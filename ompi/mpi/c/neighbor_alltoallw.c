@@ -41,10 +41,10 @@
 static const char FUNC_NAME[] = "MPI_Neighbor_alltoallw";
 
 
-int MPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[],
-                           MPI_Datatype *sendtypes, void *recvbuf,
-                           int recvcounts[], MPI_Aint rdispls[],
-                           MPI_Datatype *recvtypes, MPI_Comm comm)
+int MPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[],
+                           const MPI_Datatype sendtypes[], void *recvbuf,
+                           const int recvcounts[], const MPI_Aint rdispls[],
+                           const MPI_Datatype recvtypes[], MPI_Comm comm)
 {
     int i, size, err;
 
@@ -116,9 +116,9 @@ int MPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[],
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-
-    err = comm->c_coll.coll_neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes,
-                                               recvbuf, recvcounts, rdispls, recvtypes,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_neighbor_alltoallw((void *) sendbuf, (int *) sendcounts, (MPI_Aint *) sdispls, (ompi_datatype_t **) sendtypes,
+                                               recvbuf, (int *) recvcounts, (MPI_Aint *) rdispls, (ompi_datatype_t **) recvtypes,
                                                comm, comm->c_coll.coll_neighbor_alltoallw_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

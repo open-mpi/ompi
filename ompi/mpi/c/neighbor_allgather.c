@@ -42,7 +42,7 @@
 static const char FUNC_NAME[] = "MPI_Neighbor_allgather";
 
 
-int MPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                            void *recvbuf, int recvcount, MPI_Datatype recvtype,
                            MPI_Comm comm)
 {
@@ -116,8 +116,8 @@ int MPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-
-    err = comm->c_coll.coll_neighbor_allgather(sendbuf, sendcount, sendtype,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_neighbor_allgather((void *) sendbuf, sendcount, sendtype,
                                                recvbuf, recvcount, recvtype, comm,
                                                comm->c_coll.coll_neighbor_allgather_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -39,8 +40,8 @@
 static const char FUNC_NAME[] = "MPI_Cart_create";
 
 
-int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
-                    int periods[], int reorder, MPI_Comm *comm_cart)
+int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
+                    const int periods[], int reorder, MPI_Comm *comm_cart)
 {
     mca_topo_base_module_t* topo;
     int err;
@@ -71,7 +72,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
         /* check if the number of processes on the grid are correct */
         {
            int i, count_nodes = 1;
-           int *p = dims;
+           const int *p = dims;
            int parent_procs = ompi_comm_size(old_comm);
 
            for (i=0; i < ndims; i++, p++) {
@@ -98,8 +99,9 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int dims[],
     }
 
     /* Now let that topology module rearrange procs/ranks if it wants to */    
+    /* XXX -- CONST -- do not cast away const -- update mca/topo */
     err = topo->topo.cart.cart_create(topo, old_comm,
-                                      ndims, dims, periods,
+                                      ndims, (int *) dims, (int *) periods,
                                       (0 == reorder) ? false : true, comm_cart);
     OPAL_CR_EXIT_LIBRARY();
 

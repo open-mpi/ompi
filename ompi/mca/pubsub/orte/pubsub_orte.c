@@ -126,7 +126,7 @@ static int init(void)
  * be published under our process name, so only we will be allowed
  * to remove it later.
  */
-static int publish ( char *service_name, ompi_info_t *info, char *port_name )
+static int publish ( const char *service_name, ompi_info_t *info, const char *port_name )
 {
     int rc, ret, flag;
     bool global_scope = false;
@@ -245,7 +245,7 @@ CLEANUP:
 
 enum { NONE, LOCAL, GLOBAL };
 
-static char* lookup ( char *service_name, ompi_info_t *info )
+static char* lookup ( const char *service_name, ompi_info_t *info )
 {
     orte_process_name_t *info_host;
     opal_buffer_t *buf;
@@ -459,7 +459,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
  * the service_name has the right to remove this
  * service - the server will verify and report the result
  */
-static int unpublish ( char *service_name, ompi_info_t *info )
+static int unpublish ( const char *service_name, ompi_info_t *info )
 {
     int rc, ret, flag;
     bool global_scope;

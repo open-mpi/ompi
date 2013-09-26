@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -38,7 +39,7 @@
 
 static const char FUNC_NAME[] = "MPI_Cart_rank";
 
-int MPI_Cart_rank(MPI_Comm comm, int coords[], int *rank) 
+int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
 {
     int i, err;
 
@@ -86,7 +87,8 @@ int MPI_Cart_rank(MPI_Comm comm, int coords[], int *rank)
     }
     OPAL_CR_ENTER_LIBRARY();
 
-    err = comm->c_topo->topo.cart.cart_rank(comm, coords, rank);
+    /* XXX -- CONST -- do not cast away const -- update mca/topo */
+    err = comm->c_topo->topo.cart.cart_rank(comm, (int *) coords, rank);
     OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -5,17 +6,17 @@
  * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -40,13 +41,13 @@
 static const char FUNC_NAME[] = "MPI_Ialltoallw";
 
 
-int MPI_Ialltoallw(void *sendbuf, int sendcounts[], int sdispls[], 
-                  MPI_Datatype *sendtypes,
-                  void *recvbuf, int recvcounts[], int rdispls[], 
-                  MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request) 
+int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[],
+                   const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
+                   const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
+                   MPI_Request *request)
 {
-    int i, size, err;   
-    
+    int i, size, err;
+
     MEMCHECKER(
         ptrdiff_t recv_ext;
         ptrdiff_t send_ext;
@@ -57,7 +58,7 @@ int MPI_Ialltoallw(void *sendbuf, int sendcounts[], int sdispls[],
         for ( i = 0; i < size; i++ ) {
             memchecker_datatype(sendtypes[i]);
             memchecker_datatype(recvtypes[i]);
-            
+
             ompi_datatype_type_extent(sendtypes[i], &send_ext);
             ompi_datatype_type_extent(recvtypes[i], &recv_ext);
 
@@ -77,7 +78,7 @@ int MPI_Ialltoallw(void *sendbuf, int sendcounts[], int sdispls[],
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
 
@@ -108,11 +109,11 @@ int MPI_Ialltoallw(void *sendbuf, int sendcounts[], int sdispls[],
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-
-    err = comm->c_coll.coll_ialltoallw(sendbuf, sendcounts, sdispls, sendtypes, 
-                                      recvbuf, recvcounts, rdispls, recvtypes,
-                                      comm, request,
-                                      comm->c_coll.coll_ialltoallw_module);
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_ialltoallw((void *) sendbuf, (int *) sendcounts, (int *) sdispls,
+                                       (ompi_datatype_t **) sendtypes, recvbuf, (int *) recvcounts,
+                                       (int *) rdispls, (ompi_datatype_t **) recvtypes, comm, request,
+                                       comm->c_coll.coll_ialltoallw_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

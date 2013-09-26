@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -40,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Reduce_scatter";
 
 
-int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int recvcounts[],
+int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[],
                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) 
 {
     int i, err, size, count;
@@ -126,7 +127,8 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int recvcounts[],
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll.coll_reduce_scatter(sendbuf, recvbuf, recvcounts,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_reduce_scatter((void *) sendbuf, recvbuf, (int *) recvcounts,
                                            datatype, op, comm,
                                            comm->c_coll.coll_reduce_scatter_module);
     OBJ_RELEASE(op);

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -320,7 +322,7 @@ int ompi_mpi_errclass_add(void)
     return newerrcode->cls;
 }
 
-int ompi_mpi_errnum_add_string(int errnum, char *errstring, int len)
+int ompi_mpi_errnum_add_string(int errnum, const char *errstring, int len)
 {
     ompi_mpi_errcode_t *errcodep;
 

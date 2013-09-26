@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,8 +13,10 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      University of Houston.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
  * 
  * $HEADER$
@@ -39,7 +42,7 @@
 static const char FUNC_NAME[] = "MPI_Gather";
 
 
-int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, int recvcount, MPI_Datatype recvtype,
                int root, MPI_Comm comm) 
 {
@@ -174,8 +177,8 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-	
-    err = comm->c_coll.coll_gather(sendbuf, sendcount, sendtype, recvbuf,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_gather((void *) sendbuf, sendcount, sendtype, recvbuf,
                                    recvcount, recvtype, root, comm,
                                    comm->c_coll.coll_gather_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

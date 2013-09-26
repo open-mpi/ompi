@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,9 +26,9 @@
 #include "ompi/constants.h"
 #include "mpi.h"
 
-static int check_stride(int[],int);
+static int check_stride(const int[],int);
 
-int ompi_group_calc_strided ( int n , int *ranks ) { 
+int ompi_group_calc_strided ( int n , const int *ranks ) {
     if(-1 == check_stride(ranks,n)) {
         return -1;
     }
@@ -36,7 +39,7 @@ int ompi_group_calc_strided ( int n , int *ranks ) {
 
 /* from parent group to child group*/
 int ompi_group_translate_ranks_strided (ompi_group_t *parent_group, 
-                                        int n_ranks, int *ranks1,
+                                        int n_ranks, const int *ranks1,
                                         ompi_group_t *child_group, 
                                         int *ranks2) 
 {
@@ -61,7 +64,7 @@ int ompi_group_translate_ranks_strided (ompi_group_t *parent_group,
 
 /* from child group to parent group*/
 int ompi_group_translate_ranks_strided_reverse (ompi_group_t *child_group, 
-                                                int n_ranks, int *ranks1,
+                                                int n_ranks, const int *ranks1,
                                                 ompi_group_t *parent_group, 
                                                 int *ranks2) 
 {
@@ -79,7 +82,7 @@ int ompi_group_translate_ranks_strided_reverse (ompi_group_t *child_group,
     return OMPI_SUCCESS;
 }
 
-static int check_stride(int incl[],int incllen) { 
+static int check_stride(const int incl[],int incllen) {
     int s,i;
     if (incllen > 1) {
         s = incl[1] - incl[0];
@@ -98,8 +101,8 @@ static int check_stride(int incl[],int incllen) {
     return s; 
 }
 
-int ompi_group_incl_strided(ompi_group_t* group, int n, int *ranks, 
-                            ompi_group_t **new_group) 
+int ompi_group_incl_strided(ompi_group_t* group, int n, const int *ranks,
+                            ompi_group_t **new_group)
 {
     /* local variables */
     int my_group_rank,stride;

@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  *
  */
@@ -25,8 +28,8 @@
 
 static const char FUNC_NAME[] = "MPI_Dist_graph_create";
 
-int MPI_Dist_graph_create(MPI_Comm comm_old, int n, int sources[],
-                          int degrees[], int destinations[], int weights[],
+int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],
+                          const int degrees[], const int destinations[], const int weights[],
                           MPI_Info info, int reorder, MPI_Comm * newcomm)
 {
     mca_topo_base_module_t* topo;
@@ -79,8 +82,9 @@ int MPI_Dist_graph_create(MPI_Comm comm_old, int n, int sources[],
         return OMPI_ERRHANDLER_INVOKE(comm_old, err, FUNC_NAME);      
     }
 
-    err = topo->topo.dist_graph.dist_graph_create(topo, comm_old, n, sources, degrees,
-                                                  destinations, weights, info,
+    /* XXX -- CONST -- do not cast away const -- update mca/topo */
+    err = topo->topo.dist_graph.dist_graph_create(topo, comm_old, n, (int *) sources, (int *) degrees,
+                                                  (int *) destinations, (int *) weights, info,
                                                   reorder, newcomm);
     OMPI_ERRHANDLER_RETURN(err, comm_old, err, FUNC_NAME);
 }

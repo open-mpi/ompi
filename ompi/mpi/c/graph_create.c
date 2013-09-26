@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -39,8 +40,8 @@
 static const char FUNC_NAME[] = "MPI_Graph_create";
 
 
-int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int indx[],
-                     int edges[], int reorder, MPI_Comm *comm_graph) 
+int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
+                     const int edges[], int reorder, MPI_Comm *comm_graph)
 {
     mca_topo_base_module_t* topo;
     int err;
@@ -98,8 +99,9 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int indx[],
     }
 
     /* Now let that topology module rearrange procs/ranks if it wants to */    
+    /* XXX -- CONST -- do not cast away const -- update mca/topo */
     err = topo->topo.graph.graph_create(topo, old_comm,
-                                        nnodes, indx, edges,
+                                        nnodes, (int *) indx, (int *) edges,
                                         (0 == reorder) ? false : true, comm_graph);
     OPAL_CR_EXIT_LIBRARY();
 

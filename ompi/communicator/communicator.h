@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -15,10 +15,12 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -113,9 +115,9 @@ struct ompi_communicator_t {
     uint32_t                  c_flags; /* flags, e.g. intercomm,
                                           topology, etc. */
 
-    int c_id_available; /* the currently available Cid for allocation 
+    int c_id_available; /* the currently available Cid for allocation
                to a child*/
-    int c_id_start_index; /* the starting index of the block of cids 
+    int c_id_start_index; /* the starting index of the block of cids
                  allocated to this communicator*/
 
     ompi_group_t        *c_local_group;
@@ -125,7 +127,7 @@ struct ompi_communicator_t {
                                                  local communicator in
                                                  case the comm is an
                                                  inter-comm*/
-                     
+
     /* Attributes */
     struct opal_hash_table_t       *c_keyhash;
 
@@ -193,7 +195,7 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  * add a pointer at the back end of the base structure to point to an
  * extension of the type.  Or we can just increase the padding and
  * break backwards binary compatibility.
- * 
+ *
  * The above method was decided after several failed attempts
  * described below.
  *
@@ -216,7 +218,7 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  *   non-static initializers (e.g., MPI datatypes).
  */
 
-/* Define for the preallocated size of the predefined handle.  
+/* Define for the preallocated size of the predefined handle.
  * Note that we are using a pointer type as the base memory chunk
  * size so when the bitness changes the size of the handle changes.
  * This is done so we don't end up needing a structure that is
@@ -302,11 +304,11 @@ static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
     return (comm->c_flags & OMPI_COMM_INTER ? comm->c_remote_group->grp_proc_count : 0);
 }
 
-/** 
+/**
  * Context ID for the communicator, suitable for passing to
- * ompi_comm_lookup for getting the communicator back 
+ * ompi_comm_lookup for getting the communicator back
  */
-static inline uint32_t ompi_comm_get_cid(ompi_communicator_t* comm) 
+static inline uint32_t ompi_comm_get_cid(ompi_communicator_t* comm)
 {
     return comm->c_contextid;
 }
@@ -370,7 +372,7 @@ int ompi_comm_enable(ompi_communicator_t *old_comm,
 /**
  * Back end of MPI_DIST_GRAPH_CREATE_ADJACENT
  */
-int ompi_topo_dist_graph_create_adjacent(ompi_communicator_t *old_comm, 
+int ompi_topo_dist_graph_create_adjacent(ompi_communicator_t *old_comm,
                                          int indegree, int sources[],
                                          int sourceweights[], int outdegree,
                                          int destinations[], int destweights[],
@@ -400,7 +402,7 @@ OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key
  *
  * @
  */
-OMPI_DECLSPEC int ompi_comm_split_type(ompi_communicator_t *comm, 
+OMPI_DECLSPEC int ompi_comm_split_type(ompi_communicator_t *comm,
                                        int split_type, int key,
                                        struct ompi_info_t *info,
                                        ompi_communicator_t** newcomm);
@@ -515,14 +517,13 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
 
-OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm, 
-				       ompi_communicator_t* comm,
-				       ompi_communicator_t* bridgecomm,
-				       void* local_leader,
-				       void* remote_leader,
-				       int mode,
-				       int send_first );
-				       
+OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm,
+                                       ompi_communicator_t* comm,
+                                       ompi_communicator_t* bridgecomm,
+                                       void* local_leader,
+                                       void* remote_leader,
+                                       int mode,
+                                       int send_first );
 
 /**
  * a simple function to dump the structure
@@ -530,7 +531,7 @@ OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm,
 int ompi_comm_dump ( ompi_communicator_t *comm );
 
 /* setting name */
-int ompi_comm_set_name (ompi_communicator_t *comm, char *name );
+int ompi_comm_set_name (ompi_communicator_t *comm, const char *name );
 
 /*
  * these are the init and finalize functions for the comm_reg
@@ -544,10 +545,10 @@ void ompi_comm_reg_finalize(void);
 extern int ompi_comm_num_dyncomm;
 
 
-/* check whether any of the processes has requested support for 
+/* check whether any of the processes has requested support for
    MPI_THREAD_MULTIPLE. Note, that this produces global
    information across MPI_COMM_WORLD, in contrary to the local
-   flag ompi_mpi_thread_provided 
+   flag ompi_mpi_thread_provided
 */
 OMPI_DECLSPEC int ompi_comm_cid_init ( void );
 

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -5,15 +6,17 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -38,8 +41,8 @@
 static const char FUNC_NAME[] = "MPI_Ireduce";
 
 
-int MPI_Ireduce(void *sendbuf, void *recvbuf, int count,
-               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request) 
+int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count,
+                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
 {
     int err;
 
@@ -55,7 +58,7 @@ int MPI_Ireduce(void *sendbuf, void *recvbuf, int count,
                 } else {
                     memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
                 }
-                
+
                 /* check whether root's receive buffer is addressable. */
                 memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, count, datatype);
             } else {
@@ -66,7 +69,7 @@ int MPI_Ireduce(void *sendbuf, void *recvbuf, int count,
             if (MPI_ROOT == root) {
                 /* check whether root's receive buffer is addressable. */
                 memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, count, datatype);
-            } else if (MPI_PROC_NULL != root) {               
+            } else if (MPI_PROC_NULL != root) {
                 /* check whether send buffer is defined. */
                 memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
             }
@@ -78,12 +81,12 @@ int MPI_Ireduce(void *sendbuf, void *recvbuf, int count,
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
 
         /* Checks for all ranks */
-	
+
         else if (MPI_OP_NULL == op || NULL == op) {
             err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
@@ -119,12 +122,11 @@ int MPI_Ireduce(void *sendbuf, void *recvbuf, int count,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
     OBJ_RETAIN(op);
-    err = comm->c_coll.coll_ireduce(sendbuf, recvbuf, count,
-                                   datatype, op, root, comm,
-                                   request,
-                                   comm->c_coll.coll_ireduce_module);
+    err = comm->c_coll.coll_ireduce((void *) sendbuf, recvbuf, count,
+                                    datatype, op, root, comm, request,
+                                    comm->c_coll.coll_ireduce_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

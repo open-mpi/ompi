@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +40,7 @@
 static const char FUNC_NAME[] = "MPI_Unpack_external ";
 
 
-int MPI_Unpack_external (char *datarep, void *inbuf, MPI_Aint insize,
+int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insize,
                          MPI_Aint *position, void *outbuf, int outcount,
                          MPI_Datatype datatype) 
 {

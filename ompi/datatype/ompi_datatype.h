@@ -1,10 +1,12 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -321,9 +323,9 @@ OMPI_DECLSPEC int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int3
                                               int32_t * ca, OPAL_PTRDIFF_TYPE* a,
                                               int32_t * cd, ompi_datatype_t** d, int32_t * type);
 OMPI_DECLSPEC int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
-                                              int32_t ci, int32_t ** i,
-                                              int32_t ca, OPAL_PTRDIFF_TYPE* a,
-                                              int32_t cd, ompi_datatype_t** d,int32_t type);
+                                              int32_t ci, const int32_t ** i,
+                                              int32_t ca, const OPAL_PTRDIFF_TYPE* a,
+                                              int32_t cd, ompi_datatype_t* const * d,int32_t type);
 OMPI_DECLSPEC int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
                                                ompi_datatype_t* dest_data );
 OMPI_DECLSPEC int32_t ompi_datatype_release_args( ompi_datatype_t* pData );

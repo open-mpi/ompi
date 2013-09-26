@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,10 +10,12 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -37,8 +40,8 @@
 static const char FUNC_NAME[] = "MPI_Send";
 
 
-int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
-             int tag, MPI_Comm comm) 
+int MPI_Send(const void *buf, int count, MPI_Datatype type, int dest,
+             int tag, MPI_Comm comm)
 {
     int rc = MPI_SUCCESS;
 
@@ -56,7 +59,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
             rc = MPI_ERR_COUNT;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
-        } else if (ompi_comm_peer_invalid(comm, dest) && 
+        } else if (ompi_comm_peer_invalid(comm, dest) &&
                    (MPI_PROC_NULL != dest)) {
             rc = MPI_ERR_RANK;
         } else {
@@ -71,7 +74,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
     }
 
     OPAL_CR_ENTER_LIBRARY();
-
-    rc = MCA_PML_CALL(send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_STANDARD, comm));
+    /* XXX -- CONST -- do not cast away const -- update mca/pml */
+    rc = MCA_PML_CALL(send((void *) buf, count, type, dest, tag, MCA_PML_BASE_SEND_STANDARD, comm));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

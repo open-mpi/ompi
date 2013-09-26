@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -39,7 +40,7 @@
 
 static const char FUNC_NAME[] = "MPI_Get_elements";
 
-int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
+int MPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count)
 {
     size_t internal_count;
     int ret;

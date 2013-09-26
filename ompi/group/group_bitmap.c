@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,10 +12,12 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -23,9 +26,9 @@
 #include "ompi/constants.h"
 #include "mpi.h"
 
-static bool check_ranks (int, int *);
+static bool check_ranks (int, const int *);
 
-int ompi_group_calc_bmap ( int n, int orig_size , int *ranks) {  
+int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks) {
     if (check_ranks(n,ranks)) {
         return ompi_group_div_ceil(orig_size,BSIZE); 
     }
@@ -36,7 +39,7 @@ int ompi_group_calc_bmap ( int n, int orig_size , int *ranks) {
 
 /* from parent group to child group*/
 int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group, 
-                                      int n_ranks, int *ranks1,
+                                      int n_ranks, const int *ranks1,
                                       ompi_group_t *child_group, 
                                       int *ranks2) 
 {
@@ -80,7 +83,7 @@ int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group,
 }
 /* from child group to parent group */
 int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *child_group, 
-                                              int n_ranks, int *ranks1,
+                                              int n_ranks, const int *ranks1,
                                               ompi_group_t *parent_group, 
                                               int *ranks2) 
 {
@@ -131,7 +134,7 @@ int ompi_group_div_ceil (int num, int den)
  * since we won't be able to translate the ranks corrently since the algorithms 
  * assume that the ranks are in order in the bitmap list.
  */
-static bool check_ranks (int n, int *ranks) {
+static bool check_ranks (int n, const int *ranks) {
     int i;
     for (i=1 ; i < n ; i++) {
         if ( ranks[i-1] > ranks [i] ) {
@@ -141,8 +144,8 @@ static bool check_ranks (int n, int *ranks) {
     return true;
 }
 
-int ompi_group_incl_bmap(ompi_group_t* group, int n, int *ranks, 
-                         ompi_group_t **new_group) 
+int ompi_group_incl_bmap(ompi_group_t* group, int n, const int *ranks,
+                         ompi_group_t **new_group)
 {
     /* local variables */
     int my_group_rank,i,bit_set;

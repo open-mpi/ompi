@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
-* $COPYRIGHT$
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
@@ -52,7 +55,7 @@ typedef int (*ompi_dpm_base_module_init_fn_t)(void);
  * Connect/accept communications
  */
 typedef int (*ompi_dpm_base_module_connect_accept_fn_t)(ompi_communicator_t *comm, int root,
-                                                        char *port, bool send_first,
+                                                        const char *port, bool send_first,
                                                         ompi_communicator_t **newcomm);
 
 /* define a callback function for use by non-blocking persistent connect/accept operations */
@@ -109,11 +112,11 @@ typedef int (*ompi_dpm_base_module_disconnect_fn_t)(ompi_communicator_t *comm);
 /*
  * Dynamically spawn processes
  */
-typedef int (*ompi_dpm_base_module_spawn_fn_t)(int count, char **array_of_commands,
-                                               char ***array_of_argv,
-                                               int *array_of_maxprocs,
-                                               MPI_Info *array_of_info,
-                                               char *port_name);
+typedef int (*ompi_dpm_base_module_spawn_fn_t)(int count, char const *array_of_commands[],
+                                               char **array_of_argv[],
+                                               const int array_of_maxprocs[],
+                                               const MPI_Info array_of_info[],
+                                               const char *port_name);
 
 /*
  * This routine checks, whether an application has been spawned
@@ -148,7 +151,7 @@ typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, ompi_rml_tag
 /*
  * Converts an opaque port string to a RML process nane and tag.
  */
-typedef int (*ompi_dpm_base_module_parse_port_name_t)(char *port_name,
+typedef int (*ompi_dpm_base_module_parse_port_name_t)(const char *port_name,
                                                       char **hnp_uri, char **rml_uri,
                                                       ompi_rml_tag_t *tag);
 
@@ -162,7 +165,7 @@ typedef int (*ompi_dpm_base_module_route_to_port_t)(char *rml_uri, ompi_process_
 /*
  * Close a port
  */
-typedef int (*ompi_dpm_base_module_close_port_fn_t)(char *port_name);
+typedef int (*ompi_dpm_base_module_close_port_fn_t)(const char *port_name);
 
 /*
  * Finalize a module

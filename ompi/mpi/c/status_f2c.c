@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,10 +11,12 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -36,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Status_f2c";
 
 
-int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status) 
+int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status)
 {
     int i, *c_ints;
 
@@ -47,8 +50,8 @@ int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status)
 
         /* MPI-2:4.12.5 says that if you pass in
            MPI_STATUS[ES]_IGNORE, it's erroneous */
-        
-        if (NULL == f_status || 
+
+        if (NULL == f_status ||
 #if OMPI_BUILD_FORTRAN_BINDINGS
             /* This section is #if'ed out if we are not building the
                fortran bindings because these macros check values
@@ -58,7 +61,7 @@ int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status)
             OMPI_IS_FORTRAN_STATUSES_IGNORE(f_status) ||
 #endif
             NULL == c_status) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                           MPI_ERR_IN_STATUS, FUNC_NAME);
         }
     }

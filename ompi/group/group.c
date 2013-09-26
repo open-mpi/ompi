@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +42,7 @@ int ompi_group_free ( ompi_group_t **group )
 }
 
 int ompi_group_translate_ranks ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
+                                 int n_ranks, const int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2) 
 {
@@ -196,7 +199,7 @@ int ompi_group_minloc ( int list[] , int length )
     return index;
 }
 
-int ompi_group_incl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group) 
+int ompi_group_incl(ompi_group_t* group, int n, const int *ranks, ompi_group_t **new_group)
 {
     int method,result;
 
@@ -234,7 +237,7 @@ int ompi_group_incl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_g
     return result;
 }
 
-int ompi_group_excl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group) 
+int ompi_group_excl(ompi_group_t* group, int n, const int *ranks, ompi_group_t **new_group)
 {
     int i, j, k, result;
     int *ranks_included=NULL;

@@ -37,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Add_error_string";
 
 
-int MPI_Add_error_string(int errorcode, char *string)
+int MPI_Add_error_string(int errorcode, const char *string)
 {
     int rc;
 

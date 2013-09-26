@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -5,14 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -36,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Sendrecv";
 
 
-int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                  int dest, int sendtag, void *recvbuf, int recvcount,
                  MPI_Datatype recvtype, int source, int recvtag,
                  MPI_Comm comm,  MPI_Status *status)
@@ -57,7 +60,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, recvtype, recvcount);
         OMPI_CHECK_USER_BUFFER(rc, sendbuf, sendtype, sendcount);
         OMPI_CHECK_USER_BUFFER(rc, recvbuf, recvtype, recvcount);
-        
+
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (dest != MPI_PROC_NULL && ompi_comm_peer_invalid(comm, dest)) {
@@ -67,7 +70,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         } else if (source != MPI_PROC_NULL && source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
         } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > mca_pml.pml_max_tag)) {
-                rc = MPI_ERR_TAG;
+            rc = MPI_ERR_TAG;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
@@ -81,7 +84,8 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     if (dest != MPI_PROC_NULL) { /* send */
-        rc = MCA_PML_CALL(send(sendbuf, sendcount, sendtype, dest,
+        /* XXX -- CONST -- do not cast away const -- update mca/pml */
+        rc = MCA_PML_CALL(send((void *) sendbuf, sendcount, sendtype, dest,
                                sendtag, MCA_PML_BASE_SEND_STANDARD, comm));
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }

@@ -35,7 +35,7 @@ static int init(void)
 /*
  * publish the port_name for the specified service_name.
  */
-static int publish ( char *service_name, ompi_info_t *info, char *port_name )
+static int publish ( const char *service_name, ompi_info_t *info, const char *port_name )
 {
     int rc;
 
@@ -53,7 +53,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     return OMPI_SUCCESS;
 }
 
-static char* lookup ( char *service_name, ompi_info_t *info )
+static char* lookup ( const char *service_name, ompi_info_t *info )
 {
     char *port=NULL;
     int rc;
@@ -76,7 +76,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
 
 /*
  * delete the entry */
-static int unpublish ( char *service_name, ompi_info_t *info )
+static int unpublish ( const char *service_name, ompi_info_t *info )
 {
     int rc;
 

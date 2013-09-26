@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Scan";
 
 
-int MPI_Scan(void *sendbuf, void *recvbuf, int count,
+int MPI_Scan(const void *sendbuf, void *recvbuf, int count,
              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) 
 {
     int err;
@@ -98,7 +101,8 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
     /* Call the coll component to actually perform the allgather */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll.coll_scan(sendbuf, recvbuf, count,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_scan((void *) sendbuf, recvbuf, count,
                                  datatype, op, comm,
                                  comm->c_coll.coll_scan_module);
     OBJ_RELEASE(op);

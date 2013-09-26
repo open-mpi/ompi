@@ -1,5 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
-
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Pack";
 
 
-int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
+int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
              void *outbuf, int outsize, int *position, MPI_Comm comm)
 {
     int rc;
@@ -75,7 +76,7 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
     OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
     /* the resulting convertor will be set to the position ZERO */
     opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(datatype->super),
-                                              incount, inbuf, 0, &local_convertor );
+                                              incount, (void *) inbuf, 0, &local_convertor );
 
     /* Check for truncation */
     opal_convertor_get_packed_size( &local_convertor, &size );

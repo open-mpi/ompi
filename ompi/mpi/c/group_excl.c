@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos Nat Security, LLC. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos Nat Security, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Group_excl";
 
 
-int MPI_Group_excl(MPI_Group group, int n, int ranks[],
+int MPI_Group_excl(MPI_Group group, int n, const int ranks[],
                    MPI_Group *new_group) 
 {
     ompi_group_t *group_pointer = (ompi_group_t *)group;

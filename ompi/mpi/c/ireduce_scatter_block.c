@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +42,7 @@
 static const char FUNC_NAME[] = "MPI_Reduce_scatter_block";
 
 
-int MPI_Ireduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount,
+int MPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
                               MPI_Datatype datatype, MPI_Op op, 
                               MPI_Comm comm, MPI_Request *request)
 {
@@ -96,9 +99,9 @@ int MPI_Ireduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll.coll_ireduce_scatter_block(sendbuf, recvbuf, recvcount,
-                                                  datatype, op, comm,
-                                                  request,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_ireduce_scatter_block((void *) sendbuf, recvbuf, recvcount,
+                                                  datatype, op, comm, request,
                                                   comm->c_coll.coll_ireduce_scatter_block_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
