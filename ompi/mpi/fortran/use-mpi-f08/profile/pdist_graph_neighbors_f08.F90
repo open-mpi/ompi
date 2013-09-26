@@ -6,7 +6,7 @@
 ! $COPYRIGHT$
 
 subroutine PMPI_Dist_graph_neighbors_f08(comm,maxindegree,sources,sourceweights,&
-                                         maxoutdegree,destinations,destweights,ierror)
+                                        maxoutdegree,destinations,destweights,ierror)
    use :: mpi_f08_types, only : MPI_Comm
    use :: mpi_f08, only : ompi_dist_graph_neighbors_f
    implicit none

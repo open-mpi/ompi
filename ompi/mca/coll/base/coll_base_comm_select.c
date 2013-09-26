@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,7 +14,9 @@
  *                         rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Rigde National Laboratory.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -175,6 +178,19 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         COPY(avail->ac_module, comm, iscan);
         COPY(avail->ac_module, comm, iscatter);
         COPY(avail->ac_module, comm, iscatterv);
+
+        COPY(avail->ac_module, comm, neighbor_allgather);
+        COPY(avail->ac_module, comm, neighbor_allgatherv);
+        COPY(avail->ac_module, comm, neighbor_alltoall);
+        COPY(avail->ac_module, comm, neighbor_alltoallv);
+        COPY(avail->ac_module, comm, neighbor_alltoallw);
+
+        COPY(avail->ac_module, comm, ineighbor_allgather);
+        COPY(avail->ac_module, comm, ineighbor_allgatherv);
+        COPY(avail->ac_module, comm, ineighbor_alltoall);
+        COPY(avail->ac_module, comm, ineighbor_alltoallv);
+        COPY(avail->ac_module, comm, ineighbor_alltoallw);
+
         /* release the original module reference and the list item */
         OBJ_RELEASE(avail->ac_module);
         OBJ_RELEASE(avail);
@@ -217,7 +233,17 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         (NULL == comm->c_coll.coll_ireduce_scatter) ||
         ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_iscan)) ||
         (NULL == comm->c_coll.coll_iscatter) ||
-        (NULL == comm->c_coll.coll_iscatterv)
+        (NULL == comm->c_coll.coll_iscatterv) ||
+        (NULL == comm->c_coll.coll_neighbor_allgather) ||
+        (NULL == comm->c_coll.coll_neighbor_allgatherv) ||
+        (NULL == comm->c_coll.coll_neighbor_alltoall) ||
+        (NULL == comm->c_coll.coll_neighbor_alltoallv) ||
+        (NULL == comm->c_coll.coll_neighbor_alltoallw) ||
+        (NULL == comm->c_coll.coll_ineighbor_allgather) ||
+        (NULL == comm->c_coll.coll_ineighbor_allgatherv) ||
+        (NULL == comm->c_coll.coll_ineighbor_alltoall) ||
+        (NULL == comm->c_coll.coll_ineighbor_alltoallv) ||
+        (NULL == comm->c_coll.coll_ineighbor_alltoallw)
         ) {
         mca_coll_base_comm_unselect(comm);
         return OMPI_ERR_NOT_FOUND;

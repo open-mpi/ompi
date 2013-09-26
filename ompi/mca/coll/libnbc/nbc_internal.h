@@ -557,6 +557,9 @@ static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
   } \
 }
 
+int NBC_Comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted);
+int NBC_Comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[]);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -131,6 +134,13 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         basic_module->super.coll_scatter    = mca_coll_basic_scatter_intra;
         basic_module->super.coll_scatterv   = mca_coll_basic_scatterv_intra;
     }
+
+    /* These functions will return an error code if comm does not have a virtual topology */
+    basic_module->super.coll_neighbor_allgather = mca_coll_basic_neighbor_allgather;
+    basic_module->super.coll_neighbor_allgatherv = mca_coll_basic_neighbor_allgatherv;
+    basic_module->super.coll_neighbor_alltoall = mca_coll_basic_neighbor_alltoall;
+    basic_module->super.coll_neighbor_alltoallv = mca_coll_basic_neighbor_alltoallv;
+    basic_module->super.coll_neighbor_alltoallw = mca_coll_basic_neighbor_alltoallw;
 
     return &(basic_module->super);
 }

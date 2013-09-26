@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -248,6 +251,27 @@ int ompi_coll_libnbc_iscatterv_inter(void* sendbuf, int *sendcounts, int *displs
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root, 
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_0_0_t *module);
+
+
+int ompi_coll_libnbc_ineighbor_allgather(void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+                                         int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+                                         ompi_request_t ** request, struct mca_coll_base_module_2_0_0_t *module);
+int ompi_coll_libnbc_ineighbor_allgatherv(void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+                                          int *rcounts, int *displs, MPI_Datatype rtype,
+                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                          struct mca_coll_base_module_2_0_0_t *module);
+int ompi_coll_libnbc_ineighbor_alltoall(void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+                                        int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+                                        ompi_request_t ** request, struct mca_coll_base_module_2_0_0_t *module);
+int ompi_coll_libnbc_ineighbor_alltoallv(void *sbuf, int *scounts, int *sdispls, MPI_Datatype stype,
+                                         void *rbuf, int *rcounts, int *rdispls, MPI_Datatype rtype,
+                                         struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                         struct mca_coll_base_module_2_0_0_t *module);
+int ompi_coll_libnbc_ineighbor_alltoallw(void *sbuf, int *scounts, MPI_Aint *sdisps, MPI_Datatype *stypes,
+                                         void *rbuf, int *rcounts, MPI_Aint *rdisps, MPI_Datatype *rtypes,
+                                         struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                         struct mca_coll_base_module_2_0_0_t *module);
+
 
 END_C_DECLS
 

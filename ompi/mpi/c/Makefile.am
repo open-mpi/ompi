@@ -214,6 +214,16 @@ libmpi_c_mpi_la_SOURCES = \
         message_c2f.c \
         mprobe.c \
         mrecv.c \
+        neighbor_allgather.c \
+        ineighbor_allgather.c \
+        neighbor_allgatherv.c \
+        ineighbor_allgatherv.c \
+        neighbor_alltoall.c \
+        ineighbor_alltoall.c \
+        neighbor_alltoallv.c \
+        ineighbor_alltoallv.c \
+        neighbor_alltoallw.c \
+        ineighbor_alltoallw.c \
         op_c2f.c \
         op_commutative.c \
         op_create.c \

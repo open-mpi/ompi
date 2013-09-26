@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -305,6 +308,30 @@ BEGIN_C_DECLS
                                       int root,
                                       struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module);
+
+     int mca_coll_basic_neighbor_allgather(void *sbuf, int scount,
+                                           struct ompi_datatype_t *sdtype, void *rbuf,
+                                           int rcount, struct ompi_datatype_t *rdtype,
+                                           struct ompi_communicator_t *comm,
+                                           mca_coll_base_module_t *module);
+
+     int mca_coll_basic_neighbor_allgatherv(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                            void *rbuf, int rcounts[], int disps[], struct ompi_datatype_t *rdtype,
+                                            struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
+
+     int mca_coll_basic_neighbor_alltoall(void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf,
+                                          int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module);
+
+     int mca_coll_basic_neighbor_alltoallv(void *sbuf, int scounts[], int sdisps[],
+                                           struct ompi_datatype_t *sdtype, void *rbuf, int rcounts[],
+                                           int rdisps[], struct ompi_datatype_t *rdtype,
+                                           struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
+
+     int mca_coll_basic_neighbor_alltoallw(void *sbuf, int scounts[], MPI_Aint sdisps[],
+                                           struct ompi_datatype_t *sdtypes[], void *rbuf, int rcounts[],
+                                           MPI_Aint rdisps[], struct ompi_datatype_t *rdtypes[],
+                                           struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
     int mca_coll_basic_ft_event(int status);
 

@@ -196,6 +196,16 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pmessage_c2f.c \
         pmprobe.c \
         pmrecv.c \
+        pneighbor_allgather.c \
+        pineighbor_allgather.c \
+        pneighbor_allgatherv.c \
+        pineighbor_allgatherv.c \
+        pneighbor_alltoall.c \
+        pineighbor_alltoall.c \
+        pneighbor_alltoallv.c \
+        pineighbor_alltoallv.c \
+        pneighbor_alltoallw.c \
+        pineighbor_alltoallw.c \
         pop_c2f.c \
         pop_create.c \
         pop_commutative.c \

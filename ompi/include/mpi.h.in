@@ -469,7 +469,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_SEEK_END               604
 
 /* Max data representation length */
-#define MPI_MAX_DATAREP_STRING OPAL_MAX_DATAREP_STRING 
+#define MPI_MAX_DATAREP_STRING OPAL_MAX_DATAREP_STRING
 
 #endif /* #if OMPI_PROVIDE_MPI_FILE_INTERFACE */
 
@@ -645,7 +645,7 @@ enum {
   MPI_COMBINER_HINDEXED_BLOCK
 };
 
-/* 
+/*
  * Communicator split type constants.
  * Do not change the order of these without also modifying mpif.h.in
  * (see also mpif-common.h.fin).
@@ -1250,25 +1250,25 @@ OMPI_DECLSPEC  int MPI_Comm_free(MPI_Comm *comm);
 OMPI_DECLSPEC  int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                                      void *attribute_val, int *flag);
 OMPI_DECLSPEC  int MPI_Dist_graph_create(MPI_Comm comm_old, int n, int nodes[],
-                                         int degrees[], int targets[], 
-                                         int weights[], MPI_Info info, 
+                                         int degrees[], int targets[],
+                                         int weights[], MPI_Info info,
                                          int reorder, MPI_Comm * newcomm);
 OMPI_DECLSPEC  int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
                                                   int indegree, int sources[],
-                                                  int sourceweights[], 
+                                                  int sourceweights[],
                                                   int outdegree,
-                                                  int destinations[], 
+                                                  int destinations[],
                                                   int destweights[],
                                                   MPI_Info info, int reorder,
                                                   MPI_Comm *comm_dist_graph);
 OMPI_DECLSPEC int MPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree,
                                            int sources[], int sourceweights[],
-                                           int maxoutdegree, 
+                                           int maxoutdegree,
                                            int destinations[],
                                            int destweights[]);
-OMPI_DECLSPEC  int MPI_Dist_graph_neighbors_count(MPI_Comm comm, 
+OMPI_DECLSPEC  int MPI_Dist_graph_neighbors_count(MPI_Comm comm,
                                                   int *inneighbors,
-                                                  int *outneighbors, 
+                                                  int *outneighbors,
                                                   int *weighted);
 OMPI_DECLSPEC  int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *erhandler);
 OMPI_DECLSPEC  int MPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen);
@@ -1516,7 +1516,37 @@ OMPI_DECLSPEC  int MPI_Mprobe(int source, int tag, MPI_Comm comm,
                                MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
                              MPI_Message *message, MPI_Status *status);
-OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op); 
+OMPI_DECLSPEC  int MPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                          void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                          MPI_Comm comm);
+OMPI_DECLSPEC  int MPI_Ineighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                           void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                           MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Neighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                           void *recvbuf, int recvcounts[], int displs[],
+                                           MPI_Datatype recvtype, MPI_Comm comm);
+OMPI_DECLSPEC  int MPI_Ineighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                            void *recvbuf, int recvcounts[], int displs[],
+                                            MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                         void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                         MPI_Comm comm);
+OMPI_DECLSPEC  int MPI_Ineighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                          void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                          MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[],  MPI_Datatype sendtype,
+                                          void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype,
+                                          MPI_Comm comm);
+OMPI_DECLSPEC  int MPI_Ineighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype,
+                                           void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype,
+                                           MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[],
+                                          void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[],
+                                          MPI_Comm comm);
+OMPI_DECLSPEC  int MPI_Ineighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[],
+                                           void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[],
+                                           MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op);
 OMPI_DECLSPEC  int MPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int MPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);
 OMPI_DECLSPEC  int MPI_Open_port(MPI_Info info, char *port_name);
@@ -1818,25 +1848,25 @@ OMPI_DECLSPEC  int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 OMPI_DECLSPEC  int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
                                  __mpi_interface_deprecated__("MPI_Attr_get is superseded by MPI_Comm_get_attr in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Dist_graph_create(MPI_Comm comm_old, int n, int nodes[],
-                                          int degrees[], int targets[], 
-                                          int weights[], MPI_Info info, 
+                                          int degrees[], int targets[],
+                                          int weights[], MPI_Info info,
                                           int reorder, MPI_Comm * newcomm);
 OMPI_DECLSPEC  int PMPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
                                                    int indegree, int sources[],
-                                                   int sourceweights[], 
+                                                   int sourceweights[],
                                                    int outdegree,
-                                                   int destinations[], 
+                                                   int destinations[],
                                                     int destweights[],
                                                    MPI_Info info, int reorder,
                                                    MPI_Comm *comm_dist_graph);
 OMPI_DECLSPEC int PMPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree,
                                             int sources[], int sourceweights[],
-                                            int maxoutdegree, 
+                                            int maxoutdegree,
                                              int destinations[],
                                             int destweights[]);
-OMPI_DECLSPEC  int PMPI_Dist_graph_neighbors_count(MPI_Comm comm, 
+OMPI_DECLSPEC  int PMPI_Dist_graph_neighbors_count(MPI_Comm comm,
                                                    int *inneighbors,
-                                                   int *outneighbors, 
+                                                   int *outneighbors,
                                                    int *weighted);
 OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
                                  __mpi_interface_deprecated__("MPI_Attr_put is superseded by MPI_Comm_set_attr in MPI-2.0");
@@ -2136,6 +2166,36 @@ OMPI_DECLSPEC  int PMPI_Mprobe(int source, int tag, MPI_Comm comm,
                                MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Mrecv(void *buf, int count, MPI_Datatype type,
                               MPI_Message *message, MPI_Status *status);
+OMPI_DECLSPEC  int PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                           void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                           MPI_Comm comm);
+OMPI_DECLSPEC  int PMPI_Ineighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                            void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                            MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Neighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                            void *recvbuf, int recvcounts[], int displs[],
+                                            MPI_Datatype recvtype, MPI_Comm comm);
+OMPI_DECLSPEC  int PMPI_Ineighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                             void *recvbuf, int recvcounts[], int displs[],
+                                             MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                          void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                          MPI_Comm comm);
+OMPI_DECLSPEC  int PMPI_Ineighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                           void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                                           MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[],  MPI_Datatype sendtype,
+                                           void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype,
+                                           MPI_Comm comm);
+OMPI_DECLSPEC  int PMPI_Ineighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype,
+                                            void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype,
+                                            MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[],
+                                           void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[],
+                                           MPI_Comm comm);
+OMPI_DECLSPEC  int PMPI_Ineighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[],
+                                            void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[],
+                                            MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  MPI_Fint PMPI_Op_c2f(MPI_Op op);
 OMPI_DECLSPEC  int PMPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int PMPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);

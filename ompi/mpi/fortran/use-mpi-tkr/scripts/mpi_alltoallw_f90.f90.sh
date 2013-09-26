@@ -7,6 +7,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -51,11 +53,11 @@ subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
   include "mpif-config.h"
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
-  integer, dimension(*), intent(in) :: sdispls
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
   integer, dimension(*), intent(in) :: sendtypes
   ${type} :: recvbuf
   integer, dimension(*), intent(in) :: recvcounts
-  integer, dimension(*), intent(in) :: rdispls
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
   integer, dimension(*), intent(in) :: recvtypes
   integer, intent(in) :: comm
   integer, intent(out) :: ierror
