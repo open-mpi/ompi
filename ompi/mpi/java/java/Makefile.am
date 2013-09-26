@@ -13,29 +13,42 @@
 # list them here in EXTRA_DIST so that they get picked up by "make
 # dist".
 JAVA_SRC_FILES = \
-        Cartcomm.java     \
+        CartComm.java     \
         CartParms.java    \
         Comm.java         \
+	Constant.java     \
         Datatype.java     \
+	DistGraphNeighbors.java \
+	DoubleInt.java    \
+	DoubleComplex.java \
         Errhandler.java   \
+	FloatComplex.java \
+	FloatInt.java     \
+	File.java         \
+	FileView.java     \
         Freeable.java     \
-        Graphcomm.java    \
+        GraphComm.java    \
         GraphParms.java   \
         Group.java        \
+	Info.java	  \
+	Int2.java         \
         Intercomm.java    \
         Intracomm.java    \
-        Maxloc.java       \
-        Minloc.java       \
+	LongInt.java      \
+	Message.java      \
         MPI.java          \
         MPIException.java \
         Op.java           \
         Prequest.java     \
         Request.java      \
         ShiftParms.java   \
+	ShortInt.java     \
         Status.java       \
-        User_function.java 
+	Struct.java       \
+	UserFunction.java \
+	Win.java
 
-JAVA_CLASS_FILES = $(JAVA_SRC_FILES:%.java=mpi/%.class)
+JAVA_CLASS_FILES = $(JAVA_SRC_FILES:%.java=mpi/%.class) mpi/*$*.class
 EXTRA_DIST = $(JAVA_SRC_FILES)
 
 # Only do this stuff if we want the Java bindings
@@ -48,21 +61,25 @@ if OMPI_WANT_JAVA_BINDINGS
 JAVA_H = \
         mpi_MPI.h          \
         mpi_CartParms.h    \
-        mpi_Cartcomm.h     \
+        mpi_CartComm.h     \
         mpi_Comm.h         \
+	mpi_Constant.h     \
         mpi_Datatype.h     \
         mpi_Errhandler.h   \
+	mpi_File.h         \
         mpi_GraphParms.h   \
-        mpi_Graphcomm.h    \
+        mpi_GraphComm.h    \
         mpi_Group.h        \
+	mpi_Info.h         \
         mpi_Intercomm.h    \
         mpi_Intracomm.h    \
+	mpi_Message.h      \
         mpi_Op.h           \
         mpi_Prequest.h     \
         mpi_Request.h      \
         mpi_ShiftParms.h   \
         mpi_Status.h       \
-        mpi_User_function.h 
+	mpi_Win.h
 
 # A little verbosity magic; "make" will show the terse output.  "make
 # V=1" will show the actual commands used (just like the other

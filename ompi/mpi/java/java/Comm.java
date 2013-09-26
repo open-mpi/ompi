@@ -20,1360 +20,2695 @@
  * Copyright: Northeast Parallel Architectures Center
  *            at Syracuse University 1998
  */
-
 package mpi;
-import java.io.*;
-import java.lang.*;
 
-public class Comm {
-  protected final static int SELF  = 1;
-  protected final static int WORLD = 2;
-
-  protected static long nullHandle ;
-
-  Comm() {}
-
-  void setType(int Type) {
-    GetComm(Type);
-  }
-
-  private native void GetComm(int Type);
-
-  protected Comm(long handle) {
-    this.handle = handle;
-  }  
-
-  /**
-   * Duplicate this communicator.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> copy of this communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_DUP</tt>.
-   * <p>
-   * The new communicator is ``congruent'' to the old one, but has a
-   * different context.
-   */
-
-  public Object clone() {
-    return new Comm(dup());
-  }
-
-  protected native long dup();
-
-  /**
-   * Size of group of this communicator.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> number of processors in the group
-   *                                      of this communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_SIZE</tt>.
-   */
-
-  public native int Size() throws MPIException ;
-
-  /**
-   * Rank of this process in group of this communicator.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> rank of the calling process in the
-   *                                      group of this communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_RANK</tt>.
-   */
-
-  public native int Rank() throws MPIException ;
-
-  /**
-   * Compare two communicators.
-   * <p>
-   * <table>
-   * <tr><td><tt> comm1    </tt></td><td> first communicator </tr>
-   * <tr><td><tt> comm2    </tt></td><td> second communicator </tr>
-   * <tr><td><em> returns: </em></td><td> result </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_COMPARE</tt>.
-   * <p>
-   * <tt>MPI.IDENT</tt> results if the <tt>comm1</tt> and <tt>comm2</tt>
-   * are references to the same object (ie, if <tt>comm1 == comm2</tt>).
-   * <tt>MPI.CONGRUENT</tt> results if the underlying groups are identical
-   * but the communicators differ by context.
-   * <tt>MPI.SIMILAR</tt> results if the underlying groups are similar
-   * but the communicators differ by context.
-   * <tt>MPI.UNEQUAL</tt> results otherwise.
-   */
-
-  public static native int Compare(Comm comm1, Comm comm2) throws MPIException ;
-
-  /**
-   * Destroy this communicator.
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_FREE</tt>.
-   */
-
-  public native void Free() throws MPIException ;
-
-  /**
-   * Test if communicator object is void (has been freed).
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> true if the comm object is void,
-   *                                      false otherwise </tr>
-   * </table>
-   */
-
-  public native boolean Is_null();
-
-  /**
-   * Return group associated with a communicator.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> group corresponding to this
-   *                                      communicator group </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_GROUP</tt>.
-   */
-
-  public Group Group() throws MPIException {
-    return new Group(group());
-  }
-
-  private native long group();
-
-  // Inter-communication
-
-  /**
-   * Test if this communicator is an inter-communicator.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> <tt>true</tt> if this is an
-   *                                      inter-communicator,
-   *                                      <tt>false</tt> otherwise </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_TEST_INTER</tt>.
-   */
-
-  public native boolean Test_inter() throws MPIException ;
-
-  /**
-   * Create an inter-communicator.
-   * <p>
-   * <table>
-   * <tr><td><tt> local_comm    </tt></td><td> local intra-communicator </tr>
-   * <tr><td><tt> local_leader  </tt></td><td> rank of local group leader
-   *                                           in <tt>localComm</tt> </tr>
-   * <tr><td><tt> remote_leader </tt></td><td> rank of remote group leader
-   *                                           in this communictor </tr>
-   * <tr><td><tt> tag           </tt></td><td> ``safe'' tag </tr>
-   * <tr><td><em> returns:      </em></td><td> new inter-communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_INTERCOMM_CREATE</tt>.
-   * <p>
-   * (This operation is defined as a method on the ``peer communicator'',
-   * making it analogous to a <tt>send</tt> or <tt>recv</tt> communication
-   * with the remote group leader.)
-   */
-
-  public Intercomm Create_intercomm(Comm local_comm, 
-                                    int  local_leader,
-	                            int  remote_leader, 
-                                    int  tag) throws MPIException {
-    return new Intercomm(GetIntercomm(local_comm, local_leader,
-                                      remote_leader, tag)) ;
-  }
-
-  public native long GetIntercomm(Comm local_comm, 
-                                  int  local_leader,
-	                          int  remote_leader, 
-                                  int  tag) ;
-
-
-  // Object serialization support
-    
-  public byte[] Object_Serialize(Object   buf,
-                                 int      offset,
-                                 int      count, 
-                                 Datatype type) throws MPIException {
-    if(type.Size() != 0) {
-	byte[] byte_buf ; 
-	Object buf_els [] = (Object[])buf;
-	try {
-	  ByteArrayOutputStream o = new ByteArrayOutputStream();
-	  ObjectOutputStream out = new ObjectOutputStream(o);
-	  int base;
-	  for (int i = 0; i < count; i++){
-	    base = type.Extent() * i;
-	    for (int j = 0 ; j < type.displacements.length ; j++)
-	      out.writeObject(buf_els[base + offset + 
-				     type.displacements[j]]);     
-	  }
-	      
-	  out.flush();
-	  out.close();
-	  byte_buf  = o.toByteArray();
-
-	} catch(Exception ex){
-	    ex.printStackTrace();
-	    byte_buf  = null ;
-	}
-	return byte_buf ;
-    }
-    else return new byte[0];
-  }
-   
-  public void Object_Deserialize(Object   buf,
-                                 byte[]   byte_buf,
-                                 int      offset,
-                                 int      count,
-                                 Datatype type) throws MPIException {
-
-    if(type.Size() != 0) {
-      Object buf_els [] = (Object[])buf;          
-
-      try {      
-        ByteArrayInputStream in = new ByteArrayInputStream(byte_buf);   
-	ObjectInputStream s = new ObjectInputStream(in);
-	int base;
-	for (int i = 0; i < count; i++){
-	  base = type.Extent() * i;
-	  for (int j = 0 ; j < type.displacements.length ; j++)
-	    buf_els[base + offset + type.displacements[j]]=s.readObject();
-	} 
-	s.close(); 
-      }catch(Exception ex){ex.printStackTrace();}	
-    }  
-  }
-
-    
-  // Blocking Send and Recv
-    
-  /**
-   * Blocking send operation.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_SEND</tt>.
-   * <p>
-   * The actual argument associated with <tt>buf</tt> must be
-   * one-dimensional array.  The value <tt>offset</tt> is a subscript in
-   * this array, defining the position of the first item of the message.
-   * <p>
-   * If the <tt>datatype</tt> argument represents an MPI basic type, its
-   * value must agree with the element type of <tt>buf</tt>---either
-   * a primitive type or a reference (object) type.  If the
-   * <tt>datatype</tt> argument represents an MPI derived type, its
-   * <em>base type</em> must agree with the element type of <tt>buf</tt>
-   */
-
-  public void Send(Object   buf,
-                   int      offset, 
-                   int      count, 
-                   Datatype type,
-                   int      dest,  
-                   int      tag) throws MPIException {
-
-    if (type.isObject()){   
-      byte[] byte_buf = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-
-      send(length_buf, 0, 2, MPI.INT, dest, tag);  // header
-
-      send(byte_buf, 0, byte_buf.length, MPI.BYTE,dest, tag) ;
-    }
-    else {
-      send(buf, offset, count, type, dest, tag);
-    }
-  }
-  
-  private native void send(Object   buf, 
-                           int      offset, 
-                           int      count, 
-                           Datatype type, 
-                           int      dest, 
-                           int      tag);
-
-  /**
-   * Blocking receive operation.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> receive buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in receive buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> source   </tt></td><td> rank of source </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> status object </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_RECV</tt>.
-   * <p>
-   * The actual argument associated with <tt>buf</tt> must be
-   * one-dimensional array.  The value <tt>offset</tt> is a subscript in
-   * this array, defining the position into which the first item of the
-   * incoming message will be copied.
-   * <p>
-   * If the <tt>datatype</tt> argument represents an MPI basic type, its
-   * value must agree with the element type of <tt>buf</tt>---either
-   * a primitive type or a reference (object) type.  If the
-   * <tt>datatype</tt> argument represents an MPI derived type, its
-   * <em>base type</em> must agree with the element type of <tt>buf</tt>
-   */
-
-  public Status Recv(Object   buf, 
-                     int      offset, 
-                     int      count, 
-                     Datatype type,
-                     int      source, 
-                     int      tag) throws MPIException {
-
-    if (type.isObject()){
-      Status status = new Status();
-
-      int[] length_buf= new int[2];
-      Recv(length_buf,0,2, MPI.INT, source, tag, status); 
-
-      byte[] byte_buf = new byte[length_buf[0]];
-      Recv(byte_buf,0,length_buf[0], MPI.BYTE, status.source, tag, status);
-
-      Object_Deserialize(buf,byte_buf,offset,length_buf[1],type);
-
-      status.object_count = length_buf[1];
-      return status;
-    }
-    else
-      return Recv(buf, offset, count, type, source, tag, new Status());
-  }
-
-  private native Status Recv(Object   buf, 
-                             int      offset, 
-                             int      count, 
-                             Datatype type,
-                             int      source, 
-                             int      tag, 
-                             Status   stat);
-
-  // Send-Recv
-
-  /**
-   * Execute a blocking send and receive operation.
-   * <p>
-   * <table>
-   * <tr><td><tt> sendbuf    </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> sendoffset </tt></td><td> initial offset in send
-   *                                        buffer </tr>
-   * <tr><td><tt> sendcount  </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> sendtype   </tt></td><td> datatype of each item in send
-   *                                        buffer </tr>
-   * <tr><td><tt> dest       </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> sendtag    </tt></td><td> send tag </tr>
-   * <tr><td><tt> recvbuf    </tt></td><td> receive buffer array </tr>
-   * <tr><td><tt> recvoffset </tt></td><td> initial offset in receive
-   *                                        buffer </tr>
-   * <tr><td><tt> recvcount  </tt></td><td> number of items in receive
-   *                                        buffer </tr>
-   * <tr><td><tt> recvtype   </tt></td><td> datatype of each item in receive
-   *                                        buffer </tr>
-   * <tr><td><tt> source     </tt></td><td> rank of source </tr>
-   * <tr><td><tt> recvtag    </tt></td><td> receive tag </tr>
-   * <tr><td><em> returns:   </em></td><td> status object </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_SENDRECV</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt> and <tt>Recv</tt>.
-   */
-
-  public Status Sendrecv(Object   sendbuf, 
-                         int      sendoffset,
-                         int      sendcount, 
-                         Datatype sendtype,
-                         int      dest, 
-                         int      sendtag,
-                         Object   recvbuf, 
-                         int      recvoffset,
-                         int      recvcount, 
-                         Datatype recvtype,
-                         int      source, 
-                         int      recvtag) throws MPIException {
-
-    if(sendtype.isObject() || recvtype.isObject()) {
-      Request reqs [] = {Isend(sendbuf, sendoffset, sendcount, sendtype,
-                               dest, sendtag),
-                         Irecv(recvbuf, recvoffset, recvcount, recvtype,
-                               source, recvtag)} ;
-
-      Status stas [] = Request.Waitall(reqs) ;
-
-      return stas [1] ;      
-    }
-    else  return Sendrecv(sendbuf,   sendoffset,
-                          sendcount, sendtype,
-                          dest,      sendtag,
-                          recvbuf,   recvoffset,
-                          recvcount, recvtype, 
-                          source,    recvtag,
-                          new Status());
-  }
-
-  private native Status Sendrecv(Object   sbuf, 
-                                 int      soffset, 
-                                 int      scount,
-                                 Datatype stype, 
-                                 int      dest, 
-                                 int      stag,
-                                 Object   rbuf, 
-                                 int      roffset, 
-                                 int      rcount, 
-                                 Datatype rtype, 
-                                 int      source, 
-                                 int      rtag,
-                                 Status   stat);
-
-  /**
-   * Execute a blocking send and receive operation, receiving message
-   * into send buffer.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> type     </tt></td><td> datatype of each item in
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> sendtag  </tt></td><td> send tag </tr>
-   * <tr><td><tt> source   </tt></td><td> rank of source </tr>
-   * <tr><td><tt> recvtag  </tt></td><td> receive tag </tr>
-   * <tr><td><em> returns: </em></td><td> status object </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_SENDRECV_REPLACE</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt> and <tt>Recv</tt>.
-   */
-
-  public Status Sendrecv_replace(Object   buf, 
-                                 int      offset, 
-                                 int      count,
-                                 Datatype type, 
-                                 int      dest, 
-                                 int      sendtag,
-                                 int      source, 
-                                 int      recvtag) throws MPIException {
-
-    if(type.isObject()) {
-
-      // Might as well do this natively, to avoid allocation of one more
-      // buffer.
-
-      Status status = new Status() ;
-
-      byte[] sendbytes = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {sendbytes.length, count} ;
-
-      Sendrecv_replace(length_buf, 0, 2, MPI.INT,
-                       dest, sendtag, source, recvtag,
-                       status) ;
-
-      byte [] recvbytes = new byte [length_buf[0]] ;
-
-      Sendrecv(sendbytes, 0, sendbytes.length, MPI.BYTE, dest, sendtag,
-               recvbytes, 0, recvbytes.length, MPI.BYTE, status.source, recvtag,
-               status) ;
-
-      Object_Deserialize(buf,recvbytes,offset,length_buf[1],type);
-
-      status.object_count = length_buf[1] ;
-      return status;
-    }
-    else
-      return Sendrecv_replace(buf, offset, count, type, 
-                              dest, sendtag, source, recvtag, new Status());
-  }
-
-  private native Status Sendrecv_replace(Object   buf, 
-                                         int      offset, 
-                                         int      count,
-                                         Datatype type, 
-                                         int      dest, 
-                                         int      stag,
-                                         int      source, 
-                                         int      rtag, 
-                                         Status   stat);
-
-  // Communication Modes
-
-  /**
-   * Send in buffered mode.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_BSEND</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public void Bsend(Object   buf, 
-                    int      offset, 
-                    int      count, 
-                    Datatype type,
-                    int      dest, 
-                    int      tag) throws MPIException {
-
-    if (type.isObject()){
-      byte[] byte_buf  = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-       
-      bsend(length_buf, 0, 2, MPI.INT, dest, tag);
-      bsend(byte_buf, 0, length_buf[0], MPI.BYTE, dest, tag);
-    }
-    else bsend(buf, offset, count, type, dest, tag);
-  }
-
-  private native void bsend(Object   buf, 
-                            int      offset, 
-                            int      count, 
-                            Datatype type,
-                            int      dest, 
-                            int      tag) ;
-
-  /**
-   * Send in synchronous mode.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_SSEND</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public void Ssend(Object   buf, 
-                    int      offset, 
-                    int      count,
-                    Datatype type,
-                    int      dest, 
-                    int      tag) throws MPIException {
-
-    if (type.isObject()){
-      byte[] byte_buf  = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-
-      send(length_buf, 0, 2, MPI.INT, dest, tag); 
-      ssend(byte_buf , 0, byte_buf.length, MPI.BYTE, dest, tag);
-    }
-    else ssend(buf, offset, count, type, dest,  tag);
-  }
-
-  private native void ssend(Object   buf,
-                            int      offset, 
-                            int      count, 
-                            Datatype type,
-                            int      dest, 
-                            int      tag);
-
-  /**
-   * Send in ready mode.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_RSEND</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public void Rsend(Object   buf, 
-                    int      offset, 
-                    int      count,
-                    Datatype type,
-                    int      dest, 
-                    int      tag) throws MPIException {
-
-    if (type.isObject()){
-      byte[] byte_buf  = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-       
-      rsend(length_buf, 0, 2, MPI.INT, dest, tag);       
-      rsend(byte_buf , 0, byte_buf.length, MPI.BYTE, dest, tag);
-    }
-    else rsend(buf, offset, count, type, dest, tag);
-  }
-
-  private native void rsend(Object   buf,
-                            int      offset, 
-                            int      count, 
-                            Datatype type,
-                            int      dest, 
-                            int      tag) ;
-
-  // Nonblocking communication 
-
-  /**
-   * Start a standard mode, nonblocking send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> communication request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_ISEND</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Request Isend(Object   buf, 
-                       int      offset, 
-                       int      count,
-                       Datatype type, 
-                       int      dest, 
-                       int      tag) throws MPIException {
-    if (type.isObject()) {
-      byte[] byte_buf  = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-       
-      Request hdrReq = Isend(length_buf, 0, 2, MPI.INT, dest, tag,
-                             new Request());
-      Request req = new Request(hdrReq) ;
-
-      Isend(byte_buf, 0, byte_buf.length, MPI.BYTE, dest, tag, req);
-
-      return req;
-    }
-    else
-      return Isend(buf, offset, count, type, dest, tag, new Request());
-  }
-
-  /**
-   * Protected member used internally by <tt>Prequest.Start</tt>
-   */
-
-  protected native Request Isend(Object   buf, 
-                                 int      offset, 
-                                 int      count,
-                                 Datatype type,
-                                 int      dest, 
-                                 int      tag,  
-                                 Request  req);
-
-  /**
-   * Start a buffered mode, nonblocking send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> communication request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_IBSEND</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Request Ibsend(Object   buf, 
-                        int      offset, 
-                        int      count,
-                        Datatype type, 
-                        int      dest, 
-                        int      tag) throws MPIException {
-
-    if (type.isObject()){
-      byte[] byte_buf  = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-       
-      Request hdrReq = Ibsend(length_buf, 0, 2, MPI.INT, dest, tag,
-                              new Request());
-      Request req = new Request(hdrReq) ;
-
-      Ibsend(byte_buf, 0, byte_buf.length, MPI.BYTE, dest, tag, req);
-
-      return req;     
-    }
-    else
-      return Ibsend(buf, offset, count, type, dest, tag, new Request());
-  }
-
-  /**
-   * Protected member used internally by <tt>Prequest.Start</tt>
-   */
-
-  protected native Request Ibsend(Object   buf, 
-                                  int      offset, 
-                                  int      count,
-                                  Datatype type,
-                                  int      dest, 
-                                  int      tag, 
-                                  Request req);
-
-  /**
-   * Start a synchronous mode, nonblocking send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> communication request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_ISSEND</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Request Issend(Object   buf, 
-                        int      offset, 
-                        int      count,
-                        Datatype type,
-                        int      dest, 
-                        int      tag) throws MPIException {
-    if (type.isObject()){
-      byte[] byte_buf  = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-
-      Request hdrReq = Issend(length_buf, 0, 2, MPI.INT, dest, tag,
-                              new Request());
-      Request req = new Request(hdrReq) ;
-
-      Isend(byte_buf, 0, byte_buf.length, MPI.BYTE, dest, tag, req);
-
-      return req;     
-    }
-    else
-      return Issend(buf, offset, count, type, dest, tag, new Request());
-  }
-
-  /**
-   * Protected member used internally by <tt>Prequest.Start</tt>
-   */
-
-  protected native Request Issend(Object   buf, 
-                                  int      offset, 
-                                  int      count,
-                                  Datatype type,
-                                  int      dest, 
-                                  int      tag, 
-                                  Request  req);
-
-  /**
-   * Start a ready mode, nonblocking send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> communication request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_IRSEND</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Request Irsend(Object   buf, 
-                        int      offset, 
-                        int      count,
-                        Datatype type,
-                        int      dest,
-                        int      tag) throws MPIException {
-
-    if (type.isObject()){
-      byte[] byte_buf  = Object_Serialize(buf,offset,count,type);
-
-      int[] length_buf = {byte_buf.length, count} ;
-       
-      Request hdrReq = Irsend(length_buf, 0, 2, MPI.INT, dest, tag,
-                              new Request());
-      Request req = new Request(hdrReq) ;
-
-      Isend(byte_buf, 0, byte_buf.length, MPI.BYTE, dest, tag, req);
-
-      return req;     
-    }
-    else
-      return Irsend(buf, offset, count, type, dest, tag, new Request()); 
-  }
-
-  /**
-   * Protected member used internally by <tt>Prequest.Start</tt>
-   */
-
-  protected native Request Irsend(Object   buf,
-                                  int      offset, 
-                                  int      count,
-                                  Datatype type,
-                                  int      dest, 
-                                  int      tag,
-                                  Request  req);
-
-  /**
-   * Start a nonblocking receive.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> receive buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> source   </tt></td><td> rank of source </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> communication request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_IRECV</tt>.
-   * <p>
-   * Further comments as for <tt>Recv</tt>.
-   */
-
-  public Request Irecv(Object   buf, 
-                       int      offset, 
-                       int      count,
-                       Datatype type,
-                       int      source,
-                       int      tag) throws MPIException {
-
-    if (type.isObject()){
-      int[] length_buf= new int[2];
-
-      Request req = new Request(buf, offset, count, type,
-                                tag, this, length_buf) ;
-
-      Irecv(length_buf, 0, 2, MPI.INT, source, tag, req);
-
-      return req;
-    }
-    else
-      return Irecv(buf, offset, count, type, source, tag, new Request());
-  }
-
-  /**
-   * Protected member used internally by <tt>Prequest.Start</tt>
-   */
-
-  protected native Request Irecv(Object   buf, 
-                                 int      offset, 
-                                 int      count,
-                                 Datatype type,
-                                 int      source, 
-                                 int      tag,
-                                 Request  req);
-
-
-  // Persistent communication  requests
-
-  /**
-   * Creates a persistent communication request for a standard mode send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> persistent communication
-   *                                      request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_SEND_INIT</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Prequest Send_init(Object   buf, 
-                            int      offset, 
-                            int      count,
-                            Datatype type,
-                            int      dest, 
-                            int      tag) throws MPIException {
-
-    return new Prequest(Prequest.MODE_STANDARD, buf, offset, count, type,
-                        dest, tag, this) ;
-  }
-
-  /**
-   * Creates a persistent communication request for a buffered mode send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> persistent communication
-   *                                      request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_BSEND_INIT</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Prequest Bsend_init(Object   buf, 
-                             int      offset, 
-                             int      count,
-                             Datatype type,
-                             int      dest, 
-                             int      tag) throws MPIException {
-
-    return new Prequest(Prequest.MODE_BUFFERED, buf, offset, count, type,
-                        dest, tag, this) ;
-  }
-
-  /**
-   * Creates a persistent communication request for a synchronous mode send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> persistent communication
-   *                                      request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_SSEND_INIT</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Prequest Ssend_init(Object   buf, 
-                             int      offset, 
-                             int      count,
-                             Datatype type,
-                             int      dest, 
-                             int      tag) throws MPIException {
-
-    return new Prequest(Prequest.MODE_SYNCHRONOUS, buf, offset, count, type,
-                        dest, tag, this) ;
-  }
-
-  /**
-   * Creates a persistent communication request for a ready mode send.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> send buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in send buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items to send </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in send
-   *                                      buffer </tr>
-   * <tr><td><tt> dest     </tt></td><td> rank of destination </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> persistent communication
-   *                                      request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_RSEND_INIT</tt>.
-   * <p>
-   * Further comments as for <tt>Send</tt>.
-   */
-
-  public Prequest Rsend_init(Object   buf, 
-                             int      offset, 
-                             int      count,
-                             Datatype type,
-                             int      dest, 
-                             int      tag) throws MPIException {
-
-    return new Prequest(Prequest.MODE_READY, buf, offset, count, type,
-                        dest, tag, this) ;
-  }
-
-
-  /**
-   * Creates a persistent communication request for a receive operation.
-   * <p>
-   * <table>
-   * <tr><td><tt> buf      </tt></td><td> receive buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> count    </tt></td><td> number of items in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in receive
-   *                                      buffer </tr>
-   * <tr><td><tt> source   </tt></td><td> rank of source </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> communication request </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_RECV_INIT</tt>.
-   * <p>
-   * Further comments as for <tt>Recv</tt>.
-   */
-
-  public Prequest Recv_init(Object   buf, 
-                            int      offset, 
-                            int      count,
-                            Datatype type,
-                            int      source, 
-                            int      tag) throws MPIException {
-
-    return new Prequest(buf, offset, count, type, source, tag, this) ;
-  }
-
-
-  // Pack and Unpack 
-
-  /**
-   * Packs message in send buffer <tt>inbuf</tt> into space specified in
-   * <tt>outbuf</tt>.
-   * <p>
-   * <table>
-   * <tr><td><tt> inbuf    </tt></td><td> input buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in input buffer </tr>
-   * <tr><td><tt> incount  </tt></td><td> number of items in input
-   *                                      buffer </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in input
-   *                                      buffer </tr>
-   * <tr><td><tt> outbuf   </tt></td><td> output buffer </tr>
-   * <tr><td><tt> position </tt></td><td> initial position in output buffer
-   *                                      </tr>
-   * <tr><td><em> returns: </em></td><td> final position in output buffer
-   *                                      </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_PACK</tt>.
-   * <p>
-   * The return value is the output value of <tt>position</tt> - the
-   * inital value incremented by the number of bytes written.
-   */
-
-  public int Pack(Object   inbuf, 
-                  int      offset, 
-                  int      incount,
-                  Datatype datatype, 
-                  byte[]   outbuf, 
-                  int      position) throws MPIException {
-
-    if (datatype.isObject()){
-      byte[] byte_buf = Object_Serialize(inbuf,offset,incount,datatype);
-
-      System.arraycopy(byte_buf,0,outbuf,position,byte_buf.length);
-  
-      return (position + byte_buf.length);
-
-    }
-    else
-      return pack(inbuf, offset, incount, datatype, outbuf, position);
-  }
-
-  private native int pack(Object   inbuf,
-                          int      offset,
-                          int      incount,
-                          Datatype data, 
-                          byte[]   outbuf, 
-                          int      position);
-
-  /**
-   * Unpacks message in receive buffer <tt>outbuf</tt> into space specified in
-   * <tt>inbuf</tt>.
-   * <p>
-   * <table>
-   * <tr><td><tt> inbuf    </tt></td><td> input buffer </tr>
-   * <tr><td><tt> position </tt></td><td> initial position in input buffer
-   *                                      </tr>
-   * <tr><td><tt> outbuf   </tt></td><td> output buffer array </tr>
-   * <tr><td><tt> offset   </tt></td><td> initial offset in output buffer </tr>
-   * <tr><td><tt> outcount </tt></td><td> number of items in output
-   *                                      buffer </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in output
-   *                                      buffer </tr>
-   * <tr><td><em> returns: </em></td><td> final position in input buffer
-   *                                      </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_UNPACK</tt>.
-   * <p>
-   * The return value is the output value of <tt>position</tt> - the
-   * inital value incremented by the number of bytes read.
-   */
-
-  public int Unpack(byte[]   inbuf, 
-                    int      position, 
-                    Object   outbuf, 
-                    int      offset, 
-                    int      outcount, 
-                    Datatype datatype) throws MPIException {
-
-    if (datatype.isObject()){
-   
-      Object buf_els [] = (Object[])outbuf;
-      int ava=0;   
-
-      try {      
-        ByteArrayInputStream in = 
-                       new ByteArrayInputStream(inbuf,position,
-                                                inbuf.length-position);
-  
-        ObjectInputStream s = new ObjectInputStream(in);
-            
-        int base;
-        for (int i = 0; i < outcount; i++){
-          base = datatype.Extent() * i;
-          for (int j = 0 ; j < datatype.displacements.length ; j++)
-             buf_els[base + offset + datatype.displacements[j]]=s.readObject();
-        }  
-        ava= in.available();
-        s.close(); 
-      }catch(Exception ex){ex.printStackTrace();}	
-
-      return inbuf.length- ava;
-    }
-    else
-      return unpack(inbuf, position, outbuf, offset, outcount, datatype);
-  }
-
-  private native int unpack(byte[]   inbuf,
-                            int      position, 
-                            Object   outbuf, 
-                            int      offset, 
-                            int      outcount, 
-                            Datatype type);
-
-  /**
-   * Returns an upper bound on the increment of <tt>position</tt> effected
-   * by <tt>pack</tt>.
-   * <p>
-   * <table>
-   * <tr><td><tt> incount  </tt></td><td> number of items in input
-   *                                      buffer </tr>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in input
-   *                                      buffer </tr>
-   * <tr><td><em> returns: </em></td><td> upper bound on size of packed
-   *                                      message </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_PACK_SIZE</tt>.
-   * <p>
-   * <em>It is an error to call this function if the base type of
-   * <tt>datatype</tt> is <tt>MPI.OBJECT</tt></em>.
-   */
-
-  public native int Pack_size(int incount, Datatype datatype)
-                                                  throws MPIException ;
-
-  // Probe and Cancel
-
-  /**
-   * Check if there is an incoming message matching the pattern specified.
-   * <p>
-   * <table>
-   * <tr><td><tt> source   </tt></td><td> rank of source </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> status object or null handle </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_IPROBE</tt>.
-   * <p>
-   * If such a message is currently available, a status object
-   * similar to the return value of a matching <tt>Recv</tt> operation
-   * is returned.
-   * Otherwise a null handle is returned.
-   */
-
-  public Status Iprobe(int source, int tag) throws MPIException {
-    return Iprobe(source,tag,new Status());
-  }
-
-  private native Status Iprobe(int source, int tag,Status stat)
-                                                   throws MPIException ;
-
-  /**
-   * Wait until there is an incoming message matching the pattern specified.
-   * <p>
-   * <table>
-   * <tr><td><tt> source   </tt></td><td> rank of source </tr>
-   * <tr><td><tt> tag      </tt></td><td> message tag </tr>
-   * <tr><td><em> returns: </em></td><td> status object </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_PROBE</tt>.
-   * <p>
-   * Returns a status object similar to the return value of a matching
-   * <tt>Recv</tt> operation.
-   */
-
-  public Status Probe(int source, int tag) throws MPIException {
-    return Probe(source,tag,new Status());
-  }
-
-  private native Status Probe(int source, int tag,Status stat)
-                                                   throws MPIException ;
-
-  // Caching
-
-  /**
-   * Retrieves attribute value by key.
-   * <p>
-   * <table>
-   * <tr><td><tt> keyval   </tt></td><td> one of the key values predefined
-   *                                      by the implementation </tr>
-   * <tr><td><em> returns: </em></td><td> attribute value </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_ATTR_GET</tt>.
-   */
-
-  public native int Attr_get(int keyval) throws MPIException ;
-
-  public native void Attr_delete(int keyval);
-
-    public native void Attr_put(int keyval, int value);
-
-  // Process Topologies
-
-  /**
-   * Returns the type of topology associated with the communicator.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> topology type of communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TOPO_TEST</tt>.
-   * <p>
-   * The return value will be one of <tt>MPI.GRAPH</tt>, <tt>MPI.CART</tt>
-   * or <tt>MPI.UNDEFINED</tt>.
-   */
-
-  public native int Topo_test() throws MPIException ;
-
-  // Enviromental Management 
-
-  /**
-   * Abort MPI.
-   * <p>
-   * <table>
-   * <tr><td><tt> errorcode </tt></td><td> error code for Unix or POSIX
-   *              environments </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_ABORT</tt>.
-   */
-
-  public native void Abort(int errorcode) throws MPIException ;
-
-  // Error handler
-
-  /**
-   * Associates a new error handler with communicator at the calling process.
-   * <p>
-   * <table>
-   * <tr><td><tt> errhandler </tt></td><td> new MPI error handler for
-   *                                        communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_ERRORHANDLER_SET</tt>.
-   */
-
-  public native void Errhandler_set(Errhandler errhandler) throws MPIException ;
-
-  /**
-   * Returns the error handler currently associated with the communicator.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> MPI error handler currently
-   *                                      associated with communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_ERRORHANDLER_GET</tt>.
-   */
-
-  public Errhandler Errorhandler_get() throws MPIException {
-    return new Errhandler(errorhandler_get()) ;
-  }
-
-  private native long errorhandler_get();
-
-  protected long handle;
-
-  static {
+import java.nio.*;
+import static mpi.MPI.isHeapBuffer;
+import static mpi.MPI.assertDirectBuffer;
+
+/**
+ * The {@code Comm} class represents communicators.
+ */
+public class Comm implements Freeable
+{
+protected final static int SELF  = 1;
+protected final static int WORLD = 2;
+protected long handle;
+
+protected static long nullHandle;
+
+static
+{
     init();
-  }
-
-  private static native void init();
 }
 
-// Things to do:
-//
-//   Should `Object_Serialize', `Object_Deserialize' really be instance 
-//   methods on `Comm'?
-//
-//   Mystery: Why does `startO' test hang on the `Ssend_init' case if
-//   header is sent standard-mode and data is sent synchronous?
-//
-//   Selection of constructors on the basis of `long' vs `int' argument
-//   is bad.  Too easy to get the wrong one.
+private static native void init();
 
+protected Comm()
+{
+}
+
+protected Comm(long handle)
+{
+    this.handle = handle;
+}
+
+protected final void setType(int type)
+{
+    getComm(type);
+}
+
+private native void getComm(int type);
+
+/**
+ * Duplicate this communicator.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_DUP}.
+ * <p>The new communicator is "congruent" to the old one,
+ *    but has a different context.
+ * @return copy of this communicator
+ */
+@Override public Comm clone()
+{
+    try
+    {
+        MPI.check();
+        return new Comm(dup());
+    }
+    catch(MPIException e)
+    {
+        throw new RuntimeException(e.getMessage());
+    }
+}
+
+protected final native long dup() throws MPIException;
+
+/**
+ * Size of group of this communicator.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_SIZE}.
+ * @return number of processors in the group of this communicator
+ * @throws MPIException
+ */
+public final int getSize() throws MPIException
+{
+    MPI.check();
+    return getSize(handle);
+}
+
+private native int getSize(long comm) throws MPIException;
+
+/**
+ * Rank of this process in group of this communicator.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_RANK}.
+ * @return rank of the calling process in the group of this communicator
+ * @throws MPIException
+ */
+public final int getRank() throws MPIException
+{
+    MPI.check();
+    return getRank(handle);
+}
+
+private native int getRank(long comm) throws MPIException;
+
+/**
+ * Compare two communicators.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_COMPARE}.
+ * @param comm1 first communicator
+ * @param comm2 second communicator
+ * @return
+ * {@code MPI.IDENT} results if the {@code comm1} and {@code comm2}
+ * are references to the same object (ie, if {@code comm1 == comm2}).<br>
+ * {@code MPI.CONGRUENT} results if the underlying groups are identical
+ * but the communicators differ by context.<br>
+ * {@code MPI.SIMILAR} results if the underlying groups are similar
+ * but the communicators differ by context.<br>
+ * {@code MPI.UNEQUAL} results otherwise.
+ * @throws MPIException
+ */
+public static int compare(Comm comm1, Comm comm2) throws MPIException
+{
+    MPI.check();
+    return compare(comm1.handle, comm2.handle);
+}
+
+private static native int compare(long comm1, long comm2) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_COMM_FREE}.
+ * @throws MPIException
+ */
+@Override public void free() throws MPIException
+{
+    MPI.check();
+    handle = free(handle);
+}
+
+private native long free(long comm) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_COMM_DISCONNECT}.
+ * @throws MPIException 
+ */
+public final void disconnect() throws MPIException
+{
+    MPI.check();
+    handle = disconnect(handle);
+}
+
+private native long disconnect(long comm) throws MPIException;
+
+/**
+ * Test if communicator object is void (has been freed).
+ * @return true if the comm object is void, false otherwise
+ */
+public final native boolean isNull();
+
+/**
+ * Return group associated with a communicator.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_GROUP}.
+ * @return group corresponding to this communicator group
+ * @throws MPIException
+ */
+public final Group getGroup() throws MPIException
+{
+    MPI.check();
+    return new Group(getGroup(handle));
+}
+
+private native long getGroup(long comm);
+
+// Inter-communication
+
+/**
+ * Test if this communicator is an inter-communicator.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_TEST_INTER}.
+ * @return {@code true} if this is an inter-communicator,
+ *         {@code false} otherwise
+ * @throws MPIException
+ */
+public final boolean isInter() throws MPIException
+{
+    MPI.check();
+    return isInter(handle);
+}
+
+private native boolean isInter(long comm) throws MPIException;
+
+/**
+ * Create an inter-communicator.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_INTERCOMM_CREATE}.
+ * <p>
+ * This operation is defined as a method on the "peer communicator",
+ * making it analogous to a {@code send} or {@code recv} communication
+ * with the remote group leader.
+ * @param localComm    local intra-communicator
+ * @param localLeader  rank of local group leader in {@code localComm}
+ * @param remoteLeader rank of remote group leader in this communicator
+ * @param tag          "safe" tag
+ * @return new inter-communicator
+ * @throws MPIException
+ */
+public final Intercomm createIntercomm(Comm localComm, int localLeader,
+                                       int remoteLeader, int tag)
+        throws MPIException
+{
+    MPI.check();
+
+    return new Intercomm(createIntercomm(handle, localComm.handle,
+                                         localLeader, remoteLeader, tag));
+}
+
+private native long createIntercomm(
+        long comm, long localComm, int localLeader,
+        int remoteLeader, int tag) throws MPIException;
+
+// Blocking Send and Recv
+
+/**
+ * Blocking send operation.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_SEND}.
+ * <p>
+ * The actual argument associated with {@code buf} must be
+ * one-dimensional array. The value {@code offset} is a subscript in
+ * this array, defining the position of the first item of the message.
+ * <p>
+ * If the {@code datatype} argument represents an MPI basic type, its
+ * value must agree with the element type of {@code buf}---either
+ * a primitive type or a reference (object) type.  If the
+ * {@code datatype} argument represents an MPI derived type, its
+ * <em>base type</em> must agree with the element type of {@code buf}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @throws MPIException
+ */
+public final void send(Object buf, int count, Datatype type, int dest, int tag)
+        throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    send(buf, off, count, type, dest, tag);
+}
+
+private native void send(Object buf, int offset, int count,
+                         Datatype type, int dest, int tag)
+                         throws MPIException;
+
+/**
+ * Blocking receive operation.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_RECV}.
+ * <p>
+ * The actual argument associated with {@code buf} must be
+ * one-dimensional array.  The value {@code offset} is a subscript in
+ * this array, defining the position into which the first item of the
+ * incoming message will be copied.
+ * <p>
+ * If the {@code datatype} argument represents an MPI basic type, its
+ * value must agree with the element type of {@code buf}---either
+ * a primitive type or a reference (object) type.  If the
+ * {@code datatype} argument represents an MPI derived type, its
+ * <em>base type</em> must agree with the element type of {@code buf}
+ * @param buf    receive buffer array
+ * @param count  number of items in receive buffer
+ * @param type   datatype of each item in receive buffer
+ * @param source rank of source
+ * @param tag    message tag
+ * @return status object
+ * @throws MPIException
+ */
+public final Status recv(Object buf, int count,
+                         Datatype type, int source, int tag)
+        throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    Status stat = new Status();
+    recv(buf, off, count, type, source, tag, stat);
+    return stat;
+}
+
+private native void recv(
+        Object buf, int offset, int count, Datatype type,
+        int source, int tag, Status stat) throws MPIException;
+
+// Send-Recv
+
+/**
+ * Execute a blocking send and receive operation.
+ * <p>Java binding of the MPI operation {@code MPI_SENDRECV}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param dest      rank of destination
+ * @param sendtag   send tag
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items in receive buffer
+ * @param recvtype  datatype of each item in receive buffer
+ * @param source    rank of source
+ * @param recvtag   receive tag
+ * @return status object
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
+ * @see mpi.Comm#recv(Object, int, Datatype, int, int)
+ */
+public final Status sendRecv(
+    Object sendbuf, int sendcount, Datatype sendtype, int dest,   int sendtag,
+    Object recvbuf, int recvcount, Datatype recvtype, int source, int recvtag)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    Status stat = new Status();
+    
+    sendRecv(sendbuf, sendoff, sendcount, sendtype, dest, sendtag,
+             recvbuf, recvoff, recvcount, recvtype, source, recvtag, stat);
+
+    return stat;
+}
+
+private native void sendRecv(Object sbuf, int soffset, int scount,
+                             Datatype stype, int dest, int stag,
+                             Object rbuf, int roffset, int rcount,
+                             Datatype rtype, int source, int rtag,
+                             Status stat) throws MPIException;
+
+/**
+ * Execute a blocking send and receive operation,
+ * receiving message into send buffer.
+ * <p>Java binding of the MPI operation {@code MPI_SENDRECV_REPLACE}.
+ * @param buf     buffer array
+ * @param count   number of items to send
+ * @param type    datatype of each item in buffer
+ * @param dest    rank of destination
+ * @param sendtag send tag
+ * @param source  rank of source
+ * @param recvtag receive tag
+ * @return status object
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
+ * @see mpi.Comm#recv(Object, int, Datatype, int, int)
+ */
+public final Status sendRecvReplace(
+        Object buf, int count, Datatype type,
+        int dest, int sendtag, int source, int recvtag)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    Status stat = new Status();
+
+    sendRecvReplace(buf, off, count, type, dest,
+                    sendtag, source, recvtag, stat);
+    return stat;
+}
+
+private native void sendRecvReplace(
+        Object buf, int offset, int count, Datatype type, int dest,
+        int stag, int source, int rtag, Status stat) throws MPIException;
+
+// Communication Modes
+
+/**
+ * Send in buffered mode.
+ * <p>Java binding of the MPI operation {@code MPI_BSEND}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final void bSend(Object buf, int count, Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    bSend(buf, off, count, type, dest, tag);
+}
+
+private native void bSend(Object buf, int offset, int count,
+                          Datatype type, int dest, int tag)
+                          throws MPIException;
+/**
+ * Send in synchronous mode.
+ * <p>Java binding of the MPI operation {@code MPI_SSEND}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final void sSend(Object buf, int count, Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    sSend(buf, off, count, type, dest, tag);
+}
+
+private native void sSend(Object buf, int offset, int count,
+                          Datatype type, int dest, int tag)
+                          throws MPIException;
+
+/**
+ * Send in ready mode.
+ * <p>Java binding of the MPI operation {@code MPI_RSEND}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final void rSend(Object buf, int count, Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    rSend(buf, off, count, type, dest, tag);
+}
+
+private native void rSend(Object buf, int offset, int count,
+                          Datatype type, int dest, int tag)
+                          throws MPIException;
+
+// Nonblocking communication
+
+/**
+ * Start a standard mode, nonblocking send.
+ * <p>Java binding of the MPI operation {@code MPI_ISEND}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Request iSend(Buffer buf, int count,
+                           Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Request(iSend(handle, buf, count, type.handle, dest, tag));
+}
+
+/**
+ * Protected member used internally by <tt>Prequest.start</tt>
+ */
+protected final native long iSend(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Start a buffered mode, nonblocking send.
+ * <p>Java binding of the MPI operation <tt>MPI_IBSEND</tt>.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Request ibSend(Buffer buf, int count,
+                            Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Request(ibSend(handle, buf, count, type.handle, dest, tag));
+}
+
+/**
+ * Protected member used internally by <tt>Prequest.Start</tt>
+ */
+protected final native long ibSend(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Start a synchronous mode, nonblocking send.
+ * <p>Java binding of the MPI operation {@code MPI_ISSEND}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Request isSend(Buffer buf, int count,
+                            Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Request(isSend(handle, buf, count, type.handle, dest, tag));
+}
+
+/**
+ * Protected member used internally by <tt>Prequest.Start</tt>
+ */
+protected final native long isSend(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Start a ready mode, nonblocking send.
+ * <p>Java binding of the MPI operation {@code MPI_IRSEND}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Request irSend(Buffer buf, int count,
+                            Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Request(irSend(handle, buf, count, type.handle, dest, tag));
+}
+
+/**
+ * Protected member used internally by <tt>Prequest.Start</tt>
+ */
+protected final native long irSend(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Start a nonblocking receive.
+ * <p>Java binding of the MPI operation {@code MPI_IRECV}.
+ * @param buf    receive buffer array
+ * @param count  number of items in receive buffer
+ * @param type   datatype of each item in receive buffer
+ * @param source rank of source
+ * @param tag    message tag
+ * @return communication request
+ * @throws MPIException
+ * @see mpi.Comm#recv(Object, int, Datatype, int, int)
+ */
+public final Request iRecv(Buffer buf, int count,
+                           Datatype type, int source, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Request(iRecv(handle, buf, count, type.handle, source, tag));
+}
+
+/**
+ * Protected member used internally by <tt>Prequest.Start</tt>
+ */
+protected final native long iRecv(
+        long comm, Buffer buf, int count, long type, int source, int tag)
+        throws MPIException;
+
+
+// Persistent communication  requests
+
+/**
+ * Creates a persistent communication request for a standard mode send.
+ * <p>Java binding of the MPI operation {@code MPI_SEND_INIT}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return persistent communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Prequest sendInit(Buffer buf, int count,
+                               Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Prequest(sendInit(handle, buf, count, type.handle, dest, tag));
+}
+
+private native long sendInit(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Creates a persistent communication request for a buffered mode send.
+ * <p>Java binding of the MPI operation {@code MPI_BSEND_INIT}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return persistent communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Prequest bSendInit(Buffer buf, int count,
+                                Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Prequest(bSendInit(handle, buf, count, type.handle, dest, tag));
+}
+
+private native long bSendInit(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Creates a persistent communication request for a synchronous mode send.
+ * <p>Java binding of the MPI operation {@code MPI_SSEND_INIT}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return persistent communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Prequest sSendInit(Buffer buf, int count,
+                                Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Prequest(sSendInit(handle, buf, count, type.handle, dest, tag));
+}
+
+private native long sSendInit(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Creates a persistent communication request for a ready mode send.
+ * <p>Java binding of the MPI operation {@code MPI_RSEND_INIT}.
+ * @param buf   send buffer array
+ * @param count number of items to send
+ * @param type  datatype of each item in send buffer
+ * @param dest  rank of destination
+ * @param tag   message tag
+ * @return persistent communication request
+ * @throws MPIException
+ * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ */
+public final Prequest rSendInit(Buffer buf, int count,
+                                Datatype type, int dest, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Prequest(rSendInit(handle, buf, count, type.handle, dest, tag));
+}
+
+private native long rSendInit(
+        long comm, Buffer buf, int count, long type, int dest, int tag)
+        throws MPIException;
+
+/**
+ * Creates a persistent communication request for a receive operation.
+ * <p>Java binding of the MPI operation {@code MPI_RECV_INIT}.
+ * @param buf    receive buffer array
+ * @param count  number of items in receive buffer
+ * @param type   datatype of each item in receive buffer
+ * @param source rank of source
+ * @param tag    message tag
+ * @return communication request
+ * @throws MPIException
+ * @see mpi.Comm#recv(Object, int, Datatype, int, int)
+ */
+public final Prequest recvInit(Buffer buf, int count,
+                               Datatype type, int source, int tag)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Prequest(recvInit(handle, buf, count, type.handle, source, tag));
+}
+
+private native long recvInit(
+        long comm, Buffer buf, int count, long type, int source, int tag)
+        throws MPIException;
+
+// Pack and Unpack
+
+/**
+ * Packs message in send buffer {@code inbuf} into space specified in
+ * {@code outbuf}.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_PACK}.
+ * <p>
+ * The return value is the output value of {@code position} - the
+ * inital value incremented by the number of bytes written.
+ * @param inbuf    input buffer array
+ * @param incount  number of items in input buffer
+ * @param type     datatype of each item in input buffer
+ * @param outbuf   output buffer
+ * @param position initial position in output buffer
+ * @return final position in output buffer
+ * @throws MPIException
+ */
+public final int pack(Object inbuf, int incount, Datatype type,
+                      byte[] outbuf, int position)
+        throws MPIException
+{
+    MPI.check();
+    int offset = 0;
+
+    if(isHeapBuffer(inbuf))
+    {
+        offset = ((Buffer)inbuf).arrayOffset();
+        inbuf  = ((Buffer)inbuf).array();
+    }
+
+    return pack(inbuf, offset, incount, type, outbuf, position);
+}
+
+private native int pack(Object inbuf, int offset, int incount,
+                        Datatype type, byte[] outbuf, int position)
+                        throws MPIException;
+
+/**
+ * Unpacks message in receive buffer {@code outbuf} into space specified in
+ * {@code inbuf}.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_UNPACK}.
+ * <p>
+ * The return value is the output value of {@code position} - the
+ * inital value incremented by the number of bytes read.
+ * @param inbuf    input buffer
+ * @param position initial position in input buffer
+ * @param outbuf   output buffer array
+ * @param outcount number of items in output buffer
+ * @param type     datatype of each item in output buffer
+ * @return final position in input buffer
+ * @throws MPIException
+ */
+public final int unpack(byte[] inbuf, int position,
+                        Object outbuf, int outcount, Datatype type)
+        throws MPIException
+{
+    MPI.check();
+    int offset = 0;
+
+    if(isHeapBuffer(outbuf))
+    {
+        offset = ((Buffer)outbuf).arrayOffset();
+        outbuf = ((Buffer)outbuf).array();
+    }
+
+    return unpack(inbuf, position, outbuf, offset, outcount, type);
+}
+
+private native int unpack(byte[] inbuf, int position, Object outbuf,
+                          int offset, int outcount, Datatype type)
+                          throws MPIException;
+
+/**
+ * Returns an upper bound on the increment of {@code position} effected
+ * by {@code pack}.
+ * <p>Java binding of the MPI operation {@code MPI_PACK_SIZE}.
+ * @param incount number of items in input buffer
+ * @param type    datatype of each item in input buffer
+ * @return upper bound on size of packed message
+ * @throws MPIException
+ */
+public final int packSize(int incount, Datatype type) throws MPIException
+{
+    MPI.check();
+    return packSize(handle, incount, type.handle);
+}
+
+private native int packSize(long comm, int incount, long type)
+        throws MPIException;
+
+// Probe and Cancel
+
+/**
+ * Check if there is an incoming message matching the pattern specified.
+ * <p>Java binding of the MPI operation {@code MPI_IPROBE}.
+ * <p>If such a message is currently available, a status object similar
+ * to the return value of a matching {@code recv} operation is returned.
+ * @param source rank of source
+ * @param tag    message tag
+ * @return status object if such a message is currently available,
+ *         {@code null} otherwise.
+ * @throws MPIException
+ */
+public final Status iProbe(int source, int tag) throws MPIException
+{
+    MPI.check();
+    return iProbe(handle, source, tag);
+}
+
+private native Status iProbe(long comm, int source, int tag)
+        throws MPIException;
+
+/**
+ * Wait until there is an incoming message matching the pattern specified.
+ * <p>Java binding of the MPI operation {@code MPI_PROBE}.
+ * <p>Returns a status object similar to the return value of a matching
+ * {@code recv} operation.
+ * @param source rank of source
+ * @param tag    message tag
+ * @return status object
+ * @throws MPIException
+ */
+public final Status probe(int source, int tag) throws MPIException
+{
+    MPI.check();
+    Status stat = new Status();
+    probe(handle, source, tag, stat);
+    return stat;
+}
+
+private native void probe(long comm, int source, int tag, Status stat)
+        throws MPIException;
+
+// Caching
+
+/**
+ * Create a new attribute key.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_CREATE_KEYVAL}.
+ * @return attribute key for future access
+ * @throws MPIException
+ */
+public static int createKeyval() throws MPIException
+{
+    MPI.check();
+    return createKeyval_jni();
+}
+
+private static native int createKeyval_jni() throws MPIException;
+
+/**
+ * Frees an attribute key for communicators.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_FREE_KEYVAL}.
+ * @param keyval attribute key
+ * @throws MPIException
+ */
+public static void freeKeyval(int keyval) throws MPIException
+{
+    MPI.check();
+    freeKeyval_jni(keyval);
+}
+
+private static native void freeKeyval_jni(int keyval) throws MPIException;
+
+/**
+ * Stores attribute value associated with a key.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_SET_ATTR}.
+ * @param keyval attribute key
+ * @param value  attribute value
+ * @throws MPIException
+ */
+public final void setAttr(int keyval, Object value) throws MPIException
+{
+    MPI.check();
+    setAttr(handle, keyval, MPI.attrSet(value));
+}
+
+private native void setAttr(long comm, int keyval, byte[] value)
+        throws MPIException;
+
+/**
+ * Retrieves attribute value by key.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_GET_ATTR}.
+ * @param keyval attribute key
+ * @return attribute value or null if no attribute is associated with the key.
+ * @throws MPIException
+ */
+public final Object getAttr(int keyval) throws MPIException
+{
+    MPI.check();
+
+    if( keyval == MPI.TAG_UB       ||
+        keyval == MPI.HOST         ||
+        keyval == MPI.IO           ||
+        keyval == MPI.APPNUM       ||
+        keyval == MPI.LASTUSEDCODE ||
+        keyval == MPI.UNIVERSE_SIZE)
+    {
+        return getAttr_predefined(handle, keyval);
+    }
+    else if(keyval == MPI.WTIME_IS_GLOBAL)
+    {
+        Integer value = (Integer)getAttr_predefined(handle, keyval);
+        return value==null ? null : value.intValue() != 0;
+    }
+    else
+    {
+        return MPI.attrGet(getAttr(handle, keyval));
+    }
+}
+
+private native Object getAttr_predefined(long comm, int keyval)
+        throws MPIException;
+
+private native byte[] getAttr(long comm, int keyval) throws MPIException;
+
+/**
+ * Deletes an attribute value associated with a key on a communicator.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_DELETE_ATTR}.
+ * @param keyval attribute key
+ * @throws MPIException
+ */
+public final void deleteAttr(int keyval) throws MPIException
+{
+    MPI.check();
+    deleteAttr(handle, keyval);
+}
+
+private native void deleteAttr(long comm, int keyval) throws MPIException;
+
+// Process Topologies
+
+/**
+ * Returns the type of topology associated with the communicator.
+ * <p>Java binding of the MPI operation {@code MPI_TOPO_TEST}.
+ * <p>The return value will be one of {@code MPI.GRAPH}, {@code MPI.CART}
+ * or {@code MPI.UNDEFINED}.
+ * @return topology type of communicator
+ * @throws MPIException
+ */
+public final int getTopology() throws MPIException
+{
+    MPI.check();
+    return getTopology(handle);
+}
+
+private native int getTopology(long comm) throws MPIException;
+
+// Enviromental Management
+
+/**
+ * Abort MPI.
+ * <p>Java binding of the MPI operation {@code MPI_ABORT}.
+ * @param errorcode error code for Unix or POSIX environments
+ * @throws MPIException
+ */
+public final void abort(int errorcode) throws MPIException
+{
+    MPI.check();
+    abort(handle, errorcode);
+}
+
+private native void abort(long comm, int errorcode) throws MPIException;
+
+// Error handler
+
+/**
+ * Associates a new error handler with communicator at the calling process.
+ * <p>Java binding of the MPI operation {@code MPI_ERRHANDLER_SET}.
+ * @param errhandler new MPI error handler for communicator
+ * @throws MPIException
+ */
+public final void setErrhandler(Errhandler errhandler) throws MPIException
+{
+    MPI.check();
+    setErrhandler(handle, errhandler.handle);
+}
+
+private native void setErrhandler(long comm, long errhandler)
+        throws MPIException;
+
+/**
+ * Returns the error handler currently associated with the communicator.
+ * <p>Java binding of the MPI operation {@code MPI_ERRHANDLER_GET}.
+ * @return MPI error handler currently associated with communicator
+ * @throws MPIException
+ */
+public final Errhandler getErrhandler() throws MPIException
+{
+    MPI.check();
+    return new Errhandler(getErrhandler(handle));
+}
+
+private native long getErrhandler(long comm);
+
+// Collective Communication
+
+/**
+ * A call to {@code barrier} blocks the caller until all process
+ * in the group have called it.
+ * <p>Java binding of the MPI operation {@code MPI_BARRIER}.
+ * @throws MPIException
+ */
+public final void barrier() throws MPIException
+{
+    MPI.check();
+    barrier(handle);
+}
+
+private native void barrier(long comm) throws MPIException;
+
+/**
+ * Nonblocking barrier sinchronization.
+ * <p>Java binding of the MPI operation {@code MPI_IBARRIER}.
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iBarrier() throws MPIException
+{
+    MPI.check();
+    return new Request(iBarrier(handle));
+}
+
+private native long iBarrier(long comm) throws MPIException;
+
+/**
+ * Broadcast a message from the process with rank {@code root}
+ * to all processes of the group.
+ * <p>Java binding of the MPI operation {@code MPI_BCAST}.
+ * @param buf   buffer array
+ * @param count number of items in buffer
+ * @param type  datatype of each item in buffer
+ * @param root  rank of broadcast root
+ * @throws MPIException
+ */
+public final void bcast(Object buf, int count, Datatype type, int root)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    bcast(buf, off, count, type, root);
+}
+
+private native void bcast(Object buf, int offset, int count,
+                          Datatype type, int root)
+                          throws MPIException;
+
+/**
+ * Broadcast a message from the process with rank {@code root}
+ * to all processes of the group.
+ * <p>Java binding of the MPI operation {@code MPI_IBCAST}.
+ * @param buf   buffer array
+ * @param count number of items in buffer
+ * @param type  datatype of each item in buffer
+ * @param root  rank of broadcast root
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iBcast(Buffer buf, int count, Datatype type, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Request(iBcast(handle, buf, count, type.handle, root));
+}
+
+private native long iBcast(
+        long comm, Buffer buf, int count, long type, int root)
+        throws MPIException;
+
+/**
+ * Each process sends the contents of its send buffer to the root process.
+ * <p>Java binding of the MPI operation {@code MPI_GATHER}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of receiving process
+ * @throws MPIException
+ */
+public final void gather(
+        Object sendbuf, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvcount, Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    gather(sendbuf, sendoff, sendcount, sendtype,
+           recvbuf, recvoff, recvcount, recvtype, root);
+}
+
+/**
+ * Each process sends the contents of its send buffer to the root process.
+ * <p>Java binding of the MPI operation {@code MPI_GATHER}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * The buffer is used by the root process to receive data,
+ * and it is used by the non-root processes to send data.
+ * @param buf   buffer array
+ * @param count number of items to send/receive
+ * @param type  datatype of each item in buffer
+ * @param root  rank of receiving process
+ * @throws MPIException
+ */
+public final void gather(Object buf, int count, Datatype type, int root)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    gather(null, 0, 0, null, buf, off, count, type, root);
+}
+
+private native void gather(
+        Object sendbuf, int sendoff, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvoff, int recvcount, Datatype recvtype, int root)
+        throws MPIException;
+
+/**
+ * Each process sends the contents of its send buffer to the root process.
+ * <p>Java binding of the MPI operation {@code MPI_IGATHER}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of receiving process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iGather(
+        Buffer sendbuf, int sendcount, Datatype sendtype,
+        Buffer recvbuf, int recvcount, Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iGather(handle, sendbuf, sendcount, sendtype.handle,
+                               recvbuf, recvcount, recvtype.handle, root));
+}
+
+/**
+ * Each process sends the contents of its send buffer to the root process.
+ * <p>Java binding of the MPI operation {@code MPI_IGATHER}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * The buffer is used by the root process to receive data,
+ * and it is used by the non-root processes to send data.
+ * @param buf   buffer array
+ * @param count number of items to send/receive
+ * @param type  datatype of each item in buffer
+ * @param root  rank of receiving process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iGather(Buffer buf, int count, Datatype type, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+
+    return new Request(iGather(handle, null, 0, 0,
+                               buf, count, type.handle, root));
+}
+
+private native long iGather(
+        long comm, Buffer sendbuf, int sendcount, long sendtype,
+        Buffer recvbuf, int recvcount, long recvtype,
+        int root) throws MPIException;
+
+/**
+ * Extends functionality of {@code gather} by allowing varying
+ * counts of data from each process.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_GATHERV}.
+ * <p>
+ * The sizes of arrays {@code recvcounts} and {@code displs} should be the
+ * size of the group.  Entry <em>i</em> of {@code displs} specifies the
+ * displacement relative to element {@code recvoffset} of {@code recvbuf}
+ * at which to place incoming data.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of receiving process
+ * @throws MPIException
+ */
+public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
+                          Object recvbuf, int[] recvcount, int[] displs,
+                          Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    gatherv(sendbuf, sendoff, sendcount, sendtype,
+            recvbuf, recvoff, recvcount, displs, recvtype, root);
+}
+
+/**
+ * Extends functionality of {@code gather} by allowing varying
+ * counts of data from each process.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_GATHERV} using
+ * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
+ * This method must be used in the root process.
+ * <p>
+ * The sizes of arrays {@code recvcounts} and {@code displs} should be the
+ * size of the group.  Entry <em>i</em> of {@code displs} specifies the
+ * displacement relative to element {@code recvoffset} of {@code recvbuf}
+ * at which to place incoming data.
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of receiving process
+ * @throws MPIException
+ */
+public final void gatherv(Object recvbuf, int[] recvcount, int[] displs,
+                          Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    int recvoff = 0;
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    gatherv(null, 0, 0, null,
+            recvbuf, recvoff, recvcount, displs, recvtype, root);
+}
+
+/**
+ * Extends functionality of {@code gather} by allowing varying
+ * counts of data from each process.
+ * <p>Java binding of the MPI operation {@code MPI_GATHERV} using
+ * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
+ * This method must be used in the non-root processes.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param root      rank of receiving process
+ * @throws MPIException
+ */
+public final void gatherv(Object sendbuf, int sendcount,
+                          Datatype sendtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    int sendoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    gatherv(sendbuf, sendoff, sendcount, sendtype,
+            null, 0, null, null, null, root);
+}
+
+private native void gatherv(
+        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvoffset, int[] recvcount, int[] displs,
+        Datatype recvtype, int root) throws MPIException;
+
+/**
+ * Extends functionality of {@code gather} by allowing varying
+ * counts of data from each process.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_IGATHERV}.
+ * <p>
+ * The sizes of arrays {@code recvcounts} and {@code displs} should be the
+ * size of the group.  Entry <em>i</em> of {@code displs} specifies the
+ * displacement relative to element {@code recvoffset} of {@code recvbuf}
+ * at which to place incoming data.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of receiving process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iGatherv(
+        Buffer sendbuf, int sendcount, Datatype sendtype, Buffer recvbuf,
+        int[] recvcount, int[] displs, Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iGatherv(
+            handle, sendbuf, sendcount, sendtype.handle,
+            recvbuf, recvcount, displs, recvtype.handle, root));
+}
+
+/**
+ * Extends functionality of {@code gather} by allowing varying
+ * counts of data from each process.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_IGATHERV} using
+ * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
+ * This method must be used in the root process.
+ * <p>
+ * The sizes of arrays {@code recvcounts} and {@code displs} should be the
+ * size of the group.  Entry <em>i</em> of {@code displs} specifies the
+ * displacement relative to element {@code recvoffset} of {@code recvbuf}
+ * at which to place incoming data.
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of receiving process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iGatherv(Buffer recvbuf, int[] recvcount, int[] displs,
+                              Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(recvbuf);
+
+    return new Request(iGatherv(handle, null, 0, 0,
+            recvbuf, recvcount, displs, recvtype.handle, root));
+}
+
+/**
+ * Extends functionality of {@code gather} by allowing varying
+ * counts of data from each process.
+ * <p>Java binding of the MPI operation {@code MPI_IGATHERV} using
+ * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
+ * This method must be used in the non-root processes.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param root      rank of receiving process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iGatherv(Buffer sendbuf, int sendcount,
+                              Datatype sendtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf);
+
+    return new Request(iGatherv(handle, sendbuf, sendcount, sendtype.handle,
+                                null, null, null, 0, root));
+}
+
+private native long iGatherv(
+        long handle, Buffer sendbuf, int sendcount, long sendtype,
+        Buffer recvbuf, int[] recvcount, int[] displs,
+        long recvtype, int root)
+        throws MPIException;
+
+/**
+ * Inverse of the operation {@code gather}.
+ * <p>Java binding of the MPI operation {@code MPI_SCATTER}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of sending process
+ * @throws MPIException
+ */
+public final void scatter(
+        Object sendbuf, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvcount, Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    scatter(sendbuf, sendoff, sendcount, sendtype,
+            recvbuf, recvoff, recvcount, recvtype, root);
+}
+
+/**
+ * Inverse of the operation {@code gather}.
+ * <p>Java binding of the MPI operation {@code MPI_SCATTER}
+ * using {@code MPI_IN_PLACE} instead of the receive buffer.
+ * The buffer is used by the root process to send data,
+ * and it is used by the non-root processes to receive data.
+ * @param buf   send/receive buffer array
+ * @param count number of items to send/receive
+ * @param type  datatype of each item in buffer
+ * @param root  rank of sending process
+ * @throws MPIException
+ */
+public final void scatter(Object buf, int count, Datatype type, int root)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    scatter(buf, off, count, type, null, 0, 0, null, root);
+}
+
+private native void scatter(
+        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype,
+        int root) throws MPIException;
+
+/**
+ * Inverse of the operation {@code gather}.
+ * <p>Java binding of the MPI operation {@code MPI_ISCATTER}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of sending process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iScatter(
+        Buffer sendbuf, int sendcount, Datatype sendtype,
+        Buffer recvbuf, int recvcount, Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iScatter(handle, sendbuf, sendcount, sendtype.handle,
+                                recvbuf, recvcount, recvtype.handle, root));
+}
+
+/**
+ * Inverse of the operation {@code gather}.
+ * <p>Java binding of the MPI operation {@code MPI_ISCATTER}
+ * using {@code MPI_IN_PLACE} instead of the receive buffer.
+ * The buffer is used by the root process to send data,
+ * and it is used by the non-root processes to receive data.
+ * @param buf   send/receive buffer array
+ * @param count number of items to send/receive
+ * @param type  datatype of each item in buffer
+ * @param root  rank of sending process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iScatter(Buffer buf, int count, Datatype type, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+
+    return new Request(iScatter(handle, buf, count, type.handle,
+                                null, 0, 0, root));
+}
+
+private native long iScatter(
+        long comm, Buffer sendbuf, int sendcount, long sendtype,
+        Buffer recvbuf, int recvcount, long recvtype, int root)
+        throws MPIException;
+
+/**
+ * Inverse of the operation {@code gatherv}.
+ * <p>Java binding of the MPI operation {@code MPI_SCATTERV}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each process
+ * @param displs    displacements from which to take outgoing data
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of sending process
+ * @throws MPIException
+ */
+public final void scatterv(
+        Object sendbuf, int[] sendcount, int[] displs, Datatype sendtype,
+        Object recvbuf, int recvcount, Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    scatterv(sendbuf, sendoff, sendcount, displs, sendtype,
+             recvbuf, recvoff, recvcount, recvtype, root);
+}
+
+/**
+ * Inverse of the operation {@code gatherv}.
+ * <p>Java binding of the MPI operation {@code MPI_SCATTERV} using
+ * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
+ * This method must be used in the root process.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each process
+ * @param displs    displacements from which to take outgoing data
+ * @param sendtype  datatype of each item in send buffer
+ * @param root      rank of sending process
+ * @throws MPIException
+ */
+public final void scatterv(Object sendbuf, int[] sendcount, int[] displs,
+                           Datatype sendtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    int sendoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    scatterv(sendbuf, sendoff, sendcount, displs, sendtype,
+             null, 0, 0, null, root);
+}
+
+/**
+ * Inverse of the operation {@code gatherv}.
+ * <p>Java binding of the MPI operation {@code MPI_SCATTERV} using
+ * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
+ * This method must be used in the non-root processes.
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of sending process
+ * @throws MPIException
+ */
+public final void scatterv(Object recvbuf, int recvcount,
+                           Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    int recvoff = 0;
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    scatterv(null, 0, null, null, null,
+             recvbuf, recvoff, recvcount, recvtype, root);
+}
+
+private native void scatterv(
+        Object sendbuf, int sendoffset,
+        int[] sendcount, int[] displs, Datatype sendtype,
+        Object recvbuf, int recvoffset, int recvcount,
+        Datatype recvtype, int root)
+        throws MPIException;
+
+/**
+ * Inverse of the operation {@code gatherv}.
+ * <p>Java binding of the MPI operation {@code MPI_ISCATTERV}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each process
+ * @param displs    displacements from which to take outgoing data
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of sending process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iScatterv(
+        Buffer sendbuf, int[] sendcount, int[] displs,  Datatype sendtype,
+        Buffer recvbuf, int recvcount, Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iScatterv(
+            handle, sendbuf, sendcount, displs, sendtype.handle,
+            recvbuf, recvcount, recvtype.handle, root));
+}
+
+/**
+ * Inverse of the operation {@code gatherv}.
+ * <p>Java binding of the MPI operation {@code MPI_ISCATTERV} using
+ * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
+ * This method must be used in the root process.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each process
+ * @param displs    displacements from which to take outgoing data
+ * @param sendtype  datatype of each item in send buffer
+ * @param root      rank of sending process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iScatterv(Buffer sendbuf, int[] sendcount, int[] displs,
+                               Datatype sendtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf);
+
+    return new Request(iScatterv(handle, sendbuf, sendcount, displs,
+                                 sendtype.handle, null, 0, 0, root));
+}
+
+/**
+ * Inverse of the operation {@code gatherv}.
+ * <p>Java binding of the MPI operation {@code MPI_ISCATTERV} using
+ * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
+ * This method must be used in the non-root processes.
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @param root      rank of sending process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iScatterv(Buffer recvbuf, int recvcount,
+                               Datatype recvtype, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(recvbuf);
+
+    return new Request(iScatterv(handle, null, null, null, 0,
+                                 recvbuf, recvcount, recvtype.handle, root));
+}
+
+private native long iScatterv(
+        long comm, Buffer sendbuf, int[] sendcount, int[] displs, long sendtype,
+        Buffer recvbuf, int recvcount, long recvtype, int root)
+        throws MPIException;
+
+/**
+ * Similar to {@code gather}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_ALLGATHER}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @throws MPIException
+ */
+public final void allGather(Object sendbuf, int sendcount, Datatype sendtype,
+                            Object recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    allGather(sendbuf, sendoff, sendcount, sendtype,
+              recvbuf, recvoff, recvcount, recvtype);
+}
+
+/**
+ * Similar to {@code gather}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_ALLGATHER}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   receive buffer array
+ * @param count number of items to receive
+ * @param type  datatype of each item in receive buffer
+ * @throws MPIException
+ */
+public final void allGather(Object buf, int count, Datatype type)
+    throws MPIException
+{
+    MPI.check();
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    allGather(null, 0, 0, null, buf, off, count, type);
+}
+
+private native void allGather(
+        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype)
+        throws MPIException;
+
+/**
+ * Similar to {@code gather}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_IALLGATHER}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllGather(
+        Buffer sendbuf, int sendcount, Datatype sendtype,
+        Buffer recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iAllGather(handle, sendbuf, sendcount, sendtype.handle,
+                                  recvbuf, recvcount, recvtype.handle));
+}
+
+/**
+ * Similar to {@code gather}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_IALLGATHER}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   receive buffer array
+ * @param count number of items to receive
+ * @param type  datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllGather(Buffer buf, int count, Datatype type)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    return new Request(iAllGather(handle, null, 0, 0, buf, count, type.handle));
+}
+
+private native long iAllGather(
+        long comm, Buffer sendbuf, int sendcount, long sendtype,
+        Buffer recvbuf, int recvcount, long recvtype) throws MPIException;
+
+/**
+ * Similar to {@code gatherv}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_ALLGATHERV}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @throws MPIException
+ */
+public final void allGatherv(
+        Object sendbuf, int sendcount, Datatype sendtype,
+        Object recvbuf, int[] recvcount, int[] displs, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    allGatherv(sendbuf, sendoff, sendcount, sendtype,
+               recvbuf, recvoff, recvcount, displs, recvtype);
+}
+
+/**
+ * Similar to {@code gatherv}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_ALLGATHERV}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @throws MPIException
+ */
+public final void allGatherv(Object recvbuf, int[] recvcount,
+                             int[] displs, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    int recvoff = 0;
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    allGatherv(null, 0, 0, null, recvbuf, recvoff, recvcount, displs, recvtype);
+}
+
+private native void allGatherv(
+        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvoffset, int[] recvcount, int[] displs,
+        Datatype recvtype) throws MPIException;
+
+/**
+ * Similar to {@code gatherv}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_IALLGATHERV}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllGatherv(
+        Buffer sendbuf, int sendcount, Datatype sendtype,
+        Buffer recvbuf, int[] recvcount, int[] displs, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iAllGatherv(
+            handle, sendbuf, sendcount, sendtype.handle,
+            recvbuf, recvcount, displs, recvtype.handle));
+}
+
+/**
+ * Similar to {@code gatherv}, but all processes receive the result.
+ * <p>Java binding of the MPI operation {@code MPI_IALLGATHERV}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf    receive buffer array
+ * @param count  number of elements received from each process
+ * @param displs displacements at which to place incoming data
+ * @param type   datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllGatherv(
+        Buffer buf, int[] count, int[] displs, Datatype type)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+
+    return new Request(iAllGatherv(
+            handle, null, 0, 0, buf, count, displs, type.handle));
+}
+
+private native long iAllGatherv(
+        long handle, Buffer sendbuf, int sendcount, long sendtype,
+        Buffer recvbuf, int[] recvcount, int[] displs, long recvtype)
+        throws MPIException;
+
+/**
+ * Extension of {@code allGather} to the case where each process sends
+ * distinct data to each of the receivers.
+ * <p>Java binding of the MPI operation {@code MPI_ALLTOALL}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each process
+ * @param sendtype  datatype send buffer items
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items received from any process
+ * @param recvtype  datatype of receive buffer items
+ * @throws MPIException
+ */
+public final void allToAll(Object sendbuf, int sendcount, Datatype sendtype,
+                           Object recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    allToAll(sendbuf, sendoff, sendcount, sendtype,
+             recvbuf, recvoff, recvcount, recvtype);
+}
+
+private native void allToAll(
+        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype)
+        throws MPIException;
+
+/**
+ * Extension of {@code allGather} to the case where each process sends
+ * distinct data to each of the receivers.
+ * <p>Java binding of the MPI operation {@code MPI_IALLTOALL}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each process
+ * @param sendtype  datatype send buffer items
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of items received from any process
+ * @param recvtype  datatype of receive buffer items
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllToAll(Buffer sendbuf, int sendcount, Datatype sendtype,
+                               Buffer recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iAllToAll(handle, sendbuf, sendcount, sendtype.handle,
+                                 recvbuf, recvcount, recvtype.handle));
+}
+
+private native long iAllToAll(
+        long comm, Buffer sendbuf, int sendcount, long sendtype,
+        Buffer recvbuf, int recvcount, long recvtype) throws MPIException;
+
+/**
+ * Adds flexibility to {@code allToAll}: location of data for send is
+ * specified by {@code sdispls} and location to place data on receive
+ * side is specified by {@code rdispls}.
+ * <p>Java binding of the MPI operation {@code MPI_ALLTOALLV}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each buffer
+ * @param sdispls   displacements from which to take outgoing data
+ * @param sendtype  datatype send buffer items
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param rdispls   displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @throws MPIException
+ */
+public final void allToAllv(
+        Object sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
+        Object recvbuf, int[] recvcount, int[] rdispls, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    allToAllv(sendbuf, sendoff, sendcount, sdispls, sendtype,
+              recvbuf, recvoff, recvcount, rdispls, recvtype);
+}
+
+private native void allToAllv(
+        Object sendbuf, int sendoffset,
+        int[] sendcount, int[] sdispls, Datatype sendtype,
+        Object recvbuf, int recvoffset,
+        int[] recvcount, int[] rdispls, Datatype recvtype)
+        throws MPIException;
+
+/**
+ * Adds flexibility to {@code allToAll}: location of data for send is
+ * specified by {@code sdispls} and location to place data on receive
+ * side is specified by {@code rdispls}.
+ * <p>Java binding of the MPI operation {@code MPI_IALLTOALLV}.
+ * @param sendbuf   send buffer array
+ * @param sendcount number of items sent to each buffer
+ * @param sdispls   displacements from which to take outgoing data
+ * @param sendtype  datatype send buffer items
+ * @param recvbuf   receive buffer array
+ * @param recvcount number of elements received from each process
+ * @param rdispls   displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllToAllv(
+        Buffer sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
+        Buffer recvbuf, int[] recvcount, int[] rdispls, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iAllToAllv(
+            handle, sendbuf, sendcount, sdispls, sendtype.handle,
+            recvbuf, recvcount, rdispls, recvtype.handle));
+}
+
+private native long iAllToAllv(long comm,
+        Buffer sendbuf, int[] sendcount, int[] sdispls, long sendtype,
+        Buffer recvbuf, int[] recvcount, int[] rdispls, long recvtype)
+        throws MPIException;
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and return the combined value in the output buffer of the
+ * root process.
+ * <p>
+ * Java binding of the MPI operation {@code MPI_REDUCE}.
+ * <p>
+ * The predefined operations are available in Java as {@code MPI.MAX},
+ * {@code MPI.MIN}, {@code MPI.SUM}, {@code MPI.PROD}, {@code MPI.LAND},
+ * {@code MPI.BAND}, {@code MPI.LOR}, {@code MPI.BOR}, {@code MPI.LXOR},
+ * {@code MPI.BXOR}, {@code MPI.MINLOC} and {@code MPI.MAXLOC}.
+ * @param sendbuf send buffer array
+ * @param recvbuf receive buffer array
+ * @param count   number of items in send buffer
+ * @param type    data type of each item in send buffer
+ * @param op      reduce operation
+ * @param root    rank of root process
+ * @throws MPIException
+ */
+public final void reduce(Object sendbuf, Object recvbuf, int count,
+                         Datatype type, Op op, int root)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    reduce(sendbuf, sendoff, recvbuf, recvoff, count, type, op, root);
+}
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and return the combined value in the output buffer of the
+ * root process.
+ * <p>Java binding of the MPI operation {@code MPI_REDUCE}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   send/receive buffer array
+ * @param count number of items in buffer
+ * @param type  data type of each item in buffer
+ * @param op    reduce operation
+ * @param root  rank of root process
+ * @throws MPIException
+ */
+public final void reduce(Object buf, int count, Datatype type, Op op, int root)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    reduce(null, 0, buf, off, count, type, op, root);
+}
+
+private native void reduce(
+        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int count, Datatype type, Op op, int root) throws MPIException;
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and return the combined value in the output buffer of the
+ * root process.
+ * <p>Java binding of the MPI operation {@code MPI_IREDUCE}.
+ * @param sendbuf send buffer array
+ * @param recvbuf receive buffer array
+ * @param count   number of items in send buffer
+ * @param type    data type of each item in send buffer
+ * @param op      reduce operation
+ * @param root    rank of root process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iReduce(Buffer sendbuf, Buffer recvbuf,
+                             int count, Datatype type, Op op, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+    op.setDatatype(type);
+
+    return new Request(iReduce(handle, sendbuf, recvbuf, count,
+                               type.handle, type.baseType, op, root));
+}
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and return the combined value in the output buffer of the
+ * root process.
+ * <p>Java binding of the MPI operation {@code MPI_IREDUCE}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   send/receive buffer array
+ * @param count number of items in buffer
+ * @param type  data type of each item in buffer
+ * @param op    reduce operation
+ * @param root  rank of root process
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iReduce(Buffer buf, int count,
+                             Datatype type, Op op, int root)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(buf);
+    op.setDatatype(type);
+
+    return new Request(iReduce(handle, null, buf, count,
+                               type.handle, type.baseType, op, root));
+}
+
+private native long iReduce(long comm, Buffer sendbuf, Buffer recvbuf,
+                            int count, long type, int baseType, Op op, int root)
+                            throws MPIException;
+
+/**
+ * Same as {@code reduce} except that the result appears in receive
+ * buffer of all process in the group.
+ * <p>Java binding of the MPI operation {@code MPI_ALLREDUCE}.
+ * @param sendbuf send buffer array
+ * @param recvbuf receive buffer array
+ * @param count   number of items in send buffer
+ * @param type    data type of each item in send buffer
+ * @param op      reduce operation
+ * @throws MPIException
+ */
+public final void allReduce(Object sendbuf, Object recvbuf,
+                            int count, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    allReduce(sendbuf, sendoff, recvbuf, recvoff, count, type, op);
+}
+
+/**
+ * Same as {@code reduce} except that the result appears in receive
+ * buffer of all process in the group.
+ * <p>Java binding of the MPI operation {@code MPI_ALLREDUCE}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   receive buffer array
+ * @param count number of items in send buffer
+ * @param type  data type of each item in send buffer
+ * @param op    reduce operation
+ * @throws MPIException
+ */
+public final void allReduce(Object buf, int count, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    allReduce(null, 0, buf, off, count, type, op);
+}
+
+private native void allReduce(
+        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int count, Datatype type, Op op) throws MPIException;
+
+/**
+ * Same as {@code reduce} except that the result appears in receive
+ * buffer of all process in the group.
+ * <p>Java binding of the MPI operation {@code MPI_IALLREDUCE}.
+ * @param sendbuf send buffer array
+ * @param recvbuf receive buffer array
+ * @param count   number of items in send buffer
+ * @param type    data type of each item in send buffer
+ * @param op      reduce operation
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllReduce(Buffer sendbuf, Buffer recvbuf,
+                                int count, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+    op.setDatatype(type);
+
+    return new Request(iAllReduce(handle, sendbuf, recvbuf, count,
+                                  type.handle, type.baseType, op));
+}
+
+/**
+ * Same as {@code reduce} except that the result appears in receive
+ * buffer of all process in the group.
+ * <p>Java binding of the MPI operation {@code MPI_IALLREDUCE}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   receive buffer array
+ * @param count number of items in send buffer
+ * @param type  data type of each item in send buffer
+ * @param op    reduce operation
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iAllReduce(Buffer buf, int count, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    assertDirectBuffer(buf);
+
+    return new Request(iAllReduce(handle, null, buf, count,
+                                  type.handle, type.baseType, op));
+}
+
+private native long iAllReduce(
+        long comm, Buffer sendbuf, Buffer recvbuf, int count,
+        long type, int baseType, Op op) throws MPIException;
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and scatter the combined values over the output buffers
+ * of the processes.
+ * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER}.
+ * @param sendbuf    send buffer array
+ * @param recvbuf    receive buffer array
+ * @param recvcounts numbers of result elements distributed to each process
+ * @param type       data type of each item in send buffer
+ * @param op         reduce operation
+ * @throws MPIException
+ */
+public final void reduceScatter(Object sendbuf, Object recvbuf,
+                                int[] recvcounts, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    reduceScatter(sendbuf, sendoff, recvbuf, recvoff, recvcounts, type, op);
+}
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and scatter the combined values over the output buffers
+ * of the processes.
+ * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf    receive buffer array
+ * @param counts numbers of result elements distributed to each process
+ * @param type   data type of each item in send buffer
+ * @param op     reduce operation
+ * @throws MPIException
+ */
+public final void reduceScatter(Object buf, int[] counts, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    reduceScatter(null, 0, buf, off, counts, type, op);
+}
+
+private native void reduceScatter(
+        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int[] recvcounts, Datatype type, Op op) throws MPIException;
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and scatter the combined values over the output buffers
+ * of the processes.
+ * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER}.
+ * @param sendbuf    send buffer array
+ * @param recvbuf    receive buffer array
+ * @param recvcounts numbers of result elements distributed to each process
+ * @param type       data type of each item in send buffer
+ * @param op         reduce operation
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iReduceScatter(Buffer sendbuf, Buffer recvbuf,
+                                    int[] recvcounts, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iReduceScatter(handle, sendbuf, recvbuf, recvcounts,
+                                      type.handle, type.baseType, op));
+}
+
+/**
+ * Combine elements in input buffer of each process using the reduce
+ * operation, and scatter the combined values over the output buffers
+ * of the processes.
+ * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf    receive buffer array
+ * @param counts numbers of result elements distributed to each process
+ * @param type   data type of each item in send buffer
+ * @param op     reduce operation
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iReduceScatter(
+        Buffer buf, int[] counts, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    assertDirectBuffer(buf);
+
+    return new Request(iReduceScatter(handle, null, buf, counts,
+                                      type.handle, type.baseType, op));
+}
+
+private native long iReduceScatter(
+        long handle, Buffer sendbuf, Object recvbuf, int[] recvcounts,
+        long type, int baseType, Op op) throws MPIException;
+
+/**
+ * Combine values and scatter the results.
+ * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER_BLOCK}.
+ * @param sendbuf   send buffer array
+ * @param recvbuf   receive buffer array
+ * @param recvcount element count per block
+ * @param type      data type of each item in send buffer
+ * @param op        reduce operation
+ * @throws MPIException
+ */
+public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
+                                     int recvcount, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    if(isHeapBuffer(sendbuf))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(isHeapBuffer(recvbuf))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    reduceScatterBlock(sendbuf, sendoff, recvbuf, recvoff, recvcount, type, op);
+}
+
+/**
+ * Combine values and scatter the results.
+ * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER_BLOCK}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   receive buffer array
+ * @param count element count per block
+ * @param type  data type of each item in send buffer
+ * @param op    reduce operation
+ * @throws MPIException
+ */
+public final void reduceScatterBlock(
+        Object buf, int count, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    int off = 0;
+
+    if(isHeapBuffer(buf))
+    {
+        off = ((Buffer)buf).arrayOffset();
+        buf = ((Buffer)buf).array();
+    }
+
+    reduceScatterBlock(null, 0, buf, off, count, type, op);
+}
+
+private native void reduceScatterBlock(
+        Object sendbuf, int sendoffset, Object recvbuf, int recvoffset,
+        int recvcount, Datatype type, Op op) throws MPIException;
+
+/**
+ * Combine values and scatter the results.
+ * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER_BLOCK}.
+ * @param sendbuf   send buffer array
+ * @param recvbuf   receive buffer array
+ * @param recvcount element count per block
+ * @param type      data type of each item in send buffer
+ * @param op        reduce operation
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iReduceScatterBlock(
+        Buffer sendbuf, Buffer recvbuf, int recvcount, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iReduceScatterBlock(handle, sendbuf, recvbuf, recvcount,
+                                           type.handle, type.baseType, op));
+}
+
+/**
+ * Combine values and scatter the results.
+ * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER_BLOCK}
+ * using {@code MPI_IN_PLACE} instead of the send buffer.
+ * @param buf   receive buffer array
+ * @param count element count per block
+ * @param type  data type of each item in send buffer
+ * @param op    reduce operation
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iReduceScatterBlock(
+        Buffer buf, int count, Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    assertDirectBuffer(buf);
+
+    return new Request(iReduceScatterBlock(handle, null, buf, count,
+                                           type.handle, type.baseType, op));
+}
+
+private native long iReduceScatterBlock(
+        long handle, Buffer sendbuf, Buffer recvbuf, int recvcount,
+        long type, int baseType, Op op) throws MPIException;
+
+/**
+ * Apply the operation given by {@code op} element-wise to the
+ * elements of {@code inbuf} and {@code inoutbuf} with the result
+ * stored element-wise in {@code inoutbuf}.
+ * <p>Java binding of the MPI operation {@code MPI_REDUCE_LOCAL}.
+ * @param inbuf    input buffer array
+ * @param inoutbuf input buffer array, will contain combined output
+ * @param count    number of elements
+ * @param type     data type of each item
+ * @param op       reduce operation
+ * @throws MPIException
+ */
+public final void reduceLocal(Object inbuf, Object inoutbuf, int count,
+                              Datatype type, Op op)
+    throws MPIException
+{
+    MPI.check();
+    op.setDatatype(type);
+    reduceLocal_jni(inbuf, inoutbuf, count, type, op);
+}
+
+private native void reduceLocal_jni(Object inbuf, Object inoutbuf, int count,
+                                    Datatype datatype, Op op)
+                                    throws MPIException;
+
+/**
+ * Sets the print name for the communicator.
+ * @param name name for the communicator
+ * @throws MPIException
+ */
+public final void setName(String name) throws MPIException
+{
+    MPI.check();
+    setName(handle, name);
+}
+
+private native void setName(long handle, String name) throws MPIException;
+
+/**
+ * Return the print name from the communicator.
+ * @return name of the communicator
+ * @throws MPIException
+ */
+public final String getName() throws MPIException
+{
+    MPI.check();
+    return getName(handle);
+}
+
+private native String getName(long handle) throws MPIException;
+
+} // Comm

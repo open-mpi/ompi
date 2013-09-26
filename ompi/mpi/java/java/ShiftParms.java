@@ -23,7 +23,36 @@
 
 package mpi;
 
-public class ShiftParms {
-	public int rank_source;
-	public int rank_dest;
+/**
+ * Source and destination ranks for "shift" communication.
+ */
+public final class ShiftParms
+{
+private final int rankSource;
+private final int rankDest;
+
+protected ShiftParms(int rankSource, int rankDest)
+{
+    this.rankSource = rankSource;
+    this.rankDest   = rankDest;
 }
+
+/**
+ * Gets the source rank.
+ * @return source rank
+ */
+public int getRankSource()
+{
+    return rankSource;
+}
+
+/**
+ * Gets the destination rank.
+ * @return destination rank
+ */
+public int getRankDest()
+{
+    return rankDest;
+}
+
+} // ShiftParms

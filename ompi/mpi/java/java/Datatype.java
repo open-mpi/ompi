@@ -23,823 +23,509 @@
 
 package mpi;
 
-public class Datatype extends Freeable {
-
-  private final static int UNDEFINED = -1 ;
-  private final static int NULL      =  0 ;
-  private final static int BYTE      =  1 ;
-  private final static int CHAR      =  2 ;
-  private final static int SHORT     =  3 ;
-  private final static int BOOLEAN   =  4 ;
-  private final static int INT       =  5 ;
-  private final static int LONG      =  6 ;
-  private final static int FLOAT     =  7 ;
-  private final static int DOUBLE    =  8 ;  
-  private final static int PACKED    =  9 ;
-  private final static int LB        = 10 ;
-  private final static int UB        = 11 ;
-  private final static int OBJECT    = 12 ;
-
-  private static native void init();
-
-
-  /*
-   * Constructor used in static initializer of `MPI'.
-   *
-   * (Called before MPI.Init(), so cannot make any native MPI calls.)
-   */
-
-  Datatype() {}
-  //public Datatype() {}  // debug
-
-  /*
-   * Constructor for basic datatypes.
-   *
-   * (Initialization done in separate `setBasic', so can create
-   * datatype objects for `BYTE', etc in static initializers invoked before
-   * MPI.Init(), then initialize objects after MPI initialized.)
-   */
-
-  Datatype(int Type) { 
-    setBasic(Type) ;
-  }
-
-  void setBasic (int Type) { 
-    switch(Type) {
-      case OBJECT :
-        baseType = OBJECT ;
-        displacements = new int [1] ;
-        lb = 0 ;
-        ub = 1 ;
-        lbSet = false ;
-        ubSet = false ;
-
-        break ;
-
-      case LB :
-        baseType = UNDEFINED ;
-        displacements = new int [0] ;
-        lb = 0 ;
-        ub = 0 ;
-        lbSet = true ;
-        ubSet = false ;
-
-        break ;
-
-      case UB :
-        baseType = UNDEFINED ;
-        displacements = new int [0] ;
-        lb = 0 ;
-        ub = 0 ;
-        lbSet = false ;
-        ubSet = true ;
-
-        break ;
-
-      default :  // Native case
-
-        baseType = Type ;  // what about PACKED?
-        GetDatatype(Type); 
-
-	baseSize = size() ;
-    }
-  }
-
-  private native void GetDatatype(int Type);
-
-  /*
-   * Constructor used by `Contiguous'
-   *
-   * (Initialization done in separate `setContiguous', so can create
-   * datatype objects for `SHORT2', etc in static initializers invoked before
-   * MPI.Init(), then initialize objects after MPI initialized.)
-   */
-
-  private Datatype(int count, Datatype oldtype) throws MPIException {
-    setContiguous(count, oldtype) ;
-  }
-
-  void setContiguous(int count, Datatype oldtype) throws MPIException {
-
-    baseType = oldtype.baseType ;
-
-    if(baseType == OBJECT || baseType == UNDEFINED) {
-
-      int oldSize  = oldtype.Size() ;
-      boolean oldUbSet = oldtype.ubSet ;
-      boolean oldLbSet = oldtype.lbSet ;
-
-      displacements = new int [count * oldSize] ;
-
-      ubSet = count > 0 && oldUbSet ;
-      lbSet = count > 0 && oldLbSet ;
-
-      lb = Integer.MAX_VALUE ;
-      ub = Integer.MIN_VALUE ;
-
-      if(oldSize != 0 || oldLbSet || oldUbSet) {
-
-	// `oldType.ub', `oldType.lb', `oldType.Extent()' all well-defined.
-
-	int oldExtent  = oldtype.Extent() ;
-
-	if(count > 0) {
-
-	  // Compose proper displacements...
-
-          int ptr = 0 ;
-          for (int i = 0 ; i < count ; i++) {
-	    int startElement = i * oldExtent ;
-
-	    for (int l = 0; l < oldSize; l++, ptr++)
-	      displacements [ptr] = startElement + oldtype.displacements[l] ;
-          }
-
-	  // Now maximize/minimize upper/lower bounds
-
-          int maxStartElement = oldExtent > 0 ? (count - 1) * oldExtent : 0 ;
-          int max_ub = maxStartElement + oldtype.ub ;
-          if (max_ub > ub)
-            ub = max_ub ;
-            
-          int minStartElement = oldExtent > 0 ? 0 : (count - 1) * oldExtent ;
-          int min_lb = minStartElement + oldtype.lb ;
-          if (min_lb < lb)
-            lb = min_lb ;
-        }
-      }
-      else {
-
-        // `oldType.ub', `oldType.lb' and `oldType.Extent()' are undefined.
-        // Can ignore unless...
-
-        if(count > 1) {
-          System.out.println("Datatype.Contiguous: repeat-count specified " +
-                             "for component with undefined extent");
-          MPI.COMM_WORLD.Abort(1);
-        }
-      }
-    }
-    else {
-      baseSize = oldtype.baseSize ;
-
-      GetContiguous(count, oldtype) ;
-    }
-  }
-
-  private native void GetContiguous(int count, Datatype oldtype);
-
-
-  /*
-   * Constructor used by `Vector', `Hvector'
-   */
-
-  private Datatype(int count, int blocklength, int stride, Datatype oldtype,
-                   boolean unitsOfOldExtent) throws MPIException {
-
-    baseType = oldtype.baseType ;
-
-    if(baseType == OBJECT || baseType == UNDEFINED) {
-
-      int oldSize  = oldtype.Size() ;
-      boolean oldUbSet = oldtype.ubSet ;
-      boolean oldLbSet = oldtype.lbSet ;
-
-      int repetitions = count * blocklength ;
-
-      displacements = new int [repetitions * oldSize] ;
-
-      ubSet = repetitions > 0 && oldUbSet ;
-      lbSet = repetitions > 0 && oldLbSet ;
-
-      lb = Integer.MAX_VALUE ;
-      ub = Integer.MIN_VALUE ;
-
-      if(repetitions > 0) {
-        if(oldSize != 0 || oldLbSet || oldUbSet) {
-
-	  // `oldType.ub', `oldType.lb', `oldType.Extent()' all well-defined.
-
-	  int oldExtent  = oldtype.Extent() ;
-
-          int ptr = 0 ;
-          for (int i = 0 ; i < count ; i++) {
-
-	    int startBlock = stride * i ;
-            if(unitsOfOldExtent) startBlock *= oldExtent ;
-
-	    // Compose proper displacements...
-
-	    for (int j = 0; j < blocklength ; j++) {
-	      int startElement = startBlock + j * oldExtent ;
-
-	      for (int l = 0; l < oldSize; l++, ptr++)
-		displacements [ptr] = startElement + oldtype.displacements[l] ;
-	    }
-
-	    // Now maximize/minimize upper/lower bounds
-
-            int maxStartElement = 
-                oldExtent > 0 ? startBlock + (blocklength - 1) * oldExtent
-                              : startBlock ;
-            int max_ub = maxStartElement + oldtype.ub ;
-            if (max_ub > ub)
-              ub = max_ub ;
-            
-            int minStartElement = 
-                oldExtent > 0 ? startBlock 
-                              : startBlock + (blocklength - 1) * oldExtent ;
-            int min_lb = minStartElement + oldtype.lb ;
-            if (min_lb < lb)
-              lb = min_lb ;
-          }
-        }
-        else {
-
-          // `oldType.ub', `oldType.lb' and `oldType.Extent()' are undefined.
-
-          if(unitsOfOldExtent) {
-	    System.out.println("Datatype.Vector: " +
-                               "old type has undefined extent");
-	    MPI.COMM_WORLD.Abort(1);
-          }
-          else {
-
-            // For `Hvector' can ignore unless...
-
-            if(blocklength > 1) {
-              System.out.println("Datatype.Hvector: repeat-count specified " +
-                                 "for component with undefined extent");
-              MPI.COMM_WORLD.Abort(1);
-            }
-          }
-        }
-      }
-    }
-    else {
-      baseSize = oldtype.baseSize ;
-
-      if(unitsOfOldExtent)
-        GetVector(count, blocklength, stride, oldtype) ;
-      else
-        GetHvector(count, blocklength, stride, oldtype) ;
-    }
-  }
-
-  private native void GetVector(int count, int blocklength, int stride,
-                                Datatype oldtype);
-
-  private native void GetHvector(int count, int blocklength, int stride,
-                                 Datatype oldtype) ;
-
-
-  /*
-   * Constructor used by `Indexed', `Hindexed'
-   */
-
-  private Datatype(int[] array_of_blocklengths, int[] array_of_displacements,
-                   Datatype oldtype, boolean unitsOfOldExtent)
-                                                      throws MPIException {
-
-    baseType = oldtype.baseType ;
-
-    if(baseType == OBJECT || baseType == UNDEFINED) {
-
-      int oldSize  = oldtype.Size() ;
-      boolean oldUbSet = oldtype.ubSet ;
-      boolean oldLbSet = oldtype.lbSet ;
-
-      int count = 0 ;
-      for (int i = 0; i < array_of_blocklengths.length; i++)
-        count += array_of_blocklengths[i] ;
-
-      displacements = new int [count * oldSize] ;
-
-      ubSet = count > 0 && oldUbSet ;
-      lbSet = count > 0 && oldLbSet ;
-
-      lb = Integer.MAX_VALUE ;
-      ub = Integer.MIN_VALUE ;
-
-      if(oldSize != 0 || oldLbSet || oldUbSet) {
-
-	// `oldType.ub', `oldType.lb', `oldType.Extent()' all well-defined.
-
-	int oldExtent  = oldtype.Extent() ;
-
-        int ptr = 0 ;
-        for (int i = 0; i < array_of_blocklengths.length; i++) {
-	  int blockLen = array_of_blocklengths [i] ;
-	  if(blockLen > 0) {
-
-	    int startBlock = array_of_displacements [i] ;
-            if(unitsOfOldExtent) startBlock *= oldExtent ;
-
-	    // Compose proper displacements...
-
-	    for (int j = 0; j < blockLen ; j++) {
-	      int startElement = startBlock + j * oldExtent ;
-
-	      for (int l = 0; l < oldSize; l++, ptr++)
-		displacements [ptr] = startElement + oldtype.displacements[l] ;
-	    }
-
-	    // Now maximize/minimize upper/lower bounds
-
-            int maxStartElement = 
-                oldExtent > 0 ? startBlock + (blockLen - 1) * oldExtent
-                              : startBlock ;
-            int max_ub = maxStartElement + oldtype.ub ;
-            if (max_ub > ub)
-              ub = max_ub ;
-            
-            int minStartElement = 
-                oldExtent > 0 ? startBlock 
-                              : startBlock + (blockLen - 1) * oldExtent ;
-            int min_lb = minStartElement + oldtype.lb ;
-            if (min_lb < lb)
-              lb = min_lb ;
-          }
-        }
-      }
-      else {
-
-        // `oldType.ub', `oldType.lb' and `oldType.Extent()' are undefined.
-
-        if(unitsOfOldExtent) {
-	  System.out.println("Datatype.Indexed: old type has undefined extent");
-	  MPI.COMM_WORLD.Abort(1);
-        }
-        else {
-          // Can ignore unless...
-
-          for (int i = 0; i < array_of_blocklengths.length; i++)
-            if(array_of_blocklengths [i] > 1) {
-              System.out.println("Datatype.Hindexed: repeat-count specified " +
-                                 "for component with undefined extent");
-              MPI.COMM_WORLD.Abort(1);
-            }
-        }
-      }
-    }
-    else {
-      baseSize = oldtype.baseSize ;
-
-      if(unitsOfOldExtent)
-        GetIndexed(array_of_blocklengths, array_of_displacements, oldtype) ;
-      else
-        GetHindexed(array_of_blocklengths, array_of_displacements, oldtype) ;
-    }
-  }
-
-  private native void GetIndexed(int[] array_of_blocklengths,
-                                 int[] array_of_displacements, 
-                                 Datatype oldtype) ;
-
-  private native void GetHindexed(int[] array_of_blocklengths,
-                                  int[] array_of_displacements,
-                                  Datatype oldtype) ;
-
-
-  /*
-   * Constructor used by `Struct'
-   */
-
-  private Datatype(int[] array_of_blocklengths, int[] array_of_displacements,
-                   Datatype[] array_of_types) throws MPIException {
-
-    // Compute new base type
-
-    baseType = UNDEFINED;
-    for (int i = 0; i < array_of_types.length; i++) {
-      int oldBaseType = array_of_types[i].baseType ;  
-      if(oldBaseType != baseType) {
-        if(baseType == UNDEFINED) {
-          baseType = oldBaseType ;
-
-          if(baseType != OBJECT)
-            baseSize = array_of_types[i].baseSize ;
-        }
-        else if(oldBaseType != UNDEFINED) {
-          System.out.println("Datatype.Struct: All base types must agree...");
-          MPI.COMM_WORLD.Abort(1);
-        }
-      }
-    }
-
-    // Allocate `displacements' if required
-
-    if(baseType == OBJECT || baseType == UNDEFINED) {
-      int size = 0 ;
-      for (int i = 0; i < array_of_blocklengths.length; i++)
-        size += array_of_blocklengths[i] * array_of_types[i].Size();
-
-      displacements = new int [size] ;
-    }
-
-    ubSet = false ;
-    lbSet = false ;
-
-    lb = Integer.MAX_VALUE ;
-    ub = Integer.MIN_VALUE ;
-
-    int ptr = 0 ;
-    for (int i = 0; i < array_of_blocklengths.length; i++) {
-      int blockLen     = array_of_blocklengths [i] ;
-      if(blockLen > 0) {
-        Datatype oldtype = array_of_types [i] ;
-        int oldBaseType  = oldtype.baseType ;
-
-        if(oldBaseType == OBJECT || oldBaseType == UNDEFINED) {
-
-          int oldSize  = oldtype.Size() ;
-          boolean oldUbSet = oldtype.ubSet ;
-          boolean oldLbSet = oldtype.lbSet ;
-
-          if(oldSize != 0 || oldLbSet || oldUbSet) {
-
-            // `oldType.ub', `oldType.lb', `oldType.Extent()' all well-defined.
-
-            int oldExtent  = oldtype.Extent() ;
-
-            int startBlock = array_of_displacements [i] ;
-
-            // Compose normal displacements...
-
-            for (int j = 0; j < blockLen ; j++) {
-              int startElement = startBlock + j * oldExtent ;
-
-              for (int l = 0; l < oldSize; l++, ptr++)
-                displacements [ptr] = startElement + oldtype.displacements[l] ;
-            }
-
-            // Now maximize/minimize upper/lower bounds
-
-            // `ubSet' acts like a most significant positive bit in
-            // the maximization operation.
-
-            if (oldUbSet == ubSet) {
-              int maxStartElement = 
-                  oldExtent > 0 ? startBlock + (blockLen - 1) * oldExtent
-                                : startBlock ;
-              int max_ub = maxStartElement + oldtype.ub ;
-              if (max_ub > ub)
-                ub = max_ub ;
-            }
-            else if(oldUbSet) {
-              int maxStartElement = 
-                  oldExtent > 0 ? startBlock + (blockLen - 1) * oldExtent
-                                : startBlock ;
-              ub    = maxStartElement + oldtype.ub ;
-              ubSet = true ;
-            }
-            
-            // `lbSet' acts like a most significant negative bit in
-            // the minimization operation.
-
-            if (oldLbSet == lbSet) {
-              int minStartElement = 
-                  oldExtent > 0 ? startBlock 
-                                : startBlock + (blockLen - 1) * oldExtent ;
-              int min_lb = minStartElement + oldtype.lb ;
-              if (min_lb < lb)
-                lb = min_lb ;
-            }
-            else if(oldLbSet) {
-              int minStartElement = 
-                  oldExtent > 0 ? startBlock 
-                                : startBlock + (blockLen - 1) * oldExtent ;
-              lb    = minStartElement + oldtype.lb ;
-              lbSet = true ;
-            }
-          }
-          else {
-
-            // `oldType.ub', `oldType.lb' and `oldType.Extent()' are undefined.
-            // Can ignore unless...
-
-            if(blockLen > 1) {
-              System.out.println("Datatype.Struct: repeat-count specified " +
-                                 "for component with undefined extent");
-              MPI.COMM_WORLD.Abort(1);
-            }
-          }
-        }
-      }
-    }
-
-    if(baseType != OBJECT && baseType != UNDEFINED)
-      GetStruct(array_of_blocklengths, array_of_displacements, array_of_types,
-                lbSet, lb, ubSet, ub) ;
-  }
-
-
-  private native void GetStruct(int[] array_of_blocklengths,
-                                int[] array_of_displacements, 
-                                Datatype[] array_of_types,
-                                boolean lbSet, int lb, boolean ubSet, int ub) ;
-
-
-  protected boolean isObject() {
-    return baseType == OBJECT || baseType == UNDEFINED ;
-  }
-
-  /**
-   * Returns the extent of a datatype - the difference between
-   * upper and lower bound.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> datatype extent </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_EXTENT</tt>.
-   */
-
-  public int Extent() throws MPIException {
-    if(baseType == OBJECT || baseType == UNDEFINED)
-      return ub - lb ;
-    else
-      return extent() / baseSize ;  
-  }
-
-  private native int extent();
-
-  /**
-   * Returns the total size of a datatype - the number of buffer
-   * elements it represents.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> datatype size </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_SIZE</tt>.
-   */
-
-  public int Size() throws MPIException {
-    if(baseType == OBJECT || baseType == UNDEFINED)
-      return displacements.length;
-    else 
-      return size() / baseSize ;  
-  }
-
-  private native int size();
-
-  /**
-   * Find the lower bound of a datatype - the least value
-   * in its displacement sequence.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> displacement of lower bound
-   *                                      from origin </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_LB</tt>.
-   */
-
-  public int Lb() throws MPIException {
-    if(baseType == OBJECT || baseType == UNDEFINED)
-      return lb;
-    else 
-      return lB() / baseSize ;
-  }
-
-  private native int lB();
-
-  /**
-   * Find the upper bound of a datatype - the greatest value
-   * in its displacement sequence.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> displacement of upper bound
-   *                                      from origin </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_UB</tt>.
-   */
-
-  public int Ub() throws MPIException {
-    if(baseType == OBJECT || baseType == UNDEFINED)
-      return ub;
-    else 
-      return uB() / baseSize ; 
-  }
-
-  private native int uB();
-
-  /**
-   * Commit a derived datatype.
-   * Java binding of the MPI operation <tt>MPI_TYPE_COMMIT</tt>.
-   */
-
-  public void Commit() throws MPIException {
-    if (baseType != OBJECT && baseType != UNDEFINED)
-      commit() ;
-  }
-
-  private native void commit();
-
-  @SuppressWarnings("unchecked")
-  public void finalize() throws MPIException {
-      synchronized(MPI.class) {
-          MPI.freeList.addFirst(this) ;
-      }
-  }
-
-  native void free() ;
-
-  /**
-   * Construct new datatype representing replication of old datatype into
-   * contiguous locations.
-   * <p>
-   * <table>
-   * <tr><td><tt> count    </tt></td><td> replication count </tr>
-   * <tr><td><tt> oldtype  </tt></td><td> old datatype </tr>
-   * <tr><td><em> returns: </em></td><td> new datatype </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_CONTIGUOUS</tt>.
-   * <p>
-   * The base type of the new datatype is the same as the base type of
-   * <tt>oldtype</tt>.
-   */
-
-  public static Datatype Contiguous(int      count, 
-                                    Datatype oldtype) throws MPIException { 
-
-    return new Datatype(count, oldtype) ;
-  }
-
-  /**
-   * Construct new datatype representing replication of old datatype into
-   * locations that consist of equally spaced blocks.
-   * <p>
-   * <table>
-   * <tr><td><tt> count       </tt></td><td> number of blocks </tr>
-   * <tr><td><tt> blocklength </tt></td><td> number of elements in each
-   *                                         block </tr>
-   * <tr><td><tt> stride      </tt></td><td> number of elements between
-   *                                         start of each block </tr>
-   * <tr><td><tt> oldtype     </tt></td><td> old datatype </tr>
-   * <tr><td><em> returns:    </em></td><td> new datatype </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_VECTOR</tt>.
-   * <p>
-   * The base type of the new datatype is the same as the base type of
-   * <tt>oldtype</tt>.
-   */
-
-  public static Datatype Vector(int      count, 
-                                int      blocklength, 
-                                int      stride, 
-                                Datatype oldtype) throws MPIException {
- 
-    return new Datatype(count, blocklength, stride, oldtype, true) ;
-  }
-
-  /**
-   * Identical to <tt>vector</tt> except that the stride is expressed
-   * directly in terms of the buffer index, rather than the units of
-   * the old type.
-   * <p>
-   * <table>
-   * <tr><td><tt> count       </tt></td><td> number of blocks </tr>
-   * <tr><td><tt> blocklength </tt></td><td> number of elements in each
-   *                                         block </tr>
-   * <tr><td><tt> stride      </tt></td><td> number of elements between
-   *                                         start of each block </tr>
-   * <tr><td><tt> oldtype     </tt></td><td> old datatype </tr>
-   * <tr><td><em> returns:    </em></td><td> new datatype </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_HVECTOR</tt>.
-   * <p>
-   * <em>Unlike other language bindings</em>, the value of <tt>stride</tt>
-   * is <em>not</em> measured in bytes.
-   */
-
-  public static Datatype Hvector(int      count, 
-                                 int      blocklength, 
-                                 int      stride, 
-                                 Datatype oldtype) throws MPIException {
- 
-    return new Datatype(count, blocklength, stride, oldtype, false) ;
-  }
-
-  /**
-   * Construct new datatype representing replication of old datatype into
-   * a sequence of blocks where each block can contain a different number
-   * of copies and have a different displacement.
-   * <p>
-   * <table>
-   * <tr><td><tt> array_of_blocklengths  </tt></td><td> number of elements per
-   *                                                    block </tr>
-   * <tr><td><tt> array_of_displacements </tt></td><td> displacement of each
-   *                                                    block in units of
-   *                                                    old type </tr>
-   * <tr><td><tt> oldtype                </tt></td><td> old datatype </tr>
-   * <tr><td><em> returns:               </em></td><td> new datatype </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_INDEXED</tt>.
-   * <p>
-   * The number of blocks is taken to be size of the
-   * <tt>array_of_blocklengths</tt> argument.  The second argument,
-   * <tt>array_of_displacements</tt>, should be the same size.
-   * The base type of the new datatype is the same as the base type of
-   * <tt>oldtype</tt>.
-   */
-
-  public static Datatype Indexed(int[]    array_of_blocklengths, 
-                                 int[]    array_of_displacements, 
-                                 Datatype oldtype) throws MPIException {
-  
-    return new Datatype(array_of_blocklengths, array_of_displacements,
-                        oldtype, true) ;
-  }
-
-  /**
-   * Identical to <tt>indexed</tt> except that the displacements are
-   * expressed directly in terms of the buffer index, rather than the
-   * units of the old type.
-   * <p>
-   * <table>
-   * <tr><td><tt> array_of_blocklengths  </tt></td><td> number of elements per
-   *                                                    block </tr>
-   * <tr><td><tt> array_of_displacements </tt></td><td> displacement in buffer
-   *                                                    for each block </tr>
-   * <tr><td><tt> oldtype                </tt></td><td> old datatype </tr>
-   * <tr><td><em> returns:               </em></td><td> new datatype </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_HINDEXED</tt>.
-   * <p>
-   * <em>Unlike other language bindings</em>, the values in
-   * <tt>array_of_displacements</tt> are <em>not</em> measured in bytes.
-   */
-
-  public static Datatype Hindexed(int[]    array_of_blocklengths, 
-                                  int[]    array_of_displacements, 
-                                  Datatype oldtype) throws MPIException {
-    return new Datatype(array_of_blocklengths, array_of_displacements,
-                        oldtype, false) ;
-  }
-
-  /**
-   * The most general type constructor.
-   * <p>
-   * <table>
-   * <tr><td><tt> array_of_blocklengths  </tt></td><td> number of elements per
-   *                                                    block </tr>
-   * <tr><td><tt> array_of_displacements </tt></td><td> displacement in buffer
-   *                                                    for each block </tr>
-   * <tr><td><tt> array_of_types         </tt></td><td> type of elements in
-   *                                                    each block </tr>
-   * <tr><td><em> returns:               </em></td><td> new datatype </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TYPE_STRUCT</tt>.
-   * <p>
-   * The number of blocks is taken to be size of the
-   * <tt>array_of_blocklengths</tt> argument.  The second and third
-   * arguments, <tt>array_of_displacements</tt>, and <tt>array_of_types</tt>,
-   * should be the same size.
-   * <em>Unlike other language bindings</em>, the values in
-   * <tt>array_of_displacements</tt> are <em>not</em> measured in bytes.
-   * All elements of <tt>array_of_types</tt> with definite base types
-   * <em>must have the <em>same</em> base type</em>: this will be the base
-   * type of new datatype.
-   */
-
-  public static Datatype Struct(int[] array_of_blocklengths,   
-                                int[] array_of_displacements, 
-                                Datatype[] array_of_types) throws MPIException {
-    return new Datatype(array_of_blocklengths, array_of_displacements,
-                        array_of_types) ;
-  }
-
-  protected long handle;
-  protected int baseType ;
-  protected int baseSize ;  // or private
-
-  protected int displacements[] ;
-
-  protected int lb, ub ;
-
-  protected boolean ubSet, lbSet ;
-    // Flags set if MPI.UB, MPI.LB respectively appears as a component type.
-
-  static {
+/**
+ * The {@code Datatype} class represents {@code MPI_Datatype} handles.
+ */
+public final class Datatype implements Freeable
+{
+protected long handle;
+protected int baseType;
+protected int baseSize;
+
+// Cache to avoid unnecessary jni calls.
+private int lb, extent, trueLb, trueExtent;
+
+protected static final int NULL       =  0;
+protected static final int BYTE       =  1;
+protected static final int CHAR       =  2;
+protected static final int SHORT      =  3;
+protected static final int BOOLEAN    =  4;
+protected static final int INT        =  5;
+protected static final int LONG       =  6;
+protected static final int FLOAT      =  7;
+protected static final int DOUBLE     =  8;
+protected static final int PACKED     =  9;
+protected static final int INT2       = 10;
+protected static final int SHORT_INT  = 11;
+protected static final int LONG_INT   = 12;
+protected static final int FLOAT_INT  = 13;
+protected static final int DOUBLE_INT = 14;
+protected static final int FLOAT_COMPLEX  = 15;
+protected static final int DOUBLE_COMPLEX = 16;
+
+static
+{
     init();
-  }
-
 }
 
-// Things to do:
-//
-//   Initialization and use of `baseSize' should probably be done entirely
-//   on JNI side.
-//
-//   `baseType' could just take values from {UNDEFINED, OBJECT, NATIVE}?
-//   (But in future may want to add runtime checks using exact value.)
+private static native void init();
 
+/*
+ * Constructor used in static initializer of 'MPI'.
+ *
+ * (Called before MPI.Init(), so cannot make any native MPI calls.)
+ *
+ * (Initialization done in separate 'setBasic', so can create
+ * datatype objects for 'BYTE', etc in static initializers invoked before
+ * MPI.Init(), then initialize objects after MPI initialized.)
+ */
+protected Datatype()
+{
+}
+
+protected void setBasic(int type)
+{
+    baseType = type;
+    handle   = getDatatype(type);
+    baseSize = type == NULL ? 0 : getSize(handle);
+}
+
+protected void setBasic(int type, Datatype oldType)
+{
+    baseType = oldType.baseType;
+    handle   = getDatatype(type);
+    baseSize = oldType.baseSize;
+}
+
+private static native long getDatatype(int type);
+
+/*
+ * Constructor used in 'create*' methods.
+ */
+private Datatype(Datatype oldType, long handle)
+{
+    baseType = oldType.baseType;
+    baseSize = oldType.baseSize;
+    this.handle = handle;
+}
+
+/*
+ * Constructor used in 'create*' methods.
+ */
+private Datatype(int baseType, int baseSize, long handle)
+{
+    this.baseType = baseType;
+    this.baseSize = baseSize;
+    this.handle   = handle;
+}
+
+/**
+ * Returns the lower bound of a datatype.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_EXTENT}.
+ * @return lower bound of datatype
+ * @throws MPIException
+ */
+public int getLb() throws MPIException
+{
+    if(extent == 0)
+        getLbExtent();
+
+    return lb;
+}
+
+/**
+ * Returns the extent of a datatype.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_EXTENT}.
+ * @return datatype extent
+ * @throws MPIException
+ */
+public int getExtent() throws MPIException
+{
+    if(extent == 0)
+        getLbExtent();
+
+    return extent;
+}
+
+private void getLbExtent() throws MPIException
+{
+    MPI.check();
+    int lbExt[] = new int[2];
+    getLbExtent(handle, lbExt);
+    lb     = lbExt[0] / baseSize;
+    extent = lbExt[1] / baseSize;
+}
+
+private native void getLbExtent(long handle, int[] lbExt);
+
+/**
+ * Returns the true lower bound of a datatype.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_TRUE_EXTENT}.
+ * @return lower bound of datatype
+ * @throws MPIException
+ */
+public int getTrueLb() throws MPIException
+{
+    if(trueExtent == 0)
+        getTrueLbExtent();
+
+    return trueLb;
+}
+
+/**
+ * Returns the true extent of a datatype.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_TRUE_EXTENT}.
+ * @return datatype true extent
+ * @throws MPIException
+ */
+public int getTrueExtent() throws MPIException
+{
+    if(trueExtent == 0)
+        getTrueLbExtent();
+
+    return trueExtent;
+}
+
+private void getTrueLbExtent() throws MPIException
+{
+    MPI.check();
+    int lbExt[] = new int[2];
+    getTrueLbExtent(handle, lbExt);
+    trueLb     = lbExt[0] / baseSize;
+    trueExtent = lbExt[1] / baseSize;
+}
+
+private native void getTrueLbExtent(long handle, int[] lbExt);
+
+/**
+ * Returns the total size of a datatype - the number of buffer
+ * elements it represents.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_SIZE}.
+ * @return datatype size
+ * @throws MPIException
+ */
+public int getSize() throws MPIException
+{
+    MPI.check();
+    return getSize(handle) / baseSize;
+}
+
+private native int getSize(long type);
+
+/**
+ * Commits a derived datatype.
+ * Java binding of the MPI operation {@code MPI_TYPE_COMMIT}.
+ * @throws MPIException
+ */
+public void commit() throws MPIException
+{
+    MPI.check();
+    commit(handle);
+}
+
+private native void commit(long type);
+
+/**
+ * Frees the datatype.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_FREE}.
+ * @throws MPIException
+ */
+@Override public void free() throws MPIException
+{
+    MPI.check();
+    handle = free(handle);
+}
+
+private native long free(long type) throws MPIException;
+
+/**
+ * Returns {@code true} if this datatype is MPI_DATATYPE_NULL.
+ * @return {@code true} if this datatype is MPI_DATATYPE_NULL
+ */
+public boolean isNull()
+{
+    return handle == MPI.DATATYPE_NULL.handle;
+}
+
+/**
+ * Java binding of {@code MPI_TYPE_DUP}.
+ * @return new datatype
+ */
+@Override public Datatype clone()
+{
+    try
+    {
+        MPI.check();
+        return new Datatype(this, dup(handle));
+    }
+    catch(MPIException e)
+    {
+        throw new RuntimeException(e.getMessage());
+    }
+}
+
+private native long dup(long type) throws MPIException;
+
+/**
+ * Construct new datatype representing replication of old datatype into
+ * contiguous locations.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_CONTIGUOUS}.
+ * <p>The base type of the new datatype is the same as the base type of
+ * {@code oldType}.
+ * @param count   replication count
+ * @param oldType old datatype
+ * @return new datatype
+ * @throws MPIException
+ */
+public static Datatype createContiguous(int count, Datatype oldType)
+        throws MPIException
+{
+    MPI.check();
+    return new Datatype(oldType, getContiguous(count, oldType.handle));
+}
+
+private static native long getContiguous(int count, long oldType);
+
+/**
+ * Construct new datatype representing replication of old datatype into
+ * locations that consist of equally spaced blocks.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_VECTOR}.
+ * <p>The base type of the new datatype is the same as the base type of
+ * {@code oldType}.
+ * @param count       number of blocks
+ * @param blockLength number of elements in each block
+ * @param stride      number of elements between start of each block
+ * @param oldType     old datatype
+ * @return new datatype
+ * @throws MPIException
+ */
+public static Datatype createVector(int count, int blockLength,
+                                    int stride, Datatype oldType)
+        throws MPIException
+{
+    MPI.check();
+    long handle = getVector(count, blockLength, stride, oldType.handle);
+    return new Datatype(oldType, handle);
+}
+
+private static native long getVector(
+        int count, int blockLength, int stride, long oldType)
+        throws MPIException;
+
+/**
+ * Identical to {@code createVector} except that the stride is expressed
+ * directly in terms of the buffer index, rather than the units of
+ * the old type.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_HVECTOR}.
+ * @param count       number of blocks
+ * @param blockLength number of elements in each
+ * @param stride      number of bytes between start of each block
+ * @param oldType     old datatype
+ * @return new datatype
+ * @throws MPIException
+ */
+public static Datatype createHVector(int count, int blockLength,
+                                     int stride, Datatype oldType)
+        throws MPIException
+{
+    MPI.check();
+    long handle = getHVector(count, blockLength, stride, oldType.handle);
+    return new Datatype(oldType, handle);
+}
+
+private static native long getHVector(
+        int count, int blockLength, int stride, long oldType)
+        throws MPIException;
+
+/**
+ * Construct new datatype representing replication of old datatype into
+ * a sequence of blocks where each block can contain a different number
+ * of copies and have a different displacement.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_INDEXED}.
+ * <p>The number of blocks is taken to be size of the {@code blockLengths}
+ * argument. The second argument, {@code displacements}, should be the
+ * same size. The base type of the new datatype is the same as the base
+ * type of {@code oldType}.
+ * @param blockLengths  number of elements per block
+ * @param displacements displacement of each block in units of old type
+ * @param oldType       old datatype
+ * @return new datatype
+ * @throws MPIException
+ */
+public static Datatype createIndexed(int[] blockLengths,
+                                     int[] displacements, Datatype oldType)
+        throws MPIException
+{
+    MPI.check();
+    long handle = getIndexed(blockLengths, displacements, oldType.handle);
+    return new Datatype(oldType, handle);
+}
+
+private static native long getIndexed(
+        int[] blockLengths, int[] displacements, long oldType)
+        throws MPIException;
+
+/**
+ * Identical to {@code createIndexed} except that the displacements are
+ * expressed directly in terms of the buffer index, rather than the
+ * units of the old type.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_HINDEXED}.
+ * @param blockLengths  number of elements per block
+ * @param displacements byte displacement in buffer for each block
+ * @param oldType       old datatype
+ * @return new datatype
+ * @throws MPIException
+ */
+public static Datatype createHIndexed(int[] blockLengths,
+                                      int[] displacements, Datatype oldType)
+        throws MPIException
+{
+    MPI.check();
+    long handle = getHIndexed(blockLengths, displacements, oldType.handle);
+    return new Datatype(oldType, handle);
+}
+
+private static native long getHIndexed(
+        int[] blockLengths, int[] displacements, long oldType)
+        throws MPIException;
+
+/**
+ * The most general type constructor.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_STRUCT}.
+ * <p>The number of blocks is taken to be size of the {@code blockLengths}
+ * argument. The second and third arguments, {@code displacements},
+ * and {@code types}, should be the same size.
+ * @param blockLengths  number of elements in each block
+ * @param displacements byte displacement of each block
+ * @param types         type of elements in each block
+ * @return new datatype
+ * @throws MPIException
+ */
+public static Datatype createStruct(int[] blockLengths,
+                                    int[] displacements, Datatype[] types)
+        throws MPIException
+{
+    MPI.check();
+    long handle = getStruct(blockLengths, displacements, types);
+    return new Datatype(MPI.BYTE, handle);
+}
+
+private static native long getStruct(
+        int[] blockLengths, int[] displacements, Datatype[] types)
+        throws MPIException;
+
+/*
+ * JMS add proper documentation here
+ * JMS int != Aint!  This needs to be fixed throughout.
+ */
+/**
+ * Create a datatype with a new lower bound and extent from an existing
+ * datatype.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_CREATE_RESIZED}.
+ * @param oldType input datatype
+ * @param lb      new lower bound of datatype (address integer)
+ * @param extent  new extent of datatype (address integer)
+ * @return new datatype
+ * @throws MPIException
+ */
+public static Datatype createResized(Datatype oldType, int lb, int extent)
+        throws MPIException
+{
+    MPI.check();
+    long handle = getResized(oldType.handle, lb, extent);
+    return new Datatype(oldType, handle);
+}
+
+private static native long getResized(long oldType, int lb, int extent);
+
+/**
+ * Sets the print name for the datatype.
+ * @param name name for the datatype
+ * @throws MPIException
+ */
+public void setName(String name) throws MPIException
+{
+    MPI.check();
+    setName(handle, name);
+}
+
+private native void setName(long handle, String name) throws MPIException;
+
+/**
+ * Return the print name from the datatype.
+ * @return name of the datatype
+ * @throws MPIException
+ */
+public String getName() throws MPIException
+{
+    MPI.check();
+    return getName(handle);
+}
+
+private native String getName(long handle) throws MPIException;
+
+/**
+ * Create a new attribute key.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_CREATE_KEYVAL}.
+ * @return attribute key for future access
+ * @throws MPIException
+ */
+public static int createKeyval() throws MPIException
+{
+    MPI.check();
+    return createKeyval_jni();
+}
+
+private static native int createKeyval_jni() throws MPIException;
+
+/**
+ * Frees an attribute key.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_FREE_KEYVAL}.
+ * @param keyval attribute key
+ * @throws MPIException
+ */
+public static void freeKeyval(int keyval) throws MPIException
+{
+    MPI.check();
+    freeKeyval_jni(keyval);
+}
+
+private static native void freeKeyval_jni(int keyval) throws MPIException;
+
+/**
+ * Stores attribute value associated with a key.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_SET_ATTR}.
+ * @param keyval attribute key
+ * @param value  attribute value
+ * @throws MPIException
+ */
+public void setAttr(int keyval, Object value) throws MPIException
+{
+    MPI.check();
+    setAttr(handle, keyval, MPI.attrSet(value));
+}
+
+private native void setAttr(long type, int keyval, byte[] value)
+        throws MPIException;
+
+/**
+ * Retrieves attribute value by key.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_GET_ATTR}.
+ * @param keyval attribute key
+ * @return attribute value or null if no attribute is associated with the key.
+ * @throws MPIException
+ */
+public Object getAttr(int keyval) throws MPIException
+{
+    MPI.check();
+    Object obj = getAttr(handle, keyval);
+    return obj instanceof byte[] ? MPI.attrGet((byte[])obj) : obj;
+}
+
+private native Object getAttr(long type, int keyval) throws MPIException;
+
+/**
+ * Deletes an attribute value associated with a key.
+ * <p>Java binding of the MPI operation {@code MPI_TYPE_DELETE_ATTR}.
+ * @param keyval attribute key
+ * @throws MPIException
+ */
+public void deleteAttr(int keyval) throws MPIException
+{
+    MPI.check();
+    deleteAttr(handle, keyval);
+}
+
+private native void deleteAttr(long type, int keyval) throws MPIException;
+
+} // Datatype
