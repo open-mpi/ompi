@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Put";
 
 
-int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+int MPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
             int target_rank, MPI_Aint target_disp, int target_count,
             MPI_Datatype target_datatype, MPI_Win win) 
 {
@@ -76,7 +79,8 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    rc = win->w_osc_module->osc_put(origin_addr, origin_count, origin_datatype,
+    /* XXX -- CONST -- do not cast away const -- update mca/osc */
+    rc = win->w_osc_module->osc_put((void *) origin_addr, origin_count, origin_datatype,
                                     target_rank, target_disp, target_count,
                                     target_datatype, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);

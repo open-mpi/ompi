@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Pack_external";
 
 
-int MPI_Pack_external(char *datarep, void *inbuf, int incount,
+int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
                       MPI_Datatype datatype, void *outbuf,
                       MPI_Aint outsize, MPI_Aint *position) 
 {
@@ -75,7 +78,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
      * more than just packing the data.
      */
     opal_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              &(datatype->super), incount, inbuf,
+                                              &(datatype->super), incount, (void *) inbuf,
                                               CONVERTOR_SEND_CONVERSION,
                                               &local_convertor );
 

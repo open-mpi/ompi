@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -5,15 +6,17 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -38,9 +41,9 @@
 static const char FUNC_NAME[] = "MPI_Ssend_init";
 
 
-int MPI_Ssend_init(void *buf, int count, MPI_Datatype type,
+int MPI_Ssend_init(const void *buf, int count, MPI_Datatype type,
                    int dest, int tag, MPI_Comm comm,
-                   MPI_Request *request) 
+                   MPI_Request *request)
 {
     int rc;
 
@@ -88,8 +91,9 @@ int MPI_Ssend_init(void *buf, int count, MPI_Datatype type,
     /*
      * Here, we just initialize the request -- memchecker should set the buffer in MPI_Start.
      */
-    rc = MCA_PML_CALL(isend_init(buf,count,type,dest,tag,
-                                 MCA_PML_BASE_SEND_SYNCHRONOUS,comm,request));
+    /* XXX -- CONST -- do not cast away const -- update mca/pml */
+    rc = MCA_PML_CALL(isend_init((void *) buf, count, type, dest, tag,
+                                 MCA_PML_BASE_SEND_SYNCHRONOUS, comm, request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

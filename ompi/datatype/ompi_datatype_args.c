@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,9 +112,9 @@ typedef struct __dt_args {
 
 
 int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
-                                int32_t ci, int32_t** i,
-                                int32_t ca, OPAL_PTRDIFF_TYPE* a,
-                                int32_t cd, ompi_datatype_t** d, int32_t type)
+                                int32_t ci, const int32_t** i,
+                                int32_t ca, const OPAL_PTRDIFF_TYPE* a,
+                                int32_t cd, ompi_datatype_t* const * d, int32_t type)
 {
     int pos;
     ompi_datatype_args_t* pArgs;
@@ -673,13 +675,13 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         /******************************************************************/
     case MPI_COMBINER_CONTIGUOUS:
         ompi_datatype_create_contiguous( i[0], d[0], &datatype );
-        ompi_datatype_set_args( datatype, 1, &i, 0, NULL, 1, d, MPI_COMBINER_CONTIGUOUS );
+        ompi_datatype_set_args( datatype, 1, (const int **) &i, 0, NULL, 1, d, MPI_COMBINER_CONTIGUOUS );
         break;
         /******************************************************************/
     case MPI_COMBINER_VECTOR:
         ompi_datatype_create_vector( i[0], i[1], i[2], d[0], &datatype );
         {
-            int* a_i[3]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &i[2];
+            const int* a_i[3] = {&i[0], &i[1], &i[2]};
             ompi_datatype_set_args( datatype, 3, a_i, 0, NULL, 1, d, MPI_COMBINER_VECTOR );
         }
         break;
@@ -688,7 +690,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_HVECTOR:
         ompi_datatype_create_hvector( i[0], i[1], a[0], d[0], &datatype );
         {
-            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            const int* a_i[2] = {&i[0], &i[1]};
             ompi_datatype_set_args( datatype, 2, a_i, 1, a, 1, d, MPI_COMBINER_HVECTOR );
         }
         break;
@@ -696,7 +698,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_INDEXED:  /* TO CHECK */
         ompi_datatype_create_indexed( i[0], &(i[1]), &(i[1+i[0]]), d[0], &datatype );
         {
-            int* a_i[3]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &(i[1+i[0]]);
+            const int* a_i[3] = {&i[0], &i[1], &(i[1+i[0]])};
             ompi_datatype_set_args( datatype, 2 * i[0] + 1, a_i, 0, NULL, 1, d, MPI_COMBINER_INDEXED );
         }
         break;
@@ -705,7 +707,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_HINDEXED:
         ompi_datatype_create_hindexed( i[0], &(i[1]), a, d[0], &datatype );
         {
-            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            const int* a_i[2] = {&i[0], &i[1]};
             ompi_datatype_set_args( datatype, i[0] + 1, a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED );
         }
         break;
@@ -713,7 +715,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_INDEXED_BLOCK:
         ompi_datatype_create_indexed_block( i[0], i[1], &(i[2]), d[0], &datatype );
         {
-            int* a_i[3]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &i[2];
+            const int* a_i[3] = {&i[0], &i[1], &i[2]};
             ompi_datatype_set_args( datatype, 2 * i[0], a_i, 0, NULL, 1, d, MPI_COMBINER_INDEXED_BLOCK );
         }
         break;
@@ -722,7 +724,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_STRUCT:
         ompi_datatype_create_struct( i[0], &(i[1]), a, d, &datatype );
         {
-            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            const int* a_i[2] = {&i[0], &i[1]};
             ompi_datatype_set_args( datatype, i[0] + 1, a_i, i[0], a, i[0], d, MPI_COMBINER_STRUCT );
         }
         break;
@@ -732,7 +734,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
                                        &i[1 + 2 * i[0]], i[1 + 3 * i[0]],
                                        d[0], &datatype );
         {
-            int* a_i[5]; a_i[0] = &i[0]; a_i[1] = &i[1 + 0 * i[0]]; a_i[2] = &i[1 + 1 * i[0]];  a_i[3] = &i[1 + 2 * i[0]]; a_i[4] = &i[1 + 3 * i[0]];
+            const int* a_i[5] = {&i[0], &i[1 + 0 * i[0]], &i[1 + 1 * i[0]], &i[1 + 2 * i[0]], &i[1 + 3 * i[0]]};
             ompi_datatype_set_args( datatype, 3 * i[0] + 2, a_i, 0, NULL, 1, d, MPI_COMBINER_SUBARRAY);
         }
         break;
@@ -743,9 +745,8 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
                                      &i[3 + 2 * i[0]], &i[3 + 3 * i[0]],
                                      i[3 + 4 * i[0]], d[0], &datatype );
         {
-            int* a_i[8]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &i[2];
-            a_i[3] = &i[3 + 0 * i[0]]; a_i[4] = &i[3 + 1 * i[0]];  a_i[5] = &i[3 + 2 * i[0]];
-            a_i[6] = &i[3 + 3 * i[0]]; a_i[7] = &i[3 + 4 * i[0]];
+            const int* a_i[8] = {&i[0], &i[1], &i[2], &i[3 + 0 * i[0]], &i[3 + 1 * i[0]], &i[3 + 2 * i[0]],
+                                 &i[3 + 3 * i[0]], &i[3 + 4 * i[0]]};
             ompi_datatype_set_args( datatype, 4 * i[0] + 4,a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
         }
         break;
@@ -768,7 +769,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_HINDEXED_BLOCK:
         ompi_datatype_create_hindexed_block( i[0], i[1], a, d[0], &datatype );
         {
-            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            const int* a_i[2] = {&i[0], &i[1]};
             ompi_datatype_set_args( datatype, 2 + i[0], a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
         }
         break;

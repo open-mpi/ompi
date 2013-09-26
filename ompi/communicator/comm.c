@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -15,7 +16,7 @@
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -993,7 +994,7 @@ int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, in
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-int ompi_comm_set_name (ompi_communicator_t *comm, char *name )
+int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
 {
 
 #ifdef USE_MUTEX_FOR_COMMS

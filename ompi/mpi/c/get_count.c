@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Get_count";
 
 
-int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) 
+int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count)
 {
     size_t size = 0, internal_count;
     int rc      = MPI_SUCCESS;

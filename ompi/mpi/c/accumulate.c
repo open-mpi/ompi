@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystmes, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +42,7 @@
 
 static const char FUNC_NAME[] = "MPI_Accumulate";
 
-int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                    int target_rank, MPI_Aint target_disp, int target_count,
                    MPI_Datatype target_datatype, MPI_Op op, MPI_Win win) 
 {
@@ -125,7 +128,8 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
 
     OPAL_CR_ENTER_LIBRARY();
 
-    rc = ompi_win->w_osc_module->osc_accumulate(origin_addr, 
+    /* XXX -- CONST -- do not cast away const -- update mca/osc */
+    rc = ompi_win->w_osc_module->osc_accumulate((void *) origin_addr,
                                                 origin_count,
                                                 origin_datatype,
                                                 target_rank, 

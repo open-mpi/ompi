@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +42,7 @@ static const char FUNC_NAME[] = "MPI_File_set_view";
 
 
 int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
-                      MPI_Datatype filetype, char *datarep, MPI_Info info)
+                      MPI_Datatype filetype, const char *datarep, MPI_Info info)
 {
     int rc;
 
@@ -68,8 +71,9 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
+        /* XXX -- CONST -- do not cast away const -- update mca/io */
         rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_set_view(fh, disp, etype, filetype, datarep, info);
+          io_module_file_set_view(fh, disp, etype, filetype, (char *) datarep, info);
         break;
 
     default:

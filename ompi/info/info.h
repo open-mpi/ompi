@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,12 +12,12 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,10 +38,10 @@
  * ompi_info_t structure. MPI_Info is a pointer to this structure
  */
 struct ompi_info_t {
-  opal_list_t super; 
+  opal_list_t super;
   /**< generic list pointer which is the container for (key,value)
        pairs */
-  int i_f_to_c_index; 
+  int i_f_to_c_index;
   /**< fortran handle for info. This is needed for translation from
        fortran to C and vice versa */
   opal_mutex_t *i_lock;
@@ -80,7 +80,7 @@ struct ompi_info_entry_t {
     char *ie_value; /**< value part of the (key, value) pair.
                   * Maximum length is MPI_MAX_INFO_VAL */
     char ie_key[MPI_MAX_INFO_KEY + 1]; /**< "key" part of the (key, value)
-                                     * pair */ 
+                                     * pair */
 };
 /**
  * \internal
@@ -92,7 +92,7 @@ BEGIN_C_DECLS
 
 /**
  * Table for Fortran <-> C translation table
- */ 
+ */
 extern opal_pointer_array_t ompi_info_f_to_c_table;
 
 /**
@@ -217,7 +217,7 @@ OMPI_DECLSPEC int ompi_info_get_bool (ompi_info_t *info, char *key, bool *value,
  *   In C and C++, 'valuelen' should be one less than the allocated
  *   space to allow for for the null terminator.
  */
-OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
+OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, const char *key, int valuelen,
                                  char *value, int *flag);
 
 /**
@@ -230,7 +230,7 @@ OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
  * @retval MPI_SUCCESS
  * @retval MPI_ERR_NOKEY
  */
-int ompi_info_delete (ompi_info_t *info, char *key);
+int ompi_info_delete (ompi_info_t *info, const char *key);
 
 /**
  *   @param info - ompi_info_t pointer object (handle)
@@ -247,8 +247,8 @@ int ompi_info_delete (ompi_info_t *info, char *key);
  *   character.  If the 'key' is not found on 'info', 'valuelen' is left
  *   alone.
  */
-OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
-                              int *flag);
+OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, const char *key, int *valuelen,
+                                          int *flag);
 
 /**
  *   ompi_info_get_nthkey - Get a key indexed by integer from an 'MPI_Info' o
@@ -282,7 +282,7 @@ OMPI_DECLSPEC int ompi_info_value_to_bool(char *value, bool *interp);
  * Convert value string to integer
  *
  * Convert value string \c value into a integer, using the
- * interpretation rules specified in MPI-2 Section 4.10.  
+ * interpretation rules specified in MPI-2 Section 4.10.
  * All others will return \c OMPI_ERR_BAD_PARAM
  *
  * @param value Value string for info key to interpret
@@ -323,8 +323,8 @@ static inline bool ompi_info_is_freed(ompi_info_t *info)
  *
  * @retval The number of keys defined on info
  */
-static inline int 
-ompi_info_get_nkeys(ompi_info_t *info, int *nkeys) 
+static inline int
+ompi_info_get_nkeys(ompi_info_t *info, int *nkeys)
 {
     *nkeys = (int) opal_list_get_size(&(info->super));
     return MPI_SUCCESS;

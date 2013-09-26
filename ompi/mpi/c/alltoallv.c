@@ -41,9 +41,9 @@
 static const char FUNC_NAME[] = "MPI_Alltoallv";
 
 
-int MPI_Alltoallv(void *sendbuf, int sendcounts[], int sdispls[],
-                  MPI_Datatype sendtype, 
-                  void *recvbuf, int recvcounts[], int rdispls[], 
+int MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
+                  const int sdispls[], MPI_Datatype sendtype,
+                  void *recvbuf, const int recvcounts[], const int rdispls[],
                   MPI_Datatype recvtype, MPI_Comm comm) 
 {
     int i, size, err;
@@ -116,9 +116,9 @@ int MPI_Alltoallv(void *sendbuf, int sendcounts[], int sdispls[],
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-
-    err = comm->c_coll.coll_alltoallv(sendbuf, sendcounts, sdispls, sendtype, 
-                                      recvbuf, recvcounts, rdispls, recvtype,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_alltoallv((void *) sendbuf, (int *) sendcounts, (int *) sdispls, sendtype,
+                                      recvbuf, (int *) recvcounts, (int *) rdispls, recvtype,
                                       comm, comm->c_coll.coll_alltoallv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

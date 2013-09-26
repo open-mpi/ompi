@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,10 +42,10 @@
 static const char FUNC_NAME[] = "MPI_Comm_spawn_multiple";
 
 
-int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_of_argv,
-                            int *array_of_maxprocs, MPI_Info *array_of_info,
+int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_of_argv[],
+                            const int array_of_maxprocs[], const MPI_Info array_of_info[],
                             int root, MPI_Comm comm, MPI_Comm *intercomm,
-                            int *array_of_errcodes) 
+                            int array_of_errcodes[])
 {
     int i=0, rc=0, rank=0, size=0, flag;
     ompi_communicator_t *newcomp=NULL;
@@ -154,7 +157,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
-        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn(count, array_of_commands,
+        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn(count, (const char **) array_of_commands,
                                                  array_of_argv, array_of_maxprocs,
                                                  array_of_info, port_name))) {
             goto error;

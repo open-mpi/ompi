@@ -41,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Neighbor_alltoall";
 
 
-int MPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                           void *recvbuf, int recvcount, MPI_Datatype recvtype,
                           MPI_Comm comm)
 {
@@ -92,8 +92,8 @@ int MPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-
-    err = comm->c_coll.coll_neighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_neighbor_alltoall((void *) sendbuf, sendcount, sendtype, recvbuf,
                                               recvcount, recvtype, comm,
                                               comm->c_coll.coll_neighbor_alltoall_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

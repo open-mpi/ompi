@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,11 +39,11 @@
 static const char FUNC_NAME[] = "MPI_Register_datarep";
 
 
-int MPI_Register_datarep(char *datarep,
-                       MPI_Datarep_conversion_function *read_conversion_fn,
-                       MPI_Datarep_conversion_function *write_conversion_fn,
-                       MPI_Datarep_extent_function *dtype_file_extent_fn,
-                       void *extra_state) 
+int MPI_Register_datarep(const char *datarep,
+			 MPI_Datarep_conversion_function *read_conversion_fn,
+			 MPI_Datarep_conversion_function *write_conversion_fn,
+			 MPI_Datarep_extent_function *dtype_file_extent_fn,
+			 void *extra_state)
 {
     int rc;
 
@@ -65,7 +68,8 @@ int MPI_Register_datarep(char *datarep,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Call the back-end io component function */
-    rc = mca_io_base_register_datarep(datarep, read_conversion_fn,
+    /* XXX -- CONST -- do not cast away const -- update mca/io */
+    rc = mca_io_base_register_datarep((char *) datarep, read_conversion_fn,
                                       write_conversion_fn,
                                       dtype_file_extent_fn,
                                       extra_state);

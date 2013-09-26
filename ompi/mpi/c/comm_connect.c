@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      University of Houston.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +42,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_connect";
 
 
-int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
+int MPI_Comm_connect(const char *port_name, MPI_Info info, int root,
                      MPI_Comm comm, MPI_Comm *newcomm) 
 {
     int rank, rc;

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -41,9 +42,9 @@ OMPI_DECLSPEC extern mca_base_framework_t ompi_pubsub_base_framework;
 OMPI_DECLSPEC int ompi_pubsub_base_select(void);
 
 /* NULL functions */
-OMPI_DECLSPEC int ompi_pubsub_base_null_publish(char *service, ompi_info_t *info, char *port);
-OMPI_DECLSPEC int ompi_pubsub_base_null_unpublish(char *service, ompi_info_t *info);
-OMPI_DECLSPEC char* ompi_pubsub_base_null_lookup(char *service, ompi_info_t *info);
+OMPI_DECLSPEC int ompi_pubsub_base_null_publish(const char *service, ompi_info_t *info, const char *port);
+OMPI_DECLSPEC int ompi_pubsub_base_null_unpublish(const char *service, ompi_info_t *info);
+OMPI_DECLSPEC char* ompi_pubsub_base_null_lookup(const char *service, ompi_info_t *info);
 
 /* useful globals */
 OMPI_DECLSPEC extern ompi_pubsub_base_module_t ompi_pubsub;

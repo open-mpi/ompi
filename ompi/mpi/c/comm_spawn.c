@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,9 +42,9 @@
 static const char FUNC_NAME[] = "MPI_Comm_spawn";
 
 
-int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
-                    int root, MPI_Comm comm, MPI_Comm *intercomm,
-                    int *array_of_errcodes) 
+int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info info,
+		   int root, MPI_Comm comm, MPI_Comm *intercomm,
+		   int array_of_errcodes[])
 {
     int rank, rc=OMPI_SUCCESS, i, flag;
     bool send_first = false; /* we wait to be contacted */

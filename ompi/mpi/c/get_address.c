@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +36,7 @@
 static const char FUNC_NAME[] = "MPI_Get_address";
 
 
-int MPI_Get_address(void *location, MPI_Aint *address)
+int MPI_Get_address(const void *location, MPI_Aint *address)
 {
 
     OPAL_CR_NOOP_PROGRESS();

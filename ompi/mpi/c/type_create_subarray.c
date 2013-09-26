@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -5,15 +6,17 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,9 +41,9 @@ static const char FUNC_NAME[] = "MPI_Type_create_subarray";
 
 
 int MPI_Type_create_subarray(int ndims,
-                             int size_array[],
-                             int subsize_array[],
-                             int start_array[],
+                             const int size_array[],
+                             const int subsize_array[],
+                             const int start_array[],
                              int order,
                              MPI_Datatype oldtype,
                              MPI_Datatype *newtype)
@@ -49,7 +52,7 @@ int MPI_Type_create_subarray(int ndims,
 
     MEMCHECKER(
         memchecker_datatype(oldtype);
-    );
+        );
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -67,7 +70,7 @@ int MPI_Type_create_subarray(int ndims,
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
             } else if( (start_array[i] < 0) || (start_array[i] > (size_array[i] - subsize_array[i])) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            } 
+            }
         }
     }
 
@@ -76,13 +79,7 @@ int MPI_Type_create_subarray(int ndims,
     rc = ompi_datatype_create_subarray( ndims, size_array, subsize_array, start_array,
                                         order, oldtype, newtype);
     if( OMPI_SUCCESS == rc ) {
-        int* a_i[5];
-
-        a_i[0] = &ndims;
-        a_i[1] = size_array;
-        a_i[2] = subsize_array;
-        a_i[3] = start_array;
-        a_i[4] = &order;
+        const int* a_i[5] = {&ndims, size_array, subsize_array, start_array, &order};
 
         ompi_datatype_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
                                 MPI_COMBINER_SUBARRAY );

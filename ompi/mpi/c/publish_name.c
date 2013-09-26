@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,8 +39,8 @@
 static const char FUNC_NAME[] = "MPI_Publish_name";
 
 
-int MPI_Publish_name(char *service_name, MPI_Info info,
-                     char *port_name) 
+int MPI_Publish_name(const char *service_name, MPI_Info info,
+                     const char *port_name)
 {
     int rc;
 
