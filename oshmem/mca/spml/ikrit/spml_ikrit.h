@@ -56,7 +56,7 @@ struct mxm_peer {
     opal_list_item_t    super;
     mxm_conn_h          mxm_conn;
     int                 pe;
-    uint32_t            n_active_puts;
+    int32_t             n_active_puts;
     int                 need_fence;
     /* if >= 0, data will be send to pe_relay which will forward it to destination pe */
     int                 pe_relay;   
@@ -77,9 +77,9 @@ struct mca_spml_ikrit_t {
     mxm_mq_h mxm_mq;
     mxm_peer_t **mxm_peers;
 
-    uint32_t n_active_puts;
-    uint32_t n_active_gets;
-    uint32_t n_mxm_fences;
+    int32_t n_active_puts;
+    int32_t n_active_gets;
+    int32_t n_mxm_fences;
 
     int priority; /* component priority */
     int free_list_num; /* initial size of free list */
