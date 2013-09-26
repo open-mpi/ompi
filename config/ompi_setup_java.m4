@@ -67,6 +67,11 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
                AC_MSG_WARN([Please reconfigure the --with-jdk options to where Java])
                AC_MSG_WARN([support can be found])
                AC_MSG_ERROR([Cannot continue])])
+
+        # Mac Java requires this file (i.e., some other Java-related
+        # header file needs this file, so we need to check for
+        # it/include it in our sources when compiling on Mac).
+        AC_CHECK_HEADERS([TargetConditionals.h])
     else
         AC_MSG_RESULT([no])
         WANT_MPI_JAVA_SUPPORT=0
