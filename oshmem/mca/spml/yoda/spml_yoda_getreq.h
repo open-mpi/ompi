@@ -24,7 +24,7 @@
 BEGIN_C_DECLS
 
 struct mca_spml_yoda_getreq_parent {
-    uint32_t active_count;
+    int32_t active_count;
 };
 
 struct mca_spml_yoda_get_request_t {

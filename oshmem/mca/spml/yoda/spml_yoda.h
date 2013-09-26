@@ -72,7 +72,7 @@ struct mca_spml_yoda_t {
     /* free lists */
     ompi_free_list_t rdma_frags;
     /* number of outstanding put requests */
-    uint32_t n_active_puts;
+    int32_t n_active_puts;
     bool enabled;
     struct yoda_btl *btl_type_map;
     int n_btls;
