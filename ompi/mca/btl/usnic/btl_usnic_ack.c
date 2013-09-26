@@ -127,22 +127,29 @@ ompi_btl_usnic_handle_ack(
         bytes_acked = sseg->ss_base.us_btl_header->payload_len;
         frag = sseg->ss_parent_frag;
 
-        /* when no bytes left to ACK, fragment send is truly done */
-        frag->sf_ack_bytes_left -= bytes_acked;
 #if MSGDEBUG1
         opal_output(0, "   ACKED seg %p, frag %p, ack_bytes=%"PRIu32", left=%zd\n",
-                (void*)sseg, (void*)frag, bytes_acked, frag->sf_ack_bytes_left);
+                (void*)sseg, (void*)frag, bytes_acked,
+                frag->sf_ack_bytes_left-bytes_acked);
 #endif
 
         /* If all ACKs received, and this is a put or a regular send
          * that needs a callback, perform the callback now
+         *
+         * NOTE on sf_ack_bytes_left - here we check for 
+         *      sf_ack_bytes_left == bytes_acked
+         * as opposed to adjusting sf_ack_bytes_left and checking for 0 because
+         * if we don't, the callback function may call usnic_free() and free
+         * the fragment out from under us which we do not want.  If the
+         * fragment really needs to be freed, we'll take care of it in a few
+         * lines below.
          */
-        if (frag->sf_ack_bytes_left == 0 &&
+        if (frag->sf_ack_bytes_left == bytes_acked &&
             ((frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) ||
              (frag->sf_base.uf_base.des_flags &
               MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
 #if MSGDEBUG2
-            opal_output(0, "completion callback for put frag=%p, dest=%p\n",
+            opal_output(0, "send completion callback frag=%p, dest=%p\n",
                     (void*)frag, frag->sf_base.uf_dst_seg[0].seg_addr.pval);
 #endif
             frag->sf_base.uf_base.des_cbfunc(&module->super,
@@ -157,6 +164,10 @@ ompi_btl_usnic_handle_ack(
         if (sseg->ss_send_posted == 0) {
             ompi_btl_usnic_release_send_segment(module, frag, sseg);
         }
+
+        /* when no bytes left to ACK, fragment send is truly done */
+        /* see note above on why this is done here as opposed to earlier */
+        frag->sf_ack_bytes_left -= bytes_acked;
 
         /* OK to return this fragment? */
         ompi_btl_usnic_send_frag_return_cond(module, frag);
