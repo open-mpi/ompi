@@ -3,7 +3,7 @@
 # WARNING: DO NOT EDIT THE mpijava.pl FILE AS IT IS GENERATED!
 #          MAKE ALL CHANGES IN mpijava.pl.in
 
-# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 
 use strict;
@@ -31,6 +31,7 @@ my $my_arg;
 # Cannot use the usual GetOpts library as the user might
 # be passing -options to the Java compiler! So have to
 # parse the options ourselves to look for help and showme
+my @save_args;
 foreach $my_arg (@ARGV) {
     if ($my_arg eq "-h" ||
         $my_arg eq "--h" ||
@@ -38,17 +39,15 @@ foreach $my_arg (@ARGV) {
         $my_arg eq "--help") {
         print "Options:
   --showme                      Show the wrapper compiler command without executing it
+  --verbose                     Show the wrapper compiler command *and* execute it
   --help | -h                   This help list\n";
-        exit;
-    } elsif ($my_arg eq "-showme" ||
-               $my_arg eq "--showme") {
+        exit(0);
+    } elsif ($my_arg eq "--showme") {
         $showme_arg = 1;
-        shift(@ARGV);
-    } elsif ($my_arg eq "-verbose" ||
-             $my_arg eq "-v" ||
-             $my_arg eq "--verbose") {
+    } elsif ($my_arg eq "--verbose") {
         $verbose = 1;
-        shift(@ARGV);
+    } else {
+        push(@save_args, $my_arg);
     }
 }
 
@@ -61,7 +60,7 @@ my $where;
 my $where2;
 my $cp_found = 0;
 my $my_cp;
-foreach $my_arg (@ARGV) {
+foreach $my_arg (@save_args) {
     if (1 == $cp_found) {
         $where = index($my_arg, "mpi.jar");
         if ($where < 0) {
@@ -145,6 +144,5 @@ if ($showme_arg) {
         print "$my_compiler @arguments\n";
     }
     $returnCode = system $my_compiler, @arguments;
-    $returnCode = $returnCode > 0 ? 1:0;
 }
 exit $returnCode;
