@@ -1,7 +1,7 @@
 # -*- makefile -*-
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+# Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -207,6 +207,11 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Lookup_name.3 \
         mpi/man/man3/MPI_Mprobe.3 \
         mpi/man/man3/MPI_Mrecv.3 \
+        mpi/man/man3/MPI_Neighbor_allgather.3 \
+        mpi/man/man3/MPI_Neighbor_allgatherv.3 \
+        mpi/man/man3/MPI_Neighbor_alltoall.3 \
+        mpi/man/man3/MPI_Neighbor_alltoallv.3 \
+        mpi/man/man3/MPI_Neighbor_alltoallw.3 \
         mpi/man/man3/MPI_Op_c2f.3 \
         mpi/man/man3/MPI_Op_create.3 \
         mpi/man/man3/MPI_Open_port.3 \

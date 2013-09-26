@@ -79,6 +79,11 @@ fortran_scripts = \
      mpi_ibsend_f90.f90.sh \
      mpi_iexscan_f90.f90.sh \
      mpi_imrecv_f90.f90.sh \
+     mpi_ineighbor_allgather_f90.f90.sh \
+     mpi_ineighbor_allgatherv_f90.f90.sh \
+     mpi_ineighbor_alltoall_f90.f90.sh \
+     mpi_ineighbor_alltoallv_f90.f90.sh \
+     mpi_ineighbor_alltoallw_f90.f90.sh \
      mpi_igather_f90.f90.sh \
      mpi_igatherv_f90.f90.sh \
      mpi_irecv_f90.f90.sh \
@@ -92,6 +97,11 @@ fortran_scripts = \
      mpi_isend_f90.f90.sh \
      mpi_issend_f90.f90.sh \
      mpi_mrecv_f90.f90.sh \
+     mpi_neighbor_allgather_f90.f90.sh \
+     mpi_neighbor_allgatherv_f90.f90.sh \
+     mpi_neighbor_alltoall_f90.f90.sh \
+     mpi_neighbor_alltoallv_f90.f90.sh \
+     mpi_neighbor_alltoallw_f90.f90.sh \
      mpi_pack_external_f90.f90.sh \
      mpi_pack_f90.f90.sh \
      mpi_put_f90.f90.sh \

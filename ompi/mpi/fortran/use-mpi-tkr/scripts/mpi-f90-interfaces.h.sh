@@ -11,6 +11,8 @@
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2012      Inria.  All rights reserved.
+# Copyright (c) 2013      Los Alamos Nationa Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -347,6 +349,36 @@ do
 done
 end MPI_Allgather
 
+start MPI_Neighbor_allgather large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_7 MPI_Neighbor_allgather ${rank} CH "character${dim}"
+  output_7 MPI_Neighbor_allgather ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_7 MPI_Neighbor_allgather ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_7 MPI_Neighbor_allgather ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_7 MPI_Neighbor_allgather ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Neighbor_allgather
+
 #------------------------------------------------------------------------
 
 output_7_nonblocking() {
@@ -464,6 +496,36 @@ do
   done
 done
 end MPI_Allgatherv
+
+start MPI_Neighbor_allgatherv large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_8 MPI_Neighbor_allgatherv ${rank} CH "character${dim}"
+  output_8 MPI_Neighbor_allgatherv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_8 MPI_Neighbor_allgatherv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_8 MPI_Neighbor_allgatherv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_8 MPI_Neighbor_allgatherv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Neighbor_allgatherv
 
 #------------------------------------------------------------------------
 
@@ -723,6 +785,36 @@ do
 done
 end MPI_Alltoall
 
+start MPI_Neighbor_alltoall large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_11 MPI_Neighbor_alltoall ${rank} CH "character${dim}"
+  output_11 MPI_Neighbor_alltoall ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_11 MPI_Neighbor_alltoall ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_11 MPI_Neighbor_alltoall ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_11 MPI_Neighbor_alltoall ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Neighbor_alltoall
+
 #------------------------------------------------------------------------
 
 output_11_nonblocking() {
@@ -841,6 +933,36 @@ do
   done
 done
 end MPI_Alltoallv
+
+start MPI_Neighbor_alltoallv large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_12 MPI_Neighbor_alltoallv ${rank} CH "character${dim}"
+  output_12 MPI_Neighbor_alltoallv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_12 MPI_Neighbor_alltoallv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_12 MPI_Neighbor_alltoallv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_12 MPI_Neighbor_alltoallv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Neighbor_alltoallv
 
 #------------------------------------------------------------------------
 
@@ -965,6 +1087,66 @@ end MPI_Alltoallw
 
 #------------------------------------------------------------------------
 
+output_13_neigbor() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, ierror)
+  ${type}, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer, dimension(*), intent(in) :: sendtypes
+  ${type} :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer, dimension(*), intent(in) :: recvtypes
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierror
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Neighbor_alltoallw large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_13_neigbor MPI_Neighbor_alltoallw ${rank} CH "character${dim}"
+  output_13_neigbor MPI_Neighbor_alltoallw ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_13_neigbor MPI_Neighbor_alltoallw ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_13_neigbor MPI_Neighbor_alltoallw ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_13_neigbor MPI_Neighbor_alltoallw ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Neighbor_alltoallw
+
+#------------------------------------------------------------------------
+
 output_13_nonblocking() {
     if test "$output" = "0"; then
         return 0
@@ -1023,6 +1205,67 @@ do
   done
 done
 end MPI_Ialltoallw
+
+#------------------------------------------------------------------------
+
+output_13_nonblocking_neighbor() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, request, ierror)
+  ${type}, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer, dimension(*), intent(in) :: sendtypes
+  ${type} :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer, dimension(*), intent(in) :: recvtypes
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ineighbor_alltoallw large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_13_nonblocking_neighbor MPI_Ineighbor_alltoallw ${rank} CH "character${dim}"
+  output_13_nonblocking_neighbor MPI_Ineighbor_alltoallw ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_13_nonblocking_neighbor MPI_Ineighbor_alltoallw ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_13_nonblocking_neighbor MPI_Ineighbor_alltoallw ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_13_nonblocking_neighbor MPI_Ineighbor_alltoallw ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ineighbor_alltoallw
 
 #------------------------------------------------------------------------
 

@@ -148,6 +148,11 @@ mpi_api_files = \
         igatherv_f08.F90 \
         improbe_f08.F90 \
         imrecv_f08.F90 \
+        ineighbor_allgather_f08.F90 \
+        ineighbor_allgatherv_f08.F90 \
+        ineighbor_alltoall_f08.F90 \
+        ineighbor_alltoallv_f08.F90 \
+        ineighbor_alltoallw_f08.F90 \
         info_create_f08.F90 \
         info_delete_f08.F90 \
         info_dup_f08.F90 \
@@ -177,6 +182,11 @@ mpi_api_files = \
         lookup_name_f08.F90 \
         mprobe_f08.F90 \
         mrecv_f08.F90 \
+        neighbor_allgather_f08.F90 \
+        neighbor_allgatherv_f08.F90 \
+        neighbor_alltoall_f08.F90 \
+        neighbor_alltoallv_f08.F90 \
+        neighbor_alltoallw_f08.F90 \
         op_commutative_f08.F90 \
         op_create_f08.F90 \
         open_port_f08.F90 \
@@ -361,6 +371,7 @@ pmpi_api_files = \
         profile/padd_error_class_f08.F90 \
         profile/padd_error_code_f08.F90 \
         profile/padd_error_string_f08.F90 \
+        profile/pallgather_f08.F90 \
         profile/pallgatherv_f08.F90 \
         profile/palloc_mem_f08.F90 \
         profile/pallreduce_f08.F90 \
@@ -464,6 +475,11 @@ pmpi_api_files = \
         profile/piexscan_f08.F90 \
         profile/pimprobe_f08.F90 \
         profile/pimrecv_f08.F90 \
+        profile/pineighbor_allgather_f08.F90 \
+        profile/pineighbor_allgatherv_f08.F90 \
+        profile/pineighbor_alltoall_f08.F90 \
+        profile/pineighbor_alltoallv_f08.F90 \
+        profile/pineighbor_alltoallw_f08.F90 \
         profile/pinfo_create_f08.F90 \
         profile/pinfo_delete_f08.F90 \
         profile/pinfo_dup_f08.F90 \
@@ -493,6 +509,11 @@ pmpi_api_files = \
         profile/plookup_name_f08.F90 \
         profile/pmprobe_f08.F90 \
         profile/pmrecv_f08.F90 \
+        profile/pneighbor_allgather_f08.F90 \
+        profile/pneighbor_allgatherv_f08.F90 \
+        profile/pneighbor_alltoall_f08.F90 \
+        profile/pneighbor_alltoallv_f08.F90 \
+        profile/pneighbor_alltoallw_f08.F90 \
         profile/pop_commutative_f08.F90 \
         profile/pop_create_f08.F90 \
         profile/popen_port_f08.F90 \
