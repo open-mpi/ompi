@@ -71,7 +71,7 @@ struct ibv_device **ompi_ibv_get_device_list(int *num_devs)
     ib_devs = (struct ibv_device**)malloc(*num_devs * sizeof(struct ibv_dev*));
     if (NULL == ib_devs) {
         *num_devs = 0;
-        opal_output("Failed malloc: %s:%d", __FILE__, __LINE__);
+        opal_output(0, "Failed malloc: %s:%d", __FILE__, __LINE__);
         return NULL;
     }
 
