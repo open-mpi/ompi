@@ -230,12 +230,13 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                     abort();
                 }
 #if MSGDEBUG1
-opal_output(0, "Start large recv to %p, size=%d\n",
-        fip->rfi_data, chunk_hdr->ch_frag_size);
+                opal_output(0, "Start large recv to %p, size=%"PRIu32"\n",
+                    (void *)fip->rfi_data, chunk_hdr->ch_frag_size);
 #endif
             } else {
 #if MSGDEBUG1
-opal_output(0, "Start PUT to %p\n", chunk_hdr->ch_hdr.put_addr);
+                opal_output(0, "Start PUT to %p\n",
+                        (void *)chunk_hdr->ch_hdr.put_addr);
 #endif
                 fip->rfi_data = chunk_hdr->ch_hdr.put_addr;
             }
