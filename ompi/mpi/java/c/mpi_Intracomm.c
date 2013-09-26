@@ -13,7 +13,7 @@
 */
 /*
  * File         : mpi_Intracomm.c
- * Headerfile   : mpi_Intracomm.h 
+ * Headerfile   : mpi_Intracomm.h
  * Author       : Xinying Li, Bryan Carpenter
  * Created      : Thu Apr  9 12:22:15 1998
  * Revision     : $Revision: 1.10 $
@@ -34,794 +34,492 @@
 #include "mpi_Intracomm.h"
 #include "mpiJava.h"
 
-
-/* Collectives are not particularly amenable to the strategies used
- * in point-to-point to reduce copying when the GC does not support pinning.
- *
- * It's possibly doable, but may too complex to be worth the effort.
- * A general problem is that the relation between positions in the
- * original buffer and positions in a packed buffer is not very
- * well-defined.  
- *
- * Collectives that use `Op' have an additional problem that
- * `MPI_User_function' prototype expects the actual user-specified
- * datatype as an argument.  Packing, then operating on data transferred
- * as a more primitive datatype is not generally correct.
- */
-
-
-extern MPI_Datatype Dts[] ;
-
-
-/*
- * Class:     mpi_Intracomm
- * Method:    split
- * Signature: (II)J
- */
-JNIEXPORT jlong JNICALL Java_mpi_Intracomm_split(JNIEnv *env, jobject jthis,
-                                                 jint colour, jint key)
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_split(
+        JNIEnv *env, jobject jthis, jlong comm, jint colour, jint key)
 {
     MPI_Comm newcomm;
-
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Comm_split((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)),
-                   colour, key, &newcomm);
-
+    int rc = MPI_Comm_split((MPI_Comm)comm, colour, key, &newcomm);
+    ompi_java_exceptionCheck(env, rc);
     return (jlong)newcomm;
 }
 
-/*
- * Class:     mpi_Intracomm
- * Method:    creat
- * Signature: (Lmpi/Group;)J
- */
-JNIEXPORT jlong JNICALL Java_mpi_Intracomm_creat(JNIEnv *env, jobject jthis,
-                                                 jobject group)
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_create(
+        JNIEnv *env, jobject jthis, jlong comm, jlong group)
 {
     MPI_Comm newcomm;
-
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Comm_create((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)),
-                    (MPI_Group)((*env)->GetLongField(env,group,ompi_java.GrouphandleID)),
-                    &newcomm);
+    int rc = MPI_Comm_create((MPI_Comm)comm, (MPI_Group)group, &newcomm);
+    ompi_java_exceptionCheck(env, rc);
     return (jlong)newcomm;
 }
 
-/*
- * Class:     mpi_Intracomm
- * Method:    Barrier
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_mpi_Intracomm_Barrier(JNIEnv *env, jobject jthis)
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createCart(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jintArray dims, jbooleanArray periods, jboolean reorder)
 {
-    ompi_java_clearFreeList(env) ;
+    jint *jDims;
+    int  *cDims;
+    ompi_java_getIntArray(env, dims, &jDims, &cDims);
 
-    MPI_Barrier((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)));
-}
+    jboolean *jPeriods;
+    int      *cPeriods;
+    ompi_java_getBooleanArray(env, periods, &jPeriods, &cPeriods);
 
-/*
- * Class:     mpi_Intracomm
- * Method:    GetCart
- * Signature: ([I[ZZ)J
- */
-JNIEXPORT jlong JNICALL Java_mpi_Intracomm_GetCart(JNIEnv *env, jobject jthis,
-                                                   jintArray dims, jbooleanArray periods,
-                                                   jboolean reorder)
-{
+    int ndims = (*env)->GetArrayLength(env, dims);
     MPI_Comm cart;
-    int ndims=(*env)->GetArrayLength(env,dims);
-    jboolean isCopy=JNI_TRUE;
-    jint *ds; jboolean *ps;
-    int i;
-    int *int_re_ds=(int*)calloc((*env)->GetArrayLength(env,periods),
-                                sizeof(int));
 
-    ompi_java_clearFreeList(env) ;
+    int rc = MPI_Cart_create((MPI_Comm)comm, ndims, cDims,
+                             cPeriods, reorder, &cart);
 
-    ds=(*env)->GetIntArrayElements(env,dims,&isCopy);
-    ps=(*env)->GetBooleanArrayElements(env,periods,&isCopy);
-
-    for(i=0;i<=(*env)->GetArrayLength(env,periods);i++)
-        if(ps[i]==JNI_TRUE)
-            int_re_ds[i]=1;
-        else
-            int_re_ds[i]=0;
-
-    MPI_Cart_create((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)), 
-                    ndims, (int*)ds, int_re_ds, reorder, &cart);
-    (*env)->ReleaseIntArrayElements(env,dims,ds,0);
-    (*env)->ReleaseBooleanArrayElements(env,periods,ps,0);
-    free(int_re_ds);
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_forgetIntArray(env, dims, jDims, cDims);
+    ompi_java_forgetBooleanArray(env, periods, jPeriods, cPeriods);
     return (jlong)cart;
 }
 
-/*
- * Class:     mpi_Intracomm
- * Method:    GetGraph
- * Signature: ([I[IZ)J
- */
-JNIEXPORT jlong JNICALL Java_mpi_Intracomm_GetGraph(JNIEnv *env, jobject jthis,
-                                                    jintArray index, jintArray edges,
-                                                    jboolean reorder)
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createGraph(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jintArray index, jintArray edges, jboolean reorder)
 {
     MPI_Comm graph;
-    int nnodes=(*env)->GetArrayLength(env,index);
-    jboolean isCopy=JNI_TRUE;
-    jint *ind, *edg;
+    int nnodes = (*env)->GetArrayLength(env, index);
 
-    ompi_java_clearFreeList(env) ;
+    jint *jIndex, *jEdges;
+    int  *cIndex, *cEdges;
+    ompi_java_getIntArray(env, index, &jIndex, &cIndex);
+    ompi_java_getIntArray(env, edges, &jEdges, &cEdges);
 
-    ind=(*env)->GetIntArrayElements(env,index,&isCopy);
-    edg=(*env)->GetIntArrayElements(env,edges,&isCopy);
-    MPI_Graph_create((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)),
-                     nnodes, (int*)ind, (int*)edg, reorder, &graph);
-    (*env)->ReleaseIntArrayElements(env,index,ind,0);
-    (*env)->ReleaseIntArrayElements(env,edges,edg,0);
+    int rc = MPI_Graph_create((MPI_Comm)comm,
+             nnodes, cIndex, cEdges, reorder, &graph);
+
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_forgetIntArray(env, index, jIndex, cIndex);
+    ompi_java_forgetIntArray(env, edges, jEdges, cEdges);
     return (jlong)graph;
 }
 
-/*
- * Class:     mpi_Intracomm
- * Method:    bcast
- * Signature: (Ljava/lang/Object;IILmpi/Datatype;I)V
- */
-JNIEXPORT void JNICALL Java_mpi_Intracomm_bcast(JNIEnv *env, jobject jthis,
-                                                jobject buf, jint offset,
-                                                jint count, jobject type, jint root)
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createDistGraph(
+        JNIEnv *env, jobject jthis, jlong comm, jintArray sources,
+        jintArray degrees, jintArray destins, jintArray weights,
+        jlong info, jboolean reorder, jboolean weighted)
 {
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-    MPI_Datatype mpi_type =
-        (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypehandleID)) ;
+    MPI_Comm graph;
+    int nnodes = (*env)->GetArrayLength(env, sources);
+    
+    jint *jSources, *jDegrees, *jDestins, *jWeights = NULL;
+    int  *cSources, *cDegrees, *cDestins, *cWeights = MPI_UNWEIGHTED;
+    ompi_java_getIntArray(env, sources, &jSources, &cSources);
+    ompi_java_getIntArray(env, degrees, &jDegrees, &cDegrees);
+    ompi_java_getIntArray(env, destins, &jDestins, &cDestins);
 
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypebaseTypeID) ;
+    if(weighted)
+        ompi_java_getIntArray(env, weights, &jWeights, &cWeights);
 
-    void *bufptr ;
+    int rc = MPI_Dist_graph_create((MPI_Comm)comm,
+             nnodes, cSources, cDegrees, cDestins, cWeights,
+             (MPI_Info)info, reorder, &graph);
 
-#ifdef GC_DOES_PINNING
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_forgetIntArray(env, sources, jSources, cSources);
+    ompi_java_forgetIntArray(env, degrees, jDegrees, cDegrees);
+    ompi_java_forgetIntArray(env, destins, jDestins, cDestins);
 
-    void *bufbase ;
+    if(weighted)
+        ompi_java_forgetIntArray(env, weights, jWeights, cWeights);
 
-    ompi_java_clearFreeList(env) ;
-
-    bufptr = ompi_java_getBufPtr(&bufbase, env, buf, baseType, offset) ;
-    MPI_Bcast(bufptr, count, mpi_type, root, mpi_comm) ;
-    ompi_java_releaseBufPtr(env, buf, bufbase, baseType) ;
-
-#else
-
-    int size ;
-
-    ompi_java_clearFreeList(env) ;
-
-    bufptr = ompi_java_getMPIBuf(&size, env, buf, offset,
-                                    count, mpi_type, mpi_comm, baseType) ;
-
-    MPI_Bcast(bufptr, size, MPI_BYTE, root, mpi_comm) ;
-
-    ompi_java_releaseMPIBuf(env, buf, offset, count, mpi_type, mpi_comm,
-                               bufptr, size, baseType) ;
-
-#endif  /* GC_DOES_PINNING */
+    return (jlong)graph;
 }
 
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Gather
- * Signature:
- (Ljava/lang/Object;IILmpi/Datatype;Ljava/lang/Object;IILmpi/Datatype;I)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_gather(JNIEnv *env, jobject jthis,
-                                                 jobject sendbuf, jint sendoffset,
-                                                 jint sendcount, jobject sendtype,
-                                                 jobject recvbuf, jint recvoffset,
-                                                 jint recvcount, jobject recvtype,
-                                                 jint root)
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createDistGraphAdjacent(
+        JNIEnv *env, jobject jthis, jlong comm, jintArray sources,
+        jintArray srcWeights, jintArray destins, jintArray desWeights,
+        jlong info, jboolean reorder, jboolean weighted)
 {
-    int id ;
+    MPI_Comm graph;
 
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
+    int inDegree  = (*env)->GetArrayLength(env, sources),
+        outDegree = (*env)->GetArrayLength(env, destins);
+    
+    jint *jSources, *jDestins, *jSrcWeights, *jDesWeights;
+    int  *cSources, *cDestins, *cSrcWeights, *cDesWeights;
+    ompi_java_getIntArray(env, sources, &jSources, &cSources);
+    ompi_java_getIntArray(env, destins, &jDestins, &cDestins);
+    
+    if(weighted)
+    {
+        ompi_java_getIntArray(env, srcWeights, &jSrcWeights, &cSrcWeights);
+        ompi_java_getIntArray(env, desWeights, &jDesWeights, &cDesWeights);
+    }
+    else
+    {
+        jSrcWeights = jDesWeights = NULL;
+        cSrcWeights = cDesWeights = MPI_UNWEIGHTED;
+    }
+    
+    int rc = MPI_Dist_graph_create_adjacent((MPI_Comm)comm,
+             inDegree, cSources, cSrcWeights, outDegree, cDestins,
+             cDesWeights, (MPI_Info)info, reorder, &graph);
 
-    MPI_Datatype mpi_stype =
-        (MPI_Datatype)((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-    MPI_Datatype mpi_rtype = (MPI_Datatype)
-        ((*env)->GetLongField(env, recvtype, ompi_java.DatatypehandleID)) ;
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_forgetIntArray(env, sources, jSources, cSources);
+    ompi_java_forgetIntArray(env, destins, jDestins, cDestins);
 
-    int sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-    int rbaseType = -1;
-
-    void *sendptr, *recvptr = NULL;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Comm_rank(mpi_comm, &id) ;
-    if(id == root) {
-        /* 
-         * In principle need the "id == root" check here and elsewere for
-         * correctness, in case arguments that are not supposed to be
-         * significant except on root are legitimately passed in as `null',
-         * say.  Shouldn't produce null pointer exception.
-         *
-         * (However in this case MPICH complains if `mpi_rtype' is not defined
-         * in all processes, notwithstanding what the spec says.)
-         */
-
-        rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
-
-        recvptr = ompi_java_getBufPtr(&rbufbase,
-                                         env, recvbuf, rbaseType, recvoffset) ;
+    if(weighted)
+    {
+        ompi_java_forgetIntArray(env, srcWeights, jSrcWeights, cSrcWeights);
+        ompi_java_forgetIntArray(env, desWeights, jDesWeights, cDesWeights);
     }
 
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, sbaseType, sendoffset) ;
-
-    MPI_Gather(sendptr, sendcount, mpi_stype,
-               recvptr, recvcount, mpi_rtype, root, mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType) ;
-
-    if (id == root) {
-        ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType);
-    }
+    return (jlong)graph;
 }
 
-/*
- * Class:     mpi_Intracomm
- * Method:    Gatherv
- * Signature:
- (Ljava/lang/Object;IILmpi/Datatype;Ljava/lang/Object;I[I[ILmpi/Datatype;I)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_gatherv(JNIEnv *env, jobject jthis,
-                                                  jobject sendbuf, jint sendoffset,
-                                                  jint sendcount, jobject sendtype,
-                                                  jobject recvbuf, jint recvoffset,
-                                                  jintArray recvcounts, jintArray displs,
-                                                  jobject recvtype, jint root)
+JNIEXPORT void JNICALL Java_mpi_Intracomm_scan(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jobject sendBuf, jint sendOff, jobject recvBuf, jint recvOff,
+        jint count, jlong type, jint baseType, jobject op)
 {
-    int id ;
-    jint *rcount = NULL, *dps = NULL;
-    jboolean isCopy ;
+    void *sPtr, *sBase, *rPtr, *rBase;
 
-    MPI_Comm mpi_comm =
-        (MPI_Comm) ((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
+    if(sendBuf == NULL)
+        sPtr = MPI_IN_PLACE;
+    else
+        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, baseType, sendOff);
 
-    MPI_Datatype mpi_stype = (MPI_Datatype)
-        ((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-    MPI_Datatype mpi_rtype = mpi_stype;
+    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, baseType, recvOff);
 
-    int sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-    int rbaseType = 0;
+    int rc = MPI_Scan(sPtr, rPtr, count, (MPI_Datatype)type,
+                      ompi_java_op_getHandle(env, op, baseType),
+                      (MPI_Comm)comm);
 
-    void *sendptr, *recvptr = NULL;
-    void *sbufbase, *rbufbase ;
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_releaseBufPtr(env, recvBuf, rBase, baseType);
 
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Comm_rank(mpi_comm, &id) ;
-    if(id == root) {
-        rcount=(*env)->GetIntArrayElements(env,recvcounts,&isCopy);
-        dps=(*env)->GetIntArrayElements(env,displs,&isCopy);
-
-        mpi_rtype = (MPI_Datatype)
-            ((*env)->GetLongField(env,recvtype,ompi_java.DatatypehandleID)) ;
-
-        rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
-
-        recvptr = ompi_java_getBufPtr(&rbufbase,
-                                         env, recvbuf, rbaseType, recvoffset) ;
-    }
-
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, sbaseType, sendoffset) ;
-
-    MPI_Gatherv(sendptr, sendcount, mpi_stype,
-                recvptr, (int*) rcount, (int*) dps, mpi_rtype,
-                root, mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType) ;
-    if (id == root) {
-        ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType);
-    }
-
-    if (id == root) {
-        (*env)->ReleaseIntArrayElements(env,recvcounts,rcount,JNI_ABORT);
-        (*env)->ReleaseIntArrayElements(env,displs,dps,JNI_ABORT);
-    }
+    if(sendBuf != NULL)
+        ompi_java_releaseReadBufPtr(env, sendBuf, sBase, baseType);
 }
 
-/*
- * Class:     mpi_Intracomm
- * Method:    Scatter
- * Signature:
- (Ljava/lang/Object;IILmpi/Datatype;Ljava/lang/Object;IILmpi/Datatype;I)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_scatter(JNIEnv *env, jobject jthis,
-                                                  jobject sendbuf, jint sendoffset,
-                                                  jint sendcount, jobject sendtype,
-                                                  jobject recvbuf, jint recvoffset,
-                                                  jint recvcount, jobject recvtype,
-                                                  jint root)
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_iScan(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jobject sendBuf, jobject recvBuf, jint count,
+        jlong type, int baseType, jobject op)
 {
-    int id ;
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
+    void *sPtr, *rPtr;
+    MPI_Request request;
 
-    MPI_Datatype mpi_stype =
-        (MPI_Datatype) ((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-    /* MPICH complains if `mpi_stype' is not defined
-     * in all processes, notwithstanding what the spec says. */
+    if(sendBuf == NULL)
+        sPtr = MPI_IN_PLACE;
+    else
+        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
 
-    MPI_Datatype mpi_rtype =
-        (MPI_Datatype)((*env)->GetLongField(env,recvtype,ompi_java.DatatypehandleID)) ;
+    rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
 
+    int rc = MPI_Iscan(sPtr, rPtr, count, (MPI_Datatype)type,
+                       ompi_java_op_getHandle(env, op, baseType),
+                       (MPI_Comm)comm, &request);
 
-    int sbaseType = -1;
-    int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
 
-    void *sendptr = NULL, *recvptr ;
-    void *sbufbase, *rbufbase ;
+JNIEXPORT void JNICALL Java_mpi_Intracomm_exScan(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jobject sendBuf, jint sendOff, jobject recvBuf, jint recvOff,
+        jint count, jlong type, int bType, jobject op)
+{
+    void *sPtr, *sBase, *rPtr, *rBase;
 
-    ompi_java_clearFreeList(env) ;
+    if(sendBuf == NULL)
+        sPtr = MPI_IN_PLACE;
+    else
+        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, bType, sendOff);
 
-    MPI_Comm_rank(mpi_comm, &id) ;
-    if (id == root) {
-        sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
+    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, bType, recvOff);
+
+    int rc = MPI_Exscan(sPtr, rPtr, count, (MPI_Datatype)type,
+                        ompi_java_op_getHandle(env, op, bType),
+                        (MPI_Comm)comm);
+
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_releaseBufPtr(env, recvBuf, rBase, bType);
+
+    if(sendBuf != NULL)
+        ompi_java_releaseReadBufPtr(env, sendBuf, sBase, bType);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_iExScan(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jobject sendBuf, jobject recvBuf, jint count,
+        jlong type, int bType, jobject op)
+{
+    void *sPtr, *rPtr;
+
+    if(sendBuf == NULL)
+        sPtr = MPI_IN_PLACE;
+    else
+        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
+
+    rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+    MPI_Request request;
+
+    int rc = MPI_Iexscan(sPtr, rPtr, count, (MPI_Datatype)type,
+                         ompi_java_op_getHandle(env, op, bType),
+                         (MPI_Comm)comm, &request);
+
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
+JNIEXPORT jstring JNICALL Java_mpi_Intracomm_openPort(
+                          JNIEnv *env, jclass clazz, jlong info)
+{
+    char port[MPI_MAX_PORT_NAME + 1];
+    int rc = MPI_Open_port((MPI_Info)info, port);
+
+    return ompi_java_exceptionCheck(env, rc)
+           ? NULL : (*env)->NewStringUTF(env, port);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Intracomm_closePort_1jni(
+                       JNIEnv *env, jclass clazz, jstring jport)
+{
+    const char *port = (*env)->GetStringUTFChars(env, jport, NULL);
+    int rc = MPI_Close_port((char*)port);
+    ompi_java_exceptionCheck(env, rc);
+    (*env)->ReleaseStringUTFChars(env, jport, port);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_accept(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jstring jport, jlong info, jint root)
+{
+    const char *port = jport == NULL ? NULL :
+                       (*env)->GetStringUTFChars(env, jport, NULL);
+    MPI_Comm newComm;
+
+    int rc = MPI_Comm_accept((char*)port, (MPI_Info)info,
+                             root, (MPI_Comm)comm, &newComm);
+
+    ompi_java_exceptionCheck(env, rc);
+    
+    if(jport != NULL)
+        (*env)->ReleaseStringUTFChars(env, jport, port);
+
+    return (jlong)newComm;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_connect(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jstring jport, jlong info, jint root)
+{
+    const char *port = jport == NULL ? NULL :
+                       (*env)->GetStringUTFChars(env, jport, NULL);
+    MPI_Comm newComm;
+
+    int rc = MPI_Comm_connect((char*)port, (MPI_Info)info,
+                              root, (MPI_Comm)comm, &newComm);
+
+    ompi_java_exceptionCheck(env, rc);
+
+    if(jport != NULL)
+        (*env)->ReleaseStringUTFChars(env, jport, port);
+
+    return (jlong)newComm;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Intracomm_publishName(
+        JNIEnv *env, jclass clazz, jstring jservice, jlong info, jstring jport)
+{
+    const char *service = (*env)->GetStringUTFChars(env, jservice, NULL),
+               *port    = (*env)->GetStringUTFChars(env, jport,    NULL);
+
+    int rc = MPI_Publish_name((char*)service, (MPI_Info)info, (char*)port);
+    ompi_java_exceptionCheck(env, rc);
+
+    (*env)->ReleaseStringUTFChars(env, jservice, service);
+    (*env)->ReleaseStringUTFChars(env, jport,    port);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Intracomm_unpublishName(
+        JNIEnv *env, jclass clazz, jstring jservice, jlong info, jstring jport)
+{
+    const char *service = (*env)->GetStringUTFChars(env, jservice, NULL),
+               *port    = (*env)->GetStringUTFChars(env, jport,    NULL);
+
+    int rc = MPI_Unpublish_name((char*)service, (MPI_Info)info, (char*)port);
+    ompi_java_exceptionCheck(env, rc);
+
+    (*env)->ReleaseStringUTFChars(env, jservice, service);
+    (*env)->ReleaseStringUTFChars(env, jport,    port);
+}
+
+JNIEXPORT jstring JNICALL Java_mpi_Intracomm_lookupName(
+        JNIEnv *env, jclass clazz, jstring jservice, jlong info)
+{
+    char port[MPI_MAX_PORT_NAME + 1];
+    const char *service = (*env)->GetStringUTFChars(env, jservice, NULL);
+
+    int rc = MPI_Lookup_name((char*)service, (MPI_Info)info, port);
+    (*env)->ReleaseStringUTFChars(env, jservice, service);
+
+    return ompi_java_exceptionCheck(env, rc)
+           ? NULL : (*env)->NewStringUTF(env, port);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_spawn(
+        JNIEnv *env, jobject jthis, jlong comm, jstring jCommand,
+        jobjectArray jArgv, jint maxprocs, jlong info, jint root,
+        jintArray errCodes)
+{
+    int i, rc;
+    MPI_Comm intercomm;
+    const char* command = (*env)->GetStringUTFChars(env, jCommand, NULL);
+
+    jint *jErrCodes;
+    int  *cErrCodes = MPI_ERRCODES_IGNORE;
+
+    if(errCodes != NULL)
+        ompi_java_getIntArray(env, errCodes, &jErrCodes, &cErrCodes);
+
+    char **argv = MPI_ARGV_NULL;
+
+    if(jArgv != NULL)
+    {
+        jsize argvLength = (*env)->GetArrayLength(env, jArgv);
+        argv = (char**)calloc(argvLength + 1, sizeof(char*));
+
+        for(i = 0; i < argvLength; i++)
+        {
+            jstring a = (*env)->GetObjectArrayElement(env, jArgv, i);
+            argv[i] = strdup((*env)->GetStringUTFChars(env, a, NULL));
+            (*env)->DeleteLocalRef(env, a);
+        }
+
+        argv[argvLength] = NULL;
     }
 
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, rbaseType, recvoffset) ;
+    rc = MPI_Comm_spawn((char*)command, argv, maxprocs, (MPI_Info)info,
+                        root, (MPI_Comm)comm, &intercomm, cErrCodes);
 
-    if (id == root) {
-        sendptr = ompi_java_getBufPtr(&sbufbase,
-                                         env, sendbuf, sbaseType, sendoffset);
+    ompi_java_exceptionCheck(env, rc);
+
+    if(jArgv != NULL)
+    {
+        jsize argvLength = (*env)->GetArrayLength(env, jArgv);
+
+        for(i = 0; i < argvLength; i++)
+        {
+            jstring a = (*env)->GetObjectArrayElement(env, jArgv, i);
+            (*env)->ReleaseStringUTFChars(env, a, argv[i]);
+            (*env)->DeleteLocalRef(env, a);
+        }
+
+        free(argv);
     }
 
-    MPI_Scatter(sendptr, sendcount, mpi_stype,
-                recvptr, recvcount, mpi_rtype, root, mpi_comm) ;
+    if(errCodes != NULL)
+        ompi_java_releaseIntArray(env, errCodes, jErrCodes, cErrCodes);
 
-    if (id == root) {
-        ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType);
+    (*env)->ReleaseStringUTFChars(env, jCommand, command);
+    return (jlong)intercomm;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_spawnMultiple(
+        JNIEnv *env, jobject jthis, jlong comm, jobjectArray jCommands,
+        jobjectArray jArgv, jintArray maxProcs, jlongArray info,
+        jint root, jintArray errCodes)
+{
+    int i, rc;
+    MPI_Comm intercomm;
+    jlong *jInfo = (*env)->GetLongArrayElements(env, info, NULL);
+
+    jint *jMaxProcs, *jErrCodes;
+    int  *cMaxProcs, *cErrCodes = MPI_ERRCODES_IGNORE;
+    ompi_java_getIntArray(env, maxProcs, &jMaxProcs, &cMaxProcs);
+
+    if(errCodes != NULL)
+        ompi_java_getIntArray(env, errCodes, &jErrCodes, &cErrCodes);
+
+    int commandsLength = (*env)->GetArrayLength(env, jCommands),
+        infoLength     = (*env)->GetArrayLength(env, info);
+
+    char **commands = calloc(commandsLength, sizeof(char*)),
+         ***argv    = MPI_ARGVS_NULL;
+    MPI_Info *cInfo = calloc(infoLength, sizeof(MPI_Info));
+
+    for(i = 0; i < infoLength; i++)
+        cInfo[i] = (MPI_Info)jInfo[i];
+
+    for(i = 0; i < commandsLength; i++)
+    {
+        jstring a = (*env)->GetObjectArrayElement(env, jCommands, i);
+        commands[i] = (char*)(*env)->GetStringUTFChars(env, a, NULL);
+        (*env)->DeleteLocalRef(env, a);
     }
 
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType);
-}
+    if(jArgv != NULL)
+    {
+        int argvLength = (*env)->GetArrayLength(env, jArgv);
+        argv = calloc(argvLength, sizeof(char**));
 
+        for(i = 0; i < argvLength; i++)
+        {
+            jobjectArray arr = (*env)->GetObjectArrayElement(env, jArgv, i);
+            int j, length = (*env)->GetArrayLength(env, arr);
+            argv[i] = calloc(length + 1, sizeof(char*));
 
+            for(j = 0; j < length; j++)
+            {
+                jstring a = (*env)->GetObjectArrayElement(env, arr, j);
+                argv[i][j] = (char*)(*env)->GetStringUTFChars(env, a, NULL);
+                (*env)->DeleteLocalRef(env, a);
+            }
 
-/*
- * Class:     mpi_Intracomm
- * Method:    Scatterv
- * Signature:
- (Ljava/lang/Object;II[ILmpi/Datatype;Ljava/lang/Object;I[ILmpi/Datatype;I)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_scatterv(JNIEnv *env, jobject jthis,
-                                                   jobject sendbuf, jint sendoffset,
-                                                   jintArray sendcount, jintArray displs,
-                                                   jobject sendtype,
-                                                   jobject recvbuf, jint recvoffset,
-                                                   jint recvcount, jobject recvtype,
-                                                   jint root)
-{
-    int id ;
-    jint *scount = NULL, *dps = NULL;
-    jboolean isCopy ;
-
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_rtype =
-        (MPI_Datatype)((*env)->GetLongField(env,recvtype,ompi_java.DatatypehandleID)) ;
-    MPI_Datatype mpi_stype = mpi_rtype;
-
-    int sbaseType = -1;
-    int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr = NULL, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Comm_rank(mpi_comm, &id) ;
-    if(id == root) {
-        mpi_stype = (MPI_Datatype)
-            ((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-
-        sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-
-        scount = (*env)->GetIntArrayElements(env,sendcount,&isCopy);
-        dps    = (*env)->GetIntArrayElements(env,displs,&isCopy);
+            argv[i][length] = NULL;
+            (*env)->DeleteLocalRef(env, arr);
+        }
     }
 
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, rbaseType, recvoffset) ;
+    rc = MPI_Comm_spawn_multiple(
+            commandsLength, commands, argv, cMaxProcs, cInfo,
+            root, (MPI_Comm)comm, &intercomm, cErrCodes);
 
-    if (id == root) {
-        sendptr = ompi_java_getBufPtr(&sbufbase,
-                                         env, sendbuf, sbaseType, sendoffset);
+    ompi_java_exceptionCheck(env, rc);
+
+    if(jArgv != NULL)
+    {
+        int argvLength = (*env)->GetArrayLength(env, jArgv);
+
+        for(i = 0; i < argvLength; i++)
+        {
+            jobjectArray arr = (*env)->GetObjectArrayElement(env, jArgv, i);
+            int j, length = (*env)->GetArrayLength(env, arr);
+
+            for(j = 0; j < length; j++)
+            {
+                jstring a = (*env)->GetObjectArrayElement(env, arr, j);
+                (*env)->ReleaseStringUTFChars(env, a, argv[i][j]);
+                (*env)->DeleteLocalRef(env, a);
+            }
+
+            (*env)->DeleteLocalRef(env, arr);
+            free(argv[i]);
+        }
+
+        free(argv);
     }
 
-    MPI_Scatterv(sendptr, (int*) scount, (int*) dps, mpi_stype,
-                 recvptr, recvcount, mpi_rtype,
-                 root, mpi_comm) ;
-
-    if (id == root) {
-        ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType);
+    for(i = 0; i < commandsLength; i++)
+    {
+        jstring a = (*env)->GetObjectArrayElement(env, jCommands, i);
+        (*env)->ReleaseStringUTFChars(env, a, commands[i]);
+        (*env)->DeleteLocalRef(env, a);
     }
 
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType) ;
+    if(errCodes != NULL)
+        ompi_java_releaseIntArray(env, errCodes, jErrCodes, cErrCodes);
 
-    if (id == root) {
-        (*env)->ReleaseIntArrayElements(env, sendcount, scount, JNI_ABORT);
-        (*env)->ReleaseIntArrayElements(env, displs, dps, JNI_ABORT);
-    }
+    free(cInfo);
+    free(commands);
+    (*env)->ReleaseLongArrayElements(env, info, jInfo, JNI_ABORT);
+    ompi_java_forgetIntArray(env, maxProcs, jMaxProcs, cMaxProcs);
+    return (jlong)intercomm;
 }
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Allgather
- * Signature:
- (Ljava/lang/Object;IILmpi/Datatype;Ljava/lang/Object;IILmpi/Datatype;)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_allgather(JNIEnv *env, jobject jthis,
-                                                    jobject sendbuf, jint sendoffset,
-                                                    jint sendcount, jobject sendtype,
-                                                    jobject recvbuf, jint recvoffset,
-                                                    jint recvcount, jobject recvtype)
-{
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_stype = (MPI_Datatype)
-        ((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-    MPI_Datatype mpi_rtype = (MPI_Datatype)
-        ((*env)->GetLongField(env, recvtype, ompi_java.DatatypehandleID)) ;
-
-    int sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-    int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, rbaseType, recvoffset) ;
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, sbaseType, sendoffset) ;
-
-    MPI_Allgather(sendptr, sendcount, mpi_stype,
-                  recvptr, recvcount, mpi_rtype, mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType) ;
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType) ;
-}
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Allgatherv
- * Signature:
- (Ljava/lang/Object;IILmpi/Datatype;Ljava/lang/Object;I[I[ILmpi/Datatype;)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_allgatherv(JNIEnv *env, jobject jthis,
-                                                     jobject sendbuf, jint sendoffset,
-                                                     jint sendcount,jobject sendtype,
-                                                     jobject recvbuf, jint recvoffset,
-                                                     jintArray recvcount, jintArray displs,
-                                                     jobject recvtype)
-{
-    jint *rcount, *dps;
-    jboolean isCopy ;
-
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_stype = (MPI_Datatype)
-        ((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-    MPI_Datatype mpi_rtype = (MPI_Datatype)
-        ((*env)->GetLongField(env, recvtype, ompi_java.DatatypehandleID)) ;
-
-    int sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-    int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    rcount = (*env)->GetIntArrayElements(env, recvcount, &isCopy);
-    dps = (*env)->GetIntArrayElements(env, displs, &isCopy);
-
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, rbaseType, recvoffset) ;
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, sbaseType, sendoffset) ;
-
-    MPI_Allgatherv(sendptr, sendcount, mpi_stype,
-                   recvptr, (int*) rcount, (int*) dps, mpi_rtype,
-                   mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType) ;
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType) ;
-
-    (*env)->ReleaseIntArrayElements(env, recvcount, rcount, JNI_ABORT);
-    (*env)->ReleaseIntArrayElements(env, displs, dps, JNI_ABORT);
-}
- 
-/*
- * Class:     mpi_Intracomm
- * Method:    Alltoall
- * Signature:
- (Ljava/lang/Object;IILmpi/Datatype;Ljava/lang/Object;IILmpi/Datatype;)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_alltoall(JNIEnv *env, jobject jthis,
-                                                   jobject sendbuf, jint sendoffset,
-                                                   jint sendcount, jobject sendtype,
-                                                   jobject recvbuf, jint recvoffset,
-                                                   jint recvcount, jobject recvtype)
-{
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_stype = (MPI_Datatype)
-        ((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-    MPI_Datatype mpi_rtype = (MPI_Datatype)
-        ((*env)->GetLongField(env, recvtype, ompi_java.DatatypehandleID)) ;
-
-    int sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-    int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, rbaseType, recvoffset) ;
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, sbaseType, sendoffset) ;
-
-    MPI_Alltoall(sendptr, sendcount, mpi_stype,
-                 recvptr, recvcount, mpi_rtype, mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType) ;
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType) ;
-}
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Alltoallv
- * Signature:
- (Ljava/lang/Object;II[ILmpi/Datatype;Ljava/lang/Object;I[I[ILmpi/Datatype;)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_alltoallv(JNIEnv *env, jobject jthis,
-                                                    jobject sendbuf, jint sendoffset, jintArray sendcount, 
-                                                    jintArray sdispls, jobject sendtype,
-                                                    jobject recvbuf, jint recvoffset, jintArray recvcount,
-                                                    jintArray rdispls, jobject recvtype)
-{
-    jint *rcount, *scount, *sdps, *rdps ;
-    jboolean isCopy ;
-
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_stype = (MPI_Datatype)
-        ((*env)->GetLongField(env,sendtype,ompi_java.DatatypehandleID)) ;
-    MPI_Datatype mpi_rtype = (MPI_Datatype)
-        ((*env)->GetLongField(env, recvtype, ompi_java.DatatypehandleID)) ;
-
-    int sbaseType = (*env)->GetIntField(env, sendtype, ompi_java.DatatypebaseTypeID) ;
-    int rbaseType = (*env)->GetIntField(env, recvtype, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    scount=(*env)->GetIntArrayElements(env,sendcount,&isCopy);
-    rcount=(*env)->GetIntArrayElements(env,recvcount,&isCopy);
-    sdps=(*env)->GetIntArrayElements(env,sdispls,&isCopy);
-    rdps=(*env)->GetIntArrayElements(env,rdispls,&isCopy);
-
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, rbaseType, recvoffset) ;
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, sbaseType, sendoffset) ;
-
-    MPI_Alltoallv(sendptr, (int*) scount, (int*) sdps, mpi_stype,
-                  recvptr, (int*) rcount, (int*) rdps, mpi_rtype,
-                  mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, sbaseType) ;
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, rbaseType) ;
-
-    (*env)->ReleaseIntArrayElements(env,recvcount,rcount,JNI_ABORT);
-    (*env)->ReleaseIntArrayElements(env,sendcount,scount,JNI_ABORT);
-    (*env)->ReleaseIntArrayElements(env,sdispls,sdps,JNI_ABORT);
-    (*env)->ReleaseIntArrayElements(env,rdispls,rdps,JNI_ABORT);
-}
- 
-/*
- * Class:     mpi_Intracomm
- * Method:    Reduce
- * Signature:
- (Ljava/lang/Object;ILjava/lang/Object;IILmpi/Datatype;Lmpi/Op;I)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_reduce(JNIEnv *env, jobject jthis,
-                                                 jobject sendbuf, jint sendoffset,
-                                                 jobject recvbuf, jint recvoffset,
-                                                 jint count, jobject type, jobject op, jint root)
-{
-    int id ;
-
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_type =
-        (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypehandleID)) ;
-
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr = NULL;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Comm_rank(mpi_comm, &id) ;
-
-    if (id == root) {
-        recvptr = ompi_java_getBufPtr(&rbufbase,
-                                         env, recvbuf, baseType, recvoffset);
-    }
-
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, baseType, sendoffset) ;
-
-    MPI_Reduce(sendptr, recvptr, count, mpi_type,
-               (MPI_Op)((*env)->GetLongField(env,op,ompi_java.OphandleID)),
-               root, mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, baseType) ;
-
-    if (id == root) {
-        ompi_java_releaseBufPtr(env, recvbuf, rbufbase, baseType);
-    }
-}
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Allreduce
- * Signature:
- (Ljava/lang/Object;ILjava/lang/Object;IILmpi/Datatype;Lmpi/Op;)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_allreduce(JNIEnv *env, jobject jthis,
-                                                    jobject sendbuf, jint sendoffset,
-                                                    jobject recvbuf, jint recvoffset,
-                                                    jint count, jobject type, jobject op)
-{
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_type =
-        (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypehandleID)) ;
-
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, baseType, recvoffset) ;
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, baseType, sendoffset) ;
-
-    MPI_Allreduce(sendptr, recvptr, count, mpi_type,
-                  (MPI_Op)((*env)->GetLongField(env,op,ompi_java.OphandleID)),
-                  mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, baseType) ;
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, baseType) ;
-}
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Reduce_scatter
- * Signature:
- (Ljava/lang/Object;ILjava/lang/Object;I[ILmpi/Datatype;Lmpi/Op;)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_reduce_1scatter(JNIEnv *env,
-                                                          jobject jthis,
-                                                          jobject sendbuf, jint sendoffset,
-                                                          jobject recvbuf, jint recvoffset,
-                                                          jintArray recvcount,
-                                                          jobject type, jobject op)
-{
-    jint *rcount;
-    jboolean isCopy ;
-
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_type =
-        (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypehandleID)) ;
-
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    rcount=(*env)->GetIntArrayElements(env,recvcount,&isCopy);
-
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, baseType, recvoffset) ;
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, baseType, sendoffset) ;
-
-    MPI_Reduce_scatter(sendptr, recvptr, (int*) rcount, mpi_type,
-                       (MPI_Op)((*env)->GetLongField(env,op,ompi_java.OphandleID)),
-                       mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, baseType) ;
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, baseType) ;
-
-    (*env)->ReleaseIntArrayElements(env,recvcount,rcount,JNI_ABORT);
-}
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Reduce_local
- * Signature:
- (Ljava/lang/Object;ILjava/lang/Object;IILmpi/Datatype;Lmpi/Op;I)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_reduce_1local(JNIEnv *env, jobject jthis,
-                                                        jobject inbuf, jobject inoutbuf,
-                                                        jint count, jobject type,
-                                                        jobject op)
-{
-    MPI_Datatype mpi_type =
-        (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypehandleID)) ;
-
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypebaseTypeID) ;
-
-    void *inptr, *inoutptr = NULL;
-    void *inbase, *inoutbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    inptr = ompi_java_getBufPtr(&inbase, env, inbuf, baseType, 0) ;
-    inoutptr = ompi_java_getBufPtr(&inoutbase, env, inoutbuf, baseType, 0) ;
-
-    MPI_Reduce_local(inptr, inoutptr, count, mpi_type,
-               (MPI_Op)((*env)->GetLongField(env,op,ompi_java.OphandleID))) ;
-
-    ompi_java_releaseBufPtr(env, inbuf, inbase, baseType) ;
-    ompi_java_releaseBufPtr(env, inoutbuf, inoutbase, baseType) ;
-}
-
-/*
- * Class:     mpi_Intracomm
- * Method:    Scan
- * Signature:
- (Ljava/lang/Object;ILjava/lang/Object;IILmpi/Datatype;Lmpi/Op;)V
-*/
-JNIEXPORT void JNICALL Java_mpi_Intracomm_scan(JNIEnv *env, jobject jthis,
-                                               jobject sendbuf, jint sendoffset,
-                                               jobject recvbuf, jint recvoffset,
-                                               jint count, jobject type, jobject op)
-{
-    MPI_Comm mpi_comm =
-        (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)) ;
-
-    MPI_Datatype mpi_type =
-        (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypehandleID)) ;
-
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypebaseTypeID) ;
-
-    void *sendptr, *recvptr ;
-    void *sbufbase, *rbufbase ;
-
-    ompi_java_clearFreeList(env) ;
-
-    recvptr = ompi_java_getBufPtr(&rbufbase, env, recvbuf, baseType, recvoffset) ;
-    sendptr = ompi_java_getBufPtr(&sbufbase, env, sendbuf, baseType, sendoffset) ;
-
-    MPI_Scan(sendptr, recvptr, count, mpi_type,
-             (MPI_Op)((*env)->GetLongField(env,op,ompi_java.OphandleID)),
-             mpi_comm) ;
-
-    ompi_java_releaseBufPtr(env, sendbuf, sbufbase, baseType) ;
-    ompi_java_releaseBufPtr(env, recvbuf, rbufbase, baseType) ;
-}
-

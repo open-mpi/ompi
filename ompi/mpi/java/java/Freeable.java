@@ -21,7 +21,15 @@
 
 package mpi;
 
-abstract class Freeable {
-    abstract void free() ;
+/**
+ * Objects freeables must be freed calling the method free.
+ */
+public interface Freeable
+{
+    /**
+     * Frees a freeable object.
+     * @throws MPIException 
+     */
+    void free() throws MPIException;
 }
 

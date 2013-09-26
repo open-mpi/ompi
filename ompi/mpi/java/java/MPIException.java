@@ -23,8 +23,55 @@
 
 package mpi;
 
-public class MPIException extends Exception {
-  public MPIException() {super() ;}
-  public MPIException(String message) {super(message) ;}
+/**
+ * Signals that an MPI exception of some sort has occurred.
+ */
+public final class MPIException extends Exception
+{
+private int errorCode, errorClass;
+
+protected MPIException(int code, int clazz, String message)
+{
+    super(message);
+    errorCode  = code;
+    errorClass = clazz;
 }
 
+/**
+ * Creates an exception.
+ * @param message message associated to the exception
+ */
+public MPIException(String message)
+{
+    super(message);
+}
+
+/**
+ * Creates an exception:
+ * @param cause cause associated to the exception
+ */
+public MPIException(Throwable cause)
+{
+    super(cause);
+    setStackTrace(cause.getStackTrace());
+}
+
+/**
+ * Gets the MPI error code.
+ * @return error code
+ */
+public int getErrorCode()
+{
+    return errorCode;
+}
+
+/**
+ * Gets the MPI error class.
+ * @return error class
+ */
+public int getErrorClass()
+{
+    return errorClass;
+}
+
+} // MPIException

@@ -23,99 +23,113 @@
 
 package mpi;
 
-public class Status extends Freeable {
+/**
+ * This class represents {@code MPI_Status}.
+ */
+public final class Status
+{
+private int  source;
+private int  tag;
+private int  error;
+private int  index;
+private int  elements;
+private int  _cancelled;
+private long _ucount;
 
-  public int index;
-  public int source;
-  public int tag;
-
-  int elements; 
-
-  //protected int count; 
-  protected int object_count;
-
-//  protected Status(long _handle) { handle = _handle;}
-
-  public Status() {alloc() ;}
-  private native void alloc() ;
-
-  @SuppressWarnings("unchecked")
-  public void finalize() throws MPIException {
-      synchronized(MPI.class) {
-          MPI.freeList.addFirst(this) ;
-      }
-  }
-
-  native void free() ;
-
-  /**
-   * Get the number of received entries.
-   * <p>
-   * <table>
-   * <tr><td><tt> datatype </tt></td><td> datatype of each item in receive
-   *                                      buffer </tr>
-   * <tr><td><em> returns: </em></td><td> number of received entries </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_GET_COUNT</tt>.
-   */
-
-  public int Get_count(Datatype datatype) throws MPIException {
-    
-    if (datatype.isObject())
-      return object_count;    // Is this correct?
-    else
-      return get_count(datatype);
-  }
-
-  private native int get_count(Datatype datatype);
-
-  /**
-   * Test if communication was cancelled.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> true if the operation was
-   *                                      succesfully cancelled,
-   *                                      false otherwise
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_TEST_CANCELLED</tt>.
-   */
-
-  public native boolean Test_cancelled() throws MPIException ;
-
-  /**
-   * Retrieve number of basic elements from status.
-   * <p>
-   * <table>
-   * <tr><td><tt> datatype </tt></td><td> datatype used by receive
-   *                                      operation </tr>
-   * <tr><td><em> returns: </em></td><td> number of received basic
-   *                                      elements </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_GET_ELEMENTS</tt>.
-   */
-
-  public int Get_elements(Datatype datatype) throws MPIException {
-    if(datatype.isObject())
-      return MPI.UNDEFINED;  // Is this correct?
-    else 
-      return get_elements(datatype) ;
-  }
-
-  private native int get_elements(Datatype datatype);
-
-  private static native void init(); 
-
-  protected long handle;
-
-  static {
+static
+{
     init();
-  }          
-
 }
 
-// Things to do
-//
+/**
+ * Status objects must be created only by the MPI methods.
+ */
+protected Status()
+{
+}
 
+private static native void init();
+
+/**
+ * Returns the number of received entries.
+ * <p>Java binding of the MPI operation {@code MPI_GET_COUNT}.
+ * @param datatype datatype of each item in receive buffer
+ * @return number of received entries
+ * @throws MPIException 
+ */
+public int getCount(Datatype datatype) throws MPIException
+{
+    MPI.check();
+    return getCount_jni(datatype);
+}
+
+private native int getCount_jni(Datatype datatype) throws MPIException;
+
+/**
+ * Tests if the communication was cancelled.
+ * <p>Java binding of the MPI operation {@code MPI_TEST_CANCELLED}.
+ * @return true if the operation was succesfully cancelled, false otherwise
+ * @throws MPIException 
+ */
+public boolean isCancelled() throws MPIException
+{
+    MPI.check();
+    return isCancelled_jni();
+}
+
+private native boolean isCancelled_jni() throws MPIException;
+
+/**
+ * Retrieves the number of basic elements from status.
+ * <p>Java binding of the MPI operation {@code MPI_GET_ELEMENTS}.
+ * @param datatype datatype used by receive operation
+ * @return number of received basic elements
+ * @throws MPIException 
+ */
+public int getElements(Datatype datatype) throws MPIException
+{
+    MPI.check();
+    return getElements_jni(datatype);
+}
+
+private native int getElements_jni(Datatype datatype) throws MPIException;
+
+/**
+ * Returns the "source" of message.
+ * <p>Java binding of the MPI value {@code MPI_SOURCE}.
+ * @return source of message
+ */
+public int getSource()
+{
+    return source;
+}
+
+/**
+ * Returns the "tag" of message.
+ * <p>Java binding of the MPI value {@code MPI_TAG}.
+ * @return tag of message
+ */
+public int getTag()
+{
+    return tag;
+}
+
+/**
+ * Returns the {@code MPI_ERROR} of message.
+ * @return error of message.
+ */
+public int getError()
+{
+    return error;
+}
+
+/**
+ * Returns the index of message.
+ * @return index of message.
+ */
+public int getIndex()
+{
+    return index;
+}
+
+} // Status

@@ -35,47 +35,68 @@
 
 /*
  * Class:     mpi_Intercomm
- * Method:    Remote_size
+ * Method:    getRemoteSize_jni
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_mpi_Intercomm_Remote_1size(JNIEnv *env, jobject jthis)
+JNIEXPORT jint JNICALL Java_mpi_Intercomm_getRemoteSize_1jni(
+                       JNIEnv *env, jobject jthis)
 {
-    int size;
+    int size, rc;
 
-    ompi_java_clearFreeList(env) ;
+    rc = MPI_Comm_remote_size(
+         (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommHandle)),
+         &size);
 
-    MPI_Comm_remote_size((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)),
-                         &size);
+    ompi_java_exceptionCheck(env, rc);
     return size;
 }
+
 /*
  * Class:     mpi_Intercomm
- * Method:    remote_group
+ * Method:    getRemoteGroup_jni
  * Signature: ()J
  */
-JNIEXPORT jlong JNICALL Java_mpi_Intercomm_remote_1group(JNIEnv *env, jobject jthis)
+JNIEXPORT jlong JNICALL Java_mpi_Intercomm_getRemoteGroup_1jni(
+                        JNIEnv *env, jobject jthis)
 {
     MPI_Group group;
 
-    ompi_java_clearFreeList(env) ;
+    int rc = MPI_Comm_remote_group(
+             (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommHandle)),
+             &group);
 
-    MPI_Comm_remote_group((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)),
-                          &group);
+    ompi_java_exceptionCheck(env, rc);
     return (jlong)group;
 }
 
 /*
  * Class:     mpi_Intercomm
- * Method:    merge
+ * Method:    merge_jni
  * Signature: (Z)Lmpi/Intracomm;
  */
-JNIEXPORT jlong JNICALL Java_mpi_Intercomm_merge(JNIEnv *env, jobject jthis, jboolean high)
+JNIEXPORT jlong JNICALL Java_mpi_Intercomm_merge_1jni(
+                        JNIEnv *env, jobject jthis, jboolean high)
 {
     MPI_Comm newintracomm;
 
-    ompi_java_clearFreeList(env) ;
+    int rc = MPI_Intercomm_merge(
+             (MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommHandle)),
+             high, &newintracomm);
 
-    MPI_Intercomm_merge((MPI_Comm)((*env)->GetLongField(env,jthis,ompi_java.CommhandleID)), high,
-                        &newintracomm);
+    ompi_java_exceptionCheck(env, rc);
     return (jlong)newintracomm;
+}
+
+/*
+ * Class:     mpi_Intercomm
+ * Method:    getParent_jni
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_mpi_Intercomm_getParent_1jni(
+                        JNIEnv *env, jclass clazz)
+{
+    MPI_Comm parent;
+    int rc = MPI_Comm_get_parent(&parent);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)parent;
 }

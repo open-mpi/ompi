@@ -1,4 +1,11 @@
 /*
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ *
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow.
+ */
+/*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -24,533 +31,919 @@
 
 package mpi;
 
-import java.util.LinkedList ;
+import java.io.*;
+import java.nio.*;
 
-public class MPI {
+/**
+ * MPI environment.
+ */
+public final class MPI
+{
+private static boolean initialized, finalized;
+private static byte[] buffer = null; // Buffer allocation
+private static final int MAX_PROCESSOR_NAME = 256;
 
-  static int MAX_PROCESSOR_NAME = 256;
+public static final Intracomm COMM_WORLD, COMM_SELF;
 
-  static public Intracomm COMM_WORLD;
-  static public Comm COMM_SELF;
+public static final int THREAD_SINGLE, THREAD_FUNNELED, THREAD_SERIALIZED,
+                        THREAD_MULTIPLE;
 
-  static public int GRAPH, CART;
-  static public int ANY_SOURCE, ANY_TAG;
+public static final int GRAPH, DIST_GRAPH, CART;
+public static final int ANY_SOURCE, ANY_TAG;
 
-  static public Op MAX, MIN, SUM, PROD, LAND, BAND,
-                   LOR, BOR, LXOR, BXOR, MINLOC, MAXLOC;
+public static final Op MAX, MIN, SUM, PROD, LAND, BAND,
+                       LOR, BOR, LXOR, BXOR, MINLOC, MAXLOC;
 
-  static public Datatype BYTE, CHAR, SHORT, BOOLEAN, 
-    INT, LONG, FLOAT, DOUBLE, PACKED, LB, UB, OBJECT;
-  static public Datatype SHORT2, INT2, LONG2, FLOAT2, DOUBLE2;
+public static final Datatype DATATYPE_NULL;
 
-  static public Request REQUEST_NULL;
-  static public Group GROUP_EMPTY;
+public static final Datatype BYTE, CHAR, SHORT, BOOLEAN,
+                             INT, LONG, FLOAT, DOUBLE, PACKED,
+                             INT2, SHORT_INT, LONG_INT, FLOAT_INT, DOUBLE_INT,
+                             FLOAT_COMPLEX, DOUBLE_COMPLEX;
 
-  static public int PROC_NULL;
-  static public int BSEND_OVERHEAD;
-  static public int UNDEFINED;
-  static public int IDENT, CONGRUENT, SIMILAR, UNEQUAL;
-  static public int TAG_UB, HOST, IO;
+public static final Int2      int2;
+public static final ShortInt  shortInt;
+public static final LongInt   longInt;
+public static final FloatInt  floatInt;
+public static final DoubleInt doubleInt;
 
-  static Errhandler ERRORS_ARE_FATAL, ERRORS_RETURN;
+public static final Request REQUEST_NULL;
+public static final Group GROUP_EMPTY;
+public static final Info INFO_ENV, INFO_NULL;
 
-  static {
-   
-      // System.loadLibrary("savesignals");
-            // Actually only needed for JVMs that don't provide
-            // JDK 1.4-like signal chaining, but doesn't do any harm.
+public static final int PROC_NULL;
+public static final int UNDEFINED;
+public static final int IDENT, CONGRUENT, SIMILAR, UNEQUAL;
+public static final int TAG_UB, HOST, IO, WTIME_IS_GLOBAL;
 
-      //saveSignalHandlers();
-      
-      System.loadLibrary("mpi_java");
-      if (!loadGlobalLibraries()) {
-	  System.out.println("JAVA BINDINGS FAILED TO LOAD REQUIRED LIBRARIES");
-	  System.exit(1);
-      }
+public static final int APPNUM, LASTUSEDCODE, UNIVERSE_SIZE, WIN_BASE,
+                        WIN_SIZE, WIN_DISP_UNIT;
 
+public static final int VERSION, SUBVERSION;
+public static final int ROOT, KEYVAL_INVALID, BSEND_OVERHEAD;
+public static final int MAX_OBJECT_NAME, MAX_PORT_NAME, MAX_DATAREP_STRING;
+public static final int MAX_INFO_KEY, MAX_INFO_VAL;
+public static final int ORDER_C, ORDER_FORTRAN;
+public static final int DISTRIBUTE_BLOCK, DISTRIBUTE_CYCLIC, DISTRIBUTE_NONE,
+                        DISTRIBUTE_DFLT_DARG;
 
-      //restoreSignalHandlers();
-            // On SP2, JVM signal handlers overridden during loadLibrary().
+public static final int MODE_CREATE, MODE_RDONLY, MODE_WRONLY, MODE_RDWR,
+                        MODE_DELETE_ON_CLOSE, MODE_UNIQUE_OPEN, MODE_EXCL,
+                        MODE_APPEND, MODE_SEQUENTIAL;
+public static final int DISPLACEMENT_CURRENT;
+public static final int SEEK_SET, SEEK_CUR, SEEK_END;
 
-    try {
-      BYTE    = new Datatype();
-      CHAR    = new Datatype();
-      SHORT   = new Datatype();
-      BOOLEAN = new Datatype();
-      INT     = new Datatype();
-      LONG    = new Datatype();
-      FLOAT   = new Datatype();
-      DOUBLE  = new Datatype();
-      PACKED  = new Datatype();
-      LB      = new Datatype();
-      UB      = new Datatype();
-      OBJECT  = new Datatype();
+public static final int MODE_NOCHECK, MODE_NOPRECEDE, MODE_NOPUT,
+                        MODE_NOSTORE, MODE_NOSUCCEED;
+public static final int LOCK_EXCLUSIVE, LOCK_SHARED;
 
-      SHORT2  = new Datatype() ;
-      INT2    = new Datatype() ;
-      LONG2   = new Datatype() ;
-      FLOAT2  = new Datatype() ;
-      DOUBLE2 = new Datatype() ;
+public static final Errhandler ERRORS_ARE_FATAL, ERRORS_RETURN;
 
-      MAX  = new Op(1);
-      MIN  = new Op(2);
-      SUM  = new Op(3);
-      PROD = new Op(4);
-      LAND = new Op(5);
-      BAND = new Op(6);
-      LOR  = new Op(7);
-      BOR  = new Op(8);
-      LXOR = new Op(9);
-      BXOR = new Op(10);
+// Error classes and codes
+public static final int SUCCESS;
+public static final int ERR_BUFFER;
+public static final int ERR_COUNT;
+public static final int ERR_TYPE;
+public static final int ERR_TAG;
+public static final int ERR_COMM;
+public static final int ERR_RANK;
+public static final int ERR_REQUEST;
+public static final int ERR_ROOT;
+public static final int ERR_GROUP;
+public static final int ERR_OP;
+public static final int ERR_TOPOLOGY;
+public static final int ERR_DIMS;
+public static final int ERR_ARG;
+public static final int ERR_UNKNOWN;
+public static final int ERR_TRUNCATE;
+public static final int ERR_OTHER;
+public static final int ERR_INTERN;
+public static final int ERR_IN_STATUS;
+public static final int ERR_PENDING;
+public static final int ERR_ACCESS;
+public static final int ERR_AMODE;
+public static final int ERR_ASSERT;
+public static final int ERR_BAD_FILE;
+public static final int ERR_BASE;
+public static final int ERR_CONVERSION;
+public static final int ERR_DISP;
+public static final int ERR_DUP_DATAREP;
+public static final int ERR_FILE_EXISTS;
+public static final int ERR_FILE_IN_USE;
+public static final int ERR_FILE;
+public static final int ERR_INFO_KEY;
+public static final int ERR_INFO_NOKEY;
+public static final int ERR_INFO_VALUE;
+public static final int ERR_INFO;
+public static final int ERR_IO;
+public static final int ERR_KEYVAL;
+public static final int ERR_LOCKTYPE;
+public static final int ERR_NAME;
+public static final int ERR_NO_MEM;
+public static final int ERR_NOT_SAME;
+public static final int ERR_NO_SPACE;
+public static final int ERR_NO_SUCH_FILE;
+public static final int ERR_PORT;
+public static final int ERR_QUOTA;
+public static final int ERR_READ_ONLY;
+public static final int ERR_RMA_CONFLICT;
+public static final int ERR_RMA_SYNC;
+public static final int ERR_SERVICE;
+public static final int ERR_SIZE;
+public static final int ERR_SPAWN;
+public static final int ERR_UNSUPPORTED_DATAREP;
+public static final int ERR_UNSUPPORTED_OPERATION;
+public static final int ERR_WIN;
+public static final int ERR_LASTCODE;
+public static final int ERR_SYSRESOURCE;
 
-      MINLOC = new Op(new Minloc(), true);
-      MAXLOC = new Op(new Maxloc(), true);
+static
+{
+    System.loadLibrary("mpi_java");
 
-      GROUP_EMPTY  = new Group(Group.EMPTY);
-      REQUEST_NULL = new Request(Request.NULL);
-      
-      // Constant
-      SetConstant(); 
-
-      ERRORS_ARE_FATAL = new Errhandler(Errhandler.FATAL);
-      ERRORS_RETURN    = new Errhandler(Errhandler.RETURN);       
-
-      COMM_WORLD = new Intracomm() ;
+    if(!loadGlobalLibraries())
+    {
+        System.out.println("JAVA BINDINGS FAILED TO LOAD REQUIRED LIBRARIES");
+        System.exit(1);
     }
-    catch (MPIException e) {
-      System.out.println(e.getMessage()) ;
-      System.exit(1) ;
-    }
-  }
 
-    static private native boolean loadGlobalLibraries();
-    static private native void saveSignalHandlers();
-    //    static private native void restoreSignalHandlers(); 
+    //restoreSignalHandlers();
+    // On SP2, JVM signal handlers overridden during loadLibrary().
 
-  /**
-   * Initialize MPI.
-   * <p>
-   * <table>
-   * <tr><td><tt> args </tt></td><td> arguments to <tt>main</tt> method. </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_INIT</tt>.
-   */
+    DATATYPE_NULL = new Datatype();
 
-  static public String [] Init(String[] args) throws MPIException {
+    BYTE    = new Datatype();
+    CHAR    = new Datatype();
+    SHORT   = new Datatype();
+    BOOLEAN = new Datatype();
+    INT     = new Datatype();
+    LONG    = new Datatype();
+    FLOAT   = new Datatype();
+    DOUBLE  = new Datatype();
+    PACKED  = new Datatype();
+    INT2    = new Datatype();
 
-    String [] newArgs = InitNative(args);
+    SHORT_INT  = new Datatype();
+    LONG_INT   = new Datatype();
+    FLOAT_INT  = new Datatype();
+    DOUBLE_INT = new Datatype();
+    FLOAT_COMPLEX  = new Datatype();
+    DOUBLE_COMPLEX = new Datatype();
 
-    // restoreSignalHandlers();
-          // On MPICH, etc, JVM signal handlers overridden during MPI_Init().
+    int2      = newInt2();
+    shortInt  = newShortInt();
+    longInt   = newLongInt();
+    floatInt  = newFloatInt();
+    doubleInt = newDoubleInt();
 
+    MAX    = new Op(1);
+    MIN    = new Op(2);
+    SUM    = new Op(3);
+    PROD   = new Op(4);
+    LAND   = new Op(5);
+    BAND   = new Op(6);
+    LOR    = new Op(7);
+    BOR    = new Op(8);
+    LXOR   = new Op(9);
+    BXOR   = new Op(10);
+    MINLOC = new Op(11);
+    MAXLOC = new Op(12);
 
-    BYTE.setBasic(1);
-    CHAR.setBasic(2);
-    SHORT.setBasic(3);
-    BOOLEAN.setBasic(4);
-    INT.setBasic(5);
-    LONG.setBasic(6);
-    FLOAT.setBasic(7);
-    DOUBLE.setBasic(8);
-    PACKED.setBasic(9);
-    LB.setBasic(10);
-    UB.setBasic(11);
-    OBJECT.setBasic(12);
+    GROUP_EMPTY  = new Group(Group.getEmpty());
+    REQUEST_NULL = new Request(Request.getNull());
+    INFO_ENV     = Info.newEnv();
+    INFO_NULL    = new Info(Info.NULL);
 
-    SHORT2.setContiguous(2, MPI.SHORT);
-    INT2.setContiguous(2, MPI.INT);
-    LONG2.setContiguous(2, MPI.LONG);
-    FLOAT2.setContiguous(2, MPI.FLOAT);
-    DOUBLE2.setContiguous(2, MPI.DOUBLE);
+    Constant c = new Constant();
 
-    SHORT2.Commit();
-    INT2.Commit();
-    LONG2.Commit();
-    FLOAT2.Commit();
-    DOUBLE2.Commit();
+    THREAD_SINGLE     = c.THREAD_SINGLE;
+    THREAD_FUNNELED   = c.THREAD_FUNNELED;
+    THREAD_SERIALIZED = c.THREAD_SERIALIZED;
+    THREAD_MULTIPLE   = c.THREAD_MULTIPLE;
+
+    GRAPH      = c.GRAPH;
+    DIST_GRAPH = c.DIST_GRAPH;
+    CART       = c.CART;
+
+    ANY_SOURCE = c.ANY_SOURCE;
+    ANY_TAG    = c.ANY_TAG;
+    PROC_NULL  = c.PROC_NULL;
+
+    UNDEFINED = c.UNDEFINED;
+
+    IDENT     = c.IDENT;
+    CONGRUENT = c.CONGRUENT;
+    SIMILAR   = c.SIMILAR;
+    UNEQUAL   = c.UNEQUAL;
+
+    TAG_UB          = c.TAG_UB;
+    HOST            = c.HOST;
+    IO              = c.IO;
+    WTIME_IS_GLOBAL = c.WTIME_IS_GLOBAL;
+
+    APPNUM        = c.APPNUM;
+    LASTUSEDCODE  = c.LASTUSEDCODE;
+    UNIVERSE_SIZE = c.UNIVERSE_SIZE;
+    WIN_BASE      = c.WIN_BASE;
+    WIN_SIZE      = c.WIN_SIZE;
+    WIN_DISP_UNIT = c.WIN_DISP_UNIT;
+
+    VERSION    = c.VERSION;
+    SUBVERSION = c.SUBVERSION;
+
+    ROOT           = c.ROOT;
+    KEYVAL_INVALID = c.KEYVAL_INVALID;
+    BSEND_OVERHEAD = c.BSEND_OVERHEAD;
+
+    MAX_OBJECT_NAME    = c.MAX_OBJECT_NAME;
+    MAX_PORT_NAME      = c.MAX_PORT_NAME;
+    MAX_DATAREP_STRING = c.MAX_DATAREP_STRING;
+
+    MAX_INFO_KEY = c.MAX_INFO_KEY;
+    MAX_INFO_VAL = c.MAX_INFO_VAL;
+
+    ORDER_C       = c.ORDER_C;
+    ORDER_FORTRAN = c.ORDER_FORTRAN;
+
+    DISTRIBUTE_BLOCK     = c.DISTRIBUTE_BLOCK;
+    DISTRIBUTE_CYCLIC    = c.DISTRIBUTE_CYCLIC;
+    DISTRIBUTE_NONE      = c.DISTRIBUTE_NONE;
+    DISTRIBUTE_DFLT_DARG = c.DISTRIBUTE_DFLT_DARG;
+
+    MODE_CREATE          = c.MODE_CREATE;
+    MODE_RDONLY          = c.MODE_RDONLY;
+    MODE_WRONLY          = c.MODE_WRONLY;
+    MODE_RDWR            = c.MODE_RDWR;
+    MODE_DELETE_ON_CLOSE = c.MODE_DELETE_ON_CLOSE;
+    MODE_UNIQUE_OPEN     = c.MODE_UNIQUE_OPEN;
+    MODE_EXCL            = c.MODE_EXCL;
+    MODE_APPEND          = c.MODE_APPEND;
+    MODE_SEQUENTIAL      = c.MODE_SEQUENTIAL;
+
+    DISPLACEMENT_CURRENT = c.DISPLACEMENT_CURRENT;
+
+    SEEK_SET = c.SEEK_SET;
+    SEEK_CUR = c.SEEK_CUR;
+    SEEK_END = c.SEEK_END;
+
+    MODE_NOCHECK   = c.MODE_NOCHECK;
+    MODE_NOPRECEDE = c.MODE_NOPRECEDE;
+    MODE_NOPUT     = c.MODE_NOPUT;
+    MODE_NOSTORE   = c.MODE_NOSTORE;
+    MODE_NOSUCCEED = c.MODE_NOSUCCEED;
+    LOCK_EXCLUSIVE = c.LOCK_EXCLUSIVE;
+    LOCK_SHARED    = c.LOCK_SHARED;
+
+    ERRORS_ARE_FATAL = new Errhandler(Errhandler.getFatal());
+    ERRORS_RETURN    = new Errhandler(Errhandler.getReturn());
+
+    COMM_WORLD = new Intracomm();
+    COMM_SELF  = new Intracomm();
+
+    // Error classes and codes
+    SUCCESS          = c.SUCCESS;
+    ERR_BUFFER       = c.ERR_BUFFER;
+    ERR_COUNT        = c.ERR_COUNT;
+    ERR_TYPE         = c.ERR_TYPE;
+    ERR_TAG          = c.ERR_TAG;
+    ERR_COMM         = c.ERR_COMM;
+    ERR_RANK         = c.ERR_RANK;
+    ERR_REQUEST      = c.ERR_REQUEST;
+    ERR_ROOT         = c.ERR_ROOT;
+    ERR_GROUP        = c.ERR_GROUP;
+    ERR_OP           = c.ERR_OP;
+    ERR_TOPOLOGY     = c.ERR_TOPOLOGY;
+    ERR_DIMS         = c.ERR_DIMS;
+    ERR_ARG          = c.ERR_ARG;
+    ERR_UNKNOWN      = c.ERR_UNKNOWN;
+    ERR_TRUNCATE     = c.ERR_TRUNCATE;
+    ERR_OTHER        = c.ERR_OTHER;
+    ERR_INTERN       = c.ERR_INTERN;
+    ERR_IN_STATUS    = c.ERR_IN_STATUS;
+    ERR_PENDING      = c.ERR_PENDING;
+    ERR_ACCESS       = c.ERR_ACCESS;
+    ERR_AMODE        = c.ERR_AMODE;
+    ERR_ASSERT       = c.ERR_ASSERT;
+    ERR_BAD_FILE     = c.ERR_BAD_FILE;
+    ERR_BASE         = c.ERR_BASE;
+    ERR_CONVERSION   = c.ERR_CONVERSION;
+    ERR_DISP         = c.ERR_DISP;
+    ERR_DUP_DATAREP  = c.ERR_DUP_DATAREP;
+    ERR_FILE_EXISTS  = c.ERR_FILE_EXISTS;
+    ERR_FILE_IN_USE  = c.ERR_FILE_IN_USE;
+    ERR_FILE         = c.ERR_FILE;
+    ERR_INFO_KEY     = c.ERR_INFO_KEY;
+    ERR_INFO_NOKEY   = c.ERR_INFO_NOKEY;
+    ERR_INFO_VALUE   = c.ERR_INFO_VALUE;
+    ERR_INFO         = c.ERR_INFO;
+    ERR_IO           = c.ERR_IO;
+    ERR_KEYVAL       = c.ERR_KEYVAL;
+    ERR_LOCKTYPE     = c.ERR_LOCKTYPE;
+    ERR_NAME         = c.ERR_NAME;
+    ERR_NO_MEM       = c.ERR_NO_MEM;
+    ERR_NOT_SAME     = c.ERR_NOT_SAME;
+    ERR_NO_SPACE     = c.ERR_NO_SPACE;
+    ERR_NO_SUCH_FILE = c.ERR_NO_SUCH_FILE;
+    ERR_PORT         = c.ERR_PORT;
+    ERR_QUOTA        = c.ERR_QUOTA;
+    ERR_READ_ONLY    = c.ERR_READ_ONLY;
+    ERR_RMA_CONFLICT = c.ERR_RMA_CONFLICT;
+    ERR_RMA_SYNC     = c.ERR_RMA_SYNC;
+    ERR_SERVICE      = c.ERR_SERVICE;
+    ERR_SIZE         = c.ERR_SIZE;
+    ERR_SPAWN        = c.ERR_SPAWN;
+    ERR_UNSUPPORTED_DATAREP   = c.ERR_UNSUPPORTED_DATAREP;
+    ERR_UNSUPPORTED_OPERATION = c.ERR_UNSUPPORTED_OPERATION;
+    ERR_WIN          = c.ERR_WIN;
+    ERR_LASTCODE     = c.ERR_LASTCODE;
+    ERR_SYSRESOURCE  = c.ERR_SYSRESOURCE;
+}
+
+private static native boolean loadGlobalLibraries();
+
+private static native Int2      newInt2();
+private static native ShortInt  newShortInt();
+private static native LongInt   newLongInt();
+private static native FloatInt  newFloatInt();
+private static native DoubleInt newDoubleInt();
+
+private static void initCommon() throws MPIException
+{
+    initialized = true;
+
+    DATATYPE_NULL.setBasic(Datatype.NULL);
+
+    BYTE.setBasic(Datatype.BYTE);
+    CHAR.setBasic(Datatype.CHAR);
+    SHORT.setBasic(Datatype.SHORT);
+    BOOLEAN.setBasic(Datatype.BOOLEAN);
+    INT.setBasic(Datatype.INT);
+    LONG.setBasic(Datatype.LONG);
+    FLOAT.setBasic(Datatype.FLOAT);
+    DOUBLE.setBasic(Datatype.DOUBLE);
+    PACKED.setBasic(Datatype.PACKED);
+
+    INT2.setBasic(Datatype.INT2, MPI.BYTE);
+    SHORT_INT.setBasic(Datatype.SHORT_INT, MPI.BYTE);
+    LONG_INT.setBasic(Datatype.LONG_INT, MPI.BYTE);
+    FLOAT_INT.setBasic(Datatype.FLOAT_INT, MPI.BYTE);
+    DOUBLE_INT.setBasic(Datatype.DOUBLE_INT, MPI.BYTE);
+    FLOAT_COMPLEX.setBasic(Datatype.FLOAT_COMPLEX, MPI.FLOAT);
+    DOUBLE_COMPLEX.setBasic(Datatype.DOUBLE_COMPLEX, MPI.DOUBLE);
 
     COMM_WORLD.setType(Intracomm.WORLD);
-
-    return newArgs ;
-  }
-
-  static private native String [] InitNative(String[] args);
-  static private native void SetConstant();
-
-  /**
-   * Finalize MPI.
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_FINALIZE</tt>.
-   */
-
-  static public native void Finalize() throws MPIException ;
-
-  /**
-   * Returns wallclock time.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> elapsed wallclock time in seconds
-   *                                      since some time in the past </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_WTIME</tt>.
-   */
-
-  static public native double Wtime();
-
-  /**
-   * Returns resolution of timer.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> resolution of <tt>wtime</tt> in
-   *                                      seconds. </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_WTICK</tt>.
-   */
-
-  static public native double Wtick();
-
-  /**
-   * Returns the name of the processor on which it is called.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> A unique specifier for the actual
-   *                                      node. </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_GET_PROCESSOR_NAME</tt>.
-   */
-
-  static public String Get_processor_name() throws MPIException {
-    byte[] buf = new byte[MAX_PROCESSOR_NAME] ;
-    int lengh = Get_processor_name(buf) ;
-    return new String(buf,0,lengh) ;
-  }
-
-  static private native int Get_processor_name(byte[] buf) ;
-
-  /**
-   * Test if MPI has been initialized.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> <tt>true</tt> if <tt>Init</tt> has
-   *                                      been called, <tt>false</tt>
-   *                                      otherwise. </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_INITIALIZED</tt>.
-   */
-
-  static public native boolean Initialized() throws MPIException ;
-
-  // Buffer allocation
-
-  private static byte [] buffer = null ;
-
-  /**
-   * Provides to MPI a buffer in user's memory to be used for buffering
-   * outgoing messages.
-   * Java binding of the MPI operation <tt>MPI_BUFFER_ATTACH</tt>.
-   */
-
-  static public void Buffer_attach(byte[] buffer) throws MPIException {
-    MPI.buffer = buffer ;
-    Buffer_attach_native(buffer);
-  }
-
-  static private native void Buffer_attach_native(byte[] buffer);
-
-
-  /**
-   * Detach the buffer currently associated with MPI.
-   * Java binding of the MPI operation <tt>MPI_BUFFER_DETACH</tt>.
-   */
-
-  static public byte[] Buffer_detach() throws MPIException {
-    Buffer_detach_native(buffer);
-    byte [] result = MPI.buffer ;
-    MPI.buffer = null ;
-    return result ;
-  }
-
-  static private native void Buffer_detach_native(byte[] buffer);
-
-  static LinkedList freeList = new LinkedList() ;
-
-  synchronized static void clearFreeList() {
-
-      while(!freeList.isEmpty())
-	  ((Freeable) freeList.removeFirst()).free() ;
-  }
+    COMM_SELF.setType(Intracomm.SELF);
 }
 
+/**
+ * Initialize MPI.
+ * <p>Java binding of the MPI operation {@code MPI_INIT}.
+ * @param args arguments to the {@code main} method.
+ * @return arguments
+ * @throws MPIException
+ */
+public static String[] Init(String[] args) throws MPIException
+{
+    if(initialized)
+        throw new MPIException("MPI is already initialized.");
 
-// Minloc and Maxloc
-// BC Note: moved to separate source files
-/*
-class Maxloc extends User_function{
-  public void Call(Object invec, int inoffset, Object outvec, int outoffset,
-                   int count, Datatype datatype){
-
-    // *** should work also for derived datatypes with following as
-    //     as bases ? ***
-
-    if(datatype == MPI.SHORT2) {
-      short [] in_array = (short[])invec;
-      short [] out_array = (short[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2) {  
-        short inval  = in_array  [indisp] ;
-        short outval = out_array [outdisp] ;
-
-        if(inval > outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          short inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.INT2) {
-      int [] in_array = (int[])invec;
-      int [] out_array = (int[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        int inval  = in_array  [indisp] ;
-        int outval = out_array [outdisp] ;
-
-        if(inval > outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          int inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.LONG2) {
-      long [] in_array = (long[])invec;
-      long [] out_array = (long[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        long inval  = in_array  [indisp] ;
-        long outval = out_array [outdisp] ;
-
-        if(inval > outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          long inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.FLOAT2) {
-      float [] in_array = (float[])invec;
-      float [] out_array = (float[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        float inval  = in_array  [indisp] ;
-        float outval = out_array [outdisp] ;
-
-        if(inval > outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          float inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.DOUBLE2) {
-      double [] in_array = (double[])invec;
-      double [] out_array = (double[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        double inval  = in_array  [indisp] ;
-        double outval = out_array [outdisp] ;
-
-        if(inval > outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          double inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else {
-      System.out.println("MPI.MAXLOC: invalid datatype") ;
-      try {
-        MPI.COMM_WORLD.Abort(1);
-      }
-      catch(MPIException e) {}
-    }
-  }
+    String[] newArgs = Init_jni(args);
+    initCommon();
+    return newArgs;
 }
 
-class Minloc extends User_function{
-  public void Call(Object invec, int inoffset, Object outvec, int outoffset,
-                   int count, Datatype datatype){
-    if(datatype == MPI.SHORT2) {
-      short [] in_array = (short[])invec;
-      short [] out_array = (short[])outvec;
+private static native String [] Init_jni(String[] args);
 
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        short inval  = in_array  [indisp] ;
-        short outval = out_array [outdisp] ;
+/**
+ * Initialize MPI with threads.
+ * <p>Java binding of the MPI operation {@code MPI_INIT_THREAD}.
+ * @param args     arguments to the {@code main} method.
+ * @param required desired level of thread support
+ * @return provided level of thread support
+ * @throws MPIException 
+ */
+public static int InitThread(String[] args, int required) throws MPIException
+{
+    if(initialized)
+        throw new MPIException("MPI is already initialized.");
 
-        if(inval < outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          short inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.INT2) {
-      int [] in_array = (int[])invec;
-      int [] out_array = (int[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        int inval  = in_array  [indisp] ;
-        int outval = out_array [outdisp] ;
-
-        if(inval < outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          int inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.LONG2) {
-      long [] in_array = (long[])invec;
-      long [] out_array = (long[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        long inval  = in_array  [indisp] ;
-        long outval = out_array [outdisp] ;
-
-        if(inval < outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          long inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.FLOAT2) {
-      float [] in_array = (float[])invec;
-      float [] out_array = (float[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        float inval  = in_array  [indisp] ;
-        float outval = out_array [outdisp] ;
-
-        if(inval < outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          float inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else if(datatype == MPI.DOUBLE2) {
-      double [] in_array = (double[])invec;
-      double [] out_array = (double[])outvec;
-
-      int indisp  = inoffset ;
-      int outdisp = outoffset ;
-      for (int i = 0; i < count; i++, indisp += 2, outdisp += 2){
-        
-        double inval  = in_array  [indisp] ;
-        double outval = out_array [outdisp] ;
-
-        if(inval < outval) {
-          out_array [outdisp    ] = inval ;
-          out_array [outdisp + 1] = in_array [outdisp + 1] ;
-        }
-        else if(inval == outval) {
-          double inloc = in_array [indisp + 1] ;
-
-          if(inloc < out_array [outdisp + 1])
-            out_array [outdisp + 1] = inloc ;
-        }
-      }
-    }
-    else {
-      System.out.println("MPI.MINLOC: invalid datatype") ;
-      try {
-        MPI.COMM_WORLD.Abort(1);
-      }
-      catch(MPIException e) {}
-    }
-  }
+    int provided = InitThread_jni(args, required);
+    initCommon();
+    return provided;
 }
-*/
 
-// Things to do:
-//
-//   Check if `Maxloc'/`Minloc' should work with derived types.
+private static native int InitThread_jni(String[] args, int required)
+        throws MPIException;
 
+/**
+ * Java binding of the MPI operation {@code MPI_QUERY_THREAD}.
+ * @return provided level of thread support
+ * @throws MPIException 
+ */
+public static int queryThread() throws MPIException
+{
+    MPI.check();
+    return queryThread_jni();
+}
+
+private static native int queryThread_jni() throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_IS_THREAD_MAIN}.
+ * @return true if it is the main thread
+ * @throws MPIException 
+ */
+public static boolean isThreadMain() throws MPIException
+{
+    MPI.check();
+    return isThreadMain_jni();
+}
+
+private static native boolean isThreadMain_jni() throws MPIException;
+
+/**
+ * Finalize MPI.
+ * <p>Java binding of the MPI operation {@code MPI_FINALIZE}.
+ * @throws MPIException
+ */
+public static void Finalize() throws MPIException
+{
+    check();
+    Finalize_jni();
+    finalized = true;
+}
+
+private static native void Finalize_jni() throws MPIException;
+
+/**
+ * Returns an elapsed time on the calling processor.
+ * <p>Java binding of the MPI operation {@code MPI_WTIME}.
+ * @return time in seconds since an arbitrary time in the past.
+ * @throws MPIException
+ */
+public static double wtime() throws MPIException
+{
+    check();
+    return wtime_jni();
+}
+
+private static native double wtime_jni();
+
+/**
+ * Returns resolution of timer.
+ * <p>Java binding of the MPI operation {MPI_WTICK}.
+ * @return resolution of {@code wtime} in seconds.
+ * @throws MPIException
+ */
+public static double wtick() throws MPIException
+{
+    check();
+    return wtick_jni();
+}
+
+private static native double wtick_jni();
+
+/**
+ * Returns the name of the processor on which it is called.
+ * <p>Java binding of the MPI operation {@code MPI_GET_PROCESSOR_NAME}.
+ * @return A unique specifier for the actual node.
+ * @throws MPIException
+ */
+static public String getProcessorName() throws MPIException
+{
+    check();
+    byte[] buf = new byte[MAX_PROCESSOR_NAME];
+    int lengh = getProcessorName(buf);
+    return new String(buf,0,lengh);
+}
+
+static private native int getProcessorName(byte[] buf);
+
+/**
+ * Test if MPI has been initialized.
+ * <p>Java binding of the MPI operation {@code MPI_INITIALIZED}.
+ * @return {@code true} if {@code Init} has been called,
+ *         {@code false} otherwise.
+ * @throws MPIException
+ */
+static public native boolean isInitialized() throws MPIException;
+
+/**
+ * Test if MPI has been finalized.
+ * <p>Java binding of the MPI operation {@code MPI_FINALIZED}.
+ * @return {@code true} if {@code Finalize} has been called,
+ *         {@code false} otherwise.
+ * @throws MPIException
+ */
+static public native boolean isFinalized() throws MPIException;
+
+/**
+ * Attaches a user-provided buffer for sending.
+ * <p>Java binding of the MPI operation {@code MPI_BUFFER_ATTACH}.
+ * @param buffer initial buffer
+ * @throws MPIException
+ */
+static public void attachBuffer(byte[] buffer) throws MPIException
+{
+    check();
+    MPI.buffer = buffer;
+    attachBuffer_jni(buffer);
+}
+
+static private native void attachBuffer_jni(byte[] buffer);
+
+/**
+ * Removes an existing buffer (for use in sending).
+ * <p>Java binding of the MPI operation {@code MPI_BUFFER_DETACH}.
+ * @return initial buffer
+ * @throws MPIException
+ */
+static public byte[] detachBuffer() throws MPIException
+{
+    check();
+    detachBuffer_jni(buffer);
+    byte[] result = MPI.buffer;
+    MPI.buffer = null;
+    return result;
+}
+
+static private native void detachBuffer_jni(byte[] buffer);
+
+/**
+ * Controls profiling.
+ * <p>This method is not implemented.
+ * <p>Java binding of the MPI operation {@code MPI_PCONTROL}.
+ * @param level Profiling level.
+ * @param obj   Profiling information.
+ */
+public static void pControl(int level, Object obj)
+{
+    // Nothing to do here.
+}
+
+/**
+ * Check if MPI has been initialized and hasn't been finalized.
+ * @throws MPIException
+ */
+protected static void check() throws MPIException
+{
+    if(!initialized)
+        throw new MPIException("MPI is not initialized.");
+
+    if(finalized)
+        throw new MPIException("MPI is finalized.");
+}
+
+protected static byte[] attrSet(Object value) throws MPIException
+{
+    try
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream os = new ObjectOutputStream(baos);
+        os.writeObject(value);
+        os.close();
+        return baos.toByteArray();
+    }
+    catch(IOException ex)
+    {
+        MPIException mpiex = new MPIException(ex);
+        mpiex.setStackTrace(ex.getStackTrace());
+        throw mpiex;
+    }
+}
+
+protected static Object attrGet(byte[] value) throws MPIException
+{
+    if(value == null)
+        return null;
+
+    try
+    {
+        ByteArrayInputStream bais = new ByteArrayInputStream(value);
+        ObjectInputStream is = new ObjectInputStream(bais);
+        Object obj = is.readObject();
+        is.close();
+        return obj;
+    }
+    catch(ClassNotFoundException ex)
+    {
+        throw new MPIException(ex);
+    }
+    catch(IOException ex)
+    {
+        throw new MPIException(ex);
+    }
+}
+
+/**
+ * Allocates a new direct byte buffer.
+ * @param capacity The new buffer's capacity, in bytes
+ * @return The new byte buffer
+ */
+public static ByteBuffer newByteBuffer(int capacity)
+{
+    ByteBuffer buf = ByteBuffer.allocateDirect(capacity);
+    buf.order(ByteOrder.nativeOrder());
+    return buf;
+}
+
+/**
+ * Allocates a new direct char buffer.
+ * @param capacity The new buffer's capacity, in chars
+ * @return The new char buffer
+ */
+public static CharBuffer newCharBuffer(int capacity)
+{
+    assert capacity <= Integer.MAX_VALUE / 2;
+    ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 2);
+    buf.order(ByteOrder.nativeOrder());
+    return buf.asCharBuffer();
+}
+
+/**
+ * Allocates a new direct short buffer.
+ * @param capacity The new buffer's capacity, in shorts
+ * @return The new short buffer
+ */
+public static ShortBuffer newShortBuffer(int capacity)
+{
+    assert capacity <= Integer.MAX_VALUE / 2;
+    ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 2);
+    buf.order(ByteOrder.nativeOrder());
+    return buf.asShortBuffer();
+}
+
+/**
+ * Allocates a new direct int buffer.
+ * @param capacity The new buffer's capacity, in ints
+ * @return The new int buffer
+ */
+public static IntBuffer newIntBuffer(int capacity)
+{
+    assert capacity <= Integer.MAX_VALUE / 4;
+    ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 4);
+    buf.order(ByteOrder.nativeOrder());
+    return buf.asIntBuffer();
+}
+
+/**
+ * Allocates a new direct long buffer.
+ * @param capacity The new buffer's capacity, in longs
+ * @return The new long buffer
+ */
+public static LongBuffer newLongBuffer(int capacity)
+{
+    assert capacity <= Integer.MAX_VALUE / 8;
+    ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 8);
+    buf.order(ByteOrder.nativeOrder());
+    return buf.asLongBuffer();
+}
+
+/**
+ * Allocates a new direct float buffer.
+ * @param capacity The new buffer's capacity, in floats
+ * @return The new float buffer
+ */
+public static FloatBuffer newFloatBuffer(int capacity)
+{
+    assert capacity <= Integer.MAX_VALUE / 4;
+    ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 4);
+    buf.order(ByteOrder.nativeOrder());
+    return buf.asFloatBuffer();
+}
+
+/**
+ * Allocates a new direct double buffer.
+ * @param capacity The new buffer's capacity, in doubles
+ * @return The new double buffer
+ */
+public static DoubleBuffer newDoubleBuffer(int capacity)
+{
+    assert capacity <= Integer.MAX_VALUE / 8;
+    ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 8);
+    buf.order(ByteOrder.nativeOrder());
+    return buf.asDoubleBuffer();
+}
+
+/**
+ * Asserts that a buffer is direct.
+ * @param buf buffer
+ */
+protected static void assertDirectBuffer(Buffer buf)
+{
+    if(!buf.isDirect())
+        throw new IllegalArgumentException("The buffer must be direct.");
+}
+
+/**
+ * Asserts that buffers are direct.
+ * @param sendbuf
+ * @param recvbuf 
+ */
+protected static void assertDirectBuffer(Buffer sendbuf, Buffer recvbuf)
+{
+    if(!sendbuf.isDirect())
+        throw new IllegalArgumentException("The send buffer must be direct.");
+
+    if(!recvbuf.isDirect())
+        throw new IllegalArgumentException("The recv. buffer must be direct.");
+}
+
+/**
+ * Checks if an object is a direct buffer.
+ * @param obj object
+ * @return true if the object is a direct buffer
+ */
+protected static boolean isDirectBuffer(Object obj)
+{
+    return obj instanceof Buffer && ((Buffer)obj).isDirect();
+}
+
+/**
+ * Checks if an object is a heap buffer.
+ * @param obj object
+ * @return true if the object is a heap buffer
+ */
+protected static boolean isHeapBuffer(Object obj)
+{
+    return obj instanceof Buffer && !((Buffer)obj).isDirect();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static ByteBuffer slice(ByteBuffer buf, int offset)
+{
+    buf.position(offset);
+    ByteOrder order = buf.order();
+    return buf.slice().order(order);
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static CharBuffer slice(CharBuffer buf, int offset)
+{
+    buf.position(offset);
+    return buf.slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static ShortBuffer slice(ShortBuffer buf, int offset)
+{
+    buf.position(offset);
+    return buf.slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static IntBuffer slice(IntBuffer buf, int offset)
+{
+    buf.position(offset);
+    return buf.slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static LongBuffer slice(LongBuffer buf, int offset)
+{
+    buf.position(offset);
+    return buf.slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static FloatBuffer slice(FloatBuffer buf, int offset)
+{
+    buf.position(offset);
+    return buf.slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static DoubleBuffer slice(DoubleBuffer buf, int offset)
+{
+    buf.position(offset);
+    return buf.slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static ByteBuffer slice(byte[] buf, int offset)
+{
+    return ByteBuffer.wrap(buf, offset, buf.length - offset)
+                     .slice().order(ByteOrder.nativeOrder());
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static CharBuffer slice(char[] buf, int offset)
+{
+    return CharBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static ShortBuffer slice(short[] buf, int offset)
+{
+    return ShortBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static IntBuffer slice(int[] buf, int offset)
+{
+    return IntBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static LongBuffer slice(long[] buf, int offset)
+{
+    return LongBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static FloatBuffer slice(float[] buf, int offset)
+{
+    return FloatBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @return the new buffer.
+ */
+public static DoubleBuffer slice(double[] buf, int offset)
+{
+    return DoubleBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+} // MPI

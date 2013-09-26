@@ -22,64 +22,93 @@
  */
 
 package mpi;
-//import mpi.*;
 
-public class Intercomm extends Comm {
-
-  protected Intercomm(long handle) {super(handle) ;}
-
-  public Object clone() {
-    return new Intercomm(super.dup());
-  }
-
-  // Inter-Communication
-
-  /**
-   * Size of remote group.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> number of process in remote group
-   *                                      of this communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_REMOTE_SIZE</tt>.
-   */
-
-  public native int Remote_size() throws MPIException ;
-
-  /**
-   * Return the remote group.
-   * <p>
-   * <table>
-   * <tr><td><em> returns: </em></td><td> remote group of this
-   *                                      communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_COMM_REMOTE_GROUP</tt>.
-   */
-
-  public Group Remote_group() throws MPIException {
-    return new Group(remote_group());
-  }
-
-  private native long remote_group();
-
-  /**
-   * Create an inter-communicator.
-   * <p>
-   * <table>
-   * <tr><td><tt> high     </tt></td><td> true if the local group has higher
-   *                                      ranks in combined group </tr>
-   * <tr><td><em> returns: </em></td><td> new intra-communicator </tr>
-   * </table>
-   * <p>
-   * Java binding of the MPI operation <tt>MPI_INTERCOMM_MERGE</tt>.
-   */
-
-  public Intracomm Merge(boolean high) throws MPIException {
-    return new Intracomm(merge(high)) ;
-  }
-
-  private native long merge(boolean high);
+/**
+ * This class represents intercommunicators.
+ */
+public final class Intercomm extends Comm
+{
+protected Intercomm(long handle)
+{
+    super(handle);
 }
 
+/**
+ * Duplicate this communicator.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_DUP}.
+ * <p>The new communicator is "congruent" to the old one,
+ *    but has a different context.
+ * @return copy of this communicator
+ */
+@Override public Intercomm clone()
+{
+    try
+    {
+        MPI.check();
+        return new Intercomm(dup());
+    }
+    catch(MPIException e)
+    {
+        throw new RuntimeException(e.getMessage());
+    }
+}
+
+// Inter-Communication
+
+/**
+ * Size of remote group.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_REMOTE_SIZE}.
+ * @return number of process in remote group of this communicator
+ * @throws MPIException
+ */
+public int getRemoteSize() throws MPIException
+{
+    MPI.check();
+    return getRemoteSize_jni();
+}
+
+private native int getRemoteSize_jni() throws MPIException;
+
+/**
+ * Return the remote group.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_REMOTE_GROUP}.
+ * @return remote group of this communicator
+ * @throws MPIException
+ */
+public Group getRemoteGroup() throws MPIException
+{
+    MPI.check();
+    return new Group(getRemoteGroup_jni());
+}
+
+private native long getRemoteGroup_jni();
+
+/**
+ * Creates an intracommuncator from an intercommunicator 
+ * <p>Java binding of the MPI operation {@code MPI_INTERCOMM_MERGE}.
+ * @param high true if the local group has higher ranks in combined group
+ * @return new intra-communicator
+ * @throws MPIException
+ */
+public Intracomm merge(boolean high) throws MPIException
+{
+    MPI.check();
+    return new Intracomm(merge_jni(high));
+}
+
+private native long merge_jni(boolean high);
+
+/**
+ * Java binding of {@code MPI_COMM_GET_PARENT}.
+ * @return the parent communicator
+ * @throws MPIException 
+ */
+public static Intercomm getParent() throws MPIException
+{
+    MPI.check();
+    return new Intercomm(getParent_jni());
+}
+
+private native static long getParent_jni() throws MPIException;
+
+} // Intercomm

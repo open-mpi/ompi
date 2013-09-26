@@ -23,9 +23,70 @@
 
 package mpi;
 
-public class CartParms {
-	public int [] dims;
-	public boolean [] periods;
-	public int [] coords;
+/**
+ * Cartesian topology information associated with a communicator.
+ */
+public final class CartParms
+{
+/** Number of processes for each cartesian dimension. */
+private final int[] dims;
+
+/** Periodicity (true/false) for each cartesian dimension. */
+private final boolean[] periods;
+
+/** Coordinates of calling process in cartesian structure. */
+private final int[] coords;
+
+/**
+ * Constructs a cartesian topology information object.
+ * @param dims    number of processes for each cartesian dimension.
+ * @param periods periodicity (true/false) for each cartesian dimension.
+ * @param coords  coordinates of calling process in cartesian structure.
+ */
+protected CartParms(int[] dims, boolean[] periods, int[] coords)
+{
+    this.dims    = dims;
+    this.periods = periods;
+    this.coords  = coords;
 }
 
+/**
+ * Returns the number of dimensions.
+ * @return number of dimensions.
+ */
+public int getDimCount()
+{
+    return dims.length;
+}
+
+/**
+ * Returns the number of processes for a cartesian dimension.
+ * @param i cartesian dimension.
+ * @return number of processes for a cartesian dimension.
+ */
+public int getDim(int i)
+{
+    return dims[i];
+}
+
+/**
+ * Returns the periodicity (true/false) for a cartesian dimension.
+ * @param i cartesian dimension.
+ * @return periodicity for a cartesian dimension.
+ */
+public boolean getPeriod(int i)
+{
+    return periods[i];
+}
+
+/**
+ * Returns the coordinate of calling process for a cartesian dimension.
+ * @param i cartesian dimension.
+ * @return coordinate of calling process for a cartesian dimension.
+ */
+public int getCoord(int i)
+{
+    return coords[i];
+}
+
+} // CartParms

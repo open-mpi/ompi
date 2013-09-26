@@ -32,31 +32,17 @@
 #include "mpi_Errhandler.h"
 #include "mpiJava.h"
 
-jfieldID ErrhandleID;
-
-/*
- * Class:     mpi_Errhandler
- * Method:    init
- * Signature: ()V
- */
 JNIEXPORT void JNICALL Java_mpi_Errhandler_init(JNIEnv *env, jclass thisClass)
 {
-    ompi_java.ErrhandleID = (*env)->GetFieldID(env,thisClass,"handle","J");                      
+    ompi_java.ErrHandle = (*env)->GetFieldID(env, thisClass, "handle", "J");                      
 }
 
-/*
- * Class:     mpi_Errhandler
- * Method:    GetErrhandler
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_mpi_Errhandler_GetErrhandler(JNIEnv *env, jobject jthis, jint type)
+JNIEXPORT jlong JNICALL Java_mpi_Errhandler_getFatal(JNIEnv *env, jclass clazz)
 {
-    switch (type) {
-    case 0:
-        (*env)->SetLongField(env,jthis, ompi_java.ErrhandleID, (jlong)MPI_ERRORS_RETURN);
-    case 1:
-        (*env)->SetLongField(env,jthis, ompi_java.ErrhandleID, (jlong)MPI_ERRORS_ARE_FATAL);
-    }
+    return (jlong)MPI_ERRORS_ARE_FATAL;
 }
 
-
+JNIEXPORT jlong JNICALL Java_mpi_Errhandler_getReturn(JNIEnv *env, jclass clazz)
+{
+    return (jlong)MPI_ERRORS_RETURN;
+}

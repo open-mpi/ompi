@@ -22,24 +22,27 @@
  */
 
 package mpi;
-//import mpi.*;
 
-public class Errhandler{
-  public final static int FATAL = 1;
-  public final static int RETURN = 0;
+/**
+ * Error handler.
+ */
+public final class Errhandler
+{
+protected long handle;
 
-  private static native void init();
-
-  //public Errhandler() {}
-  public Errhandler(int Type) { GetErrhandler(Type);}
-  public Errhandler(long _handle) { handle = _handle;}  
-
-  protected native void GetErrhandler(int Type);
-  
-  protected long handle;
-
-  static {
+static
+{
     init();
-  }
-
 }
+
+private static native void init();
+
+protected static native long getFatal();
+protected static native long getReturn();
+
+protected Errhandler(long handle)
+{
+    this.handle = handle;
+}  
+
+} // Errhandler

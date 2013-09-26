@@ -12,7 +12,7 @@
 if OMPI_WANT_JAVA_BINDINGS
 
 # Get the include files that were generated from the .java source files
-AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(ORTE_JDK_CPPFLAGS) $(LTDLINCL)
+AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(ORTE_JDK_CPPFLAGS)
 
 headers = \
         mpiJava.h
@@ -22,20 +22,26 @@ ompi_HEADERS = \
 
 lib_LTLIBRARIES = libmpi_java.la
 libmpi_java_la_SOURCES = \
-        mpi_Cartcomm.c \
+        mpi_CartComm.c \
         mpi_Comm.c \
+	mpi_Constant.c \
         mpi_Datatype.c \
         mpi_Errhandler.c \
-        mpi_Graphcomm.c \
+	mpi_File.c \
+        mpi_GraphComm.c \
         mpi_Group.c \
+	mpi_Info.c \
         mpi_Intercomm.c \
         mpi_Intracomm.c \
+	mpi_Message.c \
         mpi_MPI.c \
         mpi_Op.c \
         mpi_Request.c \
-        mpi_Status.c
+        mpi_Prequest.c \
+        mpi_Status.c \
+	mpi_Win.c
 
-libmpi_java_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(LIBLTDL)
+libmpi_java_la_LIBADD = $(top_builddir)/ompi/libmpi.la
 libmpi_java_la_LDFLAGS = -version-info $(libmpi_java_so_version)
 
 endif

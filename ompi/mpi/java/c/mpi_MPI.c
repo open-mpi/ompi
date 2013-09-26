@@ -1,4 +1,11 @@
 /*
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ *
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow.
+ */
+/*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -13,7 +20,7 @@
 */
 /*
  * File         : mpi_MPI.c
- * Headerfile   : mpi_MPI.h 
+ * Headerfile   : mpi_MPI.h
  * Author       : SungHoon Ko, Xinying Li (contributions from MAEDA Atusi)
  * Created      : Thu Apr  9 12:22:15 1998
  * Revision     : $Revision: 1.17 $
@@ -39,18 +46,12 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-
-#if OPAL_WANT_LIBLTDL
-  #if OPAL_LIBLTDL_INTERNAL
-    #include "opal/libltdl/ltdl.h"
-  #else
-    #include "ltdl.h"
-  #endif
-#endif
+#include <dlfcn.h>
 
 #include "opal/util/output.h"
 
 #include "mpi.h"
+#include "ompi/errhandler/errcode.h"
 #include "mpi_MPI.h"
 #include "mpiJava.h"
 
@@ -58,7 +59,7 @@ ompi_java_globals_t ompi_java;
 
 static int len = 0;
 static char** sargs = 0;
-
+static void *mpilibhandle=NULL;
 
 /*
  * Class:    mpi_MPI
@@ -88,163 +89,222 @@ static char** sargs = 0;
  */
 JNIEXPORT jboolean JNICALL Java_mpi_MPI_loadGlobalLibraries(JNIEnv *env, jclass obj)
 {
-#if OPAL_WANT_LIBLTDL
-    lt_dladvise advise;
-
-    if (lt_dlinit() != 0) {
-        opal_output(0, "LT_DLINIT FAILED - CANNOT LOAD LIBOMPI");
+    if (NULL == (mpilibhandle = dlopen("libmpi.so", RTLD_NOW | RTLD_GLOBAL))) {
         return JNI_FALSE;
     }
-
-#if OPAL_HAVE_LTDL_ADVISE
-    /* open the library into the global namespace */
-    if (lt_dladvise_init(&advise)) {
-        opal_output(0, "LT_DLADVISE INIT FAILED - CANNOT LOAD LIBOMPI");
-        return JNI_FALSE;
-    }
-
-    if (lt_dladvise_ext(&advise)) {
-        opal_output(0, "LT_DLADVISE EXT FAILED - CANNOT LOAD LIBOMPI");
-        lt_dladvise_destroy(&advise);
-        return JNI_FALSE;
-    }
-
-    if (lt_dladvise_global(&advise)) {
-        opal_output(0, "LT_DLADVISE GLOBAL FAILED - CANNOT LOAD LIBOMPI");
-        lt_dladvise_destroy(&advise);
-        return JNI_FALSE;
-    }
-
-    /* we don't care about the return value
-     * on dlopen - it might return an error
-     * because the lib is already loaded,
-     * depending on the way we were built
-     */
-    lt_dlopenadvise("libmpi", advise);
-    lt_dladvise_destroy(&advise);
-
     return JNI_TRUE;
-#endif
-    opal_output(0, "NO LT_DLADVISE - CANNOT LOAD LIBOMPI");
-    /* need to balance the ltdl inits */
-    lt_dlexit();
-    /* if we don't have advise, then we are hosed */
-    return JNI_FALSE;
-#endif
-    /* if dlopen was disabled, then all symbols
-     * should have been pulled up into the libraries,
-     * so we don't need to do anything as the symbols
-     * are already available
-     */
-    return JNI_TRUE;
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_MPI_newInt2(JNIEnv *env, jclass clazz)
+{
+    struct { int a; int b; } s;
+    int iOff = (int)((MPI_Aint)(&(s.b)) - (MPI_Aint)(&(s.a)));
+    jclass c = (*env)->FindClass(env, "mpi/Int2");
+    jmethodID m = (*env)->GetMethodID(env, c, "<init>", "(II)V");
+    return (*env)->NewObject(env, c, m, iOff, sizeof(int));
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_MPI_newShortInt(JNIEnv *env, jclass clazz)
+{
+    struct { short a; int b; } s;
+    int iOff = (int)((MPI_Aint)(&(s.b)) - (MPI_Aint)(&(s.a)));
+    jclass c = (*env)->FindClass(env, "mpi/ShortInt");
+    jmethodID m = (*env)->GetMethodID(env, c, "<init>", "(III)V");
+    return (*env)->NewObject(env, c, m, sizeof(short), iOff, sizeof(int));
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_MPI_newLongInt(JNIEnv *env, jclass clazz)
+{
+    struct { long a; int b; } s;
+    int iOff = (int)((MPI_Aint)(&(s.b)) - (MPI_Aint)(&(s.a)));
+    jclass c = (*env)->FindClass(env, "mpi/LongInt");
+    jmethodID m = (*env)->GetMethodID(env, c, "<init>", "(III)V");
+    return (*env)->NewObject(env, c, m, sizeof(long), iOff, sizeof(int));
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_MPI_newFloatInt(JNIEnv *env, jclass clazz)
+{
+    struct { float a; int b; } s;
+    int iOff = (int)((MPI_Aint)(&(s.b)) - (MPI_Aint)(&(s.a)));
+    jclass c = (*env)->FindClass(env, "mpi/FloatInt");
+    jmethodID m = (*env)->GetMethodID(env, c, "<init>", "(II)V");
+    return (*env)->NewObject(env, c, m, iOff, sizeof(int));
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_MPI_newDoubleInt(JNIEnv *env, jclass clazz)
+{
+    struct { double a; int b; } s;
+    int iOff = (int)((MPI_Aint)(&(s.b)) - (MPI_Aint)(&(s.a)));
+    jclass c = (*env)->FindClass(env, "mpi/DoubleInt");
+    jmethodID m = (*env)->GetMethodID(env, c, "<init>", "(II)V");
+    return (*env)->NewObject(env, c, m, iOff, sizeof(int));
 }
 
 /*
  * Class:     mpi_MPI
- * Method:    InitNative
+ * Method:    Init_jni
  * Signature: ([Ljava/lang/String;)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_InitNative(JNIEnv *env, jclass obj, jobjectArray argv)
+JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
+        JNIEnv *env, jclass clazz, jobjectArray argv)
 {
     jsize i;
-    jstring jc;
     jclass string;
     jobject value;
 
     len = (*env)->GetArrayLength(env,argv);
     sargs = (char**)calloc(len+1, sizeof(char*));
-    for (i=0; i<len; i++) {
-        jc=(jstring)(*env)->GetObjectArrayElement(env,argv,i);
-        sargs[i] = (char*)calloc(strlen((*env)->GetStringUTFChars(env,jc,0)) + 1,
-                                 sizeof(char));
-        strcpy(sargs[i],(*env)->GetStringUTFChars(env,jc,0));
+
+    for(i = 0; i < len; i++)
+    {
+        jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
+        const char *s = (*env)->GetStringUTFChars(env, jc, 0);
+        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
+        strcpy(sargs[i], s);
+        (*env)->DeleteLocalRef(env, jc);
     }
 
-    MPI_Init(&len, &sargs);
+    int rc = MPI_Init(&len, &sargs);
+    ompi_java_exceptionCheck(env, rc);
 
     string = (*env)->FindClass(env, "java/lang/String");
     value = (*env)->NewObjectArray(env, len, string, NULL);
-    for (i = 0; i < len; i++) {
-        jc = (*env)->NewStringUTF(env, sargs[i]);
+
+    for(i = 0; i < len; i++)
+    {
+        jstring jc = (*env)->NewStringUTF(env, sargs[i]);
         (*env)->SetObjectArrayElement(env, value, i, jc);
+        (*env)->DeleteLocalRef(env, jc);
     }
 
-    ompi_java_init_native_Datatype() ;
-
+    ompi_java_init_native_Datatype(env);
+    ompi_java_findClasses(env);
     return value;
-}                                                   
+}
 
 /*
  * Class:     mpi_MPI
- * Method:    Finalize
+ * Method:    InitThread_jni
+ * Signature: ([Ljava/lang/String;I)I
+ */
+JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
+        JNIEnv *env, jclass clazz, jobjectArray argv, jint required)
+{
+    jsize i;
+    len = (*env)->GetArrayLength(env,argv);
+    sargs = (char**)calloc(len+1, sizeof(char*));
+
+    for(i = 0; i < len; i++)
+    {
+        jstring jc = (jstring)(*env)->GetObjectArrayElement(env, argv, i);
+        const char *s = (*env)->GetStringUTFChars(env, jc, 0);
+        sargs[i] = (char*)calloc(strlen(s) + 1, sizeof(char));
+        strcpy(sargs[i], s);
+        (*env)->DeleteLocalRef(env, jc);
+    }
+
+    int provided;
+    int rc = MPI_Init_thread(&len, &sargs, required, &provided);
+    ompi_java_exceptionCheck(env, rc);
+
+    ompi_java_init_native_Datatype(env);
+    ompi_java_findClasses(env);
+    return provided;
+}
+
+/*
+ * Class:     mpi_MPI
+ * Method:    queryThread_jni
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_mpi_MPI_queryThread_1jni(JNIEnv *env, jclass clazz)
+{
+    int provided;
+    int rc = MPI_Query_thread(&provided);
+    ompi_java_exceptionCheck(env, rc);
+    return provided;
+}
+
+/*
+ * Class:     mpi_MPI
+ * Method:    isThreadMain_jni
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_mpi_MPI_isThreadMain_1jni(
+                           JNIEnv *env, jclass clazz)
+{
+    int flag;
+    int rc = MPI_Is_thread_main(&flag);
+    ompi_java_exceptionCheck(env, rc);
+    return flag ? JNI_TRUE : JNI_FALSE;
+}
+
+/*
+ * Class:     mpi_MPI
+ * Method:    Finalize_jni
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_mpi_MPI_Finalize(JNIEnv *env, jclass obj)
+JNIEXPORT void JNICALL Java_mpi_MPI_Finalize_1jni(JNIEnv *env, jclass obj)
 {
-    ompi_java_clearFreeList(env) ;
+    if (NULL != mpilibhandle) {
+        dlclose(mpilibhandle);
+    }
 
-#if OPAL_WANT_LIBLTDL
-    /* need to balance the ltdl inits */
-    lt_dlexit();
-#endif
-
-    MPI_Finalize();
+    int rc = MPI_Finalize();
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_deleteClasses(env);
 }
-                                             
+
 /*
  * Class:     mpi_MPI
- * Method:    Get_processor_name
+ * Method:    getProcessorName
  * Signature: ([B)I
  */
-JNIEXPORT jint JNICALL Java_mpi_MPI_Get_1processor_1name(JNIEnv *env, jclass obj, jbyteArray buf)
+JNIEXPORT jint JNICALL Java_mpi_MPI_getProcessorName(
+                       JNIEnv *env, jclass obj, jbyteArray buf)
 {
-    int len;
-    jboolean isCopy; 
+    int len, rc;
+    jboolean isCopy;
     jbyte* bufc = (jbyte*)((*env)->GetByteArrayElements(env,buf,&isCopy)) ;
 
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Get_processor_name((char*)bufc, &len); 
+    rc = MPI_Get_processor_name((char*)bufc, &len);
+    ompi_java_exceptionCheck(env, rc);
     (*env)->ReleaseByteArrayElements(env,buf,bufc,0) ;
     return len;
 }
 
 /*
  * Class:     mpi_MPI
- * Method:    Wtime
+ * Method:    wtime_jni
  * Signature: ()D
  */
-JNIEXPORT jdouble JNICALL Java_mpi_MPI_Wtime(JNIEnv *env, jclass jthis)
+JNIEXPORT jdouble JNICALL Java_mpi_MPI_wtime_1jni(JNIEnv *env, jclass jthis)
 {
-    ompi_java_clearFreeList(env) ;
-
     return MPI_Wtime();
 }
 
 /*
  * Class:     mpi_MPI
- * Method:    Wtick
+ * Method:    wtick_jni
  * Signature: ()D
  */
-JNIEXPORT jdouble JNICALL Java_mpi_MPI_Wtick(JNIEnv *env, jclass jthis)
+JNIEXPORT jdouble JNICALL Java_mpi_MPI_wtick_1jni(JNIEnv *env, jclass jthis)
 {
-    ompi_java_clearFreeList(env) ;
-
     return MPI_Wtick();
 }
 
 /*
  * Class:     mpi_MPI
- * Method:    Initialized
+ * Method:    isInitialized
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_mpi_MPI_Initialized(JNIEnv *env, jclass jthis)
+JNIEXPORT jboolean JNICALL Java_mpi_MPI_isInitialized(JNIEnv *env, jclass jthis)
 {
-    int flag;
+    int flag, rc;
 
-    ompi_java_clearFreeList(env) ;
+    rc = MPI_Initialized(&flag);
+    ompi_java_exceptionCheck(env, rc);
 
-    MPI_Initialized(&flag);
     if (flag==0) {
         return JNI_FALSE;
     } else {
@@ -254,96 +314,260 @@ JNIEXPORT jboolean JNICALL Java_mpi_MPI_Initialized(JNIEnv *env, jclass jthis)
 
 /*
  * Class:     mpi_MPI
- * Method:    Buffer_attach_native
+ * Method:    isFinalized
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_mpi_MPI_isFinalized(JNIEnv *env, jclass jthis)
+{
+    int flag, rc;
+
+    rc = MPI_Finalized(&flag);
+    ompi_java_exceptionCheck(env, rc);
+
+    if (flag==0) {
+        return JNI_FALSE;
+    } else {
+        return JNI_TRUE;
+    }
+}
+
+/*
+ * Class:     mpi_MPI
+ * Method:    attachBuffer_jni
  * Signature: ([B)V
  */
-JNIEXPORT void JNICALL Java_mpi_MPI_Buffer_1attach_1native(JNIEnv *env, jclass jthis, jbyteArray buf)
+JNIEXPORT void JNICALL Java_mpi_MPI_attachBuffer_1jni(
+                       JNIEnv *env, jclass jthis, jbyteArray buf)
 {
     jboolean isCopy;
 
     int size=(*env)->GetArrayLength(env,buf);
     jbyte* bufptr = (*env)->GetByteArrayElements(env,buf,&isCopy) ;
 
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Buffer_attach(bufptr,size); 
+    int rc = MPI_Buffer_attach(bufptr,size);
+    ompi_java_exceptionCheck(env, rc);
 }
 
 /*
  * Class:     mpi_MPI
- * Method:    Buffer_detach_native
+ * Method:    detachBuffer_jni
  * Signature: ([B)V
  */
-JNIEXPORT void JNICALL Java_mpi_MPI_Buffer_1detach_1native(JNIEnv *env, jclass jthis, jbyteArray buf)
+JNIEXPORT void JNICALL Java_mpi_MPI_detachBuffer_1jni(
+                       JNIEnv *env, jclass jthis, jbyteArray buf)
 {
     /*jboolean isCopy;*/
 
-    int size;
+    int size, rc;
     /*char* bufptr ;*/
     jbyte* bufptr ;
 
-    ompi_java_clearFreeList(env) ;
-
-    MPI_Buffer_detach(&bufptr, &size);
+    rc = MPI_Buffer_detach(&bufptr, &size);
+    ompi_java_exceptionCheck(env, rc);
 
     if (buf != NULL) {
         (*env)->ReleaseByteArrayElements(env,buf,bufptr,0);
     }
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    SetConstant
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_mpi_MPI_SetConstant(JNIEnv *env, jclass jthis)
+void ompi_java_findClasses(JNIEnv *env)
 {
-    jfieldID anysourceID=(*env)->GetStaticFieldID(env,jthis,"ANY_SOURCE","I");
-    jfieldID anytagID=(*env)->GetStaticFieldID(env,jthis,"ANY_TAG","I");
-    jfieldID procnullID=(*env)->GetStaticFieldID(env,jthis,"PROC_NULL","I");  
-    jfieldID graphID=(*env)->GetStaticFieldID(env,jthis,"GRAPH","I");
-    jfieldID cartID=(*env)->GetStaticFieldID(env,jthis,"CART","I");
-    jfieldID bsendoverID=(*env)->GetStaticFieldID(env,jthis,"BSEND_OVERHEAD","I");
-    jfieldID undefinedID=(*env)->GetStaticFieldID(env,jthis,"UNDEFINED","I");
-   
-    jfieldID identID=(*env)->GetStaticFieldID(env,jthis,"IDENT","I");
-    jfieldID congruentID=(*env)->GetStaticFieldID(env,jthis,"CONGRUENT","I");
-    jfieldID similarID=(*env)->GetStaticFieldID(env,jthis,"SIMILAR","I");
-    jfieldID unequalID=(*env)->GetStaticFieldID(env,jthis,"UNEQUAL","I");
-    jfieldID tagubID=(*env)->GetStaticFieldID(env,jthis,"TAG_UB","I");
-    jfieldID hostID=(*env)->GetStaticFieldID(env,jthis,"HOST","I");
-    jfieldID ioID=(*env)->GetStaticFieldID(env,jthis,"IO","I");
+    ompi_java.CartParmsClass  = ompi_java_findClass(env, "mpi/CartParms");
+    ompi_java.ShiftParmsClass = ompi_java_findClass(env, "mpi/ShiftParms");
+    ompi_java.GraphParmsClass = ompi_java_findClass(env, "mpi/GraphParms");
 
-    (*env)->SetStaticIntField(env,jthis,anysourceID,MPI_ANY_SOURCE);
-    (*env)->SetStaticIntField(env,jthis,anytagID,MPI_ANY_TAG);
-    (*env)->SetStaticIntField(env,jthis,procnullID,MPI_PROC_NULL);
-    (*env)->SetStaticIntField(env,jthis,graphID,MPI_GRAPH);
-    (*env)->SetStaticIntField(env,jthis,cartID,MPI_CART);
-#ifdef GC_DOES_PINNING
-    (*env)->SetStaticIntField(env,jthis,bsendoverID,MPI_BSEND_OVERHEAD);
-#else
-    (*env)->SetStaticIntField(env,jthis,bsendoverID,
-                              MPI_BSEND_OVERHEAD + sizeof(int));
-#endif  /* GC_DOES_PINNING */
+    ompi_java.DistGraphNeighborsClass = ompi_java_findClass(
+                                        env, "mpi/DistGraphNeighbors");
 
-    (*env)->SetStaticIntField(env,jthis,undefinedID,MPI_UNDEFINED);
+    ompi_java.StatusClass     = ompi_java_findClass(env, "mpi/Status");
+    ompi_java.ExceptionClass  = ompi_java_findClass(env, "mpi/MPIException");
+
+    ompi_java.ExceptionInit = (*env)->GetMethodID(
+                              env, ompi_java.ExceptionClass,
+                              "<init>", "(IILjava/lang/String;)V");
+
+    ompi_java.IntegerClass = ompi_java_findClass(env, "java/lang/Integer");
+    ompi_java.LongClass    = ompi_java_findClass(env, "java/lang/Long");
+
+    ompi_java.IntegerValueOf = (*env)->GetStaticMethodID(
+            env, ompi_java.IntegerClass, "valueOf", "(I)Ljava/lang/Integer;");
+    ompi_java.LongValueOf = (*env)->GetStaticMethodID(
+            env, ompi_java.LongClass, "valueOf", "(J)Ljava/lang/Long;");
+}
+
+jclass ompi_java_findClass(JNIEnv *env, const char *className)
+{
+    jclass c = (*env)->FindClass(env, className),
+           r = (*env)->NewGlobalRef(env, c);
+
+    (*env)->DeleteLocalRef(env, c);
+    return r;
+}
+
+void ompi_java_deleteClasses(JNIEnv *env)
+{
+    (*env)->DeleteGlobalRef(env, ompi_java.CartParmsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.ExceptionClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.IntegerClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.LongClass);
+}
+
+jobject ompi_java_Integer_valueOf(JNIEnv *env, jint i)
+{
+    return (*env)->CallStaticObjectMethod(env,
+           ompi_java.IntegerClass, ompi_java.IntegerValueOf, i);
+}
+
+jobject ompi_java_Long_valueOf(JNIEnv *env, jlong i)
+{
+    return (*env)->CallStaticObjectMethod(env,
+           ompi_java.LongClass, ompi_java.LongValueOf, i);
+}
+
+void ompi_java_getIntArray(JNIEnv *env, jintArray array,
+                           jint **jptr, int **cptr)
+{
+    jint *jInts = (*env)->GetIntArrayElements(env, array, NULL);
+    *jptr = jInts;
+
+    if(sizeof(int) == sizeof(jint))
+    {
+        *cptr = (int*)jInts;
+    }
+    else
+    {
+        int i, length = (*env)->GetArrayLength(env, array);
+        int *cInts = calloc(length, sizeof(int));
+
+        for(i = 0; i < length; i++)
+            cInts[i] = jInts[i];
+
+        *cptr = cInts;
+    }
+}
+
+void ompi_java_releaseIntArray(JNIEnv *env, jintArray array,
+                               jint *jptr, int *cptr)
+{
+    if(jptr != cptr)
+    {
+        int i, length = (*env)->GetArrayLength(env, array);
+
+        for(i = 0; i < length; i++)
+            jptr[i] = cptr[i];
+
+        free(cptr);
+    }
+
+    (*env)->ReleaseIntArrayElements(env, array, jptr, 0);
+}
+
+void ompi_java_forgetIntArray(JNIEnv *env, jintArray array,
+                              jint *jptr, int *cptr)
+{
+    if(jptr != cptr)
+        free(cptr);
+
+    (*env)->ReleaseIntArrayElements(env, array, jptr, JNI_ABORT);
+}
+
+void ompi_java_getBooleanArray(JNIEnv *env, jbooleanArray array,
+                               jboolean **jptr, int **cptr)
+{
+    int i, length = (*env)->GetArrayLength(env, array);
+    jboolean *jb = (*env)->GetBooleanArrayElements(env, array, NULL);
+    int *cb = (int*)calloc(length, sizeof(int));
+
+    for(i = 0; i < length; i++)
+        cb[i] = jb[i];
     
-    (*env)->SetStaticIntField(env,jthis,identID,MPI_IDENT);
-    (*env)->SetStaticIntField(env,jthis,congruentID,MPI_CONGRUENT);
-    (*env)->SetStaticIntField(env,jthis,similarID,MPI_SIMILAR);
-    (*env)->SetStaticIntField(env,jthis,unequalID,MPI_UNEQUAL);
-    (*env)->SetStaticIntField(env,jthis,tagubID,MPI_TAG_UB);
-    (*env)->SetStaticIntField(env,jthis,hostID,MPI_HOST);
-    (*env)->SetStaticIntField(env,jthis,ioID,MPI_IO);
+    *jptr = jb;
+    *cptr = cb;
 }
 
-void ompi_java_clearFreeList(JNIEnv *env)
+void ompi_java_releaseBooleanArray(JNIEnv *env, jbooleanArray array,
+                                   jboolean *jptr, int *cptr)
 {
-    jclass mpi ;
-    jmethodID clearID ;
+    int i, length = (*env)->GetArrayLength(env, array);
 
-    mpi = (*env)->FindClass(env, "mpi/MPI");
-    clearID = (*env)->GetStaticMethodID(env, mpi, "clearFreeList", "()V");
-    (*env)->CallStaticVoidMethod(env, mpi, clearID) ;
+    for(i = 0; i < length; i++)
+        jptr[i] = cptr[i] ? JNI_TRUE : JNI_FALSE;
+
+    free(cptr);
+    (*env)->ReleaseBooleanArrayElements(env, array, jptr, 0);
 }
 
+void ompi_java_forgetBooleanArray(JNIEnv *env, jbooleanArray array,
+                                  jboolean *jptr, int *cptr)
+{
+    free(cptr);
+    (*env)->ReleaseBooleanArrayElements(env, array, jptr, JNI_ABORT);
+}
+
+jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
+{
+    if((*env)->ExceptionCheck(env))
+    {
+        return JNI_TRUE;
+    }
+    else if(MPI_SUCCESS == rc)
+    {
+        return JNI_FALSE;
+    }
+    else
+    {
+        int     errClass = ompi_mpi_errcode_get_class(rc);
+        char    *message = ompi_mpi_errnum_get_string(rc);
+        jstring jmessage = (*env)->NewStringUTF(env, (const char*)message);
+
+        jobject mpiex = (*env)->NewObject(env, ompi_java.ExceptionClass,
+                                          ompi_java.ExceptionInit,
+                                          rc, errClass, jmessage);
+        (*env)->Throw(env, mpiex);
+        (*env)->DeleteLocalRef(env, mpiex);
+        (*env)->DeleteLocalRef(env, jmessage);
+        return JNI_TRUE;
+    }
+}
+
+void* ompi_java_attrSet(JNIEnv *env, jbyteArray jval)
+{
+    int length = (*env)->GetArrayLength(env, jval);
+    void *cval = malloc(sizeof(int) + length);
+    *((int*)cval) = length;
+
+    (*env)->GetByteArrayRegion(env, jval,
+            0, length, (jbyte*)cval + sizeof(int));
+    
+    return cval;
+}
+
+jbyteArray ompi_java_attrGet(JNIEnv *env, void *cval)
+{
+    int length = *((int*)cval);
+    jbyteArray jval = (*env)->NewByteArray(env, length);
+
+    (*env)->SetByteArrayRegion(env, jval,
+            0, length, (jbyte*)cval + sizeof(int));
+
+    return jval;
+}
+
+int ompi_java_attrCopy(void *attrValIn, void *attrValOut, int *flag)
+{
+    int length = *((int*)attrValIn) + sizeof(int);
+    *((void**)attrValOut) = malloc(length);
+    memcpy(*((void**)attrValOut), attrValIn, length);
+    *flag = 1;
+    return MPI_SUCCESS;
+}
+
+int ompi_java_attrDelete(void *attrVal)
+{
+    free(attrVal);
+    return MPI_SUCCESS;
+}
