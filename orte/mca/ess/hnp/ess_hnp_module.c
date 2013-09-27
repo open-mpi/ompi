@@ -446,6 +446,8 @@ static int rte_init(void)
         error = "orte_db_base_select";
         goto error;
     }
+    /* set our id */
+    opal_db.set_id((opal_identifier_t*)ORTE_PROC_MY_NAME);
 
     /*
      * Group communications

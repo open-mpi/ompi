@@ -191,6 +191,13 @@ END_C_DECLS
 
 BEGIN_C_DECLS
 
+/* Each RTE is required to define a DB key for identifying the node
+ * upon which a process resides, and for providing this information
+ * for each process
+ *
+ * #define OMPI_RTE_NODE_ID
+ */
+
 /* Communication tags */
 #define OMPI_RML_TAG_UDAPL                          OMPI_RML_TAG_BASE+1
 #define OMPI_RML_TAG_OPENIB                         OMPI_RML_TAG_BASE+2

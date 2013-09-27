@@ -59,7 +59,8 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
          * so check there next - if it is, the peer object will be added
          * to our hash table
          */
-	if (OPAL_SUCCESS == opal_db.fetch_pointer((opal_identifier_t*)&msg->peer, ORTE_DB_RMLURI, (void **)&rmluri, OPAL_STRING)) {
+	if (OPAL_SUCCESS == opal_db.fetch_pointer((opal_identifier_t*)&msg->peer, ORTE_DB_RMLURI,
+                                                  (void **)&rmluri, OPAL_STRING)) {
             process_uri(rmluri);
             free(rmluri);
             if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,

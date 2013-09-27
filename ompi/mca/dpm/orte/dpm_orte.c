@@ -1630,47 +1630,6 @@ static void timeout_cb(int fd, short args, void *cbdata)
     OBJ_RELEASE(req);
 }
 
-static int pack_request(opal_buffer_t *buf, ompi_group_t *group)
-{
-    int rc;
-
-    /* pack the MPI info */
-    ompi_proc_pack(group->grp_proc_pointers, 1, false, buf);
-
-    /* pack our hostname */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &orte_process_info.nodename, 1, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* pack our node rank */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &orte_process_info.my_node_rank, 1, ORTE_NODE_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* pack our local rank */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &orte_process_info.my_local_rank, 1, ORTE_LOCAL_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-#if OPAL_HAVE_HWLOC
-    /* pack our binding info so other procs can determine our locality */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &orte_process_info.cpuset, 1, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-#endif
-
-    /* pack the modex entries we have received */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    return ORTE_SUCCESS;
-}
-
 static void process_request(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             bool connector,
@@ -1686,10 +1645,6 @@ static void process_request(orte_process_name_t* sender,
     opal_buffer_t *xfer;
     int cnt, rc;
     uint32_t id;
-    char *hostname;
-    orte_node_rank_t node_rank;
-    orte_local_rank_t local_rank;
-    opal_hwloc_locality_t locality;
 
     OPAL_OUTPUT_VERBOSE((2, ompi_dpm_base_framework.framework_output,
                          "%s dpm:pconprocess: PROCESS REQUEST: %s",
@@ -1718,118 +1673,19 @@ static void process_request(orte_process_name_t* sender,
      * and then call PML add_procs
      */
     if (0 < new_proc_len) {
-        /* unpack the peer's hostname and store it */
-        cnt=1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &hostname, &cnt, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)sender, OPAL_DB_INTERNAL, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        /* unpack the node rank */
-        cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &node_rank, &cnt, ORTE_NODE_RANK))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)sender, OPAL_DB_INTERNAL, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        /* unpack the local rank */
-        cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &local_rank, &cnt, ORTE_LOCAL_RANK))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)sender, OPAL_DB_INTERNAL, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        /* compute the locality and store in the database */
-#if OPAL_HAVE_HWLOC
-        {
-            char *cpuset;
-
-            /* unpack and store the cpuset - could be NULL */
-            cnt = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &cpuset, &cnt, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)sender, OPAL_DB_INTERNAL, ORTE_DB_CPUSET, cpuset, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            OPAL_OUTPUT_VERBOSE((2, ompi_dpm_base_framework.framework_output,
-                                 "%s dpm:pconprocess: setting proc %s cpuset %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(sender), cpuset));
-
-            if (0 != strcmp(hostname, orte_process_info.nodename)) {
-                /* this is on a different node, then mark as non-local */
-                OPAL_OUTPUT_VERBOSE((5, ompi_dpm_base_framework.framework_output,
-                                     "%s dpm:pconprocess: setting proc %s locale NONLOCAL",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(sender)));
-                locality = OPAL_PROC_NON_LOCAL;
-            } else if (NULL == cpuset || NULL == orte_process_info.cpuset) {
-                /* one or both of us is not bound, so all we can say is we are on the
-                 * same node
-                 */
-                locality = OPAL_PROC_ON_NODE;
-            } else {
-                /* determine relative location on our node */
-                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                 orte_process_info.cpuset,
-                                                                 cpuset);
-                OPAL_OUTPUT_VERBOSE((5, ompi_dpm_base_framework.framework_output,
-                                     "%s dpm:pconprocess: setting proc %s locale %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(sender),
-                                     opal_hwloc_base_print_locality(locality)));
-            }
-        }
-#else
-        if (0 != strcmp(hostname, orte_process_info.nodename)) {
-            /* this is on a different node, then mark as non-local */
-            OPAL_OUTPUT_VERBOSE((5, ompi_dpm_base_framework.framework_output,
-                                 "%s dpm:pconprocess: setting proc %s locale NONLOCAL",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(sender)));
-            locality = OPAL_PROC_NON_LOCAL;
-        } else {
-            /* must be on our node */
-            locality = OPAL_PROC_ON_NODE;
-        }
-#endif
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)sender, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        OPAL_OUTPUT_VERBOSE((5, ompi_dpm_base_framework.framework_output,
-                             "%s dpm:pconprocess: adding modex entry for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(sender)));
-        
-        /* process the modex info */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(sender, buffer))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }            
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
+                             "%s dpm:pconprocess: process modex",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        orte_grpcomm_base_store_modex(buffer, NULL);
 
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:pconprocess: adding procs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
         if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(new_proc_list, new_proc_len)))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-
+        
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:pconnect new procs added",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -1850,7 +1706,7 @@ static void process_request(orte_process_name_t* sender,
             goto cleanup;
         }
         /* pack the remaining info */
-        if (ORTE_SUCCESS != pack_request(xfer, group)) {
+        if (ORTE_SUCCESS != ompi_proc_pack(group->grp_proc_pointers, 1, true, xfer)) {
             OBJ_RELEASE(xfer);
             goto cleanup;
         }
@@ -2039,7 +1895,7 @@ static int dpm_pconnect(char *port,
         return rc;
     }
     /* pack the request info */
-    if (ORTE_SUCCESS != pack_request(buf, group)) {
+    if (ORTE_SUCCESS != ompi_proc_pack(group->grp_proc_pointers, 1, true, buf)) {
         OBJ_RELEASE(buf);
         OPAL_THREAD_LOCK(&ompi_dpm_port_mutex);
         opal_list_remove_item(&orte_dpm_connectors, &connector->super);

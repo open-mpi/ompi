@@ -23,6 +23,10 @@ BEGIN_C_DECLS
 
 typedef uint64_t opal_identifier_t;
 
+/* some OPAL-appropriate key definitions */
+#define OPAL_DB_LOCALITY "opal.locality"
+#define OPAL_DB_CPUSET   "opal.cpuset"
+
 END_C_DECLS
 
 #endif

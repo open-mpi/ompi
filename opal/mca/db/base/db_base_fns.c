@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Intel Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,8 +22,15 @@
 #include "opal/mca/db/base/base.h"
 
 
+void opal_db_base_set_id(const opal_identifier_t *proc)
+{
+    /* to protect alignment, copy the data across */
+    memcpy(&opal_db_base.my_id, proc, sizeof(opal_identifier_t));
+    opal_db_base.id_set = true;
+}
+
 int opal_db_base_store(const opal_identifier_t *proc,
-                       opal_db_locality_t locality,
+                       opal_scope_t scope,
                        const char *key, const void *object,
                        opal_data_type_t type)
 {
@@ -30,13 +38,17 @@ int opal_db_base_store(const opal_identifier_t *proc,
     opal_db_active_module_t *mod;
     int rc;
 
+    if (!opal_db_base.id_set) {
+        return OPAL_ERR_FATAL;
+    }
+
     /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
     OPAL_LIST_FOREACH(mod, &opal_db_base.store_order, opal_db_active_module_t) {
         if (NULL == mod->module->store) {
             continue;
         }
-        if (OPAL_SUCCESS == (rc = mod->module->store(proc, locality, key, object, type))) {
+        if (OPAL_SUCCESS == (rc = mod->module->store(proc, scope, key, object, type))) {
             did_op = true;
             break;
         }
@@ -58,12 +70,15 @@ int opal_db_base_store(const opal_identifier_t *proc,
 }
 
 int opal_db_base_store_pointer(const opal_identifier_t *proc,
-                               opal_db_locality_t locality,
                                opal_value_t *kv)
 {
     bool did_op;
     opal_db_active_module_t *mod;
     int rc;
+
+    if (!opal_db_base.id_set) {
+        return OPAL_ERR_FATAL;
+    }
 
     /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
@@ -71,7 +86,7 @@ int opal_db_base_store_pointer(const opal_identifier_t *proc,
         if (NULL == mod->module->store_pointer) {
             continue;
         }
-        if (OPAL_SUCCESS == (rc = mod->module->store_pointer(proc, locality, kv))) {
+        if (OPAL_SUCCESS == (rc = mod->module->store_pointer(proc, kv))) {
             did_op = true;
             break;
         }
@@ -112,23 +127,33 @@ int opal_db_base_fetch(const opal_identifier_t *proc,
 {
     bool did_op;
     opal_db_active_module_t *mod;
-    int rc;
+    int rc, i;
 
-    /* cycle thru the actiove modules until one agrees to perform the op */
+    if (!opal_db_base.id_set) {
+        return OPAL_ERR_FATAL;
+    }
+
+    /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
-    OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
-        if (NULL == mod->module->fetch) {
-            continue;
-        }
-        if (OPAL_SUCCESS == (rc = mod->module->fetch(proc, key, data, type))) {
-            did_op = true;
-            break;
-        }
-        /* modules return "next option" if they didn't perform
-         * the operation - anything else is a true error.
-         */
-        if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
-            return rc;
+    /* we cycle thru the list of modules twice - this allows us to check
+     * a local store first, then attempt to obtain the data from an
+     * external store that puts it in the local store
+     */
+    for(i=0; i < 2 && !did_op; i++) {
+        OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
+            if (NULL == mod->module->fetch) {
+                continue;
+            }
+            if (OPAL_SUCCESS == (rc = mod->module->fetch(proc, key, data, type))) {
+                did_op = true;
+                break;
+            }
+            /* modules return "next option" if they didn't perform
+             * the operation - anything else is a true error.
+             */
+            if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
+                return rc;
+            }
         }
     }
 
@@ -145,23 +170,33 @@ int opal_db_base_fetch_pointer(const opal_identifier_t *proc,
 {
     bool did_op;
     opal_db_active_module_t *mod;
-    int rc;
+    int rc, i;
 
-    /* cycle thru the actiove modules until one agrees to perform the op */
+    if (!opal_db_base.id_set) {
+        return OPAL_ERR_FATAL;
+    }
+
+    /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
-    OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
-        if (NULL == mod->module->fetch_pointer) {
-            continue;
-        }
-        if (OPAL_SUCCESS == (rc = mod->module->fetch_pointer(proc, key, data, type))) {
-            did_op = true;
-            break;
-        }
-        /* modules return "next option" if they didn't perform
-         * the operation - anything else is a true error.
-         */
-        if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
-            return rc;
+    /* we cycle thru the list of modules twice - this allows us to check
+     * a local store first, then attempt to obtain the data from an
+     * external store that puts it in the local store
+     */
+    for(i=0; i < 2 && !did_op; i++) {
+        OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
+            if (NULL == mod->module->fetch_pointer) {
+                continue;
+            }
+            if (OPAL_SUCCESS == (rc = mod->module->fetch_pointer(proc, key, data, type))) {
+                did_op = true;
+                break;
+            }
+            /* modules return "next option" if they didn't perform
+             * the operation - anything else is a true error.
+             */
+            if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
+                return rc;
+            }
         }
     }
 
@@ -173,6 +208,7 @@ int opal_db_base_fetch_pointer(const opal_identifier_t *proc,
 }
 
 int opal_db_base_fetch_multiple(const opal_identifier_t *proc,
+                                opal_scope_t scope,
                                 const char *key,
                                 opal_list_t *kvs)
 {
@@ -180,13 +216,17 @@ int opal_db_base_fetch_multiple(const opal_identifier_t *proc,
     opal_db_active_module_t *mod;
     int rc;
 
-    /* cycle thru the actiove modules until one agrees to perform the op */
+    if (!opal_db_base.id_set) {
+        return OPAL_ERR_FATAL;
+    }
+
+    /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
     OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
         if (NULL == mod->module->fetch_multiple) {
             continue;
         }
-        if (OPAL_SUCCESS == (rc = mod->module->fetch_multiple(proc, key, kvs))) {
+        if (OPAL_SUCCESS == (rc = mod->module->fetch_multiple(proc, scope, key, kvs))) {
             did_op = true;
             break;
         }

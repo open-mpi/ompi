@@ -33,18 +33,19 @@
 static int init(void);
 static void finalize(void);
 static int store(const opal_identifier_t *proc,
-                 opal_db_locality_t locality,
+                 opal_scope_t scope,
                  const char *key, const void *object,
                  opal_data_type_t type);
 static int store_pointer(const opal_identifier_t *proc,
-                         opal_db_locality_t locality,
                          opal_value_t *kv);
 static int fetch(const opal_identifier_t *proc,
-                 const char *key, void **data, opal_data_type_t type);
+                 const char *key, void **data,
+                 opal_data_type_t type);
 static int fetch_pointer(const opal_identifier_t *proc,
                          const char *key,
                          void **data, opal_data_type_t type);
 static int fetch_multiple(const opal_identifier_t *proc,
+                          opal_scope_t scope,
                           const char *key,
                           opal_list_t *kvs);
 static int remove_data(const opal_identifier_t *proc, const char *key);
@@ -52,6 +53,7 @@ static int remove_data(const opal_identifier_t *proc, const char *key);
 opal_db_base_module_t opal_db_hash_module = {
     init,
     finalize,
+    opal_db_base_set_id,
     store,
     store_pointer,
     NULL,
@@ -116,7 +118,7 @@ static void finalize(void)
  * container.
  */
 static opal_value_t* lookup_keyval(proc_data_t *proc_data,
-                                       const char *key)
+                                   const char *key)
 {
     opal_value_t *kv = NULL;
     for (kv = (opal_value_t *) opal_list_get_first(&proc_data->data);
@@ -132,7 +134,7 @@ static opal_value_t* lookup_keyval(proc_data_t *proc_data,
 
 
 /**
-* Find proc_data_t container associated with given
+ * Find proc_data_t container associated with given
  * opal_identifier_t.
  */
 static proc_data_t* lookup_opal_proc(opal_hash_table_t *jtable, opal_identifier_t id)
@@ -154,7 +156,7 @@ static proc_data_t* lookup_opal_proc(opal_hash_table_t *jtable, opal_identifier_
 }
 
 static int store(const opal_identifier_t *uid,
-                 opal_db_locality_t locality,
+                 opal_scope_t scope,
                  const char *key, const void *data,
                  opal_data_type_t type)
 {
@@ -163,6 +165,11 @@ static int store(const opal_identifier_t *uid,
     opal_byte_object_t *boptr;
     opal_identifier_t id;
 
+    /* data must have an assigned scope */
+    if (OPAL_SCOPE_UNDEF == scope) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
     /* to protect alignment, copy the data across */
     memcpy(&id, uid, sizeof(opal_identifier_t));
 
@@ -170,8 +177,8 @@ static int store(const opal_identifier_t *uid,
      * if this fell to us, we store it
      */
     opal_output_verbose(1, opal_db_base_framework.framework_output,
-                        "db:hash:store storing data for proc %" PRIu64 " at locality %d",
-                        id, (int)locality);
+                        "db:hash:store storing data for proc %" PRIu64 " for scope %d",
+                        id, (int)scope);
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_opal_proc(&hash_data, id))) {
@@ -197,6 +204,7 @@ static int store(const opal_identifier_t *uid,
     }
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(key);
+    kv->scope = scope;
     opal_list_append(&proc_data->data, &kv->super);
 
     /* the type could come in as an OPAL one (e.g., OPAL_VPID). Since
@@ -265,12 +273,16 @@ static int store(const opal_identifier_t *uid,
 }
 
 static int store_pointer(const opal_identifier_t *uid,
-                         opal_db_locality_t locality,
                          opal_value_t *kv)
 {
     proc_data_t *proc_data;
     opal_value_t *k2;
     opal_identifier_t id;
+
+    /* data must have an assigned scope */
+    if (OPAL_SCOPE_UNDEF == kv->scope) {
+        return OPAL_ERR_BAD_PARAM;
+    }
 
     /* to protect alignment, copy the data across */
     memcpy(&id, uid, sizeof(opal_identifier_t));
@@ -279,8 +291,8 @@ static int store_pointer(const opal_identifier_t *uid,
      * if this fell to us, we store it
      */
     opal_output_verbose(1, opal_db_base_framework.framework_output,
-                        "db:hash:store storing data for proc %" PRIu64 " at locality %d",
-                        id, (int)locality);
+                        "db:hash:store storing data for proc %" PRIu64 " for scope %d",
+                        id, (int)kv->scope);
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_opal_proc(&hash_data, id))) {
@@ -308,7 +320,8 @@ static int store_pointer(const opal_identifier_t *uid,
 }
 
 static int fetch(const opal_identifier_t *uid,
-                 const char *key, void **data, opal_data_type_t type)
+                 const char *key, void **data,
+                 opal_data_type_t type)
 {
     proc_data_t *proc_data;
     opal_value_t *kv;
@@ -337,12 +350,8 @@ static int fetch(const opal_identifier_t *uid,
 
     /* find the value */
     if (NULL == (kv = lookup_keyval(proc_data, key))) {
-        /* if the proc object was found, then all data
-         * for that proc has been stored - if we didn't
-         * find it, then report so. Otherwise, we can
-         * enter an infinite loop of looking for it
-         */
-        return OPAL_ERR_NOT_FOUND;
+        /* let them look globally for it */
+        return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
     /* do the copy and check the type */
@@ -433,12 +442,8 @@ static int fetch_pointer(const opal_identifier_t *uid,
 
     /* find the value */
     if (NULL == (kv = lookup_keyval(proc_data, key))) {
-        /* if the proc object was found, then all data
-         * for that proc has been stored - if we didn't
-         * find it, then report so. Otherwise, we can
-         * enter an infinite loop of looking for it
-         */
-        return OPAL_ERR_NOT_FOUND;
+        /* let them look globally for it */
+        return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
    switch (type) {
@@ -487,6 +492,7 @@ static int fetch_pointer(const opal_identifier_t *uid,
 }
 
 static int fetch_multiple(const opal_identifier_t *uid,
+                          opal_scope_t scope,
                           const char *key,
                           opal_list_t *kvs)
 {
@@ -515,6 +521,10 @@ static int fetch_multiple(const opal_identifier_t *uid,
         for (kv = (opal_value_t*) opal_list_get_first(&proc_data->data);
              kv != (opal_value_t*) opal_list_get_end(&proc_data->data);
              kv = (opal_value_t*) opal_list_get_next(kv)) {
+            /* check for a matching scope */
+            if (!(scope & kv->scope)) {
+                continue;
+            }
             if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&kvnew, kv, OPAL_VALUE))) {
                 OPAL_ERROR_LOG(rc);
                 return rc;
@@ -535,6 +545,10 @@ static int fetch_multiple(const opal_identifier_t *uid,
     for (kv = (opal_value_t*) opal_list_get_first(&proc_data->data);
          kv != (opal_value_t*) opal_list_get_end(&proc_data->data);
          kv = (opal_value_t*) opal_list_get_next(kv)) {
+        /* check for a matching scope */
+        if (!(scope & kv->scope)) {
+            continue;
+        }
         if ((0 < len && 0 == strncmp(srchkey, kv->key, len)) ||
             (0 == len && 0 == strcmp(key, kv->key))) {
             if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&kvnew, kv, OPAL_VALUE))) {
