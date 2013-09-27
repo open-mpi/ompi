@@ -56,39 +56,12 @@ orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
     modex
 };
 
-static char *pmi_kvs_name=NULL;
-
 /**
  * Initialize the module
  */
 static int init(void)
 {
-    int max_length, rc;
-
-#if WANT_PMI2_SUPPORT
-    /* TODO -- is this ok */
-    max_length = 1024;
-#else
-    if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
-        return ORTE_ERROR;
-    }
-#endif
-    pmi_kvs_name = (char*)malloc(max_length);
-    if (NULL == pmi_kvs_name) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-#if WANT_PMI2_SUPPORT
-    rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
-#else
-    rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
-#endif
-    if (PMI_SUCCESS != rc) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
-        return ORTE_ERROR;
-    }
-    return ORTE_SUCCESS;
+     return ORTE_SUCCESS;
 }
 
 /**
@@ -96,9 +69,6 @@ static int init(void)
  */
 static void finalize(void)
 {
-    if (NULL != pmi_kvs_name) {
-        free(pmi_kvs_name);
-    }
     return;
 }
 
@@ -185,47 +155,47 @@ static int modex(orte_grpcomm_collective_t *coll)
 
     /* discover the local ranks */
 #if WANT_PMI2_SUPPORT
-        {
-            char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-            int found, sid, nodes, k;
-            orte_vpid_t n;
-            char *p;
-            rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-            if (!found || PMI_SUCCESS != rc) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-                opal_output(0, "%s could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                return ORTE_ERROR;
-            }
+    {
+        char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
+        int found, sid, nodes, k;
+        orte_vpid_t n;
+        char *p;
+        rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
+        if (!found || PMI_SUCCESS != rc) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
+            opal_output(0, "%s could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            return ORTE_ERROR;
+        }
 
-            i = 0; n = 0; local_rank_count = 0;
-            if (NULL != (p = strstr(pmapping, "(vector"))) {
-                while (NULL != (p = strstr(p+1, ",("))) {
-                    if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &local_rank_count)) {
-                        for (k = 0; k < nodes; k++) {
-                            if ((ORTE_PROC_MY_NAME->vpid >= n) &&
-                                (ORTE_PROC_MY_NAME->vpid < (n + local_rank_count))) {
-                                break;
-                            }
-                            n += local_rank_count;
+        i = 0; n = 0; local_rank_count = 0;
+        if (NULL != (p = strstr(pmapping, "(vector"))) {
+            while (NULL != (p = strstr(p+1, ",("))) {
+                if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &local_rank_count)) {
+                    for (k = 0; k < nodes; k++) {
+                        if ((ORTE_PROC_MY_NAME->vpid >= n) &&
+                            (ORTE_PROC_MY_NAME->vpid < (n + local_rank_count))) {
+                            break;
                         }
+                        n += local_rank_count;
                     }
                 }
             }
-            free(pmapping);
+        }
+        free(pmapping);
 
-            if ((local_rank_count > 0) && (local_rank_count < (int)orte_process_info.num_procs)) {
-                local_ranks = (int*)malloc(local_rank_count * sizeof(int));
-                for (i=0; i < local_rank_count; i++) {
-                    local_ranks[i] = n + i;
-                }
-            }
-
-            if (NULL == local_ranks) {
-                opal_output(0, "%s could not get PMI_process_mapping",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                return ORTE_ERROR;
+        if ((local_rank_count > 0) && (local_rank_count < (int)orte_process_info.num_procs)) {
+            local_ranks = (int*)malloc(local_rank_count * sizeof(int));
+            for (i=0; i < local_rank_count; i++) {
+                local_ranks[i] = n + i;
             }
         }
+
+        if (NULL == local_ranks) {
+            opal_output(0, "%s could not get PMI_process_mapping",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            return ORTE_ERROR;
+        }
+    }
 #else
     rc = PMI_Get_clique_size (&local_rank_count);
     if (PMI_SUCCESS != rc) {
@@ -268,9 +238,12 @@ static int modex(orte_grpcomm_collective_t *coll)
 	    }
 	}
 
-	/* compute and store the locality as it isn't something that gets pushed to PMI */
+	/* compute and store the locality as it isn't something that gets pushed to PMI  - doing
+         * this here will prevent the MPI layer from fetching data for all ranks
+         */
         if (local) {
-	    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&name, ORTE_DB_CPUSET, (void **)&cpuset, OPAL_STRING))) {
+	    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&name, OPAL_DB_CPUSET,
+                                                            (void **)&cpuset, OPAL_STRING))) {
 		ORTE_ERROR_LOG(rc);
 		return rc;
 	    }
@@ -291,7 +264,8 @@ static int modex(orte_grpcomm_collective_t *coll)
             locality = OPAL_PROC_NON_LOCAL;
 	}
 
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_SCOPE_INTERNAL,
+                                                OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

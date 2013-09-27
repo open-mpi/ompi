@@ -35,21 +35,6 @@
 
 BEGIN_C_DECLS
 
-/* define a flag to indicate the scope of data being
- * stored in the database. Three options are supported:
- *
- * GLOBAL:   data is to be published such that any proc
- *           in the job can access it
- * LOCAL:    data is to be published such that any proc
- *           on the same node can access it
- * INTERNAL: data is to be stored in this app only
- */
-typedef enum {
-    OPAL_DB_GLOBAL,
-    OPAL_DB_LOCAL,
-    OPAL_DB_INTERNAL
-} opal_db_locality_t;
-
 /*
  * Initialize the module
  */
@@ -61,26 +46,51 @@ typedef int (*opal_db_base_module_init_fn_t)(void);
 typedef void (*opal_db_base_module_finalize_fn_t)(void);
 
 /*
- * Store a copy of data in the database - overwrites if already present. The data is
- * copied into the database and therefore does not need to be preserved by
- * the caller.
+ * Set local identifier - pass in an opal_identifier_t value
+ * that identifies this process. Used to determine whether or
+ * not to publish values outside the process. Values stored
+ * for other processes are never published as it is assumed
+ * that each process is responsible for determining its own
+ * need to publish a given piece of data
+ */
+typedef void (*opal_db_base_module_set_id_fn_t)(const opal_identifier_t *proc);
+
+/*
+ * Store a copy of data in the database - overwrites if already present. The
+ * data is copied into the database and therefore does not need to be preserved
+ * by the caller. The scope of the data determines where it is stored:
+ *
+ * - if the proc id is NOT my own, or the scope is INTERNAL, then the
+ *   data is stored in my own internal storage system. Data for procs
+ *   other than myself is NEVER published to the outside world
+ *
+ * - if the proc id is my own, and the scope is LOCAL, then the data
+ *   is both stored internally AND pushed to the outside world. If the
+ *   external API supports node-local operations, then the data will
+ *   only be pushed to procs that are on the same node as ourselves.
+ *   Otherwise, the data will be published GLOBAL.
+ *
+ * - if the proc id is my own, and the scope is GLOBAL, then the data
+ *   is both stored internally AND pushed to the outside world.
+&
  */
 typedef int (*opal_db_base_module_store_fn_t)(const opal_identifier_t *proc,
-                                              opal_db_locality_t locality,
+                                              opal_scope_t scope,
                                               const char *key, const void *data,
                                               opal_data_type_t type);
 
 /*
  * Store a pointer to data in the database - data must be retained by the user.
  * This allows users to share data across the code base without consuming
- * additional memory, but while retaining local access
+ * additional memory, but while retaining local access. Scope rules are
+ * as outlined above
  */
 typedef int (*opal_db_base_module_store_pointer_fn_t)(const opal_identifier_t *proc,
-                                                      opal_db_locality_t locality,
                                                       opal_value_t *kv);
 
 /*
- * Commit data to the database
+ * Commit data to the database - used to generate a commit of data
+ * to an external key-value store such as PMI
  */
 typedef void (*opal_db_base_module_commit_fn_t)(const opal_identifier_t *proc);
 
@@ -110,9 +120,16 @@ typedef int (*opal_db_base_module_fetch_pointer_fn_t)(const opal_identifier_t *p
  * Retrieve multiple data elements
  *
  * Retrieve data for the given proc associated with the specified key. Wildcards
- * are supported here as well. Caller is responsible for releasing the objects on the list.
+ * are supported here as well (key==NULL implies return all key-value pairs). Caller
+ * is responsible for releasing the objects on the list. Scope rules are as described above.
+ * A NULL identifer parameter indicates that data for all procs is to be returned.
+ * The scope of the data is matched against the scope of the data when
+ * stored. Note that a call to fetch data with a GLOBAL scope will return data
+ * that was stored as PEER or NON_PEER, but not data stored as INTERNAL. A scope
+ * of ALL will return data stored under any scope.
  */
 typedef int (*opal_db_base_module_fetch_multiple_fn_t)(const opal_identifier_t *proc,
+                                                       opal_scope_t scope,
                                                        const char *key,
                                                        opal_list_t *kvs);
 
@@ -141,6 +158,7 @@ typedef int (*opal_db_base_module_add_log_fn_t)(const char *table, const opal_va
 struct opal_db_base_module_1_0_0_t {
     opal_db_base_module_init_fn_t                      init;
     opal_db_base_module_finalize_fn_t                  finalize;
+    opal_db_base_module_set_id_fn_t                    set_id;
     opal_db_base_module_store_fn_t                     store;
     opal_db_base_module_store_pointer_fn_t             store_pointer;
     opal_db_base_module_commit_fn_t                    commit;

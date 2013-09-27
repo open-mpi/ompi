@@ -31,6 +31,7 @@
 opal_db_base_module_t opal_db = {
     NULL,
     NULL,
+    opal_db_base_set_id,
     opal_db_base_store,
     opal_db_base_store_pointer,
     opal_db_base_commit,
@@ -53,6 +54,8 @@ static int opal_db_base_close(void)
 
 static int opal_db_base_open(mca_base_open_flag_t flags)
 {
+    opal_db_base.my_id = 0;
+    opal_db_base.id_set = false;
     OBJ_CONSTRUCT(&opal_db_base.fetch_order, opal_list_t);
     OBJ_CONSTRUCT(&opal_db_base.store_order, opal_list_t);
 

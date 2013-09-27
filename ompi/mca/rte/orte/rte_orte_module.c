@@ -139,7 +139,8 @@ void ompi_rte_wait_for_debugger(void)
 int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
                       const void *data, opal_data_type_t type)
 {
-    return opal_db.store((opal_identifier_t*)nm, OPAL_DB_GLOBAL, key, data, type);
+    /* MPI connection data is to be shared with ALL other processes */
+    return opal_db.store((opal_identifier_t*)nm, OPAL_SCOPE_GLOBAL, key, data, type);
 }
 
 int ompi_rte_db_fetch(const orte_process_name_t *nm,
@@ -185,7 +186,9 @@ int ompi_rte_db_fetch_multiple(const orte_process_name_t *nm,
     ompi_proc_t *proct;
     int rc;
 
-    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)nm, key, kvs))) {
+    /* MPI processes are only concerned with shared info */
+    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)nm,
+                                                     OPAL_SCOPE_GLOBAL, key, kvs))) {
         return rc;
     }
     /* update the hostname */

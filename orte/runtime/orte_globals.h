@@ -121,11 +121,9 @@ ORTE_DECLSPEC extern int orte_exit_status;
 #define ORTE_DB_DAEMON_VPID  "orte.daemon.vpid"
 #define ORTE_DB_NODERANK     "orte.node.rank"
 #define ORTE_DB_LOCALRANK    "orte.local.rank"
-#define ORTE_DB_LOCALITY     "orte.locality"
 #define ORTE_DB_ARCH         "orte.arch"
 #define ORTE_DB_NPROCS       "orte.nprocs"
 #define ORTE_DB_RMLURI       "orte.rmluri"
-#define ORTE_DB_CPUSET       "orte.cpuset"
 
 
 /* State Machine lists */

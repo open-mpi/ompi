@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "orte_config.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/dss/dss_types.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/hwloc/hwloc.h"
 
@@ -98,12 +100,9 @@ ORTE_DECLSPEC void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t
                                                  void* cbdata);
 
 /* modex support */
-ORTE_DECLSPEC   void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata);
 ORTE_DECLSPEC   void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata);
 ORTE_DECLSPEC   void orte_grpcomm_base_modex(int fd, short args, void *cbdata);
-ORTE_DECLSPEC   int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf);
-ORTE_DECLSPEC   int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
-                                                           opal_buffer_t *rbuf);
+ORTE_DECLSPEC   int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, opal_scope_t scope);
 
 /* comm support */
 ORTE_DECLSPEC int orte_grpcomm_base_comm_start(void);

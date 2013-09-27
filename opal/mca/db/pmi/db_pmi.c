@@ -40,11 +40,10 @@
 static int init(void);
 static void finalize(void);
 static int store(const opal_identifier_t *id,
-                 opal_db_locality_t locality,
+                 opal_scope_t scope,
                  const char *key, const void *object,
                  opal_data_type_t type);
 static int store_pointer(const opal_identifier_t *proc,
-                         opal_db_locality_t locality,
                          opal_value_t *kv);
 static void commit(const opal_identifier_t *proc);
 static int fetch(const opal_identifier_t *proc,
@@ -53,6 +52,7 @@ static int fetch_pointer(const opal_identifier_t *proc,
                          const char *key,
                          void **data, opal_data_type_t type);
 static int fetch_multiple(const opal_identifier_t *proc,
+                          opal_scope_t scope,
                           const char *key,
                           opal_list_t *kvs);
 static int remove_data(const opal_identifier_t *proc, const char *key);
@@ -60,6 +60,7 @@ static int remove_data(const opal_identifier_t *proc, const char *key);
 opal_db_base_module_t opal_db_pmi_module = {
     init,
     finalize,
+    opal_db_base_set_id,
     store,
     store_pointer,
     commit,
@@ -326,21 +327,20 @@ static int pmi_get_packed (const opal_identifier_t *uid, char **packed_data, siz
     return OPAL_SUCCESS;
 }
 
-static bool cache_keys_locally (const opal_identifier_t *uid, const char *key)
+static void cache_keys_locally(const opal_identifier_t *uid)
 {
     char *tmp, *tmp2, *tmp3, *tmp_val;
     opal_data_type_t stored_type;
     size_t len, offset;
     int rc, size;
-    bool found;
 
     OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
-                         "db:pmi:fetch get key %s for proc %" PRIu64 " in KVS %s",
-			 key, *uid, pmi_kvs_name));
+                         "db:pmi:fetch get all keys for proc %" PRIu64 " in KVS %s",
+			 *uid, pmi_kvs_name));
 
     rc = pmi_get_packed (uid, &tmp_val, &len);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        return;
     }
 
     /* search for this key in the decoded data */
@@ -365,28 +365,22 @@ static bool cache_keys_locally (const opal_identifier_t *uid, const char *key)
                 bo.bytes = (uint8_t*)tmp3;
                 bo.size = size;
             }
-            opal_db.store (uid, OPAL_DB_INTERNAL, tmp_val + offset, &bo, stored_type);
+            opal_db.store (uid, OPAL_SCOPE_GLOBAL, tmp_val + offset, &bo, stored_type);
         } else if (size < 0xffff) {
-            opal_db.store (uid, OPAL_DB_INTERNAL, tmp_val + offset, tmp3, stored_type);
+            opal_db.store (uid, OPAL_SCOPE_GLOBAL, tmp_val + offset, tmp3, stored_type);
         } else {
-            opal_db.store (uid, OPAL_DB_INTERNAL, tmp_val + offset, NULL, stored_type);
-            size = 0;
+            opal_db.store (uid, OPAL_SCOPE_GLOBAL, tmp_val + offset, NULL, stored_type);
         }
-
-        if (0 != strcmp (key, tmp_val + offset)) {
-            found = true;
-	}
 
         /* keep going and cache everything locally */
         offset = (size_t) (tmp3 - tmp_val) + size;
     }
 
     free (tmp_val);
-
-    return found;
 }
 
-static int store(const opal_identifier_t *uid, opal_db_locality_t locality,
+static int store(const opal_identifier_t *uid,
+                 opal_scope_t scope,
                  const char *key, const void *data, opal_data_type_t type)
 {
     opal_identifier_t proc;
@@ -394,8 +388,9 @@ static int store(const opal_identifier_t *uid, opal_db_locality_t locality,
     /* to protect alignment, copy the data across */
     memcpy(&proc, uid, sizeof(opal_identifier_t));
 
-    /* pass internal stores down to someone else */
-    if (OPAL_DB_INTERNAL == locality) {
+    /* we never push other proc's data, or INTERNAL data */
+    if (OPAL_SCOPE_INTERNAL & scope ||
+        proc != opal_db_base.my_id) {
         return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
@@ -406,19 +401,23 @@ static int store(const opal_identifier_t *uid, opal_db_locality_t locality,
     return pmi_store_encoded (uid, key, data, type);
 }
 
-static int store_pointer(const opal_identifier_t *proc,
-                         opal_db_locality_t locality,
+static int store_pointer(const opal_identifier_t *uid,
                          opal_value_t *kv)
 {
     int rc;
+    opal_identifier_t proc;
 
-    /* pass internal stores down to someone else */
-    if (OPAL_DB_INTERNAL == locality) {
+    /* to protect alignment, copy the data across */
+    memcpy(&proc, uid, sizeof(opal_identifier_t));
+
+    /* we never push other proc's data, or INTERNAL data */
+    if (OPAL_SCOPE_INTERNAL & kv->scope ||
+        proc != opal_db_base.my_id) {
         return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
     /* just push this to PMI */
-    if (OPAL_SUCCESS != (rc = store(proc, locality, kv->key, (void*)&kv->data, kv->type))) {
+    if (OPAL_SUCCESS != (rc = store(uid, kv->scope, kv->key, (void*)&kv->data, kv->type))) {
         OPAL_ERROR_LOG(rc);
     }
     return rc;
@@ -445,132 +444,65 @@ static void commit(const opal_identifier_t *proc)
 #endif
 }
 
-/* the only current use for fetch_pointer is to retrieve the
- * hostname for the process - so don't worry about other uses
- * here just yet
- */
-static int fetch_pointer(const opal_identifier_t *proc,
+static int fetch(const opal_identifier_t *uid,
+                 const char *key, void **data,
+                 opal_data_type_t type)
+{
+    opal_identifier_t proc;
+
+    /* to protect alignment, copy the data across */
+    memcpy(&proc, uid, sizeof(opal_identifier_t));
+
+    /* if it is my own id, the data isn't here */
+    if (proc == opal_db_base.my_id) {
+        return OPAL_ERR_TAKE_NEXT_OPTION;
+    }
+
+    cache_keys_locally(&proc);
+    /* all keys will be available internally now */
+    return OPAL_ERR_TAKE_NEXT_OPTION;
+}
+
+static int fetch_pointer(const opal_identifier_t *uid,
                          const char *key,
                          void **data, opal_data_type_t type)
 {
-    if (cache_keys_locally (proc, key)) {
-        /* the key will be available internally now */
-        return opal_db.fetch_pointer (proc, key, data, type);
-    }
+    opal_identifier_t proc;
 
-    return OPAL_ERR_NOT_FOUND;
+    /* to protect alignment, copy the data across */
+    memcpy(&proc, uid, sizeof(opal_identifier_t));
+
+    /* if it is my own id, the data isn't here */
+    if (proc == opal_db_base.my_id) {
+        return OPAL_ERR_TAKE_NEXT_OPTION;
+    }
+    cache_keys_locally(&proc);
+    /* all keys will be available internally now */
+    return OPAL_ERR_TAKE_NEXT_OPTION;
 }
 
-static int fetch_multiple(const opal_identifier_t *proc,
+static int fetch_multiple(const opal_identifier_t *uid,
+                          opal_scope_t scope,
                           const char *key,
                           opal_list_t *kvs)
 {
-    char *tmp, *tmp2, *tmp3, *tmp_val;
-    opal_data_type_t stored_type;
-    size_t len, offset;
-    opal_value_t *kv;
-    regex_t regexp;
-    int rc, size;
+    opal_identifier_t proc;
 
-    OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
+    /* to protect alignment, copy the data across */
+    memcpy(&proc, uid, sizeof(opal_identifier_t));
+
+    /* if it is my own id, the data isn't here */
+    if (proc == opal_db_base.my_id) {
+        return OPAL_ERR_TAKE_NEXT_OPTION;
+    }
+
+     OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
                          "db:pmi:fetch_multiple get key %s for proc %" PRIu64 " in KVS %s",
-			 key, *proc, pmi_kvs_name));
+                          (NULL == key) ? "NULL" : key, proc, pmi_kvs_name));
 
-    if (NULL == key) {
-        /* match anything */
-        key = ".*";
-    }
-
-    rc = regcomp (&regexp, key, REG_EXTENDED);
-    if (0 != rc) {
-        return OPAL_ERR_BAD_PARAM;
-    }
-
-    rc = pmi_get_packed (proc, &tmp_val, &len);
-    if (OPAL_SUCCESS != rc) {
-        regfree (&regexp);
-        return rc;
-    }
-
-    rc = OPAL_ERR_NOT_FOUND;
-
-    /* search for this key in the decoded data */
-    for (offset = 0 ; offset < len && '\0' != tmp_val[offset] ; ) {
-        /* type */
-	tmp = tmp_val + offset + strlen (tmp_val + offset) + 1;
-        /* size */
-	tmp2 = tmp + strlen (tmp) + 1;
-        /* data */
-        tmp3 = tmp2 + strlen (tmp2) + 1;
-
-        stored_type = (opal_data_type_t) strtol (tmp, NULL, 16);
-        size = strtol (tmp2, NULL, 16);
-
-        if (0 != regexec (&regexp, tmp_val + offset, 0, NULL, 0)) {
-	    offset = (size_t) (tmp3 - tmp_val) + size;
-	    continue;
-	}
-
-        OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
-                             "db:pmi:fetch_multiple found matching key %s",
-                             tmp_val + offset));
-
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(tmp_val + offset);
-        kv->type = stored_type;
-
-        switch (stored_type) {
-        case OPAL_STRING:
-            kv->data.string = size ? strdup (tmp3) : NULL;
-            break;
-        case OPAL_INT32:
-        case OPAL_UINT32:
-            memcpy(&kv->data.uint32, tmp3, sizeof (kv->data.uint32));
-            break;
-        case OPAL_INT16:
-        case OPAL_UINT16:
-            memcpy(&kv->data.uint16, tmp3, sizeof (kv->data.uint16));
-            break;
-        case OPAL_UINT:
-        case OPAL_INT:
-            memcpy(&kv->data.integer, tmp3, sizeof (kv->data.integer));
-            break;
-        case OPAL_BYTE_OBJECT:
-            kv->data.bo.size = size;
-            if (size) {
-                kv->data.bo.bytes = (uint8_t *) malloc (size);
-                memmove (kv->data.bo.bytes, tmp3, size);
-            } else {
-                kv->data.bo.bytes = NULL;
-            }
-            break;
-        default:
-            OBJ_RELEASE(kv);
-            rc = OPAL_ERR_NOT_SUPPORTED;
-            goto error;
-        }
-
-        opal_list_append (kvs, (opal_list_item_t *) kv);
-        offset = (size_t) (tmp3 - tmp_val) + size;
-        rc = OPAL_SUCCESS;
-    }
-
- error:
-    regfree (&regexp);
-    free (tmp_val);
-
-    return rc;
-}
-
-static int fetch(const opal_identifier_t *uid,
-                 const char *key, void **data, opal_data_type_t type)
-{
-    if (cache_keys_locally (uid, key)) {
-        /* the key will be available internally now */
-        return opal_db.fetch (uid, key, data, type);
-    }
-
-    return OPAL_ERR_NOT_FOUND;
+    cache_keys_locally(&proc);
+    /* all keys will be available internally now */
+    return OPAL_ERR_TAKE_NEXT_OPTION;
 }
 
 static int remove_data(const opal_identifier_t *proc, const char *key)

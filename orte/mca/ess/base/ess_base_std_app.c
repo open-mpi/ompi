@@ -12,6 +12,7 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -166,6 +167,8 @@ int orte_ess_base_app_setup(void)
         error = "orte_db_base_select";
         goto error;
     }
+    /* set our id */
+    opal_db.set_id((opal_identifier_t*)ORTE_PROC_MY_NAME);
 
     /*
      * Group communications
