@@ -224,7 +224,7 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  * This is done so we don't end up needing a structure that is
  * incredibly larger than necessary because of the bitness.
  */
-#define PREDEFINED_COMMUNICATOR_PAD (sizeof(void*) * 128)
+#define PREDEFINED_COMMUNICATOR_PAD (sizeof(void*) * 192)
 
 struct ompi_predefined_communicator_t {
     struct ompi_communicator_t comm;
