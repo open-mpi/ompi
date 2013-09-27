@@ -228,8 +228,6 @@ static void rdmacm_contents_destructor(rdmacm_contents_t *contents)
  */
 static void rdmacm_component_register(void)
 {
-    int value;
-
     rdmacm_priority = 30;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                            "connect_rdmacm_priority",
