@@ -1747,7 +1747,7 @@ OMPI_DECLSPEC  int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
                                __mpi_interface_deprecated__("MPI_Type_ub is deprecated, use MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Type_vector(int count, int blocklength, int stride,
                                    MPI_Datatype oldtype, MPI_Datatype *newtype);
-OMPI_DECLSPEC  int MPI_Unpack(void *inbuf, int insize, int *position,
+OMPI_DECLSPEC  int MPI_Unpack(const void *inbuf, int insize, int *position,
                               void *outbuf, int outcount, MPI_Datatype datatype,
                               MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Unpublish_name(const char *service_name, MPI_Info info, const char *port_name);
@@ -2396,7 +2396,7 @@ OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
                                 __mpi_interface_deprecated__("MPI_Type_ub is deprecated, use MPI_Type_get_extent in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Type_vector(int count, int blocklength, int stride,
                                     MPI_Datatype oldtype, MPI_Datatype *newtype);
-OMPI_DECLSPEC  int PMPI_Unpack(void *inbuf, int insize, int *position,
+OMPI_DECLSPEC  int PMPI_Unpack(const void *inbuf, int insize, int *position,
                                void *outbuf, int outcount, MPI_Datatype datatype,
                                MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Unpublish_name(const char *service_name, MPI_Info info,
