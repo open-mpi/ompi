@@ -1705,6 +1705,7 @@ interface MPI_Ineighbor_alltoallw
 
 subroutine MPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
         recvcounts, rdispls, recvtypes, comm, request, ierror)
+  include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
@@ -2253,6 +2254,7 @@ interface MPI_Neighbor_alltoallw
 
 subroutine MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
         recvcounts, rdispls, recvtypes, comm, ierror)
+  include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts

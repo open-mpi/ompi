@@ -4416,7 +4416,7 @@ interface  MPI_Neighbor_alltoallw
 subroutine MPI_Neighbor_alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("MPI_Neighbor_alltoallw_f08")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Aint
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Aint, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
