@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -27,9 +27,9 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "ompi/constants.h"
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/util/output.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 

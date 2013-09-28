@@ -24,8 +24,6 @@
 
 #include <stddef.h>
 
-#include "mpi.h"
-
 #include "opal/align.h"
 #include "opal/types.h"
 #include "opal/util/arch.h"

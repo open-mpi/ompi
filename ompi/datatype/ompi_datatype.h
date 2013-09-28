@@ -39,10 +39,7 @@
 #endif
 
 #include "ompi/constants.h"
-#include "opal/class/opal_pointer_array.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype.h"
 #include "mpi.h"
 
 BEGIN_C_DECLS
@@ -177,31 +174,8 @@ ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, uint
     return opal_datatype_add( &pdtBase->super, &pdtAdd->super, count, disp, extent );
 }
 
-
-static inline int32_t
-ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType )
-{
-    ompi_datatype_t * new_ompi_datatype = ompi_datatype_create( oldType->super.desc.used + 2 );
-
-    *newType = new_ompi_datatype;
-    if( NULL == new_ompi_datatype ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    opal_datatype_clone( &oldType->super, &new_ompi_datatype->super);
-    /* Strip the predefined flag at the OMPI level. */
-    new_ompi_datatype->super.flags &= ~OMPI_DATATYPE_FLAG_PREDEFINED;
-    /* By default maintain the relationships related to the old data (such as ops) */
-    new_ompi_datatype->id = oldType->id;
-
-    /* Set the keyhash to NULL -- copying attributes is *only* done at
-       the top level (specifically, MPI_TYPE_DUP). */
-    new_ompi_datatype->d_keyhash = NULL;
-    new_ompi_datatype->args = NULL;
-    snprintf (new_ompi_datatype->name, MPI_MAX_OBJECT_NAME, "Dup %s",
-              oldType->name);
-
-    return OMPI_SUCCESS;
-}
+OMPI_DECLSPEC int32_t
+ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 
 OMPI_DECLSPEC int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_vector( int count, int bLength, int stride,

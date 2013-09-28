@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil  -*- */
 /*
- * Copyright (c) 2009-2010 The University of Tennessee and The University
+ * Copyright (c) 2009-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -26,7 +26,6 @@
 #define OMPI_DATATYPE_INTERNAL_H
 
 #include "opal/datatype/opal_datatype_internal.h"
-#include "ompi/class/ompi_free_list.h"
 
 /*
  * This is the OMPI-layered numbering of ALL supported MPI types
