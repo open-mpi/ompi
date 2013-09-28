@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -24,7 +24,6 @@
 #include <string.h>
 #endif
 
-#include "ompi/constants.h"
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/attribute/attribute.h"
@@ -87,3 +86,29 @@ int32_t ompi_datatype_destroy( ompi_datatype_t** type)
     *type = NULL;
     return OMPI_SUCCESS;
 }
+
+int32_t
+ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType )
+{
+    ompi_datatype_t * new_ompi_datatype = ompi_datatype_create( oldType->super.desc.used + 2 );
+
+    *newType = new_ompi_datatype;
+    if( NULL == new_ompi_datatype ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    opal_datatype_clone( &oldType->super, &new_ompi_datatype->super);
+    /* Strip the predefined flag at the OMPI level. */
+    new_ompi_datatype->super.flags &= ~OMPI_DATATYPE_FLAG_PREDEFINED;
+    /* By default maintain the relationships related to the old data (such as ops) */
+    new_ompi_datatype->id = oldType->id;
+
+    /* Set the keyhash to NULL -- copying attributes is *only* done at
+       the top level (specifically, MPI_TYPE_DUP). */
+    new_ompi_datatype->d_keyhash = NULL;
+    new_ompi_datatype->args = NULL;
+    snprintf (new_ompi_datatype->name, MPI_MAX_OBJECT_NAME, "Dup %s",
+              oldType->name);
+
+    return OMPI_SUCCESS;
+}
+
