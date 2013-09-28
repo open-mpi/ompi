@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -30,8 +30,8 @@
 #pragma weak pmpi_get_elements_x_ = ompi_get_elements_x_f
 #pragma weak pmpi_get_elements_x__ = ompi_get_elements_x_f
 
-#pragma weak PMPI_get_elements_x_f = ompi_get_elements_x_f
-#pragma weak PMPI_get_elements_x_f08 = ompi_get_elements_x_f
+#pragma weak PMPI_Get_elements_x_f = ompi_get_elements_x_f
+#pragma weak PMPI_Get_elements_x_f08 = ompi_get_elements_x_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ELEMENTS_X,
                            pmpi_get_elements_x,
@@ -48,8 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ELEMENTS_X,
 #pragma weak mpi_get_elements_x_ = ompi_get_elements_x_f
 #pragma weak mpi_get_elements_x__ = ompi_get_elements_x_f
 
-#pragma weak MPI_get_elements_x_f = ompi_get_elements_x_f
-#pragma weak MPI_get_elements_x_f08 = ompi_get_elements_x_f
+#pragma weak MPI_Get_elements_x_f = ompi_get_elements_x_f
+#pragma weak MPI_Get_elements_x_f08 = ompi_get_elements_x_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER

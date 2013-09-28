@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -29,8 +29,8 @@
 #pragma weak pmpi_type_size_x_ = ompi_type_size_x_f
 #pragma weak pmpi_type_size_x__ = ompi_type_size_x_f
 
-#pragma weak PMPI_type_size_x_f = ompi_type_size_x_f
-#pragma weak PMPI_type_size_x_f08 = ompi_type_size_x_f
+#pragma weak PMPI_Type_size_x_f = ompi_type_size_x_f
+#pragma weak PMPI_Type_size_x_f08 = ompi_type_size_x_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_SIZE_X,
                            pmpi_type_size_x,
@@ -47,8 +47,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_SIZE_X,
 #pragma weak mpi_type_size_x_ = ompi_type_size_x_f
 #pragma weak mpi_type_size_x__ = ompi_type_size_x_f
 
-#pragma weak MPI_type_size_x_f = ompi_type_size_x_f
-#pragma weak MPI_type_size_x_f08 = ompi_type_size_x_f
+#pragma weak MPI_Type_size_x_f = ompi_type_size_x_f
+#pragma weak MPI_Type_size_x_f08 = ompi_type_size_x_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
