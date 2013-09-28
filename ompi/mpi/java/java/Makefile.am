@@ -150,9 +150,13 @@ java_DATA = mpi.jar
 # JAVA_CLASS_FILES.
 BUILT_SOURCES = $(JAVA_H)
 
+# Convenience for building Javadoc docs
+jdoc:
+	javadoc -d doc $(srcdir)/*.java
+
 # Clean up all the things that this Makefile.am generates.  The
 # generated .class files are all within the "mpi" subdirectory.
-CLEANFILES += -rf mpi/* $(JAVA_H)
+CLEANFILES += -rf mpi/* $(JAVA_H) doc
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
