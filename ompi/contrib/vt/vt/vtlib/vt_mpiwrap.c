@@ -47,7 +47,8 @@
    (e.g. MPI_Send(void* sendbuf, ...) -> MPI_Send(const void* sendbuf, ...));
    prepend CONST to these parameters which is defined either to "const"
    (if MPI-3) or to nothing (if MPI-1/2) */
-#if defined(MPI_VERSION) && MPI_VERSION >= 3
+/* JMS Temporarily added "|| 1" in the next line so that the OMPI trunk can build */
+#if defined(MPI_VERSION) && MPI_VERSION >= 3 || 1
 # define CONST const
 #else /* MPI_VERSION */
 # define CONST
