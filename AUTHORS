@@ -69,7 +69,7 @@ mschaara    Mohamad Chaarawi            UH
 mt          Mark Taylor                 LANL
 naughtont   Tom Naughton                ORNL
 ollie       Li-Ta Lo                    LANL
-osvegis     Oscar Vega-Gisbert          DSIC-UPV
+osvegis     Oscar Vega-Gisbert          UPV
 paklui      Pak Lui                     Sun
 pasha       Pavel Shamis                Mellanox, ORNL
 patrick     Patrick Geoffray            Myricom
@@ -106,8 +106,8 @@ yaeld       Yael Dalen                  Mellanox
 yosefe      Yossi Etigin                Mellanox
 yuw         Weikuan Yu                  LANL, OSU
 
-Affiliaion abbreviations:
--------------------------
+Affiliation abbreviations:
+--------------------------
 
 Chelsio = Chelsio Communications, Inc.
 Cisco = Cisco Systems, Inc.
@@ -129,6 +129,7 @@ UBC = University of British Columbia
 UJ = Friedrich-Schiller-Universitat Jena
 UH = University of Houston
 OU = University of Oregon
+UPV = Universitat Politecnica de Valencia
 UTK = University of Tennessee, Knoxville
 UWL = University of Wisconsin-La Crosse
 Voltaire = Voltaire
