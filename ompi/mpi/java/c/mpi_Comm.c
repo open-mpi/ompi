@@ -134,31 +134,46 @@ static void releaseArrayPtr(JNIEnv *e, jobject buf, void *bufBase,
 void* ompi_java_getBufPtr(void** bufBase, JNIEnv *env, jobject buf,
                           int baseType, int offset)
 {
-    *bufBase = (*env)->GetDirectBufferAddress(env, buf);
-
-    if(*bufBase != NULL)
+    if(buf == NULL)
     {
-        assert(offset == 0);
-        return *bufBase;
+        /* Allow NULL buffers to send/recv 0 items as control messages. */
+        *bufBase = NULL;
+        return NULL;
     }
     else
     {
-        return getArrayPtr(bufBase, env, buf, baseType, offset);
+        *bufBase = (*env)->GetDirectBufferAddress(env, buf);
+
+        if(*bufBase != NULL)
+        {
+            assert(offset == 0);
+            return *bufBase;
+        }
+        else
+        {
+            return getArrayPtr(bufBase, env, buf, baseType, offset);
+        }
     }
 }
 
 void ompi_java_releaseBufPtr(JNIEnv *env, jobject buf,
                              void* bufBase, int baseType)
 {
-    if((*env)->GetDirectBufferAddress(env, buf) == NULL)
+    if(buf != NULL && (*env)->GetDirectBufferAddress(env, buf) == NULL)
         releaseArrayPtr(env, buf, bufBase, baseType, 0);
 }
 
 void ompi_java_releaseReadBufPtr(
         JNIEnv *env, jobject buf, void *bufBase, int baseType)
 {
-    if((*env)->GetDirectBufferAddress(env, buf) == NULL)
+    if(buf != NULL && (*env)->GetDirectBufferAddress(env, buf) == NULL)
         releaseArrayPtr(env, buf, bufBase, baseType, JNI_ABORT);
+}
+
+void* ompi_java_getDirectBufferAddress(JNIEnv *env, jobject buf)
+{
+    /* Allow NULL buffers to send/recv 0 items as control messages. */
+    return buf == NULL ? NULL : (*env)->GetDirectBufferAddress(env, buf);
 }
 
 /* `getArrayCritical' is used in
@@ -356,10 +371,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_send(
     int baseType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
-
-    if(bufPtr == NULL)
-        return; /* Out of memory */
-
     int rc = MPI_Send(bufPtr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, bufBase, baseType);
@@ -381,9 +392,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_recv(
 
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
-
-    if(bufPtr == NULL)
-        return; /* Out of memory */
 
     MPI_Status status;
     int rc = MPI_Recv(bufPtr, count, type, source, tag, comm, &status);
@@ -415,19 +423,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
     void *sBufPtr, *sBufBase,
          *rBufPtr, *rBufBase;
 
-    MPI_Status status;
     sBufPtr = ompi_java_getBufPtr(&sBufBase, env, sBuf, sBaseType, sOffset);
-
-    if(sBufPtr == NULL)
-        return; /* Out of memory */
-
     rBufPtr = ompi_java_getBufPtr(&rBufBase, env, rBuf, rBaseType, rOffset);
-
-    if(rBufPtr == NULL)
-    {
-        ompi_java_releaseReadBufPtr(env, sBuf, sBufBase, sBaseType);
-        return; /* Out of memory */
-    }
+    MPI_Status status;
 
     int rc = MPI_Sendrecv(sBufPtr, sCount, sType, dest, sTag,
                           rBufPtr, rCount, rType, source, rTag,
@@ -457,9 +455,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
 
-    if(bufPtr == NULL)
-        return; /* Out of memory */
-
     int rc = MPI_Sendrecv_replace(bufPtr, count, type, dest,
                                   sTag, source, rTag, comm, &status);
 
@@ -484,9 +479,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_bSend(
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
 
-    if(bufPtr == NULL)
-        return; /* Out of memory */
-
     int rc = MPI_Bsend(bufPtr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, bufBase, baseType);
@@ -508,9 +500,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sSend(
 
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
-
-    if(bufPtr == NULL)
-        return; /* Out of memory */
 
     int rc = MPI_Ssend(bufPtr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
@@ -534,9 +523,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_rSend(
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
 
-    if(bufPtr == NULL)
-        return; /* Out of memory */
-
     int rc = MPI_Rsend(bufPtr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, bufBase, baseType);
@@ -546,7 +532,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iSend(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Isend(ptr, count, (MPI_Datatype)type,
@@ -560,7 +546,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_ibSend(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Ibsend(ptr, count, (MPI_Datatype)type,
@@ -574,7 +560,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_isSend(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Issend(ptr, count, (MPI_Datatype)type,
@@ -588,7 +574,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_irSend(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Irsend(ptr, count, (MPI_Datatype)type,
@@ -602,7 +588,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iRecv(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint source, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Irecv(ptr, count, (MPI_Datatype)type,
@@ -616,7 +602,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_sendInit(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Send_init(ptr, count, (MPI_Datatype)type,
@@ -630,7 +616,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_bSendInit(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Bsend_init(ptr, count, (MPI_Datatype)type,
@@ -644,7 +630,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_sSendInit(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Ssend_init(ptr, count, (MPI_Datatype)type,
@@ -658,7 +644,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_rSendInit(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint dest, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Rsend_init(ptr, count, (MPI_Datatype)type,
@@ -672,7 +658,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_recvInit(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint source, jint tag)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Recv_init(ptr, count, (MPI_Datatype)type,
@@ -905,9 +891,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_bcast(
     int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypeBaseType);
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
 
-    if(bufPtr == NULL)
-        return; /* Out of memory */
-
     int rc = MPI_Bcast(bufPtr, count, mpiType, root, comm);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, bufBase, baseType);
@@ -917,7 +900,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iBcast(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject buf, jint count, jlong type, jint root)
 {
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Ibcast(ptr, count, (MPI_Datatype)type,
@@ -946,8 +929,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
     MPI_Datatype sType;
     int sBType, rBType;
 
-    if(sendBuf == NULL)
+    if(sJType == NULL)
     {
+        assert(sendBuf == NULL);
         sType  = MPI_DATATYPE_NULL;
         sBType = 0;
         sPtr   = MPI_IN_PLACE;
@@ -965,7 +949,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
     MPI_Datatype rType = (MPI_Datatype)((*env)->GetLongField(
                          env, rJType, ompi_java.DatatypeHandle));
 
-    if(rootOrInter || sendBuf == NULL)
+    if(rootOrInter || sPtr == MPI_IN_PLACE)
     {
         /*
          * In principle need the "id == root" check here and elsewere for
@@ -978,7 +962,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
          */
 
         rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
-        rPtr   = ompi_java_getBufPtr(&rBase, env,recvBuf, rBType, rOffset);
+        rPtr   = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
 
         if(!rootOrInter)
         {
@@ -1018,17 +1002,18 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
     MPI_Request request;
     void *sPtr, *rPtr = NULL;
 
-    if(sendBuf == NULL)
+    if(sType == 0)
     {
+        assert(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
     else
     {
-        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
+        sPtr = ompi_java_getDirectBufferAddress(env, sendBuf);
     }
 
-    if(rootOrInter || sendBuf == NULL)
+    if(rootOrInter || sPtr == MPI_IN_PLACE)
     {
         /*
          * In principle need the "id == root" check here and elsewere for
@@ -1040,7 +1025,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
          * in all processes, notwithstanding what the spec says.)
          */
 
-        rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+        rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
 
         if(!rootOrInter)
         {
@@ -1082,8 +1067,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gatherv(
     MPI_Datatype sType;
     int sBType;
 
-    if(sendBuf == NULL)
+    if(sJType == NULL)
     {
+        assert(sendBuf == NULL);
         sType  = MPI_DATATYPE_NULL;
         sBType = 0;
         sPtr   = MPI_IN_PLACE;
@@ -1147,14 +1133,15 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGatherv(
     MPI_Request request;
     void *sPtr, *rPtr = NULL;
 
-    if(sendBuf == NULL)
+    if(sType == 0)
     {
+        assert(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
     else
     {
-        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
+        sPtr = ompi_java_getDirectBufferAddress(env, sendBuf);
     }
 
     jint *jRCounts, *jDispls;
@@ -1164,7 +1151,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGatherv(
     {
         ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
         ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
-        rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+        rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
     }
     else
     {
@@ -1206,8 +1193,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
     MPI_Datatype sType, rType;
     int sBType, rBType;
 
-    if(recvBuf == NULL)
+    if(rJType == NULL)
     {
+        assert(recvBuf == NULL);
         rType  = MPI_DATATYPE_NULL;
         rPtr   = MPI_IN_PLACE;
         rBType = 0;
@@ -1224,7 +1212,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
     sType = (MPI_Datatype)((*env)->GetLongField(
             env, sJType, ompi_java.DatatypeHandle));
 
-    if(rootOrInter || recvBuf == NULL)
+    if(rootOrInter || rPtr == MPI_IN_PLACE)
     {
         sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType);
         sPtr   = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
@@ -1267,19 +1255,20 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatter(
     void *sPtr = NULL, *rPtr;
     MPI_Request request;
 
-    if(recvBuf == NULL)
+    if(rType == 0)
     {
+        assert(recvBuf == NULL);
         rType = (jlong)MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
     }
     else
     {
-        rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+        rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
     }
 
-    if(rootOrInter || recvBuf == NULL)
+    if(rootOrInter || rPtr == MPI_IN_PLACE)
     {
-        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
+        sPtr = ompi_java_getDirectBufferAddress(env, sendBuf);
 
         if(!rootOrInter)
         {
@@ -1322,8 +1311,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
     MPI_Datatype rType;
     int rBType;
 
-    if(recvBuf == NULL)
+    if(rJType == NULL)
     {
+        assert(recvBuf == NULL);
         rType  = MPI_DATATYPE_NULL;
         rBType = 0;
         rPtr   = MPI_IN_PLACE;
@@ -1386,14 +1376,15 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatterv(
     MPI_Request request;
     void *sPtr = NULL, *rPtr;
 
-    if(recvBuf == NULL)
+    if(rType == 0)
     {
+        assert(recvBuf == NULL);
         rType = (jlong)MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
     }
     else
     {
-        rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+        rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
     }
 
     jint *jSCounts, *jDispls;
@@ -1403,7 +1394,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatterv(
     {
         ompi_java_getIntArray(env, sCounts, &jSCounts, &cSCounts);
         ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
-        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
+        sPtr = ompi_java_getDirectBufferAddress(env, sendBuf);
     }
     else
     {
@@ -1438,8 +1429,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allGather(
     MPI_Datatype sType;
     void *sPtr, *sBase, *rPtr, *rBase;
 
-    if(sendBuf == NULL)
+    if(sendtype == NULL)
     {
+        assert(sendBuf == NULL);
         sType  = MPI_DATATYPE_NULL;
         sBType = 0;
         sPtr   = MPI_IN_PLACE;
@@ -1480,17 +1472,18 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGather(
     void *sPtr, *rPtr;
     MPI_Request request;
 
-    if(sendBuf == NULL)
+    if(sType == 0)
     {
+        assert(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
     else
     {
-        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
+        sPtr = ompi_java_getDirectBufferAddress(env, sendBuf);
     }
 
-    rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+    rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
 
     int rc = MPI_Iallgather(sPtr, sCount, (MPI_Datatype)sType,
                             rPtr, rCount, (MPI_Datatype)rType,
@@ -1513,8 +1506,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allGatherv(
     MPI_Datatype sType;
     int sBType;
 
-    if(sendBuf == NULL)
+    if(sJType == NULL)
     {
+        assert(sendBuf == NULL);
         sType  = MPI_DATATYPE_NULL;
         sBType = 0;
         sPtr   = MPI_IN_PLACE;
@@ -1562,14 +1556,15 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGatherv(
     MPI_Request request;
     void *sPtr, *rPtr;
 
-    if(sendBuf == NULL)
+    if(sType == 0)
     {
+        assert(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
     else
     {
-        sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
+        sPtr = ompi_java_getDirectBufferAddress(env, sendBuf);
     }
 
     jint *jRCounts, *jDispls;
@@ -1577,7 +1572,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGatherv(
     ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
     ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
 
-    rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+    rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
 
     int rc = MPI_Iallgatherv(sPtr, sCount, (MPI_Datatype)sType,
                              rPtr, cRCounts, cDispls, (MPI_Datatype)rType,
@@ -1621,8 +1616,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAll(
         jobject sendBuf, jint sCount, jlong sType,
         jobject recvBuf, jint rCount, jlong rType)
 {
-    void *sPtr = (*env)->GetDirectBufferAddress(env, sendBuf),
-         *rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+    void *sPtr = ompi_java_getDirectBufferAddress(env, sendBuf),
+         *rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
 
     MPI_Request request;
 
@@ -1688,8 +1683,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllv(
     ompi_java_getIntArray(env, sDispls, &jSDispls, &cSDispls);
     ompi_java_getIntArray(env, rDispls, &jRDispls, &cRDispls);
 
-    void *sPtr = (*env)->GetDirectBufferAddress(env, sendBuf),
-         *rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
+    void *sPtr = ompi_java_getDirectBufferAddress(env, sendBuf),
+         *rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
 
     MPI_Request request;
 
