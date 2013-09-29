@@ -10,4 +10,4 @@
 
 SUBDIRS = java c
 
-EXTRA_DIST = README.txt License.txt
+EXTRA_DIST = License.txt
