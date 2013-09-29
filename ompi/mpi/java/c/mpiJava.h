@@ -68,6 +68,8 @@ void ompi_java_releaseBufPtr(
 void ompi_java_releaseReadBufPtr(
         JNIEnv *env, jobject buf, void *bufBase, int baseType);
 
+void* ompi_java_getDirectBufferAddress(JNIEnv *env, jobject buf);
+
 void ompi_java_setStaticLongField(JNIEnv *env, jclass c,
                                   char *field, jlong value);
 

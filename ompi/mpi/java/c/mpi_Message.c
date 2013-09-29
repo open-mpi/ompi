@@ -81,7 +81,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Message_imRecv(
     MPI_Message msg = (MPI_Message)((*env)->GetLongField(
                       env, jthis, ompi_java.MessageHandle));
 
-    void *ptr = (*env)->GetDirectBufferAddress(env, buf);
+    void *ptr = ompi_java_getDirectBufferAddress(env, buf);
     MPI_Request request;
 
     int rc = MPI_Imrecv(ptr, count, (MPI_Datatype)type, &msg, &request);
