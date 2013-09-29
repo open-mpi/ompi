@@ -25,6 +25,8 @@ package mpi;
 
 /**
  * Signals that an MPI exception of some sort has occurred.
+ * <p>The Java binding of the MPI operation {@code MPI_Error_string} is the
+ * method {@code getMessage}, which is inherited from the class Exception.
  */
 public final class MPIException extends Exception
 {
