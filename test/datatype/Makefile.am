@@ -12,7 +12,7 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position ddt_test ddt_raw
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw
     MPI_CHECKS = to_self ddt_pack
 endif
 TESTS = opal_datatype_test $(MPI_TESTS)
@@ -38,6 +38,10 @@ checksum_LDADD = $(top_builddir)/ompi/libmpi.la
 position_SOURCES = position.c
 position_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 position_LDADD = $(top_builddir)/ompi/libmpi.la
+
+position_noncontig_SOURCES = position_noncontig.c
+position_noncontig_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+position_noncontig_LDADD = $(top_builddir)/ompi/libmpi.la
 
 to_self_SOURCES = to_self.c
 to_self_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
