@@ -403,6 +403,17 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
                                                           opal_datatype_local_sizes );
     } else {
         rc = opal_convertor_generic_simple_position( convertor, position );
+        /**
+         * If we have a non-contigous send convertor don't allow it move in the middle
+         * of a predefined datatype, it won't be able to copy out the left-overs
+         * anyway. Instead force the position to stay on predefined datatypes
+         * boundaries. As we allow partial predefined datatypes on the contiguous
+         * case, we should be accepted by any receiver convertor.
+         */
+        if( CONVERTOR_SEND & convertor->flags ) {
+            convertor->bConverted -= convertor->partial_length;
+            convertor->partial_length = 0;
+        }
     }
     *position = convertor->bConverted;
     return rc;
