@@ -1312,7 +1312,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     /* And now add the information into the database */
     /* Store the remote processes into the opal_db */
     if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(rprocs, rsize)))) {
-        ORTE_ERROR_LOG(rc);
+        OMPI_ERROR_LOG(rc);
         goto err_exit;
     }
 

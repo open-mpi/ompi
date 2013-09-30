@@ -677,8 +677,8 @@ ompi_proc_unpack(opal_buffer_t* buf,
 
             if (full_info) {
                 int32_t num_recvd_entries;
-                orte_std_cntr_t cnt;
-                orte_std_cntr_t j;
+                int32_t cnt;
+                int32_t j;
 
                 /* unpack the number of entries for this proc */
                 cnt = 1;
@@ -721,7 +721,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #endif
                 if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
                     /* retrieve the hostname */
-                    rc = opal_db.fetch_pointer((opal_identifier_t*)&new_name, ORTE_DB_HOSTNAME,
+                    rc = opal_db.fetch_pointer((opal_identifier_t*)&new_name, OMPI_DB_HOSTNAME,
                                                (void**)&new_hostname, OPAL_STRING);
                     if( OPAL_SUCCESS != rc ) {
                         new_hostname = NULL;
@@ -762,7 +762,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
         } else {
             if (full_info) {
                 int32_t num_recvd_entries;
-                orte_std_cntr_t j, cnt;
+                int32_t j, cnt;
 
                 /* discard all keys: they are already locally known */
                 cnt = 1;
