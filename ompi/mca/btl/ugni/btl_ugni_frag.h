@@ -60,7 +60,6 @@ typedef union mca_btl_ugni_frag_hdr_t {
 
 enum {
     MCA_BTL_UGNI_FRAG_BUFFERED      = 1, /* frag data is buffered */
-k
     MCA_BTL_UGNI_FRAG_COMPLETE      = 2, /* smsg complete for frag */
     MCA_BTL_UGNI_FRAG_EAGER         = 4, /* eager get frag */
     MCA_BTL_UGNI_FRAG_IGNORE        = 8, /* ignore local smsg completion */
