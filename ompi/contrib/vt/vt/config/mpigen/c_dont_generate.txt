@@ -90,8 +90,6 @@ MPI_Test
 MPI_Testall
 MPI_Testany
 MPI_Testsome
-MPI_Type_hindexed
-MPI_Type_struct
 MPI_Wait
 MPI_Waitall
 MPI_Waitany

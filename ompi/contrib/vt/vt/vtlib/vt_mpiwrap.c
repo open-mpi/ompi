@@ -46,23 +46,17 @@
 /* The MPI 3.0 standard added the const keyword to all in buffers in the
    C bindings. Prepend CONST to those function parameters which is defined
    either to const (if MPI-3*) or to nothing (if MPI-1/2).
-   *or Open MPI v1.9a, even though it doesn't identify itself as MPI-3.0 yet */
+   *or Open MPI version >= 1.7.4, even though it doesn't identify itself as
+    MPI-3.0 yet */
 #if (defined(MPI_VERSION) && MPI_VERSION >= 3) || \
-    (defined(OPEN_MPI) && defined(OMPI_MAJOR_VERSION) && \
-     defined(OMPI_MINOR_VERSION) && \
-     OMPI_MAJOR_VERSION == 1 && OMPI_MINOR_VERSION == 9)
+    (defined(OMPI_MAJOR_VERSION) && defined(OMPI_MINOR_VERSION) && \
+     defined(OMPI_RELEASE_VERSION) && \
+     (OMPI_MAJOR_VERSION > 1 || \
+      (OMPI_MINOR_VERSION > 7 || \
+       (OMPI_MINOR_VERSION == 7 && OMPI_RELEASE_VERSION > 3))))
 # define CONST const
-  /* Open MPI did not add the const keyword to deprecated functions
-     (e.g. MPI_Type_hindexed, MPI_Type_struct), so we need a special CONST macro
-     for those functions. */
-# if defined(OPEN_MPI)
-#   define DEPRECATED_CONST
-# else /* OPEN_MPI */
-#   define DEPRECATED_CONST CONST
-# endif /* OPEN_MPI */
 #else /* MPI_VERSION */
 # define CONST
-# define DEPRECATED_CONST
 #endif /* MPI_VERSION */
 
 /* get calling thread id */
@@ -1323,109 +1317,6 @@ VT_MPI_INT MPI_Win_get_group(MPI_Win win, MPI_Group* group)
 }
 
 #endif /* HAVE_MPI2_1SIDED */
-
-/*
- *-----------------------------------------------------------------------------
- *
- * Derived datatypes
- *
- *-----------------------------------------------------------------------------
- */
-
-/* -- MPI_Type_hindexed -- */
-
-VT_MPI_INT MPI_Type_hindexed(VT_MPI_INT count,
-                             DEPRECATED_CONST VT_MPI_INT* array_of_blocklengths,
-                             DEPRECATED_CONST MPI_Aint* array_of_displacements,
-                             MPI_Datatype oldtype, MPI_Datatype* newtype)
-{
-  VT_MPI_INT result;
-  uint32_t tid;
-
-  GET_THREAD_ID(tid);
-
-  if (IS_MPI_TRACE_ON(tid))
-  {
-    uint64_t time;
-    uint8_t was_recorded;
-
-    MPI_TRACE_OFF(tid);
-
-    time = vt_pform_wtime();
-    was_recorded = vt_enter(tid, &time, vt_mpi_regid[VT__MPI_TYPE_HINDEXED]);
-
-    VT_UNIMCI_CHECK_PRE(MPI_Type_hindexed,
-      (count, array_of_blocklengths, array_of_displacements, oldtype, newtype,
-       "", 0, 0), was_recorded, &time);
-
-    result = PMPI_Type_hindexed(count, array_of_blocklengths,
-                                array_of_displacements, oldtype, newtype);
-
-    VT_UNIMCI_CHECK_POST(MPI_Type_hindexed,
-      (count, array_of_blocklengths, array_of_displacements, oldtype, newtype,
-       "", 0, 0), was_recorded, &time);
-
-    time = vt_pform_wtime();
-    vt_exit(tid, &time);
-
-    MPI_TRACE_ON(tid);
-  }
-  else
-  {
-    result = PMPI_Type_hindexed(count, array_of_blocklengths,
-                                array_of_displacements, oldtype, newtype);
-  }
-
-  return result;
-}
-
-/* -- MPI_Type_struct -- */
-
-VT_MPI_INT MPI_Type_struct(VT_MPI_INT count,
-                           DEPRECATED_CONST VT_MPI_INT* array_of_blocklengths,
-                           DEPRECATED_CONST MPI_Aint* array_of_displacements,
-                           DEPRECATED_CONST MPI_Datatype* array_of_types,
-                           MPI_Datatype* newtype)
-{
-  VT_MPI_INT result;
-  uint32_t tid;
-
-  GET_THREAD_ID(tid);
-
-  if (IS_MPI_TRACE_ON(tid))
-  {
-    uint64_t time;
-    uint8_t was_recorded;
-
-    MPI_TRACE_OFF(tid);
-
-    time = vt_pform_wtime();
-    was_recorded = vt_enter(tid, &time, vt_mpi_regid[VT__MPI_TYPE_STRUCT]);
-
-    VT_UNIMCI_CHECK_PRE(MPI_Type_struct,
-      (count, array_of_blocklengths, array_of_displacements, array_of_types,
-       newtype, "", 0, 0), was_recorded, &time);
-
-    result = PMPI_Type_struct(count, array_of_blocklengths,
-                              array_of_displacements, array_of_types, newtype);
-
-    VT_UNIMCI_CHECK_POST(MPI_Type_struct,
-      (count, array_of_blocklengths, array_of_displacements, array_of_types,
-       newtype, "", 0, 0), was_recorded, &time);
-
-    time = vt_pform_wtime();
-    vt_exit(tid, &time);
-
-    MPI_TRACE_ON(tid);
-  }
-  else
-  {
-    result = PMPI_Type_struct(count, array_of_blocklengths,
-                              array_of_displacements, array_of_types, newtype);
-  }
-
-  return result;
-}
 
 /*
  *-----------------------------------------------------------------------------
