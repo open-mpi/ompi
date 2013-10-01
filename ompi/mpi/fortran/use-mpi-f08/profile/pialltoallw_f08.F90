@@ -14,15 +14,15 @@ subroutine PMPI_Ialltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,&
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
    INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: sendtypes
-   TYPE(MPI_Datatype), INTENT(IN) :: recvtypes
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(1)
+   TYPE(MPI_Datatype), INTENT(IN) :: recvtypes(1)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_ialltoallw_f(sendbuf,sendcounts,sdispls,sendtypes%MPI_VAL,&
-                         recvbuf,recvcounts,rdispls,recvtypes%MPI_VAL,comm%MPI_VAL,request%MPI_VAL,c_ierror)
+   call ompi_ialltoallw_f(sendbuf,sendcounts,sdispls,sendtypes(1)%MPI_VAL,&
+                         recvbuf,recvcounts,rdispls,recvtypes(1)%MPI_VAL,comm%MPI_VAL,request%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
 end subroutine PMPI_Ialltoallw_f08
