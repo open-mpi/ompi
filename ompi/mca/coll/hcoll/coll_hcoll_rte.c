@@ -36,8 +36,6 @@
 #include "ompi/mca/pml/pml.h"
 
 
-#define RTE_DEBUG 0
-
 #include "hcoll_dte.h"
 #include "hcoll_api.h"
 #include "hcoll_constants.h"
@@ -167,9 +165,6 @@ static int recv_nb(struct dte_data_representation_t data,
 {
     ompi_communicator_t *comm = (ompi_communicator_t *)grp_h;
 
-#if RTE_DEBUG
-    assert(ec_h.group == grp_h);
-#endif
     if (NULL == ec_h.handle && -1 != ec_h.rank) {
         fprintf(stderr,"***Error in hcolrte_rml_recv_nb: wrong null argument: "
                 "ec_h.handle = %p, ec_h.rank = %d\n",ec_h.handle,ec_h.rank);
@@ -240,10 +235,6 @@ static int send_nb( dte_data_representation_t data,
                     rte_request_handle_t *req)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *)grp_h;
-
-#if RTE_DEBUG
-    assert(ec_h.group == grp_h);
-#endif
 
     if (! ec_h.handle) {
         fprintf(stderr,"***Error in hcolrte_rml_send_nb: wrong null argument: "
@@ -338,9 +329,6 @@ static int get_ec_handles( int num_ec ,
     ompi_communicator_t *comm = (ompi_communicator_t *)grp_h;
     for (i=0; i<num_ec; i++){
         ompi_proc_t *proc = ompi_comm_peer_lookup(comm,ec_indexes[i]);
-#if RTE_DEBUG
-        ec_handles[i].group = grp_h;
-#endif
         ec_handles[i].rank = ec_indexes[i];
         ec_handles[i].handle = (void *)proc;
     }
@@ -354,9 +342,6 @@ static int get_my_ec ( rte_grp_handle_t grp_h, rte_ec_handle_t *ec_handle)
     ompi_proc_t *my_proc = ompi_comm_peer_lookup(comm,my_rank);
     ec_handle->handle = (void *)my_proc;
     ec_handle->rank = my_rank;
-#if RTE_DEBUG
-    ec_handle->group = grp_h;
-#endif
     return HCOLL_SUCCESS;
 }
 
