@@ -151,13 +151,6 @@ libnbc_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-
-static int libnbc_not_implemented (void *arg0, ...)
-{
-    (void)arg0;
-    return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
 /*
  * Invoked when there's a new communicator that has been created.
  * Look at the communicator and decide which set of functions and
@@ -193,11 +186,6 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_iscan = NULL;
         module->super.coll_iscatter = ompi_coll_libnbc_iscatter_inter;
         module->super.coll_iscatterv = ompi_coll_libnbc_iscatterv_inter;
-        module->super.coll_ineighbor_allgather = (mca_coll_base_module_allgather_fn_t) libnbc_not_implemented;
-        module->super.coll_ineighbor_allgatherv = (mca_coll_base_module_allgatherv_fn_t) libnbc_not_implemented;
-        module->super.coll_ineighbor_alltoall = (mca_coll_base_module_alltoall_fn_t) libnbc_not_implemented;
-        module->super.coll_ineighbor_alltoallv = (mca_coll_base_module_alltoallv_fn_t) libnbc_not_implemented;
-        module->super.coll_ineighbor_alltoallw = (mca_coll_base_module_alltoallw_fn_t) libnbc_not_implemented;
     } else {
         module->super.coll_iallgather = ompi_coll_libnbc_iallgather;
         module->super.coll_iallgatherv = ompi_coll_libnbc_iallgatherv;
@@ -216,11 +204,14 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_iscan = ompi_coll_libnbc_iscan;
         module->super.coll_iscatter = ompi_coll_libnbc_iscatter;
         module->super.coll_iscatterv = ompi_coll_libnbc_iscatterv;
-        module->super.coll_ineighbor_allgather = ompi_coll_libnbc_ineighbor_allgather;
-        module->super.coll_ineighbor_allgatherv = ompi_coll_libnbc_ineighbor_allgatherv;
-        module->super.coll_ineighbor_alltoall = ompi_coll_libnbc_ineighbor_alltoall;
-        module->super.coll_ineighbor_alltoallv = ompi_coll_libnbc_ineighbor_alltoallv;
-        module->super.coll_ineighbor_alltoallw = ompi_coll_libnbc_ineighbor_alltoallw;
+
+        if (OMPI_COMM_IS_GRAPH(comm) || OMPI_COMM_IS_DIST_GRAPH(comm) || OMPI_COMM_IS_CART(comm)) {
+            module->super.coll_ineighbor_allgather = ompi_coll_libnbc_ineighbor_allgather;
+            module->super.coll_ineighbor_allgatherv = ompi_coll_libnbc_ineighbor_allgatherv;
+            module->super.coll_ineighbor_alltoall = ompi_coll_libnbc_ineighbor_alltoall;
+            module->super.coll_ineighbor_alltoallv = ompi_coll_libnbc_ineighbor_alltoallv;
+            module->super.coll_ineighbor_alltoallw = ompi_coll_libnbc_ineighbor_alltoallw;
+        }
     }
 
     module->super.ft_event = NULL;
