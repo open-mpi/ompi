@@ -228,36 +228,4 @@ SUBROUTINE MPI_Datarep_conversion_function(userbuf, datatype, count, &
 END SUBROUTINE
 END INTERFACE
 
-!
-! For deprecated routines - currently not planned for MPI-3.0
-!
-
-!  OMPI_ABSTRACT INTERFACE
-!   SUBROUTINE MPI_Copy_function(oldcomm, keyval, extra_state, attribute_val_in, attribute_val_out, flag, ierr) BIND(C)
-!     USE mpi_f08_types 
-!     IMPLICIT NONE 
-!     TYPE(MPI_Comm) :: oldcomm
-!     INTEGER :: keyval, extra_state, attribute_val_in, attribute_val_out, ierr
-!     LOGICAL :: flag
-!   END SUBROUTINE
-!  END INTERFACE
-! 
-!  OMPI_ABSTRACT INTERFACE
-!   SUBROUTINE MPI_Delete_function(comm, keyval, attribute_val, extra_state, ierr) BIND(C)
-!     USE mpi_f08_types 
-!     IMPLICIT NONE 
-!     TYPE(MPI_Comm) :: comm
-!     INTEGER :: keyval, attribute_val, extra_state, ierr
-!   END SUBROUTINE
-!  END INTERFACE
-! 
-!  OMPI_ABSTRACT INTERFACE
-!   SUBROUTINE MPI_Handler_function(comm, error_code) BIND(C)
-!     USE mpi_f08_types 
-!     IMPLICIT NONE 
-!     TYPE(MPI_Comm) :: comm
-!     INTEGER :: error_code
-!   END SUBROUTINE
-!  END INTERFACE
-
 end module mpi_f08_interfaces_callbacks
