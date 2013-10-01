@@ -58,6 +58,7 @@ fi
 greekonly=0
 want_ompi=1
 autogen_args=
+distdir=".."
 while test "$1" != ""; do
     case $1 in
         -greekonly) greekonly=1 ;;
@@ -68,6 +69,8 @@ while test "$1" != ""; do
         --no-ompi) want_ompi=0 ;;
         -autogen-args) autogen_args=$2; shift ;;
         --autogen-args) autogen_args=$2; shift ;;
+        -distdir) distdir=$2; shift ;;
+        --distdir) distdir=$2; shift ;;
         *)
             echo Unrecognized argument: $1
             exit 1
@@ -279,7 +282,7 @@ make_tarball() {
     # move
     #
     echo "*** Moving tarballs..."
-    mv openmpi-* ..
+    mv openmpi-* $distdir
 
     echo "*** All done"
 }
