@@ -180,6 +180,8 @@ static int ompi_proc_set_locality(ompi_proc_t *proc)
     }
     ret = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
                         OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T);
+    /* set the proc's local value as well */
+    proc->proc_flags = locality;
     return ret;
 }
 
