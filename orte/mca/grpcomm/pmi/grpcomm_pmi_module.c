@@ -264,6 +264,11 @@ static int modex(orte_grpcomm_collective_t *coll)
             locality = OPAL_PROC_NON_LOCAL;
 	}
 
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                            "%s grpcomm:pmi proc %s locality %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&name), opal_hwloc_base_print_locality(locality)));
+
         if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_SCOPE_INTERNAL,
                                                 OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
