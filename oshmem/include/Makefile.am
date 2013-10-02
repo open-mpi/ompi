@@ -7,11 +7,7 @@
 # $HEADER$
 #
 
-# mpif-common.h is not generated, but mpif.h and mpif-config.h are.
-# See big comments in these files for an explanation.
 
-# note - headers and nodist_headers will go in ${includedir}/openmpi,
-# not ${includedir}/
 headers =
 nodist_headers = \
 	oshmem_config.h
