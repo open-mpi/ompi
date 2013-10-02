@@ -822,6 +822,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     n = 1;
     /* cycle through the buffer */
     OBJ_CONSTRUCT(&jobs, opal_list_t);
+    orte_process_info.num_local_peers = 0;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &proc.jobid, &n, ORTE_JOBID))) {
         OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
                              "%s orte:util:decode:pidmap working job %s",
@@ -886,6 +887,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                     orte_process_info.cpuset = strdup(cpu_bitmap);
                 }
 #endif
+            } else if (proc.jobid == ORTE_PROC_MY_NAME->jobid &&
+                       dmn.vpid == ORTE_PROC_MY_DAEMON->vpid) {
+                /* if we share a daemon, then add to my local peers */
+                orte_process_info.num_local_peers++;
             }
             /* apps don't need the rest of the data in the buffer for this proc,
              * but we have to unpack it anyway to stay in sync
@@ -981,7 +986,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         goto cleanup;
     }
     rc = ORTE_SUCCESS;        
-    
+
  cleanup:
     OBJ_DESTRUCT(&buf);
     return rc;
