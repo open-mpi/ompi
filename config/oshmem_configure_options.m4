@@ -143,41 +143,41 @@ AC_SUBST([OSHMEM_CFLAGS])
 
 
 
-OMPI_CHECK_OPENFABRICS([openib],
-                        [openib_happy="yes"],
-                        [openib_happy="no"])
+OMPI_CHECK_OPENFABRICS([oshmem_verbs],
+                        [oshmem_verbs_happy="yes"],
+                        [oshmem_verbs_happy="no"])
 
 # substitute in the things needed to build MEMHEAP BASE
-AC_SUBST([openib_CFLAGS])
-AC_SUBST([openib_CPPFLAGS])
-AC_SUBST([openib_LDFLAGS])
-AC_SUBST([openib_LIBS])
+AC_SUBST([oshmem_verbs_CFLAGS])
+AC_SUBST([oshmem_verbs_CPPFLAGS])
+AC_SUBST([oshmem_verbs_LDFLAGS])
+AC_SUBST([oshmem_verbs_LIBS])
 
-# If we have the openib stuff available, find out what we've got
+# If we have the oshmem_verbs stuff available, find out what we've got
 AS_IF(
-    [test "$openib_happy" = "yes"],
+    [test "$oshmem_verbs_happy" = "yes"],
     [
-        OSHMEM_LIBSHMEM_EXTRA_LDFLAGS="$OSHMEM_LIBSHMEM_EXTRA_LDFLAGS $openib_LDFLAGS"
-        OSHMEM_LIBSHMEM_EXTRA_LIBS="$OSHMEM_LIBSHMEM_EXTRA_LIBS $openib_LIBS"
+        OSHMEM_LIBSHMEM_EXTRA_LDFLAGS="$OSHMEM_LIBSHMEM_EXTRA_LDFLAGS $oshmem_verbs_LDFLAGS"
+        OSHMEM_LIBSHMEM_EXTRA_LIBS="$OSHMEM_LIBSHMEM_EXTRA_LIBS $oshmem_verbs_LIBS"
 
         # ibv_reg_shared_mr was added in MOFED 1.8
         oshmem_have_mpage=0
 
-        openib_save_CPPFLAGS="$CPPFLAGS"
-        openib_save_LDFLAGS="$LDFLAGS"
-        openib_save_LIBS="$LIBS"
+        oshmem_verbs_save_CPPFLAGS="$CPPFLAGS"
+        oshmem_verbs_save_LDFLAGS="$LDFLAGS"
+        oshmem_verbs_save_LIBS="$LIBS"
 
-        CPPFLAGS="$CPPFLAGS $openib_CPPFLAGS"
-        LDFLAGS="$LDFLAGS $openib_LDFLAGS"
-        LIBS="$LIBS $openib_LIBS"
+        CPPFLAGS="$CPPFLAGS $oshmem_verbs_CPPFLAGS"
+        LDFLAGS="$LDFLAGS $oshmem_verbs_LDFLAGS"
+        LIBS="$LIBS $oshmem_verbs_LIBS"
 
         AC_CHECK_DECLS([IBV_ACCESS_ALLOCATE_MR,IBV_ACCESS_SHARED_MR_USER_READ],
                [oshmem_have_mpage=2], [],
                [#include <infiniband/verbs.h>])
 
-        CPPFLAGS="$openib_save_CPPFLAGS"
-        LDFLAGS="$openib_save_LDFLAGS"
-        LIBS="$openib_save_LIBS"
+        CPPFLAGS="$oshmem_verbs_save_CPPFLAGS"
+        LDFLAGS="$oshmem_verbs_save_LDFLAGS"
+        LIBS="$oshmem_verbs_save_LIBS"
 
         AC_DEFINE_UNQUOTED(MPAGE_ENABLE, $oshmem_have_mpage,
             [Whether we can use M-PAGE supported since MOFED 1.8])
