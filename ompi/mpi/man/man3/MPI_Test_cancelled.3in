@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Test_cancelled(MPI_Status *\fIstatus\fP, int \fI*flag\fP)
+int MPI_Test_cancelled(const MPI_Status *\fIstatus\fP, int \fI*flag\fP)
 
 .fi
 .SH Fortran Syntax

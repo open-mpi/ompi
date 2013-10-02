@@ -4,26 +4,37 @@
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Neighbor_allgatherv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Neighbor_allgatherv\fP \- Gathers and distributes data from and to all neighbors. Each process may contribute a different amount of data.
+\fBMPI_Neighbor_allgatherv, MPI_Ineighbor_allgatherv\fP \- Gathers and distributes data from and to all neighbors. Each process may contribute a different amount of data.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Neighbor_allgatherv(void\fI *sendbuf\fP, int\fI sendcount\fP,
-	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcounts[]\fP,
-	int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP)
+int MPI_Neighbor_allgatherv(const void\fI *sendbuf\fP, int\fI sendcount\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, const int\fI recvcounts[]\fP,
+	const int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP)
+
+int MPI_Ineighbor_allgatherv(const void\fI *sendbuf\fP, int\fI sendcount\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, const int\fI recvcounts[]\fP,
+	const int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP,
+        MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
-MPI_ALLGATHERV(\fISENDBUF\fP,\fI SENDCOUNT\fP, \fISENDTYPE\fP,\fI RECVBUF\fP,
+MPI_NEIGHBOR_ALLGATHERV(\fISENDBUF\fP,\fI SENDCOUNT\fP, \fISENDTYPE\fP,\fI RECVBUF\fP,
 		\fIRECVCOUNT\fP,\fI DISPLS\fP, \fIRECVTYPE\fP,\fI COMM\fP,\fI IERROR\fP)
 	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
 	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP, \fIRECVCOUNT\fP(*),
 	INTEGER	\fIDISPLS\fP(*),\fI RECVTYPE\fP,\fI COMM\fP,\fI IERROR\fP
+
+MPI_INEIGHBOR_ALLGATHERV(\fISENDBUF\fP,\fI SENDCOUNT\fP, \fISENDTYPE\fP,\fI RECVBUF\fP,
+		\fIRECVCOUNT\fP,\fI DISPLS\fP, \fIRECVTYPE\fP,\fI COMM\fP,\fI REQUEST\fP,\fI IERROR\fP)
+	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
+	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP, \fIRECVCOUNT\fP(*),
+	INTEGER	\fIDISPLS\fP(*),\fI RECVTYPE\fP,\fI COMM\fP,\fIREQUEST\fP,\fI IERROR\fP
 
 .fi
 .SH INPUT PARAMETERS
@@ -55,6 +66,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Address of receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

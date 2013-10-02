@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Group_excl(MPI_Group \fIgroup\fP, int\fI n\fP, int\fI ranks\fP[],
+int MPI_Group_excl(MPI_Group \fIgroup\fP, int\fI n\fP, const int\fI ranks\fP[],
 	MPI_Group\fI *newgroup\fP)
 
 .fi

@@ -1,0 +1,80 @@
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.TH MPI_Comm_create_group 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Comm_create_group\fP \- Creates a new communicator.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Comm_create_group(MPI_Comm \fIcomm\fP, MPI_Group\fI group\fP, int\fI tag\fP, MPI_Comm\fI *newcomm\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_COMM_CREATE_GROUP(\fICOMM, GROUP, TAG, NEWCOMM, IERROR\fP)
+	INTEGER	\fICOMM, GROUP, TAG, NEWCOMM, IERROR\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+comm
+Communicator (handle).
+.TP 1i
+group
+Group, which is a subset of the group of comm (handle).
+.TP 1i
+tag
+Tag (integer).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+newcomm
+New communicator (handle).
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+MPI_Comm_create_group is similar to MPI_Comm_create; however,
+MPI_Comm_create must be called by all processes in the group of
+comm, whereas MPI_Comm_create_group must be called by all processes in group,
+which is a subgroup of the group of \fIcomm\fP. In addition, MPI_Comm_create_group
+requires that \fIcomm\fP is an intracommunicator. MPI_Comm_create_group returns a new
+intracommunicator, \fInewcomm\fP, for which the group argument defines the communication
+group. No cached information propagates from \fIcomm\fP to \fInewcomm\fP.
+
+Each process must provide a group argument that is a subgroup of the group associated with \fIcomm\fP;
+this could be MPI_GROUP_EMPTY. If a non-empty group is specified, then all processes in that
+group must call the function, and each of these processes must provide the same arguments,
+including a group that contains the same members with the same ordering. Otherwise
+the call is erroneous. If the calling process is a member of the group given as the \fIgroup\fP
+argument, then newcomm is a communicator with group as its associated group. If the
+calling process is not a member of group, e.g., \fIgroup\fP is MPI_GROUP_EMPTY, then the call
+is a local operation and MPI_COMM_NULL is returned as \fInewcomm\fP.
+
+.sp
+.LP
+
+.SH NOTES
+MPI_Comm_create_group provides a means of making a subset of processes for the purpose of separate MIMD computation, with separate communication space. \fInewcomm\fR, which is created by MPI_Comm_create_group, can be used in subsequent calls to MPI_Comm_create_group (or other communicator constructors) to further subdivide a computation into parallel sub-computations. A more general service is provided by MPI_Comm_split.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+.ft R
+MPI_Comm_create
+

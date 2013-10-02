@@ -1,10 +1,12 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Exscan 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
 .SH NAME
-\fBMPI_Exscan\fP \- Computes an exclusive scan (partial reduction)
+\fBMPI_Exscan, MPI_Iexscan\fP \- Computes an exclusive scan (partial reduction)
 
 .SH SYNTAX
 .ft R
@@ -12,8 +14,12 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Exscan(void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP, 
+int MPI_Exscan(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
 	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP)
+
+int MPI_Iexscan(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP,
+        MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -22,6 +28,10 @@ INCLUDE 'mpif.h'
 MPI_EXSCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fICOUNT, DATATYPE, OP, COMM, IERROR\fP 
+
+MPI_IEXSCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -55,6 +65,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

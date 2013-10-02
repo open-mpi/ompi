@@ -1,3 +1,4 @@
+.\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
@@ -11,9 +12,9 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Get_elements(MPI_Status *\fIstatus\fP, MPI_Datatype\fI datatype\fP,
+int MPI_Get_elements(const MPI_Status *\fIstatus\fP, MPI_Datatype\fI datatype\fP,
 	int\fI *count\fP)
-int MPI_Get_elements_x(MPI_Status *\fIstatus\fP, MPI_Datatype\fI datatype\fP,
+int MPI_Get_elements_x(const MPI_Status *\fIstatus\fP, MPI_Datatype\fI datatype\fP,
 	MPI_Count\fI *count\fP)
 
 .fi

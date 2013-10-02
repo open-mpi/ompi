@@ -1,10 +1,12 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Alltoall 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
 .SH NAME
-\fBMPI_Alltoall\fP \- All processes send data to all processes 
+\fBMPI_Alltoall, MPI_Ialltoall\fP \- All processes send data to all processes
 
 .SH SYNTAX
 .ft R
@@ -12,9 +14,13 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Alltoall(void *\fIsendbuf\fP, int \fIsendcount\fP,
+int MPI_Alltoall(const void *\fIsendbuf\fP, int \fIsendcount\fP,
 	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
 	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP)
+
+int MPI_Ialltoall(const void *\fIsendbuf\fP, int \fIsendcount\fP,
+	MPI_Datatype \fIsendtype\fP, void *\fIrecvbuf\fP, int \fIrecvcount\fP,
+	MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -26,6 +32,13 @@ MPI_ALLTOALL(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE\fP
 	INTEGER	\fICOMM, IERROR\fP
+
+MPI_IALLTOALL(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+	RECVTYPE, COMM, REQUEST, IERROR\fP)
+
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE\fP
+	INTEGER	\fICOMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -74,6 +87,9 @@ Communicator over which data is to be exchanged (handle).
 .TP 1.2i
 recvbuf
 Starting address of receive buffer (choice).
+.TP 1.2i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1.2i
 IERROR
@@ -108,10 +124,12 @@ When the communicator is an inter-communicator, the gather operation occurs in t
 The first group defines the root process.  The root process uses MPI_ROOT as the value of \fIroot\fR.  All other processes in the first group use MPI_PROC_NULL as the value of \fIroot\fR.  All processes in the second group use the rank of the root process in the first group as the value of \fIroot\fR.
 .sp
 When the communicator is an intra-communicator, these groups are the same, and the operation occurs in a single phase.
+
+.SH USE OF IN-PLACE OPTION
+When the communicator is an intracommunicator, you can perform an all-to-all operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of \fIsendbuf\fR.  In this case, \fIsendcount\fR and \fIsendtype\fR are ignored.  The input data of each process is assumed to be in the area where that process would receive its own contribution to the receive buffer.
+
 .sp  
 .SH NOTES
-.ft R
-The MPI_IN_PLACE option is not available for this function.
 .sp
 All arguments on all processes are significant. The \fIcomm\fP argument,
 in particular, must describe the same communicator on all processes.

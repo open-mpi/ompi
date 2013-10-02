@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Get_count 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -9,7 +11,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Get_count(MPI_Status *\fIstatus\fP, MPI_Datatype\fI datatype\fP,
+int MPI_Get_count(const MPI_Status *\fIstatus\fP, MPI_Datatype\fI datatype\fP,
 	int\fI *count\fP)
 
 .fi
