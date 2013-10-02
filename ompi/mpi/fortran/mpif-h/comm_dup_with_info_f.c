@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -30,8 +30,8 @@
 #pragma weak pmpi_comm_dup_with_info_ = ompi_comm_dup_with_info_f
 #pragma weak pmpi_comm_dup_with_info__ = ompi_comm_dup_with_info_f
 
-#pragma weak PMPI_comm_dup_with_info_f = ompi_comm_dup_with_info_f
-#pragma weak PMPI_comm_dup_with_info_f08 = ompi_comm_dup_with_info_f
+#pragma weak PMPI_Comm_dup_with_info_f = ompi_comm_dup_with_info_f
+#pragma weak PMPI_Comm_dup_with_info_f08 = ompi_comm_dup_with_info_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DUP_WITH_INFO,
                             pmpi_comm_dup_with_info,
@@ -48,8 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DUP_WITH_INFO,
 #pragma weak mpi_comm_dup_with_info_ = ompi_comm_dup_with_info_f
 #pragma weak mpi_comm_dup_with_info__ = ompi_comm_dup_with_info_f
 
-#pragma weak MPI_comm_dup_with_info_f = ompi_comm_dup_with_info_f
-#pragma weak MPI_comm_dup_with_info_f08 = ompi_comm_dup_with_info_f
+#pragma weak MPI_Comm_dup_with_info_f = ompi_comm_dup_with_info_f
+#pragma weak MPI_Comm_dup_with_info_f08 = ompi_comm_dup_with_info_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
