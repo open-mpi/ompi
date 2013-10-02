@@ -2016,6 +2016,31 @@ end MPI_Comm_create
 
 #------------------------------------------------------------------------
 
+output_34_group() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, group, tag, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: group
+  integer, intent(in) :: tag
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Comm_create_group small
+output_34_group MPI_Comm_create_group
+end MPI_Comm_create_group
+
+#------------------------------------------------------------------------
+
 output_35() {
     if test "$output" = "0"; then
         return 0
@@ -2108,6 +2133,54 @@ EOF
 start MPI_Comm_dup small
 output_38 MPI_Comm_dup
 end MPI_Comm_dup
+
+#------------------------------------------------------------------------
+
+output_38_info() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, info, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Comm_dup_with_info small
+output_38_info MPI_Comm_dup_with_info
+end MPI_Comm_dup_with_info
+
+#------------------------------------------------------------------------
+
+output_38_nb() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, newcomm, request, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Comm_idup small
+output_38_nb MPI_Comm_idup
+end MPI_Comm_idup
 
 #------------------------------------------------------------------------
 

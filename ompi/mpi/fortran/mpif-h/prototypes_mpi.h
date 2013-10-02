@@ -118,9 +118,12 @@ PN2(void, MPI_Comm_connect, mpi_comm_connect, MPI_COMM_CONNECT, (char *port_name
 PN2(void, MPI_Comm_create_errhandler, mpi_comm_create_errhandler, MPI_COMM_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Comm_create_keyval, mpi_comm_create_keyval, MPI_COMM_CREATE_KEYVAL, (ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Comm_create, mpi_comm_create, MPI_COMM_CREATE, (MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr));
+PN2(void, MPI_Comm_create_group, mpi_comm_create_group, MPI_COMM_CREATE_GROUP, (MPI_Fint *comm, MPI_Fint *group, MPI_Fint *tag, MPI_Fint *newcomm, MPI_Fint *ierr));
 PN2(void, MPI_Comm_delete_attr, mpi_comm_delete_attr, MPI_COMM_DELETE_ATTR, (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr));
 PN2(void, MPI_Comm_disconnect, mpi_comm_disconnect, MPI_COMM_DISCONNECT, (MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Comm_dup, mpi_comm_dup, MPI_COMM_DUP, (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr));
+PN2(void, MPI_Comm_dup_with_info, mpi_comm_dup_with_info, MPI_COMM_DUP_WITH_INFO, (MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr));
+PN2(void, MPI_Comm_idup, mpi_comm_idup, MPI_COMM_IDUP, (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Comm_free_keyval, mpi_comm_free_keyval, MPI_COMM_FREE_KEYVAL, (MPI_Fint *comm_keyval, MPI_Fint *ierr));
 PN2(void, MPI_Comm_free, mpi_comm_free, MPI_COMM_FREE, (MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Comm_get_attr, mpi_comm_get_attr, MPI_COMM_GET_ATTR, (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr));

@@ -1,7 +1,7 @@
 ! -*- f90 -*-
 !
 ! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
+! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
 !                         of Tennessee Research Foundation.  All rights
@@ -1704,6 +1704,19 @@ subroutine MPI_Comm_create_f08(comm,group,newcomm,ierror &
 end subroutine MPI_Comm_create_f08
 end interface  MPI_Comm_create
 
+interface  MPI_Comm_create_group
+subroutine MPI_Comm_create_group_f08(comm,group,newcomm,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("MPI_Comm_create_group_f08")
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Group), INTENT(IN) :: group
+   INTEGER, INTENT(IN) :: tag
+   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Comm_create_group_f08
+end interface  MPI_Comm_create_group
+
 interface  MPI_Comm_create_keyval
 subroutine MPI_Comm_create_keyval_f08(comm_copy_attr_fn,comm_delete_attr_fn,comm_keyval, &
                                       extra_state,ierror &
@@ -1741,6 +1754,30 @@ subroutine MPI_Comm_dup_f08(comm,newcomm,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Comm_dup_f08
 end interface  MPI_Comm_dup
+
+interface  MPI_Comm_dup_with_info
+subroutine MPI_Comm_dup_with_info_f08(comm,newcomm,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("MPI_Comm_dup_with_info_f08")
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Info
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_INFO), INTENT(IN) :: info
+   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Comm_dup_with_info_f08
+end interface  MPI_Comm_dup_with_info
+
+interface  MPI_Comm_idup
+subroutine MPI_Comm_idup_f08(comm,newcomm,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("MPI_Comm_idup_f08")
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Request
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Comm_idup_f08
+end interface  MPI_Comm_idup
 
 interface  MPI_Comm_free
 subroutine MPI_Comm_free_f08(comm,ierror &
