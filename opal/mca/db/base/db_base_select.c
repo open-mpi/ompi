@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,7 +23,7 @@
 static bool selected = false;
 
 int 
-opal_db_base_select(void)
+opal_db_base_select(bool restrict_local)
 {
     mca_base_component_list_item_t *cli = NULL;
     opal_db_base_component_t *component = NULL;
@@ -57,7 +58,7 @@ opal_db_base_select(void)
         opal_output_verbose(5, opal_db_base_framework.framework_output,
                             "mca:db:select: Querying component [%s]",
                             component->base_version.mca_component_name);
-        rc = component->query(&module, &store, &fetch);
+        rc = component->query(&module, &store, &fetch, restrict_local);
 
         /* If no module was returned, then skip component */
         if (OPAL_SUCCESS != rc || NULL == module) {

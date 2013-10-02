@@ -66,7 +66,7 @@
 
 #include "orte/mca/ess/base/base.h"
 
-int orte_ess_base_app_setup(void)
+int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
     char *error = NULL;
@@ -162,7 +162,7 @@ int orte_ess_base_app_setup(void)
         error = "opal_db_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db_base_select())) {
+    if (ORTE_SUCCESS != (ret = opal_db_base_select(db_restrict_local))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_select";
         goto error;

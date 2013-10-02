@@ -142,16 +142,8 @@ static int rte_init(void)
         
     }
     
-    /* otherwise, I must be an application process -  ensure
-     * that we do NOT load the PMI database component or else
-     * we could wind up wasting a lot of time in startup if
-     * we are a proc launched by mpirun in an environment that
-     * has PMI as well
-     */
-    putenv("OMPI_MCA_db=^pmi");
-
     /* use the default procedure to finish my setup */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(true))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_app_setup";
         goto error;
@@ -210,9 +202,6 @@ static int rte_finalize(void)
 
     /* deconstruct the nidmap and jobmap arrays */
     orte_util_nidmap_finalize();
-
-    /* cleanup the env */
-    unsetenv("OMPI_MCA_db");
 
     return ORTE_SUCCESS;
 }

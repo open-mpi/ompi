@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,7 +27,8 @@
 static int db_hash_component_open(void);
 static int db_hash_component_query(opal_db_base_module_t **module,
                                    int *store_priority,
-                                   int *fetch_priority);
+                                   int *fetch_priority,
+                                   bool restrict_local);
 static int db_hash_component_close(void);
 static int db_hash_component_register(void);
 
@@ -75,7 +77,8 @@ static int db_hash_component_open(void)
 
 static int db_hash_component_query(opal_db_base_module_t **module,
                                    int *store_priority,
-                                   int *fetch_priority)
+                                   int *fetch_priority,
+                                   bool restrict_local)
 {
     /* we are the default - the ESS modules will set the db selection
      * envar if they need someone else
