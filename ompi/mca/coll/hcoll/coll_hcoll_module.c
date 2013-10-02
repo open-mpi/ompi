@@ -108,19 +108,22 @@ static int __save_coll_handlers(mca_coll_hcoll_module_t *hcoll_module)
  * Initialize module on the communicator
  */
 static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
-                                      struct ompi_communicator_t *comm)
+                                        struct ompi_communicator_t *comm)
 {
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*) module;
     hcoll_module->comm = comm;
+
     if (OMPI_SUCCESS != __save_coll_handlers(hcoll_module)){
         HCOL_ERROR("coll_hcol: __save_coll_handlers failed");
         return OMPI_ERROR;
     }
 
     hcoll_set_runtime_tag_offset(-100,mca_pml.pml_max_tag);
+    hcoll_set_rte_halt_flag_address(&ompi_mpi_finalized);
+    hcoll_set_rte_halt_flag_size(sizeof(ompi_mpi_finalized));
 
     hcoll_module->hcoll_context =
-            hcoll_create_context((rte_grp_handle_t)comm);
+        hcoll_create_context((rte_grp_handle_t)comm);
     if (NULL == hcoll_module->hcoll_context){
         HCOL_VERBOSE(1,"hcoll_create_context returned NULL");
         return OMPI_ERROR;
