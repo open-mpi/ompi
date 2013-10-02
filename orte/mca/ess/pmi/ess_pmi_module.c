@@ -296,19 +296,19 @@ static int rte_init(void)
         }
 #else
         /* get our local proc info to find our local rank */
-        if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&i))) {
+        if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&procs))) {
             OPAL_PMI_ERROR(ret, "PMI_Get_clique_size");
             error = "could not get PMI clique size";
             goto error;
         }
         /* now get the specific ranks */
-        ranks = (int*)calloc(i, sizeof(int));
+        ranks = (int*)calloc(procs, sizeof(int));
         if (NULL == ranks) {
             error = "could not get memory for local ranks";
             ret = ORTE_ERR_OUT_OF_RESOURCE;
             goto error;
         }
-        if (PMI_SUCCESS != (ret = PMI_Get_clique_ranks(ranks, i))) {
+        if (PMI_SUCCESS != (ret = PMI_Get_clique_ranks(ranks, procs))) {
             OPAL_PMI_ERROR(ret, "PMI_Get_clique_ranks");
             error = "could not get clique ranks";
             goto error;
@@ -318,12 +318,12 @@ static int rte_init(void)
          * of peers that share the node WITH ME, so we have to subtract
          * ourselves from that number
          */
-        orte_process_info.num_local_peers = i - 1;
+        orte_process_info.num_local_peers = procs - 1;
         /* The clique ranks are returned in rank order, so
          * cycle thru the array and update the local/node
          * rank info
          */
-        for (j=0; j < i; j++) {
+        for (j=0; j < procs; j++) {
             if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
                 orte_process_info.my_local_rank = (orte_local_rank_t)j;
                 orte_process_info.my_node_rank = (orte_node_rank_t)j;
