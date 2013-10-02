@@ -329,9 +329,9 @@ static int rte_init(void)
     /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                      1,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      1))) {
+                                                       1,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       1))) {
         ORTE_ERROR_LOG(ret);
         error = "setup job array";
         goto error;
@@ -339,18 +339,18 @@ static int rte_init(void)
     
     orte_node_pool = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
         ORTE_ERROR_LOG(ret);
         error = "setup node array";
         goto error;
     }
     orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
         ORTE_ERROR_LOG(ret);
         error = "setup node topologies array";
         goto error;
@@ -441,7 +441,7 @@ static int rte_init(void)
         error = "orte_db_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db_base_select())) {
+    if (ORTE_SUCCESS != (ret = opal_db_base_select(true))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_select";
         goto error;
@@ -555,8 +555,8 @@ static int rte_init(void)
         }
         
         /* Once the session directory location has been established, set
-         the opal_output hnp file location to be in the
-         proc-specific session directory. */
+           the opal_output hnp file location to be in the
+           proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
         
@@ -695,28 +695,28 @@ static int rte_init(void)
     }
 
     /* We actually do *not* want an HNP to voluntarily yield() the
-     processor more than necessary.  Orterun already blocks when
-     it is doing nothing, so it doesn't use any more CPU cycles than
-     it should; but when it *is* doing something, we do not want it
-     to be unnecessarily delayed because it voluntarily yielded the
-     processor in the middle of its work.
+       processor more than necessary.  Orterun already blocks when
+       it is doing nothing, so it doesn't use any more CPU cycles than
+       it should; but when it *is* doing something, we do not want it
+       to be unnecessarily delayed because it voluntarily yielded the
+       processor in the middle of its work.
      
-     For example: when a message arrives at orterun, we want the
-     OS to wake us up in a timely fashion (which most OS's
-     seem good about doing) and then we want orterun to process
-     the message as fast as possible.  If orterun yields and lets
-     aggressive MPI applications get the processor back, it may be a
-     long time before the OS schedules orterun to run again
-     (particularly if there is no IO event to wake it up).  Hence,
-     routed OOB messages (for example) may be significantly delayed
-     before being delivered to MPI processes, which can be
-     problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
-     require OOB messages for wireup, etc.). */
+       For example: when a message arrives at orterun, we want the
+       OS to wake us up in a timely fashion (which most OS's
+       seem good about doing) and then we want orterun to process
+       the message as fast as possible.  If orterun yields and lets
+       aggressive MPI applications get the processor back, it may be a
+       long time before the OS schedules orterun to run again
+       (particularly if there is no IO event to wake it up).  Hence,
+       routed OOB messages (for example) may be significantly delayed
+       before being delivered to MPI processes, which can be
+       problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
+       require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
 
     return ORTE_SUCCESS;
 
-error:
+ error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
@@ -794,6 +794,7 @@ static int rte_finalize(void)
             fclose(orte_xml_fp);
         }
     }
+
     return ORTE_SUCCESS;
 }
 

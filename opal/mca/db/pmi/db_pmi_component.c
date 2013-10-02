@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,7 +22,8 @@
 static int db_pmi_component_open(void);
 static int db_pmi_component_query(opal_db_base_module_t **module,
                                   int *store_priority,
-                                  int *fetch_priority);
+                                  int *fetch_priority,
+                                  bool restrict_local);
 static int db_pmi_component_close(void);
 static int db_pmi_component_register(void);
 
@@ -67,16 +69,19 @@ static int db_pmi_component_open(void)
 
 static int db_pmi_component_query(opal_db_base_module_t **module,
                                   int *store_priority,
-                                  int *fetch_priority)
+                                  int *fetch_priority,
+                                  bool restrict_local)
 {
-    /* only use PMI if available - the ESS pmi module
-     * will force our selection if we are direct-launched
-     */
-    if (mca_common_pmi_init()) {
-        *store_priority = my_store_priority;
-        *fetch_priority = my_fetch_priority;
-        *module = &opal_db_pmi_module;
-        return OPAL_SUCCESS;
+    if (!restrict_local) {
+        /* only use PMI if available - the ESS pmi module
+         * will force our selection if we are direct-launched
+         */
+        if (mca_common_pmi_init()) {
+            *store_priority = my_store_priority;
+            *fetch_priority = my_fetch_priority;
+            *module = &opal_db_pmi_module;
+            return OPAL_SUCCESS;
+        }
     }
 
     *store_priority = 0;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +35,8 @@ static int sqlite_component_open(void);
 static int sqlite_component_close(void);
 static int sqlite_component_query(opal_db_base_module_t **module,
                                   int *store_priority,
-                                  int *fetch_priority);
+                                  int *fetch_priority,
+                                  bool restrict_local);
 static int sqlite_component_register(void);
 
 /*
@@ -74,7 +76,8 @@ static int sqlite_component_open(void)
 /* this component is NEVER used for store or fetch */
 static int sqlite_component_query(opal_db_base_module_t **module,
                                   int *store_priority,
-                                  int *fetch_priority)
+                                  int *fetch_priority,
+                                  bool restrict_local)
 {
     struct stat buf;
 
