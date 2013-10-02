@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
@@ -11,7 +13,7 @@
 .nf
 #include <mpi.h>
 int MPI_Type_create_struct(int \fIcount\fP, int \fIarray_of_blocklengths\fP[], 
-	MPI_Aint \fIarray_of_displacements\fP[], MPI_Datatype \fIarray_of_types\fP[], 
+	const MPI_Aint \fIarray_of_displacements\fP[], const MPI_Datatype \fIarray_of_types\fP[],
 	MPI_Datatype *\fInewtype\fP)
 
 .fi

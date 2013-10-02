@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Accumulate(void *\fIorigin_addr\fP, int \fIorigin_count\fP, 
+int MPI_Accumulate(const void *\fIorigin_addr\fP, int \fIorigin_count\fP,
 	MPI_Datatype \fIorigin_datatype\fP, int \fItarget_rank\fP, 
 	MPI_Aint \fItarget_disp\fP, int \fItarget_count\fP, 
 	MPI_Datatype \fItarget_datatype\fP, MPI_Op \fIop\fP, MPI_Win \fIwin\fP)

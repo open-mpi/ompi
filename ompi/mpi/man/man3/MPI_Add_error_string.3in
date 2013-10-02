@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -14,7 +16,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Add_error_string(int \fIerrorcode\fP, char *\fIstring\fP)
+int MPI_Add_error_string(int \fIerrorcode\fP, const char *\fIstring\fP)
 
 .fi
 .SH Fortran Syntax

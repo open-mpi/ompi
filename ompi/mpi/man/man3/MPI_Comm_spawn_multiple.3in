@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,9 +12,9 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Comm_spawn_multiple(int \fIcount\fP, char *\fIarray_of_commands\fP[], 
-	char **\fIarray_of_argv\fP[], int \fIarray_of_maxprocs\fP[], MPI_Info 
-	\fIarray_of_info\fP[], int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Comm *\fIintercomm\fP, 
+int MPI_Comm_spawn_multiple(int \fIcount\fP, char *\fIarray_of_commands\fP[],
+	char **\fIarray_of_argv\fP[], const int \fIarray_of_maxprocs\fP[], const MPI_Info
+	\fIarray_of_info\fP[], int \fIroot\fP, MPI_Comm \fIcomm\fP, MPI_Comm *\fIintercomm\fP,
 	int \fIarray_of_errcodes\fP[])
 
 .fi

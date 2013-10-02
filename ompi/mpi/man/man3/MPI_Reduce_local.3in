@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright 2009-2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Reduce_local(void *\fIinbuf\fP, void *\fIinoutbuf\fP, int\fI count\fP,
+int MPI_Reduce_local(const void *\fIinbuf\fP, void *\fIinoutbuf\fP, int\fI count\fP,
 	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP)
 
 .fi

@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Info_get(MPI_Info \fIinfo\fP, char \fI*key\fP, int \fIvaluelen\fP, char \fI*value\fP, int *\fIflag\fP)
+int MPI_Info_get(MPI_Info \fIinfo\fP, const char \fI*key\fP, int \fIvaluelen\fP, char \fI*value\fP, int *\fIflag\fP)
 
 .fi
 .SH Fortran Syntax

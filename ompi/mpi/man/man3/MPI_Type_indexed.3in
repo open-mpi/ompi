@@ -1,17 +1,23 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_indexed 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Type_indexed\fP \- Creates an indexed datatype.
+\fBMPI_Type_indexed, MPI_Type_create_hindexed\fP \- Creates an indexed datatype.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Type_indexed(int \fIcount\fP, int\fI array_of_blocklengths[]\fP,
-	int\fI array_of_displacements[]\fP, MPI_Datatype\fI oldtype\fP,
+int MPI_Type_indexed(int \fIcount\fP, const int\fI array_of_blocklengths[]\fP,
+	const int\fI array_of_displacements[]\fP, MPI_Datatype\fI oldtype\fP,
+	MPI_Datatype\fI *newtype\fP)
+
+int MPI_Type_create_hindexed(int \fIcount\fP, const int\fI array_of_blocklengths[]\fP,
+	const int\fI array_of_displacements[]\fP, MPI_Datatype\fI oldtype\fP,
 	MPI_Datatype\fI *newtype\fP)
 
 .fi
@@ -19,6 +25,12 @@ int MPI_Type_indexed(int \fIcount\fP, int\fI array_of_blocklengths[]\fP,
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_INDEXED(\fICOUNT, ARRAY_OF_BLOCKLENGTHS,
+		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR\fP)
+	INTEGER	\fICOUNT, ARRAY_OF_BLOCKLENGTHS(*)\fP
+	INTEGER	\fIARRAY_OF_DISPLACEMENTS(*), OLDTYPE, NEWTYPE\fP
+	INTEGER	\fIIERROR\fP
+
+MPI_TYPE_CREATE_HINDEXED(\fICOUNT, ARRAY_OF_BLOCKLENGTHS,
 		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR\fP)
 	INTEGER	\fICOUNT, ARRAY_OF_BLOCKLENGTHS(*)\fP
 	INTEGER	\fIARRAY_OF_DISPLACEMENTS(*), OLDTYPE, NEWTYPE\fP
@@ -32,6 +44,10 @@ Datatype Datatype::Create_indexed(int \fIcount\fP,
 	const int \fIarray_of_blocklengths\fP[], 
 	const int \fIarray_of_displacements\fP[]) const 
 
+Datatype Datatype::Create_hindexed(int \fIcount\fP,
+	const int \fIarray_of_blocklengths\fP[],
+	const int \fIarray_of_displacements\fP[]) const
+
 .fi
 .SH INPUT PARAMETERS
 .ft R
@@ -44,7 +60,7 @@ array_of_blocklengths
 Number of elements per block (array of nonnegative integers).
 .TP 1i
 array_of_displacements 
-Displacement for each block, in multiples of oldtype extent (array of
+Displacement for each block, in multiples of oldtype extent for MPI_Type_indexed and bytes for MPI_Type_create_hindexed (array of
 integer).
 .TP 1i
 oldtype      
@@ -107,6 +123,8 @@ and
 
     B[j] = blocklength, j = 0, .., count-1
 .fi
+
+The function MPI_Type_create_hindexed is identical to MPI_Type_indexed, except that block displacements in \fIarray_of_displacements\fP are specified in bytes, rather than in multiples of the \fIoldtype\fP extent.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.

@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Comm_connect(char *\fIport_name\fP, MPI_Info \fIinfo\fP, int \fIroot\fP, 
+int MPI_Comm_connect(const gchar *\fIport_name\fP, MPI_Info \fIinfo\fP, int \fIroot\fP,
 	MPI_Comm \fIcomm\fP, MPI_Comm *\fInewcomm\fP)
 
 .fi

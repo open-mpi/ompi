@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Sendrecv(void *\fIsendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI sendtype\fP,
+int MPI_Sendrecv(const void *\fIsendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI sendtype\fP,
 	int\fI dest\fP, int\fI sendtag\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	MPI_Datatype\fI recvtype\fP, int\fI source\fP, int\fI recvtag\fP, 
 	MPI_Comm\fI comm\fP, MPI_Status\fI *status\fP)

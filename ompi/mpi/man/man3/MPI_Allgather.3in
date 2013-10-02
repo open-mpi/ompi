@@ -1,18 +1,24 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Allgather 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Allgather\fP \- Gathers data from all processes and distributes it to all processes
+\fBMPI_Allgather, MPI_Iallgather\fP \- Gathers data from all processes and distributes it to all processes
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Allgather(void\fI *sendbuf\fP, int \fI sendcount\fP,
-	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
+int MPI_Allgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
+	 MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP) 
+
+int MPI_Iallgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
+	 MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
+	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -23,6 +29,12 @@ MPI_ALLGATHER(\fISENDBUF\fP,\fI SENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVBUF\fP,\fI 
 	<type>	\fISENDBUF\fP (*), \fIRECVBUF\fP (*)
 	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVCOUNT\fP,\fI RECVTYPE\fP,\fI COMM\fP,
 	INTEGER	\fIIERROR\fP  
+
+MPI_IALLGATHER(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+		RECVTYPE, COMM, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP (*)
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, COMM\fP
+	INTEGER	\fIREQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -73,9 +85,12 @@ Communicator (handle).
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1i
-recvbuf    
+recvbuf
 Address of receive buffer (choice).
 .ft R
+.TP 1i
+request
+Request (handle, non-blocking only).
 .TP 1i
 IERROR
 Fortran only: Error status (integer). 

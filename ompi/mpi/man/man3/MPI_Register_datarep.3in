@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .nf
 C Syntax
     #include <mpi.h>
-    int MPI_Register_datarep(char \fI*datarep\fP, 
+    int MPI_Register_datarep(const char \fI*datarep\fP,
     	      MPI_Datarep_conversion_function \fI*read_conversion_fn\fP, 
     	      MPI_Datarep_conversion_function \fI*write_conversion_fn\fP, 
     	      MPI_Datarep_extent_function \fI*dtype_file_extent_fn\fP, 

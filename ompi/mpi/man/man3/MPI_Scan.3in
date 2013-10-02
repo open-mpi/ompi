@@ -1,10 +1,12 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Scan 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
 .SH NAME
-\fBMPI_Scan\fP \- Computes an inclusive scan (partial reduction)
+\fBMPI_Scan, MPI_Iscan\fP \- Computes an inclusive scan (partial reduction)
 
 .SH SYNTAX
 .ft R
@@ -12,8 +14,12 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Scan(void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP, 
-	MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP)
+int MPI_Scan(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+             MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP)
+
+int MPI_Iscan(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
+              MPI_Datatype \fIdatatype\fP, MPI_Op \fIop\fP, MPI_Comm \fIcomm\fP,
+              MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -21,7 +27,11 @@ int MPI_Scan(void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
 INCLUDE 'mpif.h'
 MPI_SCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
-	INTEGER	\fICOUNT, DATATYPE, OP, COMM, IERROR\fP 
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, IERROR\fP
+
+MPI_ISCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -55,6 +65,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,8 +12,8 @@
 .nf
 C Syntax
     #include <mpi.h>
-    int MPI_File_write_at_all_end(MPI_File \fIfh\fP, void *buf, 
-    	      MPI_Status *status)
+    int MPI_File_write_at_all_end(MPI_File \fIfh\fP, const void \fI*buf\fP,
+	      MPI_Status \fI*status\fP)
 
 .fi
 .SH Fortran Syntax

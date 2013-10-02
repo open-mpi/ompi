@@ -1,29 +1,40 @@
+.\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Neighbor_allgather 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Neighbor_allgather\fP \- Gathers and distributes data from and to all neighbors
+\fBMPI_Neighbor_allgather, MPI_Ineighbor_allgather\fP \- Gathers and distributes data from and to all neighbors
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Neighbor_allgather(void\fI *sendbuf\fP, int \fI sendcount\fP,
+int MPI_Neighbor_allgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
 	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP)
+
+int MPI_Ineighbor_allgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
+	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP, MPI_Request \fIreq\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
-MPI_ALLGATHER(\fISENDBUF\fP,\fI SENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVBUF\fP,\fI RECVCOUNT\fP,\fI
+MPI_NEIGHBOR_ALLGATHER(\fISENDBUF\fP,\fI SENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVBUF\fP,\fI RECVCOUNT\fP,\fI
 		RECVTYPE\fP,\fI COMM\fP,\fI IERROR\fP)
 	<type>	\fISENDBUF\fP (*), \fIRECVBUF\fP (*)
 	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVCOUNT\fP,\fI RECVTYPE\fP,\fI COMM\fP,
 	INTEGER	\fIIERROR\fP
+
+MPI_NEIGHBOR_ALLGATHER(\fISENDBUF\fP,\fI SENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVBUF\fP,\fI RECVCOUNT\fP,\fI
+		RECVTYPE\fP,\fI COMM\fP, \fPREQUEST\fI,\fI IERROR\fP)
+	<type>	\fISENDBUF\fP (*), \fIRECVBUF\fP (*)
+	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVCOUNT\fP,\fI RECVTYPE\fP,\fI COMM\fP,
+	INTEGER	\fIREQUEST, IERROR\fP
 
 .fi
 .SH INPUT PARAMETERS
@@ -55,6 +66,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Address of receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

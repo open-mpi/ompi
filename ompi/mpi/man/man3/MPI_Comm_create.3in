@@ -1,3 +1,4 @@
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -17,7 +18,7 @@ int MPI_Comm_create(MPI_Comm \fIcomm\fP, MPI_Group\fI group\fP, MPI_Comm\fI *new
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_CREATE(\fICOMM, GROUP, NEWCOMM, IERROR\fP)
-	INTEGER	\fICOMM, GROUP, NEW, IERROR\fP
+	INTEGER	\fICOMM, GROUP, NEWCOMM, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -80,4 +81,4 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 MPI_Comm_split
 .sp
 MPI_Intercomm_create
-
+MPI_Comm_create_group
