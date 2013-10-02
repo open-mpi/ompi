@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,9 +22,11 @@
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
 headers += \
-        communicator/communicator.h
+        communicator/communicator.h \
+	communicator/comm_request.h
 
 libmpi_la_SOURCES += \
         communicator/comm_init.c \
 	communicator/comm.c \
-	communicator/comm_cid.c
+	communicator/comm_cid.c \
+	communicator/comm_request.c

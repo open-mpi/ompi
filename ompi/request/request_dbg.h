@@ -27,6 +27,7 @@ typedef enum {
     OMPI_REQUEST_COLL,     /**< MPI-3 non-blocking collectives request */
     OMPI_REQUEST_NULL,     /**< NULL request */
     OMPI_REQUEST_NOOP,     /**< A request that does nothing (e.g., to PROC_NULL) */
+    OMPI_REQUEST_COMM,     /**< MPI-3 non-blocking communicator duplication */
     OMPI_REQUEST_MAX       /**< Maximum request type */
 } ompi_request_type_t;
 

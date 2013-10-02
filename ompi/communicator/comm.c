@@ -100,9 +100,40 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
                     ompi_group_t *local_group, 
                     ompi_group_t *remote_group )
 {
+    ompi_request_t *req;
+    int rc;
+
+    rc = ompi_comm_set_nb (ncomm, oldcomm, local_size, local_ranks, remote_size, remote_ranks,
+                           attr, errh, copy_topocomponent, local_group, remote_group, &req);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    if (NULL != req) {
+        ompi_request_wait (&req, MPI_STATUS_IGNORE);
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
+                       ompi_communicator_t *oldcomm,
+                       int local_size,
+                       int *local_ranks,
+                       int remote_size,
+                       int *remote_ranks,
+                       opal_hash_table_t *attr,
+                       ompi_errhandler_t *errh,
+                       bool copy_topocomponent,
+                       ompi_group_t *local_group,
+                       ompi_group_t *remote_group,
+                       ompi_request_t **req )
+{
     ompi_communicator_t *newcomm = NULL;
     int ret;
-    
+
+    *req = NULL;
+
     /* ompi_comm_allocate */
     newcomm = OBJ_NEW(ompi_communicator_t);
     /* fill in the inscribing hyper-cube dimensions */
@@ -134,9 +165,9 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
         }
         newcomm->c_flags |= OMPI_COMM_INTER;
         if ( OMPI_COMM_IS_INTRA(oldcomm) ) {
-            ompi_comm_dup(oldcomm, &newcomm->c_local_comm);
+            ompi_comm_idup(oldcomm, &newcomm->c_local_comm, req);
         } else {
-            ompi_comm_dup(oldcomm->c_local_comm, &newcomm->c_local_comm);
+            ompi_comm_idup(oldcomm->c_local_comm, &newcomm->c_local_comm, req);
         }
     } else { 
         newcomm->c_remote_group = newcomm->c_local_group;
@@ -846,6 +877,14 @@ ompi_comm_split_type(ompi_communicator_t *comm,
 /**********************************************************************/
 int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 {
+    return ompi_comm_dup_with_info (comm, NULL, newcomm);
+}
+
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+int ompi_comm_dup_with_info ( ompi_communicator_t * comm, ompi_info_t *info, ompi_communicator_t **newcomm )
+{
     ompi_communicator_t *newcomp = NULL;
     int rsize = 0, mode = OMPI_COMM_CID_INTRA, rc = OMPI_SUCCESS;
 
@@ -906,6 +945,202 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
     *newcomm = newcomp;
     return MPI_SUCCESS;
 }
+
+struct ompi_comm_idup_with_info_context {
+    ompi_communicator_t *comm;
+    ompi_communicator_t *newcomp;
+    ompi_communicator_t **newcomm;
+};
+
+static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request);
+static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request);
+static int ompi_comm_idup_getcid (ompi_comm_request_t *request);
+
+int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, ompi_request_t **req)
+{
+    return ompi_comm_idup_with_info (comm, NULL, newcomm, req);
+}
+
+int ompi_comm_idup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
+{
+    struct ompi_comm_idup_with_info_context *context;
+    ompi_comm_request_t *request;
+    ompi_request_t *subreq;
+    int rsize = 0, rc;
+
+    *newcomm = MPI_COMM_NULL;
+
+    request = ompi_comm_request_get ();
+    if (NULL == request) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    context = calloc (1, sizeof (*context));
+    if (NULL == context) {
+        ompi_comm_request_return (request);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    context->comm    = comm;
+    context->newcomm = newcomm;
+
+    request->context = context;
+
+    rc =  ompi_comm_set_nb (&context->newcomp,                      /* new comm */
+                            comm,                                   /* old comm */
+                            comm->c_local_group->grp_proc_count,    /* local_size */
+                            NULL,                                   /* local_procs */
+                            rsize,                                  /* remote_size */
+                            NULL,                                   /* remote_procs */
+                            comm->c_keyhash,                        /* attrs */
+                            comm->error_handler,                    /* error handler */
+                            true,                                   /* copy the topo */
+                            comm->c_local_group,                    /* local group */
+                            comm->c_remote_group,                   /* remote group */
+                            &subreq);                               /* new subrequest */
+    if (NULL == context->newcomp) {
+        ompi_comm_request_return (request);
+        return rc;
+    }
+
+    ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, &subreq, subreq ? 1 : 0);
+
+    /* kick off the request */
+    ompi_comm_request_start (request);
+    *req = &request->super;
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
+{
+    struct ompi_comm_idup_with_info_context *context =
+        (struct ompi_comm_idup_with_info_context *) request->context;
+    ompi_request_t *subreq;
+    int rc, mode;
+
+    if (OMPI_COMM_IS_INTER(context->comm)){
+        mode  = OMPI_COMM_CID_INTER;
+    } else {
+        mode  = OMPI_COMM_CID_INTRA;
+    }
+
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid_nb (context->newcomp,  /* new communicator */
+                               context->comm,     /* old comm */
+                               NULL,              /* bridge comm */
+                               mode,              /* mode */
+                               &subreq);          /* new subrequest */
+    if (OMPI_SUCCESS != rc) {
+        ompi_comm_request_return (request);
+        return rc;
+    }
+
+    ompi_comm_request_schedule_append (request, ompi_comm_idup_with_info_activate, &subreq, 1);
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
+{
+    struct ompi_comm_idup_with_info_context *context =
+        (struct ompi_comm_idup_with_info_context *) request->context;
+    ompi_request_t *subreq;
+    int rc, mode;
+
+    if (OMPI_COMM_IS_INTER(context->comm)){
+        mode  = OMPI_COMM_CID_INTER;
+    } else {
+        mode  = OMPI_COMM_CID_INTRA;
+    }
+
+    /* Set name for debugging purposes */
+    snprintf(context->newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d DUP FROM %d",
+             context->newcomp->c_contextid, context->comm->c_contextid );
+
+    /* activate communicator and init coll-module */
+    rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, mode, &subreq);
+    if ( OMPI_SUCCESS != rc ) {
+        return rc;
+    }
+
+    ompi_comm_request_schedule_append (request, ompi_comm_idup_with_info_finish, &subreq, 1);
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
+{
+    struct ompi_comm_idup_with_info_context *context =
+        (struct ompi_comm_idup_with_info_context *) request->context;
+
+    *context->newcomm = context->newcomp;
+
+    /* done */
+    return MPI_SUCCESS;
+}
+
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int tag, ompi_communicator_t **newcomm)
+{
+    ompi_communicator_t *newcomp = NULL;
+    int mode = OMPI_COMM_CID_GROUP, rc = OMPI_SUCCESS;
+
+    *newcomm = MPI_COMM_NULL;
+
+    rc =  ompi_comm_set ( &newcomp,                               /* new comm */
+                          comm,                                   /* old comm */
+                          group->grp_proc_count,                  /* local_size */
+                          NULL,                                   /* local_procs*/
+                          0,                                      /* remote_size */
+                          NULL,                                   /* remote_procs */
+                          comm->c_keyhash,                        /* attrs */
+                          comm->error_handler,                    /* error handler */
+                          true,                                   /* copy the topo */
+                          group,                                  /* local group */
+                          NULL);                                  /* remote group */
+    if ( NULL == newcomp ) {
+        rc =  MPI_ERR_INTERN;
+        return rc;
+    }
+    if ( MPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,  /* new communicator */
+                             comm,     /* old comm */
+                             newcomp,  /* bridge comm (used to pass the group into the group allreduce) */
+                             &tag,     /* user defined tag */
+                             NULL,     /* remote_leader */
+                             mode,     /* mode */
+                             -1 );     /* send_first */
+    if ( OMPI_SUCCESS != rc ) {
+        return rc;
+    }
+
+    /* Set name for debugging purposes */
+    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d GROUP FROM %d",
+             newcomp->c_contextid, comm->c_contextid );
+
+    /* activate communicator and init coll-module */
+    rc = ompi_comm_activate( &newcomp, /* new communicator */
+                             comm,
+                             newcomp,
+                             &tag,
+                             NULL,
+                             mode,
+                             -1 );
+    if ( OMPI_SUCCESS != rc ) {
+        return rc;
+    }
+
+    *newcomm = newcomp;
+    return MPI_SUCCESS;
+}
+
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
