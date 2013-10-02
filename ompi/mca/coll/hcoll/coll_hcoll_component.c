@@ -229,6 +229,8 @@ static int hcoll_close(void)
     int rc;
     HCOL_VERBOSE(5,"HCOLL FINALIZE");
     rc = hcoll_finalize();
+
+
     opal_progress_unregister(hcoll_progress_fn);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(1,"Hcol library finalize failed");
@@ -236,3 +238,4 @@ static int hcoll_close(void)
     }
     return OMPI_SUCCESS;
 }
+
