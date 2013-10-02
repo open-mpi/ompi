@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -30,8 +30,8 @@
 #pragma weak pmpi_comm_create_group_ = ompi_comm_create_group_f
 #pragma weak pmpi_comm_create_group__ = ompi_comm_create_group_f
 
-#pragma weak PMPI_comm_create_group_f = ompi_comm_create_group_f
-#pragma weak PMPI_comm_create_group_f08 = ompi_comm_create_group_f
+#pragma weak PMPI_Comm_create_group_f = ompi_comm_create_group_f
+#pragma weak PMPI_Comm_create_group_f08 = ompi_comm_create_group_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_GROUP,
                             pmpi_comm_create_group,
@@ -48,8 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_GROUP,
 #pragma weak mpi_comm_create_group_ = ompi_comm_create_group_f
 #pragma weak mpi_comm_create_group__ = ompi_comm_create_group_f
 
-#pragma weak MPI_comm_create_group_f = ompi_comm_create_group_f
-#pragma weak MPI_comm_create_group_f08 = ompi_comm_create_group_f
+#pragma weak MPI_Comm_create_group_f = ompi_comm_create_group_f
+#pragma weak MPI_Comm_create_group_f08 = ompi_comm_create_group_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
