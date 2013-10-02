@@ -624,7 +624,7 @@ subroutine MPI_Comm_idup(comm, newcomm, request, ierror)
   integer, intent(out) :: newcomm
   integer, intent(out) :: request
   integer, intent(out) :: ierror
-end subroutine MPI_Comm_dup
+end subroutine MPI_Comm_idup
 
 end interface
 
