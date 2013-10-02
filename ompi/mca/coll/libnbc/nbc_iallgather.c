@@ -135,3 +135,56 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
  
   return NBC_OK;
 }
+
+int ompi_coll_libnbc_iallgather_inter(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				      struct mca_coll_base_module_2_0_0_t *module)
+{
+  int rank, res, r, rsize;
+  MPI_Aint rcvext;
+  NBC_Schedule *schedule;
+  char *rbuf;
+  NBC_Handle *handle;
+  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
+  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+
+  res = NBC_Init_handle(comm, coll_req, libnbc_module);
+  if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+  handle = (*coll_req);
+  res = MPI_Comm_rank(comm, &rank);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+  res = MPI_Comm_remote_size(comm, &rsize);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_remote_size() (%i)\n", res); return res; }
+  res = MPI_Type_extent(recvtype, &rcvext);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+  handle->tmpbuf = NULL;
+
+  schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
+  if (NULL == schedule) { printf("Error in malloc()\n"); return res; }
+
+  res = NBC_Sched_create(schedule);
+  if(NBC_OK != res) { printf("Error in NBC_Sched_create, (%i)\n", res); return res; }
+
+  /* do rsize - 1 rounds */
+  for(r = 0 ; r < rsize ; ++r) {
+    /* recv from rank r */
+    rbuf = ((char *)recvbuf) + r*(recvcount*rcvext);
+    res = NBC_Sched_recv(rbuf, false, recvcount, recvtype, r, schedule);
+    if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+    /* send to rank r */
+    res = NBC_Sched_send(sendbuf, false, recvcount, recvtype, r, schedule);
+    if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+  }
+
+  res = NBC_Sched_commit(schedule);
+  if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+  /*NBC_PRINT_SCHED(*schedule);*/
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+
+  return NBC_OK;
+}
