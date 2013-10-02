@@ -68,10 +68,13 @@ mpi_api_files = \
         comm_connect_f08.F90 \
         comm_create_errhandler_f08.F90 \
         comm_create_f08.F90 \
+        comm_create_group_f08.F90 \
         comm_create_keyval_f08.F90 \
         comm_delete_attr_f08.F90 \
         comm_disconnect_f08.F90 \
         comm_dup_f08.F90 \
+        comm_dup_with_info_f08.F90 \
+        comm_idup_f08.F90 \
         comm_free_f08.F90 \
         comm_free_keyval_f08.F90 \
         comm_get_attr_f08.F90 \
@@ -400,10 +403,13 @@ pmpi_api_files = \
         profile/pcomm_connect_f08.F90 \
         profile/pcomm_create_errhandler_f08.F90 \
         profile/pcomm_create_f08.F90 \
+        profile/pcomm_create_group_f08.F90 \
         profile/pcomm_create_keyval_f08.F90 \
         profile/pcomm_delete_attr_f08.F90 \
         profile/pcomm_disconnect_f08.F90 \
         profile/pcomm_dup_f08.F90 \
+        profile/pcomm_dup_with_info_f08.F90 \
+        profile/pcomm_idup_f08.F90 \
         profile/pcomm_free_f08.F90 \
         profile/pcomm_free_keyval_f08.F90 \
         profile/pcomm_get_attr_f08.F90 \

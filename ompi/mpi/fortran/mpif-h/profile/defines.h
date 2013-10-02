@@ -12,6 +12,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Inria.  All rights reserved.
  * Copyright (c) 2011      Universite Bordeaux 1
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,10 +61,13 @@
 #define ompi_comm_connect_f pompi_comm_connect_f
 #define ompi_comm_create_errhandler_f pompi_comm_create_errhandler_f
 #define ompi_comm_create_keyval_f pompi_comm_create_keyval_f
+#define ompi_comm_create_group_f pompi_comm_create_group_f
 #define ompi_comm_create_f pompi_comm_create_f
 #define ompi_comm_delete_attr_f pompi_comm_delete_attr_f
 #define ompi_comm_disconnect_f pompi_comm_disconnect_f
+#define ompi_comm_dup_with_info_f pompi_comm_dup_with_info_f
 #define ompi_comm_dup_f pompi_comm_dup_f
+#define ompi_comm_idup_f pompi_comm_idup_f
 #define ompi_comm_free_keyval_f pompi_comm_free_keyval_f
 #define ompi_comm_free_f pompi_comm_free_f
 #define ompi_comm_get_attr_f pompi_comm_get_attr_f

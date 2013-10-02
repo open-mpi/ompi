@@ -12,6 +12,8 @@
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2012 Inria.  All rights reserved.
 # Copyright (c) 2011-2012 Universite Bordeaux 1
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -112,10 +114,13 @@ libmpi_mpifh_la_SOURCES += \
         comm_connect_f.c \
         comm_create_errhandler_f.c \
         comm_create_f.c \
+        comm_create_group_f.c \
         comm_create_keyval_f.c \
         comm_delete_attr_f.c \
         comm_disconnect_f.c \
         comm_dup_f.c \
+        comm_dup_with_info_f.c \
+        comm_idup_f.c \
         comm_free_f.c \
         comm_free_keyval_f.c \
         comm_get_attr_f.c \
