@@ -97,11 +97,12 @@ int mca_atomic_mxm_fadd(void *target,
     sreq.op.atomic.remote_vaddr = (uintptr_t) remote_addr;
 #if MXM_API < MXM_VERSION(2,0)
     sreq.op.atomic.remote_memh  = MXM_INVALID_MEM_HANDLE;
+    memcpy(&sreq.op.atomic.value8, cond, nlong);
 #else
     sreq.op.atomic.remote_mkey  = MXM_INVALID_MEM_HANDLE;
+    memcpy(&sreq.op.atomic.value, cond, nlong);
 #endif
     sreq.op.atomic.order = nlong_order;
-    memcpy(&sreq.op.atomic.value8, value, nlong);
 
     /* Do we need atomic 'add' or atomic 'fetch and add'? */
     if (NULL == prev) {
