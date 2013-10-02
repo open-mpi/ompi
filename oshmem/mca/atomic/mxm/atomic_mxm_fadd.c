@@ -97,10 +97,10 @@ int mca_atomic_mxm_fadd(void *target,
     sreq.op.atomic.remote_vaddr = (uintptr_t) remote_addr;
 #if MXM_API < MXM_VERSION(2,0)
     sreq.op.atomic.remote_memh  = MXM_INVALID_MEM_HANDLE;
-    memcpy(&sreq.op.atomic.value8, cond, nlong);
+    memcpy(&sreq.op.atomic.value8, value, nlong);
 #else
     sreq.op.atomic.remote_mkey  = MXM_INVALID_MEM_HANDLE;
-    memcpy(&sreq.op.atomic.value, cond, nlong);
+    memcpy(&sreq.op.atomic.value, value, nlong);
 #endif
     sreq.op.atomic.order = nlong_order;
 
