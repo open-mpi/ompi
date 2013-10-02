@@ -8,7 +8,7 @@
 #
 
 AM_CFLAGS = $(OSHMEM_CFLAGS)
-AM_CPPFLAGS = $(openib_CPPFLAGS)
+AM_CPPFLAGS = $(oshmem_verbs_CPPFLAGS)
 
 dist_pkgdata_DATA += base/help-shmem-mca.txt 
 
@@ -23,5 +23,5 @@ libmca_memheap_la_SOURCES += \
 	base/memheap_base_register.c \
 	base/memheap_base_mkey.c
 
-libmca_memheap_la_LDFLAGS += -module -avoid-version $(openib_LDFLAGS) 
-libmca_memheap_la_LIBADD  += $(openib_LIBS)
+libmca_memheap_la_LDFLAGS += -module -avoid-version $(oshmem_verbs_LDFLAGS) 
+libmca_memheap_la_LIBADD  += $(oshmem_verbs_LIBS)
