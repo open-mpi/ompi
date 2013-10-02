@@ -84,7 +84,7 @@ static bool app_init_complete=false;
 
 static int rte_init(void)
 {
-    int ret, i, j;
+    int ret, i, j, procs;
     char *error = NULL, *localj;
     int32_t jobfam, stepid;
     char *envar, *ev1, *ev2;
@@ -257,7 +257,7 @@ static int rte_init(void)
         {
             /* get our local proc info to find our local rank */
             char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-            int found, sid, nodes, procs, k;
+            int found, sid, nodes, k;
             orte_vpid_t n;
             char *p;
             ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
