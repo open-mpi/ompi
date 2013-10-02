@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
+ *                         rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -13,11 +15,12 @@
 static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle);
 static inline int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
 
+static inline int red_sched_linear(int rank, int rsize, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
+
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
 int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param) {
-
-	if( (a->sendbuf == b->sendbuf) && 
+  if( (a->sendbuf == b->sendbuf) &&
       (a->recvbuf == b->recvbuf) &&
       (a->count == b->count) && 
       (a->datatype == b->datatype) &&
@@ -25,10 +28,10 @@ int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param)
       (a->root == b->root) ) {
     return  0;
   }
-	if( a->sendbuf < b->sendbuf ) {	
+  if( a->sendbuf < b->sendbuf ) {
     return -1;
-	}
-	return +1;
+  }
+  return +1;
 }
 #endif
 
@@ -140,6 +143,49 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
   
+  /* tmpbuf is freed with the handle */
+  return NBC_OK;
+}
+
+int ompi_coll_libnbc_ireduce_inter(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+				   MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+				   struct mca_coll_base_module_2_0_0_t *module) {
+  int rank, res, rsize;
+  NBC_Schedule *schedule;
+  MPI_Aint ext;
+  NBC_Handle *handle;
+  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
+  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+
+  res = NBC_Init_handle(comm, coll_req, libnbc_module);
+  if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+  handle = (*coll_req);
+
+  res = MPI_Comm_rank(comm, &rank);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+  res = MPI_Comm_remote_size(comm, &rsize);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_remote_size() (%i)\n", res); return res; }
+  res = MPI_Type_extent(datatype, &ext);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+  handle->tmpbuf = malloc(ext*count);
+  if (NULL == handle->tmpbuf) { printf("Error in malloc() (%i)\n", res); return res; }
+
+  schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
+  if (NULL == schedule) { printf("Error in malloc() (%i)\n", res); return res; }
+
+  res = NBC_Sched_create(schedule);
+  if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+  res = red_sched_linear (rank, rsize, root, sendbuf, recvbuf, count, datatype, op, schedule, handle);
+  if (NBC_OK != res) { printf("Error in Schedule creation() (%i)\n", res); return res; }
+
+  res = NBC_Sched_commit(schedule);
+  if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+
   /* tmpbuf is freed with the handle */
   return NBC_OK;
 }
@@ -288,6 +334,41 @@ static inline int red_sched_chain(int rank, int p, int root, void *sendbuf, void
       /* this barrier here seems awkward but isn't!!!! */
       res = NBC_Sched_barrier(schedule);
     }
+  }
+
+  return NBC_OK;
+}
+
+/* simple linear algorithm for intercommunicators */
+static inline int red_sched_linear(int rank, int rsize, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
+  int res, peer;
+
+  if(count == 0) return NBC_OK;
+
+  if (MPI_ROOT == root) {
+    res = NBC_Sched_recv (recvbuf, false, count, datatype, 0, schedule);
+    if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+    res = NBC_Sched_barrier (schedule);
+    if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+    for (peer = 1 ; peer < rsize ; ++peer) {
+      res = NBC_Sched_recv (0, true, count, datatype, peer, schedule);
+      if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+      res = NBC_Sched_barrier(schedule);
+      if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+      res = NBC_Sched_op (recvbuf, false, 0, true, recvbuf, false, count, datatype, op, schedule);
+      if (NBC_OK != res) { printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+
+      res = NBC_Sched_barrier(schedule);
+      if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+    }
+  } else if (MPI_PROC_NULL != root) {
+    res = NBC_Sched_send (sendbuf, false, count, datatype, root, schedule);
+    if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
   }
 
   return NBC_OK;

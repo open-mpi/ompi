@@ -22,7 +22,6 @@
 sources = \
         coll_libnbc.h \
 	coll_libnbc_component.c \
-	coll_libnbc_not_implemented.c \
 	coll_libnbc_ireduce_scatter_block.c \
 	nbc.c \
 	nbc_internal.h \
@@ -36,9 +35,11 @@ sources = \
 	nbc_iallreduce.c \
 	nbc_ialltoall.c \
 	nbc_ialltoallv.c \
+	nbc_ialltoallw.c \
 	nbc_ibarrier.c \
 	nbc_ibcast.c \
 	nbc_ibcast_inter.c \
+	nbc_iexscan.c \
 	nbc_igather.c \
 	nbc_igatherv.c \
 	nbc_ineighbor_allgather.c \
