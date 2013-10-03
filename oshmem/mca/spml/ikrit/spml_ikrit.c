@@ -560,9 +560,10 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
             mkeys[i].spml_context = 0;
 #if MXM_API < MXM_VERSION(1,5)
             mkeys[i].ib.lkey = mkeys[i].ib.rkey = MXM_MKEY_NONE;
+#elif MXM_API < MXM_VERSION(2,0)
+            mkeys[i].ib.lkey = mkeys[i].ib.rkey = 0;
 #else
             mkeys[i].ib.lkey = mkeys[i].ib.rkey = 0;
-
             err = mxm_mem_map(mca_spml_ikrit.mxm_context, &addr, &size, 0, 0, 0);
             if (MXM_OK != err) {
                 SPML_VERBOSE(1, "failed to register memory: %s", mxm_error_string(err));
