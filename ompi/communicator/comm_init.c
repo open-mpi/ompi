@@ -432,7 +432,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     if ( MPI_UNDEFINED != comm->c_f_to_c_index && 
          NULL != opal_pointer_array_get_item(&ompi_comm_f_to_c_table,
                                              comm->c_f_to_c_index)) {
-        opal_pointer_array_set_item ( &ompi_mpi_communicators,
+        opal_pointer_array_set_item ( &ompi_comm_f_to_c_table,
                                       comm->c_f_to_c_index, NULL);
     }
 }
