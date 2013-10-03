@@ -179,20 +179,19 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         COPY(avail->ac_module, comm, iscatter);
         COPY(avail->ac_module, comm, iscatterv);
 
-        if (OMPI_COMM_IS_GRAPH(comm) || OMPI_COMM_IS_DIST_GRAPH(comm) ||
-            OMPI_COMM_IS_CART(comm)) {
-            COPY(avail->ac_module, comm, neighbor_allgather);
-            COPY(avail->ac_module, comm, neighbor_allgatherv);
-            COPY(avail->ac_module, comm, neighbor_alltoall);
-            COPY(avail->ac_module, comm, neighbor_alltoallv);
-            COPY(avail->ac_module, comm, neighbor_alltoallw);
+        /* We can not reliably check if this comm has a topology
+         * at this time. The flags are set *after* coll_select */
+        COPY(avail->ac_module, comm, neighbor_allgather);
+        COPY(avail->ac_module, comm, neighbor_allgatherv);
+        COPY(avail->ac_module, comm, neighbor_alltoall);
+        COPY(avail->ac_module, comm, neighbor_alltoallv);
+        COPY(avail->ac_module, comm, neighbor_alltoallw);
 
-            COPY(avail->ac_module, comm, ineighbor_allgather);
-            COPY(avail->ac_module, comm, ineighbor_allgatherv);
-            COPY(avail->ac_module, comm, ineighbor_alltoall);
-            COPY(avail->ac_module, comm, ineighbor_alltoallv);
-            COPY(avail->ac_module, comm, ineighbor_alltoallw);
-        }
+        COPY(avail->ac_module, comm, ineighbor_allgather);
+        COPY(avail->ac_module, comm, ineighbor_allgatherv);
+        COPY(avail->ac_module, comm, ineighbor_alltoall);
+        COPY(avail->ac_module, comm, ineighbor_alltoallv);
+        COPY(avail->ac_module, comm, ineighbor_alltoallw);
 
         /* release the original module reference and the list item */
         OBJ_RELEASE(avail->ac_module);
@@ -236,22 +235,9 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         (NULL == comm->c_coll.coll_ireduce_scatter) ||
         ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_iscan)) ||
         (NULL == comm->c_coll.coll_iscatter) ||
-        (NULL == comm->c_coll.coll_iscatterv) ||
-        /* neighborhood collectives only need to be defined if this
-         * is a virtual topology communicator */
-        ((OMPI_COMM_IS_GRAPH(comm) || OMPI_COMM_IS_DIST_GRAPH(comm) ||
-          OMPI_COMM_IS_CART(comm)) &&
-         ((NULL == comm->c_coll.coll_neighbor_allgather) ||
-          (NULL == comm->c_coll.coll_neighbor_allgatherv) ||
-          (NULL == comm->c_coll.coll_neighbor_alltoall) ||
-          (NULL == comm->c_coll.coll_neighbor_alltoallv) ||
-          (NULL == comm->c_coll.coll_neighbor_alltoallw) ||
-          (NULL == comm->c_coll.coll_ineighbor_allgather) ||
-          (NULL == comm->c_coll.coll_ineighbor_allgatherv) ||
-          (NULL == comm->c_coll.coll_ineighbor_alltoall) ||
-          (NULL == comm->c_coll.coll_ineighbor_alltoallv) ||
-          (NULL == comm->c_coll.coll_ineighbor_alltoallw)))
-        ) {
+        (NULL == comm->c_coll.coll_iscatterv)) {
+        /* TODO -- Once the topologu flags are set before coll_select then
+         * check if neighborhood collectives have been set. */
         mca_coll_base_comm_unselect(comm);
         return OMPI_ERR_NOT_FOUND;
     }
