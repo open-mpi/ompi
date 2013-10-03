@@ -82,7 +82,7 @@ extern opal_hash_table_t ompi_mpi_f90_real_hashtable;
 extern opal_hash_table_t ompi_mpi_f90_complex_hashtable;
 
 /** version string of ompi */
-OSHMEM_DECLSPEC extern const char ompi_version_string[];
+OSHMEM_DECLSPEC extern const char oshmem_version_string[];
 
 /**
  * Initialize the Open SHMEM environment
