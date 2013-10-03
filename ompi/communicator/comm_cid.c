@@ -302,7 +302,6 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
 
     /* set the according values to the newcomm */
     newcomm->c_contextid = nextcid;
-    newcomm->c_f_to_c_index = newcomm->c_contextid;
     opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
 
  release_and_return:
@@ -468,7 +467,6 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
     if (1 == context->rflag) {
         /* set the according values to the newcomm */
         context->newcomm->c_contextid = context->nextcid;
-        context->newcomm->c_f_to_c_index = context->newcomm->c_contextid;
         opal_pointer_array_set_item (&ompi_mpi_communicators, context->nextcid, context->newcomm);
 
         ompi_comm_unregister_cid (context->comm->c_contextid);

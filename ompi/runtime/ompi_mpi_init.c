@@ -871,9 +871,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
-    /* Prepare communicator requests */
-    ompi_comm_request_init ();
-
     /* Init coll for the comms. This has to be after dpm_base_select, 
        (since dpm.mark_dyncomm is not set in the communicator creation
        function else), but before dpm.dyncom_init, since this function

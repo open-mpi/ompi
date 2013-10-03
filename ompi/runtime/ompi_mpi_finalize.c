@@ -283,9 +283,6 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
-    /* release resources held by comm requests */
-    ompi_comm_request_fini ();
-
     if (OMPI_SUCCESS != (ret = ompi_message_finalize())) {
         return ret;
     }

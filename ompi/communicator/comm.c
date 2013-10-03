@@ -1005,6 +1005,9 @@ int ompi_comm_idup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi
 
     ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, &subreq, subreq ? 1 : 0);
 
+    /* assign the newcomm now */
+    *newcomm = context->newcomp;
+
     /* kick off the request */
     ompi_comm_request_start (request);
     *req = &request->super;
@@ -1071,11 +1074,6 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
 {
-    struct ompi_comm_idup_with_info_context *context =
-        (struct ompi_comm_idup_with_info_context *) request->context;
-
-    *context->newcomm = context->newcomp;
-
     /* done */
     return MPI_SUCCESS;
 }

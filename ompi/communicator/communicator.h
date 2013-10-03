@@ -106,6 +106,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 
 
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_comm_f_to_c_table;
 
 struct ompi_communicator_t {
     opal_object_t              c_base;
