@@ -528,7 +528,9 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
 {
     int i;
     mca_spml_mkey_t *mkeys;
+#if MXM_API >= MXM_VERSION(2,0)
     mxm_error_t err;
+#endif
 
     *count = 0;
     mkeys = (mca_spml_mkey_t *) calloc(1, MXM_PTL_LAST * sizeof(*mkeys));
@@ -557,14 +559,14 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
             mkeys[i].va_base = addr;
             mkeys[i].spml_context = 0;
 #if MXM_API < MXM_VERSION(2,0)
-            mkeys[i].ib.lkey = mkeys[i].ib.rkey = MXM_MKEY_NONE;
-#else
             mkeys[i].ib.lkey = mkeys[i].ib.rkey = 0;
+#else
+            mkeys[i].ib.lkey = mkeys[i].ib.rkey = MXM_MKEY_NONE;
 
             err = mxm_mem_map(mca_spml_ikrit.mxm_context, &addr, &size, 0, 0, 0);
             if (MXM_OK != err) {
                 SPML_VERBOSE(1, "failed to register memory: %s", mxm_error_string(err));
-                goto err;
+                goto error_out;
             }
             mkeys[i].spml_context = (void *)(unsigned long)size;
 #endif
@@ -572,7 +574,7 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
 
         default:
             SPML_ERROR("unsupported PTL: %d", i);
-            goto err;
+            goto error_out;
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d rkey %x lkey %x key %llx address 0x%llX len %llu shmid 0x%X|0x%X",
@@ -583,7 +585,9 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
 
     return mkeys;
 
-    err: mca_spml_ikrit_deregister(mkeys);
+    error_out: 
+    mca_spml_ikrit_deregister(mkeys);
+
     return NULL ;
 }
 
