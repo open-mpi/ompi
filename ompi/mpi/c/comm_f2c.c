@@ -52,9 +52,9 @@ MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
        return an invalid C handle. */
 
     if ( 0 > o_index ||
-         o_index >= opal_pointer_array_get_size(&ompi_mpi_communicators)) {
+         o_index >= opal_pointer_array_get_size(&ompi_comm_f_to_c_table)) {
         return NULL;
     }
         
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_mpi_communicators, o_index);
+    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
 }
