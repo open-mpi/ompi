@@ -421,7 +421,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     }
 
     /* mark this cid as available */
-    if ( MPI_UNDEFINED != comm->c_contextid &&
+    if ( MPI_UNDEFINED != (int)comm->c_contextid &&
          NULL != opal_pointer_array_get_item(&ompi_mpi_communicators,
                                              comm->c_contextid)) {
         opal_pointer_array_set_item ( &ompi_mpi_communicators,
