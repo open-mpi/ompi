@@ -90,7 +90,7 @@
  */
 #define OSHMEM_OPAL_THREAD_ENABLE 0
 
-const char ompi_version_string[] = OSHMEM_IDENT_STRING;
+const char oshmem_version_string[] = OSHMEM_IDENT_STRING;
 
 /*
  * Global variables and symbols for the MPI layer
@@ -104,64 +104,6 @@ int oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
 long *preconnect_value = 0;
 
 opal_thread_t *oshmem_mpi_main_thread = NULL;
-
-/*
- * These variables are here, rather than under ompi/mpi/c/foo.c
- * because it is not sufficient to have a .c file that only contains
- * variables -- you must have a function that is invoked from
- * elsewhere in the code to guarantee that all linkers will pull in
- * the .o file from the library.  Hence, although these are MPI
- * constants, we might as well just define them here (i.e., in a file
- * that already has a function that is guaranteed to be linked in,
- * rather than make a new .c file with the constants and a
- * corresponding dummy function that is invoked from this function).
- *
- * Additionally, there can be/are strange linking paths such that
- * ompi_info needs symbols such as ompi_fortran_status_ignore,
- * which, if they weren't here with a collection of other global
- * symbols that are initialized (which seems to force this .o file to
- * be pulled into the resolution process, because ompi_info certainly
- * does not call ompi_mpi_init()), would not be able to be found by
- * the OSX linker.
- *
- * NOTE: See the big comment in ompi/mpi/f77/constants.h about why we
- * have four symbols for each of the common blocks (e.g., the Fortran
- * equivalent(s) of MPI_STATUS_IGNORE).  Here, we can only have *one*
- * value (not four).  So the only thing we can do is make it equal to
- * the fortran compiler convention that was selected at configure
- * time.  Note that this is also true for the value of .TRUE. from the
- * Fortran compiler, so even though Open MPI supports all four Fortran
- * symbol conventions, it can only support one convention for the two
- * C constants (MPI_FORTRAN_STATUS[ES]_IGNORE) and only support one
- * compiler for the value of .TRUE.  Ugh!!
- *
- * Note that the casts here are ok -- we're *only* comparing pointer
- * values (i.e., they'll never be de-referenced).  The global symbols
- * are actually of type (ompi_fortran_common_t) (for alignment
- * issues), but MPI says that MPI_F_STATUS[ES]_IGNORE must be of type
- * (MPI_Fint*).  Hence, we have to cast to make compilers not
- * complain.
- */
-#if OMPI_WANT_F77_BINDINGS
-#  if OMPI_F77_CAPS
-MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUS_IGNORE;
-MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUSES_IGNORE;
-#  elif OMPI_F77_PLAIN
-MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore;
-MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore;
-#  elif OMPI_F77_SINGLE_UNDERSCORE
-MPI_Fint *MPI_F_STATUS_IGNORE;
-MPI_Fint *MPI_F_STATUSES_IGNORE;
-#  elif OMPI_F77_DOUBLE_UNDERSCORE
-MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore__;
-MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore__;
-#  else
-#    error Unrecognized Fortran 77 name mangling scheme
-#  endif
-#else
-MPI_Fint *MPI_F_STATUS_IGNORE = NULL;
-MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
-#endif  /* OMPI_WANT_F77_BINDINGS */
 
 /* Constants for the Fortran layer.  These values are referred to via
  common blocks in the Fortran equivalents.  See
