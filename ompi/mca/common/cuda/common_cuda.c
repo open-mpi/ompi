@@ -1529,3 +1529,66 @@ int mca_common_cuda_device_can_access_peer(int *access, int dev1, int dev2)
     }
     return 0;
 }
+
+int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base)
+{
+    CUresult result;
+    result = cuFunc.cuMemGetAddressRange((CUdeviceptr *)pbase, psize, (CUdeviceptr)base);
+    if (CUDA_SUCCESS != result) {
+        opal_show_help("help-mpi-common-cuda.txt", "cuMemGetAddressRange failed",
+                       true, result, base);
+        return OMPI_ERROR;
+    } else {
+        opal_output_verbose(10, mca_common_cuda_output,
+                            "CUDA: cuMemGetAddressRange passed: addr=%p, pbase=%p, psize=%lu ",
+                            base, *(char **)pbase, *psize);
+    }
+    return 0;
+}
+
+#if OMPI_CUDA_SUPPORT_60 && OMPI_GDR_SUPPORT
+int mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg)
+{
+    int res;
+    unsigned long long bufID;
+    unsigned char *dbuf = reg->base;
+
+    res = cuFunc.cuPointerGetAttribute(&bufID, CU_POINTER_ATTRIBUTE_BUFFER_ID,
+                                       (CUdeviceptr)dbuf);
+    if (res != CUDA_SUCCESS) {
+        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed", true, res);
+        return 0;
+    }
+    opal_output_verbose(50, mca_common_cuda_output,
+                        "CUDA: base=%p, bufID=%llu, reg->gpu_bufID=%llu, %s", dbuf, bufID, reg->gpu_bufID,
+                        (reg->gpu_bufID == bufID ? "BUFFER_ID match":"BUFFER_ID do not match"));
+    if (bufID != reg->gpu_bufID) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+/*
+ * Get the buffer ID from the memory and store it in the registration.
+ * This is needed to ensure the cached registration is not stale.  If
+ * we fail to get buffer ID, print an error and set buffer ID to 0.
+ */
+void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg)
+{
+    int res;
+    unsigned long long bufID = 0;
+    unsigned char *dbuf = reg->base;
+
+    res = cuFunc.cuPointerGetAttribute(&bufID, CU_POINTER_ATTRIBUTE_BUFFER_ID,
+                                       (CUdeviceptr)dbuf);
+
+    if (res != CUDA_SUCCESS) {
+        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed", true, res);
+    }
+
+    reg->gpu_bufID = bufID;
+
+}
+#endif /* OMPI_CUDA_SUPPORT_60 */       
+
