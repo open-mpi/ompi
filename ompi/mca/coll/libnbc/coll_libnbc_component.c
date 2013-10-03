@@ -205,13 +205,11 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_iscatter = ompi_coll_libnbc_iscatter;
         module->super.coll_iscatterv = ompi_coll_libnbc_iscatterv;
 
-        if (OMPI_COMM_IS_GRAPH(comm) || OMPI_COMM_IS_DIST_GRAPH(comm) || OMPI_COMM_IS_CART(comm)) {
-            module->super.coll_ineighbor_allgather = ompi_coll_libnbc_ineighbor_allgather;
-            module->super.coll_ineighbor_allgatherv = ompi_coll_libnbc_ineighbor_allgatherv;
-            module->super.coll_ineighbor_alltoall = ompi_coll_libnbc_ineighbor_alltoall;
-            module->super.coll_ineighbor_alltoallv = ompi_coll_libnbc_ineighbor_alltoallv;
-            module->super.coll_ineighbor_alltoallw = ompi_coll_libnbc_ineighbor_alltoallw;
-        }
+        module->super.coll_ineighbor_allgather = ompi_coll_libnbc_ineighbor_allgather;
+        module->super.coll_ineighbor_allgatherv = ompi_coll_libnbc_ineighbor_allgatherv;
+        module->super.coll_ineighbor_alltoall = ompi_coll_libnbc_ineighbor_alltoall;
+        module->super.coll_ineighbor_alltoallv = ompi_coll_libnbc_ineighbor_alltoallv;
+        module->super.coll_ineighbor_alltoallw = ompi_coll_libnbc_ineighbor_alltoallw;
     }
 
     module->super.ft_event = NULL;
