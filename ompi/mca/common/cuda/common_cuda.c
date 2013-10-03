@@ -219,7 +219,7 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
  * will result in this initialization failing and status will be set 
  * showing that.
  */
-static int mca_common_cuda_stage_one_init(void)
+int mca_common_cuda_stage_one_init(void)
 {
     opal_lt_dladvise advise;
     int retval, i, j;
@@ -413,6 +413,7 @@ static int mca_common_cuda_stage_one_init(void)
     if (true != stage_one_init_passed) {
         return 1;
     }
+    opal_cuda_add_initialization_function(&mca_common_cuda_init);
 
     /* Map in the functions that we need.  Note that if there is an error
      * the macro OMPI_CUDA_DLSYM will print an error and call return.  */
@@ -702,7 +703,6 @@ void mca_common_cuda_register(void *ptr, size_t amount, char *msg) {
             ompi_mpi_cuda_support = 0;
             return;
         }
-        opal_cuda_add_initialization_function(&mca_common_cuda_init);
         OBJ_CONSTRUCT(&common_cuda_memory_registrations, opal_list_t);
     }
 
