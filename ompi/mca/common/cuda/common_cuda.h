@@ -20,6 +20,7 @@
 #ifndef OMPI_MCA_COMMON_CUDA_H
 #define OMPI_MCA_COMMON_CUDA_H
 #include "ompi/mca/btl/btl.h"
+#include "opal/datatype/opal_convertor.h"
 
 #define MEMHANDLE_SIZE 8
 #define EVTHANDLE_SIZE 8
@@ -31,6 +32,7 @@ struct mca_mpool_common_cuda_reg_t {
 };
 typedef struct mca_mpool_common_cuda_reg_t mca_mpool_common_cuda_reg_t;
 extern bool mca_common_cuda_enabled;
+#define OMPI_GDR_SUPPORT 0
 
 OMPI_DECLSPEC int mca_common_cuda_register_mca_variables(void);
 
@@ -72,6 +74,27 @@ OMPI_DECLSPEC int cuda_closememhandle(void *reg_data, mca_mpool_base_registratio
 OMPI_DECLSPEC int mca_common_cuda_get_device(int *devicenum);
 OMPI_DECLSPEC int mca_common_cuda_device_can_access_peer(int *access, int dev1, int dev2);
 OMPI_DECLSPEC int mca_common_cuda_stage_one_init(void);
-
+OMPI_DECLSPEC int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base);
+#if OMPI_CUDA_SUPPORT_60 && OMPI_GDR_SUPPORT
+OMPI_DECLSPEC int mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg);
+OMPI_DECLSPEC void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg);
+#endif /* OMPI_CUDA_SUPPORT_60 */
+/**
+ * Return:   0 if no packing is required for sending (the upper layer
+ *             can use directly the pointer to the contiguous user
+ *             buffer).
+ *           1 if data does need to be packed, i.e. heterogeneous peers
+ *             (source arch != dest arch) or non contiguous memory
+ *             layout.
+ */
+static inline int32_t opal_convertor_cuda_need_buffers( opal_convertor_t* pConvertor )
+{
+    int32_t retval;
+    uint32_t cudaflag = pConvertor->flags & CONVERTOR_CUDA; /* Save CUDA flag */
+    pConvertor->flags &= ~CONVERTOR_CUDA;              /* Clear CUDA flag if it exists */
+    retval = opal_convertor_need_buffers(pConvertor);
+    pConvertor->flags |= cudaflag; /* Restore CUDA flag */
+    return retval;
+}
 
 #endif /* OMPI_MCA_COMMON_CUDA_H */
