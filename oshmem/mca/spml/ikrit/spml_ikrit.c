@@ -528,6 +528,7 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
 {
     int i;
     mca_spml_mkey_t *mkeys;
+    mxm_error_t err;
 
     *count = 0;
     mkeys = (mca_spml_mkey_t *) calloc(1, MXM_PTL_LAST * sizeof(*mkeys));
@@ -553,13 +554,20 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
             mkeys[i].va_base = addr;
             break;
         case MXM_PTL_RDMA:
-#if MXM_API < MXM_VERSION(1,5)
+            mkeys[i].va_base = addr;
+            mkeys[i].spml_context = 0;
+#if MXM_API < MXM_VERSION(2,0)
             mkeys[i].ib.lkey = mkeys[i].ib.rkey = MXM_MKEY_NONE;
 #else
             mkeys[i].ib.lkey = mkeys[i].ib.rkey = 0;
+
+            err = mxm_mem_map(mca_spml_ikrit.mxm_context, &addr, &size, 0, 0, 0);
+            if (MXM_OK != err) {
+                SPML_VERBOSE(1, "failed to register memory: %s", mxm_error_string(err));
+                goto err;
+            }
+            mkeys[i].spml_context = (void *)(unsigned long)size;
 #endif
-            mkeys[i].spml_context = 0;
-            mkeys[i].va_base = addr;
             break;
 
         default:
@@ -600,6 +608,11 @@ int mca_spml_ikrit_deregister(mca_spml_mkey_t *mkeys)
                          MXM_PTL_RDMA,
                          (void *) mkeys[i].va_base,
                          (unsigned long) mkeys[i].spml_context);
+#elif MXM_API >= MXM_VERSION(2,0)
+            mxm_mem_unmap(mca_spml_ikrit.mxm_context,
+                    (void *)mkeys[i].va_base,
+                    (unsigned long)mkeys[i].spml_context,
+                    0);
 #endif
             break;
         }
@@ -691,7 +704,7 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     sreq->base.data.buffer.memh = NULL;
     sreq->op.mem.remote_memh = NULL;
 #else
-    sreq->op.mem.remote_mkey = NULL;
+    sreq->op.mem.remote_mkey = &mxm_empty_mem_key;
 #endif
     sreq->opcode = MXM_REQ_OP_GET;
     sreq->op.mem.remote_vaddr = (intptr_t) rva;
@@ -1026,6 +1039,9 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     } else  {
         put_req->mxm_req.flags = MXM_REQ_SEND_FLAG_LAZY;
     }
+    if (!zcopy) {
+        put_req->mxm_req.flags |= MXM_REQ_SEND_FLAG_BLOCKING;
+    }
 #endif
 
     put_req->mxm_req.base.conn = mca_spml_ikrit.mxm_peers[dst]->mxm_conn;
@@ -1046,7 +1062,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.base.data.buffer.memh = NULL;
     put_req->mxm_req.op.mem.remote_memh = NULL;
 #else
-    put_req->mxm_req.op.mem.remote_mkey = NULL;
+    put_req->mxm_req.op.mem.remote_mkey = &mxm_empty_mem_key;
 #endif
 
     if (mca_spml_ikrit.mxm_peers[dst]->pe_relay >= 0
@@ -1194,7 +1210,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     mxm_req.base.data.buffer.memh = NULL;
     mxm_req.op.mem.remote_memh = NULL;
 #else
-    mxm_req.op.mem.remote_mkey = NULL;
+    mxm_req.op.mem.remote_mkey = &mxm_empty_mem_key;
 #endif
 
     if (mca_spml_ikrit.mxm_peers[dst]->need_fence == 0) {
