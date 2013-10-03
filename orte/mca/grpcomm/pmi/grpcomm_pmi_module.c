@@ -183,7 +183,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
         free(pmapping);
 
-        if ((local_rank_count > 0) && (local_rank_count < (int)orte_process_info.num_procs)) {
+        if (local_rank_count > 0) {
             local_ranks = (int*)malloc(local_rank_count * sizeof(int));
             for (i=0; i < local_rank_count; i++) {
                 local_ranks[i] = n + i;
