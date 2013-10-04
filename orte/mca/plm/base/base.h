@@ -63,6 +63,7 @@ ORTE_DECLSPEC void orte_plm_base_mapping_complete(int fd, short args, void *cbda
 ORTE_DECLSPEC void orte_plm_base_launch_apps(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_post_launch(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_registered(int fd, short args, void *cbdata);
+ORTE_DECLSPEC int orte_plm_base_fork_hnp(void);
 
 END_C_DECLS
 

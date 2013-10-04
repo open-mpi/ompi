@@ -43,7 +43,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
-#include "orte/mca/plm/plm.h"
+#include "orte/mca/plm/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rmaps/rmaps.h"
@@ -1422,6 +1422,22 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
     int rc, len;
     char tag[12];
     
+    /* if we are a singleton and the supporting HNP hasn't
+     * been spawned, then do so now
+     */
+    if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
+        !orte_routing_is_enabled) {
+        if (ORTE_SUCCESS != orte_plm_base_fork_hnp()) {
+            ORTE_ERROR_LOG(ORTE_ERR_FATAL);
+            return ORTE_ERR_FATAL;
+        }
+        orte_routing_is_enabled = true;
+        /* need to init_routes again to redirect messages
+         * thru the HNP
+         */
+        orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL);
+    }
+
     if (NULL == orte_process_info.my_hnp_uri) {
         rc = OMPI_ERR_NOT_AVAILABLE;
         ORTE_ERROR_LOG(rc);

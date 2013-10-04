@@ -284,12 +284,21 @@ static int rte_init(void)
         error = "orte_plm_base_select";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_set_hnp_name";
-        goto error;
+    /* if we were spawned by a singleton, our jobid was given to us */
+    if (NULL != orte_ess_base_jobid) {
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&ORTE_PROC_MY_NAME->jobid, orte_ess_base_jobid))) {
+            ORTE_ERROR_LOG(ret);
+            error = "convert_string_to_jobid";
+            goto error;
+        }
+        ORTE_PROC_MY_NAME->vpid = 0;
+    } else {
+        if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_set_hnp_name";
+            goto error;
+        }
     }
-
     /* Setup the communication infrastructure */
     
     /*
