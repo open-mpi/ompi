@@ -91,8 +91,6 @@ OBJ_CLASS_DECLARATION(ompi_proc_t);
  *
  * Pointer to the ompi_proc_t structure for the local process
  *
- * Pointer to the ompi_proc_t structure for the local process.
- *
  * @note This pointer is declared here to allow inline functions
  * within this header file to access the local process quickly.
  * Please use ompi_proc_local() instead.
