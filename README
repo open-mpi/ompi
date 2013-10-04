@@ -57,7 +57,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (22 February 2012):
+base as of this writing (October 2013):
 
 General notes
 -------------
@@ -110,8 +110,8 @@ General notes
   (*) Be sure to read the Compiler Notes, below.
 
 - Other systems have been lightly (but not fully tested):
+  - Cygwin 32 & 64 bit with gcc
   - Other 64 bit platforms (e.g., Linux on PPC64)
-  - 32-bit Solaris
 
 Compiler Notes
 --------------
@@ -337,7 +337,7 @@ General Run-Time Support Notes
 MPI Functionality and Features
 ------------------------------
 
-- All MPI-2.1 and most MPI-3 functionality is supported.
+- All MPI-2.2 and most MPI-3 functionality is supported.
 
 - When using MPI deprecated functions, some compilers will emit
   warnings.  For example:
@@ -364,8 +364,8 @@ MPI Functionality and Features
   - self
 
   Note that Open MPI's thread support is in a fairly early stage; the
-  above devices are likely to *work*, but the latency is likely to be
-  fairly high.  Specifically, efforts so far have concentrated on
+  above devices may *work*, but the latency is likely to be fairly
+  high.  Specifically, efforts so far have concentrated on
   *correctness*, not *performance* (yet).
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
@@ -505,7 +505,7 @@ Network Support
   applications that used the OFED network transports.  If Open MPI is
   able to find the <linux/ummunotify.h> header file, it will build
   support for ummunotify and include it by default.  If MPI processes
-  then find the ummunotify kernel module loaded and active, then ther
+  then find the ummunotify kernel module loaded and active, then their
   memory managers (which have been shown to be problematic in some
   cases) will be disabled and ummunotify will be used.  Otherwise, the
   same memory managers from prior versions of Open MPI will be used.
@@ -554,10 +554,6 @@ Network Support
   layouts.  The MX BTL is recommended in all other cases, such as when
   using multiple interconnects at the same time (including TCP), or
   transferring non contiguous data-types.
-
-- Older Myrinet "GM" support is no longer available in the v1.5
-  series.  Older versions of Open MPI can be used if GM support is
-  still needed.
 
 - Linux "knem" support is used when the "sm" (shared memory) BTL is
   compiled with knem support (see the --with-knem configure option)
@@ -651,25 +647,22 @@ INSTALLATION OPTIONS
 
 NETWORKING SUPPORT / OPTIONS
 
---with-elan=<directory>
-  Specify the directory where the Quadrics Elan library and header
-  files are located.  This option is generally only necessary if the
-  Elan headers and libraries are not in default compiler/linker
-  search paths.
-
-  Elan is the support library for Quadrics-based networks.
-
---with-elan-libdir=<directory>
-  Look in directory for the Quadrics Elan libraries.  By default, Open
-  MPI will look in <elan directory>/lib and <elan directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
-
 --with-fca=<directory>
-  Specify the directory where the Mellanox FCA library and
-  header files are located.  
+  Specify the directory where the Mellanox FCA library and header
+  files are located.  This option is generally only necessary if the
+  FCA headers and libraries are not in default compiler/linker search
+  paths.
 
   FCA is the support library for Mellanox QDR switches and HCAs.
+
+--with-hcoll=<directory>
+  Specify the directory where the Mellanox hcoll library and header
+  files are located.  This option is generally only necessary if the
+  hcoll headers and libraries are not in default compiler/linker
+  search paths.
+
+  hcoll is the support library for MPI collective operation offload on
+  Mellanox ConnectX-3 HCAs (and later).
 
 --with-knem=<directory>
   Specify the directory where the knem libraries and header files are
@@ -749,49 +742,17 @@ NETWORKING SUPPORT / OPTIONS
   Additional libraries to link with for Portals support.
 
 --with-psm=<directory>
-  Specify the directory where the QLogic InfiniPath PSM library and
+  Specify the directory where the Intel InfiniPath PSM library and
   header files are located.  This option is generally only necessary
   if the InfiniPath headers and libraries are not in default
   compiler/linker search paths.
 
-  PSM is the support library for QLogic InfiniPath network adapters.
+  PSM is the support library for Intel InfiniPath network adapters.
 
 --with-psm-libdir=<directory>
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
-
---with-sctp=<directory>
-  Specify the directory where the SCTP libraries and header files are
-  located.  This option is generally only necessary if the SCTP headers
-  and libraries are not in default compiler/linker search paths.
-
-  SCTP is a special network stack over Ethernet networks.
-
---with-sctp-libdir=<directory>
-  Look in directory for the SCTP libraries.  By default, Open MPI will
-  look in <sctp directory>/lib and <sctp directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
-
---with-udapl=<directory>
-  Specify the directory where the UDAPL libraries and header files are
-  located.  Note that UDAPL support is disabled by default on Linux;
-  the --with-udapl flag must be specified in order to enable it.
-  Specifying the directory argument is generally only necessary if the
-  UDAPL headers and libraries are not in default compiler/linker
-  search paths.
-
-  UDAPL is the support library for high performance networks in Oracle
-  Message Passing Toolkit, and also available on Linux OpenFabrics
-  networks (although the "openib" options are preferred for Linux
-  OpenFabrics networks, not UDAPL).  To be clear: the UDAPL BTL is
-  *not* recommended for Linux/OpenFabrics platforms.
-
---with-udapl-libdir=<directory>
-  Look in directory for the UDAPL libraries.  By default, Open MPI
-  will look in <udapl directory>/lib and <udapl directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
 
 RUN-TIME SYSTEM SUPPORT
 
@@ -807,19 +768,6 @@ RUN-TIME SYSTEM SUPPORT
   path names.  --enable-orterun-prefix-by-default is a synonym for
   this option.
 
---enable-sensors
-  Enable internal sensors (default: disabled)
-
---enable-heartbeat
-  Enable heartbeat monitoring of daemons (default: disabled)
-
---enable-orte-progress-threads
-  Enable orte progress thread - allows async progress of
-  RTE messages. Requires both enable-event-thread-support
-  and enable-opal-multi-thread-support. The latter imposes
-  an MPI performance penalty, so this shouldn't normally be
-  used. (default: disabled)
-
 --enable-orte-static-ports
    Enable orte static ports for tcp oob. (default: enabled)
 
@@ -827,8 +775,11 @@ RUN-TIME SYSTEM SUPPORT
   Force the building of for the Cray Alps run-time environment.  If
   Alps support cannot be found, configure will abort.
 
---with-cray-pmi-ext
-  Include Cray PMI2 extensions.
+--with-alps-libdir=<directory>
+  Look in directory for the Alps libraries.  By default, Open MPI will
+  look in <alps directory>/lib and <alps directory>/lib64, which
+  covers most cases.  This option is only needed for special
+  configurations.
 
 --with-loadleveler
   Force the building of LoadLeveler scheduler support.  If LoadLeveler
@@ -1100,11 +1051,11 @@ For example:
 
   shell$ ./configure CC=mycc CXX=myc++ FC=myfortran ...
 
-***Note: We generally suggest using the above command line form for
-   setting different compilers (vs. setting environment variables and
-   then invoking "./configure").  The above form will save all
-   variables and values in the config.log file, which makes
-   post-mortem analysis easier when problems occur.
+*** NOTE: We generally suggest using the above command line form for
+    setting different compilers (vs. setting environment variables and
+    then invoking "./configure").  The above form will save all
+    variables and values in the config.log file, which makes
+    post-mortem analysis easier when problems occur.
 
 Note that if you intend to compile Open MPI with a "make" other than
 the default one in your PATH, then you must either set the $MAKE
@@ -1583,9 +1534,10 @@ are equivalent.  Some of mpiexec's switches (such as -host and -arch)
 are not yet functional, although they will not error if you try to use
 them.  
 
-The rsh launcher accepts a -hostfile parameter (the option
-"-machinefile" is equivalent); you can specify a -hostfile parameter
-indicating an standard mpirun-style hostfile (one hostname per line):
+The rsh launcher (which defaults to using ssh) accepts a -hostfile
+parameter (the option "-machinefile" is equivalent); you can specify a
+-hostfile parameter indicating an standard mpirun-style hostfile (one
+hostname per line):
 
   shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
 
