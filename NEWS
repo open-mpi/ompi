@@ -18,6 +18,7 @@ Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
+Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -53,7 +54,8 @@ included in the vX.Y.Z section and be denoted as:
 
 Trunk (not on release branches yet)
 -----------------------------------
-
+- CUDA-aware support can now handle GPUs within a node that do not
+  support CUDA IPC.  Earlier versions would get error and abort.
 - Do not build the MPI C++ bindings by default.  They must be enabled
   via --enable-mpi-cxx.
 - Adding a new parallel I/O component and multiple new frameworks to 
@@ -81,7 +83,8 @@ Trunk (not on release branches yet)
 
 1.7.3
 -----
-
+- Make CUDA-aware support dynamically load libcuda.so so CUDA-aware
+  MPI library can run on systems without CUDA software.
 - Fix various issues with dynamic processes and intercommunicator
   operations under Torque.  Thanks to Suraj Prabhakaran for reporting
   the problem.
