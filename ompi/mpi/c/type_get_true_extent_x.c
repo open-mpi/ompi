@@ -63,8 +63,8 @@ int MPI_Type_get_true_extent_x(MPI_Datatype datatype,
 
    rc = ompi_datatype_get_true_extent( datatype, &atrue_lb, &atrue_extent );
    if (OMPI_SUCCESS == rc) {
-      *true_lb = ((size_t) atrue_lb > MPI_COUNT_MAX) ? MPI_UNDEFINED : atrue_lb;
-      *true_extent = ((size_t) atrue_extent > MPI_COUNT_MAX) ? MPI_UNDEFINED : atrue_extent;
+      *true_lb = ((uint64_t) atrue_lb > MPI_COUNT_MAX) ? MPI_UNDEFINED : atrue_lb;
+      *true_extent = ((uint64_t) atrue_extent > MPI_COUNT_MAX) ? MPI_UNDEFINED : atrue_extent;
    }
 
    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );

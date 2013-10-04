@@ -59,8 +59,8 @@ int MPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb, MPI_Count *extent)
 
   rc = ompi_datatype_get_extent( type, &alb, &aextent );
   if (OMPI_SUCCESS == rc) {
-    *lb = ((size_t) alb > MPI_COUNT_MAX) ? MPI_UNDEFINED : alb;
-    *extent = ((size_t) aextent > MPI_COUNT_MAX) ? MPI_UNDEFINED : aextent;
+    *lb = ((uint64_t) alb > MPI_COUNT_MAX) ? MPI_UNDEFINED : alb;
+    *extent = ((uint64_t) aextent > MPI_COUNT_MAX) ? MPI_UNDEFINED : aextent;
   }
 
   OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
