@@ -895,6 +895,12 @@ RUN-TIME SYSTEM SUPPORT
   path names.  --enable-orterun-prefix-by-default is a synonym for
   this option.
 
+--enable-sensors
+  Enable internal sensors (default: disabled)
+
+--enable-orte-static-ports
+   Enable orte static ports for tcp oob. (default: enabled)
+
 --with-alps
   Force the building of for the Cray Alps run-time environment.  If
   Alps support cannot be found, configure will abort.
