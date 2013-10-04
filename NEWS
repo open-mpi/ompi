@@ -89,7 +89,7 @@ Trunk (not on release branches yet)
 - Improve support for Portals 4.
 - Various Solaris fixes.  Many thanks to Siegmar Gross for his
   incredible patience in reporting all the issues.
-- MPI-2.2: Add redunction support for MPI_C_*COMPLEX and MPI::*COMPLEX.
+- MPI-2.2: Add reduction support for MPI_C_*COMPLEX and MPI::*COMPLEX.
 - Fixed internal accounting when openpty() fails.  Thanks to Michal
   Peclo for reporting the issue and providing a patch.
 - Fixed too-large memory consumption in XRC mode of the openib BTL.
