@@ -595,6 +595,9 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, access_flag);
 
     if (NULL == openib_reg->mr) {
+        OPAL_OUTPUT_VERBOSE((5, mca_btl_openib_component.memory_registration_verbose,
+                             "ibv_reg_mr() failed: base=%p, bound=%p, size=%d, flags=0x%x, errno=%d",
+                              reg->base, reg->bound, (int) (reg->bound - reg->base + 1), reg->flags, errno));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
