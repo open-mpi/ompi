@@ -18,6 +18,7 @@ Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
+Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 
 $COPYRIGHT$
 
@@ -56,6 +57,8 @@ included in the vX.Y.Z section and be denoted as:
 1.7.3
 -----
 
+- Make CUDA-aware support dynamically load libcuda.so so CUDA-aware
+  MPI library can run on systems without CUDA software.
 - Fix various issues with dynamic processes and intercommunicator
   operations under Torque.  Thanks to Suraj Prabhakaran for reporting
   the problem.
