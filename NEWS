@@ -54,9 +54,6 @@ included in the vX.Y.Z section and be denoted as:
 Trunk (not on release branches yet)
 -----------------------------------
 
-- Add missing MPI_Get_address implementation in the Fortran "mpi"
-  module for gfortran.  Thanks to Hugo Gagnon for identifying the issue.
-- Add support for MPI_Dist_graph functionality (MPI 2.2).
 - Do not build the MPI C++ bindings by default.  They must be enabled
   via --enable-mpi-cxx.
 - Adding a new parallel I/O component and multiple new frameworks to 
@@ -76,21 +73,63 @@ Trunk (not on release branches yet)
 - Native Windows support has been removed. A cygwin package is
   available from that group for Windows-based use.
 - Added MPI Java bindings
-- Added new usnic BTL to support the Cisco usNIC device
 - Wrapper compilers now add rpath support by default to generated
   executables on systems that support it.  This behavior can be
   disabled via --disable-wrapper-rpath.  See note in README about ABI
   issues when using rpath in MPI applications.
-- Add support for MPI_C_*COMPLEX and MPI_CXX_*COMPLEX datatypes.
-- Add support for the MPI_COUNT datatype and the associated MPI
-  functions introduced with MPI-3.
-- Add support for the MPI tool information interface (MPI_T).
-- Update ompi_info to support limiting output by opal info level.
 
-- Wrapper compilers now add rpath support by default to generated
-  executables on systems that support it.  This behavior can be
-  disabled via --disable-wrapper-rpath.  See note in README about ABI
-  issues when using rpath in MPI applications.
+
+1.7.3
+-----
+
+- Fix various issues with dynamic processes and intercommunicator
+  operations under Torque.  Thanks to Suraj Prabhakaran for reporting
+  the problem.
+- Enable support for the Mellanox MXM2 library by default.
+- Improve support for Portals 4.
+- Various Solaris fixes.  Many thanks to Siegmar Gross for his
+  incredible patience in reporting all the issues.
+- MPI-2.2: Add redunction support for MPI_C_*COMPLEX and MPI::*COMPLEX.
+- Fixed internal accounting when openpty() fails.  Thanks to Michal
+  Peclo for reporting the issue and providing a patch.
+- Fixed too-large memory consumption in XRC mode of the openib BTL.
+  Thanks to Alexey Ryzhikh for the patch.
+- Add bozo check for negative np values to mpirun to prevent a
+  deadlock.  Thanks to Upinder Malhi for identifying the issue.
+- Fixed MPI_IS_THREAD_MAIN behavior.  Thanks to Lisandro Dalcin for
+  pointing out the problem.
+- Various rankfile fixes.
+- Fix functionality over iWARP devices.
+- Various memory and performance optimizations and tweaks.
+- Fix MPI_Cancel issue identified by Fujitsu.
+- Add missing support for MPI_Get_address in the "use mpi" TKR
+  implementation.  Thanks to Hugo Gagnon for identifying the issue.
+- MPI-3: Add support for MPI_Count.
+- MPI-2.2: Add missing MPI_IN_PLACE support for MPI_ALLTOALL.
+- Added new usnic BTL to support the Cisco usNIC device.
+- Minor VampirTrace update to 5.14.4.4.
+- Removed support for ancient OS X systems (i.e., prior to 10.5).
+- Fixed obscure packing/unpacking datatype bug.  Thanks to Takahiro
+  Kawashima for identifying the issue.
+- Add run-time support for PMI2 environments.
+- Update openib BTL default parameters to include support for Mellanox
+  ConnectX3-Pro devices.
+- Update libevent to v2.0.21.
+- "ompi_info --param TYPE PLUGIN" now only shows a small number of MCA
+  parameters by default.  Add "--level 9" or "--all" to see *all* MCA
+  parameters.  See README for more details.
+- Add support for asynchronous CUDA-aware copies.
+- Add support for Mellanox MPI collective operation offload via the
+  "hcoll" library.
+- MPI-3: Add support for the MPI_T interface.  Open MPI's MCA
+  parameters are now accessible via the MPI_T control variable
+  interface.  Support has been added for a small number of MPI_T
+  performance variables.
+- Add Gentoo memory hooks override.  Thanks to Justin Bronder for the
+  patch.
+- Added new "mindist" process mapper, allowing placement of processes
+  via PCI locality information reported by the BIOS.
+- MPI-2.2: Add support for MPI_Dist_graph functionality.
 
 
 1.7.2
