@@ -88,6 +88,8 @@ PN2(void, MPI_Address, mpi_address, MPI_ADDRESS, (char *location, MPI_Fint *addr
 PN2(void, MPI_Allgather, mpi_allgather, MPI_ALLGATHER, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Allgatherv, mpi_allgatherv, MPI_ALLGATHERV, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Alloc_mem, mpi_alloc_mem, MPI_ALLOC_MEM, (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr));
+/* Extra Alloc_mem prototype for the _cptr variant added in MPI-3.0 errata */
+PN2(void, MPI_Alloc_mem_cptr, mpi_alloc_mem_cptr, MPI_ALLOC_MEM_CPTR, (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr));
 PN2(void, MPI_Allreduce, mpi_allreduce, MPI_ALLREDUCE, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Alltoall, mpi_alltoall, MPI_ALLTOALL, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Alltoallv, mpi_alltoallv, MPI_ALLTOALLV, (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
