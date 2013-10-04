@@ -221,7 +221,7 @@ static int rte_init(void)
      */
 
     /* use the std app init to complete the procedure */
-    if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup())) {
+    if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

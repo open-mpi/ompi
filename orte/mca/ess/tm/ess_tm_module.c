@@ -112,23 +112,9 @@ static int rte_init(void)
         
     }
     
-    /* otherwise, I must be an application process - use
-     * the default procedure to finish my setup
-     */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_ess_base_app_setup";
-        goto error;
-    }
-    
-    /* setup the nidmap arrays */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_util_nidmap_init";
-        goto error;
-    }
-    
-    return ORTE_SUCCESS;
+    /* no other options are supported! */
+    error = "ess_error";
+    ret = ORTE_ERROR;
     
 error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {

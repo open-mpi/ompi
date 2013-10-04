@@ -268,7 +268,8 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_db_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db_base_select())) {
+    /* always restrict daemons to local database components */
+    if (ORTE_SUCCESS != (ret = opal_db_base_select(true))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_db_base_select";
         goto error;

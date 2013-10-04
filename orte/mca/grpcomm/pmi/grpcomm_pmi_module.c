@@ -171,7 +171,7 @@ static int pmi_allgather(orte_grpcomm_collective_t *coll)
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
-    int *local_ranks, local_rank_count;
+    int *local_ranks=NULL, local_rank_count;
     opal_hwloc_locality_t locality;
     orte_process_name_t name;
     orte_vpid_t v;
@@ -184,47 +184,46 @@ static int modex(orte_grpcomm_collective_t *coll)
 
     /* discover the local ranks */
 #if WANT_PMI2_SUPPORT
-        {
-            char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-            int found, sid, nodes, k;
-            orte_vpid_t n;
-            char *p;
-            rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-            if (!found || PMI_SUCCESS != rc) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-                opal_output(0, "%s could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                return ORTE_ERROR;
-            }
+    {
+        char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
+        int found, sid, nodes, k;
+        orte_vpid_t n;
+        char *p;
+        rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
+        if (!found || PMI_SUCCESS != rc) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
+            opal_output(0, "%s could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            return ORTE_ERROR;
+        }
 
-            i = 0; n = 0; local_rank_count = 0;
-            if (NULL != (p = strstr(pmapping, "(vector"))) {
-                while (NULL != (p = strstr(p+1, ",("))) {
-                    if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &local_rank_count)) {
-                        for (k = 0; k < nodes; k++) {
-                            if ((ORTE_PROC_MY_NAME->vpid >= n) &&
-                                (ORTE_PROC_MY_NAME->vpid < (n + local_rank_count))) {
-                                break;
-                            }
-                            n += local_rank_count;
+        i = 0; n = 0; local_rank_count = 0;
+        if (NULL != (p = strstr(pmapping, "(vector"))) {
+            while (NULL != (p = strstr(p+1, ",("))) {
+                if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &local_rank_count)) {
+                    for (k = 0; k < nodes; k++) {
+                        if ((ORTE_PROC_MY_NAME->vpid >= n) &&
+                            (ORTE_PROC_MY_NAME->vpid < (n + local_rank_count))) {
+                            break;
                         }
+                        n += local_rank_count;
                     }
                 }
             }
-            free(pmapping);
+        }
+        free(pmapping);
 
-            if ((local_rank_count > 0) && (local_rank_count < (int)orte_process_info.num_procs)) {
-                local_ranks = (int*)malloc(local_rank_count * sizeof(int));
-                for (i=0; i < local_rank_count; i++) {
-                    local_ranks[i] = n + i;
-                }
-            }
-
-            if (NULL == local_ranks) {
-                opal_output(0, "%s could not get PMI_process_mapping",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                return ORTE_ERROR;
+        if (local_rank_count > 0) {
+            local_ranks = (int*)malloc(local_rank_count * sizeof(int));
+            for (i=0; i < local_rank_count; i++) {
+                local_ranks[i] = n + i;
             }
         }
+        if (NULL == local_ranks) {
+            opal_output(0, "%s could not get PMI_process_mapping",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            return ORTE_ERROR;
+        }
+    }
 #else
     rc = PMI_Get_clique_size (&local_rank_count);
     if (PMI_SUCCESS != rc) {
@@ -269,35 +268,35 @@ static int modex(orte_grpcomm_collective_t *coll)
 	/* compute and store the locality as it isn't something that gets pushed to PMI */
         if (local) {
 #if OPAL_HAVE_HWLOC
-        {
-            opal_hwloc_level_t bind_level, *lvptr;
-            unsigned int bind_idx, *idxptr;
-            opal_hwloc_locality_t locality;
+            {
+                opal_hwloc_level_t bind_level, *lvptr;
+                unsigned int bind_idx, *idxptr;
+                opal_hwloc_locality_t locality;
 
-            /* get the proc's locality info */
-            lvptr = &bind_level;
-	    if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, ORTE_DB_BIND_LEVEL, (void**)&lvptr, OPAL_HWLOC_LEVEL_T))) {
-		ORTE_ERROR_LOG(rc);
-		return rc;
-	    }
-            idxptr = &bind_idx;
-	    if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, ORTE_DB_BIND_INDEX, (void**)&idxptr, OPAL_UINT))) {
-		ORTE_ERROR_LOG(rc);
-		return rc;
-	    }
-            /* determine relative location on our node */
-            locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                             orte_process_info.bind_level,
-                                                             orte_process_info.bind_idx,
-                                                             bind_level, bind_idx);
-	    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-				 "%s grpcomm:pmi setting proc %s locale %s",
-				 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-				 ORTE_NAME_PRINT(&name),
-				 opal_hwloc_base_print_locality(locality)));
-	}
+                /* get the proc's locality info */
+                lvptr = &bind_level;
+                if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, ORTE_DB_BIND_LEVEL, (void**)&lvptr, OPAL_HWLOC_LEVEL_T))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                idxptr = &bind_idx;
+                if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, ORTE_DB_BIND_INDEX, (void**)&idxptr, OPAL_UINT))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                /* determine relative location on our node */
+                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                 orte_process_info.bind_level,
+                                                                 orte_process_info.bind_idx,
+                                                                 bind_level, bind_idx);
+                OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                                     "%s grpcomm:pmi setting proc %s locale %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name),
+                                     opal_hwloc_base_print_locality(locality)));
+            }
 #else
-        locality = OPAL_PROC_ON_NODE;
+            locality = OPAL_PROC_ON_NODE;
 #endif
 	} else {
             /* this is on a different node, then mark as non-local */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +30,8 @@ static int print_component_open(void);
 static int print_component_close(void);
 static int print_component_query(opal_db_base_module_t **module,
                                  int *store_priority,
-                                 int *fetch_priority);
+                                 int *fetch_priority,
+                                 bool restrict_local);
 static int print_component_register(void);
 
 /*
@@ -69,7 +71,8 @@ static int print_component_open(void)
 /* this component is NEVER used for store or fetch */
 static int print_component_query(opal_db_base_module_t **module,
                                  int *store_priority,
-                                 int *fetch_priority)
+                                 int *fetch_priority,
+                                 bool restrict_local)
 {
     if (NULL == mca_db_print_component.filename) {
         *store_priority = 0;

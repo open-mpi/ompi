@@ -250,7 +250,7 @@ static int rte_init(void)
         putenv("OMPI_MCA_routed=direct");
     
         /* now use the default procedure to finish my setup */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
+        if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_app_setup";
             goto error;
@@ -280,12 +280,14 @@ static int rte_init(void)
                             }
                             n += procs;
                         }
+                    } else {
+                        procs = 0;
                     }
                 }
             }
             free(pmapping);
 
-            if ((procs > 0) && (n < orte_process_info.num_procs)) {
+            if (0 < procs) {
                 ranks = (int*)malloc(procs * sizeof(int));
                 for (i=0; i < procs; i++) {
                     ranks[i] = n + i;

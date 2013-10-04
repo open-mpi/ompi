@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +31,7 @@ OPAL_DECLSPEC extern mca_base_framework_t opal_db_base_framework;
 /**
  * Select a db module
  */
-OPAL_DECLSPEC int opal_db_base_select(void);
+OPAL_DECLSPEC int opal_db_base_select(bool restrict_local);
 
 typedef struct {
     opal_list_item_t super;
