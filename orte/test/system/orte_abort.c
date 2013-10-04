@@ -30,6 +30,12 @@ int main(int argc, char* argv[])
     pid = getpid();
     gethostname(hostname, 500);
 
+    if (1 < argc) {
+        rc = strtol(argv[1], NULL, 10);
+    } else {
+        rc = 3;
+    }
+
     printf("orte_abort: Name %s Host: %s Pid %ld\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
               hostname, (long)pid);
     
@@ -41,7 +47,7 @@ int main(int argc, char* argv[])
         if ((ORTE_PROC_MY_NAME->vpid == 3 || 
              (orte_process_info.num_procs <= 3 && ORTE_PROC_MY_NAME->vpid == 0))
             && i == 9995) {
-            orte_errmgr.abort(3, NULL);
+            orte_errmgr.abort(rc, NULL);
         }
     }
 
