@@ -65,6 +65,7 @@ fortran_scripts = \
      mpi_file_write_ordered_end_f90.f90.sh \
      mpi_file_write_ordered_f90.f90.sh \
      mpi_file_write_shared_f90.f90.sh \
+     mpi_free_mem_f90.f90.sh \
      mpi_gather_f90.f90.sh \
      mpi_gatherv_f90.f90.sh \
      mpi_get_f90.f90.sh \

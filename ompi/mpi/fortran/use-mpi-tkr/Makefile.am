@@ -185,6 +185,7 @@ nodist_libmpi_usempi_la_SOURCES = \
      mpi_irsend_f90.f90 \
      mpi_isend_f90.f90 \
      mpi_issend_f90.f90 \
+     mpi_free_mem_f90.f90 \
      mpi_mrecv_f90.f90 \
      mpi_put_f90.f90 \
      mpi_recv_f90.f90 \
