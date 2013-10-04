@@ -1545,6 +1545,13 @@ The following options may be helpful:
             or just the parameters of a specific component can be
             displayed by using an appropriate <framework> and/or
             <component> name.
+--level <level>
+            Show MCA parameters up to level <level> (<level> defaults
+            to 1 if not specified; 9 is the maximum value).  Use
+            "ompi_info --param <framework> <component> --level 9" to
+            see *all* MCA parameters for a given component.  See "The
+            Modular Component Architecture (MCA)" section, below, for
+            a fuller explanation.
 
 Changing the values of these parameters is explained in the "The
 Modular Component Architecture (MCA)" section, below.
@@ -1758,6 +1765,7 @@ MPI component frameworks:
 -------------------------
 
 allocator - Memory allocator
+bcol      - Base collective operations
 bml       - BTL management layer
 btl       - MPI point-to-point Byte Transfer Layer, used for MPI
             point-to-point messages on some types of networks
@@ -1766,8 +1774,6 @@ crcp      - Checkpoint/restart coordination protocol
 dpm       - MPI-2 dynamic process management
 fbtl      - file byte transfer layer: abstraction for individual 
             read/write operations for OMPIO
-fcache    - framework to store description about a file system
-            for OMPIO
 fcoll     - collective read and write operations for MPI I/O
 fs        - file system functions for MPI I/O
 io        - MPI-2 I/O
@@ -1779,6 +1785,8 @@ osc       - MPI-2 one-sided communications
 pml       - MPI point-to-point management layer
 pubsub    - MPI-2 publish/subscribe management
 rcache    - Memory registration cache
+rte       - Run-time environment operations
+sbgp      - Collective operation sub-group
 sharedfp  - shared file pointer operations for MPI I/O
 topo      - MPI topology routines
 vprotocol - Protocols for the "v" PML
@@ -1786,12 +1794,12 @@ vprotocol - Protocols for the "v" PML
 Back-end run-time environment (RTE) component frameworks:
 ---------------------------------------------------------
 
+dfs       - Distributed filesystem
 errmgr    - RTE error manager
 ess       - RTE environment-specfic services
 filem     - Remote file management
 grpcomm   - RTE group communications
 iof       - I/O forwarding
-notifier  - System/network administrator noficiation system
 odls      - OpenRTE daemon local launch subsystem
 oob       - Out of band messaging
 plm       - Process lifecycle management
@@ -1802,6 +1810,7 @@ routed    - Routing table for the RML
 sensor    - Software and hardware health monitoring
 snapc     - Snapshot coordination
 sstore    - Distributed scalable storage
+state     - RTE state machine
 
 Miscellaneous frameworks:
 -------------------------
@@ -1809,6 +1818,7 @@ Miscellaneous frameworks:
 backtrace   - Debugging call stack backtrace support
 compress    - Compression algorithms
 crs         - Checkpoint and restart service
+db          - Internal database support
 event       - Event library (libevent) versioning support
 hwloc       - Hardware locality (hwloc) versioning support
 if          - OS IP interface support
@@ -1835,8 +1845,50 @@ to see what its tunable parameters are.  For example:
 
   shell$ ompi_info --param btl tcp
 
-shows all the parameters (and default values) for the tcp btl
-component.
+shows a some of parameters (and default values) for the tcp btl
+component.  
+
+Note that ompi_info only shows a small number a component's MCA
+parameters by default.  Each MCA parameter has a "level" value from 1
+to 9, corresponding to the MPI-3 MPI_T tool interface levels.  In Open
+MPI, we have interpreted these nine levels as three groups of three:
+
+ 1. End user / basic
+ 2. End user / detailed
+ 3. End user / all
+
+ 4. Application tuner / basic
+ 5. Application tuner / detailed
+ 6. Application tuner / all
+
+ 7. MPI developer / basic
+ 8. MPI developer / detailed
+ 9. MPI developer / all
+
+Here's how the three sub-groups are defined:
+
+ 1. End user: Generally, these are parameters that are required for
+    correctness, meaning that someone may need to set these just to
+    get their MPI application to run correctly. 
+ 2. Application tuner: Generally, these are parameters that can be
+    used to tweak MPI application performance.
+ 3. MPI developer: Parameters that either don't fit in the other two,
+    or are specifically intended for debugging / development of Open
+    MPI itself.
+
+Each sub-group is broken down into three classifications:
+
+ 1. Basic: For parameters that everyone in this category will want to
+    see.
+ 2. Detailed: Parameters that are useful, but you probably won't need
+    to change them often.
+ 3. All: All other parameters -- probably including some fairly
+    esoteric parameters.
+
+To see *all* available parameters for a given component, specify that
+ompi_info should use level 9:
+
+  shell$ ompi_info --param btl tcp --level 9
 
 These values can be overridden at run-time in several ways.  At
 run-time, the following locations are examined (in order) for new
