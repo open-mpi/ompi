@@ -105,9 +105,10 @@ static int finalize(void)
     opal_list_item_t *item;
 
     /* if I am an application process, indicate that I am
-        * truly finalizing prior to departure
-        */
-    if (ORTE_PROC_IS_APP) {
+     * truly finalizing prior to departure if I have
+     * an HNP/daemon monitoring me
+     */
+    if (ORTE_PROC_IS_APP && orte_routing_is_enabled) {
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -639,7 +640,16 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
                              (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
-                
+
+        /* if we are a singleton and we have not spawned our
+         * supporting HNP, then we don't route and don't need
+         * the corresponding URIs
+         */
+        if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
+            !orte_routing_is_enabled) {
+            return ORTE_SUCCESS;
+        }
+
         if (NULL == orte_process_info.my_daemon_uri) {
             /* in this module, we absolutely MUST have this information - if
              * we didn't get it, then error out
@@ -700,7 +710,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             return rc;
         }
         /* no answer is expected or coming */
-        
+        orte_routing_is_enabled = true;
         return ORTE_SUCCESS;
     }
 }

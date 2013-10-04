@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -794,7 +795,7 @@ static int setup_child(orte_proc_t *child,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (OPAL_SUCCESS != mca_base_var_env_name ("orte_ess_jobid", &param)) {
+    if (OPAL_SUCCESS != mca_base_var_env_name ("ess_base_jobid", &param)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;
@@ -808,7 +809,7 @@ static int setup_child(orte_proc_t *child,
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (OPAL_SUCCESS != mca_base_var_env_name ("orte_ess_vpid", &param)) {
+    if (OPAL_SUCCESS != mca_base_var_env_name ("ess_base_vpid", &param)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;

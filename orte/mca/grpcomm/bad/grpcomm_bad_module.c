@@ -142,6 +142,23 @@ static void process_barrier(int fd, short args, void *cbdata)
     opal_buffer_t *buf;
     orte_namelist_t *nm;
 
+    /* if we are a singleton and routing isn't enabled,
+     * then we have nobody with which to communicate, so
+     * we can just declare success
+     */
+    if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
+        !orte_routing_is_enabled) {
+        if (NULL != coll->cbfunc) {
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s CALLING BARRIER RELEASE",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            coll->cbfunc(NULL, coll->cbdata);
+        }
+        /* flag the collective as complete */
+        coll->active = false;
+        return;
+    }
+
     /* setup the collective */
     opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
 
@@ -198,6 +215,23 @@ static void process_allgather(int fd, short args, void *cbdata)
     opal_buffer_t *buf;
     orte_namelist_t *nm;
     opal_list_item_t *item;
+
+    /* if we are a singleton and routing isn't enabled,
+     * then we have nobody with which to communicate, so
+     * we can just declare success
+     */
+    if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
+        !orte_routing_is_enabled) {
+        if (NULL != gather->cbfunc) {
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s CALLING GATHER RELEASE",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            gather->cbfunc(NULL, gather->cbdata);
+        }
+        /* flag the collective as complete */
+        gather->active = false;
+        return;
+    }
 
     /* if this is an original request, then record the collective */
     if (NULL == gather->next_cb) {

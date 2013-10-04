@@ -79,6 +79,23 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
                          "%s grpcomm:base:modex: performing modex",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
+    /* if we are a singleton and routing isn't enabled,
+     * then we have nobody with which to communicate, so
+     * we can just declare success
+     */
+    if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
+        !orte_routing_is_enabled) {
+        if (NULL != modex->cbfunc) {
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s CALLING MODEX RELEASE",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            modex->cbfunc(NULL, modex->cbdata);
+        }
+        /* flag the collective as complete */
+        modex->active = false;
+        return;
+    }
+
     if (0 == opal_list_get_size(&modex->participants)) {
         /* record the collective */
         modex->next_cbdata = modex;
