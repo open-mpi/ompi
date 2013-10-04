@@ -40,6 +40,7 @@ typedef struct mca_coll_hcoll_ops_t {
     int (*hcoll_barrier)(void *);
 } mca_coll_hcoll_ops_t;
 
+
 struct mca_coll_hcoll_component_t {
     /** Base coll component */
     mca_coll_base_component_2_0_0_t super;
