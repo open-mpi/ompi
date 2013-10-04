@@ -155,6 +155,8 @@ void ompi_comm_request_start (ompi_comm_request_t *request)
         ompi_comm_request_progress_active = true;
     }
 
+    request->super.req_state = OMPI_REQUEST_ACTIVE;
+
     opal_mutex_unlock (&ompi_comm_request_mutex);
 }
 
@@ -195,7 +197,7 @@ static int ompi_comm_request_free (struct ompi_request_t **ompi_req)
         return MPI_ERR_REQUEST;
     }
 
-    (*ompi_req)->req_complete = false;
+    OMPI_REQUEST_FINI(*ompi_req);
     ompi_comm_request_return (request);
 
     *ompi_req = MPI_REQUEST_NULL;
@@ -232,6 +234,8 @@ ompi_comm_request_t *ompi_comm_request_get (void)
 
     OPAL_FREE_LIST_GET(&ompi_comm_requests, item, rc);
     (void) rc;
+
+    OMPI_REQUEST_INIT((ompi_request_t *) item, false);
 
     return (ompi_comm_request_t *) item;
 }
