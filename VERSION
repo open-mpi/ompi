@@ -55,7 +55,7 @@ date="Unreleased developer copy"
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
 # Interface Versions" chapter from the GNU Libtool documentation.  The
-# first Open MPI release to programatically specify these versions was
+# first Open MPI release to programaticaly specify these versions was
 # v1.3.4 (note that Libtool defaulted all prior releases to 0:0:0).
 # All changes in these version numbers are dictated by the Open MPI
 # release managers (not individual developers).  Notes:
@@ -68,7 +68,7 @@ date="Unreleased developer copy"
 # It does not refer to any internal interfaces.
 
 # 3. Similar to libmpi, libmpi_f77, libmpi_f90 (and possibly other
-# Fortran libraries someday -- shrudder!), the version number refers
+# Fortran libraries someday -- shudder!), the version number refers
 # to the public MPI interfaces.  Note that there have been typo fixes
 # in the parameter types to libmpi_f77 functions over time; these
 # technically did not change the interface because Fortran 77 does not
