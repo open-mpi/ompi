@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 !
-! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 !
@@ -16,15 +16,6 @@
 
 #ifndef OMPI_FORTRAN_CONFIGURE_OUTPUT_BOTTOM_H
 #define OMPI_FORTRAN_CONFIGURE_OUTPUT_BOTTOM_H
-
-! Whether we're using wrappers or not.
-! Currently, we're *always* using wrappers.  This can be optimized in
-! the future for "good" compilers.
-#if OMPI_FORTRAN_NEED_WRAPPER_ROUTINES
-#define OMPI_F08_INTERFACE_BIND_C(foo)
-#else
-#define OMPI_F08_INTERFACE_BIND_C(foo) BIND(C,name=foo)
-#endif
 
 ! PROCEDURE or not
 #if OMPI_FORTRAN_HAVE_PROCEDURE
