@@ -112,6 +112,7 @@ General notes
   (*) Be sure to read the Compiler Notes, below.
 
 - Other systems have been lightly (but not fully tested):
+  - Cygwin 32 & 64 bit with gcc
   - ARMv4, ARMv5, ARMv6, ARMv7 (when using non-inline assembly; only
     ARMv7 is fully supported when -DOMPI_DISABLE_INLINE_ASM is used).
   - Other 64 bit platforms (e.g., Linux on PPC64)
@@ -352,7 +353,7 @@ General Run-Time Support Notes
 MPI Functionality and Features
 ------------------------------
 
-- All MPI-2.1 functionality is supported.
+- All MPI-2.2 and most MPI-3 functionality is supported.
 
 - When using MPI deprecated functions, some compilers will emit
   warnings.  For example:
@@ -379,8 +380,8 @@ MPI Functionality and Features
   - self
 
   Note that Open MPI's thread support is in a fairly early stage; the
-  above devices are likely to *work*, but the latency is likely to be
-  fairly high.  Specifically, efforts so far have concentrated on
+  above devices may *work*, but the latency is likely to be fairly
+  high.  Specifically, efforts so far have concentrated on
   *correctness*, not *performance* (yet).
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
@@ -558,17 +559,13 @@ Network Support
   applications that used the OFED network transports.  If Open MPI is
   able to find the <linux/ummunotify.h> header file, it will build
   support for ummunotify and include it by default.  If MPI processes
-  then find the ummunotify kernel module loaded and active, then ther
+  then find the ummunotify kernel module loaded and active, then their
   memory managers (which have been shown to be problematic in some
   cases) will be disabled and ummunotify will be used.  Otherwise, the
   same memory managers from prior versions of Open MPI will be used.
   The ummunotify Linux kernel module can be downloaded from:
 
     http://lwn.net/Articles/343351/
-
-- Older mVAPI-based InfiniBand drivers (Mellanox VAPI) are no longer
-  supported.  Please use an older version of Open MPI (1.2 series or
-  earlier) if you need mVAPI support.
 
 - The use of fork() with OpenFabrics-based networks (i.e., the openib
   BTL) is only partially supported, and only on Linux kernels >=
@@ -607,10 +604,6 @@ Network Support
   layouts.  The MX BTL is recommended in all other cases, such as when
   using multiple interconnects at the same time (including TCP), or
   transferring non contiguous data-types.
-
-- Older Myrinet "GM" support is no longer available in the v1.5
-  series.  Older versions of Open MPI can be used if GM support is
-  still needed.
 
 - Linux "knem" support is used when the "sm" (shared memory) BTL is
   compiled with knem support (see the --with-knem configure option)
@@ -1230,11 +1223,11 @@ For example:
 
   shell$ ./configure CC=mycc CXX=myc++ FC=myfortran ...
 
-***Note: We generally suggest using the above command line form for
-   setting different compilers (vs. setting environment variables and
-   then invoking "./configure").  The above form will save all
-   variables and values in the config.log file, which makes
-   post-mortem analysis easier when problems occur.
+*** NOTE: We generally suggest using the above command line form for
+    setting different compilers (vs. setting environment variables and
+    then invoking "./configure").  The above form will save all
+    variables and values in the config.log file, which makes
+    post-mortem analysis easier when problems occur.
 
 Note that if you intend to compile Open MPI with a "make" other than
 the default one in your PATH, then you must either set the $MAKE
@@ -1713,9 +1706,10 @@ are equivalent.  Some of mpiexec's switches (such as -host and -arch)
 are not yet functional, although they will not error if you try to use
 them.  
 
-The rsh launcher accepts a -hostfile parameter (the option
-"-machinefile" is equivalent); you can specify a -hostfile parameter
-indicating an standard mpirun-style hostfile (one hostname per line):
+The rsh launcher (which defaults to using ssh) accepts a -hostfile
+parameter (the option "-machinefile" is equivalent); you can specify a
+-hostfile parameter indicating an standard mpirun-style hostfile (one
+hostname per line):
 
   shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
 
