@@ -178,7 +178,7 @@ typedef struct {
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_diskstats_t);
 typedef struct {
     opal_list_item_t super;
-    char *interface;
+    char *net_interface;
     unsigned long num_bytes_recvd;
     unsigned long num_packets_recvd;
     unsigned long num_recv_errs;
