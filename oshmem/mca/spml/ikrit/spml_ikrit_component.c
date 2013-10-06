@@ -98,7 +98,11 @@ static int mca_spml_ikrit_component_register(void)
                                               "[integer] First N ranks on host will receive and forward put messages to other ranks running on it. Can be used to as work around Sandy Bridge far socket problem");
 
     np = mca_spml_ikrit_param_register_int("np",
+#if MXM_API > MXM_VERSION(1,5)
                                            128,
+#else
+                                           0,
+#endif
                                            "[integer] Minimal allowed job's NP to activate ikrit");
     if (oshmem_num_procs() < np) {
         SPML_VERBOSE(1,
