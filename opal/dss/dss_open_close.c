@@ -172,12 +172,12 @@ OBJ_CLASS_INSTANCE(opal_diskstats_t,
 
 static void netstat_cons(opal_netstats_t *ptr)
 {
-    ptr->interface = NULL;
+    ptr->net_interface = NULL;
 }
 static void netstat_dest(opal_netstats_t *ptr)
 {
-    if (NULL != ptr->interface) {
-        free(ptr->interface);
+    if (NULL != ptr->net_interface) {
+        free(ptr->net_interface);
     }
 }
 OBJ_CLASS_INSTANCE(opal_netstats_t,
