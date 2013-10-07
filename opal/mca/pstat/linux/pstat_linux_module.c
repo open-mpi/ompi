@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -436,7 +437,7 @@ static int query(pid_t pid,
             }
             /* pack the ones of interest into the struct */
             ns = OBJ_NEW(opal_netstats_t);
-            ns->interface = strdup(dptr);
+            ns->net_interface = strdup(dptr);
             ns->num_bytes_recvd = strtoul(fields[0], NULL, 10);
             ns->num_packets_recvd = strtoul(fields[1], NULL, 10);
             ns->num_recv_errs = strtoul(fields[2], NULL, 10);
