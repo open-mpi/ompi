@@ -14,7 +14,8 @@ Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
-Copyright (c) 2011	University of Houston. All rights reserved.
+Copyright (c) 2011      University of Houston. All rights reserved.
+Copyright (c) 2013      Intel, Inc. All rights reserved 
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -97,17 +98,13 @@ General notes
   - SLURM
   - Cray XT-3, XT-4, and XT-5
   - Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine
-  - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
 
 - Systems that have been tested are:
-  - Linux (various flavors/distros), 32 bit, with gcc, and Oracle
-    Solaris Studio 12
+  - Linux (various flavors/distros), 32 bit, with gcc
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
-    Intel, Portland, and Oracle Solaris Studio 12.3 compilers (*)
+    Intel, and Portland (*)
   - OS X (10.5, 10.6, 10.7), 32 and 64 bit (x86_64), with gcc and
     Absoft compilers (*)
-  - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
-    with Oracle Solaris Studio 12.2 and 12.3
 
   (*) Be sure to read the Compiler Notes, below.
 
@@ -116,6 +113,8 @@ General notes
   - ARMv4, ARMv5, ARMv6, ARMv7 (when using non-inline assembly; only
     ARMv7 is fully supported when -DOMPI_DISABLE_INLINE_ASM is used).
   - Other 64 bit platforms (e.g., Linux on PPC64)
+  - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
+    with Oracle Solaris Studio 12.2 and 12.3
 
 Compiler Notes
 --------------
