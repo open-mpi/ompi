@@ -1730,7 +1730,8 @@ subroutine pompi_file_set_errhandler_f(file,errhandler,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_set_errhandler_f
 
-#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
+! OMPI_PROVIDE_MPI_FILE_INTERFACE
+#endif
 
 subroutine pompi_finalize_f(ierror) &
    BIND(C, name="pompi_finalize_f")
@@ -2703,7 +2704,8 @@ subroutine pompi_file_write_shared_f(fh,buf,count,datatype,status,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_write_shared_f
 
-#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
+! OMPI_PROVIDE_MPI_FILE_INTERFACE
+#endif
 
 subroutine pompi_register_datarep_f(datarep,read_conversion_fn, &
                                    write_conversion_fn,dtype_file_extent_fn, &
