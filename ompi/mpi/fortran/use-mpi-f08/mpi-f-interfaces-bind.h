@@ -56,8 +56,8 @@
 ! an address to the first MPI_VAL is exactly the same as passing an
 ! array of INTEGERS.
 !
-! Specifically: the back-end C function (in
-! ompi/mpi/fortran/mpif-h/*.c) gets an (MPI_Fint*), and it's all good.
+! Specifically: the back-end C function (in *.c files in
+! ompi/mpi/fortran/mpif-h) gets an (MPI_Fint*), and it's all good.
 !
 ! The key here is that there is a disconnect between Fortran and C:
 ! we're telling the Fortran compiler what the C interface is, and
