@@ -345,12 +345,17 @@ static int fetch(const opal_identifier_t *uid,
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_opal_proc(&hash_data, id))) {
         /* maybe they can find it elsewhere */
+        OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
+                             "db_hash:fetch data for proc %" PRIu64 " not found", id));
         return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
     /* find the value */
     if (NULL == (kv = lookup_keyval(proc_data, key))) {
         /* let them look globally for it */
+        OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
+                             "db_hash:fetch key %s for proc %" PRIu64 " not found",
+                             (NULL == key) ? "NULL" : key, id));
         return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
