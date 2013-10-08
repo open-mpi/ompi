@@ -88,13 +88,13 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=2:2:1
+libmpi_so_version=3:0:1
 libmpi_cxx_so_version=2:2:1
-libmpi_mpifh_so_version=2:2:0
-libmpi_usempi_tkr_so_version=1:2:0
+libmpi_mpifh_so_version=3:0:1
+libmpi_usempi_tkr_so_version=2:0:1
 libmpi_usempi_ignore_tkr_so_version=1:2:0
-libopen_rte_so_version=5:2:0
-libopen_pal_so_version=5:2:0
+libopen_rte_so_version=6:0:0
+libopen_pal_so_version=6:0:0
 libmpi_java_so_version=1:2:0
 
 # "Common" components install standalone libraries that are run-time
@@ -103,7 +103,7 @@ libmpi_java_so_version=1:2:0
 # components-don't-affect-the-build-system abstraction.
 
 libmca_common_sm_so_version=4:2:0
-libmca_common_mx_so_version=2:2:0
+libmca_common_mx_so_version=2:3:0
 libmca_common_portals_so_version=2:2:0
 libmca_common_cuda_so_version=1:2:0
 libmca_opal_common_hwloc_so_version=1:2:0
