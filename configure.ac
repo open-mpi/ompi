@@ -125,6 +125,7 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_mpifh_so_version)
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
+          AC_SUBST(libmpi_usempif08_so_version)
           # It's icky that we have to hard-code the names of the
           # common components here.  :-( This could probably be done
           # transparently by adding some intelligence in autogen.sh
