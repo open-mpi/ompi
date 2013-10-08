@@ -51,20 +51,22 @@ int main(int argc, char **argv, char **envp)
         goto done;
     }
  
- done:
-    if (PMI_TRUE == pmi_initialized) {
-        i = 0;
-        while (1) {
-            i++;
-            pi = i / 3.14159256;
-            if (i > 10000) i = 0;
-            if ((pmi_rank == 3 || 
-                 (pmi_process_group_size <= 3 && pmi_rank == 0))
-                && i == 9995) {
-                PMI_Abort(rc, "RANK0 CALLED ABORT");
-            }
+    i = 0;
+    while (1) {
+        i++;
+        pi = i / 3.14159256;
+        if (i > 10000) i = 0;
+        if ((pmi_rank == 3 || 
+             (pmi_process_group_size <= 3 && pmi_rank == 0))
+            && i == 9995) {
+            asprintf(&err, "RANK%d CALLED ABORT", pmi_rank);
+            fprintf(stderr, "%s\n", err);
+            fflush(stderr);
+            PMI_Abort(rc, err);
         }
     }
+
+ done:
     if (NULL != err) {
         fprintf(stderr, "=== ERROR [rank:%d] %s\n", pmi_rank, err);
         rc = EXIT_FAILURE;

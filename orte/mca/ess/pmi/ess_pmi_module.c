@@ -53,6 +53,7 @@
 
 #include "opal/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -387,6 +388,30 @@ static int rte_init(void)
         goto error;
     }
 
+    /* if we are an ORTE app - and not an MPI app - then
+     * we need to exchange our connection info here.
+     * MPI_Init has its own modex, so we don't need to do
+     * two of them. However, if we don't do a modex at all,
+     * then processes have no way to communicate
+     *
+     * NOTE: only do this when the process originally launches.
+     * Cannot do this on a restart as the rest of the processes
+     * in the job won't be executing this step, so we would hang
+     */
+    if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
+        orte_grpcomm_collective_t coll;
+        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+        coll.id = orte_process_info.peer_modex;
+        coll.active = true;
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(&coll))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte modex";
+            goto error;
+        }
+        ORTE_WAIT_FOR_COMPLETION(coll.active);
+        OBJ_DESTRUCT(&coll);
+    }
+
     /* flag that we completed init */
     app_init_complete = true;
     
@@ -446,7 +471,26 @@ static int rte_finalize(void)
     return ORTE_SUCCESS;
 }
 
-static void rte_abort(int error_code, bool report)
+static void rte_abort(int status, bool report)
 {
-    orte_ess_base_app_abort(error_code, report);
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
+                         "%s ess:pmi:abort: abort with status %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         status));
+
+    /* PMI doesn't like NULL messages, but our interface
+     * doesn't provide one - so rig one up here
+     */
+#if WANT_PMI2_SUPPORT
+    PMI2_Abort(status, "N/A");
+#else
+    PMI_Abort(status, "N/A");
+#endif
+
+    /* - Clean out the global structures 
+     * (not really necessary, but good practice) */
+    orte_proc_info_finalize();
+    
+    /* Now Exit */
+    exit(status);
 }

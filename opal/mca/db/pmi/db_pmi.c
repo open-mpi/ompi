@@ -384,6 +384,7 @@ static int store(const opal_identifier_t *uid,
                  const char *key, const void *data, opal_data_type_t type)
 {
     opal_identifier_t proc;
+    int rc;
 
     /* to protect alignment, copy the data across */
     memcpy(&proc, uid, sizeof(opal_identifier_t));
@@ -398,7 +399,16 @@ static int store(const opal_identifier_t *uid,
                          "db:pmi:store: storing key %s[%s] for proc %" PRIu64 "",
                          key, opal_dss.lookup_data_type(type), proc));
 
-    return pmi_store_encoded (uid, key, data, type);
+    if (OPAL_SUCCESS != (rc = pmi_store_encoded (uid, key, data, type))) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* we want our internal data to be stored internally
+     * as well since some of the upper layer components
+     * want to retrieve it
+     */
+    return OPAL_ERR_TAKE_NEXT_OPTION;
 }
 
 static int store_pointer(const opal_identifier_t *uid,
@@ -419,8 +429,14 @@ static int store_pointer(const opal_identifier_t *uid,
     /* just push this to PMI */
     if (OPAL_SUCCESS != (rc = store(uid, kv->scope, kv->key, (void*)&kv->data, kv->type))) {
         OPAL_ERROR_LOG(rc);
+        return rc;
     }
-    return rc;
+
+    /* we want our internal data to be stored internally
+     * as well since some of the upper layer components
+     * want to retrieve it
+     */
+    return OPAL_ERR_TAKE_NEXT_OPTION;
 }
 
 static void commit(const opal_identifier_t *proc)

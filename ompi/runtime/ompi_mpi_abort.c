@@ -194,8 +194,8 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         /*
          * Abort peers in this communicator group. Does not include self.
          */
-        if( OMPI_SUCCESS != (ret = ompi_rte_abort_peers(abort_procs, nabort_procs)) ) {
-            ompi_rte_abort(ret, "Open MPI failed to abort all of the procs requested (%d).", ret);
+        if( OMPI_SUCCESS != (ret = ompi_rte_abort_peers(abort_procs, nabort_procs, errcode)) ) {
+            ompi_rte_abort(errcode, "Open MPI failed to abort all of the procs requested (%d).", ret);
         }
     }
 

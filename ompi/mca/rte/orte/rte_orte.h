@@ -71,7 +71,7 @@ typedef orte_local_rank_t ompi_local_rank_t;
 
 /* Error handling objects and operations */
 OMPI_DECLSPEC void ompi_rte_abort(int error_code, char *fmt, ...);
-#define ompi_rte_abort_peers(a, b) orte_errmgr.abort_peers(a, b)
+#define ompi_rte_abort_peers(a, b, c) orte_errmgr.abort_peers(a, b, c)
 #define OMPI_RTE_ERRHANDLER_FIRST ORTE_ERRMGR_CALLBACK_FIRST
 #define OMPI_RTE_ERRHANDLER_LAST ORTE_ERRMGR_CALLBACK_LAST
 #define OMPI_RTE_ERRHANDLER_PREPEND ORTE_ERRMGR_CALLBACK_PREPEND

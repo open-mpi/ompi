@@ -72,7 +72,8 @@ ORTE_DECLSPEC void orte_errmgr_base_log(int error_code, char *filename, int line
 ORTE_DECLSPEC void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     __opal_attribute_format__(__printf__, 2, 3);
 ORTE_DECLSPEC int orte_errmgr_base_abort_peers(orte_process_name_t *procs,
-                                               orte_std_cntr_t num_procs);
+                                               orte_std_cntr_t num_procs,
+                                               int error_code);
 
 ORTE_DECLSPEC void orte_errmgr_base_register_migration_warning(struct timeval *tv);
 
