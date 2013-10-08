@@ -708,6 +708,7 @@ module_sentinel_file = \
 libmpi_usempif08_la_LIBADD = \
         $(module_sentinel_file) \
         $(OMPI_MPIEXT_USEMPIF08_LIBS)
+libmpi_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
 
 #
 # Clean up all module files

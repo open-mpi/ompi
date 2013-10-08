@@ -95,6 +95,7 @@ libmpi_cxx_so_version=0:0:0
 libmpi_mpifh_so_version=0:0:0
 libmpi_usempi_tkr_so_version=0:0:0
 libmpi_usempi_ignore_tkr_so_version=0:0:0
+libmpi_usempif08_so_version=0:0:0
 libopen_rte_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 libmpi_java_so_version=0:0:0
