@@ -92,10 +92,6 @@ EXTRA_DIST = \
         platform/lanl/toss/toss-common \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
-	platform/cisco/macosx-dynamic \
-	platform/cisco/macosx-dynamic.conf \
-	platform/cisco/linux \
-	platform/cisco/linux.conf \
 	platform/ibm/debug-ppc32-gcc \
 	platform/ibm/debug-ppc64-gcc \
 	platform/ibm/optimized-ppc32-gcc \
