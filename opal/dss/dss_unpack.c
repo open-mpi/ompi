@@ -718,7 +718,7 @@ static int unpack_net_stats(opal_buffer_t *buffer, opal_node_stats_t *ns)
     for (i=0; i < n; i++) {
         net = OBJ_NEW(opal_netstats_t);
         m=1;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &net->interface, &m, OPAL_STRING))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &net->net_interface, &m, OPAL_STRING))) {
             OPAL_ERROR_LOG(ret);
             OBJ_RELEASE(net);
             return ret;

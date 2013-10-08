@@ -530,7 +530,7 @@ static int pack_net_stats(opal_buffer_t *buffer, opal_netstats_t *ns)
     uint64_t i64;
     int ret;
 
-    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ns->interface, 1, OPAL_STRING))) {
+    if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ns->net_interface, 1, OPAL_STRING))) {
         return ret;
     }
     i64 = (uint64_t)ns->num_bytes_recvd;
