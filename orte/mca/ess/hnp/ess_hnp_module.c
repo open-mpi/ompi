@@ -510,11 +510,13 @@ static int rte_init(void)
         error = "orte_rmaps_base_find_available";
         goto error;
     }
+#if OPAL_HAVE_HWLOC
     /* if a topology file was given, then the rmaps framework open
      * will have reset our topology. Ensure we always get the right
      * one by setting our node topology afterwards
      */
     node->topology = opal_hwloc_topology;
+#endif
 
     /* Open/select the odls */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_odls_base_framework, 0))) {
