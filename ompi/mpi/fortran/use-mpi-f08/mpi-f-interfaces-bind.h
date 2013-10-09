@@ -3005,7 +3005,7 @@ subroutine ompi_neighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcoun
    INTEGER, INTENT(IN) :: sendcount, recvcount
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_allgather_f
 
 subroutine ompi_ineighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -3019,7 +3019,7 @@ subroutine ompi_ineighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcou
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_allgather_f
 
 subroutine ompi_neighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
@@ -3033,7 +3033,7 @@ subroutine ompi_neighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcou
    INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_allgatherv_f
 
 subroutine ompi_ineighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
@@ -3048,7 +3048,7 @@ subroutine ompi_ineighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvco
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_allgatherv_f
 
 subroutine ompi_neighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -3061,7 +3061,7 @@ subroutine ompi_neighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount
    INTEGER, INTENT(IN) :: sendcount, recvcount
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_alltoall_f
 
 subroutine ompi_ineighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -3075,7 +3075,7 @@ subroutine ompi_ineighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcoun
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_alltoall_f
 
 subroutine ompi_neighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
@@ -3088,7 +3088,7 @@ subroutine ompi_neighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf
    INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_alltoallv_f
 
 subroutine ompi_ineighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
@@ -3102,13 +3102,13 @@ subroutine ompi_ineighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbu
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_alltoallv_f
 
 subroutine ompi_neighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,ierror) &
                              BIND(C, name="ompi_neighbor_alltoallw_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Aint, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3116,7 +3116,7 @@ subroutine ompi_neighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbu
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
    INTEGER, INTENT(IN) :: sendtypes, recvtypes
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_alltoallw_f
 
 subroutine ompi_ineighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
@@ -3131,7 +3131,7 @@ subroutine ompi_ineighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvb
    INTEGER, INTENT(IN) :: sendtypes, recvtypes
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_alltoallw_f
 
 end interface
