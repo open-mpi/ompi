@@ -72,12 +72,12 @@ AC_ARG_ENABLE(oshmem-profile,
                    [enable OSHMEM profiling (default: enabled)]))
 if test "$enable_oshmem_profile" != "no"; then
     AC_MSG_RESULT([yes])
-    oshmem_progiling_support=1
+    oshmem_profiling_support=1
 else
     AC_MSG_RESULT([no])
-    oshmem_progiling_support=0
+    oshmem_profiling_support=0
 fi
-AM_CONDITIONAL(OSHMEM_PROFILING, test "$oshmem_progiling_support" = 1)
+AM_CONDITIONAL(OSHMEM_PROFILING, test "$oshmem_profiling_support" = 1)
 
 # Whether to build the OpenShmem fortran support or not For the
 # moment, use the same value as was derived from --enable-mpi-fortra.
