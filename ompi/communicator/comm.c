@@ -949,7 +949,6 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, ompi_info_t *info, omp
 struct ompi_comm_idup_with_info_context {
     ompi_communicator_t *comm;
     ompi_communicator_t *newcomp;
-    ompi_communicator_t **newcomm;
 };
 
 static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request);
@@ -982,7 +981,6 @@ int ompi_comm_idup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi
     }
 
     context->comm    = comm;
-    context->newcomm = newcomm;
 
     request->context = context;
 
