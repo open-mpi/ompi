@@ -1,7 +1,7 @@
 enable_orterun_prefix_by_default=yes
 enable_ft_thread=no
 enable_mem_debug=no
-enable_mem_profile=yes
+enable_mem_profile=no
 enable_debug_symbols=yes
 enable_binaries=yes
 enable_heterogeneous=no
@@ -25,3 +25,5 @@ with_tm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
+with_slurm=$SLURMHOME
+with_pmi=$SLURMHOME
