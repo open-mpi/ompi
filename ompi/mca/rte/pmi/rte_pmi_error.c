@@ -45,9 +45,9 @@ ompi_rte_abort(int error_code, char *fmt, ...)
 
 
 int
-ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs, int status)
+ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs)
 {
-    PMI_Abort(status, "");
+    PMI_Abort(1, "");
     return OMPI_SUCCESS;
 }
 

@@ -48,8 +48,7 @@ static int init(void);
 static int finalize(void);
 
 static int abort_peers(orte_process_name_t *procs,
-                       orte_std_cntr_t num_procs,
-                       int error_code);
+                       orte_std_cntr_t num_procs);
 static orte_errmgr_fault_callback_t* set_fault_callback(orte_errmgr_fault_callback_t *cbfunc);
 
 /******************
@@ -125,16 +124,14 @@ static void proc_errors(int fd, short args, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
-static int abort_peers(orte_process_name_t *procs,
-                       orte_std_cntr_t num_procs,
-                       int error_code)
+static int abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)
 {
     /* just abort */
     if (0 < opal_output_get_verbosity(orte_errmgr_base_framework.framework_output)) {
-        orte_errmgr_base_abort(error_code, "%s called abort_peers",
+        orte_errmgr_base_abort(ORTE_ERROR_DEFAULT_EXIT_CODE, "%s called abort_peers",
                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     } else {
-        orte_errmgr_base_abort(error_code, NULL);
+        orte_errmgr_base_abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
     }
     return ORTE_SUCCESS;
 }

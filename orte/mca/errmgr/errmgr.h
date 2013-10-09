@@ -13,7 +13,6 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -194,8 +193,7 @@ __opal_attribute_format_funcptr__(__printf__, 2, 3);
  *  communicator group before aborting itself.
  */
 typedef int (*orte_errmgr_base_module_abort_peers_fn_t)(orte_process_name_t *procs,
-                                                        orte_std_cntr_t num_procs,
-                                                        int error_code);
+                                                        orte_std_cntr_t num_procs);
 
 /**
  * Predicted process/node failure notification

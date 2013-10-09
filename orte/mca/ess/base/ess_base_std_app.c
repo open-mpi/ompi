@@ -260,6 +260,31 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
 
+    /* if we are an ORTE app - and not an MPI app - then
+     * we need to barrier here. MPI_Init has its own barrier,
+     * so we don't need to do two of them. However, if we
+     * don't do a barrier at all, then one process could
+     * finalize before another one called orte_init. This
+     * causes ORTE to believe that the proc abnormally
+     * terminated
+     *
+     * NOTE: only do this when the process originally launches.
+     * Cannot do this on a restart as the rest of the processes
+     * in the job won't be executing this step, so we would hang
+     */
+    if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
+        orte_grpcomm_collective_t coll;
+        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+        coll.id = orte_process_info.peer_init_barrier;
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte barrier";
+            goto error;
+        }
+        ORTE_WAIT_FOR_COMPLETION(coll.active);
+        OBJ_DESTRUCT(&coll);
+    }
+    
     return ORTE_SUCCESS;
     
 error:

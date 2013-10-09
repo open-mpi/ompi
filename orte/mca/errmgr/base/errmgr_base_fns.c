@@ -243,9 +243,7 @@ void orte_errmgr_base_register_migration_warning(struct timeval *tv)
     return;
 }
 
-int orte_errmgr_base_abort_peers(orte_process_name_t *procs,
-                                 orte_std_cntr_t num_procs,
-                                 int error_code)
+int orte_errmgr_base_abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
