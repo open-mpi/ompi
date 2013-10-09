@@ -180,6 +180,7 @@ bool opal_output_init(void)
         verbose.lds_want_stderr = true;
     }
     gethostname(hostname, sizeof(hostname));
+    hostname[sizeof(hostname)-1] = '\0';
     asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
