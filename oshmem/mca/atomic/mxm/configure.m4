@@ -21,7 +21,7 @@ AC_DEFUN([MCA_oshmem_atomic_mxm_CONFIG],[
                    CPPFLAGS="$CPPFLAGS -I$ompi_check_mxm_dir/include"
                    LDFLAGS="$LDFLAGS -L$ompi_check_mxm_dir/lib"
                    LIBS="$LIBS -lmxm"
-                   AC_TRY_RUN([
+                   AC_COMPILE_IFELSE([
                                 #include <mxm/api/mxm_api.h>
                                 int main() {
                                 if (mxm_get_version() < MXM_VERSION(1,5) )
