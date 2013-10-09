@@ -190,7 +190,7 @@ FUNC_OP_CREATE(max, fint4, ompi_fortran_integer4_t, __max_op);
 FUNC_OP_CREATE(max, fint8, ompi_fortran_integer8_t, __max_op);
 FUNC_OP_CREATE(max, freal4, ompi_fortran_real4_t, __max_op);
 FUNC_OP_CREATE(max, freal8, ompi_fortran_real8_t, __max_op);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(max, freal16, ompi_fortran_real16_t, __max_op);
 #endif
 
@@ -207,7 +207,7 @@ FUNC_OP_CREATE(min, fint4, ompi_fortran_integer4_t, __min_op);
 FUNC_OP_CREATE(min, fint8, ompi_fortran_integer8_t, __min_op);
 FUNC_OP_CREATE(min, freal4, ompi_fortran_real4_t, __min_op);
 FUNC_OP_CREATE(min, freal8, ompi_fortran_real8_t, __min_op);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(min, freal16, ompi_fortran_real16_t, __min_op);
 #endif
 
@@ -226,7 +226,7 @@ FUNC_OP_CREATE(sum, fint4, ompi_fortran_integer4_t, __sum_op);
 FUNC_OP_CREATE(sum, fint8, ompi_fortran_integer8_t, __sum_op);
 FUNC_OP_CREATE(sum, freal4, ompi_fortran_real4_t, __sum_op);
 FUNC_OP_CREATE(sum, freal8, ompi_fortran_real8_t, __sum_op);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(sum, freal16, ompi_fortran_real16_t, __sum_op);
 #endif
 
@@ -245,7 +245,7 @@ FUNC_OP_CREATE(prod, fint4, ompi_fortran_integer4_t, __prod_op);
 FUNC_OP_CREATE(prod, fint8, ompi_fortran_integer8_t, __prod_op);
 FUNC_OP_CREATE(prod, freal4, ompi_fortran_real4_t, __prod_op);
 FUNC_OP_CREATE(prod, freal8, ompi_fortran_real8_t, __prod_op);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(prod, freal16, ompi_fortran_real16_t, __prod_op);
 #endif
 
@@ -298,7 +298,7 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(max, fint8, ompi_fortran_integer8_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_FINT8);
     OBJ_OP_CREATE(max, freal4, ompi_fortran_real4_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_FREAL4);
     OBJ_OP_CREATE(max, freal8, ompi_fortran_real8_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_FREAL8);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(max, freal16, ompi_fortran_real16_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_FREAL16);
 #endif
 
@@ -314,7 +314,7 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(min, fint8, ompi_fortran_integer8_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_FINT8);
     OBJ_OP_CREATE(min, freal4, ompi_fortran_real4_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_FREAL4);
     OBJ_OP_CREATE(min, freal8, ompi_fortran_real8_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_FREAL8);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(min, freal16, ompi_fortran_real16_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_FREAL16);
 #endif
 
@@ -332,7 +332,7 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(sum, fint8, ompi_fortran_integer8_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_FINT8);
     OBJ_OP_CREATE(sum, freal4, ompi_fortran_real4_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_FREAL4);
     OBJ_OP_CREATE(sum, freal8, ompi_fortran_real8_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_FREAL8);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(sum, freal16, ompi_fortran_real16_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_FREAL16);
 #endif
 
@@ -350,7 +350,7 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(prod, fint8, ompi_fortran_integer8_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_FINT8);
     OBJ_OP_CREATE(prod, freal4, ompi_fortran_real4_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_FREAL4);
     OBJ_OP_CREATE(prod, freal8, ompi_fortran_real8_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_FREAL8);
-#if defined(ompi_fortran_real16_t)
+#if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(prod, freal16, ompi_fortran_real16_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_FREAL16);
 #endif
 
