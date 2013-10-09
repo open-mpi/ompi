@@ -102,7 +102,7 @@ OMPI_DECLSPEC extern bool ompi_rte_proc_is_bound;
 
 /* Error handling objects and operations */
 OMPI_DECLSPEC void ompi_rte_abort(int error_code, char *fmt, ...);
-OMPI_DECLSPEC int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs);
+OMPI_DECLSPEC int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs, int status);
 OMPI_DECLSPEC int ompi_rte_error_log(const char *file, int line, 
                                      const char *func, int ret);
 #define OMPI_ERROR_LOG(ret) ompi_rte_error_log(__FILE__, __LINE__, __func__, ret)

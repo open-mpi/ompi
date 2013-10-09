@@ -32,7 +32,8 @@ int main(int argc, char* argv[])
 
     printf("orte_abort: Name %s Host: %s Pid %ld\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
               hostname, (long)pid);
-    
+    fflush(stdout);
+
     i = 0;
     while (1) {
         i++;
