@@ -1,0 +1,16 @@
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug=no
+enable_memchecker=no
+enable_picky=no
+with_mpi_param_check=no
+enable_heterogeneous=no
+enable_ft_thread=no
+enable_mpirun_prefix_by_default=yes
+enable_orterun_prefix_by_default=yes
+enable_debug_symbols=yes
+with_openib=yes
+with_verbs=yes
+with_pmi=yes
+with_devel_headers=yes
+with_oshmem=yes
