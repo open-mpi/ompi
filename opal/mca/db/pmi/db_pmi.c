@@ -326,24 +326,24 @@ static int pmi_get_packed (const opal_identifier_t *uid, char **packed_data, siz
     return OPAL_SUCCESS;
 }
 
-static bool cache_keys_locally (const opal_identifier_t *uid, const char *key)
+static void cache_keys_locally (const opal_identifier_t *uid)
 {
     char *tmp, *tmp2, *tmp3, *tmp_val;
     opal_data_type_t stored_type;
     size_t len, offset;
     int rc, size;
-    bool found;
 
     OPAL_OUTPUT_VERBOSE((1, opal_db_base_framework.framework_output,
-                         "db:pmi:fetch get key %s for proc %" PRIu64 " in KVS %s",
-			 key, *uid, pmi_kvs_name));
+                         "db:pmi:fetch get keys for proc %" PRIu64 " in KVS %s",
+			 *uid, pmi_kvs_name));
 
     rc = pmi_get_packed (uid, &tmp_val, &len);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        OPAL_ERROR_LOG(rc);
+        return;
     }
 
-    /* search for this key in the decoded data */
+    /* retrieve all keys from decoded data */
     for (offset = 0 ; offset < len && '\0' != tmp_val[offset] ; ) {
         /* type */
 	tmp = tmp_val + offset + strlen (tmp_val + offset) + 1;
@@ -373,17 +373,11 @@ static bool cache_keys_locally (const opal_identifier_t *uid, const char *key)
             size = 0;
         }
 
-        if (0 != strcmp (key, tmp_val + offset)) {
-            found = true;
-	}
-
         /* keep going and cache everything locally */
         offset = (size_t) (tmp3 - tmp_val) + size;
     }
 
     free (tmp_val);
-
-    return found;
 }
 
 static int store(const opal_identifier_t *uid, opal_db_locality_t locality,
@@ -449,16 +443,13 @@ static void commit(const opal_identifier_t *proc)
  * hostname for the process - so don't worry about other uses
  * here just yet
  */
-static int fetch_pointer(const opal_identifier_t *proc,
+static int fetch_pointer(const opal_identifier_t *uid,
                          const char *key,
                          void **data, opal_data_type_t type)
 {
-    if (cache_keys_locally (proc, key)) {
-        /* the key will be available internally now */
-        return opal_db.fetch_pointer (proc, key, data, type);
-    }
-
-    return OPAL_ERR_NOT_FOUND;
+    cache_keys_locally(uid);
+    /* all keys will be available internally now */
+    return OPAL_ERR_TAKE_NEXT_OPTION;
 }
 
 static int fetch_multiple(const opal_identifier_t *proc,
@@ -565,12 +556,9 @@ static int fetch_multiple(const opal_identifier_t *proc,
 static int fetch(const opal_identifier_t *uid,
                  const char *key, void **data, opal_data_type_t type)
 {
-    if (cache_keys_locally (uid, key)) {
-        /* the key will be available internally now */
-        return opal_db.fetch (uid, key, data, type);
-    }
-
-    return OPAL_ERR_NOT_FOUND;
+    cache_keys_locally(uid);
+    /* all keys will be available internally now */
+    return OPAL_ERR_TAKE_NEXT_OPTION;
 }
 
 static int remove_data(const opal_identifier_t *proc, const char *key)

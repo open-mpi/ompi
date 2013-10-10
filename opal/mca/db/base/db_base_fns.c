@@ -112,23 +112,29 @@ int opal_db_base_fetch(const opal_identifier_t *proc,
 {
     bool did_op;
     opal_db_active_module_t *mod;
-    int rc;
+    int rc, i;
 
     /* cycle thru the actiove modules until one agrees to perform the op */
     did_op = false;
-    OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
-        if (NULL == mod->module->fetch) {
-            continue;
-        }
-        if (OPAL_SUCCESS == (rc = mod->module->fetch(proc, key, data, type))) {
-            did_op = true;
-            break;
-        }
-        /* modules return "next option" if they didn't perform
-         * the operation - anything else is a true error.
-         */
-        if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
-            return rc;
+    /* we cycle thru the list of modules twice - this allows us to check
+     * a local store first, then attempt to obtain the data from an
+     * external store that puts it in the local store
+     */
+    for(i=0; i < 2 && !did_op; i++) {
+        OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
+            if (NULL == mod->module->fetch) {
+                continue;
+            }
+            if (OPAL_SUCCESS == (rc = mod->module->fetch(proc, key, data, type))) {
+                did_op = true;
+                break;
+            }
+            /* modules return "next option" if they didn't perform
+             * the operation - anything else is a true error.
+             */
+            if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
+                return rc;
+            }
         }
     }
 
@@ -145,23 +151,29 @@ int opal_db_base_fetch_pointer(const opal_identifier_t *proc,
 {
     bool did_op;
     opal_db_active_module_t *mod;
-    int rc;
+    int rc, i;
 
-    /* cycle thru the actiove modules until one agrees to perform the op */
+    /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
-    OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
-        if (NULL == mod->module->fetch_pointer) {
-            continue;
-        }
-        if (OPAL_SUCCESS == (rc = mod->module->fetch_pointer(proc, key, data, type))) {
-            did_op = true;
-            break;
-        }
-        /* modules return "next option" if they didn't perform
-         * the operation - anything else is a true error.
-         */
-        if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
-            return rc;
+    /* we cycle thru the list of modules twice - this allows us to check
+     * a local store first, then attempt to obtain the data from an
+     * external store that puts it in the local store
+     */
+    for(i=0; i < 2 && !did_op; i++) {
+        OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
+            if (NULL == mod->module->fetch_pointer) {
+                continue;
+            }
+            if (OPAL_SUCCESS == (rc = mod->module->fetch_pointer(proc, key, data, type))) {
+                did_op = true;
+                break;
+            }
+            /* modules return "next option" if they didn't perform
+             * the operation - anything else is a true error.
+             */
+            if (OPAL_ERR_TAKE_NEXT_OPTION != rc) {
+                return rc;
+            }
         }
     }
 
@@ -180,7 +192,7 @@ int opal_db_base_fetch_multiple(const opal_identifier_t *proc,
     opal_db_active_module_t *mod;
     int rc;
 
-    /* cycle thru the actiove modules until one agrees to perform the op */
+    /* cycle thru the active modules until one agrees to perform the op */
     did_op = false;
     OPAL_LIST_FOREACH(mod, &opal_db_base.fetch_order, opal_db_active_module_t) {
         if (NULL == mod->module->fetch_multiple) {

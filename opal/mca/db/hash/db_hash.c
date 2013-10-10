@@ -337,12 +337,8 @@ static int fetch(const opal_identifier_t *uid,
 
     /* find the value */
     if (NULL == (kv = lookup_keyval(proc_data, key))) {
-        /* if the proc object was found, then all data
-         * for that proc has been stored - if we didn't
-         * find it, then report so. Otherwise, we can
-         * enter an infinite loop of looking for it
-         */
-        return OPAL_ERR_NOT_FOUND;
+        /* let them look globally for it */
+        return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
     /* do the copy and check the type */
@@ -433,12 +429,8 @@ static int fetch_pointer(const opal_identifier_t *uid,
 
     /* find the value */
     if (NULL == (kv = lookup_keyval(proc_data, key))) {
-        /* if the proc object was found, then all data
-         * for that proc has been stored - if we didn't
-         * find it, then report so. Otherwise, we can
-         * enter an infinite loop of looking for it
-         */
-        return OPAL_ERR_NOT_FOUND;
+        /* let them look globally for it */
+        return OPAL_ERR_TAKE_NEXT_OPTION;
     }
 
    switch (type) {

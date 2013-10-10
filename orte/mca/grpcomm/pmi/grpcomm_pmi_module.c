@@ -271,7 +271,6 @@ static int modex(orte_grpcomm_collective_t *coll)
             {
                 opal_hwloc_level_t bind_level, *lvptr;
                 unsigned int bind_idx, *idxptr;
-                opal_hwloc_locality_t locality;
 
                 /* get the proc's locality info */
                 lvptr = &bind_level;
@@ -290,10 +289,10 @@ static int modex(orte_grpcomm_collective_t *coll)
                                                                  orte_process_info.bind_idx,
                                                                  bind_level, bind_idx);
                 OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                                     "%s grpcomm:pmi setting proc %s locale %s",
+                                     "%s grpcomm:pmi setting proc %s locale %s:%x",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&name),
-                                     opal_hwloc_base_print_locality(locality)));
+                                     opal_hwloc_base_print_locality(locality), locality));
             }
 #else
             locality = OPAL_PROC_ON_NODE;
@@ -303,11 +302,15 @@ static int modex(orte_grpcomm_collective_t *coll)
             locality = OPAL_PROC_NON_LOCAL;
 	}
 
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+         if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
+
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:pmi: modex complete",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* execute the callback */
     coll->active = false;
