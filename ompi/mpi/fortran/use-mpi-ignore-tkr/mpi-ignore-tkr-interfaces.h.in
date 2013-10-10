@@ -848,6 +848,68 @@ end subroutine MPI_Dims_create
 end interface
 
 
+interface  MPI_Dist_graph_create
+
+subroutine MPI_Dist_graph_create(comm_old,n,sources,degrees,destinations,weights, &
+      info,reorder,comm_dist_graph,ierror)
+   implicit none
+   integer, intent(in) :: comm_old
+   integer, intent(in) :: n, sources(n), degrees(n), destinations(*), weights(*)
+   integer, intent(in) :: info
+   logical, intent(in) :: reorder
+   integer, intent(out) :: comm_dist_graph
+   integer, intent(out) :: ierror
+end subroutine MPI_Dist_graph_create
+
+end interface
+
+
+interface  MPI_Dist_graph_create_adjacent
+
+subroutine MPI_Dist_graph_create_adjacent(comm_old,indegree,sources,sourceweights, &
+      outdegree,destinations,destweights,info,reorder, &
+      comm_dist_graph,ierror)
+   implicit none
+   integer, intent(in) :: comm_old
+   integer, intent(in) :: indegree, sources(indegree), outdegree, destinations(outdegree)
+   integer, intent(in) :: sourceweights(indegree), destweights(outdegree)
+   integer, intent(in) :: info
+   logical, intent(in) :: reorder
+   integer, intent(out) :: comm_dist_graph
+   integer, intent(out) :: ierror
+end subroutine MPI_Dist_graph_create_adjacent
+
+end interface
+
+
+interface  MPI_Dist_graph_neighbors
+
+subroutine MPI_Dist_graph_neighbors(comm,maxindegree,sources,sourceweights, &
+      maxoutdegree,destinations,destweights,ierror)
+   implicit none
+   integer, intent(in) :: comm
+   integer, intent(in) :: maxindegree, maxoutdegree
+   integer, intent(out) :: sources(maxindegree), destinations(maxoutdegree)
+   integer, intent(out) :: sourceweights(maxindegree), destweights(maxoutdegree)
+   integer, intent(out) :: ierror
+end subroutine MPI_Dist_graph_neighbors
+
+end interface
+
+
+interface  MPI_Dist_graph_neighbors_count
+
+subroutine MPI_Dist_graph_neighbors_count(comm,indegree,outdegree,weighted,ierror)
+   implicit none
+   integer, intent(in) :: comm
+   integer, intent(out) :: indegree, outdegree
+   logical, intent(out) :: weighted
+   integer, intent(out) :: ierror
+end subroutine MPI_Dist_graph_neighbors_count
+
+end interface
+
+
 interface MPI_Errhandler_create
 
 subroutine MPI_Errhandler_create(function, errhandler, ierr)
