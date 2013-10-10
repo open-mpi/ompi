@@ -141,15 +141,16 @@ m4_ifdef([project_ompi],
           # transparently by adding some intelligence in autogen.sh
           # and/or ompi_mca.m4, but I don't have the cycles to do this
           # right now.
-          AC_SUBST(libmca_common_sm_so_version)
-          AC_SUBST(libmca_common_mx_so_version)
           AC_SUBST(libmca_common_cuda_so_version)
-          AC_SUBST(libmca_common_portals_so_version)])
+          AC_SUBST(libmca_common_mx_so_version)
+          AC_SUBST(libmca_common_ofacm_so_version)
+          AC_SUBST(libmca_common_sm_so_version)
+          AC_SUBST(libmca_common_ugni_so_version)
+          AC_SUBST(libmca_common_verbs_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
          [AC_SUBST(libshmem_so_version)])
-AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libmca_opal_common_pmi_so_version)
 AC_SUBST(libopen_pal_so_version)
 

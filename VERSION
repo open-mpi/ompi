@@ -106,9 +106,13 @@ libshmem_so_version=0:0:0
 # well.  Yuck; this somewhat breaks the
 # components-don't-affect-the-build-system abstraction.
 
-libmca_common_sm_so_version=0:0:0
-libmca_common_mx_so_version=0:0:0
-libmca_common_portals_so_version=0:0:0
+# OMPI layer
 libmca_common_cuda_so_version=0:0:0
-libmca_opal_common_hwloc_so_version=0:0:0
+libmca_common_mx_so_version=0:0:0
+libmca_common_ofacm_so_version=0:0:0
+libmca_common_sm_so_version=0:0:0
+libmca_common_ugni_so_version=0:0:0
+libmca_common_verbs_so_version=0:0:0
+
+# OPAL layer
 libmca_opal_common_pmi_so_version=0:0:0
