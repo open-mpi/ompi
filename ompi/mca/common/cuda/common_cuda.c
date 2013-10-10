@@ -414,6 +414,7 @@ int mca_common_cuda_stage_one_init(void)
         return 1;
     }
     opal_cuda_add_initialization_function(&mca_common_cuda_init);
+    OBJ_CONSTRUCT(&common_cuda_memory_registrations, opal_list_t);
 
     /* Map in the functions that we need.  Note that if there is an error
      * the macro OMPI_CUDA_DLSYM will print an error and call return.  */
@@ -703,7 +704,6 @@ void mca_common_cuda_register(void *ptr, size_t amount, char *msg) {
             ompi_mpi_cuda_support = 0;
             return;
         }
-        OBJ_CONSTRUCT(&common_cuda_memory_registrations, opal_list_t);
     }
 
     if (!common_cuda_initialized) {
