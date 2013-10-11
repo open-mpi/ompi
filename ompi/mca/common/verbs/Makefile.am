@@ -49,7 +49,9 @@ endif
 libmca_common_verbs_la_SOURCES = $(headers) $(sources)
 # TBD: create own config file 
 libmca_common_verbs_la_CPPFLAGS = $(common_verbs_CPPFLAGS)
-libmca_common_verbs_la_LDFLAGS =  $(common_verbs_LDFLAGS)
+libmca_common_verbs_la_LDFLAGS =  \
+        -version-info $(libmca_common_verbs_so_version) \
+        $(common_verbs_LDFLAGS)
 libmca_common_verbs_la_LIBADD =   $(common_verbs_LIBS)
 libmca_common_verbs_noinst_la_SOURCES = $(libmca_common_verbs_la_SOURCES)
 

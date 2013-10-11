@@ -48,7 +48,9 @@ endif
 
 libmca_common_ofacm_la_SOURCES = $(headers) $(sources)
 libmca_common_ofacm_la_CPPFLAGS = $(common_ofacm_CPPFLAGS)
-libmca_common_ofacm_la_LDFLAGS = $(common_ofacm_LDFLAGS)
+libmca_common_ofacm_la_LDFLAGS = \
+        -version-info $(libmca_common_ofacm_so_version) \
+        $(common_ofacm_LDFLAGS)
 libmca_common_ofacm_la_LIBADD = $(common_ofacm_LIBS)
 libmca_common_ofacm_noinst_la_SOURCES = $(libmca_common_ofacm_la_SOURCES)
 
