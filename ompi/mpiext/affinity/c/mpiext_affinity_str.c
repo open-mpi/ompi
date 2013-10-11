@@ -52,14 +52,14 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
 {
     int ret;
 
-    memset(ompi_bound, 0, sizeof(ompi_bound));
-    memset(current_binding, 0, sizeof(current_binding));
+    memset(ompi_bound, 0, OMPI_AFFINITY_STRING_MAX);
+    memset(current_binding, 0, OMPI_AFFINITY_STRING_MAX);
 
     /* If we have no hwloc support, return nothing */
     if (NULL == opal_hwloc_topology) {
-        strncpy(ompi_bound, "Not supported", sizeof(ompi_bound));
-        strncpy(current_binding, "Not supported", sizeof(current_binding));
-        strncpy(exists, "Not supported", sizeof(exists));
+        strncpy(ompi_bound, "Not supported", OMPI_AFFINITY_STRING_MAX);
+        strncpy(current_binding, "Not supported", OMPI_AFFINITY_STRING_MAX);
+        strncpy(exists, "Not supported", OMPI_AFFINITY_STRING_MAX);
         return MPI_SUCCESS;
     }
 
@@ -153,7 +153,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
     }
     hwloc_bitmap_free(boundset);
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 
@@ -333,7 +333,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
     }
     hwloc_bitmap_free(boundset);
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 /*
