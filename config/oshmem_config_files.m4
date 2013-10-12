@@ -19,6 +19,7 @@ AC_DEFUN([OSHMEM_CONFIG_FILES],[
 
     oshmem/shmem/c/profile/Makefile
 
+    oshmem/tools/oshmem_info/Makefile
     oshmem/tools/wrappers/Makefile
     oshmem/tools/wrappers/shmemcc-wrapper-data.txt
     oshmem/tools/wrappers/shmemfort-wrapper-data.txt

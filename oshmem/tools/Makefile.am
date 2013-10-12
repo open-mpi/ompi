@@ -12,7 +12,9 @@
 
 
 SUBDIRS += \
+	tools/oshmem_info \
 	tools/wrappers
 
 DIST_SUBDIRS += \
+	tools/oshmem_info \
 	tools/wrappers
