@@ -1401,7 +1401,7 @@ static int fca_close(void)
 	if(mca_coll_fca_component.fca_enable_cache) {
 		
 		mca_coll_fca_c_cache_item_t *item;
-		while(NULL != (item = opal_list_remove_first(&mca_coll_fca_component.c_cache))) {
+		while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(&mca_coll_fca_component.c_cache))) {
 			OBJ_RELEASE(item);
 		}
 
@@ -1416,7 +1416,7 @@ static int fca_close(void)
 			
 			if(mca_coll_fca_component.fca_hash[i] != NULL) {
 				
-				while(NULL != (item = opal_list_remove_first(mca_coll_fca_component.fca_hash[i]))) {
+				while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(mca_coll_fca_component.fca_hash[i]))) {
 					OBJ_RELEASE(item);
 				}
 
