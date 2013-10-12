@@ -53,7 +53,8 @@ SHMEM_API_SOURCES = \
 	shmem_clear_lock.c \
 	shmem_set_lock.c \
 	shmem_test_lock.c \
-	shmem_lock.c
+	shmem_lock.c \
+	globalexit.c
 
 
 AM_CFLAGS = $(OSHMEM_CFLAGS)

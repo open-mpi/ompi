@@ -141,6 +141,21 @@ esac
 
 AC_SUBST([OSHMEM_CFLAGS])
 
+OPAL_CHECK_PMI([pmi_oshmem], [pmi_oshmem_happy="yes"], [pmi_oshmem_happy="no"])
+
+AC_SUBST([pmi_oshmem_CPPFLAGS])
+AC_SUBST([pmi_oshmem_LDFLAGS])
+AC_SUBST([pmi_oshmem_LIBS])
+ 
+AS_IF(
+    [test "$pmi_oshmem_happy" = "yes"],
+    [
+	OSHMEM_CFLAGS="$OSHMEM_CFLAGS $pmi_oshmem_CPPFLAGS"
+	OSHMEM_LDFLAGS="$OSHMEM_LDFLAGS $pmi_oshmem_LDFLAGS $pmi_oshmem_LIBS"
+    ])
+
+AC_SUBST([OSHMEM_CFLAGS])
+AC_SUBST([OSHMEM_LDFLAGS])
 
 
 OMPI_CHECK_OPENFABRICS([oshmem_verbs],
