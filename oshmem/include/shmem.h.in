@@ -380,6 +380,7 @@ OSHMEM_DECLSPEC  int shmem_my_pe(void);
 
 OSHMEM_DECLSPEC  void shmem_put(void *target, const void *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void shmem_get(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void globalexit(int status);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

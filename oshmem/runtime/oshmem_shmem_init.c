@@ -196,6 +196,21 @@ static void* shmem_opal_thread(void* argc)
 }
 #endif
 
+int inGlobalExit;
+
+static void sighandler__SIGUSR1(int signum)
+{
+    if (0 != inGlobalExit)
+    {
+	return;
+    }
+    _exit(0);
+}
+static void sighandler__SIGTERM(int signum)
+{
+    /* Do nothing. Just replace other unpredictalbe handlers with this one (e.g. mxm handler). */
+}
+
 int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
 {
     int ret = OSHMEM_SUCCESS;
@@ -225,7 +240,10 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
 #endif
         }
     }
-
+#ifdef SIGUSR1
+    signal(SIGUSR1,sighandler__SIGUSR1);
+    signal(SIGTERM,sighandler__SIGTERM);
+#endif
     return ret;
 }
 
