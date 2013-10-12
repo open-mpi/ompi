@@ -79,21 +79,24 @@ void oshmem_info_show_oshmem_version(const char *scope)
 {
     char *tmp, *tmp2;
 
-    asprintf(&tmp, "%s:version:full", oshmem_info_type_oshmem);
-    tmp2 = opal_info_make_version_str(scope,
-                                      OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
-                                      OSHMEM_RELEASE_VERSION,
-                                      OSHMEM_GREEK_VERSION,
-                                      OSHMEM_WANT_REPO_REV, OSHMEM_REPO_REV);
-    opal_info_out("Open SHMEM", tmp, tmp2);
-    free(tmp);
-    free(tmp2);
-    asprintf(&tmp, "%s:version:repo", oshmem_info_type_oshmem);
-    opal_info_out("Open SHMEM repo revision", tmp, OSHMEM_REPO_REV);
-    free(tmp);
-    asprintf(&tmp, "%s:version:release_date", oshmem_info_type_oshmem);
-    opal_info_out("Open SHMEM release date", tmp, OSHMEM_RELEASE_DATE);
-    free(tmp);
+    if (0 < asprintf(&tmp, "%s:version:full", oshmem_info_type_oshmem)) {
+        tmp2 = opal_info_make_version_str(scope,
+                OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                OSHMEM_RELEASE_VERSION,
+                OSHMEM_GREEK_VERSION,
+                OSHMEM_WANT_REPO_REV, OSHMEM_REPO_REV);
+        opal_info_out("Open SHMEM", tmp, tmp2);
+        free(tmp);
+        free(tmp2);
+    }
+    if(0 < asprintf(&tmp, "%s:version:repo", oshmem_info_type_oshmem)) {
+        opal_info_out("Open SHMEM repo revision", tmp, OSHMEM_REPO_REV);
+        free(tmp);
+    }
+    if (0 < asprintf(&tmp, "%s:version:release_date", oshmem_info_type_oshmem)) {
+        opal_info_out("Open SHMEM release date", tmp, OSHMEM_RELEASE_DATE);
+        free(tmp);
+    }
 
     /* Do OMPI interface call */
     ompi_info_show_ompi_version(scope);
