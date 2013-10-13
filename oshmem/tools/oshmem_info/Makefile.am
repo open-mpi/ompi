@@ -46,6 +46,8 @@ oshmem_info_SOURCES = \
         oshmem_info.c \
         param.c
 
+oshmem_info_CFLAGS  = $(AM_CFLAGS) $(pmi_oshmem_CPPFLAGS)
+oshmem_info_LDFLAGS = $(pmi_oshmem_LDFLAGS) $(pmi_oshmem_LIBS)
 oshmem_info_LDADD = $(top_builddir)/ompi/libmpi.la
 oshmem_info_LDADD += $(top_builddir)/oshmem/libshmem.la
 if OMPI_RTE_ORTE
