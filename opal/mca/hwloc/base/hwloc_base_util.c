@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 #include "opal/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/show_help.h"
 #include "opal/threads/tsd.h"
 
@@ -211,18 +213,25 @@ int opal_hwloc_base_get_topology(void)
     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_topology"));
 
-    if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
-        0 != hwloc_topology_set_flags(opal_hwloc_topology, 
-                                      (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
-                                       HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
-        0 != hwloc_topology_load(opal_hwloc_topology)) {
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
+    if (NULL == opal_hwloc_base_topo_file) {
+        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+            0 != hwloc_topology_set_flags(opal_hwloc_topology, 
+                                          (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                           HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
+            0 != hwloc_topology_load(opal_hwloc_topology)) {
+            return OPAL_ERR_NOT_SUPPORTED;
+        }
 
-    /* filter the cpus thru any default cpu set */
-    rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
+        /* filter the cpus thru any default cpu set */
+        rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    } else {
+        rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
     }
 
     /* fill opal_cache_line_size global with the smallest L1 cache
@@ -1309,7 +1318,7 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
      * NOTE: we may alter that latter part as hwloc's ability to
      * sense multi-cu, multi-cluster systems grows
      */
-    locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE | OPAL_PROC_ON_BOARD;
+    locality = OPAL_PROC_ON_NODE;
 
     /* if either cpuset is NULL, then that isn't bound */
     if (NULL == cpuset1 || NULL == cpuset2) {
@@ -1357,25 +1366,25 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
                 shared = true;
                 switch(obj->type) {
                 case HWLOC_OBJ_NODE:
-                    locality |= OPAL_PROC_ON_NUMA;
+                    locality = OPAL_PROC_ON_NUMA;
                     break;
                 case HWLOC_OBJ_SOCKET:
-                    locality |= OPAL_PROC_ON_SOCKET;
+                    locality = OPAL_PROC_ON_SOCKET;
                     break;
                 case HWLOC_OBJ_CACHE:
                     if (3 == obj->attr->cache.depth) {
-                        locality |= OPAL_PROC_ON_L3CACHE;
+                        locality = OPAL_PROC_ON_L3CACHE;
                     } else if (2 == obj->attr->cache.depth) {
-                        locality |= OPAL_PROC_ON_L2CACHE;
+                        locality = OPAL_PROC_ON_L2CACHE;
                     } else {
-                        locality |= OPAL_PROC_ON_L1CACHE;
+                        locality = OPAL_PROC_ON_L1CACHE;
                     }
                     break;
                 case HWLOC_OBJ_CORE:
-                    locality |= OPAL_PROC_ON_CORE;
+                    locality = OPAL_PROC_ON_CORE;
                     break;
                 case HWLOC_OBJ_PU:
-                    locality |= OPAL_PROC_ON_HWTHREAD;
+                    locality = OPAL_PROC_ON_HWTHREAD;
                     break;
                 default:
                     /* just ignore it */
@@ -1402,6 +1411,110 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
                         opal_hwloc_base_print_locality(locality));
 
     return locality;
+}
+
+/* searches the given topology for coprocessor objects and returns
+ * their serial numbers as a comma-delimited string, or NULL
+ * if no coprocessors are found
+ */
+char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
+{
+    hwloc_obj_t osdev;
+    unsigned i;
+    char **cps = NULL;
+    char *cpstring = NULL;
+    int depth;
+
+    /* coprocessors are recorded under OS_DEVICEs, so first
+     * see if we have any of those
+     */
+    if (HWLOC_TYPE_DEPTH_UNKNOWN == (depth = hwloc_get_type_depth(topo, HWLOC_OBJ_OS_DEVICE))) {
+        return NULL;
+    }
+    /* check the device objects for coprocessors */
+    osdev = hwloc_get_obj_by_depth(topo, depth, 0);
+    while (NULL != osdev) {
+        if (HWLOC_OBJ_OSDEV_COPROC == osdev->attr->osdev.type) {
+            /* got one! find and save its serial number */
+            for (i=0; i < osdev->infos_count; i++) {
+                if (0 == strncmp(osdev->infos[i].name, "MICSerialNumber", strlen("MICSerialNumber"))) {
+                    opal_argv_append_nosize(&cps, osdev->infos[i].value);
+                }
+            }
+        }
+        osdev = osdev->next_cousin;
+    }
+    if (NULL != cps) {
+        cpstring = opal_argv_join(cps, ',');
+        opal_argv_free(cps);
+    }
+    return cpstring;
+}
+
+#define OPAL_HWLOC_MAX_ELOG_LINE 1024
+
+static char *hwloc_getline(FILE *fp)
+{
+    char *ret, *buff;
+    char input[OPAL_HWLOC_MAX_ELOG_LINE];
+
+    ret = fgets(input, OPAL_HWLOC_MAX_ELOG_LINE, fp);
+    if (NULL != ret) {
+	   input[strlen(input)-1] = '\0';  /* remove newline */
+	   buff = strdup(input);
+	   return buff;
+    }
+    
+    return NULL;
+}
+
+/* checks local environment to determine if this process
+ * is on a coprocessor - if so, it returns the serial number
+ * as a string, or NULL if it isn't on a coprocessor
+ */
+char* opal_hwloc_base_check_on_coprocessor(void)
+{
+    /* this support currently is limited to Intel Phi processors
+     * but will hopefully be extended as we get better, more
+     * generalized ways of identifying coprocessors
+     */
+    FILE *fp;
+    char *t, *cptr, *e, *cp=NULL;
+
+    if (OPAL_SUCCESS != opal_os_dirpath_access("/tmp/elog", S_IRUSR)) {
+        /* if the file isn't there, or we don't have permission
+         * to read it, then we are not on a coprocessor so far
+         * as we can tell
+         */
+        return NULL;
+    }
+    if (NULL == (fp = fopen("/tmp/elog", "r"))) {
+        /* nothing we can do */
+        return NULL;
+    }
+    /* look for the line containing the serial number of this
+     * card - usually the first line in the file
+     */
+    while (NULL != (cptr = hwloc_getline(fp))) {
+        if (NULL != (t = strstr(cptr, "Card"))) {
+            /* we want the string right after this - delimited by
+             * a colon at the end
+             */
+            t += 5;  // move past "Card "
+            if (NULL == (e = strchr(t, ':'))) {
+                /* not what we were expecting */
+                free(cptr);
+                continue;
+            }
+            *e = '\0';
+            cp = strdup(t);
+            free(cptr);
+            break;
+        }
+        free(cptr);
+    }
+    fclose(fp);
+    return cp;
 }
 
 char* opal_hwloc_base_print_binding(opal_binding_policy_t binding)

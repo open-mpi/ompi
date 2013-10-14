@@ -13,8 +13,7 @@ headers += \
         base/base.h
 
 libmca_hwloc_la_SOURCES += \
-        base/hwloc_base_close.c \
-        base/hwloc_base_open.c
+        base/hwloc_base_frame.c
 
 if OPAL_HAVE_HWLOC
 libmca_hwloc_la_SOURCES += \

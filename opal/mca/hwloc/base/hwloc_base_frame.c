@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,6 +57,7 @@ hwloc_obj_type_t opal_hwloc_levels[] = {
     HWLOC_OBJ_PU
 };
 bool opal_hwloc_use_hwthreads_as_cpus = false;
+char *opal_hwloc_base_topo_file = NULL;
 #endif
 
 #if OPAL_HAVE_HWLOC
@@ -75,8 +77,7 @@ static mca_base_var_enum_value_t hwloc_failure_action[] = {
 
 static int opal_hwloc_base_register(mca_base_register_flag_t flags);
 static int opal_hwloc_base_open(mca_base_open_flag_t flags);
-/* defined in hwloc_base_close.c */
-int opal_hwloc_base_close(void);
+static int opal_hwloc_base_close(void);
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, hwloc, NULL, opal_hwloc_base_register, opal_hwloc_base_open, opal_hwloc_base_close,
                            mca_hwloc_base_static_components, 0);
@@ -161,6 +162,12 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
                                  "Use hardware threads as independent cpus",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_use_hwthreads_as_cpus);
+
+    opal_hwloc_base_topo_file = NULL;
+    (void) mca_base_var_register("opal", "hwloc", "base", "topo_file",
+                                 "Read local topology from file instead of directly sensing it",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_topo_file);
 
 #endif
     /* register parameters */
@@ -296,6 +303,37 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
     }
 #endif
 
+    return OPAL_SUCCESS;
+}
+
+static int opal_hwloc_base_close(void)
+{
+    if (!opal_hwloc_base_inited) {
+        return OPAL_SUCCESS;
+    }
+
+#if OPAL_HAVE_HWLOC
+    {
+        int ret;
+
+        /* no need to close the component as it was statically opened */
+
+        /* for support of tools such as ompi_info */
+        ret = mca_base_framework_components_close (&opal_hwloc_base_framework, NULL);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+
+        /* free memory */
+        if (NULL != opal_hwloc_my_cpuset) {
+            hwloc_bitmap_free(opal_hwloc_my_cpuset);
+            opal_hwloc_my_cpuset = NULL;
+        }
+    }
+#endif
+
+    /* All done */
+    opal_hwloc_base_inited = false;
     return OPAL_SUCCESS;
 }
 

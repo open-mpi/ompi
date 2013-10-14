@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,6 +61,7 @@ OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t localit
 OPAL_DECLSPEC extern char *opal_hwloc_base_slot_list;
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
+OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
 
 /* convenience macro for debugging */
 #define OPAL_HWLOC_SHOW_BINDING(n, v)                                   \
@@ -192,6 +194,10 @@ OPAL_DECLSPEC bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset);
 OPAL_DECLSPEC int opal_hwloc_base_slot_list_parse(const char *slot_str,
                                                   hwloc_topology_t topo,
                                                   hwloc_cpuset_t cpumask);
+
+OPAL_DECLSPEC char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo);
+OPAL_DECLSPEC char* opal_hwloc_base_check_on_coprocessor(void);
+
 
 /**
  * Report a bind failure using the normal mechanisms if a component

@@ -81,7 +81,8 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .app_rank =                     */   -1,
     /*  .peer_modex =                   */   -1,
     /*  .peer_init_barrier =            */   -1,
-    /*  .peer_fini_barrier =            */   -1
+    /*  .peer_fini_barrier =            */   -1,
+    /*  .my_hostid =                    */   ORTE_VPID_INVALID
 };
 
 static bool init=false;

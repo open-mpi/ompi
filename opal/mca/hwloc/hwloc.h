@@ -79,16 +79,17 @@ enum {
     OPAL_PROC_LOCALITY_UNKNOWN  = 0x0000,
     OPAL_PROC_NON_LOCAL         = 0x8000,
     OPAL_PROC_ON_CLUSTER        = 0x0400,
-    OPAL_PROC_ON_CU             = 0x0200,
-    OPAL_PROC_ON_NODE           = 0x0100,
-    OPAL_PROC_ON_BOARD          = 0x0080,
-    OPAL_PROC_ON_NUMA           = 0x0040,
-    OPAL_PROC_ON_SOCKET         = 0x0020,
-    OPAL_PROC_ON_L3CACHE        = 0x0010,
-    OPAL_PROC_ON_L2CACHE        = 0x0008,
-    OPAL_PROC_ON_L1CACHE        = 0x0004,
-    OPAL_PROC_ON_CORE           = 0x0002,
-    OPAL_PROC_ON_HWTHREAD       = 0x0001,
+    OPAL_PROC_ON_CU             = 0x0600,
+    OPAL_PROC_ON_HOST           = 0x0700,
+    OPAL_PROC_ON_BOARD          = 0x0680,
+    OPAL_PROC_ON_NODE           = 0x0780,   // same host and board
+    OPAL_PROC_ON_NUMA           = 0x07c0,
+    OPAL_PROC_ON_SOCKET         = 0x07b0,
+    OPAL_PROC_ON_L3CACHE        = 0x07a0,
+    OPAL_PROC_ON_L2CACHE        = 0x07a8,
+    OPAL_PROC_ON_L1CACHE        = 0x07ac,
+    OPAL_PROC_ON_CORE           = 0x07ab,
+    OPAL_PROC_ON_HWTHREAD       = 0x07aa,
     OPAL_PROC_ALL_LOCAL         = 0x0fff
 };
 
@@ -101,7 +102,8 @@ enum {
 #define OPAL_PROC_ON_LOCAL_SOCKET(n)    ((n) & OPAL_PROC_ON_SOCKET)
 #define OPAL_PROC_ON_LOCAL_NUMA(n)      ((n) & OPAL_PROC_ON_NUMA)
 #define OPAL_PROC_ON_LOCAL_BOARD(n)     ((n) & OPAL_PROC_ON_BOARD)
-#define OPAL_PROC_ON_LOCAL_NODE(n)      ((n) & OPAL_PROC_ON_NODE)
+#define OPAL_PROC_ON_LOCAL_HOST(n)      ((n) & OPAL_PROC_ON_HOST)
+#define OPAL_PROC_ON_LOCAL_NODE(n)      (((n) & OPAL_PROC_ON_HOST) && ((n) & OPAL_PROC_ON_BOARD))
 #define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)
 #define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
 

@@ -148,9 +148,28 @@ static int ompi_proc_set_locality(ompi_proc_t *proc)
                                              (void**)&vptr, OPAL_UINT32))) {
         return ret;
     }
-    /* if we are on different nodes, then we are non-local */
+    /* if we are on different nodes, then we are probably non-local */
     if (vpid != OMPI_RTE_MY_NODEID) {
+#ifdef OMPI_RTE_HOST_ID
+        /* see if coprocessors were detected - if the hostid isn't
+         * present, then no coprocessors were detected and we can
+         * ignore this test
+         */
+        vptr = &vpid;
+        if (OMPI_SUCCESS == opal_db.fetch((opal_identifier_t*)&proc->proc_name, OMPI_RTE_HOST_ID,
+                                                (void**)&vptr, OPAL_UINT32)) {
+            /* if this matches my host id, then we are on the same host,
+             * but not on the same board
+             */
+            if (vpid == ompi_process_info.my_hostid) {
+                locality = OPAL_PROC_ON_HOST;
+            } else {
+                locality = OPAL_PROC_NON_LOCAL;
+            }
+        }
+#else
         locality = OPAL_PROC_NON_LOCAL;
+#endif
     } else {
 #if OPAL_HAVE_HWLOC
         {

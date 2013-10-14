@@ -13,6 +13,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -334,6 +335,8 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
 #endif
     orte_job_t *jdata, *jdatorted;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    int i, j, k;
+    orte_node_t *node, *nptr;
 
     /* if we don't want to launch the apps, now is the time to leave */
     if (orte_do_not_launch) {
@@ -406,6 +409,51 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
     }
 #endif
+
+    /* if coprocessors were detected, now is the time to
+     * identify who is attached to what host - this info
+     * will be shipped to the daemons in the nidmap. Someday,
+     * there may be a direct way for daemons on coprocessors
+     * to detect their hosts - but not today.
+     */
+    if (orte_coprocessors_detected) {
+        /* cycle thru the nodes looking for hosts with
+         * coprocessors present
+         */
+        for (i=0; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            if (!node->coprocessor_host) {
+                continue;
+            }
+            /* set our hostid to our own daemon vpid */
+            node->hostid = node->daemon->name.vpid;
+            /* cycle thru our list of coprocessors */
+            for (j=0; NULL != node->coprocessors[j]; j++) {
+                /* search the list of nodes for this coprocessor - yes,
+                 * this search stinks for scalability, but we'll have to
+                 * find a more scalable method at some point
+                 */
+                for (k=0; k < orte_node_pool->size; k++) {
+                    if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, k))) {
+                        continue;
+                    }
+                    if (nptr->coprocessor_host || NULL == nptr->coprocessors) {
+                        continue;
+                    }
+                    if (0 == strcmp(node->coprocessors[j], nptr->coprocessors[0])) {
+                        /* found it - record the hostid as the vpid of the
+                         * daemon on the host
+                         */
+                        nptr->hostid = node->daemon->name.vpid;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     /* set the job state to the next position */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_LAUNCH_APPS);
 
@@ -772,49 +820,87 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         }
 
 #if OPAL_HAVE_HWLOC
-        /* store the local resources for that node */
-        if (1 == dname.vpid || orte_hetero_nodes) {
-            hwloc_topology_t topo, t;
-            int i;
-            bool found;
-            
+        {
+            char *coprocessors;
+
+            /* store the local resources for that node */
+            if (1 == dname.vpid || orte_hetero_nodes) {
+                hwloc_topology_t topo, t;
+                int i;
+                bool found;
+                
+                idx=1;
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
+                    ORTE_ERROR_LOG(rc);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
+                }
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                     "%s RECEIVED TOPOLOGY FROM NODE %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
+                if (10 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
+                    opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
+                }
+                /* do we already have this topology from some other node? */
+                found = false;
+                for (i=0; i < orte_node_topologies->size; i++) {
+                    if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, i))) {
+                        continue;
+                    }
+                    if (OPAL_EQUAL == opal_dss.compare(topo, t, OPAL_HWLOC_TOPO)) {
+                        /* yes - just point to it */
+                        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                             "%s TOPOLOGY MATCHES - DISCARDING",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                        found = true;
+                        node->topology = t;
+                        hwloc_topology_destroy(topo);
+                        break;
+                    }
+                }
+                if (!found) {
+                    /* nope - add it */
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                         "%s NEW TOPOLOGY - ADDING",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    
+                    opal_pointer_array_add(orte_node_topologies, topo);
+                    node->topology = topo;
+                }
+            }
+            /* unpack any coprocessors */
             idx=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 orted_failed_launch = true;
                 goto CLEANUP;
             }
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                 "%s RECEIVED TOPOLOGY FROM NODE %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
-            if (10 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
-                opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
+            if (NULL != coprocessors) {
+                node->coprocessors = opal_argv_split(coprocessors, ',');
+                node->coprocessor_host = true;
+                free(coprocessors);
+                orte_coprocessors_detected = true;
             }
-            /* do we already have this topology from some other node? */
-            found = false;
-            for (i=0; i < orte_node_topologies->size; i++) {
-                if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, i))) {
-                    continue;
-                }
-                if (OPAL_EQUAL == opal_dss.compare(topo, t, OPAL_HWLOC_TOPO)) {
-                    /* yes - just point to it */
-                    OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                         "%s TOPOLOGY MATCHES - DISCARDING",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                    found = true;
-                    node->topology = t;
-                    hwloc_topology_destroy(topo);
-                    break;
-                }
+            /* see if this daemon is on a coprocessor */
+            idx=1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
             }
-            if (!found) {
-                /* nope - add it */
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                     "%s NEW TOPOLOGY - ADDING",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                    
-                opal_pointer_array_add(orte_node_topologies, topo);
-                node->topology = topo;
+            if (NULL != coprocessors) {
+                if (NULL != node->coprocessors) {
+                    /* this is not allowed - a coprocessor cannot be host
+                     * to another coprocessor at this time
+                     */
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+                    orted_failed_launch = true;
+                    free(coprocessors);
+                    goto CLEANUP;
+                }
+                node->coprocessors = opal_argv_split(coprocessors, ',');
+                free(coprocessors);
+                orte_coprocessors_detected = true;
             }
         }
 #endif
