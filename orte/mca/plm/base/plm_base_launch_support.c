@@ -33,6 +33,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 #include <ctype.h>
 
+#include "opal/hash_string.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
@@ -330,13 +331,12 @@ void orte_plm_base_setup_job_complete(int fd, short args, void *cbdata)
 
 void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
 {
-#if OPAL_ENABLE_FT_CR == 1
-    int rc;
-#endif
     orte_job_t *jdata, *jdatorted;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    int i, j, k;
-    orte_node_t *node, *nptr;
+    int i, rc;
+    orte_node_t *node;
+    uint32_t h;
+    orte_vpid_t *vptr;
 
     /* if we don't want to launch the apps, now is the time to leave */
     if (orte_do_not_launch) {
@@ -417,41 +417,32 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
      * to detect their hosts - but not today.
      */
     if (orte_coprocessors_detected) {
-        /* cycle thru the nodes looking for hosts with
-         * coprocessors present
-         */
+        /* cycle thru the nodes looking for coprocessors */
         for (i=0; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
             }
-            if (!node->coprocessor_host) {
+            /* if we don't have a serial number, then we are not a coprocessor */
+            if (NULL == node->serial_number) {
+                /* set our hostid to our own daemon vpid */
+                node->hostid = node->daemon->name.vpid;
                 continue;
             }
-            /* set our hostid to our own daemon vpid */
-            node->hostid = node->daemon->name.vpid;
-            /* cycle thru our list of coprocessors */
-            for (j=0; NULL != node->coprocessors[j]; j++) {
-                /* search the list of nodes for this coprocessor - yes,
-                 * this search stinks for scalability, but we'll have to
-                 * find a more scalable method at some point
-                 */
-                for (k=0; k < orte_node_pool->size; k++) {
-                    if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, k))) {
-                        continue;
-                    }
-                    if (nptr->coprocessor_host || NULL == nptr->coprocessors) {
-                        continue;
-                    }
-                    if (0 == strcmp(node->coprocessors[j], nptr->coprocessors[0])) {
-                        /* found it - record the hostid as the vpid of the
-                         * daemon on the host
-                         */
-                        nptr->hostid = node->daemon->name.vpid;
-                        break;
-                    }
-                }
+            /* if we have a serial number, then we are a coprocessor - so
+             * compute our hash and lookup our hostid
+             */
+            OPAL_HASH_STR(node->serial_number, h);
+            if (OPAL_SUCCESS != (rc = opal_hash_table_get_value_uint32(orte_coprocessors, h,
+                                                                       (void**)&vptr))) {
+                ORTE_ERROR_LOG(rc);
+                break;
             }
+            node->hostid = (*vptr);
         }
+    }
+    /* done with the coprocessor mapping at this time */
+    if (NULL != orte_coprocessors) {
+        OBJ_RELEASE(orte_coprocessors);
     }
 
     /* set the job state to the next position */
@@ -675,6 +666,8 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     orte_job_t *jdata;
     orte_process_name_t dname;
     opal_buffer_t *relay;
+    char *coprocessors, **sns;
+    uint32_t h;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
@@ -821,8 +814,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
 
 #if OPAL_HAVE_HWLOC
         {
-            char *coprocessors;
-
             /* store the local resources for that node */
             if (1 == dname.vpid || orte_hetero_nodes) {
                 hwloc_topology_t topo, t;
@@ -868,43 +859,57 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     node->topology = topo;
                 }
             }
-            /* unpack any coprocessors */
-            idx=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                orted_failed_launch = true;
-                goto CLEANUP;
-            }
-            if (NULL != coprocessors) {
-                node->coprocessors = opal_argv_split(coprocessors, ',');
-                node->coprocessor_host = true;
-                free(coprocessors);
-                orte_coprocessors_detected = true;
-            }
-            /* see if this daemon is on a coprocessor */
-            idx=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                orted_failed_launch = true;
-                goto CLEANUP;
-            }
-            if (NULL != coprocessors) {
-                if (NULL != node->coprocessors) {
-                    /* this is not allowed - a coprocessor cannot be host
-                     * to another coprocessor at this time
-                     */
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
-                    orted_failed_launch = true;
-                    free(coprocessors);
-                    goto CLEANUP;
-                }
-                node->coprocessors = opal_argv_split(coprocessors, ',');
-                free(coprocessors);
-                orte_coprocessors_detected = true;
-            }
         }
 #endif
         
+        /* unpack any coprocessors */
+        idx=1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        if (NULL != coprocessors) {
+            /* init the hash table, if necessary */
+            if (NULL == orte_coprocessors) {
+                orte_coprocessors = OBJ_NEW(opal_hash_table_t);
+                opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
+            }
+            /* separate the serial numbers of the coprocessors
+             * on this host
+             */
+            sns = opal_argv_split(coprocessors, ',');
+            for (idx=0; NULL != sns[idx]; idx++) {
+                /* compute the hash */
+                OPAL_HASH_STR(sns[idx], h);
+                /* mark that this coprocessor is hosted by this node */
+                opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&node->daemon->name.vpid);
+            }
+            opal_argv_free(sns);
+            free(coprocessors);
+            orte_coprocessors_detected = true;
+        }
+        /* see if this daemon is on a coprocessor */
+        idx=1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        if (NULL != coprocessors) {
+            if (NULL != node->serial_number) {
+                /* this is not allowed - a coprocessor cannot be host
+                 * to another coprocessor at this time
+                 */
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+                orted_failed_launch = true;
+                free(coprocessors);
+                goto CLEANUP;
+            }
+            node->serial_number = coprocessors;
+            orte_coprocessors_detected = true;
+        }
+
     CLEANUP:
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch %s for daemon %s at contact %s",

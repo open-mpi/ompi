@@ -33,6 +33,7 @@
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/dss/dss.h"
@@ -69,6 +70,7 @@ char *orte_local_cpu_type = NULL;
 char *orte_local_cpu_model = NULL;
 char *orte_basename = NULL;
 bool orte_coprocessors_detected = false;
+opal_hash_table_t *orte_coprocessors;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -819,8 +821,7 @@ static void orte_node_construct(orte_node_t* node)
     node->index = -1;
     node->name = NULL;
     node->alias = NULL;
-    node->coprocessors = NULL;
-    node->coprocessor_host = false;
+    node->serial_number = NULL;
     node->hostid = ORTE_VPID_INVALID;
     node->daemon = NULL;
     node->daemon_launched = false;
@@ -864,16 +865,16 @@ static void orte_node_destruct(orte_node_t* node)
         node->name = NULL;
     }
 
+    if (NULL != node->serial_number) {
+        free(node->serial_number);
+        node->serial_number = NULL;
+    }
+
     if (NULL != node->alias) {
         opal_argv_free(node->alias);
         node->alias = NULL;
     }
     
-    if (NULL != node->coprocessors) {
-        opal_argv_free(node->coprocessors);
-        node->coprocessors = NULL;
-    }
-        
     if (NULL != node->daemon) {
         node->daemon->node = NULL;
         OBJ_RELEASE(node->daemon);
