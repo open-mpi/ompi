@@ -722,10 +722,23 @@ int orte_daemon(int argc, char *argv[])
         }
 
 #if OPAL_HAVE_HWLOC
-        /* add the local topology */
-        if (NULL != opal_hwloc_topology &&
-            (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+        {
+            char *coprocessors;
+            /* add the local topology */
+            if (NULL != opal_hwloc_topology &&
+                (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+                    ORTE_ERROR_LOG(ret);
+                }
+            }
+            /* detect and add any coprocessors */
+            coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(ret);
+            }
+            /* see if I am on a coprocessor */
+            coprocessors = opal_hwloc_base_check_on_coprocessor();
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
             }
         }

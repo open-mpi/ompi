@@ -389,8 +389,26 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 #if OPAL_HAVE_HWLOC
-    /* add it to the array of known topologies */
-    opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
+    {
+        char *coprocessors;
+        /* add it to the array of known topologies */
+        opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
+        /* detect and add any coprocessors */
+        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+        if (NULL != coprocessors) {
+            node->coprocessors = opal_argv_split(coprocessors, ',');
+            node->coprocessor_host = true;
+            free(coprocessors);
+            orte_coprocessors_detected = true;
+        }
+        /* see if I am on a coprocessor */
+        coprocessors = opal_hwloc_base_check_on_coprocessor();
+        if (NULL != coprocessors) {
+            node->coprocessors = opal_argv_split(coprocessors, ',');
+            free(coprocessors);
+            orte_coprocessors_detected = true;
+        }
+    }
 #endif
 
     /* create and store a proc object for us */

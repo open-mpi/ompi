@@ -56,6 +56,7 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define OMPI_PROCESS_NAME_NTOH ORTE_PROCESS_NAME_NTOH
 #define OMPI_RTE_NODE_ID  ORTE_DB_DAEMON_VPID
 #define OMPI_RTE_MY_NODEID ORTE_PROC_MY_DAEMON->vpid
+#define OMPI_RTE_HOST_ID ORTE_DB_HOSTID
 
 /* Collective objects and operations */
 #define ompi_rte_collective_t orte_grpcomm_collective_t

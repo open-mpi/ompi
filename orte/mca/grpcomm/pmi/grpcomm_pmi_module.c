@@ -252,7 +252,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 		/* if we share a node, but we don't know anything more, then
 		 * mark us as on the node as this is all we know
 		 */
-		locality = OPAL_PROC_ON_NODE;
+                locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
 	    } else {
 		/* determine relative location on our node */
 		locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,

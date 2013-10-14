@@ -68,6 +68,7 @@ bool orted_spin_flag = false;
 char *orte_local_cpu_type = NULL;
 char *orte_local_cpu_model = NULL;
 char *orte_basename = NULL;
+bool orte_coprocessors_detected = false;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;
@@ -815,9 +816,12 @@ OBJ_CLASS_INSTANCE(orte_job_t,
 
 static void orte_node_construct(orte_node_t* node)
 {
+    node->index = -1;
     node->name = NULL;
     node->alias = NULL;
-    node->index = -1;
+    node->coprocessors = NULL;
+    node->coprocessor_host = false;
+    node->hostid = ORTE_VPID_INVALID;
     node->daemon = NULL;
     node->daemon_launched = false;
     node->location_verified = false;
@@ -865,6 +869,11 @@ static void orte_node_destruct(orte_node_t* node)
         node->alias = NULL;
     }
     
+    if (NULL != node->coprocessors) {
+        opal_argv_free(node->coprocessors);
+        node->coprocessors = NULL;
+    }
+        
     if (NULL != node->daemon) {
         node->daemon->node = NULL;
         OBJ_RELEASE(node->daemon);
