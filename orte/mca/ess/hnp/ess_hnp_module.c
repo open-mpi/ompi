@@ -34,6 +34,8 @@
 #include <unistd.h>
 #endif
 
+#include "opal/hash_string.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/db/base/base.h"
 #include "opal/mca/event/event.h"
@@ -130,14 +132,15 @@ static void setup_sighandler(int signal, opal_event_t *ev,
 
 static int rte_init(void)
 {
-    int ret;
+    int ret, idx;
     char *error = NULL;
     char *contact_path, *jobfam_dir;
     orte_job_t *jdata;
     orte_node_t *node;
     orte_proc_t *proc;
     orte_app_context_t *app;
-
+    char *coprocessors, **sns;
+    uint32_t h;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -389,26 +392,8 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 #if OPAL_HAVE_HWLOC
-    {
-        char *coprocessors;
-        /* add it to the array of known topologies */
-        opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
-        /* detect and add any coprocessors */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
-        if (NULL != coprocessors) {
-            node->coprocessors = opal_argv_split(coprocessors, ',');
-            node->coprocessor_host = true;
-            free(coprocessors);
-            orte_coprocessors_detected = true;
-        }
-        /* see if I am on a coprocessor */
-        coprocessors = opal_hwloc_base_check_on_coprocessor();
-        if (NULL != coprocessors) {
-            node->coprocessors = opal_argv_split(coprocessors, ',');
-            free(coprocessors);
-            orte_coprocessors_detected = true;
-        }
-    }
+    /* add it to the array of known topologies */
+    opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
 #endif
 
     /* create and store a proc object for us */
@@ -447,6 +432,35 @@ static int rte_init(void)
     jdata->state = ORTE_JOB_STATE_RUNNING;
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
+
+    /* detect and add any coprocessors */
+    coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+    if (NULL != coprocessors) {
+        /* init the hash table, if necessary */
+        if (NULL == orte_coprocessors) {
+            orte_coprocessors = OBJ_NEW(opal_hash_table_t);
+            opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
+        }
+        /* separate the serial numbers of the coprocessors
+         * on this host
+         */
+        sns = opal_argv_split(coprocessors, ',');
+        for (idx=0; NULL != sns[idx]; idx++) {
+            /* compute the hash */
+            OPAL_HASH_STR(sns[idx], h);
+            /* mark that this coprocessor is hosted by this node */
+            opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
+        }
+        opal_argv_free(sns);
+        free(coprocessors);
+        orte_coprocessors_detected = true;
+    }
+    /* see if I am on a coprocessor */
+    coprocessors = opal_hwloc_base_check_on_coprocessor();
+    if (NULL != coprocessors) {
+        node->serial_number = coprocessors;
+        orte_coprocessors_detected = true;
+    }
 
     /*
      * Routed system

@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #endif
 
+#include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_ring_buffer.h"
@@ -304,15 +305,10 @@ typedef struct {
     orte_std_cntr_t index;
     /** String node name */
     char *name;
+    /* serial number - used if node is a coprocessor */
+    char *serial_number;
     /* argv-like array of aliases for this node */
     char **alias;
-    /* argv-like array of co-processor id's on this node */
-    char **coprocessors;
-    /* whether or not this node hosts coprocessors - will
-     * be true if the coprocessor array contains hosted
-     * processors, false if this node itself is a coprocessor
-     */
-    bool coprocessor_host;
     /* if this "node" is a coprocessor being hosted on a
      * different node, then we need to know the id of our
      * "host" to help any procs on us to determine locality
@@ -605,6 +601,7 @@ ORTE_DECLSPEC extern char *orte_local_cpu_type;
 ORTE_DECLSPEC extern char *orte_local_cpu_model;
 ORTE_DECLSPEC extern char *orte_basename;
 ORTE_DECLSPEC extern bool orte_coprocessors_detected;
+ORTE_DECLSPEC extern opal_hash_table_t *orte_coprocessors;
 
 /* ORTE OOB port flags */
 ORTE_DECLSPEC extern bool orte_static_ports;
