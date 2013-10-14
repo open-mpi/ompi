@@ -44,7 +44,9 @@
 
 #include "ompi/runtime/ompi_info_support.h"
 
+/*
 #include "oshmem/include/oshmem/frameworks.h"
+*/
 #include "oshmem/include/oshmem/constants.h"
 #include "oshmem/tools/oshmem_info/oshmem_info.h"
 #include "oshmem/runtime/oshmem_info_support.h"
