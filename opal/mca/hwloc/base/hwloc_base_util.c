@@ -1481,14 +1481,14 @@ char* opal_hwloc_base_check_on_coprocessor(void)
     FILE *fp;
     char *t, *cptr, *e, *cp=NULL;
 
-    if (OPAL_SUCCESS != opal_os_dirpath_access("/tmp/elog", S_IRUSR)) {
+    if (OPAL_SUCCESS != opal_os_dirpath_access("/proc/elog", S_IRUSR)) {
         /* if the file isn't there, or we don't have permission
          * to read it, then we are not on a coprocessor so far
          * as we can tell
          */
         return NULL;
     }
-    if (NULL == (fp = fopen("/tmp/elog", "r"))) {
+    if (NULL == (fp = fopen("/proc/elog", "r"))) {
         /* nothing we can do */
         return NULL;
     }
