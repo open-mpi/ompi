@@ -11,6 +11,5 @@ enable_orterun_prefix_by_default=yes
 enable_debug_symbols=yes
 with_openib=yes
 with_verbs=yes
-with_pmi=yes
 with_devel_headers=yes
 with_oshmem=yes
