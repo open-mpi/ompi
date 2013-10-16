@@ -355,6 +355,7 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 #if OPAL_HAVE_HWLOC
+    node->topology = opal_hwloc_topology;
     /* add it to the array of known topologies */
     opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
 #endif
