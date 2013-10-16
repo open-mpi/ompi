@@ -921,7 +921,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
 
 #if OMPI_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support. */
-    if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate)) {
+    if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
 #endif /* OMPI_CUDA_SUPPORT */
@@ -1004,10 +1004,12 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
         mca_btl_smcuda_component_progress();
     }
 
+#if OMPI_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support */
-    if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate)) {
+    if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
+#endif /* OMPI_CUDA_SUPPORT */
 
     /* available header space */
     frag->hdr->len = frag->segment.base.seg_len;

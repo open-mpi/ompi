@@ -170,6 +170,8 @@ static int smcuda_register(void)
     } else {
         mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
     }
+    mca_btl_smcuda_param_register_int("use_cuda_ipc", 1, &mca_btl_smcuda_component.use_cuda_ipc);
+    mca_btl_smcuda_param_register_int("use_cuda_ipc_same_gpu", 1, &mca_btl_smcuda_component.use_cuda_ipc_same_gpu);
     mca_btl_smcuda_param_register_int("cuda_ipc_verbose", 0, &mca_btl_smcuda_component.cuda_ipc_verbose);
     mca_btl_smcuda_component.cuda_ipc_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_btl_smcuda_component.cuda_ipc_output, mca_btl_smcuda_component.cuda_ipc_verbose);
@@ -734,12 +736,36 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
                 return;
             }
 
-            /* Check for IPC support between devices. If the CUDA API call fails, then
-             * just move endpoint into bad state.  No need to send a reply. */
-            res = mca_common_cuda_device_can_access_peer(&ipcaccess, mydevnum, ctrlhdr.cudev);
-            if (0 != res) {
-                endpoint->ipcstate = IPC_BAD;
-                return;
+            /* Check for IPC support between devices. If they are the
+             * same device and use_cuda_ipc_same_gpu is 1 (default),
+             * then assume CUDA IPC is possible.  This could be a
+             * device running in DEFAULT mode or running under MPS.
+             * Otherwise, check peer acces to determine CUDA IPC
+             * support.  If the CUDA API call fails, then just move
+             * endpoint into bad state.  No need to send a reply. */
+            if (mydevnum == ctrlhdr.cudev) {
+                if (mca_btl_smcuda_component.use_cuda_ipc_same_gpu) {
+                    ipcaccess = 1;
+                } else {
+                    opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                        "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                                        "peerdev=%d --> Access is disabled by btl_smcuda_use_cuda_ipc_same_gpu",
+                                        endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank,
+                                        ctrlhdr.cudev);
+                    endpoint->ipcstate = IPC_BAD;
+                    return;
+                }
+            } else {
+                res = mca_common_cuda_device_can_access_peer(&ipcaccess, mydevnum, ctrlhdr.cudev);
+                if (0 != res) {
+                    opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                        "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                                        "peerdev=%d --> Access is disabled because peer check failed with err=%d",
+                                        endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank,
+                                        ctrlhdr.cudev, res);
+                    endpoint->ipcstate = IPC_BAD;
+                    return;
+                }
             }
 
             assert(endpoint->peer_smp_rank == frag->hdr->my_smp_rank);
