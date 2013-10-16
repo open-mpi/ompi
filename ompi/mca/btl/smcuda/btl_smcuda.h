@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -205,6 +205,8 @@ struct mca_btl_smcuda_component_t {
 #if OMPI_CUDA_SUPPORT
     int cuda_ipc_verbose;
     int cuda_ipc_output;
+    int use_cuda_ipc;
+    int use_cuda_ipc_same_gpu;
 #endif /* OMPI_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_component_t mca_btl_smcuda_component_t;
