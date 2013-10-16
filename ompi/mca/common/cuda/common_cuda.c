@@ -231,6 +231,9 @@ int mca_common_cuda_stage_one_init(void)
     int errsize;
     bool stage_one_init_passed = false;
 
+    if (true == stage_one_init_complete) {
+        return 0;
+    }
     stage_one_init_complete = true;
 
     /* Set different levels of verbosity in the cuda related code. */
