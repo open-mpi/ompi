@@ -9,7 +9,9 @@
 
 headers += \
 	oshmem/constants.h \
+        oshmem/frameworks.h \
 	oshmem/types.h
 
 nodist_headers += \
 	oshmem/version.h
+
