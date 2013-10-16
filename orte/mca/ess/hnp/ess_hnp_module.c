@@ -355,7 +355,6 @@ static int rte_init(void)
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 #if OPAL_HAVE_HWLOC
-    node->topology = opal_hwloc_topology;
     /* add it to the array of known topologies */
     opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
 #endif
@@ -475,7 +474,14 @@ static int rte_init(void)
         error = "orte_rmaps_base_find_available";
         goto error;
     }
-    
+#if OPAL_HAVE_HWLOC
+    /* if a topology file was given, then the rmaps framework open
+     * will have reset our topology. Ensure we always get the right
+     * one by setting our node topology afterwards
+     */
+    node->topology = opal_hwloc_topology;
+#endif
+
     /* Open/select the odls */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_odls_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
