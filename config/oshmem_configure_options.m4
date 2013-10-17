@@ -79,26 +79,21 @@ else
 fi
 AM_CONDITIONAL(OSHMEM_PROFILING, test "$oshmem_profiling_support" = 1)
 
-# Whether to build the OpenShmem fortran support or not For the
-# moment, use the same value as was derived from --enable-mpi-fortra.
-# *This seems wrong*; someone should somehow unify these two
-# options... but the implications are complicated.
 #
-# Option 1: make --enable-fortran that governs both MPI and shmem.
-# This has 2 implications:
-# - --enable-mpi-fortran needs to be maintained for at least the
-#   1.7/1.8 series
-# - what to do with --enable-mpi-cxx?  It should be made consistent --
-#   so make it --enable-cxx?
-# 
-# Option 2: make separate --enable-oshmem-fortran.  This seems sucky,
-# though, because oshmem Fortran depends on a lot of MPI Fortran
-# infrastructure.  If it isin't there, then oshmem Fortran can't
-# built.
+# Fortran bindings
 #
-# Option 3: ...? (something better than option 1/2?)
+AC_ARG_ENABLE(oshmem-fortran,
+AC_HELP_STRING([--enable-oshmem-fortran],
+               [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
+if test "$enable_oshmem_fortran" != "no"; then
+    AC_MSG_RESULT([yes])
+    OSHMEM_WANT_FORTRAN_BINDINGS=1
+else
+    AC_MSG_RESULT([no])
+    OSHMEM_WANT_FORTRAN_BINDINGS=0
+fi
+
 AC_MSG_CHECKING([if want to build SHMEM fortran bindings])
-OSHMEM_WANT_FORTRAN_BINDINGS=$OMPI_WANT_FORTRAN_BINDINGS
 AM_CONDITIONAL(OSHMEM_WANT_FORTRAN_BINDINGS,
     [test $OSHMEM_WANT_FORTRAN_BINDINGS -eq 1])
 AS_IF([test $OSHMEM_WANT_FORTRAN_BINDINGS -eq 1],
