@@ -1,1 +1,1 @@
-../../../../opal/config/opal_check_visibility.m4
+../../../../config/opal_check_visibility.m4
