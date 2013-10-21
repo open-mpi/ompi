@@ -329,65 +329,11 @@ static int fca_open(void)
 
 static int fca_close(void)
 {
-	if(mca_coll_fca_component.fca_enable_cache) {
-		
-		mca_coll_fca_c_cache_item_t *item;
-		while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(&mca_coll_fca_component.c_cache))) {
-			OBJ_RELEASE(item);
-		}
+    FCA_VERBOSE(2, "==>");
 
-	if(mca_coll_fca_component.fca_enable_hash && mca_coll_fca_component.fca_enable_hash) {
-		int i = 0;
-		mca_coll_fca_c_cache_item_t *item;
-		for(i = 0; i< mca_coll_fca_component.fca_hash_size; i++) {
-			
-			if(mca_coll_fca_component.fca_hash[i] != NULL) {
-				
-				while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(mca_coll_fca_component.fca_hash[i]))) {
-					OBJ_RELEASE(item);
-				}
+    if (!mca_coll_fca_component.fca_context)
+        return OMPI_SUCCESS;
 
-				OBJ_RELEASE(mca_coll_fca_component.fca_hash[i]);
-
-			}
-		}
-		free(mca_coll_fca_component.fca_hash);
-	} 
-
-	if(mca_coll_fca_component.fca_verbose == 10) {
-		char file_name[30];
-		sprintf(file_name, "rank_%d.txt", ORTE_PROC_MY_NAME->vpid);
-		FILE *fileHandle;
-		fileHandle = fopen(file_name,"w");
-		fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_total_work_time);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_cache_hit);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_cache_miss);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_hash_hit);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_hash_miss);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_max_deep_in_cache);
-		fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_work_time_parallel);
-		fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_work_time_sequency);
-		fclose(fileHandle);
-	}
-
-	
-	FCA_VERBOSE(10,"fca_total_work_time %f\n", mca_coll_fca_component.fca_total_work_time);
-	
-	FCA_VERBOSE(10,"fca_cache_hit %d\n", mca_coll_fca_component.fca_cache_hit);
-	
-	FCA_VERBOSE(10,"fca_cache_miss %d\n", mca_coll_fca_component.fca_cache_miss);
-	
-	FCA_VERBOSE(10,"fca_hash_hit %d\n", mca_coll_fca_component.fca_hash_hit);
-	
-	FCA_VERBOSE(10,"fca_hash_miss %d\n", mca_coll_fca_component.fca_hash_miss);
-	
-	FCA_VERBOSE(10,"fca_max_deep %d\n", mca_coll_fca_component.fca_max_deep_in_cache);
-
-	FCA_VERBOSE(2, "==>");
-
-	if (!mca_coll_fca_component.fca_context)
-		return OMPI_SUCCESS;
-
-	mca_coll_fca_close_fca_lib();
-	return OMPI_SUCCESS;
+    mca_coll_fca_close_fca_lib();
+    return OMPI_SUCCESS;
 }
