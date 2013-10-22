@@ -17,9 +17,9 @@ AM_CPPFLAGS = $(common_ugni_CPPFLAGS)
 
 if MCA_BUILD_ompi_common_ugni_DSO
 component_noinst =
-component_install = mca_common_ugni.la
+component_install = libmca_common_ugni.la
 else
-component_noinst = libmca_common_ugni.la
+component_noinst = libmca_common_ugni_noinst.la
 component_install =
 endif
 
@@ -31,15 +31,15 @@ ugni_SOURCES = common_ugni.c \
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
-nodist_mca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-mca_common_ugni_la_LIBADD = $(common_ugni_LIBS) 
-mca_common_ugni_la_LDFLAGS = \
+libmca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
+nodist_libmca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
+libmca_common_ugni_la_LIBADD = $(common_ugni_LIBS) 
+libmca_common_ugni_la_LDFLAGS = \
         -version-info $(libmca_common_ugni_so_version) \
         $(common_ugni_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
-nodist_libmca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-libmca_common_ugni_la_LIBADD = $(common_ugni_LIBS)
-libmca_common_ugni_la_LDFLAGS = -module -avoid-version $(common_ugni_LDFLAGS)
+libmca_common_ugni_noinst_la_SOURCES = $(headers) $(ugni_SOURCES)
+nodist_libmca_common_ugni_noinst_la_SOURCES = $(ugni_nodist_SOURCES)
+libmca_common_ugni_noinst_la_LIBADD = $(common_ugni_LIBS)
+libmca_common_ugni_noinst_la_LDFLAGS = -module -avoid-version $(common_ugni_LDFLAGS)
