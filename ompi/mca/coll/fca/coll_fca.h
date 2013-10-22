@@ -37,7 +37,7 @@
 #define FCA_CONVERTOR_CONVERTOR_PACK opal_convertor_pack
 
 #define FCA_DT_MAX_PREDEFINED     OMPI_DATATYPE_MAX_PREDEFINED
-#define FCA_DT_EXTENT	          ompi_datatype_type_extent
+#define FCA_DT_EXTENT             ompi_datatype_type_extent
 #define FCA_DT_GET_TRUE_EXTENT    ompi_datatype_get_true_extent
 #define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(__dtype, __count) \
                                   ompi_datatype_is_contiguous_memory_layout(__dtype, __count)
@@ -52,7 +52,7 @@
 #define FCA_CONVERTOR_CONVERTOR_PACK ompi_convertor_pack
 
 #define FCA_DT_MAX_PREDEFINED     DT_MAX_PREDEFINED
-#define FCA_DT_EXTENT	          ompi_ddt_type_extent
+#define FCA_DT_EXTENT             ompi_ddt_type_extent
 #define FCA_DT_GET_TRUE_EXTENT    ompi_ddt_get_true_extent
 #define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(__dtype, __count) \
                                   ompi_ddt_is_contiguous_memory_layout(__dtype, __count)
@@ -168,44 +168,44 @@ struct mca_coll_fca_component_t {
     /** MCA parameter: FCA NP */
     int   fca_np;
 
-	/** MCA parameter: Enable FCA comm cache */
-	int   fca_enable_cache;
+    /** MCA parameter: Enable FCA comm cache */
+    int   fca_enable_cache;
 
-	/** MCA parameter: Enable parallel hash calc */
-	int fca_parallel_hash_calc;
+    /** MCA parameter: Enable parallel hash calc */
+    int fca_parallel_hash_calc;
 
-	/** Some statistics counters */
-	double fca_total_work_time;
-	double fca_work_time_parallel;
-	double fca_work_time_sequency;
-	int fca_cache_hit;
-	int fca_cache_miss;
-	int fca_hash_hit;
-	int fca_hash_miss;
-	int fca_max_deep_in_cache;
+    /** Some statistics counters */
+    double fca_total_work_time;
+    double fca_work_time_parallel;
+    double fca_work_time_sequency;
+    int fca_cache_hit;
+    int fca_cache_miss;
+    int fca_hash_hit;
+    int fca_hash_miss;
+    int fca_max_deep_in_cache;
 
-	/** MCA parameter: Enable hash for cache */
-	int fca_enable_hash;
+    /** MCA parameter: Enable hash for cache */
+    int fca_enable_hash;
 
     /* FCA global stuff */
     fca_t *fca_context;                                 /* FCA context handle */
     mca_coll_fca_dtype_info_t fca_dtypes[FCA_DT_MAX_PREDEFINED]; /* FCA dtype translation */
     mca_coll_fca_op_info_t fca_reduce_ops[FCA_MAX_OPS]; /* FCA op translation */
 
-	/* communicator cache */
-	opal_list_t c_cache;
+    /* communicator cache */
+    opal_list_t c_cache;
 
-	/* pointer to primes */
-	int *fca_primes;
+    /* pointer to primes */
+    int *fca_primes;
 
-	/** MCA parameter hash table size*/
-	int fca_hash_size;
-	
-	/** MCA parameter hash table size*/
-	int fca_number_of_primes;
+    /** MCA parameter hash table size*/
+    int fca_hash_size;
+    
+    /** MCA parameter hash table size*/
+    int fca_number_of_primes;
 
-	/* Pointer to hash  */
-	opal_list_t **fca_hash;
+    /* Pointer to hash  */
+    opal_list_t **fca_hash;
 
 };
 typedef struct mca_coll_fca_component_t mca_coll_fca_component_t;
@@ -213,18 +213,18 @@ typedef struct mca_coll_fca_component_t mca_coll_fca_component_t;
 OMPI_MODULE_DECLSPEC extern mca_coll_fca_component_t mca_coll_fca_component;
 
 struct mca_coll_fca_comm_wrap_t {
-	opal_object_t super;
-	fca_comm_t *fca_comm;
-	int comm_id, rank;
+    opal_object_t super;
+    fca_comm_t *fca_comm;
+    int comm_id, rank;
 };
 typedef struct mca_coll_fca_comm_wrap_t mca_coll_fca_comm_wrap_t;
 OBJ_CLASS_DECLARATION(mca_coll_fca_comm_wrap_t);
 
 struct mca_coll_fca_c_cache_item_t {
-	opal_list_item_t super;
-	int size;
-	ompi_communicator_t *comm;
-	mca_coll_fca_comm_wrap_t *fca_comm_wrap;
+    opal_list_item_t super;
+    int size;
+    ompi_communicator_t *comm;
+    mca_coll_fca_comm_wrap_t *fca_comm_wrap;
 };
 typedef struct mca_coll_fca_c_cache_item_t mca_coll_fca_c_cache_item_t;
 OBJ_CLASS_DECLARATION(mca_coll_fca_c_cache_item_t);
