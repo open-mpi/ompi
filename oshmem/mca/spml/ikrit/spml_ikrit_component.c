@@ -311,6 +311,11 @@ static int mca_spml_ikrit_component_fini(void)
     if (NULL != mca_spml_ikrit.mxm_ep) {
         mxm_ep_destroy(mca_spml_ikrit.mxm_ep);
     }
+
+    if(!mca_spml_ikrit.enabled)
+        return OSHMEM_SUCCESS; /* never selected.. return success.. */
+    mca_spml_ikrit.enabled = false;  /* not anymore */
+
     return OSHMEM_SUCCESS;
 }
 
