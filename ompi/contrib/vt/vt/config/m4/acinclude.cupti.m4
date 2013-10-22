@@ -24,7 +24,7 @@ AC_DEFUN([ACVT_CUPTI],
 		AC_HELP_STRING([--with-cupti-dir=CUPTIDIR],
 		[give the path for CUPTI, default: /usr]),
 	[CUPTIDIR="$withval/"],
-	[AS_IF([test x"$CUDATKDIR" != x], [CUPTIDIR="$CUDATKDIR/extras/CUPTI/"])])
+	[AS_IF([test x"$CUDATKDIR" != x], [CUPTIDIR="$CUDATKDIR"extras/CUPTI/])])
 
 	AC_ARG_WITH(cupti-inc-dir,
 		AC_HELP_STRING([--with-cupti-inc-dir=CUPTIINCDIR],
