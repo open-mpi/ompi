@@ -11,6 +11,8 @@
 
 #include "comm_request.h"
 
+#include "opal/include/opal/sys/atomic.h"
+
 opal_free_list_t ompi_comm_requests;
 opal_list_t ompi_comm_requests_active;
 opal_mutex_t ompi_comm_request_mutex;
@@ -89,10 +91,14 @@ int ompi_comm_request_schedule_append (ompi_comm_request_t *request, ompi_comm_r
 static int ompi_comm_request_progress (void)
 {
     ompi_comm_request_t *request, *next;
+    static int32_t progressing = 0;
 
-    if (opal_mutex_trylock (&ompi_comm_request_mutex)) {
+    /* don't allow re-entry */
+    if (opal_atomic_swap_32 (&progressing, 1)) {
         return 0;
     }
+
+    opal_mutex_lock (&ompi_comm_request_mutex);
 
     OPAL_LIST_FOREACH_SAFE(request, next, &ompi_comm_requests_active, ompi_comm_request_t) {
         int rc = OMPI_SUCCESS;
@@ -140,6 +146,7 @@ static int ompi_comm_request_progress (void)
     }
 
     opal_mutex_unlock (&ompi_comm_request_mutex);
+    progressing = 0;
 
     return 1;
 }
