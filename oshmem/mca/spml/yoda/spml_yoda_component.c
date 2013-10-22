@@ -112,13 +112,15 @@ mca_spml_yoda_component_init(int* priority,
     }
 
     /* We use BML/BTL and need to start it */
+    mca_spml_yoda.force_bml = false;
     if (!mca_bml_base_inited()) {
         SPML_VERBOSE(10, "starting bml\n");
-        if (OSHMEM_SUCCESS
+        if (OMPI_SUCCESS
                 != mca_bml_base_init(enable_progress_threads,
                                      enable_mpi_threads)) {
             return NULL ;
         }
+        mca_spml_yoda.force_bml = true;
     }
 
     mca_spml_yoda.n_active_puts = 0;
@@ -131,8 +133,13 @@ int mca_spml_yoda_component_fini(void)
     int rc;
 
     /* Shutdown BML */
-    if (OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
+    if ((mca_spml_yoda.force_bml == true) &&
+            (OMPI_SUCCESS != (rc = mca_bml.bml_finalize())))
         return rc;
+
+    if(!mca_spml_yoda.enabled)
+        return OSHMEM_SUCCESS; /* never selected.. return success.. */
+    mca_spml_yoda.enabled = false;  /* not anymore */
 
     OBJ_DESTRUCT(&mca_spml_yoda.lock);
 #if OSHMEM_WAIT_COMPLETION_DEBUG == 1
