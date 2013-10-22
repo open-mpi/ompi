@@ -7,7 +7,6 @@
   $HEADER$
  */
 #include "coll_fca.h"
-//#include "opal/mca/paffinity/paffinity.h"
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
