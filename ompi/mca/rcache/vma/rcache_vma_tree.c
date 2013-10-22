@@ -14,6 +14,7 @@
   * Copyright (c) 2006      Voltaire. All rights reserved.
   * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
   * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
   *
   * $COPYRIGHT$
   * 
@@ -546,7 +547,7 @@ void mca_rcache_vma_tree_dump_range(mca_rcache_vma_module_t *vma_rcache,
 
     opal_output(0, "Dumping rcache entries: %s", msg);
 
-    if(opal_list_get_size(&vma_rcache->vma_list) == 0) {
+    if(opal_list_is_empty(&vma_rcache->vma_list)) {
         opal_output(0, "  rcache is empty");
         return;
     }
@@ -568,8 +569,8 @@ void mca_rcache_vma_tree_dump_range(mca_rcache_vma_module_t *vma_rcache,
             continue;
         }
 
-        opal_output(0, "  vma: base=%p, bound=%p, size=%d, number of registrations=%d",
-                    (void *)vma->start, (void *)vma->end, (int)(vma->end - vma->start + 1),
+        opal_output(0, "  vma: base=%p, bound=%p, size=%lu, number of registrations=%d",
+                    (void *)vma->start, (void *)vma->end, vma->end - vma->start + 1,
                     (int)opal_list_get_size(&vma->reg_list));
         for(item = opal_list_get_first(&vma->reg_list);
                 item != opal_list_get_end(&vma->reg_list);
