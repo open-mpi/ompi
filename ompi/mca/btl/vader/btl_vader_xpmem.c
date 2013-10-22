@@ -12,6 +12,7 @@
 #include "ompi/mca/btl/vader/btl_vader.h"
 #include "opal/include/opal/align.h"
 #include "btl_vader_xpmem.h"
+#include "opal/mca/memchecker/base/base.h"
 
 /* largest address we can attach to using xpmem */
 #define VADER_MAX_ADDRESS ((uintptr_t)0x7ffffffff000)
@@ -89,6 +90,8 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
             return NULL;
         }
 
+        opal_memchecker_base_mem_defined (reg->alloc_base, bound - base);
+
         rcache->rcache_insert (rcache, reg, 0);
     }
 
@@ -107,6 +110,7 @@ void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_b
     opal_atomic_add (&reg->ref_count, -1);
     if (OPAL_UNLIKELY(0 == reg->ref_count && !(reg->flags & MCA_MPOOL_FLAGS_PERSIST))) {
         rcache->rcache_delete (rcache, reg);
+        opal_memchecker_base_mem_noaccess (reg->alloc_base, (uintptr_t)(reg->bound - reg->base));
         (void)xpmem_detach (reg->alloc_base);
         OBJ_RELEASE (reg);
     }
