@@ -150,6 +150,7 @@ static int ompi_proc_set_locality(ompi_proc_t *proc)
     }
     /* if we are on different nodes, then we are probably non-local */
     if (vpid != OMPI_RTE_MY_NODEID) {
+        locality = OPAL_PROC_NON_LOCAL;
 #ifdef OMPI_RTE_HOST_ID
         /* see if coprocessors were detected - if the hostid isn't
          * present, then no coprocessors were detected and we can
@@ -167,8 +168,6 @@ static int ompi_proc_set_locality(ompi_proc_t *proc)
                 locality = OPAL_PROC_NON_LOCAL;
             }
         }
-#else
-        locality = OPAL_PROC_NON_LOCAL;
 #endif
     } else {
 #if OPAL_HAVE_HWLOC
