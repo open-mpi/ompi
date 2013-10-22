@@ -1120,7 +1120,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     /* Make sure this is only run once */
     if (mca_coll_fca_component.fca_context) {
-    	return OMPI_SUCCESS;
+        return OMPI_SUCCESS;
     }
 
     fca_ver = FCA_API_CLEAR_MICRO(fca_get_version());
@@ -1165,8 +1165,8 @@ static void mca_coll_fca_close_fca_lib(void)
 {
     opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
     if (mca_coll_fca_component.fca_context) {
-    	fca_cleanup(mca_coll_fca_component.fca_context);
-    	mca_coll_fca_component.fca_context = NULL;
+        fca_cleanup(mca_coll_fca_component.fca_context);
+        mca_coll_fca_component.fca_context = NULL;
     }
 }
 
@@ -1317,55 +1317,55 @@ static int fca_register(void)
 
      mca_coll_fca_component.fca_enable_cache = 0;
      (void) mca_base_component_var_register(c, "enable_cache",
-			                               "[1|0|] Enable/Disable cache for fca comms",
+                                           "[1|0|] Enable/Disable cache for fca comms",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-										   &mca_coll_fca_component.fca_enable_cache); 
-	
+                                           &mca_coll_fca_component.fca_enable_cache); 
+    
      mca_coll_fca_component.fca_enable_hash = 0;
      (void) mca_base_component_var_register(c, "enable_hash",
-			                               "[1|0|] Enable/Disable hash for fca comms cache",
-										   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-										   OPAL_INFO_LVL_9,
-										   MCA_BASE_VAR_SCOPE_READONLY,
-										   &mca_coll_fca_component.fca_enable_hash);
+                                           "[1|0|] Enable/Disable hash for fca comms cache",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_enable_hash);
 
 
      mca_coll_fca_component.fca_parallel_hash_calc = 1;
      (void) mca_base_component_var_register(c, "parallel_hash_calc",
                                            "[1|0|] Enable/Disable parallel hash calc",
-										   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-										   OPAL_INFO_LVL_9,
-										   MCA_BASE_VAR_SCOPE_READONLY,
-										   &mca_coll_fca_component.fca_parallel_hash_calc); 
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_parallel_hash_calc); 
 
-     mca_coll_fca_component.fca_hash_size = 5096;	
+     mca_coll_fca_component.fca_hash_size = 5096;   
      (void) mca_base_component_var_register(c, "hash_size",
                                            "[integer] Length of hash table",
-										   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-										   OPAL_INFO_LVL_9,
-										   MCA_BASE_VAR_SCOPE_READONLY,
-										   &mca_coll_fca_component.fca_hash_size); 
-	
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_hash_size); 
+    
      mca_coll_fca_component.fca_number_of_primes = 1024;
      (void) mca_base_component_var_register(c, "number_of_primes",
                                            "[integer] Number of primes to use",
-										   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-										   OPAL_INFO_LVL_9,
-										   MCA_BASE_VAR_SCOPE_READONLY,
-										   &mca_coll_fca_component.fca_number_of_primes); 
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_fca_component.fca_number_of_primes); 
 
-	mca_coll_fca_component.fca_total_work_time = 0;
-	mca_coll_fca_component.fca_work_time_parallel = 0;
-	mca_coll_fca_component.fca_work_time_sequency = 0;
-	mca_coll_fca_component.fca_cache_hit = 0;
-	mca_coll_fca_component.fca_cache_miss = 0;
-	mca_coll_fca_component.fca_hash_hit = 0;
-	mca_coll_fca_component.fca_hash_miss = 0; 
-	mca_coll_fca_component.fca_max_deep_in_cache = 0; 
+    mca_coll_fca_component.fca_total_work_time = 0;
+    mca_coll_fca_component.fca_work_time_parallel = 0;
+    mca_coll_fca_component.fca_work_time_sequency = 0;
+    mca_coll_fca_component.fca_cache_hit = 0;
+    mca_coll_fca_component.fca_cache_miss = 0;
+    mca_coll_fca_component.fca_hash_hit = 0;
+    mca_coll_fca_component.fca_hash_miss = 0; 
+    mca_coll_fca_component.fca_max_deep_in_cache = 0; 
 
-	mca_coll_fca_component.fca_primes = mca_coll_fca_primes;
+    mca_coll_fca_component.fca_primes = mca_coll_fca_primes;
 
     return OMPI_SUCCESS;
 }
@@ -1379,88 +1379,88 @@ static int fca_open(void)
 
     mca_coll_fca_component.fca_context = NULL;
 
-	/* initialize the communicator cache */
-	if(mca_coll_fca_component.fca_enable_cache) {
-		OBJ_CONSTRUCT(&mca_coll_fca_component.c_cache, opal_list_t);
-	}
+    /* initialize the communicator cache */
+    if(mca_coll_fca_component.fca_enable_cache) {
+        OBJ_CONSTRUCT(&mca_coll_fca_component.c_cache, opal_list_t);
+    }
 
-	/* initialize hash table */
-	if(mca_coll_fca_component.fca_enable_hash && mca_coll_fca_component.fca_enable_hash) {
-		int i = 0;
-		mca_coll_fca_component.fca_hash = malloc(mca_coll_fca_component.fca_hash_size * sizeof(opal_list_t *));
-		for(i = 0; i< mca_coll_fca_component.fca_hash_size; i++) {
-			mca_coll_fca_component.fca_hash[i] = NULL;
-		}
-	} 
+    /* initialize hash table */
+    if(mca_coll_fca_component.fca_enable_hash && mca_coll_fca_component.fca_enable_hash) {
+        int i = 0;
+        mca_coll_fca_component.fca_hash = malloc(mca_coll_fca_component.fca_hash_size * sizeof(opal_list_t *));
+        for(i = 0; i< mca_coll_fca_component.fca_hash_size; i++) {
+            mca_coll_fca_component.fca_hash[i] = NULL;
+        }
+    } 
 
     return OMPI_SUCCESS;
 }
 
 static int fca_close(void)
 {
-	if(mca_coll_fca_component.fca_enable_cache) {
-		
-		mca_coll_fca_c_cache_item_t *item;
-		while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(&mca_coll_fca_component.c_cache))) {
-			OBJ_RELEASE(item);
-		}
+    if(mca_coll_fca_component.fca_enable_cache) {
+        
+        mca_coll_fca_c_cache_item_t *item;
+        while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(&mca_coll_fca_component.c_cache))) {
+            OBJ_RELEASE(item);
+        }
 
-		OBJ_DESTRUCT(&mca_coll_fca_component.c_cache);
-	}
+        OBJ_DESTRUCT(&mca_coll_fca_component.c_cache);
+    }
 
     
-	if(mca_coll_fca_component.fca_enable_hash && mca_coll_fca_component.fca_enable_hash) {
-		int i = 0;
-		mca_coll_fca_c_cache_item_t *item;
-		for(i = 0; i< mca_coll_fca_component.fca_hash_size; i++) {
-			
-			if(mca_coll_fca_component.fca_hash[i] != NULL) {
-				
-				while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(mca_coll_fca_component.fca_hash[i]))) {
-					OBJ_RELEASE(item);
-				}
+    if(mca_coll_fca_component.fca_enable_hash && mca_coll_fca_component.fca_enable_hash) {
+        int i = 0;
+        mca_coll_fca_c_cache_item_t *item;
+        for(i = 0; i< mca_coll_fca_component.fca_hash_size; i++) {
+            
+            if(mca_coll_fca_component.fca_hash[i] != NULL) {
+                
+                while(NULL != (item = (mca_coll_fca_c_cache_item_t *)opal_list_remove_first(mca_coll_fca_component.fca_hash[i]))) {
+                    OBJ_RELEASE(item);
+                }
 
-				OBJ_RELEASE(mca_coll_fca_component.fca_hash[i]);
+                OBJ_RELEASE(mca_coll_fca_component.fca_hash[i]);
 
-			}
-		}
-		free(mca_coll_fca_component.fca_hash);
-	} 
+            }
+        }
+        free(mca_coll_fca_component.fca_hash);
+    } 
 
-	if(mca_coll_fca_component.fca_verbose == 10) {
-		char file_name[30];
-		sprintf(file_name, "rank_%d.txt", ORTE_PROC_MY_NAME->vpid);
-		FILE *fileHandle;
-		fileHandle = fopen(file_name,"w");
-		fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_total_work_time);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_cache_hit);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_cache_miss);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_hash_hit);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_hash_miss);
-		fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_max_deep_in_cache);
-		fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_work_time_parallel);
-		fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_work_time_sequency);
-		fclose(fileHandle);
-	}
+    if(mca_coll_fca_component.fca_verbose == 10) {
+        char file_name[30];
+        sprintf(file_name, "rank_%d.txt", ORTE_PROC_MY_NAME->vpid);
+        FILE *fileHandle;
+        fileHandle = fopen(file_name,"w");
+        fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_total_work_time);
+        fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_cache_hit);
+        fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_cache_miss);
+        fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_hash_hit);
+        fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_hash_miss);
+        fprintf(fileHandle, "%d\n", mca_coll_fca_component.fca_max_deep_in_cache);
+        fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_work_time_parallel);
+        fprintf(fileHandle, "%f\n", mca_coll_fca_component.fca_work_time_sequency);
+        fclose(fileHandle);
+    }
 
-	
-	FCA_VERBOSE(10,"fca_total_work_time %f\n", mca_coll_fca_component.fca_total_work_time);
-	
-	FCA_VERBOSE(10,"fca_cache_hit %d\n", mca_coll_fca_component.fca_cache_hit);
-	
-	FCA_VERBOSE(10,"fca_cache_miss %d\n", mca_coll_fca_component.fca_cache_miss);
-	
-	FCA_VERBOSE(10,"fca_hash_hit %d\n", mca_coll_fca_component.fca_hash_hit);
-	
-	FCA_VERBOSE(10,"fca_hash_miss %d\n", mca_coll_fca_component.fca_hash_miss);
-	
-	FCA_VERBOSE(10,"fca_max_deep %d\n", mca_coll_fca_component.fca_max_deep_in_cache);
+    
+    FCA_VERBOSE(10,"fca_total_work_time %f\n", mca_coll_fca_component.fca_total_work_time);
+    
+    FCA_VERBOSE(10,"fca_cache_hit %d\n", mca_coll_fca_component.fca_cache_hit);
+    
+    FCA_VERBOSE(10,"fca_cache_miss %d\n", mca_coll_fca_component.fca_cache_miss);
+    
+    FCA_VERBOSE(10,"fca_hash_hit %d\n", mca_coll_fca_component.fca_hash_hit);
+    
+    FCA_VERBOSE(10,"fca_hash_miss %d\n", mca_coll_fca_component.fca_hash_miss);
+    
+    FCA_VERBOSE(10,"fca_max_deep %d\n", mca_coll_fca_component.fca_max_deep_in_cache);
 
-	FCA_VERBOSE(2, "==>");
+    FCA_VERBOSE(2, "==>");
 
-	if (!mca_coll_fca_component.fca_context)
-		return OMPI_SUCCESS;
+    if (!mca_coll_fca_component.fca_context)
+        return OMPI_SUCCESS;
 
-	mca_coll_fca_close_fca_lib();
-	return OMPI_SUCCESS;
+    mca_coll_fca_close_fca_lib();
+    return OMPI_SUCCESS;
 }

@@ -78,7 +78,7 @@ static inline int mca_coll_fca_comm_init(fca_t *fca_context, int rank, int comm_
                                          fca_comm_desc_t *comm_desc,
                                          fca_comm_t **fca_comm
 #if OMPI_FCA_VERSION >= 30
-                                         ,	 void *comm_init_data
+                                         ,   void *comm_init_data
 #endif
                                          )
 {
