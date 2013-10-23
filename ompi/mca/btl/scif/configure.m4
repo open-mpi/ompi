@@ -26,7 +26,7 @@ AC_DEFUN([MCA_ompi_btl_scif_CONFIG],[
 	OMPI_CHECK_PACKAGE([btl_scif], [scif.h], [scif], [scif_open], [],
 	                   [$ompi_check_scif_dir], [], [btl_scif_happy="yes"], [])
 
-	if test "$btl_scif_happy" != "yes" ; then
+	if test "$btl_scif_happy" != "yes" -a -n "$with_scif" ; then
 	    AC_MSG_ERROR([SCIF support requested but not found.  Aborting])
 	fi
     fi
