@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
@@ -169,6 +169,9 @@ int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
   */
 void mca_rcache_vma_finalize(struct mca_rcache_base_module_t* rcache)
 {
+    OBJ_DESTRUCT(&rcache->lock);
+    mca_rcache_vma_tree_finalize((mca_rcache_vma_module_t *)rcache);
+    free(rcache);
 }
 
 void mca_rcache_vma_dump_range(struct mca_rcache_base_module_t* rcache,
