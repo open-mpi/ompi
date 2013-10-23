@@ -731,8 +731,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
         if (IBV_LINK_LAYER_ETHERNET == ib_port_attr->link_layer) {
-            subnet_id = mca_btl_openib_get_ip_subnet_id(device->ib_dev,
-                                                           port_num);
+            subnet_id = mca_btl_openib_component.rroce_enable ? 0 :
+                   mca_btl_openib_get_ip_subnet_id(device->ib_dev, port_num);
         } else {
             subnet_id = ntoh64(gid.global.subnet_prefix);
         }
