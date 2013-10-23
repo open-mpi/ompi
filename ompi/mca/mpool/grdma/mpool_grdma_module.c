@@ -483,6 +483,9 @@ void mca_mpool_grdma_finalize(struct mca_mpool_base_module_t *mpool)
 
     /* Cleanup any vmas that we have deferred deletion on */
     mpool->rcache->rcache_clean(mpool->rcache);
+
+    /* this mpool was allocated by grdma_init in mpool_grdma_component.c */
+    free(mpool);
 }
 
 int mca_mpool_grdma_ft_event(int state) {
