@@ -229,25 +229,22 @@ libnbc_module_enable(mca_coll_base_module_t *module,
 int
 ompi_coll_libnbc_progress(void)
 {
-    opal_list_item_t *item;
+    ompi_coll_libnbc_request_t* request, *next;
 
     if (opal_atomic_trylock(&mca_coll_libnbc_component.progress_lock)) return 0;
 
-    for (item = opal_list_get_first(&mca_coll_libnbc_component.active_requests) ;
-         item != opal_list_get_end(&mca_coll_libnbc_component.active_requests) ;
-         item = opal_list_get_next(item)) {
-        ompi_coll_libnbc_request_t* request = (ompi_coll_libnbc_request_t*) item;
+    OPAL_LIST_FOREACH_SAFE(request, next, &mca_coll_libnbc_component.active_requests,
+                           ompi_coll_libnbc_request_t) {
         if (NBC_OK == NBC_Progress(request)) {
             /* done, remove and complete */
-            item = opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
-                                         &request->super.super.super);
+            opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
+                                  &request->super.super.super);
 
             request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
             OPAL_THREAD_LOCK(&ompi_request_lock);
             ompi_request_complete(&request->super, true);
             OPAL_THREAD_UNLOCK(&ompi_request_lock);
         }
-        item = opal_list_get_next(item);
     }
 
     opal_atomic_unlock(&mca_coll_libnbc_component.progress_lock);

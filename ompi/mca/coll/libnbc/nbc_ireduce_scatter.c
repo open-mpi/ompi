@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
+ *                         rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -142,6 +144,98 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
   
+  /* tmpbuf is freed with the handle */
+  return NBC_OK;
+}
+
+int ompi_coll_libnbc_ireduce_scatter_inter(void* sendbuf, void* recvbuf, int *recvcounts, MPI_Datatype datatype,
+					   MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+					   struct mca_coll_base_module_2_0_0_t *module) {
+  int peer, rank, r, res, count, rsize, offset;
+  MPI_Aint ext;
+  NBC_Schedule *schedule;
+  NBC_Handle *handle;
+  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
+  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+
+  res = NBC_Init_handle(comm, coll_req, libnbc_module);
+  if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+  handle = (*coll_req);
+  res = MPI_Comm_rank(comm, &rank);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+  res = MPI_Comm_remote_size(comm, &rsize);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_remote_size() (%i)\n", res); return res; }
+  MPI_Type_extent(datatype, &ext);
+  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+  schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
+  if (NULL == schedule) { printf("Error in malloc()\n"); return NBC_OOR; }
+
+  res = NBC_Sched_create(schedule);
+  if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+  count = 0;
+  for (r = 0 ; r < rsize ; ++r) count += recvcounts[r];
+
+  handle->tmpbuf = malloc(2 * ext * count);
+  if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
+
+  /* send my data to the remote root */
+  res = NBC_Sched_send(sendbuf, false, count, datatype, 0, schedule);
+  if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+
+  if (0 == rank) {
+    res = NBC_Sched_recv((void *) 0, true, count, datatype, 0, schedule);
+    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+    res = NBC_Sched_barrier(schedule);
+    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+    for (peer = 1 ; peer < rsize ; ++peer) {
+      res = NBC_Sched_recv((void *)(ext * count), true, count, datatype, peer, schedule);
+      if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+      res = NBC_Sched_barrier(schedule);
+      if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+      res = NBC_Sched_op((void *) 0, true, (void *)(ext * count), true, (void *) 0, true, count, datatype, op, schedule);
+      if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+
+      res = NBC_Sched_barrier(schedule);
+      if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+    }
+
+    /* exchange data with remote root for scatter phase (we *could* use the local communicator to do the scatter) */
+    res = NBC_Sched_recv((void *)(ext * count), true, count, datatype, 0, schedule);
+    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+    res = NBC_Sched_send((void *) 0, true, count, datatype, 0, schedule);
+    if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+
+    res = NBC_Sched_barrier(schedule);
+    if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+    /* scatter */
+    for (peer = 0, offset = ext * count ; peer < rsize ; ++peer) {
+      res = NBC_Sched_send((void *)(uintptr_t) offset, true, recvcounts[peer], datatype, peer, schedule);
+      if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+      offset += recvcounts[peer] * ext;
+    }
+  }
+
+  /* receive my block */
+  res = NBC_Sched_recv(recvbuf, false, recvcounts[rank], datatype, 0, schedule);
+  if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+  /*NBC_PRINT_SCHED(*schedule);*/
+
+  res = NBC_Sched_commit(schedule);
+  if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+
   /* tmpbuf is freed with the handle */
   return NBC_OK;
 }
