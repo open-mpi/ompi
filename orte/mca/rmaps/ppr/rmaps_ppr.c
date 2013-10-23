@@ -75,12 +75,14 @@ static int ppr_mapper(orte_job_t *jdata)
     orte_proc_t *proc;
     orte_app_context_t *app;
     orte_vpid_t total_procs, nprocs_mapped;
-    opal_hwloc_level_t level, start=OPAL_HWLOC_NODE_LEVEL;
+    opal_hwloc_level_t start=OPAL_HWLOC_NODE_LEVEL;
 #if OPAL_HAVE_HWLOC
     hwloc_obj_t obj;
     hwloc_obj_type_t lowest;
     unsigned cache_level=0;
     unsigned int nobjs, i;
+    bool pruning_reqd = false;
+    opal_hwloc_level_t level;
 #endif
     opal_list_t node_list;
     opal_list_item_t *item;
@@ -88,7 +90,6 @@ static int ppr_mapper(orte_job_t *jdata)
     orte_app_idx_t idx;
     char **ppr_req, **ck;
     size_t len;
-    bool pruning_reqd = false;
     bool initial_map=true;
 
     /* only handle initial launch of loadbalanced
@@ -218,19 +219,21 @@ static int ppr_mapper(orte_job_t *jdata)
         opal_output(0, "NOTHING GIVEN");
         return ORTE_ERR_SILENT;
     }
+#if OPAL_HAVE_HWLOC
     /* if more than one level was specified, then pruning will be reqd */
     if (1 < n) {
         pruning_reqd = true;
     }
+#endif
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: job %s assigned policy %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         orte_rmaps_base_print_mapping(jdata->map->mapping));
 
+#if OPAL_HAVE_HWLOC
     /* convenience */
     level = start;
-#if OPAL_HAVE_HWLOC
     lowest = opal_hwloc_levels[start];
 #endif
 
