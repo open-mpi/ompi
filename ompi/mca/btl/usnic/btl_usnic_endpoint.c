@@ -109,6 +109,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 
 static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
+    int rc;
     ompi_btl_usnic_proc_t *proc;
 
     OBJ_DESTRUCT(&(endpoint->endpoint_ack_li));
@@ -127,7 +128,11 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     free(endpoint->endpoint_rx_frag_info);
 
     if (NULL != endpoint->endpoint_remote_ah) {
-        ibv_destroy_ah(endpoint->endpoint_remote_ah);
+        rc = ibv_destroy_ah(endpoint->endpoint_remote_ah);
+        if (rc) {
+            BTL_ERROR(("failed to ibv_destroy_ah, err=%d (%s)",
+                       rc, strerror(rc)));
+        }
     }
 }
 
