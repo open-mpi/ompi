@@ -881,8 +881,9 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
      * (i.e., so that their super/opal_list_item_t member isn't still
      * in use) 
      * This call to usnic_finalize is actually an implicit ACK of
-     * every packet we have ever sent, so call handle_ack to do all 
-     * the ACK processing and release all the data that needs releasing.
+     * every packet we have ever sent, so call handle_ack (via
+     * flush_endpoint) to do all the ACK processing and release all the
+     * data that needs releasing.
      *
      * If we don't care about releasing data, we could just set:
      *   endpoint->endpoint_ack_seq_rcvd =
@@ -901,6 +902,10 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
         }
     }
     OBJ_DESTRUCT(&(module->all_endpoints));
+
+    /* _flush_endpoint should have emptied this list */
+    assert(opal_list_is_empty(&(module->pending_resend_segs)));
+    OBJ_DESTRUCT(&module->pending_resend_segs);
 
     /* Similarly, empty the endpoints_that_need_acks list so that
        endpoints don't still have an endpoint_ack_li item still in
@@ -922,11 +927,17 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     }
     OBJ_DESTRUCT(&module->all_procs);
 
+    for (i = module->first_pool; i <= module->last_pool; ++i) {
+        OBJ_DESTRUCT(&module->module_recv_buffers[i]);
+    }
+    free(module->module_recv_buffers);
+
     OBJ_DESTRUCT(&module->ack_segs);
     OBJ_DESTRUCT(&module->endpoints_with_sends);
     OBJ_DESTRUCT(&module->small_send_frags);
     OBJ_DESTRUCT(&module->large_send_frags);
     OBJ_DESTRUCT(&module->put_dest_frags);
+    OBJ_DESTRUCT(&module->chunk_segs);
     OBJ_DESTRUCT(&module->senders);
     mca_mpool_base_module_destroy(module->super.btl_mpool);
 
@@ -1700,7 +1711,7 @@ ompi_btl_usnic_channel_finalize(
 {
     /* gets set right after constructor called, lets us know recv_segs
      * have been constructed
-    */
+     */
     if (channel->recv_segs.ctx == module) {
         OBJ_DESTRUCT(&channel->recv_segs);
     }
@@ -1775,7 +1786,6 @@ ompi_btl_usnic_channel_init(
      */
     segsize = (mtu + opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&channel->recv_segs, ompi_free_list_t);
-    channel->recv_segs.ctx = module;
     rc = ompi_free_list_init_new(&channel->recv_segs,
                                  sizeof(ompi_btl_usnic_recv_segment_t),
                                  opal_cache_line_size,
@@ -1786,6 +1796,8 @@ ompi_btl_usnic_channel_init(
                                  rd_num,
                                  rd_num,
                                  module->super.btl_mpool);
+    channel->recv_segs.ctx = module; /* must come after ompi_free_list_init_new,
+                                        otherwise ctx gets clobbered */
     if (OMPI_SUCCESS != rc) {
         goto error;
     }
@@ -1969,7 +1981,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
         ~(opal_cache_line_size - 1);
 
     /* Send frags freelists */
-    module->small_send_frags.ctx = module;
     OBJ_CONSTRUCT(&module->small_send_frags, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->small_send_frags,
                                  sizeof(ompi_btl_usnic_small_send_frag_t),
@@ -1983,7 +1994,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  module->super.btl_mpool);
     assert(OMPI_SUCCESS == rc);
 
-    module->large_send_frags.ctx = module;
     OBJ_CONSTRUCT(&module->large_send_frags, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->large_send_frags,
                                  sizeof(ompi_btl_usnic_large_send_frag_t),
@@ -1997,7 +2007,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  NULL);
     assert(OMPI_SUCCESS == rc);
 
-    module->put_dest_frags.ctx = module;
     OBJ_CONSTRUCT(&module->put_dest_frags, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->put_dest_frags,
                                  sizeof(ompi_btl_usnic_put_dest_frag_t),
@@ -2012,7 +2021,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     assert(OMPI_SUCCESS == rc);
 
     /* list of segments to use for sending */
-    module->chunk_segs.ctx = module;
     OBJ_CONSTRUCT(&module->chunk_segs, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->chunk_segs,
                                  sizeof(ompi_btl_usnic_chunk_segment_t),
@@ -2027,7 +2035,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     assert(OMPI_SUCCESS == rc);
 
     /* ACK segments freelist */
-    module->ack_segs.ctx = module;
     ack_segment_len = (sizeof(ompi_btl_usnic_btl_header_t) +
             opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&module->ack_segs, ompi_free_list_t);
@@ -2045,14 +2052,16 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
 
     /*
      * Initialize pools of large recv buffers
+     *
+     * NOTE: (last_pool < first_pool) is _not_ erroneous; recv buffer pools
+     * simply won't be used in that case.
      */
-    module->first_pool = 16;
+    module->first_pool = 16; /* 64 kiB */
     module->last_pool = fls(module->super.btl_eager_limit-1);
     module->module_recv_buffers = calloc(module->last_pool+1,
             sizeof(ompi_free_list_t));
     assert(module->module_recv_buffers != NULL);
     for (i=module->first_pool; i<=module->last_pool; ++i) {
-        module->module_recv_buffers[i].ctx = module;
         OBJ_CONSTRUCT(&module->module_recv_buffers[i], ompi_free_list_t);
         rc = ompi_free_list_init_new(&module->module_recv_buffers[i],
                                      1 << i,
