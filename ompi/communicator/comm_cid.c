@@ -1439,7 +1439,7 @@ static int ompi_comm_allreduce_group (int *inbuf, int* outbuf,
     const int group_rank = ompi_group_rank (group);
     int tag = *((int *) local_leader);
     int *tmp1;
-    int i, rc;
+    int i, rc=OMPI_SUCCESS;
 
     /* basic recursive doubling allreduce on the group */
     peers_group[0] = group_rank ? ((group_rank - 1) >> 1) : MPI_PROC_NULL;
