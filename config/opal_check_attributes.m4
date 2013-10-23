@@ -356,7 +356,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         [])
 
 
-    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([noinline],
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([noinline],
         [
          int foo(int arg1, int arg2) __attribute__ ((__noinline__));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
