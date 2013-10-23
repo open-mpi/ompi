@@ -14,6 +14,7 @@
   * Copyright (c) 2006      Voltaire. All rights reserved.
   * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
   * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
   *
   * $COPYRIGHT$
   * 
@@ -531,4 +532,55 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
         }
     }
     return 0;
+}
+
+/* Dump out rcache entries within a range of memory.  Useful for debugging. */
+void mca_rcache_vma_tree_dump_range(mca_rcache_vma_module_t *vma_rcache,
+                                    unsigned char *base, size_t size, char *msg)
+{
+    unsigned char * bound = base + size -1;
+    mca_mpool_base_registration_t *reg;
+
+    if (NULL == msg) {
+        msg = "";
+    }
+
+    opal_output(0, "Dumping rcache entries: %s", msg);
+
+    if(opal_list_is_empty(&vma_rcache->vma_list)) {
+        opal_output(0, "  rcache is empty");
+        return;
+    }
+
+    do {
+        mca_rcache_vma_t *vma;
+        opal_list_item_t *item;
+        vma = (mca_rcache_vma_t*)
+            ompi_rb_tree_find_with(&vma_rcache->rb_tree, base,
+                mca_rcache_vma_tree_node_compare_closest);
+
+        if(NULL == vma) {
+            /* base is bigger than any registered memory */
+            break;
+        }
+
+        if(base < (unsigned char*)vma->start) {
+            base = (unsigned char*)vma->start;
+            continue;
+        }
+
+        opal_output(0, "  vma: base=%p, bound=%p, size=%lu, number of registrations=%d",
+                    (void *)vma->start, (void *)vma->end, vma->end - vma->start + 1,
+                    (int)opal_list_get_size(&vma->reg_list));
+        for(item = opal_list_get_first(&vma->reg_list);
+                item != opal_list_get_end(&vma->reg_list);
+                item = opal_list_get_next(item)) {
+            mca_rcache_vma_reg_list_item_t *vma_item;
+            vma_item = (mca_rcache_vma_reg_list_item_t*)item;
+            reg = vma_item->reg;
+            opal_output(0, "    reg: base=%p, bound=%p, alloc_base=%p, ref_count=%d, flags=0x%x",
+                        reg->base, reg->bound, reg->alloc_base, reg->ref_count, reg->flags);
+        }
+        base = (unsigned char *)vma->end + 1;
+    } while(bound >= base);
 }
