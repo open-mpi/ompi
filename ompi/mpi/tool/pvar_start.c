@@ -55,5 +55,5 @@ int MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
 
     mpit_unlock ();
 
-    return ret;
+    return ompit_opal_to_mpit_error (ret);
 }

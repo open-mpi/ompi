@@ -31,13 +31,10 @@ int MPI_T_pvar_session_create(MPI_T_pvar_session *session)
 
     mpit_lock ();
 
-    do {
-        *session = OBJ_NEW(mca_base_pvar_session_t);
-        if (NULL == *session) {
-            ret = MPI_ERR_NO_MEM;
-            break;
-        }
-    } while (0);
+    *session = OBJ_NEW(mca_base_pvar_session_t);
+    if (NULL == *session) {
+        ret = MPI_ERR_NO_MEM;
+    }
 
     mpit_unlock ();
 

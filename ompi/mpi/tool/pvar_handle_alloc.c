@@ -50,16 +50,9 @@ int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
 
         ret = mca_base_pvar_handle_alloc (session, pvar_index, obj_handle,
                                           handle, count);
-        if (OPAL_ERR_OUT_OF_RESOURCE == ret) {
-            ret = MPI_T_ERR_MEMORY;
-        } else if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == ret) {
-            ret = MPI_T_ERR_INVALID_HANDLE;
-        } else if (OPAL_SUCCESS != ret) {
-            ret = MPI_ERR_UNKNOWN;
-        }
     } while (0);
 
     mpit_unlock ();
 
-    return ret;
+    return ompit_opal_to_mpit_error(ret);
 }
