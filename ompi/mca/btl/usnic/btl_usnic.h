@@ -170,6 +170,10 @@ typedef uint64_t ompi_btl_usnic_seq_t;
  */
 int ompi_btl_usnic_component_register(void); 
 
+/**
+ * Routine which can be called from a debugger to print module, endpoint,
+ * fragment, and segment state to standard output. */
+void ompi_btl_usnic_component_debug(void);
 
 END_C_DECLS
 #endif
