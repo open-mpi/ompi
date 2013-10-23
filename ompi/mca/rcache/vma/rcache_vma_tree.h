@@ -14,6 +14,7 @@
   * Copyright (c) 2006      Voltaire. All rights reserved.
   * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   *
+  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
   * $COPYRIGHT$
   * 
   * Additional copyrights may follow
@@ -62,6 +63,11 @@ OBJ_CLASS_DECLARATION(mca_rcache_vma_t);
  * initialize the vma tree
  */
 int mca_rcache_vma_tree_init(mca_rcache_vma_module_t* rcache); 
+
+/*
+ * clean up the vma tree
+ */
+void mca_rcache_vma_tree_finalize(mca_rcache_vma_module_t* rcache);
 
 /**
  *  Returns the item in the vma tree  
