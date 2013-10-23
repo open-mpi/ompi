@@ -856,6 +856,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
 static int usnic_finalize(struct mca_btl_base_module_t* btl)
 {
     int i;
+    int rc;
     ompi_btl_usnic_proc_t *proc;
     ompi_btl_usnic_module_t* module = (ompi_btl_usnic_module_t*)btl;
 
@@ -868,8 +869,7 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
             &module->mod_channels[USNIC_DATA_CHANNEL]);
     ompi_btl_usnic_channel_finalize(module,
             &module->mod_channels[USNIC_PRIORITY_CHANNEL]);
-    ibv_dealloc_pd(module->pd);
-    
+
     /* Disable the stats callback event, and then call the stats
        callback manually to display the final stats */
     if (mca_btl_usnic_component.stats_enabled) {
@@ -939,6 +939,19 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&module->put_dest_frags);
     OBJ_DESTRUCT(&module->chunk_segs);
     OBJ_DESTRUCT(&module->senders);
+
+    /* destroy the PD after all the CQs and AHs have been destroyed, otherwise
+     * we get a minor leak in libusnic_verbs */
+    rc = ibv_dealloc_pd(module->pd);
+    if (rc) {
+        BTL_ERROR(("failed to ibv_dealloc_pd, err=%d (%s)", rc, strerror(rc)));
+    }
+
+    rc = ibv_close_device(module->device_context);
+    if (-1 == rc) {
+        BTL_ERROR(("failed to ibv_close_device"));
+    }
+
     mca_mpool_base_module_destroy(module->super.btl_mpool);
 
     return OMPI_SUCCESS;
@@ -2099,7 +2112,10 @@ chan_destroy:
     mca_mpool_base_module_destroy(module->super.btl_mpool);
 
 dealloc_pd:
-    ibv_dealloc_pd(module->pd);
+    rc = ibv_dealloc_pd(module->pd);
+    if (rc) {
+        BTL_ERROR(("failed to ibv_dealloc_pd, err=%d (%s)", rc, strerror(rc)));
+    }
     return OMPI_ERROR;
 }
 
