@@ -463,26 +463,8 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
             break;
         }
 
-        if (mca_base_pvar_is_sum (pvar)) {
-            /* for sums (counters, timers, etc) we need to keep track of
-               what the last value of the underlying counter was. this allows
-               us to push the computation of handle values from the event(s)
-               (which could be in a critical path) to pvar read/stop/reset/etc */
-            pvar_handle->last_value = calloc (*count, datatype_size);
-            if (NULL == pvar_handle->last_value) {
-                ret = OPAL_ERR_OUT_OF_RESOURCE;
-                break;
-            }
-        }
-
         if (!mca_base_pvar_is_continuous (pvar) || mca_base_pvar_is_sum (pvar) ||
             mca_base_pvar_is_watermark (pvar)) {
-            pvar_handle->tmp_value = calloc (*count, datatype_size);
-            if (NULL == pvar_handle->tmp_value) {
-                ret = OPAL_ERR_OUT_OF_RESOURCE;
-                break;
-            }
-       
             /* if a variable is not continuous we will need to keep track of its last value
                to support start->stop->read correctly. use calloc to initialize the current
                value to 0. */
@@ -493,20 +475,37 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
             }
         }
 
-        /* get the current value of the performance variable if this is a
-           continuous sum or watermark. if this variable needs to be started first the
-           current value is not relevant. */
-        if (mca_base_pvar_is_continuous (pvar) && (mca_base_pvar_is_sum (pvar) || mca_base_pvar_is_sum (pvar))) {
-            if (mca_base_pvar_is_sum (pvar)) {
-                /* the initial value of a sum is 0 */
-                ret = pvar->get_value (pvar, pvar_handle->last_value, pvar_handle->obj_handle);
-            } else {
-                /* the initial value of a watermark is the current value of the variable */
-                ret = pvar->get_value (pvar, pvar_handle->current_value, pvar_handle->obj_handle);
+        if (mca_base_pvar_is_sum (pvar) || mca_base_pvar_is_watermark (pvar)) {
+            /* for sums (counters, timers, etc) we need to keep track of
+               what the last value of the underlying counter was. this allows
+               us to push the computation of handle values from the event(s)
+               (which could be in a critical path) to pvar read/stop/reset/etc */
+            pvar_handle->tmp_value = calloc (*count, datatype_size);
+            if (NULL == pvar_handle->tmp_value) {
+                ret = OPAL_ERR_OUT_OF_RESOURCE;
+                break;
+            }
+       
+            pvar_handle->last_value = calloc (*count, datatype_size);
+            if (NULL == pvar_handle->last_value) {
+                ret = OPAL_ERR_OUT_OF_RESOURCE;
+                break;
             }
 
-            if (OPAL_SUCCESS != ret) {
-                return ret;
+            /* get the current value of the performance variable if this is a
+               continuous sum or watermark. if this variable needs to be started first the
+               current value is not relevant. */
+            if (mca_base_pvar_is_continuous (pvar)) {
+                if (mca_base_pvar_is_sum (pvar)) {
+                    ret = pvar->get_value (pvar, pvar_handle->last_value, pvar_handle->obj_handle);
+                } else {
+                    /* the initial value of a watermark is the current value of the variable */
+                    ret = pvar->get_value (pvar, pvar_handle->current_value, pvar_handle->obj_handle);
+                }
+
+                if (OPAL_SUCCESS != ret) {
+                    return ret;
+                }
             }
         }
 
@@ -533,14 +532,6 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
 
 int mca_base_pvar_handle_free (mca_base_pvar_handle_t *handle)
 {
-    if (handle->session) {
-        opal_list_remove_item (&handle->session->handles, &handle->super);
-    }
-
-    if (handle->pvar) {
-        opal_list_remove_item (&handle->pvar->bound_handles, &handle->list2);
-    }
-
     OBJ_RELEASE(handle);
 
     return OPAL_SUCCESS;
@@ -550,6 +541,10 @@ int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle)
 {
     int i, ret;
     void *tmp;
+
+    if (mca_base_pvar_is_invalid (handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
 
     if (!mca_base_pvar_handle_is_running (handle)) {
         return OPAL_SUCCESS;
@@ -657,6 +652,10 @@ int mca_base_pvar_handle_read_value (mca_base_pvar_handle_t *handle, void *value
 {
     int ret;
 
+    if (mca_base_pvar_is_invalid (handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
+
     /* ensure this handle's value is up to date. */
     ret = mca_base_pvar_handle_update (handle);
     if (OPAL_SUCCESS != ret) {
@@ -678,6 +677,10 @@ int mca_base_pvar_handle_read_value (mca_base_pvar_handle_t *handle, void *value
 int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void *value)
 {
     int ret;
+
+    if (mca_base_pvar_is_invalid (handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
 
     if (mca_base_pvar_is_readonly (handle->pvar)) {
         return OPAL_ERR_PERM;
@@ -735,6 +738,10 @@ int mca_base_pvar_handle_stop (mca_base_pvar_handle_t *handle)
 {
     int ret;
 
+    if (mca_base_pvar_is_invalid (handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
+
     /* Can't stop a continuous or an already stopped variable */
     if (!mca_base_pvar_handle_is_running (handle) || mca_base_pvar_is_continuous (handle->pvar)) {
         return OPAL_ERR_NOT_SUPPORTED;
@@ -757,6 +764,10 @@ int mca_base_pvar_handle_stop (mca_base_pvar_handle_t *handle)
 int mca_base_pvar_handle_reset (mca_base_pvar_handle_t *handle)
 {
     int ret = OPAL_SUCCESS;
+
+    if (mca_base_pvar_is_invalid (handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
 
     /* reset this handle to a state analagous to when it was created */
     if (mca_base_pvar_is_sum (handle->pvar)) {
@@ -908,7 +919,8 @@ static void ompi_mpi_pvar_session_destructor (mca_base_pvar_session_t *session)
     mca_base_pvar_handle_t *handle, *next;
 
     /* it is likely a user error if there are any allocated handles when the session
-       is freed. clean it up anyway. */
+     * is freed. clean it up anyway. The handle destructor will remove the handle from
+     * the session's handle list. */
     OPAL_LIST_FOREACH_SAFE(handle, next, &session->handles, mca_base_pvar_handle_t) {
         OBJ_DESTRUCT(handle);
     }
@@ -945,7 +957,15 @@ static void mca_base_pvar_handle_destructor (mca_base_pvar_handle_t *handle)
         free (handle->tmp_value);
     }
 
+    /* remove this handle from the pvar list */
+    opal_list_remove_item (&handle->pvar->bound_handles, &handle->list2);
+
     OBJ_DESTRUCT(&handle->list2);
+
+    /* remove this handle from the session */
+    if (handle->session) {
+        opal_list_remove_item (&handle->session->handles, &handle->super);
+    }
 }
 
 OBJ_CLASS_INSTANCE(mca_base_pvar_handle_t, opal_list_item_t, mca_base_pvar_handle_constructor,

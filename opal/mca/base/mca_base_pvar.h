@@ -451,6 +451,11 @@ static inline bool mca_base_pvar_is_atomic (const mca_base_pvar_t *pvar)
     return !!(pvar->flags & MCA_BASE_PVAR_FLAG_ATOMIC);
 }
 
+static inline bool mca_base_pvar_is_invalid (const mca_base_pvar_t *pvar)
+{
+    return !!(pvar->flags & MCA_BASE_PVAR_FLAG_INVALID);
+}
+
 /* Handle functions */
 
 /**

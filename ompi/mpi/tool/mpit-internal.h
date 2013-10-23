@@ -37,6 +37,7 @@ void mpit_unlock (void);
 extern volatile uint32_t mpit_init_count;
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype);
+int ompit_opal_to_mpit_error (int rc);
 
 static inline int mpit_is_initialized (void)
 {
