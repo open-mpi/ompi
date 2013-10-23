@@ -167,7 +167,7 @@ static int create_listen(void)
     struct sockaddr_storage inaddr;
     opal_socklen_t addrlen;
     char **ports=NULL;
-    int sd;
+    int sd = -1;
     char *tconn;
     mca_oob_tcp_listener_t *conn;
 
@@ -369,7 +369,9 @@ static int create_listen(void)
     }
     if (0 == opal_list_get_size(&mca_oob_tcp_component.listeners)) {
         /* cleanup */
-        CLOSE_THE_SOCKET(sd);
+        if (0 <= sd) {
+            CLOSE_THE_SOCKET(sd);
+        }
         opal_argv_free(ports);
         return ORTE_ERR_SOCKET_NOT_AVAILABLE;
     }
