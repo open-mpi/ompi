@@ -22,6 +22,7 @@
 Dave Goodell <dgoodell@cisco.com> <dgoodell@open-mpi-git-mirror.example.com>
 Jeff Squyres <jsquyres@cisco.com> <jsquyres@open-mpi-git-mirror.example.com>
 Reese Faucette <rfaucett@cisco.com> <rfaucett@open-mpi-git-mirror.example.com>
+Bill D'Amico <bdamico@cisco.com> <damico@open-mpi-git-mirror.example.com>
 
 # fix Manjunath's name, it was inadvertently truncated in commit c4e17f1
 Manjunath Gorentla Venkata <manjugv@open-mpi-git-mirror.example.com>
@@ -50,7 +51,6 @@ Manjunath Gorentla Venkata <manjugv@open-mpi-git-mirror.example.com>
 #Camille Coti <proper.name@proper.domain> <coti@open-mpi-git-mirror.example.com>
 #Christian Bell <proper.name@proper.domain> <csbell@open-mpi-git-mirror.example.com>
 #Chris Yeoh <proper.name@proper.domain> <cyeoh@open-mpi-git-mirror.example.com>
-#Bill D'Amico <proper.name@proper.domain> <damico@open-mpi-git-mirror.example.com>
 #David Daniel <proper.name@proper.domain> <ddd@open-mpi-git-mirror.example.com>
 #Nadia Derby <proper.name@proper.domain> <derbeyn@open-mpi-git-mirror.example.com>
 #Denis Dimick <proper.name@proper.domain> <dgdimick@open-mpi-git-mirror.example.com>
