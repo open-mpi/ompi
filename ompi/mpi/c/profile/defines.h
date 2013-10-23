@@ -74,10 +74,13 @@
 #define MPI_Comm_connect PMPI_Comm_connect
 #define MPI_Comm_create_errhandler PMPI_Comm_create_errhandler
 #define MPI_Comm_create_keyval PMPI_Comm_create_keyval
+#define MPI_Comm_create_group PMPI_Comm_create_group
 #define MPI_Comm_create PMPI_Comm_create
 #define MPI_Comm_delete_attr PMPI_Comm_delete_attr
 #define MPI_Comm_disconnect PMPI_Comm_disconnect
 #define MPI_Comm_dup PMPI_Comm_dup
+#define MPI_Comm_dup_with_info PMPI_Comm_dup_with_info
+#define MPI_Comm_idup PMPI_Comm_idup
 #define MPI_Comm_f2c PMPI_Comm_f2c
 #define MPI_Comm_free_keyval PMPI_Comm_free_keyval
 #define MPI_Comm_free PMPI_Comm_free

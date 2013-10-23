@@ -13,6 +13,8 @@
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2012 Inria.  All rights reserved.
 # Copyright (c) 2011-2012 Universite Bordeaux 1
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -82,10 +84,13 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pcomm_connect_f.c \
         pcomm_create_errhandler_f.c \
         pcomm_create_f.c \
+        pcomm_create_group_f.c \
         pcomm_create_keyval_f.c \
         pcomm_delete_attr_f.c \
         pcomm_disconnect_f.c \
         pcomm_dup_f.c \
+        pcomm_dup_with_info_f.c \
+        pcomm_idup_f.c \
         pcomm_free_f.c \
         pcomm_free_keyval_f.c \
         pcomm_get_attr_f.c \

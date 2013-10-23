@@ -12,7 +12,9 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
-# Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
+# Copyright (c)      2012 Oak Ridge National Laboratory. All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -88,10 +90,13 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_connect.c \
         pcomm_create.c \
         pcomm_create_errhandler.c \
+        pcomm_create_group.c \
         pcomm_create_keyval.c \
         pcomm_delete_attr.c \
         pcomm_disconnect.c \
         pcomm_dup.c \
+        pcomm_dup_with_info.c \
+        pcomm_idup.c \
         pcomm_f2c.c \
         pcomm_free.c \
         pcomm_free_keyval.c \

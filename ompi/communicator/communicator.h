@@ -29,6 +29,7 @@
 #include "opal/class/opal_object.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
+#include "ompi/communicator/comm_request.h"
 
 #include "mpi.h"
 #include "ompi/group/group.h"
@@ -89,6 +90,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_CID_INTER        0x00000040
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
 #define OMPI_COMM_CID_INTRA_OOB    0x00000100
+#define OMPI_COMM_CID_GROUP        0x00000200
 
 /**
  * The block of CIDs allocated for MPI_COMM_WORLD
@@ -102,6 +104,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 
 
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_comm_f_to_c_table;
 
 struct ompi_communicator_t {
     opal_object_t              c_base;
@@ -357,6 +360,13 @@ OMPI_DECLSPEC int ompi_comm_group (ompi_communicator_t *comm, ompi_group_t **gro
 int ompi_comm_create (ompi_communicator_t* comm, ompi_group_t *group,
                       ompi_communicator_t** newcomm);
 
+
+/**
+ * Non-collective create communicator based on a group
+ */
+int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int tag,
+                            ompi_communicator_t **newcomm);
+
 /**
  * Take an almost complete communicator and reserve the CID as well
  * as activate it (initialize the collective and the topologies).
@@ -414,6 +424,37 @@ OMPI_DECLSPEC int ompi_comm_split_type(ompi_communicator_t *comm,
  * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
  */
 OMPI_DECLSPEC int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm);
+
+/**
+ * dup a communicator (non-blocking). Parameter are identical to the MPI-counterpart
+ * of the function. It has been extracted, since we need to be able
+ * to dup a communicator internally as well.
+ *
+ * @param comm:      input communicator
+ * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
+ */
+OMPI_DECLSPEC int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, ompi_request_t **request);
+
+/**
+ * dup a communicator with info. Parameter are identical to the MPI-counterpart
+ * of the function. It has been extracted, since we need to be able
+ * to dup a communicator internally as well.
+ *
+ * @param comm:      input communicator
+ * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
+ */
+OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi_communicator_t **newcomm);
+
+/**
+ * dup a communicator (non-blocking) with info.
+ * of the function. It has been extracted, since we need to be able
+ * to dup a communicator internally as well.
+ *
+ * @param comm:      input communicator
+ * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
+ */
+OMPI_DECLSPEC int ompi_comm_idup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req);
+
 /**
  * compare two communicators.
  *
@@ -468,6 +509,21 @@ OMPI_DECLSPEC int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
                                       int send_first);
 
 /**
+ * allocate new communicator ID (non-blocking)
+ * @param newcomm:    pointer to the new communicator
+ * @param oldcomm:    original comm
+ * @param bridgecomm: bridge comm for intercomm_create
+ * @param mode: combination of input
+ *              OMPI_COMM_CID_INTRA:        intra-comm
+ *              OMPI_COMM_CID_INTER:        inter-comm
+ * This routine has to be thread safe in the final version.
+ */
+OMPI_DECLSPEC int ompi_comm_nextcid_nb (ompi_communicator_t* newcomm,
+                                        ompi_communicator_t* comm,
+                                        ompi_communicator_t* bridgecomm,
+                                        int mode, ompi_request_t **req);
+
+/**
  * shut down the communicator infrastructure.
  */
 int ompi_comm_finalize (void);
@@ -487,6 +543,20 @@ OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
                                   bool copy_topocomponent,
                                   ompi_group_t *local_group,
                                   ompi_group_t *remote_group   );
+
+OMPI_DECLSPEC int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
+                                     ompi_communicator_t *oldcomm,
+                                     int local_size,
+                                     int *local_ranks,
+                                     int remote_size,
+                                     int *remote_ranks,
+                                     opal_hash_table_t *attr,
+                                     ompi_errhandler_t *errh,
+                                     bool copy_topocomponent,
+                                     ompi_group_t *local_group,
+                                     ompi_group_t *remote_group,
+                                     ompi_request_t **req );
+
 /**
  * This is a short-hand routine used in intercomm_create.
  * The routine makes sure, that all processes have afterwards
@@ -523,6 +593,11 @@ OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm,
 				       int mode,
 				       int send_first );
 				       
+
+OMPI_DECLSPEC int ompi_comm_activate_nb (ompi_communicator_t **newcomm,
+                                         ompi_communicator_t *comm,
+                                         ompi_communicator_t *bridgecomm,
+                                         int mode, ompi_request_t **req);
 
 /**
  * a simple function to dump the structure

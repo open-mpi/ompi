@@ -535,6 +535,18 @@ end subroutine MPI_Comm_create
 
 end interface
 
+interface MPI_Comm_create_group
+
+subroutine MPI_Comm_create_group(comm, group, tag, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: group
+  integer, intent(in) :: tag
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_create_group
+
+end interface
+
 
 interface MPI_Comm_create_errhandler
 
@@ -589,6 +601,28 @@ subroutine MPI_Comm_dup(comm, newcomm, ierr)
   integer, intent(out) :: newcomm
   integer, intent(out) :: ierr
 end subroutine MPI_Comm_dup
+
+end interface
+
+interface MPI_Comm_dup
+
+subroutine MPI_Comm_dup_with_info(comm, info, newcomm, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_dup_with_info
+
+end interface
+
+interface MPI_Comm_idup
+
+subroutine MPI_Comm_idup(comm, newcomm, request, ierror)
+  integer, intent(in) :: comm
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_idup
 
 end interface
 

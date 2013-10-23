@@ -11,7 +11,9 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
-# Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -106,10 +108,13 @@ libmpi_c_mpi_la_SOURCES = \
         comm_connect.c \
         comm_create.c \
         comm_create_errhandler.c \
+        comm_create_group.c \
         comm_create_keyval.c \
         comm_delete_attr.c \
         comm_disconnect.c \
         comm_dup.c \
+        comm_dup_with_info.c \
+        comm_idup.c \
         comm_f2c.c \
         comm_free.c \
         comm_free_keyval.c \

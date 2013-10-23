@@ -1182,6 +1182,16 @@ subroutine ompi_comm_create_f(comm,group,newcomm,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_create_f
 
+subroutine ompi_comm_create_group_f(comm, group, tag, newcomm, ierror) &
+   BIND(C, name="ompi_comm_create_group_f")
+   implicit none
+  integer, intent(in) :: comm
+  integer, intent(in) :: group
+  integer, intent(in) :: tag
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine ompi_comm_create_group_f
+
 subroutine ompi_comm_create_keyval_f(comm_copy_attr_fn,comm_delete_attr_fn, &
                                      comm_keyval,extra_state,ierror) &
    BIND(C, name="ompi_comm_create_keyval_f")
@@ -1211,6 +1221,15 @@ subroutine ompi_comm_dup_f(comm,newcomm,ierror) &
    INTEGER, INTENT(OUT) :: newcomm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_dup_f
+
+subroutine ompi_comm_dup_with_info_f(comm, info, newcomm, ierror) &
+   BIND(C, name="ompi_comm_dup_with_info_f")
+   implicit none
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierror
+end subroutine ompi_comm_dup_with_info_f
 
 subroutine ompi_comm_free_f(comm,ierror) &
    BIND(C, name="ompi_comm_free_f")
@@ -1255,6 +1274,15 @@ subroutine ompi_comm_group_f(comm,group,ierror) &
    INTEGER, INTENT(OUT) :: group
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_group_f
+
+subroutine ompi_comm_idup_f(comm, newcomm, request, ierror) &
+   BIND(C, name="ompi_comm_idup_f")
+   implicit none
+  integer, intent(in) :: comm
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine ompi_comm_idup_f
 
 subroutine ompi_comm_rank_f(comm,rank,ierror) &
    BIND(C, name="ompi_comm_rank_f")
