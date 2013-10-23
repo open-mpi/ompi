@@ -499,6 +499,13 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.enable_srq_resize = false;
 #endif
 
+#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
+    CHECK(reg_bool("rroce_enable", NULL,
+                   "Enable/Disable routing between different subnets"
+                   "(0 = disable, nonzero = enable)", false,
+                   &mca_btl_openib_component.rroce_enable));
+#endif
+
     CHECK(reg_uint("buffer_alignment", NULL,
                    "Preferred communication buffer alignment, in bytes "
                    "(must be > 0 and power of two)",
