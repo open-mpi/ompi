@@ -724,25 +724,23 @@ static inline void usnic_stats_reset(ompi_btl_usnic_module_t *module)
     }
 }
 
-
-static void usnic_stats_callback(int fd, short flags, void *arg)
+/* Prints a a few terse statistics lines via opal_output(0,...).  The first
+ * line will be prefixed with the string "prefix".  If "reset_stats" is true
+ * then the statistics will be reset after printing.
+ *
+ * NOTE: this routine ignores the setting of stats_enable, so it can be used
+ * for debugging routines even when normal stats reporting is not enabled.
+ */
+void ompi_btl_usnic_print_stats(
+    ompi_btl_usnic_module_t *module,
+    const char *prefix,
+    bool reset_stats)
 {
-    ompi_btl_usnic_module_t *module = (ompi_btl_usnic_module_t*) arg;
     char tmp[128], str[2048];
-
-    if (!mca_btl_usnic_component.stats_enabled) {
-        return;
-    }
-
-    if (module->final_stats) {
-        snprintf(tmp, sizeof(tmp), "final");
-    } else {
-        snprintf(tmp, sizeof(tmp), "%4lu", ++module->stats_report_num);
-    }
 
     /* The usuals */
     snprintf(str, sizeof(str), "%s:MCW:%3u, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu OA/DA %4lu/%4lu CRC:%4lu ",
-             tmp,
+             prefix,
              ompi_proc_local()->proc_name.vpid,
 
              module->num_total_sends,
@@ -754,7 +752,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
              module->num_timeout_retrans,
              module->num_fast_retrans,
              module->num_ack_sends,
-             
+
              module->num_total_recvs,
              (module->num_total_recvs - module->num_recv_reposts) == 0 ? 'g' : 'B',
              (module->num_total_recvs -
@@ -773,10 +771,10 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
              module->num_dup_recvs,
              module->num_badfrag_recvs,
              module->num_ack_recvs,
-             
+
              module->num_old_dup_acks,
              module->num_dup_acks,
-             
+
              module->num_crc_errors);
 
     /* If our PML calls were 0, then show send and receive window
@@ -790,7 +788,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
 
         rd_min = su_min = WINDOW_SIZE * 2;
         rd_max = su_max = 0;
-        
+
         item = opal_list_get_first(&module->all_endpoints);
         while (item != opal_list_get_end(&(module->all_endpoints))) {
             endpoint = container_of(item, mca_btl_base_endpoint_t,
@@ -799,8 +797,8 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
 
             /* Number of un-acked sends (i.e., sends for which we're
                still waiting for ACK) */
-            send_unacked = 
-                endpoint->endpoint_next_seq_to_send - 
+            send_unacked =
+                endpoint->endpoint_next_seq_to_send -
                 endpoint->endpoint_ack_seq_rcvd - 1;
             if (send_unacked > su_max) su_max = send_unacked;
             if (send_unacked < su_min) su_min = send_unacked;
@@ -808,7 +806,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
             /* Receive window depth (i.e., difference between highest
                seq received and the next message we haven't ACKed
                yet) */
-            recv_depth = 
+            recv_depth =
                 endpoint->endpoint_highest_seq_rcvd -
                 endpoint->endpoint_next_contig_seq_to_recv;
             if (recv_depth > rd_max) rd_max = recv_depth;
@@ -826,18 +824,32 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
     }
 
     strncat(str, tmp, sizeof(str) - strlen(str) - 1);
-    opal_output(0, str);
+    opal_output(0, "%s", str);
 
-    if (mca_btl_usnic_component.stats_relative) {
+    if (reset_stats) {
         usnic_stats_reset(module);
     }
+}
+
+/* callback routine for libevent */
+static void usnic_stats_callback(int fd, short flags, void *arg)
+{
+    ompi_btl_usnic_module_t *module = (ompi_btl_usnic_module_t*) arg;
+    char tmp[128];
+
+    if (!mca_btl_usnic_component.stats_enabled) {
+        return;
+    }
+
+    snprintf(tmp, sizeof(tmp), "%4lu", ++module->stats_report_num);
+
+    ompi_btl_usnic_print_stats(module, tmp,
+                               /*reset=*/mca_btl_usnic_component.stats_relative);
 
     /* In OMPI v1.6, we have to re-add this event (because there's an
        old libevent in OMPI v1.6) */
-    if (!module->final_stats) {
-        opal_event_add(&(module->stats_timer_event),
-                       &(module->stats_timeout));
-    }
+    opal_event_add(&(module->stats_timer_event),
+                   &(module->stats_timeout));
 }
 
 
@@ -862,8 +874,7 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
        callback manually to display the final stats */
     if (mca_btl_usnic_component.stats_enabled) {
         opal_event_del(&(module->stats_timer_event));
-        module->final_stats = true;
-        usnic_stats_callback(0, 0, module);
+        ompi_btl_usnic_print_stats(module, "final", /*reset_stats=*/false);
     }
 
     /* Empty the all_endpoints list so that we can destroy endpoints
@@ -2059,12 +2070,12 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     if (mca_btl_usnic_component.stats_enabled) {
         usnic_stats_reset(module);
 
-        module->final_stats = false;
         module->stats_timeout.tv_sec = mca_btl_usnic_component.stats_frequency;
         module->stats_timeout.tv_usec = 0;
 
         opal_event_set(opal_event_base, &(module->stats_timer_event),
-                       -1, EV_TIMEOUT | EV_PERSIST, usnic_stats_callback, module);
+                       -1, EV_TIMEOUT | EV_PERSIST,
+                       &usnic_stats_callback, module);
         opal_event_add(&(module->stats_timer_event),
                        &(module->stats_timeout));
     }
