@@ -1,0 +1,130 @@
+# This file exists to help map usernames to proper names and email addresses
+# in the Open MPI github mirror of the canonical SVN repository.  The github
+# mirror can be found here:
+#
+#   https://github.com/open-mpi/ompi-svn-mirror
+#
+# The format of this file is documented in git-shortlog(1).  Specifically,
+# a line like this:
+#
+#   Proper Name <proper@email.xx> <commit@email.xx>
+#
+# means that when git sees "commit@email.xx" it will display
+# "Proper Name <proper@email.xx>" instead in certain circumstances.  Those
+# circumstances include:
+#   - git shortlog
+#   - git blame
+#   - git log --format=tformat:"%aN <%aE>"   (and similar)
+#
+# A copy of this file should be present on each branch in SVN which is being
+# tracked in the Git mirror.
+
+Dave Goodell <dgoodell@cisco.com> <dgoodell@open-mpi-git-mirror.example.com>
+Jeff Squyres <jsquyres@cisco.com> <jsquyres@open-mpi-git-mirror.example.com>
+Reese Faucette <rfaucett@cisco.com> <rfaucett@open-mpi-git-mirror.example.com>
+
+# fix Manjunath's name, it was inadvertently truncated in commit c4e17f1
+Manjunath Gorentla Venkata <manjugv@open-mpi-git-mirror.example.com>
+
+# If you want your name to be rendered properly in these situations, please
+# remove it from the list below, place it above, uncomment it, and change
+# "proper.name@proper.domain" to the appropriate values.  This template list
+# comes from the AUTHORS file.
+#
+#Abhishek Kulkarni <proper.name@proper.domain> <abbyz@open-mpi-git-mirror.example.com>
+#Adrian Knoth <proper.name@proper.domain> <adi@open-mpi-git-mirror.example.com>
+#Abhishek Kulkarni <proper.name@proper.domain> <adkulkar@open-mpi-git-mirror.example.com>
+#Andrew Friedley <proper.name@proper.domain> <afriedle@open-mpi-git-mirror.example.com>
+#Aleksey Senin <proper.name@proper.domain> <alekseys@open-mpi-git-mirror.example.com>
+#Alex Margolin <proper.name@proper.domain> <alex@open-mpi-git-mirror.example.com>
+#Alex Mikheev <proper.name@proper.domain> <amikheev@open-mpi-git-mirror.example.com>
+#Thara Angskun <proper.name@proper.domain> <angskun@open-mpi-git-mirror.example.com>
+#Anya Tatashina <proper.name@proper.domain> <Anya@open-mpi-git-mirror.example.com>
+#Avneesh Pant <proper.name@proper.domain> <apant@open-mpi-git-mirror.example.com>
+#Brad Benton <proper.name@proper.domain> <bbenton@open-mpi-git-mirror.example.com>
+#George Bosilca <proper.name@proper.domain> <bosilca@open-mpi-git-mirror.example.com>
+#Aurelien Bouteiller <proper.name@proper.domain> <bouteill@open-mpi-git-mirror.example.com>
+#Brian Barrett <proper.name@proper.domain> <brbarret@open-mpi-git-mirror.example.com>
+#Alex Brick <proper.name@proper.domain> <bricka@open-mpi-git-mirror.example.com>
+#Laura Casswell <proper.name@proper.domain> <casswell@open-mpi-git-mirror.example.com>
+#Camille Coti <proper.name@proper.domain> <coti@open-mpi-git-mirror.example.com>
+#Christian Bell <proper.name@proper.domain> <csbell@open-mpi-git-mirror.example.com>
+#Chris Yeoh <proper.name@proper.domain> <cyeoh@open-mpi-git-mirror.example.com>
+#Bill D'Amico <proper.name@proper.domain> <damico@open-mpi-git-mirror.example.com>
+#David Daniel <proper.name@proper.domain> <ddd@open-mpi-git-mirror.example.com>
+#Nadia Derby <proper.name@proper.domain> <derbeyn@open-mpi-git-mirror.example.com>
+#Denis Dimick <proper.name@proper.domain> <dgdimick@open-mpi-git-mirror.example.com>
+#Donald Kerr <proper.name@proper.domain> <dkerr@open-mpi-git-mirror.example.com>
+#Dan Lacher <proper.name@proper.domain> <dlacher@open-mpi-git-mirror.example.com>
+#Doron Shoham <proper.name@proper.domain> <dorons@open-mpi-git-mirror.example.com>
+#Edgar Gabriel <proper.name@proper.domain> <edgar@open-mpi-git-mirror.example.com>
+#Ethan Mallove <proper.name@proper.domain> <emallove@open-mpi-git-mirror.example.com>
+#Eugene Loh <proper.name@proper.domain> <eugene@open-mpi-git-mirror.example.com>
+#Graham Fagg <proper.name@proper.domain> <gef@open-mpi-git-mirror.example.com>
+#Ginger Young <proper.name@proper.domain> <gingery@open-mpi-git-mirror.example.com>
+#Gleb Natapov <proper.name@proper.domain> <gleb@open-mpi-git-mirror.example.com>
+#Galen Shipman <proper.name@proper.domain> <gshipman@open-mpi-git-mirror.example.com>
+#Greg Watson <proper.name@proper.domain> <gwatson@open-mpi-git-mirror.example.com>
+#Thomas Herault <proper.name@proper.domain> <herault@open-mpi-git-mirror.example.com>
+#Nathan Hjelm <proper.name@proper.domain> <hjelmn@open-mpi-git-mirror.example.com>
+#Sven Stork <proper.name@proper.domain> <hpcstork@open-mpi-git-mirror.example.com>
+#Torsten Hoefler <proper.name@proper.domain> <htor@open-mpi-git-mirror.example.com>
+#Iain Bason <proper.name@proper.domain> <igb@open-mpi-git-mirror.example.com>
+#Igor Usarov <proper.name@proper.domain> <igoru@open-mpi-git-mirror.example.com>
+#Jon Mason <proper.name@proper.domain> <jdmason@open-mpi-git-mirror.example.com>
+#Josh Hursey <proper.name@proper.domain> <jjhursey@open-mpi-git-mirror.example.com>
+#Joshua Ladd <proper.name@proper.domain> <jladd@open-mpi-git-mirror.example.com>
+#Nysal Jan <proper.name@proper.domain> <jnysal@open-mpi-git-mirror.example.com>
+#Jose E. Roman <proper.name@proper.domain> <jroman@open-mpi-git-mirror.example.com>
+#Matthias Jurenz <proper.name@proper.domain> <jurenz@open-mpi-git-mirror.example.com>
+#Karen Norteman <proper.name@proper.domain> <karenn@open-mpi-git-mirror.example.com>
+#Yevgeny Kliteynik <proper.name@proper.domain> <kliteyn@open-mpi-git-mirror.example.com>
+#Karl Mroz <proper.name@proper.domain> <kmroz@open-mpi-git-mirror.example.com>
+#Andreas Knuepfer <proper.name@proper.domain> <knuepfer@open-mpi-git-mirror.example.com>
+#Greg Koenig <proper.name@proper.domain> <koenig@open-mpi-git-mirror.example.com>
+#Pierre Lemarinier <proper.name@proper.domain> <lemarini@open-mpi-git-mirror.example.com>
+#Lenny Verkhovsky <proper.name@proper.domain> <lennyve@open-mpi-git-mirror.example.com>
+#Andrew Lumsdaine <proper.name@proper.domain> <lums@open-mpi-git-mirror.example.com>
+#Manjunath Gorentla Venkata <proper.name@proper.domain> <manjugv@open-mpi-git-mirror.example.com>
+#Ken Matney <proper.name@proper.domain> <matney@open-mpi-git-mirror.example.com>
+#Mike Dubman <proper.name@proper.domain> <miked@open-mpi-git-mirror.example.com>
+#Mitch Sukalski <proper.name@proper.domain> <mitch@open-mpi-git-mirror.example.com>
+#Mohamad Chaarawi <proper.name@proper.domain> <mschaara@open-mpi-git-mirror.example.com>
+#Mark Taylor <proper.name@proper.domain> <mt@open-mpi-git-mirror.example.com>
+#Tom Naughton <proper.name@proper.domain> <naughtont@open-mpi-git-mirror.example.com>
+#Li-Ta Lo <proper.name@proper.domain> <ollie@open-mpi-git-mirror.example.com>
+#Oscar Vega-Gisbert <proper.name@proper.domain> <osvegis@open-mpi-git-mirror.example.com>
+#Pak Lui <proper.name@proper.domain> <paklui@open-mpi-git-mirror.example.com>
+#Pavel Shamis <proper.name@proper.domain> <pasha@open-mpi-git-mirror.example.com>
+#Patrick Geoffray <proper.name@proper.domain> <patrick@open-mpi-git-mirror.example.com>
+#Brad Penoff <proper.name@proper.domain> <penoff@open-mpi-git-mirror.example.com>
+#Jelena Pjesivac-Grbovic <proper.name@proper.domain> <pjesa@open-mpi-git-mirror.example.com>
+#Prabhanjan Kambadur <proper.name@proper.domain> <pkambadu@open-mpi-git-mirror.example.com>
+#Craig Rasmussen <proper.name@proper.domain> <rasmussn@open-mpi-git-mirror.example.com>
+#Ron Brightwell <proper.name@proper.domain> <rbbrigh@open-mpi-git-mirror.example.com>
+#Ralph Castain <proper.name@proper.domain> <rhc@open-mpi-git-mirror.example.com>
+#Rich Graham <proper.name@proper.domain> <rlgraham@open-mpi-git-mirror.example.com>
+#Rolf Vandevaart <proper.name@proper.domain> <rolfv@open-mpi-git-mirror.example.com>
+#Rob Awles <proper.name@proper.domain> <rta@open-mpi-git-mirror.example.com>
+#Rainer Keller <proper.name@proper.domain> <rusraink@open-mpi-git-mirror.example.com>
+#Sami Ayyorgun <proper.name@proper.domain> <sami@open-mpi-git-mirror.example.com>
+#Samuel K. Gutierrez <proper.name@proper.domain> <samuel@open-mpi-git-mirror.example.com>
+#Gopal Santhanaraman <proper.name@proper.domain> <santhana@open-mpi-git-mirror.example.com>
+#Swen Boehm <proper.name@proper.domain> <sboehm@open-mpi-git-mirror.example.com>
+#Sharon Melamed <proper.name@proper.domain> <sharonm@open-mpi-git-mirror.example.com>
+#Shiqing Fan <proper.name@proper.domain> <shiqing@open-mpi-git-mirror.example.com>
+#Sylvain Jeaugey <proper.name@proper.domain> <sjeaugey@open-mpi-git-mirror.example.com>
+#Sayantan Sur <proper.name@proper.domain> <surs@open-mpi-git-mirror.example.com>
+#Sushant Sharma <proper.name@proper.domain> <sushant@open-mpi-git-mirror.example.com>
+#Steve Wise <proper.name@proper.domain> <swise@open-mpi-git-mirror.example.com>
+#Terry Dontje <proper.name@proper.domain> <tdd@open-mpi-git-mirror.example.com>
+#Tim Mattox <proper.name@proper.domain> <timattox@open-mpi-git-mirror.example.com>
+#Tim Prins <proper.name@proper.domain> <tprins@open-mpi-git-mirror.example.com>
+#Tim Woodall <proper.name@proper.domain> <twoodall@open-mpi-git-mirror.example.com>
+#Vasily Filipov <proper.name@proper.domain> <vasily@open-mpi-git-mirror.example.com>
+#Vishal Sahay <proper.name@proper.domain> <vsahay@open-mpi-git-mirror.example.com>
+#Vishwanath Venkatesan <proper.name@proper.domain> <vvenkatesan@open-mpi-git-mirror.example.com>
+#Wesley Bland <proper.name@proper.domain> <wbland@open-mpi-git-mirror.example.com>
+#Yael Dalen <proper.name@proper.domain> <yaeld@open-mpi-git-mirror.example.com>
+#Yossi Etigin <proper.name@proper.domain> <yosefe@open-mpi-git-mirror.example.com>
+#Weikuan Yu <proper.name@proper.domain> <yuw@open-mpi-git-mirror.example.com>
