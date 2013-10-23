@@ -292,6 +292,11 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t* module);
  */
 void ompi_btl_usnic_module_progress_sends(ompi_btl_usnic_module_t *module);
 
+/* opal_output statistics that are useful for debugging */
+void ompi_btl_usnic_print_stats(
+    ompi_btl_usnic_module_t *module,
+    const char *prefix,
+    bool reset_stats);
 
 END_C_DECLS
 #endif
