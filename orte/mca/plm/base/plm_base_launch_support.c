@@ -1,4 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,8 +12,7 @@
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
- *                         reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -679,38 +677,6 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     }
 
-#if OPAL_HAVE_HWLOC
-    {
-        char *coprocessors, **sns;
-
-        /* detect and add any of my coprocessors to the hash table */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
-
-        if (NULL != coprocessors) {
-            /* init the hash table, if necessary */
-            if (NULL == orte_coprocessors) {
-                orte_coprocessors = OBJ_NEW(opal_hash_table_t);
-                opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
-            }
-            /* separate the serial numbers of the coprocessors
-             * on this host
-             */
-            sns = opal_argv_split(coprocessors, ',');
-            for (int idx = 0 ; NULL != sns[idx] ; ++idx) {
-                uint32_t h;
-
-                /* compute the hash */
-                OPAL_HASH_STR(sns[idx], h);
-                /* mark that this coprocessor is hosted by this daemon */
-                opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&ORTE_PROC_MY_NAME->vpid);
-            }
-            opal_argv_free(sns);
-            free(coprocessors);
-            orte_coprocessors_detected = true;
-        }
-    }
-#endif
-
     /* multiple daemons could be in this buffer, so unpack until we exhaust the data */
     idx = 1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(buffer, &dname, &idx, ORTE_NAME))) {
@@ -1305,7 +1271,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
             /* check for duplicate */
             ignore = false;
             for (j=0; j < *argc; j++) {
-              if (0 == strcmp((*argv)[j], orted_cmd_line[i+1])) {
+	      if (0 == strcmp((*argv)[j], orted_cmd_line[i+1])) {
                     ignore = true;
                     break;
                 }
@@ -1623,7 +1589,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         OBJ_DESTRUCT(&nodes);
         /* mark that the daemons have reported so we can proceed */
         daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
-        daemons->updated = false;
+	daemons->updated = false;
         return ORTE_SUCCESS;
     }
 
