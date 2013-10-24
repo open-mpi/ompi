@@ -375,6 +375,10 @@ int mca_base_pvar_mark_invalid (int index)
 
 int mca_base_pvar_notify (mca_base_pvar_handle_t *handle, mca_base_pvar_event_t event, int *count)
 {
+    if (mca_base_pvar_is_invalid (handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
+
     return handle->pvar->notify (handle->pvar, event, handle->obj_handle, count);
 }
 
