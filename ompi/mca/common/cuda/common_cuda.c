@@ -91,6 +91,9 @@ struct cudaFunctionTable {
     int (*cuCtxGetDevice)(CUdevice *);
     int (*cuDeviceCanAccessPeer)(int *, CUdevice, CUdevice);
     int (*cuDeviceGet)(CUdevice *, int);
+#if OMPI_CUDA_SUPPORT_60
+    int (*cuPointerSetAttribute)(const void *, CUpointer_attribute, CUdeviceptr);
+#endif /* OMPI_CUDA_SUPPORT_60 */
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
 cudaFunctionTable_t cuFunc;
@@ -446,6 +449,9 @@ int mca_common_cuda_stage_one_init(void)
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxGetDevice);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceCanAccessPeer);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceGet);
+#if OMPI_CUDA_SUPPORT_60
+    OMPI_CUDA_DLSYM(libcuda_handle, cuPointerSetAttribute);
+#endif /* OMPI_CUDA_SUPPORT_60 */
     return 0;
 }
 
@@ -832,6 +838,21 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     cuda_reg->base.bound = (unsigned char *)pbase + psize - 1;
     memcpy(&cuda_reg->memHandle, &memHandle, sizeof(memHandle));
 
+#if OMPI_CUDA_SUPPORT_60
+    /* With CUDA 6.0, we can set an attribute on the memory pointer that will
+     * ensure any synchronous copies are completed prior to any other access
+     * of the memory region.  This means we do not need to record an event
+     * and send to the remote side.
+     */
+    memType = 1; /* Just use this variable since we already have it */
+    result = cuFunc.cuPointerSetAttribute(&memType, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS,
+                                          (CUdeviceptr)base);
+    if (CUDA_SUCCESS != result) {
+        opal_show_help("help-mpi-common-cuda.txt", "cuPointerSetAttribute failed",
+                       true, result, base);
+        return OMPI_ERROR;
+    }
+#else
     /* Need to record the event to ensure that any memcopies into the
      * device memory have completed.  The event handle associated with
      * this event is sent to the remote process so that it will wait
@@ -845,6 +866,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
                        true, result, base);
         return OMPI_ERROR;
     }
+#endif /* OMPI_CUDA_SUPPORT_60 */
 
     return OMPI_SUCCESS;
 }
@@ -968,6 +990,10 @@ void mca_common_cuda_destruct_event(uint64_t *event)
  */
 void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
 {
+#if OMPI_CUDA_SUPPORT_60
+    /* No need for any of this with CUDA 6.0 */
+    return;
+#else /* OMPI_CUDA_SUPPORT_60 */
     CUipcEventHandle evtHandle;
     CUevent event;
     CUresult result;
@@ -1005,6 +1031,7 @@ void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
         opal_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
                        true, result);
     }
+#endif /* OMPI_CUDA_SUPPORT_60 */
 }
 
 /*
