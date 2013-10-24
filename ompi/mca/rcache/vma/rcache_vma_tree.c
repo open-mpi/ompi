@@ -16,6 +16,7 @@
   * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
   *
+  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
   * $COPYRIGHT$
   * 
   * Additional copyrights may follow
@@ -264,6 +265,15 @@ int mca_rcache_vma_tree_init(mca_rcache_vma_module_t* rcache)
     rcache->reg_cur_cache_size = 0;
     return ompi_rb_tree_init(&rcache->rb_tree, 
                              mca_rcache_vma_tree_node_compare);
+}
+
+void mca_rcache_vma_tree_finalize(mca_rcache_vma_module_t* rcache)
+{
+    ompi_rb_tree_init(&rcache->rb_tree,
+                      mca_rcache_vma_tree_node_compare);
+    OBJ_DESTRUCT(&rcache->vma_delete_list);
+    OBJ_DESTRUCT(&rcache->vma_list);
+    OBJ_DESTRUCT(&rcache->rb_tree);
 }
 
 mca_mpool_base_registration_t *mca_rcache_vma_tree_find(
