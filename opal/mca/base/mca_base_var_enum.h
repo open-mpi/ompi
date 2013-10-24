@@ -92,7 +92,7 @@ typedef int (*mca_base_var_enum_sfv_fn_t)(mca_base_var_enum_t *self, const int v
  * integer value is used for the MCA variable.
  */
 struct mca_base_var_enum_value_t {
-    const int value;
+    int value;
     const char *string;
 };
 
@@ -116,13 +116,15 @@ struct mca_base_var_enum_t {
      valid value return OPAL_ERR_VALUE_OUT_OF_BOUNDS */
     mca_base_var_enum_vfs_fn_t value_from_string;
     /** Given an integer return the corresponding string value. If the integer does not
-        mathach a valid value return OPAL_ERR_VALUE_OUT_OF_BOUNDS */
+        match a valid value return OPAL_ERR_VALUE_OUT_OF_BOUNDS */
     mca_base_var_enum_sfv_fn_t string_from_value;
     /** Dump a textual representation of the enumerator. The caller is responsible for
         freeing the string */
     mca_base_var_enum_dump_fn_t dump;
 
     int enum_value_count;
+    /** Copy of the enumerators values (used by the default functions). This array and
+        and the strings it contains are freed by the destructor if not NULL. */
     mca_base_var_enum_value_t *enum_values;
 };
 
@@ -152,7 +154,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_enum_t);
  * been used in a pvar registration, because variables that use the
  * enumerator will OBJ_RETAIN it.
  */
-OPAL_DECLSPEC int mca_base_var_enum_create (char *name, mca_base_var_enum_value_t values[],
+OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t values[],
                                             mca_base_var_enum_t **enumerator);
 
 #endif /* !defined(MCA_BASE_VAR_ENUM_H) */
