@@ -311,6 +311,9 @@ struct mca_btl_openib_component_t {
     bool cuda_async_send;
     bool cuda_async_recv;
 #endif /* OMPI_CUDA_SUPPORT */
+#if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
+    int rroce_enable;
+#endif
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
