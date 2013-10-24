@@ -3,8 +3,8 @@
 # mpirun completion v1.0
 #
 # Bash completion script for Open MPI's mpirun
-# Put this file in ~/.bash_completion.d if using standard
 #
+# Put this file in ~/.bash_completion.d if using standard
 # bash completion.
 
 # Check for orterun
@@ -107,26 +107,15 @@ _mpirun() {
 
     cur=${COMP_WORDS[COMP_CWORD]}
 
-    if test "${prv}" = "--bind-to" ; then
-	COMPREPLY=($(compgen -W "none hwthread core socket numa board" -- "$cur"))
-    elif test "${prv}" = "--map-by" -o "${prv}" = "-map-by" ; then
-	COMPREPLY=($(compgen -W "slot hwthread core socket numa board node" -- "$cur"))
-    elif test "${prv##*-}" = "hostfile" ; then
-	COMPREPLY=($(compgen -f -- "$cur"))
-    elif test "${cur:0:1}" = "-" ; then
-	switches=$(_get_mpirun_switches)
-	COMPREPLY=($(compgen -W "$switches" -- "$cur"))
-    fi
-
-    cmd=${COMP_WORDS[$cmd_index]}
-
     if test "${prv##*-}" = "mca" ; then
 	# Complete variable name
 
 	# Remove mca parameters already on the command line
 	already_specified=($(_find_mca_parameters | sort))
 	all_variables=($(_get_mca_variable_names | sort))
-	avail_variables=($(_set_remove "${all_variables[*]}" "${already_specified[*]}"))
+	if test -n "${already_specified[*]}" ; then
+	    avail_variables=($(_set_remove "${all_variables[*]}" "${already_specified[*]}"))
+	fi
 
 	# Return a fuzzy-search of the mca parameter names
 	COMPREPLY=($(_fuzzy_search "$cur" "${avail_variables[*]}"))
@@ -136,7 +125,7 @@ _mpirun() {
 	# Check if the variable is a selection variable (no _ in the name)
         if test "${prv#_}" = "${prv}" ; then
 	    # component selection variable, find available components (removing ones already selected)
-	    enumerations=($(_set_remove "$(_get_mca_component_names $prv)" "$(echo $cur | tr ',' '\n')"))
+	    enumerations=($(_set_remove "$(_get_mca_component_names $prv)" "$(echo $cur | tr ',' '\n' | sort -n)"))
 
 	    # Prepend the current selection if there is one
 	    if test "${cur%,*}" = "${cur}" ; then
@@ -148,6 +137,15 @@ _mpirun() {
 	    enumerations=($(_get_enum_values "$prv"))
 	    COMPREPLY=($(_fuzzy_search "$cur" "${enumerations[*]}"))
 	fi
+    elif test "${prv}" = "--bind-to" ; then
+	COMPREPLY=($(compgen -W "none hwthread core socket numa board" -- "$cur"))
+    elif test "${prv}" = "--map-by" -o "${prv}" = "-map-by" ; then
+	COMPREPLY=($(compgen -W "slot hwthread core socket numa board node" -- "$cur"))
+    elif test "${prv##*-}" = "hostfile" ; then
+	COMPREPLY=($(compgen -f -- "$cur"))
+    elif test "${cur:0:1}" = "-" ; then
+	switches=$(_get_mpirun_switches)
+	COMPREPLY=($(compgen -W "$switches" -- "$cur"))
     fi
 
     return 0
