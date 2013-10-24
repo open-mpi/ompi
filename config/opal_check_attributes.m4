@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -205,6 +205,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
     opal_cv___attribute__malloc=0
     opal_cv___attribute__may_alias=0
     opal_cv___attribute__no_instrument_function=0
+    opal_cv___attribute__noinline=0
     opal_cv___attribute__nonnull=0
     opal_cv___attribute__noreturn=0
     opal_cv___attribute__noreturn_funcptr=0
@@ -351,6 +352,16 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         [],
         [])
 
+
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([noinline],
+        [
+         int foo(int arg1, int arg2) __attribute__ ((__noinline__));
+         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+         static int bar(int arg1, int arg2) __attribute__ ((__noinline__));
+         static int bar(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+        ],
+        [],
+        [])
 
     #
     # Attribute nonnull:
@@ -561,6 +572,8 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ may_alias or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NO_INSTRUMENT_FUNCTION, [$opal_cv___attribute__no_instrument_function],
                      [Whether your compiler has __attribute__ no_instrument_function or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NOINLINE, [$opal_cv___attribute__noinline],
+                     [Whether your compiler has __attribute__ noinline or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NONNULL, [$opal_cv___attribute__nonnull],
                      [Whether your compiler has __attribute__ nonnull or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_NORETURN, [$opal_cv___attribute__noreturn],

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -155,6 +155,12 @@
 #    define __opal_attribute_no_instrument_function__  __attribute__((__no_instrument_function__))
 #else
 #    define __opal_attribute_no_instrument_function__
+#endif
+
+#if OPAL_HAVE_ATTRIBUTE_NOINLINE
+#    define __opal_attribute_noinline__  __attribute__((__noinline__))
+#else
+#    define __opal_attribute_noinline__
 #endif
 
 #if OPAL_HAVE_ATTRIBUTE_NONNULL
