@@ -56,7 +56,7 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
         return OMPI_ERROR; 
     }
 
-    bound_addr = (unsigned char *)addr + size - 1;
+    bound_addr = ((unsigned char *)addr) + size - 1;
         
     /* Check to ensure that the cache is valid */
     if (OPAL_UNLIKELY(opal_memory_changed() && 
@@ -82,7 +82,7 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
         return OMPI_ERROR;
     }
 
-    bound_addr = (unsigned char *)addr + size - 1;
+    bound_addr = ((unsigned char *)addr) + size - 1;
 
     /* Check to ensure that the cache is valid */
     if (OPAL_UNLIKELY(opal_memory_changed() && 
