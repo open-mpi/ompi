@@ -70,7 +70,7 @@ char *orte_local_cpu_type = NULL;
 char *orte_local_cpu_model = NULL;
 char *orte_basename = NULL;
 bool orte_coprocessors_detected = false;
-opal_hash_table_t *orte_coprocessors;
+opal_hash_table_t *orte_coprocessors = NULL;
 
 /* ORTE OOB port flags */
 bool orte_static_ports = false;

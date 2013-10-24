@@ -411,7 +411,7 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         orte_node_t *node;
         uint32_t h;
         orte_vpid_t *vptr;
-    int i, rc;
+        int i, rc;
 
         /* if coprocessors were detected, now is the time to
          * identify who is attached to what host - this info
