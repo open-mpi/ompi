@@ -431,43 +431,6 @@ static int rte_init(void)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
 
-#if OPAL_HAVE_HWLOC
-    {
-        char *coprocessors, **sns;
-        uint32_t h;
-        int idx;
-
-        /* detect and add any coprocessors */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
-        if (NULL != coprocessors) {
-            /* init the hash table, if necessary */
-            if (NULL == orte_coprocessors) {
-                orte_coprocessors = OBJ_NEW(opal_hash_table_t);
-                opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
-            }
-            /* separate the serial numbers of the coprocessors
-             * on this host
-             */
-            sns = opal_argv_split(coprocessors, ',');
-            for (idx=0; NULL != sns[idx]; idx++) {
-                /* compute the hash */
-                OPAL_HASH_STR(sns[idx], h);
-                /* mark that this coprocessor is hosted by this node */
-                opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
-            }
-            opal_argv_free(sns);
-            free(coprocessors);
-            orte_coprocessors_detected = true;
-        }
-        /* see if I am on a coprocessor */
-        coprocessors = opal_hwloc_base_check_on_coprocessor();
-        if (NULL != coprocessors) {
-            node->serial_number = coprocessors;
-            orte_coprocessors_detected = true;
-        }
-    }
-#endif
-
     /*
      * Routed system
      */
@@ -549,11 +512,46 @@ static int rte_init(void)
         goto error;
     }
 #if OPAL_HAVE_HWLOC
-    /* if a topology file was given, then the rmaps framework open
-     * will have reset our topology. Ensure we always get the right
-     * one by setting our node topology afterwards
-     */
-    node->topology = opal_hwloc_topology;
+    {
+        char *coprocessors, **sns;
+        uint32_t h;
+        int idx;
+
+        /* if a topology file was given, then the rmaps framework open
+         * will have reset our topology. Ensure we always get the right
+         * one by setting our node topology afterwards
+         */
+        node->topology = opal_hwloc_topology;
+
+        /* init the hash table, if necessary */
+        if (NULL == orte_coprocessors) {
+            orte_coprocessors = OBJ_NEW(opal_hash_table_t);
+            opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
+        }
+        /* detect and add any coprocessors */
+        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+        if (NULL != coprocessors) {
+            /* separate the serial numbers of the coprocessors
+             * on this host
+             */
+            sns = opal_argv_split(coprocessors, ',');
+            for (idx=0; NULL != sns[idx]; idx++) {
+                /* compute the hash */
+                OPAL_HASH_STR(sns[idx], h);
+                /* mark that this coprocessor is hosted by this node */
+                opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
+            }
+            opal_argv_free(sns);
+            free(coprocessors);
+            orte_coprocessors_detected = true;
+        }
+        /* see if I am on a coprocessor */
+        coprocessors = opal_hwloc_base_check_on_coprocessor();
+        if (NULL != coprocessors) {
+            node->serial_number = coprocessors;
+            orte_coprocessors_detected = true;
+        }
+    }
 #endif
 
     /* Open/select the odls */
