@@ -44,7 +44,7 @@ print join(" ", sort(@uniq));'
 }
 
 _get_mpirun_switches() {
-    mpirun --help 2>&1 | sed 's/^\s*//g' | egrep '^-' | cut -d' ' -f1 | tr '|' ' ' | tr '\n' ' '
+    mpirun --help 2>&1 | sed 's/^\s*//g' | egrep '^-' | cut -d' ' -f1 | tr '|\n' ' '
 }
 
 # get enumerator values for a variable
@@ -65,8 +65,8 @@ print join(" ", @values);'
 }
 
 # remove items from $1 that are also in $2. lists must be sorted
-_set_remove () {    
-    comm -23 <(echo $1 | tr " " "\n") <(echo $2 | tr " " "\n")
+_set_remove () {
+    comm -23 <(echo $1 | sort | tr " " "\n") <(echo $2 | sort | tr " " "\n") 2>/dev/null
 }
 
 # find mca parameters specified on the command line (prevent duplicates)
@@ -111,8 +111,8 @@ _mpirun() {
 	# Complete variable name
 
 	# Remove mca parameters already on the command line
-	already_specified=($(_find_mca_parameters | sort))
-	all_variables=($(_get_mca_variable_names | sort))
+	already_specified=($(_find_mca_parameters))
+	all_variables=($(_get_mca_variable_names))
 
 	avail_variables=($(_set_remove "${all_variables[*]}" "${already_specified[*]}"))
         # Return a fuzzy-search of the mca parameter names
@@ -123,7 +123,7 @@ _mpirun() {
 	# Check if the variable is a selection variable (no _ in the name)
         if test "${prv#_}" = "${prv}" ; then
 	    # component selection variable, find available components (removing ones already selected)
-	    enumerations=($(_set_remove "$(_get_mca_component_names $prv)" "$(echo $cur | tr ',' '\n' | sort -n)"))
+	    enumerations=($(_set_remove "$(_get_mca_component_names $prv)" "$(echo $cur | tr ',' '\n')"))
 
 	    # Prepend the current selection if there is one
 	    if test "${cur%,*}" = "${cur}" ; then
