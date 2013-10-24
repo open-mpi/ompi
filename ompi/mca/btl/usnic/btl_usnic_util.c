@@ -86,6 +86,37 @@ void ompi_btl_usnic_sprintf_gid_mac(char *out, union ibv_gid *gid)
     ompi_btl_usnic_sprintf_mac(out, mac);
 }
 
+/* Pretty-print the given boolean array as a hexadecimal string.  slen should
+ * include space for any null terminator. */
+void ompi_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[], size_t alen)
+{
+    size_t i = 0;
+    size_t j = 0;
+
+    /* could accommodate other cases, but not needed right now */
+    assert(slen % 4 == 0);
+
+    /* compute one nybble at a time */
+    while (i < alen && (j < slen - 1)) {
+        unsigned char tmp = 0;
+
+        /* first bool is the leftmost (most significant) bit of the nybble */
+        tmp |= !!a[i+0] << 3;
+        tmp |= !!a[i+1] << 2;
+        tmp |= !!a[i+2] << 1;
+        tmp |= !!a[i+3] << 0;
+        tmp += '0';
+        s[j] = tmp;
+
+        ++j;
+        i += 4;
+    }
+
+    s[j++] = '\0';
+    assert(i <= alen);
+    assert(j <= slen);
+}
+
 
 int ompi_btl_usnic_find_ip(ompi_btl_usnic_module_t *module, uint8_t mac[6])
 {

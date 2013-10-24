@@ -57,7 +57,6 @@ typedef enum {
     OMPI_BTL_USNIC_FRAG_PUT_DEST
 } ompi_btl_usnic_frag_type_t;
 
-#if MSGDEBUG2
 static inline const char *
 usnic_frag_type(ompi_btl_usnic_frag_type_t t)
 {
@@ -68,7 +67,6 @@ usnic_frag_type(ompi_btl_usnic_frag_type_t t)
     default: return "unknown";
     }
 }
-#endif
 
 typedef enum {
     OMPI_BTL_USNIC_SEG_ACK,
@@ -77,7 +75,6 @@ typedef enum {
     OMPI_BTL_USNIC_SEG_RECV
 } ompi_btl_usnic_seg_type_t;
 
-#if MSGDEBUG2
 static inline const char *
 usnic_seg_type(ompi_btl_usnic_seg_type_t t)
 {
@@ -89,7 +86,6 @@ usnic_seg_type(ompi_btl_usnic_seg_type_t t)
     default: return "unknown";
     }
 }
-#endif
 
 
 typedef struct ompi_btl_usnic_reg_t {

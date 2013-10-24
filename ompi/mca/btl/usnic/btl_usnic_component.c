@@ -83,6 +83,10 @@ static opal_event_t usnic_clock_timer_event;
 static bool usnic_clock_timer_event_set = false;
 static struct timeval usnic_clock_timeout;
 
+/* set to true in a debugger to enable even more verbose output when calling
+ * ompi_btl_usnic_component_debug */
+static volatile bool dump_bitvectors = false;
+
 static int usnic_component_open(void);
 static int usnic_component_close(void);
 static mca_btl_base_module_t **
@@ -1348,4 +1352,178 @@ static bool filter_module(ompi_btl_usnic_module_t *module,
 
     /* Turn the match result into whether we should keep it or not */
     return match ^ !filter_incl;
+}
+
+/* could take indent as a parameter instead of hard-coding it */
+static void dump_endpoint(ompi_btl_usnic_endpoint_t *endpoint)
+{
+    int i;
+    ompi_btl_usnic_frag_t *frag;
+    ompi_btl_usnic_send_segment_t *sseg;
+    int ep_jobid;
+    int ep_rank;
+    struct in_addr ia;
+    char ep_addr_str[INET_ADDRSTRLEN];
+    char tmp[128], str[2048];
+
+    ep_jobid = endpoint->endpoint_proc->proc_ompi->proc_name.jobid;
+    ep_rank = endpoint->endpoint_proc->proc_ompi->proc_name.vpid;
+
+    memset(ep_addr_str, 0x00, sizeof(ep_addr_str));
+    ia.s_addr = endpoint->endpoint_remote_addr.ipv4_addr;
+    inet_ntop(AF_INET, &ia, ep_addr_str, sizeof(ep_addr_str));
+
+    opal_output(0, "    endpoint %p, %s job=%"PRIu32" rank=%"PRIu32" rts=%s s_credits=%"PRIi32"\n",
+           (void *)endpoint, ep_addr_str, ep_jobid, ep_rank,
+           (endpoint->endpoint_ready_to_send ? "true" : "false"),
+           endpoint->endpoint_send_credits);
+    opal_output(0, "      endpoint->frag_send_queue:\n");
+
+    OPAL_LIST_FOREACH(frag, &endpoint->endpoint_frag_send_queue,
+                      ompi_btl_usnic_frag_t) {
+        snprintf(str, sizeof(str), "      --> frag %p, %s", (void *)frag,
+                 usnic_frag_type(frag->uf_type));
+        switch (frag->uf_type) {
+            ompi_btl_usnic_small_send_frag_t *ssfrag = NULL;
+            ompi_btl_usnic_large_send_frag_t *lsfrag = NULL;
+
+            case OMPI_BTL_USNIC_FRAG_LARGE_SEND:
+                lsfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
+                snprintf(tmp, sizeof(tmp), " tag=%"PRIu8" id=%"PRIu32" offset=%llu/%llu post_cnt=%"PRIu32" ack_bytes_left=%llu\n",
+                        lsfrag->lsf_tag,
+                        lsfrag->lsf_frag_id,
+                        (unsigned long long)lsfrag->lsf_cur_offset,
+                        (unsigned long long)lsfrag->lsf_base.sf_size,
+                        lsfrag->lsf_base.sf_seg_post_cnt,
+                        (unsigned long long)lsfrag->lsf_base.sf_ack_bytes_left);
+                strncat(str, tmp, sizeof(str) - strlen(str) - 1);
+                opal_output(0, "%s", str);
+
+                OPAL_LIST_FOREACH(sseg, &lsfrag->lsf_seg_chain,
+                                  ompi_btl_usnic_send_segment_t) {
+                    /* chunk segs are just typedefs to send segs */
+                    opal_output(0, "        chunk seg %p, chan=%s hotel=%d times_posted=%"PRIu32" pending=%s\n",
+                                (void *)sseg,
+                                (USNIC_PRIORITY_CHANNEL == sseg->ss_channel ?
+                                "prio" : "data"),
+                                sseg->ss_hotel_room,
+                                sseg->ss_send_posted,
+                                (sseg->ss_ack_pending ? "true" : "false"));
+                }
+            break;
+
+            case OMPI_BTL_USNIC_FRAG_SMALL_SEND:
+                ssfrag = (ompi_btl_usnic_small_send_frag_t *)frag;
+                snprintf(tmp, sizeof(tmp), " sf_size=%llu post_cnt=%"PRIu32" ack_bytes_left=%llu\n",
+                        (unsigned long long)ssfrag->ssf_base.sf_size,
+                        ssfrag->ssf_base.sf_seg_post_cnt,
+                        (unsigned long long)ssfrag->ssf_base.sf_ack_bytes_left);
+                strncat(str, tmp, sizeof(str) - strlen(str) - 1);
+                opal_output(0, "%s", str);
+
+                sseg = &ssfrag->ssf_segment;
+                opal_output(0, "        small seg %p, chan=%s hotel=%d times_posted=%"PRIu32" pending=%s\n",
+                    (void *)sseg,
+                    (USNIC_PRIORITY_CHANNEL == sseg->ss_channel ?
+                        "prio" : "data"),
+                    sseg->ss_hotel_room,
+                    sseg->ss_send_posted,
+                    (sseg->ss_ack_pending ? "true" : "false"));
+            break;
+
+            case OMPI_BTL_USNIC_FRAG_PUT_DEST:
+                /* put_dest frags are just a typedef to generic frags */
+                snprintf(tmp, sizeof(tmp), " put_addr=%p\n", frag->uf_dst_seg[0].seg_addr.pval);
+                strncat(str, tmp, sizeof(str) - strlen(str) - 1);
+                opal_output(0, "%s", str);
+            break;
+        }
+    }
+
+    /* Now examine the hotel for this endpoint and dump any segments we find
+     * there.  Yes, this peeks at members that are technically "private", so
+     * eventually this should be done through some sort of debug or iteration
+     * interface in the hotel code. */
+    opal_output(0, "      endpoint->endpoint_sent_segs (%p):\n",
+           (void *)endpoint->endpoint_sent_segs);
+    for (i = 0; i < WINDOW_SIZE; ++i) {
+        sseg = endpoint->endpoint_sent_segs[i];
+        if (NULL != sseg) {
+            opal_output(0, "        [%d] sseg=%p %s chan=%s hotel=%d times_posted=%"PRIu32" pending=%s\n",
+                   i,
+                   (void *)sseg,
+                   usnic_seg_type(sseg->ss_base.us_type),
+                   (USNIC_PRIORITY_CHANNEL == sseg->ss_channel ?
+                    "prio" : "data"),
+                   sseg->ss_hotel_room,
+                   sseg->ss_send_posted,
+                   (sseg->ss_ack_pending ? "true" : "false"));
+        }
+    }
+
+    opal_output(0, "      ack_needed=%s n_t=%"PRIu64" n_a=%"PRIu64" n_r=%"PRIu64" n_s=%"PRIu64" rfstart=%"PRIu32"\n",
+                (endpoint->endpoint_ack_needed?"true":"false"),
+                endpoint->endpoint_next_seq_to_send,
+                endpoint->endpoint_ack_seq_rcvd,
+                endpoint->endpoint_next_contig_seq_to_recv,
+                endpoint->endpoint_highest_seq_rcvd,
+                endpoint->endpoint_rfstart);
+
+    if (dump_bitvectors) {
+        ompi_btl_usnic_snprintf_bool_array(str, sizeof(str),
+                                           endpoint->endpoint_rcvd_segs,
+                                           WINDOW_SIZE);
+        opal_output(0, "      rcvd_segs 0x%s", str);
+    }
+}
+
+void ompi_btl_usnic_component_debug(void)
+{
+    int i;
+    ompi_btl_usnic_module_t *module;
+    ompi_btl_usnic_endpoint_t *endpoint;
+    ompi_btl_usnic_send_segment_t *sseg;
+    opal_list_item_t *item;
+
+    opal_output(0, "*** dumping usnic state for MPI_COMM_WORLD rank %d ***\n",
+                ompi_proc_local_proc->proc_name.vpid);
+    for (i = 0; i < (int)mca_btl_usnic_component.num_modules; ++i) {
+        module = mca_btl_usnic_component.usnic_active_modules[i];
+
+        opal_output(0, "active_modules[%d]=%p %s max{frag,chunk,tiny}=%llu,%llu,%llu\n",
+               i, (void *)module, module->if_name,
+               (unsigned long long)module->max_frag_payload,
+               (unsigned long long)module->max_chunk_payload,
+               (unsigned long long)module->max_tiny_payload);
+
+        opal_output(0, "  endpoints_with_sends:\n");
+        OPAL_LIST_FOREACH(endpoint, &module->endpoints_with_sends,
+                          ompi_btl_usnic_endpoint_t) {
+            dump_endpoint(endpoint);
+        }
+
+        opal_output(0, "  endpoints_that_need_acks:\n");
+        OPAL_LIST_FOREACH(endpoint, &module->endpoints_that_need_acks,
+                          ompi_btl_usnic_endpoint_t) {
+            dump_endpoint(endpoint);
+        }
+
+        /* the all_endpoints list uses a different list item member */
+        opal_output(0, "  all_endpoints:\n");
+        item = opal_list_get_first(&module->all_endpoints);
+        while (item != opal_list_get_end(&module->all_endpoints)) {
+            endpoint = container_of(item, mca_btl_base_endpoint_t,
+                                    endpoint_endpoint_li);
+            item = opal_list_get_next(item);
+            dump_endpoint(endpoint);
+        }
+
+        opal_output(0, "  pending_resend_segs:\n");
+        OPAL_LIST_FOREACH(sseg, &module->pending_resend_segs,
+                          ompi_btl_usnic_send_segment_t) {
+            opal_output(0, "    sseg %p\n", (void *)sseg);
+        }
+
+        ompi_btl_usnic_print_stats(module, "  manual", /*reset=*/false);
+    }
 }

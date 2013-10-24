@@ -724,25 +724,23 @@ static inline void usnic_stats_reset(ompi_btl_usnic_module_t *module)
     }
 }
 
-
-static void usnic_stats_callback(int fd, short flags, void *arg)
+/* Prints a a few terse statistics lines via opal_output(0,...).  The first
+ * line will be prefixed with the string "prefix".  If "reset_stats" is true
+ * then the statistics will be reset after printing.
+ *
+ * NOTE: this routine ignores the setting of stats_enable, so it can be used
+ * for debugging routines even when normal stats reporting is not enabled.
+ */
+void ompi_btl_usnic_print_stats(
+    ompi_btl_usnic_module_t *module,
+    const char *prefix,
+    bool reset_stats)
 {
-    ompi_btl_usnic_module_t *module = (ompi_btl_usnic_module_t*) arg;
     char tmp[128], str[2048];
-
-    if (!mca_btl_usnic_component.stats_enabled) {
-        return;
-    }
-
-    if (module->final_stats) {
-        snprintf(tmp, sizeof(tmp), "final");
-    } else {
-        snprintf(tmp, sizeof(tmp), "%4lu", ++module->stats_report_num);
-    }
 
     /* The usuals */
     snprintf(str, sizeof(str), "%s:MCW:%3u, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu OA/DA %4lu/%4lu CRC:%4lu ",
-             tmp,
+             prefix,
              ompi_proc_local()->proc_name.vpid,
 
              module->num_total_sends,
@@ -754,7 +752,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
              module->num_timeout_retrans,
              module->num_fast_retrans,
              module->num_ack_sends,
-             
+
              module->num_total_recvs,
              (module->num_total_recvs - module->num_recv_reposts) == 0 ? 'g' : 'B',
              (module->num_total_recvs -
@@ -773,10 +771,10 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
              module->num_dup_recvs,
              module->num_badfrag_recvs,
              module->num_ack_recvs,
-             
+
              module->num_old_dup_acks,
              module->num_dup_acks,
-             
+
              module->num_crc_errors);
 
     /* If our PML calls were 0, then show send and receive window
@@ -790,7 +788,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
 
         rd_min = su_min = WINDOW_SIZE * 2;
         rd_max = su_max = 0;
-        
+
         item = opal_list_get_first(&module->all_endpoints);
         while (item != opal_list_get_end(&(module->all_endpoints))) {
             endpoint = container_of(item, mca_btl_base_endpoint_t,
@@ -799,8 +797,8 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
 
             /* Number of un-acked sends (i.e., sends for which we're
                still waiting for ACK) */
-            send_unacked = 
-                endpoint->endpoint_next_seq_to_send - 
+            send_unacked =
+                endpoint->endpoint_next_seq_to_send -
                 endpoint->endpoint_ack_seq_rcvd - 1;
             if (send_unacked > su_max) su_max = send_unacked;
             if (send_unacked < su_min) su_min = send_unacked;
@@ -808,7 +806,7 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
             /* Receive window depth (i.e., difference between highest
                seq received and the next message we haven't ACKed
                yet) */
-            recv_depth = 
+            recv_depth =
                 endpoint->endpoint_highest_seq_rcvd -
                 endpoint->endpoint_next_contig_seq_to_recv;
             if (recv_depth > rd_max) rd_max = recv_depth;
@@ -826,24 +824,39 @@ static void usnic_stats_callback(int fd, short flags, void *arg)
     }
 
     strncat(str, tmp, sizeof(str) - strlen(str) - 1);
-    opal_output(0, str);
+    opal_output(0, "%s", str);
 
-    if (mca_btl_usnic_component.stats_relative) {
+    if (reset_stats) {
         usnic_stats_reset(module);
     }
+}
+
+/* callback routine for libevent */
+static void usnic_stats_callback(int fd, short flags, void *arg)
+{
+    ompi_btl_usnic_module_t *module = (ompi_btl_usnic_module_t*) arg;
+    char tmp[128];
+
+    if (!mca_btl_usnic_component.stats_enabled) {
+        return;
+    }
+
+    snprintf(tmp, sizeof(tmp), "%4lu", ++module->stats_report_num);
+
+    ompi_btl_usnic_print_stats(module, tmp,
+                               /*reset=*/mca_btl_usnic_component.stats_relative);
 
     /* In OMPI v1.6, we have to re-add this event (because there's an
        old libevent in OMPI v1.6) */
-    if (!module->final_stats) {
-        opal_event_add(&(module->stats_timer_event),
-                       &(module->stats_timeout));
-    }
+    opal_event_add(&(module->stats_timer_event),
+                   &(module->stats_timeout));
 }
 
 
 static int usnic_finalize(struct mca_btl_base_module_t* btl)
 {
     int i;
+    int rc;
     ompi_btl_usnic_proc_t *proc;
     ompi_btl_usnic_module_t* module = (ompi_btl_usnic_module_t*)btl;
 
@@ -856,22 +869,21 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
             &module->mod_channels[USNIC_DATA_CHANNEL]);
     ompi_btl_usnic_channel_finalize(module,
             &module->mod_channels[USNIC_PRIORITY_CHANNEL]);
-    ibv_dealloc_pd(module->pd);
-    
+
     /* Disable the stats callback event, and then call the stats
        callback manually to display the final stats */
     if (mca_btl_usnic_component.stats_enabled) {
         opal_event_del(&(module->stats_timer_event));
-        module->final_stats = true;
-        usnic_stats_callback(0, 0, module);
+        ompi_btl_usnic_print_stats(module, "final", /*reset_stats=*/false);
     }
 
     /* Empty the all_endpoints list so that we can destroy endpoints
      * (i.e., so that their super/opal_list_item_t member isn't still
      * in use) 
      * This call to usnic_finalize is actually an implicit ACK of
-     * every packet we have ever sent, so call handle_ack to do all 
-     * the ACK processing and release all the data that needs releasing.
+     * every packet we have ever sent, so call handle_ack (via
+     * flush_endpoint) to do all the ACK processing and release all the
+     * data that needs releasing.
      *
      * If we don't care about releasing data, we could just set:
      *   endpoint->endpoint_ack_seq_rcvd =
@@ -890,6 +902,10 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
         }
     }
     OBJ_DESTRUCT(&(module->all_endpoints));
+
+    /* _flush_endpoint should have emptied this list */
+    assert(opal_list_is_empty(&(module->pending_resend_segs)));
+    OBJ_DESTRUCT(&module->pending_resend_segs);
 
     /* Similarly, empty the endpoints_that_need_acks list so that
        endpoints don't still have an endpoint_ack_li item still in
@@ -911,12 +927,31 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     }
     OBJ_DESTRUCT(&module->all_procs);
 
+    for (i = module->first_pool; i <= module->last_pool; ++i) {
+        OBJ_DESTRUCT(&module->module_recv_buffers[i]);
+    }
+    free(module->module_recv_buffers);
+
     OBJ_DESTRUCT(&module->ack_segs);
     OBJ_DESTRUCT(&module->endpoints_with_sends);
     OBJ_DESTRUCT(&module->small_send_frags);
     OBJ_DESTRUCT(&module->large_send_frags);
     OBJ_DESTRUCT(&module->put_dest_frags);
+    OBJ_DESTRUCT(&module->chunk_segs);
     OBJ_DESTRUCT(&module->senders);
+
+    /* destroy the PD after all the CQs and AHs have been destroyed, otherwise
+     * we get a minor leak in libusnic_verbs */
+    rc = ibv_dealloc_pd(module->pd);
+    if (rc) {
+        BTL_ERROR(("failed to ibv_dealloc_pd, err=%d (%s)", rc, strerror(rc)));
+    }
+
+    rc = ibv_close_device(module->device_context);
+    if (-1 == rc) {
+        BTL_ERROR(("failed to ibv_close_device"));
+    }
+
     mca_mpool_base_module_destroy(module->super.btl_mpool);
 
     return OMPI_SUCCESS;
@@ -1689,7 +1724,7 @@ ompi_btl_usnic_channel_finalize(
 {
     /* gets set right after constructor called, lets us know recv_segs
      * have been constructed
-    */
+     */
     if (channel->recv_segs.ctx == module) {
         OBJ_DESTRUCT(&channel->recv_segs);
     }
@@ -1764,7 +1799,6 @@ ompi_btl_usnic_channel_init(
      */
     segsize = (mtu + opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&channel->recv_segs, ompi_free_list_t);
-    channel->recv_segs.ctx = module;
     rc = ompi_free_list_init_new(&channel->recv_segs,
                                  sizeof(ompi_btl_usnic_recv_segment_t),
                                  opal_cache_line_size,
@@ -1775,6 +1809,8 @@ ompi_btl_usnic_channel_init(
                                  rd_num,
                                  rd_num,
                                  module->super.btl_mpool);
+    channel->recv_segs.ctx = module; /* must come after ompi_free_list_init_new,
+                                        otherwise ctx gets clobbered */
     if (OMPI_SUCCESS != rc) {
         goto error;
     }
@@ -1958,7 +1994,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
         ~(opal_cache_line_size - 1);
 
     /* Send frags freelists */
-    module->small_send_frags.ctx = module;
     OBJ_CONSTRUCT(&module->small_send_frags, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->small_send_frags,
                                  sizeof(ompi_btl_usnic_small_send_frag_t),
@@ -1972,7 +2007,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  module->super.btl_mpool);
     assert(OMPI_SUCCESS == rc);
 
-    module->large_send_frags.ctx = module;
     OBJ_CONSTRUCT(&module->large_send_frags, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->large_send_frags,
                                  sizeof(ompi_btl_usnic_large_send_frag_t),
@@ -1986,7 +2020,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                                  NULL);
     assert(OMPI_SUCCESS == rc);
 
-    module->put_dest_frags.ctx = module;
     OBJ_CONSTRUCT(&module->put_dest_frags, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->put_dest_frags,
                                  sizeof(ompi_btl_usnic_put_dest_frag_t),
@@ -2001,7 +2034,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     assert(OMPI_SUCCESS == rc);
 
     /* list of segments to use for sending */
-    module->chunk_segs.ctx = module;
     OBJ_CONSTRUCT(&module->chunk_segs, ompi_free_list_t);
     rc = ompi_free_list_init_new(&module->chunk_segs,
                                  sizeof(ompi_btl_usnic_chunk_segment_t),
@@ -2016,7 +2048,6 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     assert(OMPI_SUCCESS == rc);
 
     /* ACK segments freelist */
-    module->ack_segs.ctx = module;
     ack_segment_len = (sizeof(ompi_btl_usnic_btl_header_t) +
             opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&module->ack_segs, ompi_free_list_t);
@@ -2034,14 +2065,16 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
 
     /*
      * Initialize pools of large recv buffers
+     *
+     * NOTE: (last_pool < first_pool) is _not_ erroneous; recv buffer pools
+     * simply won't be used in that case.
      */
-    module->first_pool = 16;
+    module->first_pool = 16; /* 64 kiB */
     module->last_pool = fls(module->super.btl_eager_limit-1);
     module->module_recv_buffers = calloc(module->last_pool+1,
             sizeof(ompi_free_list_t));
     assert(module->module_recv_buffers != NULL);
     for (i=module->first_pool; i<=module->last_pool; ++i) {
-        module->module_recv_buffers[i].ctx = module;
         OBJ_CONSTRUCT(&module->module_recv_buffers[i], ompi_free_list_t);
         rc = ompi_free_list_init_new(&module->module_recv_buffers[i],
                                      1 << i,
@@ -2059,12 +2092,12 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     if (mca_btl_usnic_component.stats_enabled) {
         usnic_stats_reset(module);
 
-        module->final_stats = false;
         module->stats_timeout.tv_sec = mca_btl_usnic_component.stats_frequency;
         module->stats_timeout.tv_usec = 0;
 
         opal_event_set(opal_event_base, &(module->stats_timer_event),
-                       -1, EV_TIMEOUT | EV_PERSIST, usnic_stats_callback, module);
+                       -1, EV_TIMEOUT | EV_PERSIST,
+                       &usnic_stats_callback, module);
         opal_event_add(&(module->stats_timer_event),
                        &(module->stats_timeout));
     }
@@ -2079,7 +2112,10 @@ chan_destroy:
     mca_mpool_base_module_destroy(module->super.btl_mpool);
 
 dealloc_pd:
-    ibv_dealloc_pd(module->pd);
+    rc = ibv_dealloc_pd(module->pd);
+    if (rc) {
+        BTL_ERROR(("failed to ibv_dealloc_pd, err=%d (%s)", rc, strerror(rc)));
+    }
     return OMPI_ERROR;
 }
 

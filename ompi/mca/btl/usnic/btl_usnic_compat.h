@@ -44,6 +44,12 @@
 #  define opal_ifindextomtu  btl_usnic_opal_ifindextomtu
 #  define opal_ifindextoname btl_usnic_opal_ifindextoname
 
+/* this _FOREACH macro is not present in v1.6 */
+#define OPAL_LIST_FOREACH(item, list, type)                             \
+  for (item = (type *) (list)->opal_list_sentinel.opal_list_next ;      \
+       item != (type *) &(list)->opal_list_sentinel ;                   \
+       item = (type *) ((opal_list_item_t *) (item))->opal_list_next)
+
 #elif (OMPI_MAJOR_VERSION == 1 && OMPI_MINOR_VERSION >= 7) || \
       (OMPI_MAJOR_VERSION >= 2)
 /* v1.7, v1.8 (to be released), trunk (v1.9), or later */
