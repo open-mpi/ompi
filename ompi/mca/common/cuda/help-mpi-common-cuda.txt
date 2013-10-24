@@ -172,3 +172,10 @@ could cause incorrect results.  Turn of GPU Direct RDMA support by running with
 --mca btl_openib_cuda_want_gdr_support 0.
   cuPointerGetAttribute return value:   %d
 Check the cuda.h file for what the return value means.
+[cuPointerSetAttribute failed]
+The call to cuPointerSetAttribute failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuPointerSetAttribute return value:   %d
+  Address: %p
+Check the cuda.h file for what the return value means.
+#
