@@ -113,11 +113,9 @@ _mpirun() {
 	# Remove mca parameters already on the command line
 	already_specified=($(_find_mca_parameters | sort))
 	all_variables=($(_get_mca_variable_names | sort))
-	if test -n "${already_specified[*]}" ; then
-	    avail_variables=($(_set_remove "${all_variables[*]}" "${already_specified[*]}"))
-	fi
 
-	# Return a fuzzy-search of the mca parameter names
+	avail_variables=($(_set_remove "${all_variables[*]}" "${already_specified[*]}"))
+        # Return a fuzzy-search of the mca parameter names
 	COMPREPLY=($(_fuzzy_search "$cur" "${avail_variables[*]}"))
     elif test "${tb##*-}" = "mca" ; then
 	# Complete variable value
