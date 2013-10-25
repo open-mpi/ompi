@@ -21,7 +21,7 @@ AC_DEFUN([MCA_oshmem_atomic_mxm_CONFIG],[
                    CPPFLAGS="$CPPFLAGS -I$ompi_check_mxm_dir/include"
                    LDFLAGS="$LDFLAGS -L$ompi_check_mxm_dir/lib"
                    LIBS="$LIBS -lmxm"
-                   AC_COMPILE_IFELSE([
+                   AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
                                 #include <mxm/api/mxm_api.h>
                                 int main() {
                                 if (mxm_get_version() < MXM_VERSION(1,5) )
@@ -31,7 +31,7 @@ AC_DEFUN([MCA_oshmem_atomic_mxm_CONFIG],[
                                 int add_index = MXM_REQ_OP_ATOMIC_ADD;
                                 int swap_index = MXM_REQ_OP_ATOMIC_SWAP;
                                 return 0;
-                                }],
+                                }]])],
                     [AC_DEFINE([OSHMEM_HAS_ATOMIC_MXM], [1], [mxm support is available]) atomic_mxm_happy="yes"],
                    [atomic_mxm_happy="no"],
                    [atomic_mxm_happy="no"])
