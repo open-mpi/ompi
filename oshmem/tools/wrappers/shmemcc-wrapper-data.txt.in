@@ -31,8 +31,8 @@ linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 # the MPI API.
 libs=-lshmem -lmpi @OMPI_WRAPPER_EXTRA_LIBS@
 libs_static=-lshmem -lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
-dyn_lib_file=libmpi.@OPAL_DYN_LIB_SUFFIX@
-static_lib_file=libmpi.a
+dyn_lib_file=libshmem.@OPAL_DYN_LIB_SUFFIX@
+static_lib_file=libshmem.a
 required_file=
 includedir=${includedir}
 libdir=${libdir}

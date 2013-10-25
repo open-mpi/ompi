@@ -12,6 +12,7 @@
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
+# Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,7 +29,9 @@ CXX = mpic++
 CCC = mpic++
 FC = mpifort
 JAVAC = mpijavac
-SHMEM = shmemcc
+SHMEMCC = shmemcc
+SHMEMFC = shmemfort
+
 # Using -g is not necessary, but it is helpful for example programs,
 # especially if users want to examine them with debuggers.  Note that
 # gmake requires the CXXFLAGS macro, while other versions of make
@@ -48,12 +51,16 @@ EXAMPLES = \
 	 hello_usempi \
 	 hello_usempif08 \
      hello_shmem \
+     hello_shmemfh \
 	 Hello.class \
          ring_c \
 	 ring_cxx \
 	 ring_mpifh \
 	 ring_usempi \
 	 ring_usempif08 \
+	 ring_shmem \
+	 ring_shmemfh \
+	 ring_shmemf90 \
 	 Ring.class \
 	 connectivity_c
 
@@ -78,6 +85,10 @@ all: hello_c ring_c connectivity_c
 	fi
 	@ if ompi_info --parsable | grep mca:shmem >/dev/null; then \
 	    $(MAKE) hello_shmem; \
+	    $(MAKE) hello_shmemfh; \
+	    $(MAKE) ring_shmem; \
+	    $(MAKE) ring_shmemfh; \
+	    $(MAKE) ring_shmemf90; \
 	fi
 
 # The usual "clean" target
@@ -107,7 +118,15 @@ Hello.class: Hello.java
 Ring.class: Ring.java
 	$(JAVAC) Ring.java
 
-hello_shmem: hello_shmem.c
-	$(SHMEM) $(CFLAGS) $^ -o $@
+hello_shmem: hello_shmem_c.c
+	$(SHMEMCC) $(CFLAGS) $^ -o $@
+hello_shmemfh: hello_shmemfh.f
+	$(SHMEMFC) $(FCFLAGS) $^ -o $@
 
+ring_shmem: ring_shmem_c.c
+	$(SHMEMCC) $(CFLAGS) $^ -o $@
+ring_shmemfh: ring_shmemfh.f
+	$(SHMEMFC) $(FCFLAGS) $^ -o $@
+ring_shmemf90: ring_shmem.f90
+	$(SHMEMFC) $(FCFLAGS) $^ -o $@
 

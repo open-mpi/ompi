@@ -13,6 +13,7 @@
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
+# Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -37,11 +38,16 @@ EXTRA_DIST += \
         examples/hello_mpifh.f \
         examples/hello_usempi.f90 \
         examples/hello_usempif08.f90 \
+        examples/hello_shmem_c.c \
+        examples/hello_shmemfh.f \
         examples/ring_c.c \
         examples/ring_cxx.cc \
         examples/ring_mpifh.f \
         examples/ring_usempi.f90 \
         examples/ring_usempif08.f90 \
+        examples/ring_shmem_c.c \
+        examples/ring_shmemfh.f \
+        examples/ring_shmem.f90 \
         examples/connectivity_c.c \
 	examples/Hello.java \
 	examples/Ring.java

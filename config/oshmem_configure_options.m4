@@ -39,28 +39,28 @@ AC_DEFINE_UNQUOTED([OSHMEM_SPEC_COMPAT], [$OSHMEM_SPEC_COMPAT],
 #
 # Do we want to disable OSHMEM parameter checking at run-time?
 #
-AC_MSG_CHECKING([if want SHMEM API parameter checking])
-AC_ARG_WITH(shmem-param-check,
-    AC_HELP_STRING([--shmem-param-check(=VALUE)],
-                   [behavior of SHMEM function parameter checking.  Valid values are: always, never.  If --with-shmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-shmem-param-check is equivalent to "never" (default: always).]))
+AC_MSG_CHECKING([if want OSHMEM API parameter checking])
+AC_ARG_WITH(oshmem-param-check,
+    AC_HELP_STRING([--oshmem-param-check(=VALUE)],
+                   [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).]))
 shmem_param_check=1
-if test "$with_shmem_param_check" = "no" -o \
-    "$with_shmem_param_check" = "never"; then
+if test "$with_oshmem_param_check" = "no" -o \
+    "$with_oshmem_param_check" = "never"; then
     shmem_param_check=0
     AC_MSG_RESULT([never])
-elif test "$with_shmem_param_check" = "yes" -o \
-    "$with_shmem_param_check" = "always" -o \
-    -z "$with_shmem_param_check"; then
+elif test "$with_oshmem_param_check" = "yes" -o \
+    "$with_oshmem_param_check" = "always" -o \
+    -z "$with_oshmem_param_check"; then
     shmem_param_check=1
     AC_MSG_RESULT([always])
 else
     AC_MSG_RESULT([unknown])
-    AC_MSG_WARN([*** Unrecognized --with-shmem-param-check value])
+    AC_MSG_WARN([*** Unrecognized --with-oshmem-param-check value])
     AC_MSG_WARN([*** See "configure --help" output])
     AC_MSG_WARN([*** Defaulting to "runtime"])
 fi
 AC_DEFINE_UNQUOTED(OSHMEM_PARAM_CHECK, $shmem_param_check,
-    [Whether we want to check SHMEM parameters always or never])
+    [Whether we want to check OSHMEM parameters always or never])
 
 
 #
@@ -85,15 +85,18 @@ AM_CONDITIONAL(OSHMEM_PROFILING, test "$oshmem_profiling_support" = 1)
 AC_ARG_ENABLE(oshmem-fortran,
 AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
-if test "$enable_oshmem_fortran" != "no"; then
+AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 1],
+[if test "$enable_oshmem_fortran" != "no"; then
     AC_MSG_RESULT([yes])
     OSHMEM_WANT_FORTRAN_BINDINGS=1
 else
     AC_MSG_RESULT([no])
     OSHMEM_WANT_FORTRAN_BINDINGS=0
-fi
+fi],
+[AC_MSG_RESULT([no]) 
+    OSHMEM_WANT_FORTRAN_BINDINGS=0])
 
-AC_MSG_CHECKING([if want to build SHMEM fortran bindings])
+AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AM_CONDITIONAL(OSHMEM_WANT_FORTRAN_BINDINGS,
     [test $OSHMEM_WANT_FORTRAN_BINDINGS -eq 1])
 AS_IF([test $OSHMEM_WANT_FORTRAN_BINDINGS -eq 1],
