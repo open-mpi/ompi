@@ -31,7 +31,7 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
                         i,
                         s->start,
                         s->end,
-                        (long long)(s->end - s->start),
+                        (long long)(((uintptr_t)s->end) - ((uintptr_t)s->start)),
                         s->type,
                         s->shmid);
         ret = __reg_segment(s, &memheap_map->num_transports);
@@ -56,7 +56,7 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
                         i,
                         s->start,
                         s->end,
-                        (long long)(s->end - s->start));
+                        (long long)(((uintptr_t)s->end) - ((uintptr_t)s->start))),
         ret = __dereg_segment(s);
     }
 
@@ -110,7 +110,7 @@ static int __reg_segment(map_segment_t *s, int *num_btl)
 
     if (!rc) {
         s->mkeys = MCA_SPML_CALL(register((void *)(unsigned long)s->start,
-                        s->end - s->start,
+                        (long long)((uintptr_t)s->end) - ((uintptr_t)s->start),
                         MEMHEAP_SHM_CODE(s->type, s->shmid),
                         num_btl));
         if (NULL == s->mkeys) {
