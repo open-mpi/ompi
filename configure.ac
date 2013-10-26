@@ -566,12 +566,6 @@ OPAL_CHECK_COMPILER_VERSION_ID
 
 
 ##################################
-# Java compiler characteristics
-##################################
-# Needed for ORTE - OMPI will AC_REQUIRE where needed
-m4_ifdef([project_orte], [ORTE_SETUP_JAVA])
-
-##################################
 # Java MPI Binding request
 ##################################
 # Only needed for OMPI
