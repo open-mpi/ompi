@@ -32,7 +32,7 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS_BANNER],[
 # this macro.
 AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
     # must have Java setup
-    AC_REQUIRE([ORTE_SETUP_JAVA])
+    AC_REQUIRE([OPAL_SETUP_JAVA])
 
     AC_REQUIRE([OMPI_SETUP_JAVA_BINDINGS_BANNER])
 
@@ -42,14 +42,14 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
                        [enable Java MPI bindings (default: disabled)]))
 
     # check for required support
-    if test "$orte_java_happy" = "no" -a "$enable_mpi_java" = "yes"; then
+    if test "$opal_java_happy" = "no" -a "$enable_mpi_java" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_WARN([Java bindings requested but no Java support found])
         AC_MSG_ERROR([cannot continue])
     fi
 
     # Only build the Java bindings if requested
-    if test "$orte_java_happy" = "yes" -a "$enable_mpi_java" = "yes"; then
+    if test "$opal_java_happy" = "yes" -a "$enable_mpi_java" = "yes"; then
         AC_MSG_RESULT([yes])
         WANT_MPI_JAVA_SUPPORT=1
         AC_MSG_CHECKING([if shared libraries are enabled])
@@ -61,7 +61,7 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
               [AC_MSG_RESULT([yes])])
         # must have Java support
         AC_MSG_CHECKING([if Java support was found])
-        AS_IF([test "$orte_java_happy" = "yes"],
+        AS_IF([test "$opal_java_happy" = "yes"],
               [AC_MSG_RESULT([yes])],
               [AC_MSG_WARN([Java MPI bindings requested, but Java support was not found])
                AC_MSG_WARN([Please reconfigure the --with-jdk options to where Java])
