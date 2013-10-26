@@ -19,8 +19,8 @@ class Ring {
 	int prev;
 	int message[] = new int [1];
 
-	int myrank = MPI.COMM_WORLD.Rank() ;
-	int size = MPI.COMM_WORLD.Size() ;
+	int myrank = MPI.COMM_WORLD.getRank() ;
+	int size = MPI.COMM_WORLD.getSize() ;
 
 	/* Calculate the rank of the next process in the ring.  Use the
 	   modulus operator so that the last process "wraps around" to
@@ -37,7 +37,7 @@ class Ring {
 	    message[0] = 10;
 
 	    System.out.println("Process 0 sending " + message[0] + " to rank " + next + " (" + size + " processes in ring)"); 
-	    MPI.COMM_WORLD.Send(message, 0, 1, MPI.INT, next, tag); 
+	    MPI.COMM_WORLD.send(message, 1, MPI.INT, next, tag); 
 	}
 
 	/* Pass the message around the ring.  The exit mechanism works as
@@ -49,14 +49,14 @@ class Ring {
 	   and can quit normally. */
 
 	while (true) {
-	    MPI.COMM_WORLD.Recv(message, 0, 1, MPI.INT, prev, tag);
+	    MPI.COMM_WORLD.recv(message, 1, MPI.INT, prev, tag);
 
 	    if (0 == myrank) {
 		--message[0];
 		System.out.println("Process 0 decremented value: " + message[0]);
 	    }
 
-	    MPI.COMM_WORLD.Send(message, 0, 1, MPI.INT, next, tag);
+	    MPI.COMM_WORLD.send(message, 1, MPI.INT, next, tag);
 	    if (0 == message[0]) {
 		System.out.println("Process " + myrank + " exiting");
 		break;
@@ -67,7 +67,7 @@ class Ring {
 	   to be received before the program can exit */
 
 	if (0 == myrank) {
-	    MPI.COMM_WORLD.Recv(message, 0, 1, MPI.INT, prev, tag);
+	    MPI.COMM_WORLD.recv(message, 1, MPI.INT, prev, tag);
 	}
     
 	MPI.Finalize();

@@ -12,28 +12,24 @@
     limitations under the License.
 */
 /*
- * Author of revised version: Franklyn Pinedo
- *
- * Adapted from Source Code in C of Tutorial/User's Guide for MPI by
- * Peter Pacheco.
- */
-/*
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- *
+ * File         : Freeable.java
+ * Author       : Bryan Carpenter
+ * Created      : Wed Jan 15 23:14:43 EST 2003
+ * Revision     : $Revision: 1.1 $
+ * Updated      : $Date: 2003/01/16 16:39:34 $
  */
 
-import mpi.*;
- 
-class Hello {
-    static public void main(String[] args) throws MPIException {
-      
+package mpi;
 
-	MPI.Init(args);
-
-	int myrank = MPI.COMM_WORLD.getRank();
-	int size = MPI.COMM_WORLD.getSize() ;
-	System.out.println("Hello world from rank " + myrank + " of " + size);
- 
-	MPI.Finalize();
-    }
+/**
+ * Objects freeables must be freed calling the method free.
+ */
+public interface Freeable
+{
+    /**
+     * Frees a freeable object.
+     * @throws MPIException 
+     */
+    void free() throws MPIException;
 }
+

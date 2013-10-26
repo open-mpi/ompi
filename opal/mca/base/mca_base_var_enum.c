@@ -140,7 +140,7 @@ int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t 
 
 static int enum_dump (mca_base_var_enum_t *self, char **out)
 {
-    size_t i;
+    int i;
     char *tmp;
     int ret;
 
@@ -151,7 +151,7 @@ static int enum_dump (mca_base_var_enum_t *self, char **out)
     }
 
     tmp = NULL;
-    for (i = 0; i < self->enum_value_count && self->enum_values[i].string ; ++i) {
+    for (i = 0; self->enum_values[i].string ; ++i) {
         ret = asprintf (out, "%s%s%d:\"%s\"", tmp ? tmp : "", tmp ? ", " : "", self->enum_values[i].value,
                         self->enum_values[i].string);
         if (tmp) free (tmp);

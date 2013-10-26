@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+# Copyright (c) 2013      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,9 +24,17 @@ man_pages = $(generated_man_pages)
 
 EXTRA_DIST = mpif77.1in
 
+if OMPI_WANT_JAVA_BINDINGS
+EXTRA_DIST += mpijavac.1
+man_pages += mpijavac.1
+endif
+
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 bin_SCRIPTS = ompi_wrapper_script
+if OMPI_WANT_JAVA_BINDINGS
+bin_SCRIPTS += mpijavac.pl
+endif
 CLEANFILES += $(bin_SCRIPTS)
 
 install-exec-hook-always:
@@ -36,6 +45,9 @@ install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); rm -f mpifort; $(LN_S) ompi_wrapper_script mpifort)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) mpifort mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) mpifort mpif90)
+if OMPI_WANT_JAVA_BINDINGS
+	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
+endif
 
 uninstall-local-always:
 	rm -f $(DESTDIR)$(bindir)/mpicc \
@@ -43,6 +55,9 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpicxx \
 	$(DESTDIR)$(bindir)/mpifort \
 	$(DESTDIR)$(bindir)/mpif77 \
+if OMPI_WANT_JAVA_BINDINGS
+	$(DESTDIR)$(bindir)/mpijavac \
+endif
 	$(DESTDIR)$(bindir)/mpif90
 
 if CASE_SENSITIVE_FS
@@ -62,6 +77,10 @@ if OMPI_INSTALL_BINARIES
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ompi.pc ompi-c.pc ompi-cxx.pc ompi-fort.pc
 
+if OMPI_WANT_JAVA_BINDINGS
+bin_SCRIPTS = mpijavac.pl
+endif
+
 man_MANS = $(man_pages)
 
 nodist_pkgdata_DATA = \
@@ -77,6 +96,9 @@ install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper mpifort)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) mpifort mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) mpifort mpif90)
+if OMPI_WANT_JAVA_BINDINGS
+	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
+endif
 
 install-data-hook-always:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
@@ -97,6 +119,10 @@ uninstall-local-always:
 	$(DESTDIR)$(pkgdatadir)/mpif90-wrapper-data.txt \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f77.pc \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f90.pc \
+if OMPI_WANT_JAVA_BINDINGS
+	$(DESTDIR)$(bindir)/mpijavac \
+	$(DESTDIR)$(bindir)/mpijavac.pl \
+endif
 	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc
 
 if CASE_SENSITIVE_FS

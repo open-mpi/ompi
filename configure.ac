@@ -126,6 +126,7 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_usempif08_so_version)
+          AC_SUBST(libmpi_java_so_version)
           # It's icky that we have to hard-code the names of the
           # common components here.  :-( This could probably be done
           # transparently by adding some intelligence in autogen.sh
@@ -559,6 +560,12 @@ OPAL_CHECK_COMPILER_VERSION_ID
 
 
 ##################################
+# Java MPI Binding request
+##################################
+# Only needed for OMPI
+m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
+
+##################################
 # Assembler Configuration
 ##################################
 
@@ -601,8 +608,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/types.h sys/uio.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
     ifaddrs.h crt_externs.h regex.h signal.h \
-    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h limits.h db.h ndbm.h \
-    TargetConditionals.h])
+    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h limits.h db.h ndbm.h])
 
 AC_CHECK_HEADERS([sys/mount.h], [], [],
 [AC_INCLUDES_DEFAULT
