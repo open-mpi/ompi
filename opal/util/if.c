@@ -395,9 +395,33 @@ int opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, unsigned int leng
     }
 
     for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
-        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
-        intf =  (opal_if_t*)opal_list_get_next(intf)) {
+         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if (intf->if_index == if_index) {
+            memcpy(if_addr, &intf->if_addr, MIN(length, sizeof (intf->if_addr)));
+            return OPAL_SUCCESS;
+        }
+    }
+    return OPAL_ERROR;
+}
+
+
+/* 
+ *  Lookup the interface by opal_list kindex and return the 
+ *  primary address assigned to the interface.
+ */
+int opal_ifkindextoaddr(int if_kindex, struct sockaddr* if_addr, unsigned int length)
+{
+    opal_if_t* intf;
+
+    if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
+        return OPAL_ERROR;
+    }
+
+    for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
+         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+         intf =  (opal_if_t*)opal_list_get_next(intf)) {
+        if (intf->if_kernel_index == if_kindex) {
             memcpy(if_addr, &intf->if_addr, MIN(length, sizeof (intf->if_addr)));
             return OPAL_SUCCESS;
         }
@@ -686,17 +710,17 @@ bool opal_ifisloopback(int if_index)
  * into account that the list entries could be given as named interfaces,
  * IP addrs, or subnet+mask
  */
-int opal_ifmatches(int idx, char **nets)
+int opal_ifmatches(int kidx, char **nets)
 {
     bool named_if;
     int i, rc;
     size_t j;
-    int index;
+    int kindex;
     struct sockaddr_in inaddr;
     uint32_t addr, netaddr, netmask;
 
     /* get the address info for the given network in case we need it */
-    if (OPAL_SUCCESS != (rc = opal_ifindextoaddr(idx, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
+    if (OPAL_SUCCESS != (rc = opal_ifkindextoaddr(kidx, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
         return rc;
     }
     addr = ntohl(inaddr.sin_addr.s_addr);
@@ -713,10 +737,10 @@ int opal_ifmatches(int idx, char **nets)
             }
         }
         if (named_if) {
-            if (0 > (index = opal_ifnametoindex(nets[i]))) {
+            if (0 > (kindex = opal_ifnametokindex(nets[i]))) {
                 continue;
             }
-            if (index == idx) {
+            if (kindex == kidx) {
                 return OPAL_SUCCESS;
             }
         } else {

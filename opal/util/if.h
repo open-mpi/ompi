@@ -151,6 +151,9 @@ OPAL_DECLSPEC int opal_ifkindextoname(int if_kindex, char* if_name, int);
  */
 OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*,
                                      unsigned int);
+OPAL_DECLSPEC int opal_ifkindextoaddr(int if_kindex,
+                                      struct sockaddr* if_addr,
+                                      unsigned int length);
 
 /**
  *  Lookup an interface by index and return its network mask (in CIDR
@@ -215,7 +218,7 @@ OPAL_DECLSPEC bool opal_ifisloopback(int if_index);
 /*
  * Determine if a specified interface is included in a NULL-terminated argv array
  */
-OPAL_DECLSPEC int opal_ifmatches(int idx, char **nets);
+OPAL_DECLSPEC int opal_ifmatches(int kidx, char **nets);
 
 /*
  * Provide a list of strings that contain all known aliases for this node
