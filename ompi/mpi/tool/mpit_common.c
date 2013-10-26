@@ -82,3 +82,18 @@ int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype
 
     return OMPI_SUCCESS;
 }
+
+int ompit_opal_to_mpit_error (int rc)
+{
+    switch (rc) {
+    case OPAL_SUCCESS:
+        return MPI_SUCCESS;
+    case OPAL_ERR_OUT_OF_RESOURCE:
+        return MPI_T_ERR_MEMORY;
+    case OPAL_ERR_VALUE_OUT_OF_BOUNDS:
+    case OPAL_ERR_NOT_BOUND:
+        return MPI_T_ERR_INVALID_HANDLE;
+    default:
+        return MPI_ERR_UNKNOWN;
+    }
+}
