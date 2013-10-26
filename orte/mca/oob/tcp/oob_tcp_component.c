@@ -472,7 +472,7 @@ static bool component_available(void)
         /* handle include/exclude directives */
         if (NULL != interfaces) {
             /* check for match */
-            rc = opal_ifmatches(i, interfaces);
+            rc = opal_ifmatches(kindex, interfaces);
             /* if one of the network specifications isn't parseable, then
              * error out as we can't do what was requested
              */
