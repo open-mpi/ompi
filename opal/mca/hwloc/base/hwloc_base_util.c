@@ -248,7 +248,7 @@ int opal_hwloc_base_set_topology(char *topofile)
     int rc;
 
      OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                         "hwloc:base:set_topology"));
+                          "hwloc:base:set_topology %s", topofile));
 
    if (NULL != opal_hwloc_topology) {
         hwloc_topology_destroy(opal_hwloc_topology);
@@ -258,6 +258,8 @@ int opal_hwloc_base_set_topology(char *topofile)
     }
     if (0 != hwloc_topology_set_xml(opal_hwloc_topology, topofile)) {
         hwloc_topology_destroy(opal_hwloc_topology);
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                             "hwloc:base:set_topology bad topo file"));
         return OPAL_ERR_NOT_SUPPORTED;
     }
     /* since we are loading this from an external source, we have to
@@ -272,6 +274,8 @@ int opal_hwloc_base_set_topology(char *topofile)
     }
     if (0 != hwloc_topology_load(opal_hwloc_topology)) {
         hwloc_topology_destroy(opal_hwloc_topology);
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                             "hwloc:base:set_topology failed to load"));
         return OPAL_ERR_NOT_SUPPORTED;
     }
     /* remove the hostname from the topology. Unfortunately, hwloc
@@ -1429,6 +1433,8 @@ char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
      * see if we have any of those
      */
     if (HWLOC_TYPE_DEPTH_UNKNOWN == (depth = hwloc_get_type_depth(topo, HWLOC_OBJ_OS_DEVICE))) {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                             "hwloc:base:find_coprocessors: NONE FOUND IN TOPO"));
         return NULL;
     }
     /* check the device objects for coprocessors */
@@ -1438,6 +1444,9 @@ char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
             /* got one! find and save its serial number */
             for (i=0; i < osdev->infos_count; i++) {
                 if (0 == strncmp(osdev->infos[i].name, "MICSerialNumber", strlen("MICSerialNumber"))) {
+                    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                                         "hwloc:base:find_coprocessors: coprocessor %s found",
+                                         osdev->infos[i].value));
                     opal_argv_append_nosize(&cps, osdev->infos[i].value);
                 }
             }
@@ -1448,6 +1457,9 @@ char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
         cpstring = opal_argv_join(cps, ',');
         opal_argv_free(cps);
     }
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                         "hwloc:base:find_coprocessors: hosting coprocessors %s",
+                         (NULL == cpstring) ? "NONE" : cpstring));
     return cpstring;
 }
 
@@ -1514,6 +1526,9 @@ char* opal_hwloc_base_check_on_coprocessor(void)
         free(cptr);
     }
     fclose(fp);
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                         "hwloc:base:check_coprocessor: on coprocessor %s",
+                         (NULL == cp) ? "NONE" : cp));
     return cp;
 }
 
