@@ -140,7 +140,7 @@ int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t 
 
 static int enum_dump (mca_base_var_enum_t *self, char **out)
 {
-    size_t i;
+    int i;
     char *tmp;
     int ret;
 
