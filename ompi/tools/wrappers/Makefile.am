@@ -46,6 +46,7 @@ install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) mpifort mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) mpifort mpif90)
 if OMPI_WANT_JAVA_BINDINGS
+	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
 endif
 
@@ -97,6 +98,7 @@ install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) mpifort mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) mpifort mpif90)
 if OMPI_WANT_JAVA_BINDINGS
+	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
 endif
 
