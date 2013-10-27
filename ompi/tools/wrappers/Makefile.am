@@ -56,10 +56,8 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpicxx \
 	$(DESTDIR)$(bindir)/mpifort \
 	$(DESTDIR)$(bindir)/mpif77 \
-if OMPI_WANT_JAVA_BINDINGS
-	$(DESTDIR)$(bindir)/mpijavac \
-endif
-	$(DESTDIR)$(bindir)/mpif90
+	$(DESTDIR)$(bindir)/mpif90 \
+	$(DESTDIR)$(bindir)/mpijavac
 
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
@@ -121,11 +119,9 @@ uninstall-local-always:
 	$(DESTDIR)$(pkgdatadir)/mpif90-wrapper-data.txt \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f77.pc \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f90.pc \
-if OMPI_WANT_JAVA_BINDINGS
+	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc \
 	$(DESTDIR)$(bindir)/mpijavac \
-	$(DESTDIR)$(bindir)/mpijavac.pl \
-endif
-	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc
+	$(DESTDIR)$(bindir)/mpijavac.pl
 
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
