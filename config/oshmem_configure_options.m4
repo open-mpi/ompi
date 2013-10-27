@@ -135,34 +135,26 @@ oshmem_CFLAGS="`echo $oshmem_CFLAGS | sed 's/-Wundef//g'`"
 oshmem_CFLAGS="`echo $oshmem_CFLAGS | sed 's/-Wno-long-double//g'`"
 CFLAGS="$oshmem_CFLAGS"
 
-case "$oshmem_c_vendor" in
-    gnu)
-        OSHMEM_CFLAGS=" -Werror"
-        ;;
-    intel)
+AC_MSG_CHECKING([if treat OpenSHMEM warnings as errors during build])
+AC_ARG_ENABLE([oshmem-warnings-as-errors],
+              [AC_HELP_STRING([--enable-oshmem-warnings-as-errors],
+                              [Treat OpenSHMEM warnings as errors during build (default:disabled)])])
+if test "$enable_oshmem_warnings_as_errors" = "yes"; then
+    AC_MSG_RESULT([yes])
+    case "$oshmem_c_vendor" in
+        gnu)
+            OSHMEM_CFLAGS=" -Werror"
+            ;;
+        intel)
         # we want specifically the warning on format string conversion
-        OSHMEM_CFLAGS=" -Werror "
-        ;;
-esac
+            OSHMEM_CFLAGS=" -Werror "
+            ;;
+    esac
+else
+    AC_MSG_RESULT([no])
+fi
 
 AC_SUBST([OSHMEM_CFLAGS])
-
-OPAL_CHECK_PMI([pmi_oshmem], [pmi_oshmem_happy="yes"], [pmi_oshmem_happy="no"])
-
-AC_SUBST([pmi_oshmem_CPPFLAGS])
-AC_SUBST([pmi_oshmem_LDFLAGS])
-AC_SUBST([pmi_oshmem_LIBS])
- 
-AS_IF(
-    [test "$pmi_oshmem_happy" = "yes"],
-    [
-	OSHMEM_CFLAGS="$OSHMEM_CFLAGS $pmi_oshmem_CPPFLAGS"
-	OSHMEM_LDFLAGS="$OSHMEM_LDFLAGS $pmi_oshmem_LDFLAGS $pmi_oshmem_LIBS"
-    ])
-
-AC_SUBST([OSHMEM_CFLAGS])
-AC_SUBST([OSHMEM_LDFLAGS])
-
 
 OMPI_CHECK_OPENFABRICS([oshmem_verbs],
                         [oshmem_verbs_happy="yes"],
