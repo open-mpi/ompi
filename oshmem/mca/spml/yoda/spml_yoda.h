@@ -74,7 +74,6 @@ struct mca_spml_yoda_t {
     /* number of outstanding put requests */
     int32_t n_active_puts;
     bool enabled;
-    bool force_bml;
     struct yoda_btl *btl_type_map;
     int n_btls;
 };
