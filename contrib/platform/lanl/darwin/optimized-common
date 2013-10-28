@@ -1,0 +1,10 @@
+# (c) 2013 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI common optimized configuration for Darwin v1.7.x/1.8.x
+
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug_symbols=no
+enable_picky=no
+enable_debug=no
+with_valgrind=no
+enable_memchecker=no
