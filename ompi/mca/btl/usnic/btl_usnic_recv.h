@@ -166,9 +166,9 @@ ompi_btl_usnic_check_rx_seq(
 
         /* Stats */
         if (seq < endpoint->endpoint_next_contig_seq_to_recv) {
-            ++endpoint->endpoint_module->num_oow_low_recvs;
+            ++endpoint->endpoint_module->stats.num_oow_low_recvs;
         } else {
-            ++endpoint->endpoint_module->num_oow_high_recvs;
+            ++endpoint->endpoint_module->stats.num_oow_high_recvs;
         }
         goto dup_needs_ack;
     }
@@ -211,7 +211,7 @@ ompi_btl_usnic_check_rx_seq(
         assert (seq > endpoint->endpoint_next_contig_seq_to_recv - 1);
 
         /* Stats */
-        ++endpoint->endpoint_module->num_dup_recvs;
+        ++endpoint->endpoint_module->stats.num_dup_recvs;
         goto dup_needs_ack;
     }
 
@@ -314,7 +314,7 @@ ompi_btl_usnic_recv_frag_bookkeeping(
             (void*)(seg->rs_recv_desc.sg_list[0].addr),
             seg->rs_recv_desc.sg_list[0].length);
 
-    ++module->num_total_recvs;
+    ++module->stats.num_total_recvs;
 
     /* Do late processing of incoming sequence # */
     rc = ompi_btl_usnic_check_rx_seq(endpoint, seg, &window_index);
@@ -322,7 +322,7 @@ ompi_btl_usnic_recv_frag_bookkeeping(
         goto repost;
     }
 
-    ++module->num_frag_recvs;
+    ++module->stats.num_frag_recvs;
 
     ompi_btl_usnic_update_window(endpoint, window_index);
 
@@ -332,7 +332,7 @@ repost:
         OBJ_RELEASE(endpoint);
     }
 
-    ++module->num_recv_reposts;
+    ++module->stats.num_recv_reposts;
 
     /* Add recv to linked list for reposting */
     seg->rs_recv_desc.next = channel->repost_recv_head;

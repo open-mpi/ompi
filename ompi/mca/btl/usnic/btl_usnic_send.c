@@ -176,7 +176,7 @@ ompi_btl_usnic_send_slower(
     frag->sf_base.uf_base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
     /* Stats */
-    ++(((ompi_btl_usnic_module_t*)module)->pml_module_sends);
+    ++(((ompi_btl_usnic_module_t*)module)->stats.pml_module_sends);
 
     return rc;
 }
