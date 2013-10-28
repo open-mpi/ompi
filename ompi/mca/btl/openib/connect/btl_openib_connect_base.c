@@ -1,7 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007 Mellanox Technologies, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007      Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  *
@@ -114,6 +115,9 @@ int ompi_btl_openib_connect_base_register(void)
     /* Parse the if_[in|ex]clude paramters to come up with a list of
        CPCs that are available */
     available = (ompi_btl_openib_connect_base_component_t **) calloc(1, sizeof(all));
+    if (NULL == available) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* If we have an "include" list, then find all those CPCs and put
        them in available[] */
