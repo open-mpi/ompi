@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2008      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -6,6 +7,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler 
  *
@@ -33,9 +36,9 @@ static const char FUNC_NAME[] = "MPI_Dist_graph_create_adjacent";
 
 
 int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
-                                   int indegree, int sources[],
-                                   int sourceweights[], int outdegree,
-                                   int destinations[], int destweights[],
+                                   int indegree, const int sources[],
+                                   const int sourceweights[], int outdegree,
+                                   const int destinations[], const int destweights[],
                                    MPI_Info info, int reorder,
                                    MPI_Comm *comm_dist_graph)
 {
@@ -89,9 +92,10 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
         return OMPI_ERRHANDLER_INVOKE(comm_old, err, FUNC_NAME);      
     }
 
+    /* XXX -- CONST -- do not cast away const -- update mca/topo */
     err = topo->topo.dist_graph.dist_graph_create_adjacent(topo, comm_old, indegree,
-                                                           sources, sourceweights, outdegree,
-                                                           destinations, destweights, info,
+                                                           (int *) sources, (int *) sourceweights, outdegree,
+                                                           (int *) destinations, (int *) destweights, info,
                                                            reorder, comm_dist_graph);
     OMPI_ERRHANDLER_RETURN(err, comm_old, err, FUNC_NAME);
 }

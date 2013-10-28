@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -69,21 +70,21 @@ static void recv_cb(int status, orte_process_name_t* sender,
 
 /* API functions */
 static int init(void);
-static int connect_accept ( ompi_communicator_t *comm, int root,
-                            char *port_string, bool send_first,
-                            ompi_communicator_t **newcomm );
+static int connect_accept (ompi_communicator_t *comm, int root,
+                           const char *port_string, bool send_first,
+                           ompi_communicator_t **newcomm);
 static int disconnect(ompi_communicator_t *comm);
-static int spawn(int count, char **array_of_commands,
-                 char ***array_of_argv,
-                 int *array_of_maxprocs,
-                 MPI_Info *array_of_info,
-                 char *port_name);
+static int spawn(int count, const char *array_of_commands[],
+                 char **array_of_argv[],
+                 const int array_of_maxprocs[],
+                 const MPI_Info array_of_info[],
+                 const char *port_name);
 static int dyn_init(void);
 static int open_port(char *port_name, orte_rml_tag_t given_tag);
-static int parse_port_name(char *port_name, char **hnp_uri, char **rml_uri,
+static int parse_port_name(const char *port_name, char **hnp_uri, char **rml_uri,
                            orte_rml_tag_t *tag);
 static int route_to_port(char *rml_uri, orte_process_name_t *rproc);
-static int close_port(char *port_name);
+static int close_port(const char *port_name);
 static int finalize(void);
 
 /*
@@ -123,9 +124,9 @@ static int init(void)
     return OMPI_SUCCESS;
 }
 
-static int connect_accept ( ompi_communicator_t *comm, int root,
-                            char *port_string, bool send_first,
-                            ompi_communicator_t **newcomm )
+static int connect_accept(ompi_communicator_t *comm, int root,
+                          const char *port_string, bool send_first,
+                          ompi_communicator_t **newcomm)
 {
     int size, rsize, rank, rc;
     orte_std_cntr_t num_vals;
@@ -655,11 +656,11 @@ static int disconnect(ompi_communicator_t *comm)
     
 }
 
-static int spawn(int count, char **array_of_commands,
-                 char ***array_of_argv,
-                 int *array_of_maxprocs,
-                 MPI_Info *array_of_info,
-                 char *port_name)
+static int spawn(int count, const char *array_of_commands[],
+                 char **array_of_argv[],
+                 const int array_of_maxprocs[],
+                 const MPI_Info array_of_info[],
+                 const char *port_name)
 {
     int rc, i, j, counter;
     int have_wdir=0;
@@ -1511,7 +1512,7 @@ static int route_to_port(char *rml_uri, orte_process_name_t *rproc)
     return rc;
 }
 
-static int parse_port_name(char *port_name,
+static int parse_port_name(const char *port_name,
                            char **hnp_uri, 
                            char **rml_uri,
                            orte_rml_tag_t *ptag)
@@ -1560,7 +1561,7 @@ cleanup:
     return rc;
 }
 
-static int close_port(char *port_name)
+static int close_port(const char *port_name)
 {
     /* nothing to do here - user is responsible for the memory */
     return OMPI_SUCCESS;

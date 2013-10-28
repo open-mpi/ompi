@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +40,7 @@
 static const char FUNC_NAME[] = "MPI_File_delete";
 
 
-int MPI_File_delete(char *filename, MPI_Info info) 
+int MPI_File_delete(const char *filename, MPI_Info info)
 {
     int rc;
 
@@ -74,7 +77,7 @@ int MPI_File_delete(char *filename, MPI_Info info)
     /* Since there is no MPI_File handle associated with this
        function, the MCA has to do a selection and perform the
        action */
-
-    rc = mca_io_base_delete(filename, info);
+    /* XXX -- CONST -- do not cast away const -- update mca/io */
+    rc = mca_io_base_delete((char *) filename, info);
     OMPI_ERRHANDLER_RETURN(rc, MPI_FILE_NULL, rc, FUNC_NAME);
 }

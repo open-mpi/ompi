@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos Nat Security, LLC. All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Group_translate_ranks";
 
 
-int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int ranks1[],
+int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, const int ranks1[],
                               MPI_Group group2, int ranks2[]) 
 {
     int err;

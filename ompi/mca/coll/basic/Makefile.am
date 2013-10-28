@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -34,6 +36,11 @@ sources = \
         coll_basic_gather.c \
         coll_basic_gatherv.c \
         coll_basic_module.c \
+        coll_basic_neighbor_allgather.c \
+        coll_basic_neighbor_allgatherv.c \
+        coll_basic_neighbor_alltoall.c \
+        coll_basic_neighbor_alltoallv.c \
+        coll_basic_neighbor_alltoallw.c \
         coll_basic_reduce.c \
         coll_basic_reduce_scatter.c \
         coll_basic_reduce_scatter_block.c \

@@ -7,6 +7,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -75,18 +77,18 @@ do
   case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
   case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
-  output MPI_Allgather ${rank} CH "character${dim}"
-  output MPI_Allgather ${rank} L "logical${dim}"
+  output MPI_Neighbor_allgather ${rank} CH "character${dim}"
+  output MPI_Neighbor_allgather ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Allgather ${rank} I${kind} "integer*${kind}${dim}"
+    output MPI_Neighbor_allgather ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Allgather ${rank} R${kind} "real*${kind}${dim}"
+    output MPI_Neighbor_allgather ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Allgather ${rank} C${kind} "complex*${kind}${dim}"
+    output MPI_Neighbor_allgather ${rank} C${kind} "complex*${kind}${dim}"
   done
 done

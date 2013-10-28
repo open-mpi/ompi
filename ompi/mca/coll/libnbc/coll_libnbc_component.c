@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -148,7 +151,6 @@ libnbc_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-
 /*
  * Invoked when there's a new communicator that has been created.
  * Look at the communicator and decide which set of functions and
@@ -202,7 +204,14 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_iscan = ompi_coll_libnbc_iscan;
         module->super.coll_iscatter = ompi_coll_libnbc_iscatter;
         module->super.coll_iscatterv = ompi_coll_libnbc_iscatterv;
+
+        module->super.coll_ineighbor_allgather = ompi_coll_libnbc_ineighbor_allgather;
+        module->super.coll_ineighbor_allgatherv = ompi_coll_libnbc_ineighbor_allgatherv;
+        module->super.coll_ineighbor_alltoall = ompi_coll_libnbc_ineighbor_alltoall;
+        module->super.coll_ineighbor_alltoallv = ompi_coll_libnbc_ineighbor_alltoallv;
+        module->super.coll_ineighbor_alltoallw = ompi_coll_libnbc_ineighbor_alltoallw;
     }
+
     module->super.ft_event = NULL;
 
     if (OMPI_SUCCESS != NBC_Init_comm(comm, module)) {

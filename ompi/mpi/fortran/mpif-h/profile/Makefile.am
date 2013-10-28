@@ -170,6 +170,11 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pigatherv_f.c \
         pimprobe_f.c \
         pimrecv_f.c \
+        pineighbor_allgather_f.c \
+        pineighbor_allgatherv_f.c \
+        pineighbor_alltoall_f.c \
+        pineighbor_alltoallv_f.c \
+        pineighbor_alltoallw_f.c \
         pinfo_create_f.c \
         pinfo_delete_f.c \
         pinfo_dup_f.c \
@@ -201,6 +206,11 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         plookup_name_f.c \
         pmprobe_f.c \
         pmrecv_f.c \
+        pneighbor_allgather_f.c \
+        pneighbor_allgatherv_f.c \
+        pneighbor_alltoall_f.c \
+        pneighbor_alltoallv_f.c \
+        pneighbor_alltoallw_f.c \
         pop_commutative_f.c \
         pop_create_f.c \
         popen_port_f.c \

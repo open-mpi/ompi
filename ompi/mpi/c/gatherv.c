@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -39,8 +40,8 @@
 static const char FUNC_NAME[] = "MPI_Gatherv";
 
 
-int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                void *recvbuf, int recvcounts[], int displs[],
+int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                void *recvbuf, const int recvcounts[], const int displs[],
                 MPI_Datatype recvtype, int root, MPI_Comm comm) 
 {
     int i, size, err;
@@ -190,9 +191,9 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-	
-    err = comm->c_coll.coll_gatherv(sendbuf, sendcount, sendtype, recvbuf,
-                                    recvcounts, displs,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_gatherv((void *) sendbuf, sendcount, sendtype, recvbuf,
+                                    (int *) recvcounts, (int *) displs,
                                     recvtype, root, comm,
                                     comm->c_coll.coll_gatherv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

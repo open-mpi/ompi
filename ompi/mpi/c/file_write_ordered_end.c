@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,7 +38,7 @@
 static const char FUNC_NAME[] = "MPI_File_write_ordered_end";
 
 
-int MPI_File_write_ordered_end(MPI_File fh, void *buf, MPI_Status *status)
+int MPI_File_write_ordered_end(MPI_File fh, const void *buf, MPI_Status *status)
 {
     int rc;
 
@@ -55,8 +58,9 @@ int MPI_File_write_ordered_end(MPI_File fh, void *buf, MPI_Status *status)
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
+        /* XXX -- CONST -- do not cast away const -- update mca/io */
         rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_write_ordered_end(fh, buf, status);
+          io_module_file_write_ordered_end(fh, (void *) buf, status);
         break;
 
     default:

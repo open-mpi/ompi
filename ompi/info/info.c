@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -66,7 +66,7 @@ static void info_constructor(ompi_info_t *info);
 static void info_destructor(ompi_info_t *info);
 static void info_entry_constructor(ompi_info_entry_t *entry);
 static void info_entry_destructor(ompi_info_entry_t *entry);
-static ompi_info_entry_t *info_find_key (ompi_info_t *info, char *key);
+static ompi_info_entry_t *info_find_key (ompi_info_t *info, const char *key);
 
 
 /*
@@ -288,7 +288,7 @@ int ompi_info_free (ompi_info_t **info)
 /*
  * Get a value from an info
  */
-int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
+int ompi_info_get (ompi_info_t *info, const char *key, int valuelen,
                    char *value, int *flag) 
 {
     ompi_info_entry_t *search;
@@ -369,7 +369,7 @@ int ompi_info_get_bool(ompi_info_t *info, char *key, bool *value, int *flag)
 /*
  * Delete a key from an info
  */
-int ompi_info_delete (ompi_info_t *info, char *key) 
+int ompi_info_delete (ompi_info_t *info, const char *key)
 {
     ompi_info_entry_t *search;
 
@@ -396,7 +396,7 @@ int ompi_info_delete (ompi_info_t *info, char *key)
 /*
  * Return the length of a value
  */
-int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
+int ompi_info_get_valuelen (ompi_info_t *info, const char *key, int *valuelen,
                             int *flag) 
 {
     ompi_info_entry_t *search;
@@ -609,7 +609,7 @@ static void info_entry_destructor(ompi_info_entry_t *entry)
  * Do NOT thread lock in here -- the calling function is responsible
  * for that.
  */
-static ompi_info_entry_t *info_find_key (ompi_info_t *info, char *key)
+static ompi_info_entry_t *info_find_key (ompi_info_t *info, const char *key)
 {
     ompi_info_entry_t *iterator;
 

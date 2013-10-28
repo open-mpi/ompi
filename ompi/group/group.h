@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +14,8 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -231,9 +233,9 @@ void ompi_set_group_rank(ompi_group_t *group, struct ompi_proc_t *proc_pointer);
  * Abstracting MPI_Group_translate_ranks to an ompi function for internal use
  */
 OMPI_DECLSPEC int ompi_group_translate_ranks ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
-                                 ompi_group_t *group2, 
-                                 int *ranks2);
+                                               int n_ranks, const int *ranks1,
+                                               ompi_group_t *group2,
+                                               int *ranks2);
 
 /**
  * Abstracting MPI_Group_compare to an ompi function for internal use
@@ -253,27 +255,27 @@ int ompi_group_free (ompi_group_t **group);
 OMPI_DECLSPEC ompi_proc_t* ompi_group_get_proc_ptr (ompi_group_t* group , int rank);
 
 int ompi_group_translate_ranks_sporadic ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
+                                 int n_ranks, const int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 int ompi_group_translate_ranks_sporadic_reverse ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
+                                 int n_ranks, const int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 int ompi_group_translate_ranks_strided ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
+                                 int n_ranks, const int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 int ompi_group_translate_ranks_strided_reverse ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
+                                 int n_ranks, const int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 int ompi_group_translate_ranks_bmap ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
+                                 int n_ranks, const int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *group1, 
-                                 int n_ranks, int *ranks1,
+                                 int n_ranks, const int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 
@@ -281,41 +283,41 @@ int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *group1,
  *  Prototypes for the group back-end functions. Argument lists 
  are similar to the according  C MPI functions.
  */
-int ompi_group_incl(ompi_group_t* group, int n, int *ranks, 
-		    ompi_group_t **new_group);
-int ompi_group_excl(ompi_group_t* group, int n, int *ranks,
-		    ompi_group_t **new_group);
+int ompi_group_incl(ompi_group_t* group, int n, const int *ranks,
+                    ompi_group_t **new_group);
+int ompi_group_excl(ompi_group_t* group, int n, const int *ranks,
+                    ompi_group_t **new_group);
 int ompi_group_range_incl(ompi_group_t* group, int n_triplets, 
-			  int ranges[][3],ompi_group_t **new_group);
+                          int ranges[][3],ompi_group_t **new_group);
 int ompi_group_range_excl(ompi_group_t* group, int n_triplets, 
-			  int ranges[][3],ompi_group_t **new_group);
+                          int ranges[][3],ompi_group_t **new_group);
 int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2, 
-		      ompi_group_t **new_group); 
+                      ompi_group_t **new_group);
 int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,
-			    ompi_group_t **new_group); 
+                            ompi_group_t **new_group);
 int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
-			  ompi_group_t **new_group);
+                          ompi_group_t **new_group);
 
 
 /** 
  *  Include Functions to handle Sparse storage formats
  */
-int ompi_group_incl_plist(ompi_group_t* group, int n, int *ranks,
-			  ompi_group_t **new_group);
-int ompi_group_incl_spor(ompi_group_t* group, int n, int *ranks, 
-			 ompi_group_t **new_group);
-int ompi_group_incl_strided(ompi_group_t* group, int n, int *ranks, 
-			    ompi_group_t **new_group);
-int ompi_group_incl_bmap(ompi_group_t* group, int n, int *ranks, 
-			    ompi_group_t **new_group);
+int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
+                          ompi_group_t **new_group);
+int ompi_group_incl_spor(ompi_group_t* group, int n, const int *ranks,
+                         ompi_group_t **new_group);
+int ompi_group_incl_strided(ompi_group_t* group, int n, const int *ranks,
+                            ompi_group_t **new_group);
+int ompi_group_incl_bmap(ompi_group_t* group, int n, const int *ranks,
+                         ompi_group_t **new_group);
 
 /** 
  *  Functions to calculate storage spaces
  */
-int ompi_group_calc_plist ( int n, int *ranks );
-int ompi_group_calc_strided ( int n, int *ranks );
-int ompi_group_calc_sporadic ( int n, int *ranks );
-int ompi_group_calc_bmap ( int n, int orig_size , int *ranks );
+int ompi_group_calc_plist ( int n, const int *ranks );
+int ompi_group_calc_strided ( int n, const int *ranks );
+int ompi_group_calc_sporadic ( int n, const int *ranks );
+int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks );
 
 /**
  * Function to return the minimum value in an array

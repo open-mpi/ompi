@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -5,14 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -37,8 +40,8 @@
 static const char FUNC_NAME[] = "MPI_Iexscan";
 
 
-int MPI_Iexscan(void *sendbuf, void *recvbuf, int count,
-               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) 
+int MPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
+                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
     int err;
 
@@ -53,7 +56,7 @@ int MPI_Iexscan(void *sendbuf, void *recvbuf, int count,
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
 
@@ -76,10 +79,10 @@ int MPI_Iexscan(void *sendbuf, void *recvbuf, int count,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    err = comm->c_coll.coll_iexscan(sendbuf, recvbuf, count,
-                                   datatype, op, comm,
-                                   request,
-                                   comm->c_coll.coll_iexscan_module);
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_iexscan((void *) sendbuf, recvbuf, count,
+                                    datatype, op, comm, request,
+                                    comm->c_coll.coll_iexscan_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

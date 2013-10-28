@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +58,7 @@ static const char FUNC_NAME[] = "MPI_Info_get_valuelen";
  *   character.  If the 'key' is not found on 'info', 'valuelen' is left 
  *   alone.
  */
-int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
+int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
                           int *flag) 
 {
     int key_length;

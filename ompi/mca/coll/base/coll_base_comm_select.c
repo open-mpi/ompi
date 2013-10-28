@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,7 +14,9 @@
  *                         rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Rigde National Laboratory.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,6 +90,20 @@ static OBJ_CLASS_INSTANCE(avail_coll_t, opal_list_item_t, NULL, NULL);
         }                                                               \
     } while (0)
 
+/* XXX -- here to keep the size of the communicator within the predefined size
+ * for 1.7.x. delete me for 1.9.x */
+#define COPY_NEIGH(module, comm, func)                                  \
+    do {                                                                \
+        if (NULL != module->coll_ ## func) {                            \
+            if (NULL != comm->c_coll.neigh->coll_ ## func ## _module) { \
+                OBJ_RELEASE(comm->c_coll.neigh->coll_ ## func ## _module); \
+            }                                                           \
+            comm->c_coll.neigh->coll_ ## func = module->coll_ ## func;  \
+            comm->c_coll.neigh->coll_ ## func ## _module = module;      \
+            OBJ_RETAIN(module);                                         \
+        }                                                               \
+    } while (0)
+
 /*
  * This function is called at the initialization time of every
  * communicator.  It is used to select which coll component will be
@@ -121,6 +138,12 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         opal_show_help("help-mca-coll-base",
                        "comm-select:none-available", true);
         return OMPI_ERROR;
+    }
+
+    /* TODO -- remove me for 1.9.x */
+    comm->c_coll.neigh = calloc (1, sizeof (*comm->c_coll.neigh));
+    if (NULL == comm->c_coll.neigh) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* FIX ME - Do some kind of collective operation to find a module
@@ -175,6 +198,21 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         COPY(avail->ac_module, comm, iscan);
         COPY(avail->ac_module, comm, iscatter);
         COPY(avail->ac_module, comm, iscatterv);
+
+        /* We can not reliably check if this comm has a topology
+         * at this time. The flags are set *after* coll_select */
+        COPY_NEIGH(avail->ac_module, comm, neighbor_allgather);
+        COPY_NEIGH(avail->ac_module, comm, neighbor_allgatherv);
+        COPY_NEIGH(avail->ac_module, comm, neighbor_alltoall);
+        COPY_NEIGH(avail->ac_module, comm, neighbor_alltoallv);
+        COPY_NEIGH(avail->ac_module, comm, neighbor_alltoallw);
+
+        COPY_NEIGH(avail->ac_module, comm, ineighbor_allgather);
+        COPY_NEIGH(avail->ac_module, comm, ineighbor_allgatherv);
+        COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoall);
+        COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoallv);
+        COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoallw);
+
         /* release the original module reference and the list item */
         OBJ_RELEASE(avail->ac_module);
         OBJ_RELEASE(avail);
@@ -217,8 +255,9 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         (NULL == comm->c_coll.coll_ireduce_scatter) ||
         ((OMPI_COMM_IS_INTRA(comm)) && (NULL == comm->c_coll.coll_iscan)) ||
         (NULL == comm->c_coll.coll_iscatter) ||
-        (NULL == comm->c_coll.coll_iscatterv)
-        ) {
+        (NULL == comm->c_coll.coll_iscatterv)) {
+        /* TODO -- Once the topologu flags are set before coll_select then
+         * check if neighborhood collectives have been set. */
         mca_coll_base_comm_unselect(comm);
         return OMPI_ERR_NOT_FOUND;
     }

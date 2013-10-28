@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,8 +28,8 @@
 
 #include "ompi/mpi/c/bindings.h"
 
-int MPI_Isend(void *buf, int count, MPI_Datatype type, int dest,
-               int tag, MPI_Comm comm, MPI_Request *request) 
+int MPI_Isend(const void *buf, int count, MPI_Datatype type, int dest,
+              int tag, MPI_Comm comm, MPI_Request *request)
 {
     char typename[MPI_MAX_OBJECT_NAME], commname[MPI_MAX_OBJECT_NAME];
     int len;

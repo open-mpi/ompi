@@ -43,11 +43,17 @@
 
 #include "mpi.h"
 
-/* since MPI-3 the C keyword "const" is added to all relevant MPI API parameters
-   (e.g. MPI_Send(void* sendbuf, ...) -> MPI_Send(const void* sendbuf, ...));
-   prepend CONST to these parameters which is defined either to "const"
-   (if MPI-3) or to nothing (if MPI-1/2) */
-#if defined(MPI_VERSION) && MPI_VERSION >= 3
+/* The MPI 3.0 standard added the const keyword to all in buffers in the
+   C bindings. Prepend CONST to those function parameters which is defined
+   either to const (if MPI-3*) or to nothing (if MPI-1/2).
+   *or Open MPI version >= 1.7.4, even though it doesn't identify itself as
+    MPI-3.0 yet */
+#if (defined(MPI_VERSION) && MPI_VERSION >= 3) || \
+    (defined(OMPI_MAJOR_VERSION) && defined(OMPI_MINOR_VERSION) && \
+     defined(OMPI_RELEASE_VERSION) && \
+     (OMPI_MAJOR_VERSION > 1 || \
+      (OMPI_MINOR_VERSION > 7 || \
+       (OMPI_MINOR_VERSION == 7 && OMPI_RELEASE_VERSION > 3))))
 # define CONST const
 #else /* MPI_VERSION */
 # define CONST

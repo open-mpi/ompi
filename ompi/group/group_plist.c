@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,10 +12,12 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,12 +29,12 @@
 
 #include <math.h>
 
-int ompi_group_calc_plist ( int n , int *ranks ) { 
+int ompi_group_calc_plist ( int n , const int *ranks ) {
     return sizeof(char *) * n ;
 }
 
-int ompi_group_incl_plist(ompi_group_t* group, int n, int *ranks, 
-                          ompi_group_t **new_group) 
+int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
+                          ompi_group_t **new_group)
 {
     /* local variables */
     int proc,my_group_rank;

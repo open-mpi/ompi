@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -41,10 +42,10 @@ static const char FUNC_NAME[] = "MPI_Type_create_darray";
 int MPI_Type_create_darray(int size,
                            int rank,
                            int ndims,
-                           int gsize_array[],
-                           int distrib_array[],
-                           int darg_array[],
-                           int psize_array[],
+                           const int gsize_array[],
+                           const int distrib_array[],
+                           const int darg_array[],
+                           const int psize_array[],
                            int order,
                            MPI_Datatype oldtype,
                            MPI_Datatype *newtype)
@@ -98,19 +99,11 @@ int MPI_Type_create_darray(int size,
                                       gsize_array, distrib_array, darg_array, psize_array,
                                       order, oldtype, newtype );
     if( OMPI_SUCCESS == rc ) {
-        int* a_i[8];
-
-        a_i[0] = &size;
-        a_i[1] = &rank;
-        a_i[2] = &ndims;
-        a_i[3] = gsize_array;
-        a_i[4] = distrib_array;
-        a_i[5] = darg_array;
-        a_i[6] = psize_array;
-        a_i[7] = &order;
+        const int* a_i[8] = {&size, &rank, &ndims, gsize_array, distrib_array, darg_array,
+                             psize_array, &order};
 
         ompi_datatype_set_args( *newtype, 4 * ndims + 4, a_i, 0, NULL, 1, &oldtype,
-                           MPI_COMBINER_DARRAY );
+                                MPI_COMBINER_DARRAY );
     }
 
     OPAL_CR_EXIT_LIBRARY();

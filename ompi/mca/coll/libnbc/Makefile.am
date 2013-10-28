@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -42,11 +44,17 @@ sources = \
 	nbc_iexscan.c \
 	nbc_igather.c \
 	nbc_igatherv.c \
+	nbc_ineighbor_allgather.c \
+	nbc_ineighbor_allgatherv.c \
+	nbc_ineighbor_alltoall.c \
+	nbc_ineighbor_alltoallv.c \
+	nbc_ineighbor_alltoallw.c \
 	nbc_ireduce.c \
 	nbc_ireduce_scatter.c \
 	nbc_iscan.c \
 	nbc_iscatter.c \
-	nbc_iscatterv.c
+	nbc_iscatterv.c \
+	nbc_neighbor_helpers.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

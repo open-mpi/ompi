@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,10 +13,12 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      University of Houston.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -39,9 +42,9 @@
 static const char FUNC_NAME[] = "MPI_Scatter";
 
 
-int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                 void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                int root, MPI_Comm comm) 
+                int root, MPI_Comm comm)
 {
     int err;
 
@@ -79,7 +82,7 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == recvbuf) ||
                    (ompi_comm_rank(comm) == root && MPI_IN_PLACE == sendbuf)) {
@@ -109,7 +112,7 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
              them out into individual tests. */
 
           else if (ompi_comm_rank(comm) == root) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+              OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
           }
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
@@ -119,16 +122,16 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         else {
           if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
                  MPI_ROOT == root || MPI_PROC_NULL == root)) {
-            err = MPI_ERR_ROOT;
+              err = MPI_ERR_ROOT;
           }
 
           /* Errors for the receivers */
 
           else if (MPI_ROOT != root && MPI_PROC_NULL != root) {
             if (recvcount < 0) {
-              err = MPI_ERR_COUNT;
+                err = MPI_ERR_COUNT;
             } else if (MPI_DATATYPE_NULL == recvtype) {
-              err = MPI_ERR_TYPE;
+                err = MPI_ERR_TYPE;
             }
           }
 
@@ -137,7 +140,7 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
              make the code easier to read. */
 
           else if (MPI_ROOT == root) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+              OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
           }
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
@@ -145,20 +148,20 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     /* Do we need to do anything? */
 
-    if ((0 == recvcount && MPI_ROOT != root && 
-         (ompi_comm_rank(comm) != root || 
+    if ((0 == recvcount && MPI_ROOT != root &&
+         (ompi_comm_rank(comm) != root ||
           (ompi_comm_rank(comm) == root && MPI_IN_PLACE != recvbuf))) ||
         (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf &&
-         0 == sendcount) || 
-	(0 == sendcount && (MPI_ROOT == root || MPI_PROC_NULL == root))) {
+         0 == sendcount) ||
+        (0 == sendcount && (MPI_ROOT == root || MPI_PROC_NULL == root))) {
         return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-	
-    err = comm->c_coll.coll_scatter(sendbuf, sendcount, sendtype, recvbuf,
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_scatter((void *) sendbuf, sendcount, sendtype, recvbuf,
                                     recvcount, recvtype, root, comm,
                                     comm->c_coll.coll_scatter_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

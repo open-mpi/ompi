@@ -202,6 +202,11 @@ libmpi_mpifh_la_SOURCES += \
         igatherv_f.c \
         improbe_f.c \
         imrecv_f.c \
+        ineighbor_allgather_f.c \
+        ineighbor_allgatherv_f.c \
+        ineighbor_alltoall_f.c \
+        ineighbor_alltoallv_f.c \
+        ineighbor_alltoallw_f.c \
         info_create_f.c \
         info_delete_f.c \
         info_dup_f.c \
@@ -233,6 +238,11 @@ libmpi_mpifh_la_SOURCES += \
         lookup_name_f.c \
         mprobe_f.c \
         mrecv_f.c \
+        neighbor_allgather_f.c \
+        neighbor_allgatherv_f.c \
+        neighbor_alltoall_f.c \
+        neighbor_alltoallv_f.c \
+        neighbor_alltoallw_f.c \
         op_commutative_f.c \
         op_create_f.c \
         open_port_f.c \

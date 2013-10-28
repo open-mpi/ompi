@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +41,7 @@
 static const char FUNC_NAME[] = "MPI_Reduce_local";
 
 
-int MPI_Reduce_local(void *inbuf, void *inoutbuf, int count, 
+int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
                      MPI_Datatype datatype, MPI_Op op)
 {
     MEMCHECKER(
@@ -71,7 +74,8 @@ int MPI_Reduce_local(void *inbuf, void *inoutbuf, int count,
 
     /* Invoke the op component to perform the back-end operation */
     OBJ_RETAIN(op);
-    ompi_op_reduce(op, inbuf, inoutbuf, count, datatype);
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    ompi_op_reduce(op,(void *) inbuf, inoutbuf, count, datatype);
     OBJ_RELEASE(op);
 
     return MPI_SUCCESS;

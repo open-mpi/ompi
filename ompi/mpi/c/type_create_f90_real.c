@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +42,6 @@ static const char FUNC_NAME[] = "MPI_Type_create_f90_real";
 
 
 int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
-
 {
     uint64_t key;
 
@@ -80,7 +82,7 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 
     if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;
-        int* a_i[2];
+        const int* a_i[2] = {&r, &p};
         int rc;
 
         key = (((uint64_t)p) << 32) | ((uint64_t)r);
@@ -103,8 +105,6 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
         snprintf(datatype->name, MPI_MAX_OBJECT_NAME, "COMBINER %s",
                  (*newtype)->name);
 
-        a_i[0] = &r;
-        a_i[1] = &p;
         ompi_datatype_set_args( datatype, 1, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_REAL );
 
         rc = opal_hash_table_set_value_uint64( &ompi_mpi_f90_real_hashtable, key, datatype );

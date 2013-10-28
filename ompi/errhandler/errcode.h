@@ -181,7 +181,7 @@ int ompi_mpi_errclass_add (void);
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERROR on error
  */
-int ompi_mpi_errnum_add_string (int errnum, char* string, int len);
+int ompi_mpi_errnum_add_string (int errnum, const char* string, int len);
     
 END_C_DECLS
 

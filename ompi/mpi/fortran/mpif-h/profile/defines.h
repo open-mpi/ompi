@@ -204,6 +204,11 @@
 #define ompi_igatherv_f pompi_igatherv_f
 #define ompi_improbe_f pompi_improbe_f
 #define ompi_imrecv_f pompi_imrecv_f
+#define ompi_ineighbor_allgather_f pompi_ineighbor_allgather_f
+#define ompi_ineighbor_allgatherv_f pompi_ineighbor_allgatherv_f
+#define ompi_ineighbor_alltoall_f pompi_ineighbor_alltoall_f
+#define ompi_ineighbor_alltoallv_f pompi_ineighbor_alltoallv_f
+#define ompi_ineighbor_alltoallw_f pompi_ineighbor_alltoallw_f
 #define ompi_ireduce_f pompi_ireduce_f
 #define ompi_ireduce_scatter_f pompi_ireduce_scatter_f
 #define ompi_ireduce_scatter_block_f pompi_ireduce_scatter_block_f
@@ -235,6 +240,11 @@
 #define ompi_lookup_name_f pompi_lookup_name_f
 #define ompi_mprobe_f pompi_mprobe_f
 #define ompi_mrecv_f pompi_mrecv_f
+#define ompi_neighbor_allgather_f pompi_neighbor_allgather_f
+#define ompi_neighbor_allgatherv_f pompi_neighbor_allgatherv_f
+#define ompi_neighbor_alltoall_f pompi_neighbor_alltoall_f
+#define ompi_neighbor_alltoallv_f pompi_neighbor_alltoallv_f
+#define ompi_neighbor_alltoallw_f pompi_neighbor_alltoallw_f
 #define ompi_op_commutative_f pompi_op_commutative_f
 #define ompi_op_create_f pompi_op_create_f
 #define ompi_open_port_f pompi_open_port_f

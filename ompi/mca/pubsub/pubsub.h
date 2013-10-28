@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,17 +46,17 @@ typedef int (*ompi_pubsub_base_module_init_fn_t)(void);
 /*
  * Publish a data item
  */
-typedef int (*ompi_pubsub_base_module_publish_fn_t)(char *service, ompi_info_t *info, char *port);
+typedef int (*ompi_pubsub_base_module_publish_fn_t)(const char *service, ompi_info_t *info, const char *port);
 
 /*
  * Unpublish a data item
  */
-typedef int (*ompi_pubsub_base_module_unpublish_fn_t)(char *service, ompi_info_t *info);
+typedef int (*ompi_pubsub_base_module_unpublish_fn_t)(const char *service, ompi_info_t *info);
 
 /*
  * Lookup a data item
  */
-typedef char* (*ompi_pubsub_base_module_lookup_fn_t)(char *service, ompi_info_t *info);
+typedef char* (*ompi_pubsub_base_module_lookup_fn_t)(const char *service, ompi_info_t *info);
 
 /*
  * Finalize a module

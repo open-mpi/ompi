@@ -7,6 +7,8 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
+! Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+!                         reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -1712,6 +1714,112 @@ end subroutine MPI_Imrecv
 end interface
 
 
+interface MPI_Ineighbor_allgather
+
+subroutine MPI_Ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Ineighbor_allgather
+
+end interface
+
+
+interface MPI_Ineighbor_allgatherv
+
+subroutine MPI_Ineighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Ineighbor_allgatherv
+
+end interface
+
+
+interface MPI_Ineighbor_alltoall
+
+subroutine MPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Ineighbor_alltoall
+
+end interface
+
+
+interface MPI_Ineighbor_alltoallv
+
+subroutine MPI_Ineighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
+        recvcounts, rdispls, recvtype, comm, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: sdispls
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: rdispls
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Ineighbor_alltoallv
+
+end interface
+
+
+interface MPI_Ineighbor_alltoallw
+
+subroutine MPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer, dimension(*), intent(in) :: sendtypes
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer, dimension(*), intent(in) :: recvtypes
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Ineighbor_alltoallw
+
+end interface
+
+
 interface MPI_Info_create
 
 subroutine MPI_Info_create(info, ierr)
@@ -2158,6 +2266,106 @@ end subroutine MPI_Mrecv
 
 end interface
 
+
+interface MPI_Neighbor_allgather
+
+subroutine MPI_Neighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierror
+end subroutine MPI_Neighbor_allgather
+
+end interface
+
+
+interface MPI_Neighbor_allgatherv
+
+subroutine MPI_Neighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, comm, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierror
+end subroutine MPI_Neighbor_allgatherv
+
+end interface
+
+
+interface MPI_Neighbor_alltoall
+
+subroutine MPI_Neighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierror
+end subroutine MPI_Neighbor_alltoall
+
+end interface
+
+
+interface MPI_Neighbor_alltoallv
+
+subroutine MPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
+        recvcounts, rdispls, recvtype, comm, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: sdispls
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: rdispls
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierror
+end subroutine MPI_Neighbor_alltoallv
+
+end interface
+
+
+interface MPI_Neighbor_alltoallw
+
+subroutine MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer, dimension(*), intent(in) :: sendtypes
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer, dimension(*), intent(in) :: recvtypes
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierror
+end subroutine MPI_Neighbor_alltoallw
+
+end interface
 
 interface MPI_Op_commutative
 

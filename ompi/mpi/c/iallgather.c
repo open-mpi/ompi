@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,9 +43,9 @@
 static const char FUNC_NAME[] = "MPI_Iallgather";
 
 
-int MPI_Iallgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                 void *recvbuf, int recvcount, MPI_Datatype recvtype, 
-                 MPI_Comm comm,  MPI_Request *request)
+int MPI_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                   MPI_Comm comm,  MPI_Request *request)
 {
     int err;
 
@@ -91,11 +95,10 @@ int MPI_Iallgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-
-    err = comm->c_coll.coll_iallgather(sendbuf, sendcount, sendtype, 
-                                      recvbuf, recvcount, recvtype, comm, 
-                                      request,
-                                      comm->c_coll.coll_iallgather_module);
+    /* XXX -- CONST -- do not cast away const -- update mca/coll */
+    err = comm->c_coll.coll_iallgather((void *) sendbuf, sendcount, sendtype,
+                                       recvbuf, recvcount, recvtype, comm,
+                                       request, comm->c_coll.coll_iallgather_module);
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

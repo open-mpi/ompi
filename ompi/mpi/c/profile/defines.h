@@ -12,6 +12,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -245,6 +247,16 @@
 #define MPI_Mprobe PMPI_Mprobe
 #define MPI_Mrecv PMPI_Mrecv
 #define MPI_Message_cancel PMPI_Message_cancel
+#define MPI_Neighbor_allgather PMPI_Neighbor_allgather
+#define MPI_Ineighbor_allgather PMPI_Ineighbor_allgather
+#define MPI_Neighbor_allgatherv PMPI_Neighbor_allgatherv
+#define MPI_Ineighbor_allgatherv PMPI_Ineighbor_allgatherv
+#define MPI_Neighbor_alltoall PMPI_Neighbor_alltoall
+#define MPI_Ineighbor_alltoall PMPI_Ineighbor_alltoall
+#define MPI_Neighbor_alltoallv PMPI_Neighbor_alltoallv
+#define MPI_Ineighbor_alltoallv PMPI_Ineighbor_alltoallv
+#define MPI_Neighbor_alltoallw PMPI_Neighbor_alltoallw
+#define MPI_Ineighbor_alltoallw PMPI_Ineighbor_alltoallw
 #define MPI_Op_c2f PMPI_Op_c2f 
 #define MPI_Op_commutative PMPI_Op_commutative 
 #define MPI_Op_create PMPI_Op_create 

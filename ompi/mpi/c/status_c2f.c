@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,10 +11,12 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -38,9 +41,10 @@
 static const char FUNC_NAME[] = "MPI_Status_c2f";
 
 
-int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status) 
+int MPI_Status_c2f(const MPI_Status *c_status, MPI_Fint *f_status)
 {
-    int i, *c_ints;
+    const int *c_ints;
+    int i;
     MEMCHECKER(
         if(c_status != MPI_STATUSES_IGNORE) {
             /*
@@ -59,10 +63,10 @@ int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status)
 
         /* MPI-2:4.12.5 says that if you pass in
            MPI_STATUS[ES]_IGNORE, it's erroneous */
-        
-        if (NULL == c_status || MPI_STATUS_IGNORE == c_status || 
+
+        if (NULL == c_status || MPI_STATUS_IGNORE == c_status ||
             MPI_STATUSES_IGNORE == c_status || NULL == f_status) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                           MPI_ERR_IN_STATUS, FUNC_NAME);
         }
     }
@@ -89,7 +93,7 @@ int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status)
        hosed anyway (i.e., even the public values in the status could
        get truncated).  But if sizeof(int) == sizeof(INTEGER) or
        sizeof(int) < sizeof(INTEGER), everything should be kosher. */
-    c_ints = (int*)c_status;
+    c_ints = (const int*)c_status;
     for( i = 0; i < (int)(sizeof(MPI_Status) / sizeof(int)); i++ )
         f_status[i] = OMPI_INT_2_FINT(c_ints[i]);
 

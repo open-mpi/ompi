@@ -40,7 +40,7 @@
 
 static const char FUNC_NAME[] = "MPI_Get_elements_x";
 
-int MPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *count)
+int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count)
 {
     size_t internal_count;
     int ret;
