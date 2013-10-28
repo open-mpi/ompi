@@ -1,0 +1,43 @@
+# -*- shell-script -*-
+# (c) 2013 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI common configuration for Darwin v1.7.x/1.8.x
+
+enable_dlopen=no
+enable_binaries=yes
+enable_heterogeneous=no
+enable_shared=yes
+enable_static=yes
+enable_ipv6=no
+enable_ft_thread=no
+enable_per_user_config_files=no
+
+# Enable the fortran bindings
+enable_mpi_fortran=yes
+
+# Disable the C++ binding. They were deprecated in MPI-2.2 and removed in MPI-3
+enable_mpi_cxx=no
+enable_mpi_cxx_seek=no
+enable_cxx_exceptions=no
+
+# Disable components not needed on any TOSS platform
+enable_mca_no_build=carto,crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,btl-tcp
+
+# Enable malloc hooks for mpi_leave_pinned
+with_memory_manager=linux
+
+# TOSS2 uses slurm
+with_slurm=yes
+with_tm=no
+
+# Enable PMI support for direct launch
+with_pmi=yes
+
+# Always build ibverbs support
+with_verbs=yes
+
+# Install the development headers
+with_devel_headers=yes
+
+# Enable support for hwloc PCI (to find MIC Co-processors)
+enable_pci=yes
+enable_libpci=yes

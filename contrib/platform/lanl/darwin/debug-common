@@ -1,0 +1,12 @@
+# (c) 2013 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI common debug configuration for TOSS/TOSS2 v1.7.x/1.8.x
+
+enable_mem_debug=yes
+enable_mem_profile=yes
+enable_debug_symbols=yes
+enable_picky=yes
+enable_debug=yes
+
+# Enable the memchecker
+enable_memchecker=yes
+with_valgrind=yes

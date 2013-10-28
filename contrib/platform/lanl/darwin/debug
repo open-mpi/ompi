@@ -1,0 +1,5 @@
+# (c) 2013 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI debug configuration for Darwin v1.7.x/1.8.x
+
+source ./darwin-common
+source ./debug-common
