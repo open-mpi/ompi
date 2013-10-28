@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -449,9 +452,6 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
  *	Accepts:	- same arguments as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code (passed from 
  *                        the reduce scatter implementation)
- *      Note: If we detect zero valued counts in the rcounts array, we
- *      fall back to the nonoverlapping algorithm because the other
- *      algorithms do not currently handle it.
  */
 int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
                                                     int *rcounts,
@@ -466,7 +466,6 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
     const double b = 8.0;
     const size_t small_message_size = 12 * 1024;
     const size_t large_message_size = 256 * 1024;
-    bool zerocounts = false;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
 
@@ -476,12 +475,9 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
     total_message_size = 0;
     for (i = 0; i < comm_size; i++) { 
         total_message_size += rcounts[i];
-        if (0 == rcounts[i]) {
-            zerocounts = true;
-        }
     }
 
-    if( !ompi_op_is_commute(op) || (zerocounts)) {
+    if( !ompi_op_is_commute(op) ) {
         return ompi_coll_tuned_reduce_scatter_intra_nonoverlapping (sbuf, rbuf, rcounts, 
                                                                     dtype, op, 
                                                                     comm, module); 
