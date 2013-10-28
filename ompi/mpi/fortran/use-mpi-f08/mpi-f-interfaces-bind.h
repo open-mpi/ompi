@@ -11,9 +11,150 @@
 !
 ! This file provides the interface specifications for the MPI Fortran
 ! API bindings.  It effectively maps between public names ("MPI_Init")
-! and the back-end implementation subroutine name (e.g., "ompi_init_f").
+! and the back-end OMPI implementation subroutine name (e.g.,
+! "ompi_init_f").
+!
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
+
+!
+! Most of the "wrapper" subroutines in the mpi_f08 module (i.e., all
+! the ones prototyped in this file) are simple routines that simply
+! invoke a back-end ompi_*_f() subroutine, which is BIND(C)-bound to a
+! back-end C function.  Easy-peasy.
+!
+! However, a bunch of MPI Fortran subroutines use LOGICAL dummy
+! parameters, and Fortran disallows passing LOGICAL parameters to
+! BIND(C) routines (because the .TRUE. and .FALSE. values are not
+! standardized (!)).  Hence, for these
+! subroutines-with-LOGICAL-params, we have to be creative on how to
+! invoke the back-end ompi_*_f() C function.  There are 2 cases:
+
+! 1. If the Fortran interface has a LOGICAL parameter and no
+! TYPE(MPI_Status) parameter, the individual wrapper implementation
+! files (e.g., finalized_f08.F90) use the "mpi" module to get a
+! interface for the subroutine and call the PMPI_* name of the
+! function, which then invokes the corresponding function in the
+! ompi/mpi/fortran/mpif-h directory.
+!
+! This is a bit of a hack: the "mpi" module will provide the right
+! Fortran interface so that the compiler can verify that we're passing
+! the right types (e.g., convert MPI handles from comm to
+! comm%MPI_VAL).  But here's the hack part: when we pass *unbounded
+! arrays* of handles (e.g., the sendtypes and recvtypes arrays
+! MPI_Alltoallw), we declare that the corresponding ompi_*_f()
+! subroutine takes a *scalar*, and then we pass sendtypes(0)%MPI_VAL.
+!
+! >>>THIS IS A LIE!<<< We're passing a scalar to something that
+! expects an array.
+!
+! However, remember that Fortran passes by reference.  So the compiler
+! will pass a pointer to sendtypes(0)%MPI_VAL (i.e., the first integer
+! in the array).  And since the mpi_f08 handles were cleverly designed
+! to be exactly equivalent to a single INTEGER, an array of mpi_f08
+! handles is exactly equivalent to an array of INTEGERS.  So passing
+! an address to the first MPI_VAL is exactly the same as passing an
+! array of INTEGERS.
+!
+! Specifically: the back-end C function (in *.c files in
+! ompi/mpi/fortran/mpif-h) gets an (MPI_Fint*), and it's all good.
+!
+! The key here is that there is a disconnect between Fortran and C:
+! we're telling the Fortran compiler what the C interface is, and
+! we're lying.  But just a little bit.  No one gets hurt.
+!
+! Yes, this is a total hack.  But Craig Rasumussen tells me that this
+! is actually quite a common hack in the Fortran developer world, so
+! we shouldn't feel bad about using it.  Shrug.
+!
+! 2. If the Fortran interface has both LOGICAL and TYPE(MPI_Status)
+! parameters, then we have to do even more tricks than we described
+! above. :-(
+!
+! The problem occurs because in the mpi_f08 module, an MPI_Status is
+! TYPE(MPI_Status), but in the mpi module, it's INTEGER,
+! DIMENSION(MPI_STATUS_SIZE).  Just like MPI handles, TYPE(MPI_Status)
+! was cleverly designed so that it can be identical (in terms of a
+! memory map) to INTEGER, DIMENSION(MPI_STATUS_SIZE).  So we just have
+! to fool the compiler into accepting it (it's the same C<-->Fortran
+! disconnect from #1).
+!
+! So in this case, we actually don't "use mpi" at all -- we just add
+! an "interface" block for the PMPI_* subroutine that we want to call.
+! And we lie in that interface block, saying that the status argument
+! is TYPE(MPI_Status) (rather than an INTEGER,
+! DIMENSION(MPI_STATUS_SIZE), which is what it *really* is) -- i.e.,
+! the same type that we already have.
+!
+! For the C programmers reading this, this is very much analogous to
+! something like this:
+!
+! $ cat header.h
+! void foo(int *param);
+! $ cat source.c
+! #include "header.h"
+! // Pretend that we *know* somehow that param will point to exactly
+! // sizeof(int) bytes.
+! void bar(char *param) {
+!     foo(param); // <-- This generates a compiler warning
+! }
+!
+! To fix the compiler warning, instead of including "header.h", we
+! just put a byte-equivalent prototype in source.c:
+!
+! $ cat source.c
+! void foo(char *param);
+! void bar(char *param) {
+!     foo(param);
+! }
+!
+! And now it compiles without warning.
+!
+! The main difference here is that in Fortran, it is an error -- not a
+! warning.
+!
+! Again, we're making the Fortran compiler happy, but we're lying
+! because we know the back-end memory representation of the two types
+! is the same.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Wasn't that simple?  Here's the list of subroutines that are not
+! prototyped in this file because they fall into case #1 or #2, above.
+!
+! MPI_Cart_create
+! MPI_Cart_get
+! MPI_Cart_map
+! MPI_Cart_sub
+! MPI_Comm_get_attr
+! MPI_Comm_test_inter
+! MPI_Dist_graph_create
+! MPI_Dist_graph_create_adjacent
+! MPI_Dist_graph_neighbors_count
+! MPI_File_get_atomicity
+! MPI_File_set_atomicity
+! MPI_Finalized
+! MPI_Graph_create
+! MPI_Improbe
+! MPI_Info_get
+! MPI_Info_get_valuelen
+! MPI_Initialized
+! MPI_Intercomm_merge
+! MPI_Iprobe
+! MPI_Is_thread_main
+! MPI_Op_commutative
+! MPI_Op_create
+! MPI_Request_get_status
+! MPI_Status_set_cancelled
+! MPI_Test
+! MPI_Testall
+! MPI_Testany
+! MPI_Testsome
+! MPI_Test_cancelled
+! MPI_Type_get_attr
+! MPI_Win_get_attr
+! MPI_Win_test
+!
 
 interface
 
@@ -81,17 +222,6 @@ subroutine ompi_ibsend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ibsend_f
-
-subroutine ompi_iprobe_f(source,tag,comm,flag,status,ierror) &
-   BIND(C, name="ompi_iprobe_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: source, tag
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_iprobe_f
 
 subroutine ompi_irecv_f(buf,count,datatype,source,tag,comm,request,ierror) &
    BIND(C, name="ompi_irecv_f")
@@ -176,16 +306,6 @@ subroutine ompi_request_free_f(request,ierror) &
    INTEGER, INTENT(INOUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_request_free_f
-
-subroutine ompi_request_get_status_f(request,flag,status,ierror) &
-   BIND(C, name="ompi_request_get_status_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: request
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_request_get_status_f
 
 subroutine ompi_rsend_f(buf,count,datatype,dest,tag,comm,ierror) &
    BIND(C, name="ompi_rsend_f")
@@ -292,61 +412,6 @@ subroutine ompi_startall_f(count,array_of_requests,ierror) &
    INTEGER, INTENT(INOUT) :: array_of_requests(count)
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_startall_f
-
-subroutine ompi_test_f(request,flag,status,ierror) &
-   BIND(C, name="ompi_test_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(INOUT) :: request
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_test_f
-
-subroutine ompi_testall_f(count,array_of_requests,flag,array_of_statuses,ierror) &
-   BIND(C, name="ompi_testall_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: count
-   INTEGER, INTENT(INOUT) :: array_of_requests(count)
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(count)
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_testall_f
-
-subroutine ompi_testany_f(count,array_of_requests,index,flag,status,ierror) &
-   BIND(C, name="ompi_testany_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: count
-   INTEGER, INTENT(INOUT) :: array_of_requests(count)
-   INTEGER, INTENT(OUT) :: index
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_testany_f
-
-subroutine ompi_testsome_f(incount,array_of_requests,outcount, &
-                           array_of_indices,array_of_statuses,ierror) &
-   BIND(C, name="ompi_testsome_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: incount
-   INTEGER, INTENT(INOUT) :: array_of_requests(incount)
-   INTEGER, INTENT(OUT) :: outcount
-   INTEGER, INTENT(OUT) :: array_of_indices(*)
-   TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(*)
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_testsome_f
-
-subroutine ompi_test_cancelled_f(status,flag,ierror) &
-   BIND(C, name="ompi_test_cancelled_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   TYPE(MPI_Status), INTENT(IN) :: status
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_test_cancelled_f
 
 subroutine ompi_wait_f(request,status,ierror) &
    BIND(C, name="ompi_wait_f")
@@ -981,24 +1046,6 @@ subroutine ompi_igatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_igatherv_f
 
-subroutine ompi_op_commutative_f(op,commute,ierror) &
-   BIND(C, name="ompi_op_commutative_f")
-   implicit none
-   INTEGER, INTENT(IN) :: op
-   LOGICAL, INTENT(OUT) :: commute
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_op_commutative_f
-
-subroutine ompi_op_create_f(user_fn,commute,op,ierror) &
-   BIND(C, name="ompi_op_create_f")
-   use :: mpi_f08_interfaces_callbacks, only : MPI_User_function
-   implicit none
-   OMPI_PROCEDURE(MPI_User_function) :: user_fn
-   LOGICAL, INTENT(IN) :: commute
-   INTEGER, INTENT(OUT) :: op
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_op_create_f
-
 subroutine ompi_op_free_f(op,ierror) &
    BIND(C, name="ompi_op_free_f")
    implicit none
@@ -1245,17 +1292,6 @@ subroutine ompi_comm_free_keyval_f(comm_keyval,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_free_keyval_f
 
-subroutine ompi_comm_get_attr_f(comm,comm_keyval,attribute_val,flag,ierror) &
-   BIND(C, name="ompi_comm_get_attr_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(IN) :: comm_keyval
-   INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: attribute_val
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_comm_get_attr_f
-
 subroutine ompi_comm_get_name_f(comm,comm_name,resultlen,ierror,comm_name_len) &
    BIND(C, name="ompi_comm_get_name_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
@@ -1344,14 +1380,6 @@ subroutine ompi_comm_split_f(comm,color,key,newcomm,ierror) &
    INTEGER, INTENT(OUT) :: newcomm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_split_f
-
-subroutine ompi_comm_test_inter_f(comm,flag,ierror) &
-   BIND(C, name="ompi_comm_test_inter_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_comm_test_inter_f
 
 subroutine ompi_group_compare_f(group1,group2,result,ierror) &
    BIND(C, name="ompi_group_compare_f")
@@ -1471,15 +1499,6 @@ subroutine ompi_intercomm_create_f(local_comm,local_leader,peer_comm, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_intercomm_create_f
 
-subroutine ompi_intercomm_merge_f(intercomm,high,newintracomm,ierror) &
-   BIND(C, name="ompi_intercomm_merge_f")
-   implicit none
-   INTEGER, INTENT(IN) :: intercomm
-   LOGICAL, INTENT(IN) :: high
-   INTEGER, INTENT(OUT) :: newintracomm
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_intercomm_merge_f
-
 subroutine ompi_type_create_keyval_f(type_copy_attr_fn,type_delete_attr_fn, &
                                      type_keyval,extra_state,ierror) &
    BIND(C, name="ompi_type_create_keyval_f")
@@ -1508,17 +1527,6 @@ subroutine ompi_type_free_keyval_f(type_keyval,ierror) &
    INTEGER, INTENT(INOUT) :: type_keyval
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_type_free_keyval_f
-
-subroutine ompi_type_get_attr_f(type,type_keyval,attribute_val,flag,ierror) &
-   BIND(C, name="ompi_type_get_attr_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   implicit none
-   INTEGER, INTENT(IN) :: type
-   INTEGER, INTENT(IN) :: type_keyval
-   INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: attribute_val
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_type_get_attr_f
 
 subroutine ompi_type_get_name_f(type,type_name,resultlen,ierror,type_name_len) &
    BIND(C, name="ompi_type_get_name_f")
@@ -1580,17 +1588,6 @@ subroutine ompi_win_free_keyval_f(win_keyval,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_free_keyval_f
 
-subroutine ompi_win_get_attr_f(win,win_keyval,attribute_val,flag,ierror) &
-   BIND(C, name="ompi_win_get_attr_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   implicit none
-   INTEGER, INTENT(IN) :: win
-   INTEGER, INTENT(IN) :: win_keyval
-   INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: attribute_val
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_win_get_attr_f
-
 subroutine ompi_win_get_name_f(win,win_name,resultlen,ierror,win_name_len) &
    BIND(C, name="ompi_win_get_name_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
@@ -1639,37 +1636,6 @@ subroutine ompi_cart_coords_f(comm,rank,maxdims,coords,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_cart_coords_f
 
-subroutine ompi_cart_create_f(comm_old,ndims,dims,periods, &
-                              reorder,comm_cart,ierror) &
-   BIND(C, name="ompi_cart_create_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: ndims, dims(ndims)
-   LOGICAL, INTENT(IN) :: periods(ndims), reorder
-   INTEGER, INTENT(OUT) :: comm_cart
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_cart_create_f
-
-subroutine ompi_cart_get_f(comm,maxdims,dims,periods,coords,ierror) &
-   BIND(C, name="ompi_cart_get_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(IN) :: maxdims
-   INTEGER, INTENT(OUT) :: dims(maxdims), coords(maxdims)
-   LOGICAL, INTENT(OUT) :: periods(maxdims)
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_cart_get_f
-
-subroutine ompi_cart_map_f(comm,ndims,dims,periods,newrank,ierror) &
-   BIND(C, name="ompi_cart_map_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(IN) :: ndims, dims(ndims)
-   LOGICAL, INTENT(IN) :: periods(ndims)
-   INTEGER, INTENT(OUT) :: newrank
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_cart_map_f
-
 subroutine ompi_cart_rank_f(comm,coords,rank,ierror) &
    BIND(C, name="ompi_cart_rank_f")
    implicit none
@@ -1688,15 +1654,6 @@ subroutine ompi_cart_shift_f(comm,direction,disp,rank_source,rank_dest,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_cart_shift_f
 
-subroutine ompi_cart_sub_f(comm,remain_dims,newcomm,ierror) &
-   BIND(C, name="ompi_cart_sub_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(IN) :: remain_dims(*)
-   INTEGER, INTENT(OUT) :: newcomm
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_cart_sub_f
-
 subroutine ompi_dims_create_f(nnodes,ndims,dims,ierror) &
    BIND(C, name="ompi_dims_create_f")
    implicit none
@@ -1704,34 +1661,6 @@ subroutine ompi_dims_create_f(nnodes,ndims,dims,ierror) &
    INTEGER, INTENT(INOUT) :: dims(*)
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_dims_create_f
-
-subroutine ompi_dist_graph_create_f(comm_old,n,sources,degrees, &
-               destinations,weights,info,reorder,comm_dist_graph,ierror) &
-   BIND(C, name="ompi_dist_graph_create_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: n
-   INTEGER, INTENT(IN) :: sources(n), degrees(n), destinations(*), weights(*)
-   INTEGER, INTENT(IN) :: info
-   LOGICAL, INTENT(IN) :: reorder
-   INTEGER, INTENT(OUT) :: comm_dist_graph
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_dist_graph_create_f
-
-subroutine ompi_dist_graph_create_adjacent_f(comm_old,indegree,sources, &
-                          sourceweights,outdegree,destinations,destweights,info, &
-                          reorder,comm_dist_graph,ierror) &
-   BIND(C, name="ompi_dist_graph_create_adjacent_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: indegree, outdegree
-   INTEGER, INTENT(IN) :: sources(indegree), sourceweights(indegree)
-   INTEGER, INTENT(IN) :: destinations(outdegree), destweights(outdegree)
-   INTEGER, INTENT(IN) :: info
-   LOGICAL, INTENT(IN) :: reorder
-   INTEGER, INTENT(OUT) :: comm_dist_graph
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_dist_graph_create_adjacent_f
 
 subroutine ompi_dist_graph_neighbors_f(comm,maxindegree,sources,sourceweights, &
                                        maxoutdegree,destinations,destweights,ierror) &
@@ -1744,16 +1673,6 @@ subroutine ompi_dist_graph_neighbors_f(comm,maxindegree,sources,sourceweights, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_dist_graph_neighbors_f
 
-subroutine ompi_dist_graph_neighbors_count_f(comm,indegree,outdegree, &
-                                             weighted,ierror) &
-   BIND(C, name="ompi_dist_graph_neighbors_count_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(OUT) :: indegree, outdegree
-   LOGICAL, INTENT(OUT) :: weighted
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_dist_graph_neighbors_count_f
-
 subroutine ompi_graphdims_get_f(comm,nnodes,nedges,ierror) &
    BIND(C, name="ompi_graphdims_get_f")
    implicit none
@@ -1761,18 +1680,6 @@ subroutine ompi_graphdims_get_f(comm,nnodes,nedges,ierror) &
    INTEGER, INTENT(OUT) :: nnodes, nedges
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_graphdims_get_f
-
-subroutine ompi_graph_create_f(comm_old,nnodes,index,edges,reorder, &
-                               comm_graph,ierror) &
-   BIND(C, name="ompi_graph_create_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: nnodes
-   INTEGER, INTENT(IN) :: index(*), edges(*)
-   LOGICAL, INTENT(IN) :: reorder
-   INTEGER, INTENT(OUT) :: comm_graph
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_graph_create_f
 
 subroutine ompi_graph_get_f(comm,maxindex,maxedges,index,edges,ierror) &
    BIND(C, name="ompi_graph_get_f")
@@ -1970,20 +1877,14 @@ subroutine ompi_file_set_errhandler_f(file,errhandler,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_file_set_errhandler_f
 
-#endif ! OMPI_PROFILE_MPI_FILE_INTERFACE
+! OMPI_PROFILE_MPI_FILE_INTERFACE
+#endif
 
 subroutine ompi_finalize_f(ierror) &
    BIND(C, name="ompi_finalize_f")
    implicit none
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_finalize_f
-
-subroutine ompi_finalized_f(flag,ierror) &
-   BIND(C, name="ompi_finalized_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_finalized_f
 
 subroutine ompi_free_mem_f(base,ierror) &
    BIND(C, name="ompi_free_mem_f")
@@ -2015,13 +1916,6 @@ subroutine ompi_init_f(ierror) &
    implicit none
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_init_f
-
-subroutine ompi_initialized_f(flag,ierror) &
-   BIND(C, name="ompi_initialized_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_initialized_f
 
 subroutine ompi_win_call_errhandler_f(win,errorcode,ierror) &
    BIND(C, name="ompi_win_call_errhandler_f")
@@ -2088,19 +1982,6 @@ subroutine ompi_info_free_f(info,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_info_free_f
 
-subroutine ompi_info_get_f(info,key,valuelen,value,flag,ierror,key_len,value_len) &
-   BIND(C, name="ompi_info_get_f")
-   use, intrinsic :: ISO_C_BINDING, only : C_CHAR
-   implicit none
-   INTEGER, INTENT(IN) :: info
-   CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: key
-   INTEGER, INTENT(IN) :: valuelen
-   CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(OUT) :: value
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-   INTEGER, VALUE, INTENT(IN) :: key_len, value_len
-end subroutine ompi_info_get_f
-
 subroutine ompi_info_get_nkeys_f(info,nkeys,ierror) &
    BIND(C, name="ompi_info_get_nkeys_f")
    implicit none
@@ -2119,18 +2000,6 @@ subroutine ompi_info_get_nthkey_f(info,n,key,ierror,key_len) &
    INTEGER, INTENT(OUT) :: ierror
    INTEGER, VALUE, INTENT(IN) :: key_len
 end subroutine ompi_info_get_nthkey_f
-
-subroutine ompi_info_get_valuelen_f(info,key,valuelen,flag,ierror,key_len) &
-   BIND(C, name="ompi_info_get_valuelen_f")
-   use, intrinsic :: ISO_C_BINDING, only : C_CHAR
-   implicit none
-   INTEGER, INTENT(IN) :: info
-   CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: key
-   INTEGER, INTENT(OUT) :: valuelen
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-   INTEGER, VALUE, INTENT(IN) :: key_len
-end subroutine ompi_info_get_valuelen_f
 
 subroutine ompi_info_set_f(info,key,value,ierror,key_len,value_len) &
    BIND(C, name="ompi_info_set_f")
@@ -2389,14 +2258,6 @@ subroutine ompi_win_start_f(group,assert,win,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_start_f
 
-subroutine ompi_win_test_f(win,flag,ierror) &
-   BIND(C, name="ompi_win_test_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(IN) :: win
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_win_test_f
-
 subroutine ompi_win_unlock_f(rank,win,ierror) &
    BIND(C, name="ompi_win_unlock_f")
    implicit none
@@ -2443,28 +2304,12 @@ subroutine ompi_init_thread_f(required,provided,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_init_thread_f
 
-subroutine ompi_is_thread_main_f(flag,ierror) &
-   BIND(C, name="ompi_is_thread_main_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_is_thread_main_f
-
 subroutine ompi_query_thread_f(provided,ierror) &
    BIND(C, name="ompi_query_thread_f")
    implicit none
    INTEGER, INTENT(OUT) :: provided
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_query_thread_f
-
-subroutine ompi_status_set_cancelled_f(status,flag,ierror) &
-   BIND(C, name="ompi_status_set_cancelled_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   TYPE(MPI_Status), INTENT(INOUT) :: status
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_status_set_cancelled_f
 
 subroutine ompi_status_set_elements_f(status,datatype,count,ierror) &
    BIND(C, name="ompi_status_set_elements_f")
@@ -2512,14 +2357,6 @@ subroutine ompi_file_get_amode_f(fh,amode,ierror) &
    INTEGER, INTENT(OUT) :: amode
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_file_get_amode_f
-
-subroutine ompi_file_get_atomicity_f(fh,flag,ierror) &
-   BIND(C, name="ompi_file_get_atomicity_f")
-   implicit none
-   INTEGER, INTENT(IN) :: fh
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_file_get_atomicity_f
 
 subroutine ompi_file_get_byte_offset_f(fh,offset,disp,ierror) &
    BIND(C, name="ompi_file_get_byte_offset_f")
@@ -2846,14 +2683,6 @@ subroutine ompi_file_seek_shared_f(fh,offset,whence,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_file_seek_shared_f
 
-subroutine ompi_file_set_atomicity_f(fh,flag,ierror) &
-   BIND(C, name="ompi_file_set_atomicity_f")
-   implicit none
-   INTEGER, INTENT(IN) :: fh
-   LOGICAL, INTENT(IN) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_file_set_atomicity_f
-
 subroutine ompi_file_set_info_f(fh,info,ierror) &
    BIND(C, name="ompi_file_set_info_f")
    implicit none
@@ -3029,7 +2858,8 @@ subroutine ompi_file_write_shared_f(fh,buf,count,datatype,status,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_file_write_shared_f
 
-#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
+! OMPI_PROVIDE_MPI_FILE_INTERFACE
+#endif
 
 subroutine ompi_register_datarep_f(datarep,read_conversion_fn, &
                                    write_conversion_fn,dtype_file_extent_fn, &
@@ -3142,18 +2972,6 @@ subroutine ompi_mprobe_f(source,tag,comm,message,status,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_mprobe_f
 
-subroutine ompi_improbe_f(source,tag,comm,flag,message,status,ierror) &
-   BIND(C, name="ompi_improbe_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: source, tag
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: message
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine ompi_improbe_f
-
 subroutine ompi_imrecv_f(buf,count,datatype,message,request,ierror) &
    BIND(C, name="ompi_imrecv_f")
    implicit none
@@ -3187,7 +3005,7 @@ subroutine ompi_neighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcoun
    INTEGER, INTENT(IN) :: sendcount, recvcount
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_allgather_f
 
 subroutine ompi_ineighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -3201,7 +3019,7 @@ subroutine ompi_ineighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcou
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_allgather_f
 
 subroutine ompi_neighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
@@ -3215,7 +3033,7 @@ subroutine ompi_neighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcou
    INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_allgatherv_f
 
 subroutine ompi_ineighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
@@ -3230,7 +3048,7 @@ subroutine ompi_ineighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvco
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_allgatherv_f
 
 subroutine ompi_neighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -3243,7 +3061,7 @@ subroutine ompi_neighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount
    INTEGER, INTENT(IN) :: sendcount, recvcount
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_alltoall_f
 
 subroutine ompi_ineighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -3257,7 +3075,7 @@ subroutine ompi_ineighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcoun
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_alltoall_f
 
 subroutine ompi_neighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
@@ -3270,7 +3088,7 @@ subroutine ompi_neighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf
    INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_alltoallv_f
 
 subroutine ompi_ineighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
@@ -3284,13 +3102,13 @@ subroutine ompi_ineighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbu
    INTEGER, INTENT(IN) :: sendtype, recvtype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_alltoallv_f
 
 subroutine ompi_neighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,ierror) &
                              BIND(C, name="ompi_neighbor_alltoallw_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Aint, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3298,7 +3116,7 @@ subroutine ompi_neighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbu
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
    INTEGER, INTENT(IN) :: sendtypes, recvtypes
    INTEGER, INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_neighbor_alltoallw_f
 
 subroutine ompi_ineighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
@@ -3313,7 +3131,7 @@ subroutine ompi_ineighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvb
    INTEGER, INTENT(IN) :: sendtypes, recvtypes
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_ineighbor_alltoallw_f
 
 end interface

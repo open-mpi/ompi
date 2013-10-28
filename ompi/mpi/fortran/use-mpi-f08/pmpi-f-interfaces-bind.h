@@ -15,6 +15,49 @@
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
+!
+! Note that interfaces for the following subroutines are not included
+! in this file because they contain LOGICAL dummy parameters, and
+! therefore cannot be BIND(C).  Instead, the individual wrapper
+! implementation files (e.g., iprobe_f08.F90) use the "mpi" module to
+! get a interface for the subroutine and call the PMPI_* name of the
+! function, which then invokes the corresponding function in the
+! ompi/mpi/fortran/mpif-h directory.
+!
+! MPI_Cart_create
+! MPI_Cart_get
+! MPI_Cart_map
+! MPI_Cart_sub
+! MPI_Comm_get_attr
+! MPI_Comm_test_inter
+! MPI_Dist_graph_create
+! MPI_Dist_graph_create_adjacent
+! MPI_Dist_graph_neighbors_count
+! MPI_File_get_atomicity
+! MPI_File_set_atomicity
+! MPI_Finalized
+! MPI_Graph_create
+! MPI_Improbe
+! MPI_Info_get
+! MPI_Info_get_valuelen
+! MPI_Initialized
+! MPI_Intercomm_merge
+! MPI_Iprobe
+! MPI_Is_thread_main
+! MPI_Op_commutative
+! MPI_Op_create
+! MPI_Request_get_status
+! MPI_Status_set_cancelled
+! MPI_Test
+! MPI_Testall
+! MPI_Testany
+! MPI_Testsome
+! MPI_Test_cancelled
+! MPI_Type_get_attr
+! MPI_Win_get_attr
+! MPI_Win_test
+!
+
 interface
 
 subroutine pompi_bsend_f(buf,count,datatype,dest,tag,comm,ierror) &
@@ -81,17 +124,6 @@ subroutine pompi_ibsend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_ibsend_f
-
-subroutine pompi_iprobe_f(source,tag,comm,flag,status,ierror) &
-   BIND(C, name="pompi_iprobe_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: source, tag
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_iprobe_f
 
 subroutine pompi_irecv_f(buf,count,datatype,source,tag,comm,request,ierror) &
    BIND(C, name="pompi_irecv_f")
@@ -176,16 +208,6 @@ subroutine pompi_request_free_f(request,ierror) &
    INTEGER, INTENT(INOUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_request_free_f
-
-subroutine pompi_request_get_status_f(request,flag,status,ierror) &
-   BIND(C, name="pompi_request_get_status_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: request
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_request_get_status_f
 
 subroutine pompi_rsend_f(buf,count,datatype,dest,tag,comm,ierror) &
    BIND(C, name="pompi_rsend_f")
@@ -293,39 +315,6 @@ subroutine pompi_startall_f(count,array_of_requests,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_startall_f
 
-subroutine pompi_test_f(request,flag,status,ierror) &
-   BIND(C, name="pompi_test_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(INOUT) :: request
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_test_f
-
-subroutine pompi_testall_f(count,array_of_requests,flag,array_of_statuses,ierror) &
-   BIND(C, name="pompi_testall_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: count
-   INTEGER, INTENT(INOUT) :: array_of_requests(count)
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(count)
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_testall_f
-
-subroutine pompi_testany_f(count,array_of_requests,index,flag,status,ierror) &
-   BIND(C, name="pompi_testany_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: count
-   INTEGER, INTENT(INOUT) :: array_of_requests(count)
-   INTEGER, INTENT(OUT) :: index
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_testany_f
-
 subroutine pompi_testsome_f(incount,array_of_requests,outcount, &
                            array_of_indices,array_of_statuses,ierror) &
    BIND(C, name="pompi_testsome_f")
@@ -338,15 +327,6 @@ subroutine pompi_testsome_f(incount,array_of_requests,outcount, &
    TYPE(MPI_Status), INTENT(OUT) :: array_of_statuses(*)
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_testsome_f
-
-subroutine pompi_test_cancelled_f(status,flag,ierror) &
-   BIND(C, name="pompi_test_cancelled_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   TYPE(MPI_Status), INTENT(IN) :: status
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_test_cancelled_f
 
 subroutine pompi_wait_f(request,status,ierror) &
    BIND(C, name="pompi_wait_f")
@@ -944,24 +924,6 @@ subroutine pompi_igatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_igatherv_f
 
-subroutine pompi_op_commutative_f(op,commute,ierror) &
-   BIND(C, name="pompi_op_commutative_f")
-   implicit none
-   INTEGER, INTENT(IN) :: op
-   LOGICAL, INTENT(OUT) :: commute
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_op_commutative_f
-
-subroutine pompi_op_create_f(user_fn,commute,op,ierror) &
-   BIND(C, name="pompi_op_create_f")
-   use :: mpi_f08_interfaces_callbacks, only : MPI_User_function
-   implicit none
-   OMPI_PROCEDURE(MPI_User_function) :: user_fn
-   LOGICAL, INTENT(IN) :: commute
-   INTEGER, INTENT(OUT) :: op
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_op_create_f
-
 subroutine pompi_op_free_f(op,ierror) &
    BIND(C, name="pompi_op_free_f")
    implicit none
@@ -1189,17 +1151,6 @@ subroutine pompi_comm_free_keyval_f(comm_keyval,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_comm_free_keyval_f
 
-subroutine pompi_comm_get_attr_f(comm,comm_keyval,attribute_val,flag,ierror) &
-   BIND(C, name="pompi_comm_get_attr_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(IN) :: comm_keyval
-   INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: attribute_val
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_comm_get_attr_f
-
 subroutine pompi_comm_get_name_f(comm,comm_name,resultlen,ierror,comm_name_len) &
    BIND(C, name="pompi_comm_get_name_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
@@ -1279,14 +1230,6 @@ subroutine pompi_comm_split_f(comm,color,key,newcomm,ierror) &
    INTEGER, INTENT(OUT) :: newcomm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_comm_split_f
-
-subroutine pompi_comm_test_inter_f(comm,flag,ierror) &
-   BIND(C, name="pompi_comm_test_inter_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_comm_test_inter_f
 
 subroutine pompi_group_compare_f(group1,group2,result,ierror) &
    BIND(C, name="pompi_group_compare_f")
@@ -1406,15 +1349,6 @@ subroutine pompi_intercomm_create_f(local_comm,local_leader,peer_comm, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_intercomm_create_f
 
-subroutine pompi_intercomm_merge_f(intercomm,high,newintracomm,ierror) &
-   BIND(C, name="pompi_intercomm_merge_f")
-   implicit none
-   INTEGER, INTENT(IN) :: intercomm
-   LOGICAL, INTENT(IN) :: high
-   INTEGER, INTENT(OUT) :: newintracomm
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_intercomm_merge_f
-
 subroutine pompi_type_create_keyval_f(type_copy_attr_fn,type_delete_attr_fn, &
                                      type_keyval,extra_state,ierror) &
    BIND(C, name="pompi_type_create_keyval_f")
@@ -1443,17 +1377,6 @@ subroutine pompi_type_free_keyval_f(type_keyval,ierror) &
    INTEGER, INTENT(INOUT) :: type_keyval
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_type_free_keyval_f
-
-subroutine pompi_type_get_attr_f(type,type_keyval,attribute_val,flag,ierror) &
-   BIND(C, name="pompi_type_get_attr_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   implicit none
-   INTEGER, INTENT(IN) :: type
-   INTEGER, INTENT(IN) :: type_keyval
-   INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: attribute_val
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_type_get_attr_f
 
 subroutine pompi_type_get_name_f(type,type_name,resultlen,ierror,type_name_len) &
    BIND(C, name="pompi_type_get_name_f")
@@ -1515,17 +1438,6 @@ subroutine pompi_win_free_keyval_f(win_keyval,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_free_keyval_f
 
-subroutine pompi_win_get_attr_f(win,win_keyval,attribute_val,flag,ierror) &
-   BIND(C, name="pompi_win_get_attr_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   implicit none
-   INTEGER, INTENT(IN) :: win
-   INTEGER, INTENT(IN) :: win_keyval
-   INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: attribute_val
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_win_get_attr_f
-
 subroutine pompi_win_get_name_f(win,win_name,resultlen,ierror,win_name_len) &
    BIND(C, name="pompi_win_get_name_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
@@ -1574,37 +1486,6 @@ subroutine pompi_cart_coords_f(comm,rank,maxdims,coords,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_cart_coords_f
 
-subroutine pompi_cart_create_f(comm_old,ndims,dims,periods, &
-                              reorder,comm_cart,ierror) &
-   BIND(C, name="pompi_cart_create_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: ndims, dims(ndims)
-   LOGICAL, INTENT(IN) :: periods(ndims), reorder
-   INTEGER, INTENT(OUT) :: comm_cart
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_cart_create_f
-
-subroutine pompi_cart_get_f(comm,maxdims,dims,periods,coords,ierror) &
-   BIND(C, name="pompi_cart_get_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(IN) :: maxdims
-   INTEGER, INTENT(OUT) :: dims(maxdims), coords(maxdims)
-   LOGICAL, INTENT(OUT) :: periods(maxdims)
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_cart_get_f
-
-subroutine pompi_cart_map_f(comm,ndims,dims,periods,newrank,ierror) &
-   BIND(C, name="pompi_cart_map_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(IN) :: ndims, dims(ndims)
-   LOGICAL, INTENT(IN) :: periods
-   INTEGER, INTENT(OUT) :: newrank
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_cart_map_f
-
 subroutine pompi_cart_rank_f(comm,coords,rank,ierror) &
    BIND(C, name="pompi_cart_rank_f")
    implicit none
@@ -1623,15 +1504,6 @@ subroutine pompi_cart_shift_f(comm,direction,disp,rank_source,rank_dest,ierror) 
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_cart_shift_f
 
-subroutine pompi_cart_sub_f(comm,remain_dims,newcomm,ierror) &
-   BIND(C, name="pompi_cart_sub_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(IN) :: remain_dims(*)
-   INTEGER, INTENT(OUT) :: newcomm
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_cart_sub_f
-
 subroutine pompi_dims_create_f(nnodes,ndims,dims,ierror) &
    BIND(C, name="pompi_dims_create_f")
    implicit none
@@ -1639,34 +1511,6 @@ subroutine pompi_dims_create_f(nnodes,ndims,dims,ierror) &
    INTEGER, INTENT(INOUT) :: dims(*)
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_dims_create_f
-
-subroutine pompi_dist_graph_create_f(comm_old,n,sources,degrees, &
-               destinations,weights,info,reorder,comm_dist_graph,ierror) &
-   BIND(C, name="pompi_dist_graph_create_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: n
-   INTEGER, INTENT(IN) :: sources(n), degrees(n), destinations(*), weights(*)
-   INTEGER, INTENT(IN) :: info
-   LOGICAL, INTENT(IN) :: reorder
-   INTEGER, INTENT(OUT) :: comm_dist_graph
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_dist_graph_create_f
-
-subroutine pompi_dist_graph_create_adjacent_f(comm_old,indegree,sources, &
-                          sourceweights,outdegree,destinations,destweights,info, &
-                          reorder,comm_dist_graph,ierror) &
-   BIND(C, name="pompi_dist_graph_create_adjacent_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: indegree, outdegree
-   INTEGER, INTENT(IN) :: sources(indegree), sourceweights(indegree)
-   INTEGER, INTENT(IN) :: destinations(outdegree), destweights(outdegree)
-   INTEGER, INTENT(IN) :: info
-   LOGICAL, INTENT(IN) :: reorder
-   INTEGER, INTENT(OUT) :: comm_dist_graph
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_dist_graph_create_adjacent_f
 
 subroutine pompi_dist_graph_neighbors_f(comm,maxindegree,sources,sourceweights, &
                                        maxoutdegree,destinations,destweights,ierror) &
@@ -1679,16 +1523,6 @@ subroutine pompi_dist_graph_neighbors_f(comm,maxindegree,sources,sourceweights, 
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_dist_graph_neighbors_f
 
-subroutine pompi_dist_graph_neighbors_count_f(comm,indegree,outdegree, &
-                                             weighted,ierror) &
-   BIND(C, name="pompi_dist_graph_neighbors_count_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(OUT) :: indegree, outdegree
-   LOGICAL, INTENT(OUT) :: weighted
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_dist_graph_neighbors_count_f
-
 subroutine pompi_graphdims_get_f(comm,nnodes,nedges,ierror) &
    BIND(C, name="pompi_graphdims_get_f")
    implicit none
@@ -1696,18 +1530,6 @@ subroutine pompi_graphdims_get_f(comm,nnodes,nedges,ierror) &
    INTEGER, INTENT(OUT) :: nnodes, nedges
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_graphdims_get_f
-
-subroutine pompi_graph_create_f(comm_old,nnodes,index,edges,reorder, &
-                               comm_graph,ierror) &
-   BIND(C, name="pompi_graph_create_f")
-   implicit none
-   INTEGER, INTENT(IN) :: comm_old
-   INTEGER, INTENT(IN) :: nnodes
-   INTEGER, INTENT(IN) :: index(*), edges(*)
-   LOGICAL, INTENT(IN) :: reorder
-   INTEGER, INTENT(OUT) :: comm_graph
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_graph_create_f
 
 subroutine pompi_graph_get_f(comm,maxindex,maxedges,index,edges,ierror) &
    BIND(C, name="pompi_graph_get_f")
@@ -1908,20 +1730,14 @@ subroutine pompi_file_set_errhandler_f(file,errhandler,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_set_errhandler_f
 
-#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
+! OMPI_PROVIDE_MPI_FILE_INTERFACE
+#endif
 
 subroutine pompi_finalize_f(ierror) &
    BIND(C, name="pompi_finalize_f")
    implicit none
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_finalize_f
-
-subroutine pompi_finalized_f(flag,ierror) &
-   BIND(C, name="pompi_finalized_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_finalized_f
 
 subroutine pompi_free_mem_f(base,ierror) &
    BIND(C, name="pompi_free_mem_f")
@@ -1956,13 +1772,6 @@ subroutine pompi_init_f(ierror) &
    implicit none
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_init_f
-
-subroutine pompi_initialized_f(flag,ierror) &
-   BIND(C, name="pompi_initialized_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_initialized_f
 
 subroutine pompi_win_call_errhandler_f(win,errorcode,ierror) &
    BIND(C, name="pompi_win_call_errhandler_f")
@@ -2029,19 +1838,6 @@ subroutine pompi_info_free_f(info,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_info_free_f
 
-subroutine pompi_info_get_f(info,key,valuelen,value,flag,ierror,key_len,value_len) &
-   BIND(C, name="pompi_info_get_f")
-   use, intrinsic :: ISO_C_BINDING, only : C_CHAR
-   implicit none
-   INTEGER, INTENT(IN) :: info
-   CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: key
-   INTEGER, INTENT(IN) :: valuelen
-   CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(OUT) :: value
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-   INTEGER, VALUE, INTENT(IN) :: key_len, value_len
-end subroutine pompi_info_get_f
-
 subroutine pompi_info_get_nkeys_f(info,nkeys,ierror) &
    BIND(C, name="pompi_info_get_nkeys_f")
    implicit none
@@ -2060,18 +1856,6 @@ subroutine pompi_info_get_nthkey_f(info,n,key,ierror,key_len) &
    INTEGER, INTENT(OUT) :: ierror
    INTEGER, VALUE, INTENT(IN) :: key_len
 end subroutine pompi_info_get_nthkey_f
-
-subroutine pompi_info_get_valuelen_f(info,key,valuelen,flag,ierror,key_len) &
-   BIND(C, name="pompi_info_get_valuelen_f")
-   use, intrinsic :: ISO_C_BINDING, only : C_CHAR
-   implicit none
-   INTEGER, INTENT(IN) :: info
-   CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: key
-   INTEGER, INTENT(OUT) :: valuelen
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-   INTEGER, VALUE, INTENT(IN) :: key_len
-end subroutine pompi_info_get_valuelen_f
 
 subroutine pompi_info_set_f(info,key,value,ierror,key_len,value_len) &
    BIND(C, name="pompi_info_set_f")
@@ -2330,14 +2114,6 @@ subroutine pompi_win_start_f(group,assert,win,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_start_f
 
-subroutine pompi_win_test_f(win,flag,ierror) &
-   BIND(C, name="pompi_win_test_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(IN) :: win
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_win_test_f
-
 subroutine pompi_win_unlock_f(rank,win,ierror) &
    BIND(C, name="pompi_win_unlock_f")
    implicit none
@@ -2384,28 +2160,12 @@ subroutine pompi_init_thread_f(required,provided,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_init_thread_f
 
-subroutine pompi_is_thread_main_f(flag,ierror) &
-   BIND(C, name="pompi_is_thread_main_f")
-   implicit none
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_is_thread_main_f
-
 subroutine pompi_query_thread_f(provided,ierror) &
    BIND(C, name="pompi_query_thread_f")
    implicit none
    INTEGER, INTENT(OUT) :: provided
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_query_thread_f
-
-subroutine pompi_status_set_cancelled_f(status,flag,ierror) &
-   BIND(C, name="pompi_status_set_cancelled_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   TYPE(MPI_Status), INTENT(INOUT) :: status
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_status_set_cancelled_f
 
 subroutine pompi_status_set_elements_f(status,datatype,count,ierror) &
    BIND(C, name="pompi_status_set_elements_f")
@@ -2443,14 +2203,6 @@ subroutine pompi_file_get_amode_f(fh,amode,ierror) &
    INTEGER, INTENT(OUT) :: amode
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_get_amode_f
-
-subroutine pompi_file_get_atomicity_f(fh,flag,ierror) &
-   BIND(C, name="pompi_file_get_atomicity_f")
-   implicit none
-   INTEGER, INTENT(IN) :: fh
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_file_get_atomicity_f
 
 subroutine pompi_file_get_byte_offset_f(fh,offset,disp,ierror) &
    BIND(C, name="pompi_file_get_byte_offset_f")
@@ -2777,14 +2529,6 @@ subroutine pompi_file_seek_shared_f(fh,offset,whence,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_seek_shared_f
 
-subroutine pompi_file_set_atomicity_f(fh,flag,ierror) &
-   BIND(C, name="pompi_file_set_atomicity_f")
-   implicit none
-   INTEGER, INTENT(IN) :: fh
-   LOGICAL, INTENT(IN) :: flag
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_file_set_atomicity_f
-
 subroutine pompi_file_set_info_f(fh,info,ierror) &
    BIND(C, name="pompi_file_set_info_f")
    implicit none
@@ -2960,7 +2704,8 @@ subroutine pompi_file_write_shared_f(fh,buf,count,datatype,status,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_write_shared_f
 
-#endif ! OMPI_PROVIDE_MPI_FILE_INTERFACE
+! OMPI_PROVIDE_MPI_FILE_INTERFACE
+#endif
 
 subroutine pompi_register_datarep_f(datarep,read_conversion_fn, &
                                    write_conversion_fn,dtype_file_extent_fn, &
@@ -3072,18 +2817,6 @@ subroutine pompi_mprobe_f(source,tag,comm,message,status,ierror) &
    TYPE(MPI_Status), INTENT(OUT) :: status
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_mprobe_f
-
-subroutine pompi_improbe_f(source,tag,comm,flag,message,status,ierror) &
-   BIND(C, name="pompi_improbe_f")
-   use :: mpi_f08_types, only : MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: source, tag
-   INTEGER, INTENT(IN) :: comm
-   LOGICAL, INTENT(OUT) :: flag
-   INTEGER, INTENT(OUT) :: message
-   TYPE(MPI_Status), INTENT(OUT) :: status
-   INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_improbe_f
 
 subroutine pompi_imrecv_f(buf,count,datatype,message,request,ierror) &
    BIND(C, name="pompi_imrecv_f")

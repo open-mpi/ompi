@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -21,7 +21,9 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/base \
-             $(OMPI_FC_MODULE_FLAG). -I$(top_srcdir) $(FCFLAGS_f90)
+             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
+             $(OMPI_FC_MODULE_FLAG). \
+             -I$(top_srcdir) $(FCFLAGS_f90)
 
 lib_LTLIBRARIES = libmpi_usempif08.la
 
