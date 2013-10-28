@@ -112,15 +112,9 @@ mca_spml_yoda_component_init(int* priority,
     }
 
     /* We use BML/BTL and need to start it */
-    mca_spml_yoda.force_bml = false;
     if (!mca_bml_base_inited()) {
-        SPML_VERBOSE(10, "starting bml\n");
-        if (OMPI_SUCCESS
-                != mca_bml_base_init(enable_progress_threads,
-                                     enable_mpi_threads)) {
-            return NULL ;
-        }
-        mca_spml_yoda.force_bml = true;
+        SPML_VERBOSE(10, "can not select yoda because ompi has no bml component");
+        return NULL;
     }
 
     mca_spml_yoda.n_active_puts = 0;
@@ -131,11 +125,6 @@ mca_spml_yoda_component_init(int* priority,
 int mca_spml_yoda_component_fini(void)
 {
     int rc;
-
-    /* Shutdown BML */
-    if ((mca_spml_yoda.force_bml == true) &&
-            (OMPI_SUCCESS != (rc = mca_bml.bml_finalize())))
-        return rc;
 
     if(!mca_spml_yoda.enabled)
         return OSHMEM_SUCCESS; /* never selected.. return success.. */
