@@ -66,7 +66,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
 
     bseg = &seg->rs_base;
 
-    ++module->num_total_recvs;
+    ++module->stats.num_total_recvs;
 
     /* Valgrind help */
     opal_memchecker_base_mem_defined((void*)(seg->rs_recv_desc.sg_list[0].addr),
@@ -95,7 +95,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                     dest_mac, 
                     bseg->us_btl_header->seq);
 #endif
-        ++module->num_unk_recvs;
+        ++module->stats.num_unk_recvs;
         goto repost_no_endpoint;
     }
 
@@ -245,7 +245,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
 
         /* frag_id is not 0 - it must match, drop if not */
         } else if (fip->rfi_frag_id != chunk_hdr->ch_frag_id) {
-            ++module->num_badfrag_recvs;
+            ++module->stats.num_badfrag_recvs;
             goto repost;
         }
 #if MSGDEBUG1
@@ -256,7 +256,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
 #endif
 
         /* Stats */
-        ++module->num_chunk_recvs;
+        ++module->stats.num_chunk_recvs;
 
         /* validate offset and len to be within fragment */
         assert(chunk_hdr->ch_frag_offset + chunk_hdr->ch_hdr.payload_len <=
@@ -331,7 +331,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         ack_seq = bseg->us_btl_header->ack_seq;
 
         /* Stats */
-        ++module->num_ack_recvs;
+        ++module->stats.num_ack_recvs;
 
 #if MSGDEBUG1
         opal_output(0, "    Received ACK for sequence number %" UDSEQ " from %s to %s\n",
@@ -345,7 +345,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     /***********************************************************************/
     /* Have no idea what the frag is; drop it */
     else {
-        ++module->num_unk_recvs;
+        ++module->stats.num_unk_recvs;
         opal_output(0, "==========================unknown 2");
         goto repost;
     }
@@ -358,7 +358,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         OBJ_RELEASE(endpoint);
     }
  repost_no_endpoint:
-    ++module->num_recv_reposts;
+    ++module->stats.num_recv_reposts;
 
     /* Add recv to linked list for reposting */
     seg->rs_recv_desc.next = channel->repost_recv_head;

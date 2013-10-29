@@ -68,6 +68,7 @@
 #include "btl_usnic_frag.h"
 #include "btl_usnic_endpoint.h"
 #include "btl_usnic_module.h"
+#include "btl_usnic_stats.h"
 #include "btl_usnic_util.h"
 #include "btl_usnic_ack.h"
 #include "btl_usnic_send.h"
@@ -812,6 +813,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     usnic_clock_timeout.tv_usec = 1000;
     opal_event_add(&usnic_clock_timer_event, &usnic_clock_timeout);
 
+    /* Setup MPI_T performance variables */
+    ompi_btl_usnic_setup_mpit_pvars();
+
+    /* All done */
     *num_btl_modules = mca_btl_usnic_component.num_modules;
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: returning %d modules", *num_btl_modules);
@@ -916,7 +921,7 @@ static int usnic_handle_completion(
                    cwc->vendor_err, cwc->byte_len));
             } else {
                 /* silently count CRC errors */
-                ++module->num_crc_errors;
+                ++module->stats.num_crc_errors;
             }
             rseg->rs_recv_desc.next = channel->repost_recv_head;
             channel->repost_recv_head = &rseg->rs_recv_desc;

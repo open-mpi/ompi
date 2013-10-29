@@ -118,7 +118,7 @@ ompi_btl_usnic_post_segment(
     --channel->sd_wqe;
 
     /* Stats */
-    ++module->num_total_sends;
+    ++module->stats.num_total_sends;
     ++channel->num_channel_sends;
 }
 /*
@@ -210,9 +210,9 @@ ompi_btl_usnic_endpoint_send_segment(
     /* Stats */
     if (sseg->ss_parent_frag->sf_base.uf_type
             == OMPI_BTL_USNIC_FRAG_LARGE_SEND) {
-        ++module->num_chunk_sends;
+        ++module->stats.num_chunk_sends;
     } else {
-        ++module->num_frag_sends;
+        ++module->stats.num_frag_sends;
     }
 
     /* If we have room in the sender's window, we also have room in

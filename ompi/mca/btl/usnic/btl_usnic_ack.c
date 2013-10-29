@@ -49,7 +49,7 @@ ompi_btl_usnic_force_retrans(
     opal_list_append(&(endpoint->endpoint_module->pending_resend_segs),
                      &(sseg->ss_base.us_list.super));
 
-    ++endpoint->endpoint_module->num_fast_retrans;
+    ++endpoint->endpoint_module->stats.num_fast_retrans;
 }
 
 
@@ -76,12 +76,12 @@ ompi_btl_usnic_handle_ack(
         opal_output(0, "Got OLD DUP ACK seq %"UDSEQ" < %"UDSEQ"\n",
                 ack_seq, endpoint->endpoint_ack_seq_rcvd);
 #endif
-        ++module->num_old_dup_acks;
+        ++module->stats.num_old_dup_acks;
         return;
 
     /* A duplicate ACK means next seg was lost */
     } else if (ack_seq == endpoint->endpoint_ack_seq_rcvd) {
-        ++module->num_dup_acks;
+        ++module->stats.num_dup_acks;
 
         ompi_btl_usnic_force_retrans(endpoint, ack_seq);
         return;
@@ -230,7 +230,7 @@ ompi_btl_usnic_ack_send(
     ompi_btl_usnic_post_segment(module, endpoint, ack);
 
     /* Stats */
-    ++module->num_ack_sends;
+    ++module->stats.num_ack_sends;
 
     return;
 }
@@ -282,6 +282,6 @@ ompi_btl_usnic_ack_timeout(
                      &(seg->ss_base.us_list.super));
 
     /* Stats */
-    ++module->num_timeout_retrans;
+    ++module->stats.num_timeout_retrans;
 }
 

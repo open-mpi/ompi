@@ -44,6 +44,8 @@ sources = \
     btl_usnic_recv.h \
     btl_usnic_send.c \
     btl_usnic_send.h \
+    btl_usnic_stats.h \
+    btl_usnic_stats.c \
     btl_usnic_util.c \
     btl_usnic_util.h
 

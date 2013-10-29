@@ -29,6 +29,7 @@
 #include "ompi/mca/common/verbs/common_verbs.h"
 
 #include "btl_usnic_endpoint.h"
+#include "btl_usnic_stats.h"
 
 /*
  * Default limits.
@@ -176,40 +177,8 @@ typedef struct ompi_btl_usnic_module_t {
 
     uint32_t qp_max_inline;
 
-    /* Debugging statistics */
-    bool final_stats;
-    uint64_t stats_report_num;
-
-    uint64_t num_total_sends;
-    uint64_t num_resends;
-    uint64_t num_timeout_retrans;
-    uint64_t num_fast_retrans;
-    uint64_t num_chunk_sends;
-    uint64_t num_frag_sends;
-    uint64_t num_ack_sends;
-
-    uint64_t num_total_recvs;
-    uint64_t num_unk_recvs;
-    uint64_t num_dup_recvs;
-    uint64_t num_oow_low_recvs;
-    uint64_t num_oow_high_recvs;
-    uint64_t num_frag_recvs;
-    uint64_t num_chunk_recvs;
-    uint64_t num_badfrag_recvs;
-    uint64_t num_ack_recvs;
-    uint64_t num_old_dup_acks;
-    uint64_t num_dup_acks;
-    uint64_t num_recv_reposts;
-    uint64_t num_crc_errors;
-
-    uint64_t max_sent_window_size;
-    uint64_t max_rcvd_window_size;
-
-    uint64_t pml_module_sends;
-    uint64_t pml_send_callbacks;
-
-    opal_event_t stats_timer_event;
-    struct timeval stats_timeout;
+    /* Performance / debugging statistics */
+    ompi_btl_usnic_module_stats_t stats;
 } ompi_btl_usnic_module_t;
 
 struct ompi_btl_usnic_frag_t;
