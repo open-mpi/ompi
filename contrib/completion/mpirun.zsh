@@ -11,7 +11,7 @@
 local mca_variable_names mca_variable_values mca_component_names
 
 _generate_mca_variable_names_zsh() {
-    local excl=$1 TMP_IF=$IFS
+    local excl=$1 TMP_IFS=$IFS
 
     IFS="
 "
