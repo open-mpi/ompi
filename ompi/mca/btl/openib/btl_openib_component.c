@@ -1098,6 +1098,17 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     }
 
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    if (NULL == init_data) {
+        if (mca_btl_openib_component.max_eager_rdma > 0 &&
+            device->use_eager_rdma) {
+            /* cleanup */
+            free (device->eager_rdma_buffers);
+            device->eager_rdma_buffers = NULL;
+        }
+        BTL_ERROR(("Memory allocation fails"));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     length = sizeof(mca_btl_openib_header_t) +
         sizeof(mca_btl_openib_footer_t) +
         sizeof(mca_btl_openib_eager_rdma_header_t);
@@ -1129,6 +1140,11 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     /* setup all the qps */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
+        if (NULL == init_data) {
+            BTL_ERROR(("Memory allocation fails"));
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
         /* Initialize pool of send fragments */
         length = sizeof(mca_btl_openib_header_t) +
             sizeof(mca_btl_openib_header_coalesced_t) +
@@ -1439,6 +1455,10 @@ static int setup_qps(void)
     mca_btl_openib_component.qp_infos = (mca_btl_openib_qp_info_t*)
         malloc(sizeof(mca_btl_openib_qp_info_t) *
                 mca_btl_openib_component.num_qps);
+    if (NULL == mca_btl_openib_component.qp_infos) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto error;
+    }
 
     qp = 0;
 #define P(N) (((N) > count) ? NULL : params[(N)])
@@ -1657,6 +1677,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
     /* If mca_btl_if_include/exclude were specified, get usable ports */
     allowed_ports = (int*)malloc(device->ib_dev_attr.phys_port_cnt * sizeof(int));
+    if (NULL == allowed_ports) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto error;
+    }
+
     port_cnt = get_port_list(device, allowed_ports);
     if (0 == port_cnt) {
         free(allowed_ports);
@@ -2233,6 +2258,9 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
     openib_btl->qps = (mca_btl_openib_module_qp_t*)
         calloc(mca_btl_openib_component.num_qps,
                 sizeof(mca_btl_openib_module_qp_t));
+    if (NULL == openib_btl->qps) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* setup all the qps */
     for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
@@ -2419,6 +2447,9 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 {
     int i;
     struct dev_distance *devs = (struct dev_distance *) malloc(count * sizeof(struct dev_distance));
+    if (NULL == devs) {
+        return NULL;
+    }
 
     for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
@@ -2573,6 +2604,10 @@ btl_openib_component_init(int *num_btl_modules,
     OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
 
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    if (NULL == init_data) {
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+        goto no_btls;
+    }
 
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.send_user_free;
@@ -2590,6 +2625,10 @@ btl_openib_component_init(int *num_btl_modules,
     }
 
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    if (NULL == init_data) {
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+        goto no_btls;
+    }
 
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.recv_user_free;
@@ -2607,6 +2646,10 @@ btl_openib_component_init(int *num_btl_modules,
     }
 
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
+    if (NULL == init_data) {
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+        goto no_btls;
+    }
     length = sizeof(mca_btl_openib_coalesced_frag_t);
 
     init_data->list = &mca_btl_openib_component.send_free_coalesced;
@@ -2686,6 +2729,10 @@ btl_openib_component_init(int *num_btl_modules,
     }
 
     dev_sorted = sort_devs_by_distance(ib_devs, num_devs);
+    if (NULL == dev_sorted) {
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+        goto no_btls;
+    }
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
@@ -2874,6 +2921,11 @@ btl_openib_component_init(int *num_btl_modules,
             device->qps = (mca_btl_openib_device_qp_t*)
                 calloc(mca_btl_openib_component.num_qps,
                        sizeof(mca_btl_openib_device_qp_t));
+            if (NULL == device->qps) {
+                BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
+                goto no_btls;
+            }
+
             for (qp_index = 0; qp_index < mca_btl_openib_component.num_qps; qp_index++) {
                 OBJ_CONSTRUCT(&device->qps[qp_index].send_free, ompi_free_list_t);
                 OBJ_CONSTRUCT(&device->qps[qp_index].recv_free, ompi_free_list_t);
