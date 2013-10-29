@@ -1,14 +1,18 @@
-#compdef mpirun orterun
+#compdef mpirun orterun mpiexec oshrun # -*- shell-script -*-
 
-# Completion script for Open MPI's mpirun command v1.0
+# Completion script for Open MPI's mpirun command v1.0.1
+#
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
+#
+# To install copy this file to _mpirun in any directory in $fpath.
+#
 
 local mca_variable_names mca_variable_values mca_component_names
 
 _generate_mca_variable_names_zsh() {
-    local excl=$1
-    TMP_IFS=$IFS
+    local excl=$1 TMP_IF=$IFS
+
     IFS="
 "
     mca_variable_names=($(ompi_info -a --parsable | perl -e '
