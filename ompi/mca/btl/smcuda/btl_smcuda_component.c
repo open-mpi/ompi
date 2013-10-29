@@ -163,6 +163,11 @@ static int smcuda_register(void)
     } else {
         mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
     }
+    mca_btl_smcuda_param_register_int("use_cuda_ipc", 1, &mca_btl_smcuda_component.use_cuda_ipc);
+    mca_btl_smcuda_param_register_int("use_cuda_ipc_same_gpu", 1, &mca_btl_smcuda_component.use_cuda_ipc_same_gpu);
+    mca_btl_smcuda_param_register_int("cuda_ipc_verbose", 0, &mca_btl_smcuda_component.cuda_ipc_verbose);
+    mca_btl_smcuda_component.cuda_ipc_output = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_btl_smcuda_component.cuda_ipc_output, mca_btl_smcuda_component.cuda_ipc_verbose);
 #else /* OMPI_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
 #endif /* OMPI_CUDA_SUPPORT */
@@ -173,9 +178,6 @@ static int smcuda_register(void)
     mca_btl_smcuda.super.btl_rdma_pipeline_frag_size = 64*1024;
     mca_btl_smcuda.super.btl_min_rdma_pipeline_size = 64*1024;
     mca_btl_smcuda.super.btl_flags = MCA_BTL_FLAGS_SEND;
-#if OMPI_CUDA_SUPPORT
-    mca_btl_smcuda.super.btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
-#endif /* OMPI_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_seg_size = sizeof (mca_btl_smcuda_segment_t);
     mca_btl_smcuda.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_smcuda.super.btl_latency   = 1;     /* Microsecs */
@@ -289,6 +291,216 @@ CLEANUP:
     return return_value;
 }
 
+#if OMPI_CUDA_SUPPORT
+
+/**
+ * Send a CUDA IPC ACK or NOTREADY message back to the peer.
+ *
+ * @param btl (IN)      BTL module
+ * @param peer (IN)     BTL peer addressing
+ * @param peer (IN)     If ready, then send ACK
+ */
+static void mca_btl_smcuda_send_cuda_ipc_ack(struct mca_btl_base_module_t* btl,
+                                             struct mca_btl_base_endpoint_t* endpoint, int ready)
+{
+    mca_btl_smcuda_frag_t* frag;
+    ctrlhdr_t ctrlhdr;
+    int rc;
+
+    if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
+        mca_btl_smcuda_component_progress();
+    }
+
+    /* allocate a fragment, giving up if we can't get one */
+    MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
+    if( OPAL_UNLIKELY(NULL == frag) ) {
+        endpoint->ipcstate = IPC_BAD;
+        return;
+    }
+
+    if (ready) {
+        ctrlhdr.ctag = IPC_ACK;
+    } else {
+        ctrlhdr.ctag = IPC_NOTREADY;
+    }
+
+    /* Fill in fragment fields. */
+    frag->hdr->tag = MCA_BTL_TAG_SMCUDA;
+    frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+    frag->endpoint = endpoint;
+    memcpy(frag->segment.base.seg_addr.pval, &ctrlhdr, sizeof(struct ctrlhdr_st));
+
+    /* write the fragment pointer to the FIFO */
+    /*
+     * Note that we don't care what the FIFO-write return code is.  Even if
+     * the return code indicates failure, the write has still "completed" from
+     * our point of view:  it has been posted to a "pending send" queue.
+     */
+    OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
+
+    MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
+                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+
+    /* Set state now that we have sent message */
+    if (ready) {
+        endpoint->ipcstate = IPC_ACKED;
+    } else {
+        endpoint->ipcstate = IPC_INIT;
+    }
+
+    return;
+
+}
+/* This function is utilized to set up CUDA IPC support within the smcuda
+ * BTL.  It handles smcuda specific control messages that are triggered
+ * when GPU memory transfers are initiated. */
+static void btl_smcuda_control(mca_btl_base_module_t* btl,
+                               mca_btl_base_tag_t tag,
+                               mca_btl_base_descriptor_t* des, void* cbdata)
+{
+    int mydevnum, ipcaccess, res;
+    ctrlhdr_t ctrlhdr;
+    ompi_proc_t *ep_proc;
+    struct mca_btl_base_endpoint_t *endpoint;
+    mca_btl_smcuda_t *smcuda_btl = (mca_btl_smcuda_t *)btl;
+    mca_btl_smcuda_frag_t *frag = (mca_btl_smcuda_frag_t *)des;
+    mca_btl_base_segment_t* segments = des->des_dst;
+
+    /* Use the rank of the peer that sent the data to get to the endpoint
+     * structure.  This is needed for PML callback. */
+    endpoint = mca_btl_smcuda_component.sm_peers[frag->hdr->my_smp_rank];
+    ep_proc = endpoint->proc_ompi;
+
+    /* Copy out control message payload to examine it */
+    memcpy(&ctrlhdr, segments->seg_addr.pval, sizeof(struct ctrlhdr_st));
+
+    /* Handle an incoming CUDA IPC control message. */
+    switch (ctrlhdr.ctag) {
+    case IPC_REQ:
+        /* Initial request to set up IPC.  If the state of IPC
+         * initialization is IPC_INIT, then check on the peer to peer
+         * access and act accordingly.  If we are in the IPC_SENT
+         * state, then this means both sides are trying to set up the
+         * connection.  If my smp rank is higher then check and act
+         * accordingly.  Otherwise, drop the request and let the other
+         * side continue the handshake. */
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        if ((IPC_INIT == endpoint->ipcstate) ||
+            ((IPC_SENT == endpoint->ipcstate) && (endpoint->my_smp_rank > endpoint->peer_smp_rank))) {
+            endpoint->ipcstate = IPC_ACKING; /* Move into new state to prevent any new connection attempts */
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+
+            /* If not yet CUDA ready, send a NOTREADY message back. */
+            if (!mca_common_cuda_enabled) {
+                opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                    "Sending CUDA IPC NOTREADY: myrank=%d, peerrank=%d",
+                                    mca_btl_smcuda_component.my_smp_rank,
+                                    endpoint->peer_smp_rank);
+                mca_btl_smcuda_send_cuda_ipc_ack(btl, endpoint, 0);
+                return;
+            }
+
+            /* Get my current device.  If this fails, move this endpoint state into
+             * bad state.  No need to send a reply.  */
+            res = mca_common_cuda_get_device(&mydevnum);
+            if (0 != res) {
+                endpoint->ipcstate = IPC_BAD;
+                return;
+            }
+
+            /* Check for IPC support between devices. If they are the
+             * same device and use_cuda_ipc_same_gpu is 1 (default),
+             * then assume CUDA IPC is possible.  This could be a
+             * device running in DEFAULT mode or running under MPS.
+             * Otherwise, check peer acces to determine CUDA IPC
+             * support.  If the CUDA API call fails, then just move
+             * endpoint into bad state.  No need to send a reply. */
+            if (mydevnum == ctrlhdr.cudev) {
+                if (mca_btl_smcuda_component.use_cuda_ipc_same_gpu) {
+                    ipcaccess = 1;
+                } else {
+                    opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                        "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                                        "peerdev=%d --> Access is disabled by btl_smcuda_use_cuda_ipc_same_gpu",
+                                        endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank,
+                                        ctrlhdr.cudev);
+                    endpoint->ipcstate = IPC_BAD;
+                    return;
+                }
+            } else {
+                res = mca_common_cuda_device_can_access_peer(&ipcaccess, mydevnum, ctrlhdr.cudev);
+                if (0 != res) {
+                    opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                        "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                                        "peerdev=%d --> Access is disabled because peer check failed with err=%d",
+                                        endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank,
+                                        ctrlhdr.cudev, res);
+                    endpoint->ipcstate = IPC_BAD;
+                    return;
+                }
+            }
+
+            assert(endpoint->peer_smp_rank == frag->hdr->my_smp_rank);
+            opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                                "peerdev=%d --> ACCESS=%d",
+                                endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank,
+                                ctrlhdr.cudev, ipcaccess);
+
+            if (0 == ipcaccess) {
+                /* No CUDA IPC support */
+                opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                    "Not sending CUDA IPC ACK, no P2P support");
+                endpoint->ipcstate = IPC_BAD;
+            } else {
+                /* CUDA IPC works */
+                smcuda_btl->error_cb(&smcuda_btl->super, MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC,
+                                     ep_proc, (char *)&mca_btl_smcuda_component.cuda_ipc_output);
+                opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                    "Sending CUDA IPC ACK:  myrank=%d, mydev=%d, peerrank=%d, peerdev=%d", 
+                                    endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank, 
+                                    ctrlhdr.cudev);
+                mca_btl_smcuda_send_cuda_ipc_ack(btl, endpoint, 1);
+            }
+        } else {
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                                "Not sending CUDA IPC ACK because request already initiated");
+        }
+        break;
+
+    case IPC_ACK:
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "Received CUDA IPC ACK, notifying PML: myrank=%d, peerrank=%d",
+                            endpoint->my_smp_rank, endpoint->peer_smp_rank);
+
+        smcuda_btl->error_cb(&smcuda_btl->super, MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC,
+                             ep_proc, (char *)&mca_btl_smcuda_component.cuda_ipc_output);
+        assert(endpoint->ipcstate == IPC_SENT);
+        endpoint->ipcstate = IPC_ACKED;
+        break;
+
+    case IPC_NOTREADY:
+        /* The remote side is not ready.  Reset state to initialized so next
+         * send call will try again to set up connection. */
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "Received CUDA IPC NOTREADY, reset state to allow another attempt: "
+                            "myrank=%d, peerrank=%d",
+                            endpoint->my_smp_rank, endpoint->peer_smp_rank);
+        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+        if (IPC_SENT == endpoint->ipcstate) {
+            endpoint->ipcstate = IPC_INIT;
+        }
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+        break;
+
+    default:
+        opal_output(0, "Received UNKNOWN CUDA IPC control message. This should not happen.");
+    }
+}
+
+#endif /* OMPI_CUDA_SUPPORT */
+
 /*
  *  SM component initialization
  */
@@ -358,7 +570,10 @@ static mca_btl_base_module_t** mca_btl_smcuda_component_init(
 
 #if OMPI_CUDA_SUPPORT
     /* Assume CUDA GET works. */
-	mca_btl_smcuda.super.btl_get = mca_btl_smcuda_get_cuda;
+    mca_btl_smcuda.super.btl_get = mca_btl_smcuda_get_cuda;
+    /* Register a smcuda control function to help setup IPC support */
+    mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbfunc = btl_smcuda_control;
+    mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbdata = NULL;
 #endif /* OMPI_CUDA_SUPPORT */
 
     return btls;
@@ -486,6 +701,9 @@ int mca_btl_smcuda_component_progress(void)
 		seg.seg_len = hdr->len;
                 Frag.base.des_dst_cnt = 1;
                 Frag.base.des_dst = &seg;
+#if OMPI_CUDA_SUPPORT
+                Frag.hdr = hdr;  /* needed for peer rank in control messages */
+#endif /* OMPI_CUDA_SUPPORT */
                 reg->cbfunc(&mca_btl_smcuda.super, hdr->tag, &(Frag.base),
                             reg->cbdata);
                 /* return the fragment */

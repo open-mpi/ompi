@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -191,6 +191,12 @@ struct mca_btl_smcuda_component_t {
     /** If we want DMA and DMA is supported, this will be loaded with
         KNEM_FLAG_DMA.  Otherwise, it'll be 0. */
     int knem_dma_flag;
+#if OMPI_CUDA_SUPPORT
+    int cuda_ipc_verbose;
+    int cuda_ipc_output;
+    int use_cuda_ipc;
+    int use_cuda_ipc_same_gpu;
+#endif /* OMPI_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_component_t mca_btl_smcuda_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_smcuda_component_t mca_btl_smcuda_component;
@@ -482,6 +488,30 @@ extern struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
 		size_t reserve,
 		size_t* size,
 		uint32_t flags);
+
+/* CUDA IPC control message tags */
+enum ipcCtrlMsg {
+    IPC_REQ = 10,
+    IPC_ACK,
+    IPC_NOTREADY,
+};
+
+/* CUDA IPC control message */
+typedef struct ctrlhdr_st {
+        enum ipcCtrlMsg ctag;
+        int cudev;
+} ctrlhdr_t;
+
+/* State of setting up CUDA IPC on an endpoint */
+enum ipcState {
+    IPC_INIT = 1,
+    IPC_SENT,
+    IPC_ACKING,
+    IPC_ACKED,
+    IPC_OK,
+    IPC_BAD
+};
+
 #endif /* OMPI_CUDA_SUPPORT */
 
 /**

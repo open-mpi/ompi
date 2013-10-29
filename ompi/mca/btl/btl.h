@@ -169,6 +169,7 @@ typedef uint8_t mca_btl_base_tag_t;
  */
 #define MCA_BTL_TAG_IB                (MCA_BTL_TAG_BTL + 0)
 #define MCA_BTL_TAG_UDAPL             (MCA_BTL_TAG_BTL + 1)
+#define MCA_BTL_TAG_SMCUDA            (MCA_BTL_TAG_BTL + 2)
 
 /* prefered protocol */
 #define MCA_BTL_FLAGS_SEND            0x0001
@@ -210,6 +211,7 @@ typedef uint8_t mca_btl_base_tag_t;
 /* error callback flags */
 #define MCA_BTL_ERROR_FLAGS_FATAL 0x1
 #define MCA_BTL_ERROR_FLAGS_NONFATAL 0x2
+#define MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC 0x4
 
 /**
  * Asynchronous callback function on completion of an operation.

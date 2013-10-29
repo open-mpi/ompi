@@ -30,6 +30,7 @@ struct mca_mpool_common_cuda_reg_t {
     uint64_t event;
 };
 typedef struct mca_mpool_common_cuda_reg_t mca_mpool_common_cuda_reg_t;
+extern bool mca_common_cuda_enabled;
 
 OMPI_DECLSPEC int mca_common_cuda_register_mca_variables(void);
 
@@ -68,6 +69,8 @@ OMPI_DECLSPEC int cuda_ungetmemhandle(void *reg_data, mca_mpool_base_registratio
 OMPI_DECLSPEC int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *newreg,
                                      mca_mpool_base_registration_t *hdrreg);
 OMPI_DECLSPEC int cuda_closememhandle(void *reg_data, mca_mpool_base_registration_t *reg);
+OMPI_DECLSPEC int mca_common_cuda_get_device(int *devicenum);
+OMPI_DECLSPEC int mca_common_cuda_device_can_access_peer(int *access, int dev1, int dev2);
 
 
 #endif /* OMPI_MCA_COMMON_CUDA_H */

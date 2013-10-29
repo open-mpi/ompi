@@ -43,6 +43,9 @@ size_t mca_pml_ob1_rdma_cuda_btls(
 int mca_pml_ob1_cuda_need_buffers(void * rreq,
                                   mca_btl_base_module_t* btl);
 
+void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t flags,
+                                      ompi_proc_t* errproc, char* btlinfo);
+
 /**
  * Handle the CUDA buffer.
  */
@@ -146,8 +149,12 @@ int mca_pml_ob1_cuda_need_buffers(void * rreq,
                                   mca_btl_base_module_t* btl) 
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)rreq;
+    mca_bml_base_endpoint_t* bml_endpoint = 
+        (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+    mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
+
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
-        (btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET)) {
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET)) {
         recvreq->req_recv.req_base.req_convertor.flags &= ~CONVERTOR_CUDA;
         if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
             recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_CUDA;
@@ -160,3 +167,36 @@ int mca_pml_ob1_cuda_need_buffers(void * rreq,
     return true;
 }
 
+/*
+ * This function enables us to start using RDMA get protocol with GPU buffers.
+ * We do this by adjusting the flags in the BML structure.  This is not the
+ * best thing, but this may go away if CUDA IPC is supported everywhere in the
+ * future. */
+void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t flags,
+                                      ompi_proc_t* errproc, char* btlinfo)
+{ 
+    mca_bml_base_endpoint_t* ep;
+    int btl_verbose_stream = 0;
+    int i;
+
+    assert(NULL != errproc);
+    assert(NULL != errproc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
+    if (NULL != btlinfo) {
+        btl_verbose_stream = *(int *)btlinfo;
+    }
+    ep = (mca_bml_base_endpoint_t*)errproc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+
+    /* Find the corresponding bml and adjust the flag to support CUDA get */
+    for( i = 0; i < (int)ep->btl_send.arr_size; i++ ) {
+        if( ep->btl_send.bml_btls[i].btl == btl ) {
+            ep->btl_send.bml_btls[i].btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
+            opal_output_verbose(5, btl_verbose_stream,
+                        "BTL %s: rank=%d enabling CUDA IPC "
+                        "to rank=%d on node=%s \n",
+                        btl->btl_component->btl_version.mca_component_name,
+                        OMPI_PROC_MY_NAME->vpid,
+                        errproc->proc_name.vpid,
+                        errproc->proc_hostname);
+        }
+    }
+}
