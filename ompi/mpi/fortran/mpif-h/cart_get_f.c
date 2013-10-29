@@ -81,7 +81,7 @@ void ompi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
     OMPI_ARRAY_LOGICAL_2_INT_ALLOC(periods, size);
 
     c_ierr = MPI_Cart_get(c_comm,
-                          OMPI_FINT_2_INT(*maxdims), 
+                          size, 
                           OMPI_ARRAY_NAME_CONVERT(dims),
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(periods),
                           OMPI_ARRAY_NAME_CONVERT(coords));

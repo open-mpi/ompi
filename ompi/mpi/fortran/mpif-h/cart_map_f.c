@@ -80,7 +80,7 @@ void ompi_cart_map_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *dims,
     OMPI_ARRAY_LOGICAL_2_INT(periods, size);
 
     c_ierr = MPI_Cart_map(c_comm, 
-                          OMPI_FINT_2_INT(*ndims),
+                          size,
                           OMPI_ARRAY_NAME_CONVERT(dims),
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(periods),
                           OMPI_SINGLE_NAME_CONVERT(newrank));
