@@ -601,6 +601,10 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    OPAL_OUTPUT_VERBOSE((30, mca_btl_openib_component.memory_registration_verbose,
+                         "openib_reg_mr: base=%p, bound=%p, size=%d, flags=0x%x", reg->base, reg->bound,
+                         (int) (reg->bound - reg->base + 1), reg->flags));
+
 #if OMPI_CUDA_SUPPORT
     if (reg->flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) {
         mca_common_cuda_register(base, size,
@@ -615,6 +619,10 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
 {
     mca_btl_openib_device_t *device = (mca_btl_openib_device_t*)reg_data;
     mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
+
+    OPAL_OUTPUT_VERBOSE((30, mca_btl_openib_component.memory_registration_verbose,
+                         "openib_dereg_mr: base=%p, bound=%p, size=%d, flags=0x%x", reg->base, reg->bound,
+                         (int) (reg->bound - reg->base + 1), reg->flags));
 
     if(openib_reg->mr != NULL) {
         if(ibv_dereg_mr(openib_reg->mr)) {

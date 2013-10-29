@@ -1248,7 +1248,7 @@ int progress_one_cuda_dtoh_event(struct mca_btl_base_descriptor_t **frag) {
     CUresult result;
 
     if (cuda_event_dtoh_num_used > 0) {
-        opal_output_verbose(20, mca_common_cuda_output,
+        opal_output_verbose(30, mca_common_cuda_output,
                            "CUDA: progress_one_cuda_dtoh_event, outstanding_events=%d",
                             cuda_event_dtoh_num_used);
 
@@ -1256,7 +1256,7 @@ int progress_one_cuda_dtoh_event(struct mca_btl_base_descriptor_t **frag) {
 
         /* We found an event that is not ready, so return. */
         if (CUDA_ERROR_NOT_READY == result) {
-            opal_output_verbose(20, mca_common_cuda_output,
+            opal_output_verbose(30, mca_common_cuda_output,
                                 "CUDA: cuEventQuery returned CUDA_ERROR_NOT_READY");
             *frag = NULL;
             return 0;
@@ -1268,7 +1268,7 @@ int progress_one_cuda_dtoh_event(struct mca_btl_base_descriptor_t **frag) {
         }
 
         *frag = cuda_event_dtoh_frag_array[cuda_event_dtoh_first_used];
-        opal_output_verbose(10, mca_common_cuda_output,
+        opal_output_verbose(30, mca_common_cuda_output,
                             "CUDA: cuEventQuery returned %d", result);
 
         /* Bump counters, loop around the circular buffer if necessary */
@@ -1290,7 +1290,7 @@ int progress_one_cuda_htod_event(struct mca_btl_base_descriptor_t **frag) {
     CUresult result;
 
     if (cuda_event_htod_num_used > 0) {
-        opal_output_verbose(20, mca_common_cuda_output,
+        opal_output_verbose(30, mca_common_cuda_output,
                            "CUDA: progress_one_cuda_htod_event, outstanding_events=%d",
                             cuda_event_htod_num_used);
 
@@ -1298,7 +1298,7 @@ int progress_one_cuda_htod_event(struct mca_btl_base_descriptor_t **frag) {
 
         /* We found an event that is not ready, so return. */
         if (CUDA_ERROR_NOT_READY == result) {
-            opal_output_verbose(20, mca_common_cuda_output,
+            opal_output_verbose(30, mca_common_cuda_output,
                                 "CUDA: cuEventQuery returned CUDA_ERROR_NOT_READY");
             *frag = NULL;
             return 0;
@@ -1310,7 +1310,7 @@ int progress_one_cuda_htod_event(struct mca_btl_base_descriptor_t **frag) {
         }
 
         *frag = cuda_event_htod_frag_array[cuda_event_htod_first_used];
-        opal_output_verbose(10, mca_common_cuda_output,
+        opal_output_verbose(30, mca_common_cuda_output,
                             "CUDA: cuEventQuery returned %d", result);
 
         /* Bump counters, loop around the circular buffer if necessary */

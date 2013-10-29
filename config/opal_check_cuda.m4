@@ -76,6 +76,14 @@ AS_IF([test "$opal_check_cuda_happy"="yes"],
         [#include <$opal_cuda_incdir/cuda.h>]),
     [])
 
+# If we have CUDA support, check to see if we have CUDA 6.0 support.
+# Look for new CUDA 6.0 attribute.
+AS_IF([test "$opal_check_cuda_happy"="yes"],
+    AC_CHECK_HEADER([$opal_cuda_incdir/cuda.h])
+    AC_CHECK_DECL([CU_POINTER_ATTRIBUTE_BUFFER_ID], [CUDA_SUPPORT_60=1], [CUDA_SUPPORT_60=0],
+        [#include <$opal_cuda_incdir/cuda.h>]),
+    [])
+
 AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
     AC_MSG_RESULT([yes (-I$with_cuda)])
@@ -94,5 +102,9 @@ AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT],$CUDA_SUPPORT,
 AM_CONDITIONAL([OPAL_cuda_support_41], [test "x$CUDA_SUPPORT_41" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT_41],$CUDA_SUPPORT_41,
                    [Whether we have CUDA 4.1 support available])
+
+AM_CONDITIONAL([OPAL_cuda_support_60], [test "x$CUDA_SUPPORT_60" = "x1"])
+AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT_60],$CUDA_SUPPORT_60,
+                   [Whether we have CUDA 6.0 support available])
 
 ])

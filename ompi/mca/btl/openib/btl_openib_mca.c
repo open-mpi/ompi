@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -220,7 +221,7 @@ int btl_openib_register_mca_params(void)
     char default_qps[100];
     uint32_t mid_qp_size;
     char *msg, *str;
-    int ret, tmp;
+    int ret, tmp, tmp1;
 
     ret = OMPI_SUCCESS;
 #define CHECK(expr) do {\
@@ -522,6 +523,13 @@ int btl_openib_register_mca_params(void)
                    "Maximum size (in bytes) of a single fragment of a long message when using the RDMA protocols (must be > 0 and <= hw capabilities).",
                    0, &mca_btl_openib_component.max_hw_msg_size, 0));
 
+    /* Help debug memory registration issues */
+    CHECK(reg_int("memory_registration_verbose", NULL,
+                  "Output some verbose memory registration information "
+                  "(0 = no output, nonzero = output)", 0, &tmp1, 0));
+    mca_btl_openib_component.memory_registration_verbose = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_btl_openib_component.memory_registration_verbose, tmp1);
+
     /* Info only */
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                           "have_fork_support",
@@ -549,10 +557,6 @@ int btl_openib_register_mca_params(void)
     /* Default to bandwidth auto-detection */
     mca_btl_openib_module.super.btl_bandwidth = 0;
     mca_btl_openib_module.super.btl_latency = 4;
-    CHECK(mca_btl_base_param_register(
-            &mca_btl_openib_component.super.btl_version,
-            &mca_btl_openib_module.super));
-
 #if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* Default is enabling CUDA asynchronous send copies */
     CHECK(reg_bool("cuda_async_send", NULL,
@@ -571,10 +575,13 @@ int btl_openib_register_mca_params(void)
         mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
     }
     /* Also make the max send size larger for better GPU buffer performance */
-   mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
-   /* Turn of message coalescing - not sure if it works with GPU buffers */
-   mca_btl_openib_component.use_message_coalescing = 0;
+    mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
+    /* Turn of message coalescing - not sure if it works with GPU buffers */
+    mca_btl_openib_component.use_message_coalescing = 0;
 #endif /* OMPI_CUDA_SUPPORT */
+    CHECK(mca_btl_base_param_register(
+            &mca_btl_openib_component.super.btl_version,
+            &mca_btl_openib_module.super));
 
     /* setup all the qp stuff */
     /* round mid_qp_size to smallest power of two */
