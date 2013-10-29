@@ -1,17 +1,24 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Reduce 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Reduce\fP \- Reduces values on all processes within a group. 
+\fBMPI_Reduce, MPI_Ireduce\fP \- Reduces values on all processes within a group.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Reduce(void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int\fI count\fP,
-	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, int\fI root\fP, MPI_Comm\fI comm\fP)
+int MPI_Reduce(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int\fI count\fP,
+               MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, int\fI root\fP,
+               MPI_Comm\fI comm\fP)
+
+int MPI_Ireduce(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int\fI count\fP,
+                MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, int\fI root\fP,
+                MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -21,6 +28,11 @@ MPI_REDUCE(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
 		IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fICOUNT, DATATYPE, OP, ROOT, COMM, IERROR\fP 
+
+MPI_IREDUCE(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
+            REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fICOUNT, DATATYPE, OP, ROOT, COMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -57,6 +69,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Address of receive buffer (choice, significant only at root).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

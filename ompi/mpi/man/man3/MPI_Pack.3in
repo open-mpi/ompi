@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Pack(void *\fIinbuf\fP, int\fI incount\fP, MPI_Datatype\fI datatype\fP,
+int MPI_Pack(const void *\fIinbuf\fP, int\fI incount\fP, MPI_Datatype\fI datatype\fP,
 	void\fI *outbuf\fP, int\fI outsize\fP, int\fI *position\fP, MPI_Comm\fI comm\fP)
 
 .fi

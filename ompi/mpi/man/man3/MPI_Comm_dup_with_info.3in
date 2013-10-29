@@ -1,0 +1,65 @@
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.TH MPI_Comm_dup_with_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Comm_dup_with_info \fP \-  Duplicates an existing communicator using provided info.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Comm_dup_with_info(MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Comm\fI *newcomm\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_COMM_DUP_WITH_INFO(\fICOMM, INFO, NEWCOMM, IERROR\fP)
+	INTEGER	\fICOMM, INFO, NEWCOMM, IERROR\fP
+
+.fi
+.SH INPUT PARAMETER
+.ft R
+.TP 1i
+comm
+Communicator (handle).
+.ft R
+.TP 1i
+info
+Info argument (handle).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+newcomm
+Copy of comm (handle).
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+MPI_Comm_dup_with_info acts exactly like MPI_Comm_dup except that the
+info hints associated with the communicator \fIcomm\fP are not duplicated in \fInewcomm\fP. The
+hints provided by the argument \fIinfo\fP are associated with the output communicator \fInewcomm\fP
+instead.
+
+.SH NOTES
+This operation is used to provide a parallel
+library call with a duplicate communication space that has the same properties as the original communicator. This includes any attributes (see below) and topologies (see Chapter 6, "Process Topologies," in the MPI-1 Standard). This call is valid even if there are pending point-to-point communications involving the communicator comm. A typical call might involve an MPI_Comm_dup_with_info at the beginning of the parallel call, and an MPI_Comm_free of that duplicated communicator at the end of the call. Other models of communicator management are also possible.
+.sp
+This call applies to both intra- and intercommunicators.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+MPI_Comm_dup
+MPI_Comm_idup

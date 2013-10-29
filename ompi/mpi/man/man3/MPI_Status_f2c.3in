@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Status_f2c 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -9,8 +11,8 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Status_f2c(MPI_Fint \fI*f_status\fP, MPI_Status \fI*c_status\fP)
-int MPI_Status_c2f(MPI_Status \fI*c_status\fP, MPI_Fint \fI*f_status\fP)
+int MPI_Status_f2c(const MPI_Fint \fI*f_status\fP, MPI_Status \fI*c_status\fP)
+int MPI_Status_c2f(const MPI_Status \fI*c_status\fP, MPI_Fint \fI*f_status\fP)
 
 .fi
 .SH DESCRIPTION

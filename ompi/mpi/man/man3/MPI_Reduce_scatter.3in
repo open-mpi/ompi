@@ -1,17 +1,22 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Reduce_scatter 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Reduce_scatter\fP \- Combines values and scatters the results.
+\fBMPI_Reduce_scatter, MPI_Ireduce_scatter\fP \- Combines values and scatters the results.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Reduce_scatter(void *\fIsendbuf\fP, void\fI *recvbuf\fP, int\fI recvcounts\fP[],
-	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP)        
+int MPI_Reduce_scatter(const void *\fIsendbuf\fP, void\fI *recvbuf\fP, const int\fI recvcounts\fP[],
+	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP)
+
+int MPI_Ireduce_scatter(const void *\fIsendbuf\fP, void\fI *recvbuf\fP, const int\fI recvcounts\fP[],
+	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -21,6 +26,11 @@ MPI_REDUCE_SCATTER(\fISENDBUF, RECVBUF, RECVCOUNTS, DATATYPE, OP,
 		COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fIRECVCOUNTS(*), DATATYPE, OP, COMM, IERROR \fP
+
+MPI_IREDUCE_SCATTER(\fISENDBUF, RECVBUF, RECVCOUNTS, DATATYPE, OP,
+		COMM, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fIRECVCOUNTS(*), DATATYPE, OP, COMM, REQUEST, IERROR \fP
 
 .fi
 .SH C++ Syntax
@@ -55,6 +65,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Starting address of receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

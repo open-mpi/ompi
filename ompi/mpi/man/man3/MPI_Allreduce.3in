@@ -1,26 +1,35 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Allreduce 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Allreduce\fP \- Combines values from all processes and distributes the result back to all processes.
+\fBMPI_Allreduce, MPI_Iallreduce\fP \- Combines values from all processes and distributes the result back to all processes.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Allreduce(void \fI*sendbuf\fP, void \fI*recvbuf\fP, int\fI count\fP,
-	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP)
+int MPI_Allreduce(const void \fI*sendbuf\fP, void \fI*recvbuf\fP, int\fI count\fP,
+                  MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP)
+
+int MPI_Iallreduce(const void \fI*sendbuf\fP, void \fI*recvbuf\fP, int\fI count\fP,
+                   MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP,
+                   MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
-MPI_ALLREDUCE(\fISENDBUF\fP,\fI RECVBUF\fP, \fICOUNT\fP,\fI DATATYPE\fP,\fI OP\fP,
-		\fICOMM\fP, \fIIERROR\fP)
+MPI_ALLREDUCE(\fISENDBUF\fP,\fI RECVBUF\fP, \fICOUNT\fP,\fI DATATYPE\fP,\fI OP\fP, \fICOMM\fP, \fIIERROR\fP)
 	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
-	INTEGER	\fICOUNT\fP,\fI DATATYPE\fP,\fI OP\fP,\fI COMM\fP,\fI IERROR 
+	INTEGER	\fICOUNT\fP,\fI DATATYPE\fP,\fI OP\fP,\fI COMM\fP,\fI IERROR\fP
+
+MPI_ALLREDUCE(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -68,6 +77,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Starting address of receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

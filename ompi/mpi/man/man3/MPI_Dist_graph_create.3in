@@ -1,0 +1,121 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.TH MPI_Dist_graph_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Dist_graph_create \fP \- Makes a new communicator to which topology information has been attached.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Dist_graph_create(MPI_Comm \fIcomm_old\fP, int\fI n\fP, const int\fI sources[]\fP,
+	const int\fI degrees[]\fP, const int\fI destinations\fP[], const int\fI weights\fP[],
+        MPI_Info info, int\fI reorder\fP, MPI_Comm\fI *comm_dist_graph\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_DIST_GRAPH_CREATE(\fICOMM_OLD, N, SOURCES, DEGREES, DESTINATIONS, WEIGHTS,
+                INFO, REORDER, COMM_DIST_GRAPH, IERROR\fP)
+	INTEGER	\fICOMM_OLD, N, SOURCES(*), DEGRES(*), WEIGHTS(*), INFO\fP
+	INTEGER	\fICOMM_DIST_GRAPH, IERROR\fP
+	LOGICAL   \fIREORDER\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+comm_old
+Input communicator without topology (handle).
+.TP 1i
+n
+Number of source nodes for which this process specifies edges (non-negative integer).
+.TP 1i
+sources
+Array containing the \fIn\fP source nodes for which this process species edges (array of non-negative integers).
+.TP 1i
+degrees
+Array specifying the number of destinations for each source node in the source node array (array of non-negative integers).
+.TP 1i
+destinations
+Destination nodes for the source nodes in the source node array (array of non-negative integers).
+.TP 1i
+weights
+Weights for source to destination edges (array of non-negative integers).
+.TP 1i
+Hints on optimization and interpretation of weights (handle).
+.TP 1i
+reorder
+Ranking may be reordered (true) or not (false) (logical).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+comm_dist_graph
+Communicator with distibuted graph topology added (handle).
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+MPI_Dist_graph_create creates a new communicator \fIcomm_dist_graph\fP with distrubuted
+graph topology and returns a handle to the new communicator. The number of processes in
+\fIcomm_dist_graph\fP is identical to the number of processes in \fIcomm_old\fP. Concretely, each process calls the
+constructor with a set of directed (source,destination) communication edges as described below.
+Every process passes an array of \fIn\fP source nodes in the \fIsources\fP array. For each source node, a
+non-negative number of destination nodes is specied in the \fIdegrees\fP array. The destination
+nodes are stored in the corresponding consecutive segment of the \fIdestinations\fP array. More
+precisely, if the i-th node in sources is s, this species \fIdegrees\fP[i] \fIedges\fP (s,d) with d of the j-th
+such edge stored in \fIdestinations\fP[\fIdegrees\fP[0]+...+\fIdegrees\fP[i-1]+j]. The weight of this edge is
+stored in \fIweights\fP[\fIdegrees\fP[0]+...+\fIdegrees\fP[i-1]+j]. Both the \fIsources\fP and the \fIdestinations\fP arrays
+may contain the same node more than once, and the order in which nodes are listed as
+destinations or sources is not signicant. Similarly, different processes may specify edges
+with the same source and destination nodes. Source and destination nodes must be process
+ranks of comm_old. Different processes may specify different numbers of source and
+destination nodes, as well as different source to destination edges. This allows a fully distributed
+specification of the communication graph. Isolated processes (i.e., processes with
+no outgoing or incoming edges, that is, processes that do not occur as source or destination
+node in the graph specication) are allowed. The call to MPI_Dist_graph_create is collective.
+
+If reorder = false, all processes will have the same rank in comm_dist_graph as in
+comm_old. If reorder = true then the MPI library is free to remap to other processes (of
+comm_old) in order to improve communication on the edges of the communication graph.
+The weight associated with each edge is a hint to the MPI library about the amount or
+intensity of communication on that edge, and may be used to compute a \"best\" reordering.
+
+.SH WEIGHTS
+.ft R
+Weights are specied as non-negative integers and can be used to influence the process
+remapping strategy and other internal MPI optimizations. For instance, approximate count
+arguments of later communication calls along specic edges could be used as their edge
+weights. Multiplicity of edges can likewise indicate more intense communication between
+pairs of processes. However, the exact meaning of edge weights is not specied by the MPI
+standard and is left to the implementation. An application can supply the special value
+MPI_UNWEIGHTED for the weight array to indicate that all edges have the same (effectively no)
+weight. It is erroneous to supply MPI_UNWEIGHTED for some but not
+all processes of comm_old. If the graph is weighted but \fIn\fP = 0, then MPI_WEIGHTS_EMPTY
+or any arbitrary array may be passed to weights. Note that MPI_UNWEIGHTED and
+MPI_WEIGHTS_EMPTY are not special weight values; rather they are special values for the
+total array argument. In Fortran, MPI_UNWEIGHTED and MPI_WEIGHTS_EMPTY are objects
+like MPI_BOTTOM (not usable for initialization or assignment). See MPI-3 § 2.5.4.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+.ft R
+.sp
+MPI_Dist_graph_create_adjacent
+MPI_Dist_graph_neighbors
+MPI_Dist_graph_neighbors_count
+

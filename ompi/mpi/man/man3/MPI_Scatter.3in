@@ -1,18 +1,24 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Scatter 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Scatter\fP \- Sends data from one task to all tasks in a group.
+\fBMPI_Scatter, MPI_Iscatter\fP \- Sends data from one task to all tasks in a group.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Scatter(void *\fIsendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI sendtype\fP,
+int MPI_Scatter(const void *\fIsendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI sendtype\fP,
 	void\fI *recvbuf\fP, int\fI recvcount\fP, MPI_Datatype\fI recvtype\fP, int\fI root\fP,
 	MPI_Comm\fI comm\fP)
+
+int MPI_Iscatter(const void *\fIsendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI sendtype\fP,
+	void\fI *recvbuf\fP, int\fI recvcount\fP, MPI_Datatype\fI recvtype\fP, int\fI root\fP,
+	MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -23,6 +29,12 @@ MPI_SCATTER(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT\fP 
 	INTEGER	\fICOMM, IERROR\fP 
+
+MPI_ISCATTER(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+		RECVTYPE, ROOT, COMM, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT\fP
+	INTEGER	\fICOMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -64,6 +76,9 @@ Communicator (handle).
 .TP 1i
 recvbuf
 Address of receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

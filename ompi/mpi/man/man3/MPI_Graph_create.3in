@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -10,8 +12,8 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Graph_create(MPI_Comm \fIcomm_old\fP, int\fI nnodes\fP, int\fI index[]\fP,
-	int\fI edges[]\fP, int\fI reorder\fP, MPI_Comm\fI *comm_graph\fP)
+int MPI_Graph_create(MPI_Comm \fIcomm_old\fP, int\fI nnodes\fP, const int\fI index[]\fP,
+	const int\fI edges[]\fP, int\fI reorder\fP, MPI_Comm\fI *comm_graph\fP)
 
 .fi
 .SH Fortran Syntax

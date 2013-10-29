@@ -1,18 +1,25 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2007-2008 Sun Microsystems, Inc. 
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Allgatherv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Allgatherv\fP \- Gathers data from all processes and delivers it to all. Each process may contribute a different amount of data.
+\fBMPI_Allgatherv, MPI_Iallgatherv\fP \- Gathers data from all processes and delivers it to all. Each process may contribute a different amount of data.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Allgatherv(void\fI *sendbuf\fP, int\fI sendcount\fP,
-	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcounts[]\fP,
-	int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP)
+int MPI_Allgatherv(const void\fI *sendbuf\fP, int\fI sendcount\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, const int\fI recvcounts[]\fP,
+	const int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP)
+
+int MPI_Iallgatherv(const void\fI *sendbuf\fP, int\fI sendcount\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, const int\fI recvcounts[]\fP,
+	const int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP,
+        MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -21,8 +28,14 @@ INCLUDE 'mpif.h'
 MPI_ALLGATHERV(\fISENDBUF\fP,\fI SENDCOUNT\fP, \fISENDTYPE\fP,\fI RECVBUF\fP,
 		\fIRECVCOUNT\fP,\fI DISPLS\fP, \fIRECVTYPE\fP,\fI COMM\fP,\fI IERROR\fP)
 	<type>	\fISENDBUF\fP(*), \fIRECVBUF\fP(*)
-	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP, \fIRECVCOUNT\fP(*),
+	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP, \fIRECVCOUNT\fP(*)
 	INTEGER	\fIDISPLS\fP(*),\fI RECVTYPE\fP,\fI COMM\fP,\fI IERROR\fP
+
+MPI_IALLGATHERV(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF,
+		RECVCOUNT, DISPLS, RECVTYPE, COMM, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT\fP(*),
+	INTEGER	\fIDISPLS\fP(*)\fI, RECVTYPE, COMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -77,6 +90,9 @@ Communicator (handle).
 .TP 1i
 recvbuf    
 Address of receive buffer (choice).
+.TP 1i
+request
+Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR

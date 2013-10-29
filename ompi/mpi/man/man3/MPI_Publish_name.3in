@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -14,8 +16,8 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Publish_name(char *\fIservice_name\fP, MPI_Info \fIinfo\fP,
-	char *\fIport_name\fP)
+int MPI_Publish_name(const char *\fIservice_name\fP, MPI_Info \fIinfo\fP,
+	const char *\fIport_name\fP)
 
 .fi
 .SH Fortran Syntax

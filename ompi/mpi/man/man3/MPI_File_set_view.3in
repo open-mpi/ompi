@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -11,7 +13,7 @@ C Syntax
     #include <mpi.h>
     int MPI_File_set_view(MPI_File \fIfh\fP, MPI_Offset \fIdisp\fP,
     	      MPI_Datatype \fIetype\fP, MPI_Datatype \fIfiletype\fP,
-   	      char \fI*datarep\fP, MPI_Info \fIinfo\fP)
+	      const char \fI*datarep\fP, MPI_Info \fIinfo\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)

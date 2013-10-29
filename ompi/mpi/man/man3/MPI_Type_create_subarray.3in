@@ -1,3 +1,5 @@
+.\" -*- nroff -*-
+.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines
@@ -10,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Type_create_subarray(int \fIndims\fP, int \fIarray_of_sizes[]\fP, int \fIarray_of_subsizes[]\fP, int \fIarray_of_starts[]\fP, int \fIorder\fP, MPI_Datatype \fIoldtype\fO, MPI_Datatype \fI*newtype\fP) 
+int MPI_Type_create_subarray(int \fIndims\fP, const int \fIarray_of_sizes[]\fP, const int \fIarray_of_subsizes[]\fP, const int \fIarray_of_starts[]\fP, int \fIorder\fP, MPI_Datatype \fIoldtype\fO, MPI_Datatype \fI*newtype\fP)
 
 .fi
 .SH Fortran Syntax
