@@ -89,6 +89,18 @@ EXTRA_DIST = \
         platform/lanl/toss/optimized-panasas \
         platform/lanl/toss/optimized-panasas.conf \
         platform/lanl/toss/toss-common \
+        platform/lanl/darwin/darwin-common \
+        platform/lanl/darwin/debug-common \
+        platform/lanl/darwin/optimized-common \
+        platform/lanl/darwin/mic-common \
+        platform/lanl/darwin/debug \
+        platform/lanl/darwin/debug.conf \
+        platform/lanl/darwin/debug-mic \
+        platform/lanl/darwin/debug-mic.conf \
+        platform/lanl/darwin/optimized \
+        platform/lanl/darwin/optimized.conf \
+        platform/lanl/darwin/optimized-mic \
+        platform/lanl/darwin/optimized-mic.conf \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
 	platform/ibm/debug-ppc32-gcc \

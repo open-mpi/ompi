@@ -1,0 +1,46 @@
+# -*- shell-script -*-
+# (c) 2013 Los Alamos National Security, LLC. All rights reserved.
+# Open MPI common configuration for Darwin MIC Co-processors v1.7.x/1.8.x
+
+XCOMPOSER=`type -p icc | sed 's/\/bin\/intel64\/icc//g'`
+
+if test -z "$XCOMPOSER" ; then
+    echo "ERROR: Need an intel compiler to compile MIC code"
+    exit 1
+fi
+
+CC=icc
+CXX=icpc
+FC=ifort
+
+CFLAGS=-mmic
+CXXFLAGS=-mmic
+LDFLAGS=-mmic
+
+# Need to turn on cross-compiling mode
+cross_compiling=yes
+host_alias=blackfin
+
+# Need to disable fortran for now (cross-compiling issue)
+enable_mpi_fortran=no
+
+# No PCI support on the MIC. Disable it here (was enabled in darwin-common)
+enable_pci=no
+enable_libpci=no
+with_pmi=no
+with_slurm=no
+with_verbs=no
+
+MIC_LDFLAGS="-L$XCOMPOSER/compiler/lib/mic -Wl,-rpath=$XCOMPOSER/compiler/lib/mic"
+
+if test -n "$LDFLAGS" ; then
+    LDFLAGS="$LDFLAGS $MIC_LDFLAGS"
+else
+    LDFLAGS="$MIC_LDFLAGS"
+fi
+
+if test -n "$with_wrapper_ldflags" ; then
+    with_wrapper_ldflags="$with_wrapper_ldflags $MIC_LDFLAGS"
+else
+    with_wrapper_ldflags="$MIC_LDFLAGS"
+fi
