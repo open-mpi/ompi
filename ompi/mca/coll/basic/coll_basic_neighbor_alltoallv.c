@@ -201,7 +201,7 @@ mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts
 
     for (neighbor = 0 ; neighbor < outdegree ; ++neighbor) {
         /* remove cast from const when the pml layer is updated to take a const for the send buffer */
-        rc = MCA_PML_CALL(isend((void *) sbuf + sdisps[neighbor] * sdextent, scounts[neighbor], sdtype,
+        rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[neighbor] * sdextent, scounts[neighbor], sdtype,
                                 outedges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
                                 comm, reqs++));
         if (OMPI_SUCCESS != rc) break;
