@@ -60,10 +60,6 @@
  * halving is used to be nice to the app memory wise.  There are much
  * better algorithms for large messages with cummutative operations,
  * so this should be investigated further.
- *
- * NOTE: We default to a simple reduce/scatterv if one of the rcounts
- * is zero.  This is because the existing algorithms do not currently
- * support a count of zero in the array.
  */
 int
 mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
