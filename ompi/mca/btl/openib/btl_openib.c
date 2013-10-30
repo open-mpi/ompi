@@ -1437,6 +1437,9 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
                     OBJ_RELEASE(endpoint);
                 }
             }
+            opal_pointer_array_set_item(openib_btl->device->endpoints,
+                                        ep_index, NULL);
+            assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
             OBJ_RELEASE(endpoint);
         }
     }
@@ -1511,14 +1514,13 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         return 0;
     }
 
-    if( OMPI_SUCCESS != (rc = mca_btl_openib_finalize_resources(btl) ) ) {
-        BTL_VERBOSE(("Failed to finalize resources"));
-    }
-
     /* Remove the btl from component list */
-    if ( mca_btl_openib_component.ib_num_btls > 1 ) {
+    if ( mca_btl_openib_component.ib_num_btls > 0 ) {
         for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
             if (mca_btl_openib_component.openib_btls[i] == openib_btl){
+                if( OMPI_SUCCESS != (rc = mca_btl_openib_finalize_resources(btl) ) ) {
+                    BTL_VERBOSE(("Failed to finalize resources"));
+                }
                 mca_btl_openib_component.openib_btls[i] =
                     mca_btl_openib_component.openib_btls[mca_btl_openib_component.ib_num_btls-1];
                 break;
