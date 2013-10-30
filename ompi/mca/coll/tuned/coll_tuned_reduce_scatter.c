@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      University of Houston. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -306,7 +308,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 
             /* actual data transfer.  Send from result_buf,
                receive into recv_buf */
-            if (send_count > 0 && recv_count != 0) {
+            if (recv_count > 0) {
                 err = MCA_PML_CALL(irecv(recv_buf + (ptrdiff_t)tmp_disps[recv_index] * extent,
                                          recv_count, dtype, peer,
                                          MCA_COLL_BASE_TAG_REDUCE_SCATTER,
@@ -317,7 +319,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
                     goto cleanup;
                 }                                             
             }
-            if (recv_count > 0 && send_count != 0) {
+            if (send_count > 0) {
                 err = MCA_PML_CALL(send(result_buf + (ptrdiff_t)tmp_disps[send_index] * extent,
                                         send_count, dtype, peer, 
                                         MCA_COLL_BASE_TAG_REDUCE_SCATTER,
@@ -329,18 +331,17 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
                     goto cleanup;
                 }                                             
             }
-            if (send_count > 0 && recv_count != 0) {
+
+            /* if we received something on this step, push it into
+               the results buffer */
+            if (recv_count > 0) {
                 err = ompi_request_wait(&request, MPI_STATUS_IGNORE);
                 if (OMPI_SUCCESS != err) {
                     free(tmp_rcounts);
                     free(tmp_disps);
                     goto cleanup;
                 }                                             
-            }
 
-            /* if we received something on this step, push it into
-               the results buffer */
-            if (recv_count > 0) {
                 ompi_op_reduce(op, 
                                recv_buf + (ptrdiff_t)tmp_disps[recv_index] * extent, 
                                result_buf + (ptrdiff_t)tmp_disps[recv_index] * extent,
