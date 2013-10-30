@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -56,6 +57,10 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_tcp_la_SOURCES = $(component_sources)
 mca_btl_tcp_la_LDFLAGS = -module -avoid-version
+if MCA_ompi_cuda_support
+mca_btl_tcp_la_LIBADD = \
+    $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
+endif
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_tcp_la_SOURCES = $(lib_sources)
