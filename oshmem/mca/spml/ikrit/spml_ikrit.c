@@ -891,6 +891,9 @@ static int mca_spml_ikrit_mxm_fence(int dst)
     fence_req->mxm_req.flags  = MXM_REQ_SEND_FLAG_FENCE;
     fence_req->mxm_req.op.mem.remote_vaddr = 0;
     fence_req->mxm_req.op.mem.remote_mkey  = &mxm_empty_mem_key;
+    fence_req->mxm_req.base.data_type      = MXM_REQ_DATA_BUFFER;
+    fence_req->mxm_req.base.data.buffer.ptr    = 0;
+    fence_req->mxm_req.base.data.buffer.length = 0;
 #endif
     fence_req->mxm_req.base.state = MXM_REQ_NEW;
     fence_req->mxm_req.base.completed_cb = fence_completion_cb;

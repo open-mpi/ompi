@@ -182,7 +182,6 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
         RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", (x));    \
         oshmem_shmem_abort(-1);                                                         \
     }
-
 #define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)    \
     if (OPAL_UNLIKELY((long)(x) > MCA_MEMHEAP_CALL(size)))        \
     {                                                                                   \
@@ -195,6 +194,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 #define RUNTIME_CHECK_INIT()
 #define RUNTIME_CHECK_PE(x)
 #define RUNTIME_CHECK_ADDR(x)
+#define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x) 
 
 #endif  /* OSHMEM_PARAM_CHECK */
 

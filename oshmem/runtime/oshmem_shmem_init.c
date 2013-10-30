@@ -223,6 +223,8 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
             ret = __shmem_init(argc, argv, requested, provided);
         }
 
+        MPI_Barrier(MPI_COMM_WORLD);
+
         if (OSHMEM_SUCCESS == ret) {
             oshmem_shmem_initialized = true;
 
