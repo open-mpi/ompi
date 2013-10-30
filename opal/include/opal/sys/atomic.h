@@ -163,6 +163,8 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #include "opal/sys/sparcv9/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_SYNC_BUILTIN
 #include "opal/sys/sync_builtin/atomic.h"
+#elif OPAL_ASSEMBLY_ARCH == OMPI_OSX_BUILTIN
+#include "opal/sys/osx/atomic.h"
 #endif
 
 #ifndef DOXYGEN

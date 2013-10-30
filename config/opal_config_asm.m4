@@ -761,11 +761,18 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
       [AC_HELP_STRING([--enable-builtin-atomics],
          [Enable use of __sync builtin atomics (default: disabled)])])
 
+    AC_ARG_ENABLE([osx-builtin-atomics],
+      [AC_HELP_STRING([--enable-osx-builtin-atomics],
+         [Enable use of OSX builtin atomics (default: disabled)])])
+
     if test "$enable_builtin_atomics" = "yes" ; then
        OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_arch="SYNC_BUILTIN"],
          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
          [Whether C compiler supports GCC style inline assembly])
+    elif test "$enable_osx_builtin_atomics" = "yes" ; then
+	AC_CHECK_HEADER([libkern/OSAtomic.h],[ompi_cv_asm_arch="OSX_BUILTIN"],
+	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
     else
         OMPI_CHECK_ASM_PROC
         OMPI_CHECK_ASM_TEXT
@@ -978,7 +985,7 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$ompi_cv_asm_arch" != "WINDOWS" -a "$ompi_cv_asm_arch" != "SYNC_BUILTIN" ; then
+if test "$ompi_cv_asm_arch" != "WINDOWS" -a "$ompi_cv_asm_arch" != "SYNC_BUILTIN" -a "$ompi_cv_asm_arch" != "OSX_BUILTIN" ; then
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already
