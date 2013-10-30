@@ -20,6 +20,7 @@
 #include "ompi/runtime/ompi_info_support.h"
 #include "oshmem/runtime/oshmem_info_support.h"
 #include "opal/util/show_help.h"
+#include "ompi/include/ompi/constants.h"
 
 const char *oshmem_info_type_oshmem = "oshmem";
 
