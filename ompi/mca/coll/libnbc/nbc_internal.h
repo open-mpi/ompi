@@ -22,6 +22,7 @@
 #include "coll_libnbc.h"
 #include "ompi/include/ompi/constants.h"
 #include "ompi/request/request.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -479,14 +480,14 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 /* let's give a try to inline functions */
 static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
   int size, pos, res;
-  MPI_Aint ext;
+  OPAL_PTRDIFF_TYPE ext, lb;
   void *packbuf;
 
   if((srctype == tgttype) && NBC_Type_intrinsic(srctype)) {
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
-    res = MPI_Type_extent(srctype, &ext);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    res = ompi_datatype_get_extent(srctype, &lb, &ext);
+    if (OMPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
     memcpy(tgt, src, srccount*ext);
   } else {
     /* we have to pack and unpack */
