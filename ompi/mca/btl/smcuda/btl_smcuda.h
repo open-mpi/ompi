@@ -202,12 +202,12 @@ struct mca_btl_smcuda_component_t {
     char *sm_mpool_rndv_file_name;
     char *sm_ctl_file_name;
     char *sm_rndv_file_name;
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     int cuda_ipc_verbose;
     int cuda_ipc_output;
     int use_cuda_ipc;
     int use_cuda_ipc_same_gpu;
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_component_t mca_btl_smcuda_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_smcuda_component_t mca_btl_smcuda_component;
@@ -478,7 +478,7 @@ extern int mca_btl_smcuda_send(
     mca_btl_base_tag_t tag
 );
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 /**
  * Remote get using device memory.
  */
@@ -519,7 +519,7 @@ enum ipcState {
     IPC_BAD
 };
 
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 
 extern void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,

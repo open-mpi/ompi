@@ -131,7 +131,7 @@ void* mca_mpool_grdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
     if(0 == align)
         align = mca_mpool_base_page_size;
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     /* CUDA cannot handle registering overlapping regions, so make
      * sure each region is page sized and page aligned. */
     align = mca_mpool_base_page_size;

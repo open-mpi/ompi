@@ -51,7 +51,7 @@ mca_btl_smcuda_la_LDFLAGS = -module -avoid-version
 mca_btl_smcuda_la_LIBADD = \
     $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
 mca_btl_smcuda_la_CPPFLAGS = $(btl_smcuda_CPPFLAGS)
-if MCA_ompi_cuda_support
+if OPAL_cuda_support
 mca_btl_smcuda_la_LIBADD += \
     $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
 endif

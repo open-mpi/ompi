@@ -22,12 +22,12 @@
 #include "pml_ob1.h"
 #include "pml_ob1_sendreq.h"
 #include "ompi/mca/bml/base/base.h" 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 #include "ompi/mca/common/cuda/common_cuda.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/runtime/params.h"
 static void mca_pml_ob1_process_pending_cuda_async_copies(void);
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 int mca_pml_ob1_progress(void)
 {
@@ -35,9 +35,9 @@ int mca_pml_ob1_progress(void)
     int j, completed_requests = 0;
     bool send_succedded;
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     mca_pml_ob1_process_pending_cuda_async_copies();
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
     if( OPAL_LIKELY(0 == queue_length) )
         return 0;
@@ -87,7 +87,7 @@ int mca_pml_ob1_progress(void)
     return completed_requests;
 }
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 static void mca_pml_ob1_process_pending_cuda_async_copies(void)
 {
     mca_btl_base_descriptor_t *frag;
@@ -106,4 +106,4 @@ static void mca_pml_ob1_process_pending_cuda_async_copies(void)
     /* Consider progressing dtoh events here in future */
 
 }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */

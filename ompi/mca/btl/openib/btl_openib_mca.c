@@ -564,7 +564,7 @@ int btl_openib_register_mca_params(void)
     /* Default to bandwidth auto-detection */
     mca_btl_openib_module.super.btl_bandwidth = 0;
     mca_btl_openib_module.super.btl_latency = 4;
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* Default is enabling CUDA asynchronous send copies */
     CHECK(reg_bool("cuda_async_send", NULL,
                    "Enable or disable CUDA async send copies "
@@ -580,7 +580,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
     /* Turn of message coalescing - not sure if it works with GPU buffers */
     mca_btl_openib_component.use_message_coalescing = 0;
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
     CHECK(mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,
             &mca_btl_openib_module.super));
@@ -727,7 +727,7 @@ int btl_openib_verify_mca_params (void)
         mca_btl_openib_component.buffer_alignment = 64;
     }
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     if (mca_btl_openib_component.cuda_async_send) {
         mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
     } else {

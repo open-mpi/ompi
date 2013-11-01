@@ -69,9 +69,9 @@
 #include "btl_tcp_proc.h"
 #include "btl_tcp_frag.h"
 #include "btl_tcp_endpoint.h" 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 #include "ompi/mca/common/cuda/common_cuda.h"
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 
 /* 
@@ -1084,9 +1084,9 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
         return NULL;
     }
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     mca_common_cuda_stage_one_init();
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
     memcpy(btls, mca_btl_tcp_component.tcp_btls, mca_btl_tcp_component.tcp_num_btls*sizeof(mca_btl_tcp_module_t*));
     *num_btl_modules = mca_btl_tcp_component.tcp_num_btls;
