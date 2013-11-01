@@ -22,10 +22,9 @@
 generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpifort.1 mpif77.1 mpif90.1
 man_pages = $(generated_man_pages)
 
-EXTRA_DIST = mpif77.1in
+EXTRA_DIST = mpif77.1in mpijavac.1 mpijavac.pl.in
 
 if OMPI_WANT_JAVA_BINDINGS
-EXTRA_DIST += mpijavac.1
 man_pages += mpijavac.1
 endif
 
