@@ -11,6 +11,9 @@
  *
  */
 #include "nbc_internal.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+
 #include <assert.h>
 
 static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
@@ -39,9 +42,10 @@ int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Dat
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_0_0_t *module)
 {
-  int rank, p, res, size;
-  MPI_Aint ext;
+  int rank, p, res;
+  OPAL_PTRDIFF_TYPE ext, lb;
   NBC_Schedule *schedule;
+  size_t size;
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Allreduce_args *args, *found, search;
 #endif
@@ -56,14 +60,13 @@ int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Dat
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   handle = (*coll_req);
-  res = MPI_Comm_rank(comm, &rank);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-  res = MPI_Comm_size(comm, &p);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  res = MPI_Type_extent(datatype, &ext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-  res = MPI_Type_size(datatype, &size);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
+
+  rank = ompi_comm_rank (comm);
+  p = ompi_comm_size (comm);
+  res = ompi_datatype_get_extent(datatype, &lb, &ext);
+  if (OMPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+  res = ompi_datatype_type_size (datatype, &size);
+  if (OMPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
 
   handle->tmpbuf = malloc(ext*count);
   if(handle->tmpbuf == NULL) { printf("Error in malloc() (%i)\n", res); return NBC_OOR; }
