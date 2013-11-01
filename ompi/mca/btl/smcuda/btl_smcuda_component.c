@@ -53,10 +53,10 @@
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/rte/rte.h"
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 #include "ompi/runtime/params.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/runtime/opal_cr.h"
@@ -163,7 +163,7 @@ static int smcuda_register(void)
     /* default number of extra procs to allow for future growth */
     mca_btl_smcuda_param_register_int("sm_extra_procs", 0, &mca_btl_smcuda_component.sm_extra_procs);
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     /* Lower priority when CUDA support is not requested */
     if (ompi_mpi_cuda_support) {
         mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
@@ -175,9 +175,9 @@ static int smcuda_register(void)
     mca_btl_smcuda_param_register_int("cuda_ipc_verbose", 0, &mca_btl_smcuda_component.cuda_ipc_verbose);
     mca_btl_smcuda_component.cuda_ipc_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_btl_smcuda_component.cuda_ipc_output, mca_btl_smcuda_component.cuda_ipc_verbose);
-#else /* OMPI_CUDA_SUPPORT */
+#else /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_eager_limit = 4*1024;
     mca_btl_smcuda.super.btl_rndv_eager_limit = 4*1024;
     mca_btl_smcuda.super.btl_max_send_size = 32*1024;
@@ -619,7 +619,7 @@ out:
     return rc;
 }
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 
 /**
  * Send a CUDA IPC ACK or NOTREADY message back to the peer.
@@ -827,7 +827,7 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
     }
 }
 
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 /*
  *  SM component initialization
@@ -931,13 +931,13 @@ mca_btl_smcuda_component_init(int *num_btls,
     /* set flag indicating btl not inited */
     mca_btl_smcuda.btl_inited = false;
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     /* Assume CUDA GET works. */
     mca_btl_smcuda.super.btl_get = mca_btl_smcuda_get_cuda;
     /* Register a smcuda control function to help setup IPC support */
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbfunc = btl_smcuda_control;
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbdata = NULL;
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 
     return btls;
@@ -1065,9 +1065,9 @@ int mca_btl_smcuda_component_progress(void)
                 seg.seg_len = hdr->len;
                 Frag.base.des_dst_cnt = 1;
                 Frag.base.des_dst = &seg;
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
                 Frag.hdr = hdr;  /* needed for peer rank in control messages */
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
                 reg->cbfunc(&mca_btl_smcuda.super, hdr->tag, &(Frag.base),
                             reg->cbdata);
                 /* return the fragment */
@@ -1126,7 +1126,7 @@ int mca_btl_smcuda_component_progress(void)
         }
     }
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     /* Check to see if there are any outstanding CUDA events that have
      * completed.  If so, issue the PML callbacks on the fragments.
      */
@@ -1149,6 +1149,6 @@ int mca_btl_smcuda_component_progress(void)
         }
         nevents++;
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
     return nevents;
 }

@@ -53,7 +53,7 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
                                         mca_bml_base_btl_t* bml_btl,
                                         size_t size) {
     int rc;
-#if OMPI_CUDA_SUPPORT_41
+#if OPAL_CUDA_SUPPORT_41
     sendreq->req_send.req_base.req_convertor.flags &= ~CONVERTOR_CUDA;
     if (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
         unsigned char *base;
@@ -87,7 +87,7 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
 #else
     /* Just do the rendezvous but set initial data to be sent to zero */
     rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, 0, 0);
-#endif /* OMPI_CUDA_SUPPORT_41 */
+#endif /* OPAL_CUDA_SUPPORT_41 */
     return rc;
 }
 

@@ -37,15 +37,15 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "opal/util/arch.h"
 #include "ompi/memchecker.h"
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
 #include "ompi/mca/common/cuda/common_cuda.h"
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 int mca_pml_ob1_cuda_need_buffers(mca_pml_ob1_recv_request_t* recvreq,
                                   mca_btl_base_module_t* btl);
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 void mca_pml_ob1_recv_request_process_pending(void)
 {
@@ -530,7 +530,7 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
     }
 }
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
 /**
  * This function is basically the first half of the code in the
  * mca_pml_ob1_recv_request_progress_frag function.  This fires off
@@ -607,7 +607,7 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
         mca_pml_ob1_recv_request_schedule(recvreq, NULL);
     }
 }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 /*
  * Update the recv request status to reflect the number of bytes
@@ -638,9 +638,9 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
      * sender side is already registered. We need to be smarter here, perhaps
      * do couple of RDMA reads */
     if (opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
         if (mca_pml_ob1_cuda_need_buffers(recvreq, btl))
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
         {
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
             return;
@@ -651,7 +651,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
             mca_bml_base_btl_t *bml_btl;
@@ -666,7 +666,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
             return;
         }
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
@@ -786,7 +786,7 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
         mca_pml_ob1_recv_request_schedule(recvreq, NULL);
     }
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* If BTL supports it and this is a CUDA buffer being received into,
      * have all subsequent FRAGS copied in asynchronously. */
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&

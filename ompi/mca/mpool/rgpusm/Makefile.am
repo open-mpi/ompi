@@ -46,7 +46,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_rgpusm_la_SOURCES = $(sources)
 mca_mpool_rgpusm_la_LDFLAGS = -module -avoid-version
 mca_mpool_rgpusm_la_LIBADD = $(mpool_rgpusm_LIBS)
-if MCA_ompi_cuda_support
+if OPAL_cuda_support
 mca_mpool_rgpusm_la_LIBADD += \
     $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
 endif

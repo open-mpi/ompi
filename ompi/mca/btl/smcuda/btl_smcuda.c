@@ -51,9 +51,9 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/btl/btl.h"
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 #include "ompi/mca/common/cuda/common_cuda.h"
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 
@@ -91,11 +91,11 @@ mca_btl_smcuda_t mca_btl_smcuda = {
         mca_btl_smcuda_alloc,
         mca_btl_smcuda_free,
         mca_btl_smcuda_prepare_src,
-#if OMPI_CUDA_SUPPORT || OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
+#if OPAL_CUDA_SUPPORT || OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
         mca_btl_smcuda_prepare_dst,
 #else
         NULL,
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
         mca_btl_smcuda_send,
         mca_btl_smcuda_sendi,
         NULL,  /* put */
@@ -107,10 +107,10 @@ mca_btl_smcuda_t mca_btl_smcuda = {
     }
 };
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* btl,
                                                  struct mca_btl_base_endpoint_t* endpoint);
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 /*
  * calculate offset of an address from the beginning of a shared memory segment
@@ -341,7 +341,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
             return rc;
         }
     }
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     /* Create a local memory pool that sends handles to the remote
      * side.  Note that the res argument is not really used, but
      * needed to satisfy function signature. */
@@ -351,7 +351,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
     if (NULL == smcuda_btl->super.btl_mpool) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
     /* it is now safe to free the mpool resources */
     free(res);
@@ -478,7 +478,7 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
         return NULL;
     }
 #endif
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     {
         mca_mpool_base_resources_t resources; /* unused, but needed */
 
@@ -489,7 +489,7 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
                                                  NULL,
                                                  &resources);
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
     return ep;
 }
 
@@ -543,11 +543,11 @@ int mca_btl_smcuda_add_procs(
             return_code = OMPI_ERROR;
             goto CLEANUP;
         }
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
         peers[proc]->proc_ompi = procs[proc];
         peers[proc]->ipcstate = IPC_INIT;
         peers[proc]->ipctries = 0;
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
         n_local_procs++;
 
@@ -795,9 +795,9 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
     size_t max_data = *size;
     int rc;
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     if (0 != reserve) {
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
         if ( reserve + max_data <= mca_btl_smcuda_component.eager_limit ) {
             MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
         } else {
@@ -820,7 +820,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
             return NULL;
         }
         frag->segment.base.seg_len = reserve + max_data;
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     } else {
         /* Normally, we are here because we have a GPU buffer and we are preparing
          * to send it.  However, we can also be there because we have received a 
@@ -851,7 +851,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
         frag->segment.memh_seg_len = registration->bound - registration->base + 1;
 
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
     frag->base.des_src = &(frag->segment.base);
     frag->base.des_src_cnt = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
@@ -919,12 +919,12 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         mca_btl_smcuda_component_progress();
     }
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support. */
     if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
     /* this check should be unnecessary... turn into an assertion? */
     if( length < mca_btl_smcuda_component.eager_limit ) {
@@ -1004,12 +1004,12 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
         mca_btl_smcuda_component_progress();
     }
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support */
     if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
     /* available header space */
     frag->hdr->len = frag->segment.base.seg_len;
@@ -1036,7 +1036,7 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
      */
     return 0;
 }
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst( 
         struct mca_btl_base_module_t* btl,
         struct mca_btl_base_endpoint_t* endpoint,
@@ -1071,10 +1071,10 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
     frag->base.des_flags = flags;
     return &frag->base;
 }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
 int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
                         struct mca_btl_base_endpoint_t* ep,
                         struct mca_btl_base_descriptor_t* descriptor)
@@ -1242,7 +1242,7 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
 
 }
 
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 /**
  *

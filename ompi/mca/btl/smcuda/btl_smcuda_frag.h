@@ -48,13 +48,13 @@ typedef struct mca_btl_smcuda_hdr_t mca_btl_smcuda_hdr_t;
 
 struct mca_btl_smcuda_segment_t {
     mca_btl_base_segment_t base;
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     uint8_t key[128]; /* 64 bytes for CUDA mem handle, 64 bytes for CUDA event handle */
     /** Address of the entire memory handle */
     ompi_ptr_t memh_seg_addr;        
      /** Length in bytes of entire memory handle */
     uint32_t memh_seg_len;           
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_segment_t mca_btl_smcuda_segment_t;
 
@@ -65,9 +65,9 @@ struct mca_btl_smcuda_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_smcuda_segment_t segment;
     struct mca_btl_base_endpoint_t *endpoint;
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     struct mca_mpool_base_registration_t *registration;
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
     size_t size;
     /* pointer written to the FIFO, this is the base of the shared memory region */
     mca_btl_smcuda_hdr_t *hdr;
