@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2013      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,6 +21,8 @@
 use File::Find;
 use File::Basename;
 use File::Compare;
+use File::Copy;
+use File::Path;
 use Getopt::Long;
 use Text::Diff;
 
@@ -33,6 +36,7 @@ my $flag;
 my $help_arg = 0;
 my $diff_file = "";
 my $diff_arg;
+my $update_arg;
 
 sub construct {
     # don't process directories or links, and dont' recurse down 
@@ -72,15 +76,17 @@ my $ok = Getopt::Long::GetOptions("help|h" => \$help_arg,
                                   "src=s" => \$src_arg,
                                   "tgt=s" => \$tgt_arg,
                                   "diff=s" => \$diff_arg,
+                                  "update" => \$update_arg,
     );
 
 if (!$ok || $help_arg) {
     print "Invalid command line argument.\n\n"
         if (!$ok);
     print "Options:
-  --diff | -diff   Output diff of changed files to specified file
-  --src | -src     Head of source directory
-  --tgt | -tgt     Head of target directory\n";
+  --diff | -diff      Output diff of changed files to specified file
+  --src | -src        Head of source directory
+  --tgt | -tgt        Head of target directory
+  --update | -update  Apply changes to update target\n";
     exit($ok ? 0 : 1);
 }
 
@@ -89,8 +95,44 @@ if (!$src_arg || !$tgt_arg) {
     exit(1);
 }
 
-$src_dir = $src_arg;
-$target_dir = $tgt_arg;
+$src_dir = File::Spec->rel2abs($src_arg);
+$target_dir = File::Spec->rel2abs($tgt_arg);
+my @srcpth = ();
+my @newpth = ();
+my $spath;
+my $npath;
+# if we are updating, then identify the
+# leading elements of the src_dir path that
+# must be replaced when pointing to the
+# target location for a file copy
+if ($update_arg) {
+    my $s;
+    my $t;
+    my @srcpath = File::Spec->splitdir($src_dir);
+    my @tgtpath = File::Spec->splitdir($target_dir);
+    # find the place where they first differ - since
+    # they cannot be identical, they must differ
+    # somewhere
+    my $found = 0;
+    while ($found == 0) {
+        $s = shift(@srcpath);
+        $t = shift(@tgtpath);
+        push(@srcpth, $s);
+        push(@newpth, $t);
+        if ($s ne $t) {
+            $found = 1;
+        }
+    }
+    # if either path has been exhausted, then we are done
+    if (0 != scalar(@srcpath) && 0 != scalar(@tgtpath)) {
+        # find the place where they re-converge - this
+        # might be nowhere, e.g., if they provided the
+        # top of two different source trees
+    }
+    $spath = join("/", @srcpth);
+    $npath = join("/", @newpth);
+    print "Source: " . $spath . "  New: " . $npath . "\n";
+}
 
 if ($diff_arg) {
     $diff_file = File::Spec->rel2abs($diff_arg);
@@ -134,8 +176,10 @@ foreach $src (@src_tree) {
             if (compare($src, $tgt) != 0) {
                 push(@modified, $src);
                 if ($diff_arg) {
-                    my $diff = diff $src, $tgt, { STYLE => "Unified" };
+                    my $diff = diff $tgt, $src, { STYLE => "Unified" };
                     print MYFILE $diff . "\n";
+                } elsif ($update_arg) {
+                    copy("$src", "$tgt") or die "Copy failed: src=$src tgt=$tgt\n";
                 }
             }
             # remove this file from the target tree as it has been found
@@ -144,7 +188,27 @@ foreach $src (@src_tree) {
         }
     }
     if ($found == 0) {
-        print "Add: " . $src . "\n";
+        if ($update_arg) {
+            my $targetpath = $src;
+            $targetpath =~ s/$spath/$npath/;
+            my $tpath = dirname($targetpath);
+            if (! -d $tpath) {
+                my $dirs = eval { mkpath($tpath) };
+                if (!$dirs) {
+                    print "Failed to create path $tpath\n";
+                    exit;
+                }
+                print "Adding $tpath to svn repo\n";
+                my $cmd = "svn add $tpath";
+                system($cmd);
+            }
+            print "Copying $src to $targetpath\n";
+            copy("$src", "$targetpath") or die "Update failed: src=$src tgt=$targetpath\n";
+            my $cmd = "svn add $targetpath";
+            system($cmd);
+        } else {
+            print "Add: " . $src . "\n";
+        }
     } else {
         push(@src_pared, $src);
     }
@@ -165,15 +229,22 @@ foreach $tgt (@tgt_tree) {
         }
     }
     if ($found == 0) {
-        print "Delete: " . $tgt . "\n";
+        if ($update_arg) {
+            my $cmd = "svn del $tgt";
+            system($cmd);
+        } else {
+            print "Delete: " . $tgt . "\n";
+        }
     }
 }
 
 print "\n";
 
-# print a list of files that have been modified
-foreach $tgt (@modified) {
-    print "Modified: " . $tgt . "\n";
+if (!$update_arg) {
+    # print a list of files that have been modified
+    foreach $tgt (@modified) {
+        print "Modified: " . $tgt . "\n";
+    }
 }
 
 if ($diff_arg) {
