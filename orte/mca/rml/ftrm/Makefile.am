@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
     rml_ftrm.h \
     rml_ftrm_component.c \

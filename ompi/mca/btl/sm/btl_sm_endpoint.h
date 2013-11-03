@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -39,7 +39,7 @@ struct mca_btl_base_endpoint_t {
     opal_list_t pending_sends; /**< pending data to send */
 
     /** lock for concurrent access to endpoint state */
-    opal_mutex_t                endpoint_lock;
+    opal_mutex_t endpoint_lock;
 
 };
 

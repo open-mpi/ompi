@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -69,22 +69,15 @@ orte_iof_base_module_t orte_iof_tool_module = {
 
 
 static int init(void)
-{
-    int rc;
-    
+{    
     /* post a non-blocking RML receive to get messages
      from the HNP IOF component */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_IOF_PROXY,
-                                                      ORTE_RML_PERSISTENT,
-                                                      orte_iof_tool_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-        
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_IOF_PROXY,
+                            ORTE_RML_PERSISTENT,
+                            orte_iof_tool_recv,
+                            NULL);
     
-    OBJ_CONSTRUCT(&mca_iof_tool_component.lock, opal_mutex_t);
     mca_iof_tool_component.closed = false;
     
     return ORTE_SUCCESS;
@@ -169,7 +162,7 @@ static int tool_pull(const orte_process_name_t* src_name,
     /* send the buffer to the correct HNP */
     ORTE_HNP_NAME_FROM_JOB(&hnp, src_name->jobid);
     orte_rml.send_buffer_nb(&hnp, buf, ORTE_RML_TAG_IOF_HNP,
-                            0, send_cb, NULL);
+                            send_cb, NULL);
     
     return ORTE_SUCCESS;
 }
@@ -218,23 +211,19 @@ static int tool_close(const orte_process_name_t* src_name,
     /* send the buffer to the correct HNP */
     ORTE_HNP_NAME_FROM_JOB(&hnp, src_name->jobid);
     orte_rml.send_buffer_nb(&hnp, buf, ORTE_RML_TAG_IOF_HNP,
-                            0, send_cb, NULL);
+                            send_cb, NULL);
     
     return ORTE_SUCCESS;
 }
 
 static int finalize(void)
 {
-    int rc;
     opal_list_item_t* item;
     orte_iof_write_output_t *output;
     orte_iof_write_event_t *wev;
     int num_written;
     bool dump;
     
-    OPAL_THREAD_LOCK(&mca_iof_tool_component.lock);
-
-    OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
     /* check if anything is still trying to be written out */
     wev = orte_iof_base.iof_write_stdout->wev;
     if (!opal_list_is_empty(&wev->outputs)) {
@@ -273,14 +262,11 @@ static int finalize(void)
         }
         OBJ_RELEASE(orte_iof_base.iof_write_stderr);
     }
-    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
     
     /* Cancel the RML receive */
-    rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
-    OPAL_THREAD_UNLOCK(&mca_iof_tool_component.lock);
-    OBJ_DESTRUCT(&mca_iof_tool_component.lock);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
     
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 /*

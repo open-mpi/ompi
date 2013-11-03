@@ -1,7 +1,9 @@
 /*
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -154,7 +156,7 @@ static int if_posix_open(void)
      */
     ptr = (char*) ifconf.ifc_req;
     rem = ifconf.ifc_len;
-        
+
     /* loop through all interfaces */
     while (rem > 0) {
         struct ifreq* ifr = (struct ifreq*) ptr;
@@ -209,9 +211,11 @@ static int if_posix_open(void)
             close(sd);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
+        intf->af_family = AF_INET;
 
         /* copy entry over into our data structure */
-        strcpy(intf->if_name, ifr->ifr_name);
+        memset(intf->if_name, 0, sizeof(intf->if_name));
+        strncpy(intf->if_name, ifr->ifr_name, sizeof(intf->if_name) - 1);
         intf->if_flags = ifr->ifr_flags;
             
         /* every new address gets its own internal if_index */

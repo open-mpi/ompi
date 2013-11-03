@@ -86,6 +86,20 @@ static int orte_sensor_resusage_register (void)
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &proc_memory_limit);
     mca_sensor_resusage_component.proc_memory_limit = (float) proc_memory_limit;
+    
+    mca_sensor_resusage_component.log_node_stats = false;
+    (void) mca_base_component_var_register (c, "log_node_stats", "Log the node stats",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_sensor_resusage_component.log_node_stats);
+
+    mca_sensor_resusage_component.log_process_stats = false;
+    (void) mca_base_component_var_register (c, "log_process_stats", "Log the process stats",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_sensor_resusage_component.log_process_stats);
 
     return ORTE_SUCCESS;
 }

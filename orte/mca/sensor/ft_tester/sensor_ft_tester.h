@@ -23,7 +23,6 @@ BEGIN_C_DECLS
 
 struct orte_sensor_ft_tester_component_t {
     orte_sensor_base_component_t super;
-    int fail_rate;
     float fail_prob;
     float daemon_fail_prob;
     bool multi_fail;

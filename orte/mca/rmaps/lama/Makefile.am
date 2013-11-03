@@ -9,8 +9,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 dist_pkgdata_DATA = help-orte-rmaps-lama.txt
 
 sources = \

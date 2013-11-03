@@ -42,14 +42,18 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "ompi/constants.h"
-#include "opal/mca/event/event.h"
+#include "opal/mca/shmem/base/base.h"
+#include "opal/mca/shmem/shmem.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
+#include "ompi/constants.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/rte/rte.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/runtime/opal_cr.h"
@@ -68,6 +72,10 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
     bool enable_mpi_threads
 );
 
+typedef enum {
+    MCA_BTL_SM_RNDV_MOD_SM = 0,
+    MCA_BTL_SM_RNDV_MOD_MPOOL
+} mca_btl_sm_rndv_module_type_t;
 
 /*
  * Shared Memory (SM) component instance.
@@ -290,7 +298,7 @@ static int mca_btl_sm_component_close(void)
         close(mca_btl_sm.knem_fd);
         mca_btl_sm.knem_fd = -1;
     }
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
     /**
@@ -350,18 +358,341 @@ CLEANUP:
     return return_value;
 }
 
+/* 
+ * Returns the number of processes on the node.
+ */
+static inline int
+get_num_local_procs(void)
+{
+    /* num_local_peers does not include us in
+     * its calculation, so adjust for that */
+    return (int)(1 + ompi_process_info.num_local_peers);
+}
+
+static void
+calc_sm_max_procs(int n)
+{
+    /* see if need to allocate space for extra procs */
+    if (0 > mca_btl_sm_component.sm_max_procs) {
+        /* no limit */
+        if (0 <= mca_btl_sm_component.sm_extra_procs) {
+            /* limit */
+            mca_btl_sm_component.sm_max_procs =
+                n + mca_btl_sm_component.sm_extra_procs;
+        } else {
+            /* no limit */
+            mca_btl_sm_component.sm_max_procs = 2 * n;
+        }
+    }
+}
+
+static int
+create_and_attach(mca_btl_sm_component_t *comp_ptr,
+                  size_t size,
+                  char *file_name,
+                  size_t size_ctl_structure,
+                  size_t data_seg_alignment,
+                  mca_common_sm_module_t **out_modp)
+
+{
+    if (NULL == (*out_modp =
+        mca_common_sm_module_create_and_attach(size, file_name,
+                                               size_ctl_structure,
+                                               data_seg_alignment))) {
+        opal_output(0, "create_and_attach: unable to create shared memory "
+                    "BTL coordinating strucure :: size %lu \n",
+                    (unsigned long)size);
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+}
+
+/*
+ * SKG - I'm not happy with this, but I can't figure out a better way of
+ * finding the sm mpool's minimum size 8-|. The way I see it. This BTL only
+ * uses the sm mpool, so maybe this isn't so bad...
+ *
+ * The problem is the we need to size the mpool resources at sm BTL component
+ * init. That means we need to know the mpool's minimum size at create.
+ */
+static int
+get_min_mpool_size(mca_btl_sm_component_t *comp_ptr,
+                   size_t *out_size)
+{
+    const char *type_name = "mpool";
+    const char *param_name = "min_size";
+    const mca_base_var_storage_t *min_size;
+    int id = 0;
+
+    if (0 > (id = mca_base_var_find("ompi", type_name, comp_ptr->sm_mpool_name,
+                                      param_name))) {
+        opal_output(0, "mca_base_var_find: failure looking for %s_%s_%s\n",
+                    type_name, comp_ptr->sm_mpool_name, param_name);
+        return OMPI_ERR_NOT_FOUND;
+    }
+
+    if (OPAL_SUCCESS != mca_base_var_get_value(id, &min_size, NULL, NULL)) {
+        opal_output(0, "mca_base_var_get_value failure\n");
+        return OMPI_ERROR;
+    }
+
+    /* the min_size variable is an unsigned long long */
+    *out_size = (size_t) min_size->ullval;
+
+    return OMPI_SUCCESS;
+}
+
+static int
+get_mpool_res_size(int32_t max_procs,
+                   size_t *out_res_size)
+{
+    size_t size = 0;
+
+    *out_res_size = 0;
+    /* determine how much memory to create */
+    /*
+     * This heuristic formula mostly says that we request memory for:
+     * - nfifos FIFOs, each comprising:
+     *   . a sm_fifo_t structure
+     *   . many pointers (fifo_size of them per FIFO)
+     * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
+     * - max fragments (sm_free_list_num of them)
+     *
+     * On top of all that, we sprinkle in some number of
+     * "opal_cache_line_size" additions to account for some
+     * padding and edge effects that may lie in the allocator.
+     */
+    size = FIFO_MAP_NUM(max_procs) *
+           (sizeof(sm_fifo_t) + sizeof(void *) *
+            mca_btl_sm_component.fifo_size + 4 * opal_cache_line_size) +
+           (2 * max_procs + mca_btl_sm_component.sm_free_list_inc) *
+           (mca_btl_sm_component.eager_limit + 2 * opal_cache_line_size) +
+           mca_btl_sm_component.sm_free_list_num *
+           (mca_btl_sm_component.max_frag_size + 2 * opal_cache_line_size);
+
+    /* add something for the control structure */
+    size += sizeof(mca_common_sm_module_t);
+
+    /* before we multiply by max_procs, make sure the result won't overflow */
+    /* Stick that little pad in, particularly since we'll eventually
+     * need a little extra space.  E.g., in mca_mpool_sm_init() in
+     * mpool_sm_component.c when sizeof(mca_common_sm_module_t) is
+     * added.
+     */
+    if (((double)size) * max_procs > LONG_MAX - 4096) {
+        return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+    }
+    size *= (size_t)max_procs;
+    *out_res_size = size;
+    return OMPI_SUCCESS;
+}
+
+
+/* Generates all the unique paths for the shared-memory segments that this BTL
+ * needs along with other file paths used to share "connection information". */
+static int
+set_uniq_paths_for_init_rndv(mca_btl_sm_component_t *comp_ptr)
+{
+    int rc = OMPI_ERR_OUT_OF_RESOURCE;
+
+    /* NOTE: don't forget to free these after init */
+    comp_ptr->sm_mpool_ctl_file_name = NULL;
+    comp_ptr->sm_mpool_rndv_file_name = NULL;
+    comp_ptr->sm_ctl_file_name = NULL;
+    comp_ptr->sm_rndv_file_name = NULL;
+
+    if (asprintf(&comp_ptr->sm_mpool_ctl_file_name,
+                 "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
+        /* rc set */
+        goto out;
+    }
+    if (asprintf(&comp_ptr->sm_mpool_rndv_file_name,
+                 "%s"OPAL_PATH_SEP"shared_mem_pool_rndv.%s",
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
+        /* rc set */
+        goto out;
+    }
+    if (asprintf(&comp_ptr->sm_ctl_file_name,
+                 "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
+        /* rc set */
+        goto out;
+    }
+    if (asprintf(&comp_ptr->sm_rndv_file_name,
+                 "%s"OPAL_PATH_SEP"shared_mem_btl_rndv.%s",
+                 ompi_process_info.job_session_dir,
+                 ompi_process_info.nodename) < 0) {
+        /* rc set */
+        goto out;
+    }
+    /* all is well */
+    rc = OMPI_SUCCESS;
+
+out:
+    if (OMPI_SUCCESS != rc) {
+        if (comp_ptr->sm_mpool_ctl_file_name) {
+            free(comp_ptr->sm_mpool_ctl_file_name);
+        }
+        if (comp_ptr->sm_mpool_rndv_file_name) {
+            free(comp_ptr->sm_mpool_rndv_file_name);
+        }
+        if (comp_ptr->sm_ctl_file_name) {
+            free(comp_ptr->sm_ctl_file_name);
+        }
+        if (comp_ptr->sm_rndv_file_name) {
+            free(comp_ptr->sm_rndv_file_name);
+        }
+    }
+    return rc;
+}
+
+static int
+create_rndv_file(mca_btl_sm_component_t *comp_ptr,
+                  mca_btl_sm_rndv_module_type_t type)
+{
+    size_t size = 0;
+    int rc = OMPI_SUCCESS;
+    int fd = -1;
+    char *fname = NULL;
+    /* used as a temporary store so we can extract shmem_ds info */
+    mca_common_sm_module_t *tmp_modp = NULL;
+
+    if (MCA_BTL_SM_RNDV_MOD_MPOOL == type) {
+        size_t min_size = 0;
+        /* get the segment size for the sm mpool. */
+        if (OMPI_SUCCESS != (rc = get_mpool_res_size(comp_ptr->sm_max_procs,
+                                                     &size))) {
+            /* rc is already set */
+            goto out;
+        }
+        /* do we need to update the size based on the sm mpool's min size? */
+        if (OMPI_SUCCESS != (rc = get_min_mpool_size(comp_ptr, &min_size))) {
+            goto out;
+        }
+        /* update size if less than required minimum */
+        if (size < min_size) {
+            size = min_size;
+        }
+        /* we only need the shmem_ds info at this point. initilization will be
+         * completed in the mpool module code. the idea is that we just need this
+         * info so we can populate the rndv file (or modex when we have it). */
+        if (OMPI_SUCCESS != (rc =
+            create_and_attach(comp_ptr, size, comp_ptr->sm_mpool_ctl_file_name,
+                              sizeof(mca_common_sm_module_t), 8, &tmp_modp))) {
+            /* rc is set */
+            goto out;
+        }
+        fname = comp_ptr->sm_mpool_rndv_file_name;
+    }
+    else if (MCA_BTL_SM_RNDV_MOD_SM == type) {
+        /* calculate the segment size. */
+        size = sizeof(mca_common_sm_seg_header_t) +
+               comp_ptr->sm_max_procs *
+               (sizeof(sm_fifo_t *) +
+                sizeof(char *) + sizeof(uint16_t)) +
+               opal_cache_line_size;
+
+        if (OMPI_SUCCESS != (rc =
+            create_and_attach(comp_ptr, size, comp_ptr->sm_ctl_file_name,
+                              sizeof(mca_common_sm_seg_header_t),
+                              opal_cache_line_size, &comp_ptr->sm_seg))) {
+            /* rc is set */
+            goto out;
+        }
+        fname = comp_ptr->sm_rndv_file_name;
+        tmp_modp = comp_ptr->sm_seg;
+    }
+    else {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /* at this point, we have all the info we need to populate the rendezvous
+     * file containing all the meta info required for attach. */
+
+    /* now just write the contents of tmp_modp->shmem_ds to the full
+     * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size starts. */
+    if (-1 == (fd = open(fname, O_CREAT | O_RDWR, 0600))) {
+        int err = errno;
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+                       "open(2)", strerror(err), err);
+        rc = OMPI_ERR_IN_ERRNO;
+        goto out;
+    }
+    if ((ssize_t)sizeof(opal_shmem_ds_t) != write(fd, &(tmp_modp->shmem_ds),
+                                                  sizeof(opal_shmem_ds_t))) {
+        int err = errno;
+        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+                       "write(2)", strerror(err), err);
+        rc = OMPI_ERR_IN_ERRNO;
+        goto out;
+    }
+    if (MCA_BTL_SM_RNDV_MOD_MPOOL == type) {
+        if ((ssize_t)sizeof(size) != write(fd, &size, sizeof(size))) {
+            int err = errno;
+            opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+                           "write(2)", strerror(err), err);
+            rc = OMPI_ERR_IN_ERRNO;
+            goto out;
+        }
+        /* only do this for the mpool case */
+        OBJ_RELEASE(tmp_modp);
+    }
+
+out:
+    if (-1 != fd) {
+        (void)close(fd);
+    }
+    return rc;
+}
+
+/*
+ * Creates information required for the sm modex and modex sends it.
+ */
+static int
+backing_store_init(mca_btl_sm_component_t *comp_ptr,
+                   ompi_local_rank_t local_rank)
+{
+    int rc = OMPI_SUCCESS;
+
+    if (OMPI_SUCCESS != (rc = set_uniq_paths_for_init_rndv(comp_ptr))) {
+        goto out;
+    }
+    /* only let the lowest rank setup the metadata */
+    if (0 == local_rank) {
+        /* === sm mpool === */
+        if (OMPI_SUCCESS != (rc =
+            create_rndv_file(comp_ptr, MCA_BTL_SM_RNDV_MOD_MPOOL))) {
+            goto out;
+        }
+        /* === sm === */
+        if (OMPI_SUCCESS != (rc =
+            create_rndv_file(comp_ptr, MCA_BTL_SM_RNDV_MOD_SM))) {
+            goto out;
+        }
+    }
+
+out:
+    return rc;
+}
+
 /*
  *  SM component initialization
  */
-static mca_btl_base_module_t** mca_btl_sm_component_init(
-    int *num_btls,
-    bool enable_progress_threads,
-    bool enable_mpi_threads)
+static mca_btl_base_module_t **
+mca_btl_sm_component_init(int *num_btls,
+                          bool enable_progress_threads,
+                          bool enable_mpi_threads)
 {
+    int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
+    ompi_local_rank_t my_local_rank = OMPI_LOCAL_RANK_INVALID;
 #if OMPI_BTL_SM_HAVE_KNEM
     int rc;
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */
@@ -375,6 +706,33 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
      * when we use a proper modex for init. */
         return NULL;
     }
+    /* if we don't have locality information, then we cannot be used because we
+     * need to know who the respective node ranks for initialization. note the
+     * use of my_local_rank here. we use this instead of my_node_rank because in
+     * the spawn case we need to designate a metadata creator rank within the
+     * set of processes that are initializing the btl, and my_local_rank seems
+     * to provide that for us. */
+    if (OMPI_LOCAL_RANK_INVALID ==
+        (my_local_rank = ompi_process_info.my_local_rank)) {
+        opal_show_help("help-mpi-btl-sm.txt", "no locality", true);
+        return NULL;
+    }
+    /* no use trying to use sm with less than two procs, so just bail. */
+    if ((num_local_procs = get_num_local_procs()) < 2) {
+        return NULL;
+    }
+    /* calculate max procs so we can figure out how large to make the
+     * shared-memory segment. this routine sets component sm_max_procs. */
+    calc_sm_max_procs(num_local_procs);
+
+    /* This is where the modex will live some day. For now, just have local rank
+     * 0 create a rendezvous file containing the backing store info, so the
+     * other local procs can read from it during add_procs. The rest will just
+     * stash the known paths for use later in init. */
+    if (OMPI_SUCCESS != backing_store_init(&mca_btl_sm_component,
+                                           my_local_rank)) {
+        return NULL;
+    }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
@@ -385,19 +743,24 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
         opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
     }
-    mca_btl_sm_component.sm_fifo_fd = open(mca_btl_sm_component.sm_fifo_path, O_RDWR);
+    mca_btl_sm_component.sm_fifo_fd = open(mca_btl_sm_component.sm_fifo_path,
+                                           O_RDWR);
     if(mca_btl_sm_component.sm_fifo_fd < 0) {
-        opal_output(0, "mca_btl_sm_component_init: open(%s) failed with errno=%d\n",
+        opal_output(0, "mca_btl_sm_component_init: "
+                   "open(%s) failed with errno=%d\n",
                     mca_btl_sm_component.sm_fifo_path, errno);
         return NULL;
     }
 
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_fifo_thread, opal_thread_t);
-    mca_btl_sm_component.sm_fifo_thread.t_run = (opal_thread_fn_t) mca_btl_sm_component_event_thread;
+    mca_btl_sm_component.sm_fifo_thread.t_run =
+        (opal_thread_fn_t)mca_btl_sm_component_event_thread;
     opal_thread_start(&mca_btl_sm_component.sm_fifo_thread);
 #endif
 
-    mca_btl_sm_component.sm_btls = (mca_btl_sm_t **) malloc( mca_btl_sm_component.sm_max_btls * sizeof (mca_btl_sm_t *));
+    mca_btl_sm_component.sm_btls =
+        (mca_btl_sm_t **)malloc(mca_btl_sm_component.sm_max_btls *
+                                sizeof(mca_btl_sm_t *));
     if (NULL == mca_btl_sm_component.sm_btls) {
         return NULL;
     }
@@ -553,7 +916,7 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
        was <0, in which case the fact that knem is not available is
        not an error. */
     return btls;
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
 }
 
 
@@ -616,7 +979,7 @@ int mca_btl_sm_component_progress(void)
     sm_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
-    int peer_smp_rank, j, rc, nevents = 0;
+    int peer_smp_rank, j, rc = 0, nevents = 0;
 
     /* first, deal with any pending sends */
     /* This check should be fast since we only need to check one variable. */
@@ -683,7 +1046,6 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr->frag, false, true, rc);
-                (void)rc;  // silence compilier warning
                 break;
             }
         case MCA_BTL_SM_FRAG_ACK:
@@ -732,10 +1094,10 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr, false, true, rc);
-                (void)rc;  // silence compilier warning
                 break;
         }
     }
+    (void)rc; /* this is safe to ignore as the message is requeued till success */
 
 #if OMPI_BTL_SM_HAVE_KNEM
     /* The sm btl is currently hard-wired for a single module.  So
@@ -793,6 +1155,6 @@ int mca_btl_sm_component_progress(void)
             break;
         }
     }
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM */
     return nevents;
 }

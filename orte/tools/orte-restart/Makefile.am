@@ -22,9 +22,8 @@
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orte-restart.1
-EXTRA_DIST = orte-restart.1in CMakeLists.txt
+EXTRA_DIST = orte-restart.1in
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if WANT_FT_CR
 if OMPI_INSTALL_BINARIES
 
@@ -42,10 +41,9 @@ dist_pkgdata_DATA = help-orte-restart.txt
 endif # OMPI_INSTALL_BINARIES
 
 orte_restart_SOURCES = orte-restart.c
-orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la
+orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 endif # WANT_FT_CR
-endif # ORTE_DISABLE_FULL_SUPPORT
 
 distclean-local:
 	rm -f $(man_pages)

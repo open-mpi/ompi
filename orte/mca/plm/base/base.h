@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,24 +39,6 @@ BEGIN_C_DECLS
  * MCA framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_plm_base_framework;
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-/**
- * Struct to hold data for public access
- */
-typedef struct orte_plm_base_t {
-    /** indicate a component has been selected */
-    bool selected;
-    /** selected component */
-    orte_plm_base_component_t selected_component;
-} orte_plm_base_t;
-
-/**
- * Global instance of publicly-accessible PLM framework data
- */
-ORTE_DECLSPEC extern orte_plm_base_t orte_plm_base;
-
 /*
  * Select an available component.
  */
@@ -80,8 +63,7 @@ ORTE_DECLSPEC void orte_plm_base_mapping_complete(int fd, short args, void *cbda
 ORTE_DECLSPEC void orte_plm_base_launch_apps(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_post_launch(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_registered(int fd, short args, void *cbdata);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
+ORTE_DECLSPEC int orte_plm_base_fork_hnp(void);
 
 END_C_DECLS
 

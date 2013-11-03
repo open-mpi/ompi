@@ -12,6 +12,13 @@
 #
 # This is the US/English general help file for Open RTE's ODLS Framework
 #
+[orte-odls-base:could-not-kill]
+WARNING: A process refused to die despite all the efforts!
+This process may still be running and/or consuming resources.
+
+Host: %s
+PID:  %d
+
 [orte-odls-base:could-not-preload-binary]
 WARNING: Could not preload the binary file.
 

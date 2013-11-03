@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -28,7 +28,6 @@
 #include <string.h>
 #endif
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -46,9 +45,6 @@
 #include "orte/mca/ess/ess.h"
 
 #include "orte/mca/odls/base/odls_private.h"
-
-#endif
-
 #include "orte/mca/odls/base/base.h"
 
 
@@ -59,28 +55,6 @@
  */
 
 #include "orte/mca/odls/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-static int orte_odls_base_register(mca_base_register_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_odls_base_open(mca_base_open_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_odls_base_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /*
  * Instantiate globals
@@ -152,7 +126,6 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
     /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.xterm_ranks, opal_list_t);
     orte_odls_globals.xtermcmd = NULL;
-    orte_odls_globals.dmap = NULL;
     
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {
@@ -205,6 +178,10 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&orte_odls_base_framework, flags);
 }
 
+MCA_BASE_FRAMEWORK_DECLARE(orte, odls, "ORTE Daemon Launch Subsystem",
+                           orte_odls_base_register, orte_odls_base_open, orte_odls_base_close,
+                           mca_odls_base_static_components, 0);
+
 static void launch_local_const(orte_odls_launch_local_t *ptr)
 {
     ptr->ev = opal_event_alloc();
@@ -220,9 +197,3 @@ OBJ_CLASS_INSTANCE(orte_odls_launch_local_t,
                    opal_object_t,
                    launch_local_const,
                    launch_local_dest);
-
-#endif
-
-MCA_BASE_FRAMEWORK_DECLARE(orte, odls, "ORTE Daemon Launch Subsystem",
-                           orte_odls_base_register, orte_odls_base_open, orte_odls_base_close,
-                           mca_odls_base_static_components, 0);

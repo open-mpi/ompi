@@ -22,8 +22,6 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -31,9 +29,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
-
-#endif
-
 #include "orte/mca/plm/base/base.h"
 
 /*
@@ -43,24 +38,6 @@
  */
 
 #include "orte/mca/plm/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-static int orte_plm_base_open(mca_base_open_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_plm_base_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
-
 
 /*
  * Global variables for use within PLM frameworks
@@ -118,8 +95,6 @@ static int orte_plm_base_open(mca_base_open_flag_t flags)
      /* Open up all available components */
     return mca_base_framework_components_open(&orte_plm_base_framework, flags);
 }
-
-#endif
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, plm, NULL, NULL, orte_plm_base_open, orte_plm_base_close,
                            mca_plm_base_static_components, 0);

@@ -37,29 +37,6 @@
  * component's public mca_base_component_t struct. */
 #include "orte/mca/routed/base/static-components.h"
 
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include bogus functions here so that
- * the build system sees at least one function
- * in the library
- */
-static int orte_routed_base_register(mca_base_register_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_routed_base_open(mca_base_open_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_routed_base_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-
-#else
-
 static void construct(orte_routed_tree_t *rt)
 {
     rt->vpid = ORTE_VPID_INVALID;
@@ -88,17 +65,12 @@ OBJ_CLASS_INSTANCE(orte_routed_jobfam_t, opal_object_t,
                    jfamconst, jfamdest);
 
 orte_routed_module_t orte_routed = {0};
-opal_mutex_t orte_routed_base_lock;
-opal_condition_t orte_routed_base_cond;
 bool orte_routed_base_wait_sync;
 opal_pointer_array_t orte_routed_jobfams;
 
 static int orte_routed_base_open(mca_base_open_flag_t flags)
 {
     orte_routed_jobfam_t *jfam;
-
-    OBJ_CONSTRUCT(&orte_routed_base_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_routed_base_cond, opal_condition_t);
 
     orte_routed_base_wait_sync = false;
     
@@ -135,12 +107,13 @@ static int orte_routed_base_close(void)
         }
     }
     OBJ_DESTRUCT(&orte_routed_jobfams);
-    OBJ_DESTRUCT(&orte_routed_base_lock);
-    OBJ_DESTRUCT(&orte_routed_base_cond);
 
     return mca_base_framework_components_close(&orte_routed_base_framework, NULL);
 }
 
+MCA_BASE_FRAMEWORK_DECLARE(orte, routed, "ORTE Message Routing Subsystem", NULL,
+                           orte_routed_base_open, orte_routed_base_close,
+                           mca_routed_base_static_components, 0);
 
 
 int orte_routed_base_select(void)
@@ -224,9 +197,3 @@ void orte_routed_base_update_hnps(opal_buffer_t *buf)
         n=1;
     }
 }
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
-
-MCA_BASE_FRAMEWORK_DECLARE(orte, routed, "ORTE Message Routing Subsystem", NULL,
-                           orte_routed_base_open, orte_routed_base_close,
-                           mca_routed_base_static_components, 0);

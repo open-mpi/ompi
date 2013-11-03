@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -62,35 +62,43 @@ ORTE_DECLSPEC extern mca_base_framework_t orte_state_base_framework;
 /* For ease in debugging the state machine, it is STRONGLY recommended
  * that the functions be accessed using the following macros
  */
-#define ORTE_TERMINATE(x)                                               \
+#define ORTE_FORCED_TERMINATE(x)                                        \
     do {                                                                \
-        ORTE_UPDATE_EXIT_STATUS(x);                                     \
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FORCED_EXIT);      \
+        if (!orte_abnormal_term_ordered) {                              \
+            opal_output_verbose(1, orte_state_base_framework.framework_output, \
+                                "%s FORCE-TERMINATE AT %s:%d",          \
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),     \
+                                __FILE__, __LINE__);                    \
+            ORTE_UPDATE_EXIT_STATUS(x);                                 \
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FORCED_EXIT);  \
+            /* set the global abnormal exit flag  */                    \
+            orte_abnormal_term_ordered = true;                          \
+        }                                                               \
     } while(0);
 
 #define ORTE_ACTIVATE_JOB_STATE(j, s)                                   \
     do {                                                                \
         orte_job_t *shadow=(j);                                         \
-        OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,			\
-			     "%s ACTIVATE JOB %s STATE %s AT %s:%d",	\
-			     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),	\
-			     (NULL == shadow) ? "NULL" :		\
-			     ORTE_JOBID_PRINT(shadow->jobid),		\
-			     orte_job_state_to_str((s)),		\
-			     __FILE__, __LINE__));			\
+        opal_output_verbose(1, orte_state_base_framework.framework_output, \
+                            "%s ACTIVATE JOB %s STATE %s AT %s:%d",	\
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                            (NULL == shadow) ? "NULL" :                 \
+                            ORTE_JOBID_PRINT(shadow->jobid),		\
+                            orte_job_state_to_str((s)),                 \
+                            __FILE__, __LINE__);			\
         orte_state.activate_job_state(shadow, (s));                     \
     } while(0);
 
 #define ORTE_ACTIVATE_PROC_STATE(p, s)                                  \
     do {                                                                \
         orte_process_name_t *shadow=(p);                                \
-	OPAL_OUTPUT_VERBOSE((1, orte_state_base_framework.framework_output,			\
-			     "%s ACTIVATE PROC %s STATE %s AT %s:%d",	\
-			     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),	\
-			     (NULL == shadow) ? "NULL" :		\
-			     ORTE_NAME_PRINT(shadow),			\
-			     orte_proc_state_to_str((s)),		\
-			     __FILE__, __LINE__));			\
+	opal_output_verbose(1, orte_state_base_framework.framework_output, \
+                            "%s ACTIVATE PROC %s STATE %s AT %s:%d",	\
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                            (NULL == shadow) ? "NULL" :                 \
+                            ORTE_NAME_PRINT(shadow),			\
+                            orte_proc_state_to_str((s)),		\
+                            __FILE__, __LINE__);			\
         orte_state.activate_proc_state(shadow, (s));                    \
     } while(0);
 

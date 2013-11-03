@@ -78,7 +78,6 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
     /* No way to reach here */
 }
 
-
 /*
  * Wait for a debugger if asked.  We support two ways of waiting for
  * attaching debuggers -- see big comment in
@@ -86,8 +85,8 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
  */
 void ompi_rte_wait_for_debugger(void)
 {
-    opal_buffer_t buf;
-    int debugger, rc;
+    int debugger;
+    orte_rml_recv_cb_t xfer;
 
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
@@ -110,9 +109,7 @@ void ompi_rte_wait_for_debugger(void)
     if (orte_standalone_operation) {
         /* spin until debugger attaches and releases us */
         while (MPIR_debug_gate == 0) {
-#if defined(__WINDOWS__)
-            Sleep(100);     /* milliseconds */
-#elif defined(HAVE_USLEEP)
+#if defined(HAVE_USLEEP)
             usleep(100000); /* microseconds */
 #else
             sleep(1);       /* seconds */
@@ -124,29 +121,26 @@ void ompi_rte_wait_for_debugger(void)
          * spin in * the grpcomm barrier in ompi_mpi_init until rank=0
          * joins them.
          */
-        if (0 != OMPI_PROC_MY_NAME->vpid) {
+        if (0 != ORTE_PROC_MY_NAME->vpid) {
             return;
         }
     
         /* VPID 0 waits for a message from the HNP */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        rc = ompi_rte_recv_buffer(OMPI_NAME_WILDCARD, &buf, 
-                                  ORTE_RML_TAG_DEBUGGER_RELEASE, 0);
-        OBJ_DESTRUCT(&buf);  /* don't care about contents of message */
-        if (rc < 0) {
-            /* if it failed for some reason, then we are in trouble -
-             * for now, just report the problem and give up waiting
-             */
-            opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger!",
-                        (long)OMPI_PROC_MY_NAME->vpid);
-        }
+        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+        orte_rml.recv_buffer_nb(OMPI_NAME_WILDCARD,
+                                ORTE_RML_TAG_DEBUGGER_RELEASE,
+                                ORTE_RML_NON_PERSISTENT,
+                                orte_rml_recv_callback, &xfer);
+        xfer.active = true;
+        ORTE_WAIT_FOR_COMPLETION(xfer.active);
     }
 }    
 
 int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
                       const void *data, opal_data_type_t type)
 {
-    return opal_db.store((opal_identifier_t*)nm, OPAL_DB_GLOBAL, key, data, type);
+    /* MPI connection data is to be shared with ALL other processes */
+    return opal_db.store((opal_identifier_t*)nm, OPAL_SCOPE_GLOBAL, key, data, type);
 }
 
 int ompi_rte_db_fetch(const orte_process_name_t *nm,
@@ -192,7 +186,9 @@ int ompi_rte_db_fetch_multiple(const orte_process_name_t *nm,
     ompi_proc_t *proct;
     int rc;
 
-    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)nm, key, kvs))) {
+    /* MPI processes are only concerned with shared info */
+    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)nm,
+                                                     OPAL_SCOPE_GLOBAL, key, kvs))) {
         return rc;
     }
     /* update the hostname */

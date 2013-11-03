@@ -20,14 +20,6 @@
 # $HEADER$
 #
 
-#
-# Set the config priority so that, if we can build,
-# only ALPS component will build. This is set higher
-# than the CNOS component to ensure we don't get both
-# since the ALPS component will -only- build if specifically
-# ordered to do so - which means we don't want the CNOS one
-AC_DEFUN([MCA_orte_ess_alps_PRIORITY], [10])
-
 # MCA_ess_alps_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
@@ -53,8 +45,7 @@ AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
         [orte_mca_ess_alps_happy="yes"],
         [orte_mca_ess_alps_happy="no"])
 
-    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_without_full_support" = 0 -a \
-           "$orte_mca_ess_alps_have_cnos" = 1],
+    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_mca_ess_alps_have_cnos" = 1],
           [$1],
           [$2])
 ])dnl

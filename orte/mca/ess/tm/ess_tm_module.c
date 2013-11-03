@@ -134,6 +134,7 @@ static int rte_finalize(void)
     if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
+            return ret;
         }
     } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
@@ -148,13 +149,14 @@ static int rte_finalize(void)
          */
         if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
             ORTE_ERROR_LOG(ret);
+            return ret;
         }
     }
     
     /* deconstruct my nidmap and jobmap arrays */
     orte_util_nidmap_finalize();
-    
-    return ret;    
+
+    return ORTE_SUCCESS;
 }
 
 static int tm_set_name(void)

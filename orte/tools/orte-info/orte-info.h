@@ -36,8 +36,6 @@ extern bool orte_info_pretty;
 extern opal_cmd_line_t *orte_info_cmd_line;
 
 extern const char *orte_info_type_all;
-extern const char *orte_info_type_orte;
-extern const char *orte_info_type_orte;
 extern const char *orte_info_type_opal;
 extern const char *orte_info_type_base;
 
@@ -56,6 +54,7 @@ extern const char *orte_info_ver_greek;
 extern const char *orte_info_ver_svn;
 
 void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line);
+void orte_info_show_orte_version(const char *scope);
 void orte_info_show_component_version(const char *type_name, 
                                       const char *component_name,
                                       const char *scope, 

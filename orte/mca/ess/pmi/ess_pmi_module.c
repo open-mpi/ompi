@@ -53,6 +53,7 @@
 
 #include "opal/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -84,7 +85,7 @@ static bool app_init_complete=false;
 
 static int rte_init(void)
 {
-    int ret, i, j;
+    int ret, i, j, procs;
     char *error = NULL, *localj;
     int32_t jobfam, stepid;
     char *envar, *ev1, *ev2;
@@ -93,10 +94,7 @@ static int rte_init(void)
     char *pmi_id=NULL;
     int *ranks=NULL;
     orte_jobid_t jobid;
-    orte_local_rank_t local_rank;
-    orte_node_rank_t node_rank;
     char *rmluri;
-    opal_hwloc_locality_t locality;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -260,7 +258,7 @@ static int rte_init(void)
         {
             /* get our local proc info to find our local rank */
             char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-            int found, sid, nodes, procs, k;
+            int found, sid, nodes, k;
             orte_vpid_t n;
             char *p;
             ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
@@ -301,14 +299,19 @@ static int rte_init(void)
         }
 #else
         /* get our local proc info to find our local rank */
-        if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&i))) {
+        if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&procs))) {
             OPAL_PMI_ERROR(ret, "PMI_Get_clique_size");
             error = "could not get PMI clique size";
             goto error;
         }
         /* now get the specific ranks */
-        ranks = (int*)malloc(i * sizeof(int));
-        if (PMI_SUCCESS != (ret = PMI_Get_clique_ranks(ranks, i))) {
+        ranks = (int*)calloc(procs, sizeof(int));
+        if (NULL == ranks) {
+            error = "could not get memory for local ranks";
+            ret = ORTE_ERR_OUT_OF_RESOURCE;
+            goto error;
+        }
+        if (PMI_SUCCESS != (ret = PMI_Get_clique_ranks(ranks, procs))) {
             OPAL_PMI_ERROR(ret, "PMI_Get_clique_ranks");
             error = "could not get clique ranks";
             goto error;
@@ -318,17 +321,16 @@ static int rte_init(void)
          * of peers that share the node WITH ME, so we have to subtract
          * ourselves from that number
          */
-        orte_process_info.num_local_peers = i - 1;
+        orte_process_info.num_local_peers = procs - 1;
         /* The clique ranks are returned in rank order, so
          * cycle thru the array and update the local/node
          * rank info
          */
-        for (j=0; j < i; j++) {
-            local_rank = j;
-            node_rank = j;
+        for (j=0; j < procs; j++) {
             if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
-                orte_process_info.my_local_rank = local_rank;
-                orte_process_info.my_node_rank = node_rank;
+                orte_process_info.my_local_rank = (orte_local_rank_t)j;
+                orte_process_info.my_node_rank = (orte_node_rank_t)j;
+                break;
             }
         }
         free(ranks);
@@ -351,54 +353,63 @@ static int rte_init(void)
     /* construct the PMI RTE string */
     rmluri = orte_rml.get_contact_info();
 
-    /* store our info in the internal database */
+    /* store our info as marked for distribution to both our peers and non-peers
+     * as there is no daemons available for routed communication
+     */
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, ORTE_DB_RMLURI,
+                                             OPAL_SCOPE_GLOBAL, ORTE_DB_RMLURI,
                                              rmluri, OPAL_STRING))) {
         error = "db store uri";
         goto error;
     }
     free(rmluri);
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, ORTE_DB_HOSTNAME,
+                                             OPAL_SCOPE_GLOBAL, ORTE_DB_HOSTNAME,
                                              orte_process_info.nodename, OPAL_STRING))) {
         error = "db store hostname";
         goto error;
     }
-#if OPAL_HAVE_HWLOC
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, ORTE_DB_BIND_LEVEL,
-                                             &orte_process_info.bind_level, OPAL_HWLOC_LEVEL_T))) {
-        error = "db store bind level";
+                                             OPAL_SCOPE_GLOBAL, OPAL_DB_CPUSET,
+                                             orte_process_info.cpuset, OPAL_STRING))) {
+        error = "db store cpuset";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, ORTE_DB_BIND_INDEX,
-                                             &orte_process_info.bind_idx, OPAL_UINT))) {
-        error = "db store bind index";
-        goto error;
-    }
-#endif
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, ORTE_DB_LOCALRANK,
+                                             OPAL_SCOPE_GLOBAL, ORTE_DB_LOCALRANK,
                                              &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
         error = "db store local rank";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_GLOBAL, ORTE_DB_NODERANK,
+                                             OPAL_SCOPE_GLOBAL, ORTE_DB_NODERANK,
                                              &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
         error = "db store node rank";
         goto error;
     }
 
-    /* save local locality */
-    locality = OPAL_PROC_ALL_LOCAL;
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_DB_INTERNAL, ORTE_DB_LOCALITY,
-                                             &locality, OPAL_HWLOC_LOCALITY_T))) {
-        error = "db store locality";
-        goto error;
+    /* if we are an ORTE app - and not an MPI app - then
+     * we need to exchange our connection info here.
+     * MPI_Init has its own modex, so we don't need to do
+     * two of them. However, if we don't do a modex at all,
+     * then processes have no way to communicate
+     *
+     * NOTE: only do this when the process originally launches.
+     * Cannot do this on a restart as the rest of the processes
+     * in the job won't be executing this step, so we would hang
+     */
+    if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
+        orte_grpcomm_collective_t coll;
+        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+        coll.id = orte_process_info.peer_modex;
+        coll.active = true;
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(&coll))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte modex";
+            goto error;
+        }
+        ORTE_WAIT_FOR_COMPLETION(coll.active);
+        OBJ_DESTRUCT(&coll);
     }
 
     /* flag that we completed init */
@@ -433,7 +444,10 @@ static int rte_finalize(void)
              */
             unsetenv("OMPI_MCA_grpcomm");
             unsetenv("OMPI_MCA_routed");
+            unsetenv("OMPI_MCA_db_pmi_store_priority");
             unsetenv("OMPI_MCA_orte_precondition_transports");
+            unsetenv("OMPI_MCA_orte_ess_num_procs");
+            unsetenv("OMPI_APP_CTX_NUM_PROCS");
             /* use the default app procedure to finish */
             if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
                 ORTE_ERROR_LOG(ret);
@@ -457,7 +471,26 @@ static int rte_finalize(void)
     return ORTE_SUCCESS;
 }
 
-static void rte_abort(int error_code, bool report)
+static void rte_abort(int status, bool report)
 {
-    orte_ess_base_app_abort(error_code, report);
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
+                         "%s ess:pmi:abort: abort with status %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         status));
+
+    /* PMI doesn't like NULL messages, but our interface
+     * doesn't provide one - so rig one up here
+     */
+#if WANT_PMI2_SUPPORT
+    PMI2_Abort(status, "N/A");
+#else
+    PMI_Abort(status, "N/A");
+#endif
+
+    /* - Clean out the global structures 
+     * (not really necessary, but good practice) */
+    orte_proc_info_finalize();
+    
+    /* Now Exit */
+    exit(status);
 }

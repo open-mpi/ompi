@@ -355,10 +355,9 @@ void orte_info_do_config(bool want_all)
     
     /* setup strings that require allocation */    
     if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
-        asprintf(&threads, "%s (OPAL: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+        asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
                  (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
-                 OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                 ORTE_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+                 OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
     } else {
         threads = strdup("no");
     }
@@ -403,9 +402,10 @@ void orte_info_do_config(bool want_all)
         orte_info_out_int("C double align", "compiler:c:align:double", OPAL_ALIGNMENT_DOUBLE);
     }
     
+    orte_info_out("Thread support", "option:threads", threads);
+
     if (want_all) {
         
-        orte_info_out("Thread support", "option:threads", threads);
         
         orte_info_out("Build CFLAGS", "option:build:cflags", OMPI_BUILD_CFLAGS);
         orte_info_out("Build CXXFLAGS", "option:build:cxxflags", OMPI_BUILD_CXXFLAGS);

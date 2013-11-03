@@ -44,9 +44,6 @@ BEGIN_C_DECLS
  * MCA Framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_rmaps_base_framework;
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /* select a component */
 ORTE_DECLSPEC    int orte_rmaps_base_select(void);
 
@@ -124,8 +121,6 @@ ORTE_DECLSPEC int orte_rmaps_base_prep_topology(hwloc_topology_t topo);
 ORTE_DECLSPEC int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
                                                opal_list_t *nodes,
                                                bool remove);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

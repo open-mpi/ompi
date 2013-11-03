@@ -18,6 +18,7 @@
 #
 
 AM_CPPFLAGS = $(LTDLINCL)
+EXTRA_DIST = README.txt
 
 # main library setup
 noinst_LTLIBRARIES = libmca_iof.la

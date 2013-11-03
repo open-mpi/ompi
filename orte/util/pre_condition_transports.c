@@ -122,8 +122,6 @@ int orte_pre_condition_transports(orte_job_t *jdata)
     int n;
     orte_app_context_t *app;
     char *string_key, *cs_env;
-
-#if !defined(__WINDOWS__) || !defined(_MSC_VER)
     int fd_rand;
     size_t bytes_read; 
     struct stat buf;
@@ -146,15 +144,6 @@ int orte_pre_condition_transports(orte_job_t *jdata)
             close(fd_rand);
         }
     }
-#else
-    {
-        unsigned int random_value;
-        rand_s( &random_value );
-        unique_key[0] = (uint64_t)random_value;
-        rand_s( &random_value );
-        unique_key[1] = (uint64_t)random_value;
-    }
-#endif  /* !defined(__WINDOWS__) */
 
     if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);

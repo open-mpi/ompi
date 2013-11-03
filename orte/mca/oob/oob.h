@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,158 +31,44 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+#ifdef HAVE_NET_UIO_H
+#include <net/uio.h>
+#endif
 
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/mca/mca.h"
 
-#include "orte/mca/rml/rml.h"
-
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
-
+#include "orte/mca/rml/base/base.h"
 
 BEGIN_C_DECLS
 
+typedef bool (*mca_oob_base_component_avail_fn_t)(void);
+typedef int (*mca_oob_base_component_startup_fn_t)(void);
+typedef void (*mca_oob_base_component_shutdown_fn_t)(void);
+typedef int (*mca_oob_base_component_send_fn_t)(orte_rml_send_t *msg);
+typedef char* (*mca_oob_base_component_get_addr_fn_t)(void);
+typedef int (*mca_oob_base_component_set_addr_fn_t)(orte_process_name_t *peer,
+                                                    char **uris);
+typedef bool (*mca_oob_base_component_is_reachable_fn_t)(orte_process_name_t *peer);
+typedef void (*mca_oob_ping_callback_fn_t)(int status, void *cbdata);
 
-struct mca_oob_1_0_0_t;
-typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
-typedef struct mca_oob_1_0_0_t mca_oob_t;
-
-
-typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(int  *priority);
-
-struct mca_oob_base_component_2_0_0_t {
-   mca_base_component_t oob_base;
-   mca_base_component_data_t oob_data;
-   mca_oob_base_component_init_fn_t oob_init;
-};
-typedef struct mca_oob_base_component_2_0_0_t mca_oob_base_component_2_0_0_t;
-typedef mca_oob_base_component_2_0_0_t mca_oob_base_component_t;
-
-
-
-typedef char* (*mca_oob_base_module_get_addr_fn_t)(void);
-
-typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t* peer, 
-                                                 const char* uri);
-
-
-
-/**
-*  Implementation of mca_oob_ping().
-*   
-*  @param peer (IN)   Opaque name of peer process.
-*  @param tv (IN)     Timeout to wait in connection response.
-*  @return            OMPI error code (<0) or ORTE_SUCCESS
-*/
-typedef int (*mca_oob_base_module_ping_fn_t)(const orte_process_name_t*, 
-                                             const char* uri, 
-                                             const struct timeval* tv);
-
-
-/**
- * Send an oob message
- * 
- * Send an oob message.  All oob sends are non-blocking, and cbfunc
- * will be called when the message has been sent.  When cbfunc is
- * called, message has been injected into the network but no guarantee
- * is made about whether the target has received the message.
- *
- * @param[in] target   Destination process name
- * @param[in] origin   Origin process for the message, for the purposes
- *                     of message matching.  This can be different from
- *                     the process calling send().
- * @param[in] msg      Array of iovecs describing user buffers and lengths.
- * @param[in] count    Number of elements in iovec array.
- * @param[in] tag      User defined tag for matching send/recv.
- * @param[in] flags    Currently unused.
- * @param[in] cbfunc   Callback function on send completion.
- * @param[in] cbdata   User data that is passed to callback function.
- *
- * @return             OMPI error code (<0) on error number of bytes actually sent.
- */
-typedef int (*mca_oob_base_module_send_nb_fn_t)(
-    orte_process_name_t* target,
-    orte_process_name_t* origin,
-    struct iovec* msg,
-    int count,
-    int tag,
-    int flags,
-    orte_rml_callback_fn_t cbfunc,
-    void* cbdata);
-
-/**
-* Implementation of mca_oob_recv_nb().
-*
-* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
-* @param msg (IN)     Array of iovecs describing user buffers and lengths.
-* @param count (IN)   Number of elements in iovec array.
-* @param tag (IN)     User defined tag for matching send/recv.
-* @param flags (IN)   May be MCA_OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
-* @param cbfunc (IN)  Callback function on recv completion.
-* @param cbdata (IN)  User data that is passed to callback function.
-* @return             OMPI error code (<0) on error or number of bytes actually received.
-*/
-
-typedef int (*mca_oob_base_module_recv_nb_fn_t)(
-    orte_process_name_t* peer,
-    struct iovec* msg,
-    int count,
-    int tag,
-    int flags,
-    orte_rml_callback_fn_t cbfunc,
-    void* cbdata);
-
-/**
-* Implementation of mca_oob_recv_cancel().
-*
-* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
-* @param tag (IN)     User defined tag for matching send/recv.
-* @return             OMPI error code (<0) on error or number of bytes actually received.
-*/
-
-typedef int (*mca_oob_base_module_recv_cancel_fn_t)(orte_process_name_t* peer, int tag);
-
-/**
- * Hook function called by mca_oob_base_register to allow
- * the oob component a chance to register contact information
- */
-typedef int (*mca_oob_base_module_init_fn_t)(void);
-
-/**
- * Cleanup during finalize.
- */
-typedef int (*mca_oob_base_module_fini_fn_t)(void);
-
-/* ft event */
-typedef int (*mca_oob_base_module_ft_event_fn_t)( int state );
-
-/*
- * Check if a process is reachable - i.e., we know its contact info
- */
-typedef bool (*mca_oob_base_module_is_reachable_fn_t)(orte_process_name_t *proc);
-
-/**
- * OOB Module
- */
-struct mca_oob_1_0_0_t {
-    mca_oob_base_module_init_fn_t                oob_init;
-    mca_oob_base_module_fini_fn_t                oob_fini;
-
-    mca_oob_base_module_get_addr_fn_t            oob_get_addr;
-    mca_oob_base_module_set_addr_fn_t            oob_set_addr;
-
-    mca_oob_base_module_ping_fn_t                oob_ping;
-
-    mca_oob_base_module_send_nb_fn_t             oob_send_nb;
-
-    mca_oob_base_module_recv_nb_fn_t             oob_recv_nb;
-    mca_oob_base_module_recv_cancel_fn_t         oob_recv_cancel;
-
-    mca_oob_base_module_ft_event_fn_t            oob_ft_event;
-
-    orte_rml_exception_callback_t                oob_exception_callback;
-    mca_oob_base_module_is_reachable_fn_t        oob_is_reachable;
-};
+typedef struct {
+    mca_base_component_t                      oob_base;
+    mca_base_component_data_t                 oob_data;
+    int                                       idx;
+    int                                       priority;
+    mca_oob_base_component_avail_fn_t         available;
+    mca_oob_base_component_startup_fn_t       startup;
+    mca_oob_base_component_shutdown_fn_t      shutdown;
+    mca_oob_base_component_send_fn_t          send_nb;
+    mca_oob_base_component_get_addr_fn_t      get_addr;
+    mca_oob_base_component_set_addr_fn_t      set_addr;
+    mca_oob_base_component_is_reachable_fn_t  is_reachable;
+} mca_oob_base_component_t;
 
 /**
  * Macro for use in components that are of type oob
@@ -188,13 +76,6 @@ struct mca_oob_1_0_0_t {
 #define MCA_OOB_BASE_VERSION_2_0_0 \
   MCA_BASE_VERSION_2_0_0, \
   "oob", 2, 0, 0
-
-/*
- * BWB - FIX ME - This is the first module on the list. This is here
- * temporarily to make things work
- */
-
-ORTE_DECLSPEC extern mca_oob_t mca_oob;
 
 END_C_DECLS
 

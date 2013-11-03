@@ -26,7 +26,6 @@
 #include <fcntl.h>
 
 #include "opal/dss/dss.h"
-#include "opal/mca/paffinity/paffinity.h"
 #include "opal/runtime/opal.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -213,7 +212,6 @@ static void allgather_recv(int status, orte_process_name_t* sender,
     orte_grpcomm_collective_t *coll = (orte_grpcomm_collective_t*)cbdata;
     int rc;
     
-    OPAL_THREAD_LOCK(&coll->lock);
     /* xfer the data */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&coll->results, buffer))) {
         ORTE_ERROR_LOG(rc);
@@ -232,7 +230,6 @@ static void allgather_recv(int status, orte_process_name_t* sender,
          */
         opal_condition_broadcast(&coll->cond);
     }
-    OPAL_THREAD_UNLOCK(&coll->lock);
 }
 
 static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
@@ -309,12 +306,10 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         }
 
         /* setup the collective */
-        OPAL_THREAD_LOCK(&allgather.lock);
         allgather.recvd = 0;
         /* reset the collector */
         OBJ_DESTRUCT(&allgather.results);
         OBJ_CONSTRUCT(&allgather.results, opal_buffer_t);
-        OPAL_THREAD_UNLOCK(&allgather.lock);
         
         /* send our data to the local_rank=0 proc on this node */
         if (0 > (rc = orte_rml.send_buffer(&my_local_rank_zero_proc, sbuf, ORTE_RML_TAG_ALLGATHER, 0))) {
@@ -335,29 +330,23 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         /* wait to complete - we will receive a single message
          * sent from our local_rank=0 peer
          */
-        OPAL_THREAD_LOCK(&allgather.lock);
-        while (allgather.recvd < 1) {
-            opal_condition_wait(&allgather.cond, &allgather.lock);
-        }
+
         /* copy payload to the caller's buffer */
         if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, &allgather.results))) {
             ORTE_ERROR_LOG(rc);
         }
-        OPAL_THREAD_UNLOCK(&allgather.lock);
         
         
     } else {
         /* I am local_rank = 0 on this node! */
 
         /* setup the collective */
-        OPAL_THREAD_LOCK(&allgather.lock);
         allgather.recvd = 0;
         /* reset the collector */
         OBJ_DESTRUCT(&allgather.results);
         OBJ_CONSTRUCT(&allgather.results, opal_buffer_t);
         /* seed with my data */
         opal_dss.copy_payload(&allgather.results, sbuf);
-        OPAL_THREAD_UNLOCK(&allgather.lock);
 
         /* wait to receive their data. Be sure to do this in
          * a manner that allows us to return without being in a recv!
@@ -372,14 +361,10 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         /* wait to complete - we need to receive input from every
          * local peer (excluding myself)
          */
-        OPAL_THREAD_LOCK(&allgather.lock);
-        while (allgather.recvd < num_local_peers) {
-            opal_condition_wait(&allgather.cond, &allgather.lock);
-        }
+
         /* xfer to the tmp buf in case another allgather comes along */
         OBJ_CONSTRUCT(&tmp_buf, opal_buffer_t);
         opal_dss.copy_payload(&tmp_buf, &allgather.results);
-        OPAL_THREAD_UNLOCK(&allgather.lock);
         
         /* cancel the lingering recv */
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER);

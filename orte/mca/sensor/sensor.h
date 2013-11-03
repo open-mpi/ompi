@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -29,30 +30,35 @@ BEGIN_C_DECLS
  * Component functions - all MUST be provided!
  */
 
-/* initialize the selected module */
-typedef int (*orte_sensor_base_module_init_fn_t)(void);
-    
-/* finalize the selected module */
-typedef void (*orte_sensor_base_module_finalize_fn_t)(void);
-
 /* start collecting data */
-typedef void (*orte_sensor_base_module_start_fn_t)(orte_jobid_t jobid);
+typedef void (*orte_sensor_API_module_start_fn_t)(orte_jobid_t job);
 
 /* stop collecting data */
-typedef void (*orte_sensor_base_module_stop_fn_t)(orte_jobid_t jobid);
+typedef void (*orte_sensor_API_module_stop_fn_t)(orte_jobid_t job);
 
 /* API module */
 /*
  * Ver 1.0
  */
 struct orte_sensor_base_API_module_1_0_0_t {
-    orte_sensor_base_module_start_fn_t      start;
-    orte_sensor_base_module_stop_fn_t       stop;
+    orte_sensor_API_module_start_fn_t      start;
+    orte_sensor_API_module_stop_fn_t       stop;
 };
 
 typedef struct orte_sensor_base_API_module_1_0_0_t orte_sensor_base_API_module_1_0_0_t;
 typedef orte_sensor_base_API_module_1_0_0_t orte_sensor_base_API_module_t;
 
+/* initialize the module */
+typedef int (*orte_sensor_base_module_init_fn_t)(void);
+    
+/* finalize the module */
+typedef void (*orte_sensor_base_module_finalize_fn_t)(void);
+
+/* tell the module to sample its sensor */
+typedef void (*orte_sensor_base_module_sample_fn_t)(void);
+
+/* pass a buffer to the module for logging */
+typedef void (*orte_sensor_base_module_log_fn_t)(opal_buffer_t *sample);
 
 /*
  * Component modules Ver 1.0
@@ -60,8 +66,10 @@ typedef orte_sensor_base_API_module_1_0_0_t orte_sensor_base_API_module_t;
 struct orte_sensor_base_module_1_0_0_t {
     orte_sensor_base_module_init_fn_t       init;
     orte_sensor_base_module_finalize_fn_t   finalize;
-    orte_sensor_base_module_start_fn_t      start;
-    orte_sensor_base_module_stop_fn_t       stop;
+    orte_sensor_API_module_start_fn_t       start;
+    orte_sensor_API_module_stop_fn_t        stop;
+    orte_sensor_base_module_sample_fn_t     sample;
+    orte_sensor_base_module_log_fn_t        log;
 };
 
 typedef struct orte_sensor_base_module_1_0_0_t orte_sensor_base_module_1_0_0_t;

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -67,6 +67,7 @@
 #include "orte/runtime/orte_locks.h"
 
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/state/state.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rml/rml.h"
@@ -207,7 +208,6 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     }
     va_end(arglist);
     
-#if !ORTE_DISABLE_FULL_SUPPORT
     /* if I am a daemon or the HNP... */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* whack my local procs */
@@ -218,9 +218,6 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
         /* cleanup my session directory */
         orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     }
-#else
-    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-#endif
 
     /* if a critical connection failed, or a sensor limit was exceeded, exit without dropping a core */
     if (ORTE_ERR_CONNECTION_FAILED == error_code ||
@@ -243,11 +240,102 @@ void orte_errmgr_base_register_migration_warning(struct timeval *tv)
     return;
 }
 
-int orte_errmgr_base_abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)
+int orte_errmgr_base_abort_peers(orte_process_name_t *procs,
+                                 orte_std_cntr_t num_procs,
+                                 int error_code)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
+int orte_errmgr_base_register_error_callback(orte_errmgr_error_callback_fn_t *cbfunc,
+                                             orte_errmgr_error_order_t order)
+{
+    orte_errmgr_cback_t *cb, *cbcur;
+
+    /* check the order to see what to do */
+    switch(order) {
+    case ORTE_ERRMGR_CALLBACK_FIRST:
+        /* only one can be so designated */
+        if (NULL != (cb = (orte_errmgr_cback_t*)opal_list_get_first(&orte_errmgr_base.error_cbacks))) {
+            if (ORTE_ERRMGR_CALLBACK_FIRST == cb->order) {
+                return ORTE_ERR_NOT_SUPPORTED;
+            }
+        }
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback =cbfunc;
+        opal_list_prepend(&orte_errmgr_base.error_cbacks, &cb->super);
+        break;
+    case ORTE_ERRMGR_CALLBACK_LAST:
+        /* only one can be so designated */
+        if (NULL != (cb = (orte_errmgr_cback_t*)opal_list_get_last(&orte_errmgr_base.error_cbacks))) {
+            if (ORTE_ERRMGR_CALLBACK_LAST == cb->order) {
+                return ORTE_ERR_NOT_SUPPORTED;
+            }
+        }
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback = cbfunc;
+        opal_list_append(&orte_errmgr_base.error_cbacks, &cb->super);
+        break;
+    case ORTE_ERRMGR_CALLBACK_PREPEND:
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback =cbfunc;
+        if (NULL != (cbcur = (orte_errmgr_cback_t*)opal_list_get_first(&orte_errmgr_base.error_cbacks)) &&
+            ORTE_ERRMGR_CALLBACK_FIRST == cbcur->order) {
+            opal_list_insert(&orte_errmgr_base.error_cbacks, &cb->super, 1);
+        } else {
+            opal_list_prepend(&orte_errmgr_base.error_cbacks, &cb->super);
+        }
+        break;
+    case ORTE_ERRMGR_CALLBACK_APPEND:
+        cb = OBJ_NEW(orte_errmgr_cback_t);
+        cb->order = order;
+        cb->callback =cbfunc;
+        if (NULL != (cbcur = (orte_errmgr_cback_t*)opal_list_get_last(&orte_errmgr_base.error_cbacks)) &&
+            ORTE_ERRMGR_CALLBACK_LAST == cbcur->order) {
+            opal_list_insert_pos(&orte_errmgr_base.error_cbacks, &cbcur->super, &cb->super);
+        } else {
+            opal_list_append(&orte_errmgr_base.error_cbacks, &cb->super);
+        }
+        opal_list_append(&orte_errmgr_base.error_cbacks, &cb->super);
+        break;
+    }
+    return ORTE_SUCCESS;
+}
+
+void orte_errmgr_base_execute_error_callbacks(opal_pointer_array_t *errors)
+{
+    orte_errmgr_cback_t *cb;
+    char *errstring=NULL;
+    orte_error_t *err;
+    int errcode = ORTE_ERROR_DEFAULT_EXIT_CODE;
+
+    /* if no callbacks have been provided, then we abort */
+    if (0 == opal_list_get_size(&orte_errmgr_base.error_cbacks)) {
+        /* take the first entry, if available */
+        if (NULL != errors &&
+            (NULL != (err = (orte_error_t*)opal_pointer_array_get_item(errors, 0)))) {
+            errstring = (char*)ORTE_ERROR_NAME(err->errcode);
+            errcode = err->errcode;
+        }
+        if (NULL == errstring) {
+            /* if the error is silent, say nothing */
+            orte_errmgr.abort(errcode, NULL);
+        }
+        orte_errmgr.abort(errcode, "Executing default error callback: %s", errstring);
+    }
+
+    /* cycle across the provided callbacks until we complete the list
+     * or one reports that no further action is required
+     */
+    OPAL_LIST_FOREACH(cb, &orte_errmgr_base.error_cbacks, orte_errmgr_cback_t) {
+        if (ORTE_SUCCESS == cb->callback(errors)) {
+            break;
+        }
+    }
+}
 
 /********************
  * Utility functions
@@ -288,7 +376,7 @@ void orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_na
         case ORTE_PROC_STATE_TERMINATED:
         case ORTE_PROC_STATE_KILLED_BY_CMD:
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            opal_output(0,, "%d: Process %s is dead.",
+            opal_output(0, "%d: Process %s is dead.",
                         orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
             break;
 
@@ -460,9 +548,6 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
         new_app_context->prefix_dir             = (NULL == cur_app_context->prefix_dir ? NULL :
                                                    strdup(cur_app_context->prefix_dir));
         new_app_context->preload_binary         = false;
-        new_app_context->preload_libs           = false;
-        new_app_context->preload_files_dest_dir = NULL;
-        new_app_context->preload_files_src_dir  = NULL;
 
         asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
         asprintf(&(new_app_context->sstore_load),
@@ -556,6 +641,7 @@ int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int s
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_process_name_t loc_proc;
+    orte_job_t *jdata;
     orte_sstore_base_handle_t prev_sstore_handle = ORTE_SSTORE_HANDLE_INVALID;
 
     /* JJH First determine if we can recover this way */
@@ -573,15 +659,21 @@ int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int s
         goto cleanup;
     }
 
+    /* get the job object */
+    if (NULL == (jdata = orte_get_job_data_object(jobid))) {
+        exit_status = ORTE_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(exit_status);
+        goto cleanup;
+    }
+
     /*
      * Start the recovery
      */
     orte_snapc_base_has_recovered = false;
     loc_proc.jobid = jobid;
     loc_proc.vpid  = 0;
-    orte_errmgr.update_state(jobid, ORTE_JOB_STATE_RESTART,
-                             &loc_proc, ORTE_PROC_STATE_KILLED_BY_CMD,
-                             0, 0);
+    ORTE_ACTIVATE_PROC_STATE(&loc_proc, ORTE_PROC_STATE_KILLED_BY_CMD);
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_CONTROL_RESTART);
     while( !orte_snapc_base_has_recovered ) {
         opal_progress();
     }
@@ -649,18 +741,6 @@ int orte_errmgr_base_migrate_job(orte_jobid_t jobid, orte_snapc_base_request_op_
 }
 
 #endif
-
-orte_errmgr_fault_callback_t *orte_errmgr_base_set_fault_callback(orte_errmgr_fault_callback_t *cbfunc) {
-    orte_errmgr_fault_callback_t *temp_cbfunc = fault_cbfunc;
-
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base_framework.framework_output, 
-                "%s errmgr:base Called set_fault_callback", 
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    fault_cbfunc = cbfunc;
-
-    return temp_cbfunc;
-}
 
 /********************
  * Local Functions

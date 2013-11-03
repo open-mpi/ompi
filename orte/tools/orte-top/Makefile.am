@@ -23,7 +23,6 @@ include $(top_srcdir)/Makefile.man-page-rules
 man_pages = orte-top.1
 EXTRA_DIST = orte-top.1in
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-top
@@ -40,9 +39,7 @@ dist_pkgdata_DATA = help-orte-top.txt
 endif # OMPI_INSTALL_BINARIES
 
 orte_top_SOURCES = orte-top.c
-orte_top_LDADD = $(top_builddir)/orte/libopen-rte.la
-
-endif # ORTE_DISABLE_FULL_SUPPORT
+orte_top_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

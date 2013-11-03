@@ -11,11 +11,10 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -113,6 +112,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
+#include "opal/util/sys_limits.h"
 #include "opal/util/fd.h"
 
 #include "orte/util/show_help.h"
@@ -375,7 +375,7 @@ static void send_error_show_help(int fd, int exit_status,
 
     /* Send it */
     va_start(ap, topic);
-    (void)write_help_msg(fd, &msg, file, topic, ap);
+    write_help_msg(fd, &msg, file, topic, ap);
     va_end(ap);
 
     exit(exit_status);
@@ -387,13 +387,10 @@ static int do_child(orte_app_context_t* context,
                     orte_job_t *jobdat, int write_fd,
                     orte_iof_base_io_conf_t opts)
 {
-    int i;
+    int i, rc;
     sigset_t sigs;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
-#if OPAL_HAVE_HWLOC
-    int rc;
     char *param, *msg;
-#endif
 
     if (orte_forward_job_control) {
         /* Set a new process group for this child, so that a
@@ -576,6 +573,19 @@ static int do_child(orte_app_context_t* context,
 #if OPAL_HAVE_HWLOC
  PROCEED:
 #endif
+
+    /* if the user requested it, set the system resource limits */
+    if (OPAL_SUCCESS != (rc = opal_util_init_sys_limits(&msg))) {
+        send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
+                             "set limit",
+                             orte_process_info.nodename, context->app, 
+                             __FILE__, __LINE__, msg);
+    }
+    /* ensure we only do this once */
+    (void) mca_base_var_env_name("opal_set_max_sys_limits", &param);
+    opal_unsetenv(param, &environ_copy);
+    free(param);
+
     /* close all file descriptors w/ exception of stdin/stdout/stderr,
        the pipe used for the IOF INTERNAL messages, and the pipe up to
        the parent. */

@@ -21,9 +21,8 @@
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orte-clean.1
-EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
+EXTRA_DIST = $(man_pages:.1=.1in)
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-clean
@@ -40,9 +39,7 @@ dist_pkgdata_DATA = help-orte-clean.txt
 endif # OMPI_INSTALL_BINARIES
 
 orte_clean_SOURCES = orte-clean.c
-orte_clean_LDADD = $(top_builddir)/orte/libopen-rte.la
-
-endif # !ORTE_DISABLE_FULL_SUPPORT
+orte_clean_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

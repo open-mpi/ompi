@@ -56,39 +56,12 @@ orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
     modex
 };
 
-static char *pmi_kvs_name=NULL;
-
 /**
  * Initialize the module
  */
 static int init(void)
 {
-    int max_length, rc;
-
-#if WANT_PMI2_SUPPORT
-    /* TODO -- is this ok */
-    max_length = 1024;
-#else
-    if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
-        return ORTE_ERROR;
-    }
-#endif
-    pmi_kvs_name = (char*)malloc(max_length);
-    if (NULL == pmi_kvs_name) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-#if WANT_PMI2_SUPPORT
-    rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
-#else
-    rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
-#endif
-    if (PMI_SUCCESS != rc) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
-        return ORTE_ERROR;
-    }
-    return ORTE_SUCCESS;
+     return ORTE_SUCCESS;
 }
 
 /**
@@ -96,9 +69,6 @@ static int init(void)
  */
 static void finalize(void)
 {
-    if (NULL != pmi_kvs_name) {
-        free(pmi_kvs_name);
-    }
     return;
 }
 
@@ -171,8 +141,9 @@ static int pmi_allgather(orte_grpcomm_collective_t *coll)
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
-    int *local_ranks=NULL, local_rank_count;
+    int *local_ranks, local_rank_count;
     opal_hwloc_locality_t locality;
+    const char *cpuset;
     orte_process_name_t name;
     orte_vpid_t v;
     bool local;
@@ -218,6 +189,7 @@ static int modex(orte_grpcomm_collective_t *coll)
                 local_ranks[i] = n + i;
             }
         }
+
         if (NULL == local_ranks) {
             opal_output(0, "%s could not get PMI_process_mapping",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -244,6 +216,7 @@ static int modex(orte_grpcomm_collective_t *coll)
     }
 #endif
 
+
     /* our RTE data was constructed and pushed in the ESS pmi component */
 
     /* commit our modex info */
@@ -265,52 +238,43 @@ static int modex(orte_grpcomm_collective_t *coll)
 	    }
 	}
 
-	/* compute and store the locality as it isn't something that gets pushed to PMI */
+	/* compute and store the locality as it isn't something that gets pushed to PMI  - doing
+         * this here will prevent the MPI layer from fetching data for all ranks
+         */
         if (local) {
-#if OPAL_HAVE_HWLOC
-            {
-                opal_hwloc_level_t bind_level, *lvptr;
-                unsigned int bind_idx, *idxptr;
+	    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&name, OPAL_DB_CPUSET,
+                                                            (void **)&cpuset, OPAL_STRING))) {
+		ORTE_ERROR_LOG(rc);
+		return rc;
+	    }
 
-                /* get the proc's locality info */
-                lvptr = &bind_level;
-                if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, ORTE_DB_BIND_LEVEL, (void**)&lvptr, OPAL_HWLOC_LEVEL_T))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                idxptr = &bind_idx;
-                if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&name, ORTE_DB_BIND_INDEX, (void**)&idxptr, OPAL_UINT))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                /* determine relative location on our node */
-                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                 orte_process_info.bind_level,
-                                                                 orte_process_info.bind_idx,
-                                                                 bind_level, bind_idx);
-                OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                                     "%s grpcomm:pmi setting proc %s locale %s:%x",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&name),
-                                     opal_hwloc_base_print_locality(locality), locality));
-            }
-#else
-            locality = OPAL_PROC_ON_NODE;
-#endif
+	    if (NULL == cpuset) {
+		/* if we share a node, but we don't know anything more, then
+		 * mark us as on the node as this is all we know
+		 */
+                locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+	    } else {
+		/* determine relative location on our node */
+		locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+								 orte_process_info.cpuset,
+								 (char *) cpuset);
+	    }
 	} else {
             /* this is on a different node, then mark as non-local */
             locality = OPAL_PROC_NON_LOCAL;
 	}
 
-         if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_DB_INTERNAL, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                            "%s grpcomm:pmi proc %s locality %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&name), opal_hwloc_base_print_locality(locality)));
+
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_SCOPE_INTERNAL,
+                                                OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
-
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:pmi: modex complete",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* execute the callback */
     coll->active = false;

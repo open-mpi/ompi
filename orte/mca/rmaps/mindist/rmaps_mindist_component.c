@@ -21,6 +21,7 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "rmaps_mindist.h"
@@ -64,7 +65,6 @@ static int orte_rmaps_mindist_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &my_priority);
-
     return ORTE_SUCCESS;
 }
 

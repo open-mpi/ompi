@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,8 +26,6 @@
 
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/base/state_private.h"
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 void orte_state_base_activate_job_state(orte_job_t *jdata,
                                         orte_job_state_t state)
@@ -213,7 +211,7 @@ void orte_state_base_print_job_state_machine(void)
                     (NULL == st->cbfunc) ? "NULL" : "DEFINED");
     }
 }
-#endif
+
 
 /****    PROC STATE MACHINE    ****/
 void orte_state_base_activate_proc_state(orte_process_name_t *proc,
@@ -460,11 +458,11 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_job_t *jdata;
     orte_proc_t *pdata;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
-                         "%s state:base:track_procs called for proc %s state %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         orte_proc_state_to_str(state)));
+    opal_output_verbose(5, orte_state_base_framework.framework_output,
+                        "%s state:base:track_procs called for proc %s state %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(proc),
+                        orte_proc_state_to_str(state));
 
     /* get the job object for this proc */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
@@ -504,45 +502,18 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
         pdata->iof_complete = true;
         if (pdata->waitpid_recvd) {
-            /* the proc has terminated */
-            pdata->alive = false;
-            pdata->state = ORTE_PROC_STATE_TERMINATED;
-            /* return the allocated slot for reuse */
-            cleanup_node(pdata);
-            /* Clean up the session directory as if we were the process
-             * itself.  This covers the case where the process died abnormally
-             * and didn't cleanup its own session directory.
-             */
-            orte_session_dir_finalize(proc);
-            /* track job status */
-            jdata->num_terminated++;
-            if (jdata->num_terminated == jdata->num_procs) {
-                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-            }
+            ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
     } else if (ORTE_PROC_STATE_WAITPID_FIRED == state) {
         /* update the proc state */
         pdata->state = state;
         pdata->waitpid_recvd = true;
         if (pdata->iof_complete) {
-            /* the proc has terminated */
-            pdata->alive = false;
-            pdata->state = ORTE_PROC_STATE_TERMINATED;
-            /* return the allocated slot for reuse */
-            cleanup_node(pdata);
-            /* Clean up the session directory as if we were the process
-             * itself.  This covers the case where the process died abnormally
-             * and didn't cleanup its own session directory.
-             */
-            orte_session_dir_finalize(proc);
-            /* track job status */
-            jdata->num_terminated++;
-            if (jdata->num_terminated == jdata->num_procs) {
-                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-            }
+            ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
     } else if (ORTE_PROC_STATE_TERMINATED == state) {
         /* update the proc state */
+        pdata->alive = false;
         pdata->state = state;
 	if (pdata->local_proc) {
             /* Clean up the session directory as if we were the process
@@ -579,10 +550,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     bool one_still_alive;
     orte_vpid_t lowest=0;
 
-    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                         "%s state:base:check_job_complete on job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid)));
+    opal_output_verbose(2, orte_state_base_framework.framework_output,
+                        "%s state:base:check_job_complete on job %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid));
 
     if (NULL == jdata || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
         /* just check to see if the daemons are complete */
@@ -704,6 +675,12 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                 /* release the proc once for the map entry */
                 OBJ_RELEASE(proc);
             }
+            /* set the node location to NULL */
+            opal_pointer_array_set_item(map->nodes, index, NULL);
+            /* maintain accounting */
+            OBJ_RELEASE(node);
+            /* flag that the node is no longer in a map */
+            node->mapped = false;
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;

@@ -17,7 +17,6 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss_types.h"
-#include "opal/threads/threads.h"
 
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
@@ -28,15 +27,9 @@ BEGIN_C_DECLS
  * MCA Framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_routed_base_framework;
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /* select a component */
 ORTE_DECLSPEC    int orte_routed_base_select(void);
 
-
-ORTE_DECLSPEC extern opal_mutex_t orte_routed_base_lock;
-ORTE_DECLSPEC extern opal_condition_t orte_routed_base_cond;
 
 ORTE_DECLSPEC extern bool orte_routed_base_wait_sync;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_routed_jobfams;
@@ -52,8 +45,6 @@ ORTE_DECLSPEC int orte_routed_base_register_sync(bool setup);
 ORTE_DECLSPEC int orte_routed_base_process_callback(orte_jobid_t job,
                                                     opal_buffer_t *buffer);
 ORTE_DECLSPEC void orte_routed_base_update_hnps(opal_buffer_t *buf);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

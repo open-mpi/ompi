@@ -54,6 +54,9 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define OMPI_NAME ORTE_NAME
 #define OMPI_PROCESS_NAME_HTON ORTE_PROCESS_NAME_HTON
 #define OMPI_PROCESS_NAME_NTOH ORTE_PROCESS_NAME_NTOH
+#define OMPI_RTE_NODE_ID  ORTE_DB_DAEMON_VPID
+#define OMPI_RTE_MY_NODEID ORTE_PROC_MY_DAEMON->vpid
+#define OMPI_RTE_HOST_ID ORTE_DB_HOSTID
 
 /* Collective objects and operations */
 #define ompi_rte_collective_t orte_grpcomm_collective_t
@@ -69,8 +72,13 @@ typedef orte_local_rank_t ompi_local_rank_t;
 
 /* Error handling objects and operations */
 OMPI_DECLSPEC void ompi_rte_abort(int error_code, char *fmt, ...);
-#define ompi_rte_abort_peers(a, b) orte_errmgr.abort_peers(a, b)
-#define ompi_rte_set_fault_callback(a)
+#define ompi_rte_abort_peers(a, b, c) orte_errmgr.abort_peers(a, b, c)
+#define OMPI_RTE_ERRHANDLER_FIRST ORTE_ERRMGR_CALLBACK_FIRST
+#define OMPI_RTE_ERRHANDLER_LAST ORTE_ERRMGR_CALLBACK_LAST
+#define OMPI_RTE_ERRHANDLER_PREPEND ORTE_ERRMGR_CALLBACK_PREPEND
+#define OMPI_RTE_ERRHANDLER_APPEND ORTE_ERRMGR_CALLBACK_APPEND
+typedef orte_error_t ompi_rte_error_report_t;
+#define ompi_rte_register_errhandler(a, b) orte_errmgr.register_error_callback(a, b)
 #define OMPI_ERROR_LOG ORTE_ERROR_LOG
 
 /* Init and finalize objects and operations */
@@ -97,12 +105,11 @@ OMPI_DECLSPEC int ompi_rte_db_remove(const ompi_process_name_t *nm,
 
 /* Communications */
 typedef orte_rml_tag_t ompi_rml_tag_t;
-#define ompi_rte_send_buffer(a, b, c, d) orte_rml.send_buffer(a, b, c, d)
-#define ompi_rte_send_buffer_nb(a, b, c, d, e, f) orte_rml.send_buffer_nb(a, b, c, d, e, f)
-#define ompi_rte_recv_buffer(a, b, c, d) orte_rml.recv_buffer(a, b, c, d)
+#define ompi_rte_send_buffer_nb(a, b, c, d, e) orte_rml.send_buffer_nb(a, b, c, d, e)
 #define ompi_rte_recv_buffer_nb(a, b, c, d, e) orte_rml.recv_buffer_nb(a, b, c, d, e)
 #define ompi_rte_recv_cancel(a, b) orte_rml.recv_cancel(a, b)
 #define ompi_rte_parse_uris(a, b, c) orte_rml_base_parse_uris(a, b, c)
+#define ompi_rte_send_cbfunc orte_rml_send_callback
 
 /* Communication tags */
 /* carry over the INVALID def */
@@ -110,7 +117,8 @@ typedef orte_rml_tag_t ompi_rml_tag_t;
 /* define a starting point to avoid conflicts */
 #define OMPI_RML_TAG_BASE    ORTE_RML_TAG_MAX
 
-#define OMPI_RML_PERSISTENT  ORTE_RML_PERSISTENT
+#define OMPI_RML_PERSISTENT      ORTE_RML_PERSISTENT
+#define OMPI_RML_NON_PERSISTENT  ORTE_RML_NON_PERSISTENT
 
 END_C_DECLS
 

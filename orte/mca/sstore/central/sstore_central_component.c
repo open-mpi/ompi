@@ -67,21 +67,21 @@ orte_sstore_central_component_t mca_sstore_central_component = {
 
 static int sstore_central_register (void)
 {
-    (void) mca_base_var_register (&mca_sstore_central_component.super.base_version,
-                                  "verbose", "Verbose level for the SSTORE central component",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_LOCAL,
-                                  &mca_sstore_central_component.super.verbose);
+    (void)mca_base_component_var_register(&mca_sstore_central_component.super.base_version,
+                                          "verbose", "Verbose level for the SSTORE central component",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_sstore_central_component.super.verbose);
 
     /* Default priority */
     mca_sstore_central_component.super.priority = 20;
-    (void) mca_base_var_register (&mca_sstore_central_component.super.base_version,
-                                  "priority", "Priority of the SSTORE central component",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                  &mca_sstore_central_component.super.priority);
+    (void)mca_base_component_var_register(&mca_sstore_central_component.super.base_version,
+                                          "priority", "Priority of the SSTORE central component",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_sstore_central_component.super.priority);
 
     return ORTE_SUCCESS;
 }

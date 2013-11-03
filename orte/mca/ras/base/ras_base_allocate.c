@@ -32,6 +32,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -48,8 +49,8 @@
 
 #include "orte/mca/ras/base/ras_private.h"
 
-/* static function to display allocation */
-static void display_alloc(void)
+/* function to display allocation */
+void orte_ras_base_display_alloc(void)
 {
     char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
     int i, istart;
@@ -140,7 +141,13 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
      */
     if (NULL != orte_ras_base.active_module)  {
         /* read the allocation */
-        if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(&nodes))) {
+        if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(jdata, &nodes))) {
+            if (ORTE_ERR_ALLOCATION_PENDING == rc) {
+                /* an allocation request is underway, so just do nothing */
+                OBJ_DESTRUCT(&nodes);
+                OBJ_RELEASE(caddy);
+                return;
+            }
             if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == rc) {
                 /* this module indicates that nodes will be discovered
                  * on a bootstrap basis, so all we do here is add our
@@ -148,9 +155,29 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                  */
                 goto addlocal;
             }
+            if (ORTE_ERR_TAKE_NEXT_OPTION == rc) {
+                /* we have an active module, but it is unable to
+                 * allocate anything for this job - this indicates
+                 * that it isn't a fatal error, but could be if
+                 * an allocation is required
+                 */
+                if (orte_allocation_required) {
+                    /* an allocation is required, so this is fatal */
+                    OBJ_DESTRUCT(&nodes);
+                    orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
+                    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    OBJ_RELEASE(caddy);
+                    return;
+                } else {
+                    /* an allocation is not required, so we can just
+                     * run on the local node - go add it
+                     */
+                    goto addlocal;
+                }
+            }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -163,7 +190,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -181,7 +208,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
          */
         OBJ_DESTRUCT(&nodes);
         orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -229,11 +256,18 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 /* set an error event */
-                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
                 return;
             }
-        } else if (NULL != app->dash_host) {
+        } else if (!orte_soft_locations && NULL != app->dash_host) {
+            /* if we are using soft locations, then any dash-host would
+             * just include desired nodes and not required. We don't want
+             * to pick them up here as this would mean the request was
+             * always satisfied - instead, we want to allow the request
+             * to fail later on and use whatever nodes are actually
+             * available
+             */
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:allocate adding dash_hosts",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -241,7 +275,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                                                                     app->dash_host))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
-                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
                 return;
             }
@@ -257,7 +291,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                                                                        orte_default_hostfile))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&nodes);
-                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     OBJ_RELEASE(caddy);
                     return;
                 }
@@ -276,7 +310,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
          */
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -298,7 +332,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                                                                orte_rankfile))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return ;
         }
@@ -312,7 +346,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
          */
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -338,7 +372,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     if (NULL == node) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_DESTRUCT(&nodes);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -358,7 +392,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&nodes);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -366,8 +400,8 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
 
  DISPLAY:
     /* shall we display the results? */
-    if (4 < opal_output_get_verbosity(orte_ras_base_framework.framework_output) || orte_ras_base.display_alloc) {
-        display_alloc();
+    if (4 < opal_output_get_verbosity(orte_ras_base_framework.framework_output)) {
+        orte_ras_base_display_alloc();
     }
 
  next_state:
@@ -375,7 +409,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     if (orte_report_events) {
         if (ORTE_SUCCESS != (rc = orte_util_comm_report_event(ORTE_COMM_EVENT_ALLOCATE))) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
         }
     }
@@ -430,6 +464,9 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
                 OBJ_DESTRUCT(&nodes);
                 return rc;
             }
+            /* now indicate that this app is to run across it */
+            app->hostfile = app->add_hostfile;
+            app->add_hostfile = NULL;
         }
     }
 
@@ -447,12 +484,21 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
             continue;
         }
         if (NULL != app->add_host) {
+            if (4 < opal_output_get_verbosity(orte_ras_base_framework.framework_output)) {
+                char *fff = opal_argv_join(app->add_host, ',');
+                opal_output(0, "%s ras:base:add_hosts checking add-host %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fff);
+                free(fff);
+            }
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
                                                                     app->add_host))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 return rc;
             }
+            /* now indicate that this app is to run across them */
+            app->dash_host = app->add_host;
+            app->add_host = NULL;
         }
     }
     
@@ -469,8 +515,8 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
     }
     
     /* shall we display the results? */
-    if (0 < opal_output_get_verbosity(orte_ras_base_framework.framework_output) || orte_ras_base.display_alloc) {
-        display_alloc();
+    if (0 < opal_output_get_verbosity(orte_ras_base_framework.framework_output)) {
+        orte_ras_base_display_alloc();
     }
     
     return ORTE_SUCCESS;

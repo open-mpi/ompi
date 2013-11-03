@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -91,22 +91,15 @@ orte_iof_base_module_t orte_iof_orted_module = {
 
 static int init(void)
 {
-    int rc;
-
     /* post a non-blocking RML receive to get messages
      from the HNP IOF component */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_IOF_PROXY,
-                                                      ORTE_RML_PERSISTENT,
-                                                      orte_iof_orted_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-        
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_IOF_PROXY,
+                            ORTE_RML_PERSISTENT,
+                            orte_iof_orted_recv,
+                            NULL);
     
     /* setup the local global variables */
-    OBJ_CONSTRUCT(&mca_iof_orted_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_iof_orted_component.sinks, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_orted_component.procs, opal_list_t);
     mca_iof_orted_component.xoff = false;
@@ -282,12 +275,10 @@ static int orted_close(const orte_process_name_t* peer,
     opal_list_item_t *item, *next_item;
     orte_iof_sink_t* sink;
     orte_ns_cmp_bitmask_t mask;
-
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     
-    for(item = opal_list_get_first(&mca_iof_orted_component.sinks);
-        item != opal_list_get_end(&mca_iof_orted_component.sinks);
-        item = next_item ) {
+    for (item = opal_list_get_first(&mca_iof_orted_component.sinks);
+         item != opal_list_get_end(&mca_iof_orted_component.sinks);
+         item = next_item ) {
         sink = (orte_iof_sink_t*)item;
         next_item = opal_list_get_next(item);
         
@@ -305,17 +296,14 @@ static int orted_close(const orte_process_name_t* peer,
             break;
         }
     }
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
 
     return ORTE_SUCCESS;
 }
 
 static int finalize(void)
 {
-    int rc;
     opal_list_item_t *item;
     
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     while ((item = opal_list_remove_first(&mca_iof_orted_component.sinks)) != NULL) {
         OBJ_RELEASE(item);
     }
@@ -325,10 +313,8 @@ static int finalize(void)
     }
     OBJ_DESTRUCT(&mca_iof_orted_component.procs);
     /* Cancel the RML receive */
-    rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
-    OBJ_DESTRUCT(&mca_iof_orted_component.lock);
-    return rc;
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
+    return ORTE_SUCCESS;
 }
 
 /*
@@ -353,8 +339,6 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
     
-    /* lock us up to protect global operations */
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     wev->pending = false;
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
@@ -368,7 +352,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
             sink->wev = NULL;
-            goto DEPART;
+            return;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
@@ -400,7 +384,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                 mca_iof_orted_component.xoff = true;
                 orte_iof_orted_send_xonxoff(ORTE_IOF_XOFF);
             }
-            goto DEPART;
+            return;
         } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s orted:stdin:write:handler incomplete write %d - adjusting data",
@@ -436,8 +420,4 @@ CHECK:
             orte_iof_orted_send_xonxoff(ORTE_IOF_XON);
         }
     }
-    
-DEPART:
-    /* unlock and go */
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
 }

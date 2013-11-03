@@ -7,7 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -112,7 +112,6 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
     return OPAL_EQUAL;
 }
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 /**
  * JOB
  */
@@ -261,5 +260,3 @@ int orte_dt_compare_iof_tag(orte_iof_tag_t *value1, orte_iof_tag_t *value2, opal
     
     return OPAL_EQUAL;
 }
-
-#endif

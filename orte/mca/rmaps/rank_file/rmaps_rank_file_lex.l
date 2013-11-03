@@ -130,7 +130,7 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
 int orte_rmaps_rank_file_lex_destroy (void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER);
+        yy_delete_buffer(YY_CURRENT_BUFFER); 
 #if defined(YY_CURRENT_BUFFER_LVALUE)
         YY_CURRENT_BUFFER_LVALUE = NULL;
 #else

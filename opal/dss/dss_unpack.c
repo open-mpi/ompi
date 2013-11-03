@@ -481,6 +481,7 @@ int opal_dss_unpack_byte_object(opal_buffer_t *buffer, void *dest, int32_t *num,
         if (NULL == dbyteptr[i]) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
+
         /* unpack object size in bytes */
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_int32(buffer, &(dbyteptr[i]->size), &m, OPAL_INT32))) {
             return ret;
@@ -886,6 +887,10 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
         /* unpack the key and type */
         m=1;
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &ptr[i]->key, &m, OPAL_STRING))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_data_type(buffer, &ptr[i]->scope, &m, OPAL_DATA_SCOPE_T))) {
             return ret;
         }
         m=1;

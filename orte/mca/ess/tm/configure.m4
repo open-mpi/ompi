@@ -19,7 +19,6 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_orte_ess_tm_PRIORITY], [10])
 
 # MCA_ess_tm_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
@@ -30,7 +29,7 @@ AC_DEFUN([MCA_orte_ess_tm_CONFIG],[
          
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$ess_tm_good" = "1" -a "$orte_without_full_support" = 0],
+    AS_IF([test "$ess_tm_good" = "1"],
           [$1],
           [$2])
 

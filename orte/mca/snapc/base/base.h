@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -38,8 +39,6 @@ BEGIN_C_DECLS
 ORTE_DECLSPEC extern mca_base_framework_t orte_snapc_base_framework;
 /* select a component */
 ORTE_DECLSPEC int orte_snapc_base_select(bool seed, bool app);
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /*
  * Commands for command line tool and SnapC interaction
@@ -133,8 +132,6 @@ ORTE_DECLSPEC int orte_snapc_base_unpack_options(opal_buffer_t* buffer,
                                                  opal_crs_base_ckpt_options_t *options);
 ORTE_DECLSPEC int orte_snapc_base_pack_options(opal_buffer_t* buffer,
                                                opal_crs_base_ckpt_options_t *options);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

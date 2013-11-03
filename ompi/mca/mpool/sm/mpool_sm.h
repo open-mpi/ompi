@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -28,6 +28,7 @@
 #include "ompi_config.h"
 
 #include "opal/mca/event/event.h"
+#include "opal/mca/shmem/shmem.h"
 
 #include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/mpool/mpool.h"
@@ -36,17 +37,19 @@
 BEGIN_C_DECLS
 
 struct mca_mpool_sm_component_t {
-  mca_mpool_base_component_t super;
-  /*      mca_allocator_base_module_t* sm_allocator; */
-  char*  sm_allocator_name;
-  int    verbose;
-  /*      struct mca_mpool_sm_mmap_t *sm_mmap; */
+    mca_mpool_base_component_t super;
+    /* mca_allocator_base_module_t* sm_allocator; */
+    char *sm_allocator_name;
+    int verbose;
+    /* struct mca_mpool_sm_mmap_t *sm_mmap; */
 };
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 
 typedef struct mca_mpool_base_resources_t {
     size_t  size;
     int32_t mem_node;
+    /* backing store metadata */
+    opal_shmem_ds_t bs_meta_buf;
 } mca_mpool_base_resources_t;
 
 OMPI_MODULE_DECLSPEC extern mca_mpool_sm_component_t mca_mpool_sm_component;
@@ -54,7 +57,7 @@ OMPI_MODULE_DECLSPEC extern mca_mpool_sm_component_t mca_mpool_sm_component;
 typedef struct mca_mpool_sm_module_t {
     mca_mpool_base_module_t super;
     long sm_size;
-    mca_allocator_base_module_t * sm_allocator;
+    mca_allocator_base_module_t *sm_allocator;
     struct mca_mpool_sm_mmap_t *sm_mmap;
     mca_common_sm_module_t *sm_common_module;
     int32_t mem_node;

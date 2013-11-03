@@ -28,33 +28,22 @@
 
 #include "orte/mca/filem/base/static-components.h"
 
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-static int orte_filem_base_open(mca_base_open_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_filem_base_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
-
 /*
  * Globals
  */
 ORTE_DECLSPEC orte_filem_base_module_t orte_filem = {
-    NULL, /* filem_init     */
-    NULL, /* filem_finalize */
-
-    NULL, /* put */
-    NULL, /* get */
-    NULL  /* rm  */
+    orte_filem_base_module_init,
+    orte_filem_base_module_finalize,
+    orte_filem_base_none_put,
+    orte_filem_base_none_put_nb,
+    orte_filem_base_none_get,
+    orte_filem_base_none_get_nb,
+    orte_filem_base_none_rm,
+    orte_filem_base_none_rm_nb,
+    orte_filem_base_none_wait,
+    orte_filem_base_none_wait_all,
+    orte_filem_base_none_preposition_files,
+    orte_filem_base_none_link_local_files
 };
 bool orte_filem_base_is_active = false;
 
@@ -77,7 +66,6 @@ static int orte_filem_base_open(mca_base_open_flag_t flags)
      /* Open up all available components */
     return mca_base_framework_components_open(&orte_filem_base_framework, flags);
 }
-#endif
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, filem, NULL, NULL, orte_filem_base_open, orte_filem_base_close,
                            mca_filem_base_static_components, 0);

@@ -21,13 +21,8 @@ headers += \
         base/base.h
 
 libmca_snapc_la_SOURCES += \
-        base/snapc_base_frame.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA = base/help-orte-snapc-base.txt
-
-libmca_snapc_la_SOURCES += \
+        base/snapc_base_frame.c \
         base/snapc_base_select.c \
 	base/snapc_base_fns.c
-endif
+
+dist_pkgdata_DATA = base/help-orte-snapc-base.txt

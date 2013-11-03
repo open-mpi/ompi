@@ -62,6 +62,7 @@
 #endif
 
 #include "opal/mca/if/if.h"
+#include "opal/mca/if/base/base.h"
 
 static int if_bsdx_ipv6_open(void);
 
@@ -99,10 +100,13 @@ opal_if_base_component_t mca_if_bsdx_ipv6_component = {
 /* configure using getifaddrs(3) */
 static int if_bsdx_ipv6_open(void)
 {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     struct ifaddrs **ifadd_list;
     struct ifaddrs *cur_ifaddrs;
     struct sockaddr_in6* sin_addr;
+
+    opal_output_verbose(1, opal_if_base_framework.framework_output,
+                        "searching for IPv6 interfaces");
 
     /* 
      * the manpage claims that getifaddrs() allocates the memory,
@@ -126,42 +130,35 @@ static int if_bsdx_ipv6_open(void)
 
         /* skip non-ipv6 interface addresses */
         if (AF_INET6 != cur_ifaddrs->ifa_addr->sa_family) {
-#if 0
-            printf("skipping non-ipv6 interface %s.\n", cur_ifaddrs->ifa_name);
-#endif
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "skipping non-ipv6 interface %s[%d].\n",
+                                cur_ifaddrs->ifa_name, (int)cur_ifaddrs->ifa_addr->sa_family);
             continue;
         }
 
         /* skip interface if it is down (IFF_UP not set) */
         if (0 == (cur_ifaddrs->ifa_flags & IFF_UP)) {
-#if 0
-            printf("skipping non-up interface %s.\n", cur_ifaddrs->ifa_name);
-#endif
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "skipping non-up interface %s.\n", cur_ifaddrs->ifa_name);
             continue;
         }
 
         /* skip interface if it is a loopback device (IFF_LOOPBACK set) */
         if (!opal_if_retain_loopback && 0 != (cur_ifaddrs->ifa_flags & IFF_LOOPBACK)) {
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "skipping loopback interface %s.\n", cur_ifaddrs->ifa_name);
             continue;
         }
 
         /* or if it is a point-to-point interface */
         /* TODO: do we really skip p2p? */
         if (0!= (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
-#if 0
-            printf("skipping loopback interface %s.\n", cur_ifaddrs->ifa_name);
-#endif              
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "skipping p2p interface %s.\n", cur_ifaddrs->ifa_name);
             continue;
         }
 
         sin_addr = (struct sockaddr_in6 *) cur_ifaddrs->ifa_addr;
-        intf = OBJ_NEW(opal_if_t);
-        if (NULL == intf) {
-            opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
-                        sizeof(opal_if_t));
-            free(ifadd_list);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
 
         /* 
          * skip IPv6 address starting with fe80:, as this is supposed to be
@@ -175,25 +172,32 @@ static int if_bsdx_ipv6_open(void)
          */
 
         if ((IN6_IS_ADDR_LINKLOCAL (&sin_addr->sin6_addr))) {
-#if 0
-            printf("skipping link-local ipv6 address on interface \
-                        %s with scope %d.\n", 
-                   cur_ifaddrs->ifa_name, sin_addr->sin6_scope_id);
-#endif
+            opal_output_verbose(1, opal_if_base_framework.framework_output,
+                                "skipping link-local ipv6 address on interface "
+                                "%s with scope %d.\n", 
+                                cur_ifaddrs->ifa_name, sin_addr->sin6_scope_id);
             continue;
         }
 
-#if 0
-        char *addr_name = (char *) malloc(48*sizeof(char));
-        inet_ntop(AF_INET6, &sin_addr->sin6_addr, addr_name, 48*sizeof(char));
-        opal_output(0, "ipv6 capable interface %s discovered, address %s.\n", 
-                    cur_ifaddrs->ifa_name, addr_name);
-        free(addr_name);
-#endif
+        if (0 < opal_output_get_verbosity(opal_if_base_framework.framework_output)) {
+            char *addr_name = (char *) malloc(48*sizeof(char));
+            inet_ntop(AF_INET6, &sin_addr->sin6_addr, addr_name, 48*sizeof(char));
+            opal_output(0, "ipv6 capable interface %s discovered, address %s.\n", 
+                        cur_ifaddrs->ifa_name, addr_name);
+            free(addr_name);
+        }
 
         /* fill values into the opal_if_t */
         memcpy(&a6, &(sin_addr->sin6_addr), sizeof(struct in6_addr));
             
+        intf = OBJ_NEW(opal_if_t);
+        if (NULL == intf) {
+            opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
+                        sizeof(opal_if_t));
+            free(ifadd_list);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        intf->af_family = AF_INET6;
         strncpy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
         intf->if_index = opal_list_get_size(&opal_if_list) + 1;
         ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
@@ -219,7 +223,7 @@ static int if_bsdx_ipv6_open(void)
     }   /*  of for loop over ifaddrs list */
 
     free(ifadd_list);
-#endif  /* OPAL_WANT_IPV6 */
+#endif  /* OPAL_ENABLE_IPV6 */
 
     return OPAL_SUCCESS;
 }

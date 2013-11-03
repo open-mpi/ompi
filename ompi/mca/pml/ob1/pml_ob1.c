@@ -638,7 +638,8 @@ int mca_pml_ob1_ft_event( int state )
     if(OPAL_CRS_CHECKPOINT == state) {
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
-            orte_grpcomm.barrier();
+            ompi_rte_barrier(coll);
+            OMPI_WAIT_FOR_COMPLETION(coll->active);
         }
 
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
@@ -649,7 +650,8 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) { 
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
-                orte_grpcomm.barrier();
+                ompi_rte_barrier(coll);
+                OMPI_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
@@ -749,7 +751,8 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
-                orte_grpcomm.barrier();
+                ompi_rte_barrier(coll);
+                OMPI_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
@@ -776,7 +779,7 @@ int mca_pml_ob1_ft_event( int state )
             }
 
             /* Is this barrier necessary ? JJH */
-            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            if (OMPI_SUCCESS != (ret = ompi_rte_barrier())) {
                 opal_output(0, "pml:ob1: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
                 return ret;
             }
@@ -792,7 +795,8 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
-                orte_grpcomm.barrier();
+                ompi_rte_barrier(coll);
+                OMPI_WAIT_FOR_COMPLETION(coll->active);
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
         }

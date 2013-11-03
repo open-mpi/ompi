@@ -42,3 +42,37 @@ However, an error was encountered when trying to parse the following variable:
     %s
 
 #This is a fatal error.
+[slurm-dyn-alloc-timeout]
+We attempted to obtain a dynamic allocation from Slurm, but
+contact with the Slurm control daemon timed out. Please check
+that the Slurm dynamic allocation plug-in is properly operating.
+#
+[slurm-dyn-alloc-failed]
+
+  Allocation request: %s
+#
+[dyn-alloc-no-config]
+Dynamic allocation was enabled, but no Slurm configuration
+file was given. Please provide the required configuration file.
+#
+[host-not-resolved]
+The Slurm control host could not be resolved.
+
+  Host: %s
+
+Please check the Slurm configuration and try again.
+#
+[connection-failed]
+Connection to the Slurm controller failed:
+
+  Host: %s
+  Port: %d
+
+Please check the Slurm configuration and try again.
+#
+[config-file-not-found]
+The Slurm configuration file was not found.
+
+  File: %s
+
+Please check the filename and path and try again.

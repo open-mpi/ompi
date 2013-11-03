@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
  # $COPYRIGHT$
 # 
@@ -19,8 +19,6 @@
 # 
 # $HEADER$
 #
-
-EXTRA_DIST += tools/CMakeLists.txt
 
 # This makefile.am does not stand on its own - it is included from
 # orte/Makefile.am

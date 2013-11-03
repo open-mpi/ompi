@@ -39,28 +39,25 @@ BEGIN_C_DECLS
  * MCA Framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_ras_base_framework;
-
 /* select a component */
 ORTE_DECLSPEC    int orte_ras_base_select(void);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * globals that might be needed
  */
 typedef struct orte_ras_base_t {
     bool allocation_read;
-    bool display_alloc;
     orte_ras_base_module_t *active_module;
     int total_slots_alloc;
 } orte_ras_base_t;
 
 ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;
 
+ORTE_DECLSPEC void orte_ras_base_display_alloc(void);
+
 ORTE_DECLSPEC void orte_ras_base_allocate(int fd, short args, void *cbdata);
 
 ORTE_DECLSPEC int orte_ras_base_add_hosts(orte_job_t *jdata);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

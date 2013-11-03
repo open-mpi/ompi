@@ -91,11 +91,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         
         if (NULL != rml_uri) {
             /* set the contact info into the hash table */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
-                ORTE_ERROR_LOG(rc);
-                free(rml_uri);
-                return(rc);
-            }
+            orte_rml.set_contact_info(rml_uri);
             if (!got_name) {
                 /* we only get an update from a single jobid - the command
                  * that creates these doesn't cross jobid boundaries - so

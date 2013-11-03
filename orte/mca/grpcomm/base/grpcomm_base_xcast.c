@@ -36,6 +36,7 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
@@ -57,10 +58,13 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     opal_byte_object_t *bo;
     int8_t flag;
     orte_grpcomm_collective_t coll;
+    orte_job_t *jdata;
+    orte_proc_t *rec;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:xcast:recv:send_relay",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "%s grpcomm:xcast:recv: with %d bytes",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (int)buffer->bytes_used));
 
     /* setup the relay message */
     relay = OBJ_NEW(opal_buffer_t);
@@ -70,7 +74,8 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     cnt=1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &cnt, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
-        goto relay;
+        ORTE_FORCED_TERMINATE(ret);
+        return;
     }
 
     /* if it is add_procs, then... */
@@ -83,7 +88,8 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
         }
     
         /* update our local nidmap, if required - the decode function
-         * knows what to do - it will also free the bytes in the bo
+         * knows what to do - it will also free the bytes in the bo. Decode
+         * also updates our global nidmap object for sending to our local procs
          */
         if (ORTE_PROC_IS_HNP) {
             /* no need - already have the info */
@@ -161,7 +167,27 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
                              ORTE_NAME_PRINT(&nm->name)));
         rly = OBJ_NEW(opal_buffer_t);
         opal_dss.copy_payload(rly, relay);
-        if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST, 0,
+        /* check the state of the recipient - no point
+         * sending to someone not alive
+         */
+        jdata = orte_get_job_data_object(nm->name.jobid);
+        if (NULL == (rec = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, nm->name.vpid))) {
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                                 "%s orte:daemon:send_relay proc %s not found - cannot relay",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&nm->name)));
+            OBJ_RELEASE(rly);
+            continue;
+        }
+        if (ORTE_PROC_STATE_RUNNING < rec->state) {
+            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                                 "%s orte:daemon:send_relay proc %s not running - cannot relay",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&nm->name)));
+            OBJ_RELEASE(rly);
+            continue;
+        }
+        if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(rly);
@@ -175,7 +201,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
 
     /* now send it to myself for processing */
     if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay,
-                                           ORTE_RML_TAG_DAEMON, 0,
+                                           ORTE_RML_TAG_DAEMON,
                                            orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(relay);

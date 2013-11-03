@@ -300,7 +300,7 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
                 /* if the list is getting too large, abort */
                 if (orte_iof_base.output_limit < opal_list_get_size(&wev->outputs)) {
                     opal_output(0, "IO Forwarding is running too far behind - something is blocking us from writing");
-                    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     goto ABORT;
                 }
                 /* leave the write event running so it will call us again
@@ -321,7 +321,7 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
             /* if the list is getting too large, abort */
             if (orte_iof_base.output_limit < opal_list_get_size(&wev->outputs)) {
                 opal_output(0, "IO Forwarding is running too far behind - something is blocking us from writing");
-                ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 goto ABORT;
             }
             /* leave the write event running so it will call us again

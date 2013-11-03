@@ -41,6 +41,7 @@ static int add_log(const char *table,
 opal_db_base_module_t opal_db_print_module = {
     init,
     finalize,
+    opal_db_base_set_id,
     NULL,
     NULL,
     NULL,

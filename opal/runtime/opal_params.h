@@ -13,7 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -27,7 +27,7 @@
 
 extern char *opal_signal_string;
 extern char *opal_net_private_ipv4;
-extern bool opal_set_max_sys_limits;
+extern char *opal_set_max_sys_limits;
 
 #if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;

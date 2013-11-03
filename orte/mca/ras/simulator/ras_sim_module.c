@@ -18,6 +18,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
@@ -28,7 +29,7 @@
 /*
  * Local functions
  */
-static int allocate(opal_list_t *nodes);
+static int allocate(orte_job_t *jdata, opal_list_t *nodes);
 static int finalize(void);
 
 
@@ -36,11 +37,13 @@ static int finalize(void);
  * Global variable
  */
 orte_ras_base_module_t orte_ras_sim_module = {
+    NULL,
     allocate,
+    NULL,
     finalize
 };
 
-static int allocate(opal_list_t *nodes)
+static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int i, n, val, dig, num_nodes;
     orte_node_t *node;

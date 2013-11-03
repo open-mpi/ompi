@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -56,16 +56,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
     orte_proc_t *daemon;
 
     /* read up to the fragment size */
-#if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
-#else
-    {
-        DWORD readed;
-        HANDLE handle = (HANDLE)_get_osfhandle(fd);
-        ReadFile(handle, data, sizeof(data), &readed, NULL);
-        numbytes = (int)readed;
-    }
-#endif  /* !defined(__WINDOWS__) */
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:mrorted:read handler read %d bytes from %s, fd %d",
@@ -196,7 +187,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
     
         orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
-                                0, orte_rml_send_callback, NULL);
+                                orte_rml_send_callback, NULL);
     }
     
     /* re-add the event */
@@ -274,7 +265,7 @@ static void send_data(orte_process_name_t *name, orte_iof_tag_t tag,
     }
 
     if (0 > (rc = orte_rml.send_buffer_nb(name, buf, ORTE_RML_TAG_IOF_PROXY,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }

@@ -90,6 +90,13 @@ OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
  */
 OPAL_DECLSPEC int16_t opal_ifnametokindex(const char* if_name);
 
+/*
+ *  Attempt to resolve an address (given as either IPv4/IPv6 string
+ *  or hostname) and return the kernel index of the interface
+ *  that is on the same network as the specified address
+ */
+OPAL_DECLSPEC int16_t opal_ifaddrtokindex(const char* if_addr);
+
 /**
  *  Lookup an interface by opal_list index and return its kernel index.
  *  
@@ -144,6 +151,9 @@ OPAL_DECLSPEC int opal_ifkindextoname(int if_kindex, char* if_name, int);
  */
 OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*,
                                      unsigned int);
+OPAL_DECLSPEC int opal_ifkindextoaddr(int if_kindex,
+                                      struct sockaddr* if_addr,
+                                      unsigned int length);
 
 /**
  *  Lookup an interface by index and return its network mask (in CIDR
@@ -208,7 +218,7 @@ OPAL_DECLSPEC bool opal_ifisloopback(int if_index);
 /*
  * Determine if a specified interface is included in a NULL-terminated argv array
  */
-OPAL_DECLSPEC int opal_ifmatches(int idx, char **nets);
+OPAL_DECLSPEC int opal_ifmatches(int kidx, char **nets);
 
 /*
  * Provide a list of strings that contain all known aliases for this node

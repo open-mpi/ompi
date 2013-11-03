@@ -50,28 +50,6 @@
 orte_iof_base_module_t orte_iof = {0};
 
 
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include bogus functions here so that
- * the build system sees at least one function
- * in the library
- */
-static int orte_iof_base_register(mca_base_open_register_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_iof_base_open(mca_base_open_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_iof_base_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
-
 /* class instances */
 static void orte_iof_job_construct(orte_iof_job_t *ptr)
 {
@@ -246,8 +224,6 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
     int rc, xmlfd;
 
     /* Initialize globals */
-    OBJ_CONSTRUCT(&orte_iof_base.iof_write_output_lock, opal_mutex_t);
-
     if (0 > orte_iof_base.output_limit) {
         orte_iof_base.output_limit = INT_MAX;
     }
@@ -310,8 +286,8 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_iof_base_framework, flags);
 }
-#endif
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, iof, "ORTE I/O Forwarding",
                            orte_iof_base_register, orte_iof_base_open, orte_iof_base_close,
                            mca_iof_base_static_components, 0);
+

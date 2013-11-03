@@ -41,6 +41,8 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/threads.h"
+#include "opal/util/arch.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
@@ -474,10 +476,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
-    /* Register errhandler callback - RTE will ignore if it
+    /* Register the default errhandler callback - RTE will ignore if it
      * doesn't support this capability
      */
-    ompi_rte_set_fault_callback(ompi_errhandler_runtime_callback);
+    ompi_rte_register_errhandler(ompi_errhandler_runtime_callback,
+                                 OMPI_RTE_ERRHANDLER_LAST);
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
@@ -603,6 +606,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      */
     coll = OBJ_NEW(ompi_rte_collective_t);
     coll->id = ompi_process_info.peer_modex;
+    coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_modex(coll))) {
         error = "rte_modex failed";
         goto error;
@@ -611,9 +615,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * so long as it occurs prior to calling a function that needs
      * the modex info!
      */
-    while (coll->active) {
-        opal_progress();  /* block in progress pending events */
-    }
+    OMPI_WAIT_FOR_COMPLETION(coll->active);
     OBJ_RELEASE(coll);
 
     if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
@@ -793,14 +795,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* wait for everyone to reach this point */
     coll = OBJ_NEW(ompi_rte_collective_t);
     coll->id = ompi_process_info.peer_init_barrier;
+    coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
         error = "rte_barrier failed";
         goto error;
     }
     /* wait for barrier to complete */
-    while (coll->active) {
-        opal_progress();  /* block in progress pending events */
-    }
+    OMPI_WAIT_FOR_COMPLETION(coll->active);
     OBJ_RELEASE(coll);
 
     /* check for timing request - get stop time and report elapsed

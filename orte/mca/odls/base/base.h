@@ -35,30 +35,14 @@
 
 BEGIN_C_DECLS
 
-/**
- * Global instance of odls-wide framework data
+/*
+ * MCA framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_odls_base_framework;
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-/**
- * Struct to hold globals for the odls framework
- */
-typedef struct orte_odls_base_t {
-    /* component has been selected */
-    bool selected;
-    /** selected component */
-    orte_odls_base_component_t selected_component;
-} orte_odls_base_t;
-
 /*
  * Select an available component.
  */
 ORTE_DECLSPEC int orte_odls_base_select(void);
-
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

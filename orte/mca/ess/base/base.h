@@ -49,8 +49,6 @@ ORTE_DECLSPEC int orte_ess_base_select(void);
  */
 ORTE_DECLSPEC extern int orte_ess_base_std_buffering;
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 ORTE_DECLSPEC extern int orte_ess_base_num_procs;
 ORTE_DECLSPEC extern char *orte_ess_base_jobid;
 ORTE_DECLSPEC extern char *orte_ess_base_vpid;
@@ -83,8 +81,6 @@ ORTE_DECLSPEC int orte_ess_base_proc_binding(void);
 ORTE_DECLSPEC int orte_ess_env_put(orte_std_cntr_t num_procs,
                                    orte_std_cntr_t num_local_procs,
                                    char ***env);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

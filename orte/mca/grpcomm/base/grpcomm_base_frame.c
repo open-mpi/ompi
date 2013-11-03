@@ -142,3 +142,7 @@ OBJ_CLASS_INSTANCE(orte_grpcomm_collective_t,
                    opal_list_item_t,
                    collective_constructor,
                    collective_destructor);
+
+OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
+                   opal_object_t,
+                   NULL, NULL);

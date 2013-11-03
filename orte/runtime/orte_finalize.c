@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -32,20 +32,20 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
-#include "orte/util/show_help.h"
+#include "orte/util/name_fns.h"
 
-/**
- * Leave ORTE.
- *
- * @retval ORTE_SUCCESS Upon success.
- * @retval ORTE_ERROR Upon failure.
- *
- * This function performs 
- */
 int orte_finalize(void)
 {
-    if (!orte_initialized) {
-        return ORTE_SUCCESS;
+    int rc;
+
+    --orte_initialized;
+    if (0 != orte_initialized) {
+        /* check for mismatched calls */
+        if (0 > orte_initialized) {
+            opal_output(0, "%s MISMATCHED CALLS TO ORTE FINALIZE",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+        return ORTE_ERROR;
     }
 
     /* protect against multiple calls */
@@ -53,45 +53,37 @@ int orte_finalize(void)
         return ORTE_SUCCESS;
     }
     
-    /* set the flag indicating we are finalizing */
+    /* flag that we are finalizing */
     orte_finalizing = true;
 
-    /* close the orte_show_help system */
-    orte_show_help_finalize();
-
     /* call the finalize function for this environment */
-    orte_ess.finalize();
-    
+    if (ORTE_SUCCESS != (rc = orte_ess.finalize())) {
+        return rc;
+    }
+
     /* close the ess itself */
     (void) mca_base_framework_close(&orte_ess_base_framework);
-    
-    /* cleanup the process info */
-    orte_proc_info_finalize();
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-#if ORTE_ENABLE_PROGRESS_THREADS
     if (ORTE_PROC_IS_APP) {
         /* stop the progress thread */
         orte_event_base_active = false;
-        /* must trigger the "finalize" event to break us
-         * out of the event loop
-         */
-        opal_event_active(&orte_finalize_event, OPAL_EV_WRITE, 1);
+        /* break the event loop */
+        opal_event_base_loopbreak(orte_event_base);
         /* wait for thread to exit */
         opal_thread_join(&orte_progress_thread, NULL);
         OBJ_DESTRUCT(&orte_progress_thread);
         /* release the event base */
         opal_event_base_free(orte_event_base);
     }
-#endif
-#endif
+
+    /* cleanup the process info */
+    orte_proc_info_finalize();
 
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);
     
     /* finalize the opal utilities */
-    opal_finalize();
-    
-    orte_initialized = false;
-    return ORTE_SUCCESS;
+    rc = opal_finalize();
+
+    return rc;
 }

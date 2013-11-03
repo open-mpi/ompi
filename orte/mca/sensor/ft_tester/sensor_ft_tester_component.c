@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,46 +59,33 @@ static int orte_sensor_ft_tester_register (void)
 {
     mca_base_component_t *c = &mca_sensor_ft_tester_component.super.base_version;
 
-    mca_sensor_ft_tester_component.fail_rate = 0;
-    (void) mca_base_var_register (c, "fail_rate",
-                                  "Time between checks to decide if one or more procs shall be killed, expressed as sec",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &mca_sensor_ft_tester_component.fail_rate);
-
     fail_prob = NULL;
-    (void) mca_base_var_register (c, "fail_prob", "Probability of killing a single executable",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &fail_prob);
-
+    (void) mca_base_component_var_register (c, "fail_prob", "Probability of killing a single executable",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &fail_prob);
 
     mca_sensor_ft_tester_component.multi_fail = false;
-    (void) mca_base_var_register (c, "multi_allowed", "Allow multiple executables to be killed at one time",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                  &mca_sensor_ft_tester_component.multi_fail);
+    (void) mca_base_component_var_register (c, "multi_allowed", "Allow multiple executables to be killed at one time",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_sensor_ft_tester_component.multi_fail);
 
     daemon_fail_prob = NULL;
-    (void) mca_base_var_register (c, "daemon_fail_prob", "Probability of killing a daemon",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                  &daemon_fail_prob);
+    (void) mca_base_component_var_register (c, "daemon_fail_prob", "Probability of killing a daemon",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &daemon_fail_prob);
 
     return ORTE_SUCCESS;
 }
 
 static int orte_sensor_ft_tester_open(void)
 {
-    /* verify parameters */
-    if (mca_sensor_ft_tester_component.fail_rate < 0) {
-        opal_output(0, "Illegal value %d - must be >= 0", mca_sensor_ft_tester_component.fail_rate);
-        return ORTE_ERR_FATAL;
-    }
-
+    /* lookup parameters */
     if (NULL != fail_prob) {
         mca_sensor_ft_tester_component.fail_prob = strtof(fail_prob, NULL);
         if (1.0 < mca_sensor_ft_tester_component.fail_prob) {
@@ -124,16 +112,16 @@ static int orte_sensor_ft_tester_open(void)
 
 static int orte_sensor_ft_tester_query(mca_base_module_t **module, int *priority)
 {
-    if (0 == mca_sensor_ft_tester_component.fail_rate) {
-        *priority = 0;
-        *module = NULL;
-        return ORTE_ERROR;
+    if (0.0 < mca_sensor_ft_tester_component.fail_prob ||
+        0.0 < mca_sensor_ft_tester_component.daemon_fail_prob) {
+        *priority = 1;  /* at the bottom */
+        *module = (mca_base_module_t *)&orte_sensor_ft_tester_module;
+        return ORTE_SUCCESS;
     }
+    *priority = 0;
+    *module = NULL;
+    return ORTE_ERROR;
 
-    *priority = 1;  /* at the bottom */
-    *module = (mca_base_module_t *)&orte_sensor_ft_tester_module;
-    
-    return ORTE_SUCCESS;
 }
 
 /**

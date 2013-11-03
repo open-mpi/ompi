@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,6 +57,7 @@
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
+#include "orte/mca/db/db.h"
 #endif
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
@@ -140,9 +142,7 @@ static int rte_init(void)
         
     }
     
-    /* otherwise, I must be an application process - use
-     * the default procedure to finish my setup
-     */
+    /* use the default procedure to finish my setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(true))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_app_setup";
@@ -162,6 +162,30 @@ static int rte_init(void)
         goto error;
     }
 
+    /* if we are an ORTE app - and not an MPI app - then
+     * we need to exchange our connection info here.
+     * MPI_Init has its own modex, so we don't need to do
+     * two of them. However, if we don't do a modex at all,
+     * then processes have no way to communicate
+     *
+     * NOTE: only do this when the process originally launches.
+     * Cannot do this on a restart as the rest of the processes
+     * in the job won't be executing this step, so we would hang
+     */
+    if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
+        orte_grpcomm_collective_t coll;
+        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+        coll.id = orte_process_info.peer_modex;
+        coll.active = true;
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(&coll))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte modex";
+            goto error;
+        }
+        ORTE_WAIT_FOR_COMPLETION(coll.active);
+        OBJ_DESTRUCT(&coll);
+    }
+    
     return ORTE_SUCCESS;
 
 error:
@@ -177,12 +201,13 @@ error:
 static int rte_finalize(void)
 {
     int ret;
-    
+
     /* if I am a daemon, finalize using the default procedure */
     if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
+        return ret;
     } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
@@ -190,19 +215,19 @@ static int rte_finalize(void)
         }
         /* as a tool, I didn't create a nidmap - so just return now */
         return ret;
-    } else {
-        /* otherwise, I must be an application process
-         * use the default procedure to finish
-         */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-            ORTE_ERROR_LOG(ret);
-        }
     }
-    
+
+    /* otherwise, I must be an application process
+     * use the default procedure to finish
+     */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+        ORTE_ERROR_LOG(ret);
+    }
+
     /* deconstruct the nidmap and jobmap arrays */
     orte_util_nidmap_finalize();
-    
-    return ret;    
+
+    return ORTE_SUCCESS;
 }
 
 static int env_set_name(void)
@@ -249,6 +274,10 @@ static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_proc_type_t svtype;
+    orte_grpcomm_collective_t coll;
+
+    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+    coll.id = orte_process_info.peer_init_barrier;
 
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -317,11 +346,14 @@ static int rte_ft_event(int state)
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
              */
-            if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
                 opal_output(0, "ess:env: ft_event(%2d): Failed in orte_grpcomm.barrier (%d)",
                             state, ret);
-                return ret;
+                exit_status = ret;
+                goto cleanup;
             }
+            coll.active = true;
+            ORTE_WAIT_FOR_COMPLETION(coll.active);
 
             if( orte_cr_flush_restart_files ) {
                 OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
@@ -390,7 +422,7 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
+        if (ORTE_SUCCESS != (ret = orte_db.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -440,11 +472,15 @@ static int rte_ft_event(int state)
          * Barrier to make all processes have been successfully restarted before
          * we try to remove some restart only files.
          */
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
             opal_output(0, "ess:env ft_event(%2d): Failed in orte_grpcomm.barrier (%d)",
                         state, ret);
-            return ret;
+            exit_status = ret;
+            goto cleanup;
         }
+        coll.active = true;
+	ORTE_WAIT_FOR_COMPLETION(coll.active);
+
         if( orte_cr_flush_restart_files ) {
             OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                                  "ess:env ft_event(%2d): %s "
@@ -486,8 +522,8 @@ static int rte_ft_event(int state)
         /* Error state = Nothing */
     }
 
- cleanup:
-
+cleanup:
+    OBJ_DESTRUCT(&coll);
     return exit_status;
 }
 #endif

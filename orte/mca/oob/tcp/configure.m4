@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -34,5 +34,5 @@ AC_DEFUN([MCA_orte_oob_tcp_CONFIG],[
 #include <netinet/in.h>
 #endif])
 
-    AS_IF([test "$oob_tcp_happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
+    AS_IF([test "$oob_tcp_happy" = "yes"], [$1], [$2])
 ])dnl

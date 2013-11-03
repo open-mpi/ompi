@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,12 +34,15 @@
 #include <unistd.h>
 #endif
 
+#include "opal/hash_string.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/db/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
@@ -47,10 +51,12 @@
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/dfs/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
@@ -105,13 +111,11 @@ static bool signals_set=false;
 static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t epipe_handler;
-#ifndef __WINDOWS__
 static int term_pipe[2];
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
 static opal_event_t sigtstp_handler;
 static opal_event_t sigcont_handler;
-#endif  /* __WINDOWS__ */
 
 static void abort_signal_callback(int signal);
 static void clean_abort(int fd, short flags, void *arg);
@@ -136,14 +140,12 @@ static int rte_init(void)
     orte_proc_t *proc;
     orte_app_context_t *app;
 
-
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
         goto error;
     }
 
-#ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /** setup callbacks for abort signals - from this point
@@ -154,6 +156,11 @@ static int rte_init(void)
      * the basic POSIX trap functions to handle the signal,
      * and then let that signal handler do some magic to
      * avoid the hang
+     *
+     * NOTE: posix traps don't allow us to do anything major
+     * in them, so use a pipe tied to a libevent event to
+     * reach a "safe" place where the termination event can
+     * be created
      */
     pipe(term_pipe);
     /* setup an event to attempt normal termination on signal */
@@ -170,7 +177,6 @@ static int rte_init(void)
     setup_sighandler(SIGUSR2, &sigusr2_handler, signal_forward_callback);
     setup_sighandler(SIGTSTP, &sigtstp_handler, signal_forward_callback);
     setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
-#endif  /* __WINDOWS__ */
     signals_set = true;
 
 #if OPAL_HAVE_HWLOC
@@ -224,6 +230,12 @@ static int rte_init(void)
         fflush(orte_xml_fp);
     }
 
+    /* setup the global nidmap/pidmap object */
+    orte_nidmap.bytes = NULL;
+    orte_nidmap.size = 0;
+    orte_pidmap.bytes = NULL;
+    orte_pidmap.size = 0;
+
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
      */
@@ -273,14 +285,37 @@ static int rte_init(void)
         error = "orte_plm_base_select";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
+    /* if we were spawned by a singleton, our jobid was given to us */
+    if (NULL != orte_ess_base_jobid) {
+        if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&ORTE_PROC_MY_NAME->jobid, orte_ess_base_jobid))) {
+            ORTE_ERROR_LOG(ret);
+            error = "convert_string_to_jobid";
+            goto error;
+        }
+        ORTE_PROC_MY_NAME->vpid = 0;
+    } else {
+        if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_set_hnp_name";
+            goto error;
+        }
+    }
+    /* Setup the communication infrastructure */
+    
+    /*
+     * OOB Layer
+     */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_plm_set_hnp_name";
+        error = "orte_oob_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_select";
         goto error;
     }
 
-    /* Setup the communication infrastructure */
-    
     /*
      * Runtime Messaging Layer
      */
@@ -413,14 +448,16 @@ static int rte_init(void)
     /* database */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "opal_db_base_open";
+        error = "orte_db_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_db_base_select(true))) {
         ORTE_ERROR_LOG(ret);
-        error = "opal_db_base_select";
+        error = "orte_db_base_select";
         goto error;
     }
+    /* set our id */
+    opal_db.set_id((opal_identifier_t*)ORTE_PROC_MY_NAME);
 
     /*
      * Group communications
@@ -475,11 +512,46 @@ static int rte_init(void)
         goto error;
     }
 #if OPAL_HAVE_HWLOC
-    /* if a topology file was given, then the rmaps framework open
-     * will have reset our topology. Ensure we always get the right
-     * one by setting our node topology afterwards
-     */
-    node->topology = opal_hwloc_topology;
+    {
+        char *coprocessors, **sns;
+        uint32_t h;
+        int idx;
+
+        /* if a topology file was given, then the rmaps framework open
+         * will have reset our topology. Ensure we always get the right
+         * one by setting our node topology afterwards
+         */
+        node->topology = opal_hwloc_topology;
+
+        /* init the hash table, if necessary */
+        if (NULL == orte_coprocessors) {
+            orte_coprocessors = OBJ_NEW(opal_hash_table_t);
+            opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
+        }
+        /* detect and add any coprocessors */
+        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+        if (NULL != coprocessors) {
+            /* separate the serial numbers of the coprocessors
+             * on this host
+             */
+            sns = opal_argv_split(coprocessors, ',');
+            for (idx=0; NULL != sns[idx]; idx++) {
+                /* compute the hash */
+                OPAL_HASH_STR(sns[idx], h);
+                /* mark that this coprocessor is hosted by this node */
+                opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
+            }
+            opal_argv_free(sns);
+            free(coprocessors);
+            orte_coprocessors_detected = true;
+        }
+        /* see if I am on a coprocessor */
+        coprocessors = opal_hwloc_base_check_on_coprocessor();
+        if (NULL != coprocessors) {
+            node->serial_number = coprocessors;
+            orte_coprocessors_detected = true;
+        }
+    }
 #endif
 
     /* Open/select the odls */
@@ -503,20 +575,14 @@ static int rte_init(void)
 
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
-    
+    proc->rml_uri = strdup(orte_process_info.my_hnp_uri);
+
     /* we are also officially a daemon, so better update that field too */
-    orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
+    orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
     
-#if !ORTE_DISABLE_FULL_SUPPORT
     /* setup the orte_show_help system to recv remote output */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
-                                 ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup receive for orte_show_help";
-        goto error;
-    }
-#endif
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
+                            ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
 
     /* setup my session directory */
     if (orte_create_session_dirs) {
@@ -653,6 +719,18 @@ static int rte_init(void)
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
     
+    /* setup the dfs framework */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_select";
+        goto error;
+    }
+
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -663,7 +741,6 @@ static int rte_init(void)
         }
     }
 
-#if !ORTE_ENABLE_PROGRESS_THREADS
     /* We actually do *not* want an HNP to voluntarily yield() the
        processor more than necessary.  Orterun already blocks when
        it is doing nothing, so it doesn't use any more CPU cycles than
@@ -683,7 +760,6 @@ static int rte_init(void)
        problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
        require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
-#endif
 
     return ORTE_SUCCESS;
 
@@ -705,7 +781,6 @@ static int rte_finalize(void)
     if (signals_set) {
         /* Remove the epipe handler */
         opal_event_signal_del(&epipe_handler);
-#ifndef __WINDOWS__
         /* remove the term handler */
         opal_event_del(&term_handler);
         /** Remove the USR signal handlers */
@@ -715,7 +790,6 @@ static int rte_finalize(void)
             opal_event_signal_del(&sigtstp_handler);
             opal_event_signal_del(&sigcont_handler);
         }
-#endif  /* __WINDOWS__ */
         signals_set = false;
     }
 
@@ -723,30 +797,38 @@ static int rte_finalize(void)
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
     (void) mca_base_framework_close(&orte_sensor_base_framework);
 
+    /* close the dfs */
+    (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);
-    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     /* output any lingering stdout/err data */
     fflush(stdout);
     fflush(stderr);
     (void) mca_base_framework_close(&orte_iof_base_framework);
-    (void) mca_base_framework_close(&orte_ras_base_framework);
+    (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_rmaps_base_framework);
+    (void) mca_base_framework_close(&orte_ras_base_framework);
+    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
+    (void) mca_base_framework_close(&opal_db_base_framework);
+    (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
-    (void) mca_base_framework_close(&orte_routed_base_framework);
-    (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
 
-    /* remove my contact info file */
-    jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-    contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-    free(jobfam_dir);
-    unlink(contact_path);
-    free(contact_path);
-    
-    /* output any lingering stdout/err data */
-    fflush(stdout);
-    fflush(stderr);
+    /* cleanup the pstat stuff */
+    (void) mca_base_framework_close(&opal_pstat_base_framework);
+
+    /* remove my contact info file, if we have session directories */
+    if (NULL != orte_process_info.job_session_dir) {
+        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+        free(jobfam_dir);
+        unlink(contact_path);
+        free(contact_path);
+    }
+
+    /* shutdown the messaging frameworks */
+    (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_oob_base_framework);
 
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
@@ -815,10 +897,6 @@ static void clean_abort(int fd, short flags, void *arg)
         return;
     }
 
-    /* set the global abnormal exit flag so we know not to
-     * use the standard xcast for terminating orteds
-     */
-    orte_abnormal_term_ordered = true;
     /* ensure that the forwarding of stdin stops */
     orte_job_term_ordered = true;
 
@@ -837,10 +915,7 @@ static void clean_abort(int fd, short flags, void *arg)
        (which is a Bad Thing), so we can't call it directly.
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
-    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-
-    /* reset the event */
-    opal_event_add(&term_handler, NULL);
+    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
 static struct timeval current, last={0,0};
@@ -871,7 +946,7 @@ static void abort_signal_callback(int fd)
         if ((current.tv_sec - last.tv_sec) < 5) {
             exit(1);
         }
-    write(1, (void*)msg, strlen(msg));
+        write(1, (void*)msg, strlen(msg));
     }
     /* save the time */
     last.tv_sec = current.tv_sec;

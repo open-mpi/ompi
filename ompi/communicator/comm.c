@@ -1448,7 +1448,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         } 
         if(OMPI_GROUP_IS_DENSE(local_comm->c_local_group)) {
             rc = ompi_proc_pack(local_comm->c_local_group->grp_proc_pointers, 
-                                local_size, sbuf);
+                                local_size, true, sbuf);
         }
         /* get the proc list for the sparse implementations */
         else { 
@@ -1456,7 +1456,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
                                                  sizeof (ompi_proc_t *));
             for(i=0 ; i<local_comm->c_local_group->grp_proc_count ; i++)
                 proc_list[i] = ompi_group_peer_lookup(local_comm->c_local_group,i);
-            rc = ompi_proc_pack (proc_list, local_size, sbuf);
+            rc = ompi_proc_pack (proc_list, local_size, true, sbuf);
         }
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
@@ -1540,7 +1540,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     /* decode the names into a proc-list -- will never add a new proc
        as the result of this operation, so no need to get the newprocs
        list or call PML add_procs(). */
-    rc = ompi_proc_unpack(rbuf, rsize, &rprocs, NULL, NULL);
+    rc = ompi_proc_unpack(rbuf, rsize, &rprocs, true, NULL, NULL);
     OBJ_RELEASE(rbuf);
     
  err_exit:

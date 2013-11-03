@@ -24,11 +24,6 @@
 
 BEGIN_C_DECLS
 
-/*
- * MCA Framework
- */
-OMPI_DECLSPEC extern mca_base_framework_t ompi_rte_base_framework;
-
 /**
  * Select an available component.
  *

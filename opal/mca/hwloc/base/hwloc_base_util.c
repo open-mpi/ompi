@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +34,7 @@
 #include "opal/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/show_help.h"
 #include "opal/threads/tsd.h"
 
@@ -212,18 +213,25 @@ int opal_hwloc_base_get_topology(void)
     OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                          "hwloc:base:get_topology"));
 
-    if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
-        0 != hwloc_topology_set_flags(opal_hwloc_topology, 
-                                      (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
-                                       HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
-        0 != hwloc_topology_load(opal_hwloc_topology)) {
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
+    if (NULL == opal_hwloc_base_topo_file) {
+        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+            0 != hwloc_topology_set_flags(opal_hwloc_topology, 
+                                          (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                           HWLOC_TOPOLOGY_FLAG_IO_DEVICES)) ||
+            0 != hwloc_topology_load(opal_hwloc_topology)) {
+            return OPAL_ERR_NOT_SUPPORTED;
+        }
 
-    /* filter the cpus thru any default cpu set */
-    rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
+        /* filter the cpus thru any default cpu set */
+        rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    } else {
+        rc = opal_hwloc_base_set_topology(opal_hwloc_base_topo_file);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
     }
 
     /* fill opal_cache_line_size global with the smallest L1 cache
@@ -240,7 +248,7 @@ int opal_hwloc_base_set_topology(char *topofile)
     int rc;
 
      OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                         "hwloc:base:set_topology"));
+                          "hwloc:base:set_topology %s", topofile));
 
    if (NULL != opal_hwloc_topology) {
         hwloc_topology_destroy(opal_hwloc_topology);
@@ -250,6 +258,8 @@ int opal_hwloc_base_set_topology(char *topofile)
     }
     if (0 != hwloc_topology_set_xml(opal_hwloc_topology, topofile)) {
         hwloc_topology_destroy(opal_hwloc_topology);
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                             "hwloc:base:set_topology bad topo file"));
         return OPAL_ERR_NOT_SUPPORTED;
     }
     /* since we are loading this from an external source, we have to
@@ -264,6 +274,8 @@ int opal_hwloc_base_set_topology(char *topofile)
     }
     if (0 != hwloc_topology_load(opal_hwloc_topology)) {
         hwloc_topology_destroy(opal_hwloc_topology);
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                             "hwloc:base:set_topology failed to load"));
         return OPAL_ERR_NOT_SUPPORTED;
     }
     /* remove the hostname from the topology. Unfortunately, hwloc
@@ -929,13 +941,13 @@ hwloc_obj_t opal_hwloc_base_find_min_bound_target_under_obj(hwloc_topology_t top
     if (NULL != loc) {
         if (HWLOC_OBJ_CACHE == target) {
             OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                                 "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u:%u",
-                                 min_bound, hwloc_obj_type_string(target),
-                                 cache_level, loc->logical_index));
+                        "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u:%u",
+                        min_bound, hwloc_obj_type_string(target),
+                        cache_level, loc->logical_index));
         } else {
             OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
-                                 "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u",
-                                 min_bound, hwloc_obj_type_string(target), loc->logical_index));
+                        "hwloc:base:min_bound_under_obj found min bound of %u on %s:%u",
+                        min_bound, hwloc_obj_type_string(target), loc->logical_index));
         }
     }
 
@@ -1294,146 +1306,107 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
     return OPAL_SUCCESS;
 }
 
-static opal_hwloc_locality_t get_locality(opal_hwloc_level_t level)
-{
-    opal_hwloc_locality_t lvl = OPAL_PROC_LOCALITY_UNKNOWN;
-
-    switch(level) {
-    case OPAL_HWLOC_NODE_LEVEL:
-        lvl = OPAL_PROC_ON_NODE;
-        break;
-    case OPAL_HWLOC_NUMA_LEVEL:
-        lvl = OPAL_PROC_ON_NUMA;
-        break;
-    case OPAL_HWLOC_SOCKET_LEVEL:
-        lvl = OPAL_PROC_ON_SOCKET;
-        break;
-    case OPAL_HWLOC_L3CACHE_LEVEL:
-        lvl = OPAL_PROC_ON_L3CACHE;
-        break;
-    case OPAL_HWLOC_L2CACHE_LEVEL:
-        lvl = OPAL_PROC_ON_L2CACHE;
-        break;
-    case OPAL_HWLOC_L1CACHE_LEVEL:
-        lvl = OPAL_PROC_ON_L1CACHE;
-        break;
-    case OPAL_HWLOC_CORE_LEVEL:
-        lvl = OPAL_PROC_ON_CORE;
-        break;
-    case OPAL_HWLOC_HWTHREAD_LEVEL:
-        lvl = OPAL_PROC_ON_HWTHREAD;
-        break;
-    }
-
-    return lvl;
-}
-
 opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
-                                                            opal_hwloc_level_t level1,
-                                                            unsigned int peer1,
-                                                            opal_hwloc_level_t level2,
-                                                            unsigned int peer2)
+                                                            char *cpuset1, char *cpuset2)
 {
     opal_hwloc_locality_t locality;
-    hwloc_obj_t obj1, obj2;
-    unsigned cache_level=0;
-    opal_hwloc_level_t i, lvl;
+    hwloc_obj_t obj;
+    unsigned depth, d, width, w;
+    hwloc_cpuset_t avail;
+    bool shared;
+    hwloc_obj_type_t type;
+    int sect1, sect2;
+    hwloc_cpuset_t loc1, loc2;
 
     /* start with what we know - they share a node on a cluster
      * NOTE: we may alter that latter part as hwloc's ability to
      * sense multi-cu, multi-cluster systems grows
      */
-    locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE | OPAL_PROC_ON_BOARD;
+    locality = OPAL_PROC_ON_NODE;
 
-    /* TBD: handle procs bound at different levels - means they
-     * are from different jobs
-     */
-    if (level1 != level2) {
+    /* if either cpuset is NULL, then that isn't bound */
+    if (NULL == cpuset1 || NULL == cpuset2) {
         return locality;
     }
 
-    lvl = level1;
+    /* get the max depth of the topology */
+    depth = hwloc_topology_get_depth(topo);
 
-    /* we know that the objects are bound to the same level, so
-     * if the two objects are the index, then they share
-     * all levels down to and including their own
-     */
-    if (peer1 == peer2) {
-        for (i=lvl; 0 < i; i--) {
-            opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
-                                "equal level - computing locality: %s",
-                                opal_hwloc_base_print_level(i));
-            locality |= get_locality(i);
+    /* convert the strings to cpusets */
+    loc1 = hwloc_bitmap_alloc();
+    hwloc_bitmap_list_sscanf(loc1, cpuset1);
+    loc2 = hwloc_bitmap_alloc();
+    hwloc_bitmap_list_sscanf(loc2, cpuset2);
+
+    /* start at the first depth below the top machine level */
+    for (d=1; d < depth; d++) {
+        shared = false;
+        /* get the object type at this depth */
+        type = hwloc_get_depth_type(topo, d);
+        /* if it isn't one of interest, then ignore it */
+        if (HWLOC_OBJ_NODE != type &&
+            HWLOC_OBJ_SOCKET != type &&
+            HWLOC_OBJ_CACHE != type &&
+            HWLOC_OBJ_CORE != type &&
+            HWLOC_OBJ_PU != type) {
+            continue;
         }
-        goto checkpu;
-    }
+        /* get the width of the topology at this depth */
+        width = hwloc_get_nbobjs_by_depth(topo, d);
 
-    /* get cache level if required */
-    if (OPAL_HWLOC_L3CACHE_LEVEL == lvl) {
-        cache_level = 3;
-    } else if (OPAL_HWLOC_L2CACHE_LEVEL == lvl) {
-        cache_level = 2;
-    } else if (OPAL_HWLOC_L1CACHE_LEVEL == lvl) {
-        cache_level = 1;
-    }
-
-    /* get the objects for these peers */
-    opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
-                        "computing locality - getting object at level %s, index %u",
-                        opal_hwloc_base_print_level(lvl), peer1);
-    obj1 = opal_hwloc_base_get_obj_by_type(topo, opal_hwloc_levels[lvl],
-                                           cache_level, peer1, OPAL_HWLOC_AVAILABLE);
-    opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
-                        "computing locality - getting object at level %s, index %u",
-                        opal_hwloc_base_print_level(lvl), peer2);
-    obj2 = opal_hwloc_base_get_obj_by_type(topo, opal_hwloc_levels[lvl],
-                                           cache_level, peer2, OPAL_HWLOC_AVAILABLE);
-
-    /* climb the levels
-     * NOTE: for now, we will just assume that the two objects
-     * have a common topology above them - i.e., that each
-     * object has the same levels above them. In cases where
-     * nodes have heterogeneous sockets, this won't be true - but
-     * leave that problem for another day
-     */
-    --lvl;
-    while (OPAL_HWLOC_NODE_LEVEL < lvl &&
-           NULL != obj1 && NULL != obj2 && obj1 != obj2) {
-        opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
-                            "computing locality - shifting up from %s",
-                            opal_hwloc_base_print_level(lvl));
-        obj1 = obj1->parent;
-        obj2 = obj2->parent;
-        --lvl;
-    }
-
-    /* set the locality */
-    for (i=lvl; 0 < i; i--) {
-        opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
-                            "computing locality - filling level %s",
-                            opal_hwloc_base_print_level(i));
-        locality |= get_locality(i);
-    }
-
- checkpu:
-    /* NOTE: hwloc isn't able to find cores on all platforms.  Example:
-       PPC64 running RHEL 5.4 (linux kernel 2.6.18) only reports NUMA
-       nodes and PU's.  Fine.  
-
-       However, note that hwloc_get_obj_by_type() will return NULL in
-       2 (effectively) different cases:
-
-       - no objects of the requested type were found
-       - the Nth object of the requested type was not found
-
-       So see if we can find *any* cores by looking for the 0th core.
-    */
-    if (NULL == hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, 0)) {
-        /* nope - so if the two peer's share a HWTHREAD, also
-         * declare them as sharing a core
+        /* scan all objects at this depth to see if
+         * our locations overlap with them
          */
-        if (OPAL_PROC_ON_LOCAL_HWTHREAD(locality)) {
-            locality |= OPAL_PROC_ON_CORE;
+        for (w=0; w < width; w++) {
+            /* get the object at this depth/index */
+            obj = hwloc_get_obj_by_depth(topo, d, w);
+            /* get the available cpuset for this obj */
+            avail = opal_hwloc_base_get_available_cpus(topo, obj);
+            /* see if our locations intersect with it */
+            sect1 = hwloc_bitmap_intersects(avail, loc1);
+            sect2 = hwloc_bitmap_intersects(avail, loc2);
+            /* if both intersect, then we share this level */
+            if (sect1 && sect2) {
+                shared = true;
+                switch(obj->type) {
+                case HWLOC_OBJ_NODE:
+                    locality = OPAL_PROC_ON_NUMA;
+                    break;
+                case HWLOC_OBJ_SOCKET:
+                    locality = OPAL_PROC_ON_SOCKET;
+                    break;
+                case HWLOC_OBJ_CACHE:
+                    if (3 == obj->attr->cache.depth) {
+                        locality = OPAL_PROC_ON_L3CACHE;
+                    } else if (2 == obj->attr->cache.depth) {
+                        locality = OPAL_PROC_ON_L2CACHE;
+                    } else {
+                        locality = OPAL_PROC_ON_L1CACHE;
+                    }
+                    break;
+                case HWLOC_OBJ_CORE:
+                    locality = OPAL_PROC_ON_CORE;
+                    break;
+                case HWLOC_OBJ_PU:
+                    locality = OPAL_PROC_ON_HWTHREAD;
+                    break;
+                default:
+                    /* just ignore it */
+                    break;
+                }
+                break;
+            }
+            /* otherwise, we don't share this
+             * object - but we still might share another object
+             * on this level, so we have to keep searching
+             */
+        }
+        /* if we spanned the entire width without finding
+         * a point of intersection, then no need to go
+         * deeper
+         */
+        if (!shared) {
+            break;
         }
     }
 
@@ -1444,160 +1417,119 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
     return locality;
 }
 
-static hwloc_obj_t df_search_level(hwloc_obj_t start,
-                                   hwloc_cpuset_t cpus,
-                                   opal_hwloc_level_t *bind_level)
+/* searches the given topology for coprocessor objects and returns
+ * their serial numbers as a comma-delimited string, or NULL
+ * if no coprocessors are found
+ */
+char* opal_hwloc_base_find_coprocessors(hwloc_topology_t topo)
 {
-    unsigned k;
-    hwloc_obj_t obj;
-    hwloc_cpuset_t avail;
+    hwloc_obj_t osdev;
+    unsigned i;
+    char **cps = NULL;
+    char *cpstring = NULL;
+    int depth;
 
-    /* get the available cpus */
-    avail = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, start);
-    if (NULL != avail && 0 == hwloc_bitmap_compare(avail, cpus)) {
-        /* convert the level */
-        if (HWLOC_OBJ_MACHINE == start->type) {
-            *bind_level = OPAL_HWLOC_NODE_LEVEL;
-        } else if (HWLOC_OBJ_NODE == start->type) {
-            *bind_level = OPAL_HWLOC_NUMA_LEVEL;
-        } else if (HWLOC_OBJ_SOCKET == start->type) {
-            *bind_level = OPAL_HWLOC_SOCKET_LEVEL;
-        } else if (HWLOC_OBJ_CACHE == start->type) {
-            if (3 == start->attr->cache.depth) {
-                *bind_level = OPAL_HWLOC_L3CACHE_LEVEL;
-            } else if (2 == start->attr->cache.depth) {
-                *bind_level = OPAL_HWLOC_L2CACHE_LEVEL;
-            } else {
-                *bind_level = OPAL_HWLOC_L1CACHE_LEVEL;
+    /* coprocessors are recorded under OS_DEVICEs, so first
+     * see if we have any of those
+     */
+    if (HWLOC_TYPE_DEPTH_UNKNOWN == (depth = hwloc_get_type_depth(topo, HWLOC_OBJ_OS_DEVICE))) {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                             "hwloc:base:find_coprocessors: NONE FOUND IN TOPO"));
+        return NULL;
+    }
+    /* check the device objects for coprocessors */
+    osdev = hwloc_get_obj_by_depth(topo, depth, 0);
+    while (NULL != osdev) {
+        if (HWLOC_OBJ_OSDEV_COPROC == osdev->attr->osdev.type) {
+            /* got one! find and save its serial number */
+            for (i=0; i < osdev->infos_count; i++) {
+                if (0 == strncmp(osdev->infos[i].name, "MICSerialNumber", strlen("MICSerialNumber"))) {
+                    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                                         "hwloc:base:find_coprocessors: coprocessor %s found",
+                                         osdev->infos[i].value));
+                    opal_argv_append_nosize(&cps, osdev->infos[i].value);
+                }
             }
-        } else if (HWLOC_OBJ_CORE == start->type) {
-            *bind_level = OPAL_HWLOC_CORE_LEVEL;
-        } else if (HWLOC_OBJ_PU == start->type) {
-            *bind_level = OPAL_HWLOC_HWTHREAD_LEVEL;
-        } else {
-            /* We don't know what level it is, so just assign it to
-               "node" */
-            *bind_level = OPAL_HWLOC_NODE_LEVEL;
         }
-        return start;
+        osdev = osdev->next_cousin;
     }
+    if (NULL != cps) {
+        cpstring = opal_argv_join(cps, ',');
+        opal_argv_free(cps);
+    }
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                         "hwloc:base:find_coprocessors: hosting coprocessors %s",
+                         (NULL == cpstring) ? "NONE" : cpstring));
+    return cpstring;
+}
 
-    /* continue the search */
-    for (k=0; k < start->arity; k++) {
-        obj = df_search_level(start->children[k], cpus, bind_level);
-        if (NULL != obj) {
-            return obj;
-        }
+#define OPAL_HWLOC_MAX_ELOG_LINE 1024
+
+static char *hwloc_getline(FILE *fp)
+{
+    char *ret, *buff;
+    char input[OPAL_HWLOC_MAX_ELOG_LINE];
+
+    ret = fgets(input, OPAL_HWLOC_MAX_ELOG_LINE, fp);
+    if (NULL != ret) {
+	   input[strlen(input)-1] = '\0';  /* remove newline */
+	   buff = strdup(input);
+	   return buff;
     }
+    
     return NULL;
 }
 
-hwloc_obj_t opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpus,
-                                                opal_hwloc_level_t *bind_level,
-                                                unsigned int *bind_idx)
+/* checks local environment to determine if this process
+ * is on a coprocessor - if so, it returns the serial number
+ * as a string, or NULL if it isn't on a coprocessor
+ */
+char* opal_hwloc_base_check_on_coprocessor(void)
 {
-    hwloc_obj_t root, obj;
+    /* this support currently is limited to Intel Phi processors
+     * but will hopefully be extended as we get better, more
+     * generalized ways of identifying coprocessors
+     */
+    FILE *fp;
+    char *t, *cptr, *e, *cp=NULL;
 
-    /* if we don't have topology info, nothing we can do */
-    if (NULL == opal_hwloc_topology) {
-        *bind_level = OPAL_HWLOC_NODE_LEVEL;
-        *bind_idx = 0;
+    if (OPAL_SUCCESS != opal_os_dirpath_access("/proc/elog", S_IRUSR)) {
+        /* if the file isn't there, or we don't have permission
+         * to read it, then we are not on a coprocessor so far
+         * as we can tell
+         */
         return NULL;
     }
-
-    /* start at the node level and do a down-first
-     * search until we find an exact match for the cpus
-     */
-    *bind_level = OPAL_HWLOC_NODE_LEVEL;
-    *bind_idx = 0;
-    root = hwloc_get_root_obj(opal_hwloc_topology);
-    obj = df_search_level(root, cpus, bind_level);
-
-    if (NULL == obj) {
-        /* no match found */
+    if (NULL == (fp = fopen("/proc/elog", "r"))) {
+        /* nothing we can do */
         return NULL;
     }
-
-    /* get the index */
-    *bind_idx = opal_hwloc_base_get_obj_idx(opal_hwloc_topology, obj, OPAL_HWLOC_AVAILABLE);
-    return obj;
-}
-
-int opal_hwloc_base_get_local_index(hwloc_obj_type_t type,
-                                    unsigned cache_level,
-                                    unsigned int *idx)
-{
-    opal_hwloc_level_t bind_level;
-    unsigned int bind_idx;
-    hwloc_obj_t obj;
-
-    /* if we don't have topology info, nothing we can do */
-    if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
-
-    /* ensure we have our local cpuset */
-    opal_hwloc_base_get_local_cpuset();
-
-    /* if we are not bound, then this is meaningless */
-    obj = opal_hwloc_base_get_level_and_index(opal_hwloc_my_cpuset,
-                                              &bind_level, &bind_idx);
-    if (OPAL_HWLOC_NODE_LEVEL == bind_level) {
-        return OPAL_ERR_NOT_BOUND;
-    }
-
-    /* if the type/level match, then we are done */
-    if (type == opal_hwloc_levels[bind_level]) {
-        if (HWLOC_OBJ_CACHE == type) {
-            if ((cache_level == 1 && bind_level == OPAL_HWLOC_L1CACHE_LEVEL) ||
-                (cache_level == 2 && bind_level == OPAL_HWLOC_L2CACHE_LEVEL) ||
-                (cache_level == 3 && bind_level == OPAL_HWLOC_L3CACHE_LEVEL)) {
-                *idx = bind_idx;
-                return OPAL_SUCCESS;
-            }
-        } else {
-            *idx = bind_idx;
-            return OPAL_SUCCESS;
-        }
-    }
-
-    /* if the binding level is below the type, then we cannot
-     * answer the question as we could run on multiple objects
-     * of that type - e.g., if we are bound to NUMA and we are
-     * asked for the idx of the socket we are on, then we can
-     * only answer "unknown"
+    /* look for the line containing the serial number of this
+     * card - usually the first line in the file
      */
-    if (type > opal_hwloc_levels[bind_level]) {
-        return OPAL_ERR_MULTIPLE_AFFINITIES;
-    }
-    if (type == HWLOC_OBJ_CACHE) {
-        if ((cache_level == 1 && OPAL_HWLOC_L1CACHE_LEVEL < bind_level) ||
-            (cache_level == 2 && OPAL_HWLOC_L2CACHE_LEVEL < bind_level) ||
-            (cache_level == 3 && OPAL_HWLOC_L3CACHE_LEVEL < bind_level)) {
-            return OPAL_ERR_MULTIPLE_AFFINITIES;
-        }
-    }
-
-    /* move upward until we find the specified type */
-    while (NULL != obj) {
-        obj = obj->parent;
-        if (obj->type == type) {
-            if (type == HWLOC_OBJ_CACHE) {
-                if (cache_level == obj->attr->cache.depth) {
-                    break;
-                }
-            } else {
-                break;
+    while (NULL != (cptr = hwloc_getline(fp))) {
+        if (NULL != (t = strstr(cptr, "Card"))) {
+            /* we want the string right after this - delimited by
+             * a colon at the end
+             */
+            t += 5;  // move past "Card "
+            if (NULL == (e = strchr(t, ':'))) {
+                /* not what we were expecting */
+                free(cptr);
+                continue;
             }
+            *e = '\0';
+            cp = strdup(t);
+            free(cptr);
+            break;
         }
+        free(cptr);
     }
-    if (NULL == obj) {
-        return OPAL_ERR_NOT_FOUND;
-    }
-
-    /* get the index of this object */
-    *idx = opal_hwloc_base_get_obj_idx(opal_hwloc_topology, obj, OPAL_HWLOC_AVAILABLE);
-    return OPAL_SUCCESS;
+    fclose(fp);
+    OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
+                         "hwloc:base:check_coprocessor: on coprocessor %s",
+                         (NULL == cp) ? "NONE" : cp));
+    return cp;
 }
 
 char* opal_hwloc_base_print_binding(opal_binding_policy_t binding)
@@ -1665,40 +1597,6 @@ char* opal_hwloc_base_print_binding(opal_binding_policy_t binding)
 
     return ret;
 }
-
-char* opal_hwloc_base_print_level(opal_hwloc_level_t level)
-{
-    char *ret = "unknown";
-
-    switch(level) {
-    case OPAL_HWLOC_NODE_LEVEL:
-        ret = "NODE";
-        break;
-    case OPAL_HWLOC_NUMA_LEVEL:
-        ret = "NUMA";
-        break;
-    case OPAL_HWLOC_SOCKET_LEVEL:
-        ret = "SOCKET";
-        break;
-    case OPAL_HWLOC_L3CACHE_LEVEL:
-        ret = "L3CACHE";
-        break;
-    case OPAL_HWLOC_L2CACHE_LEVEL:
-        ret = "L2CACHE";
-        break;
-    case OPAL_HWLOC_L1CACHE_LEVEL:
-        ret = "L1CACHE";
-        break;
-    case OPAL_HWLOC_CORE_LEVEL:
-        ret = "CORE";
-        break;
-    case OPAL_HWLOC_HWTHREAD_LEVEL:
-        ret = "HWTHREAD";
-        break;
-    }
-    return ret;
-}
-
 
 /*
  * Turn an int bitmap to a "a-b,c" range kind of string

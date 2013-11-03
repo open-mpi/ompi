@@ -1,0 +1,18 @@
+# -*- text -*-
+#
+# Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+#
+[mpi-procs-not-supported]
+The staged execution system cannot support MPI applications
+because MPI requires that all processes execute simultaneously.
+
+Please re-run your job without the --staged option.
+[no-np]
+You must specify the number of procs for each app_context when
+using staged execution

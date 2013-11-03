@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +31,15 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC extern orte_ras_base_component_t mca_ras_slurm_component;
+typedef struct {
+    orte_ras_base_component_t super;
+    int timeout;
+    bool dyn_alloc_enabled;
+    char *config_file;
+    bool rolling_alloc;
+} orte_ras_slurm_component_t;
+ORTE_DECLSPEC extern orte_ras_slurm_component_t mca_ras_slurm_component;
+
 ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_slurm_module;
 
 END_C_DECLS

@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -883,13 +882,13 @@ hwloc_obj_t * rmaps_lama_find_nth_subtree_match(hwloc_topology_t hwloc_topo,
      * Decend tree looking for the n'th matching subtree
      */
     num_found = -1;
-    (void)rmaps_lama_find_nth_subtree_match_core(hwloc_topo,
-                                                 parent_obj,
-                                                 nth,
-                                                 &num_found,
-                                                 hwloc_key,
-                                                 depth,
-                                                 cur_child);
+    rmaps_lama_find_nth_subtree_match_core(hwloc_topo,
+                                           parent_obj,
+                                           nth,
+                                           &num_found,
+                                           hwloc_key,
+                                           depth,
+                                           cur_child);
 
     /*
      * Check to see if we found it

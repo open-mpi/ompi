@@ -21,9 +21,8 @@
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orted.1
-EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
+EXTRA_DIST = $(man_pages:.1=.1in)
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orted
@@ -45,9 +44,7 @@ orted_SOURCES = orted.c
 #  nice for systems that don't have all the shared 
 #  libraries on the computes 
 orted_LDFLAGS =
-orted_LDADD = $(top_builddir)/orte/libopen-rte.la
-
-endif # !ORTE_DISABLE_FULL_SUPPORT
+orted_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 distclean-local:
 	rm -f $(man_pages)

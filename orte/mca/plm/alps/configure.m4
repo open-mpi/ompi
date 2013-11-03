@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -27,5 +27,5 @@ AC_DEFUN([MCA_orte_plm_alps_CONFIG],[
 
 	ORTE_CHECK_ALPS([plm_alps], [plm_alps_happy="yes"], [plm_alps_happy="no"])
 
-    AS_IF([test "$plm_alps_happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
+    AS_IF([test "$plm_alps_happy" = "yes"], [$1], [$2])
 ])dnl

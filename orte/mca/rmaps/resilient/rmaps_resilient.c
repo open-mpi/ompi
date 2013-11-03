@@ -3,9 +3,8 @@
  * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -175,7 +174,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                                                        &num_slots,
                                                                        app,
                                                                        jdata->map->mapping,
-                                                                       false))) {
+                                                                       false, false))) {
                 ORTE_ERROR_LOG(rc);
                 while (NULL != (item = opal_list_remove_first(&node_list))) {
                     OBJ_RELEASE(item);
@@ -479,7 +478,7 @@ static int get_new_node(orte_proc_t *proc,
                                                                &num_slots,
                                                                app,
                                                                map->mapping,
-                                                               false))) {
+                                                               false, false))) {
         ORTE_ERROR_LOG(rc);
         goto release;
     }
@@ -721,7 +720,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                   map->mapping, initial_map))) {
+                                                                   map->mapping, initial_map, false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -827,7 +826,10 @@ static int map_to_ftgrps(orte_job_t *jdata)
                 opal_pointer_array_add(map->nodes, nd);
                 nd->mapped = true;
             }
-            (void)orte_rmaps_base_setup_proc(jdata, nd, app->idx);
+            if (NULL == orte_rmaps_base_setup_proc(jdata, nd, app->idx)) {
+                ORTE_ERROR_LOG(ORTE_ERROR);
+                return ORTE_ERROR;
+            }
             if ((nd->slots < (int)nd->num_procs) ||
                 (0 < nd->slots_max && nd->slots_max < (int)nd->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {

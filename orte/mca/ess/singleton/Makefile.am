@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         ess_singleton.h \
         ess_singleton_component.c \

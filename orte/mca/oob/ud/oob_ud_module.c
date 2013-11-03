@@ -349,20 +349,24 @@ int mca_oob_ud_module_init (void)
             rc = mca_oob_ud_port_recv_start (port);
             if (ORTE_SUCCESS != rc) {
                 mca_oob_ud_listen_destroy (port);
+                continue;
             }
 
             /* NTH: only supports one port for now */
+            found_one = true;
+
+            /* NTH: since we only support one port start monitoring now */
+            mca_oob_ud_event_start_monitor (device);
+
             break;
         }
-
-        mca_oob_ud_event_start_monitor (device);
     }
 
-    if (found_one) {
-        return ORTE_SUCCESS;
-    } else {
+    if (!found_one) {
         return ORTE_ERR_NOT_FOUND;
     }
+
+    return ORTE_SUCCESS;
 }
 
 static void mca_oob_ud_cancel_all_in_list (opal_list_t *list)

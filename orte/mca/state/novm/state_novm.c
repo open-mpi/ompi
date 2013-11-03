@@ -206,7 +206,7 @@ static void allocation_complete(int fd, short args, void *cbdata)
     /* get the daemon job object */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         goto done;
     }
     /* mark that we are not using a VM */

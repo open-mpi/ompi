@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,50 +32,9 @@
 #include "orte/mca/filem/base/base.h"
 
 
-static orte_filem_base_component_t none_component = {
-    /* Handle the general mca_component_t struct containing 
-     *  meta information about the component itself
-     */
-    {
-        ORTE_FILEM_BASE_VERSION_2_0_0,
-        /* Component name and version */
-        "none",
-        ORTE_MAJOR_VERSION,
-        ORTE_MINOR_VERSION,
-        ORTE_RELEASE_VERSION,
-        
-        /* Component open and close functions */
-        orte_filem_base_none_open,
-        orte_filem_base_none_close,
-        orte_filem_base_none_query
-    },
-    {
-        /* This component is checkpointable */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-    
-    /* Verbosity level */
-    0,
-    /* opal_output handler */
-    -1,
-    /* Default priority */
-    1
-};
-
-static orte_filem_base_module_t none_module = {
-    /** Initialization Function */
-    orte_filem_base_module_init,
-    /** Finalization Function */
-    orte_filem_base_module_finalize,
-
-    orte_filem_base_none_put,
-    orte_filem_base_none_get,
-    orte_filem_base_none_rm
-};
-
 int orte_filem_base_select(void)
 {
-    int exit_status = OPAL_SUCCESS;
+    int exit_status = ORTE_SUCCESS;
     orte_filem_base_component_t *best_component = NULL;
     orte_filem_base_module_t *best_module = NULL;
 
@@ -87,8 +48,7 @@ int orte_filem_base_select(void)
         /* It is okay to not select anything - we'll just retain
          * the default none module
          */
-        best_component = &none_component;
-        best_module = &none_module;
+        return ORTE_SUCCESS;
     }
 
     /* Save the winner */

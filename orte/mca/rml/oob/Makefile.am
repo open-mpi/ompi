@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
 	rml_oob.h \
 	rml_oob_component.c \

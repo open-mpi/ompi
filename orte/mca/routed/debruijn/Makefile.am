@@ -11,8 +11,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
 	routed_debruijn.h \
 	routed_debruijn.c \

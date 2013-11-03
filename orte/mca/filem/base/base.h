@@ -22,9 +22,7 @@
 
 #include "orte_config.h"
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/rml/rml.h"
-#endif
 
 #include "orte/mca/filem/filem.h"
 
@@ -34,13 +32,11 @@ BEGIN_C_DECLS
  * MCA framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_filem_base_framework;
-
 /*
  * Select an available component.
  */
 ORTE_DECLSPEC int orte_filem_base_select(void);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * cmds for base receive
  */
@@ -49,80 +45,44 @@ typedef uint8_t orte_filem_cmd_flag_t;
 #define ORTE_FILEM_GET_PROC_NODE_NAME_CMD  1
 #define ORTE_FILEM_GET_REMOTE_PATH_CMD     2
 
-    /**
-     * FileM request object maintenance functions
-     */
-    ORTE_DECLSPEC void orte_filem_base_process_set_construct(orte_filem_base_process_set_t *obj);
-    ORTE_DECLSPEC void orte_filem_base_process_set_destruct( orte_filem_base_process_set_t *obj);
+/**
+ * Globals
+ */
+ORTE_DECLSPEC extern orte_filem_base_module_t orte_filem;
+ORTE_DECLSPEC extern bool orte_filem_base_is_active;
 
-    ORTE_DECLSPEC void orte_filem_base_file_set_construct(orte_filem_base_file_set_t *obj);
-    ORTE_DECLSPEC void orte_filem_base_file_set_destruct( orte_filem_base_file_set_t *obj);
+/**
+ * 'None' component functions
+ * These are to be used when no component is selected.
+ * They just return success, and empty strings as necessary.
+ */
+int orte_filem_base_module_init(void);
+int orte_filem_base_module_finalize(void);
 
-    ORTE_DECLSPEC void orte_filem_base_construct(orte_filem_base_request_t *obj);
-    ORTE_DECLSPEC void orte_filem_base_destruct( orte_filem_base_request_t *obj);
+int orte_filem_base_none_put(orte_filem_base_request_t *request);
+int orte_filem_base_none_put_nb(orte_filem_base_request_t *request);
+int orte_filem_base_none_get(orte_filem_base_request_t *request);
+int orte_filem_base_none_get_nb(orte_filem_base_request_t *request);
+int orte_filem_base_none_rm( orte_filem_base_request_t *request);
+int orte_filem_base_none_rm_nb( orte_filem_base_request_t *request);
+int orte_filem_base_none_wait( orte_filem_base_request_t *request);
+int orte_filem_base_none_wait_all( opal_list_t *request_list);
+int orte_filem_base_none_preposition_files(orte_job_t *jdata,
+                                           orte_filem_completion_cbfunc_t cbfunc,
+                                           void *cbdata);
+int orte_filem_base_none_link_local_files(orte_job_t *jdata,
+                                          orte_app_context_t *app);
 
-    
-    /**
-     * Select an available component.
-     *
-     * @retval ORTE_SUCCESS Upon Success
-     * @retval ORTE_NOT_FOUND If no component can be selected
-     * @retval ORTE_ERROR Upon other failure
-     *
-     */
-    ORTE_DECLSPEC int orte_filem_base_select(void);
+/**
+ * Some utility functions
+ */
+/* base comm functions */
+ORTE_DECLSPEC int orte_filem_base_comm_start(void);
+ORTE_DECLSPEC int orte_filem_base_comm_stop(void);
+ORTE_DECLSPEC void orte_filem_base_recv(int status, orte_process_name_t* sender,
+                                        opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                        void* cbdata);
 
-    /**
-     * Globals
-     */
-    ORTE_DECLSPEC extern orte_filem_base_component_t orte_filem_base_selected_component;
-    ORTE_DECLSPEC extern orte_filem_base_module_t orte_filem;
-    ORTE_DECLSPEC extern bool orte_filem_base_is_active;
-
-    /**
-     * 'None' component functions
-     * These are to be used when no component is selected.
-     * They just return success, and empty strings as necessary.
-     */
-    ORTE_DECLSPEC int orte_filem_base_none_open(void);
-    ORTE_DECLSPEC int orte_filem_base_none_close(void);
-    ORTE_DECLSPEC int orte_filem_base_none_query(mca_base_module_t **module, int *priority);
-
-    int orte_filem_base_module_init(void);
-    int orte_filem_base_module_finalize(void);
-
-    int orte_filem_base_none_put(orte_filem_base_request_t *request);
-    int orte_filem_base_none_put_nb(orte_filem_base_request_t *request);
-    int orte_filem_base_none_get(orte_filem_base_request_t *request);
-    int orte_filem_base_none_get_nb(orte_filem_base_request_t *request);
-    int orte_filem_base_none_rm( orte_filem_base_request_t *request);
-    int orte_filem_base_none_rm_nb( orte_filem_base_request_t *request);
-    int orte_filem_base_none_wait( orte_filem_base_request_t *request);
-    int orte_filem_base_none_wait_all( opal_list_t *request_list);
-
-    /**
-     * Some utility functions
-     */
-    /* base comm functions */
-    ORTE_DECLSPEC int orte_filem_base_comm_start(void);
-    ORTE_DECLSPEC int orte_filem_base_comm_stop(void);
-    ORTE_DECLSPEC void orte_filem_base_recv(int status, orte_process_name_t* sender,
-                                            opal_buffer_t* buffer, orte_rml_tag_t tag,
-                                            void* cbdata);
-
-
-    /**
-     * Get Node Name for an ORTE process
-     */
-    ORTE_DECLSPEC int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine_name);
-    ORTE_DECLSPEC int orte_filem_base_get_remote_path(char **remote_ref, orte_process_name_t *peer, int *flag);
-
-    /**
-     * Setup request structure
-     */
-    ORTE_DECLSPEC int orte_filem_base_prepare_request(orte_filem_base_request_t *request, int move_type);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

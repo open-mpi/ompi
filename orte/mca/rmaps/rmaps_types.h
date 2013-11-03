@@ -8,7 +8,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,7 +55,6 @@ struct orte_job_map_t {
     orte_ranking_policy_t ranking;
 #if OPAL_HAVE_HWLOC
     opal_binding_policy_t binding;
-    opal_hwloc_level_t bind_level;
 #endif
     /* mapping options */
     char *ppr;
@@ -115,6 +116,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 #define ORTE_MAPPING_RR                0x000f
 /* sequential policy */
 #define ORTE_MAPPING_SEQ               20
+/* staged execution mapping */
+#define ORTE_MAPPING_STAGED            21
 /* rank file and other user-defined mapping */
 #define ORTE_MAPPING_BYUSER            22
 /* macro to separate out the mapping policy

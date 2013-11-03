@@ -42,18 +42,20 @@ typedef struct {
 OBJ_CLASS_DECLARATION(opal_db_active_module_t);
 
 typedef struct {
+    opal_identifier_t my_id;
+    bool id_set;
     opal_list_t store_order;
     opal_list_t fetch_order;
 } opal_db_base_t;
 
 OPAL_DECLSPEC extern opal_db_base_t opal_db_base;
 
+OPAL_DECLSPEC void opal_db_base_set_id(const opal_identifier_t *proc);
 OPAL_DECLSPEC int opal_db_base_store(const opal_identifier_t *proc,
-                                     opal_db_locality_t locality,
+                                     opal_scope_t scope,
                                      const char *key, const void *object,
                                      opal_data_type_t type);
 OPAL_DECLSPEC int opal_db_base_store_pointer(const opal_identifier_t *proc,
-                                             opal_db_locality_t locality,
                                              opal_value_t *kv);
 OPAL_DECLSPEC int opal_db_base_fetch(const opal_identifier_t *proc,
                                      const char *key, void **data,
@@ -62,14 +64,13 @@ OPAL_DECLSPEC int opal_db_base_fetch_pointer(const opal_identifier_t *proc,
                                              const char *key,
                                              void **data, opal_data_type_t type);
 OPAL_DECLSPEC int opal_db_base_fetch_multiple(const opal_identifier_t *proc,
+                                              opal_scope_t scope,
                                               const char *key,
                                               opal_list_t *kvs);
 OPAL_DECLSPEC int opal_db_base_remove_data(const opal_identifier_t *proc,
                                            const char *key);
-
 OPAL_DECLSPEC int opal_db_base_add_log(const char *table,
                                        const opal_value_t *kvs, int nkvs);
-
 OPAL_DECLSPEC void opal_db_base_commit(const opal_identifier_t *proc);
 
 END_C_DECLS

@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -141,7 +141,6 @@ int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
     return ret;
 }
 
-#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * JOB
  * NOTE: We do not pack all of the job object's fields as many of them have no
@@ -379,7 +378,7 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
         
         /* pack the number of slots allocated */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(nodes[i]->slots_alloc)), 1, ORTE_STD_CNTR))) {
+                         (void*)(&(nodes[i]->slots)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -491,10 +490,10 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
  * APP CONTEXT
  */
 int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
-                                 int32_t num_vals, opal_data_type_t type)
+                             int32_t num_vals, opal_data_type_t type)
 {
     int rc;
-    int8_t have_prefix, have_preload_files, have_preload_files_dest_dir, user_specified;
+    int8_t user_specified;
     int32_t i, count;
     orte_app_context_t **app_context;
 
@@ -504,28 +503,28 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
     for (i=0; i < num_vals; i++) {
         /* pack the application index (for multiapp jobs) */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->idx)), 1, ORTE_STD_CNTR))) {
+                                                       (void*)(&(app_context[i]->idx)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the application name */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->app)), 1, OPAL_STRING))) {
+                                                       (void*)(&(app_context[i]->app)), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of processes */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->num_procs)), 1, ORTE_STD_CNTR))) {
+                                                       (void*)(&(app_context[i]->num_procs)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the first rank for this app */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(app_context[i]->first_rank)), 1, ORTE_VPID))) {
+                                                       (void*)(&(app_context[i]->first_rank)), 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -540,7 +539,7 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
         /* if there are entries, pack the argv entries */
         if (0 < count) {
             if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                            (void*)(app_context[i]->argv), count, OPAL_STRING))) {
+                                                           (void*)(app_context[i]->argv), count, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -556,7 +555,7 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
         /* if there are entries, pack the enviro entries */
         if (0 < count) {
             if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                (void*)(app_context[i]->env), count, OPAL_STRING))) {
+                                                           (void*)(app_context[i]->env), count, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -564,7 +563,7 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
 
         /* pack the cwd */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->cwd)), 1, OPAL_STRING))) {
+                                                       (void*)(&(app_context[i]->cwd)), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -576,21 +575,33 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             user_specified = 0;
         }
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&user_specified), 1, OPAL_INT8))) {
+                                                       (void*)(&user_specified), 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the use-session-dir cwd flag */
+        if (app_context[i]->set_cwd_to_session_dir) {
+            user_specified = 1;
+        } else {
+            user_specified = 0;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                       (void*)(&user_specified), 1, OPAL_INT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the hostfile name */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->hostfile)), 1, OPAL_STRING))) {
+                                                       (void*)(&(app_context[i]->hostfile)), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
         /* pack the add_hostfile name */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->add_hostfile)), 1, OPAL_STRING))) {
+                                                       (void*)(&(app_context[i]->add_hostfile)), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -605,7 +616,7 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
         /* if there are entries, pack the argv entries */
         if (0 < count) {
             if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                             (void*)(app_context[i]->add_host), count, OPAL_STRING))) {
+                                                           (void*)(app_context[i]->add_host), count, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -618,116 +629,38 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
-        /* if there are entries, pack the argv entries */
+        /* if there are entries, pack the dash_host entries */
         if (0 < count) {
             if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                            (void*)(app_context[i]->dash_host), count, OPAL_STRING))) {
+                                                           (void*)(app_context[i]->dash_host), count, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
         }
 
-        /* pack the prefix dir if we have one */
-        if (NULL != app_context[i]->prefix_dir) {
-            have_prefix = 1;
-        } else {
-            have_prefix = 0;
-        }
-
+        /* pack the prefix dir */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                     (void*)(&have_prefix), 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        if (have_prefix) {
-            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                     (void*)(&(app_context[i]->prefix_dir)), 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                    (void*)(&(app_context[i]->preload_binary)), 1, OPAL_BOOL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                    (void*)(&(app_context[i]->preload_libs)), 1, OPAL_BOOL))) {
+                                                       (void*)(&(app_context[i]->prefix_dir)), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        /* Pack the preload_files if we have one */
-        if (NULL != app_context[i]->preload_files) {
-            have_preload_files = 1;
-        } else {
-            have_preload_files = 0;
-        }
-
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&have_preload_files), 1, OPAL_INT8))) {
+                                                       (void*)(&(app_context[i]->preload_binary)), 1, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        if( have_preload_files) {
-            if( NULL != app_context[i]->preload_files) {
-                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                               (void*)(&(app_context[i]->preload_files)), 1, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        }
-
-        /* Pack the preload_files_dest_dir if we have one */
-        if (NULL != app_context[i]->preload_files_dest_dir) {
-            have_preload_files_dest_dir = 1;
-        } else {
-            have_preload_files_dest_dir = 0;
-        }
-        
+        /* Pack the preload_files */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&have_preload_files_dest_dir), 1, OPAL_INT8))) {
+                                                       (void*)(&(app_context[i]->preload_files)), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
-        }
-        
-        if( have_preload_files_dest_dir) {
-            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                           (void*)(&(app_context[i]->preload_files_dest_dir)), 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        
-        /* Pack the preload_files_src_dir if we have one */
-        if (NULL != app_context[i]->preload_files_src_dir) {
-            have_preload_files_dest_dir = 1;
-        } else {
-            have_preload_files_dest_dir = 0;
-        }
-        
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&have_preload_files_dest_dir), 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        if( have_preload_files_dest_dir) {
-            if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                           (void*)(&(app_context[i]->preload_files_src_dir)), 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
         }
 
         /* pack the recovery defined flag */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                    (void*)(&(app_context[i]->recovery_defined)), 1, OPAL_BOOL))) {
+                                                       (void*)(&(app_context[i]->recovery_defined)), 1, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -739,24 +672,27 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
         }
 
 #if OPAL_ENABLE_FT_CR == 1
-        /* Pack the preload_files_src_dir if we have one */
-        if (NULL != app_context[i]->sstore_load) {
-            have_preload_files_dest_dir = 1;
-        } else {
-            have_preload_files_dest_dir = 0;
-        }
+        {
+            int8_t have_sstore;
+            /* Pack the preload_files_src_dir if we have one */
+            if (NULL != app_context[i]->sstore_load) {
+                have_sstore = 1;
+            } else {
+                have_sstore = 0;
+            }
         
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&have_preload_files_dest_dir), 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        if( have_preload_files_dest_dir) {
             if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                           (void*)(&(app_context[i]->sstore_load)), 1, OPAL_STRING))) {
+                                                           (void*)(&have_sstore), 1, OPAL_INT8))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
+            }
+        
+            if( have_sstore) {
+                if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                               (void*)(&(app_context[i]->sstore_load)), 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
         }
 #endif
@@ -925,4 +861,3 @@ int orte_dt_pack_iof_tag(opal_buffer_t *buffer, const void *src, int32_t num_val
     
     return ret;
 }
-#endif

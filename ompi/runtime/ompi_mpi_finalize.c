@@ -207,15 +207,14 @@ int ompi_mpi_finalize(void)
     */
     coll = OBJ_NEW(ompi_rte_collective_t);
     coll->id = ompi_process_info.peer_fini_barrier;
+    coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
         OMPI_ERROR_LOG(ret);
         return ret;
     }
 
     /* wait for barrier to complete */
-    while (coll->active) {
-        opal_progress();  /* block in progress pending events */
-    }
+    OMPI_WAIT_FOR_COMPLETION(coll->active);
     OBJ_RELEASE(coll);
 
     /* check for timing request - get stop time and report elapsed

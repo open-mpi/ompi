@@ -27,16 +27,12 @@ orte_rml_oob_exception_callback(const orte_process_name_t *peer,
 {
     opal_list_item_t *item;
 
-    OPAL_THREAD_LOCK(&orte_rml_oob_module.exceptions_lock);
-
     for (item = opal_list_get_first(&orte_rml_oob_module.exceptions) ;
          item != opal_list_get_end(&orte_rml_oob_module.exceptions) ;
          item = opal_list_get_next(item)) {
         orte_rml_oob_exception_t *ex = (orte_rml_oob_exception_t*) item;
         ex->cbfunc(peer, exception);
     }
-
-    OPAL_THREAD_UNLOCK(&orte_rml_oob_module.exceptions_lock);
 }
 
 
@@ -47,12 +43,8 @@ orte_rml_oob_add_exception(orte_rml_exception_callback_t cbfunc)
 
     if (NULL == ex) return ORTE_ERROR;
 
-    OPAL_THREAD_LOCK(&orte_rml_oob_module.exceptions_lock);
-
     ex->cbfunc = cbfunc;
     opal_list_append(&orte_rml_oob_module.exceptions, &ex->super);
-
-    OPAL_THREAD_UNLOCK(&orte_rml_oob_module.exceptions_lock);
 
     return ORTE_SUCCESS;
 }
@@ -63,8 +55,6 @@ orte_rml_oob_del_exception(orte_rml_exception_callback_t cbfunc)
 {
     opal_list_item_t *item;
 
-    OPAL_THREAD_LOCK(&orte_rml_oob_module.exceptions_lock);
-
     for (item = opal_list_get_first(&orte_rml_oob_module.exceptions) ;
          item != opal_list_get_end(&orte_rml_oob_module.exceptions) ;
          item = opal_list_get_next(item)) {
@@ -72,12 +62,8 @@ orte_rml_oob_del_exception(orte_rml_exception_callback_t cbfunc)
 
         if (cbfunc == ex->cbfunc) {
             opal_list_remove_item(&orte_rml_oob_module.exceptions, item);
-            OPAL_THREAD_UNLOCK(&orte_rml_oob_module.exceptions_lock);
             return ORTE_SUCCESS;
         }
     }
-
-    OPAL_THREAD_UNLOCK(&orte_rml_oob_module.exceptions_lock);
-
     return ORTE_ERR_NOT_FOUND;
 }

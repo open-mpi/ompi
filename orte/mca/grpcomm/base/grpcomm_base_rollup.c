@@ -112,13 +112,13 @@ void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t* sender,
         /* if my parent is the HNP, send it to the final destination */
         if (ORTE_PROC_MY_PARENT->vpid == ORTE_PROC_MY_HNP->vpid) {
             if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, relay,
-                                                   ORTE_RML_TAG_ORTED_CALLBACK, 0,
+                                                   ORTE_RML_TAG_ORTED_CALLBACK,
                                                    rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
             }
         } else {
             if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_PARENT, relay,
-                                                   ORTE_RML_TAG_ROLLUP, 0,
+                                                   ORTE_RML_TAG_ROLLUP,
                                                    rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
             }

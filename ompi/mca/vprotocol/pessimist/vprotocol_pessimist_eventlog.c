@@ -19,7 +19,7 @@
 int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm)
 {
     int rc;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer;
     char *port;
     ompi_process_name_t el_proc;
     char *hnp_uri, *rml_uri;
@@ -57,14 +57,8 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     
     /* Send an rml message to tell the remote end to wake up and jump into 
      * connect/accept */
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-    rc = ompi_rte_send_buffer(&el_proc, &buffer, el_tag+1, 0);
-    if(OMPI_SUCCESS > rc) {
-        OMPI_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buffer);        
-        return rc;
-    }
-    OBJ_DESTRUCT(&buffer);
+    buffer = OBJ_NEW(opal_buffer_t);
+    ompi_rte_send_buffer_nb(&el_proc, buffer, el_tag+1, NULL, NULL);
 
     rc = ompi_dpm.connect_accept(MPI_COMM_SELF, 0, port, true, el_comm);
     if(OMPI_SUCCESS != rc) {

@@ -43,18 +43,7 @@ headers += \
         util/proc_info.h \
         util/session_dir.h \
         util/show_help.h \
-        util/error_strings.h
-
-libopen_rte_la_SOURCES += \
-        util/error_strings.c \
-        util/name_fns.c \
-        util/proc_info.c \
-        util/session_dir.c \
-        util/show_help.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-headers += \
+        util/error_strings.h \
 	util/context_fns.h \
 	util/parse_options.h \
 	util/pre_condition_transports.h \
@@ -67,6 +56,11 @@ headers += \
         util/regex.h
 
 libopen_rte_la_SOURCES += \
+        util/error_strings.c \
+        util/name_fns.c \
+        util/proc_info.c \
+        util/session_dir.c \
+        util/show_help.c \
 	util/context_fns.c \
 	util/parse_options.c \
 	util/pre_condition_transports.c \
@@ -77,8 +71,6 @@ libopen_rte_la_SOURCES += \
         util/comm/comm.c \
         util/nidmap.c \
         util/regex.c
-
-endif
 
 # Remove the generated man pages
 distclean-local:

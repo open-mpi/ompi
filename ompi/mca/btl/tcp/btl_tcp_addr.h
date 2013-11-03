@@ -41,7 +41,7 @@ struct mca_btl_tcp_addr_t {
        machines (read: byte order), so use network byte order
        for everything and don't add padding
     */
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     struct in6_addr addr_inet;    /**< IPv4/IPv6 listen address > */
 #else
     /* Bug, FIXME: needs testing */
@@ -64,7 +64,7 @@ struct mca_btl_tcp_addr_t {
 typedef struct mca_btl_tcp_addr_t mca_btl_tcp_addr_t;
 
 #define MCA_BTL_TCP_AF_INET     0
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
 # define MCA_BTL_TCP_AF_INET6   1
 #endif
 

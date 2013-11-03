@@ -391,12 +391,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
     }
 
 done:
-    if (!got_count) {
-        if (got_max) {
-            node->slots = node->slots_max;
-        } else {
-            ++node->slots;
-        }
+    if (got_count) {
+        node->slots_given = true;
+    } else if (got_max) {
+        node->slots = node->slots_max;
+        node->slots_given = true;
+    } else {
+        /* should be set by obj_new, but just to be clear */
+        node->slots_given = false;
     }
     opal_list_append(updates, &node->super);
 
@@ -597,6 +599,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
             orte_node_t *node = (orte_node_t*)item2;
             if (0 == strcmp(node_from_file->name, node->name)) {
                 /* match - remove it */
+                opal_output(0, "HOST %s ON EXCLUDE LIST - REMOVING", node->name);
                 opal_list_remove_item(&newnodes, item2);
                 OBJ_RELEASE(item2);
                 break;
@@ -725,6 +728,8 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                  * we have to check for local interfaces
                  */
                 if (0 == strcmp(node_from_file->name, node_from_list->name) ||
+                    (0 == strcmp(node_from_file->name, "localhost") &&
+                     0 == strcmp(node_from_list->name, orte_process_info.nodename)) ||
                     (opal_ifislocal(node_from_list->name) &&
                      opal_ifislocal(node_from_file->name))) {
                     /* if the slot count here is less than the
@@ -733,7 +738,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                      * to subdivide an allocation
                      */
                     if (node_from_file->slots < node_from_list->slots) {
-                        node_from_list->slots_alloc = node_from_file->slots;
+                        node_from_list->slots = node_from_file->slots;
                     }
                     if (remove) {
                         /* remove the node from the list */
@@ -748,16 +753,16 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                     break;
                 }
             }
-            /* if the host in the newnode list wasn't found, 
-             * then that is an error we need to report to the 
-             * user and abort 
-             */ 
-            if (!found) { 
-                orte_show_help("help-hostfile.txt", "hostfile:extra-node-not-found", 
-                               true, hostfile, node_from_file->name); 
-                rc = ORTE_ERR_SILENT; 
-                goto cleanup; 
-            } 
+            /* if the host in the newnode list wasn't found,
+             * then that is an error we need to report to the
+             * user and abort
+             */
+            if (!found) {
+                orte_show_help("help-hostfile.txt", "hostfile:extra-node-not-found",
+                               true, hostfile, node_from_file->name);
+                rc = ORTE_ERR_SILENT;
+                goto cleanup;
+            }
         }
         /* cleanup the newnode list */
         OBJ_RELEASE(item2);
@@ -868,9 +873,9 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
                      * to subdivide an allocation
                      */
                     if (node->slots < node_from_pool->slots) {
-                        newnode->slots_alloc = node->slots;
+                        newnode->slots = node->slots;
                     } else {
-                        newnode->slots_alloc = node_from_pool->slots;
+                        newnode->slots = node_from_pool->slots;
                     }
                     opal_list_insert_pos(nodes, item1, &newnode->super);
                     /* track number added */
@@ -921,9 +926,9 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
              * to subdivide an allocation
              */
             if (node->slots < node_from_pool->slots) {
-                newnode->slots_alloc = node->slots;
+                newnode->slots = node->slots;
             } else {
-                newnode->slots_alloc = node_from_pool->slots;
+                newnode->slots = node_from_pool->slots;
             }
             /* insert it before item1 */
             opal_list_insert_pos(nodes, item1, &newnode->super);

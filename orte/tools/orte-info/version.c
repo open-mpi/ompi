@@ -25,7 +25,6 @@
 
 #include "opal/version.h"
 #include "orte/version.h"
-#include "orte/version.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/printf.h"
 

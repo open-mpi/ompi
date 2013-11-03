@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ *                         All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,7 +23,6 @@
 #define ORTERUN_ORTERUN_H
 
 #include "orte_config.h"
-#include "opal/threads/mutex.h"
 
 BEGIN_C_DECLS
 
@@ -45,10 +46,9 @@ struct orterun_globals_t {
     char *env_val;
     char *appfile;
     char *wdir;
+    bool set_cwd_to_session_dir;
     char *path;
     char *preload_files;
-    char *preload_files_dest_dir;
-    opal_mutex_t lock;
     bool sleep;
     char *ompi_server;
     bool wait_for_server;
@@ -60,6 +60,8 @@ struct orterun_globals_t {
     char *sstore_load;
 #endif
     bool disable_recovery;
+    bool preload_binaries;
+    bool index_argv;
 };
 
 /**

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -87,6 +87,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/show_help.h"
 
+#include "orte/mca/dfs/dfs.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -126,7 +127,6 @@ volatile int MPIR_forward_output = 0;
 volatile int MPIR_forward_comm = 0;
 char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
 int MPIR_force_to_main = 0;
-#if !defined(__WINDOWS__)
 static void orte_debugger_dump(void);
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 static void orte_debugger_init_after_spawn(int fd, short event, void *arg);
@@ -134,7 +134,7 @@ static void orte_debugger_detached(int fd, short event, void *arg);
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
 static void open_fifo (void);
-#endif
+
 ORTE_DECLSPEC void* MPIR_Breakpoint(void);
 
 /*
@@ -217,25 +217,25 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
       "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)" },
     
+    /* request that argv[0] be indexed */
+    { NULL, '\0', "index-argv-by-rank", "index-argv-by-rank", 0,
+      &orterun_globals.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
+      "Uniquely index argv[0] for each process using its rank" },
+
     /* Specify the launch agent to be used */
     { "orte_launch_agent", '\0', "launch-agent", "launch-agent", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Command used to start processes on remote nodes (default: orted)" },
     
     /* Preload the binary on the remote machine */
-    { "orte_preload_binaries", 's', NULL, "preload-binary", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, 's', NULL, "preload-binary", 0,
+      &orterun_globals.preload_binaries, OPAL_CMD_LINE_TYPE_BOOL,
       "Preload the binary on the remote machine before starting the remote process." },
 
     /* Preload files on the remote machine */
     { NULL, '\0', NULL, "preload-files", 1,
       &orterun_globals.preload_files, OPAL_CMD_LINE_TYPE_STRING,
       "Preload the comma separated list of files to the remote machines current working directory before starting the remote process." },
-
-    /* Where to Preload files on the remote machine */
-    { NULL, '\0', NULL, "preload-files-dest-dir", 1,
-      &orterun_globals.preload_files_dest_dir, OPAL_CMD_LINE_TYPE_STRING,
-      "The destination directory to use in conjunction with --preload-files. By default the absolute and relative paths provided by --preload-files are used." },
 
 #if OPAL_ENABLE_FT_CR == 1
     /* Tell SStore to preload a snapshot before launch */
@@ -327,14 +327,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps_base_oversubscribe", '\0', "oversubscribe", "oversubscribe", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are allowed to be oversubscribed, even on a managed system"},
-#if 0
     { "rmaps_base_cpus_per_rank", '\0', "cpus-per-proc", "cpus-per-proc", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Number of cpus to use for each process [default=1]" },
     { "rmaps_base_cpus_per_rank", '\0', "cpus-per-rank", "cpus-per-rank", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Synonym for cpus-per-proc" },
-#endif
 
     /* backward compatiblity */
     { "rmaps_base_bynode", '\0', "bynode", "bynode", 0,
@@ -417,10 +415,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 #endif
 
     /* Allocation options */
-    { "ras_base_display_alloc", '\0', "display-allocation", "display-allocation", 0,
+    { "orte_display_alloc", '\0', "display-allocation", "display-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the allocation being used by this job"},
-    { "ras_base_display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
+    { "orte_display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
 #if OPAL_HAVE_HWLOC
@@ -439,6 +437,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "wd", "wd", 1,
       &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Synonym for --wdir" },
+    { NULL, '\0', "set-cwd-to-session-dir", "set-cwd-to-session-dir", 0,
+      &orterun_globals.set_cwd_to_session_dir, OPAL_CMD_LINE_TYPE_BOOL,
+      "Set the working directory of the started processes to their session directory" },
     { NULL, '\0', "path", "path", 1,
       &orterun_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
@@ -525,10 +526,17 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Execute without creating an allocation-spanning virtual machine (only start daemons on nodes hosting application procs)" },
 
+    { "orte_staged_execution", '\0', "staged", "staged", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Used staged execution if inadequate resources are present (cannot support MPI jobs)" },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
+
+/* local data */
+static opal_list_t job_stack;
 
 /*
  * Local functions
@@ -544,6 +552,48 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env);
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
 
+static void spawn_next_job(opal_buffer_t *bptr, void *cbdata)
+{
+    orte_job_t *jdata = (orte_job_t*)cbdata;
+
+    /* add the data to the job's file map */
+    jdata->file_maps = OBJ_NEW(opal_buffer_t);
+    opal_dss.copy_payload(jdata->file_maps, bptr);
+
+    /* spawn the next job */
+    orte_plm.spawn(jdata);
+}
+static void run_next_job(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata;
+    orte_process_name_t name;
+
+    /* get next job on stack */
+    jdata = (orte_job_t*)opal_list_remove_first(&job_stack);
+
+    if (NULL == jdata) {
+        /* all done - trip the termination sequence */
+        orte_event_base_active = false;
+        OBJ_DESTRUCT(&job_stack);
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
+    if (NULL != orte_dfs.get_file_map) {
+        /* collect any file maps and spawn the next job */
+        name.jobid = caddy->jdata->jobid;
+        name.vpid = ORTE_VPID_WILDCARD;
+        
+        orte_dfs.get_file_map(&name, spawn_next_job, jdata);
+    } else {
+        /* just spawn the job */
+        orte_plm.spawn(jdata);
+    }
+
+    OBJ_RELEASE(caddy);
+}
+
 int orterun(int argc, char *argv[])
 {
     int rc;
@@ -551,7 +601,7 @@ int orterun(int argc, char *argv[])
     char *param;
     orte_job_t *daemons;
     orte_app_context_t *app, *dapp;
-    orte_job_t *jdata=NULL;
+    orte_job_t *jdata=NULL, *jptr;
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
 #endif
@@ -726,6 +776,11 @@ int orterun(int argc, char *argv[])
         jdata->stdin_target = strtoul(orterun_globals.stdin_target, NULL, 10);
     }
     
+    /* if we want the argv's indexed, indicate that */
+    if (orterun_globals.index_argv) {
+        jdata->controls |= ORTE_JOB_CONTROL_INDEX_ARGV;
+    }
+
     /* Parse each app, adding it to the job object */
     parse_locals(jdata, argc, argv);
     
@@ -879,13 +934,8 @@ int orterun(int argc, char *argv[])
      * there are times I need to send a command to "all daemons", and that means *I* have
      * to receive it too
      */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                 ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        goto DONE;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                            ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
     
     /* setup the data server */
     if (ORTE_SUCCESS != (rc = orte_data_server_init())) {
@@ -935,10 +985,42 @@ int orterun(int argc, char *argv[])
     orte_state.add_job_state(ORTE_JOB_STATE_READY_FOR_DEBUGGERS,
                              orte_debugger_init_after_spawn,
                              ORTE_SYS_PRI);
-
     orte_state.add_job_state(ORTE_JOB_STATE_DEBUGGER_DETACH,
                              orte_debugger_detached,
                              ORTE_SYS_PRI);
+
+    if (orte_staged_execution) {
+        /* staged execution is requested - each app_context
+         * is treated as a separate job and executed in
+         * sequence
+         */
+        int i;
+        jdata->num_procs = 0;
+        OBJ_CONSTRUCT(&job_stack, opal_list_t);
+        for (i=1; i < jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                continue;
+            }
+            jptr = OBJ_NEW(orte_job_t);
+            opal_list_append(&job_stack, &jptr->super);
+            /* transfer the app */
+            opal_pointer_array_set_item(jdata->apps, i, NULL);
+            --jdata->num_apps;
+            /* reset the app_idx */
+            app->idx = 0;
+            opal_pointer_array_set_item(jptr->apps, 0, app);
+            ++jptr->num_apps;
+        }
+        /* define a state machine position
+         * that is fired when each job completes so we can then start
+         * the next job in our stack
+         */
+        if (ORTE_SUCCESS != (rc = orte_state.set_job_state_callback(ORTE_JOB_STATE_NOTIFY_COMPLETED, run_next_job))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_UPDATE_EXIT_STATUS(rc);
+            goto DONE;
+        }
+    }
 
     /* spawn the job and its daemons */
     rc = orte_plm.spawn(jdata);
@@ -965,7 +1047,6 @@ static int init_globals(void)
 {
     /* Only CONSTRUCT things once */
     if (!globals_init) {
-        OBJ_CONSTRUCT(&orterun_globals.lock, opal_mutex_t);
         orterun_globals.env_val =     NULL;
         orterun_globals.appfile =     NULL;
         orterun_globals.wdir =        NULL;
@@ -977,6 +1058,7 @@ static int init_globals(void)
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
         orterun_globals.disable_recovery = false;
+        orterun_globals.index_argv = false;
     }
 
     /* Reset the other fields every time */
@@ -994,13 +1076,14 @@ static int init_globals(void)
     orterun_globals.appfile =     NULL;
     if( NULL != orterun_globals.wdir )
         free( orterun_globals.wdir );
+    orterun_globals.set_cwd_to_session_dir = false;
     orterun_globals.wdir =        NULL;
     if( NULL != orterun_globals.path )
         free( orterun_globals.path );
     orterun_globals.path =        NULL;
 
+    orterun_globals.preload_binaries = false;
     orterun_globals.preload_files  = NULL;
-    orterun_globals.preload_files_dest_dir = NULL;
 
 #if OPAL_ENABLE_FT_CR == 1
     orterun_globals.sstore_load = NULL;
@@ -1647,6 +1730,9 @@ static int create_app(int argc, char* argv[],
             app->cwd = opal_os_path(false, cwd, orterun_globals.wdir, NULL);
         }
         app->user_specified_cwd = true;
+    } else if (orterun_globals.set_cwd_to_session_dir) {
+        app->set_cwd_to_session_dir = true;
+        app->user_specified_cwd = true;
     } else {
         if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
             orte_show_help("help-orterun.txt", "orterun:init-failure",
@@ -1771,27 +1857,24 @@ static int create_app(int argc, char* argv[],
     app->num_procs = (orte_std_cntr_t)orterun_globals.num_procs;
     total_num_apps++;
 
-    /* The preload binary option is not functional in the v1.7 series, but
-     * should be restored in v1.9. So for now, if someone indicates they want
-     * that service, warn them of this fact and abort
+    /* Capture any preload flags */
+    app->preload_binary = orterun_globals.preload_binaries;
+    /* if we were told to cwd to the session dir and the app was given in
+     * relative syntax, then we need to preload the binary to
+     * find the app - don't do this for java apps, however, as we
+     * can't easily find the class on the cmd line. Java apps have to
+     * preload their binary via the preload_files option
      */
-    if (orte_preload_binaries ||
-        NULL != orterun_globals.preload_files) {
-        orte_show_help("help-orterun.txt", "orterun:no-preload",
-                       true, orte_basename);
-        exit(1);
+    if (app->set_cwd_to_session_dir &&
+        !opal_path_is_absolute(app->argv[0]) &&
+        NULL == strstr(app->argv[0], "java")) {
+        app->preload_binary = true;
     }
-
-    /* Preserve if we are to preload the binary */
-    app->preload_binary = orte_preload_binaries;
-    if( NULL != orterun_globals.preload_files)
+    if (NULL != orterun_globals.preload_files) {
         app->preload_files  = strdup(orterun_globals.preload_files);
-    else 
+    } else {
         app->preload_files = NULL;
-    if( NULL != orterun_globals.preload_files_dest_dir)
-        app->preload_files_dest_dir  = strdup(orterun_globals.preload_files_dest_dir);
-    else 
-        app->preload_files_dest_dir = NULL;
+    }
 
 #if OPAL_ENABLE_FT_CR == 1
     if( NULL != orterun_globals.sstore_load ) {
@@ -2411,8 +2494,7 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  * parallel debuggers (i.e., attaching to only some of the MPI
  * processes; not necessarily all of them).
  *
- * 2. If not using orterun: in this case, ORTE_DISABLE_FULL_SUPPORT
- * will be true, and we know that there will not be an RML message
+ * 2. If not using orterun: in this case, we know that there will not be an RML message
  * sent to VPID 0.  So we have to look for a magic environment
  * variable from the launcher to know if the jobs will be attached by
  * a debugger (e.g., set by yod, srun, ...etc.), and if so, spin on
@@ -2420,8 +2502,6 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  * hard-coded in the OMPI layer (see ompi/debuggers/ompi_debuggers.c).
  */
  
-#if !defined(__WINDOWS__)
-
 /* local globals and functions */
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
@@ -2693,7 +2773,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                 }
                 buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
                 if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                      ORTE_RML_TAG_DEBUGGER_RELEASE, 0,
+                                                      ORTE_RML_TAG_DEBUGGER_RELEASE,
                                                       orte_rml_send_callback, NULL))) {
                     opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
                     OBJ_RELEASE(buf);
@@ -2806,7 +2886,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                                     ORTE_NAME_PRINT(&proc->name));
                 buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
                 if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                      ORTE_RML_TAG_DEBUGGER_RELEASE, 0,
+                                                      ORTE_RML_TAG_DEBUGGER_RELEASE,
                                                       orte_rml_send_callback, NULL))) {
                     opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
                     OBJ_RELEASE(buf);
@@ -2957,4 +3037,3 @@ static void build_debugger_args(orte_app_context_t *debugger)
         }
     }
 }
-#endif /* !defined(__WINDOWS__) */

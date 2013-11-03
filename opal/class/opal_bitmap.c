@@ -440,3 +440,21 @@ int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len)
 
     return cnt;
 }
+
+bool opal_bitmap_is_clear(opal_bitmap_t *bm)
+{
+    int i, len;
+    int index, offset;
+
+    len = bm->array_size * SIZE_OF_CHAR;
+
+    for (i = 0; i < len; ++i) {
+        index = i / SIZE_OF_CHAR; 
+        offset = i % SIZE_OF_CHAR;
+
+        if (0 != (bm->bitmap[index] & (1 << offset))) {
+            return false;
+        }
+    }
+    return true;
+}

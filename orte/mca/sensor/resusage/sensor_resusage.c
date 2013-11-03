@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- *
+  *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,13 +29,14 @@
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"
 #include "opal/mca/pstat/pstat.h"
-#include "opal/mca/event/event.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/odls/base/odls_private.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/orted/orted.h"
@@ -47,170 +48,145 @@
 /* declare the API functions */
 static int init(void);
 static void finalize(void);
-static void start(orte_jobid_t job);
-static void stop(orte_jobid_t job);
+static void sample(void);
+static void res_log(opal_buffer_t *sample);
 
 /* instantiate the module */
 orte_sensor_base_module_t orte_sensor_resusage_module = {
     init,
     finalize,
-    start,
-    stop
+    NULL,
+    NULL,
+    sample,
+    res_log
 };
 
-#define ORTE_RESUSAGE_LENGTH  16
-
-
-/* declare the local functions */
-static void sample(int fd, short event, void *arg);
-
-/* local globals */
-static opal_event_t *sample_ev = NULL;
-static struct timeval sample_time;
+static bool log_enabled = true;
 
 static int init(void)
 {
-    orte_job_t *jdata;
-
-    if (0 == mca_sensor_resusage_component.sample_rate) {
-        /* not monitoring */
-        return ORTE_ERROR;
-    }
-
-    /* see if my_proc and my_node are available on the global arrays */
-    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-        orte_sensor_base.my_proc = OBJ_NEW(orte_proc_t);
-        orte_sensor_base.my_node = OBJ_NEW(orte_node_t);
-    } else {
-        if (NULL == (orte_sensor_base.my_proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, ORTE_PROC_MY_NAME->vpid))) {
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (NULL == (orte_sensor_base.my_node = orte_sensor_base.my_proc->node)) {
-            return ORTE_ERR_NOT_FOUND;
-        }
-        /* protect the objects */
-        OBJ_RETAIN(orte_sensor_base.my_proc);
-        OBJ_RETAIN(orte_sensor_base.my_node);
-    }
-
     return ORTE_SUCCESS;
 }
 
 static void finalize(void)
 {
-    if (NULL != sample_ev) {
-        opal_event_del(sample_ev);
-        free(sample_ev);
-        sample_ev = NULL;
-    }
-    
-    OBJ_RELEASE(orte_sensor_base.my_proc);
-    OBJ_RELEASE(orte_sensor_base.my_node);
-
-    return;
 }
 
-/*
- * Start monitoring of local processes
- */
-static void start(orte_jobid_t jobid)
-{
-    if (NULL == sample_ev) {
-        /* startup a timer to wake us up periodically
-         * for a data sample
-         */
-        sample_ev =  (opal_event_t *) malloc(sizeof(opal_event_t));
-        opal_event_evtimer_set(orte_event_base, sample_ev, sample, sample_ev);
-        sample_time.tv_sec = mca_sensor_resusage_component.sample_rate;
-        sample_time.tv_usec = 0;
-        opal_event_evtimer_add(sample_ev, &sample_time);
-    }
-    return;
-}
-
-
-static void stop(orte_jobid_t jobid)
-{
-    if (NULL != sample_ev) {
-        opal_event_del(sample_ev);
-        free(sample_ev);
-        sample_ev = NULL;
-    }
-    return;
-}
-
-static void sample(int fd, short event, void *arg)
+static void sample(void)
 {
     opal_pstats_t *stats, *st;
     opal_node_stats_t *nstats, *nst;
     int rc, i;
     orte_proc_t *child, *hog=NULL;
     float in_use, max_mem;
+    opal_buffer_t buf, *bptr;
+    char *comp;
 
-    /* if we are not sampling any more, then just return */
-    if (NULL == sample_ev) {
-        return;
-    }
-    
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "sample:resusage sampling resource usage"));
     
+    /* setup a buffer for our stats */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    /* pack our name */
+    comp = strdup("resusage");
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &comp, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    free(comp);
+
     /* update stats on ourself and the node */
     stats = OBJ_NEW(opal_pstats_t);
     nstats = OBJ_NEW(opal_node_stats_t);
     if (ORTE_SUCCESS != (rc = opal_pstat.query(orte_process_info.pid, stats, nstats))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(stats);
+        OBJ_DESTRUCT(stats);
         OBJ_RELEASE(nstats);
-        goto RESTART;
+        OBJ_DESTRUCT(&buf);
+        return;
     }
+
     /* the stats framework can't know nodename or rank */
     strncpy(stats->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
     stats->rank = ORTE_PROC_MY_NAME->vpid;
-    /* store it */
+    /* locally save the stats */
     if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&orte_sensor_base.my_proc->stats, stats))) {
         OBJ_RELEASE(st);
     }
     if (NULL != (nst = (opal_node_stats_t*)opal_ring_buffer_push(&orte_sensor_base.my_node->stats, nstats))) {
+        /* release the popped value */
         OBJ_RELEASE(nst);
     }
 
+    /* pack them */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &nstats, 1, OPAL_NODE_STAT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &stats, 1, OPAL_PSTAT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+
     /* loop through our children and update their stats */
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-        if (!child->alive) {
-            continue;
-        }
-        if (0 == child->pid) {
-            /* race condition */
-            continue;
-        }
-        stats = OBJ_NEW(opal_pstats_t);
-        if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, stats, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(stats);
-            continue;
-        }
-        /* the stats framework can't know nodename or rank */
-        strncpy(stats->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
-        stats->rank = child->name.vpid;
-        /* store it */
-        if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&child->stats, stats))) {
-            OBJ_RELEASE(st);
+    if (NULL != orte_local_children) {
+        for (i=0; i < orte_local_children->size; i++) {
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                continue;
+            }
+            if (!child->alive) {
+                continue;
+            }
+            if (0 == child->pid) {
+                /* race condition */
+                continue;
+            }
+            stats = OBJ_NEW(opal_pstats_t);
+            if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, stats, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(stats);
+                continue;
+            }
+            /* the stats framework can't know nodename or rank */
+            strncpy(stats->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
+            stats->rank = child->name.vpid;
+            /* store it */
+            if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&child->stats, stats))) {
+                OBJ_RELEASE(st);
+            }
+            /* pack them */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(&buf, &stats, 1, OPAL_PSTAT))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&buf);
+                return;
+            }
         }
     }
 
+    /* xfer the data for transmission */
+    bptr = &buf;
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(orte_sensor_base.samples, &bptr, 1, OPAL_BUFFER))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    OBJ_DESTRUCT(&buf);
+
     /* are there any issues with node-level usage? */
-    if (0.0 < mca_sensor_resusage_component.node_memory_limit) {
+    nst = (opal_node_stats_t*)opal_ring_buffer_poke(&orte_sensor_base.my_node->stats, -1);
+    if (NULL != nst && 0.0 < mca_sensor_resusage_component.node_memory_limit) {
         OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                              "%s CHECKING NODE MEM",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* compute the percentage of node memory in-use */
-        if (NULL == (nst = (opal_node_stats_t*)opal_ring_buffer_poke(&orte_sensor_base.my_node->stats, -1))) {
-            goto RESTART;
-        }
         in_use = 1.0 - (nst->free_mem / nst->total_mem);
         OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                              "%s PERCENT USED: %f LIMIT: %f",
@@ -252,16 +228,17 @@ static void sample(int fd, short event, void *arg)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 orte_errmgr.abort(ORTE_ERR_MEM_LIMIT_EXCEEDED, NULL);
             } else {
-                /* report the problem - this will normally kill the proc, so
-                 * we have to release the ODLS thread first
-                 */
+                /* report the problem */
                 OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                                      "%s REPORTING %s TO ERRMGR FOR EXCEEDING LIMITS",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&hog->name)));
                 ORTE_ACTIVATE_PROC_STATE(&hog->name, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED);
             }
-            goto RESTART;
+            /* since we have ordered someone to die, we've done enough for this
+             * time around - don't check proc limits as well
+             */
+            return;
         }
     }
 
@@ -290,17 +267,178 @@ static void sample(int fd, short event, void *arg)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&child->name), st->vsize));
             if (mca_sensor_resusage_component.proc_memory_limit <= st->vsize) {
-                /* report the problem - this will normally kill the proc, so
-                 * we have to release the ODLS thread first
-                 */
+                /* report the problem */
                 ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED);
-             }
+            }
+        }
+    }
+}
+
+static void res_log(opal_buffer_t *sample)
+{
+    opal_pstats_t *st=NULL;
+    opal_node_stats_t *nst=NULL;
+    int rc, n, i;
+    opal_value_t kv[14];
+    char *node;
+
+    if (!log_enabled) {
+        return;
+    }
+
+    /* unpack the node name */
+    n=1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(sample, &node, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* unpack the node stats */
+    n=1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(sample, &nst, &n, OPAL_NODE_STAT))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    if (mca_sensor_resusage_component.log_node_stats) {
+        /* convert this into an array of opal_value_t's - no clean way
+         * to do this, so have to just manually map each field
+         */
+        for (i=0; i < 13; i++) {
+            OBJ_CONSTRUCT(&kv[i], opal_value_t);
+        }
+        i=0;
+        kv[i].key = strdup("ctime");
+        kv[i].type = OPAL_TIMEVAL;
+        kv[i].data.tv.tv_sec = nst->sample_time.tv_sec;
+        kv[i++].data.tv.tv_usec = nst->sample_time.tv_usec;
+
+        kv[i].key = "hostname";
+        kv[i].type = OPAL_STRING;
+        kv[i++].data.string = strdup(node);
+
+        kv[i].key = strdup("total_mem");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->total_mem;
+
+        kv[i].key = strdup("free_mem");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->free_mem;
+
+        kv[i].key = strdup("buffers");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->buffers;
+
+        kv[i].key = strdup("cached");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->cached;
+
+        kv[i].key = strdup("swap_total");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->swap_total;
+
+        kv[i].key = strdup("swap_free");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->swap_free;
+
+        kv[i].key = strdup("mapped");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->mapped;
+
+        kv[i].key = strdup("swap_cached");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->swap_cached;
+
+        kv[i].key = strdup("la");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->la;
+
+        kv[i].key = strdup("la5");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->la5;
+
+        kv[i].key = strdup("la15");
+        kv[i].type = OPAL_FLOAT;
+        kv[i++].data.fval = nst->la15;
+
+        /* store it */
+        if (ORTE_SUCCESS != (rc = opal_db.add_log("nodestats", kv, 12))) {
+            /* don't bark about it - just quietly disable the log */
+            log_enabled = false;
+        }
+        for (i=0; i < 12; i++) {
+            OBJ_DESTRUCT(&kv[i]);
         }
     }
 
- RESTART:
-    /* restart the timer */
-    if (NULL != sample_ev) {
-        opal_event_evtimer_add(sample_ev, &sample_time);
+    OBJ_RELEASE(nst);
+
+    if (mca_sensor_resusage_component.log_process_stats) {
+        /* unpack all process stats */
+        n=1;
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(sample, &st, &n, OPAL_PSTAT))) {
+            for (i=0; i < 14; i++) {
+                OBJ_CONSTRUCT(&kv[i], opal_value_t);
+            }
+            kv[0].key = strdup("node");
+            kv[0].type = OPAL_STRING;
+            kv[0].data.string = strdup(st->node);
+            kv[1].key = strdup("rank");
+            kv[1].type = OPAL_INT32;
+            kv[1].data.int32 = st->rank;
+            kv[2].key = strdup("pid");
+            kv[2].type = OPAL_PID;
+            kv[2].data.pid = st->pid;
+            kv[3].key = strdup("cmd");
+            kv[3].type = OPAL_STRING;
+            kv[3].data.string = strdup(st->cmd);
+            kv[4].key = strdup("state");
+            kv[4].type = OPAL_STRING;
+            kv[4].data.string = (char*)malloc(3 * sizeof(char));
+            kv[4].data.string[0] = st->state[0];
+            kv[4].data.string[1] = st->state[1];
+            kv[4].data.string[2] = '\0';
+            kv[5].key = strdup("time");
+            kv[5].type = OPAL_TIMEVAL;
+            kv[5].data.tv.tv_sec = st->time.tv_sec;
+            kv[5].data.tv.tv_usec = st->time.tv_usec;
+            kv[6].key = strdup("percent_cpu");
+            kv[6].type = OPAL_FLOAT;
+            kv[6].data.fval = st->percent_cpu;
+            kv[7].key = strdup("priority");
+            kv[7].type = OPAL_INT32;
+            kv[7].data.int32 = st->priority;
+            kv[8].key = strdup("num_threads");
+            kv[8].type = OPAL_INT16;
+            kv[8].data.int16 = st->num_threads;
+            kv[9].key = strdup("vsize");
+            kv[9].type = OPAL_FLOAT;
+            kv[9].data.fval = st->vsize;
+            kv[10].key = strdup("rss");
+            kv[10].type = OPAL_FLOAT;
+            kv[10].data.fval = st->rss;
+            kv[11].key = strdup("peak_vsize");
+            kv[11].type = OPAL_FLOAT;
+            kv[11].data.fval = st->peak_vsize;
+            kv[12].key = strdup("processor");
+            kv[12].type = OPAL_INT16;
+            kv[12].data.int16 = st->processor;
+            kv[13].key = strdup("sample_time");
+            kv[13].type = OPAL_TIMEVAL;
+            kv[13].data.tv.tv_sec = st->sample_time.tv_sec;
+            kv[13].data.tv.tv_usec = st->sample_time.tv_usec;
+            /* store it */
+            if (ORTE_SUCCESS != (rc = opal_db.add_log("procstats", kv, 14))) {
+                log_enabled = false;
+            }
+            for (i=0; i < 14; i++) {
+                OBJ_DESTRUCT(&kv[i]);
+            }
+            OBJ_RELEASE(st);
+            n=1;
+        }
+        if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
 }

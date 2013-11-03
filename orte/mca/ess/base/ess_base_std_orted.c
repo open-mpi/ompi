@@ -14,6 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,10 +35,10 @@
 #endif
 
 #include "opal/dss/dss.h"
+#include "opal/mca/db/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/mca/db/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/os_path.h"
@@ -45,6 +46,8 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
@@ -79,10 +82,8 @@ static bool signals_set=false;
 static opal_event_t term_handler;
 static opal_event_t int_handler;
 static opal_event_t epipe_handler;
-#ifndef __WINDOWS__
 static opal_event_t sigusr1_handler;
 static opal_event_t sigusr2_handler;
-#endif  /* __WINDOWS__ */
 char *log_path = NULL;
 static void shutdown_signal(int fd, short flags, void *arg);
 static void signal_callback(int fd, short flags, void *arg);
@@ -112,7 +113,6 @@ int orte_ess_base_orted_setup(char **hosts)
 
     plm_in_use = false;
 
-#ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /* Set signal handlers to catch kill signals so we can properly clean up
@@ -124,7 +124,6 @@ int orte_ess_base_orted_setup(char **hosts)
     /** setup callbacks for signals we should ignore */
     setup_sighandler(SIGUSR1, &sigusr1_handler, signal_callback);
     setup_sighandler(SIGUSR2, &sigusr2_handler, signal_callback);
-#endif  /* __WINDOWS__ */
     
     signals_set = true;
     
@@ -173,6 +172,12 @@ int orte_ess_base_orted_setup(char **hosts)
     }
 #endif
     
+    /* setup the global nidmap/pidmap object */
+    orte_nidmap.bytes = NULL;
+    orte_nidmap.size = 0;
+    orte_pidmap.bytes = NULL;
+    orte_pidmap.size = 0;
+
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
      */
@@ -230,8 +235,16 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     
     /* Setup the communication infrastructure */
-    
-    /* Runtime Messaging Layer - this opens/selects the OOB as well */
+        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_select";
+        goto error;
+    }
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
@@ -274,6 +287,8 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_db_base_select";
         goto error;
     }
+    /* set our id */
+    opal_db.set_id((opal_identifier_t*)ORTE_PROC_MY_NAME);
 
     /*
      * Group communications
@@ -490,6 +505,10 @@ int orte_ess_base_orted_setup(char **hosts)
     node->daemon_launched = true;
     node->state = ORTE_NODE_STATE_UP;
     
+    /* now point our proc node field to the node */
+    OBJ_RETAIN(node);   /* keep accounting straight */
+    proc->node = node;
+
     /* record that the daemon job is running */
     jdata->num_procs = 1;
     jdata->state = ORTE_JOB_STATE_RUNNING;
@@ -585,6 +604,18 @@ int orte_ess_base_orted_setup(char **hosts)
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
     
+    /* setup the DFS framework */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_dfs_select";
+        goto error;
+    }
+
     return ORTE_SUCCESS;
     
  error:
@@ -606,10 +637,8 @@ int orte_ess_base_orted_finalize(void)
         opal_event_del(&epipe_handler);
         opal_event_del(&term_handler);
         opal_event_del(&int_handler);
-#ifndef __WINDOWS__
         opal_event_signal_del(&sigusr1_handler);
         opal_event_signal_del(&sigusr2_handler);
-#endif  /* __WINDOWS__ */
     }
     
     /* cleanup */
@@ -624,12 +653,18 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
 
+    /* close the dfs so its threads can exit */
+    (void) mca_base_framework_close(&orte_dfs_base_framework);
+
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
     (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
+
+    (void) mca_base_framework_close(&opal_db_base_framework);
 
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
@@ -652,9 +687,7 @@ static void shutdown_signal(int fd, short flags, void *arg)
  */
 static void epipe_signal_callback(int fd, short flags, void *arg)
 {
-    /* for now, we just announce and ignore them */
-    opal_output(0, "%s reports a SIGPIPE error on fd %d",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fd);
+    /* for now, we just ignore them */
     return;
 }
 

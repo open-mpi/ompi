@@ -14,9 +14,10 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1306,6 +1307,23 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
     return (rc);
 }
 
+typedef struct {
+    opal_buffer_t buf;
+    bool active;
+} comm_cid_return_t;
+
+static void comm_cid_recv(int status,
+                          ompi_process_name_t* peer,
+                          opal_buffer_t* buffer,
+                          ompi_rml_tag_t tag,
+                          void* cbdata)
+{
+    comm_cid_return_t *rcid = (comm_cid_return_t*)cbdata;
+
+    opal_dss.copy_payload(&rcid->buf, buffer);
+    rcid->active = false;
+}
+
 /* Arguments not used in this implementation:
  *    - bridgecomm
  *
@@ -1325,6 +1343,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     int local_leader, local_rank;
     ompi_process_name_t *remote_leader=NULL;
     int32_t size_count;
+    comm_cid_return_t rcid;
 
     local_leader  = (*((int*)lleader));
     remote_leader = (ompi_process_name_t*)rleader;
@@ -1346,37 +1365,46 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 
     if (local_rank == local_leader ) {
         opal_buffer_t *sbuf;
-        opal_buffer_t *rbuf;
 
         sbuf = OBJ_NEW(opal_buffer_t);
-        rbuf = OBJ_NEW(opal_buffer_t);
-        
+
         if (OPAL_SUCCESS != (rc = opal_dss.pack(sbuf, tmpbuf, (int32_t)count, OPAL_INT))) {
             goto exit;
         }
 
         if ( send_first ) {
-            if (0 > (rc = ompi_rte_send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+            if (0 > (rc = ompi_rte_send_buffer_nb(remote_leader, sbuf,
+                                                  OMPI_RML_TAG_COMM_CID_INTRA,
+                                                  ompi_rte_send_cbfunc, NULL))) {
                 goto exit;
             }
-            if (0 > (rc = ompi_rte_recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
-                goto exit;
+            OBJ_CONSTRUCT(&rcid.buf, opal_buffer_t);
+            rcid.active = true;
+            ompi_rte_recv_buffer_nb(remote_leader, OMPI_RML_TAG_COMM_CID_INTRA,
+                                    OMPI_RML_NON_PERSISTENT, comm_cid_recv, &rcid);
+            while (rcid.active) {
+                opal_progress();
             }
         }
         else {
-            if (0 > (rc = ompi_rte_recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
-                goto exit;
+            OBJ_CONSTRUCT(&rcid.buf, opal_buffer_t);
+            rcid.active = true;
+            ompi_rte_recv_buffer_nb(remote_leader, OMPI_RML_TAG_COMM_CID_INTRA,
+                                    OMPI_RML_NON_PERSISTENT, comm_cid_recv, &rcid);
+            while (rcid.active) {
+                opal_progress();
             }
-            if (0 > (rc = ompi_rte_send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+            if (0 > (rc = ompi_rte_send_buffer_nb(remote_leader, sbuf,
+                                                  OMPI_RML_TAG_COMM_CID_INTRA,
+                                                  ompi_rte_send_cbfunc, NULL))) {
                 goto exit;
             }
         }
 
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(rbuf, outbuf, &size_count, OPAL_INT))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&rcid.buf, outbuf, &size_count, OPAL_INT))) {
             goto exit;
         }
-        OBJ_RELEASE(sbuf);
-        OBJ_RELEASE(rbuf);
+        OBJ_DESTRUCT(&rcid.buf);
         count = (int)size_count;
 
 	ompi_op_reduce (op, tmpbuf, outbuf, count, MPI_INT);

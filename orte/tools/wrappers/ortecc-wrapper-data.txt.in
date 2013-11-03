@@ -12,7 +12,6 @@ language=C
 compiler_env=CC
 compiler_flags_env=CFLAGS
 compiler=@WRAPPER_CC@
-extra_includes=@ORTE_WRAPPER_EXTRA_INCLUDES@
 preprocessor_flags=@ORTE_WRAPPER_EXTRA_CPPFLAGS@
 compiler_flags_prefix=@ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX@
 compiler_flags=@ORTE_WRAPPER_EXTRA_CFLAGS@

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,6 +60,7 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_MPI           0x0020
 #define ORTE_PROC_APP           0x0030
 #define ORTE_PROC_CM            0x0040
+#define ORTE_PROC_CMSLAVE       0x0080
 #define ORTE_PROC_IOF_ENDPT     0x1000
 #define ORTE_PROC_SCHEDULER     0x2000
 
@@ -70,6 +72,7 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_IS_MPI            (ORTE_PROC_MPI & orte_process_info.proc_type)
 #define ORTE_PROC_IS_APP            (ORTE_PROC_APP & orte_process_info.proc_type)
 #define ORTE_PROC_IS_CM             (ORTE_PROC_CM & orte_process_info.proc_type)
+#define ORTE_PROC_IS_CMSLAVE        (ORTE_PROC_CMSLAVE & orte_process_info.proc_type)
 #define ORTE_PROC_IS_IOF_ENDPT      (ORTE_PROC_IOF_ENDPT & orte_process_info.proc_type)
 #define ORTE_PROC_IS_SCHEDULER      (ORTE_PROC_SCHEDULER & orte_process_info.proc_type)
 
@@ -120,13 +123,13 @@ struct orte_proc_info_t {
     char *sock_stdout;                  /**< Path name to temp file for stdout. */
     char *sock_stderr;                  /**< Path name to temp file for stderr. */
 #if OPAL_HAVE_HWLOC
-    opal_hwloc_level_t bind_level;
-    unsigned int bind_idx;
+    char *cpuset;                       /**< String-representation of bitmap where we are bound */
 #endif
     int app_rank;                        /**< rank within my app_context */
     orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */
     orte_grpcomm_coll_id_t peer_init_barrier;   /**< barrier id during init */
     orte_grpcomm_coll_id_t peer_fini_barrier;   /**< barrier id during finalize */
+    orte_vpid_t my_hostid;               /** identifies the local host for a coprocessor */
 };
 typedef struct orte_proc_info_t orte_proc_info_t;
 

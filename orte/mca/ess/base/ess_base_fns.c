@@ -51,6 +51,7 @@ int orte_ess_base_proc_binding(void)
     char *map;
     int ret;
     char *error;
+    hwloc_cpuset_t mycpus;
 
     /* Determine if we were pre-bound or not */
     if (NULL != getenv("OMPI_MCA_orte_bound_at_launch")) {
@@ -97,6 +98,7 @@ int orte_ess_base_proc_binding(void)
                  * so that we know
                  */
                 orte_proc_is_bound = true;
+                hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                 hwloc_bitmap_free(cpus);
                 OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                      "%s Process was externally bound",
@@ -120,9 +122,7 @@ int orte_ess_base_proc_binding(void)
                         hwloc_bitmap_free(cpus);
                         goto error;
                     }
-                    /* try to find a level and index for this location */
-                    opal_hwloc_base_get_level_and_index(cpus, &orte_process_info.bind_level, &orte_process_info.bind_idx);
-                    /* cleanup */
+                    hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
                     hwloc_bitmap_free(cpus);
                     orte_proc_is_bound = true;
                     OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
@@ -158,8 +158,8 @@ int orte_ess_base_proc_binding(void)
                             error = "Setting processor affinity failed";
                             goto error;
                         }
-                        orte_process_info.bind_level = OPAL_HWLOC_HWTHREAD_LEVEL;
-                        orte_process_info.bind_idx = orte_process_info.my_node_rank;
+                        hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
+                        hwloc_bitmap_free(cpus);
                         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                              "%s Process bound to hwthread",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -179,8 +179,8 @@ int orte_ess_base_proc_binding(void)
                             ret = ORTE_ERROR;
                             goto error;
                         }
-                        orte_process_info.bind_level = OPAL_HWLOC_CORE_LEVEL;
-                        orte_process_info.bind_idx = orte_process_info.my_node_rank;
+                        hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
+                        hwloc_bitmap_free(cpus);
                         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                              "%s Process bound to core",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -197,21 +197,16 @@ int orte_ess_base_proc_binding(void)
                         if (OPAL_BIND_TO_L1CACHE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                             target = HWLOC_OBJ_CACHE;
                             cache_level = 1;
-                            orte_process_info.bind_level = OPAL_HWLOC_L1CACHE_LEVEL;
                         } else if (OPAL_BIND_TO_L2CACHE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                             target = HWLOC_OBJ_CACHE;
                             cache_level = 2;
-                            orte_process_info.bind_level = OPAL_HWLOC_L2CACHE_LEVEL;
                         } else if (OPAL_BIND_TO_L3CACHE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                             target = HWLOC_OBJ_CACHE;
                             cache_level = 3;
-                            orte_process_info.bind_level = OPAL_HWLOC_L3CACHE_LEVEL;
                         } else if (OPAL_BIND_TO_SOCKET == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                             target = HWLOC_OBJ_SOCKET;
-                            orte_process_info.bind_level = OPAL_HWLOC_SOCKET_LEVEL;
                         } else if (OPAL_BIND_TO_NUMA == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                             target = HWLOC_OBJ_NODE;
-                            orte_process_info.bind_level = OPAL_HWLOC_NUMA_LEVEL;
                         } else {
                             ret = ORTE_ERR_NOT_FOUND;
                             error = "Binding policy not known";
@@ -229,13 +224,13 @@ int orte_ess_base_proc_binding(void)
                                     error = "Setting processor affinity failed";
                                     goto error;
                                 }
-                                orte_process_info.bind_idx = opal_hwloc_base_get_obj_idx(opal_hwloc_topology,
-                                                                                         obj, OPAL_HWLOC_LOGICAL);
+                                hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, cpus);
+                                hwloc_bitmap_free(cpus);
                                 orte_proc_is_bound = true;
                                 OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                                                      "%s Process bound to %s",
                                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                     opal_hwloc_base_print_level(orte_process_info.bind_level)));
+                                                     hwloc_obj_type_string(target)));
                                 break;
                             }
                         }
@@ -259,25 +254,37 @@ int orte_ess_base_proc_binding(void)
      * times, so it's more efficient to keep a global copy
      */
     opal_hwloc_base_get_local_cpuset();
-    /* report bindings, if requested */
-    if (opal_hwloc_report_bindings) {
-        char tmp1[1024], tmp2[1024];
-        hwloc_cpuset_t mycpus;
-        /* get the cpus we are bound to */
-        mycpus = hwloc_bitmap_alloc();
-        if (hwloc_get_cpubind(opal_hwloc_topology, 
-                              mycpus, 
-                              HWLOC_CPUBIND_PROCESS) < 0) {
+
+    /* get the cpus we are bound to */
+    mycpus = hwloc_bitmap_alloc();
+    if (hwloc_get_cpubind(opal_hwloc_topology, 
+                          mycpus, 
+                          HWLOC_CPUBIND_PROCESS) < 0) {
+        if (NULL != orte_process_info.cpuset) {
+            free(orte_process_info.cpuset);
+            orte_process_info.cpuset = NULL;
+        }
+        if (opal_hwloc_report_bindings) {
             opal_output(0, "MCW rank %d is not bound",
                         ORTE_PROC_MY_NAME->vpid);
-        } else {
+        }
+    } else {
+        /* store/update the string representation of our local binding */
+        if (NULL != orte_process_info.cpuset) {
+            free(orte_process_info.cpuset);
+            orte_process_info.cpuset = NULL;
+        }
+        hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, mycpus);
+        /* report the binding, if requested */
+        if (opal_hwloc_report_bindings) {
+            char tmp1[1024], tmp2[1024];
             opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), mycpus);
             opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), mycpus);
             opal_output(0, "MCW rank %d bound to %s: %s",
                         ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
         }
-        hwloc_bitmap_free(mycpus);
     }
+    hwloc_bitmap_free(mycpus);
 
     return ORTE_SUCCESS;
 

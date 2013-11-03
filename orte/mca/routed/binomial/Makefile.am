@@ -11,8 +11,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
 	routed_binomial.h \
 	routed_binomial.c \

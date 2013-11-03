@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2013      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -13,7 +13,7 @@
 AC_DEFUN([MCA_orte_rmaps_rank_file_CONFIG], [
     AC_CONFIG_FILES([orte/mca/rmaps/rank_file/Makefile])
 
-    AS_IF([test "$orte_without_full_support" = 0 -a "$OPAL_HAVE_HWLOC" = 1],
+    AS_IF([test "$OPAL_HAVE_HWLOC" = 1],
           [$1],
           [$2])
 ])

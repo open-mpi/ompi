@@ -19,31 +19,21 @@
 # $HEADER$
 #
 
-EXTRA_DIST = base/.windows
-
 headers += \
-        base/base.h
-
-libmca_rmaps_la_SOURCES += \
-        base/rmaps_base_frame.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
-
-headers += \
+        base/base.h \
         base/rmaps_private.h
 
 libmca_rmaps_la_SOURCES += \
+        base/rmaps_base_frame.c \
         base/rmaps_base_select.c \
         base/rmaps_base_map_job.c \
         base/rmaps_base_support_fns.c \
         base/rmaps_base_ranking.c \
         base/rmaps_base_print_fns.c
 
+dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
+
 if OPAL_HAVE_HWLOC
 libmca_rmaps_la_SOURCES += \
         base/rmaps_base_binding.c
-endif
-
 endif

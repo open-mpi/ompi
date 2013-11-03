@@ -28,6 +28,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
+#include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
@@ -65,7 +66,7 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
         /** check that anything is here */
         if (0 == opal_list_get_size(nodes)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, app->hostfile);
+                           true, app->app, "-hostfile", app->hostfile);
             return ORTE_ERR_SILENT;
         }
     }
@@ -81,20 +82,23 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
         /** check that anything is here */
         if (0 == opal_list_get_size(nodes)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, app->hostfile);
+                           true, app->app, "-add-hostfile", app->hostfile);
             return ORTE_ERR_SILENT;
         }
     }
     /* now filter the list through any -host specification */
-    if (NULL != app->dash_host) {
+    if (!orte_soft_locations && NULL != app->dash_host) {
         if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(nodes, app->dash_host, remove))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(nodes)) {
+            char *foo;
+            foo = opal_argv_join(app->dash_host, ',');
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "");
+                           true, app->app, "-host", foo);
+            free(foo);
             return ORTE_ERR_SILENT;
         }
     }
@@ -106,8 +110,11 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(nodes)) {
+            char *foo;
+            foo = opal_argv_join(app->dash_host, ',');
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "");
+                           true, app->app, "-add-host", foo);
+            free(foo);
             return ORTE_ERR_SILENT;
         }
     }
@@ -121,7 +128,7 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
  */
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
                                      orte_app_context_t *app, orte_mapping_policy_t policy,
-                                     bool initial_map)
+                                     bool initial_map, bool silent)
 {
     opal_list_item_t *item, *next;
     orte_node_t *node, *nd, *nptr;
@@ -146,8 +153,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
      */
     if (!orte_managed_allocation) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
-        /* if the app provided a dash-host, then use those nodes */
-        if (NULL != app->dash_host) {
+        /* if the app provided a dash-host, and we are not treating
+         * them as requested or "soft" locations, then use those nodes
+         */
+        if (!orte_soft_locations && NULL != app->dash_host) {
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using dash_host",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -217,12 +226,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             goto addknown;
         }
-
         /** if we still don't have anything */
         if (0 == opal_list_get_size(&nodes)) {
-            orte_show_help("help-orte-rmaps-base.txt",
-                           "orte-rmaps-base:no-available-resources",
-                           true);
+            if (!silent) {
+                orte_show_help("help-orte-rmaps-base.txt",
+                               "orte-rmaps-base:no-available-resources",
+                               true);
+            }
             OBJ_DESTRUCT(&nodes);
             return ORTE_ERR_SILENT;
         }
@@ -247,8 +257,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s IS MARKED NO_USE", node->name));
                     /* reset the state so it can be used another time */
-                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
-                                         "NODE %s IS MARKED NO_USE", node->name));
                     node->state = ORTE_NODE_STATE_UP;
                     continue;
                 }
@@ -261,8 +269,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
                                          "NODE %s IS MARKED NO_INCLUDE", node->name));
                     /* not to be used */
-                    OPAL_OUTPUT_VERBOSE((10, orte_rmaps_base_framework.framework_output,
-                                         "NODE %s IS MARKED NO_INCLUDE", node->name));
                     continue;
                 }
                 /* if this node wasn't included in the vm (e.g., by -host), ignore it,
@@ -433,9 +439,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /** check that anything is here */
     if (0 == opal_list_get_size(allocated_nodes)) {
-        orte_show_help("help-orte-rmaps-base.txt",
-                       "orte-rmaps-base:no-available-resources",
-                       true);
+        if (!silent) {
+            orte_show_help("help-orte-rmaps-base.txt",
+                           "orte-rmaps-base:no-available-resources",
+                           true);
+        }
         return ORTE_ERR_SILENT;
     }
     
@@ -498,9 +506,16 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /* Sanity check to make sure we have resources available */
     if (0 == num_slots) {
-        orte_show_help("help-orte-rmaps-base.txt", 
-                       "orte-rmaps-base:all-available-resources-used", true);
-        return ORTE_ERR_SILENT;
+        if (silent) {
+            /* let the caller know that the resources exist,
+             * but are currently busy
+             */
+            return ORTE_ERR_RESOURCE_BUSY;
+        } else {
+            orte_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:all-available-resources-used", true);
+            return ORTE_ERR_SILENT;
+        }
     }
     
     *total_num_slots = num_slots;
@@ -538,7 +553,7 @@ orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
     proc->nodename = node->name;
     node->num_procs++;
     if (node->slots_inuse < node->slots) {
-        node->slots_inuse++;
+        node->slots_inuse += orte_rmaps_base.cpus_per_rank;
     }
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
         ORTE_ERROR_LOG(rc);

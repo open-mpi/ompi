@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -46,7 +46,7 @@ ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list,
                                                    orte_std_cntr_t *total_num_slots,
                                                    orte_app_context_t *app,
                                                    orte_mapping_policy_t policy,
-                                                   bool initial_map);
+                                                   bool initial_map, bool silent);
 
 ORTE_DECLSPEC orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
                                                       orte_node_t *node,

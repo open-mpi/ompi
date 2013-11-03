@@ -19,20 +19,12 @@
 #
 
 headers += \
-        base/base.h
-
-libmca_odls_la_SOURCES += \
-        base/odls_base_frame.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-dist_pkgdata_DATA += base/help-orte-odls-base.txt
-
-headers += \
+        base/base.h \
         base/odls_private.h
 
 libmca_odls_la_SOURCES += \
+        base/odls_base_frame.c \
         base/odls_base_select.c \
-        base/odls_base_default_fns.c \
-        base/odls_base_state.c
-endif
+        base/odls_base_default_fns.c
+
+dist_pkgdata_DATA += base/help-orte-odls-base.txt

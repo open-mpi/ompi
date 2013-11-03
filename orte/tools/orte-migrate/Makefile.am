@@ -14,9 +14,8 @@
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orte-migrate.1
-EXTRA_DIST = orte-migrate.1in CMakeLists.txt
+EXTRA_DIST = orte-migrate.1in
 
-if !ORTE_DISABLE_FULL_SUPPORT
 if WANT_FT_CR
 if OMPI_INSTALL_BINARIES
 
@@ -34,10 +33,9 @@ dist_pkgdata_DATA = help-orte-migrate.txt
 endif # OMPI_INSTALL_BINARIES
 
 orte_migrate_SOURCES = orte-migrate.c
-orte_migrate_LDADD = $(top_builddir)/orte/libopen-rte.la
+orte_migrate_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
 
 endif # WANT_FT_CR
-endif # !ORTE_DISABLE_FULL_SUPPORT
 
 distclean-local:
 	rm -f $(man_pages)

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,9 +45,9 @@ typedef struct opal_sys_limits_t {
 OPAL_DECLSPEC extern opal_sys_limits_t opal_sys_limits;
     
 /* Get the system resource limits and, if requested, set
- * them to the max allowed
+ * them to the specified limit
  */
-OPAL_DECLSPEC int opal_util_init_sys_limits(void);
+OPAL_DECLSPEC int opal_util_init_sys_limits(char **errmsg);
 
 END_C_DECLS
 

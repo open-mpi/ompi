@@ -45,28 +45,6 @@
 
 #include "orte/mca/snapc/base/static-components.h"
 
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-static int orte_snapc_base_register(mca_base_register_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_snapc_base_open(mca_base_open_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_snapc_base_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
-
 /*
  * Globals
  */
@@ -124,8 +102,7 @@ static int orte_snapc_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&orte_snapc_base_framework, flags);
 }
 
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
-
 MCA_BASE_FRAMEWORK_DECLARE(orte, snapc, "ORTE Snapc", orte_snapc_base_register,
                            orte_snapc_base_open, orte_snapc_base_close,
                            mca_snapc_base_static_components, 0);
+

@@ -117,3 +117,14 @@ application. Your job will now abort.
   Application name:  %s
   Error message: %s
   Location:  %s:%d
+#
+[set limit]
+Error message received from:
+
+  Local host:        %s
+  Application name:  %s
+  Location:  %s:%d
+
+Message:
+
+%s

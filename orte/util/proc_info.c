@@ -76,13 +76,13 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .sock_stdout =                  */   NULL,
     /*  .sock_stderr =                  */   NULL,
 #if OPAL_HAVE_HWLOC
-    /*  .bind_level =                   */   OPAL_HWLOC_NODE_LEVEL,
-    /*  .bind_idx =                     */   0,
+    /*  .cpuset =                       */   NULL,
 #endif
     /*  .app_rank =                     */   -1,
     /*  .peer_modex =                   */   -1,
     /*  .peer_init_barrier =            */   -1,
-    /*  .peer_fini_barrier =            */   -1
+    /*  .peer_fini_barrier =            */   -1,
+    /*  .my_hostid =                    */   ORTE_VPID_INVALID
 };
 
 static bool init=false;
@@ -164,16 +164,6 @@ int orte_proc_info(void)
 
     /* get the nodename */
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
-    if (!orte_keep_fqdn_hostnames) {
-        /* if the nodename is an IP address, do not mess with it! */
-        if (!opal_net_isaddr(hostname)) {
-            /* not an IP address, so remove any domain info */
-            if (NULL != (ptr = strchr(hostname, '.'))) {
-                *ptr = '\0';
-            }
-        }
-    }
-
     if (!orte_keep_fqdn_hostnames) {
         /* if the nodename is an IP address, do not mess with it! */
         if (!opal_net_isaddr(hostname)) {

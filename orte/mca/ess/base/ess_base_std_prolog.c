@@ -46,18 +46,20 @@ int orte_ess_base_std_prolog(void)
         goto error;
     }
     
-    /*
-     * Internal startup
-     */
-    if (ORTE_SUCCESS != (ret = orte_wait_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_wait_init";
-        goto error;
+    if (!ORTE_PROC_IS_APP) {
+        /*
+         * Setup the waitpid/sigchld system
+         */
+        if (ORTE_SUCCESS != (ret = orte_wait_init())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_wait_init";
+            goto error;
+        }
     }
     
     return ORTE_SUCCESS;
     
-error:
+ error:
     orte_show_help("help-orte-runtime",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);

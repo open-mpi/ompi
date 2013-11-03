@@ -47,9 +47,9 @@ typedef struct mca_btl_sm_hdr_t mca_btl_sm_hdr_t;
 
 struct mca_btl_sm_segment_t {
     mca_btl_base_segment_t base;
-#if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA 
+#if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
     uint64_t key;
-#endif
+#endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
 };
 typedef struct mca_btl_sm_segment_t mca_btl_sm_segment_t;
 

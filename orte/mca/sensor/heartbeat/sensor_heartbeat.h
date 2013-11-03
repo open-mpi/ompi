@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -21,15 +22,7 @@
 
 BEGIN_C_DECLS
 
-struct orte_sensor_heartbeat_component_t {
-    orte_sensor_base_component_t super;
-    char *rate;
-    char *check;
-    bool include_stats;
-};
-typedef struct orte_sensor_heartbeat_component_t orte_sensor_heartbeat_component_t;
-
-ORTE_MODULE_DECLSPEC extern orte_sensor_heartbeat_component_t mca_sensor_heartbeat_component;
+ORTE_MODULE_DECLSPEC extern orte_sensor_base_component_t mca_sensor_heartbeat_component;
 extern orte_sensor_base_module_t orte_sensor_heartbeat_module;
 
 

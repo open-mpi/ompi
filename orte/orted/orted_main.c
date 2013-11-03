@@ -15,6 +15,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -224,15 +225,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
-static void rml_cbfunc(int status,
-                       struct orte_process_name_t* peer,
-                       struct opal_buffer_t* buffer,
-                       orte_rml_tag_t tag,
-                       void* cbdata)
-{
-    OBJ_RELEASE(buffer);
-}
-
 int orte_daemon(int argc, char *argv[])
 {
     int ret = 0;
@@ -320,12 +312,12 @@ int orte_daemon(int argc, char *argv[])
         free(args);
         return 1;
     }
-#if defined(HAVE_SETSID) && !defined(__WINDOWS__)
+#if defined(HAVE_SETSID)
     /* see if we were directed to separate from current session */
     if (orted_globals.set_sid) {
         setsid();
     }
-#endif  /* !defined(__WINDOWS__) */
+#endif
     /* see if they want us to spin until they can connect a debugger to us */
     i=0;
     while (orted_spin_flag) {
@@ -347,6 +339,15 @@ int orte_daemon(int argc, char *argv[])
         orte_map_reduce = true;
     }
 
+    /* detach from controlling terminal
+     * otherwise, remain attached so output can get to us
+     */
+    if(!orte_debug_flag &&
+       !orte_debug_daemons_flag &&
+       orted_globals.daemonize) {
+        opal_daemon_init(NULL);
+    }
+    
     /* Set the flag telling OpenRTE that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
@@ -408,15 +409,6 @@ int orte_daemon(int argc, char *argv[])
         }
     }
 
-    /* detach from controlling terminal
-     * otherwise, remain attached so output can get to us
-     */
-    if(!orte_debug_flag &&
-       !orte_debug_daemons_flag &&
-       orted_globals.daemonize) {
-        opal_daemon_init(NULL);
-    }
-    
     /* insert our contact info into our process_info struct so we
      * have it for later use and set the local daemon field to our name
      */
@@ -432,12 +424,8 @@ int orte_daemon(int argc, char *argv[])
     }
     
     /* setup the primary daemon command receive function */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                  ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-        goto DONE;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                            ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
     
     /* output a message indicating we are alive, our name, and our pid
      * for debugging purposes
@@ -478,7 +466,7 @@ int orte_daemon(int argc, char *argv[])
        but what the heck... :-) */
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
 
-    /* if requested, obtain and report a new process name and my uri to the indicated pipe */
+    /* if requested, report my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
         orte_job_t *jdata;
         orte_proc_t *proc;
@@ -508,19 +496,6 @@ int orte_daemon(int argc, char *argv[])
         app->num_procs = 1;
         opal_pointer_array_add(jdata->apps, app);
         
-#if 0
-        /* run our local allocator to read the available
-         * allocation in case this singleton decides to
-         * comm_spawn other procs
-         */
-        if (ORTE_SUCCESS != (ret = orte_ras.allocate(jdata))) {
-            ORTE_ERROR_LOG(ret);
-            /* don't quit as this would cause the singleton
-             * to hang!
-             */
-        }
-#endif
-        
         /* setup a proc object for the singleton - since we
          * -must- be the HNP, and therefore we stored our
          * node on the global node pool, and since the singleton
@@ -538,6 +513,10 @@ int orte_daemon(int argc, char *argv[])
         OBJ_RETAIN(node);  /* keep accounting straight */
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
+        /* and it obviously is on the node */
+        OBJ_RETAIN(proc);
+        opal_pointer_array_add(node->procs, proc);
+        node->num_procs++;
         /* and obviously it is one of my local procs */
         OBJ_RETAIN(proc);
         opal_pointer_array_add(orte_local_children, proc);
@@ -550,11 +529,8 @@ int orte_daemon(int argc, char *argv[])
         proc->alive = true;
         proc->app_idx = 0;
         proc->local_proc = true;
-#if OPAL_HAVE_HWLOC
-        proc->bind_idx = 0;
-#endif
 
-        /* create the collectives for its modex/barriers */
+        /* account for the collectives in its modex/barriers */
         jdata->peer_modex = orte_grpcomm_base_get_coll_id();
         coll = orte_grpcomm_base_setup_collective(jdata->peer_modex);
         nm = OBJ_NEW(orte_namelist_t);
@@ -577,41 +553,53 @@ int orte_daemon(int argc, char *argv[])
         opal_list_append(&coll->participants, &nm->super);
 
         /* need to setup a pidmap for it */
-        jdata->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-        if (ORTE_SUCCESS != (ret = orte_util_encode_pidmap(jdata->pmap))) {
+        if (ORTE_SUCCESS != (ret = orte_util_encode_pidmap(&orte_pidmap, false))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
-    
-    
+
         /* if we don't yet have a daemon map, then we have to generate one
          * to pass back to it
          */
-        if (NULL == orte_odls_globals.dmap) {
-            orte_odls_globals.dmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-            /* construct a nodemap */
-            if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(orte_odls_globals.dmap))) {
-                ORTE_ERROR_LOG(ret);
-                goto DONE;
-            }
+        if (NULL != orte_nidmap.bytes) {
+            free(orte_nidmap.bytes);
+        }
+        if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(&orte_nidmap, false))) {
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
         }
 
-        /* create a string that contains our uri + the singleton's name + sysinfo */
-        orte_util_convert_process_name_to_string(&nptr, &proc->name);
+        /* create a string that contains our uri + sysinfo */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
-        asprintf(&tmp, "%s[%s][%s]", orte_process_info.my_daemon_uri, nptr, sysinfo);
-        free(nptr);
+        asprintf(&tmp, "%s[%s]", orte_process_info.my_daemon_uri, sysinfo);
 	free(sysinfo);
 
         /* pass that info to the singleton */
-#ifndef __WINDOWS__
         write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */
-#else
-        send(orted_globals.uri_pipe, tmp, strlen(tmp)+1, 0); /* need to add 1 to get the NULL */
-#endif
 
         /* cleanup */
         free(tmp);
+
+        /* since a singleton spawned us, we need to harvest
+         * any MCA params from the local environment so
+         * we can pass them along to any subsequent daemons
+         * we may start as the result of a comm_spawn
+         */
+        for (i=0; NULL != environ[i]; i++) {
+            if (0 == strncmp(environ[i], "OMPI_MCA", 8)) {
+                /* make a copy to manipulate */
+                tmp = strdup(environ[i]);
+                /* find the equal sign */
+                nptr = strchr(tmp, '=');
+                *nptr = '\0';
+                nptr++;
+                /* add the mca param to the orted cmd line */
+                opal_argv_append_nosize(&orted_cmd_line, "-mca");
+                opal_argv_append_nosize(&orted_cmd_line, &tmp[9]);
+                opal_argv_append_nosize(&orted_cmd_line, nptr);
+                free(tmp);
+            }
+        }
     }
 
     /* if we were given a pipe to monitor for singleton termination, set that up */
@@ -642,14 +630,9 @@ int orte_daemon(int argc, char *argv[])
         orte_process_name_t parent;
 
         /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(orte_parent_uri))) {
-            ORTE_ERROR_LOG(ret);
-            free (orte_parent_uri);
-            orte_parent_uri = NULL;
-            goto DONE;
-        }
-        ret = orte_rml_base_parse_uris(orte_parent_uri, &parent, NULL );
-        if( ORTE_SUCCESS != ret ) {
+        orte_rml.set_contact_info(orte_parent_uri);
+        ret = orte_rml_base_parse_uris(orte_parent_uri, &parent, NULL);
+        if (ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             free (orte_parent_uri);
             orte_parent_uri = NULL;
@@ -657,7 +640,7 @@ int orte_daemon(int argc, char *argv[])
         }
 
         /* don't need this value anymore */
-        free (orte_parent_uri);
+        free(orte_parent_uri);
         orte_parent_uri = NULL;
 
         /* tell the routed module that we have a path
@@ -739,42 +722,35 @@ int orte_daemon(int argc, char *argv[])
         }
 
 #if OPAL_HAVE_HWLOC
-        /* add the local topology */
-        if (NULL != opal_hwloc_topology &&
-            (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+        {
+            char *coprocessors;
+            /* add the local topology */
+            if (NULL != opal_hwloc_topology &&
+                (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+                    ORTE_ERROR_LOG(ret);
+                }
+            }
+            /* detect and add any coprocessors */
+            coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(ret);
+            }
+            /* see if I am on a coprocessor */
+            coprocessors = opal_hwloc_base_check_on_coprocessor();
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &coprocessors, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
             }
         }
 #endif
 
-        if (orte_static_ports  && !orted_globals.tree_spawn) {
-            /* use the rollup collective to send our data to the HNP
-             * so we minimize the HNP bottleneck
-             */
-            orte_grpcomm_collective_t *coll;
-            coll = OBJ_NEW(orte_grpcomm_collective_t);
-            /* get the list of contributors we need from the routed module */
-            orte_routed.get_routing_list(ORTE_GRPCOMM_COLL_PEERS, coll);
-            /* add the collective to our list */
-            opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
-            /* send the buffer to ourselves to start the collective */
-            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, buffer,
-                                                   ORTE_RML_TAG_ROLLUP, 0,
-                                                   rml_cbfunc, NULL))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-        } else {
-            /* send directly to the HNP's callback */
-            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
-                                                   ORTE_RML_TAG_ORTED_CALLBACK, 0,
-                                                   rml_cbfunc, NULL))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
+        /* send to the HNP's callback - will be routed if routes are available */
+        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
+                                               ORTE_RML_TAG_ORTED_CALLBACK,
+                                               orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            goto DONE;
         }
     }
 

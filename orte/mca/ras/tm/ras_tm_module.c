@@ -38,7 +38,7 @@
 /*
  * Local functions
  */
-static int allocate(opal_list_t *nodes);
+static int allocate(orte_job_t *jdata, opal_list_t *nodes);
 static int finalize(void);
 
 static int discover(opal_list_t* nodelist, char *pbs_jobid);
@@ -52,7 +52,9 @@ static char *filename;
  * Global variable
  */
 orte_ras_base_module_t orte_ras_tm_module = {
+    NULL,
     allocate,
+    NULL,
     finalize
 };
 
@@ -62,7 +64,7 @@ orte_ras_base_module_t orte_ras_tm_module = {
  * them back to the caller.
  *  
  */
-static int allocate(opal_list_t *nodes)
+static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int ret;
     char *pbs_jobid;

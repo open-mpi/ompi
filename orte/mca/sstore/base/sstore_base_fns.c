@@ -35,9 +35,8 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
+#include "opal/mca/crs/base/base.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/proc_info.h"

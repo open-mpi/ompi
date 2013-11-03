@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -137,7 +137,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
                      ORTE_JOBID_PRINT(*(orte_jobid_t*)src));
             break;
             
-#if !ORTE_DISABLE_FULL_SUPPORT
         case ORTE_PROC_STATE:
             orte_dt_quick_print(output, "ORTE_PROC_STATE", prefix, src, ORTE_PROC_STATE_T);
             break;
@@ -165,7 +164,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
         case ORTE_IOF_TAG:
             orte_dt_quick_print(output, "ORTE_IOF_TAG", prefix, src, ORTE_IOF_TAG_T);
             break;
-#endif
             
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
@@ -194,8 +192,6 @@ int orte_dt_print_name(char **output, char *prefix, orte_process_name_t *name, o
     return ORTE_SUCCESS;
 }
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /*
  * JOB
  */
@@ -217,12 +213,13 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tControls: %0x\tMPI allowed: %s\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
              ORTE_JOBID_PRINT(src->jobid),
              (src->enable_recovery) ? "ENABLED" : "DISABLED",
              (src->recovery_defined) ? "DEFINED" : "DEFAULT",
              pfx2,
-             (long)src->num_apps, src->controls, ORTE_VPID_PRINT(src->stdin_target),
+             (long)src->num_apps, src->controls,
+             src->gang_launched ? "YES" : "NO", ORTE_VPID_PRINT(src->stdin_target),
              orte_job_state_to_str(src->state), src->abort ? "True" : "False");
     asprintf(&pfx, "%s\t", pfx2);
     free(pfx2);
@@ -385,7 +382,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     tmp = tmp2;
     
     asprintf(&tmp2, "%s\n%s\tNum slots allocated: %ld\tMax slots: %ld", tmp, pfx2,
-             (long)src->slots_alloc, (long)src->slots_max);
+             (long)src->slots, (long)src->slots_max);
     free(tmp);
     tmp = tmp2;
     
@@ -498,10 +495,10 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
         if (NULL != src->locale) {
             hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
         }
-        asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tBinding: %s[%u]", tmp, pfx2,
+        asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tBinding: %s", tmp, pfx2,
                  orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx,
                  (NULL == locale) ? "UNKNOWN" : locale,
-                 (NULL == src->cpu_bitmap) ? "NULL" : src->cpu_bitmap, src->bind_idx);
+                 (NULL == src->cpu_bitmap) ? "NULL" : src->cpu_bitmap);
         if (NULL != locale) {
             free(locale);
         }
@@ -559,8 +556,8 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%s\tWorking dir: %s (user: %d)\n%s\tPrefix: %s\n%s\tHostfile: %s\tAdd-Hostfile: %s", tmp,
-             pfx2, (NULL == src->cwd) ? "NULL" : src->cwd, (int) src->user_specified_cwd,
+    asprintf(&tmp2, "%s\n%s\tWorking dir: %s (user: %d session-dir: %d)\n%s\tPrefix: %s\n%s\tHostfile: %s\tAdd-Hostfile: %s", tmp,
+             pfx2, (NULL == src->cwd) ? "NULL" : src->cwd, (int) src->user_specified_cwd, (int) src->set_cwd_to_session_dir,
              pfx2, (NULL == src->prefix_dir) ? "NULL" : src->prefix_dir,
              pfx2, (NULL == src->hostfile) ? "NULL" : src->hostfile,
              (NULL == src->add_hostfile) ? "NULL" : src->add_hostfile);
@@ -581,11 +578,10 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         tmp = tmp2;
     }
     
-    asprintf(&tmp2, "%s\n%s\tPreload binary: %s\tPreload libs: %s\tUsed on node: %s\n%s\tPreload files dest: %s\n%s\tPreload files src dir: %s", tmp,
-             pfx2, (src->preload_binary) ? "TRUE" : "FALSE", (src->preload_libs) ? "TRUE" : "FALSE",
-             (src->used_on_node) ? "TRUE" : "FALSE",
-             pfx2, (NULL == src->preload_files_dest_dir) ? "NULL" : src->preload_files_dest_dir,
-             pfx2, (NULL == src->preload_files_src_dir) ? "NULL" : src->preload_files_src_dir);
+    asprintf(&tmp2, "%s\n%s\tPreload binary: %s\tPreload files: %s\tUsed on node: %s", tmp,
+             pfx2, (src->preload_binary) ? "TRUE" : "FALSE",
+             (NULL == src->preload_files) ? "NULL" : src->preload_files,
+             (src->used_on_node) ? "TRUE" : "FALSE");
     free(tmp);
     tmp = tmp2;
 
@@ -664,22 +660,23 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     
     if (orte_devel_level_output) {
 #if OPAL_HAVE_HWLOC
-        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  Binding policy: %s[%s]  Cpu set: %s  PPR: %s",
+        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s\n%sBinding policy: %s  Cpu set: %s  PPR: %s  Cpus-per-rank: %d",
                  pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
-                 opal_hwloc_base_print_binding(src->binding),
-                 opal_hwloc_base_print_level(src->bind_level),
+                 pfx2, opal_hwloc_base_print_binding(src->binding),
                  (NULL == opal_hwloc_base_cpu_set) ? "NULL" : opal_hwloc_base_cpu_set,
-                 (NULL == src->ppr) ? "NULL" : src->ppr);
+                 (NULL == src->ppr) ? "NULL" : src->ppr,
+                 (int)src->cpus_per_rank);
 #else
-        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  PPR: %s",
+        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  PPR: %s  Cpus-per-rank: %d",
                  pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
                  orte_rmaps_base_print_mapping(src->mapping),
                  orte_rmaps_base_print_ranking(src->ranking),
-                 (NULL == src->ppr) ? "NULL" : src->ppr);
+                 (NULL == src->ppr) ? "NULL" : src->ppr,
+                 (int)src->cpus_per_rank);
 #endif
 
         if (ORTE_VPID_INVALID == src->daemon_vpid_start) {
@@ -728,4 +725,3 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     free(pfx);
     return ORTE_SUCCESS;
 }
-#endif

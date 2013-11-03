@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         ess_env.h \
         ess_env_component.c \

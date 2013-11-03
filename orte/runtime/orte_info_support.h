@@ -27,7 +27,9 @@
 
 #include "opal/class/opal_pointer_array.h"
 
-extern const char *orte_info_type_orte;
+BEGIN_C_DECLS
+
+ORTE_DECLSPEC extern const char *orte_info_type_orte;
 
 ORTE_DECLSPEC void orte_info_register_types(opal_pointer_array_t *mca_types);
 
@@ -36,5 +38,7 @@ ORTE_DECLSPEC int orte_info_register_framework_params(opal_pointer_array_t *comp
 ORTE_DECLSPEC void orte_info_close_components(void);
 
 ORTE_DECLSPEC void orte_info_show_orte_version(const char *scope);
+
+END_C_DECLS
 
 #endif

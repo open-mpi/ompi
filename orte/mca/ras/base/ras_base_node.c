@@ -68,6 +68,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     int rc, i;
     orte_node_t *node, *hnp_node;
     char *ptr;
+    bool hnp_alone = true;
 
     /* get the number of nodes */
     num_nodes = (orte_std_cntr_t)opal_list_get_size(nodes);
@@ -90,7 +91,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     
     /* get the hnp node's info */
     hnp_node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-    
+
     /* cycle through the list */
     while (NULL != (item = opal_list_remove_first(nodes))) {
         node = (orte_node_t*)item;
@@ -100,28 +101,35 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
          * if this node is the same as the HNP's node so we don't double-enter it
          */
         if (NULL != hnp_node &&
-            (0 == strcmp(node->name, hnp_node->name) || opal_ifislocal(node->name))) {
+            (0 == strcmp(node->name, hnp_node->name) ||
+             0 == strcmp(node->name, "localhost") ||
+             opal_ifislocal(node->name))) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
-                                 "%s ras:base:node_insert updating HNP info to %ld slots",
+                                 "%s ras:base:node_insert updating HNP [%s] info to %ld slots",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 node->name,
                                  (long)node->slots));
-            
+
             /* flag that hnp has been allocated */
             orte_hnp_is_allocated = true;
-            /* adjust the total slots in the job - note
-             * that the HNP ess module will not have entered
-             * a value for its slots, so that will be zero.
-             * Thus, this only has impact if we re-allocate
-             */
-            orte_ras_base.total_slots_alloc -= hnp_node->slots;
+            /* update the total slots in the job */
+            orte_ras_base.total_slots_alloc += node->slots;
             /* copy the allocation data to that node's info */
-            hnp_node->slots = node->slots;
+            hnp_node->slots += node->slots;
             hnp_node->slots_max = node->slots_max;
             hnp_node->launch_id = node->launch_id;
-            /* default allocate all the slots - may be modified later
-             * as a result of filtering actions in mapper
-             */
-            hnp_node->slots_alloc = node->slots;
+            if (orte_managed_allocation) {
+                /* the slots are always treated as sacred
+                 * in managed allocations
+                 */
+                hnp_node->slots_given = true;
+            } else {
+                /* in unmanaged allocations, take whatever
+                 * was determined by the hostfile or dash-host
+                 * parsers
+                 */
+                hnp_node->slots_given = node->slots_given;
+            }
             /* use the local name for our node - don't trust what
              * we got from an RM. If requested, store the resolved
              * nodename info
@@ -139,8 +147,6 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                     }
                 }
             }
-            /* update the total slots in the job */
-            orte_ras_base.total_slots_alloc += hnp_node->slots;
             /* don't keep duplicate copy */
             OBJ_RELEASE(node);
         } else {
@@ -149,10 +155,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                                  "%s ras:base:node_insert node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == node->name) ? "NULL" : node->name));
-            /* default allocate all the slots - may be modified later
-             * as a result of filtering actions in mapper
-             */
-            node->slots_alloc = node->slots;
+            if (orte_managed_allocation) {
+                /* the slots are always treated as sacred
+                 * in managed allocations
+                 */
+                node->slots_given = true;
+            }
             /* insert it into the array */
             node->index = opal_pointer_array_add(orte_node_pool, (void*)node);
             if (ORTE_SUCCESS > (rc = node->index)) {
@@ -165,6 +173,8 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             if (NULL != strchr(node->name, '.')) {
                 orte_have_fqdn_allocation = true;
             }
+            /* indicate the HNP is not alone */
+            hnp_alone = false;
         }
     }
 
@@ -172,7 +182,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
      * ensure we don't have any domain info in the node record
      * for the hnp
      */
-    if (!orte_have_fqdn_allocation) {
+    if (!orte_have_fqdn_allocation && !hnp_alone) {
         if (NULL != (ptr = strchr(hnp_node->name, '.'))) {
             *ptr = '\0';
         }

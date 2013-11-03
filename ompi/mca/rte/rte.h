@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -49,7 +51,7 @@
  *           b. OMPI_RTE_CMP_JOBID
  *           c. OMPI_RTE_CMP_VPID
  *           d. OMPI_RTE_CMP_ALL
- *      7. uint64_t ompi_rte_hash_names(name) - return a string hash uniquely
+ *      7. uint64_t ompi_rte_hash_name(name) - return a string hash uniquely
  *         representing the ompi_process_name passed in.
  *      8. OMPI_NAME - an Opal DSS constant for a handler already registered 
  *         to serialize/deserialize an ompi_process_name_t structure.
@@ -80,18 +82,25 @@
  *     1. ompi_process_info_t - a struct containing info about the current process.
  *        The struct must contain at least the following fields:
  *           a. app_num -
- *           b. pid -
- *           c. num_procs -
- *           d. my_node_rank -
- *           e. my_hnp_uri -
- *           f. peer_modex - a collective id for the modex operation
- *           g. peer_init_barrier - a collective id for the barrier during MPI_Init
- *           h. peer_fini_barrier - a collective id for the barrier during MPI_Finalize
- *           i. job_session_dir - 
- *           j. proc_session_dir -
- *           k. nodename - a string representation for the name of the node this
+ *           b. pid - this process's pid.  Should be same as getpid().
+ *           c. num_procs - Number of processes in this job (ie, MCW)
+ *           d. my_node_rank - relative rank on local node to other peers this run-time 
+ *                    instance knows about.  If doing dynamics, this may be something
+ *                    different than my_local_rank, but will be my_local_rank in a
+ *                    static job.
+ *           d. my_local_rank - relative rank on local node with other peers in this job (ie, MCW)
+ *           e. num_local_peers - Number of local peers (peers in MCW on your node)
+ *           f. my_hnp_uri -
+ *           g. peer_modex - a collective id for the modex operation
+ *           h. peer_init_barrier - a collective id for the barrier during MPI_Init
+ *           i. peer_fini_barrier - a collective id for the barrier during MPI_Finalize
+ *           j. job_session_dir - 
+ *           k. proc_session_dir -
+ *           l. nodename - a string representation for the name of the node this
  *              process is on
- *     2. ompi_rte_proc_is_bound - global boolean that will be true if the runtime bound 
+ *           m. cpuset -
+ *     2. ompi_process_info - a global instance of the ompi_process_t structure.
+ *     3. ompi_rte_proc_is_bound - global boolean that will be true if the runtime bound 
  *        the process to a particular core or set of cores and is false otherwise.
  *
  * (d) Error handling objects and operations
@@ -100,7 +109,7 @@
  *     2. int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs) - 
  *        Abort the specified list of peers
  *     3. OMPI_ERROR_LOG(rc) - print error message regarding the given return code
- *     4. ompi_rte_set_fault_callback - register a callback function for the RTE
+ *     4. ompi_rte_register_errhandler - register a callback function for the RTE
  *        to report asynchronous errors to the caller
  *
  * (e) Init and finalize objects and operations
@@ -182,6 +191,13 @@ END_C_DECLS
 
 BEGIN_C_DECLS
 
+/* Each RTE is required to define a DB key for identifying the node
+ * upon which a process resides, and for providing this information
+ * for each process
+ *
+ * #define OMPI_RTE_NODE_ID
+ */
+
 /* Communication tags */
 #define OMPI_RML_TAG_UDAPL                          OMPI_RML_TAG_BASE+1
 #define OMPI_RML_TAG_OPENIB                         OMPI_RML_TAG_BASE+2
@@ -201,7 +217,34 @@ BEGIN_C_DECLS
 #define OMPI_RML_TAG_OFACM                          OMPI_RML_TAG_BASE+11
 #define OMPI_RML_TAG_XOFACM                         OMPI_RML_TAG_BASE+12
 
+#define OMPI_RML_PCONNECT_TAG                       OMPI_RML_TAG_BASE+13
+
+/* open shmem oob communication */
+#define OMPI_RML_TAG_SHMEM                          OMPI_RML_TAG_BASE+14
+
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
+
+/*
+ * MCA Framework
+ */
+OMPI_DECLSPEC extern mca_base_framework_t ompi_rte_base_framework;
+
+/* In a few places, we need to barrier until something happens
+ * that changes a flag to indicate we can release - e.g., waiting
+ * for a specific RTE message to arrive. We don't want to block MPI
+ * progress while waiting, so we loop over opal_progress, letting
+ * the RTE progress thread move the RTE along
+ */
+#define OMPI_WAIT_FOR_COMPLETION(flg)                                   \
+    do {                                                                \
+        opal_output_verbose(1, ompi_rte_base_framework.framework_output, \
+                            "%s waiting on RTE event at %s:%d",         \
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
+                            __FILE__, __LINE__);                        \
+        while ((flg)) {                                                \
+            opal_progress();                                            \
+        }                                                               \
+    }while(0);
 
 typedef struct {
     opal_list_item_t super;

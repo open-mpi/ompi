@@ -72,6 +72,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
+#include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
@@ -190,14 +191,8 @@ int opal_ifindextokindex(int if_index)
 int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
 {
     opal_if_t* intf;
-#if OPAL_WANT_IPV6
     int error;
     struct addrinfo hints, *res = NULL, *r;
-#else
-    int i;
-    in_addr_t inaddr;
-    struct hostent *h;
-#endif
 
     /* if the user asked us not to resolve interfaces, then just return */
     if (opal_if_do_not_resolve) {
@@ -211,7 +206,6 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
         return OPAL_ERROR;
     }
 
-#if OPAL_WANT_IPV6
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -240,42 +234,83 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
                     strncpy(if_name, intf->if_name, length);
                     return OPAL_SUCCESS;
                 }
-            } else {
+            }
+#if OPAL_ENABLE_IPV6
+            else {
                 if (IN6_ARE_ADDR_EQUAL(&((struct sockaddr_in6*) &intf->if_addr)->sin6_addr,
                     &((struct sockaddr_in6*) r->ai_addr)->sin6_addr)) {
                     strncpy(if_name, intf->if_name, length);
                     return OPAL_SUCCESS;
                 }
             }
+#endif
         }
     }
     if (NULL != res) {
         freeaddrinfo (res);
     }
-#else
-    h = gethostbyname(if_addr);
-    if (0 == h) {
+
+    /* if we get here, it wasn't found */
+    return OPAL_ERR_NOT_FOUND;
+}
+
+/*
+ *  Attempt to resolve the address (given as either IPv4/IPv6 string
+ *  or hostname) and return the kernel index of the interface
+ *  on the same network as the specified address
+ */
+int16_t opal_ifaddrtokindex(const char* if_addr)
+{
+    opal_if_t* intf;
+    int error;
+    struct addrinfo hints, *res = NULL, *r;
+    size_t len;
+
+    if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
+        return OPAL_ERROR;
+    }
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    error = getaddrinfo(if_addr, NULL, &hints, &res);
+
+    if (error) {
+        if (NULL != res) {
+            freeaddrinfo (res);
+        }
         return OPAL_ERR_NOT_FOUND;
     }
 
-    for (i=0; NULL != h->h_addr_list[i]; i++) {
-        memcpy(&inaddr, h->h_addr_list[i], sizeof(inaddr));
-	/* JMS This chunk of code did not merge cleanly from the trunk
-           (from r28538.  Ralph and I did some more changes to if.c on
-           the trunk and it looks like those have not come over.
-           Someday, probably the easiest way to fix these conflicts is
-           to just copy over a whole new copy of
-           opal_ifaddrtoname(). */
+    for (r = res; r != NULL; r = r->ai_next) {
         for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
-             intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
-             intf =  (opal_if_t*)opal_list_get_next(intf)) {
-            if (((struct sockaddr_in*) &intf->if_addr)->sin_addr.s_addr == inaddr) {
-                strncpy(if_name, intf->if_name, length);
-                return OPAL_SUCCESS;
+            intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+            intf =  (opal_if_t*)opal_list_get_next(intf)) {
+            
+            if (AF_INET == r->ai_family && AF_INET == intf->af_family) {
+                struct sockaddr_in ipv4;
+                len = (r->ai_addrlen < sizeof(struct sockaddr_in)) ? r->ai_addrlen : sizeof(struct sockaddr_in);
+                memcpy(&ipv4, r->ai_addr, len);
+                if (opal_net_samenetwork((struct sockaddr*)&ipv4, (struct sockaddr*)&intf->if_addr, intf->if_mask)) {
+                    return intf->if_kernel_index;
+                }
             }
+#if OPAL_ENABLE_IPV6
+            else if (AF_INET6 == r->ai_family && AF_INET6 == intf->af_family) {
+                struct sockaddr_in6 ipv6;
+                len = (r->ai_addrlen < sizeof(struct sockaddr_in6)) ? r->ai_addrlen : sizeof(struct sockaddr_in6);
+                memcpy(&ipv6, r->ai_addr, len);
+                if (opal_net_samenetwork((struct sockaddr*)((struct sockaddr_in6*)&intf->if_addr),
+                                         (struct sockaddr*)&ipv6, intf->if_mask)) {
+                    return intf->if_kernel_index;
+                }
+            }
+#endif
         }
     }
-#endif
+    if (NULL != res) {
+        freeaddrinfo (res);
+    }
     return OPAL_ERR_NOT_FOUND;
 }
 
@@ -360,9 +395,33 @@ int opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, unsigned int leng
     }
 
     for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
-        intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
-        intf =  (opal_if_t*)opal_list_get_next(intf)) {
+         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+         intf =  (opal_if_t*)opal_list_get_next(intf)) {
         if (intf->if_index == if_index) {
+            memcpy(if_addr, &intf->if_addr, MIN(length, sizeof (intf->if_addr)));
+            return OPAL_SUCCESS;
+        }
+    }
+    return OPAL_ERROR;
+}
+
+
+/* 
+ *  Lookup the interface by opal_list kindex and return the 
+ *  primary address assigned to the interface.
+ */
+int opal_ifkindextoaddr(int if_kindex, struct sockaddr* if_addr, unsigned int length)
+{
+    opal_if_t* intf;
+
+    if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
+        return OPAL_ERROR;
+    }
+
+    for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
+         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
+         intf =  (opal_if_t*)opal_list_get_next(intf)) {
+        if (intf->if_kernel_index == if_kindex) {
             memcpy(if_addr, &intf->if_addr, MIN(length, sizeof (intf->if_addr)));
             return OPAL_SUCCESS;
         }
@@ -438,8 +497,6 @@ int opal_ifindextomtu(int if_index, int *if_mtu)
 /* 
  *  Lookup the interface by opal_list index and return the 
  *  flags assigned to the interface.
- *
- *  Bug: Make return type portable (compatible with Windows)
  */
 
 int opal_ifindextoflags(int if_index, uint32_t* if_flags)
@@ -517,7 +574,7 @@ int opal_ifkindextoname(int if_kindex, char* if_name, int length)
 bool
 opal_ifislocal(const char *hostname)
 {
-#if OPAL_WANT_IPV6
+#if OPAL_ENABLE_IPV6
     char addrname[NI_MAXHOST]; /* should be larger than ADDRLEN, but I think
                                   they really mean IFNAMESIZE */
 #else
@@ -653,17 +710,17 @@ bool opal_ifisloopback(int if_index)
  * into account that the list entries could be given as named interfaces,
  * IP addrs, or subnet+mask
  */
-int opal_ifmatches(int idx, char **nets)
+int opal_ifmatches(int kidx, char **nets)
 {
     bool named_if;
     int i, rc;
     size_t j;
-    int index;
+    int kindex;
     struct sockaddr_in inaddr;
     uint32_t addr, netaddr, netmask;
 
     /* get the address info for the given network in case we need it */
-    if (OPAL_SUCCESS != (rc = opal_ifindextoaddr(idx, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
+    if (OPAL_SUCCESS != (rc = opal_ifkindextoaddr(kidx, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
         return rc;
     }
     addr = ntohl(inaddr.sin_addr.s_addr);
@@ -680,10 +737,10 @@ int opal_ifmatches(int idx, char **nets)
             }
         }
         if (named_if) {
-            if (0 > (index = opal_ifnametoindex(nets[i]))) {
+            if (0 > (kindex = opal_ifnametokindex(nets[i]))) {
                 continue;
             }
-            if (index == idx) {
+            if (kindex == kidx) {
                 return OPAL_SUCCESS;
             }
         } else {
@@ -825,7 +882,7 @@ opal_ifislocal(const char *hostname)
 }
 
 int
-opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
+opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
 {
     return 0;
 }

@@ -382,10 +382,6 @@ int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req)
 
             packet_size = 0;
 
-            if (sge_index >= sge_count) {
-                opal_output (0, "WTF!!!");
-            }
-
             /* grh */
             mca_oob_ud_fill_sge(recv_req->req_sge + sge_index++,
                                 recv_req->req_grh + wr_index,
@@ -394,12 +390,6 @@ int mca_oob_ud_recv_try (mca_oob_ud_req_t *recv_req)
 
             do {
                 int to_recv = min (iov_left, mtu - packet_size);
-
-                if (sge_index >= sge_count) {
-                    int *i = 0;
-                    opal_output (0, "WTF!!! P2");
-                    (*i) = 1;
-                }
 
                 mca_oob_ud_fill_sge(recv_req->req_sge + sge_index++,
                                     (char *)recv_req->req_uiov[iov_index].iov_base + iov_offset,

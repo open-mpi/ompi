@@ -89,7 +89,8 @@ orte_errmgr_base_module_t orte_errmgr_default_hnp_module = {
     suggest_map_targets,
     ft_event,
     orte_errmgr_base_register_migration_warning,
-    NULL
+    NULL,
+    orte_errmgr_base_execute_error_callbacks
 };
 
 
@@ -153,14 +154,8 @@ static void job_errors(int fd, short args, void *cbdata)
                          ORTE_JOBID_PRINT(jdata->jobid),
                          orte_job_state_to_str(jobstate)));
 
-    /* set global flags */
-    if (ORTE_PROC_MY_NAME->jobid == jdata->jobid && !orte_abnormal_term_ordered) {
-        /* set the flag indicating that a daemon failed so we use the proper
-         * methods for attempting to shutdown the rest of the system
-         */
-        orte_abnormal_term_ordered = true;
-    }
-    if (ORTE_JOB_STATE_NEVER_LAUNCHED == jobstate) {
+    if (ORTE_JOB_STATE_NEVER_LAUNCHED == jobstate ||
+        ORTE_JOB_STATE_ALLOC_FAILED == jobstate) {
         orte_never_launched = true;
         jdata->num_terminated = jdata->num_procs;
         ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_TERMINATED);
@@ -176,11 +171,7 @@ static void job_errors(int fd, short args, void *cbdata)
          */
         if (NULL != jdata->aborted_proc) {
             sts = jdata->aborted_proc->exit_code;
-            if (ORTE_PROC_MY_NAME->jobid == jdata->jobid && !orte_abnormal_term_ordered) {
-                /* set the flag indicating that a daemon failed so we use the proper
-                 * methods for attempting to shutdown the rest of the system
-                 */
-                orte_abnormal_term_ordered = true;
+            if (ORTE_PROC_MY_NAME->jobid == jdata->jobid) {
                 if (WIFSIGNALED(sts)) { /* died on signal */
 #ifdef WCOREDUMP
                     if (WCOREDUMP(sts)) {
@@ -208,6 +199,8 @@ static void job_errors(int fd, short args, void *cbdata)
 
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_FORCED_EXIT);
+    /* set the global abnormal exit flag  */
+    orte_abnormal_term_ordered = true;
     OBJ_RELEASE(caddy);
 }
 
@@ -255,14 +248,8 @@ static void proc_errors(int fd, short args, void *cbdata)
 
     /* get the job object */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
-        /* if the orteds are terminating, check job complete */
-        if (orte_orteds_term_ordered) {
-            opal_output(0, "TERM ORDERED - CHECKING COMPLETE");
-            goto cleanup;
-        } else {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            goto cleanup;
-        }
+        /* could be a race condition */
+        goto cleanup;
     }
     pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
 
@@ -286,6 +273,8 @@ static void proc_errors(int fd, short args, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             goto cleanup;
         }
+        /* mark the daemon as gone */
+        pptr->alive = false;
         /* if we have ordered orteds to terminate or abort
          * is in progress, record it */
         if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
@@ -525,6 +514,15 @@ static void proc_errors(int fd, short args, void *cbdata)
         }
         /* remove from dependent routes, if it is one */
         orte_routed.route_lost(proc);
+        /* kill all jobs */
+        default_hnp_abort(jdata);
+        break;
+
+    case ORTE_PROC_STATE_UNABLE_TO_SEND_MSG:
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:hnp: unable to send message to proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         /* kill all jobs */
         default_hnp_abort(jdata);
         break;

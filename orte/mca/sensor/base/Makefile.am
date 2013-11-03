@@ -10,17 +10,10 @@
 #
 
 headers += \
-        base/base.h
-
-libmca_sensor_la_SOURCES += \
-        base/sensor_base_frame.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-headers += \
+        base/base.h \
         base/sensor_private.h
 
 libmca_sensor_la_SOURCES += \
-        base/sensor_base_select.c
-
-endif
+        base/sensor_base_frame.c \
+        base/sensor_base_select.c \
+        base/sensor_base_fns.c

@@ -54,6 +54,7 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 static int bad_allgather(orte_grpcomm_collective_t *coll);
 static int bad_barrier(orte_grpcomm_collective_t *coll);
+static int bad_modex(orte_grpcomm_collective_t *modex);
 
 /* Module def */
 orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
@@ -62,7 +63,7 @@ orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
     xcast,
     bad_allgather,
     bad_barrier,
-    orte_grpcomm_base_modex
+    bad_modex
 };
 
 /**
@@ -119,10 +120,10 @@ static int xcast(orte_jobid_t job,
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
-    
+
     /* send it to the HNP (could be myself) for relay */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_XCAST,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         goto CLEANUP;
@@ -133,28 +134,30 @@ CLEANUP:
     return rc;
 }
 
-
-static int bad_barrier(orte_grpcomm_collective_t *coll)
+static void process_barrier(int fd, short args, void *cbdata)
 {
+    orte_grpcomm_caddy_t *caddy = (orte_grpcomm_caddy_t*)cbdata;
+    orte_grpcomm_collective_t *coll = caddy->op;
     int rc;
     opal_buffer_t *buf;
     orte_namelist_t *nm;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:bad entering barrier",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* if I am alone, just execute the callback */
-    if (1 == orte_process_info.num_procs) {
-        coll->active = false;
+    /* if we are a singleton and routing isn't enabled,
+     * then we have nobody with which to communicate, so
+     * we can just declare success
+     */
+    if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
+        !orte_routing_is_enabled) {
         if (NULL != coll->cbfunc) {
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s CALLING BARRIER RELEASE",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             coll->cbfunc(NULL, coll->cbdata);
         }
-        return ORTE_SUCCESS;
+        /* flag the collective as complete */
+        coll->active = false;
+        return;
     }
-    
-    /* mark the collective as active */
-    coll->active = true;
 
     /* setup the collective */
     opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
@@ -179,45 +182,56 @@ static int bad_barrier(orte_grpcomm_collective_t *coll)
 
     /* send the buffer to my daemon */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_COLLECTIVE,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
-        return rc;
+        return;
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:bad barrier underway",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    return rc;
 }
 
-static int bad_allgather(orte_grpcomm_collective_t *gather)
+static int bad_barrier(orte_grpcomm_collective_t *coll)
 {
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:bad entering barrier",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* push it into the event library for processing as
+     * we will be accessing global lists
+     */
+    ORTE_GRPCOMM_ACTIVATE(coll, process_barrier);
+    return ORTE_SUCCESS;
+}
+
+static void process_allgather(int fd, short args, void *cbdata)
+{
+    orte_grpcomm_caddy_t *caddy = (orte_grpcomm_caddy_t*)cbdata;
+    orte_grpcomm_collective_t *gather = caddy->op;
     int rc;
     opal_buffer_t *buf;
     orte_namelist_t *nm;
     opal_list_item_t *item;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:bad entering allgather",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* if I am alone and nobody else is participating, then
-     * nothing really to do
+    /* if we are a singleton and routing isn't enabled,
+     * then we have nobody with which to communicate, so
+     * we can just declare success
      */
-    if (1 == orte_process_info.num_procs &&
-        0 == opal_list_get_size(&gather->participants)) {
-        gather->active = false;
+    if ((orte_process_info.proc_type & ORTE_PROC_SINGLETON) &&
+        !orte_routing_is_enabled) {
         if (NULL != gather->cbfunc) {
-            gather->cbfunc(&gather->buffer, gather->cbdata);
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s CALLING GATHER RELEASE",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            gather->cbfunc(NULL, gather->cbdata);
         }
-        return ORTE_SUCCESS;
+        /* flag the collective as complete */
+        gather->active = false;
+        return;
     }
-    
-    /* mark the collective as active */
-    gather->active = true;
 
     /* if this is an original request, then record the collective */
     if (NULL == gather->next_cb) {
@@ -245,12 +259,12 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
                              (int)gather->id));
         /* send to our daemon */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
-                                              ORTE_RML_TAG_COLLECTIVE, 0,
+                                              ORTE_RML_TAG_COLLECTIVE,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(buf);
             opal_list_remove_item(&orte_grpcomm_base.active_colls, &gather->super);
-            return rc;
+            return;
         }
     } else {
         /* send directly to each participant - note that this will
@@ -269,19 +283,41 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
                                  (int)gather->id,
                                  ORTE_NAME_PRINT(&nm->name)));
             if (0 > (rc = orte_rml.send_buffer_nb(&nm->name, buf,
-                                                  ORTE_RML_TAG_COLLECTIVE, 0,
+                                                  ORTE_RML_TAG_COLLECTIVE,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
                 opal_list_remove_item(&orte_grpcomm_base.active_colls, &gather->super);
+                return;
             }
         }
-        return rc;
+        return;
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:bad allgather underway",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+}
+
+static int bad_allgather(orte_grpcomm_collective_t *gather)
+{
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:bad entering allgather",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
+    /* push it into the event library for processing as
+     * we will be accessing global lists
+     */
+    ORTE_GRPCOMM_ACTIVATE(gather, process_allgather);
+    return ORTE_SUCCESS;
+}
+
+static int bad_modex(orte_grpcomm_collective_t *modex)
+{
+    /* we need to get this into the event library
+     * to avoid race conditions with modex data arriving
+     * from other sources via the RML
+     */
+    ORTE_GRPCOMM_ACTIVATE(modex, orte_grpcomm_base_modex);
     return ORTE_SUCCESS;
 }

@@ -13,6 +13,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,22 +92,6 @@ struct orte_errmgr_predicted_node_t {
 };
 typedef struct orte_errmgr_predicted_node_t orte_errmgr_predicted_node_t;
 OBJ_CLASS_DECLARATION(orte_errmgr_predicted_node_t);
-
-/*
- * Callback function that should be called when there is a fault.
- *
- * This callback function will be used anytime (other than during finalize) the
- * runtime detects and handles a process failure. The runtime will complete all
- * its stabilization before alerting the callback function. The parameter to the
- * callback function will be the orte_process_name_t of the process that failed.
- * It will not alert the application to failures that are not in the same job as
- * the alerted process, only failures within the same jobid.
- *
- * @param[in] proc The names of the process that failed
- */
-typedef void (orte_errmgr_fault_callback_t)(opal_pointer_array_t *procs);
-
-ORTE_DECLSPEC extern orte_errmgr_fault_callback_t *fault_cbfunc;
 
 /*
  * Structure to describe a suggested remapping element for a predicted fault.
@@ -193,7 +178,8 @@ __opal_attribute_format_funcptr__(__printf__, 2, 3);
  *  communicator group before aborting itself.
  */
 typedef int (*orte_errmgr_base_module_abort_peers_fn_t)(orte_process_name_t *procs,
-                                                        orte_std_cntr_t num_procs);
+                                                        orte_std_cntr_t num_procs,
+                                                        int error_code);
 
 /**
  * Predicted process/node failure notification
@@ -242,41 +228,64 @@ typedef int  (*orte_errmgr_base_module_ft_event_fn_t)(int state);
  */
 typedef void (*orte_errmgr_base_module_register_migration_warning_fn_t)(struct timeval *tv);
 
+typedef enum {
+    ORTE_ERRMGR_CALLBACK_FIRST,
+    ORTE_ERRMGR_CALLBACK_LAST,
+    ORTE_ERRMGR_CALLBACK_PREPEND,
+    ORTE_ERRMGR_CALLBACK_APPEND
+} orte_errmgr_error_order_t;
+
 /** 
- * Set the callback function for faults.
- * 
+ * Register a callback function for faults.
+ *
+ * This callback function will be used anytime (other than during finalize) the
+ * runtime detects and handles a critical failure. The runtime will complete all
+ * its stabilization before cycling thru all registered callbacks. The order of
+ * the callbacks will proceed in the indicated order with which they were registered.
+ *
+ * The parameter to the callback function will be the orte_process_name_t
+ * of the process involved in the error.
+ *
  * @param[in] cbfunc The callback function.
  *
- * @retval The previous fault callback function.
  */
-typedef orte_errmgr_fault_callback_t *(*orte_errmgr_base_module_set_fault_callback_t)(orte_errmgr_fault_callback_t *cbfunc);
+typedef struct {
+    orte_process_name_t proc;
+    int errcode;
+} orte_error_t;
+
+typedef int (orte_errmgr_error_callback_fn_t)(opal_pointer_array_t *errors);
+typedef int (*orte_errmgr_base_module_register_error_callback_fn_t)(orte_errmgr_error_callback_fn_t *cbfunc,
+                                                                    orte_errmgr_error_order_t order);
+typedef void (*orte_errmgr_base_module_execute_error_callbacks_fn_t)(opal_pointer_array_t *errors);
 
 /*
  * Module Structure
  */
 struct orte_errmgr_base_module_2_3_0_t {
     /** Initialization Function */
-    orte_errmgr_base_module_init_fn_t                   init;
+    orte_errmgr_base_module_init_fn_t                       init;
     /** Finalization Function */
-    orte_errmgr_base_module_finalize_fn_t               finalize;
+    orte_errmgr_base_module_finalize_fn_t                   finalize;
 
-    orte_errmgr_base_module_log_fn_t                    log;
-    orte_errmgr_base_module_abort_fn_t                  abort;
-    orte_errmgr_base_module_abort_peers_fn_t            abort_peers;
+    orte_errmgr_base_module_log_fn_t                        log;
+    orte_errmgr_base_module_abort_fn_t                      abort;
+    orte_errmgr_base_module_abort_peers_fn_t                abort_peers;
 
     /** Predicted process/node failure notification */
-    orte_errmgr_base_module_predicted_fault_fn_t        predicted_fault;
+    orte_errmgr_base_module_predicted_fault_fn_t             predicted_fault;
     /** Suggest a node to map a restarting process onto */
-    orte_errmgr_base_module_suggest_map_targets_fn_t    suggest_map_targets;
+    orte_errmgr_base_module_suggest_map_targets_fn_t         suggest_map_targets;
 
     /** Handle any FT Notifications */
-    orte_errmgr_base_module_ft_event_fn_t               ft_event;
+    orte_errmgr_base_module_ft_event_fn_t                    ft_event;
 
-	/* Register to be warned of impending migration */
+    /* Register to be warned of impending migration */
     orte_errmgr_base_module_register_migration_warning_fn_t  register_migration_warning;
 
-    /* Set the callback function */
-    orte_errmgr_base_module_set_fault_callback_t        set_fault_callback;
+    /* Register a callback function */
+    orte_errmgr_base_module_register_error_callback_fn_t     register_error_callback;
+    orte_errmgr_base_module_execute_error_callbacks_fn_t     execute_error_callbacks;
 };
 typedef struct orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_2_3_0_t;
 typedef orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_t;

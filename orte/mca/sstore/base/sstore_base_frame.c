@@ -2,8 +2,9 @@
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2012-2013 The University of Wisconsin-La Crosse. All rights
+ * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
  *                         reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,6 +17,7 @@
 #include "orte/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_environ.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/util/proc_info.h"
@@ -24,28 +26,6 @@
 #include "orte/mca/sstore/base/base.h"
 
 #include "orte/mca/sstore/base/static-components.h"
-
-#if ORTE_DISABLE_FULL_SUPPORT
-/* have to include a bogus function here so that
- * the build system sees at least one function
- * in the library
- */
-static int orte_sstore_base_register(mca_base_register_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_sstore_base_open(mca_base_open_flag_t flags)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_sstore_base_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-#else
 
 /*
  * Globals
@@ -176,6 +156,11 @@ static int orte_sstore_base_open(mca_base_open_flag_t flags)
     return ORTE_SUCCESS;
 }
 
+MCA_BASE_FRAMEWORK_DECLARE(orte, sstore, "ORTE Sstore", orte_sstore_base_register,
+                           orte_sstore_base_open, orte_sstore_base_close,
+                           mca_sstore_base_static_components, 0);
+
+
 int orte_sstore_base_determine_context(void)
 {
     if( ORTE_PROC_IS_HNP) {
@@ -196,9 +181,3 @@ int orte_sstore_base_determine_context(void)
 
     return ORTE_SUCCESS;
 }
-
-#endif
-
-MCA_BASE_FRAMEWORK_DECLARE(orte, sstore, "ORTE Sstore", orte_sstore_base_register,
-                           orte_sstore_base_open, orte_sstore_base_close,
-                           mca_sstore_base_static_components, 0);

@@ -14,10 +14,6 @@
 
 #include "orte_config.h"
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-#include "orte/mca/rml/rml.h"
-#endif
-
 #include "orte/mca/sstore/sstore.h"
 
 /*
@@ -30,7 +26,6 @@ BEGIN_C_DECLS
  * MCA Framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_sstore_base_framework;
-
 /* select a component */
 ORTE_DECLSPEC    int orte_sstore_base_select(void);
 
@@ -46,32 +41,6 @@ void orte_sstore_base_global_snapshot_info_destruct( orte_sstore_base_global_sna
 /**
  * Globals
  */
-ORTE_DECLSPEC extern orte_sstore_base_module_t orte_sstore;
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-/**
- * Select an available component.
- *
- * @retval ORTE_SUCCESS Upon Success
- * @retval ORTE_NOT_FOUND If no component can be selected
- * @retval ORTE_ERROR Upon other failure
- *
- */
-ORTE_DECLSPEC int orte_sstore_base_select(void);
-
-/**
- * Object stuff
- */
-void orte_sstore_base_local_snapshot_info_construct(orte_sstore_base_local_snapshot_info_t *snapshot);
-void orte_sstore_base_local_snapshot_info_destruct( orte_sstore_base_local_snapshot_info_t *snapshot);
-
-void orte_sstore_base_global_snapshot_info_construct(orte_sstore_base_global_snapshot_info_t *snapshot);
-void orte_sstore_base_global_snapshot_info_destruct( orte_sstore_base_global_snapshot_info_t *snapshot);
-
-/**
- * Globals
- */
-ORTE_DECLSPEC extern orte_sstore_base_component_t orte_sstore_base_selected_component;
 ORTE_DECLSPEC extern orte_sstore_base_module_t orte_sstore;
 
 /*
@@ -140,8 +109,6 @@ ORTE_DECLSPEC int orte_sstore_base_tool_request_restart_handle(orte_sstore_base_
                                                                char *basedir, char *ref, int seq,
                                                                orte_sstore_base_global_snapshot_info_t *snapshot);
 ORTE_DECLSPEC int orte_sstore_base_tool_get_attr(orte_sstore_base_handle_t handle, orte_sstore_base_key_t key, char **value);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

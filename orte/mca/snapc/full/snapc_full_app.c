@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 The Trustees of Indiana University.
+ * Copyright (c) 2004-2012 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -39,6 +39,7 @@
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"
 #include "opal/mca/event/event.h"
@@ -109,6 +110,7 @@ int app_coord_init()
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_INIT;
     opal_buffer_t buffer;
+    orte_grpcomm_collective_t *coll;
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "App) Initalized for Application %s\n", 
@@ -152,11 +154,16 @@ int app_coord_init()
                              "app) Startup Barrier..."));
     }
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier()) ) {
-        ORTE_ERROR_LOG(ret);
+    coll = OBJ_NEW(orte_grpcomm_collective_t);
+    coll->id = orte_process_info.peer_init_barrier;
+    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
+	    ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
+    coll->active = true;
+    ORTE_WAIT_FOR_COMPLETION(coll->active);
+    OBJ_RELEASE(coll);
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
@@ -210,6 +217,7 @@ int app_coord_finalize()
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_FIN;
     opal_buffer_t buffer;
     orte_std_cntr_t count;
+    orte_grpcomm_collective_t *coll;
 
     /*
      * All processes must sync here, so the Global coordinator can know that
@@ -221,11 +229,15 @@ int app_coord_finalize()
                              "app) Shutdown Barrier..."));
     }
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier()) ) {
+    coll = OBJ_NEW(orte_grpcomm_collective_t);
+    coll->id = orte_process_info.peer_init_barrier;
+    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
+    coll->active = true;
+    ORTE_WAIT_FOR_COMPLETION(coll->active);
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
@@ -296,7 +308,8 @@ int app_coord_finalize()
                              "app) Shutdown Barrier: Waiting on barrier...!"));
     }
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier()) ) {
+    coll->id = orte_process_info.peer_fini_barrier;
+    if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -308,6 +321,9 @@ int app_coord_finalize()
     }
 
  cleanup:
+    /* cleanup */
+    OBJ_RELEASE(coll);
+
     /*
      * Cleanup named pipes
      */
@@ -831,9 +847,6 @@ static int snapc_full_app_notify_reopen_files(void)
 #ifndef HAVE_MKFIFO
     return ret;
 #else
-#ifdef __WINDOWS__
-    return ret;
-#else
     /*
      * Open up the read pipe
      */
@@ -885,7 +898,6 @@ static int snapc_full_app_notify_reopen_files(void)
     }
     
     return ORTE_SUCCESS;
-#endif  /* __WINDOWS__ */
 #endif  /* HAVE_MKFIFO */
 }
 

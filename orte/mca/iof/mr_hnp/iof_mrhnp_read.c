@@ -58,13 +58,11 @@ static void restart_stdin(int fd, short event, void *cbdata)
 /* return true if we should read stdin from fd, false otherwise */
 bool orte_iof_mrhnp_stdin_check(int fd)
 {
-#if !defined(__WINDOWS__) && defined(HAVE_TCGETPGRP)
+#if defined(HAVE_TCGETPGRP)
     if( isatty(fd) && (getpgrp() != tcgetpgrp(fd)) ) {
         return false;
     }
-#elif defined(__WINDOWS__)
-    return false;
-#endif  /* !defined(__WINDOWS__) */
+#endif
     return true;
 }
 
@@ -367,7 +365,7 @@ static void send_data(orte_process_name_t *name, orte_iof_tag_t tag,
     }
 
     if (0 > (rc = orte_rml.send_buffer_nb(name, buf, ORTE_RML_TAG_IOF_PROXY,
-                                          0, orte_rml_send_callback, NULL))) {
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }

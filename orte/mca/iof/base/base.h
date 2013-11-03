@@ -58,13 +58,10 @@ BEGIN_C_DECLS
  * MCA framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_iof_base_framework;
-
 /*
  * Select an available component.
  */
 ORTE_DECLSPEC int orte_iof_base_select(void);
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /* track xon/xoff of processes */
 typedef struct {
@@ -132,7 +129,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
 struct orte_iof_base_t {
     size_t                  output_limit;
     char                    *input_files;
-    opal_mutex_t            iof_write_output_lock;
     orte_iof_sink_t         *iof_write_stdout;
     orte_iof_sink_t         *iof_write_stderr;
 };
@@ -204,8 +200,6 @@ ORTE_DECLSPEC int orte_iof_base_write_output(orte_process_name_t *name, orte_iof
                                              unsigned char *data, int numbytes,
                                              orte_iof_write_event_t *channel);
 ORTE_DECLSPEC void orte_iof_base_write_handler(int fd, short event, void *cbdata);
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

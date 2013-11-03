@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -64,13 +64,11 @@ static void restart_stdin(int fd, short event, void *cbdata)
 /* return true if we should read stdin from fd, false otherwise */
 bool orte_iof_hnp_stdin_check(int fd)
 {
-#if !defined(__WINDOWS__) && defined(HAVE_TCGETPGRP)
+#if defined(HAVE_TCGETPGRP)
     if( isatty(fd) && (getpgrp() != tcgetpgrp(fd)) ) {
         return false;
     }
-#elif defined(__WINDOWS__)
-    return false;
-#endif  /* !defined(__WINDOWS__) */
+#endif
     return true;
 }
 
@@ -100,19 +98,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     int rc;
     orte_ns_cmp_bitmask_t mask;
     
-    OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
-    
     /* read up to the fragment size */
-#if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
-#else
-    {
-        DWORD readed;
-        HANDLE handle = (HANDLE)_get_osfhandle(fd);
-        ReadFile(handle, data, sizeof(data), &readed, NULL);
-        numbytes = (int)readed;
-    }
-#endif  /* !defined(__WINDOWS__) */
     
     if (numbytes < 0) {
         /* either we have a connection error or it was a non-blocking read */
@@ -120,7 +107,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
             opal_event_add(rev->ev, 0);
-            OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
             return;
         } 
 
@@ -146,7 +132,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
          */
         if (orte_job_term_ordered) {
             OBJ_RELEASE(mca_iof_hnp_component.stdinev);
-            OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
             return;
         }
         /* cycle through our list of sinks */
@@ -178,7 +163,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
                         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                              "buffer backed up - holding"));
-                        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
                         return;
                     }
                 }
@@ -223,7 +207,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             }
         }
         /* nothing more to do */
-        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
         return;
     }
     
@@ -295,7 +278,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 break;
             }
         }
-        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
         return;
     }
     
@@ -336,6 +318,5 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 
-    OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
     return;
 }

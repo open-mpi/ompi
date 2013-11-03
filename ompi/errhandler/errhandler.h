@@ -31,6 +31,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 
+#include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
@@ -366,14 +367,25 @@ struct ompi_request_t;
  * Callback function from runtime layer to alert the MPI layer of an error at
  * the runtime layer.
  *
- * @param procs The names of the processes that have failed.
+ * @param errors A pointer array containing structs of type
+ *               ompi_rte_error_report_t that consists of at least
+ *               {
+ *                  ompi_process_name_t proc;
+ *                  int errcode;
+ *               }
+ *               Each RTE is allowed to add additional information
+ *               as required
  *
- * This function is used to alert the MPI layer to a specific fault at the
- * runtime layer. Currently, the only faults reported using this method are
- * process failures. The MPI layer has the option to perform whatever actions it
- * needs to stabalize itself and continue running, abort, etc.
+ * This function is used to alert the MPI layer to a specific fault detected by the
+ * runtime layer. This could be a process failure, a lost connection, or the inability
+ * to send an OOB message. The MPI layer has the option to perform whatever actions it
+ * needs to stabilize itself and continue running, abort, etc.
+ *
+ * Upon completion, the error handler should return OMPI_SUCCESS if the error has
+ * been resolved and no further callbacks are to be executed. Return of any other
+ * value will cause the RTE to continue executing error callbacks.
  */
-OMPI_DECLSPEC void ompi_errhandler_runtime_callback(opal_pointer_array_t *procs);
+OMPI_DECLSPEC int ompi_errhandler_runtime_callback(opal_pointer_array_t *errors);
 
 /**
  * Check to see if an errhandler is intrinsic.

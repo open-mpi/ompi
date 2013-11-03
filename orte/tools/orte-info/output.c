@@ -35,10 +35,6 @@
 #endif
 #include <ctype.h>
 
-#ifdef __WINDOWS__
-#include <io.h>
-#endif  /* __WINDOWS__ */
-
 #include "orte/tools/orte-info/orte-info.h"
 
 #include "opal/util/show_help.h"

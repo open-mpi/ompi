@@ -56,6 +56,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 
     /* convenience */
     jdata = caddy->jdata;
+    jdata->state = ORTE_JOB_STATE_MAP;
 
     /* NOTE: NO PROXY COMPONENT REQUIRED - REMOTE PROCS ARE NOT
      * ALLOWED TO CALL RMAPS INDEPENDENTLY. ONLY THE PLM CAN
@@ -82,7 +83,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         map = OBJ_NEW(orte_job_map_t);
         if (NULL == map) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -151,11 +152,17 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * the job
      */
     did_map = false;
+    if (1 == opal_list_get_size(&orte_rmaps_base.selected_modules)) {
+        /* forced selection */
+        mod = (orte_rmaps_base_selected_module_t*)opal_list_get_first(&orte_rmaps_base.selected_modules);
+        jdata->map->req_mapper = strdup(mod->component->mca_component_name);
+    }
     for (item = opal_list_get_first(&orte_rmaps_base.selected_modules);
          item != opal_list_get_end(&orte_rmaps_base.selected_modules);
          item = opal_list_get_next(item)) {
         mod = (orte_rmaps_base_selected_module_t*)item;
-        if (ORTE_SUCCESS == (rc = mod->module->map_job(jdata))) {
+        if (ORTE_SUCCESS == (rc = mod->module->map_job(jdata)) ||
+            ORTE_ERR_RESOURCE_BUSY == rc) {
             did_map = true;
             break;
         }
@@ -164,17 +171,25 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
          */
         if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
-            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
         }
     }
+    if (did_map && ORTE_ERR_RESOURCE_BUSY == rc) {
+        /* the map was done but nothing could be mapped
+         * for launch as all the resources were busy
+         */
+        OBJ_RELEASE(caddy);
+        return;
+    }
+
     /* if we get here without doing the map, or with zero procs in
      * the map, then that's an error
      */
     if (!did_map || 0 == jdata->num_procs) {
         orte_show_help("help-orte-rmaps-base.txt", "failed-map", true);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -182,7 +197,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     /* compute and save local ranks */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -191,7 +206,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     /* compute and save bindings */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -241,12 +256,11 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         if (NULL != proc->locale) {
                             hwloc_bitmap_list_snprintf(locale, 64, proc->locale->cpuset);
                         }
-                        opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu locale=%s binding=%s[%s:%u]>",
+                        opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu locale=%s binding=%s>",
                                     ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
                                     (unsigned long)proc->local_rank,
                                     (unsigned long)proc->node_rank, locale,
-                                    (NULL == proc->cpu_bitmap) ? "NULL" : proc->cpu_bitmap,
-                                    opal_hwloc_base_print_level(jdata->map->bind_level), proc->bind_idx);
+                                    (NULL == proc->cpu_bitmap) ? "NULL" : proc->cpu_bitmap);
                     }
 #else
                     opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu>",
@@ -273,15 +287,12 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         continue;
                     }
                     locality = opal_hwloc_base_get_relative_locality(node->topology,
-                                                                     jdata->map->bind_level,
-                                                                     p0->bind_idx,
-                                                                     jdata->map->bind_level,
-                                                                     proc->bind_idx);
-                    opal_output(orte_clean_output, "\t\t<bind_level=%s rank=%s bind_idx=%u rank=%s bind_idx=%u locality=%s>",
-                                opal_hwloc_base_print_level(jdata->map->bind_level),
+                                                                     p0->cpu_bitmap,
+                                                                     proc->cpu_bitmap);
+                    opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
                                 ORTE_VPID_PRINT(p0->name.vpid),
-                                p0->bind_idx, ORTE_VPID_PRINT(proc->name.vpid),
-                                proc->bind_idx, opal_hwloc_base_print_locality(locality));
+                                ORTE_VPID_PRINT(proc->name.vpid),
+                                opal_hwloc_base_print_locality(locality));
                 }
                 opal_output(orte_clean_output, "\t</locality>\n</map>");
                 fflush(stderr);

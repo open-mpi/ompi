@@ -118,23 +118,13 @@ static int rte_init(void)
         /* as a tool, I don't need a nidmap - so just return now */
         return ORTE_SUCCESS;
     }
-    /* otherwise, I must be an application process - use
-     * the default procedure to finish my setup
-     */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_ess_base_app_setup";
-        goto error;
-    }
-    /* setup the nidmap arrays */
-    if (ORTE_SUCCESS !=
-        (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_util_nidmap_init";
-        goto error;
-    }
 
-    return ORTE_SUCCESS;
+    /* otherwise, I must be a direct-launched application process - if
+     * we were selected, then PMI isn't available and we cannot
+     * possibly run
+     */
+
+    return ORTE_ERR_NOT_SUPPORTED;
 
 error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
@@ -155,26 +145,15 @@ static int rte_finalize(void)
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
+        return ret;
     } else if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-        /* as a tool, I didn't create a nidmap - so just return now */
         return ret;
-    } else {
-        /* otherwise, I must be an application process
-         * use the default procedure to finish
-         */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-            ORTE_ERROR_LOG(ret);
-        }
     }
-
-    /* deconstruct my nidmap and jobmap arrays */
-    orte_util_nidmap_finalize();
-
-    return ret;
+    return ORTE_SUCCESS;
 }
 
 static char *orte_ess_alps_jobid = NULL;

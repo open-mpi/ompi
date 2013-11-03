@@ -2,7 +2,6 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -631,7 +630,7 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
                                                &num_slots,
                                                cur_app_context,
                                                jdata->map->mapping,
-                                               initial_map);
+                                               initial_map, false);
         if(ORTE_SUCCESS != ret ) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;

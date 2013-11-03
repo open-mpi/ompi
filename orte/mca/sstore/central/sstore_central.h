@@ -100,10 +100,8 @@ int orte_sstore_central_local_sync(orte_sstore_base_handle_t handle);
 int orte_sstore_central_local_remove(orte_sstore_base_handle_t handle);
 int orte_sstore_central_local_pack(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_base_handle_t handle);
 int orte_sstore_central_local_unpack(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_base_handle_t *handle);
+void orte_sstore_central_local_recv(int status, orte_process_name_t* sender, opal_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 
-void orte_sstore_central_local_process_cmd(int fd,
-                                           short event,
-                                           void *cbdata);
     /*
      * Application functions
      */

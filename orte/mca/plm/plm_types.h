@@ -79,6 +79,8 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_CANNOT_RESTART          (ORTE_PROC_STATE_ERROR + 11)  /* process failed and cannot be restarted */
 #define ORTE_PROC_STATE_TERM_NON_ZERO           (ORTE_PROC_STATE_ERROR + 12)  /* process exited with a non-zero status, indicating abnormal */
 #define ORTE_PROC_STATE_FAILED_TO_LAUNCH        (ORTE_PROC_STATE_ERROR + 13)  /* unable to launch process */
+#define ORTE_PROC_STATE_UNABLE_TO_SEND_MSG      (ORTE_PROC_STATE_ERROR + 14)  /* unable to send a message */
+#define ORTE_PROC_STATE_LIFELINE_LOST           (ORTE_PROC_STATE_ERROR + 15)  /* unable to send a message */
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own
@@ -86,6 +88,17 @@ typedef uint32_t orte_proc_state_t;
  */
 #define ORTE_PROC_STATE_DYNAMIC 100
 
+/*
+ * App_context state codes
+ */
+typedef int32_t orte_app_state_t;
+#define ORTE_APP_STATE_T    OPAL_INT32
+
+#define ORTE_APP_STATE_UNDEF                0
+#define ORTE_APP_STATE_INIT                 1
+#define ORTE_APP_STATE_ALL_MAPPED           2
+#define ORTE_APP_STATE_RUNNING              3
+#define ORTE_APP_STATE_COMPLETED            4
 
 /*
  * Job state codes
@@ -156,6 +169,7 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_SILENT_ABORT            (ORTE_JOB_STATE_ERROR + 16)  /* an error occurred and was reported elsewhere, so error out quietly */
 
 #define ORTE_JOB_STATE_REPORT_PROGRESS         (ORTE_JOB_STATE_ERROR + 17)  /* report launch progress - not an error */
+#define ORTE_JOB_STATE_ALLOC_FAILED            (ORTE_JOB_STATE_ERROR + 18)  /* job failed to obtain an allocation */
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own

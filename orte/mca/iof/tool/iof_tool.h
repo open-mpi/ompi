@@ -42,7 +42,6 @@ BEGIN_C_DECLS
 struct orte_iof_tool_component_t { 
     orte_iof_base_component_t super;
     bool closed;
-    opal_mutex_t lock;
 };
 typedef struct orte_iof_tool_component_t orte_iof_tool_component_t;
 

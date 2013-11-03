@@ -18,22 +18,7 @@
 #define MAX_COUNT 3
 
 static bool msg_recvd;
-static opal_buffer_t buf;
 
-
-static void recv_ack(int status, orte_process_name_t* sender,
-                     opal_buffer_t* buffer, orte_rml_tag_t tag,
-                     void* cbdata)
-{
-    /* save the buffer */
-    opal_dss.copy_payload(&buf, buffer);
-    msg_recvd = true;
-    
-    /* repost recv */
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, MY_TAG,
-                            ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
-
-}
 
 int
 main(int argc, char *argv[]){
@@ -43,7 +28,9 @@ main(int argc, char *argv[]){
     int i, j, rc;
     orte_process_name_t peer;
     double maxpower;
-    
+    opal_buffer_t *buf;
+    orte_rml_recv_cb_t blob;
+
     /*
      * Init
      */
@@ -59,56 +46,49 @@ main(int argc, char *argv[]){
     }
     
     peer.jobid = ORTE_PROC_MY_NAME->jobid;
-    
+    peer.vpid = ORTE_PROC_MY_NAME->vpid + 1;
+    if (peer.vpid == orte_process_info.num_procs) {
+        peer.vpid = 0;
+    }
+            
     for (j=1; j < count+1; j++) {
-        peer.vpid = (ORTE_PROC_MY_NAME->vpid + j) % orte_process_info.num_procs;
-        
         /* rank0 starts ring */
         if (ORTE_PROC_MY_NAME->vpid == 0) {
             /* setup the initiating buffer - put random sized message in it */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            buf = OBJ_NEW(opal_buffer_t);
             
             maxpower = (double)(j%7);
             msgsize = (int)pow(10.0, maxpower);
             opal_output(0, "Ring %d message size %d bytes", j, msgsize);
             msg = (uint8_t*)malloc(msgsize);
-            opal_dss.pack(&buf, msg, msgsize, OPAL_BYTE);
-            
-            if (0 > (rc = orte_rml.send_buffer(&peer,&buf, MY_TAG, 0))) {
-                opal_output(0, "error sending to %s %s\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer), ORTE_ERROR_NAME(rc));
-                exit(1);
-            }
-            OBJ_DESTRUCT(&buf);
+            opal_dss.pack(buf, msg, msgsize, OPAL_BYTE);
+            free(msg);
+            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
+
             /* wait for it to come around */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            msg_recvd = false;
+            OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, MY_TAG,
-                                    ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
-            
-            while (!msg_recvd) {
-                opal_progress();
-            }
+                                    ORTE_RML_NON_PERSISTENT,
+                                    orte_rml_recv_callback, &blob);
+            ORTE_WAIT_FOR_COMPLETION(blob.waiting);
+            OBJ_DESTRUCT(&blob);
 
             opal_output(0, "%s Ring %d completed", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
         } else {
             /* wait for msg */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            msg_recvd = false;
+            OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, MY_TAG,
-                                    ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
-            
-            while (!msg_recvd) {
-                opal_progress();
-            }
+                                    ORTE_RML_NON_PERSISTENT,
+                                    orte_rml_recv_callback, &blob);
+            ORTE_WAIT_FOR_COMPLETION(blob.waiting);
+
+            opal_output(0, "%s received message %d from %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j, ORTE_NAME_PRINT(&blob.name));
 
             /* send it along */
-            if (0 > (rc = orte_rml.send_buffer(&peer, &buf, MY_TAG, 0))) {
-                opal_output(0, "%s error sending to %s %s\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer), ORTE_ERROR_NAME(rc));
-                exit(1);
-            }
-            OBJ_DESTRUCT(&buf);
+            buf = OBJ_NEW(opal_buffer_t);
+            opal_dss.copy_payload(buf, &blob.data);
+            OBJ_DESTRUCT(&blob);
+            orte_rml.send_buffer_nb(&peer, buf, MY_TAG, orte_rml_send_callback, NULL);
         }
     }
 

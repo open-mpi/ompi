@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2008-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -28,8 +28,6 @@
 
 BEGIN_C_DECLS
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /* struct for tracking routing trees */
 typedef struct {
     opal_list_item_t super;
@@ -46,8 +44,6 @@ typedef struct {
     char *hnp_uri;
 } orte_routed_jobfam_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_routed_jobfam_t);
-
-#endif
 
 END_C_DECLS
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -29,16 +30,9 @@ BEGIN_C_DECLS
  * MCA Framework
  */
 ORTE_DECLSPEC extern mca_base_framework_t orte_sensor_base_framework;
-
 /* select a component */
 ORTE_DECLSPEC int orte_sensor_base_select(void);
 
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-/* no base functions to protect at this time */
-
-#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

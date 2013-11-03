@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
         errmgr_default_app.h \
         errmgr_default_app_component.c \

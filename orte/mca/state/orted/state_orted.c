@@ -38,24 +38,21 @@ static int init(void);
 static int finalize(void);
 
 /******************
- * ORTED module - just uses base functions after
- * initializing the proc state machine. Job state
- * machine is unused by ortedlication procs at this
- * time.
+ * ORTED module
  ******************/
 orte_state_base_module_t orte_state_orted_module = {
-		init,
-		finalize,
-		orte_state_base_activate_job_state,
-		orte_state_base_add_job_state,
-		orte_state_base_set_job_state_callback,
-		orte_state_base_set_job_state_priority,
-		orte_state_base_remove_job_state,
-		orte_state_base_activate_proc_state,
-		orte_state_base_add_proc_state,
-		orte_state_base_set_proc_state_callback,
-		orte_state_base_set_proc_state_priority,
-		orte_state_base_remove_proc_state
+    init,
+    finalize,
+    orte_state_base_activate_job_state,
+    orte_state_base_add_job_state,
+    orte_state_base_set_job_state_callback,
+    orte_state_base_set_job_state_priority,
+    orte_state_base_remove_job_state,
+    orte_state_base_activate_proc_state,
+    orte_state_base_add_proc_state,
+    orte_state_base_set_proc_state_callback,
+    orte_state_base_set_proc_state_priority,
+    orte_state_base_remove_proc_state
 };
 
 /* Local functions */
@@ -73,16 +70,16 @@ static orte_state_cbfunc_t job_callbacks[] = {
 };
 
 static orte_proc_state_t proc_states[] = {
-		ORTE_PROC_STATE_RUNNING,
-		ORTE_PROC_STATE_REGISTERED,
-		ORTE_PROC_STATE_IOF_COMPLETE,
-		ORTE_PROC_STATE_WAITPID_FIRED
+    ORTE_PROC_STATE_RUNNING,
+    ORTE_PROC_STATE_REGISTERED,
+    ORTE_PROC_STATE_IOF_COMPLETE,
+    ORTE_PROC_STATE_WAITPID_FIRED
 };
 static orte_state_cbfunc_t proc_callbacks[] = {
-		track_procs,
-		track_procs,
-		track_procs,
-		track_procs
+    track_procs,
+    track_procs,
+    track_procs,
+    track_procs
 };
 
 /************************
@@ -181,7 +178,7 @@ static void track_jobs(int fd, short argc, void *cbdata)
         }
         /* send it */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                              ORTE_RML_TAG_PLM, 0,
+                                              ORTE_RML_TAG_PLM,
                                               orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(alert);
@@ -203,6 +200,7 @@ static void track_procs(int fd, short argc, void *cbdata)
     int rc, i;
     orte_plm_cmd_flag_t cmd;
     orte_vpid_t null=ORTE_VPID_INVALID;
+    int8_t flag;
 
     OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
                          "%s state:orted:track_procs called for proc %s state %s",
@@ -258,6 +256,15 @@ static void track_procs(int fd, short argc, void *cbdata)
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
+                    if (pptr->mpi_proc) {
+                        flag = 1;
+                    } else {
+                        flag = 0;
+                    }
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &flag, 1, OPAL_INT8))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
                 }
             }
             /* pack an invalid marker */
@@ -273,7 +280,7 @@ static void track_procs(int fd, short argc, void *cbdata)
             }
             /* send it */
             if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                  ORTE_RML_TAG_PLM, 0,
+                                                  ORTE_RML_TAG_PLM,
                                                   orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
             } else {
@@ -315,7 +322,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jdata->jobid)));
                 if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                      ORTE_RML_TAG_PLM, 0,
+                                                      ORTE_RML_TAG_PLM,
                                                       orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
                 }
@@ -366,7 +373,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jdata->jobid)));
                 if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
-                                                      ORTE_RML_TAG_PLM, 0,
+                                                      ORTE_RML_TAG_PLM,
                                                       orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
                 }
