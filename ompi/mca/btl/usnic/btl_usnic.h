@@ -164,6 +164,9 @@ typedef struct ompi_btl_usnic_component_t {
 
     /** retrans characteristics */
     int retrans_timeout;
+
+    /** convertor packing threshold */
+    int pack_lazy_threshold;
 } ompi_btl_usnic_component_t;
 
 OMPI_MODULE_DECLSPEC extern ompi_btl_usnic_component_t mca_btl_usnic_component;

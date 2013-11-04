@@ -249,10 +249,10 @@ typedef struct ompi_btl_usnic_send_frag_t {
 
     struct mca_btl_base_endpoint_t *sf_endpoint;
 
-    size_t sf_size;            /* total_fragment size (upper + user payload) */
+    size_t sf_size;             /* total_fragment size (upper + user payload) */
 
-    /* original message data if convertor required */
-    struct opal_convertor_t* sf_convertor;
+    struct opal_convertor_t sf_convertor; /* copy of original message data if
+                                             convertor required */
 
     uint32_t sf_seg_post_cnt;   /* total segs currently posted for this frag */
     size_t sf_ack_bytes_left;   /* bytes remaining to be ACKed */
@@ -272,18 +272,28 @@ typedef struct ompi_btl_usnic_large_send_frag_t {
     mca_btl_base_tag_t lsf_tag; /* save tag */
 
     uint32_t lsf_frag_id;       /* fragment ID for reassembly */
-    size_t lsf_cur_offset;      /* current offset into message */
-    size_t lsf_bytes_left;      /* bytes remaining to send */
-    uint8_t *lsf_cur_ptr;       /* current send pointer */
+
+    size_t lsf_cur_offset;      /* next byte offset to be enqueued on the
+                                   endpoint (incl. any convertor payload) */
+    size_t lsf_bytes_left;      /* bytes remaining to give enqueue on the
+                                   endpoint (incl. any convertor payload) */
+    size_t lsf_pack_bytes_left; /* bytes remaining to be packed into chunk
+                                   segments (incl. any convertor payload) */
+    uint8_t *lsf_cur_ptr;       /* current packing pointer */
     int lsf_cur_sge;
     size_t lsf_bytes_left_in_sge;
 
     uint8_t *lsf_buffer;        /* attached storage for usnic_alloc() */
 
-    /* this will go away when we update convertor approach */
     opal_list_t lsf_seg_chain;  /* chain of segments for converted data */
-    
+
+    bool lsf_pack_on_the_fly;   /* true if we are packing on the fly */
 } ompi_btl_usnic_large_send_frag_t;
+
+/* Shortcut member macros.  Access uf_src_seg array instead of the descriptor's
+ * des_src ptr to save a deref. */
+#define lsf_des_src lsf_base.sf_base.uf_src_seg
+#define lsf_des_src_cnt lsf_base.sf_base.uf_base.des_src_cnt
 
 /**
  * small send fragment
@@ -443,6 +453,12 @@ ompi_btl_usnic_frag_return(
         if (lfrag->lsf_buffer != NULL) {
             free(lfrag->lsf_buffer);
             lfrag->lsf_buffer = NULL;
+        }
+        lfrag->lsf_pack_on_the_fly = false;
+
+        if (2 == lfrag->lsf_des_src_cnt &&
+            NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
+            opal_convertor_cleanup(&lfrag->lsf_base.sf_convertor);
         }
     }
 

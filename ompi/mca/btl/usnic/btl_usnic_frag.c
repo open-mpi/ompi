@@ -169,6 +169,7 @@ send_frag_constructor(ompi_btl_usnic_send_frag_t *frag)
     desc->order = MCA_BTL_NO_ORDER;
     desc->des_flags = 0;
 
+    OBJ_CONSTRUCT(&frag->sf_convertor, opal_convertor_t);
     frag->sf_seg_post_cnt = 0;
 }
 
@@ -183,6 +184,8 @@ send_frag_destructor(ompi_btl_usnic_send_frag_t *frag)
     assert(0 == frag->sf_base.uf_src_seg[0].seg_len);
     /* PML may change desc->des_dst to point elsewhere, cannot assert that it
      * still points to our embedded segment */
+
+    OBJ_DESTRUCT(&frag->sf_convertor);
 }
 
 static void
@@ -230,6 +233,7 @@ large_send_frag_constructor(ompi_btl_usnic_large_send_frag_t *lfrag)
 
     lfrag->lsf_buffer = NULL;
     OBJ_CONSTRUCT(&lfrag->lsf_seg_chain, opal_list_t);
+    lfrag->lsf_pack_on_the_fly = false;
 }
 
 static void

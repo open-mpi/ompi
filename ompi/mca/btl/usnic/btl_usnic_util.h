@@ -10,6 +10,8 @@
 #ifndef BTL_USNIC_UTIL_H
 #define BTL_USNIC_UTIL_H
 
+#include "opal/datatype/opal_convertor.h"
+
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
 
@@ -42,6 +44,32 @@ static __always_inline int fls(int x)
     return r;
 }
 
+/* a helper function that just declutters convertor packing */
+static inline
+int
+usnic_convertor_pack_simple(
+    opal_convertor_t *convertor,
+    void *dest,
+    size_t max_bytes_to_pack,
+    size_t *bytes_packed)
+{
+    int rc;
+    struct iovec iov;
+    uint32_t iov_count;
+
+    iov.iov_base = (IOVBASE_TYPE*)dest;
+    iov.iov_len = max_bytes_to_pack;
+    iov_count = 1;
+    *bytes_packed = max_bytes_to_pack;
+    rc = opal_convertor_pack(convertor, &iov, &iov_count, bytes_packed);
+    if (OPAL_UNLIKELY(rc < 0)) {
+        BTL_ERROR(("opal_convertor_pack error"));
+        abort();    /* XXX */
+    }
+
+    return OMPI_SUCCESS;
+}
+
 /*
  * Safely (but abnornmally) exit this process without abort()'ing (and
  * leaving a corefile).
@@ -64,5 +92,8 @@ uint32_t ompi_btl_usnic_get_ipv4_subnet(uint32_t addrn, uint32_t cidr_len);
 
 void ompi_btl_usnic_util_abort(const char *msg, const char *file, int line,
                                int ret);
+
+size_t ompi_btl_usnic_convertor_pack_peek(const opal_convertor_t *conv,
+                                          size_t max_len);
 
 #endif /* BTL_USNIC_UTIL_H */
