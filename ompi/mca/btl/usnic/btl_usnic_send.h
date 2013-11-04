@@ -274,9 +274,12 @@ void ompi_btl_usnic_frag_send_complete(ompi_btl_usnic_module_t *module,
 void ompi_btl_usnic_chunk_send_complete(ompi_btl_usnic_module_t *module,
                                     ompi_btl_usnic_send_segment_t *sseg);
 
-int ompi_btl_usnic_send_slower( ompi_btl_usnic_module_t *module,
+int
+ompi_btl_usnic_finish_put_or_send(
+    ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_endpoint_t *endpoint,
     ompi_btl_usnic_send_frag_t *frag,
-    mca_btl_base_tag_t tag);
+    mca_btl_base_tag_t tag)
+__opal_attribute_noinline__;
 
 #endif /* BTL_USNIC_SEND_H */

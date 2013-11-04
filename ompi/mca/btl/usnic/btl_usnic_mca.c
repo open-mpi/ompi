@@ -141,6 +141,7 @@ int ompi_btl_usnic_component_register(void)
     static int max_tiny_payload;
     static int eager_limit;
     static int rndv_eager_limit;
+    static int pack_lazy_threshold;
     static char *vendor_part_ids;
 
 #define CHECK(expr) do {\
@@ -243,6 +244,10 @@ int ompi_btl_usnic_component_register(void)
                   0, &rndv_eager_limit, REGINT_GE_ZERO, OPAL_INFO_LVL_5));
     ompi_btl_usnic_module_template.super.btl_rndv_eager_limit = 
         rndv_eager_limit;
+
+    CHECK(reg_int("pack_lazy_threshold", "Convertor packing on-the-fly threshold (-1 = always pack eagerly, 0 = always pack lazily, otherwise will pack on the fly if fragment size is > limit)",
+                  USNIC_DFLT_PACK_LAZY_THRESHOLD, &pack_lazy_threshold, REGINT_NEG_ONE_OK, OPAL_INFO_LVL_5));
+    mca_btl_usnic_component.pack_lazy_threshold = pack_lazy_threshold;
 
     /* Default to bandwidth auto-detection */
     ompi_btl_usnic_module_template.super.btl_bandwidth = 0;

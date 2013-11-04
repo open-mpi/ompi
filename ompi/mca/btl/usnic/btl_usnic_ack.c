@@ -128,9 +128,11 @@ ompi_btl_usnic_handle_ack(
         frag = sseg->ss_parent_frag;
 
 #if MSGDEBUG1
-        opal_output(0, "   ACKED seg %p, frag %p, ack_bytes=%"PRIu32", left=%zd\n",
+        opal_output(0, "   ACKED seg %p frag %p ack_bytes=%"PRIu32" left=%zd dst_seg[0].seg_addr=%p des_flags=0x%x\n",
                 (void*)sseg, (void*)frag, bytes_acked,
-                frag->sf_ack_bytes_left-bytes_acked);
+                frag->sf_ack_bytes_left-bytes_acked,
+                frag->sf_base.uf_dst_seg[0].seg_addr.pval,
+                frag->sf_base.uf_base.des_flags);
 #endif
 
         /* If all ACKs received, and this is a put or a regular send
