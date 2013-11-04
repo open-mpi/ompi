@@ -2009,7 +2009,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
         rc = ompi_free_list_init_new(&module->module_recv_buffers[i],
                                      1 << i,
                                      opal_cache_line_size,
-                                     OBJ_CLASS(ompi_btl_usnic_large_send_frag_t),
+                                     OBJ_CLASS(ompi_free_list_item_t),
                                      0,  /* payload size */
                                      0,  /* payload align */
                                      8,
