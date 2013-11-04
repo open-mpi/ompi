@@ -148,15 +148,7 @@ ompi_btl_usnic_handle_ack(
             ((frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) ||
              (frag->sf_base.uf_base.des_flags &
               MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
-#if MSGDEBUG2
-            opal_output(0, "send completion callback frag=%p, dest=%p\n",
-                    (void*)frag, frag->sf_base.uf_dst_seg[0].seg_addr.pval);
-#endif
-            frag->sf_base.uf_base.des_cbfunc(&module->super,
-                    frag->sf_endpoint, &frag->sf_base.uf_base,
-                    OMPI_SUCCESS);
-            frag->sf_base.uf_base.des_flags &=
-                ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+            OMPI_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");
         }
 
         /* free this segment */
