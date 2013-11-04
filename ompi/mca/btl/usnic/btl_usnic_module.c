@@ -962,16 +962,7 @@ usnic_handle_large_send(
                 (frag->sf_base.uf_base.des_flags &
                  MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
 
-#if MSGDEBUG1
-            opal_output(0, "callback for large frag %p, len=%zd\n",
-                    (void *)(uintptr_t)frag->sf_base.uf_base.des_cbfunc,
-                    frag->sf_size);
-#endif
-            frag->sf_base.uf_base.des_cbfunc(&module->super,
-                          frag->sf_endpoint, &frag->sf_base.uf_base,
-                          OMPI_SUCCESS);
-            ++module->stats.pml_send_callbacks;
-            frag->sf_base.uf_base.des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+            OMPI_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "large");
         }
     }
 }
@@ -1071,17 +1062,7 @@ ompi_btl_usnic_module_progress_sends(
                          MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) ==
                         (MCA_BTL_DES_SEND_ALWAYS_CALLBACK |
                          MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-#if MSGDEBUG1
-                opal_output(0, "callback frag small %p, len=%"PRIu64"\n",
-                        (void*)frag,
-                        (unsigned long)frag->sf_base.uf_src_seg[0].seg_len);
-#endif
-                    frag->sf_base.uf_base.des_cbfunc(&module->super,
-                                  frag->sf_endpoint, &frag->sf_base.uf_base,
-                                  OMPI_SUCCESS);
-                    ++module->stats.pml_send_callbacks;
-                    frag->sf_base.uf_base.des_flags &= 
-                        ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+                    OMPI_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "small");
                 }
             }
 
@@ -1257,26 +1238,20 @@ usnic_send(
          */
         if (descriptor->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
             if (descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
-#if MSGDEBUG1
-                opal_output(0, "immediate callback for frag %p\n", (void *)frag);
-#endif
-                descriptor->des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-                frag->sf_base.uf_base.des_cbfunc(&module->super,
-                        frag->sf_endpoint, &frag->sf_base.uf_base,
-                        OMPI_SUCCESS);
+                OMPI_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "immediate small");
                 rc = 0;
             } else {
 #if MSGDEBUG1
                 opal_output(0, "skipping callback for frag %p\n", (void *)frag);
 #endif
                 rc = 1;
+                ++module->stats.pml_send_callbacks;   /* returning "1" is an implicit CB */
             }
         } else {
             descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
             rc = 0;
         }
         ++module->stats.pml_module_sends;
-        ++module->stats.pml_send_callbacks;   /* returning "1" is an implicit CB */
         return rc;
     } else {
         /*
