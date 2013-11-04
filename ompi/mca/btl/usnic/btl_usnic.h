@@ -64,6 +64,18 @@ get_nsec(void)
 /* MSGDEBUG1 prints more info about arguments and internal functions */
 #define MSGDEBUG1 0
 
+/* output macros to declutter source */
+#if MSGDEBUG1
+#define MSGDEBUG1_OUT(...) opal_output(0, __VA_ARGS__)
+#else
+#define MSGDEBUG1_OUT(...) do {} while (0)
+#endif
+#if MSGDEBUG2
+#define MSGDEBUG2_OUT(...) opal_output(0, __VA_ARGS__)
+#else
+#define MSGDEBUG2_OUT(...) do {} while (0)
+#endif
+
 /* Set to >0 to randomly drop received frags.  The higher the number,
    the more frequent the drops. */
 #define WANT_RECV_FRAG_DROPS 0
