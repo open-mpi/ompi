@@ -20,7 +20,7 @@ AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
     # make sure that CUDA-aware checks have been done
     AC_REQUIRE([OPAL_CHECK_CUDA])
 
-    AS_IF([test "x$OPAL_CUDA_SUPPORT" = "x1"],
+    AS_IF([test "x$CUDA_SUPPORT" = "x1"],
           [$1],
           [$2])
 
