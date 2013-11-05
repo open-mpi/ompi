@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011      INRIA.  All rights reserved.
  * Copyright (c) 2011      Université Bordeaux 1
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -85,9 +86,6 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
     if( !OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ) {
         OMPI_ARRAY_FINT_2_INT(destweights, *outdegree);
     }
-
-    /* Number of edges is equal to the last entry in the index array */
-    OMPI_ARRAY_FINT_2_INT(edges, index[*nnodes - 1]);
 
     *ierr = OMPI_INT_2_FINT(MPI_Dist_graph_create_adjacent(c_comm_old, OMPI_FINT_2_INT(*indegree),
                                                            OMPI_ARRAY_NAME_CONVERT(sources),
