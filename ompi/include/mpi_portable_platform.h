@@ -98,7 +98,7 @@
 #    define PLATFORM_COMPILER_VERSION \
          PLATFORM_COMPILER_VERSION_INT(__INTEL_COMPILER/10, __INTEL_COMPILER/100, _PLATFORM_INTEL_COMPILER_BUILD_DATE)
 #    define PLATFORM_COMPILER_VERSION_STR \
-         _STRINGIFY(__INTEL_COMPILER) "." _STRINGIFY(_PLATFORM_INTEL_COMPILER_BUILD_DATE)
+         _STRINGIFY(__INTEL_COMPILER)"."_STRINGIFY(_PLATFORM_INTEL_COMPILER_BUILD_DATE)
 
 #elif defined(__PATHSCALE__)
 #    define PLATFORM_COMPILER_PATHSCALE  1
@@ -131,7 +131,7 @@
 #      define PLATFORM_COMPILER_VERSION \
             PLATFORM_COMPILER_VERSION_INT(__PGIC__,__PGIC_MINOR__,__PGIC_PATCHLEVEL__)
 #      define PLATFORM_COMPILER_VERSION_STR \
-            _STRINGIFY(__PGIC__) "." _STRINGIFY(__PGIC_MINOR__) "-" _STRINGIFY(__PGIC_PATCHLEVEL__)
+            _STRINGIFY(__PGIC__)"."_STRINGIFY(__PGIC_MINOR__)"-"_STRINGIFY(__PGIC_PATCHLEVEL__)
 #    else
        /* PGI before 6.1-4 lacks any version ID preprocessor macros - so use this filthy hack */
        /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -370,13 +370,13 @@
      /* gather any advertised GNU version number info, even for non-gcc compilers */
 #    if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
 #        define __PLATFORM_COMPILER_GNU_VERSION_STR \
-             _STRINGIFY(__GNUC__) "." _STRINGIFY(__GNUC_MINOR__) "." _STRINGIFY(__GNUC_PATCHLEVEL__)
+             _STRINGIFY(__GNUC__)"."_STRINGIFY(__GNUC_MINOR__)"."_STRINGIFY(__GNUC_PATCHLEVEL__)
 #    elif defined(__GNUC_MINOR__)
 #        define __PLATFORM_COMPILER_GNU_VERSION_STR \
-             _STRINGIFY(__GNUC__) "." _STRINGIFY(__GNUC_MINOR__) ".?"
+             _STRINGIFY(__GNUC__)"."_STRINGIFY(__GNUC_MINOR__)".?"
 #    else
 #        define __PLATFORM_COMPILER_GNU_VERSION_STR \
-             _STRINGIFY(__GNUC__) ".?.?"
+             _STRINGIFY(__GNUC__)".?.?"
 #    endif
 #elif defined(PLATFORM_COMPILER_UNKNOWN) /* unknown compiler */
 #    define PLATFORM_COMPILER_FAMILYNAME UNKNOWN
