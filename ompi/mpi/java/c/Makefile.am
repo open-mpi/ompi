@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2011	Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012	Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -12,7 +12,7 @@
 if OMPI_WANT_JAVA_BINDINGS
 
 # Get the include files that were generated from the .java source files
-AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(ORTE_JDK_CPPFLAGS)
+AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(OPAL_JDK_CPPFLAGS)
 
 headers = \
         mpiJava.h
