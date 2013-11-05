@@ -38,6 +38,8 @@ EXTRA_SRC = $(EVENT2_EXPORT)
 ## the source header filename to derive the installed header filename.
 ## With nobase_ the installed path is $(includedir)/event2/ev*.h.
 
+# Open MPI: comment this out, because we don't want these header files
+# installed
 # if INSTALL_LIBEVENT
 # nobase_include_HEADERS =	$(EVENT2_EXPORT)
 # nobase_nodist_include_HEADERS = ./event2/event-config.h
