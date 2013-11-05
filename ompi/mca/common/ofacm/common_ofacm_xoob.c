@@ -786,7 +786,7 @@ static int xoob_send_connect_data(ompi_common_ofacm_xoob_local_connection_contex
 
     /* send to remote endpoint */
     rc = ompi_rte_send_buffer_nb(&context->proc->proc_ompi->proc_name,
-            buffer, OMPI_RML_TAG_XOFACM, 0,
+            buffer, OMPI_RML_TAG_XOFACM,
             xoob_rml_send_cb, NULL);
     if (OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);
@@ -1402,16 +1402,11 @@ static int xoob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
     if (!rml_recv_posted) {
-        rc = ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD, 
-                                     OMPI_RML_TAG_XOFACM,
-                                     OMPI_RML_PERSISTENT,
-                                     xoob_rml_recv_cb,
-                                     NULL);
-        if (OMPI_SUCCESS != rc) {
-            OFACM_VERBOSE(("OFACM: xoob CPC system error %d (%s)",
-                                rc, opal_strerror(rc)));
-            return rc;
-        }
+        ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD, 
+                                OMPI_RML_TAG_XOFACM,
+                                OMPI_RML_PERSISTENT,
+                                xoob_rml_recv_cb,
+                                NULL);
         rml_recv_posted = true;
     }
         
