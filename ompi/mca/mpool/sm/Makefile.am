@@ -44,7 +44,7 @@ mca_mpool_sm_la_SOURCES = $(sources)
 mca_mpool_sm_la_LDFLAGS = -module -avoid-version
 mca_mpool_sm_la_LIBADD = \
     $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
-if OPAL_cuda_support
+if MCA_ompi_cuda_support
 mca_mpool_sm_la_LIBADD += \
     $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
 endif

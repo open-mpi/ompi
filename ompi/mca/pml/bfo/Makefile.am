@@ -53,7 +53,7 @@ bfo_sources  = \
 	pml_bfo_start.c 
 
 # If we have CUDA support requested, build the CUDA file also
-if OPAL_cuda_support
+if MCA_ompi_cuda_support
 bfo_sources += \
     pml_bfo_cuda.c
 endif

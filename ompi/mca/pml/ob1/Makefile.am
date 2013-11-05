@@ -49,7 +49,7 @@ ob1_sources  = \
 	pml_ob1_start.c 
 
 # If we have CUDA support requested, build the CUDA file also
-if OPAL_cuda_support
+if MCA_ompi_cuda_support
 ob1_sources += \
     pml_ob1_cuda.c
 endif
