@@ -81,6 +81,13 @@ Trunk (not on release branches yet)
   issues when using rpath in MPI applications.
 
 
+1.7.4
+-----
+
+- Fixed regression where Open MPI installed libevent files.  Thanks to
+  Dominique Orban for bringing the issue to our attention.
+
+
 1.7.3
 -----
 - Make CUDA-aware support dynamically load libcuda.so so CUDA-aware
