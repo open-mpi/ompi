@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -93,7 +93,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
                AC_MSG_CHECKING([OSX locations])
                AS_IF([test -d $dir],
-                     [AC_MSG_RESULT([found])
+                     [AC_MSG_RESULT([found ($dir)])
                       found=1
                       with_jdk_headers=$dir 
                       with_jdk_bindir=/usr/bin],
@@ -112,7 +112,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                          [with_jdk_headers=`dirname $jnih`
                           OPAL_WHICH([javac], [with_jdk_bindir])
                           AS_IF([test -n "$with_jdk_bindir"],
-                                [AC_MSG_RESULT([found])
+                                [AC_MSG_RESULT([found ($with_jdk_headers)])
                                  found=1
                                  with_jdk_bindir=`dirname $with_jdk_bindir`],
                                 [with_jdk_headers=])],
@@ -122,7 +122,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                                 [with_jdk_headers=`dirname $jnih`
                                  OPAL_WHICH([javac], [with_jdk_bindir])
                                  AS_IF([test -n "$with_jdk_bindir"],
-                                       [AC_MSG_RESULT([found])
+                                       [AC_MSG_RESULT([found ($with_jdk_headers)])
                                         found=1
                                         with_jdk_bindir=`dirname $with_jdk_bindir`],
                                        [with_jdk_headers=])],
@@ -134,7 +134,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                    dir=/usr/java
                    AC_MSG_CHECKING([Solaris locations])
                    AS_IF([test -d $dir -a -r "$dir/include/jni.h"], 
-                         [AC_MSG_RESULT([found])
+                         [AC_MSG_RESULT([found ($dir)])
                           with_jdk_headers=$dir/include
                           with_jdk_bindir=$dir/bin
                           found=1],
