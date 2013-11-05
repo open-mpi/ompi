@@ -24,8 +24,6 @@ AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
           [$1],
           [$2])
 
-    AM_CONDITIONAL([MCA_ompi_cuda_support], [test "x$OPAL_CUDA_SUPPORT" = "x1"]) 
-
     # Copy over the includes needed to build CUDA
     common_cuda_CPPFLAGS=$opal_datatype_cuda_CPPFLAGS
     AC_SUBST([common_cuda_CPPFLAGS])
