@@ -12,8 +12,8 @@
  * a .in file...
  * ---------------------------------------------------------------------------
  */
-#ifndef MPI_PORTABLE_PLATFORM_H
-#define MPI_PORTABLE_PLATFORM_H
+#ifndef OPAL_PORTABLE_PLATFORM_H
+#define OPAL_PORTABLE_PLATFORM_H
 
 /* All files in this directory and all sub-directories (except where otherwise noted)
  * are subject to the following licensing terms:
@@ -398,4 +398,4 @@
 #endif
 
 
-#endif /* MPI_PORTABLE_PLATFORM_H */
+#endif /* OPAL_PORTABLE_PLATFORM_H */
