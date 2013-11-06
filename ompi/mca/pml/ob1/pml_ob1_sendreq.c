@@ -331,7 +331,7 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
 /**
  * This function is called when the copy of the frag from the GPU buffer
  * to the internal buffer is complete.  Used to support asynchronous
@@ -362,7 +362,7 @@ mca_pml_ob1_copy_frag_completion( mca_btl_base_module_t* btl,
         ompi_rte_abort(-1, NULL);
     }
 }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 /**
  *  Buffer the entire message and mark as complete.
@@ -1062,7 +1062,7 @@ cannot_pack:
                  &(sendreq->req_send.req_base), size, PERUSE_SEND);
 #endif  /* OMPI_WANT_PERUSE */
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
          /* At this point, check to see if the BTL is doing an asynchronous
           * copy.  This would have been initiated in the mca_bml_base_prepare_src
           * called above.  The flag is checked here as we let the hdr be
@@ -1086,7 +1086,7 @@ cannot_pack:
             }
             continue;
         }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
         /* initiate send - note that this may complete before the call returns */
         rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_FRAG);

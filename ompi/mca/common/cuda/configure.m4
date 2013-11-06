@@ -10,8 +10,8 @@
 
 #
 # If CUDA support was requested, then build the CUDA support library.
-# This code checks the variable CUDA_SUPPORT which was set earlier in
-# the configure sequence by the opal_configure_options.m4 code.
+# This code checks just makes sure the check was done earlier by the
+# opal_check_cuda.m4 code.
 #
 
 AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
@@ -20,23 +20,9 @@ AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
     # make sure that CUDA-aware checks have been done
     AC_REQUIRE([OPAL_CHECK_CUDA])
 
-    # Use CUDA_SUPPORT which was filled in by the opal configure code.
-    AM_CONDITIONAL([MCA_ompi_cuda_support], [test "x$CUDA_SUPPORT" = "x1"])
-    AC_DEFINE_UNQUOTED([OMPI_CUDA_SUPPORT],$CUDA_SUPPORT,
-                       [Whether we want cuda memory registration support in OMPI code])
     AS_IF([test "x$CUDA_SUPPORT" = "x1"],
           [$1],
           [$2])
-
-    # Check to see if we have features of CUDA 4.1 available as well.
-    AM_CONDITIONAL([MCA_ompi_cuda_support_41], [test "x$CUDA_SUPPORT_41" = "x1"])
-    AC_DEFINE_UNQUOTED([OMPI_CUDA_SUPPORT_41],$CUDA_SUPPORT_41,
-                       [Whether we want support CUDA 4.1 features])
-
-    # Check to see if we have features of CUDA 6.0 available as well.
-    AM_CONDITIONAL([MCA_ompi_cuda_support_60], [test "x$CUDA_SUPPORT_60" = "x1"])
-    AC_DEFINE_UNQUOTED([OMPI_CUDA_SUPPORT_60],$CUDA_SUPPORT_60,
-                       [Whether we want support CUDA 6.0 features])
 
     # Copy over the includes needed to build CUDA
     common_cuda_CPPFLAGS=$opal_datatype_cuda_CPPFLAGS

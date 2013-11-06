@@ -113,12 +113,12 @@ static int btl_openib_component_open(void);
 static int btl_openib_component_close(void);
 static mca_btl_base_module_t **btl_openib_component_init(int*, bool, bool);
 static int btl_openib_component_progress(void);
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
 static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
                                                   mca_btl_openib_endpoint_t *ep,
                                                   mca_btl_base_descriptor_t* des,
                                                   int status);
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 /*
  * Local variables
  */
@@ -605,7 +605,7 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
                          "openib_reg_mr: base=%p, bound=%p, size=%d, flags=0x%x", reg->base, reg->bound,
                          (int) (reg->bound - reg->base + 1), reg->flags));
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
     if (reg->flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) {
         mca_common_cuda_register(base, size,
             openib_reg->base.mpool->mpool_component->mpool_version.mca_component_name);
@@ -631,7 +631,7 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
             return OMPI_ERROR;
         }
 
-#if OMPI_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT
         if (reg->flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) {
             mca_common_cuda_unregister(openib_reg->base.base,
                 openib_reg->base.mpool->mpool_component->mpool_version.mca_component_name);
@@ -3129,13 +3129,13 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         /* call registered callback */
         mca_btl_active_message_callback_t* reg;
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
         /* The COPY_ASYNC flag should not be set */
         assert(0 == (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC));
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
         reg = mca_btl_base_active_message_trigger + hdr->tag;
         reg->cbfunc( &openib_btl->super, hdr->tag, des, reg->cbdata );
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
         if (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC) { 
             /* Since ASYNC flag is set, we know this descriptor is being used 
              * for asynchronous copy and cannot be freed yet. Therefore, set
@@ -3145,7 +3145,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
             des->des_cbdata = (void *)ep;
             return OMPI_SUCCESS;
         }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
         if(MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
             cqp = (hdr->credits >> 11) & 0x0f;
             hdr->credits &= 0x87ff;
@@ -3236,7 +3236,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     return OMPI_SUCCESS;
 }
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
 /**
  * Called by the PML when the copying of the data out of the fragment
  * is complete.
@@ -3312,7 +3312,7 @@ static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
     send_credits(ep, cqp);
 
 }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
 static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
 {
@@ -3794,7 +3794,7 @@ static int btl_openib_component_progress(void)
         count += progress_one_device(device);
     }
 
-#if OMPI_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
     /* Check to see if there are any outstanding dtoh CUDA events that
      * have completed.  If so, issue the PML callbacks on the fragments.
      * The only thing that gets completed here are asynchronous copies
@@ -3813,7 +3813,7 @@ static int btl_openib_component_progress(void)
     if (count > 0) {
         OPAL_OUTPUT((-1, "btl_openib: DONE with openib progress, count=%d", count));
     }
-#endif /* OMPI_CUDA_SUPPORT */
+#endif /* OPAL_CUDA_SUPPORT */
 
     return count;
 

@@ -129,7 +129,7 @@ mca_btl_openib_la_SOURCES = $(component_sources)
 mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS)
 mca_btl_openib_la_LIBADD = $(btl_openib_LIBS) \
     $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la
-if MCA_ompi_cuda_support
+if OPAL_cuda_support
 mca_btl_openib_la_LIBADD += \
     $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
 endif

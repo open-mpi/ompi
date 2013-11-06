@@ -21,7 +21,7 @@
  * This file contains various support functions for doing CUDA
  * operations.  Some of the features are only available in CUDA 4.1
  * and later, so some code is conditionalized around the
- * OMPI_CUDA_SUPPORT_41 macro.
+ * OPAL_CUDA_SUPPORT_41 macro.
  */
 #include "ompi_config.h"
 
@@ -81,13 +81,13 @@ struct cudaFunctionTable {
     int (*cuEventDestroy)(CUevent);
     int (*cuStreamWaitEvent)(CUstream, CUevent, unsigned int);
     int (*cuMemGetAddressRange)(CUdeviceptr*, size_t*, CUdeviceptr);
-#if OMPI_CUDA_SUPPORT_41
+#if OPAL_CUDA_SUPPORT_41
     int (*cuIpcGetEventHandle)(CUipcEventHandle*, CUevent);
     int (*cuIpcOpenEventHandle)(CUevent*, CUipcEventHandle);
     int (*cuIpcOpenMemHandle)(CUdeviceptr*, CUipcMemHandle, unsigned int);
     int (*cuIpcCloseMemHandle)(CUdeviceptr);
     int (*cuIpcGetMemHandle)(CUipcMemHandle*, CUdeviceptr);
-#endif /* OMPI_CUDA_SUPPORT_41 */
+#endif /* OPAL_CUDA_SUPPORT_41 */
     int (*cuCtxGetDevice)(CUdevice *);
     int (*cuDeviceCanAccessPeer)(int *, CUdevice, CUdevice);
     int (*cuDeviceGet)(CUdevice *, int);
@@ -129,7 +129,7 @@ OBJ_CLASS_INSTANCE(common_cuda_mem_regs_t,
                    NULL,
                    NULL);
 
-#if OMPI_CUDA_SUPPORT_41
+#if OPAL_CUDA_SUPPORT_41
 static int mca_common_cuda_async = 1;
 
 /* Array of CUDA events to be queried for IPC stream, sending side and
@@ -182,7 +182,7 @@ static void cuda_dump_memhandle(int, void *, char *) __opal_attribute_unused__ ;
 #define CUDA_DUMP_EVTHANDLE(a)
 #endif /* OPAL_ENABLE_DEBUG */
 
-#endif /* OMPI_CUDA_SUPPORT_41 */
+#endif /* OPAL_CUDA_SUPPORT_41 */
 
 
 /**
@@ -266,7 +266,7 @@ int mca_common_cuda_stage_one_init(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_common_cuda_warning);
 
-#if OMPI_CUDA_SUPPORT_41
+#if OPAL_CUDA_SUPPORT_41
     /* Use this flag to test async vs sync copies */
     mca_common_cuda_async = 1;
     (void) mca_base_var_register("ompi", "mpi", "common_cuda", "memcpy_async",
@@ -284,7 +284,7 @@ int mca_common_cuda_stage_one_init(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &cuda_event_max);
-#endif /* OMPI_CUDA_SUPPORT_41 */
+#endif /* OPAL_CUDA_SUPPORT_41 */
 
     mca_common_cuda_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_common_cuda_output, mca_common_cuda_verbose);
@@ -436,13 +436,13 @@ int mca_common_cuda_stage_one_init(void)
     OMPI_CUDA_DLSYM(libcuda_handle, cuMemFree);
     OMPI_CUDA_DLSYM(libcuda_handle, cuMemAlloc);
     OMPI_CUDA_DLSYM(libcuda_handle, cuMemGetAddressRange);
-#if OMPI_CUDA_SUPPORT_41
+#if OPAL_CUDA_SUPPORT_41
     OMPI_CUDA_DLSYM(libcuda_handle, cuIpcGetEventHandle);
     OMPI_CUDA_DLSYM(libcuda_handle, cuIpcOpenEventHandle);
     OMPI_CUDA_DLSYM(libcuda_handle, cuIpcOpenMemHandle);
     OMPI_CUDA_DLSYM(libcuda_handle, cuIpcCloseMemHandle);
     OMPI_CUDA_DLSYM(libcuda_handle, cuIpcGetMemHandle);
-#endif /* OMPI_CUDA_SUPPORT_41 */
+#endif /* OPAL_CUDA_SUPPORT_41 */
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxGetDevice);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceCanAccessPeer);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceGet);
@@ -521,7 +521,7 @@ static int mca_common_cuda_stage_three_init(void)
         return OMPI_ERROR;
     }
 
-#if OMPI_CUDA_SUPPORT_41
+#if OPAL_CUDA_SUPPORT_41
     if (true == mca_common_cuda_enabled) {
         /* Set up an array to store outstanding IPC async copy events */
         cuda_event_ipc_array = NULL;
@@ -558,7 +558,7 @@ static int mca_common_cuda_stage_three_init(void)
         }
     }
 
-#endif /* OMPI_CUDA_SUPPORT_41 */
+#endif /* OPAL_CUDA_SUPPORT_41 */
     if (true == mca_common_cuda_enabled) {
         /* Set up an array to store outstanding async dtoh events.  Used on the
          * sending side for asynchronous copies. */
@@ -776,7 +776,7 @@ void mca_common_cuda_unregister(void *ptr, char *msg) {
     }
 }
 
-#if OMPI_CUDA_SUPPORT_41
+#if OPAL_CUDA_SUPPORT_41
 /*
  * Get the memory handle of a local section of memory that can be sent
  * to the remote size so it can access the memory.  This is the
@@ -1440,7 +1440,7 @@ static float mydifftime(struct timespec ts_start, struct timespec ts_end) {
 }
 #endif /* CUDA_COMMON_TIMING */
 
-#endif /* OMPI_CUDA_SUPPORT_41 */
+#endif /* OPAL_CUDA_SUPPORT_41 */
 
 /* Routines that get plugged into the opal datatype code */
 static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)

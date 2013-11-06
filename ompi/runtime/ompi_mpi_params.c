@@ -65,7 +65,7 @@ int ompi_mpi_leave_pinned = -1;
 bool ompi_mpi_leave_pinned_pipeline = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
-bool ompi_mpi_built_with_cuda_support = OPAL_INT_TO_BOOL(OMPI_CUDA_SUPPORT);
+bool ompi_mpi_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool ompi_mpi_cuda_support;
 
 uint32_t ompi_hostname_cutoff = UINT32_MAX;
