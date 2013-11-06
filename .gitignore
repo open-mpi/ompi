@@ -18,6 +18,7 @@
 *.xcscheme
 *.plist
 *~
+\#*
 Makefile
 Makefile.in
 static-components.h
