@@ -391,7 +391,7 @@ static void setup_mpit_pvars_enum(void)
     }
     devices[i].string = NULL;
 
-    rc = mca_base_var_enum_create("btl_usnic_devices", devices, &devices_enum);
+    rc = mca_base_var_enum_create("btl_usnic", devices, &devices_enum);
     assert(OPAL_SUCCESS == rc);
 
     rc = mca_base_component_pvar_register(&mca_btl_usnic_component.super.btl_version,
