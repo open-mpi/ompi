@@ -1059,7 +1059,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
 /* Open - this functions sets up any xoob specific commandline params */
 static void xoob_component_register(void)
 {
-    xoob_priority = 60;
+    /* the priority is initialized in the declaration above */
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                            "connect_xoob_priority",
                                            "The selection method priority for xoob",
