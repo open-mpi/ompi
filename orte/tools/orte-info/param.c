@@ -38,7 +38,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/printf.h"
 #include "opal/memoryhooks/memory.h"
-#include "opal/include/opal_portable_platform.h"
+#include "opal/opal_portable_platform.h"
 
 #include "orte/util/show_help.h"
 

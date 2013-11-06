@@ -20,8 +20,7 @@
 headers = \
 	opal_config_top.h \
 	opal_config_bottom.h \
-	opal_stdint.h \
-        opal_portable_platform.h
+	opal_stdint.h
 
 nodist_headers = opal_config.h
 

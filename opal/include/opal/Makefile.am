@@ -26,7 +26,8 @@ headers += \
 	opal/types.h \
 	opal/prefetch.h \
         opal/hash_string.h \
-	opal/frameworks.h
+	opal/frameworks.h \
+	opal/opal_portable_platform.h
 
 nodist_headers += \
 	opal/version.h
