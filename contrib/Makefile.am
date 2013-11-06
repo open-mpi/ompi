@@ -33,6 +33,7 @@ endif # WANT_FT_CR
 EXTRA_DIST = \
 	dist/make_dist_tarball \
 	dist/linux/openmpi.spec \
+	dist/linux/compile_debian_mlnx_example.in \
 	dist/macosx-pkg/buildpackage.sh \
 	dist/macosx-pkg/ReadMe.rtf \
 	platform/optimized \
