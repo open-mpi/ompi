@@ -909,11 +909,11 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
     size_t max_bytes_per_proc = 0;
  
 
+    /*If only one process used, no need to do aggregator selection!*/
+    if (fh->f_size == 1){
+	num_aggregators = 1;
+    }
 
-    /*
-    OMPI_MPI_OFFSET_TYPE temp;
-    int global_flag, flag;
-    */
     fh->f_flags |= OMPIO_AGGREGATOR_IS_SET;
 
     if (-1 == num_aggregators) {
