@@ -101,7 +101,7 @@ static inline int
 ompi_coll_portals4_get_nchildren(int cube_dim, int hibit, int rank, int size)
 {
     int guess = cube_dim - (hibit + 1);
-    if ((rank | (1 << cube_dim)) >= size) guess--;
+    if ((rank | (1 << (cube_dim - 1))) >= size) guess--;
     if (guess < 0) return 0;
     return guess;
 }

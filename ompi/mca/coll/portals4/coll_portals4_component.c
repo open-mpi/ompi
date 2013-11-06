@@ -341,21 +341,21 @@ portals4_init_query(bool enable_progress_threads,
         }
     }
 #else
-        md.start = 0;
-        md.length = PTL_SIZE_MAX;
-        md.options = 0;
-        md.eq_handle = PTL_EQ_NONE;
-        md.ct_handle = PTL_CT_NONE;
+    md.start = 0;
+    md.length = PTL_SIZE_MAX;
+    md.options = 0;
+    md.eq_handle = PTL_EQ_NONE;
+    md.ct_handle = PTL_CT_NONE;
 
-        ret = PtlMDBind(mca_coll_portals4_component.ni_h,
-                        &md,
-                        &mca_coll_portals4_component.md_h); 
-        if (PTL_OK != ret) {
-            opal_output_verbose(1, ompi_coll_base_framework.framework_output,
-                                "%s:%d: PtlMDBind failed: %d\n",
-                                __FILE__, __LINE__, ret);
-            return OMPI_ERROR;
-        }
+    ret = PtlMDBind(mca_coll_portals4_component.ni_h,
+                    &md,
+                    &mca_coll_portals4_component.md_h); 
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: PtlMDBind failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return OMPI_ERROR;
+    }
 #endif
 
     /* setup finish ack ME */
@@ -434,8 +434,10 @@ portals4_comm_query(struct ompi_communicator_t *comm,
 {
     mca_coll_portals4_module_t *portals4_module;
 
-    /* For now, we don't support intercommunicators */
-    if (OMPI_COMM_IS_INTER(comm)) {
+    /* For now, we don't support intercommunicators and we probably
+       never should handle the single proc case, since there's the
+       self module... */
+    if (OMPI_COMM_IS_INTER(comm) || ompi_comm_size(comm) < 2) {
         return NULL;
     }
 
