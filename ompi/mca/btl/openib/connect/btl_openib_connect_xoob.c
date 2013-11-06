@@ -355,8 +355,8 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
 
     /* send to remote endpoint */
     rc = ompi_rte_send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name,
-            buffer, OMPI_RML_TAG_XOPENIB, 0,
-            xoob_rml_send_cb, NULL);
+                                 buffer, OMPI_RML_TAG_XOPENIB,
+                                 xoob_rml_send_cb, NULL);
     if (OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);
         return rc;
@@ -1024,17 +1024,11 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
     if (!rml_recv_posted) {
-        rc = ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
-                                     OMPI_RML_TAG_XOPENIB,
-                                     OMPI_RML_PERSISTENT,
-                                     xoob_rml_recv_cb,
-                                     NULL);
-        if (OMPI_SUCCESS != rc) {
-            opal_output_verbose(5, ompi_btl_base_framework.framework_output,
-                                "openib BTL: xoob CPC system error %d (%s)",
-                                rc, opal_strerror(rc));
-            return rc;
-        }
+        ompi_rte_recv_buffer_nb(OMPI_NAME_WILDCARD,
+                                OMPI_RML_TAG_XOPENIB,
+                                OMPI_RML_PERSISTENT,
+                                xoob_rml_recv_cb,
+                                NULL);
         rml_recv_posted = true;
     }
 
