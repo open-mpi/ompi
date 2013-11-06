@@ -56,30 +56,6 @@ EXTRA_DIST = \
         platform/lanl/cray_xe6/optimized-common \
         platform/lanl/cray_xe6/optimized-lustre \
         platform/lanl/cray_xe6/optimized-lustre.conf \
-        platform/lanl/rr-class/cross-debug-slave \
-        platform/lanl/rr-class/cross-debug-slave.conf \
-        platform/lanl/rr-class/cross-optimized-slave \
-        platform/lanl/rr-class/cross-optimized-slave.conf \
-        platform/lanl/rr-class/debug-nopanasas \
-        platform/lanl/rr-class/debug-nopanasas.conf \
-        platform/lanl/rr-class/debug-panasas \
-        platform/lanl/rr-class/debug-panasas.conf \
-        platform/lanl/rr-class/optimized-nopanasas \
-        platform/lanl/rr-class/optimized-nopanasas.conf \
-        platform/lanl/rr-class/optimized-panasas \
-        platform/lanl/rr-class/optimized-panasas.conf \
-        platform/lanl/rr-class/debug-master \
-        platform/lanl/rr-class/debug-master.conf \
-        platform/lanl/rr-class/optimized-master \
-        platform/lanl/rr-class/optimized-master.conf \
-        platform/lanl/rr-class/debug-panasas-nocell \
-        platform/lanl/rr-class/debug-panasas-nocell.conf \
-        platform/lanl/rr-class/debug-nopanasas-nocell \
-        platform/lanl/rr-class/debug-nopanasas-nocell.conf \
-        platform/lanl/rr-class/optimized-nopanasas-nocell \
-        platform/lanl/rr-class/optimized-nopanasas-nocell.conf \
-        platform/lanl/rr-class/optimized-panasas-nocell \
-        platform/lanl/rr-class/optimized-panasas-nocell.conf \
         platform/lanl/toss/debug-common \
         platform/lanl/toss/debug-nopanasas \
         platform/lanl/toss/debug-nopanasas.conf \
