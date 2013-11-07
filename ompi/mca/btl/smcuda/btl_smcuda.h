@@ -39,6 +39,7 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/class/opal_free_list.h"
+
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/common/sm/common_sm.h"
 
@@ -191,6 +192,16 @@ struct mca_btl_smcuda_component_t {
     /** If we want DMA and DMA is supported, this will be loaded with
         KNEM_FLAG_DMA.  Otherwise, it'll be 0. */
     int knem_dma_flag;
+
+    /** MCA: should we be using CMA or not?
+        0 = no, 1 = yes */
+    int use_cma;
+
+    /* /// well-known file names for sm and sm mpool init /// */
+    char *sm_mpool_ctl_file_name;
+    char *sm_mpool_rndv_file_name;
+    char *sm_ctl_file_name;
+    char *sm_rndv_file_name;
 #if OPAL_CUDA_SUPPORT
     int cuda_ipc_verbose;
     int cuda_ipc_output;
@@ -212,10 +223,6 @@ struct mca_btl_smcuda_t {
 };
 typedef struct mca_btl_smcuda_t mca_btl_smcuda_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_smcuda_t mca_btl_smcuda;
-
-
-
-
 
 struct btl_smcuda_pending_send_item_t
 {
@@ -513,6 +520,11 @@ enum ipcState {
 };
 
 #endif /* OPAL_CUDA_SUPPORT */
+
+
+extern void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,
+                            struct mca_btl_base_endpoint_t* endpoint,
+                            int verbose);
 
 /**
  * Fault Tolerance Event Notification Function

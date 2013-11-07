@@ -54,7 +54,7 @@ struct mca_btl_smcuda_segment_t {
     ompi_ptr_t memh_seg_addr;        
      /** Length in bytes of entire memory handle */
     uint32_t memh_seg_len;           
-#endif
+#endif /* OPAL_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_segment_t mca_btl_smcuda_segment_t;
 
@@ -84,29 +84,29 @@ OBJ_CLASS_DECLARATION(mca_btl_smcuda_frag1_t);
 OBJ_CLASS_DECLARATION(mca_btl_smcuda_frag2_t);
 OBJ_CLASS_DECLARATION(mca_btl_smcuda_user_t);
 
-#define MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag)                           \
+#define MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag)                               \
 {                                                                       \
     ompi_free_list_item_t* item;                                        \
-    OMPI_FREE_LIST_GET_MT(&mca_btl_smcuda_component.sm_frags_eager, item); \
-    frag = (mca_btl_smcuda_frag_t*)item;                                \
+    OMPI_FREE_LIST_GET_MT(&mca_btl_smcuda_component.sm_frags_eager, item);     \
+    frag = (mca_btl_smcuda_frag_t*)item;                                    \
 }
 
-#define MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag)                             \
+#define MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag)                                 \
 {                                                                       \
     ompi_free_list_item_t* item;                                        \
-    OMPI_FREE_LIST_GET_MT(&mca_btl_smcuda_component.sm_frags_max, item);   \
-    frag = (mca_btl_smcuda_frag_t*)item;                                \
+    OMPI_FREE_LIST_GET_MT(&mca_btl_smcuda_component.sm_frags_max, item);       \
+    frag = (mca_btl_smcuda_frag_t*)item;                                    \
 }
 
-#define MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag)                            \
-    {                                                                   \
+#define MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag)                                \
+{                                                                       \
 	ompi_free_list_item_t* item;                                        \
-	OMPI_FREE_LIST_GET_MT(&mca_btl_smcuda_component.sm_frags_user, item);  \
-	frag = (mca_btl_smcuda_frag_t*)item;                                \
+	OMPI_FREE_LIST_GET_MT(&mca_btl_smcuda_component.sm_frags_user, item);      \
+	frag = (mca_btl_smcuda_frag_t*)item;                                    \
 }
 
 
-#define MCA_BTL_SMCUDA_FRAG_RETURN(frag)                                  \
+#define MCA_BTL_SMCUDA_FRAG_RETURN(frag)                                      \
 {                                                                         \
     OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t*)(frag)); \
 }

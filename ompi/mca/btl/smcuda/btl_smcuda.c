@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,14 +34,22 @@
 #include <sys/mman.h>
 #endif  /* HAVE_SYS_MMAN_H */
 
+#ifdef OMPI_BTL_SM_CMA_NEED_SYSCALL_DEFS
+#include "opal/sys/cma.h"
+#endif /* OMPI_BTL_SM_CMA_NEED_SYSCALL_DEFS */
+
 #include "opal/sys/atomic.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/shmem/base/base.h"
+#include "opal/mca/shmem/shmem.h"
+
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/class/ompi_free_list.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/btl/btl.h"
 #if OPAL_CUDA_SUPPORT
 #include "ompi/mca/common/cuda/common_cuda.h"
@@ -83,7 +91,7 @@ mca_btl_smcuda_t mca_btl_smcuda = {
         mca_btl_smcuda_alloc,
         mca_btl_smcuda_free,
         mca_btl_smcuda_prepare_src,
-#if OPAL_CUDA_SUPPORT
+#if OPAL_CUDA_SUPPORT || OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
         mca_btl_smcuda_prepare_dst,
 #else
         NULL,
@@ -92,7 +100,7 @@ mca_btl_smcuda_t mca_btl_smcuda = {
         mca_btl_smcuda_sendi,
         NULL,  /* put */
         NULL,  /* get -- optionally filled during initialization */
-        mca_btl_base_dump,
+        mca_btl_smcuda_dump,
         NULL, /* mpool */
         mca_btl_smcuda_register_error_cb, /* register error */
         mca_btl_smcuda_ft_event
@@ -103,7 +111,6 @@ mca_btl_smcuda_t mca_btl_smcuda = {
 static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* btl,
                                                  struct mca_btl_base_endpoint_t* endpoint);
 #endif /* OPAL_CUDA_SUPPORT */
-
 /*
  * calculate offset of an address from the beginning of a shared memory segment
  */
@@ -114,7 +121,6 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
  * a base address of a shared memory segment
  */
 #define OFFSET2ADDR(OFFSET, BASE) ((ptrdiff_t)(OFFSET) + (char*)(BASE))
-
 
 static void *mpool_calloc(size_t nmemb, size_t size)
 {
@@ -131,23 +137,111 @@ static void *mpool_calloc(size_t nmemb, size_t size)
     return buf;
 }
 
-
-static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
+static int
+setup_mpool_base_resources(mca_btl_smcuda_component_t *comp_ptr,
+                           mca_mpool_base_resources_t *out_res)
 {
-    size_t size, length, length_payload;
-    char *sm_ctl_file;
+    int rc = OMPI_SUCCESS;
+    int fd = -1;
+    ssize_t bread = 0;
+
+    if (-1 == (fd = open(comp_ptr->sm_mpool_rndv_file_name, O_RDONLY))) {
+        int err = errno;
+        opal_show_help("help-mpi-btl-smcuda.txt", "sys call fail", true,
+                       "open(2)", strerror(err), err);
+        rc = OMPI_ERR_IN_ERRNO;
+        goto out;
+    }
+    if ((ssize_t)sizeof(opal_shmem_ds_t) != (bread =
+        read(fd, &out_res->bs_meta_buf, sizeof(opal_shmem_ds_t)))) {
+        opal_output(0, "setup_mpool_base_resources: "
+                    "Read inconsistency -- read: %lu, but expected: %lu!\n",
+                    (unsigned long)bread,
+                    (unsigned long)sizeof(opal_shmem_ds_t));
+        rc = OMPI_ERROR;
+        goto out;
+    }
+    if ((ssize_t)sizeof(out_res->size) != (bread =
+        read(fd, &out_res->size, sizeof(size_t)))) {
+        opal_output(0, "setup_mpool_base_resources: "
+                    "Read inconsistency -- read: %lu, but expected: %lu!\n",
+                    (unsigned long)bread,
+                    (unsigned long)sizeof(opal_shmem_ds_t));
+        rc = OMPI_ERROR;
+        goto out;
+    }
+
+out:
+    if (-1 != fd) {
+        (void)close(fd);
+    }
+    return rc;
+}
+
+static int
+sm_segment_attach(mca_btl_smcuda_component_t *comp_ptr)
+{
+    int rc = OMPI_SUCCESS;
+    int fd = -1;
+    ssize_t bread = 0;
+    opal_shmem_ds_t *tmp_shmem_ds = calloc(1, sizeof(*tmp_shmem_ds));
+
+    if (NULL == tmp_shmem_ds) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    if (-1 == (fd = open(comp_ptr->sm_rndv_file_name, O_RDONLY))) {
+        int err = errno;
+        opal_show_help("help-mpi-btl-smcuda.txt", "sys call fail", true,
+                       "open(2)", strerror(err), err);
+        rc = OMPI_ERR_IN_ERRNO;
+        goto out;
+    }
+    if ((ssize_t)sizeof(opal_shmem_ds_t) != (bread =
+        read(fd, tmp_shmem_ds, sizeof(opal_shmem_ds_t)))) {
+        opal_output(0, "sm_segment_attach: "
+                    "Read inconsistency -- read: %lu, but expected: %lu!\n",
+                    (unsigned long)bread,
+                    (unsigned long)sizeof(opal_shmem_ds_t));
+        rc = OMPI_ERROR;
+        goto out;
+    }
+    if (NULL == (comp_ptr->sm_seg =
+                 mca_common_sm_module_attach(tmp_shmem_ds,
+                                             sizeof(mca_common_sm_seg_header_t),
+                                             opal_cache_line_size))) {
+        /* don't have to detach here, because module_attach cleans up after
+         * itself on failure. */
+        opal_output(0, "sm_segment_attach: "
+                    "mca_common_sm_module_attach failure!\n");
+        rc = OMPI_ERROR;
+    }
+
+out:
+    if (-1 != fd) {
+        (void)close(fd);
+    }
+    if (tmp_shmem_ds) {
+        free(tmp_shmem_ds);
+    }
+    return rc;
+}
+
+static int
+smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
+                       int32_t my_smp_rank,
+                       int n)
+{
+    size_t length, length_payload;
     sm_fifo_t *my_fifos;
-    int my_mem_node, num_mem_nodes, i;
-    ompi_proc_t **procs;
-    size_t num_procs;
-    mca_mpool_base_resources_t res;
+    int my_mem_node, num_mem_nodes, i, rc;
+    mca_mpool_base_resources_t *res = NULL;
     mca_btl_smcuda_component_t* m = &mca_btl_smcuda_component;
 
     /* Assume we don't have hwloc support and fill in dummy info */
     mca_btl_smcuda_component.mem_node = my_mem_node = 0;
     mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = 1;
 
-#if OPAL_HAVE_HWLOC && 0
+#if OPAL_HAVE_HWLOC
     /* If we have hwloc support, then get accurate information */
     if (NULL != opal_hwloc_topology) {
         i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology,
@@ -156,8 +250,10 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
 
         /* If we find >0 NUMA nodes, then investigate further */
         if (i > 0) {
-            opal_hwloc_level_t bind_level;
-            unsigned int bind_index;
+            int numa=0, w;
+            unsigned n_bound=0;
+            hwloc_cpuset_t avail;
+            hwloc_obj_t obj;
 
             /* JMS This tells me how many numa nodes are *available*,
                but it's not how many are being used *by this job*.
@@ -167,94 +263,64 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
                used *in this job*. */
             mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = i;
 
-            /* Fill opal_hwloc_my_cpuset and find out to what level
-               this process is bound (if at all) */
-            opal_hwloc_base_get_local_cpuset();
-            opal_hwloc_base_get_level_and_index(opal_hwloc_my_cpuset,
-                                                &bind_level, &bind_index);
-            if (OPAL_HWLOC_NODE_LEVEL != bind_level) {
-                /* We are bound to *something* (i.e., our binding
-                   level is less than "node", meaning the entire
-                   machine), so discover which NUMA node this process
-                   is bound */
-                if (OPAL_HWLOC_NUMA_LEVEL == bind_level) {
-                    mca_btl_smcuda_component.mem_node = my_mem_node = (int) bind_index;
-                } else {
-                    if (OPAL_SUCCESS == 
-                        opal_hwloc_base_get_local_index(HWLOC_OBJ_NODE, 0, &bind_index)) {
-                        mca_btl_smcuda_component.mem_node = my_mem_node = (int) bind_index;
-                    } else {
-                        /* Weird.  We can't figure out what NUMA node
-                           we're on. :-( */
-                        mca_btl_smcuda_component.mem_node = my_mem_node = -1;
+            /* if we are not bound, then there is nothing further to do */
+            if (NULL != ompi_process_info.cpuset) {
+                /* count the number of NUMA nodes to which we are bound */
+                for (w=0; w < i; w++) {
+                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+                                                                       HWLOC_OBJ_NODE, 0, w,
+                                                                       OPAL_HWLOC_AVAILABLE))) {
+                        continue;
                     }
+                    /* get that NUMA node's available cpus */
+                    avail = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
+                    /* see if we intersect */
+                    if (hwloc_bitmap_intersects(avail, opal_hwloc_my_cpuset)) {
+                        n_bound++;
+                        numa = w;
+                    }
+                }
+                /* if we are located on more than one NUMA, or we didn't find
+                 * a NUMA we are on, then not much we can do
+                 */
+                if (1 == n_bound) {
+                    mca_btl_smcuda_component.mem_node = my_mem_node = numa;
+                } else {
+                    mca_btl_smcuda_component.mem_node = my_mem_node = -1;
                 }
             }
         }
     }
 #endif
 
-    /* lookup shared memory pool */
-    mca_btl_smcuda_component.sm_mpools = (mca_mpool_base_module_t **) calloc(num_mem_nodes,
-                                            sizeof(mca_mpool_base_module_t*));
-
-    /* Create one mpool.  Per discussion with George and a UTK Euro
-       MPI 2010 paper, it may be beneficial to create multiple mpools.
-       Leaving that for a future optimization, however. */
-    /* Disable memory binding, because each MPI process will claim
-       pages in the mpool for their local NUMA node */
-    res.mem_node = -1;
-
-    /* determine how much memory to create */
-    /*
-     * This heuristic formula mostly says that we request memory for:
-     * - nfifos FIFOs, each comprising:
-     *   . a sm_fifo_t structure
-     *   . many pointers (fifo_size of them per FIFO)
-     * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
-     * - max fragments (sm_free_list_num of them)
-     *
-     * On top of all that, we sprinkle in some number of
-     * "opal_cache_line_size" additions to account for some
-     * padding and edge effects that may lie in the allocator.
-     */
-    res.size =
-        FIFO_MAP_NUM(n) * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * opal_cache_line_size )
-        + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * opal_cache_line_size )
-        +           m->sm_free_list_num   * ( m->max_frag_size + 2 * opal_cache_line_size );
-
-    /* before we multiply by n, make sure the result won't overflow */
-    /* Stick that little pad in, particularly since we'll eventually
-     * need a little extra space.  E.g., in mca_mpool_sm_init() in
-     * mpool_sm_component.c when sizeof(mca_common_sm_module_t) is
-     * added.
-     */
-    if ( ((double) res.size) * n > LONG_MAX - 4096 ) {
+    if (NULL == (res = calloc(1, sizeof(*res)))) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    res.size *= n;
-    
-    /* now, create it */
+
+    /* lookup shared memory pool */
+    mca_btl_smcuda_component.sm_mpools =
+        (mca_mpool_base_module_t **)calloc(num_mem_nodes,
+                                           sizeof(mca_mpool_base_module_t *));
+
+    /* Disable memory binding, because each MPI process will claim pages in the
+     * mpool for their local NUMA node */
+    res->mem_node = -1;
+
+    if (OMPI_SUCCESS != (rc = setup_mpool_base_resources(m, res))) {
+        free(res);
+        return rc;
+    }
+    /* now that res is fully populated, create the thing */
     mca_btl_smcuda_component.sm_mpools[0] =
         mca_mpool_base_module_create(mca_btl_smcuda_component.sm_mpool_name,
-                                     smcuda_btl, &res);
+                                     smcuda_btl, res);
     /* Sanity check to ensure that we found it */
     if (NULL == mca_btl_smcuda_component.sm_mpools[0]) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+        free(res);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     mca_btl_smcuda_component.sm_mpool = mca_btl_smcuda_component.sm_mpools[0];
-#if OPAL_CUDA_SUPPORT
-    /* Create a local memory pool that sends handles to the remote
-     * side.  Note that the res argument is not really used, but
-     * needed to satisfy function signature. */
-    smcuda_btl->super.btl_mpool = mca_mpool_base_module_create("gpusm",
-                                                               smcuda_btl,
-                                                               &res);
-    if (NULL == smcuda_btl->super.btl_mpool) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-#endif /* OPAL_CUDA_SUPPORT */
 
     mca_btl_smcuda_component.sm_mpool_base =
         mca_btl_smcuda_component.sm_mpools[0]->mpool_base(mca_btl_smcuda_component.sm_mpools[0]);
@@ -263,37 +329,31 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
     mca_btl_smcuda_component.sm_peers = (struct mca_btl_base_endpoint_t**)
         calloc(n, sizeof(struct mca_btl_base_endpoint_t*));
     if (NULL == mca_btl_smcuda_component.sm_peers) {
+        free(res);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Allocate Shared Memory BTL process coordination
-     * data structure.  This will reside in shared memory */
-
-    /* set file name */
-    if (asprintf(&sm_ctl_file, "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
-                 ompi_process_info.job_session_dir,
-                 ompi_process_info.nodename) < 0) {
+    /* remember that node rank zero is already attached */
+    if (0 != my_smp_rank) {
+        if (OMPI_SUCCESS != (rc = sm_segment_attach(m))) {
+            free(res);
+            return rc;
+        }
+    }
+#if OPAL_CUDA_SUPPORT
+    /* Create a local memory pool that sends handles to the remote
+     * side.  Note that the res argument is not really used, but
+     * needed to satisfy function signature. */
+    smcuda_btl->super.btl_mpool = mca_mpool_base_module_create("gpusm",
+                                                               smcuda_btl,
+                                                               res);
+    if (NULL == smcuda_btl->super.btl_mpool) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+#endif /* OPAL_CUDA_SUPPORT */
 
-    /* Pass in a data segment alignment of 0 to get no data
-       segment (only the shared control structure) */
-    size = sizeof(mca_common_sm_seg_header_t) +
-        n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + opal_cache_line_size;
-    procs = ompi_proc_world(&num_procs);
-    if (!(mca_btl_smcuda_component.sm_seg =
-          mca_common_sm_init(procs, num_procs, size, sm_ctl_file,
-                             sizeof(mca_common_sm_seg_header_t),
-                             opal_cache_line_size))) {
-        opal_output(0, "mca_btl_smcuda_add_procs: unable to create shared memory "
-                    "BTL coordinating strucure :: size %lu \n",
-                    (unsigned long)size);
-        free(procs);
-        free(sm_ctl_file);
-        return OMPI_ERROR;
-    }
-    free(procs);
-    free(sm_ctl_file);
+    /* it is now safe to free the mpool resources */
+    free(res);
 
     /* check to make sure number of local procs is within the
      * specified limits */
@@ -392,6 +452,7 @@ static struct mca_btl_base_endpoint_t *
 create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
 {
     struct mca_btl_base_endpoint_t *ep;
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     char path[PATH_MAX];
 #endif
@@ -431,22 +492,6 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
     return ep;
 }
 
-static void calc_sm_max_procs(int n)
-{
-    /* see if need to allocate space for extra procs */
-    if(0 > mca_btl_smcuda_component.sm_max_procs) {
-        /* no limit */
-        if(0 <= mca_btl_smcuda_component.sm_extra_procs) {
-            /* limit */
-            mca_btl_smcuda_component.sm_max_procs =
-                n + mca_btl_smcuda_component.sm_extra_procs;
-        } else {
-            /* no limit */
-            mca_btl_smcuda_component.sm_max_procs = 2 * n;
-        }
-    }
-}
-
 int mca_btl_smcuda_add_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
@@ -460,6 +505,9 @@ int mca_btl_smcuda_add_procs(
     mca_btl_smcuda_t *smcuda_btl;
     bool have_connected_peer = false;
     char **bases;
+    /* for easy access to the mpool_sm_module */
+    mca_mpool_sm_module_t *sm_mpool_modp = NULL;
+
     /* initializion */
 
     smcuda_btl = (mca_btl_smcuda_t *)btl;
@@ -472,7 +520,7 @@ int mca_btl_smcuda_add_procs(
      * and idetify procs that are on this host.  Add procs on this
      * host to shared memory reachbility list.  Also, get number
      * of local procs in the procs list. */
-    for(proc = 0; proc < (int32_t)nprocs; proc++) {
+    for (proc = 0; proc < (int32_t)nprocs; proc++) {
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
@@ -499,7 +547,6 @@ int mca_btl_smcuda_add_procs(
         peers[proc]->ipcstate = IPC_INIT;
         peers[proc]->ipctries = 0;
 #endif /* OPAL_CUDA_SUPPORT */
-
         n_local_procs++;
 
         /* add this proc to shared memory accessibility list */
@@ -513,18 +560,18 @@ int mca_btl_smcuda_add_procs(
         goto CLEANUP;
 
     /* make sure that my_smp_rank has been defined */
-    if(-1 == my_smp_rank) {
+    if (-1 == my_smp_rank) {
         return_code = OMPI_ERROR;
         goto CLEANUP;
     }
 
-    calc_sm_max_procs(n_local_procs);
-
     if (!smcuda_btl->btl_inited) {
         return_code =
-            smcuda_btl_first_time_init(smcuda_btl, mca_btl_smcuda_component.sm_max_procs);
-        if(return_code != OMPI_SUCCESS)
+            smcuda_btl_first_time_init(smcuda_btl, my_smp_rank,
+                                   mca_btl_smcuda_component.sm_max_procs);
+        if (return_code != OMPI_SUCCESS) {
             goto CLEANUP;
+        }
     }
 
     /* set local proc's smp rank in the peers structure for
@@ -537,6 +584,7 @@ int mca_btl_smcuda_add_procs(
     }
 
     bases = mca_btl_smcuda_component.shm_bases;
+    sm_mpool_modp = (mca_mpool_sm_module_t *)mca_btl_smcuda_component.sm_mpool;
 
     /* initialize own FIFOs */
     /*
@@ -560,12 +608,47 @@ int mca_btl_smcuda_add_procs(
     /* Sync with other local procs. Force the FIFO initialization to always
      * happens before the readers access it.
      */
-    opal_atomic_add_32( &mca_btl_smcuda_component.sm_seg->module_seg->seg_inited, 1);
+    opal_atomic_add_32(&mca_btl_smcuda_component.sm_seg->module_seg->seg_inited, 1);
     while( n_local_procs >
            mca_btl_smcuda_component.sm_seg->module_seg->seg_inited) {
         opal_progress();
         opal_atomic_rmb();
     }
+
+    /* it is now safe to unlink the shared memory segment. only one process
+     * needs to do this, so just let smp rank zero take care of it. */
+    if (0 == my_smp_rank) {
+        if (OMPI_SUCCESS !=
+            mca_common_sm_module_unlink(mca_btl_smcuda_component.sm_seg)) {
+            /* it is "okay" if this fails at this point. we have gone this far,
+             * so just warn about the failure and continue. this is probably
+             * only triggered by a programming error. */
+            opal_output(0, "WARNING: common_sm_module_unlink failed.\n");
+        }
+        /* SKG - another abstraction violation here, but I don't want to add
+         * extra code in the sm mpool for further synchronization. */
+
+        /* at this point, all processes have attached to the mpool segment. so
+         * it is safe to unlink it here. */
+        if (OMPI_SUCCESS !=
+            mca_common_sm_module_unlink(sm_mpool_modp->sm_common_module)) {
+            opal_output(0, "WARNING: common_sm_module_unlink failed.\n");
+        }
+        if (-1 == unlink(mca_btl_smcuda_component.sm_mpool_rndv_file_name)) {
+            opal_output(0, "WARNING: %s unlink failed.\n",
+                        mca_btl_smcuda_component.sm_mpool_rndv_file_name);
+        }
+        if (-1 == unlink(mca_btl_smcuda_component.sm_rndv_file_name)) {
+            opal_output(0, "WARNING: %s unlink failed.\n",
+                        mca_btl_smcuda_component.sm_rndv_file_name);
+        }
+    }
+
+    /* free up some space used by the name buffers */
+    free(mca_btl_smcuda_component.sm_mpool_ctl_file_name);
+    free(mca_btl_smcuda_component.sm_mpool_rndv_file_name);
+    free(mca_btl_smcuda_component.sm_ctl_file_name);
+    free(mca_btl_smcuda_component.sm_rndv_file_name);
 
     /* coordinate with other processes */
     for(j = mca_btl_smcuda_component.num_smp_procs;
@@ -777,7 +860,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
 }
 
 #if 0
-#define MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)      \
+#define MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)          \
     do {                                                                \
         char* _memory = (char*)(sm_frag)->segment.base.seg_addr.pval +  \
             (sm_frag)->segment.base.seg_len;                            \
@@ -832,7 +915,6 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
     }
-
 #if OPAL_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support. */
     if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
@@ -891,6 +973,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
         MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                               endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+        (void)rc; /* this is safe to ignore as the message is requeued till success */
         return OMPI_SUCCESS;
     }
 
@@ -917,7 +1000,6 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
     }
-
 #if OPAL_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support */
     if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
@@ -1157,6 +1239,32 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
 }
 
 #endif /* OPAL_CUDA_SUPPORT */
+
+/**
+ *
+ */
+void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,
+                     struct mca_btl_base_endpoint_t* endpoint,
+                     int verbose)
+{
+    opal_list_item_t *item;
+    mca_btl_smcuda_frag_t* frag;
+
+    mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
+                     (void*) btl, (void*) endpoint, 
+                     endpoint->my_smp_rank, endpoint->peer_smp_rank);
+    if( NULL != endpoint ) {
+        for(item =  opal_list_get_first(&endpoint->pending_sends);
+            item != opal_list_get_end(&endpoint->pending_sends); 
+            item = opal_list_get_next(item)) {
+            frag = (mca_btl_smcuda_frag_t*)item;
+            mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank %d tag %d)\n",
+                             (void*) frag, frag->size, (void*) frag->hdr->frag,
+                             frag->hdr->len, frag->hdr->my_smp_rank, 
+                             frag->hdr->tag);
+        }
+    }
+}
 
 #if OPAL_ENABLE_FT_CR    == 0
 int mca_btl_smcuda_ft_event(int state) {

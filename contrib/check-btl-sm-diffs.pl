@@ -130,21 +130,21 @@ foreach $smcudafile (@smcudafiles) {
 
   if (!$showall_arg) {
     # First, remove all the #if-#else code.
-    # #ifdef OMPI_CUDA_SUPPORT
+    # #ifdef OPAL_CUDA_SUPPORT
     # ...stuff...
-    # # else /* OMPI_CUDA_SUPPORT */
+    # # else /* OPAL_CUDA_SUPPORT */
     # Then, remove all the #if-#endif code.
-    # #ifdef OMPI_CUDA_SUPPORT
+    # #ifdef OPAL_CUDA_SUPPORT
     # ...stuff...
-    # #endif /* OMPI_CUDA_SUPPORT */
+    # #endif /* OPAL_CUDA_SUPPORT */
     # Then, remove leftover #endif from the #if-#else.
     # So, three pattern matching steps.
     # Some notes about the regular expression.
     #   1. Need the .*? so the #endif is matched with the closest if.
-    #   2. Added the comment OMPI_CUDA_SUPPORT on the #endif to get the right match.
+    #   2. Added the comment OPAL_CUDA_SUPPORT on the #endif to get the right match.
     #   3. Need the \n at the end to avoid leaving extra newlines.
-    $contents =~ s/#if OMPI_CUDA_SUPPORT(.*?)((#else \/\* OMPI_CUDA_SUPPORT \*\/\n)|(#endif \/\* OMPI_CUDA_SUPPORT \*\/\n))//gis;
-    $contents =~ s/#endif \/\* OMPI_CUDA_SUPPORT \*\/\n//gis;
+    $contents =~ s/#if OPAL_CUDA_SUPPORT(.*?)((#else \/\* OPAL_CUDA_SUPPORT \*\/\n)|(#endif \/\* OPAL_CUDA_SUPPORT \*\/\n))//gis;
+    $contents =~ s/#endif \/\* OPAL_CUDA_SUPPORT \*\/\n//gis;
   }
 
   # Strip off the copyright header also.
@@ -181,7 +181,10 @@ foreach $smfile (@smfiles) {
   die("Couldn't Read $smfile!\n") if (!$contents);
   $contents =~ s/\/\*(.*?)\$HEADER\$\n \*\/\n//is;
   # Strip away KNEM as that is not in smcuda
-  $contents =~ s/#if OMPI_BTL_SM_HAVE_KNEM(.*?)((#else\n)|(#endif\n)|(#endif  \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n))//gis;
+  $contents =~ s/#if OMPI_BTL_SM_HAVE_KNEM \|\| OMPI_BTL_SM_HAVE_CMA(.*?)((#else\n)|(#endif\n)|(#endif \/\* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA \*\/\n))//gis;
+  $contents =~ s/#if OMPI_BTL_SM_HAVE_KNEM(.*?)((#else\n)|(#endif\n)|(#endif \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n))//gis;
+  $contents =~ s/#endif  \/\* OMPI_BTL_SM_HAVE_KNEM \|\| OMPI_BTL_SM_HAVE_CMA \*\/\n//gis;
+  $contents =~ s/#endif \/\* OMPI_BTL_SM_HAVE_KNEM \|\| OMPI_BTL_SM_HAVE_CMA \*\/\n//gis;
   $contents =~ s/#endif  \/\* OMPI_BTL_SM_HAVE_KNEM \*\/\n//gis;
   Write($smfile, $contents);
 }
