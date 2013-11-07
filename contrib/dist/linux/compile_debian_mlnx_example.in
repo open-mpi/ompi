@@ -1,0 +1,15 @@
+INSTALL_DIR=${INSTALL_DIR:-/usr/mpi/gcc}
+PREFIX=${INSTALL_DIR}/openmpi-@OMPI_MAJOR_VERSION@.@OMPI_MINOR_VERSION@.@OMPI_RELEASE_VERSION@
+
+MXM_PATH=${MXM_PATH:-/opt/mellanox/mxm}
+FCA_PATH=${FCA_PATH:-/opt/mellanox/fca}
+KNEM_PATH=${KNEM_PATH:-/opt/knem-1.0.90mlnx2}
+
+[ -d $MXM_PATH ] && WITH_MXM="--with-mxm=$MXM_PATH"
+[ -d $FCA_PATH ] && WITH_FCA="--with-fca=$FCA_PATH"
+[ -d $KNEM_PATH ] && WITH_KNEM="--with-knem=$KNEM_PATH"
+
+CONFIG_ARGS=${CONFIG_ARGS:-"--prefix=$PREFIX --libdir=$OMPI_PREFIX/lib64 --with-platform=contrib/platform/mellanox/optimized $WITH_MXM $WITH_FCA $WITH_KNEM"}
+export CONFIG_ARGS
+cp -a contrib/dist/linux/debian .
+dpkg-buildpackage -us -uc
