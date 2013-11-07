@@ -173,9 +173,11 @@ could cause incorrect results.  Turn of GPU Direct RDMA support by running with
   cuPointerGetAttribute return value:   %d
 Check the cuda.h file for what the return value means.
 [cuPointerSetAttribute failed]
-The call to cuPointerSetAttribute failed. This is a unrecoverable error and will
-cause the program to abort.
+The call to cuPointerSetAttribute with CU_POINTER_ATTRIBUTE_SYNC_MEMOPS
+failed. This is highly unusual and should not happen.  The program will
+continue, but report this error to the Open MPI developers.
+  Hostname:                             %s
   cuPointerSetAttribute return value:   %d
-  Address: %p
+  Address:                              %p
 Check the cuda.h file for what the return value means.
 #
