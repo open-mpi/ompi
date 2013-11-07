@@ -111,7 +111,6 @@ mca_btl_smcuda_t mca_btl_smcuda = {
 static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* btl,
                                                  struct mca_btl_base_endpoint_t* endpoint);
 #endif /* OPAL_CUDA_SUPPORT */
-
 /*
  * calculate offset of an address from the beginning of a shared memory segment
  */
@@ -192,7 +191,7 @@ sm_segment_attach(mca_btl_smcuda_component_t *comp_ptr)
     }
     if (-1 == (fd = open(comp_ptr->sm_rndv_file_name, O_RDONLY))) {
         int err = errno;
-        opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
+        opal_show_help("help-mpi-btl-smcuda.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
@@ -251,7 +250,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
 
         /* If we find >0 NUMA nodes, then investigate further */
         if (i > 0) {
-            int numa, w;
+            int numa=0, w;
             unsigned n_bound=0;
             hwloc_cpuset_t avail;
             hwloc_obj_t obj;
@@ -548,7 +547,6 @@ int mca_btl_smcuda_add_procs(
         peers[proc]->ipcstate = IPC_INIT;
         peers[proc]->ipctries = 0;
 #endif /* OPAL_CUDA_SUPPORT */
-
         n_local_procs++;
 
         /* add this proc to shared memory accessibility list */
@@ -794,7 +792,6 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
     uint32_t iov_count = 1;
     size_t max_data = *size;
     int rc;
-
 #if OPAL_CUDA_SUPPORT
     if (0 != reserve) {
 #endif /* OPAL_CUDA_SUPPORT */
@@ -918,7 +915,6 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
     }
-
 #if OPAL_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support. */
     if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
@@ -977,6 +973,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
         MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                               endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+        (void)rc; /* this is safe to ignore as the message is requeued till success */
         return OMPI_SUCCESS;
     }
 
@@ -1003,7 +1000,6 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
     }
-
 #if OPAL_CUDA_SUPPORT
     /* Initiate setting up CUDA IPC support */
     if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
