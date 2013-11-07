@@ -1,0 +1,15 @@
+Source: openmpi
+Section: net
+Priority: extra
+Homepage: http://www.open-mpi.org/
+Maintainer:  http://www.open-mpi.org
+
+Package: openmpi
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Architecture: all
+Description: Open MPI
+ Open MPI is a project combining technologies and resources from
+ several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
+ order to build the best MPI library available.
+ This package contains all the tools necessary to compile, link, and run
+ Open MPI jobs.

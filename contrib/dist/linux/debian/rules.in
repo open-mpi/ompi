@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+
+# export DH_VERBOSE=1
+
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+
+%:
+	dh $@ --parallel
+
+override_dh_auto_clean:
+
+override_dh_auto_configure:
+	dh_auto_configure -- $(CONFIG_ARGS)
+
+override_dh_auto_test:
+
