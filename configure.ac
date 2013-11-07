@@ -1341,11 +1341,6 @@ AC_CONFIG_FILES([
     config/Makefile
 
     contrib/Makefile
-    contrib/dist/linux/compile_debian_mlnx_example
-
-    debian/changelog
-    debian/rules
-    debian/control
 
     test/Makefile
     test/event/Makefile
@@ -1355,11 +1350,7 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
-],[
-    chmod +x debian/rules
-    chmod +x contrib/dist/linux/compile_debian_mlnx_example
-    cp LICENSE debian/copyright
-    ])
+])
 
 OPAL_CONFIG_FILES
 m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
