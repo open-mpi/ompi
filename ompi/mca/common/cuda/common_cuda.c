@@ -1614,7 +1614,13 @@ int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base)
 }
 
 #if OPAL_CUDA_SUPPORT_60 && OMPI_GDR_SUPPORT
-int mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg)
+/* Check to see if the memory was freed between the time it was stored in
+ * the registration cache and now.  Return true if the memory was previously
+ * freed.  This is indicated by the BUFFER_ID value in the registration cache
+ * not matching the BUFFER_ID of the buffer we are checking.  Return false
+ * if the registration is still good.
+ */
+bool mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg)
 {
     int res;
     unsigned long long bufID;
@@ -1622,17 +1628,20 @@ int mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg)
 
     res = cuFunc.cuPointerGetAttribute(&bufID, CU_POINTER_ATTRIBUTE_BUFFER_ID,
                                        (CUdeviceptr)dbuf);
+    /* If we cannot determine the BUFFER_ID, then print a message and default
+     * to forcing the registration to be kicked out. */
     if (res != CUDA_SUCCESS) {
-        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed", true, res);
-        return 0;
+        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed",
+                       true, ompi_process_info.nodename, res);
+        return true;
     }
     opal_output_verbose(50, mca_common_cuda_output,
                         "CUDA: base=%p, bufID=%llu, reg->gpu_bufID=%llu, %s", dbuf, bufID, reg->gpu_bufID,
                         (reg->gpu_bufID == bufID ? "BUFFER_ID match":"BUFFER_ID do not match"));
     if (bufID != reg->gpu_bufID) {
-        return 1;
+        return true;
     } else {
-        return 0;
+        return false;
     }
 }
 

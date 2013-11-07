@@ -167,9 +167,10 @@ An error occurred while trying to map in the address of a function.
 CUDA-aware support is disabled.
 #
 [bufferID failed]
-An error occurred while trying to get the BUFFER_ID of a GPU memory regiion.  This
-could cause incorrect results.  Turn of GPU Direct RDMA support by running with
---mca btl_openib_cuda_want_gdr_support 0.
+An error occurred while trying to get the BUFFER_ID of a GPU memory
+region.  This could cause incorrect results.  Turn of GPU Direct RDMA
+support by running with --mca btl_openib_cuda_want_gdr_support 0.
+  Hostname:                             %s
   cuPointerGetAttribute return value:   %d
 Check the cuda.h file for what the return value means.
 [cuPointerSetAttribute failed]
