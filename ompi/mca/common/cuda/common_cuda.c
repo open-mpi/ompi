@@ -849,7 +849,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
                                           (CUdeviceptr)base);
     if (CUDA_SUCCESS != result) {
         opal_show_help("help-mpi-common-cuda.txt", "cuPointerSetAttribute failed",
-                       true, result, base);
+                       true, ompi_process_info.nodename, result, base);
         return OMPI_ERROR;
     }
 #else
