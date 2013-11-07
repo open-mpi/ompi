@@ -319,6 +319,18 @@ typedef struct ompi_btl_usnic_small_send_frag_t {
  */
 typedef ompi_btl_usnic_frag_t ompi_btl_usnic_put_dest_frag_t;
 
+/**
+ * A simple buffer that can be enqueued on an ompi_free_list_t that is intended
+ * to be used for fragment reassembly.  Nominally the free list code supports
+ * this via the rb_super.ptr field, but that field is only allocated and
+ * non-NULL if an mpool is used, and we don't need this reassembly memory to be
+ * registered.
+ */
+typedef struct ompi_btl_usnic_rx_buf_t {
+    ompi_free_list_item_t rb_super;
+    char buf[1]; /* flexible array member for frag reassembly */
+} ompi_btl_usnic_rx_buf_t;
+
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_small_send_frag_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_large_send_frag_t);
@@ -328,6 +340,8 @@ OBJ_CLASS_DECLARATION(ompi_btl_usnic_segment_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_frag_segment_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_chunk_segment_t);
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_recv_segment_t);
+
+OBJ_CLASS_DECLARATION(ompi_btl_usnic_rx_buf_t);
 
 typedef ompi_btl_usnic_send_segment_t ompi_btl_usnic_ack_segment_t;
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_ack_segment_t);

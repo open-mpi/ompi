@@ -215,11 +215,13 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                 if (pool >= module->first_pool &&
                         pool <= module->last_pool) {
                     ompi_free_list_item_t* item;
+                    ompi_btl_usnic_rx_buf_t *rx_buf;
                     OMPI_FREE_LIST_GET_MT(&module->module_recv_buffers[pool],
                                           item);
-                    if (OPAL_LIKELY(NULL != item)) {
+                    rx_buf = (ompi_btl_usnic_rx_buf_t *)item;
+                    if (OPAL_LIKELY(NULL != rx_buf)) {
                         fip->rfi_fl_elt = item;
-                        fip->rfi_data = item->ptr;
+                        fip->rfi_data = rx_buf->buf;
                         fip->rfi_data_pool = pool;
                     }
                 }
@@ -302,7 +304,6 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                 if (0 == fip->rfi_data_pool) {
                     free(fip->rfi_data);
                 } else {
-                    assert(fip->rfi_fl_elt->ptr == fip->rfi_data);
                     OMPI_FREE_LIST_RETURN_MT(
                             &module->module_recv_buffers[fip->rfi_data_pool],
                             fip->rfi_fl_elt);

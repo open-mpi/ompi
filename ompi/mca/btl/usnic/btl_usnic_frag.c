@@ -305,3 +305,8 @@ OBJ_CLASS_INSTANCE(ompi_btl_usnic_put_dest_frag_t,
                    ompi_btl_usnic_frag_t,
                    put_dest_frag_constructor,
                    put_dest_frag_destructor);
+
+OBJ_CLASS_INSTANCE(ompi_btl_usnic_rx_buf_t,
+                   ompi_free_list_item_t,
+                   NULL,
+                   NULL);

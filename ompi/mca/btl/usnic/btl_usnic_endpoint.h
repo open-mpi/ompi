@@ -100,8 +100,7 @@ typedef struct ompi_btl_usnic_rx_frag_info_t {
     char       *rfi_data;       /* pointer to assembly area */
     int         rfi_data_pool;  /* if 0, data malloced, else rx buf pool */
     ompi_free_list_item_t *rfi_fl_elt; /* free list elemement from buf pool
-                                          (rfi_fl_elt->ptr==rfi_data) when
-                                          rfi_data_pool is nonzero */
+                                          when rfi_data_pool is nonzero */
 } ompi_btl_usnic_rx_frag_info_t;
 
 /**
