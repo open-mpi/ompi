@@ -76,7 +76,7 @@ OMPI_DECLSPEC int mca_common_cuda_device_can_access_peer(int *access, int dev1, 
 OMPI_DECLSPEC int mca_common_cuda_stage_one_init(void);
 OMPI_DECLSPEC int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base);
 #if OPAL_CUDA_SUPPORT_60 && OMPI_GDR_SUPPORT
-OMPI_DECLSPEC int mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg);
+OMPI_DECLSPEC bool mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg);
 OMPI_DECLSPEC void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg);
 #endif /* OPAL_CUDA_SUPPORT_60 */
 /**
