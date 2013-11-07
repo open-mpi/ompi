@@ -2006,16 +2006,17 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     assert(module->module_recv_buffers != NULL);
     for (i=module->first_pool; i<=module->last_pool; ++i) {
         OBJ_CONSTRUCT(&module->module_recv_buffers[i], ompi_free_list_t);
+        size_t elt_size = sizeof(ompi_btl_usnic_rx_buf_t) - 1 + (1 << i);
         rc = ompi_free_list_init_new(&module->module_recv_buffers[i],
-                                     1 << i,
+                                     elt_size,
                                      opal_cache_line_size,
-                                     OBJ_CLASS(ompi_free_list_item_t),
-                                     0,  /* payload size */
-                                     0,  /* payload align */
-                                     8,
-                                     128,
-                                     8,
-                                     NULL);
+                                     OBJ_CLASS(ompi_btl_usnic_rx_buf_t),
+                                     0,   /* payload size */
+                                     0,   /* payload align */
+                                     128,   /* init elts to alloc */
+                                     128, /* max elts to alloc */
+                                     128,   /* num elts per alloc */
+                                     NULL /* mpool */);
         assert(OMPI_SUCCESS == rc);
     }
 
