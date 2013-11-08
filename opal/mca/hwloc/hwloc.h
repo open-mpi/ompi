@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -78,34 +79,34 @@ typedef uint16_t opal_hwloc_locality_t;
 enum {
     OPAL_PROC_LOCALITY_UNKNOWN  = 0x0000,
     OPAL_PROC_NON_LOCAL         = 0x8000,
-    OPAL_PROC_ON_CLUSTER        = 0x0400,
-    OPAL_PROC_ON_CU             = 0x0600,
-    OPAL_PROC_ON_HOST           = 0x0700,
-    OPAL_PROC_ON_BOARD          = 0x0680,
-    OPAL_PROC_ON_NODE           = 0x0780,   // same host and board
-    OPAL_PROC_ON_NUMA           = 0x07c0,
-    OPAL_PROC_ON_SOCKET         = 0x07b0,
-    OPAL_PROC_ON_L3CACHE        = 0x07a0,
-    OPAL_PROC_ON_L2CACHE        = 0x07a8,
-    OPAL_PROC_ON_L1CACHE        = 0x07ac,
-    OPAL_PROC_ON_CORE           = 0x07ab,
-    OPAL_PROC_ON_HWTHREAD       = 0x07aa,
+    OPAL_PROC_ON_CLUSTER        = 0x0001,
+    OPAL_PROC_ON_CU             = 0x0003,
+    OPAL_PROC_ON_HOST           = 0x0007,
+    OPAL_PROC_ON_BOARD          = 0x000f,
+    OPAL_PROC_ON_NODE           = 0x000f,   // same host and board
+    OPAL_PROC_ON_NUMA           = 0x001f,
+    OPAL_PROC_ON_SOCKET         = 0x003f,
+    OPAL_PROC_ON_L3CACHE        = 0x007f,
+    OPAL_PROC_ON_L2CACHE        = 0x00ff,
+    OPAL_PROC_ON_L1CACHE        = 0x01ff,
+    OPAL_PROC_ON_CORE           = 0x03ff,
+    OPAL_PROC_ON_HWTHREAD       = 0x07ff,
     OPAL_PROC_ALL_LOCAL         = 0x0fff
 };
 
 /** Process locality macros */
-#define OPAL_PROC_ON_LOCAL_HWTHREAD(n)  ((n) & OPAL_PROC_ON_HWTHREAD)
-#define OPAL_PROC_ON_LOCAL_CORE(n)      ((n) & OPAL_PROC_ON_CORE)
-#define OPAL_PROC_ON_LOCAL_L1CACHE(n)   ((n) & OPAL_PROC_ON_L1CACHE)
-#define OPAL_PROC_ON_LOCAL_L2CACHE(n)   ((n) & OPAL_PROC_ON_L2CACHE)
-#define OPAL_PROC_ON_LOCAL_L3CACHE(n)   ((n) & OPAL_PROC_ON_L3CACHE)
-#define OPAL_PROC_ON_LOCAL_SOCKET(n)    ((n) & OPAL_PROC_ON_SOCKET)
-#define OPAL_PROC_ON_LOCAL_NUMA(n)      ((n) & OPAL_PROC_ON_NUMA)
-#define OPAL_PROC_ON_LOCAL_BOARD(n)     ((n) & OPAL_PROC_ON_BOARD)
-#define OPAL_PROC_ON_LOCAL_HOST(n)      ((n) & OPAL_PROC_ON_HOST)
-#define OPAL_PROC_ON_LOCAL_NODE(n)      (((n) & OPAL_PROC_ON_HOST) && ((n) & OPAL_PROC_ON_BOARD))
-#define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)
 #define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
+#define OPAL_PROC_ON_LOCAL_CU(n)        (!(((n) & OPAL_PROC_ON_CU) ^ OPAL_PROC_ON_CU))
+#define OPAL_PROC_ON_LOCAL_HOST(n)      (!(((n) & OPAL_PROC_ON_HOST) ^ OPAL_PROC_ON_HOST))
+#define OPAL_PROC_ON_LOCAL_BOARD(n)     (!(((n) & OPAL_PROC_ON_BOARD) ^ OPAL_PROC_ON_BOARD))
+#define OPAL_PROC_ON_LOCAL_NODE(n)      (OPAL_PROC_ON_LOCAL_HOST(n) && OPAL_PROC_ON_LOCAL_BOARD(n))
+#define OPAL_PROC_ON_LOCAL_NUMA(n)      (!(((n) & OPAL_PROC_ON_NUMA) ^ OPAL_PROC_ON_NUMA))
+#define OPAL_PROC_ON_LOCAL_SOCKET(n)    (!(((n) & OPAL_PROC_ON_SOCKET) ^ OPAL_PROC_ON_SOCKET))
+#define OPAL_PROC_ON_LOCAL_L3CACHE(n)   (!(((n) & OPAL_PROC_ON_L3CACHE) ^ OPAL_PROC_ON_L3CACHE))
+#define OPAL_PROC_ON_LOCAL_L2CACHE(n)   (!(((n) & OPAL_PROC_ON_L2CACHE) ^ OPAL_PROC_ON_L2CACHE))
+#define OPAL_PROC_ON_LOCAL_L1CACHE(n)   (!(((n) & OPAL_PROC_ON_L1CACHE) ^ OPAL_PROC_ON_L1CACHE))
+#define OPAL_PROC_ON_LOCAL_CORE(n)      (!(((n) & OPAL_PROC_ON_CORE) ^ OPAL_PROC_ON_CORE))
+#define OPAL_PROC_ON_LOCAL_HWTHREAD(n)  (!(((n) & OPAL_PROC_ON_HWTHREAD) ^ OPAL_PROC_ON_HWTHREAD))
 
 /* ******************************************************************** */
 
