@@ -47,52 +47,6 @@ orte_rmaps_base_module_t orte_rmaps_mindist_module = {
     mindist_map
 };
 
-static int num_devices_in_list(char *list)
-{
-    int count = 0;
-    list = strtok(list, ",");
-    while (NULL != list) {
-        ++count;
-        list = strtok(NULL, ",");
-    }
-    return count;
-}
-
-static char* get_hca_name(orte_app_context_t *app)
-{
-    int found_ind = -1;
-    char** env = app->env;
-    int i;
-    for (i = 0; env[i]; i++) {
-        if (strstr(env[i], "OMPI_MCA_btl_openib_if_include") != NULL) {
-            found_ind = i;
-            break;
-        }
-    }
-    if (found_ind == -1) {
-        for (i = 0; env[i]; i++) {
-            if (strstr(env[i], "MXM_RDMA_PORTS") != NULL) {
-                found_ind = i;
-                break;
-            }
-        }
-    }
-    if (found_ind != -1) {
-        char* start = strstr(env[found_ind], "=");
-        if (start != NULL) {
-            start = strdup(start+sizeof(char));
-            if (num_devices_in_list(start) == 1) {
-                return strtok(start, ":");
-            }
-            else {
-                free(start);
-                return NULL;
-            }
-        }
-    }
-    return NULL;
-}
-
 /*
  * Create a round-robin mapping for the job.
  */
@@ -294,17 +248,10 @@ static int mindist_map(orte_job_t *jdata)
             OBJ_CONSTRUCT(&numa_list, opal_list_t);
             ret = opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
             if (ret > 1) {
-                /* check if hca device is specified via openib or mxm parameter */
-                free(orte_rmaps_base.device);
-                orte_rmaps_base.device = get_hca_name(app);
-                if (orte_rmaps_base.device != NULL) {
-                    ret = opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
-                } else {
-                    orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-hca-devices",
-                            true, ret, node->name);
-                    rc = ORTE_ERR_SILENT;
-                    goto error;
-                }
+                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-hca-devices",
+                        true, ret, node->name);
+                rc = ORTE_ERR_SILENT;
+                goto error;
             } else if (ret < 0) {
                 orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:device-not-found",
                         true, orte_rmaps_base.device, node->name);
@@ -455,9 +402,7 @@ static int mindist_map(orte_job_t *jdata)
         }
         OBJ_DESTRUCT(&node_list);
     }
-    if (orte_rmaps_base.device != NULL) {
-        free(orte_rmaps_base.device);
-    }
+    free(orte_rmaps_base.device);
     return ORTE_SUCCESS;
 
 error:
