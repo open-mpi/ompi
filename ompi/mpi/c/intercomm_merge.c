@@ -40,7 +40,7 @@ static const char FUNC_NAME[] = "MPI_Intercomm_merge";
 
 
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
-                        MPI_Comm *newcomm) 
+                        MPI_Comm *newcomm)
 {
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **procs=NULL;
@@ -50,7 +50,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int rc=MPI_SUCCESS;
     int thigh = high;
     ompi_group_t *new_group_pointer;
-    
 
     MEMCHECKER(
         memchecker_comm(intercomm);
@@ -79,7 +78,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         rc = MPI_ERR_INTERN;
         goto exit;
     }
-    
+
     first = ompi_comm_determine_first ( intercomm, thigh );
     if ( MPI_UNDEFINED == first ) {
         rc = MPI_ERR_INTERN;

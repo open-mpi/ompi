@@ -41,7 +41,7 @@ static const char FUNC_NAME[] = "MPI_Intercomm_create";
 
 int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          MPI_Comm bridge_comm, int remote_leader,
-                         int tag, MPI_Comm *newintercomm) 
+                         int tag, MPI_Comm *newintercomm)
 {
     int local_size=0, local_rank=0;
     int lleader=0, rleader=0;
@@ -58,19 +58,19 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     );
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_comm_invalid ( local_comm ) ||
-             ( local_comm->c_flags & OMPI_COMM_INTER ) ) 
+             ( local_comm->c_flags & OMPI_COMM_INTER ) )
             return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_COMM,
                                             FUNC_NAME);
 
         if ( NULL == newintercomm )
-            return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
                                             FUNC_NAME);
-        
+
         /* if ( tag < 0 || tag > MPI_TAG_UB )
-             return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG, 
+             return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
                                              FUNC_NAME);
         */
     }
@@ -83,8 +83,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     rleader = remote_leader;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( (0 > local_leader) || (local_leader >= local_size) ) 
-            return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG, 
+        if ( (0 > local_leader) || (local_leader >= local_size) )
+            return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
                                             FUNC_NAME);
 
         /* remember that the remote_leader and bridge_comm arguments
@@ -93,9 +93,9 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
             if ( ompi_comm_invalid ( bridge_comm ) ||
                  (bridge_comm->c_flags & OMPI_COMM_INTER) ) {
                 OPAL_CR_EXIT_LIBRARY();
-                return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM, 
+                return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM,
                                                 FUNC_NAME);
-            }            
+            }
             if ( (remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
                 OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
@@ -106,7 +106,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 
     if ( local_rank == local_leader ) {
         MPI_Request req;
-        
+
         /* local leader exchange group sizes lists */
         rc = MCA_PML_CALL(irecv(&rsize, 1, MPI_INT, rleader, tag, bridge_comm,
                                 &req));
@@ -123,16 +123,16 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
             goto err_exit;
         }
     }
-    
+
     /* bcast size and list of remote processes to all processes in local_comm */
-    rc = local_comm->c_coll.coll_bcast ( &rsize, 1, MPI_INT, lleader, 
+    rc = local_comm->c_coll.coll_bcast ( &rsize, 1, MPI_INT, lleader,
                                          local_comm,
                                          local_comm->c_coll.coll_bcast_module);
     if ( rc != MPI_SUCCESS ) {
         goto err_exit;
     }
 
-    rprocs = ompi_comm_get_rprocs ( local_comm, bridge_comm, lleader,
+    rprocs = ompi_comm_get_rprocs( local_comm, bridge_comm, lleader,
                                    remote_leader, tag, rsize );
     if ( NULL == rprocs ) {
         goto err_exit;
@@ -146,7 +146,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                                               rprocs);
         }
         else {
-            proc_list = (ompi_proc_t **) calloc (local_comm->c_local_group->grp_proc_count, 
+            proc_list = (ompi_proc_t **) calloc (local_comm->c_local_group->grp_proc_count,
                                                  sizeof (ompi_proc_t *));
             for(j=0 ; j<local_comm->c_local_group->grp_proc_count ; j++) {
                 proc_list[j] = ompi_group_peer_lookup(local_comm->c_local_group,j);
@@ -168,7 +168,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 
     /* put group elements in the list */
     for (j = 0; j < rsize; j++) {
-        new_group_pointer->grp_proc_pointers[j] = rprocs[j]; 
+        new_group_pointer->grp_proc_pointers[j] = rprocs[j];
     }
 
     ompi_group_increment_proc_count(new_group_pointer);
@@ -193,7 +193,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }
-    
+
     ompi_group_decrement_proc_count (new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
@@ -212,7 +212,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
     /* activate comm and init coll-module */
-    rc = ompi_comm_activate ( &newcomp, 
+    rc = ompi_comm_activate ( &newcomp,
                              local_comm,                  /* old comm */
                              bridge_comm,                 /* bridge comm */
                              &lleader,                    /* local leader */
