@@ -1342,11 +1342,11 @@ AC_CONFIG_FILES([
 
     contrib/Makefile
 
-    contrib/dist/linux/compile_debian_mlnx_example
-    contrib/dist/linux/debian/changelog
-    contrib/dist/linux/debian/rules
-    contrib/dist/linux/debian/control
-    contrib/dist/linux/debian/copyright:LICENSE
+    contrib/dist/mofed/compile_debian_mlnx_example
+    contrib/dist/mofed/debian/changelog
+    contrib/dist/mofed/debian/rules
+    contrib/dist/mofed/debian/control
+    contrib/dist/mofed/debian/copyright:LICENSE
 
     test/Makefile
     test/event/Makefile
@@ -1357,8 +1357,8 @@ AC_CONFIG_FILES([
     test/threads/Makefile
     test/util/Makefile
 ],[
-    chmod +x contrib/dist/linux/debian/rules
-    chmod +x contrib/dist/linux/compile_debian_mlnx_example
+    chmod +x contrib/dist/mofed/debian/rules
+    chmod +x contrib/dist/mofed/compile_debian_mlnx_example
     ])
 
 OPAL_CONFIG_FILES
