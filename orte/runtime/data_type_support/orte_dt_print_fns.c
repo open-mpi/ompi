@@ -13,6 +13,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -491,16 +492,23 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
 #if OPAL_HAVE_HWLOC
     {
         char *locale=NULL;
+        char *bind = NULL;
 
         if (NULL != src->locale) {
             hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
         }
-        asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tBinding: %s", tmp, pfx2,
+        if (NULL != src->bind_location) {
+            hwloc_bitmap_list_asprintf(&bind, src->bind_location->cpuset);
+        }
+        asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tBind location: %s\tBinding: %s", tmp, pfx2,
                  orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx,
-                 (NULL == locale) ? "UNKNOWN" : locale,
+                 (NULL == locale) ? "UNKNOWN" : locale, bind,
                  (NULL == src->cpu_bitmap) ? "NULL" : src->cpu_bitmap);
         if (NULL != locale) {
             free(locale);
+        }
+        if (NULL != bind) {
+            free(bind);
         }
     }
 #else

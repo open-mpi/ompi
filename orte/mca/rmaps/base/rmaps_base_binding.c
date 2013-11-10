@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +50,35 @@
 #include "orte/mca/rmaps/base/base.h"
 
 static bool membind_warned=false;
+
+static void reset_usage(orte_node_t *node, orte_jobid_t jobid)
+{
+    int j;
+    orte_proc_t *proc;
+    opal_hwloc_obj_data_t *data;
+
+    /* start by clearing any existing info */
+    opal_hwloc_base_clear_usage(node->topology);
+
+    /* cycle thru the procs on the node and record
+     * their usage in the topology
+     */
+    for (j=0; j < node->procs->size; j++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+            continue;
+        }
+        /* ignore procs from this job */
+        if (proc->name.jobid == jobid) {
+            continue;
+        }
+        if (NULL == proc->bind_location) {
+            /* this proc isn't bound - ignore it */
+            continue;
+        }
+        data = (opal_hwloc_obj_data_t*)proc->bind_location->userdata;
+        data->num_bound++;
+    }
+}
 
 static int bind_upwards(orte_job_t *jdata,
                         hwloc_obj_type_t target,
@@ -117,8 +147,13 @@ static int bind_upwards(orte_job_t *jdata,
             }
         }
 
-        /* clear the topology of any prior usage numbers */
-        opal_hwloc_base_clear_usage(node->topology);
+        if (!orte_hetero_nodes) {
+            /* if the nodes are homogeneous, we share topologies in order
+             * to save space, so we need to reset the usage info to reflect
+             * our own current state
+             */
+            reset_usage(node, jdata->jobid);
+        }
 
         /* cycle thru the procs */
         for (j=0; j < node->procs->size; j++) {
@@ -175,6 +210,8 @@ static int bind_upwards(orte_job_t *jdata,
                     /* bind it here */
                     cpus = opal_hwloc_base_get_available_cpus(node->topology, obj);
                     hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
+                    /* record the location */
+                    proc->bind_location = obj;
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "%s BOUND PROC %s TO %s[%s:%u] on node %s",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -267,8 +304,13 @@ static int bind_downwards(orte_job_t *jdata,
             }
         }
 
-        /* clear the topology of any prior usage numbers */
-        opal_hwloc_base_clear_usage(node->topology);
+        if (!orte_hetero_nodes) {
+            /* if the nodes are homogeneous, we share topologies in order
+             * to save space, so we need to reset the usage info to reflect
+             * our own current state
+             */
+            reset_usage(node, jdata->jobid);
+        }
 
         /* cycle thru the procs */
         for (j=0; j < node->procs->size; j++) {
@@ -298,7 +340,9 @@ static int bind_downwards(orte_job_t *jdata,
                 hwloc_bitmap_free(totalcpuset);
                 return ORTE_ERR_SILENT;
             }
-            /* start with a clean slate */
+            /* record the location */
+            proc->bind_location = trg_obj;
+           /* start with a clean slate */
             hwloc_bitmap_zero(totalcpuset);
             total_cpus = 0;
             nxt_obj = trg_obj;
@@ -333,6 +377,7 @@ static int bind_downwards(orte_job_t *jdata,
                 /* bind the proc here */
                 cpus = opal_hwloc_base_get_available_cpus(node->topology, trg_obj);
                 hwloc_bitmap_or(totalcpuset, totalcpuset, cpus);
+                /* track total #cpus */
                 total_cpus += ncpus;
                 /* move to the next location, in case we need it */
                 nxt_obj = trg_obj->next_cousin;
@@ -421,10 +466,15 @@ static int bind_in_place(orte_job_t *jdata,
             }
         }
 
-         /* clear the topology of any prior usage numbers */
-        opal_hwloc_base_clear_usage(node->topology);
+        if (!orte_hetero_nodes) {
+            /* if the nodes are homogeneous, we share topologies in order
+             * to save space, so we need to reset the usage info to reflect
+             * our own current state
+             */
+            reset_usage(node, jdata->jobid);
+        }
 
-       /* cycle thru the procs */
+        /* cycle thru the procs */
         for (j=0; j < node->procs->size; j++) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                 continue;
@@ -466,6 +516,8 @@ static int bind_in_place(orte_job_t *jdata,
             /* bind the proc here */
             cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
             hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
+            /* record the location */
+            proc->bind_location = proc->locale;
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s BOUND PROC %s TO %s[%s:%u] on node %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
