@@ -702,6 +702,7 @@ static void orte_job_construct(orte_job_t* job)
                             2);
     job->num_apps = 0;
     job->controls = ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+    job->failure_timer = NULL;
     job->gang_launched = true;
     job->stdin_target = ORTE_VPID_INVALID;
     job->stdout_target = ORTE_JOBID_INVALID;
@@ -767,6 +768,10 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->apps);
     
+    if (NULL != job->failure_timer) {
+        OBJ_RELEASE(job->failure_timer);
+    }
+
     if (NULL != job->map) {
         OBJ_RELEASE(job->map);
         job->map = NULL;

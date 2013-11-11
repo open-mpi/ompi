@@ -460,16 +460,13 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
 /* catch timeout to allow cmds to progress */
 static void timer_cb(int fd, short event, void *cbdata)
 {
-    orte_timer_t *tm = (orte_timer_t*)cbdata;
-    orte_job_t *jdata = (orte_job_t*)tm->payload;
+    orte_job_t *jdata = (orte_job_t*)cbdata;
 
-    if (NULL == jdata || jdata->state < ORTE_JOB_STATE_RUNNING) {
-        /* declare launch failed */
-        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
-    }
+    /* declare launch failed */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
 
     /* free event */
-    OBJ_RELEASE(tm);
+    OBJ_RELEASE(jdata->failure_timer);
 }
 
 void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
@@ -532,11 +529,24 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
      */
     caddy->jdata->num_daemons_reported++;
 
-    /* setup a timer - if we don't launch within the
+    /* if requested, setup a timer - if we don't launch within the
      * defined time, then we know things have failed
      */
     if (0 < orte_startup_timeout) {
-        ORTE_DETECT_TIMEOUT(orte_startup_timeout, 1000000, 0, timer_cb, jdata);
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                             "%s plm:base:launch defining timeout for job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jdata->jobid)));
+        jdata->failure_timer = OBJ_NEW(orte_timer_t);
+        jdata->failure_timer->payload = jdata;
+        opal_event_evtimer_set(orte_event_base,
+                               jdata->failure_timer->ev, timer_cb,
+                               jdata);
+        opal_event_set_priority(jdata->failure_timer->ev, ORTE_ERROR_PRI);
+        jdata->failure_timer->tv.tv_sec = orte_startup_timeout;
+        jdata->failure_timer->tv.tv_usec = 0;
+        opal_event_evtimer_add(jdata->failure_timer->ev,
+                               &jdata->failure_timer->tv);
     }
 
     /* cleanup */
@@ -552,6 +562,16 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
 
     /* convenience */
     jdata = caddy->jdata;
+
+    /* if a timer was defined, cancel it */
+    if (NULL != jdata->failure_timer) {
+        opal_event_evtimer_del(jdata->failure_timer->ev);
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                             "%s plm:base:launch deleting timeout for job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jdata->jobid)));
+        OBJ_RELEASE(jdata->failure_timer);
+    }
 
     if (ORTE_JOB_STATE_RUNNING != caddy->job_state) {
         ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -594,8 +614,9 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     jdata = caddy->jdata;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                         "%s plm:base:launch registered event",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "%s plm:base:launch %s registered",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid)));
 
     if (ORTE_JOB_STATE_REGISTERED != caddy->job_state) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
