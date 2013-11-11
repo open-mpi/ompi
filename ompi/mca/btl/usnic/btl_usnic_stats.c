@@ -401,7 +401,6 @@ static void setup_mpit_pvars_enum(void)
                  m->if_cidrmask);
         assert(rc > 0);
         devices[i].string = str;
-        opal_output(0, "Set string: %s", str);
     }
     devices[i].string = NULL;
 
