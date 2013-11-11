@@ -227,11 +227,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                                          ORTE_RML_TAG_COLL_ID_REQ,
                                          orte_rml_send_callback, NULL);
             /* wait for the id */
+            xfer.active = true;
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_ID,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &xfer);
             /* wait for response */
-            xfer.active = true;
             OMPI_WAIT_FOR_COMPLETION(xfer.active);
             i=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
@@ -252,11 +252,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             rc = orte_rml.send_buffer_nb(&port, nbuf, tag, orte_rml_send_callback, NULL);
         } else {
             /* wait to recv the collective id */
+            xfer.active = true;
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &xfer);
             /* wait for response */
-            xfer.active = true;
             OMPI_WAIT_FOR_COMPLETION(xfer.active);
             i=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
