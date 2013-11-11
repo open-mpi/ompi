@@ -508,11 +508,10 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         /* setup the modex */
         OBJ_CONSTRUCT(&modex, orte_grpcomm_collective_t);
         modex.id = id;
+        modex.active = true;
+
         /* copy across the list of participants */
-        for (item = opal_list_get_first(&all_procs);
-             item != opal_list_get_end(&all_procs);
-             item = opal_list_get_next(item)) {
-            nm = (orte_namelist_t*)item;
+        OPAL_LIST_FOREACH(nm, &all_procs, orte_namelist_t) {
             name = OBJ_NEW(orte_namelist_t);
             name->name = nm->name;
             opal_list_append(&modex.participants, &name->super);
@@ -523,7 +522,6 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
-        modex.active = true;
         OMPI_WAIT_FOR_COMPLETION(modex.active);
         OBJ_DESTRUCT(&modex);
 
