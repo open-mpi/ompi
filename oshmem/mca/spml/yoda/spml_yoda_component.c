@@ -124,8 +124,6 @@ mca_spml_yoda_component_init(int* priority,
 
 int mca_spml_yoda_component_fini(void)
 {
-    int rc;
-
     if(!mca_spml_yoda.enabled)
         return OSHMEM_SUCCESS; /* never selected.. return success.. */
     mca_spml_yoda.enabled = false;  /* not anymore */
