@@ -153,6 +153,11 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_enum_t);
  * Note that the output enumerator can be OBJ_RELEASE'd after it has
  * been used in a pvar registration, because variables that use the
  * enumerator will OBJ_RETAIN it.
+ *
+ * Note that all the strings in the values[] array are strdup'ed into
+ * internal storage, meaning that the caller can free all of the
+ * strings passed in values[] after mca_base_var_enum_create()
+ * returns.
  */
 OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t values[],
                                             mca_base_var_enum_t **enumerator);
