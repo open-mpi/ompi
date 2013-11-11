@@ -166,7 +166,6 @@ static int connect_accept(ompi_communicator_t *comm, int root,
 
     orte_grpcomm_coll_id_t id;
     orte_grpcomm_collective_t modex;
-    opal_list_item_t *item;
     orte_namelist_t *nm;
     orte_rml_recv_cb_t xfer;
     orte_process_name_t carport;
