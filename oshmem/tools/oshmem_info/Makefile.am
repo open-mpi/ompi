@@ -25,6 +25,17 @@ AM_CFLAGS = \
             -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
             -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
+if OSHMEM_PROFILING
+    AM_CFLAGS += -DOSHMEM_PROFILING=1
+else
+    AM_CFLAGS += -DOSHMEM_PROFILING=0
+endif
+
+if OSHMEM_WANT_FORTRAN_BINDINGS
+    AM_CFLAGS += -DOSHMEM_WANT_FORTRAN_BINDINGS=1
+else
+    AM_CFLAGS += -DOSHMEM_WANT_FORTRAN_BINDINGS=0
+endif
 
 include $(top_srcdir)/Makefile.man-page-rules
 

@@ -116,7 +116,7 @@ void oshmem_info_do_config(bool want_all)
     char *crdebug_support;
     char *topology_support;
     char *vt_support;
-
+    
     /* Do a little preprocessor trickery here to figure opal_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
      * ompi_mpi_param_check).  The preprocessor will only allow
@@ -602,5 +602,19 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string",
                   "IO interface not provided");
 #endif
-
+    
+    /* This block displays all the options with which the current
+     * installation of oshmem was configured. */
+    {
+        char *oshmem_fortran = OSHMEM_WANT_FORTRAN_BINDINGS ? "yes" : "no";
+        char *oshmem_compat = OSHMEM_SPEC_COMPAT ? "yes" : "no";
+        char *oshmem_param_check = OSHMEM_PARAM_CHECK ? "yes" : "no";
+        char *oshmem_profiling = OSHMEM_PROFILING ? "yes" : "no";
+        
+        opal_info_out("OSHMEM C bindings", "oshmem:bindings:c", "yes");
+        opal_info_out("OSHMEM Fort shmem.fh", "oshmem:bindings:fort", oshmem_fortran);
+        opal_info_out("OSHMEM SGI/Quadrix compatibility mode", "oshmem:options:spec_compat", oshmem_compat);
+        opal_info_out("OSHMEM API functions parameter checking", "oshmem:options:param_check", oshmem_param_check);
+        opal_info_out("OSHMEM profiling support", "oshmem:options:profiling", oshmem_profiling);
+    }
 }

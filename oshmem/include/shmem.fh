@@ -48,6 +48,8 @@
       integer SHMEM_CMP_GE
       parameter ( SHMEM_CMP_GE = 5 )
 
+      integer my_pe
+      integer num_pes
 
       logical shmem_pe_accessible
       logical shmem_addr_accessible

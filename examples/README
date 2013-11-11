@@ -31,7 +31,7 @@ different MPI interfaces:
   Fortran use mpi_f08: hello_usempif08.f90
   Java:                Hello.java
   C shmem.h:           hello_shmem_c.c
-  Fortran shmemfh.f:   hello_shmemfh.f
+  Fortran shmem.fh:    hello_shmemfh.f90
 
 - Send a trivial message around in a ring
   C:                   ring_c.c
@@ -41,8 +41,7 @@ different MPI interfaces:
   Fortran use mpi_f08: ring_usempif08.f90
   Java:                Ring.java
   C shmem.h:           ring_shmem_c.c
-  Fortran shmemfh.f:   ring_shmemfh.f
-  F90 shmemfh.f:       ring_shmem.f90
+  Fortran shmem.fh:    ring_shmemfh.f90
 
 Additionally, there's one further example application, but this one
 only uses the MPI C bindings:
