@@ -173,11 +173,6 @@ int mca_btl_scif_send (struct mca_btl_base_module_t *btl,
     if (OPAL_UNLIKELY(MCA_BTL_SCIF_EP_STATE_CONNECTED != endpoint->state)) {
         rc = mca_btl_scif_ep_connect (endpoint);
         if (OPAL_UNLIKELY(MCA_BTL_SCIF_EP_STATE_CONNECTED != endpoint->state)) {
-            /* something went wrong. have the pml try again later. */
-            if (MCA_BTL_SCIF_EP_STATE_INIT == endpoint->state) {
-                return OMPI_ERR_RESOURCE_BUSY;
-            }
-
             /* the receiver was not ready to handle the fragment. queue up the fragment. */
             descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
             opal_list_append (&endpoint->frag_wait_list, (opal_list_item_t *) descriptor);
