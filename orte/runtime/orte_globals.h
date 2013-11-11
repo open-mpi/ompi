@@ -388,6 +388,8 @@ typedef struct {
      * for description of supported flags
      */
     orte_job_controls_t controls;
+    /* timer event for failure detect/response if fails to launch */
+    orte_timer_t *failure_timer;
     /* flag to indicate that MPI is allowed on this job - i.e.,
      * that all members of the job are being simultaneously
      * launched
