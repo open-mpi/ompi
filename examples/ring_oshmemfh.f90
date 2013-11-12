@@ -8,7 +8,7 @@
 ! $HEADER$
 !
 
-program ring_shmem
+program ring_oshmem
     implicit none
     include 'shmem.fh'
 
@@ -59,4 +59,4 @@ program ring_shmem
 
     write(*, '("Process", i2," exiting.")') proc
 
-end program
+end program ring_oshmem

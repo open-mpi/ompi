@@ -612,9 +612,9 @@ void oshmem_info_do_config(bool want_all)
         char *oshmem_profiling = OSHMEM_PROFILING ? "yes" : "no";
         
         opal_info_out("OSHMEM C bindings", "oshmem:bindings:c", "yes");
-        opal_info_out("OSHMEM Fort shmem.fh", "oshmem:bindings:fort", oshmem_fortran);
-        opal_info_out("OSHMEM SGI/Quadrix compatibility mode", "oshmem:options:spec_compat", oshmem_compat);
-        opal_info_out("OSHMEM API functions parameter checking", "oshmem:options:param_check", oshmem_param_check);
+        opal_info_out("OSHMEM Fortran bindings", "oshmem:bindings:fort", oshmem_fortran);
+        opal_info_out("OSHMEM SGI/Quadrix mode", "oshmem:options:spec_compat", oshmem_compat);
+        opal_info_out("OSHMEM API param check", "oshmem:options:param_check", oshmem_param_check);
         opal_info_out("OSHMEM profiling support", "oshmem:options:profiling", oshmem_profiling);
     }
 }

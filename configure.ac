@@ -175,7 +175,7 @@ m4_ifdef([project_orte],
 m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/ompi_config.h ompi/include/mpi.h])])
 m4_ifdef([project_oshmem],
-         [AC_CONFIG_HEADER([oshmem/include/oshmem_config.h oshmem/include/shmem.h oshmem/include/shmem_portable_platform.h])])
+         [AC_CONFIG_HEADER([oshmem/include/oshmem_config.h oshmem/include/shmem.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
