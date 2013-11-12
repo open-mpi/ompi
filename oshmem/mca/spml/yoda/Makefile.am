@@ -14,7 +14,7 @@ dist_pkgdata_DATA = \
 
 EXTRA_DIST = post_configure.sh
 
-AM_CFLAGS = $(OSHMEM_CFLAGS) $(btl_sm_CPPFLAGS)
+AM_CFLAGS = $(btl_sm_CPPFLAGS)
 
 yoda_sources  = \
 	spml_yoda.c \

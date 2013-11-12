@@ -56,9 +56,6 @@ SHMEM_API_SOURCES = \
 	shmem_lock.c \
 	globalexit.c
 
-
-AM_CFLAGS = $(OSHMEM_CFLAGS)
-
 AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
 
 noinst_LTLIBRARIES = libshmem_c.la

@@ -117,44 +117,6 @@ AC_DEFUN([OSHMEM_SETUP_CFLAGS],[
 
 OMPI_C_COMPILER_VENDOR([oshmem_c_vendor])
 
-#
-# OSHMEM force warnings as errors
-#
-#
-# Since SHMEM libraries are not fully ISO99 C compliant
-# -pedantic and -Wundef raise a bunch of warnings, so
-# we just strip them off for this component
-AC_MSG_WARN([Removed -pedantic and -Wundef from CFLAGS for OSHMEM])
-
-oshmem_CFLAGS="$CFLAGS"
-
-# Strip off problematic arguments
-oshmem_CFLAGS="`echo $oshmem_CFLAGS | sed 's/-pedantic//g'`"
-oshmem_CFLAGS="`echo $oshmem_CFLAGS | sed 's/-Wundef//g'`"
-oshmem_CFLAGS="`echo $oshmem_CFLAGS | sed 's/-Wno-long-double//g'`"
-CFLAGS="$oshmem_CFLAGS"
-
-AC_MSG_CHECKING([if treat OpenSHMEM warnings as errors during build])
-AC_ARG_ENABLE([oshmem-warnings-as-errors],
-              [AC_HELP_STRING([--enable-oshmem-warnings-as-errors],
-                              [Treat OpenSHMEM warnings as errors during build (default:disabled)])])
-if test "$enable_oshmem_warnings_as_errors" = "yes"; then
-    AC_MSG_RESULT([yes])
-    case "$oshmem_c_vendor" in
-        gnu)
-            OSHMEM_CFLAGS=" -Werror"
-            ;;
-        intel)
-        # we want specifically the warning on format string conversion
-            OSHMEM_CFLAGS=" -Werror "
-            ;;
-    esac
-else
-    AC_MSG_RESULT([no])
-fi
-
-AC_SUBST([OSHMEM_CFLAGS])
-
 OMPI_CHECK_OPENFABRICS([oshmem_verbs],
                         [oshmem_verbs_happy="yes"],
                         [oshmem_verbs_happy="no"])

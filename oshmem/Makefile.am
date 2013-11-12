@@ -9,8 +9,6 @@
 # $HEADER$
 #
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
-
 # Do we have profiling?
 if OSHMEM_PROFILING
 c_pshmem_lib = shmem/c/profile/libshmem_c_pshmem.la

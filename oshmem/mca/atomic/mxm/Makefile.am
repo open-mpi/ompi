@@ -8,7 +8,6 @@
 # $HEADER$
 #
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
 AM_CPPFLAGS = $(atomic_mxm_CPPFLAGS)
 
 mxm_sources = \

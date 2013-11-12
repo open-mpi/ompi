@@ -7,7 +7,6 @@
 # $HEADER$
 #
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
 AM_CPPFLAGS = $(oshmem_verbs_CPPFLAGS)
 
 dist_pkgdata_DATA += base/help-shmem-mca.txt 

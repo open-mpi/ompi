@@ -10,8 +10,6 @@
 
 EXTRA_DIST = 
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
-
 ptmalloc_sources = \
 				   malloc.c \
 				   memheap_ptmalloc.c \

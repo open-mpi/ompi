@@ -8,8 +8,6 @@
 # $HEADER$
 #
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
-
 sources = \
 	atomic_basic.h \
 	atomic_basic_module.c \

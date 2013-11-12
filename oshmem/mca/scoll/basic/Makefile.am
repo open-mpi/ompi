@@ -8,8 +8,6 @@
 # $HEADER$
 #
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
-
 sources = \
 	scoll_basic.h \
 	scoll_basic_module.c \
