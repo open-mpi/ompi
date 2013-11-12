@@ -10,8 +10,6 @@
 
 EXTRA_DIST = 
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
-
 buddy_sources = \
     memheap_buddy.c \
     memheap_buddy.h \

@@ -8,8 +8,6 @@
 # $HEADER$
 #
 
-AM_CFLAGS = $(OSHMEM_CFLAGS)
-
 headers += \
         base/base.h
 

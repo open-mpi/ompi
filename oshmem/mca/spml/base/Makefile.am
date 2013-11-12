@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-AM_CFLAGS = $(OSHMEM_CFLAGS) $(btl_sm_CPPFLAGS)
+AM_CFLAGS = $(btl_sm_CPPFLAGS)
 
 headers += \
         base/base.h \

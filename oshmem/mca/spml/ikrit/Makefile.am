@@ -12,7 +12,6 @@
 dist_pkgdata_DATA = \
 	help-shmem-spml-ikrit.txt
 
-AM_CFLAGS = $(OSHMEM_CFLAGS) 
 AM_CPPFLAGS = $(spml_ikrit_CPPFLAGS)
 
 ikrit_sources  = \
