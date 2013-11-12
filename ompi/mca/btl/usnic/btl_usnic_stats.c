@@ -426,7 +426,6 @@ static void setup_mpit_pvars_enum(void)
     /* Free the strings (mca_base_var_enum_create() strdup()'ed them
        into private storage, so we don't need them any more) */
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
-        device = mca_btl_usnic_component.usnic_active_modules[i]->device;
         free((char*) devices[i].string);
     }    
 
