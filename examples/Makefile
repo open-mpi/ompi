@@ -50,21 +50,21 @@ EXAMPLES = \
 	 hello_mpifh \
 	 hello_usempi \
 	 hello_usempif08 \
-	 hello_shmem \
-	 hello_shmemfh \
+	 hello_oshmem \
+	 hello_oshmemfh \
 	 Hello.class \
          ring_c \
 	 ring_cxx \
 	 ring_mpifh \
 	 ring_usempi \
 	 ring_usempif08 \
-	 ring_shmem \
-	 ring_shmemfh \
+	 ring_oshmem \
+	 ring_oshmemfh \
 	 Ring.class \
 	 connectivity_c
 
 # Default target. 
-all: hello_c ring_c connectivity_c
+all: hello_c ring_c connectivity_c mpi
 
 # Always build the C example.  Only build the others
 # if Open MPI was build with the relevant language bindings.
@@ -85,17 +85,13 @@ mpi:
 	@ if ompi_info --parsable | grep bindings:java:yes >/dev/null; then \
 	    $(MAKE) Hello.class Ring.class; \
 	fi
-
-# Only build if we built OSHMEM support.  
-# Only build the Fortran examples if we have Fortran OSHMEM support.
-shmem:
-	@ if oshmem_info --parsable | grep oshmem:bindings:c >/dev/null; then \
-	    $(MAKE) hello_shmem; \
-	    $(MAKE) ring_shmem; \
+	@ if oshmem_info --parsable | grep oshmem:bindings:c:yes >/dev/null; then \
+	    $(MAKE) hello_oshmem; \
+	    $(MAKE) ring_oshmem; \
 	fi
-	@ if oshmem_info --parsable | grep oshmem:bindings:fort >/dev/null; then \
-	    $(MAKE) hello_shmemfh; \
-	    $(MAKE) ring_shmemfh; \
+	@ if oshmem_info --parsable | grep oshmem:bindings:fort:yes >/dev/null; then \
+	    $(MAKE) hello_oshmemfh; \
+	    $(MAKE) ring_oshmemfh; \
 	fi
 
 # The usual "clean" target
@@ -125,13 +121,13 @@ Hello.class: Hello.java
 Ring.class: Ring.java
 	$(JAVAC) Ring.java
 
-hello_shmem: hello_shmem_c.c
+hello_oshmem: hello_oshmem_c.c
 	$(SHMEMCC) $(CFLAGS) $^ -o $@
-hello_shmemfh: hello_shmemfh.f90
+hello_oshmemfh: hello_oshmemfh.f90
 	$(SHMEMFC) $(FCFLAGS) $^ -o $@
 
-ring_shmem: ring_shmem_c.c
+ring_oshmem: ring_oshmem_c.c
 	$(SHMEMCC) $(CFLAGS) $^ -o $@
-ring_shmemfh: ring_shmemfh.f90
+ring_oshmemfh: ring_oshmemfh.f90
 	$(SHMEMFC) $(FCFLAGS) $^ -o $@
 

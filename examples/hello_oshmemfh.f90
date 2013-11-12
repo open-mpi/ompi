@@ -7,7 +7,7 @@
 !
 ! $HEADER$
 !
-program hello_shmem
+program hello_oshmem
     implicit none
     include 'shmem.fh'
 
@@ -18,5 +18,5 @@ program hello_shmem
     nproc = NUM_PES()
 
     write(*, '("Hello, world, I am ", i2, " of ", i2)') proc, nproc
-end program hello_shmem
+end program hello_oshmem
 
