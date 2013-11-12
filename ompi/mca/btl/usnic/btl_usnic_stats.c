@@ -379,15 +379,28 @@ static void setup_mpit_pvars_enum(void)
     mca_base_var_enum_value_t *devices;
     static mca_base_var_enum_t *devices_enum;
     struct ibv_device *device;
+    ompi_btl_usnic_module_t *m;
+    unsigned char *c;
 
     devices = calloc(mca_btl_usnic_component.num_modules + 1,
                      sizeof(*devices));
     assert(devices != NULL);
 
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
-        device = mca_btl_usnic_component.usnic_active_modules[i]->device;
+        char *str;
+
+        m = mca_btl_usnic_component.usnic_active_modules[i];
+        c = (unsigned char*) &m->if_ipv4_addr;
+
+        device = m->device;
         devices[i].value = i;
-        devices[i].string = ibv_get_device_name(device);
+        rc = asprintf(&str, "%s,%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
+                 ibv_get_device_name(device),
+                 m->if_name,
+                 c[0], c[1], c[2], c[3],
+                 m->if_cidrmask);
+        assert(rc > 0);
+        devices[i].string = str;
     }
     devices[i].string = NULL;
 
@@ -409,6 +422,12 @@ static void setup_mpit_pvars_enum(void)
                                           usnic_pvar_notify,
                                           NULL /* context */);
     assert(rc >= 0);
+
+    /* Free the strings (mca_base_var_enum_create() strdup()'ed them
+       into private storage, so we don't need them any more) */
+    for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+        free((char*) devices[i].string);
+    }    
 
     /* The devices_enum has been RETAIN'ed by the pvar, so we can
        RELEASE it here, and the enum will be destroyed when the pvar
