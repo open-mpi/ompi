@@ -511,6 +511,8 @@ struct orte_proc_t {
 #if OPAL_HAVE_HWLOC
     /* hwloc object to which this process was mapped */
     hwloc_obj_t locale;
+    /* hwloc object to which this process is bound */
+    hwloc_obj_t bind_location;
     /* string representation of cpu bindings */
     char *cpu_bitmap;
 #endif

@@ -932,6 +932,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->app_idx = 0;
 #if OPAL_HAVE_HWLOC
     proc->locale = NULL;
+    proc->bind_location = NULL;
     proc->cpu_bitmap = NULL;
 #endif
     proc->node = NULL;
