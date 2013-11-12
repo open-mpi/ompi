@@ -1,0 +1,21 @@
+#!/bin/sh
+MYDIR=$(dirname $0)
+INSTALL_DIR=${INSTALL_DIR:-/usr/mpi/gcc}
+PREFIX=${INSTALL_DIR}/openmpi-@OMPI_MAJOR_VERSION@.@OMPI_MINOR_VERSION@.@OMPI_RELEASE_VERSION@
+
+MXM_PATH=${MXM_PATH:-/opt/mellanox/mxm}
+FCA_PATH=${FCA_PATH:-/opt/mellanox/fca}
+KNEM_PATH=${KNEM_PATH:-/opt/knem-1.0.90mlnx2}
+
+if [ ! -f AUTHORS ]; then
+    echo Please run from ompi root folder
+    exit 1
+fi
+
+[ -d $MXM_PATH ] && WITH_MXM="--with-mxm=$MXM_PATH"
+[ -d $FCA_PATH ] && WITH_FCA="--with-fca=$FCA_PATH"
+[ -d $KNEM_PATH ] && WITH_KNEM="--with-knem=$KNEM_PATH"
+
+export CONFIG_ARGS=${CONFIG_ARGS:-"--prefix=$PREFIX --libdir=$OMPI_PREFIX/lib64 --with-platform=contrib/platform/mellanox/optimized $WITH_MXM $WITH_FCA $WITH_KNEM"}
+cp -a ${MYDIR}/debian .
+dpkg-buildpackage -us -uc
