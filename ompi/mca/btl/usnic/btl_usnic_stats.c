@@ -394,7 +394,7 @@ static void setup_mpit_pvars_enum(void)
 
         device = m->device;
         devices[i].value = i;
-        rc = asprintf(&str, "%s,%s,%u.%u.%u.%u/%d",
+        rc = asprintf(&str, "%s,%s,%hhu.%hhu.%hhu.%hhu/%" PRIu32,
                  ibv_get_device_name(device),
                  m->if_name,
                  c[0], c[1], c[2], c[3],
@@ -426,8 +426,7 @@ static void setup_mpit_pvars_enum(void)
     /* Free the strings (mca_base_var_enum_create() strdup()'ed them
        into private storage, so we don't need them any more) */
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
-        m = mca_btl_usnic_component.usnic_active_modules[i];
-        device = m->device;
+        device = mca_btl_usnic_component.usnic_active_modules[i]->device;
         free((char*) devices[i].string);
     }    
 
