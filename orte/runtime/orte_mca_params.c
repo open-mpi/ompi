@@ -314,7 +314,7 @@ int orte_register_params(void)
 
     orte_startup_timeout = 0;
     (void) mca_base_var_register ("orte", "orte", NULL, "startup_timeout",
-                                  "Seconds/daemon to wait for startup before declaring failed_to_start (default: 0 => do not check)",
+                                  "Seconds to wait for startup or job launch before declaring failed_to_start (default: 0 => do not check)",
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_startup_timeout);
