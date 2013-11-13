@@ -89,7 +89,8 @@ static void *mpilibhandle=NULL;
  */
 JNIEXPORT jboolean JNICALL Java_mpi_MPI_loadGlobalLibraries(JNIEnv *env, jclass obj)
 {
-    if (NULL == (mpilibhandle = dlopen("libmpi.so", RTLD_NOW | RTLD_GLOBAL))) {
+    if (NULL == (mpilibhandle = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX,
+                                       RTLD_NOW | RTLD_GLOBAL))) {
         return JNI_FALSE;
     }
     return JNI_TRUE;
