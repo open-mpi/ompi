@@ -24,19 +24,19 @@ specifying multiple applications, you must specify how many processes
 of each to launch via the -np argument.
 #
 [orte-rmaps-mindist:no-pci-locality-info]
-No PCI locality information could be found on at least one node:
+No PCI locality information could be found on at least one node. Please, upgrade BIOS to expose NUMA info.
 
   Node: %s
 
-Open MPI therefore cannot mapp\ the application as specified.
+Open MPI will map the application by default (BYSLOT).
 #
 [orte-rmaps-mindist:several-hca-devices]
-There are several OpenFabrics devices found on at least one node. Please specify the definite one.
+There are several OpenFabrics devices found on at least one node. To use rmaps_mindist mapper, please, specify the definite one.
 
   Devices: %d
   Node: %s
 
-Open MPI therefore cannot map the application as specified.
+Open MPI will map the application by default (BYSLOT).
 #
 [orte-rmaps-mindist:device-not-found]
 An OpenFabrics device was specified that cannot be found on at least one node.
@@ -44,4 +44,4 @@ An OpenFabrics device was specified that cannot be found on at least one node.
   Device: %s
   Node: %s
 
-Open MPI therefore cannot map the application as specified.
+Open MPI will map the application by default (BYSLOT).
