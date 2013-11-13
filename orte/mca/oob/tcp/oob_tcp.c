@@ -624,7 +624,6 @@ static void recv_connect(mca_oob_tcp_module_t *mod,
     /* lookup the corresponding process */
     peer = mca_oob_tcp_peer_lookup(mod, &hdr->origin);
     if (NULL == peer) {
-        ui64 = (uint64_t*)(&peer->name);
         opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                             "%s mca_oob_tcp_recv_connect: connection from new peer",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
