@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -15,7 +15,7 @@ void ADIOI_LUSTRE_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int 
     ADIO_Offset curr_fsize, alloc_size, size, len, done;
     ADIO_Status status;
     char *buf;
-#if defined(MPICH2) || !defined(PRINT_ERR_MSG)
+#if defined(MPICH) || !defined(PRINT_ERR_MSG)
     static char myname[] = "ADIOI_LUSTRE_FCNTL";
 #endif
 

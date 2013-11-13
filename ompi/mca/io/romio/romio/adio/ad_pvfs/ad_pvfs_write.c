@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -130,6 +130,9 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 
     MPI_Type_size(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
+#ifdef HAVE_STATUS_SET_BYTES
+	MPIR_Status_set_bytes(status, datatype, 0);
+#endif
 	*error_code = MPI_SUCCESS; 
 	return;
     }
@@ -514,6 +517,9 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 
     MPI_Type_size(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
+#ifdef HAVE_STATUS_SET_BYTES
+	MPIR_Status_set_bytes(status, datatype, 0);
+#endif
 	*error_code = MPI_SUCCESS; 
 	return;
     }

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -32,7 +32,7 @@ Input Parameters:
 
 .N fortran
 @*/
-int MPI_File_delete(char *filename, MPI_Info info)
+int MPI_File_delete(const char *filename, MPI_Info info)
 {
     int error_code, file_system;
     char *tmp;

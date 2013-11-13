@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -9,27 +9,24 @@
 #include "mpisgi2.h"
 #endif */
 
-#if (defined(MPICH) || defined(MPICH2))
-/* MPICH2 also provides this routine */
+#if defined(MPICH)
+/* MPICH also provides this routine */
 void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag);
 
 void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 {
     MPIR_Datatype_iscontig(datatype, flag);
 
-    /* if it is MPICH2 and the datatype is reported as contigous,
-       check if the true_lb is non-zero, and if so, mark the 
-       datatype as noncontiguous */
-#ifdef MPICH2
+    /* if the datatype is reported as contigous, check if the true_lb is
+     * non-zero, and if so, mark the datatype as noncontiguous */
     if (*flag) {
         MPI_Aint true_extent, true_lb;
-        
+
         MPI_Type_get_true_extent(datatype, &true_lb, &true_extent);
 
         if (true_lb > 0)
             *flag = 0;
     }
-#endif
 }
 
 #elif (defined(MPIHP) && defined(HAVE_MPI_INFO))

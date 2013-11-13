@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -73,6 +73,8 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
 	}
     }
 
+    if (incr == 0) {goto done;}
+
     new_fp = *shared_fp + incr;
 
 #ifdef ADIOI_MPE_LOGGING
@@ -91,6 +93,7 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
         MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
 #endif
     }
+done:
     ADIOI_UNLOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
     if (err == -1) {
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -26,7 +26,7 @@
 /* status object not filled currently */
 
 /*@
-    MPI_File_write_at_all - Collective write using explict offset
+    MPI_File_write_at_all - Collective write using explicit offset
 
 Input Parameters:
 . fh - file handle (handle)
@@ -40,7 +40,7 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_write_at_all(MPI_File mpi_fh, MPI_Offset offset, void *buf,
+int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset, const void *buf,
                           int count, MPI_Datatype datatype, 
                           MPI_Status *status)
 {
@@ -52,7 +52,7 @@ int MPI_File_write_at_all(MPI_File mpi_fh, MPI_Offset offset, void *buf,
     HPMP_IO_START(fl_xmpi, BLKMPIFILEWRITEATALL, TRDTBLOCK, fh, datatype, count);
 #endif /* MPI_hpux */
 
-    error_code = MPIOI_File_write_all(mpi_fh, offset, ADIO_EXPLICIT_OFFSET,
+    error_code = MPIOI_File_write_all(fh, offset, ADIO_EXPLICIT_OFFSET,
 				      buf, count, datatype, myname, status);
 
 #ifdef MPI_hpux

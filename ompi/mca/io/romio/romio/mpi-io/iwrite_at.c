@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -24,7 +24,7 @@
 #endif
 
 /*@
-    MPI_File_iwrite_at - Nonblocking write using explict offset
+    MPI_File_iwrite_at - Nonblocking write using explicit offset
 
 Input Parameters:
 . fh - file handle (handle)
@@ -42,34 +42,34 @@ Output Parameters:
 #include "mpiu_greq.h"
 #endif
 
-int MPI_File_iwrite_at(MPI_File mpi_fh, MPI_Offset offset, void *buf,
+int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf,
                        int count, MPI_Datatype datatype, 
                        MPIO_Request *request)
 {
     int error_code;
-    ADIO_File fh;
+    ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_IWRITE_AT";
 
 #ifdef MPI_hpux
     int fl_xmpi;
 
     HPMP_IO_START(fl_xmpi, BLKMPIFILEIWRITEAT, TRDTSYSTEM,
-		  mpi_fh, datatype, count);
+		  fh, datatype, count);
 #endif /* MPI_hpux */
 
 
-    fh = MPIO_File_resolve(mpi_fh);
+    adio_fh = MPIO_File_resolve(fh);
 
-    error_code = MPIOI_File_iwrite(fh, offset, ADIO_EXPLICIT_OFFSET, buf,
+    error_code = MPIOI_File_iwrite(adio_fh, offset, ADIO_EXPLICIT_OFFSET, buf,
 				   count, datatype, myname, request);
 
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(fh, error_code);
+	error_code = MPIO_Err_return_file(adio_fh, error_code);
     /* --END ERROR HANDLING-- */
 
 #ifdef MPI_hpux
-    HPMP_IO_END(fl_xmpi, mpi_fh, datatype, count)
+    HPMP_IO_END(fl_xmpi, fh, datatype, count)
 #endif /* MPI_hpux */
 
     return error_code;

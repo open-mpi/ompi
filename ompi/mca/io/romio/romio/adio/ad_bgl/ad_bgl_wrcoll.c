@@ -26,7 +26,7 @@
 #endif
 
 /* prototypes of functions used for collective writes only. */
-static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
+static void ADIOI_Exch_and_write(ADIO_File fd, const void *buf, MPI_Datatype
                          datatype, int nprocs, int myrank, ADIOI_Access
                          *others_req, ADIO_Offset *offset_list,
                          ADIO_Offset *len_list, int contig_access_count, ADIO_Offset
@@ -45,10 +45,10 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
                          ADIO_Offset *fd_start, ADIO_Offset *fd_end, 
                          ADIOI_Access *others_req, 
                          int *send_buf_idx, int *curr_to_proc,
-                         int *done_to_proc, int *hole, int iter, 
+                         int *done_to_proc, int *hole, int iter,
                          MPI_Aint buftype_extent, int *buf_idx, int *error_code);
 static void ADIOI_W_Exchange_data_alltoallv(
-		ADIO_File fd, void *buf, 
+		ADIO_File fd, void *buf,
 		char *write_buf,					/* 1 */
 		ADIOI_Flatlist_node *flat_buf, 
 		ADIO_Offset *offset_list, 
@@ -421,7 +421,7 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
 /* If successful, error_code is set to MPI_SUCCESS.  Otherwise an error
  * code is created and returned in error_code.
  */
-static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
+static void ADIOI_Exch_and_write(ADIO_File fd, const void *buf, MPI_Datatype
 				 datatype, int nprocs, 
 				 int myrank,
 				 ADIOI_Access
@@ -732,7 +732,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
 /* Sets error_code to MPI_SUCCESS if successful, or creates an error code
  * in the case of error.
  */
-static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
+static void ADIOI_W_Exchange_data(ADIO_File fd, const void *buf, char *write_buf,
 				  ADIOI_Flatlist_node *flat_buf, ADIO_Offset 
 				  *offset_list, ADIO_Offset *len_list, int *send_size, 
 				  int *recv_size, ADIO_Offset off, int size,
@@ -799,12 +799,15 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
 
     sum = 0;
     for (i=0; i<nprocs; i++) sum += count[i];
-    srt_off = (ADIO_Offset *) ADIOI_Malloc((sum+1)*sizeof(ADIO_Offset));
-    srt_len = (int *) ADIOI_Malloc((sum+1)*sizeof(int));
-    /* +1 to avoid a 0-size malloc */
+    /* valgrind-detcted optimization: if there is no work on this process we do
+     * not need to search for holes */
+    if (sum) {
+	srt_off = (ADIO_Offset *) ADIOI_Malloc((sum)*sizeof(ADIO_Offset));
+	srt_len = (int *) ADIOI_Malloc((sum)*sizeof(int));
 
-    ADIOI_Heap_merge(others_req, count, srt_off, srt_len, start_pos,
-                     nprocs, nprocs_recv, sum);
+        ADIOI_Heap_merge(others_req, count, srt_off, srt_len, start_pos,
+                         nprocs, nprocs_recv, sum);
+    }
 
 /* for partial recvs, restore original lengths */
     for (i=0; i<nprocs; i++) 
@@ -821,23 +824,25 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
      * #835). Missing these holes would result in us writing more data than
      * recieved by everyone else. */
     *hole = 0;
-    if (off != srt_off[0]) /* hole at the front */
-        *hole = 1;
-    else { /* coalesce the sorted offset-length pairs */
-        for (i=1; i<sum; i++) {
-            if (srt_off[i] <= srt_off[0] + srt_len[0]) {
-		int new_len = srt_off[i] + srt_len[i] - srt_off[0];
-		if (new_len > srt_len[0]) srt_len[0] = new_len;
-	    }
-            else
-                break;
-        }
-        if (i < sum || size != srt_len[0]) /* hole in middle or end */
+    if (sum) {
+        if (off != srt_off[0]) /* hole at the front */
             *hole = 1;
-	}
+        else { /* coalesce the sorted offset-length pairs */
+            for (i=1; i<sum; i++) {
+                if (srt_off[i] <= srt_off[0] + srt_len[0]) {
+		    int new_len = srt_off[i] + srt_len[i] - srt_off[0];
+		    if (new_len > srt_len[0]) srt_len[0] = new_len;
+	        }
+                else
+                    break;
+	    }
+            if (i < sum || size != srt_len[0]) /* hole in middle or end */
+                *hole = 1;
+	    }
 
     ADIOI_Free(srt_off);
     ADIOI_Free(srt_len);
+    }
 
     if (nprocs_recv) {
 	if (*hole) {
@@ -1251,7 +1256,7 @@ static void ADIOI_Heap_merge(ADIOI_Access *others_req, int *count,
 
 
 static void ADIOI_W_Exchange_data_alltoallv(
-		ADIO_File fd, void *buf, 
+		ADIO_File fd, void *buf,
 		char *write_buf,					/* 1 */
 		ADIOI_Flatlist_node *flat_buf, 
 		ADIO_Offset *offset_list, 

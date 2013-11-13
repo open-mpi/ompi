@@ -34,7 +34,7 @@ if test "X$pac_lib_mpi_is_building" != "Xyes" ; then
      fi
   fi
   # Look for MPILIB first if it is defined
-  AC_SEARCH_LIBS(MPI_Init,$MPILIB mpi mpich mpich2)
+  AC_SEARCH_LIBS(MPI_Init,$MPILIB mpi mpich mpich)
   if test "$ac_cv_search_MPI_Init" = "no" ; then
     ifelse($2,,
     AC_MSG_ERROR([Could not find MPI library]),[$2])
@@ -97,7 +97,7 @@ dnl it became necessary to define CC etc. before invoking AC_PROG_CC (and
 dnl the othe language compilers), because those commands now do much, much
 dnl more than just determining the compiler.
 dnl
-dnl To address the change, we still define the TESTCC ect. compilers where
+dnl To address the change, we still define the TESTCC etc. compilers where
 dnl possible to allow the use of AC_TRY_RUN when required, but we define
 dnl the CC etc variables and do not define ac_cv_prog_CC etc., as these 
 dnl cause autoconf to skip all of the other initialization code that 
@@ -108,8 +108,12 @@ dnl See also:
 dnl PAC_LANG_PUSH_COMPILERS, PAC_LIB_MPI
 dnl D*/
 AC_DEFUN([PAC_ARG_MPI_TYPES],[
+# known types
 PAC_ARG_MPI_KNOWN_TYPES
+# find compilers
+PAC_MPI_FIND_COMPILER_SCRIPTS
 PAC_MPI_FIND_COMPILERS
+# check for MPI library
 PAC_MPI_CHECK_MPI_LIB
 ])
 dnl
@@ -121,8 +125,8 @@ AC_DEFUN([PAC_ARG_MPI_KNOWN_TYPES],[
 AC_ARG_WITH(mpich,
 [--with-mpich=path  - Assume that we are building with MPICH],
 ac_mpi_type=mpich)
-# Allow MPICH2 as well as MPICH
-AC_ARG_WITH(mpich2,
+# Allow MPICH as well as MPICH
+AC_ARG_WITH(mpich,
 [--with-mpich=path  - Assume that we are building with MPICH],
 ac_mpi_type=mpich)
 AC_ARG_WITH(lammpi,
@@ -152,7 +156,16 @@ if test "$ac_mpi_type" = "unknown" -a "$pac_lib_mpi_is_building" = "yes" ; then
     ac_mpi_type="mpich"
 fi
 ])
-AC_DEFUN([PAC_MPI_FIND_COMPILERS],[
+dnl
+dnl Because of autoconf insists on moving code to the beginning of
+dnl certain definitions, it is *not possible* to define a single command
+dnl that selects compilation scripts and also check for other options.
+dnl Thus, this needs to be divided into
+dnl   MPI_FIND_COMPILER_SCRIPTS
+dnl which can fail (i.e., not find a script), and
+dnl   MPI_FIND_COMPILERS
+dnl which runs the various PROC_xx for the compilers.
+AC_DEFUN([PAC_MPI_FIND_COMPILER_SCRIPTS],[
 # Set defaults
 MPIRUN_NP="-np "
 MPIEXEC_N="-n "
@@ -222,7 +235,7 @@ case $ac_mpi_type in
         dnl This isn't correct.  It should try to get the underlying compiler
         dnl from the mpicc and mpif77 scripts or mpireconfig
         if test "X$pac_lib_mpi_is_building" != "Xyes" ; then
-            save_PATH="$PATH"
+	    PAC_PUSH_FLAG([PATH])
             if test "$with_mpich" != "yes" -a "$with_mpich" != "no" ; then 
 		# Look for commands; if not found, try adding bin to the
 		# path
@@ -237,6 +250,8 @@ case $ac_mpi_type in
 	    # Note that autoconf may unconditionally change the value of 
 	    # CC (!) in some other command. Thus, we define CCMASTER
 	    CCMASTER=$CC
+	    # Force autoconf to respect this choice
+	    ac_ct_CC=$CC
 	    # to permit configure codes to recover the correct CC.  This
 	    # is an ugly not-quite-correct workaround for the fact that 
 	    # does not want you to change the C compiler once you have set it
@@ -256,7 +271,7 @@ case $ac_mpi_type in
 	    AC_PATH_PROG(MPIRUN,mpirun)
 	    AC_PATH_PROG(MPIBOOT,mpichboot)
 	    AC_PATH_PROG(MPIUNBOOT,mpichstop)
-	    PATH="$save_PATH"
+	    PAC_POP_FLAG([PATH])
   	    MPILIBNAME="mpich"
         else 
 	    # All of the above should have been passed in the environment!
@@ -271,7 +286,7 @@ case $ac_mpi_type in
 	dnl
         dnl This isn't correct.  It should try to get the underlying compiler
         dnl from the mpicc and mpif77 scripts or mpireconfig
-        save_PATH="$PATH"
+	PAC_PUSH_FLAG([PATH])
         if test "$with_mpich" != "yes" -a "$with_mpich" != "no" ; then 
 	    # Look for commands; if not found, try adding bin to the path
 		if test ! -x $with_lammpi/mpicc -a -x $with_lammpi/bin/mpicc ; then
@@ -292,7 +307,7 @@ case $ac_mpi_type in
         AC_PATH_PROG(MPICXX,mpiCC)
 	if test -z "$TESTCXX" ; then TESTCXX=${CXX-CC} ; fi
         CXX="$MPICXX"
-	PATH="$save_PATH"
+	PAC_POP_FLAG([PATH])
   	MPILIBNAME="lammpi"
 	MPIBOOT="lamboot"
 	MPIUNBOOT="wipe"
@@ -330,43 +345,15 @@ case $ac_mpi_type in
 	if test -z "$TESTF77" ; then TESTF77=${F77:=f77} ; fi
 	if test -z "$TESTCXX" ; then TESTCXX=${CXX:=CC} ; fi
 	if test -z "$TESTFC" ; then TESTFC=${FC:=f90} ; fi
-	AC_CHECK_LIB(mpi,MPI_Init)
-	if test "$ac_cv_lib_mpi_MPI_Init" = "yes" ; then
-	    MPILIBNAME="mpi"
-	fi	
+	# Must check for the MPI library in a separate macro - adding
+	# a test here will cause autoconf to prematurely define the
+	# C compiler
 	MPIRUN=mpirun
 	MPIBOOT=""
 	MPIUNBOOT=""
 	;;
 
 	generic)
-	# Find the compilers.  Expect the compilers to be mpicc and mpif77
-	# in $with_mpi/bin
-        PAC_PROG_CC
-	# We only look for the other compilers if there is no
-	# disable for them
-	if test "$enable_f77" != no -a "$enable_fortran" != no ; then
-   	    AC_PROG_F77
-        fi
-	if test "$enable_cxx" != no ; then
-	    AC_PROG_CXX
-	fi
-	if test "$enable_f90" != no ; then
-	    PAC_PROG_FC
-	fi
-	# Set defaults for the TEST versions if not already set
-	if test -z "$TESTCC" ; then 
-	    TESTCC=${CC:=cc}
-        fi
-	if test -z "$TESTF77" ; then 
-  	    TESTF77=${F77:=f77}
-        fi
-	if test -z "$TESTCXX" ; then
-	    TESTCXX=${CXX:=CC}
-        fi
-	if test -z "$TESTFC" ; then
-       	    TESTFC=${FC:=f90}
-	fi
 	# in $with_mpi/bin or $with_mpi
         if test "X$MPICC" = "X" ; then
             if test -x "$with_mpi/bin/mpicc" ; then
@@ -413,9 +400,12 @@ case $ac_mpi_type in
 	# Use the default choices for the compilers
 	;;
 esac
+])
+
+AC_DEFUN([PAC_MPI_FIND_COMPILERS],[
 # Tell autoconf to determine properties of the compilers (these are the 
 # compilers for MPI programs)
-AC_PROG_CC
+PAC_PROG_CC
 if test "$enable_f77" != no -a "$enable_fortran" != no ; then
     AC_PROG_F77
 fi
@@ -430,22 +420,23 @@ fi
 dnl
 dnl This uses the selected CC etc to check for include paths and libraries
 AC_DEFUN([PAC_MPI_CHECK_MPI_LIB],[
+AC_REQUIRE([AC_PROG_CC])
 case $ac_mpi_type in
-	mpich)
+    mpich)
 	;;
 
-        mpichnt)
+    mpichnt)
         dnl
         dnl This isn't adequate, but it helps with using MPICH-NT/SDK.gcc
-	save_CFLAGS="$CFLAGS"
-        CFLAGS="$save_CFLAGS -I$with_mpichnt/include"
-        save_CPPFLAGS="$CPPFLAGS"
-        CPPFLAGS="$save_CPPFLAGS -I$with_mpichnt/include"
-        save_LDFLAGS="$LDFLAGS"
-        LDFLAGS="$save_LDFLAGS -L$with_mpichnt/lib"
+	PAC_PUSH_FLAG([CFLAGS])
+        CFLAGS="$CFLAGS -I$with_mpichnt/include"
+	PAC_PUSH_FLAG([CPPFLAGS])
+        CPPFLAGS="$CPPFLAGS -I$with_mpichnt/include"
+	PAC_PUSH_FLAG([LDFLAGS])
+        LDFLAGS="$LDFLAGS -L$with_mpichnt/lib"
         AC_CHECK_LIB(mpich,MPI_Init,found="yes",found="no")
         if test "$found" = "no" ; then
-          AC_CHECK_LIB(mpich2,MPI_Init,found="yes",found="no")
+          AC_CHECK_LIB(mpich,MPI_Init,found="yes",found="no")
         fi
 	if test "$enable_cxx" != no ; then
 	    AC_PROG_CXX
@@ -459,33 +450,33 @@ case $ac_mpi_type in
 	if test -z "$TESTCXX" ; then TESTCXX=${CXX:=CC} ; fi
 	if test -z "$TESTFC" ; then TESTFC=${FC:=f90} ; fi
         if test "$found" = "no" ; then
-          CFLAGS=$save_CFLAGS
-          CPPFLAGS=$save_CPPFLAGS
-          LDFLAGS=$save_LDFLAGS
+	  PAC_POP_FLAG([CFLAGS])
+	  PAC_POP_FLAG([CPPFLAGS])
+	  PAC_POP_FLAG([LDFLAGS])
         fi
         ;;
 
-	lammpi)
+    lammpi)
 	;;
 
-	ibmmpi)
+    ibmmpi)
 	;;
 
-	sgimpi)
+    sgimpi)
 	AC_CHECK_LIB(mpi,MPI_Init)
 	if test "$ac_cv_lib_mpi_MPI_Init" = "yes" ; then
 	    MPILIBNAME="mpi"
 	fi	
 	;;
 
-	generic)
-	AC_SEARCH_LIBS(MPI_Init,mpi mpich2 mpich)
+    generic)
+	AC_SEARCH_LIBS(MPI_Init,mpi mpich mpich)
 	if test "$ac_cv_lib_mpi_MPI_Init" = "yes" ; then
 	    MPILIBNAME="mpi"
 	fi	
 	;;
 
-	*)
+    *)
 	;;
 esac
 ])

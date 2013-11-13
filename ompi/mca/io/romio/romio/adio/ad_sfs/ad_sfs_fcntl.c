@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -34,7 +34,7 @@ void ADIOI_SFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 	if (fd->fp_sys_posn != -1) 
 	     llseek(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
 	if (fcntl_struct->fsize == -1) {
-#ifdef MPICH2
+#ifdef MPICH
 	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
 		"**io %s", strerror(errno));
 #elif defined(PRINT_ERR_MSG)

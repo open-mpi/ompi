@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -24,7 +24,7 @@
 #endif
 
 /*@
-    MPI_File_read_at_all_begin - Begin a split collective read using explict offset
+    MPI_File_read_at_all_begin - Begin a split collective read using explicit offset
 
 Input Parameters:
 . fh - file handle (handle)
@@ -37,13 +37,13 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_read_at_all_begin(MPI_File mpi_fh, MPI_Offset offset, void *buf,
+int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
 			       int count, MPI_Datatype datatype)
 {
     int error_code;
     static char myname[] = "MPI_FILE_READ_AT_ALL_BEGIN";
 
-    error_code = MPIOI_File_read_all_begin(mpi_fh, offset,
+    error_code = MPIOI_File_read_all_begin(fh, offset,
 					   ADIO_EXPLICIT_OFFSET,
 					   buf, count, datatype, myname);
 

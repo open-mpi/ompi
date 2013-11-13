@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -150,6 +150,9 @@ void ADIOI_PVFS_ReadStridedListIO(ADIO_File fd, void *buf, int count,
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
     MPI_Type_size(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
+#ifdef HAVE_STATUS_SET_BYTES
+	MPIR_Status_set_bytes(status, datatype, 0);
+#endif
 	*error_code = MPI_SUCCESS; 
 	return;
     }

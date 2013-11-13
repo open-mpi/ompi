@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -11,7 +11,7 @@
 
 /* 
  * Below are the "safe" versions of the various string and printf
- * operations. They are directly taken from MPICH2, with MPIU replaced by ADIOI.
+ * operations. They are directly taken from MPICH, with MPIU replaced by ADIOI.
  */
 
 /*
@@ -28,11 +28,11 @@
  */
 /*@ ADIOI_Strncpy - Copy a string with a maximum length
   
-    Input Parameters:
+Input Parameters:
 +   instr - String to copy
 -   maxlen - Maximum total length of 'outstr'
 
-    Output Parameter:
+Output Parameters:
 .   outstr - String to copy into
 
     Notes:
@@ -72,11 +72,11 @@ int ADIOI_Strncpy( char *dest, const char *src, size_t n )
    any null, which is always added to the end of the line */
 /*@ ADIOI_Strnapp - Append to a string with a maximum length
 
-    Input Parameters:
+Input Parameters:
 +   instr - String to copy
 -   maxlen - Maximum total length of 'outstr'
 
-    Output Parameter:
+Output Parameters:
 .   outstr - String to copy into
 
     Notes:
@@ -128,7 +128,7 @@ int ADIOI_Strnapp( char *dest, const char *src, size_t n )
     char *ADIOI_Strdup( const char *str )
 .ve
 
-  Input Parameter:
+Input Parameters:
 . str - null-terminated string to duplicate
 
   Return value:

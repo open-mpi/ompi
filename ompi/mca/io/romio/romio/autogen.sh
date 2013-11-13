@@ -1,2 +1,3 @@
-:
-autoreconf -ivf -I confdb
+#!/bin/sh
+
+${AUTORECONF:-autoreconf} ${autoreconf_args:-"-vif"} -I confdb

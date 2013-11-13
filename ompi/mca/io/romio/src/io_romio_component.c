@@ -26,7 +26,7 @@
 #include "ompi/mca/io/io.h"
 #include "io_romio.h"
 
-#define ROMIO_VERSION_STRING "from MPICH2 v1.3.1 with an additional patch from romio-maint@mcs.anl.gov about an attribute issue"
+#define ROMIO_VERSION_STRING "from MPICH v3.0.4"
 
 /*
  * Private functions

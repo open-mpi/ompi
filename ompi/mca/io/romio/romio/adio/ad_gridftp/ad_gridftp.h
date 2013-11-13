@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
  *   See COPYRIGHT notice in top-level directory.

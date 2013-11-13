@@ -59,6 +59,7 @@ extern int 	bglmpio_timing2;
 extern int 	bglmpio_comm;
 extern int 	bglmpio_tunegather;
 extern int 	bglmpio_tuneblocking;
+extern long     bglocklessmpio_f_type;
 
 
 /* set internal variables for tuning environment variables */

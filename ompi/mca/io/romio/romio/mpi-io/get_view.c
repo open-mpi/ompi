@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -40,55 +40,53 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_view(MPI_File mpi_fh,
-		      MPI_Offset *disp,
-		      MPI_Datatype *etype,
-		      MPI_Datatype *filetype,
-		      char *datarep)
+int MPI_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etype,
+                      MPI_Datatype *filetype, char *datarep)
 {
     int error_code;
-    ADIO_File fh;
+    ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_GET_VIEW";
     int i, j, k, combiner;
     MPI_Datatype copy_etype, copy_filetype;
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
-    fh = MPIO_File_resolve(mpi_fh);
+    adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
 
     if (datarep <= (char *) 0)
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_ARG, 
 					  "**iodatarepnomem", 0);
-	error_code = MPIO_Err_return_file(fh, error_code);
+	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
     }
     /* --END ERROR HANDLING-- */
 
-    *disp = fh->disp;
-    ADIOI_Strncpy(datarep, "native", MPI_MAX_DATAREP_STRING);
+    *disp = adio_fh->disp;
+    ADIOI_Strncpy(datarep,
+	    (adio_fh->is_external32 ? "external32": "native"), MPI_MAX_DATAREP_STRING);
 
-    MPI_Type_get_envelope(fh->etype, &i, &j, &k, &combiner);
-    if (combiner == MPI_COMBINER_NAMED) *etype = fh->etype;
+    MPI_Type_get_envelope(adio_fh->etype, &i, &j, &k, &combiner);
+    if (combiner == MPI_COMBINER_NAMED) *etype = adio_fh->etype;
     else {
 	/* FIXME: It is wrong to use MPI_Type_contiguous; the user could choose to
 	   re-implement MPI_Type_contiguous in an unexpected way.  Either use 
-	   MPIR_Barrier_impl as in MPICH2 or PMPI_Type_contiguous */
-        MPI_Type_contiguous(1, fh->etype, &copy_etype);
+	   MPIR_Barrier_impl as in MPICH or PMPI_Type_contiguous */
+        MPI_Type_contiguous(1, adio_fh->etype, &copy_etype);
 
 	/* FIXME: Ditto for MPI_Type_commit - use NMPI or PMPI */
         MPI_Type_commit(&copy_etype);
         *etype = copy_etype;
     }
     /* FIXME: Ditto for MPI_Type_xxx - use NMPI or PMPI */
-    MPI_Type_get_envelope(fh->filetype, &i, &j, &k, &combiner);
-    if (combiner == MPI_COMBINER_NAMED) *filetype = fh->filetype;
+    MPI_Type_get_envelope(adio_fh->filetype, &i, &j, &k, &combiner);
+    if (combiner == MPI_COMBINER_NAMED) *filetype = adio_fh->filetype;
     else {
-        MPI_Type_contiguous(1, fh->filetype, &copy_filetype);
+        MPI_Type_contiguous(1, adio_fh->filetype, &copy_filetype);
 
         MPI_Type_commit(&copy_filetype);
         *filetype = copy_filetype;

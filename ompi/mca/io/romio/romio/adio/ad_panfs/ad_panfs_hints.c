@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   ad_panfs_hints.c
  *
@@ -11,7 +11,9 @@
 
 void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 {
+#if defined(MPICH) || !defined(PRINT_ERR_MSG)
     static char myname[] = "ADIOI_PANFS_SETINFO";
+#endif
     char* value;
     int flag, tmp_val = -1;
     unsigned long int concurrent_write = 0; 

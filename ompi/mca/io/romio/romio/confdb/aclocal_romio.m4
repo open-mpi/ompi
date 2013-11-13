@@ -9,7 +9,7 @@ dnl If the test fails, sets NOF77 to 1, HAVE_FORTRAN to 0.
 dnl
 dnl
 AC_DEFUN([PAC_GET_FORTNAMES],[
-   rm -f confftest.f confftest.o
+   rm -f confftest.f confftest.$OBJEXT
    cat > confftest.f <<EOF
        subroutine mpir_init_fop( a )
        integer a
@@ -18,7 +18,7 @@ AC_DEFUN([PAC_GET_FORTNAMES],[
        end
 EOF
    $F77 $FFLAGS -c confftest.f > /dev/null 2>&1
-   if test ! -s confftest.o ; then
+   if test ! -s confftest.$OBJEXT ; then
 	AC_MSG_WARN([Unable to test Fortran compiler.  Compiling a test 
 program failed to produce an object file])
 	NOF77=1
@@ -28,17 +28,17 @@ program failed to produce an object file])
      allstrings="-a"
      if test $arch_CRAY ; then 
 	allstrings="" 
-     elif strings - confftest.o < /dev/null >/dev/null 2>&1 ; then
+     elif strings - confftest.$OBJEXT < /dev/null >/dev/null 2>&1 ; then
          allstrings="-"
-     elif strings -a confftest.o < /dev/null >/dev/null 2>&1 ; then
+     elif strings -a confftest.$OBJEXT < /dev/null >/dev/null 2>&1 ; then
          allstrings="-a"
      fi
     
-     nameform1=`strings $allstrings confftest.o | grep mpir_init_fop_  | head -1`
-     nameform2=`strings $allstrings confftest.o | grep MPIR_INIT_FOP   | head -1`
-     nameform3=`strings $allstrings confftest.o | grep mpir_init_fop   | head -1`
-     nameform4=`strings $allstrings confftest.o | grep mpir_init_fop__ | head -1`
-    rm -f confftest.f confftest.o
+     nameform1=`strings $allstrings confftest.$OBJEXT | grep mpir_init_fop_  | head -1`
+     nameform2=`strings $allstrings confftest.$OBJEXT | grep MPIR_INIT_FOP   | head -1`
+     nameform3=`strings $allstrings confftest.$OBJEXT | grep mpir_init_fop   | head -1`
+     nameform4=`strings $allstrings confftest.$OBJEXT | grep mpir_init_fop__ | head -1`
+    rm -f confftest.f confftest.$OBJEXT
     if test -n "$nameform4" ; then
 	echo "Fortran externals are lower case and have two trailing underscores"
 	FORTRANNAMES="FORTRANDOUBLEUNDERSCORE"
@@ -175,19 +175,19 @@ define(PAC_TEST_MPI,[
          MPI_Finalize(); 
      }
 EOF
-  rm -f conftest
-  cmd="$CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB"
+  rm -f conftest$EXEEXT
+  cmd="$CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB"
   echo "$as_me:$LINENO: $cmd" >&5
   $cmd >&5 2>&5
-  if test ! -x conftest ; then
+  if test ! -x conftest$EXEEXT ; then
       echo "$as_me:$LINENO: failed program was:" >&5
       sed 's/^/| /' mpitest.c >&5
-      rm -f conftest mpitest.c
+      rm -f conftest$EXEEXT mpitest.c
       AC_MSG_ERROR([Unable to compile a simple MPI program.
 Use environment variables to provide the location of MPI libraries and
 include directories])
   else
-      rm -f conftest mpitest.c
+      rm -f conftest$EXEEXT mpitest.c
   fi
 AC_MSG_RESULT(yes)
 ])dnl
@@ -204,17 +204,17 @@ define(PAC_NEEDS_FINT,[
          i = 0;
      }
 EOF
-  rm -f mpitest1.o
+  rm -f mpitest1.$OBJEXT
   $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -c mpitest1.c > /dev/null 2>&1
-  if test ! -s mpitest1.o ; then
+  if test ! -s mpitest1.$OBJEXT ; then
       NEEDS_MPI_FINT="#define NEEDS_MPI_FINT"
       CFLAGS="$CFLAGS -DNEEDS_MPI_FINT"
       AC_MSG_RESULT(no)
-      rm -f mpitest1.o mpitest1.c
+      rm -f mpitest1.$OBJEXT mpitest1.c
   else
       NEEDS_MPI_FINT=""
       AC_MSG_RESULT(yes)
-      rm -f mpitest1.o mpitest1.c
+      rm -f mpitest1.$OBJEXT mpitest1.c
   fi
 ])dnl
 dnl
@@ -231,15 +231,15 @@ define(PAC_MPI_LONG_LONG_INT,[
          MPI_Finalize(); 
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
       AC_MSG_RESULT(yes)
       AC_DEFINE(HAVE_MPI_LONG_LONG_INT,,[Define if mpi has long long it])
   else
       AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 dnl
 dnl PAC_LONG_LONG_64: check if there is a 64-bit long long
@@ -292,11 +292,11 @@ dnl   because the program cannot be run.
            return 0;
         }
 EOF
-      rm -f conftest
-      $CC $USER_CFLAGS -o conftest ltest.c > /dev/null 2>&1
-      if test -x conftest ; then
+      rm -f conftest$EXEEXT
+      $CC $USER_CFLAGS -o conftest$EXEEXT ltest.c > /dev/null 2>&1
+      if test -x conftest$EXEEXT ; then
          echo "assuming size of long long is 8bytes; use '-longlongsize' to indicate otherwise"
-         rm -f conftest ltest.c
+         rm -f conftest$EXEEXT ltest.c
          echo "defining MPI_Offset as long long in C and integer*8 in Fortran" 
          AC_DEFINE(HAVE_LONG_LONG_64,,[Define if long long is 64 bits])
          DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
@@ -329,9 +329,9 @@ define(PAC_MPI_INFO,[
          MPI_Finalize(); 
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
       AC_MSG_RESULT(yes)
       AC_DEFINE(HAVE_MPI_INFO,1,[Define if MPI_Info available])
       HAVE_MPI_INFO="#define HAVE_MPI_INFO"
@@ -347,7 +347,7 @@ EOF
       MPI_FINFO3="      INTEGER MPI_INFO_NULL"
       MPI_FINFO4="      PARAMETER (MPI_INFO_NULL=0)"
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 dnl
 dnl
@@ -366,9 +366,9 @@ define(PAC_MPI_DARRAY_SUBARRAY,[
          MPI_Finalize(); 
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
       AC_MSG_RESULT(yes)
       AC_DEFINE(HAVE_MPI_DARRAY_SUBARRAY,,[Define if MPI Darray available])
       HAVE_MPI_DARRAY_SUBARRAY="#define HAVE_MPI_DARRAY_SUBARRAY"
@@ -390,7 +390,7 @@ EOF
       MPI_FARRAY6="      PARAMETER (MPI_DISTRIBUTE_NONE=123)"
       MPI_FARRAY7="      PARAMETER (MPI_DISTRIBUTE_DFLT_DARG=-49767)"
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 dnl
 dnl
@@ -405,15 +405,15 @@ define(PAC_CHECK_MPI_SGI_INFO_NULL,[
 	i = MPI_INFO_NULL;
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
       AC_MSG_RESULT(yes)
       cp adio/sgi/mpi3.1/*.h include
   else
       AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 dnl
 dnl
@@ -430,15 +430,15 @@ define(PAC_CHECK_MPIOF_H,[
       stop
       end
 EOF
-  rm -f conftest
-  $F77 $FFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.f $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $F77 $FFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.f $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
       AC_MSG_RESULT(yes)
       MPIOF_H_INCLUDED=1
   else
       AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.f
+  rm -f conftest$EXEEXT mpitest.f
 ])dnl
 dnl
 dnl
@@ -456,15 +456,15 @@ define(PAC_HAVE_PREAD64,[
          pread64(fd, &buf, i, off);
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -o conftest conftest.c > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -o conftest$EXEEXT conftest.c > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
       AC_MSG_RESULT(yes)
       AC_DEFINE(HAVE_PREAD64,,[Define if pread64 available])
   else
       AC_MSG_RESULT(no)
   fi
-rm -f conftest conftest.c
+rm -f conftest$EXEEXT conftest.c
 ])dnl
 dnl
 dnl
@@ -483,15 +483,15 @@ define(PAC_TEST_MPI_SGI_type_is_contig,[
          MPI_Finalize(); 
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
   else
      AC_MSG_RESULT(no)
      AC_DEFINE(NO_MPI_SGI_type_is_contig,,[Define if no MPI type is contig])
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 dnl
 dnl
@@ -510,15 +510,15 @@ define(PAC_TEST_MPI_COMBINERS,[
          MPI_Finalize(); 
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
      AC_DEFINE(HAVE_MPI_COMBINERS,,[Define if MPI combiners available])
   else
      AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 dnl
 dnl
@@ -534,12 +534,14 @@ rm -f conftest*
 # Determine the extension for Fortran 90 files (not all compilers accept
 # .f and not all accept .f90)
 if test -z "$ac_f90ext" ; then
-    if test -z "$F90" ; then
-       AC_CHECK_PROGS(F90,f90 xlf90 pgf90 ifort epcf90 f95 fort xlf95 lf95 pathf90 g95 fc ifc efc)
+    if test -z "$FC" ; then
+       # This list should correspond to the list in aclocal_fc.m4
+       AC_CHECK_PROGS(FC,ifort pgf90 pathf90 pathf95 xlf90 xlf95 f90 epcf90 \
+       f95 fort lf95 gfortran g95 ifc efc)
     fi
     AC_MSG_CHECKING([for extension for Fortran 90 programs])
     ac_f90ext="f90"
-    ac_f90compile='${F90-f90} -c $F90FLAGS conftest.$ac_f90ext 1>&AC_FD_CC'
+    ac_f90compile='${FC-f90} -c $FCFLAGS conftest.$ac_f90ext 1>&AC_FD_CC'
     cat > conftest.$ac_f90ext <<EOF
       program conftest
       end
@@ -573,12 +575,12 @@ cat <<EOF > conftest.$ac_f90ext
       stop
       end
 EOF
-if test -z "$F90" ; then
-   F90=f90
+if test -z "$FC" ; then
+   FC=f90
 fi
 KINDVAL=""
-if $F90 -o conftest conftest.$ac_f90ext >/dev/null 2>&1 ; then
-    ./conftest >/dev/null 2>&1
+if $FC -o conftest$EXEEXT conftest.$ac_f90ext >/dev/null 2>&1 ; then
+    ./conftest$EXEEXT >/dev/null 2>&1
     if test -s conftest.out ; then 
         KINDVAL=`cat conftest.out`
     fi
@@ -608,16 +610,16 @@ define(PAC_TEST_MPI_HAVE_OFFSET_KIND,[
       stop
       end
 EOF
-  rm -f conftest
-  $F77 $FFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.f $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $F77 $FFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.f $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
      MPI_OFFSET_KIND1="!"
      MPI_OFFSET_KIND2="!"
   else
      AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.f
+  rm -f conftest$EXEEXT mpitest.f
 ])dnl
 dnl
 dnl
@@ -654,56 +656,6 @@ fi
 ])dnl
 dnl
 
-dnl
-dnl Look for a style of VPATH.  Known forms are
-dnl VPATH = .:dir
-dnl .PATH: . dir
-dnl
-dnl Defines VPATH or .PATH with . $(srcdir)
-dnl Requires that vpath work with implicit targets
-dnl NEED TO DO: Check that $< works on explicit targets.
-dnl
-define(PAC_MAKE_VPATH,[
-AC_SUBST(VPATH)
-AC_MSG_CHECKING(for virtual path format)
-# This is needed for Mac OSX 10.5
-rm -rf conftest.dSYM
-rm -rf conftest*
-mkdir conftestdir
-cat >conftestdir/a.c <<EOF
-A sample file
-EOF
-cat > conftest <<EOF
-all: a.o
-VPATH=.:conftestdir
-.c.o:
-	@echo \$<
-EOF
-ac_out=`$MAKE -f conftest 2>&1 | grep 'conftestdir/a.c'`
-if test -n "$ac_out" ; then 
-    AC_MSG_RESULT(VPATH)
-    VPATH='VPATH=.:$(srcdir)'
-else
-    rm -f conftest
-    cat > conftest <<EOF
-all: a.o
-.PATH: . conftestdir
-.c.o:
-	@echo \$<
-EOF
-    ac_out=`$MAKE -f conftest 2>&1 | grep 'conftestdir/a.c'`
-    if test -n "$ac_out" ; then 
-        AC_MSG_RESULT(.PATH)
-        VPATH='.PATH: . $(srcdir)'
-    else
-	AC_MSG_RESULT(neither VPATH nor .PATH works)
-    fi
-fi
-# This is needed for Mac OSX 10.5
-rm -rf conftest.dSYM
-rm -rf conftest*
-])dnl
-dnl
 define(PAC_HAVE_MOUNT_NFS,[
   AC_MSG_CHECKING([if MOUNT_NFS is defined in the include files])
   rm -f conftest.c
@@ -715,9 +667,9 @@ define(PAC_HAVE_MOUNT_NFS,[
          int i=MOUNT_NFS;
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -o conftest conftest.c > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -o conftest$EXEEXT conftest.c > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
      ROMIO_HAVE_MOUNT_NFS=1
      AC_DEFINE(HAVE_MOUNT_NFS,,[Define if MOUNT_NFS defined])
@@ -725,7 +677,7 @@ EOF
      ROMIO_HAVE_MOUNT_NFS=0
      AC_MSG_RESULT(no)
   fi
-  rm -f conftest conftest.c
+  rm -f conftest$EXEEXT conftest.c
 ])dnl
 dnl
 dnl
@@ -735,7 +687,7 @@ dnl tries to determine the Fortran 90 kind parameter for 4-byte integers
 dnl
 define(PAC_MPI_OFFSET_KIND_4BYTE,
 [AC_MSG_CHECKING([for Fortran 90 KIND parameter for 4-byte integers])
-rm -f kind.f kind.o kind
+rm -f kind.f kind.$OBJEXT kind$EXEEXT
 cat <<EOF > kind.f
       program main
       integer i
@@ -746,17 +698,17 @@ cat <<EOF > kind.f
       stop
       end
 EOF
-if test -z "$F90" ; then
-   F90=f90
+if test -z "$FC" ; then
+   FC=f90
 fi
 KINDVAL=""
-if $F90 -o kind kind.f >/dev/null 2>&1 ; then
+if $FC -o kind$EXEEXT kind.f >/dev/null 2>&1 ; then
     ./kind >/dev/null 2>&1
     if test -s k.out ; then 
         KINDVAL=`cat k.out`
     fi
 fi
-rm -f kind k.out kind.f kind.o
+rm -f kind$EXEEXT k.out kind.f kind.$OBJEXT
 if test -n "$KINDVAL" -a "$KINDVAL" != "-1" ; then
    AC_MSG_RESULT($KINDVAL)
    MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
@@ -777,9 +729,9 @@ define(PAC_FUNC_STRERROR,[
         char *s = strerror(5);
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -o conftest conftest.c >> config.log 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -o conftest$EXEXT conftest.c >> config.log 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
      AC_DEFINE(HAVE_STRERROR,,[Define if strerror available])
   else
@@ -796,16 +748,16 @@ changequote(,)
         }
 EOF
 changequote([,])
-     rm -f conftest
-     $CC $USER_CFLAGS -o conftest conftest.c > config.log 2>&1
-     if test -x conftest ; then
+     rm -f conftest$EXEEXT
+     $CC $USER_CFLAGS -o conftest$EXEEXT conftest.c > config.log 2>&1
+     if test -x conftest$EXEEXT ; then
         AC_MSG_RESULT(yes)
         AC_DEFINE(HAVE_SYSERRLIST,,[Define if syserrlist available])
      else
         AC_MSG_RESULT(no)
      fi
   fi
-  rm -f conftest conftest.c
+  rm -f conftest$EXEEXT conftest.c
 ])dnl
 dnl
 define(PAC_TEST_MPIR_STATUS_SET_BYTES,[
@@ -824,18 +776,18 @@ define(PAC_TEST_MPIR_STATUS_SET_BYTES,[
          MPI_Finalize(); 
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
      AC_DEFINE(HAVE_STATUS_SET_BYTES,,[Define if status set bytes available])
   else
      AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 define(PAC_TEST_MPIU_FUNCS,[
-  AC_MSG_CHECKING(support for MPICH2 memory macros)
+  AC_MSG_CHECKING(support for MPICH memory macros)
   rm -f mpitest.c
   cat > mpitest.c <<EOF
 #include "mpi.h"
@@ -845,15 +797,15 @@ define(PAC_TEST_MPIU_FUNCS,[
       MPIU_Free(NULL);
   }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
-     AC_DEFINE(HAVE_MPIU_FUNCS,1,[Define if MPICH2 memory tracing macros defined])
+     AC_DEFINE(HAVE_MPIU_FUNCS,1,[Define if MPICH memory tracing macros defined])
   else
      AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl
 dnl
 define(PAC_TEST_MPI_GREQUEST,[
@@ -870,14 +822,14 @@ define(PAC_TEST_MPI_GREQUEST,[
        MPI_Finalize();
      }
 EOF
-  rm -f conftest
-  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
-  if test -x conftest ; then
+  rm -f conftest$EXEEXT
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest$EXEEXT mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest$EXEEXT ; then
      AC_MSG_RESULT(yes)
      AC_DEFINE(HAVE_MPI_GREQUEST,1,[Define if generalized requests avaliable])
      DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST 1"
   else
      AC_MSG_RESULT(no)
   fi
-  rm -f conftest mpitest.c
+  rm -f conftest$EXEEXT mpitest.c
 ])dnl

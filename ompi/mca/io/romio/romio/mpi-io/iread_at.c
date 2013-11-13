@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -23,8 +23,12 @@
 #include "mpioprof.h"
 #endif
 
+#ifdef HAVE_MPI_GREQUEST
+#include "mpiu_greq.h"
+#endif
+
 /*@
-    MPI_File_iread_at - Nonblocking read using explict offset
+    MPI_File_iread_at - Nonblocking read using explicit offset
 
 Input Parameters:
 . fh - file handle (handle)
@@ -38,13 +42,7 @@ Output Parameters:
 
 .N fortran
 @*/
-#ifdef HAVE_MPI_GREQUEST
-#include "mpiu_greq.h"
-#endif
-
-
-int MPI_File_iread_at(MPI_File mpi_fh, MPI_Offset offset, void *buf,
-                      int count, MPI_Datatype datatype, 
+int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype,
                       MPIO_Request *request)
 {
     int error_code;
@@ -53,21 +51,21 @@ int MPI_File_iread_at(MPI_File mpi_fh, MPI_Offset offset, void *buf,
 #ifdef MPI_hpux
     int fl_xmpi;
 
-    HPMP_IO_START(fl_xmpi, BLKMPIFILEIREADAT, TRDTSYSTEM, mpi_fh, datatype,
+    HPMP_IO_START(fl_xmpi, BLKMPIFILEIREADAT, TRDTSYSTEM, fh, datatype,
 		  count);
 #endif /* MPI_hpux */
 
 
-    error_code = MPIOI_File_iread(mpi_fh, offset, ADIO_EXPLICIT_OFFSET, buf,
+    error_code = MPIOI_File_iread(fh, offset, ADIO_EXPLICIT_OFFSET, buf,
 				  count, datatype, myname, request);
 
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(mpi_fh, error_code);
+	error_code = MPIO_Err_return_file(fh, error_code);
     /* --END ERROR HANDLING-- */
 
 #ifdef MPI_hpux
-    HPMP_IO_END(fl_xmpi, mpi_fh, datatype, count);
+    HPMP_IO_END(fl_xmpi, fh, datatype, count);
 #endif /* MPI_hpux */
 
     return error_code;

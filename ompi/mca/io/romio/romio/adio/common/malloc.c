@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -45,7 +45,7 @@ void *ADIOI_Malloc_fn(size_t size, int lineno, const char *fname)
     new = (void *) memalign(XFS_MEMALIGN, size);
 #else
 #ifdef HAVE_MPIU_FUNCS
-    new = (void *) MPIU_Malloc(size);
+    new = (void *) MPIU_trmalloc(size, lineno, fname);
 #else
     new = (void *) malloc(size);
 #endif
@@ -64,7 +64,7 @@ void *ADIOI_Calloc_fn(size_t nelem, size_t elsize, int lineno, const char *fname
     void *new;
 
 #ifdef HAVE_MPIU_FUNCS
-    new = (void *) MPIU_Calloc(nelem, elsize);
+    new = (void *) MPIU_trcalloc(nelem, elsize, lineno, fname);
 #else
     new = (void *) calloc(nelem, elsize);
 #endif
@@ -82,7 +82,7 @@ void *ADIOI_Realloc_fn(void *ptr, size_t size, int lineno, const char *fname)
     void *new;
 
 #ifdef HAVE_MPIU_FUNCS
-    new = (void *) MPIU_Realloc(ptr, size);
+    new = (void *) MPIU_trrealloc(ptr, size, lineno, fname);
 #else
     new = (void *) realloc(ptr, size);
 #endif
@@ -104,7 +104,7 @@ void ADIOI_Free_fn(void *ptr, int lineno, const char *fname)
     }
 
 #ifdef HAVE_MPIU_FUNCS
-    MPIU_Free(ptr);
+    MPIU_trfree(ptr, lineno, fname);
 #else
     free(ptr);
 #endif

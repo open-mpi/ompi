@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   Copyright (C) 2004 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -83,8 +83,6 @@ int MPIO_Err_return_comm(MPI_Comm mpi_comm, int error_code)
     {
 	MPI_Abort(mpi_comm, 1);
     }
-    else
-    {
-	return error_code;
-    }
+
+    return error_code;
 }

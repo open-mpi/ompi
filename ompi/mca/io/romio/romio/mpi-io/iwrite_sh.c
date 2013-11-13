@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -41,11 +41,11 @@ Output Parameters:
 #include "mpiu_greq.h"
 #endif
 
-int MPI_File_iwrite_shared(MPI_File mpi_fh, void *buf, int count, 
+int MPI_File_iwrite_shared(MPI_File fh, const void *buf, int count,
 			   MPI_Datatype datatype, MPIO_Request *request)
 {
     int error_code, bufsize, buftype_is_contig, filetype_is_contig;
-    ADIO_File fh;
+    ADIO_File adio_fh;
     int datatype_size, incr;
     ADIO_Status status;
     ADIO_Offset off, shared_fp;
@@ -53,60 +53,60 @@ int MPI_File_iwrite_shared(MPI_File mpi_fh, void *buf, int count,
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
-    fh = MPIO_File_resolve(mpi_fh);
+    adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
-    MPIO_CHECK_COUNT(fh, count, myname, error_code);
-    MPIO_CHECK_DATATYPE(fh, datatype, myname, error_code);
+    MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
+    MPIO_CHECK_COUNT(adio_fh, count, myname, error_code);
+    MPIO_CHECK_DATATYPE(adio_fh, datatype, myname, error_code);
     /* --END ERROR HANDLING-- */
 
     MPI_Type_size(datatype, &datatype_size);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_INTEGRAL_ETYPE(fh, count, datatype_size, myname, error_code);
-    MPIO_CHECK_FS_SUPPORTS_SHARED(fh, myname, error_code);
-    MPIO_CHECK_COUNT_SIZE(fh, count, datatype_size, myname, error_code);
+    MPIO_CHECK_INTEGRAL_ETYPE(adio_fh, count, datatype_size, myname, error_code);
+    MPIO_CHECK_FS_SUPPORTS_SHARED(adio_fh, myname, error_code);
+    MPIO_CHECK_COUNT_SIZE(adio_fh, count, datatype_size, myname, error_code);
     /* --END ERROR HANDLING-- */
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
-    ADIOI_Datatype_iscontig(fh->filetype, &filetype_is_contig);
+    ADIOI_Datatype_iscontig(adio_fh->filetype, &filetype_is_contig);
 
-    ADIOI_TEST_DEFERRED(fh, myname, &error_code);
+    ADIOI_TEST_DEFERRED(adio_fh, myname, &error_code);
 
-    incr = (count*datatype_size)/fh->etype_size;
-    ADIO_Get_shared_fp(fh, incr, &shared_fp, &error_code);
+    incr = (count*datatype_size)/adio_fh->etype_size;
+    ADIO_Get_shared_fp(adio_fh, incr, &shared_fp, &error_code);
     if (error_code != MPI_SUCCESS) {
 	/* note: ADIO_Get_shared_fp should have set up error code already? */
-	MPIO_Err_return_file(fh, error_code);
+	MPIO_Err_return_file(adio_fh, error_code);
     }
 
     /* contiguous or strided? */
     if (buftype_is_contig && filetype_is_contig) {
     /* convert sizes to bytes */
 	bufsize = datatype_size * count;
-	off = fh->disp + fh->etype_size * shared_fp;
-        if (!(fh->atomicity))
-	    ADIO_IwriteContig(fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
+	off = adio_fh->disp + adio_fh->etype_size * shared_fp;
+        if (!(adio_fh->atomicity))
+	    ADIO_IwriteContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
 		            off, request, &error_code); 
 	else {
             /* to maintain strict atomicity semantics with other concurrent
               operations, lock (exclusive) and call blocking routine */
 
-            if (fh->file_system != ADIO_NFS)
-                ADIOI_WRITE_LOCK(fh, off, SEEK_SET, bufsize);
+            if (adio_fh->file_system != ADIO_NFS)
+                ADIOI_WRITE_LOCK(adio_fh, off, SEEK_SET, bufsize);
 
-            ADIO_WriteContig(fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
+            ADIO_WriteContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
 			     off, &status, &error_code);  
 
-            if (fh->file_system != ADIO_NFS)
-                ADIOI_UNLOCK(fh, off, SEEK_SET, bufsize);
+            if (adio_fh->file_system != ADIO_NFS)
+                ADIOI_UNLOCK(adio_fh, off, SEEK_SET, bufsize);
 
-	    MPIO_Completed_request_create(&fh, bufsize, &error_code, request);
+	    MPIO_Completed_request_create(&adio_fh, bufsize, &error_code, request);
 	}
     }
     else
-	ADIO_IwriteStrided(fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
+	ADIO_IwriteStrided(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
 			   shared_fp, request, &error_code); 
 
 fn_exit:

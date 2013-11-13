@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2001 University of Chicago. 
@@ -66,6 +66,8 @@ int ADIOI_cb_bcast_rank_map(ADIO_File fd)
 {
     int my_rank;
     char *value;
+	int error_code = MPI_SUCCESS;
+	static char myname[] = "ADIOI_cb_bcast_rank_map";
 
     MPI_Bcast(&(fd->hints->cb_nodes), 1, MPI_INT, 0, fd->comm);
     if (fd->hints->cb_nodes > 0) {
@@ -73,7 +75,13 @@ int ADIOI_cb_bcast_rank_map(ADIO_File fd)
 	if (my_rank != 0) {
 	    fd->hints->ranklist = ADIOI_Malloc(fd->hints->cb_nodes*sizeof(int));
 	    if (fd->hints->ranklist == NULL) {
-		/* NEED TO HANDLE ENOMEM */
+                error_code = MPIO_Err_create_code(error_code,
+                                                  MPIR_ERR_RECOVERABLE,
+                                                  myname,
+                                                  __LINE__,
+                                                  MPI_ERR_OTHER,
+                                                  "**nomem2",0);
+                return error_code;
 	    }
 	}
 	MPI_Bcast(fd->hints->ranklist, fd->hints->cb_nodes, MPI_INT, 0, 
@@ -119,7 +127,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
     }
     else {
 	MPI_Attr_get(comm, ADIOI_cb_config_list_keyval, (void *) &array, &found);
-	if (found) {
+        if (found) {
             ADIOI_Assert(array != NULL);
 	    *arrayp = array;
 	    return 0;

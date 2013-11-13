@@ -95,7 +95,7 @@ by \\ [2ex]
 \begin{abstract}
 \noindent
 ROMIO is a high-performance, portable implementation of MPI-IO (the
-I/O chapter in \mbox{MPI-2}).
+I/O chapter in the \mbox{MPI Standard}).
 This document describes the internals of the ROMIO implementation.
 \end{abstract}
 
@@ -121,7 +121,7 @@ where those components are located in the ROMIO source tree.
 
 The ROMIO directory structure consists of two main branches, the MPI-IO branch
 (mpi-io) and the ADIO branch (adio).  The MPI-IO branch contains code that
-implements the functions defined in the MPI-2 specification for I/O, such as
+implements the functions defined in the MPI specification for I/O, such as
 MPI\_File\_open.  These functions are then written in terms of other functions
 that provide an abstract interface to I/O resources, the ADIO functions.
 There is an additional glue subdirectory in the MPI-IO branch that defines
@@ -369,7 +369,7 @@ Currently ROMIO implements shared file pointers by storing the file pointer
 value in a separate file...
 
 Note that the ROMIO team has devised a portable method for implementing shared
-file pointers using only MPI-1 and MPI-2 functions.  However, this method has
+file pointers using only MPI functions.  However, this method has
 not yet been implemented in ROMIO.
 
 file name is selected at end of mpi-io/open.c.

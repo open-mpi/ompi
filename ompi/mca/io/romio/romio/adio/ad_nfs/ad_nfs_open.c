@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -91,6 +91,19 @@ void ADIOI_NFS_Open(ADIO_File fd, int *error_code)
 					       __LINE__, MPI_ERR_READ_ONLY,
 					       "**ioneedrd", 0);
 	}
+    else if(errno == EISDIR) {
+        *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                           MPIR_ERR_RECOVERABLE, myname,
+                           __LINE__, MPI_ERR_BAD_FILE,
+                           "**filename", 0);
+    }
+    else if(errno == EEXIST) {
+        *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+                           MPIR_ERR_RECOVERABLE, myname,
+                           __LINE__, MPI_ERR_FILE_EXISTS,
+                           "**fileexist", 0);
+
+    }
 	else {
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
 					       MPIR_ERR_RECOVERABLE, myname,
