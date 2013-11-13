@@ -32,7 +32,7 @@ struct mca_mpool_common_cuda_reg_t {
 };
 typedef struct mca_mpool_common_cuda_reg_t mca_mpool_common_cuda_reg_t;
 extern bool mca_common_cuda_enabled;
-#define OMPI_GDR_SUPPORT 0
+#define OMPI_GDR_SUPPORT 1
 
 OMPI_DECLSPEC int mca_common_cuda_register_mca_variables(void);
 

@@ -38,6 +38,7 @@
 #define MCA_MPOOL_FLAGS_INVALID 0x8
 #define MCA_MPOOL_FLAGS_SO_MEM 0x10
 #define MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM 0x20
+#define MCA_MPOOL_FLAGS_CUDA_GPU_MEM 0x40
 
 struct mca_mpool_base_resources_t;
 
@@ -49,6 +50,9 @@ struct mca_mpool_base_registration_t {
     unsigned char* alloc_base;
     int32_t ref_count; 
     uint32_t flags;
+#if OPAL_CUDA_SUPPORT_60
+    unsigned long long gpu_bufID;
+#endif /* OPAL_CUDA_SUPPORT_60 */
 };  
 
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 

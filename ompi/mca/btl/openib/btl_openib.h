@@ -311,9 +311,11 @@ struct mca_btl_openib_component_t {
     size_t memalign_threshold;
     void* (*previous_malloc_hook)(size_t __size, const void*);
 #endif
-#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
+#if OPAL_CUDA_SUPPORT
     bool cuda_async_send;
     bool cuda_async_recv;
+    bool cuda_have_gdr;
+    bool cuda_want_gdr;
 #endif /* OPAL_CUDA_SUPPORT */
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
     bool rroce_enable;

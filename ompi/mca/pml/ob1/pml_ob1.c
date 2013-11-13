@@ -366,6 +366,46 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
             rc = OMPI_ERR_BAD_PARAM;
             goto cleanup_and_return;
         }
+#if OPAL_CUDA_SUPPORT_60
+        /* If size is SIZE_MAX, then we know we want to set this to the minimum possible
+         * value which is the size of the PML header. */
+        if (SIZE_MAX == sm->btl_module->btl_cuda_eager_limit) {
+            sm->btl_module->btl_cuda_eager_limit = sizeof(mca_pml_ob1_hdr_t);
+        }
+        if (0 != sm->btl_module->btl_cuda_eager_limit) {
+            if (sm->btl_module->btl_cuda_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
+                opal_show_help("help-mpi-pml-ob1.txt", "cuda_eager_limit_too_small",
+                               true, 
+                               sm->btl_component->btl_version.mca_component_name,
+                               ompi_process_info.nodename,
+                               sm->btl_component->btl_version.mca_component_name,
+                               sm->btl_module->btl_cuda_eager_limit,
+                               sm->btl_component->btl_version.mca_component_name,
+                               sizeof(mca_pml_ob1_hdr_t),
+                               sm->btl_component->btl_version.mca_component_name);
+                rc = OMPI_ERR_BAD_PARAM;
+                goto cleanup_and_return;
+            }
+        }
+        if (0 == sm->btl_module->btl_cuda_rdma_limit) {
+            /* All is fine.  0 means to ignore value so set to SIZE_MAX */
+            sm->btl_module->btl_cuda_rdma_limit = SIZE_MAX;
+        } else {
+            if (sm->btl_module->btl_cuda_rdma_limit < sm->btl_module->btl_cuda_eager_limit) {
+                opal_show_help("help-mpi-pml-ob1.txt", "cuda_rdma_limit_too_small",
+                               true, 
+                               sm->btl_component->btl_version.mca_component_name,
+                               ompi_process_info.nodename,
+                               sm->btl_component->btl_version.mca_component_name,
+                               sm->btl_module->btl_cuda_rdma_limit,
+                               sm->btl_component->btl_version.mca_component_name,
+                               sm->btl_module->btl_cuda_eager_limit,
+                               sm->btl_component->btl_version.mca_component_name);
+                rc = OMPI_ERR_BAD_PARAM;
+                goto cleanup_and_return;
+            }
+        }
+#endif /* OPAL_CUDA_SUPPORT_60 */
     }
 
 
