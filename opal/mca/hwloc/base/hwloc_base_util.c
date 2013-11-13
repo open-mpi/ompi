@@ -1856,7 +1856,7 @@ static int dist_cmp_fn (opal_list_item_t **a, opal_list_item_t **b)
     orte_rmaps_numa_node_t *aitem = *((orte_rmaps_numa_node_t **) a);
     orte_rmaps_numa_node_t *bitem = *((orte_rmaps_numa_node_t **) b);
 
-    if (bitem->dist_from_closed > aitem->dist_from_closed) {
+    if (aitem->dist_from_closed > bitem->dist_from_closed) {
         return 1;
     } else if( aitem->dist_from_closed == bitem->dist_from_closed ) {
         return 0;

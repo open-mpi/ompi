@@ -212,17 +212,6 @@ static int mindist_map(orte_job_t *jdata)
                 goto error;
             }
             
-            /* add the node to the map, if needed */
-            if (!node->mapped) {
-                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto error;
-                }
-                node->mapped = true;
-                OBJ_RETAIN(node);  /* maintain accounting on object */
-                jdata->map->num_nodes++;
-            }
-
             /* get the number of available pus */
             if (opal_hwloc_use_hwthreads_as_cpus) {
                 total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
@@ -250,12 +239,14 @@ static int mindist_map(orte_job_t *jdata)
             if (ret > 1) {
                 orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-hca-devices",
                         true, ret, node->name);
-                rc = ORTE_ERR_SILENT;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                rc = ORTE_ERR_TAKE_NEXT_OPTION;
                 goto error;
             } else if (ret < 0) {
                 orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:device-not-found",
                         true, orte_rmaps_base.device, node->name);
-                rc = ORTE_ERR_SILENT;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                rc = ORTE_ERR_TAKE_NEXT_OPTION;
                 goto error;
             }
             if (opal_list_get_size(&numa_list) > 0) {
@@ -293,7 +284,8 @@ static int mindist_map(orte_job_t *jdata)
                 /* don't have info about pci locality */
                 orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:no-pci-locality-info",
                         true, node->name);
-                rc = ORTE_ERR_SILENT;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                rc = ORTE_ERR_TAKE_NEXT_OPTION;
                 goto error;
             }
             while (NULL != (numa_item = opal_list_remove_first(&numa_list))) {
@@ -306,6 +298,18 @@ static int mindist_map(orte_job_t *jdata)
                     num_procs_to_assign--;
                 }
             }
+            
+            /* add the node to the map, if needed */
+            if (!node->mapped) {
+                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto error;
+                }
+                node->mapped = true;
+                OBJ_RETAIN(node);  /* maintain accounting on object */
+                jdata->map->num_nodes++;
+            }
+
         }
 
         /* If we get to the end of all the nodes and still have procs remaining, then
