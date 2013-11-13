@@ -661,9 +661,9 @@ int orte_show_help_norender(const char *filename, const char *topic,
             /* pack the resulting string */
             opal_dss.pack(buf, &output, 1, OPAL_STRING);
             /* send it to the HNP */
-            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                                  ORTE_RML_TAG_SHOW_HELP,
-                                                  orte_rml_send_callback, NULL))) {
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                                              ORTE_RML_TAG_SHOW_HELP,
+                                                              orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
             } else {
@@ -727,9 +727,9 @@ int orte_show_help_suppress(const char *filename, const char *topic)
             /* pack the flag that we DO NOT have a string */
             opal_dss.pack(buf, &have_output, 1, OPAL_INT8);
             /* send it to the HNP */
-            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                                  ORTE_RML_TAG_SHOW_HELP,
-                                                  orte_rml_send_callback, NULL))) {
+            if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                                              ORTE_RML_TAG_SHOW_HELP,
+                                                              orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
             }
