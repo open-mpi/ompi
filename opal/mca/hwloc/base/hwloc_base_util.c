@@ -527,7 +527,7 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
 {
     opal_hwloc_obj_data_t *data;
     int i;
-    unsigned int cnt;
+    unsigned int cnt = 0;
     hwloc_cpuset_t cpuset;
 
     /* if the object is a hwthread (i.e., HWLOC_OBJ_PU),
@@ -1624,7 +1624,7 @@ static char *bitmap2rangestr(int bitmap)
             } else {
                 /* A range just ended; output it */
                 if (!first) {
-                    strncat(ret, ",", sizeof(ret) - strlen(ret));
+                    strncat(ret, ",", sizeof(ret) - strlen(ret) - 1);
                     first = false;
                 }
 
@@ -1634,7 +1634,7 @@ static char *bitmap2rangestr(int bitmap)
                 } else {
                     snprintf(tmp, stmp, "%d-%d", range_start, range_end);
                 }
-                strncat(ret, tmp, sizeof(ret) - strlen(ret));
+                strncat(ret, tmp, sizeof(ret) - strlen(ret) - 1);
 
                 range_start = -999;
             }
@@ -1651,7 +1651,7 @@ static char *bitmap2rangestr(int bitmap)
     /* If we ended the bitmap with a range open, output it */
     if (range_start >= 0) {
         if (!first) {
-            strncat(ret, ",", sizeof(ret) - strlen(ret));
+            strncat(ret, ",", sizeof(ret) - strlen(ret) - 1);
             first = false;
         }
 
@@ -1661,7 +1661,7 @@ static char *bitmap2rangestr(int bitmap)
         } else {
             snprintf(tmp, stmp, "%d-%d", range_start, range_end);
         }
-        strncat(ret, tmp, sizeof(ret) - strlen(ret));
+        strncat(ret, tmp, sizeof(ret) - strlen(ret) - 1);
     }
 
     return ret;
@@ -1874,7 +1874,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
     int close_node_index;
     float latency;
     unsigned int j;
-    unsigned int depth;
+    int depth;
     unsigned i;
 
     for (device_obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_OS_DEVICE, 0); device_obj; device_obj = hwloc_get_next_osdev(topo, device_obj)) {
@@ -1900,7 +1900,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
                 if (NULL ==  distances) {
                     /* we can try to find distances under group object. This info can be there. */
                     depth = hwloc_get_type_depth(topo, HWLOC_OBJ_NODE);
-                    if (depth < 0) {
+                    if (HWLOC_TYPE_DEPTH_UNKNOWN == depth) {
                         opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                                 "hwloc:base:get_sorted_numa_list: There is no information about distances on the node.");
                         return;
@@ -1910,7 +1910,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
                         obj = root->children[i];
                         if (obj->distances_count > 0) {
                             for(j = 0; j < obj->distances_count; j++) {
-                                if (obj->distances[j]->relative_depth + 1 == depth) {
+                                if (obj->distances[j]->relative_depth + 1 == (unsigned) depth) {
                                     distances = obj->distances[j];
                                     break;
                                 }
