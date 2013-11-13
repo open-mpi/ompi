@@ -159,7 +159,7 @@ int opal_compress_gzip_decompress_nb(char * cname, char **fname, pid_t *child_pi
     char * dir_cname = NULL;
     pid_t loc_pid = 0;
     int status;
-    bool is_tar;
+    bool is_tar = false;
 
     if( 0 == strncmp(&(cname[strlen(cname)-7]), ".tar.gz", strlen(".tar.gz")) ) {
         is_tar = true;
