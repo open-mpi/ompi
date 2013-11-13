@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -37,20 +37,20 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_position(MPI_File mpi_fh, MPI_Offset *offset)
+int MPI_File_get_position(MPI_File fh, MPI_Offset *offset)
 {
     int error_code;
-    ADIO_File fh;
+    ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_GET_POSITION";
 
-    fh = MPIO_File_resolve(mpi_fh);
+    adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
-    MPIO_CHECK_NOT_SEQUENTIAL_MODE(fh, myname, error_code);
+    MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
+    MPIO_CHECK_NOT_SEQUENTIAL_MODE(adio_fh, myname, error_code);
     /* --END ERROR HANDLING-- */
 
-    ADIOI_Get_position(fh, offset);
+    ADIOI_Get_position(adio_fh, offset);
 
 fn_exit:
     return MPI_SUCCESS;

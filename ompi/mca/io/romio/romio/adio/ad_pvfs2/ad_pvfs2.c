@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2003 University of Chicago. 
@@ -23,8 +23,8 @@ struct ADIOI_Fns_struct ADIO_PVFS2_operations = {
     ADIOI_PVFS2_ReadStrided, /* ReadStrided */
     ADIOI_PVFS2_WriteStrided, /* WriteStrided */
     ADIOI_PVFS2_Close, /* Close */
-    ADIOI_FAKE_IreadContig, /* IreadContig */
-    ADIOI_FAKE_IwriteContig, /* IwriteContig */
+    ADIOI_PVFS2_IReadContig, /* IreadContig */
+    ADIOI_PVFS2_IWriteContig, /* IwriteContig */
     ADIOI_FAKE_IODone, /* ReadDone */
     ADIOI_FAKE_IODone, /* WriteDone */
     ADIOI_FAKE_IOComplete, /* ReadComplete */

@@ -10,6 +10,7 @@ int ADIOI_NFS_Feature(ADIO_File fd, int flag)
                 case ADIO_DATA_SIEVING_WRITES:
 			return 1;
                 case ADIO_SCALABLE_OPEN:
+		case ADIO_UNLINK_AFTER_CLOSE:
                 default:
                         return 0;
         }

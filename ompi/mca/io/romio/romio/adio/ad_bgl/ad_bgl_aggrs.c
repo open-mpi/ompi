@@ -484,11 +484,17 @@ void ADIOI_BGL_GPFS_Calc_file_domains(ADIO_Offset *st_offsets,
      * 320k request is a (system-dependent) sweet spot 
      
     This is from the common code - the new min_fd_size parm that we didn't implement. 
-    (And common code uses a different declaration of fd_size so beware) 
+    (And common code uses a different declaration of fd_size so beware)  */
      
+
+    /* this is not entirely sufficient on BlueGene: we must be mindful of
+     * imbalance over psets.  the hint processing code has already picked, say,
+     * 8 processors per pset, so if we go increasing fd_size we'll end up with
+     * some psets with 8 processors and some psets with none.  */
+    /*
     if (fd_size < min_fd_size)
         fd_size = min_fd_size;
-    */
+	*/
     fd_size              = (ADIO_Offset *) ADIOI_Malloc(nprocs_for_coll * sizeof(ADIO_Offset));
     *fd_start_ptr        = (ADIO_Offset *) ADIOI_Malloc(nprocs_for_coll * sizeof(ADIO_Offset));
     *fd_end_ptr          = (ADIO_Offset *) ADIOI_Malloc(nprocs_for_coll * sizeof(ADIO_Offset));
@@ -500,9 +506,16 @@ void ADIOI_BGL_GPFS_Calc_file_domains(ADIO_Offset *st_offsets,
     ADIO_Offset naggs_large   = n_gpfs_blk - naggs * (n_gpfs_blk/naggs);
     ADIO_Offset naggs_small   = naggs - naggs_large;
 
+    /* nb_cn_small * blksize: evenly split file domain among processors:
+     *      equivalent to fd_gpfs_rnage/naggs
+     * (nb_cn_small+1) * blksize: keeps file domain at least 'blksize' big
+     */
     for (i=0; i<naggs; i++)
         if (i < naggs_small) fd_size[i] = nb_cn_small     * blksize;
-                        else fd_size[i] = (nb_cn_small+1) * blksize;
+			else fd_size[i] = (nb_cn_small+1) * blksize;
+			/*potential optimization: if n_gpfs_blk smalller than
+			 * naggs, slip in some zero-sized file
+			 * domains to spread the work across all psets.  */
 
 #   if AGG_DEBUG
      DBG_FPRINTF(stderr,"%s(%d): "

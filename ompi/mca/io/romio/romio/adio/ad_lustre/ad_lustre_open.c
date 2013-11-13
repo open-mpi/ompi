@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /*
  *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
@@ -22,7 +22,7 @@ void ADIOI_LUSTRE_Open(ADIO_File fd, int *error_code)
     struct lov_user_md *lum = NULL;
     char *value;
 
-#if defined(MPICH2) || !defined(PRINT_ERR_MSG)
+#if defined(MPICH) || !defined(PRINT_ERR_MSG)
     static char myname[] = "ADIOI_LUSTRE_OPEN";
 #endif
 

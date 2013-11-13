@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -48,12 +48,12 @@ void ADIOI_Print_flatlist_node(ADIOI_Flatlist_node *flatlist_node_p)
     {
 	if (i % 5 == 0 && i != 0)
 	{
-	    fprintf(stderr, "%d=(%Ld,%Ld)\n", i, flatlist_node_p->indices[i],
-		    flatlist_node_p->blocklens[i]);
+	    fprintf(stderr, "%d=(%lld,%lld)\n", i, (long long)flatlist_node_p->indices[i],
+		    (long long)flatlist_node_p->blocklens[i]);
 	}
 	else
-	    fprintf(stderr, "%d=(%Ld,%Ld) ", i, flatlist_node_p->indices[i],
-		    flatlist_node_p->blocklens[i]);
+	    fprintf(stderr, "%d=(%lld,%lld) ", i, (long long)flatlist_node_p->indices[i],
+		    (long long)flatlist_node_p->blocklens[i]);
     }
     fprintf(stderr, "\n");
 }
@@ -133,7 +133,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
     /* parameters for datatypes */
     ADIOI_Flatlist_node *flat_mem_p = NULL, *flat_file_p = NULL;
     int memtype_sz = -1;
-    int memtype_is_contig = -1, filetype_is_contig = -1;
+    int memtype_is_contig = -1;
     int filetype_sz = -1;
 
 #ifdef AGGREGATION_PROFILE
@@ -159,7 +159,6 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
     MPI_Type_extent(fd->filetype, &filetype_extent);
     MPI_Type_size(fd->filetype, &filetype_sz);
     if (filetype_extent == filetype_sz) {
-	filetype_is_contig = 1;
 	flat_file_p = ADIOI_Add_contig_flattened(fd->filetype);
 	flat_file_p->blocklens[0] = memtype_sz*count;
 	filetype_extent = memtype_sz*count;
@@ -397,7 +396,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 			  INDICES, fd->comm, &recv_req_arr[j]);
 		j++;
 		MPI_Irecv(client_file_view_state_arr[i].flat_type_p->blocklens,
-			  recv_count_arr[i].count, MPI_INT, i, 
+			  recv_count_arr[i].count, ADIO_OFFSET, i,
 			  BLOCK_LENS, fd->comm, &recv_req_arr[j]);
 		j++;
 	    }
@@ -413,7 +412,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
                       INDICES, fd->comm, &send_req_arr[j]);
 	        j++;
 	        MPI_Isend(flat_file_p->blocklens,         
-		      send_count_arr[i].count, MPI_INT, i,
+		      send_count_arr[i].count, ADIO_OFFSET, i,
                       BLOCK_LENS, fd->comm, &send_req_arr[j]);
 	        j++;
 	    }
@@ -428,7 +427,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 		      &send_req_arr[j]);
 	        j++;
 	        MPI_Isend(flat_file_p->blocklens,         
-		      send_count_arr[i].count, MPI_INT,
+		      send_count_arr[i].count, ADIO_OFFSET,
 		      fd->hints->ranklist[i], BLOCK_LENS, fd->comm,
 		      &send_req_arr[j]);
 	        j++;

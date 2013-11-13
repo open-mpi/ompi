@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -35,18 +35,18 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_group(MPI_File mpi_fh, MPI_Group *group)
+int MPI_File_get_group(MPI_File fh, MPI_Group *group)
 {
     int error_code;
-    ADIO_File fh;
+    ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_GET_GROUP";
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
-    fh = MPIO_File_resolve(mpi_fh);
+    adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
     /* --END ERROR HANDLING-- */
 
 
@@ -54,7 +54,7 @@ int MPI_File_get_group(MPI_File mpi_fh, MPI_Group *group)
      * with deferred open this might not be the group of processes that
      * actually opened the file from the file system's perspective
      */
-    error_code = MPI_Comm_group(fh->comm, group);
+    error_code = MPI_Comm_group(adio_fh->comm, group);
 
 fn_exit:
     MPIU_THREAD_CS_EXIT(ALLFUNC,);

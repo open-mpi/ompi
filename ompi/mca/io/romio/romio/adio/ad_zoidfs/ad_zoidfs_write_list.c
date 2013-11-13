@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- 
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab 
  * 
  *   Copyright (C) 2008 University of Chicago. 
@@ -86,6 +86,9 @@ void ADIOI_ZOIDFS_WriteStrided(ADIO_File fd, void *buf, int count,
 
     MPI_Type_size(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
+#ifdef HAVE_STATUS_SET_BYTES
+	MPIR_Status_set_bytes(status, datatype, 0);
+#endif
 	*error_code = MPI_SUCCESS; 
 	return;
     }

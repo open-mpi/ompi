@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /*
  *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
@@ -42,7 +42,7 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
 					 ADIO_Offset *len_list, int *send_size,
 					 int *recv_size, ADIO_Offset off,
 					 int size, int *count,
-					 int *start_pos, int *partial_recv,
+					 int *start_pos,
 					 int *sent_to_proc, int nprocs,
 					 int myrank, int buftype_is_contig,
 					 int contig_access_count,
@@ -52,7 +52,9 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
 					 int *curr_to_proc,
 					 int *done_to_proc, int *hole,
 					 int iter, MPI_Aint buftype_extent,
-					 int *buf_idx, int *error_code);
+					 int *buf_idx,
+					 ADIO_Offset **srt_off, int **srt_len, int *srt_num,
+					 int *error_code);
 void ADIOI_Heap_merge(ADIOI_Access *others_req, int *count,
                       ADIO_Offset *srt_off, int *srt_len, int *start_pos,
                       int nprocs, int nprocs_recv, int total_elements);
@@ -308,7 +310,7 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
     int real_size, req_len, send_len;
     int *recv_curr_offlen_ptr, *recv_count, *recv_size;
     int *send_curr_offlen_ptr, *send_size;
-    int *partial_recv, *sent_to_proc, *recv_start_pos;
+    int *sent_to_proc, *recv_start_pos;
     int *send_buf_idx, *curr_to_proc, *done_to_proc;
     int *this_buf_idx;
     char *write_buf = NULL;
@@ -317,6 +319,11 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
     MPI_Aint buftype_extent;
     int stripe_size = striping_info[0], avail_cb_nodes = striping_info[2];
     int data_sieving = 0;
+    ADIO_Offset *srt_off = NULL;
+    int *srt_len = NULL;
+    int srt_num = 0;
+    ADIO_Offset block_offset;
+    int block_len;
 
     *error_code = MPI_SUCCESS;	/* changed below if error */
     /* only I/O errors are currently reported */
@@ -508,12 +515,14 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
         hole = data_sieving;
 	ADIOI_LUSTRE_W_Exchange_data(fd, buf, write_buf, flat_buf, offset_list,
                                      len_list, send_size, recv_size, off, real_size,
-                                     recv_count, recv_start_pos, partial_recv,
+                                     recv_count, recv_start_pos,
                                      sent_to_proc, nprocs, myrank,
                                      buftype_is_contig, contig_access_count,
                                      striping_info, others_req, send_buf_idx,
                                      curr_to_proc, done_to_proc, &hole, m,
-                                     buftype_extent, this_buf_idx, error_code);
+                                  buftype_extent, this_buf_idx,
+                                  &srt_off, &srt_len, &srt_num, error_code);
+
 	if (*error_code != MPI_SUCCESS)
             goto over;
 
@@ -537,22 +546,41 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
                                      ADIO_EXPLICIT_OFFSET, off, &status,
                                      error_code);
                 } else {
-                    for (i = 0; i < nprocs; i++) {
-                        if (others_req[i].count) {
-                            for (j = 0; j < others_req[i].count; j++) {
-                                if (others_req[i].offsets[j] < off + real_size &&
-                                    others_req[i].offsets[j] >= off) {
+                    block_offset = -1;
+                    block_len = 0;
+                    for (i = 0; i < srt_num; ++i) {
+                        if (srt_off[i] < off + real_size &&
+                            srt_off[i] >= off) {
+                            if (block_offset == -1) {
+                                block_offset = srt_off[i];
+                                block_len = srt_len[i];
+                            } else {
+                                if (srt_off[i] == block_offset + block_len) {
+                                    block_len += srt_len[i];
+                                } else {
                                     ADIO_WriteContig(fd,
-                                                     write_buf + others_req[i].offsets[j] - off,
-                                                     others_req[i].lens[j],
+                                                     write_buf + block_offset - off,
+                                                     block_len,
                                                      MPI_BYTE, ADIO_EXPLICIT_OFFSET,
-                                                     others_req[i].offsets[j], &status,
+                                                     block_offset, &status,
                                                      error_code);
 	                            if (*error_code != MPI_SUCCESS)
 		                        goto over;
+                                    block_offset = srt_off[i];
+                                    block_len = srt_len[i];
                                 }
                             }
                         }
+                    }
+                    if (block_offset != -1) {
+                        ADIO_WriteContig(fd,
+                                         write_buf + block_offset - off,
+                                         block_len,
+                                         MPI_BYTE, ADIO_EXPLICIT_OFFSET,
+                                         block_offset, &status,
+                                         error_code);
+                        if (*error_code != MPI_SUCCESS)
+                            goto over;
                     }
                 }
             }
@@ -562,6 +590,10 @@ static void ADIOI_LUSTRE_Exch_and_write(ADIO_File fd, void *buf,
         iter_st_off += max_size;
     }
 over:
+    if (srt_off)
+        ADIOI_Free(srt_off);
+    if (srt_len)
+        ADIOI_Free(srt_len);
     if (ntimes)
 	ADIOI_Free(write_buf);
     ADIOI_Free(recv_curr_offlen_ptr);
@@ -588,7 +620,7 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
 					 ADIO_Offset *len_list, int *send_size,
 					 int *recv_size, ADIO_Offset off,
 					 int size, int *count,
-					 int *start_pos, int *partial_recv,
+					 int *start_pos,
 					 int *sent_to_proc, int nprocs,
 					 int myrank, int buftype_is_contig,
 					 int contig_access_count,
@@ -598,15 +630,16 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
 					 int *curr_to_proc, int *done_to_proc,
                                          int *hole, int iter,
                                          MPI_Aint buftype_extent,
-					 int *buf_idx, int *error_code)
+					 int *buf_idx,
+                          ADIO_Offset **srt_off, int **srt_len, int *srt_num,
+                          int *error_code)
 {
     int i, j, nprocs_recv, nprocs_send, err;
     char **send_buf = NULL;
     MPI_Request *requests, *send_req;
     MPI_Datatype *recv_types;
     MPI_Status *statuses, status;
-    int *srt_len, sum, sum_recv;
-    ADIO_Offset *srt_off;
+    int sum_recv;
     int data_sieving = *hole;
     static char myname[] = "ADIOI_W_EXCHANGE_DATA";
 
@@ -638,20 +671,26 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
      * For this, merge the (sorted) offset lists others_req using a heap-merge.
      */
 
-    sum = 0;
+    *srt_num = 0;
     for (i = 0; i < nprocs; i++)
-	sum += count[i];
-    srt_off = (ADIO_Offset *) ADIOI_Malloc((sum + 1) * sizeof(ADIO_Offset));
-    srt_len = (int *) ADIOI_Malloc((sum + 1) * sizeof(int));
+        *srt_num += count[i];
+    if (*srt_off)
+        *srt_off = (ADIO_Offset *) ADIOI_Realloc(*srt_off, (*srt_num + 1) * sizeof(ADIO_Offset));
+    else
+        *srt_off = (ADIO_Offset *) ADIOI_Malloc((*srt_num + 1) * sizeof(ADIO_Offset));
+    if (*srt_len)
+        *srt_len = (int *) ADIOI_Realloc(*srt_len, (*srt_num + 1) * sizeof(int));
+    else
+        *srt_len = (int *) ADIOI_Malloc((*srt_num + 1) * sizeof(int));
     /* +1 to avoid a 0-size malloc */
 
-    ADIOI_Heap_merge(others_req, count, srt_off, srt_len, start_pos,
-		     nprocs, nprocs_recv, sum);
+    ADIOI_Heap_merge(others_req, count, *srt_off, *srt_len, start_pos,
+		     nprocs, nprocs_recv, *srt_num);
 
     /* check if there are any holes */
     *hole = 0;
-    for (i = 0; i < sum - 1; i++) {
-        if (srt_off[i] + srt_len[i] < srt_off[i + 1]) {
+    for (i = 0; i < *srt_num - 1; i++) {
+        if ((*srt_off)[i] + (*srt_len)[i] < (*srt_off)[i + 1]) {
             *hole = 1;
 	    break;
 	}
@@ -681,14 +720,10 @@ static void ADIOI_LUSTRE_W_Exchange_data(ADIO_File fd, void *buf,
                                                MPI_ERR_IO,
                                                "**ioRMWrdwr", 0);
             ADIOI_Free(recv_types);
-            ADIOI_Free(srt_off);
-            ADIOI_Free(srt_len);
             return;
         }
         // --END ERROR HANDLING--
     }
-    ADIOI_Free(srt_off);
-    ADIOI_Free(srt_len);
 
     nprocs_send = 0;
     for (i = 0; i < nprocs; i++)

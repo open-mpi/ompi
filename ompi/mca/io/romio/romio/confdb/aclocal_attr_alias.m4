@@ -161,8 +161,8 @@ dnl     nm -P -g pac_conftest_other.$OBJEXT | grep -i "mpifcmb"
 pac_c_attr_alias_main=no
 if test "$pac_c_attr_alias_other" = "yes" ; then
 
-#   Save LIBS for later restoration.
-    saved_LIBS="$LIBS"
+#   Push LIBS for later restoration.
+    PAC_PUSH_FLAG([LIBS])
     LIBS="pac_conftest_other.$OBJEXT $LIBS"
 
 #   Link the "other" __attribute__ object file.
@@ -207,8 +207,8 @@ dnl         nm -P -g pac_conftest_main$EXEEXT | grep -i "mpifcmb"
 dnl         cp conftest.$ac_ext pac_conftest_main.$ac_ext
     ])  dnl Endof AC_LINK_IFELSE
 
-# Restore the previously saved LIBS
-    LIBS="$saved_LIBS"
+# Restore the previously pushed LIBS
+    PAC_POP_FLAG([LIBS])
     rm -f pac_conftest_other.$OBJEXT
 fi dnl Endof if test "$pac_c_attr_alias_other" = "yes"
 
@@ -372,11 +372,11 @@ AC_LANG_PUSH([C])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([])],[
     cp conftest.$ac_ext pac_conftest.c
     PAC_RUNLOG([mv conftest.$OBJEXT pac_conftest.$OBJEXT])
-    saved_LIBS="$LIBS"
+    PAC_PUSH_FLAG([LIBS])
     LIBS="pac_conftest.$OBJEXT $LIBS"
     AC_LANG_PUSH([Fortran]) dnl AC_LANG_PUSH([Fortran 77])
-    saved_ac_link="$ac_link"
-    ac_link="`echo $saved_ac_link | sed -e 's|>.*$|> $pac_logfile 2>\&1|g'`"
+    PAC_PUSH_FLAG([ac_link])
+    ac_link="`echo $ac_link | sed -e 's|>.*$|> $pac_logfile 2>\&1|g'`"
     pac_logfile="pac_align0.log"
     rm -f $pac_logfile
     AC_LINK_IFELSE([],[
@@ -387,9 +387,9 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([])],[
     # Be sure NOT to remove the conftest.f which is still needed for later use.
     # rm -f conftest.$ac_ext 
     # Restore everything in autoconf that has been overwritten
-    ac_link="$saved_ac_link"
-    # restore previously saved LIBS
-    LIBS="$saved_LIBS"
+    PAC_POP_FLAG([ac_link])
+    # restore previously pushed LIBS
+    PAC_POP_FLAG([LIBS])
     AC_LANG_POP([Fortran]) dnl AC_LANG_POP([Fortran 77])
 ],[
     pac_f2c_alignedn_diffbase=no
@@ -430,11 +430,11 @@ extern mpif_cmblk_t   mpifcmb_ __attribute__ ((alias("mpifcmbr")));
         ],[
             cp conftest.$ac_ext pac_conftest.c
             PAC_RUNLOG([mv conftest.$OBJEXT pac_conftest.$OBJEXT])
-            saved_LIBS="$LIBS"
+	    PAC_PUSH_FLAG([LIBS])
             LIBS="pac_conftest.$OBJEXT $LIBS"
             AC_LANG_PUSH([Fortran]) dnl AC_LANG_PUSH([Fortran 77])
-            saved_ac_link="$ac_link"
-            ac_link="`echo $saved_ac_link | sed -e 's|>.*$|> $pac_logfile 2>\&1|g'`"
+	    PAC_PUSH_FLAG([ac_link])
+            ac_link="`echo $ac_link | sed -e 's|>.*$|> $pac_logfile 2>\&1|g'`"
             pac_logfile="pac_align1.log"
             rm -f $pac_logfile
             # Use conftest.f created in CONFTEST.
@@ -453,9 +453,9 @@ extern mpif_cmblk_t   mpifcmb_ __attribute__ ((alias("mpifcmbr")));
                 pac_attr_alignedn=no
             ])
             # Restore everything in autoconf that has been overwritten
-            ac_link="$saved_ac_link"
-            # restore previously saved LIBS
-            LIBS="$saved_LIBS"
+	    PAC_POP_FLAG([ac_link])
+            # restore previously pushed LIBS
+	    PAC_POP_FLAG([LIBS])
             AC_LANG_POP([Fortran]) dnl AC_LANG_POP([Fortran 77])
             # remove previously generated object file and C file.
             rm -f pac_conftest.$OBJEXT pac_conftest.c

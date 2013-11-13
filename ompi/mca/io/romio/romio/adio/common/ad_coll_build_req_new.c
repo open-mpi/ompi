@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -342,7 +342,7 @@ static inline int find_next_off(ADIO_File fd,
     ADIOI_Flatlist_node *tmp_flat_type_p = NULL;
     ADIO_Offset tmp_off = -1, fr_next_off = -1, fr_max_len = -1, 
 	tmp_fr_max_len = -1;
-    int ret = -1;
+    int ret = 0;
     flatten_state *tmp_state_p = NULL;
     ADIO_Offset tmp_st_off = 0, tmp_reg_sz = 0;
 #ifdef DTYPE_SKIP
@@ -438,7 +438,7 @@ static inline int find_next_off(ADIO_File fd,
 #ifdef AGGREGATION_PROFILE
     /* MPE_Log_event (5023, 0, NULL); */
 #endif
-    return 0;
+    return ret;
 }
 
 /* Upon completion of a full collective buffer, end of a file realm
@@ -905,7 +905,7 @@ int ADIOI_Build_client_reqs(ADIO_File fd,
     int cb_node_ct = fd->hints->cb_nodes;
     int *agg_ol_ct_arr = NULL;
     int *agg_ol_cur_ct_arr = NULL;
-    int agg_fr_idx = -1, tmp_agg_fr_idx = -1;
+    int tmp_agg_fr_idx = -1;
     int cur_off_proc = -1;
     int i = 0, j = 0;
     int agg_next_off_idx = -1;
@@ -1008,7 +1008,6 @@ int ADIOI_Build_client_reqs(ADIO_File fd,
 		if ((cur_off == -1) || 
 		    (cur_off > tmp_cur_off))
 		{
-		    agg_fr_idx = tmp_agg_fr_idx;
 		    cur_off_proc = j;
 		    cur_off = tmp_cur_off;
 		    cur_reg_max_len = tmp_cur_reg_max_len;

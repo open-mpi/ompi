@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -39,10 +39,7 @@ void ADIOI_GEN_Close(ADIO_File fd, int *error_code)
     fd->fd_direct = -1;
 
     if (err == -1 || derr == -1) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__, MPI_ERR_IO,
-					   "**io",
-					   "**io %s", strerror(errno));
+	*error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
     }
     else *error_code = MPI_SUCCESS;
 }

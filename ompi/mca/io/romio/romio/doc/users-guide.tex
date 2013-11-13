@@ -94,7 +94,7 @@ by \\ [2ex]
 \begin{abstract}
 \noindent
 ROMIO is a high-performance, portable implementation of MPI-IO (the
-I/O chapter in \mbox{MPI-2}). This document describes how to install and use
+I/O chapter in the \mbox{MPI Standard}). This document describes how to install and use
 ROMIO version~1.2.4 on various machines.
 \end{abstract}
 
@@ -102,7 +102,7 @@ ROMIO version~1.2.4 on various machines.
 
 ROMIO\footnote{\tt http://www.mcs.anl.gov/romio} is a
 high-performance, portable implementation of MPI-IO (the I/O chapter in 
-MPI-2~\cite{mpi97a}). This document describes how to install and use
+MPI~\cite{mpi97a}). This document describes how to install and use
 ROMIO version~1.2.4 on various machines.
 
 
@@ -124,8 +124,8 @@ ROMIO version~1.2.4 on various machines.
 %
 \section{General Information}
 
-This version of ROMIO includes everything defined in the MPI-2 I/O
-chapter except support for file interoperability (\S~9.5 of MPI-2) and
+This version of ROMIO includes everything defined in the MPI I/O
+chapter except support for file interoperability and
 user-defined error handlers for files (\S~4.13.3).  The subarray and
 distributed array datatype constructor functions from Chapter 4
 (\S~4.14.4 \& \S~4.14.5) have been implemented. They are useful for
@@ -324,7 +324,7 @@ these collective buffering hints).  Further, in the ROMIO implementation
 the hint is only recognized at \texttt{MPI\_File\_open} time.
 
 The set of hints used with a file is available through the routine
-\texttt{MPI\_File\_get\_info}, as documented in the MPI-2 standard. 
+\texttt{MPI\_File\_get\_info}, as documented in the MPI standard.
 As an additional feature in the ROMIO implementation, wildcards will
 be expanded to indicate the precise configuration used with the file,
 with the hostnames in the rank order used for the collective buffering
@@ -355,7 +355,7 @@ that they are listed in \texttt{cb\_config\_list}.
 The following hint controls the deferred open feature of romio and are also
 applicable to all file system types: 
 \begin{itemize}
-\item \texttt{no\_indep\_rw} -- If the application plans on performing only 
+\item \texttt{romio\_no\_indep\_rw} -- If the application plans on performing only
    collecitve operations and this hint is set to ``true'', then ROMIO can
    have just the aggregators open a file.   The \texttt{cb\_config\_list} and
    \texttt{cb\_nodes} hints can be given to further control which nodes are
@@ -654,7 +654,7 @@ the ADIO implementation in order to get the specific output they desire.
 
 \subsection{ROMIO and {\tt MPI\_FILE\_SYNC}}
 
-The MPI-2 specification notes that a call to {\tt MPI\_FILE\_SYNC} ``causes
+The MPI specification notes that a call to {\tt MPI\_FILE\_SYNC} ``causes
 all previous writes to {\tt fh} by the calling process to be transferred to
 the storage device.''  Likewise, calls to {\tt MPI\_FILE\_CLOSE} have this
 same semantic.  Further, ``if all processes have made updates to the storage
@@ -1002,9 +1002,9 @@ therefore used as the default.
 
 \subsection{Major Changes in Version 1.0.2}
 \begin{itemize}
-\item Implemented the shared file pointer functions (\S~9.4.4 of MPI-2) and 
-  split collective I/O functions (\S~9.4.5). Therefore, the main
-   components of the MPI-2 I/O chapter not yet implemented are 
+\item Implemented the shared file pointer functions and
+  split collective I/O functions. Therefore, the main
+   components of the MPI I/O chapter not yet implemented are
   file interoperability and error handling.
 
 \item Added support for using ``direct I/O'' on SGI's XFS file system. 

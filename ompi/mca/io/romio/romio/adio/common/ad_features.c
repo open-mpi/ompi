@@ -7,6 +7,7 @@ int ADIOI_GEN_Feature(ADIO_File fd, int flag)
 		case ADIO_SHARED_FP:
 		case ADIO_ATOMIC_MODE:
 		case ADIO_DATA_SIEVING_WRITES:
+		case ADIO_UNLINK_AFTER_CLOSE:
 			return 1;
 			break;
 		case ADIO_SCALABLE_OPEN:

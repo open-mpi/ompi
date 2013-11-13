@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2004 University of Chicago. 
@@ -44,10 +44,10 @@ static MPIX_Grequest_class ADIOI_GEN_greq_class = 0;
  * routines.  Otherwise, the ADIOI_Fns_struct will point to the FAKE
  * version.
  */
-void ADIOI_GEN_IwriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_GEN_IwriteContig(ADIO_File fd, const void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, ADIO_Request *request,
-			    int *error_code)  
+			    int *error_code)
 {
     int len, typesize;
     int aio_errno = 0;
@@ -58,7 +58,9 @@ void ADIOI_GEN_IwriteContig(ADIO_File fd, void *buf, int count,
     ADIOI_Assert(len == (int)((ADIO_Offset)count * (ADIO_Offset)typesize)); /* the count is an int parm */
 
     if (file_ptr_type == ADIO_INDIVIDUAL) offset = fd->fp_ind;
-    aio_errno = ADIOI_GEN_aio(fd, buf, len, offset, 1, request);
+    /* Cast away the const'ness of 'buf' as ADIOI_GEN_aio is used for
+     * both read and write calls */
+    aio_errno = ADIOI_GEN_aio(fd, (char *) buf, len, offset, 1, request);
     if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind += len;
 
     fd->fp_sys_posn = -1;
@@ -177,7 +179,7 @@ int ADIOI_GEN_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
 /* Generic implementation of IwriteStrided calls the blocking WriteStrided
  * immediately.
  */
-void ADIOI_GEN_IwriteStrided(ADIO_File fd, void *buf, int count, 
+void ADIOI_GEN_IwriteStrided(ADIO_File fd, const void *buf, int count,
 			     MPI_Datatype datatype, int file_ptr_type,
 			     ADIO_Offset offset, MPI_Request *request,
 			     int *error_code)

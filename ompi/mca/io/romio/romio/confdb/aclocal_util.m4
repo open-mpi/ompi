@@ -92,7 +92,7 @@ dnl Create any missing directories in the path
 AC_DEFUN([PAC_MKDIRS],[
 # Build any intermediate directories
 for dir in $1 ; do
-    saveIFS="$IFS"
+    PAC_PUSH_FLAG([IFS])
     IFS="/"
     tmp_curdir=""
     for tmp_subdir in $dir ; do
@@ -100,7 +100,7 @@ for dir in $1 ; do
 	if test ! -d "$tmp_curdir" ; then mkdir "$tmp_curdir" ; fi
         tmp_curdir="${tmp_curdir}/"
     done
-    IFS="$saveIFS"
+    PAC_POP_FLAG([IFS])
 done
 ])
 
@@ -189,3 +189,13 @@ fi
 rm -rf conftest.dSYM
 rm -f conftest*
 ])
+
+dnl PAC_CONF_HEX_TO_DEC(value,out_var)
+dnl
+dnl Converts the given hexadecimal integer constant to an integer constant and
+dnl stores the result in the shell variable given by 'out_var'.
+dnl
+dnl I think that printf like this will be sufficiently portable, but I don't
+dnl have any guarantee of it.  If not, we can fall back to AS_VAR_ARITH
+dnl and/or AC_COMPUTE_INT (the latter will probably be slow)
+AC_DEFUN([PAC_CONV_HEX_TO_DEC],[AS_VAR_SET([$2],[`printf "%d" $1`])])

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -19,7 +19,7 @@ static int build_cb_config_list(ADIO_File fd,
 	int rank, int procs, int *error_code);
 
 MPI_File ADIO_Open(MPI_Comm orig_comm,
-		   MPI_Comm comm, char *filename, int file_system,
+		   MPI_Comm comm, const char *filename, int file_system,
 		   ADIOI_Fns *ops,
 		   int access_mode, ADIO_Offset disp, MPI_Datatype etype, 
 		   MPI_Datatype filetype,
@@ -75,7 +75,13 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 /* create and initialize info object */
     fd->hints = (ADIOI_Hints *)ADIOI_Calloc(1, sizeof(struct ADIOI_Hints_struct));
     if (fd->hints == NULL) {
-	/* NEED TO HANDLE ENOMEM ERRORS */
+	*error_code = MPIO_Err_create_code(*error_code,
+					   MPIR_ERR_RECOVERABLE,
+					   myname,
+					   __LINE__,
+					   MPI_ERR_OTHER,
+					   "**nomem2",0);
+	goto fn_exit;
     }
     fd->hints->cb_config_list = NULL;
     fd->hints->ranklist = NULL;
@@ -254,7 +260,13 @@ static int build_cb_config_list(ADIO_File fd,
     if (rank == 0) {
 	tmp_ranklist = (int *) ADIOI_Malloc(sizeof(int) * procs);
 	if (tmp_ranklist == NULL) {
-	    /* NEED TO HANDLE ENOMEM ERRORS */
+	    *error_code = MPIO_Err_create_code(*error_code,
+					       MPIR_ERR_RECOVERABLE,
+					       myname,
+					       __LINE__,
+					       MPI_ERR_OTHER,
+					       "**nomem2",0);
+	    return 0;
 	}
 
 	rank_ct = ADIOI_cb_config_list_parse(fd->hints->cb_config_list, 

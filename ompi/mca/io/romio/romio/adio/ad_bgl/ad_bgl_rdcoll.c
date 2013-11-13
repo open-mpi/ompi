@@ -1140,5 +1140,8 @@ static void ADIOI_R_Exchange_data_alltoallv(
     
     ADIOI_Free( all_send_buf );
     ADIOI_Free( all_recv_buf );
+    ADIOI_Free( recv_buf  );
+    ADIOI_Free( sdispls );
+    ADIOI_Free( rdispls );
     return; 
 }   

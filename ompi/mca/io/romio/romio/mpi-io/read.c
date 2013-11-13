@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -38,7 +38,7 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_read(MPI_File mpi_fh, void *buf, int count, 
+int MPI_File_read(MPI_File fh, void *buf, int count,
                   MPI_Datatype datatype, MPI_Status *status)
 {
     int error_code;
@@ -46,14 +46,14 @@ int MPI_File_read(MPI_File mpi_fh, void *buf, int count,
 #ifdef MPI_hpux
     int fl_xmpi;
 
-    HPMP_IO_START(fl_xmpi, BLKMPIFILEREAD, TRDTBLOCK, mpi_fh, datatype, count);
+    HPMP_IO_START(fl_xmpi, BLKMPIFILEREAD, TRDTBLOCK, fh, datatype, count);
 #endif /* MPI_hpux */
 
-    error_code = MPIOI_File_read(mpi_fh, (MPI_Offset) 0, ADIO_INDIVIDUAL, buf,
+    error_code = MPIOI_File_read(fh, (MPI_Offset) 0, ADIO_INDIVIDUAL, buf,
 				 count, datatype, myname, status);
 
 #ifdef MPI_hpux
-    HPMP_IO_END(fl_xmpi, mpi_fh, datatype, count);
+    HPMP_IO_END(fl_xmpi, fh, datatype, count);
 #endif /* MPI_hpux */
 
     return error_code;
@@ -61,7 +61,7 @@ int MPI_File_read(MPI_File mpi_fh, void *buf, int count,
 
 /* prevent multiple definitions of this routine */
 #ifdef MPIO_BUILD_PROFILING
-int MPIOI_File_read(MPI_File mpi_fh,
+int MPIOI_File_read(MPI_File fh,
 		    MPI_Offset offset,
 		    int file_ptr_type,
 		    void *buf,
@@ -72,24 +72,25 @@ int MPIOI_File_read(MPI_File mpi_fh,
 {
     int error_code, bufsize, buftype_is_contig, filetype_is_contig;
     int datatype_size;
-    ADIO_File fh;
+    ADIO_File adio_fh;
     ADIO_Offset off;
+    void *xbuf=NULL, *e32_buf=NULL;
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
-    fh = MPIO_File_resolve(mpi_fh);
+    adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
-    MPIO_CHECK_COUNT(fh, count, myname, error_code);
-    MPIO_CHECK_DATATYPE(fh, datatype, myname, error_code);
+    MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
+    MPIO_CHECK_COUNT(adio_fh, count, myname, error_code);
+    MPIO_CHECK_DATATYPE(adio_fh, datatype, myname, error_code);
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET && offset < 0)
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_ARG,
 					  "**iobadoffset", 0);
-	error_code = MPIO_Err_return_file(fh, error_code);
+	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
     }
     /* --END ERROR HANDLING-- */
@@ -97,7 +98,7 @@ int MPIOI_File_read(MPI_File mpi_fh,
     MPI_Type_size(datatype, &datatype_size);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_COUNT_SIZE(fh, count, datatype_size, myname, error_code);
+    MPIO_CHECK_COUNT_SIZE(adio_fh, count, datatype_size, myname, error_code);
     /* --END ERROR HANDLING-- */
 
     if (count*datatype_size == 0)
@@ -110,50 +111,70 @@ int MPIOI_File_read(MPI_File mpi_fh,
     }
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_INTEGRAL_ETYPE(fh, count, datatype_size, myname, error_code);
-    MPIO_CHECK_READABLE(fh, myname, error_code);
-    MPIO_CHECK_NOT_SEQUENTIAL_MODE(fh, myname, error_code);
+    MPIO_CHECK_INTEGRAL_ETYPE(adio_fh, count, datatype_size, myname, error_code);
+    MPIO_CHECK_READABLE(adio_fh, myname, error_code);
+    MPIO_CHECK_NOT_SEQUENTIAL_MODE(adio_fh, myname, error_code);
     /* --END ERROR HANDLING-- */
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
-    ADIOI_Datatype_iscontig(fh->filetype, &filetype_is_contig);
+    ADIOI_Datatype_iscontig(adio_fh->filetype, &filetype_is_contig);
 
-    ADIOI_TEST_DEFERRED(fh, myname, &error_code);
+    ADIOI_TEST_DEFERRED(adio_fh, myname, &error_code);
+
+    xbuf = buf;
+    if (adio_fh->is_external32)
+    {
+        MPI_Aint e32_size = 0;
+        error_code = MPIU_datatype_full_size(datatype, &e32_size);
+        if (error_code != MPI_SUCCESS)
+            goto fn_exit;
+
+        e32_buf = ADIOI_Malloc(e32_size*count);
+	xbuf = e32_buf;
+    }
 
     if (buftype_is_contig && filetype_is_contig)
     {
     /* convert count and offset to bytes */
 	bufsize = datatype_size * count;
 	if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
-	    off = fh->disp + fh->etype_size * offset;
+	    off = adio_fh->disp + adio_fh->etype_size * offset;
 	}
 	else /* ADIO_INDIVIDUAL */ {
-	    off = fh->fp_ind;
+	    off = adio_fh->fp_ind;
 	}
 
         /* if atomic mode requested, lock (exclusive) the region, because
            there could be a concurrent noncontiguous request.
 	 */
-        if ((fh->atomicity) && ADIO_Feature(fh, ADIO_LOCKS))
-            ADIOI_WRITE_LOCK(fh, off, SEEK_SET, bufsize);
+        if ((adio_fh->atomicity) && ADIO_Feature(adio_fh, ADIO_LOCKS)) {
+            ADIOI_WRITE_LOCK(adio_fh, off, SEEK_SET, bufsize);
+	}
 
-	ADIO_ReadContig(fh, buf, count, datatype, file_ptr_type,
+	ADIO_ReadContig(adio_fh, xbuf, count, datatype, file_ptr_type,
 			off, status, &error_code); 
 
-        if ((fh->atomicity) && ADIO_Feature(fh, ADIO_LOCKS))
-            ADIOI_UNLOCK(fh, off, SEEK_SET, bufsize);
+        if ((adio_fh->atomicity) && ADIO_Feature(adio_fh, ADIO_LOCKS)) {
+            ADIOI_UNLOCK(adio_fh, off, SEEK_SET, bufsize);
+	}
     }
     else
     {
-	ADIO_ReadStrided(fh, buf, count, datatype, file_ptr_type,
+	ADIO_ReadStrided(adio_fh, xbuf, count, datatype, file_ptr_type,
 			  offset, status, &error_code);
 	/* For strided and atomic mode, locking is done in ADIO_ReadStrided */
     }
 
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(fh, error_code);
+	error_code = MPIO_Err_return_file(adio_fh, error_code);
     /* --END ERROR HANDLING-- */
+
+    if (e32_buf != NULL) {
+        error_code = MPIU_read_external32_conversion_fn(xbuf, datatype,
+                count, e32_buf);
+	ADIOI_Free(e32_buf);
+    }
 
 fn_exit:
     MPIU_THREAD_CS_EXIT(ALLFUNC,);

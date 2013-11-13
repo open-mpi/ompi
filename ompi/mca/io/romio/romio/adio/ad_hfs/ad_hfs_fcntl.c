@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -30,7 +30,7 @@ void ADIOI_HFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 /* not required in SPPUX since there we use pread/pwrite */
 #endif
 	if (fcntl_struct->fsize == -1) {
-#ifdef MPICH2
+#ifdef MPICH
 	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io", 
 		"**io %s", strerror(errno));
 #elif defined(PRINT_ERR_MSG)
@@ -51,7 +51,7 @@ void ADIOI_HFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 	err = prealloc64(fd->fd_sys, fcntl_struct->diskspace);
 	/* prealloc64 works only if file is of zero length */
 	if (err && (errno != ENOTEMPTY)) {
-#ifdef MPICH2
+#ifdef MPICH
 	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io", 
 		"**io %s", strerror(errno));
 #elif defined(PRINT_ERR_MSG)
@@ -72,7 +72,7 @@ void ADIOI_HFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
         if (fcntl_struct->diskspace <= 2147483647) {
 	    err = prealloc(fd->fd_sys, (off_t) fcntl_struct->diskspace);
 	    if (err && (errno != ENOTEMPTY)) {
-#ifdef MPICH2
+#ifdef MPICH
 		*error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
 		    "**io %s", strerror(errno));
 #elif defined(PRINT_ERR_MSG)

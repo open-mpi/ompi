@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -51,7 +51,7 @@ void ADIOI_Heap_merge(ADIOI_Access *others_req, int *count,
                       int nprocs, int nprocs_recv, int total_elements);
 
 
-void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
+void ADIOI_GEN_WriteStridedColl(ADIO_File fd, const void *buf, int count,
                        MPI_Datatype datatype, int file_ptr_type,
                        ADIO_Offset offset, ADIO_Status *status, int
                        *error_code)
@@ -81,7 +81,9 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
     int old_error, tmp_error;
 
     if (fd->hints->cb_pfr != ADIOI_HINT_DISABLE) { 
-	ADIOI_IOStridedColl (fd, buf, count, ADIOI_WRITE, datatype, 
+        /* Cast away const'ness as the below function is used for read
+         * and write */
+	ADIOI_IOStridedColl (fd, (char *) buf, count, ADIOI_WRITE, datatype,
 			file_ptr_type, offset, status, error_code);
 	return;
     }
@@ -202,7 +204,8 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
     ADIOI_Free(my_req);
 
 /* exchange data and write in sizes of no more than coll_bufsize. */
-    ADIOI_Exch_and_write(fd, buf, datatype, nprocs, myrank,
+    /* Cast away const'ness for the below function */
+    ADIOI_Exch_and_write(fd, (char *) buf, datatype, nprocs, myrank,
                         others_req, offset_list,
 			len_list, contig_access_count, min_st_offset,
 			fd_size, fd_start, fd_end, buf_idx, error_code);
@@ -580,8 +583,8 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
     MPI_Request *requests, *send_req;
     MPI_Datatype *recv_types;
     MPI_Status *statuses, status;
-    int *srt_len, sum;
-    ADIO_Offset *srt_off;
+    int *srt_len=NULL, sum;
+    ADIO_Offset *srt_off=NULL;
     static char myname[] = "ADIOI_W_EXCHANGE_DATA";
 
 /* exchange recv_size info so that each process knows how much to
@@ -624,12 +627,15 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
 
     sum = 0;
     for (i=0; i<nprocs; i++) sum += count[i];
-    srt_off = (ADIO_Offset *) ADIOI_Malloc((sum+1)*sizeof(ADIO_Offset));
-    srt_len = (int *) ADIOI_Malloc((sum+1)*sizeof(int));
-    /* +1 to avoid a 0-size malloc */
+    /* valgrind-detcted optimization: if there is no work on this process we do
+     * not need to search for holes */
+    if (sum) {
+        srt_off = (ADIO_Offset *) ADIOI_Malloc(sum*sizeof(ADIO_Offset));
+        srt_len = (int *) ADIOI_Malloc(sum*sizeof(int));
 
-    ADIOI_Heap_merge(others_req, count, srt_off, srt_len, start_pos,
-                     nprocs, nprocs_recv, sum);
+        ADIOI_Heap_merge(others_req, count, srt_off, srt_len, start_pos,
+                         nprocs, nprocs_recv, sum);
+    }
 
 /* for partial recvs, restore original lengths */
     for (i=0; i<nprocs; i++) 
@@ -647,23 +653,25 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
      * recieved by everyone else. */
 
     *hole = 0;
-    if (off != srt_off[0]) /* hole at the front */
-        *hole = 1;
-    else { /* coalesce the sorted offset-length pairs */
-        for (i=1; i<sum; i++) {
-            if (srt_off[i] <= srt_off[0] + srt_len[0]) {
-		int new_len = srt_off[i] + srt_len[i] - srt_off[0];
-		if (new_len > srt_len[0]) srt_len[0] = new_len;
-	    }
-            else
-                break;
-        }
-        if (i < sum || size != srt_len[0]) /* hole in middle or end */
+    if (sum) {
+        if (off != srt_off[0]) /* hole at the front */
             *hole = 1;
-    }
+        else { /* coalesce the sorted offset-length pairs */
+            for (i=1; i<sum; i++) {
+                if (srt_off[i] <= srt_off[0] + srt_len[0]) {
+		    int new_len = srt_off[i] + srt_len[i] - srt_off[0];
+		    if (new_len > srt_len[0]) srt_len[0] = new_len;
+		}
+		else
+			break;
+	    }
+            if (i < sum || size != srt_len[0]) /* hole in middle or end */
+                *hole = 1;
+	}
 
-    ADIOI_Free(srt_off);
-    ADIOI_Free(srt_len);
+        ADIOI_Free(srt_off);
+        ADIOI_Free(srt_len);
+    }
 
     if (nprocs_recv) {
 	if (*hole) {

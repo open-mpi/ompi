@@ -1,10 +1,17 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "adio.h"
+
+#ifdef ROMIO_BGL
+void ADIOI_BGL_Get_shared_fp(ADIO_File fd, int size, ADIO_Offset *shared_fp, int *error_code);
+#endif
+#ifdef ROMIO_BG
+void ADIOI_BG_Get_shared_fp(ADIO_File fd, int size, ADIO_Offset *shared_fp, int *error_code);
+#endif
 
 /* returns the current location of the shared_fp in terms of the
    no. of etypes relative to the current view, and also increments the
@@ -65,9 +72,12 @@ void ADIO_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
 	}
     }
 
+    if (incr == 0) {goto done;}
+
     new_fp = *shared_fp + incr;
 
     ADIO_WriteContig(fd->shared_fp_fd, &new_fp, sizeof(ADIO_Offset), 
 		    MPI_BYTE, ADIO_EXPLICIT_OFFSET, 0, &status, error_code);
+done:
     ADIOI_UNLOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
 }
