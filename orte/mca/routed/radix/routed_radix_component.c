@@ -3,6 +3,7 @@
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -78,18 +79,16 @@ static int orte_routed_radix_component_query(mca_base_module_t **module, int *pr
         return ORTE_ERR_BAD_PARAM;
     }
 
-    if (0 > mca_routed_radix_component.max_connections) {
-        if (0 < opal_sys_limits.num_files) {
-            /* we really should compute the max connections as the total limit on file
-             * descriptors minus the radix minus the fd's needed for our local
-             * children. However, we don't have all that info until later, so just
-             * take a reasonable approximation here
-             */
-            mca_routed_radix_component.max_connections = opal_sys_limits.num_files - mca_routed_radix_component.radix;
-        } else {
-            /* default to radix size for lack of anything better */
-            mca_routed_radix_component.max_connections = mca_routed_radix_component.radix;
-        }
+    if (0 < opal_sys_limits.num_files) {
+        /* we really should compute the max connections as the total limit on file
+         * descriptors minus the radix minus the fd's needed for our local
+         * children. However, we don't have all that info until later, so just
+         * take a reasonable approximation here
+         */
+        mca_routed_radix_component.max_connections = opal_sys_limits.num_files - mca_routed_radix_component.radix;
+    } else {
+        /* default to radix size for lack of anything better */
+        mca_routed_radix_component.max_connections = mca_routed_radix_component.radix;
     }
 
     *priority = 30;
