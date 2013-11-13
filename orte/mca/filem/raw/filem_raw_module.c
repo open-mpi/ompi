@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1169,6 +1170,10 @@ static void write_handler(int fd, short event, void *cbdata)
                     asprintf(&cmd, "tar xjf %s", sink->file);
                 } else if (ORTE_FILEM_TYPE_GZIP == sink->type) {
                     asprintf(&cmd, "tar xzf %s", sink->file);
+                } else {
+                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                    send_complete(sink->file, ORTE_ERR_FILE_WRITE_FAILURE);
+                    return;
                 }
                 getcwd(homedir, sizeof(homedir));
                 dirname = opal_dirname(sink->fullpath);
