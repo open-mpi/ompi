@@ -47,6 +47,10 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_grdma_la_SOURCES = $(sources)
 mca_mpool_grdma_la_LDFLAGS = -module -avoid-version
 mca_mpool_grdma_la_LIBADD = $(mpool_grdma_LIBS)
+if OPAL_cuda_support
+mca_mpool_grdma_la_LIBADD += \
+    $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
+endif
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpool_grdma_la_SOURCES = $(sources)

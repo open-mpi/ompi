@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -843,6 +843,10 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_register_error_fn_t btl_register_error;
     /** fault tolerant even notification */
     mca_btl_base_module_ft_event_fn_t btl_ft_event;
+#if OPAL_CUDA_SUPPORT_60
+    size_t      btl_cuda_eager_limit;  /**< switch from eager to RDMA */
+    size_t      btl_cuda_rdma_limit;   /**< switch from RDMA to rndv pipeline */
+#endif /* OPAL_CUDA_SUPPORT_60 */
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 

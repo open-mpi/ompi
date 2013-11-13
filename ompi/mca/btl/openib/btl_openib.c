@@ -1219,7 +1219,11 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     openib_btl = (mca_btl_openib_module_t*)btl;
 
+#if OPAL_CUDA_SUPPORT_60
+    if(opal_convertor_cuda_need_buffers(convertor) == false && 0 == reserve) {
+#else
     if(opal_convertor_need_buffers(convertor) == false && 0 == reserve) {
+#endif /* OPAL_CUDA_SUPPORT_60 */
         /* GMS  bloody HACK! */
         if(registration != NULL || max_data > btl->btl_max_send_size) {
             frag = alloc_send_user_frag();
@@ -1376,7 +1380,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         /* we didn't get a memory registration passed in, so we have to
          * register the region ourselves
          */
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, buffer, *size, 0,
+        uint32_t mflags = 0;
+#if OPAL_CUDA_SUPPORT
+        if (convertor->flags & CONVERTOR_CUDA) {
+            mflags |= MCA_MPOOL_FLAGS_CUDA_GPU_MEM;
+        }
+#endif /* OPAL_CUDA_SUPPORT */
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, buffer, *size, mflags,
                 &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
             MCA_BTL_IB_FRAG_RETURN(frag);
