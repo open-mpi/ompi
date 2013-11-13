@@ -866,7 +866,7 @@ int opal_cr_user_inc_register_callback(opal_cr_user_inc_callback_event_t event,
                                        opal_cr_user_inc_callback_fn_t  function,
                                        opal_cr_user_inc_callback_fn_t  *prev_function)
 {
-    if( event < 0 || event >= OMPI_CR_INC_MAX ) {
+    if (event >= OMPI_CR_INC_MAX) {
         return OPAL_ERROR;
     }
 
@@ -888,7 +888,7 @@ int trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
         return OPAL_SUCCESS;
     }
 
-    if( event < 0 || event >= OMPI_CR_INC_MAX ) {
+    if (event >= OMPI_CR_INC_MAX) {
         return OPAL_ERROR;
     }
 
