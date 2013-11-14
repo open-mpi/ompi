@@ -1335,7 +1335,7 @@ int mca_base_var_register_synonym (int synonym_for, const char *project_name,
                                    const char *synonym_name,
                                    mca_base_var_syn_flag_t flags)
 {
-    mca_base_var_flag_t var_flags = MCA_BASE_VAR_FLAG_SYNONYM;
+    mca_base_var_flag_t var_flags = (mca_base_var_flag_t) MCA_BASE_VAR_FLAG_SYNONYM;
     mca_base_var_t *var;
     int ret;
 
