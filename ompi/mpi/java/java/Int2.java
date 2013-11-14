@@ -3,7 +3,7 @@ package mpi;
 /**
  * Java binding of the MPI data type {@code MPI_2INT}.
  */
-public class Int2 extends Struct
+public final class Int2 extends Struct
 {
 private final int iOff, iSize;
 
