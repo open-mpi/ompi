@@ -1,13 +1,16 @@
 package mpi;
 
 /**
- * Java binding of the MPI data type {@code MPI_LONG_INT}.
+ * Struct class for {@link MPI#LONG_INT} datatype.
  */
 public final class LongInt extends Struct
 {
 private final int lSize, iOff, iSize;
 
-/** The struct will be created only in MPI class. */
+/**
+ * The struct object will be created only in MPI class.
+ * @see MPI#longInt
+ */
 protected LongInt(int longSize, int intOff, int intSize)
 {
     lSize = longSize;
