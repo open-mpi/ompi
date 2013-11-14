@@ -157,7 +157,10 @@ int cuda_event_ipc_first_used, cuda_event_dtoh_first_used, cuda_event_htod_first
 int cuda_event_ipc_num_used, cuda_event_dtoh_num_used, cuda_event_htod_num_used;
 
 /* Size of array holding events */
-int cuda_event_max = 200;
+int cuda_event_max = 400;
+static int cuda_event_ipc_most = 0;
+static int cuda_event_dtoh_most = 0;
+static int cuda_event_htod_most = 0;
 
 /* Handle to libcuda.so */
 opal_lt_dlhandle libcuda_handle;
@@ -280,7 +283,6 @@ int mca_common_cuda_stage_one_init(void)
                                  &mca_common_cuda_async);
 
     /* Use this parameter to increase the number of outstanding events allows */
-    cuda_event_max = 200;
     (void) mca_base_var_register("ompi", "mpi", "common_cuda", "event_max",
                                  "Set number of oustanding CUDA events",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -1053,6 +1055,15 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    if (cuda_event_ipc_num_used > cuda_event_ipc_most) {
+        cuda_event_ipc_most = cuda_event_ipc_num_used;
+        /* Just print multiples of 10 */
+        if (0 == (cuda_event_ipc_most % 10)) {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "Maximum ipc events used is now %d", cuda_event_ipc_most);
+        }
+    }
+
     /* This is the standard way to run.  Running with synchronous copies is available
      * to measure the advantages of asynchronous copies. */
     if (OPAL_LIKELY(mca_common_cuda_async)) {
@@ -1160,6 +1171,15 @@ int mca_common_cuda_record_dtoh_event(char *msg, struct mca_btl_base_descriptor_
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    if (cuda_event_dtoh_num_used > cuda_event_dtoh_most) {
+        cuda_event_dtoh_most = cuda_event_dtoh_num_used;
+        /* Just print multiples of 10 */
+        if (0 == (cuda_event_dtoh_most % 10)) {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "Maximum DtoH events used is now %d", cuda_event_dtoh_most);
+        }
+    }
+
     result = cuFunc.cuEventRecord(cuda_event_dtoh_array[cuda_event_dtoh_first_avail], dtohStream);
     if (CUDA_SUCCESS != result) {
         opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
@@ -1193,6 +1213,15 @@ int mca_common_cuda_record_htod_event(char *msg, struct mca_btl_base_descriptor_
         opal_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
                        true, cuda_event_max, cuda_event_max+100, cuda_event_max+100);
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (cuda_event_htod_num_used > cuda_event_htod_most) {
+        cuda_event_htod_most = cuda_event_htod_num_used;
+        /* Just print multiples of 10 */
+        if (0 == (cuda_event_htod_most % 10)) {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "Maximum HtoD events used is now %d", cuda_event_htod_most);
+        }
     }
 
     result = cuFunc.cuEventRecord(cuda_event_htod_array[cuda_event_htod_first_avail], htodStream);
@@ -1606,7 +1635,7 @@ int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base)
                        true, result, base);
         return OMPI_ERROR;
     } else {
-        opal_output_verbose(10, mca_common_cuda_output,
+        opal_output_verbose(50, mca_common_cuda_output,
                             "CUDA: cuMemGetAddressRange passed: addr=%p, pbase=%p, psize=%lu ",
                             base, *(char **)pbase, *psize);
     }
