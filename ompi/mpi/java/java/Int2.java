@@ -1,13 +1,16 @@
 package mpi;
 
 /**
- * Java binding of the MPI data type {@code MPI_2INT}.
+ * Struct class for {@link MPI#INT2} datatype.
  */
 public final class Int2 extends Struct
 {
 private final int iOff, iSize;
 
-/** The struct will be created only in MPI class. */
+/**
+ * The struct object will be created only in MPI class.
+ * @see MPI#int2
+ */
 protected Int2(int intOff, int intSize)
 {
     iSize = intSize;
