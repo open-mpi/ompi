@@ -52,19 +52,45 @@ public static final int GRAPH, DIST_GRAPH, CART;
 public static final int ANY_SOURCE, ANY_TAG;
 
 public static final Op MAX, MIN, SUM, PROD, LAND, BAND,
-                       LOR, BOR, LXOR, BXOR, MINLOC, MAXLOC;
+                       LOR, BOR, LXOR, BXOR;
+
+/**
+ * Global minimum operator.
+ * <p>{@code MINLOC} and {@link #MAXLOC} can be used with each of the following
+ * datatypes: {@link #INT2}, {@link #SHORT_INT}, {@link #LONG_INT}, 
+ * {@link #FLOAT_INT} and {@link #DOUBLE_INT}.
+ */
+public static final Op MINLOC;
+
+/** Global maximum operator. See {@link #MINLOC}.*/
+public static final Op MAXLOC;
 
 public static final Datatype DATATYPE_NULL;
 
 public static final Datatype BYTE, CHAR, SHORT, BOOLEAN,
                              INT, LONG, FLOAT, DOUBLE, PACKED,
-                             INT2, SHORT_INT, LONG_INT, FLOAT_INT, DOUBLE_INT,
                              FLOAT_COMPLEX, DOUBLE_COMPLEX;
 
-public static final Int2      int2;
-public static final ShortInt  shortInt;
-public static final LongInt   longInt;
-public static final FloatInt  floatInt;
+/** Struct which must be used with {@link #int2}. */
+public static final Datatype INT2;
+/** Struct which must be used with {@link #shortInt}. */
+public static final Datatype SHORT_INT;
+/** Struct which must be used with {@link #longInt}. */
+public static final Datatype LONG_INT;
+/** Struct which must be used with {@link #floatInt}. */
+public static final Datatype FLOAT_INT;
+/** Struct which must be used with {@link #doubleInt}. */
+public static final Datatype DOUBLE_INT;
+
+/** Struct object for {@link #INT2} datatype. */
+public static final Int2 int2;
+/** Struct object for {@link #SHORT_INT} datatype. */
+public static final ShortInt shortInt;
+/** Struct object for {@link #LONG_INT} datatype. */
+public static final LongInt longInt;
+/** Struct object for {@link #FLOAT_INT} datatype. */
+public static final FloatInt floatInt;
+/** Struct object for {@link #DOUBLE_INT} datatype. */
 public static final DoubleInt doubleInt;
 
 public static final Request REQUEST_NULL;
