@@ -390,6 +390,11 @@ static void cleanup_node(orte_proc_t *proc)
     orte_proc_t *p;
     int i;
 
+    OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
+                         "%s state:base:cleanup_node on proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&proc->name)));
+    
     if (NULL == (node = proc->node)) {
         return;
     }
@@ -597,9 +602,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     }
 
     OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
-                         "%s state:base:check_job_completed declared job %s normally terminated - checking all jobs",
+                         "%s state:base:check_job_completed declared job %s terminated with state %s - checking all jobs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         ORTE_JOBID_PRINT(jdata->jobid),
+                         orte_job_state_to_str(jdata->state)));
     
     /* if this job is a continuously operating one, then don't do
      * anything further - just return here
