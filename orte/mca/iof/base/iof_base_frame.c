@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -184,7 +185,7 @@ orte_iof_base_t orte_iof_base;
 static int orte_iof_base_register(mca_base_register_flag_t flags)
 {
     /* check for maximum number of pending output messages */
-  orte_iof_base.output_limit = (size_t)-1;
+    orte_iof_base.output_limit = (size_t) INT_MAX;
     (void) mca_base_var_register("orte", "iof", "base", "output_limit",
                                  "Maximum backlog of output messages [default: unlimited]",
                                  MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
@@ -222,11 +223,6 @@ static int orte_iof_base_close(void)
 static int orte_iof_base_open(mca_base_open_flag_t flags)
 {
     int rc, xmlfd;
-
-    /* Initialize globals */
-    if (0 > orte_iof_base.output_limit) {
-        orte_iof_base.output_limit = INT_MAX;
-    }
 
     /* did the user request we print output to files? */
     if (NULL != orte_output_filename) {
