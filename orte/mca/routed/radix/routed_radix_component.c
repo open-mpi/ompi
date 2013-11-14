@@ -3,7 +3,8 @@
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -15,7 +16,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/base.h"
-#include "opal/util/sys_limits.h"
 
 #include "orte/mca/routed/base/base.h"
 #include "routed_radix.h"
@@ -64,7 +64,7 @@ static int orte_routed_radix_component_register(void)
 
     mca_routed_radix_component.max_connections = -1;
     (void) mca_base_component_var_register(c, "max_connections",
-                                           "Max number of connections a daemon may make before routing messages across tree",
+                                           "Send direct between daemons if the number of nodes is less than this number",
                                            MCA_BASE_VAR_TYPE_INT, NULL,0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -77,18 +77,6 @@ static int orte_routed_radix_component_query(mca_base_module_t **module, int *pr
 {
     if (0 > mca_routed_radix_component.radix) {
         return ORTE_ERR_BAD_PARAM;
-    }
-
-    if (0 < opal_sys_limits.num_files) {
-        /* we really should compute the max connections as the total limit on file
-         * descriptors minus the radix minus the fd's needed for our local
-         * children. However, we don't have all that info until later, so just
-         * take a reasonable approximation here
-         */
-        mca_routed_radix_component.max_connections = opal_sys_limits.num_files - mca_routed_radix_component.radix;
-    } else {
-        /* default to radix size for lack of anything better */
-        mca_routed_radix_component.max_connections = mca_routed_radix_component.radix;
     }
 
     *priority = 30;
