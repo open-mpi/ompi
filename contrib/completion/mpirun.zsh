@@ -5,8 +5,15 @@
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
 #
-# To install copy this file to _mpirun in any directory in $fpath.
+# If completion is not already set up, follow the instructions in section
+# 20.2 of the zsh completion documentation found here:
+#   http://zsh.sourceforge.net/Doc/Release/Completion-System.html
 #
+# Rename this to _mpirun a place it into any directory in your $fpath. If
+# needed, you can add another directory to $fpath (I use ~/.zsh/completion)
+# by adding the following line to ~/.zshrc before the call to compinit:
+#
+#      fpath=(/path/to/completion/scripts $fpath)
 
 local mca_variable_names mca_variable_values mca_component_names
 

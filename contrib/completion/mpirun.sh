@@ -4,10 +4,16 @@
 #
 # Bash completion script for Open MPI's mpirun
 #
-# Put this file in ~/.bash_completion.d if using standard
-# bash completion.
-
-# Check for orterun
+# Installation:
+#   If bash completion is not already installed, follow the instructions at:
+#      http://anonscm.debian.org/gitweb/?p=bash-completion/bash-completion.git;a=blob_plain;f=README
+#
+# Then install mpirun completion by dropping this file into either the system bash_completion.d
+# (usually found in /etc) or somewhere in your home directory (~/.bash_completion.d is a good place).
+# If installing the script in a location other than the system-wide location, you will probably need
+# to add the following to either ~/.bash_profile or ~/.bash_completion:
+#
+#        [ -r /path/to/mpirun.sh ] && . /path/to/mpirun.sh
 
 # find available MCA variables
 _get_mca_variable_names() {
