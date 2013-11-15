@@ -2005,8 +2005,8 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
             sizeof(ompi_free_list_t));
     assert(module->module_recv_buffers != NULL);
     for (i=module->first_pool; i<=module->last_pool; ++i) {
-        OBJ_CONSTRUCT(&module->module_recv_buffers[i], ompi_free_list_t);
         size_t elt_size = sizeof(ompi_btl_usnic_rx_buf_t) - 1 + (1 << i);
+        OBJ_CONSTRUCT(&module->module_recv_buffers[i], ompi_free_list_t);
         rc = ompi_free_list_init_new(&module->module_recv_buffers[i],
                                      elt_size,
                                      opal_cache_line_size,
