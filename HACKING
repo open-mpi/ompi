@@ -9,6 +9,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2013      Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -108,6 +109,10 @@ shell$ autoconf --version
 shell$ automake --version
 shell$ libtoolize --version
 
+Required version levels for all the OMPI releases can be found here:
+
+http://www.open-mpi.org/svn/building.php
+
 To strengthen the above point: the core Open MPI developers typically
 use very, very recent versions of the GNU tools.  There are known bugs
 in older versions of the GNU tools that Open MPI no longer compensates
@@ -176,28 +181,28 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
 4. All four packages require two simple commands to build and
    install (where PREFIX is the prefix discussed in 3, above).
 
-      shell$ cd m4-1.4.13
+      shell$ cd <m4 directory>
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../autoconf-2.68
+      shell$ cd <autoconf directory>
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../automake-1.11.1
+      shell$ cd <automake directory>
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../libtool-2.2.8
+      shell$ cd <libtool directory>
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
