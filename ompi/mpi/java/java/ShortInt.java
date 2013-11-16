@@ -1,13 +1,16 @@
 package mpi;
 
 /**
- * Java binding of the MPI data type {@code MPI_SHORT_INT}.
+ * Struct class for {@link MPI#SHORT_INT} datatype.
  */
 public final class ShortInt extends Struct
 {
 private final int sSize, iOff, iSize;
 
-/** The struct will be created only in MPI class. */
+/**
+ * The struct object will be created only in MPI class.
+ * @see MPI#shortInt
+ */
 protected ShortInt(int shortSize, int intOff, int intSize)
 {
     sSize = shortSize;

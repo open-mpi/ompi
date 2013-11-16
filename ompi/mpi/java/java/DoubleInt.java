@@ -1,13 +1,16 @@
 package mpi;
 
 /**
- * Java binding of the MPI data type {@code MPI_DOUBLE_INT}.
+ * Struct class for {@link MPI#DOUBLE_INT} datatype.
  */
 public final class DoubleInt extends Struct
 {
 private final int iOff, iSize;
 
-/** The struct will be created only in MPI class. */
+/**
+ * The struct object will be created only in MPI class.
+ * @see MPI#doubleInt
+ */
 protected DoubleInt(int intOff, int intSize)
 {
     int dOff = addDouble();

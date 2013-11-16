@@ -1,13 +1,16 @@
 package mpi;
 
 /**
- * Java binding of the MPI data type {@code MPI_FLOAT_INT}.
+ * Struct class for {@link MPI#FLOAT_INT} datatype.
  */
 public final class FloatInt extends Struct
 {
 private final int iOff, iSize;
 
-/** The struct will be created only in MPI class. */
+/**
+ * The struct object will be created only in MPI class.
+ * @see MPI#floatInt
+ */
 protected FloatInt(int intOff, int intSize)
 {
     int fOff = addFloat();
