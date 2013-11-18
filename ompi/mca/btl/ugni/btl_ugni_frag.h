@@ -118,7 +118,7 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 {
     if (frag->registration) {
         frag->endpoint->btl->super.btl_mpool->mpool_deregister(frag->endpoint->btl->super.btl_mpool,
-                                                               &frag->registration->base);
+                                                               (mca_mpool_base_registration_t *) frag->registration);
         frag->registration = NULL;
     }
 

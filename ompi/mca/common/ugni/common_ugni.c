@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -14,6 +14,7 @@
 #include "common_ugni.h"
 
 #include "ompi/proc/proc.h"
+#include "opal/mca/db/db.h"
 
 /* NTH: we need some options from the btl */
 #include "ompi/mca/btl/ugni/btl_ugni.h"
@@ -122,7 +123,7 @@ ompi_common_ugni_get_nic_address(int device_id)
 }
 
 static int ompi_common_ugni_device_init (ompi_common_ugni_device_t *device,
-                                         int comm_world_size, int device_id)
+                                         int device_id)
 {
     int rc;
 
@@ -141,22 +142,11 @@ static int ompi_common_ugni_device_init (ompi_common_ugni_device_t *device,
         return ompi_common_rc_ugni_to_ompi (rc);
     }
 
-    device->dev_eps = calloc (comm_world_size, sizeof (ompi_common_ugni_endpoint_t *));
-    if (NULL == device->dev_eps) {
-        OPAL_OUTPUT((0, "Error allocating space for endpoint pointers"));
-        return OMPI_ERROR;
-    }
-
     return OMPI_SUCCESS;
 }
 
 static int ompi_common_ugni_device_fini (ompi_common_ugni_device_t *dev)
 {
-    if (dev->dev_eps) {
-        free (dev->dev_eps);
-        dev->dev_eps = NULL;
-    }
-    
     return OMPI_SUCCESS;
 }
 
@@ -236,9 +226,9 @@ int ompi_common_ugni_fini (void)
 
 int ompi_common_ugni_init (void)
 {
-    int modes, rc, my_rank, i;
-    size_t comm_world_size;
     ompi_proc_t *my_proc;
+    int modes, rc, i;
+    uint32_t my_rank, *ptr;
 
     ompi_common_ugni_module_ref_count ++;
 
@@ -247,13 +237,22 @@ int ompi_common_ugni_init (void)
     }
 
     my_proc = ompi_proc_local ();
+
+    /* get a unique id from the runtime */
+#if defined(OMPI_DB_GLOBAL_RANK)
+    ptr = &my_rank;
+    rc = opal_db.fetch ((opal_identifier_t *) &my_proc->proc_name, OMPI_DB_GLOBAL_RANK,
+                        (void **) &ptr, OPAL_UINT32);
+    if (OPAL_SUCCESS != rc) {
+        my_rank = my_proc->proc_name.vpid;
+    }
+#else
     my_rank = my_proc->proc_name.vpid;
+#endif
 
     /* pull settings from ugni btl */
     ompi_common_ugni_module.rdma_max_retries =
         mca_btl_ugni_component.rdma_max_retries;
-
-    (void) ompi_proc_world (&comm_world_size);
 
     /* Create a communication domain */
     modes = GNI_CDM_MODE_FORK_FULLCOPY | GNI_CDM_MODE_CACHED_AMO_ENABLED |
@@ -285,8 +284,7 @@ int ompi_common_ugni_init (void)
                                               sizeof (ompi_common_ugni_device_t));
 
     for (i = 0 ; i < ompi_common_ugni_module.device_count ; ++i) {
-        rc = ompi_common_ugni_device_init (ompi_common_ugni_module.devices + i,
-                                           comm_world_size, i);
+        rc = ompi_common_ugni_device_init (ompi_common_ugni_module.devices + i, i);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             OPAL_OUTPUT((-1, "error initializing uGNI device"));
             return rc;

@@ -509,14 +509,14 @@ static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *
 
 static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm) {
   int size, pos, res;
-  MPI_Aint ext;
+  OPAL_PTRDIFF_TYPE ext, lb;
 
   if(NBC_Type_intrinsic(srctype)) {
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
-    res = MPI_Type_extent(srctype, &ext);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-    memcpy(tgt, src, srccount*ext);
+    res = ompi_datatype_get_extent (srctype, &lb, &ext);
+    if (OMPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    memcpy(tgt, src, srccount * ext);
 
   } else {
     /* we have to unpack */

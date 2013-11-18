@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -39,7 +39,7 @@ typedef struct mca_btl_base_endpoint_t {
     gni_ep_handle_t smsg_ep_handle;
     gni_ep_handle_t rdma_ep_handle;
 
-    gni_smsg_attr_t remote_smsg_attrib;
+    mca_btl_ugni_endpoint_attr_t remote_attr;
 
     struct mca_btl_ugni_smsg_mbox_t *mailbox;
 
@@ -47,6 +47,8 @@ typedef struct mca_btl_base_endpoint_t {
     bool wait_listed;
 
     int32_t smsg_progressing;
+
+    int index;
 } mca_btl_base_endpoint_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_base_endpoint_t);
@@ -54,11 +56,11 @@ OBJ_CLASS_DECLARATION(mca_btl_base_endpoint_t);
 int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep);
 int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnect);
 
-static inline int mca_btl_ugni_init_ep (mca_btl_base_endpoint_t **ep,
+static inline int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module,
+                                        mca_btl_base_endpoint_t **ep,
                                         mca_btl_ugni_module_t *btl,
                                         ompi_proc_t *peer_proc) {
     mca_btl_base_endpoint_t *endpoint;
-    int rc;
 
     endpoint = OBJ_NEW(mca_btl_base_endpoint_t);
     assert (endpoint != NULL);
@@ -69,6 +71,7 @@ static inline int mca_btl_ugni_init_ep (mca_btl_base_endpoint_t **ep,
     endpoint->btl = btl;
     endpoint->peer_proc = peer_proc;
     endpoint->common = NULL;
+    endpoint->index = opal_pointer_array_add (&ugni_module->endpoints, endpoint);
 
     *ep = endpoint;
 
@@ -79,10 +82,17 @@ static inline void mca_btl_ugni_release_ep (mca_btl_base_endpoint_t *ep) {
     int rc;
 
     if (ep->common) {
+        opal_mutex_lock (&ep->lock);
+
         rc = mca_btl_ugni_ep_disconnect (ep, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             BTL_VERBOSE(("btl/ugni error disconnecting endpoint"));
         }
+
+        /* TODO -- Clear space at the end of the endpoint array */
+        opal_pointer_array_set_item (&ep->btl->endpoints, ep->index, NULL);
+
+        opal_mutex_unlock (&ep->lock);
 
         ompi_common_ugni_endpoint_return (ep->common);
     }
@@ -97,7 +107,7 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_base_endpoint_t *ep
         return OMPI_SUCCESS;
     }
 
-    OPAL_THREAD_LOCK(&ep->lock);
+    opal_mutex_lock (&ep->lock);
 
     switch (ep->state) {
     case MCA_BTL_UGNI_EP_STATE_INIT:
@@ -112,7 +122,7 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_base_endpoint_t *ep
         rc = OMPI_SUCCESS;
     }
 
-    OPAL_THREAD_UNLOCK(&ep->lock);
+    opal_mutex_unlock (&ep->lock);
 
     return rc;
 }
@@ -120,10 +130,13 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_base_endpoint_t *ep
 static inline int mca_btl_ugni_wildcard_ep_post (mca_btl_ugni_module_t *ugni_module) {
     gni_return_t rc;
 
+    BTL_VERBOSE(("posting wildcard datagram"));
+
     memset (&ugni_module->wc_local_attr, 0, sizeof (ugni_module->wc_local_attr));
-    rc = GNI_EpPostDataWId (ugni_module->wildcard_ep, &ugni_module->wc_local_attr, sizeof (ugni_module->wc_local_attr),
-                            &ugni_module->wc_remote_attr, sizeof (ugni_module->wc_remote_attr),
-                            MCA_BTL_UGNI_CONNECT_WILDCARD_ID | OMPI_PROC_MY_NAME->vpid);
+    memset (&ugni_module->wc_remote_attr, 0, sizeof (ugni_module->wc_remote_attr));
+    rc = GNI_EpPostDataWId (ugni_module->wildcard_ep, &ugni_module->wc_local_attr,
+                            sizeof (ugni_module->wc_local_attr), &ugni_module->wc_remote_attr,
+                            sizeof (ugni_module->wc_remote_attr), MCA_BTL_UGNI_CONNECT_WILDCARD_ID);
 
     return ompi_common_rc_ugni_to_ompi (rc);
 }
