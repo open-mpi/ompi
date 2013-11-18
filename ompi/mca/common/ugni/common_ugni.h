@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -51,7 +51,6 @@ struct ompi_common_ugni_device_t {
     uint32_t         dev_cpu_id;
 
     size_t                      dev_ep_count;
-    ompi_common_ugni_endpoint_t **dev_eps;
     void *btl_ctx;
 };
 typedef struct ompi_common_ugni_device_t ompi_common_ugni_device_t;

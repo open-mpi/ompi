@@ -14,17 +14,21 @@
 #include "btl_ugni_rdma.h"
 
 static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
-    struct mca_btl_ugni_reg_t *reg =
+    struct mca_btl_ugni_reg_t *ugni_reg =
         (struct mca_btl_ugni_reg_t *) mbox->super.registration;
+    struct mca_mpool_base_registration_t *base_reg =
+        (struct mca_mpool_base_registration_t *) ugni_reg;
 
     /* initialize mailbox attributes */
-    mbox->smsg_attrib.msg_type       = GNI_SMSG_TYPE_MBOX_AUTO_RETRANSMIT;
-    mbox->smsg_attrib.msg_maxsize    = mca_btl_ugni_component.ugni_smsg_limit;
-    mbox->smsg_attrib.mbox_maxcredit = mca_btl_ugni_component.smsg_max_credits;
-    mbox->smsg_attrib.mbox_offset    = (uintptr_t) mbox->super.ptr - (uintptr_t) reg->base.alloc_base;
-    mbox->smsg_attrib.msg_buffer     = reg->base.alloc_base;
-    mbox->smsg_attrib.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
-    mbox->smsg_attrib.mem_hndl       = reg->memory_hdl;
+    mbox->attr.smsg_attr.msg_type       = GNI_SMSG_TYPE_MBOX_AUTO_RETRANSMIT;
+    mbox->attr.smsg_attr.msg_maxsize    = mca_btl_ugni_component.ugni_smsg_limit;
+    mbox->attr.smsg_attr.mbox_maxcredit = mca_btl_ugni_component.smsg_max_credits;
+    mbox->attr.smsg_attr.mbox_offset    = (uintptr_t) mbox->super.ptr - (uintptr_t) base_reg->base;
+    mbox->attr.smsg_attr.msg_buffer     = base_reg->base;
+    mbox->attr.smsg_attr.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
+    mbox->attr.smsg_attr.mem_hndl       = ugni_reg->memory_hdl;
+
+    mbox->attr.proc_id = mca_btl_ugni_proc_name_to_id (*OMPI_PROC_MY_NAME);
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_ugni_smsg_mbox_t, ompi_free_list_item_t,
@@ -146,7 +150,11 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
     ep->smsg_progressing = false;
 
     /* disconnect if we get here */
+    opal_mutex_lock (&ep->lock);
+
     mca_btl_ugni_ep_disconnect (ep, false);
+
+    opal_mutex_unlock (&ep->lock);
 
     return count;
 }
@@ -155,6 +163,7 @@ static inline int
 mca_btl_ugni_handle_remote_smsg_overrun (mca_btl_ugni_module_t *btl)
 {
     gni_cq_entry_t event_data;
+    size_t endpoint_count;
     unsigned int ep_index;
     int count, rc;
 
@@ -169,8 +178,13 @@ mca_btl_ugni_handle_remote_smsg_overrun (mca_btl_ugni_module_t *btl)
         rc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
     } while (GNI_RC_NOT_DONE != rc);
 
-    for (ep_index = 0, count = 0 ; ep_index < btl->endpoint_count ; ++ep_index) {
-        mca_btl_base_endpoint_t *ep = btl->endpoints[ep_index];
+    endpoint_count = opal_pointer_array_get_size (&btl->endpoints);
+
+    for (ep_index = 0, count = 0 ; ep_index < endpoint_count ; ++ep_index) {
+        mca_btl_base_endpoint_t *ep;
+
+        ep = (mca_btl_base_endpoint_t *) opal_pointer_array_get_item (&btl->endpoints,
+                                                                      ep_index);
 
         if (NULL == ep || MCA_BTL_UGNI_EP_STATE_CONNECTED != ep->state) {
             continue;
@@ -220,7 +234,8 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
 
     inst_id = GNI_CQ_GET_INST_ID(event_data);
 
-    ep = btl->endpoints[inst_id & 0xffffffff];
+    ep = (mca_btl_base_endpoint_t *) opal_pointer_array_get_item (&btl->endpoints, inst_id);
+
     if (OPAL_UNLIKELY(MCA_BTL_UGNI_EP_STATE_CONNECTED != ep->state)) {
         /* due to the nature of datagrams we may get a smsg completion before
            we get mailbox info from the peer */

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -38,9 +38,9 @@ int ompi_common_ugni_endpoint_for_proc (struct ompi_common_ugni_device_t *dev, o
 /*
  * Allocate and bind a uGNI endpoint handle to the remote peer.
  *
- * @param[IN]  cep          common endpoint
- * @param[IN]  cq           completion queue
- * @param[OUT] ep_handle    uGNI endpoint handle
+ * @param[IN]  cep                common endpoint
+ * @param[IN]  cq                 completion queue
+ * @param[OUT] ep_handle          uGNI endpoint handle
  */
 int ompi_common_ugni_ep_create (ompi_common_ugni_endpoint_t *cep, gni_cq_handle_t cq, gni_ep_handle_t *ep_handle);
 

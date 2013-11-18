@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -15,9 +15,11 @@
 #include "btl_ugni_rdma.h"
 #include "btl_ugni_smsg.h"
 
-#include "opal/include/opal/align.h"
 #include "opal/memoryhooks/memory.h"
 #include "ompi/runtime/params.h"
+
+#include "ompi/attribute/attribute.h"
+#include "ompi/communicator/communicator.h"
 
 static int btl_ugni_component_register(void);
 static int btl_ugni_component_open(void);
@@ -26,33 +28,40 @@ static mca_btl_base_module_t **mca_btl_ugni_component_init(int *, bool, bool);
 static int mca_btl_ugni_component_progress(void);
 
 mca_btl_ugni_component_t mca_btl_ugni_component = {
-    {
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
-
-        {
+        .btl_version = {
             MCA_BTL_BASE_VERSION_2_0_0,
 
-            "ugni",                       /* MCA component name */
-            OMPI_MAJOR_VERSION,           /* MCA component major version */
-            OMPI_MINOR_VERSION,           /* MCA component minor version */
-            OMPI_RELEASE_VERSION,         /* MCA component release version */
-            btl_ugni_component_open,      /* component open */
-            btl_ugni_component_close,     /* component close */
-            NULL,                         /* component query */
-            btl_ugni_component_register,  /* component register */
+            .mca_component_name = "ugni",
+            .mca_component_major_version = OMPI_MAJOR_VERSION,
+            .mca_component_minor_version = OMPI_MINOR_VERSION,
+            .mca_component_release_version = OMPI_RELEASE_VERSION,
+            .mca_open_component = btl_ugni_component_open,
+            .mca_close_component = btl_ugni_component_close,
+            .mca_register_component_params = btl_ugni_component_register,
         },
-        {
+        .btl_data = {
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        mca_btl_ugni_component_init,
-        mca_btl_ugni_component_progress,
+        .btl_init = mca_btl_ugni_component_init,
+        .btl_progress = mca_btl_ugni_component_progress,
     }
+};
+
+mca_base_var_enum_value_t mpool_values[] = {
+    {MCA_BTL_UGNI_MPOOL_UDREG, "udreg"},
+    {MCA_BTL_UGNI_MPOOL_GRDMA, "grdma"},
+    {-1, NULL} /* sentinal */
 };
 
 static int
 btl_ugni_component_register(void)
 {
+    mca_base_var_enum_t *new_enum;
+    int rc;
+
     (void) mca_base_var_group_component_register(&mca_btl_ugni_component.super.btl_version,
                                                  "Gemini byte transport layer");
 
@@ -60,44 +69,38 @@ btl_ugni_component_register(void)
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "free_list_num", NULL, MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_free_list_num);
     mca_btl_ugni_component.ugni_free_list_max = 16384;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "free_list_max", NULL, MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_free_list_max);
     mca_btl_ugni_component.ugni_free_list_inc = 64;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "free_list_inc", NULL, MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_free_list_inc);
 
     mca_btl_ugni_component.ugni_eager_num = 16;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
-                                          "eager_num", NULL, MCA_BASE_VAR_TYPE_INT,
-                                          NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                          OPAL_INFO_LVL_5,
-                                          MCA_BASE_VAR_SCOPE_LOCAL,
-                                          &mca_btl_ugni_component.ugni_eager_num);
+                                           "eager_num", NULL, MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_ugni_component.ugni_eager_num);
     mca_btl_ugni_component.ugni_eager_max = 128;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "eager_max", NULL, MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_eager_max);
     mca_btl_ugni_component.ugni_eager_inc = 16;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "eager_inc", NULL, MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_eager_inc);
 
     mca_btl_ugni_component.remote_cq_size = 40000;
@@ -105,16 +108,14 @@ btl_ugni_component_register(void)
                                            "remote_cq_size", "Remote SMSG completion queue "
                                            "size (default 40000)", MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.remote_cq_size);
     mca_btl_ugni_component.local_cq_size = 8192;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "local_cq_size", "Local completion queue size "
                                            "(default 8192)", MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.local_cq_size);
 
     mca_btl_ugni_component.ugni_smsg_limit = 0;
@@ -124,8 +125,7 @@ btl_ugni_component_register(void)
                                            "(0 - autoselect(default), 16k max)",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_smsg_limit);
 
     mca_btl_ugni_component.smsg_max_credits = 32;
@@ -134,8 +134,7 @@ btl_ugni_component_register(void)
                                            "outstanding SMSG/MSGQ message (default 32)",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.smsg_max_credits);
 
     mca_btl_ugni_component.ugni_fma_limit = 1024;
@@ -145,8 +144,7 @@ btl_ugni_component_register(void)
                                            "Access) protocol (default 1024, 64k max)",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_fma_limit);
 
     mca_btl_ugni_component.ugni_get_limit = 1 * 1024 * 1024;
@@ -155,24 +153,21 @@ btl_ugni_component_register(void)
                                            "will be sent using a get protocol "
                                            "(default 1M)", MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.ugni_get_limit);
 
     mca_btl_ugni_component.rdma_max_retries = 16;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "rdma_max_retries", NULL, MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.rdma_max_retries);
 
     mca_btl_ugni_component.smsg_max_retries = 16;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "smsg_max_retries", NULL, MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.smsg_max_retries);
 
     mca_btl_ugni_component.max_mem_reg = 0;
@@ -182,9 +177,39 @@ btl_ugni_component_register(void)
                                            "hold (0 - autoselect, -1 - unlimited)"
                                            " (default 0)", MCA_BASE_VAR_TYPE_INT,
                                            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_ugni_component.max_mem_reg);
+
+    mca_btl_ugni_component.mbox_increment = 0;
+    (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
+                                           "mbox_inc", "Number of SMSG mailboxes to "
+                                           "allocate in each block (0 - autoselect(default))",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.mbox_increment);
+
+    mca_btl_ugni_component.smsg_page_size = 2 << 20;
+    (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
+                                           "smsg_page_size", "Page size to use for SMSG "
+                                           "mailbox allocation (default 2M)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_ugni_component.smsg_page_size);
+
+    /* btl/ugni can only support only a fixed set of mpools (these mpools have compatible resource
+     * structures) */
+    rc = mca_base_var_enum_create ("btl_ugni_mpool", mpool_values, &new_enum);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    mca_btl_ugni_component.mpool_type = MCA_BTL_UGNI_MPOOL_UDREG;
+    (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
+                                           "mpool", "mpool to use", MCA_BASE_VAR_TYPE_INT, new_enum,
+                                           0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.mpool_type);
+    OBJ_RELEASE(new_enum);
 
     mca_btl_ugni_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
 
@@ -234,59 +259,23 @@ btl_ugni_component_close(void)
 }
 
 static void mca_btl_ugni_autoset_leave_pinned (void) {
-    int value = opal_mem_hooks_support_level();
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
-        /* Set leave pinned to 1 if leave pinned pipeline is not set */
-        if (-1 == ompi_mpi_leave_pinned) {
-            ompi_mpi_leave_pinned = !ompi_mpi_leave_pinned_pipeline;
-        }
-    } else {
-        ompi_mpi_leave_pinned = 0;
-        ompi_mpi_leave_pinned_pipeline = 0;
-    }
-}
-
-static int mca_btl_ugni_smsg_setup (void) {
-    gni_smsg_attr_t tmp_smsg_attrib;
-    unsigned int mbox_size;
-    size_t nprocs;
-    gni_return_t rc;
-
-    (void) ompi_proc_world (&nprocs);
-
-    if (0 == mca_btl_ugni_component.ugni_smsg_limit) {
-        /* auto-set the smsg limit based on the number of ranks */
-        if (nprocs <= 512) {
-            mca_btl_ugni_component.ugni_smsg_limit = 8192;
-        } else if (nprocs <= 1024) {
-            mca_btl_ugni_component.ugni_smsg_limit = 2048;
-        } else if (nprocs <= 8192) {
-            mca_btl_ugni_component.ugni_smsg_limit = 1024;
-        } else if (nprocs <= 16384) {
-            mca_btl_ugni_component.ugni_smsg_limit = 512;
+    if (MCA_BTL_UGNI_MPOOL_UDREG != mca_btl_ugni_component.mpool_type) {
+        int value = opal_mem_hooks_support_level();
+        if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+            ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
+            /* Set leave pinned to 1 if leave pinned pipeline is not set */
+            if (-1 == ompi_mpi_leave_pinned) {
+                ompi_mpi_leave_pinned = !ompi_mpi_leave_pinned_pipeline;
+            }
         } else {
-            mca_btl_ugni_component.ugni_smsg_limit = 256;
+            ompi_mpi_leave_pinned = 0;
+            ompi_mpi_leave_pinned_pipeline = 0;
         }
+    } else if (-1 == ompi_mpi_leave_pinned) {
+        /* if udreg is in use we can set leave pinned without checking for the
+         * memory hooks. */
+        ompi_mpi_leave_pinned = !ompi_mpi_leave_pinned_pipeline;
     }
-
-    mca_btl_ugni_component.smsg_max_data = mca_btl_ugni_component.ugni_smsg_limit -
-        sizeof (mca_btl_ugni_send_frag_hdr_t);
-
-    /* calculate mailbox size */
-    tmp_smsg_attrib.msg_type       = GNI_SMSG_TYPE_MBOX_AUTO_RETRANSMIT;
-    tmp_smsg_attrib.msg_maxsize    = mca_btl_ugni_component.ugni_smsg_limit;
-    tmp_smsg_attrib.mbox_maxcredit = mca_btl_ugni_component.smsg_max_credits;
-
-    rc = GNI_SmsgBufferSizeNeeded (&tmp_smsg_attrib, &mbox_size);
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-        BTL_ERROR(("error in GNI_SmsgBufferSizeNeeded"));
-        return ompi_common_rc_ugni_to_ompi (rc);
-    }
-
-    mca_btl_ugni_component.smsg_mbox_size = OPAL_ALIGN(mbox_size, 64, unsigned int);
-
-    return OMPI_SUCCESS;
 }
 
 static mca_btl_base_module_t **
@@ -337,15 +326,6 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 
     mca_btl_ugni_autoset_leave_pinned ();
 
-    rc = mca_btl_ugni_smsg_setup ();
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        return NULL;
-    }
-
-    if (mca_btl_ugni_component.ugni_smsg_limit == mca_btl_ugni_module.super.btl_eager_limit) {
-        mca_btl_ugni_module.super.btl_eager_limit = mca_btl_ugni_component.smsg_max_data;
-    }
-
     mca_btl_ugni_module.super.btl_rdma_pipeline_send_length = mca_btl_ugni_module.super.btl_eager_limit;
 
     for (i = 0 ; i < mca_btl_ugni_component.ugni_num_btls ; ++i) {
@@ -364,7 +344,7 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 
     *num_btl_modules = mca_btl_ugni_component.ugni_num_btls;
 
-    BTL_VERBOSE(("btl/ugni done initializing modules"));
+    BTL_VERBOSE(("btl/ugni done initializing %d module(s)", *num_btl_modules));
 
     return base_modules;
 }
@@ -373,12 +353,12 @@ static inline int
 mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
 {
     uint32_t remote_addr, remote_id;
+    uint64_t datagram_id, data;
     mca_btl_base_endpoint_t *ep;
     gni_post_state_t post_state;
     gni_ep_handle_t handle;
-    uint64_t datagram_id;
     gni_return_t grc;
-    int count = 0;
+    int count = 0, rc;
 
     /* check for datagram completion */
     grc = GNI_PostDataProbeById (ugni_module->device->dev_handle, &datagram_id);
@@ -386,12 +366,15 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
         return 0;
     }
 
-    if ((datagram_id & MCA_BTL_UGNI_DATAGRAM_MASK) ==
-        MCA_BTL_UGNI_CONNECT_WILDCARD_ID) {
-        handle = ugni_module->wildcard_ep;
+    data = datagram_id & ~(MCA_BTL_UGNI_DATAGRAM_MASK);
+
+    BTL_VERBOSE(("datgram_id: %" PRIx64 ", mask: %" PRIx64, datagram_id, (uint64_t) (datagram_id & MCA_BTL_UGNI_DATAGRAM_MASK)));
+
+    if ((datagram_id & MCA_BTL_UGNI_DATAGRAM_MASK) == MCA_BTL_UGNI_CONNECT_DIRECTED_ID) {
+        ep = (mca_btl_base_endpoint_t *) opal_pointer_array_get_item (&ugni_module->endpoints, data);
+        handle = ep->smsg_ep_handle;
     } else {
-        handle =
-            ugni_module->endpoints[(uint32_t)(datagram_id & 0xffffffffull)]->smsg_ep_handle;
+        handle = ugni_module->wildcard_ep;
     }
 
     /* wait for the incoming datagram to complete (in case it isn't) */
@@ -402,10 +385,28 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
         return ompi_common_rc_ugni_to_ompi (grc);
     }
 
-    BTL_VERBOSE(("got a datagram completion: id = %" PRIx64 ", state = %d, "
-                 "peer = %d", datagram_id, post_state, remote_id));
+    /* if this is a wildcard endpoint lookup the remote peer by the proc id we received */
+    if (handle == ugni_module->wildcard_ep) {
+        BTL_VERBOSE(("received connection attempt on wildcard endpoint from proc id: %" PRIx64, ugni_module->wc_remote_attr.proc_id));
+        rc = opal_hash_table_get_value_uint64 (&ugni_module->id_to_endpoint,
+                                               ugni_module->wc_remote_attr.proc_id,
+                                               (void *) &ep);
+        /* check if the endpoint is known */
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || NULL == ep)) {
+            BTL_ERROR(("received connection attempt from an unknown peer. rc: %d, ep: %p, id: 0x%" PRIx64,
+                       rc, ep, ugni_module->wc_remote_attr.proc_id));
+            return OMPI_ERR_NOT_FOUND;
+        }
+    } else {
+        BTL_VERBOSE(("directed datagram complete for endpoint %p", ep));
+    }
 
-    ep = ugni_module->endpoints[remote_id];
+    /* should not have gotten a NULL endpoint */
+    assert (NULL != ep);
+
+    BTL_VERBOSE(("got a datagram completion: id = %" PRIx64 ", state = %d, "
+                 "data = 0x%" PRIx64 ", ep = %p, remote id: %d", datagram_id, post_state,
+                 data, ep, remote_id));
 
     /* NTH: TODO -- error handling */
     (void) mca_btl_ugni_ep_connect_progress (ep);
@@ -416,8 +417,7 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
     }
 
     /* repost the wildcard datagram */
-    if ((datagram_id & MCA_BTL_UGNI_DATAGRAM_MASK) ==
-        MCA_BTL_UGNI_CONNECT_WILDCARD_ID) {
+    if (handle == ugni_module->wildcard_ep) {
         mca_btl_ugni_wildcard_ep_post (ugni_module);
     }
 

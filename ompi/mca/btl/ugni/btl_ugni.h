@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -23,7 +23,7 @@
 
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/grdma/mpool_grdma.h"
+#include "ompi/mca/mpool/udreg/mpool_udreg.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
 
@@ -42,17 +42,32 @@
 #include <gni_pub.h>
 
 /* datagram message ids */
-#define MCA_BTL_UGNI_CONNECT_WILDCARD_ID 0x6b69726b00000000ull
-#define MCA_BTL_UGNI_CONNECT_DIRECTED_ID 0x6b61686e00000000ull
-#define MCA_BTL_UGNI_DATAGRAM_MASK       0xffffffff00000000ull
+#define MCA_BTL_UGNI_CONNECT_WILDCARD_ID 0x0000000000000000ull
+#define MCA_BTL_UGNI_CONNECT_DIRECTED_ID 0x8000000000000000ull
+#define MCA_BTL_UGNI_DATAGRAM_MASK       0x8000000000000000ull
+
+/* ompi and smsg endpoint attributes */
+typedef struct mca_btl_ugni_endpoint_attr_t {
+    uint64_t proc_id;
+    uint32_t index;
+    gni_smsg_attr_t smsg_attr;
+} mca_btl_ugni_endpoint_attr_t;
+
+enum {
+    MCA_BTL_UGNI_MPOOL_UDREG,
+    MCA_BTL_UGNI_MPOOL_GRDMA
+};
 
 typedef struct mca_btl_ugni_module_t {
     mca_btl_base_module_t super;
 
+    bool initialized;
+
     ompi_common_ugni_device_t *device;
 
     size_t endpoint_count;
-    struct mca_btl_base_endpoint_t **endpoints;
+    opal_pointer_array_t endpoints;
+    opal_hash_table_t id_to_endpoint;
 
     opal_list_t failed_frags;
 
@@ -60,7 +75,7 @@ typedef struct mca_btl_ugni_module_t {
     ompi_free_list_t         smsg_mboxes;
 
     gni_ep_handle_t wildcard_ep;
-    gni_smsg_attr_t wc_remote_attr, wc_local_attr;
+    struct mca_btl_ugni_endpoint_attr_t wc_remote_attr, wc_local_attr;
 
     gni_cq_handle_t rdma_local_cq;
     gni_cq_handle_t smsg_remote_cq;
@@ -85,6 +100,12 @@ typedef struct mca_btl_ugni_module_t {
 
     uint32_t reg_max;
     uint32_t reg_count;
+
+    /* used to calculate the fraction of registered memory resources
+     * this rank should be limited too */
+    int nlocal_procs;
+
+    int active_send_count;
 } mca_btl_ugni_module_t;
 
 typedef struct mca_btl_ugni_component_t {
@@ -132,6 +153,15 @@ typedef struct mca_btl_ugni_component_t {
 
     /* Maximum number of memory registrations per process */
     int max_mem_reg;
+
+    /* Page size to use for SMSG allocations (udreg mpool) */
+    unsigned int smsg_page_size;
+
+    /* mpool type (grdma or udreg) */
+    int mpool_type;
+
+    /* Number of mailboxes to allocate in each block */
+    unsigned int mbox_increment;
 } mca_btl_ugni_component_t;
 
 int mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
@@ -250,13 +280,19 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
                    uint8_t order, size_t size, uint32_t flags);
 
 typedef struct mca_btl_ugni_reg_t {
-    mca_mpool_base_registration_t  base;
-    gni_mem_handle_t                memory_hdl;
+    mca_mpool_base_registration_t base;
+    gni_mem_handle_t         memory_hdl;
 } mca_btl_ugni_reg_t;
 
 /* Global structures */ 
 
 OMPI_MODULE_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
 OMPI_MODULE_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
+
+/* Get a unique 64-bit id for the process name */
+static inline uint64_t mca_btl_ugni_proc_name_to_id (ompi_process_name_t name) {
+    /* Throw away the top bit of the jobid for the datagram type */
+    return ((uint64_t) (name.jobid & 0x7fffffff) << 32 | (uint64_t) name.vpid);
+}
 
 #endif
