@@ -2756,7 +2756,8 @@ btl_openib_component_init(int *num_btl_modules,
          i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
-        if (distance != dev_sorted[i].distance) {
+        if (0 != mca_btl_openib_component.ib_num_btls &&
+            distance != dev_sorted[i].distance) {
             break;
         }
 
