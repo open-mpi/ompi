@@ -18,6 +18,13 @@ AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LIBS)
 AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 
 #
+# Disable Open SHMEM?
+#
+AC_ARG_ENABLE([oshmem],
+  [AC_HELP_STRING([--disable-oshmem],
+     [Disable building the OpenSHMEM interface])])
+
+#
 # Enable compatibility mode
 #
 AC_MSG_CHECKING([if want SGI/Quadrix compatibility mode])
