@@ -52,7 +52,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(1,"sharedfp_sm_seek - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_sm_seek - error opening the shared file pointer\n");
             return ret;
         }
     }
@@ -64,7 +64,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
         if ( MPI_SEEK_SET == whence){
             /*no nothing*/
             if ( offset < 0){
-                opal_output(1,"sharedfp_sm_seek - MPI_SEEK_SET, offset must be > 0, got offset=%lld.\n",offset);
+                opal_output(0,"sharedfp_sm_seek - MPI_SEEK_SET, offset must be > 0, got offset=%lld.\n",offset);
                 ret = -1;
             }
 	    if ( mca_sharedfp_sm_verbose ) {
@@ -83,7 +83,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 		printf("sharedfp_sm_seek: MPI_SEEK_CUR: new_offset=%lld\n",offset);
 	    }
             if(offset < 0){
-                opal_output(1,"sharedfp_sm_seek - MPI_SEEK_CURE, offset must be > 0, got offset=%lld.\n",offset);
+                opal_output(0,"sharedfp_sm_seek - MPI_SEEK_CURE, offset must be > 0, got offset=%lld.\n",offset);
                 ret = -1;
             }
         }
@@ -96,12 +96,12 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 		printf("sharedfp_sm_seek: MPI_SEEK_END: file_get_size=%lld\n",end_position);
 	    }
             if(offset < 0){
-                opal_output(1,"sharedfp_sm_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
+                opal_output(0,"sharedfp_sm_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
                 ret = -1;
             }
         }
 	else {
-            opal_output(1,"sharedfp_sm_seek - whence=%i is not supported\n",whence);
+            opal_output(0,"sharedfp_sm_seek - whence=%i is not supported\n",whence);
             ret = -1;
         }
 

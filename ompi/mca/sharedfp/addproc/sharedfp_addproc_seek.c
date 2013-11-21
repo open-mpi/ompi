@@ -38,7 +38,7 @@ mca_sharedfp_addproc_seek (mca_io_ompio_file_t *fh,
     long buff = 0;
 
     if(NULL == fh->f_sharedfp_data){
-        opal_output(1, "sharedfp_addproc_write_ordered - shared file pointer structure not initialized correctly\n");
+        opal_output(0, "sharedfp_addproc_write_ordered - shared file pointer structure not initialized correctly\n");
         return OMPI_ERROR;
     }
 

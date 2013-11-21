@@ -24,7 +24,7 @@ void nodeDelete(node **front, node **rear)
 {
     node *delNode;
     if ((*front) == NULL && (*rear)==NULL) {
-        opal_output(1,"The queue is empty\n");
+        printf("The queue is empty\n");
     }
     else {
         delNode = *front;
@@ -53,7 +53,7 @@ void nodeInsert(node **front, node **rear, int procNo, long numBytesArrAddr)
         *front = newNode;
         *rear = newNode;
 #if 0
-	opal_output(1,"Front and rear both NULL\n");
+	printf("Front and rear both NULL\n");
 #endif
         fflush(stdout);
     }
@@ -61,7 +61,7 @@ void nodeInsert(node **front, node **rear, int procNo, long numBytesArrAddr)
         (*rear)->Next = newNode;
         *rear=newNode;
 #if 0
-            opal_output(1,"Front and rear both not NULL\n");
+            printf("Front and rear both not NULL\n");
 #endif
 	    fflush(stdout);
     }
@@ -72,12 +72,12 @@ void nodeInsert(node **front, node **rear, int procNo, long numBytesArrAddr)
 int Check_Request_Offset(int tag_received)
 {
 #if 0
-        opal_output(1,"Tag received %d\n",tag_received);
+        printf("Tag received %d\n",tag_received);
 #endif
 
     if (tag_received == REQUEST_TAG)  {
 #if 0
-	opal_output(1,"Return from Check_Request_Offset\n");
+	printf("Return from Check_Request_Offset\n");
 #endif
 	return 1;
     }
@@ -124,12 +124,12 @@ int main(int argc, char **argv)
     rear = front = NULL;
 
 #if 0
-        opal_output(1,"addproc_control: MPI_INIT\n"); fflush(stdout);
+        printf("addproc_control: MPI_INIT\n"); fflush(stdout);
 #endif
     MPI_Init(&argc,&argv);
 
 #if 0
-        opal_output(1,"addproc_control: MPI_Comm_size\n"); fflush(stdout);
+        printf("addproc_control: MPI_Comm_size\n"); fflush(stdout);
 #endif
     MPI_Comm_size(MPI_COMM_WORLD,&size);
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     endoffile = 0;
 
 #if 0
-        opal_output(1,"addproc_control: start listening\n"); fflush(stdout);
+        printf("addproc_control: start listening\n"); fflush(stdout);
 #endif
     while(!END_FLAG)  {
 
@@ -152,14 +152,14 @@ int main(int argc, char **argv)
 
         case REQUEST_TAG:
 #if 0
-                opal_output(1,"addproc_control: Offset requested by the process %d\n",status.MPI_SOURCE); fflush(stdout);
+                printf("addproc_control: Offset requested by the process %d\n",status.MPI_SOURCE); fflush(stdout);
 #endif
             /* Insert the node into the linked list */
             nodeInsert(&front,&rear,status.MPI_SOURCE,recvBuff);
             break;
         case END_TAG:
 #if 0
-	    opal_output(1,"addproc_control: End Control tag received\n"); fflush(stdout);
+	    printf("addproc_control: End Control tag received\n"); fflush(stdout);
 #endif
             END_FLAG = 1;
             break;
@@ -167,12 +167,12 @@ int main(int argc, char **argv)
             offset = recvBuff;
             MPI_Send(&offset,1,OMPI_OFFSET_DATATYPE,status.MPI_SOURCE,SEEK_SET_TAG,parentComm);
 #if 0
-	    opal_output(1,"addproc_control: Seek set tag received\n"); fflush(stdout);
+	    printf("addproc_control: Seek set tag received\n"); fflush(stdout);
 #endif
             break;
         case SEEK_CUR_TAG:
 #if 0
-	    opal_output(1,"addproc_control: Seek CUR Tag received\n"); fflush(stdout);
+	    printf("addproc_control: Seek CUR Tag received\n"); fflush(stdout);
 #endif
             /*set the pointer to the offset*/
             offset += recvBuff;
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
             break;
         case SEEK_END_TAG:
 #if 0
-	    opal_output(1,"addproc_control: Seek END TAG received\n"); fflush(stdout);
+	    printf("addproc_control: Seek END TAG received\n"); fflush(stdout);
 #endif
             offset = endoffile;
             offset += recvBuff;
@@ -188,13 +188,13 @@ int main(int argc, char **argv)
             break;
         case GET_POSITION_TAG:
 #if 0
-	    opal_output(1,"\naddproc_control: Get Position tag received\n"); fflush(stdout);
+	    printf("\naddproc_control: Get Position tag received\n"); fflush(stdout);
 #endif
             /*Send the offset as requested*/
             MPI_Send(&offset,1,OMPI_OFFSET_DATATYPE,status.MPI_SOURCE,GET_POSITION_TAG,parentComm);
             break;
         default:
-            opal_output(1,"addproc_control: Unknown tag received\n"); fflush(stdout);
+            printf("addproc_control: Unknown tag received\n"); fflush(stdout);
             break;
         }
 
@@ -220,12 +220,12 @@ int main(int argc, char **argv)
     }		/* End of while(1) loop */
 
 #if 0
-    opal_output(1,"addproc_control: finalizing mpi...\n"); fflush(stdout);
+    printf("addproc_control: finalizing mpi...\n"); fflush(stdout);
 #endif
     MPI_Finalize();
 
 #if 0
-    opal_output(1,"addproc_control: Exiting...\n");
+    printf("addproc_control: Exiting...\n");
 #endif
     return 0;
 }

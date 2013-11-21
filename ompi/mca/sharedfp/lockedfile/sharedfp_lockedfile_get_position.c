@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      University of Houston. All rights reserved.
+ * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 int
 mca_sharedfp_lockedfile_get_position(mca_io_ompio_file_t *fh,
@@ -32,11 +33,10 @@ mca_sharedfp_lockedfile_get_position(mca_io_ompio_file_t *fh,
     int ret = OMPI_SUCCESS;
     mca_sharedfp_base_module_t * shared_fp_base_module;
     struct mca_sharedfp_base_data_t *sh = NULL;
-    opal_output(1,"sharedfp_lockedfile_get_position\n");
-
 
     if(fh->f_sharedfp_data==NULL){
-        opal_output(1,"sharedfp_lockedfile_get_position - opening the shared file pointer\n");
+	opal_output(ompi_sharedfp_base_framework.framework_output,
+		    "sharedfp_lockedfile_get_position - opening the shared file pointer\n");
         shared_fp_base_module = fh->f_sharedfp;
 
         ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
@@ -45,7 +45,7 @@ mca_sharedfp_lockedfile_get_position(mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if (ret != OMPI_SUCCESS) {
-            opal_output(1,"sharedfp_lockedfile_write - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_lockedfile_write - error opening the shared file pointer\n");
             return ret;
         }
     }

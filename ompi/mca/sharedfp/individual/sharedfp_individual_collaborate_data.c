@@ -55,7 +55,7 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 
     headnode = (mca_sharedfp_individual_header_record*)sh->selected_module_data;
     if ( NULL == headnode)  {
-	opal_output (1, "sharedfp_individual_collaborate_data: headnode is NULL but file is open\n");
+	opal_output(0, "sharedfp_individual_collaborate_data: headnode is NULL but file is open\n");
 	return OMPI_ERROR;
     }
 

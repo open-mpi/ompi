@@ -59,7 +59,7 @@ int mca_sharedfp_addproc_get_position(mca_io_ompio_file_t *fh,
     struct mca_sharedfp_base_data_t *sh = NULL;
 
     if(NULL == fh->f_sharedfp_data){
-        opal_output(1, "sharedfp_addproc_get_position - shared file pointer structure not initialized correctly\n");
+        opal_output(0, "sharedfp_addproc_get_position - shared file pointer structure not initialized correctly\n");
         return OMPI_ERROR;
     }
 

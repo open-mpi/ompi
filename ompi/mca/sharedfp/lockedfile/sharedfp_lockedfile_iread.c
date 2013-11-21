@@ -51,7 +51,7 @@ int mca_sharedfp_lockedfile_iread(mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(1,"sharedfp_lockedfile_iread - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_lockedfile_iread - error opening the shared file pointer\n");
             return ret;
         }
     }
@@ -87,7 +87,7 @@ int mca_sharedfp_lockedfile_read_ordered_begin(mca_io_ompio_file_t *fh,
                                        int count,
                                        struct ompi_datatype_t *datatype)
 {
-    opal_output(1,"mca_sharedfp_lockedfile_write_ordered_begin: NOT IMPLEMENTED\n");
+    opal_output(0,"mca_sharedfp_lockedfile_write_ordered_begin: NOT IMPLEMENTED\n");
     return OMPI_ERROR;
 }
 
@@ -96,6 +96,6 @@ int mca_sharedfp_lockedfile_read_ordered_end(mca_io_ompio_file_t *fh,
                                               void *buf,
                                               ompi_status_public_t *status)
 {
-    opal_output(1,"mca_sharedfp_lockedfile_write_ordered_end: NOT IMPLEMENTED\n");
+    opal_output(0,"mca_sharedfp_lockedfile_write_ordered_end: NOT IMPLEMENTED\n");
     return OMPI_ERROR;
 }

@@ -50,14 +50,14 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     shfileHandle =  (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
     err = ompio_io_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
     if ( OMPI_SUCCESS != err)  {
-        opal_output(1, "mca_sharedfp_lockedfile_file_open: Error during file open\n");
+        opal_output(0, "mca_sharedfp_lockedfile_file_open: Error during file open\n");
         return err;
     }
 
     /*Memory is allocated here for the sh structure*/
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh){
-        opal_output(1, "mca_sharedfp_lockedfile_file_open: Error, unable to malloc f_sharedfp_ptr struct\n");
+        opal_output(0, "mca_sharedfp_lockedfile_file_open: Error, unable to malloc f_sharedfp_ptr struct\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /*Populate the sh file structure based on the implementation*/

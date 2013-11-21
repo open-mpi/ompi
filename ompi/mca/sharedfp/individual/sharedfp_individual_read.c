@@ -28,14 +28,14 @@
 int mca_sharedfp_individual_read ( mca_io_ompio_file_t *fh,
 				   void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
 {
-    opal_output(1,"mca_sharedfp_individual_read: NOT SUPPORTED by this component\n");
+    opal_output(0,"mca_sharedfp_individual_read: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
 int mca_sharedfp_individual_read_ordered ( mca_io_ompio_file_t *fh,
                                    void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
 {
-    opal_output(1,"mca_sharedfp_individual_read_ordered: NOT SUPPORTED by this component\n");
+    opal_output(0,"mca_sharedfp_individual_read_ordered: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
@@ -45,7 +45,7 @@ int mca_sharedfp_individual_iread(mca_io_ompio_file_t *fh,
                                    ompi_datatype_t *datatype,
                                    MPI_Request * request)
 {
-    opal_output(1,"mca_sharedfp_individual_iread: NOT SUPPORTED by this component\n");
+    opal_output(0,"mca_sharedfp_individual_iread: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
@@ -54,7 +54,7 @@ int mca_sharedfp_individual_read_ordered_begin(mca_io_ompio_file_t *fh,
                                                 int count,
                                                 struct ompi_datatype_t *datatype)
 {
-    opal_output(1,"mca_sharedfp_individual_read_ordered_begin: NOT SUPPORTED by this component\n");
+    opal_output(0,"mca_sharedfp_individual_read_ordered_begin: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
@@ -62,6 +62,6 @@ int mca_sharedfp_individual_read_ordered_end(mca_io_ompio_file_t *fh,
                                               void *buf,
                                               ompi_status_public_t *status)
 {
-    opal_output(1,"mca_sharedfp_individual_read_ordered_end: NOT SUPPORTED by this component\n");
+    opal_output(0,"mca_sharedfp_individual_read_ordered_end: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }

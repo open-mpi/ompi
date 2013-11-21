@@ -38,7 +38,7 @@ int mca_sharedfp_addproc_iwrite(mca_io_ompio_file_t *fh,
     struct mca_sharedfp_base_data_t *sh = NULL;
 
     if(NULL == fh->f_sharedfp_data){
-        opal_output(1, "sharedfp_addproc_iwrite: shared file pointer structure not initialized correctly\n");
+        opal_output(0, "sharedfp_addproc_iwrite: shared file pointer structure not initialized correctly\n");
         return OMPI_ERROR;
     }
 
@@ -70,7 +70,7 @@ int mca_sharedfp_addproc_write_ordered_begin(mca_io_ompio_file_t *fh,
                                              int count,
                                              struct ompi_datatype_t *datatype)
 {
-    opal_output(1,"mca_sharedfp_addproc_write_ordered_begin: NOT IMPLEMENTED\n");
+    opal_output(0,"mca_sharedfp_addproc_write_ordered_begin: NOT IMPLEMENTED\n");
     return OMPI_ERROR;
 }
 
@@ -79,6 +79,6 @@ int mca_sharedfp_addproc_write_ordered_end(mca_io_ompio_file_t *fh,
                                            void *buf,
                                            ompi_status_public_t *status)
 {
-    opal_output(1,"mca_sharedfp_addproc_write_ordered_end: NOT IMPLEMENTED\n");
+    opal_output(0,"mca_sharedfp_addproc_write_ordered_end: NOT IMPLEMENTED\n");
     return OMPI_ERROR;
 }
