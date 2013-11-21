@@ -29,6 +29,6 @@ int
 mca_sharedfp_individual_get_position(mca_io_ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE * offset)
 {
-    opal_output(1,"mca_sharedfp_individual_get_position: NOT IMPLEMENTED\n");
+    opal_output(0,"mca_sharedfp_individual_get_position: NOT IMPLEMENTED\n");
     return OMPI_SUCCESS;
 }

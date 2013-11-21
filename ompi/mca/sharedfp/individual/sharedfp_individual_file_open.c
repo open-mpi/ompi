@@ -51,13 +51,13 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     shfileHandle =  (mca_io_ompio_file_t *) malloc ( sizeof(mca_io_ompio_file_t));
     err = ompio_io_ompio_file_open ( comm, filename, amode, info, shfileHandle, false);
     if ( OMPI_SUCCESS != err )  {
-        opal_output(1, "mca_sharedfp_individual_file_open: Error during file open\n");
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during file open\n");
         return err;
     }
 
     sh = (struct mca_sharedfp_base_data_t*) malloc ( sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh ){
-        opal_output(1, "mca_sharedfp_individual_file_open: Error, unable to malloc "
+        opal_output(0, "mca_sharedfp_individual_file_open: Error, unable to malloc "
 		    "f_sharedfp_ptr struct\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -92,7 +92,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
                                    MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                    MPI_INFO_NULL, datafilehandle, false);
     if ( OMPI_SUCCESS != err) {
-        opal_output(1, "mca_sharedfp_individual_file_open: Error during datafile file open\n");
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during datafile file open\n");
         return err;
     }
 
@@ -113,7 +113,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
                                      MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                      MPI_INFO_NULL, metadatafilehandle, false);
     if ( OMPI_SUCCESS != err) {
-        opal_output(1, "mca_sharedfp_individual_file_open: Error during metadatafile file open\n");
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during metadatafile file open\n");
         return err;
     }
 

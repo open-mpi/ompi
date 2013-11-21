@@ -47,7 +47,7 @@ int mca_sharedfp_lockedfile_read ( mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(1,"sharedfp_lockedfile_read - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_lockedfile_read - error opening the shared file pointer\n");
             return ret;
         }
     }
@@ -108,7 +108,7 @@ int mca_sharedfp_lockedfile_read_ordered (mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(1,"sharedfp_lockedfile_read_ordered - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_lockedfile_read_ordered - error opening the shared file pointer\n");
             return ret;
         }
     }

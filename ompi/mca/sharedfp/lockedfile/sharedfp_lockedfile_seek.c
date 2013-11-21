@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 /*Use fcntl to lock the file which stores the current position*/
 #include <fcntl.h>
@@ -42,9 +43,8 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
     struct flock fl;
 
     if(fh->f_sharedfp_data==NULL){
-	if ( mca_sharedfp_lockedfile_verbose ) {
-	    printf("sharedfp_lockedfile_seek - opening the shared file pointer\n");
-	}
+	opal_output(ompi_sharedfp_base_framework.framework_output,
+		    "sharedfp_lockedfile_seek - opening the shared file pointer\n");
         shared_fp_base_module = fh->f_sharedfp;
 
         ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
@@ -53,7 +53,7 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if (ret != OMPI_SUCCESS) {
-            opal_output(1,"sharedfp_lockedfile_seek - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_lockedfile_seek - error opening the shared file pointer\n");
             return ret;
         }
     }
@@ -65,22 +65,24 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
         if ( MPI_SEEK_SET == whence ){
             /*don't need to read current value*/
             if(offset < 0){
-                opal_output(1,"sharedfp_lockedfile_seek - MPI_SEEK_SET, offset must be > 0, got offset=%lld.\n",offset);
+                opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_SET, offset must be > 0, got offset=%lld.\n",offset);
                 ret = -1;
             }
-            opal_output(1,"MPI_SEEK_SET: new_offset=%lld\n",offset);
+            opal_output(ompi_sharedfp_base_framework.framework_output,"MPI_SEEK_SET: new_offset=%lld\n",offset);
             fflush(stdout);
         }
 	else if ( MPI_SEEK_CUR == whence){
             OMPI_MPI_OFFSET_TYPE current_position;
             int status = mca_sharedfp_lockedfile_get_position(fh,&current_position);
-            opal_output(1,"MPI_SEEK_CUR: curr=%lld, offset=%lld, call status=%d\n",current_position,offset,status);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+			"MPI_SEEK_CUR: curr=%lld, offset=%lld, call status=%d\n",current_position,offset,status);
 
             offset = current_position + offset;
-            opal_output(1,"MPI_SEEK_CUR: new_offset=%lld\n",offset);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+			"MPI_SEEK_CUR: new_offset=%lld\n",offset);
             fflush(stdout);
             if(offset < 0){
-                opal_output(1,"sharedfp_lockedfile_seek - MPI_SEEK_CURE, offset must be > 0, got offset=%lld.\n",offset);
+                opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_CURE, offset must be > 0, got offset=%lld.\n",offset);
                 ret = -1;
             }
         }
@@ -88,16 +90,15 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
             OMPI_MPI_OFFSET_TYPE end_position=0;
             ompio_io_ompio_file_get_size(sh->sharedfh,&end_position);
             offset = end_position + offset;
-	    if ( mca_sharedfp_lockedfile_verbose ) {
-		printf("MPI_SEEK_END: file_get_size=%lld\n",end_position);
-	    }
-
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
+			"MPI_SEEK_END: file_get_size=%lld\n",end_position);
+	    
             if ( offset < 0){
-                opal_output(1,"sharedfp_lockedfile_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
+                opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
                 ret = -1;
             }
         }else{
-            opal_output(1,"sharedfp_lockedfile_seek - whence=%i is not supported\n",whence);
+            opal_output(0,"sharedfp_lockedfile_seek - whence=%i is not supported\n",whence);
             ret = -1;
         }
 
@@ -106,9 +107,8 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
         lockedfile_data = sh->selected_module_data;
         fd_lockedfilehandle = lockedfile_data->handle;
 
-	if ( mca_sharedfp_lockedfile_verbose ) {
-	    printf("sharedfp_lockedfile_seek: Aquiring lock...");
-	}
+	opal_output(ompi_sharedfp_base_framework.framework_output,
+		    "sharedfp_lockedfile_seek: Aquiring lock...");
 
         /* set up the flock structure */
         fl.l_type   = F_WRLCK;
@@ -119,14 +119,13 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
 
         /* Aquire an exclusive lock */
         if ( fcntl(fd_lockedfilehandle, F_SETLKW, &fl) == -1) {
-            opal_output(1, "#####erorr acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd_lockedfilehandle);
-            opal_output(1,"error(%i): %s", errno, strerror(errno));
+            opal_output(0, "Erorr acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd_lockedfilehandle);
+            opal_output(0,"error(%i): %s", errno, strerror(errno));
             return OMPI_ERROR;
         }
 	else{
-	    if ( mca_sharedfp_lockedfile_verbose ) {
-		printf("sharedfp_lockedfile_seek: Success! acquired lock.for fd: %d\n",fd_lockedfilehandle);
-	    }
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
+			"sharedfp_lockedfile_seek: Success! acquired lock.for fd: %d\n",fd_lockedfilehandle);
         }
 
         /*-- -----------------
@@ -150,14 +149,13 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
         fl.l_pid    = getpid();
 
         if (fcntl(fd_lockedfilehandle, F_SETLK, &fl) == -1) {
-            opal_output(1,"####failed to release lock for fd: %d\n",fd_lockedfilehandle);
-            opal_output(1,"error(%i): %s", errno, strerror(errno));
+            opal_output(0,"Failed to release lock for fd: %d\n",fd_lockedfilehandle);
+            opal_output(0,"error(%i): %s", errno, strerror(errno));
             return OMPI_ERROR;
         }
 	else{
-	    if ( mca_sharedfp_lockedfile_verbose ) {
-		printf("sharedfp_lockedfile_seek: released lock.for fd: %d\n",fd_lockedfilehandle);
-	    }
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
+			"sharedfp_lockedfile_seek: released lock.for fd: %d\n",fd_lockedfilehandle);
         }
     }
 

@@ -26,6 +26,7 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/sharedfp/lockedfile/sharedfp_lockedfile.h"
 
 /* included so that we can test file locking availability */
@@ -123,31 +124,31 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
     fd = open(filename, O_RDWR | O_CREAT, 0644);
 
     if ( -1 == fd ){
-        opal_output(1,"mca_sharedfp_lockedfile_component_file_query: error opening file %s", filename);
-        opal_output(1,"%s\n", strerror(errno));
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+		    "mca_sharedfp_lockedfile_component_file_query: error opening file %s %s", filename, strerror(errno));
         has_file_lock_support=false;
     }
     else{
         err = fcntl(fd, F_SETLKW, &lock);
-	if ( mca_sharedfp_lockedfile_verbose ) {
-	    printf("mca_sharedfp_lockedfile_component_file_query: returned err=%d, for fd=%d\n",err,fd);
-	}
-
+	opal_output(ompi_sharedfp_base_framework.framework_output,
+		    "mca_sharedfp_lockedfile_component_file_query: returned err=%d, for fd=%d\n",err,fd);
+	
         if (err) {
-            opal_output(1, "mca_sharedfp_lockedfile_component_file_query: Failed to set a file lock on %s\n", filename );
-            opal_output(1, "err=%d, errno=%d, EOPNOTSUPP=%d, EINVAL=%d, ENOSYS=%d, EACCES=%d, EAGAIN=%d, EBADF=%d\n",
-                        err,errno,EOPNOTSUPP,EINVAL,ENOSYS,EACCES,EAGAIN,EBADF);
-            opal_output(1,"%s\n", strerror(errno));
+            opal_output(ompi_sharedfp_base_framework.framework_output, 
+			"mca_sharedfp_lockedfile_component_file_query: Failed to set a file lock on %s %s\n", filename, strerror(errno) );
+            opal_output(ompi_sharedfp_base_framework.framework_output, 
+			"err=%d, errno=%d, EOPNOTSUPP=%d, EINVAL=%d, ENOSYS=%d, EACCES=%d, EAGAIN=%d, EBADF=%d\n",
+                        err, errno, EOPNOTSUPP, EINVAL, ENOSYS, EACCES, EAGAIN, EBADF);
 
             if (errno == EACCES || errno == EAGAIN) {
-                opal_output(1,"errno=EACCES || EAGAIN, Already locked by another process\n");
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+			    "errno=EACCES || EAGAIN, Already locked by another process\n");
             }
 
         }
         else {
-	    if ( mca_sharedfp_lockedfile_verbose ) {
-		printf( "mca_sharedfp_lockedfile_component_file_query: fcntl claims success in setting a file lock on %s\n", filename );
-	    }
+	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+			"mca_sharedfp_lockedfile_component_file_query: fcntl claims success in setting a file lock on %s\n", filename );
 
             has_file_lock_support=true;
         }
@@ -163,7 +164,8 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
     *priority = 0;
     /*module can not run!, return NULL to indicate that we are unable to run*/
 
-    opal_output(1,"mca_sharedfp_lockedfile_component_file_query: Can not run!, file locking not supported\n");
+    opal_output(ompi_sharedfp_base_framework.framework_output,
+		"mca_sharedfp_lockedfile_component_file_query: Can not run!, file locking not supported\n");
     return NULL;
 }
 

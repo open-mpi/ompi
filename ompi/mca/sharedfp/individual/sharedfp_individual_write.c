@@ -50,7 +50,7 @@ int mca_sharedfp_individual_write (mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if (ret != OMPI_SUCCESS) {
-            opal_output(1,"sharedfp_individual_write - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_individual_write - error opening the shared file pointer\n");
             return ret;
         }
     }
@@ -72,7 +72,7 @@ int mca_sharedfp_individual_write (mca_io_ompio_file_t *fh,
 					     headnode->datafile_offset,
 					     buf, count, datatype, status);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(1,"mca_sharedfp_individual_write: Error while writing the datafile \n");
+            opal_output(0,"mca_sharedfp_individual_write: Error while writing the datafile \n");
             return -1;
         }
 
@@ -114,7 +114,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(1,"sharedfp_individual_write - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_individual_write - error opening the shared file pointer\n");
             return ret;
         }
     }
@@ -130,7 +130,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 
     headnode = (mca_sharedfp_individual_header_record*)sh->selected_module_data;
     if ( NULL == headnode)  {
-	opal_output (1, "sharedfp_individual_write_ordered: headnode is NULL but file is open\n");
+	opal_output (0, "sharedfp_individual_write_ordered: headnode is NULL but file is open\n");
 	return OMPI_ERROR;
     }
      
@@ -176,14 +176,14 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 					  &offset, 1, OMPI_OFFSET_DATATYPE, 0,
 					  sh->comm, sh->comm->c_coll.coll_scatter_module );
     if ( OMPI_SUCCESS != ret )  {
-	opal_output(1,"sharedfp_individual_write_ordered: Error in scattering offsets \n");
+	opal_output(0,"sharedfp_individual_write_ordered: Error in scattering offsets \n");
 	goto exit;
     }
     
     ret = sh->comm->c_coll.coll_bcast ( &global_offset, 1, OMPI_OFFSET_DATATYPE, 
 				  0, sh->comm, sh->comm->c_coll.coll_bcast_module );
     if ( OMPI_SUCCESS != ret )  {
-	opal_output(1,"sharedfp_individual_write_ordered: Error while bcasting global offset \n");
+	opal_output(0,"sharedfp_individual_write_ordered: Error while bcasting global offset \n");
 	goto exit;
     }
 
@@ -192,7 +192,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
     /*use file_write_at_all to ensure the order*/
     ret = ompio_io_ompio_file_write_at_all(sh->sharedfh,offset, buf,count,datatype,status);
     if ( OMPI_SUCCESS != ret )  {
-	opal_output(1,"sharedfp_individual_write_ordered: Error while writing the datafile \n");
+	opal_output(0,"sharedfp_individual_write_ordered: Error while writing the datafile \n");
     }
 
 exit:

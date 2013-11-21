@@ -28,6 +28,6 @@
 int mca_sharedfp_individual_seek (mca_io_ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE offset, int whence)
 {
-    opal_output(1,"mca_sharedfp_individual_seek: NOT IMPLEMENTED\n");
+    opal_output(0,"mca_sharedfp_individual_seek: NOT IMPLEMENTED\n");
     return OMPI_ERROR;
 }

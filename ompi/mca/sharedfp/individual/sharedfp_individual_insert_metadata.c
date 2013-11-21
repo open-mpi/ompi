@@ -38,7 +38,7 @@ int mca_sharedfp_individual_insert_metadata(int functype,long recordlength,struc
 
     headnode = (mca_sharedfp_individual_header_record*)sh->selected_module_data;
     if ( NULL == headnode)  {
-	opal_output (1, "sharedfp_individual_insert_metadat: headnode is NULL but file is open\n");
+	opal_output (0, "sharedfp_individual_insert_metadat: headnode is NULL but file is open\n");
 	return OMPI_ERROR;
     }
 
@@ -57,7 +57,7 @@ int mca_sharedfp_individual_insert_metadata(int functype,long recordlength,struc
     /* Allocate a new Node */
     newnode = (mca_sharedfp_individual_metadata_node*)malloc(sizeof(mca_sharedfp_individual_metadata_node));
     if (NULL == newnode) {
-	opal_output(1,"mca_sharedfp_individual_insert_metadata:Error while allocating new node\n");
+	opal_output(0,"mca_sharedfp_individual_insert_metadata:Error while allocating new node\n");
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
