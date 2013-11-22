@@ -6,8 +6,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = otfprofile
 endif
 
-OTFPROFILESRCDIR = $(srcdir)
-include $(srcdir)/Makefile.common
+include Makefile.common
 
 AM_CPPFLAGS = $(COMMONINCLUDES)
 

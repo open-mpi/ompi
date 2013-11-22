@@ -2,18 +2,22 @@ if AMBUILDBINARIES
 bin_PROGRAMS = otfprofile-mpi
 endif
 
-OTFPROFILESRCDIR = $(srcdir)/..
-include $(srcdir)/../Makefile.common
+include ../Makefile.common
+
+$(COMMONSOURCES):
+	$(LN_S) $(top_srcdir)/tools/otfprofile/$@ $@
 
 CXX = $(MPICXX)
 
-AM_CPPFLAGS = $(COMMONINCLUDES) $(MPI_INCLUDE_LINE)
+AM_CPPFLAGS = -I$(top_srcdir)/tools/otfprofile $(COMMONINCLUDES) $(MPI_INCLUDE_LINE)
 
 otfprofile_mpi_CXXFLAGS = -DOTFPROFILE_MPI $(COMMONCXXFLAGS) $(MPICXXFLAGS)
 otfprofile_mpi_LDADD = $(COMMONLDADD) $(MPI_LIB_LINE)
 otfprofile_mpi_DEPENDENCIES = $(COMMONDEPENDENCIES)
 otfprofile_mpi_SOURCES = \
-	$(COMMONSOURCES) \
-	$(OTFPROFILESRCDIR)/reduce_data.h \
-	$(OTFPROFILESRCDIR)/reduce_data.cpp
+	reduce_data.h \
+	reduce_data.cpp
+nodist_otfprofile_mpi_SOURCES = $(COMMONSOURCES)
+
+CLEANFILES = $(COMMONSOURCES)
 

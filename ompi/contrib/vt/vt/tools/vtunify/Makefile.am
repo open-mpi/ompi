@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 if AMHAVEMPI
 SUBDIRS = . mpi
 endif
@@ -6,8 +8,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = vtunify
 endif
 
-VTUNIFYSRCDIR = $(srcdir)
-include $(srcdir)/Makefile.common
+include Makefile.common
 
 vtunify_CXXFLAGS = $(COMMONCXXFLAGS)
 vtunify_LDFLAGS = $(COMMONLDFLAGS)

@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 if AMHAVEMPI
 SUBDIRS = . mpi
 endif
@@ -6,8 +8,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = vtfilter
 endif
 
-VTFILTERSRCDIR = $(srcdir)
-include $(srcdir)/Makefile.common
+include Makefile.common
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f vtfiltergen$(EXEEXT); \
