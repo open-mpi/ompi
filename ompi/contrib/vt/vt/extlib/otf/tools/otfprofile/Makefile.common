@@ -1,5 +1,4 @@
 COMMONINCLUDES = \
-	-I$(OTFPROFILESRCDIR) \
 	-I$(top_builddir)/otflib -I$(top_srcdir)/otflib \
 	-I$(top_builddir)/otfauxlib -I$(top_srcdir)/otfauxlib
 
@@ -7,29 +6,28 @@ COMMONCXXFLAGS =
 COMMONLDADD = $(top_builddir)/otflib/libopen-trace-format.la $(MATHLIB)
 COMMONDEPENDENCIES = $(top_builddir)/otflib/libopen-trace-format.la
 COMMONSOURCES = \
-	$(OTFPROFILESRCDIR)/clustering.h \
-	$(OTFPROFILESRCDIR)/collect_data.h \
-        $(OTFPROFILESRCDIR)/collect_dispersion.h \
-	$(OTFPROFILESRCDIR)/comparison.h \
-	$(OTFPROFILESRCDIR)/create_csv.h \
-	$(OTFPROFILESRCDIR)/create_marker.h \
-	$(OTFPROFILESRCDIR)/create_latex.h \
-	$(OTFPROFILESRCDIR)/create_filter.h \
-	$(OTFPROFILESRCDIR)/datastructs.h \
-	$(OTFPROFILESRCDIR)/otfprofile.h \
-	$(OTFPROFILESRCDIR)/process_dispersion.h \
-	$(OTFPROFILESRCDIR)/summarize_data.h \
-	$(OTFPROFILESRCDIR)/clustering.cpp \
-	$(OTFPROFILESRCDIR)/collect_data.cpp \
-        $(OTFPROFILESRCDIR)/collect_dispersion.cpp \
-	$(OTFPROFILESRCDIR)/comparison_clinkage.cpp \
-	$(OTFPROFILESRCDIR)/comparison_kmeans.cpp \
-	$(OTFPROFILESRCDIR)/create_csv.cpp \
-	$(OTFPROFILESRCDIR)/create_marker.cpp \
-	$(OTFPROFILESRCDIR)/create_latex.cpp \
-	$(OTFPROFILESRCDIR)/create_filter.cpp \
-	$(OTFPROFILESRCDIR)/otfprofile.cpp \
-	$(OTFPROFILESRCDIR)/process_dispersion.cpp \
-	$(OTFPROFILESRCDIR)/summarize_data.cpp \
-	$(OTFPROFILESRCDIR)/summarize_data.h
+	clustering.h \
+	collect_data.h \
+        collect_dispersion.h \
+	comparison.h \
+	create_csv.h \
+	create_marker.h \
+	create_latex.h \
+	create_filter.h \
+	datastructs.h \
+	otfprofile.h \
+	process_dispersion.h \
+	summarize_data.h \
+	clustering.cpp \
+	collect_data.cpp \
+        collect_dispersion.cpp \
+	comparison_clinkage.cpp \
+	comparison_kmeans.cpp \
+	create_csv.cpp \
+	create_marker.cpp \
+	create_latex.cpp \
+	create_filter.cpp \
+	otfprofile.cpp \
+	process_dispersion.cpp \
+	summarize_data.cpp
 

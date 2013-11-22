@@ -165,10 +165,21 @@ CPPFLAGS = $(CPPFLAGS_FOR_BUILD)
 LDFLAGS = $(LDFLAGS_FOR_BUILD)
 LIBS = $(LIBS_FOR_BUILD)
 
+# From Automake v2.0 the 'subdir-objects' option will be required to compile
+# sources located outside of the current build directory. Due to a bug in
+# Automake (see http://debbugs.gnu.org/cgi/bugreport.cgi?bug=13928) we cannot
+# enable this option, so we have to sym link in the following sources (actually
+# located in $(top_srcdir)/util/) to lead Automake to believe that all sources
+# are located in this directory.
+UTILSOURCES = \
+	installdirs.c \
+	util.c
+
 @CROSS_PREFIX@vtwrapper_SOURCES = \
-	vt_wrapper.cc \
-	$(top_srcdir)/util/installdirs.c \
-	$(top_srcdir)/util/util.c
+	vt_wrapper.cc
+
+nodist_@CROSS_PREFIX@vtwrapper_SOURCES = \
+	$(UTILSOURCES)
 
 @CROSS_PREFIX@vtwrapper_CXXFLAGS = \
 	$(HAVEFCCXXFLAGS) \
@@ -177,7 +188,12 @@ LIBS = $(LIBS_FOR_BUILD)
 	$(HAVETHREADSCXXFLAGS) \
 	$(HAVEOMPCXXFLAGS)
 
-CLEANFILES = $(CROSSPREFIXCLEANFILES)
+$(UTILSOURCES):
+	$(LN_S) $(top_srcdir)/util/$@
+
+CLEANFILES = \
+	$(CROSSPREFIXCLEANFILES) \
+	$(UTILSOURCES)
 
 EXTRA_DIST = \
 	fake_omp.h \

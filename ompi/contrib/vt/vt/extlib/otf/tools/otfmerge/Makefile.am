@@ -6,8 +6,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = otfmerge
 endif
 
-OTFMERGESRCDIR = $(srcdir)
-include $(srcdir)/Makefile.common
+include Makefile.common
 
 AM_CPPFLAGS = $(COMMONINCLUDES)
 
