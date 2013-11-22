@@ -9,6 +9,9 @@
 # $HEADER$
 #
 
+# Do we need to build OSHMEM?
+if OSHMEM_SUPPORT
+
 # Do we have profiling?
 if OSHMEM_PROFILING
 c_pshmem_lib = shmem/c/profile/libshmem_c_pshmem.la
@@ -99,3 +102,5 @@ $(dir_stamp):
 # Remove the generated man pages
 distclean-local:
 	rm -f $(nodist_man_MANS) $(dir_stamp)
+
+endif # OSHMEM_SUPPORT

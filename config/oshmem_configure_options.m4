@@ -25,6 +25,22 @@ AC_ARG_ENABLE([oshmem],
      [Disable building the OpenSHMEM interface])])
 
 #
+# OSHMEM support
+#
+AC_MSG_CHECKING([if want OSHMEM support])
+AC_ARG_WITH([oshmem],
+    [AC_HELP_STRING([--with-oshmem],
+                    [Build with OSHMEM support (default=yes)])])
+if test "$with_oshmem" != "no"; then
+    AC_MSG_RESULT([yes])
+    oshmem_with_support=1
+else
+    AC_MSG_RESULT([no])
+    oshmem_with_support=0
+fi
+AM_CONDITIONAL(OSHMEM_SUPPORT, test "$oshmem_with_support" = 1)
+
+#
 # Enable compatibility mode
 #
 AC_MSG_CHECKING([if want SGI/Quadrix compatibility mode])
