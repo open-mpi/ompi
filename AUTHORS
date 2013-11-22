@@ -38,7 +38,7 @@ emallove    Ethan Mallove               Sun, Oracle
 eugene      Eugene Loh                  Sun, Oracle
 gef         Graham Fagg                 UTK
 gingery     Ginger Young                LANL
-gleb        Gleb Natapov                Voltaire
+gleb        Gleb Natapov                Mellanox
 gshipman    Galen Shipman               LANL
 gwatson     Greg Watson                 LANL
 herault     Thomas Herault              INRIA
@@ -60,11 +60,12 @@ kmroz       Karl Mroz                   UBC
 knuepfer    Andreas Knuepfer            ZIH
 koenig      Greg Koenig                 ORNL
 lemarini    Pierre Lemarinier           UTK
-lennyve     Lenny Verkhovsky            Voltaire
+lennyve     Lenny Verkhovsky            Mellanox
 lums        Andrew Lumsdaine            IU
 manjugv     Manjunath Gorentla Venkata  ORNL
 matney      Ken Matney                  ORNL
-miked       Mike Dubman                 Voltaire
+miked       Mike Dubman                 Mellanox
+devendar    Devendar Bureddy            Mellanox
 mitch       Mitch Sukalski              SNL
 mschaara    Mohamad Chaarawi            UH
 mt          Mark Taylor                 LANL
@@ -89,7 +90,7 @@ sami        Sami Ayyorgun               LANL
 samuel      Samuel K. Gutierrez         LANL
 santhana    Gopal Santhanaraman         OSU
 sboehm      Swen Boehm                  ORNL
-sharonm     Sharon Melamed              Voltaire
+sharonm     Sharon Melamed              Mellanox
 shiqing     Shiqing Fan                 HLRS
 sjeaugey    Sylvain Jeaugey             Bull
 surs        Sayantan Sur                OSU
@@ -133,5 +134,5 @@ OU = University of Oregon
 UPV = Universitat Politecnica de Valencia
 UTK = University of Tennessee, Knoxville
 UWL = University of Wisconsin-La Crosse
-Voltaire = Voltaire
+Mellanox = Mellanox
 ZIH = Technische Universitaet Dresden
