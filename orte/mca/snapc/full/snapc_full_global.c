@@ -34,6 +34,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
@@ -45,7 +46,6 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/db/db.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
