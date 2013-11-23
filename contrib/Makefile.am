@@ -30,6 +30,8 @@ dist_amca_param_DATA += \
 endif # WANT_FT_CR
 
 EXTRA_DIST = \
+        completion/mpirun.sh \
+        completion/mpirun.zsh \
 	dist/make_dist_tarball \
 	dist/linux/openmpi.spec \
 	dist/mofed/compile_debian_mlnx_example.in \
