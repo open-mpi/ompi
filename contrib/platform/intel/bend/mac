@@ -21,5 +21,5 @@ with_memory_manager=no
 with_devel_headers=yes
 with_xgrid=no
 with_slurm=no
-with_jdk_bindir=/usr/bin
-with_jdk_headers=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
+with_jdk_bindir=$JAVA_HOME/bin
+with_jdk_headers=$JAVA_HOME/include
