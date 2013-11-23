@@ -37,7 +37,7 @@ int ompi_coll_libnbc_iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtyp
                               struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_0_0_t *module) {
   int rank, p, res, i;
-  MPI_Aint sndext;
+  MPI_Aint sndext = 0;
   NBC_Schedule *schedule;
   char *sbuf, inplace;
 #ifdef NBC_CACHE_SCHEDULE
@@ -56,8 +56,10 @@ int ompi_coll_libnbc_iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtyp
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  res = MPI_Type_extent(sendtype, &sndext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+  if (rank == root) {
+    res = MPI_Type_extent(sendtype, &sndext);
+    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+  }
 
   handle->tmpbuf=NULL;
 
