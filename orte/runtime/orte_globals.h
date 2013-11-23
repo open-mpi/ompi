@@ -124,9 +124,10 @@ ORTE_DECLSPEC extern int orte_exit_status;
 #define ORTE_DB_LOCALRANK    "orte.local.rank"
 #define ORTE_DB_ARCH         "orte.arch"
 #define ORTE_DB_NPROCS       "orte.nprocs"
+#define ORTE_DB_NPROC_OFFSET "orte.nproc.offset"
 #define ORTE_DB_RMLURI       "orte.rmluri"
 #define ORTE_DB_HOSTID       "orte.hostid"
-
+#define ORTE_DB_GLOBAL_RANK  "orte.global.rank"
 
 /* State Machine lists */
 ORTE_DECLSPEC extern opal_list_t orte_job_states;
@@ -376,6 +377,8 @@ typedef struct {
     opal_list_item_t super;
     /* jobid for this job */
     orte_jobid_t jobid;
+    /* offset to the total number of procs */
+    orte_vpid_t offset;
     /* flag indicating that the job has been updated
      * and needs to be included in the pidmap message
      */
@@ -673,7 +676,7 @@ ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;
-ORTE_DECLSPEC extern uint16_t orte_num_jobs;
+ORTE_DECLSPEC extern orte_vpid_t orte_total_procs;
 
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 ORTE_DECLSPEC extern bool orte_forward_job_control;

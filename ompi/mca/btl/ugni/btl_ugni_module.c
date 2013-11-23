@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -16,6 +16,7 @@
 #include "btl_ugni_frag.h"
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_prepare.h"
+#include "btl_ugni_smsg.h"
 
 static int
 mca_btl_ugni_free (struct mca_btl_base_module_t *btl,
@@ -40,39 +41,18 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                           uint32_t flags);
 
 mca_btl_ugni_module_t mca_btl_ugni_module = {
-    {
-        /* .btl_component = */                 &mca_btl_ugni_component.super,
-
-        /* these are set in component_register */
-        /* .btl_eager_limit = */               0,
-        /* .btl_rndv_eager_limit = */          0,
-        /* .btl_max_send_size = */             0,
-        /* .btl_rdma_pipeline_send_length = */ 0,
-        /* .btl_rdma_pipeline_frag_size = */   0,
-        /* .btl_min_rdma_pipeline_size = */    0,
-        /* .btl_exclusivity = */               0,
-        /* .btl_latency = */                   0,
-        /* .btl_bandwidth = */                 0,
-        /* .btl_flags = */                     0,
-        /* .btl_seg_size = */                  0,
-
-        /* member functions */
-        mca_btl_ugni_add_procs,
-        mca_btl_ugni_del_procs,
-        NULL, /* register */
-        mca_btl_ugni_module_finalize,
-        mca_btl_ugni_alloc,
-        mca_btl_ugni_free,
-        mca_btl_ugni_prepare_src,
-        mca_btl_ugni_prepare_dst,
-        mca_btl_ugni_send,
-        NULL, /* sendi */
-        mca_btl_ugni_put,
-        mca_btl_ugni_get,
-        NULL, /* mca_btl_base_dump, */
-        NULL, /* mpool */
-        NULL, /* mca_btl_ugni_register_error_cb - error callback registration */
-        NULL, /* mca_btl_ugni_ft_event */
+    .super = {
+        .btl_component   = &mca_btl_ugni_component.super,
+        .btl_add_procs   = mca_btl_ugni_add_procs,
+        .btl_del_procs   = mca_btl_ugni_del_procs,
+        .btl_finalize    = mca_btl_ugni_module_finalize,
+        .btl_alloc       = mca_btl_ugni_alloc,
+        .btl_free        = mca_btl_ugni_free,
+        .btl_prepare_src = mca_btl_ugni_prepare_src,
+        .btl_prepare_dst = mca_btl_ugni_prepare_dst,
+        .btl_send        = mca_btl_ugni_send,
+        .btl_put         = mca_btl_ugni_put,
+        .btl_get         = mca_btl_ugni_get,
     }
 };
 
@@ -88,6 +68,10 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     /* copy module defaults (and function pointers) */
     memmove (ugni_module, &mca_btl_ugni_module, sizeof (mca_btl_ugni_module));
 
+    ugni_module->initialized = false;
+    ugni_module->nlocal_procs = 0;
+    ugni_module->active_send_count = 0;
+
     OBJ_CONSTRUCT(&ugni_module->failed_frags, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_frags_send, ompi_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->eager_frags_recv, ompi_free_list_t);
@@ -96,9 +80,10 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     OBJ_CONSTRUCT(&ugni_module->rdma_int_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->pending_smsg_frags_bb, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list, opal_list_t);
+    OBJ_CONSTRUCT(&ugni_module->endpoints, opal_pointer_array_t);
+    OBJ_CONSTRUCT(&ugni_module->id_to_endpoint, opal_hash_table_t);
 
     ugni_module->device = dev;
-    ugni_module->endpoints = NULL;
     dev->btl_ctx = (void *) ugni_module;
 
     /* create wildcard endpoint to listen for connections.
@@ -124,8 +109,18 @@ static int
 mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *)btl;
-    unsigned int i;
+    mca_btl_base_endpoint_t *ep;
+    uint64_t key;
+    void *node;
     int rc;
+
+    while (ugni_module->active_send_count) {
+        /* ensure all sends are complete before closing the module */
+        rc = mca_btl_ugni_progress_local_smsg (ugni_module);
+        if (OMPI_SUCCESS != rc) {
+            break;
+        }
+    }
 
     OBJ_DESTRUCT(&ugni_module->eager_frags_send);
     OBJ_DESTRUCT(&ugni_module->eager_frags_recv);
@@ -135,60 +130,63 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&ugni_module->ep_wait_list);
 
     /* close all open connections and release endpoints */
-    if (NULL != ugni_module->endpoints) {
-        for (i = 0 ; i < ugni_module->endpoint_count ; ++i) {
-            if (ugni_module->endpoints[i]) {
-                mca_btl_ugni_release_ep (ugni_module->endpoints[i]);
+    if (ugni_module->initialized) {
+        rc = opal_hash_table_get_first_key_uint64 (&ugni_module->id_to_endpoint, &key, (void **) &ep, &node);
+        while (OPAL_SUCCESS == rc) {
+            if (NULL != ep) {
+                mca_btl_ugni_release_ep (ep);
             }
 
-            ugni_module->endpoints[i] = NULL;
+            rc = opal_hash_table_get_next_key_uint64 (&ugni_module->id_to_endpoint, &key, (void **) &ep, node, &node);
         }
 
-        free (ugni_module->endpoints);
+        /* destroy all cqs */
+        rc = GNI_CqDestroy (ugni_module->rdma_local_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error tearing down local BTE/FMA CQ"));
+        }
 
-        ugni_module->endpoint_count = 0;
-        ugni_module->endpoints = NULL;
+        rc = GNI_CqDestroy (ugni_module->smsg_local_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error tearing down local SMSG CQ"));
+        }
+
+        rc = GNI_CqDestroy (ugni_module->smsg_remote_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error tearing down remote SMSG CQ"));
+        }
+
+        /* cancel wildcard post */
+        rc = GNI_EpPostDataCancelById (ugni_module->wildcard_ep,
+                                       MCA_BTL_UGNI_CONNECT_WILDCARD_ID |
+                                       OMPI_PROC_MY_NAME->vpid);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_VERBOSE(("btl/ugni error cancelling wildcard post"));
+        }
+
+        /* tear down wildcard endpoint */
+        rc = GNI_EpDestroy (ugni_module->wildcard_ep);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_VERBOSE(("btl/ugni error destroying endpoint"));
+        }
+
+        if (NULL != ugni_module->smsg_mpool) {
+            (void) mca_mpool_base_module_destroy (ugni_module->smsg_mpool);
+            ugni_module->smsg_mpool  = NULL;
+        }
+
+        if (NULL != ugni_module->super.btl_mpool) {
+            (void) mca_mpool_base_module_destroy (ugni_module->super.btl_mpool);
+            ugni_module->super.btl_mpool = NULL;
+        }
     }
-
-    /* destroy all cqs */
-    rc = GNI_CqDestroy (ugni_module->rdma_local_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error tearing down local BTE/FMA CQ"));
-    }
-
-    rc = GNI_CqDestroy (ugni_module->smsg_local_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error tearing down local SMSG CQ"));
-    }
-
-    rc = GNI_CqDestroy (ugni_module->smsg_remote_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error tearing down remote SMSG CQ"));
-    }
-
-    /* cancel wildcard post */
-    rc = GNI_EpPostDataCancelById (ugni_module->wildcard_ep,
-                                   MCA_BTL_UGNI_CONNECT_WILDCARD_ID |
-                                   OMPI_PROC_MY_NAME->vpid);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_VERBOSE(("btl/ugni error cancelling wildcard post"));
-    }
-
-    /* tear down wildcard endpoint */
-    rc = GNI_EpDestroy (ugni_module->wildcard_ep);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_VERBOSE(("btl/ugni error destroying endpoint"));
-    }
-
-    (void) mca_mpool_base_module_destroy (ugni_module->smsg_mpool);
-    ugni_module->smsg_mpool  = NULL;
-
-    (void) mca_mpool_base_module_destroy (ugni_module->super.btl_mpool);
-    ugni_module->super.btl_mpool = NULL;
 
     OBJ_DESTRUCT(&ugni_module->pending_smsg_frags_bb);
-
+    OBJ_DESTRUCT(&ugni_module->id_to_endpoint);
+    OBJ_DESTRUCT(&ugni_module->endpoints);
     OBJ_DESTRUCT(&ugni_module->failed_frags);
+
+    ugni_module->initialized = false;
 
     return OMPI_SUCCESS;
 }

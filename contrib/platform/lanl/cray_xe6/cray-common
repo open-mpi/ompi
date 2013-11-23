@@ -15,6 +15,9 @@ with_cray_pmi2_ext=yes
 with_ugni=/opt/cray/ugni/2.3-1.0400.4127.5.20.gem
 with_ugni_includedir=/opt/cray/gni-headers/default/include
 
+# enable the udreg mpool
+with_udreg=/opt/cray/udreg/2.3.2-1.0401.5929.3.3.gem
+
 if test -e /opt/cray/alps/default ; then
    # use default location for CLE4
    with_alps=yes
@@ -30,5 +33,5 @@ with_tm=no
 with_slurm=no
 
 # rpath alps, pmi, uGNI, and xpmem libraries
-LDFLAGS="$LDFLAGS -Wl,-rpath=/usr/lib64/alps -Wl,-rpath=$with_pmi/lib64 -Wl,-rpath=$with_ugni/lib64 -Wl,-rpath=$with_xpmem/lib64"
+LDFLAGS="$LDFLAGS -Wl,-rpath=/usr/lib64/alps -Wl,-rpath=$with_pmi/lib64 -Wl,-rpath=$with_ugni/lib64 -Wl,-rpath=$with_xpmem/lib64 -Wl,-rpath=$with_udreg/lib64"
 with_wrapper_ldflags="-Wl,-rpath=/usr/lib64/alps -Wl,-rpath=$with_pmi/lib64 -Wl,-rpath=$with_ugni/lib64 -Wl,-rpath=$with_xpmem/lib64"

@@ -134,7 +134,7 @@ opal_pointer_array_t *orte_job_data;
 opal_pointer_array_t *orte_node_pool;
 opal_pointer_array_t *orte_node_topologies;
 opal_pointer_array_t *orte_local_children;
-uint16_t orte_num_jobs = 0;
+orte_vpid_t orte_total_procs = 0;
 
 /* IOF controls */
 bool orte_tag_output;
@@ -694,6 +694,7 @@ OBJ_CLASS_INSTANCE(orte_app_context_t,
 static void orte_job_construct(orte_job_t* job)
 {
     job->jobid = ORTE_JOBID_INVALID;
+    job->offset = 0;
     job->updated = true;
     job->apps = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(job->apps,

@@ -212,6 +212,13 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     }
 #endif
     
+    /* set the offset so shared memory components can potentially
+     * connect to any spawned jobs
+     */
+    jdata->offset = orte_total_procs;
+    /* track the total number of procs launched by us */
+    orte_total_procs += jdata->num_procs;
+
     /* if it is a dynamic spawn, save the bookmark on the parent's job too */
     if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
         if (NULL != (parent = orte_get_job_data_object(jdata->originator.jobid))) {
@@ -223,7 +230,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * daemon job
      */
     if (jdata->map->display_map) {
-        char *output;
+        char *output=NULL;
         int i, j;
         orte_node_t *node;
         orte_proc_t *proc;
@@ -236,7 +243,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
              * the output a line at a time here
              */
             /* display just the procs in a diffable format */
-            opal_output(orte_clean_output, "<map>");
+            opal_output(orte_clean_output, "<map>\n\t<jobid=%s>\n\t<offset=%s>",
+                        ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));
             fflush(stderr);
             /* loop through nodes */
             for (i=0; i < jdata->map->nodes->size; i++) {
@@ -302,6 +310,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             fflush(stderr);
 #endif
         } else {
+            opal_output(orte_clean_output, " Data for JOB %s offset %s", ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));
             opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
             if (orte_xml_output) {
                 fprintf(orte_xml_fp, "%s\n", output);

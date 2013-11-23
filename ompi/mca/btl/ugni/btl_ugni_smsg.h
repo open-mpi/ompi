@@ -27,7 +27,7 @@ typedef enum {
 
 typedef struct mca_btl_ugni_smsg_mbox_t {
     ompi_free_list_item_t super;
-    gni_smsg_attr_t  smsg_attrib;
+    mca_btl_ugni_endpoint_attr_t attr;
 } mca_btl_ugni_smsg_mbox_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_mbox_t);
@@ -41,6 +41,11 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
     mca_btl_ugni_base_frag_t *frag;
     gni_cq_entry_t event_data;
     gni_return_t grc;
+
+    /* nothing to do */
+    if (0 == ugni_module->active_send_count) {
+        return OMPI_SUCCESS;
+    }
 
     grc = GNI_CqGetEvent (ugni_module->smsg_local_cq, &event_data);
     if (GNI_RC_NOT_DONE == grc) {
@@ -64,6 +69,8 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
         return OMPI_ERROR;
     }
 
+    ugni_module->active_send_count--;
+
     frag->flags |= MCA_BTL_UGNI_FRAG_SMSG_COMPLETE;
 
     if (!(frag->flags & MCA_BTL_UGNI_FRAG_IGNORE)) {
@@ -82,9 +89,11 @@ static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
     grc = GNI_SmsgSendWTag (frag->endpoint->smsg_ep_handle, hdr, hdr_len,
                             payload, payload_len, frag->msg_id, tag);
 
-    (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
-
     if (OPAL_LIKELY(GNI_RC_SUCCESS == grc)) {
+        /* increment the active send counter */
+        frag->endpoint->btl->active_send_count++;
+
+        (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
         return OMPI_SUCCESS;
     }
 

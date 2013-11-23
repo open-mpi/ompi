@@ -783,6 +783,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
         }
+        /* pack the offset */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->offset, 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup_and_return;
+        }
         /* cycle thru the job's procs, including only those that have
          * been updated so we minimize the amount of info being sent
          */
@@ -824,7 +829,7 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
             }
-             if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->do_not_barrier, 1, OPAL_BOOL))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->do_not_barrier, 1, OPAL_BOOL))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
             }
@@ -870,7 +875,7 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
 /* only APPS call this function - daemons have their own */
 int orte_util_decode_pidmap(opal_byte_object_t *bo)
 {
-    orte_vpid_t num_procs, hostid, *vptr;
+    orte_vpid_t num_procs, offset, hostid, *vptr, global_rank;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
 #if OPAL_HAVE_HWLOC
@@ -927,7 +932,18 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-
+        /* unpack and store the offset */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &offset, &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        /* only of possible use to ourselves */
+        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
+                                                ORTE_DB_NPROC_OFFSET, &offset, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
         /* cycle thru the data until we hit an INVALID vpid indicating
          * all data for this job has been read
          */
@@ -1062,6 +1078,23 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
+                /* store this procs global rank - only used by us */
+                global_rank = proc.vpid + offset;
+                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
+                                                        ORTE_DB_GLOBAL_RANK, &global_rank, OPAL_UINT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+            } else {
+                /* update our own global rank - this is something we will need
+                 * to share with non-peers
+                 */
+                global_rank = proc.vpid + offset;
+                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_NON_PEER,
+                                                        ORTE_DB_GLOBAL_RANK, &global_rank, OPAL_UINT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
             }
         }
         /* see if there is a file map */
@@ -1158,6 +1191,14 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
             goto cleanup;
         }
         jdata->num_procs = num_procs;
+
+        /* unpack the offset */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_procs, &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        jdata->offset = num_procs;
 
         /* cycle thru the data until we hit an INVALID vpid indicating
          * all data for this job has been read

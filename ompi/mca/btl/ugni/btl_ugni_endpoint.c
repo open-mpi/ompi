@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -41,40 +41,39 @@ static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     }
 
     ep->mailbox = (mca_btl_ugni_smsg_mbox_t *) mbox;
+    ep->mailbox->attr.index = ep->index;
 
     /* per ugni spec we need to zero mailbox data before connecting */
-    memset ((char *)ep->mailbox->smsg_attrib.msg_buffer + ep->mailbox->smsg_attrib.mbox_offset, 0,
-            ep->mailbox->smsg_attrib.buff_size);
+    memset ((char *)ep->mailbox->attr.smsg_attr.msg_buffer + ep->mailbox->attr.smsg_attr.mbox_offset, 0,
+            ep->mailbox->attr.smsg_attr.buff_size);
     return OMPI_SUCCESS;
 }
 
 int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnect) {
     gni_return_t rc;
 
-    do {
-        if (MCA_BTL_UGNI_EP_STATE_INIT == ep->state) {
-            /* nothing to do */
-            break;
+    if (MCA_BTL_UGNI_EP_STATE_INIT == ep->state) {
+        /* nothing to do */
+        return OMPI_SUCCESS;
+    }
+
+    if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state && send_disconnect) {
+        rc = GNI_SmsgSendWTag (ep->smsg_ep_handle, NULL, 0, NULL, 0, -1,
+                               MCA_BTL_UGNI_TAG_DISCONNECT);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_VERBOSE(("btl/ugni could not send close message"));
         }
 
-        if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state && send_disconnect) {
-            rc = GNI_SmsgSendWTag (ep->smsg_ep_handle, NULL, 0, NULL, 0, -1,
-                                   MCA_BTL_UGNI_TAG_DISCONNECT);
-            if (GNI_RC_SUCCESS != rc) {
-                BTL_VERBOSE(("btl/ugni could not send close message"));
-            }
+        /* we might want to wait for local completion here (do we even care) */
+    }
 
-            /* we might want to wait for local completion here (do we even care) */
-        }
+    (void) ompi_common_ugni_ep_destroy (&ep->smsg_ep_handle);
+    (void) ompi_common_ugni_ep_destroy (&ep->rdma_ep_handle);
 
-        (void) ompi_common_ugni_ep_destroy (&ep->smsg_ep_handle);
-        (void) ompi_common_ugni_ep_destroy (&ep->rdma_ep_handle);
+    OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
+    ep->mailbox = NULL;
 
-        OMPI_FREE_LIST_RETURN_MT(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
-        ep->mailbox = NULL;
-
-        ep->state = MCA_BTL_UGNI_EP_STATE_INIT;
-    } while (0);
+    ep->state = MCA_BTL_UGNI_EP_STATE_INIT;
 
     return OMPI_SUCCESS;
 }
@@ -89,8 +88,8 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
         return rc;
     }
 
-    BTL_VERBOSE(("initiaiting connection to remote peer with address: %u id: %u",
-                 ep->common->ep_rem_addr, ep->common->ep_rem_id));
+    BTL_VERBOSE(("initiaiting connection to remote peer with address: %u id: %u proc: %p",
+                 ep->common->ep_rem_addr, ep->common->ep_rem_id, ep->peer_proc));
 
     /* bind endpoint to remote address */
     /* we bind two endpoints to seperate out local smsg completion and local fma completion */
@@ -112,7 +111,7 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
 
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTING;
 
-    memset (&ep->remote_smsg_attrib, 0, sizeof (ep->remote_smsg_attrib));
+    memset (&ep->remote_attr, 0, sizeof (ep->remote_attr));
 
     BTL_VERBOSE(("btl/ugni connection to remote peer initiated"));
 
@@ -125,24 +124,31 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 
     BTL_VERBOSE(("finishing connection. remote attributes: msg_type = %d, msg_buffer = %p, buff_size = %d, "
                  "mem_hndl = {qword1 = %" PRIu64 ", qword2 = %" PRIu64 "}, mbox = %d, mbox_maxcredit = %d, "
-                 "msg_maxsize = %d", ep->remote_smsg_attrib.msg_type, ep->remote_smsg_attrib.msg_buffer,
-                 ep->remote_smsg_attrib.buff_size, ep->remote_smsg_attrib.mem_hndl.qword1,
-                 ep->remote_smsg_attrib.mem_hndl.qword2, ep->remote_smsg_attrib.mbox_offset,
-                 ep->remote_smsg_attrib.mbox_maxcredit, ep->remote_smsg_attrib.msg_maxsize));
+                 "msg_maxsize = %d", ep->remote_attr.smsg_attr.msg_type, ep->remote_attr.smsg_attr.msg_buffer,
+                 ep->remote_attr.smsg_attr.buff_size, ep->remote_attr.smsg_attr.mem_hndl.qword1,
+                 ep->remote_attr.smsg_attr.mem_hndl.qword2, ep->remote_attr.smsg_attr.mbox_offset,
+                 ep->remote_attr.smsg_attr.mbox_maxcredit, ep->remote_attr.smsg_attr.msg_maxsize));
 
     BTL_VERBOSE(("finishing connection. local attributes: msg_type = %d, msg_buffer = %p, buff_size = %d, "
                  "mem_hndl = {qword1 = %" PRIu64 ", qword2 = %" PRIu64 "}, mbox = %d, mbox_maxcredit = %d, "
-                 "msg_maxsize = %d", ep->mailbox->smsg_attrib.msg_type, ep->mailbox->smsg_attrib.msg_buffer,
-                 ep->mailbox->smsg_attrib.buff_size, ep->mailbox->smsg_attrib.mem_hndl.qword1,
-                 ep->mailbox->smsg_attrib.mem_hndl.qword2, ep->mailbox->smsg_attrib.mbox_offset,
-                 ep->mailbox->smsg_attrib.mbox_maxcredit, ep->mailbox->smsg_attrib.msg_maxsize));
+                 "msg_maxsize = %d", ep->mailbox->attr.smsg_attr.msg_type, ep->mailbox->attr.smsg_attr.msg_buffer,
+                 ep->mailbox->attr.smsg_attr.buff_size, ep->mailbox->attr.smsg_attr.mem_hndl.qword1,
+                 ep->mailbox->attr.smsg_attr.mem_hndl.qword2, ep->mailbox->attr.smsg_attr.mbox_offset,
+                 ep->mailbox->attr.smsg_attr.mbox_maxcredit, ep->mailbox->attr.smsg_attr.msg_maxsize));
 
-    grc = GNI_SmsgInit (ep->smsg_ep_handle, &ep->mailbox->smsg_attrib, &ep->remote_smsg_attrib);
+    grc = GNI_SmsgInit (ep->smsg_ep_handle, &ep->mailbox->attr.smsg_attr, &ep->remote_attr.smsg_attr);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
         BTL_ERROR(("error initializing SMSG protocol. rc = %d", grc));
 
         return ompi_common_rc_ugni_to_ompi (grc);
     }
+
+    /* set the local event data to the local index and the remote event data to my
+     * index on the remote peer. This makes lookup of endpoints on completion take
+     * a single lookup in the endpoints array. we will not be able to change the
+     * remote peer's index in the endpoint's array after this point. */
+    GNI_EpSetEventData (ep->rdma_ep_handle, ep->index, ep->remote_attr.index);
+    GNI_EpSetEventData (ep->smsg_ep_handle, ep->index, ep->remote_attr.index);
 
     ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
 
@@ -161,15 +167,19 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 static inline int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep) {
     gni_return_t rc;
 
-    rc = GNI_EpPostDataWId (ep->smsg_ep_handle, &ep->mailbox->smsg_attrib, sizeof (ep->mailbox->smsg_attrib),
-                            &ep->remote_smsg_attrib, sizeof (ep->remote_smsg_attrib),
-                            MCA_BTL_UGNI_CONNECT_DIRECTED_ID | ep->common->ep_rem_id);
+    BTL_VERBOSE(("posting directed datagram to remote id: %d for endpoint %p", ep->common->ep_rem_id, ep));
+
+    rc = GNI_EpPostDataWId (ep->smsg_ep_handle, &ep->mailbox->attr, sizeof (ep->mailbox->attr),
+                            &ep->remote_attr, sizeof (ep->remote_attr),
+                            MCA_BTL_UGNI_CONNECT_DIRECTED_ID | ep->index);
 
     return ompi_common_rc_ugni_to_ompi (rc);
 }
 
 int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
     int rc;
+
+    BTL_VERBOSE(("progressing connection for endpoint %p with state %d", ep, ep->state));
 
     if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state) {
         return OMPI_SUCCESS;
@@ -182,7 +192,7 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
         }
     }
 
-    if (GNI_SMSG_TYPE_INVALID == ep->remote_smsg_attrib.msg_type) {
+    if (GNI_SMSG_TYPE_INVALID == ep->remote_attr.smsg_attr.msg_type) {
         /* use datagram to exchange connection information with the remote peer */
         rc = mca_btl_ugni_directed_ep_post (ep);
         if (OMPI_SUCCESS == rc) {

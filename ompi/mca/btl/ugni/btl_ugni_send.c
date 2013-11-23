@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -25,9 +25,6 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     int flags_save = frag->base.des_flags;
     int rc;
 
-    BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
-                 OMPI_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
-
     /* tag and len are at the same location in eager and smsg frag hdrs */
     frag->hdr.send.lag = (tag << 24) | size;
     frag->endpoint = endpoint;
@@ -38,6 +35,9 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
         opal_list_append (&endpoint->frag_wait_list, (opal_list_item_t *) frag);
         return OMPI_SUCCESS;
     }
+
+    BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
+                 OMPI_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
 
     /* temporarily disable ownership and callback flags so we can reliably check the complete flag */
     frag->base.des_flags &= ~(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /**
   * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
@@ -32,12 +32,19 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#define MCA_MPOOL_FLAGS_CACHE_BYPASS 0x1
-#define MCA_MPOOL_FLAGS_PERSIST 0x2 
-#define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM 0x4
-#define MCA_MPOOL_FLAGS_INVALID 0x8
-#define MCA_MPOOL_FLAGS_SO_MEM 0x10
+#define MCA_MPOOL_FLAGS_CACHE_BYPASS      0x01
+#define MCA_MPOOL_FLAGS_PERSIST           0x02
+#define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM     0x04
+#define MCA_MPOOL_FLAGS_INVALID           0x08
+#define MCA_MPOOL_FLAGS_SO_MEM            0x10
 #define MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM 0x20
+
+#define MCA_MPOOL_FLAGS_CUDA_GPU_MEM      0x40
+
+/* Only valid in mpool flags. Used to indicate that no external memory
+ * hooks (ptmalloc2, etc) are required. */
+#define MCA_MPOOL_FLAGS_NO_HOOKS          0x80
+
 
 struct mca_mpool_base_resources_t;
 
@@ -49,6 +56,10 @@ struct mca_mpool_base_registration_t {
     unsigned char* alloc_base;
     int32_t ref_count; 
     uint32_t flags;
+    void *mpool_context;
+#if OPAL_CUDA_SUPPORT_60
+    unsigned long long gpu_bufID;
+#endif /* OPAL_CUDA_SUPPORT_60 */
 };  
 
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 

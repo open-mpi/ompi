@@ -102,6 +102,7 @@ OMPI_DECLSPEC int ompi_rte_db_remove(const ompi_process_name_t *nm,
                                      const char *key);
 #define OMPI_DB_HOSTNAME ORTE_DB_HOSTNAME
 #define OMPI_DB_LOCALITY ORTE_DB_LOCALITY
+#define OMPI_DB_GLOBAL_RANK ORTE_DB_GLOBAL_RANK
 
 /* Communications */
 typedef orte_rml_tag_t ompi_rml_tag_t;
