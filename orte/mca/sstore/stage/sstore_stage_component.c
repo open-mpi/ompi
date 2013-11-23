@@ -10,6 +10,7 @@
 
 #include "orte_config.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_environ.h"
 #include "orte/constants.h"
 
 #include "orte/mca/sstore/sstore.h"

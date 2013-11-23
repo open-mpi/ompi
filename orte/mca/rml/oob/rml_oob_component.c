@@ -39,6 +39,9 @@
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/event/event.h"
 
+#if OPAL_ENABLE_FT_CR == 1
+#include "orte/mca/rml/rml.h"
+#endif
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"

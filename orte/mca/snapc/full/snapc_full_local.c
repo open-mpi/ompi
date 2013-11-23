@@ -51,6 +51,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "opal/mca/db/db.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
@@ -63,7 +64,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/db/db.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
