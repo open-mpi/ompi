@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2009      Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -12,7 +13,7 @@
 #ifndef BTL_OPENIB_CONNECT_BASE_H
 #define BTL_OPENIB_CONNECT_BASE_H
 
-#include "connect/connect.h"
+#include "ompi/mca/btl/openib/connect/connect.h"
 
 #ifdef OMPI_HAVE_RDMAOE
 #define BTL_OPENIB_CONNECT_BASE_CHECK_IF_NOT_IB(btl)                       \

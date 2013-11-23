@@ -14,14 +14,13 @@
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
+# Copyright (c) 2013      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-
-EXTRA_DIST = .windows
 
 AM_CPPFLAGS = $(btl_openib_CPPFLAGS)
 AM_LFLAGS = -Pbtl_openib_ini_yy
@@ -62,8 +61,6 @@ sources = \
     btl_openib_ip.c \
     connect/base.h \
     connect/btl_openib_connect_base.c \
-    connect/btl_openib_connect_oob.c \
-    connect/btl_openib_connect_oob.h \
     connect/btl_openib_connect_empty.c \
     connect/btl_openib_connect_empty.h \
     connect/connect.h
@@ -73,13 +70,6 @@ if MCA_btl_openib_enable_failover
 sources += \
     btl_openib_failover.c \
     btl_openib_failover.h
-endif
-
-# If we have XRC support, build that CPC
-if MCA_btl_openib_have_xrc
-sources += \
-    connect/btl_openib_connect_xoob.c \
-    connect/btl_openib_connect_xoob.h
 endif
 
 # If we have rdmacm support, build that CPC

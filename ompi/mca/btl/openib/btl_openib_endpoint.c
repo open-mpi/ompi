@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -18,6 +18,7 @@
  * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -251,13 +252,9 @@ endpoint_init_qp_xrc(mca_btl_base_endpoint_t *ep, const int qp)
     int max = ep->endpoint_btl->device->ib_dev_attr.max_qp_wr -
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
-    int N;
     mca_btl_openib_endpoint_qp_t *ep_qp = &ep->qps[qp];
     ep_qp->qp = ep->ib_addr->qp;
-
-    N = 1 + ep_qp->qp->users/mca_btl_openib_component.num_qps;
-    ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max/N;
-
+    ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
     /* make sure that we don't overrun maximum supported by device */
     if (ep_qp->qp->sd_wqe > max)
         ep_qp->qp->sd_wqe =  max;
@@ -554,7 +551,7 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     openib_frag->segment.base.seg_len = sizeof(mca_btl_openib_control_header_t);
     com_frag->endpoint = endpoint;
 
-    sc_frag->hdr->tag = MCA_BTL_TAG_BTL;
+    sc_frag->hdr->tag = MCA_BTL_TAG_IB;
     sc_frag->hdr->cm_seen = 0;
     sc_frag->hdr->credits = 0;
 
@@ -790,7 +787,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
         to_base_frag(frag)->base.des_cbdata = NULL;
         to_base_frag(frag)->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;;
         to_com_frag(frag)->endpoint = endpoint;
-        frag->hdr->tag = MCA_BTL_TAG_BTL;
+        frag->hdr->tag = MCA_BTL_TAG_IB;
         to_base_frag(frag)->segment.base.seg_len =
             sizeof(mca_btl_openib_rdma_credits_header_t);
     }
@@ -886,7 +883,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
         sizeof(mca_btl_openib_eager_rdma_header_t);
     to_com_frag(frag)->endpoint = endpoint;
 
-    frag->hdr->tag = MCA_BTL_TAG_BTL;
+    frag->hdr->tag = MCA_BTL_TAG_IB;
     rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)to_base_frag(frag)->segment.base.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_OPENIB_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;

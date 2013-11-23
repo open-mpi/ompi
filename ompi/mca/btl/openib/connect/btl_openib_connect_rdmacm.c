@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
@@ -1068,10 +1068,8 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
                 OPAL_OUTPUT((-1, "MAIN Main thread calling disconnect on ID %p",
                              (void*) ((id_context_t*) item2)->id));
                 ++num_to_wait_for;
-#ifndef __WINDOWS__
                 ompi_btl_openib_fd_run_in_service(call_disconnect_callback,
                                                   item2);
-#endif
             }
 	    /* remove_item returns the item before the item removed,
 	       meaning that the for list is still safe */
@@ -1087,10 +1085,8 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 
     /* Now wait for all the disconnect callbacks to occur */
     while (num_to_wait_for != disconnect_callbacks) {
-#ifndef __WINDOWS__
         ompi_btl_openib_fd_main_thread_drain();
         sched_yield();
-#endif
     }
 
     OPAL_OUTPUT((-1, "MAIN Endpoint finished finalizing"));
@@ -1351,17 +1347,14 @@ static int finish_connect(id_context_t *context)
     struct rdma_conn_param conn_param;
     private_data_t msg;
     int rc;
-    struct sockaddr *peeraddr, *localaddr;
-    uint32_t localipaddr, remoteipaddr;
+    struct sockaddr *peeraddr;
+    uint32_t remoteipaddr;
     uint16_t remoteport;
     modex_message_t *message;
 
     remoteport = rdma_get_dst_port(context->id);
     peeraddr = rdma_get_peer_addr(context->id);
     remoteipaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
-
-    localaddr = rdma_get_local_addr(context->id);
-    localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
 
     message = (modex_message_t *)
         context->endpoint->endpoint_remote_cpc_data->cbm_modex_message;
@@ -1521,7 +1514,7 @@ static int event_handler(struct rdma_cm_event *event)
     rdmacm_contents_t *contents;
     struct sockaddr *peeraddr, *localaddr;
     uint32_t peeripaddr, localipaddr;
-    int rc = -1, qpnum;
+    int rc = -1;
     ompi_btl_openib_ini_values_t ini;
     bool found;
 
@@ -1530,7 +1523,6 @@ static int event_handler(struct rdma_cm_event *event)
     }
 
     contents = context->contents;
-    qpnum = context->qpnum;
     localaddr = rdma_get_local_addr(event->id);
     peeraddr = rdma_get_peer_addr(event->id);
     localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
@@ -1995,10 +1987,8 @@ static int rdmacm_component_finalize(void)
     }
 
     if (NULL != event_channel) {
-#ifndef __WINDOWS__
         rc = ompi_btl_openib_fd_unmonitor(event_channel->fd,
                                           rdmacm_unmonitor, (void*) &barrier);
-#endif
         if (OMPI_SUCCESS != rc) {
             BTL_ERROR(("Error disabling fd monitor"));
         }
@@ -2006,9 +1996,7 @@ static int rdmacm_component_finalize(void)
         /* Wait for the service thread to stop monitoring the fd */
         OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: waiting for thread to finish"));
         while (0 == barrier) {
-#ifndef __WINDOWS__
             sched_yield();
-#endif
         }
         OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: thread finished"));
     }
@@ -2068,11 +2056,9 @@ static int rdmacm_component_init(void)
         return OMPI_ERR_UNREACH;
     }
 
-#ifndef __WINDOWS__
     /* Start monitoring the fd associated with the cm_device */
     ompi_btl_openib_fd_monitor(event_channel->fd, OPAL_EV_READ,
                                rdmacm_event_dispatch, NULL);
-#endif
 
     rdmacm_component_initialized = true;
     return OMPI_SUCCESS;

@@ -17,11 +17,7 @@
 #include "btl_openib.h"
 #include "btl_openib_proc.h"
 #include "connect/base.h"
-#include "connect/btl_openib_connect_oob.h"
 #include "connect/btl_openib_connect_empty.h"
-#if HAVE_XRC
-#include "connect/btl_openib_connect_xoob.h"
-#endif
 #if OMPI_HAVE_RDMACM && OPAL_HAVE_THREADS
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
@@ -37,15 +33,13 @@
  * Array of all possible connection functions
  */
 static ompi_btl_openib_connect_base_component_t *all[] = {
-    &ompi_btl_openib_connect_oob,
+    /* Always have an entry here so that the CP indexes will always be
+       the same: OOB has been removed, so use the "empty" CPC */
+    &ompi_btl_openib_connect_empty,
 
     /* Always have an entry here so that the CP indexes will always be
-       the same: if XRC is not available, use the "empty" CPC */
-#if HAVE_XRC
-    &ompi_btl_openib_connect_xoob,
-#else
+       the same: XOOB has been removed, so use the "empty" CPC */
     &ompi_btl_openib_connect_empty,
-#endif
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -178,7 +178,9 @@ static int btl_openib_component_register(void)
     int ret;
 
     /* register IB component parameters */
-    ret = btl_openib_register_mca_params();
+    if (OMPI_SUCCESS != (ret = btl_openib_register_mca_params())) {
+        return ret;
+    }
 
     mca_btl_openib_component.max_send_size =
         mca_btl_openib_module.super.btl_max_send_size;
@@ -243,9 +245,10 @@ static int btl_openib_component_close(void)
     /* Tell the async thread to shutdown */
     if (mca_btl_openib_component.use_async_event_thread &&
         0 != mca_btl_openib_component.async_thread) {
-        int async_command = 0;
+	mca_btl_openib_async_cmd_t async_command;
+	async_command.a_cmd = OPENIB_ASYNC_THREAD_EXIT;
         if (write(mca_btl_openib_component.async_pipe[1], &async_command,
-                  sizeof(int)) < 0) {
+                  sizeof(mca_btl_openib_async_cmd_t)) < 0) {
             BTL_ERROR(("Failed to communicate with async event thread"));
             rc = OMPI_ERROR;
         } else {
@@ -265,9 +268,7 @@ static int btl_openib_component_close(void)
 #endif
 
     ompi_btl_openib_connect_base_finalize();
-#ifndef __WINDOWS__
     ompi_btl_openib_fd_finalize();
-#endif
     ompi_btl_openib_ini_finalize();
 
     if (NULL != mca_btl_openib_component.default_recv_qps) {
@@ -594,10 +595,9 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, access_flag);
 
     if (NULL == openib_reg->mr) {
-        opal_show_help("help-mpi-btl-openib.txt", "mem-reg-fail",
-                        true, ompi_process_info.nodename,
-                        ibv_get_device_name(device->ib_dev),
-                        __func__, strerror(errno), errno);
+        OPAL_OUTPUT_VERBOSE((5, mca_btl_openib_component.memory_registration_verbose,
+                             "ibv_reg_mr() failed: base=%p, bound=%p, size=%d, flags=0x%x, errno=%d",
+                              reg->base, reg->bound, (int) (reg->bound - reg->base + 1), reg->flags, errno));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -830,7 +830,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
 
-	    openib_btl->super.btl_seg_size = sizeof (mca_btl_openib_segment_t);
+            openib_btl->super.btl_seg_size = sizeof (mca_btl_openib_segment_t);
 
             /* Check bandwidth configured for this device */
             sprintf(param, "bandwidth_%s", ibv_get_device_name(device->ib_dev));
@@ -948,15 +948,16 @@ static void device_destruct(mca_btl_openib_device_t *device)
     /* signaling to async_tread to stop poll for this device */
     if (mca_btl_openib_component.use_async_event_thread &&
         -1 != mca_btl_openib_component.async_pipe[1]) {
-        int device_to_remove;
-        device_to_remove = -(device->ib_dev_context->async_fd);
-        if (write(mca_btl_openib_component.async_pipe[1], &device_to_remove,
-                    sizeof(int)) < 0){
+	mca_btl_openib_async_cmd_t async_command;
+	async_command.a_cmd = OPENIB_ASYNC_CMD_FD_REMOVE;
+	async_command.fd = device->ib_dev_context->async_fd;
+        if (write(mca_btl_openib_component.async_pipe[1], &async_command,
+                    sizeof(mca_btl_openib_async_cmd_t)) < 0){
             BTL_ERROR(("Failed to write to pipe"));
             goto device_error;
         }
         /* wait for ok from thread */
-        if (OMPI_SUCCESS != btl_openib_async_command_done(device_to_remove)){
+        if (OMPI_SUCCESS != btl_openib_async_command_done(device->ib_dev_context->async_fd)){
             goto device_error;
         }
     }
@@ -1041,6 +1042,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
 
 #if OPAL_HAVE_THREADS
     if(mca_btl_openib_component.use_async_event_thread) {
+	mca_btl_openib_async_cmd_t async_command;
         if(0 == mca_btl_openib_component.async_thread) {
             /* async thread is not yet started, so start it here */
             if(start_async_event_thread() != OMPI_SUCCESS)
@@ -1048,8 +1050,10 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
         }
         device->got_fatal_event = false;
         device->got_port_event = false;
+	async_command.a_cmd = OPENIB_ASYNC_CMD_FD_ADD;
+	async_command.fd = device->ib_dev_context->async_fd;
         if (write(mca_btl_openib_component.async_pipe[1],
-                    &device->ib_dev_context->async_fd, sizeof(int))<0){
+                    &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
             BTL_ERROR(("Failed to write to pipe [%d]",errno));
             return OMPI_ERROR;
         }
@@ -1353,7 +1357,7 @@ static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
         (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
-    return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
+    return (MCA_BTL_TAG_IB == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
 }
 
@@ -1361,7 +1365,7 @@ static bool inline is_cts_message(const mca_btl_openib_recv_frag_t *frag)
 {
     mca_btl_openib_control_header_t* chdr =
         (mca_btl_openib_control_header_t *) to_base_frag(frag)->segment.base.seg_addr.pval;
-    return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
+    return (MCA_BTL_TAG_IB == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CTS == chdr->type);
 }
 
@@ -2537,24 +2541,20 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-#ifndef __WINDOWS__
     seedv[0] = OMPI_PROC_MY_NAME->vpid;
     seedv[1] = opal_timer_base_get_cycles();
     seedv[2] = opal_timer_base_get_cycles();
     seed48(seedv);
-#endif
 
     /* Read in INI files with device-specific parameters */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         goto no_btls;
     }
 
-#ifndef __WINDOWS__
     /* Initialize FD listening */
     if (OMPI_SUCCESS != ompi_btl_openib_fd_init()) {
         goto no_btls;
     }
-#endif
 
     /* Init CPC components */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
@@ -2620,9 +2620,13 @@ btl_openib_component_init(int *num_btl_modules,
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.send_user_free;
 
+    /* Align fragments on 8-byte boundaries (instead of 2) to fix bus errors that
+       occur on some 32-bit platforms. Depending on the size of the fragment this
+       will waste 2-6 bytes of space per frag. In most cases this shouldn't waste
+       any space. */
     if (OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &mca_btl_openib_component.send_user_free,
-                sizeof(mca_btl_openib_put_frag_t), 2,
+                sizeof(mca_btl_openib_put_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_put_frag_t),
                 0, 0,
                 mca_btl_openib_component.ib_free_list_num,
@@ -2643,7 +2647,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     if(OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &mca_btl_openib_component.recv_user_free,
-                sizeof(mca_btl_openib_get_frag_t), 2,
+                sizeof(mca_btl_openib_get_frag_t), 8,
                 OBJ_CLASS(mca_btl_openib_get_frag_t),
                 0, 0,
                 mca_btl_openib_component.ib_free_list_num,
@@ -2664,7 +2668,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     if(OMPI_SUCCESS != ompi_free_list_init_ex(
                 &mca_btl_openib_component.send_free_coalesced,
-                length, 2, OBJ_CLASS(mca_btl_openib_coalesced_frag_t),
+                length, 8, OBJ_CLASS(mca_btl_openib_coalesced_frag_t),
                 mca_btl_openib_component.ib_free_list_num,
                 mca_btl_openib_component.ib_free_list_max,
                 mca_btl_openib_component.ib_free_list_inc,
@@ -2752,7 +2756,8 @@ btl_openib_component_init(int *num_btl_modules,
          i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
-        if (distance != dev_sorted[i].distance) {
+        if (0 != mca_btl_openib_component.ib_num_btls &&
+            distance != dev_sorted[i].distance) {
             break;
         }
 
@@ -3683,11 +3688,13 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     opal_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
 
     while (device->progress) {
+#if 0
         while(ompi_progress_threads()) {
             while(ompi_progress_threads())
                 sched_yield();
             usleep(100); /* give app a chance to re-enter library */
         }
+#endif
 
         if(ibv_get_cq_event(device->ib_channel, &ev_cq, &ev_ctx))
             BTL_ERROR(("Failed to get CQ event with error %s",

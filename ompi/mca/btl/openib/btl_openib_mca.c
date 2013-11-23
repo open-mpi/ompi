@@ -9,9 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -250,6 +250,13 @@ int btl_openib_register_mca_params(void)
                   "Warn if non-existent devices and/or ports are specified in the btl_openib_if_[in|ex]clude MCA parameters "
                   "(0 = do not warn; any other value = warn)",
                   true, &mca_btl_openib_component.warn_nonexistent_if));
+
+    /* If we print a warning about not having enough registered memory
+       available, do we want to abort? */
+    CHECK(reg_bool("abort_not_enough_reg_mem", NULL,
+                  "If there is not enough registered memory available on the system for Open MPI to function properly, Open MPI will issue a warning.  If this MCA parameter is set to true, then Open MPI will also abort all MPI jobs "
+                  "(0 = warn, but do not abort; any other value = warn and abort)",
+                  false, &mca_btl_openib_component.abort_not_enough_reg_mem));
 
     CHECK(reg_uint("poll_cq_batch", NULL,
                    "Retrieve up to poll_cq_batch completions from CQ",
@@ -560,24 +567,50 @@ int btl_openib_register_mca_params(void)
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* Default is enabling CUDA asynchronous send copies */
     CHECK(reg_bool("cuda_async_send", NULL,
-                  "Enable or disable CUDA async send copies "
-                  "(true = async; false = sync)",
-                  true, &mca_btl_openib_component.cuda_async_send));
-    if (mca_btl_openib_component.cuda_async_send) {
-        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
-    }
+                   "Enable or disable CUDA async send copies "
+                   "(true = async; false = sync)",
+                   true, &mca_btl_openib_component.cuda_async_send));
+
     /* Default is enabling CUDA asynchronous receive copies */
     CHECK(reg_bool("cuda_async_recv", NULL,
-                  "Enable or disable CUDA async recv copies "
-                  "(true = async; false = sync)",
-                  true, &mca_btl_openib_component.cuda_async_recv));
-    if (mca_btl_openib_component.cuda_async_recv) {
-        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
-    }
+                   "Enable or disable CUDA async recv copies "
+                   "(true = async; false = sync)",
+                   true, &mca_btl_openib_component.cuda_async_recv));
     /* Also make the max send size larger for better GPU buffer performance */
     mca_btl_openib_module.super.btl_max_send_size = 128 * 1024;
     /* Turn of message coalescing - not sure if it works with GPU buffers */
     mca_btl_openib_component.use_message_coalescing = 0;
+
+    /* Indicates if library was built with GPU Direct RDMA support.  Not changeable.  */
+    mca_btl_openib_component.cuda_have_gdr = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT_60);
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_cuda_gdr_support",
+                                           "Whether CUDA GPU Direct RDMA support is built into library or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &mca_btl_openib_component.cuda_have_gdr);
+
+    /* Default for GPU Direct RDMA is off for now */
+    CHECK(reg_bool("cuda_want_gdr_support", NULL,
+                   "Enable or disable CUDA GPU Direct RDMA support "
+                   "(true = yes; false = no)",
+                   false, &mca_btl_openib_component.cuda_want_gdr));
+
+    if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.cuda_have_gdr) {
+        opal_output(0, "GDR support requested but library does not have it built in.");
+        return OMPI_ERROR;
+    }
+#if OPAL_CUDA_SUPPORT_60
+    if (mca_btl_openib_component.cuda_want_gdr) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
+        mca_btl_openib_module.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number - indicates set it to minimum */
+        mca_btl_openib_module.super.btl_cuda_rdma_limit = 1024 * 20;  /* default switchover is 20K to pipeline */
+    } else {
+        mca_btl_openib_module.super.btl_cuda_eager_limit = 0; /* Turns off any of the GPU Direct RDMA code */
+        mca_btl_openib_module.super.btl_cuda_rdma_limit = 0;  /* Unused */
+    }
+#endif /* OPAL_CUDA_SUPPORT_60 */
 #endif /* OPAL_CUDA_SUPPORT */
     CHECK(mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,
@@ -725,6 +758,21 @@ int btl_openib_verify_mca_params (void)
         mca_btl_openib_component.buffer_alignment = 64;
     }
 
+#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
+    if (mca_btl_openib_component.cuda_async_send) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
+    } else {
+        mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND;
+    }
+
+    if (mca_btl_openib_component.cuda_async_recv) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
+    } else {
+        mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
+    }
+#endif
+
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
     if (mca_btl_openib_component.use_memalign != 32  
         && mca_btl_openib_component.use_memalign != 64
         && mca_btl_openib_component.use_memalign != 0){ 
@@ -733,6 +781,7 @@ int btl_openib_verify_mca_params (void)
                        "btl_openib_memalign is reset to 32");
         mca_btl_openib_component.use_memalign = 32; 
     }
+#endif
 
     return OMPI_SUCCESS;
 }

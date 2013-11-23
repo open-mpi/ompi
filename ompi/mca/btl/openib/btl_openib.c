@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,14 +10,15 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@
 #include "opal/include/opal_stdint.h"
 #include "opal/util/show_help.h"
 
+#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
@@ -134,9 +136,7 @@ void mca_btl_openib_show_init_error(const char *file, int line,
 {
     if (ENOMEM == errno) {
         int ret;
-#ifndef __WINDOWS__
         struct rlimit limit;
-#endif
         char *str_limit = NULL;
 
 #if HAVE_DECL_RLIMIT_MEMLOCK
@@ -144,7 +144,6 @@ void mca_btl_openib_show_init_error(const char *file, int line,
 #else
         ret = -1;
 #endif
-#ifndef __WINDOWS__
         if (0 != ret) {
             asprintf(&str_limit, "Unknown");
         } else if (limit.rlim_cur == RLIM_INFINITY) {
@@ -152,7 +151,6 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         } else {
             asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
         }
-#endif
 
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
                        true, ompi_process_info.nodename,
@@ -403,11 +401,7 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
 
     /* figure out reasonable sizes for completion queues */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        if(BTL_OPENIB_QP_TYPE_SRQ(qp)
-#if HAVE_XRC
-           || BTL_OPENIB_QP_TYPE_XRC(qp)
-#endif
-         ) {
+        if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
             send_cqes = mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
             recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
         } else {
@@ -666,18 +660,32 @@ static uint64_t calculate_max_reg (void)
 
         max_reg = (num_mtt - reserved_mtt) * getpagesize () * mtts_per_seg;
     } else {
-        /* need to update to determine the registration limit for this configuration */
+        /* Need to update to determine the registration limit for this
+           configuration */
         max_reg = mem_total;
     }
 
-    /* NTH: print a warning if we can't register more than 75% of physical memory */
+    /* Print a warning if we can't register more than 75% of physical
+       memory.  Abort if the abort_not_enough_reg_mem MCA param was
+       set. */
     if (max_reg < mem_total * 3 / 4) {
+        char *action;
+
+        if (mca_btl_openib_component.abort_not_enough_reg_mem) {
+            action = "Your MPI job will now abort.";
+        } else {
+            action = "Your MPI job will continue, but may be behave poorly and/or hang.";
+        }
         opal_show_help("help-mpi-btl-openib.txt", "reg mem limit low", true,
                        ompi_process_info.nodename, (unsigned long)(max_reg >> 20),
-                       (unsigned long)(mem_total >> 20));
+                       (unsigned long)(mem_total >> 20), action);
+        if (mca_btl_openib_component.abort_not_enough_reg_mem) {
+            ompi_rte_abort(1, NULL);
+        }
     }
 
-    /* limit us to 87.5% of the registered memory (some fluff for QPs, file systems, etc) */
+    /* Limit us to 87.5% of the registered memory (some fluff for QPs,
+       file systems, etc) */
     return (max_reg * 7) >> 3;
 }
 
@@ -1081,7 +1089,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         sfrag->hdr = sfrag->chdr;
         ctrl_hdr = (mca_btl_openib_control_header_t*)(sfrag->hdr + 1);
         clsc_hdr = (mca_btl_openib_header_coalesced_t*)(ctrl_hdr + 1);
-        sfrag->hdr->tag = MCA_BTL_TAG_BTL;
+        sfrag->hdr->tag = MCA_BTL_TAG_IB;
         ctrl_hdr->type = MCA_BTL_OPENIB_CONTROL_COALESCED;
         clsc_hdr->tag = org_tag;
         clsc_hdr->size = to_base_frag(sfrag)->segment.base.seg_len;
@@ -1151,8 +1159,8 @@ int mca_btl_openib_free(
             to_com_frag(des)->sg_entry.addr =
                 (uint64_t)(uintptr_t)to_send_frag(des)->hdr;
             to_send_frag(des)->coalesced_length = 0;
-	    to_base_frag(des)->segment.base.seg_addr.pval =
-		to_send_frag(des)->hdr + 1;
+            to_base_frag(des)->segment.base.seg_addr.pval =
+                to_send_frag(des)->hdr + 1;
             assert(!opal_list_get_size(&to_send_frag(des)->coalesced_frags));
             /* fall throug */
         case MCA_BTL_OPENIB_FRAG_SEND_USER:
@@ -1211,7 +1219,11 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
     openib_btl = (mca_btl_openib_module_t*)btl;
 
+#if OPAL_CUDA_SUPPORT_60
+    if(opal_convertor_cuda_need_buffers(convertor) == false && 0 == reserve) {
+#else
     if(opal_convertor_need_buffers(convertor) == false && 0 == reserve) {
+#endif /* OPAL_CUDA_SUPPORT_60 */
         /* GMS  bloody HACK! */
         if(registration != NULL || max_data > btl->btl_max_send_size) {
             frag = alloc_send_user_frag();
@@ -1265,23 +1277,23 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     }
 
     if (OPAL_UNLIKELY(0 == reserve)) {
-	frag = (mca_btl_openib_com_frag_t *) ib_frag_alloc(openib_btl, max_data, order, flags);
-	if(NULL == frag)
-	    return NULL;
+        frag = (mca_btl_openib_com_frag_t *) ib_frag_alloc(openib_btl, max_data, order, flags);
+        if(NULL == frag)
+            return NULL;
 
-	/* NTH: this frag will be ue used for either a get or put so we need to set the lval to be
-	   consistent with the usage in get and put. the pval will be restored in mca_btl_openib_free */
-	ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
-	to_base_frag(frag)->segment.base.seg_addr.lval =
-	    (uint64_t)(uintptr_t) ptr;
+        /* NTH: this frag will be ue used for either a get or put so we need to set the lval to be
+           consistent with the usage in get and put. the pval will be restored in mca_btl_openib_free */
+        ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
+        to_base_frag(frag)->segment.base.seg_addr.lval =
+            (uint64_t)(uintptr_t) ptr;
     } else {
-	frag =
-	    (mca_btl_openib_com_frag_t *) mca_btl_openib_alloc(btl, endpoint, order,
-							       max_data + reserve, flags);
-	if(NULL == frag)
-	    return NULL;
+        frag =
+            (mca_btl_openib_com_frag_t *) mca_btl_openib_alloc(btl, endpoint, order,
+                                                               max_data + reserve, flags);
+        if(NULL == frag)
+            return NULL;
 
-	ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
+        ptr = to_base_frag(frag)->segment.base.seg_addr.pval;
     }
 
     iov.iov_len = max_data;
@@ -1368,7 +1380,13 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         /* we didn't get a memory registration passed in, so we have to
          * register the region ourselves
          */
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, buffer, *size, 0,
+        uint32_t mflags = 0;
+#if OPAL_CUDA_SUPPORT
+        if (convertor->flags & CONVERTOR_CUDA) {
+            mflags |= MCA_MPOOL_FLAGS_CUDA_GPU_MEM;
+        }
+#endif /* OPAL_CUDA_SUPPORT */
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, buffer, *size, mflags,
                 &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
             MCA_BTL_IB_FRAG_RETURN(frag);
@@ -1808,8 +1826,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     /* Setting opcode on a frag constructor isn't enough since prepare_src
      * may return send_frag instead of put_frag */
     frag->sr_desc.opcode = IBV_WR_RDMA_WRITE;
-
     frag->sr_desc.send_flags = ib_send_flags(src_seg->base.seg_len, &(ep->qps[qp]), 1);
+    
     qp_inflight_wqe_to_frag(ep, qp, to_com_frag(frag));
     qp_reset_signal_count(ep, qp);
 

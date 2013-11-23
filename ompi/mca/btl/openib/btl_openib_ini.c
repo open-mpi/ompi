@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -106,14 +106,7 @@ int ompi_btl_openib_ini_init(void)
 {
     int ret = OMPI_ERR_NOT_FOUND;
     char *colon;
-
-#ifndef __WINDOWS__
     char separator = ':';
-#else
-    /* ':' is part of the path on Windows,
-       so use ';' instead. */
-    char separator = ';';
-#endif
 
     OBJ_CONSTRUCT(&devices, opal_list_t);
 

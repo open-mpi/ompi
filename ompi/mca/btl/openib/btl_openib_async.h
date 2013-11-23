@@ -22,4 +22,20 @@ void       mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpo
 
 #define APM_ENABLED (0 != mca_btl_openib_component.apm_lmc || 0 != mca_btl_openib_component.apm_ports)
 
+/*
+ * Command types for communicating with the async thread
+ */
+typedef enum {
+    OPENIB_ASYNC_CMD_FD_ADD,
+    OPENIB_ASYNC_CMD_FD_REMOVE,
+    OPENIB_ASYNC_IGNORE_QP_ERR,
+    OPENIB_ASYNC_THREAD_EXIT
+} btl_openib_async_cmd_type_t;
+
+typedef struct {
+    btl_openib_async_cmd_type_t a_cmd;
+    int fd;
+    struct ibv_qp *qp;
+} mca_btl_openib_async_cmd_t;
+
 #endif
