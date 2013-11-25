@@ -15,7 +15,7 @@ headers += \
 	proc/proc.h \
 	proc/proc_group_cache.h
 
-libshmem_la_SOURCES += \
+liboshmem_la_SOURCES += \
 	proc/proc.c \
 	proc/proc_group_cache.c
 

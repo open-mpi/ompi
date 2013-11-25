@@ -15,5 +15,5 @@ headers += \
 	request/request.h \
 	request/request_dbg.h
 
-libshmem_la_SOURCES += \
+liboshmem_la_SOURCES += \
 	request/request.c

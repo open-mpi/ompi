@@ -150,7 +150,7 @@ m4_ifdef([project_ompi],
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
-         [AC_SUBST(libshmem_so_version)])
+         [AC_SUBST(liboshmem_so_version)])
 AC_SUBST(libmca_opal_common_pmi_so_version)
 AC_SUBST(libopen_pal_so_version)
 
@@ -869,9 +869,9 @@ AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the MPI_Offset])
 AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
 
-AC_DEFINE_UNQUOTED(OSHMEM_SHMEM_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of SHMEM_Offset -- has to be defined here and typedef'ed later because shmem.h does not get AC SUBST's])
-AC_DEFINE_UNQUOTED(OSHMEM_SHMEM_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the SHMEM_Offset])
-AC_DEFINE_UNQUOTED(OSHMEM_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [SHMEM datatype corresponding to SHMEM_Offset])
+AC_DEFINE_UNQUOTED(OSHMEM_SHMEM_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of OSHMEM_Offset -- has to be defined here and typedef'ed later because shmem.h does not get AC SUBST's])
+AC_DEFINE_UNQUOTED(OSHMEM_SHMEM_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the OSHMEM_Offset])
+AC_DEFINE_UNQUOTED(OSHMEM_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [OSHMEM datatype corresponding to SHMEM_Offset])
 
 AC_DEFINE_UNQUOTED(OPAL_SIZEOF_LONG, $ac_cv_sizeof_long, "Size of 'long' type")
 

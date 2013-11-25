@@ -111,8 +111,8 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
-SHMEM_PROD_TO_ALL(shmem_int4_prod_to_all_f, oshmem_op_prod_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_PROD_TO_ALL(shmem_int8_prod_to_all_f, oshmem_op_prod_fint8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_PROD_TO_ALL(shmem_real4_prod_to_all_f, oshmem_op_prod_freal4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_PROD_TO_ALL(shmem_real8_prod_to_all_f, oshmem_op_prod_freal8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_PROD_TO_ALL(shmem_real16_prod_to_all_f, oshmem_op_prod_freal16, OSHMEM_GROUP_CACHE_ENABLED);
+SHMEM_PROD_TO_ALL(shmem_int4_prod_to_all_f, oshmem_op_prod_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_PROD_TO_ALL(shmem_int8_prod_to_all_f, oshmem_op_prod_fint8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_PROD_TO_ALL(shmem_real4_prod_to_all_f, oshmem_op_prod_freal4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_PROD_TO_ALL(shmem_real8_prod_to_all_f, oshmem_op_prod_freal8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_PROD_TO_ALL(shmem_real16_prod_to_all_f, oshmem_op_prod_freal16, OSHMEM_GROUP_CACHE_ENABLED)

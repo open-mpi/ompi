@@ -105,6 +105,7 @@ AM_CONDITIONAL(OSHMEM_PROFILING, test "$oshmem_profiling_support" = 1)
 #
 # Fortran bindings
 #
+AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AC_ARG_ENABLE(oshmem-fortran,
 AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
@@ -127,13 +128,11 @@ fi],
 [AC_MSG_RESULT([no]) 
     OSHMEM_WANT_FORTRAN_BINDINGS=0])
 
-AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AM_CONDITIONAL(OSHMEM_WANT_FORTRAN_BINDINGS,
     [test $OSHMEM_WANT_FORTRAN_BINDINGS -eq 1])
-AS_IF([test $OSHMEM_WANT_FORTRAN_BINDINGS -eq 1],
-    [AC_MSG_RESULT([yes])],
-    [AC_MSG_RESULT([no])])
 ])
+
+############################################################################
 
 AC_DEFUN([OSHMEM_SETUP_CFLAGS],[
 
