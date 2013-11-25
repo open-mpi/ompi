@@ -119,8 +119,8 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
-SHMEM_MAX_TO_ALL(shmem_int4_max_to_all_f, oshmem_op_max_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MAX_TO_ALL(shmem_int8_max_to_all_f, oshmem_op_max_fint8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MAX_TO_ALL(shmem_real4_max_to_all_f, oshmem_op_max_freal4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MAX_TO_ALL(shmem_real8_max_to_all_f, oshmem_op_max_freal8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MAX_TO_ALL(shmem_real16_max_to_all_f, oshmem_op_max_freal16, OSHMEM_GROUP_CACHE_ENABLED);
+SHMEM_MAX_TO_ALL(shmem_int4_max_to_all_f, oshmem_op_max_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MAX_TO_ALL(shmem_int8_max_to_all_f, oshmem_op_max_fint8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MAX_TO_ALL(shmem_real4_max_to_all_f, oshmem_op_max_freal4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MAX_TO_ALL(shmem_real8_max_to_all_f, oshmem_op_max_freal8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MAX_TO_ALL(shmem_real16_max_to_all_f, oshmem_op_max_freal16, OSHMEM_GROUP_CACHE_ENABLED)

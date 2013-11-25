@@ -18,12 +18,12 @@
 AM_CPPFLAGS = -DOSHMEM_PROFILING=1
 
 
-noinst_LTLIBRARIES = libshmem_c_pshmem.la
+noinst_LTLIBRARIES = liboshmem_c_pshmem.la
 
 headers = defines.h
 
 
-SHMEM_API_SOURCES = \
+OSHMEM_API_SOURCES = \
 	shmem_init.c \
 	shmem_free.c \
 	shmem_alloc.c \
@@ -62,15 +62,14 @@ SHMEM_API_SOURCES = \
 	shmem_set_lock.c \
 	shmem_test_lock.c
 
-#nodist_libshmem_c_pshmem_la_SOURCES = $(addprefix p, $(SHMEM_API_SOURCES))
-nodist_libshmem_c_pshmem_la_SOURCES = \
-	$(SHMEM_API_SOURCES)
+nodist_liboshmem_c_pshmem_la_SOURCES = \
+	$(OSHMEM_API_SOURCES)
 
 
 #
 # Sym link in the sources from the real MPI directory
 #
-$(nodist_libshmem_c_pshmem_la_SOURCES):
+$(nodist_liboshmem_c_pshmem_la_SOURCES):
 	if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '1-'` ; \
 		$(LN_S) $(top_srcdir)/oshmem/shmem/c/$$pname $@ ; \
@@ -85,7 +84,7 @@ endif
 
 # These files were created by targets above
 
-MAINTAINERCLEANFILES = $(nodist_libshmem_c_pshmem_la_SOURCES)
+MAINTAINERCLEANFILES = $(nodist_liboshmem_c_pshmem_la_SOURCES)
 
 # Don't want these targets in here
 

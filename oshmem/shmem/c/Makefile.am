@@ -13,8 +13,7 @@ if OSHMEM_PROFILING
     SUBDIRS = profile
 endif
 
-
-SHMEM_API_SOURCES = \
+OSHMEM_API_SOURCES = \
 	shmem_init.c \
 	shmem_free.c \
 	shmem_alloc.c \
@@ -58,11 +57,11 @@ SHMEM_API_SOURCES = \
 
 AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
 
-noinst_LTLIBRARIES = libshmem_c.la
+noinst_LTLIBRARIES = liboshmem_c.la
 
 headers = 
 
-libshmem_c_la_SOURCES = $(SHMEM_API_SOURCES)
+liboshmem_c_la_SOURCES = $(OSHMEM_API_SOURCES)
 
 if WANT_INSTALL_HEADERS
 oshmemdir = $(includedir)/openshmem/oshmem/shmem/c

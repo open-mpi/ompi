@@ -58,7 +58,7 @@ oshmem_info_SOURCES = \
         param.c
 
 oshmem_info_LDADD = $(top_builddir)/ompi/libmpi.la
-oshmem_info_LDADD += $(top_builddir)/oshmem/libshmem.la
+oshmem_info_LDADD += $(top_builddir)/oshmem/liboshmem.la
 if OMPI_RTE_ORTE
 oshmem_info_LDADD +=  $(top_builddir)/orte/libopen-rte.la
 endif

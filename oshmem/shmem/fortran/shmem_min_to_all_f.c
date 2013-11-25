@@ -111,8 +111,8 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
-SHMEM_MIN_TO_ALL(shmem_int4_min_to_all_f, oshmem_op_min_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MIN_TO_ALL(shmem_int8_min_to_all_f, oshmem_op_min_fint8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MIN_TO_ALL(shmem_real4_min_to_all_f, oshmem_op_min_freal4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MIN_TO_ALL(shmem_real8_min_to_all_f, oshmem_op_min_freal8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_MIN_TO_ALL(shmem_real16_min_to_all_f, oshmem_op_min_freal16, OSHMEM_GROUP_CACHE_ENABLED);
+SHMEM_MIN_TO_ALL(shmem_int4_min_to_all_f, oshmem_op_min_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MIN_TO_ALL(shmem_int8_min_to_all_f, oshmem_op_min_fint8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MIN_TO_ALL(shmem_real4_min_to_all_f, oshmem_op_min_freal4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MIN_TO_ALL(shmem_real8_min_to_all_f, oshmem_op_min_freal8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_MIN_TO_ALL(shmem_real16_min_to_all_f, oshmem_op_min_freal16, OSHMEM_GROUP_CACHE_ENABLED)

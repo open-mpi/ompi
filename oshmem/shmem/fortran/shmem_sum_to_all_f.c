@@ -111,8 +111,8 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
-SHMEM_SUM_TO_ALL(shmem_int4_sum_to_all_f, oshmem_op_sum_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_SUM_TO_ALL(shmem_int8_sum_to_all_f, oshmem_op_sum_fint8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_SUM_TO_ALL(shmem_real4_sum_to_all_f, oshmem_op_sum_freal4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_SUM_TO_ALL(shmem_real8_sum_to_all_f, oshmem_op_sum_freal8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_SUM_TO_ALL(shmem_real16_sum_to_all_f, oshmem_op_sum_freal16, OSHMEM_GROUP_CACHE_ENABLED);
+SHMEM_SUM_TO_ALL(shmem_int4_sum_to_all_f, oshmem_op_sum_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_SUM_TO_ALL(shmem_int8_sum_to_all_f, oshmem_op_sum_fint8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_SUM_TO_ALL(shmem_real4_sum_to_all_f, oshmem_op_sum_freal4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_SUM_TO_ALL(shmem_real8_sum_to_all_f, oshmem_op_sum_freal8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_SUM_TO_ALL(shmem_real16_sum_to_all_f, oshmem_op_sum_freal16, OSHMEM_GROUP_CACHE_ENABLED)

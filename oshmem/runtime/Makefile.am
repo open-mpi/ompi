@@ -18,7 +18,7 @@ headers += \
 	runtime/oshmem_info_support.h \
 	runtime/oshmem_shmem_preconnect.h 
 
-libshmem_la_SOURCES += \
+liboshmem_la_SOURCES += \
 	runtime/oshmem_shmem_init.c \
 	runtime/oshmem_shmem_finalize.c \
 	runtime/oshmem_shmem_abort.c \

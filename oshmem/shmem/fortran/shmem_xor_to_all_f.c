@@ -97,7 +97,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
-SHMEM_XOR_TO_ALL(shmem_int4_xor_to_all_f, oshmem_op_xor_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_XOR_TO_ALL(shmem_int8_xor_to_all_f, oshmem_op_xor_fint8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_XOR_TO_ALL(shmem_comp4_xor_to_all_f, oshmem_op_xor_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_XOR_TO_ALL(shmem_comp8_xor_to_all_f, oshmem_op_xor_fint8, OSHMEM_GROUP_CACHE_ENABLED);
+SHMEM_XOR_TO_ALL(shmem_int4_xor_to_all_f, oshmem_op_xor_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_XOR_TO_ALL(shmem_int8_xor_to_all_f, oshmem_op_xor_fint8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_XOR_TO_ALL(shmem_comp4_xor_to_all_f, oshmem_op_xor_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_XOR_TO_ALL(shmem_comp8_xor_to_all_f, oshmem_op_xor_fint8, OSHMEM_GROUP_CACHE_ENABLED)

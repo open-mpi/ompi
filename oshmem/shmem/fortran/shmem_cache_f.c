@@ -21,7 +21,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_set_cache_inv__,
         shmem_set_cache_inv_f,
         (void), 
-        ());
+        ())
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_SET_CACHE_LINE_INV,
@@ -29,7 +29,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_set_cache_line_inv__,
         shmem_set_cache_line_inv_f,
         (FORTRAN_POINTER_T target), 
-        (target));
+        (target))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_CLEAR_CACHE_INV,
@@ -37,7 +37,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_clear_cache_inv__,
         shmem_clear_cache_inv_f,
         (void), 
-        ());
+        ())
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_CLEAR_CACHE_LINE_INV,
@@ -45,7 +45,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_clear_cache_line_inv__,
         shmem_clear_cache_line_inv_f,
         (FORTRAN_POINTER_T target), 
-        (target));
+        (target))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_UDCFLUSH,
@@ -53,7 +53,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_udcflush__,
         shmem_udcflush_f,
         (void), 
-        ());
+        ())
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_UDCFLUSH_LINE,
@@ -61,7 +61,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_udcflush_line__,
         shmem_udcflush_line_f,
         (FORTRAN_POINTER_T target), 
-        (target));
+        (target))
 
 void shmem_set_cache_inv_f(void)
 {

@@ -22,7 +22,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_set_lock__,
         shmem_set_lock_f,
         (FORTRAN_POINTER_T lock), 
-        (lock));
+        (lock))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_CLEAR_LOCK,
@@ -30,7 +30,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_clear_lock__,
         shmem_clear_lock_f,
         (FORTRAN_POINTER_T lock), 
-        (lock));
+        (lock))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
         SHMEM_TEST_LOCK,
@@ -38,7 +38,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
         shmem_test_lock__,
         shmem_test_lock_f,
         (FORTRAN_POINTER_T lock), 
-        (lock));
+        (lock))
 
 void shmem_set_lock_f(FORTRAN_POINTER_T lock)
 {

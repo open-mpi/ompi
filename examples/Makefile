@@ -69,7 +69,6 @@ all: hello_c ring_c connectivity_c mpi
 # Always build the C example.  Only build the others
 # if Open MPI was build with the relevant language bindings.
 mpi:
-	
 	@ if ompi_info --parsable | grep bindings:cxx:yes >/dev/null; then \
 	    $(MAKE) hello_cxx ring_cxx; \
 	fi

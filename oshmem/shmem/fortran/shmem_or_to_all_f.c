@@ -95,5 +95,5 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
-SHMEM_OR_TO_ALL(shmem_int4_or_to_all_f, oshmem_op_or_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_OR_TO_ALL(shmem_int8_or_to_all_f, oshmem_op_or_fint8, OSHMEM_GROUP_CACHE_ENABLED);
+SHMEM_OR_TO_ALL(shmem_int4_or_to_all_f, oshmem_op_or_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_OR_TO_ALL(shmem_int8_or_to_all_f, oshmem_op_or_fint8, OSHMEM_GROUP_CACHE_ENABLED)

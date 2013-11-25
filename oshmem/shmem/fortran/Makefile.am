@@ -12,18 +12,18 @@
 AM_CPPFLAGS     = -DOSHMEM_PROFILING_DEFINES=0 -DOSHMEM_HAVE_WEAK_SYMBOLS=0
 
 if OSHMEM_WANT_FORTRAN_BINDINGS
-shmem_fortran_lib       = libshmem_fortran.la
+oshmem_fortran_lib       = liboshmem_fortran.la
 else
-shmem_fortran_lib       =
+oshmem_fortran_lib       =
 endif
 
-noinst_LTLIBRARIES = $(shmem_fortran_lib)
+noinst_LTLIBRARIES = $(oshmem_fortran_lib)
 
 headers = prototypes_shmem.h \
           bindings.h \
           shmem_fortran_pointer.h
 
-libshmem_fortran_la_SOURCES = \
+liboshmem_fortran_la_SOURCES = \
                     start_pes_f.c \
                     num_pes_f.c \
                     my_pe_f.c \

@@ -14,6 +14,6 @@
 headers += \
 	op/op.h
 
-libshmem_la_SOURCES += \
+liboshmem_la_SOURCES += \
 	op/op.c
 

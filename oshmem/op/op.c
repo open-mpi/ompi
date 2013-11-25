@@ -152,101 +152,101 @@ oshmem_op_t* oshmem_op_prod_freal16 = NULL;
 
 /* Bitwise AND */
 #define __and_op(a, b) ((a) & (b))
-FUNC_OP_CREATE(and, short, short, __and_op);
-FUNC_OP_CREATE(and, int, int, __and_op);
-FUNC_OP_CREATE(and, long, long, __and_op);
-FUNC_OP_CREATE(and, longlong, long long, __and_op);
-FUNC_OP_CREATE(and, fint4, ompi_fortran_integer4_t, __and_op);
-FUNC_OP_CREATE(and, fint8, ompi_fortran_integer8_t, __and_op);
+FUNC_OP_CREATE(and, short, short, __and_op)
+FUNC_OP_CREATE(and, int, int, __and_op)
+FUNC_OP_CREATE(and, long, long, __and_op)
+FUNC_OP_CREATE(and, longlong, long long, __and_op)
+FUNC_OP_CREATE(and, fint4, ompi_fortran_integer4_t, __and_op)
+FUNC_OP_CREATE(and, fint8, ompi_fortran_integer8_t, __and_op)
 
 /* Bitwise OR */
 #define __or_op(a, b) ((a) | (b))
-FUNC_OP_CREATE(or, short, short, __or_op);
-FUNC_OP_CREATE(or, int, int, __or_op);
-FUNC_OP_CREATE(or, long, long, __or_op);
-FUNC_OP_CREATE(or, longlong, long long, __or_op);
-FUNC_OP_CREATE(or, fint4, ompi_fortran_integer4_t, __or_op);
-FUNC_OP_CREATE(or, fint8, ompi_fortran_integer8_t, __or_op);
+FUNC_OP_CREATE(or, short, short, __or_op)
+FUNC_OP_CREATE(or, int, int, __or_op)
+FUNC_OP_CREATE(or, long, long, __or_op)
+FUNC_OP_CREATE(or, longlong, long long, __or_op)
+FUNC_OP_CREATE(or, fint4, ompi_fortran_integer4_t, __or_op)
+FUNC_OP_CREATE(or, fint8, ompi_fortran_integer8_t, __or_op)
 
 /* Bitwise XOR */
 #define __xor_op(a, b) ((a) ^ (b))
-FUNC_OP_CREATE(xor, short, short, __xor_op);
-FUNC_OP_CREATE(xor, int, int, __xor_op);
-FUNC_OP_CREATE(xor, long, long, __xor_op);
-FUNC_OP_CREATE(xor, longlong, long long, __xor_op);
-FUNC_OP_CREATE(xor, fint4, ompi_fortran_integer4_t, __xor_op);
-FUNC_OP_CREATE(xor, fint8, ompi_fortran_integer8_t, __xor_op);
+FUNC_OP_CREATE(xor, short, short, __xor_op)
+FUNC_OP_CREATE(xor, int, int, __xor_op)
+FUNC_OP_CREATE(xor, long, long, __xor_op)
+FUNC_OP_CREATE(xor, longlong, long long, __xor_op)
+FUNC_OP_CREATE(xor, fint4, ompi_fortran_integer4_t, __xor_op)
+FUNC_OP_CREATE(xor, fint8, ompi_fortran_integer8_t, __xor_op)
 
 /* MAX */
 #define __max_op(a, b) ((a) > (b) ? (a) : (b))
-FUNC_OP_CREATE(max, short, short, __max_op);
-FUNC_OP_CREATE(max, int, int, __max_op);
-FUNC_OP_CREATE(max, long, long, __max_op);
-FUNC_OP_CREATE(max, longlong, long long, __max_op);
-FUNC_OP_CREATE(max, float, float, __max_op);
-FUNC_OP_CREATE(max, double, double, __max_op);
-FUNC_OP_CREATE(max, longdouble, long double, __max_op);
-FUNC_OP_CREATE(max, fint4, ompi_fortran_integer4_t, __max_op);
-FUNC_OP_CREATE(max, fint8, ompi_fortran_integer8_t, __max_op);
-FUNC_OP_CREATE(max, freal4, ompi_fortran_real4_t, __max_op);
-FUNC_OP_CREATE(max, freal8, ompi_fortran_real8_t, __max_op);
+FUNC_OP_CREATE(max, short, short, __max_op)
+FUNC_OP_CREATE(max, int, int, __max_op)
+FUNC_OP_CREATE(max, long, long, __max_op)
+FUNC_OP_CREATE(max, longlong, long long, __max_op)
+FUNC_OP_CREATE(max, float, float, __max_op)
+FUNC_OP_CREATE(max, double, double, __max_op)
+FUNC_OP_CREATE(max, longdouble, long double, __max_op)
+FUNC_OP_CREATE(max, fint4, ompi_fortran_integer4_t, __max_op)
+FUNC_OP_CREATE(max, fint8, ompi_fortran_integer8_t, __max_op)
+FUNC_OP_CREATE(max, freal4, ompi_fortran_real4_t, __max_op)
+FUNC_OP_CREATE(max, freal8, ompi_fortran_real8_t, __max_op)
 #if OMPI_HAVE_FORTRAN_REAL16
-FUNC_OP_CREATE(max, freal16, ompi_fortran_real16_t, __max_op);
+FUNC_OP_CREATE(max, freal16, ompi_fortran_real16_t, __max_op)
 #endif
 
 /* MIN */
 #define __min_op(a, b) ((a) < (b) ? (a) : (b))
-FUNC_OP_CREATE(min, short, short, __min_op);
-FUNC_OP_CREATE(min, int, int, __min_op);
-FUNC_OP_CREATE(min, long, long, __min_op);
-FUNC_OP_CREATE(min, longlong, long long, __min_op);
-FUNC_OP_CREATE(min, float, float, __min_op);
-FUNC_OP_CREATE(min, double, double, __min_op);
-FUNC_OP_CREATE(min, longdouble, long double, __min_op);
-FUNC_OP_CREATE(min, fint4, ompi_fortran_integer4_t, __min_op);
-FUNC_OP_CREATE(min, fint8, ompi_fortran_integer8_t, __min_op);
-FUNC_OP_CREATE(min, freal4, ompi_fortran_real4_t, __min_op);
-FUNC_OP_CREATE(min, freal8, ompi_fortran_real8_t, __min_op);
+FUNC_OP_CREATE(min, short, short, __min_op)
+FUNC_OP_CREATE(min, int, int, __min_op)
+FUNC_OP_CREATE(min, long, long, __min_op)
+FUNC_OP_CREATE(min, longlong, long long, __min_op)
+FUNC_OP_CREATE(min, float, float, __min_op)
+FUNC_OP_CREATE(min, double, double, __min_op)
+FUNC_OP_CREATE(min, longdouble, long double, __min_op)
+FUNC_OP_CREATE(min, fint4, ompi_fortran_integer4_t, __min_op)
+FUNC_OP_CREATE(min, fint8, ompi_fortran_integer8_t, __min_op)
+FUNC_OP_CREATE(min, freal4, ompi_fortran_real4_t, __min_op)
+FUNC_OP_CREATE(min, freal8, ompi_fortran_real8_t, __min_op)
 #if OMPI_HAVE_FORTRAN_REAL16
-FUNC_OP_CREATE(min, freal16, ompi_fortran_real16_t, __min_op);
+FUNC_OP_CREATE(min, freal16, ompi_fortran_real16_t, __min_op)
 #endif
 
 /* SUM */
 #define __sum_op(a, b) ((a) + (b))
-FUNC_OP_CREATE(sum, short, short, __sum_op);
-FUNC_OP_CREATE(sum, int, int, __sum_op);
-FUNC_OP_CREATE(sum, long, long, __sum_op);
-FUNC_OP_CREATE(sum, longlong, long long, __sum_op);
-FUNC_OP_CREATE(sum, float, float, __sum_op);
-FUNC_OP_CREATE(sum, double, double, __sum_op);
-FUNC_OP_CREATE(sum, longdouble, long double, __sum_op);
-FUNC_OP_CREATE(sum, complexf, float complex, __sum_op);
-FUNC_OP_CREATE(sum, complexd, double complex, __sum_op);
-FUNC_OP_CREATE(sum, fint4, ompi_fortran_integer4_t, __sum_op);
-FUNC_OP_CREATE(sum, fint8, ompi_fortran_integer8_t, __sum_op);
-FUNC_OP_CREATE(sum, freal4, ompi_fortran_real4_t, __sum_op);
-FUNC_OP_CREATE(sum, freal8, ompi_fortran_real8_t, __sum_op);
+FUNC_OP_CREATE(sum, short, short, __sum_op)
+FUNC_OP_CREATE(sum, int, int, __sum_op)
+FUNC_OP_CREATE(sum, long, long, __sum_op)
+FUNC_OP_CREATE(sum, longlong, long long, __sum_op)
+FUNC_OP_CREATE(sum, float, float, __sum_op)
+FUNC_OP_CREATE(sum, double, double, __sum_op)
+FUNC_OP_CREATE(sum, longdouble, long double, __sum_op)
+FUNC_OP_CREATE(sum, complexf, float complex, __sum_op)
+FUNC_OP_CREATE(sum, complexd, double complex, __sum_op)
+FUNC_OP_CREATE(sum, fint4, ompi_fortran_integer4_t, __sum_op)
+FUNC_OP_CREATE(sum, fint8, ompi_fortran_integer8_t, __sum_op)
+FUNC_OP_CREATE(sum, freal4, ompi_fortran_real4_t, __sum_op)
+FUNC_OP_CREATE(sum, freal8, ompi_fortran_real8_t, __sum_op)
 #if OMPI_HAVE_FORTRAN_REAL16
-FUNC_OP_CREATE(sum, freal16, ompi_fortran_real16_t, __sum_op);
+FUNC_OP_CREATE(sum, freal16, ompi_fortran_real16_t, __sum_op)
 #endif
 
 /* PROD */
 #define __prod_op(a, b) ((a) * (b))
-FUNC_OP_CREATE(prod, short, short, __prod_op);
-FUNC_OP_CREATE(prod, int, int, __prod_op);
-FUNC_OP_CREATE(prod, long, long, __prod_op);
-FUNC_OP_CREATE(prod, longlong, long long, __prod_op);
-FUNC_OP_CREATE(prod, float, float, __prod_op);
-FUNC_OP_CREATE(prod, double, double, __prod_op);
-FUNC_OP_CREATE(prod, longdouble, long double, __prod_op);
-FUNC_OP_CREATE(prod, complexf, float complex, __prod_op);
-FUNC_OP_CREATE(prod, complexd, double complex, __prod_op);
-FUNC_OP_CREATE(prod, fint4, ompi_fortran_integer4_t, __prod_op);
-FUNC_OP_CREATE(prod, fint8, ompi_fortran_integer8_t, __prod_op);
-FUNC_OP_CREATE(prod, freal4, ompi_fortran_real4_t, __prod_op);
-FUNC_OP_CREATE(prod, freal8, ompi_fortran_real8_t, __prod_op);
+FUNC_OP_CREATE(prod, short, short, __prod_op)
+FUNC_OP_CREATE(prod, int, int, __prod_op)
+FUNC_OP_CREATE(prod, long, long, __prod_op)
+FUNC_OP_CREATE(prod, longlong, long long, __prod_op)
+FUNC_OP_CREATE(prod, float, float, __prod_op)
+FUNC_OP_CREATE(prod, double, double, __prod_op)
+FUNC_OP_CREATE(prod, longdouble, long double, __prod_op)
+FUNC_OP_CREATE(prod, complexf, float complex, __prod_op)
+FUNC_OP_CREATE(prod, complexd, double complex, __prod_op)
+FUNC_OP_CREATE(prod, fint4, ompi_fortran_integer4_t, __prod_op)
+FUNC_OP_CREATE(prod, fint8, ompi_fortran_integer8_t, __prod_op)
+FUNC_OP_CREATE(prod, freal4, ompi_fortran_real4_t, __prod_op)
+FUNC_OP_CREATE(prod, freal8, ompi_fortran_real8_t, __prod_op)
 #if OMPI_HAVE_FORTRAN_REAL16
-FUNC_OP_CREATE(prod, freal16, ompi_fortran_real16_t, __prod_op);
+FUNC_OP_CREATE(prod, freal16, ompi_fortran_real16_t, __prod_op)
 #endif
 
 int oshmem_op_init(void)

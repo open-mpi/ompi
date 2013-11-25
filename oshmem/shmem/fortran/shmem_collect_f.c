@@ -141,11 +141,11 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
-SHMEM_COLLECT(shmem_collect4_f, oshmem_op_prod_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_COLLECT(shmem_collect8_f, oshmem_op_prod_fint8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_COLLECT(shmem_collect32_f, oshmem_op_prod_fint4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_COLLECT(shmem_collect64_f, oshmem_op_prod_fint8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_COLLECT(shmem_fcollect4_f, oshmem_op_prod_freal4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_COLLECT(shmem_fcollect8_f, oshmem_op_prod_freal8, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_COLLECT(shmem_fcollect32_f, oshmem_op_prod_freal4, OSHMEM_GROUP_CACHE_ENABLED);
-SHMEM_COLLECT(shmem_fcollect64_f, oshmem_op_prod_freal8, OSHMEM_GROUP_CACHE_ENABLED);
+SHMEM_COLLECT(shmem_collect4_f, oshmem_op_prod_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_COLLECT(shmem_collect8_f, oshmem_op_prod_fint8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_COLLECT(shmem_collect32_f, oshmem_op_prod_fint4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_COLLECT(shmem_collect64_f, oshmem_op_prod_fint8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_COLLECT(shmem_fcollect4_f, oshmem_op_prod_freal4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_COLLECT(shmem_fcollect8_f, oshmem_op_prod_freal8, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_COLLECT(shmem_fcollect32_f, oshmem_op_prod_freal4, OSHMEM_GROUP_CACHE_ENABLED)
+SHMEM_COLLECT(shmem_fcollect64_f, oshmem_op_prod_freal8, OSHMEM_GROUP_CACHE_ENABLED)
