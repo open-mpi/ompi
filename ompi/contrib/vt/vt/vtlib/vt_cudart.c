@@ -2722,7 +2722,10 @@ cudaError_t  cudaLaunch(VT_CUDARTWRAP_COMPAT_PTR entry)
           /*  get an already created unused event */
           kernel->evt = vtDev->evtbuf_pos;
 
-          if(!vt_cupti_events_enabled){
+#if defined(VT_CUPTI_EVENTS)
+          if(!vt_cupti_events_enabled)
+#endif
+          {
             /* increment buffers */
             vtDev->evtbuf_pos++;
             vtDev->buf_pos += sizeof(VTCUDAKernel);
