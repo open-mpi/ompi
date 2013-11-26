@@ -58,7 +58,7 @@
 #include "oshmem/shmem/shmem_lock.h"
 #include "oshmem/runtime/oshmem_shmem_preconnect.h"
 
-static int __shmem_finalize(void);
+static int _shmem_finalize(void);
 
 int oshmem_shmem_finalize(void)
 {
@@ -68,7 +68,7 @@ int oshmem_shmem_finalize(void)
     if (opal_atomic_cmpset_32(&finalize_has_already_started, 0, 1)
             && oshmem_shmem_initialized && !oshmem_shmem_aborted) {
         /* Should be called first because ompi_mpi_finalize makes orte and opal finalization */
-        ret = __shmem_finalize();
+        ret = _shmem_finalize();
 
         if ((OSHMEM_SUCCESS == ret) && ompi_mpi_initialized
                 && !ompi_mpi_finalized) {
@@ -83,7 +83,7 @@ int oshmem_shmem_finalize(void)
     return ret;
 }
 
-static int __shmem_finalize(void)
+static int _shmem_finalize(void)
 {
     int ret = OSHMEM_SUCCESS;
 

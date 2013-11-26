@@ -15,8 +15,8 @@
 
 #include <stdio.h>
 
-static int __dereg_segment(map_segment_t *s);
-static int __reg_segment(map_segment_t *s, int *num_btl);
+static int _dereg_segment(map_segment_t *s);
+static int _reg_segment(map_segment_t *s, int *num_btl);
 
 int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
 {
@@ -31,10 +31,10 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
                         i,
                         s->start,
                         s->end,
-                        (long long)(((uintptr_t)s->end) - ((uintptr_t)s->start)),
+                        (long long)(s->end - s->start),
                         s->type,
                         s->shmid);
-        ret = __reg_segment(s, &memheap_map->num_transports);
+        ret = _reg_segment(s, &memheap_map->num_transports);
     }
 
     return ret;
@@ -56,14 +56,14 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
                         i,
                         s->start,
                         s->end,
-                        (long long)(((uintptr_t)s->end) - ((uintptr_t)s->start))),
-        ret = __dereg_segment(s);
+                        (long long)(s->end - s->start));
+        ret = _dereg_segment(s);
     }
 
     return ret;
 }
 
-static int __dereg_segment(map_segment_t *s)
+static int _dereg_segment(map_segment_t *s)
 {
     int rc = OSHMEM_SUCCESS;
     int j;
@@ -92,7 +92,7 @@ static int __dereg_segment(map_segment_t *s)
     return rc;
 }
 
-static int __reg_segment(map_segment_t *s, int *num_btl)
+static int _reg_segment(map_segment_t *s, int *num_btl)
 {
     int rc = OSHMEM_SUCCESS;
     int my_pe;
@@ -110,7 +110,7 @@ static int __reg_segment(map_segment_t *s, int *num_btl)
 
     if (!rc) {
         s->mkeys = MCA_SPML_CALL(register((void *)(unsigned long)s->start,
-                        (long long)((uintptr_t)s->end) - ((uintptr_t)s->start),
+                        s->end - s->start,
                         MEMHEAP_SHM_CODE(s->type, s->shmid),
                         num_btl));
         if (NULL == s->mkeys) {

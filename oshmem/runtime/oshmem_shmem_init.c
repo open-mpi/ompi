@@ -179,7 +179,7 @@ opal_hash_table_t ompi_mpi_f90_integer_hashtable;
 opal_hash_table_t ompi_mpi_f90_real_hashtable;
 opal_hash_table_t ompi_mpi_f90_complex_hashtable;
 
-static int __shmem_init(int argc, char **argv, int requested, int *provided);
+static int _shmem_init(int argc, char **argv, int requested, int *provided);
 
 #if OSHMEM_OPAL_THREAD_ENABLE
 static void* shmem_opal_thread(void* argc)
@@ -220,10 +220,8 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
             ret = ompi_mpi_init(argc, argv, requested, provided);
         }
         if (OSHMEM_SUCCESS == ret) {
-            ret = __shmem_init(argc, argv, requested, provided);
+            ret = _shmem_init(argc, argv, requested, provided);
         }
-
-        MPI_Barrier(MPI_COMM_WORLD);
 
         if (OSHMEM_SUCCESS == ret) {
             oshmem_shmem_initialized = true;
@@ -310,7 +308,7 @@ int oshmem_shmem_preconnect_all_finalize(void)
     return OSHMEM_SUCCESS;
 }
 
-static int __shmem_init(int argc, char **argv, int requested, int *provided)
+static int _shmem_init(int argc, char **argv, int requested, int *provided)
 {
     int ret = OSHMEM_SUCCESS;
     char *error = NULL;

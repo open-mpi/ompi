@@ -71,7 +71,7 @@ static inline void* __seg2base_va(int seg)
     return memheap_map->mem_segs[seg].start;
 }
 
-static int __seg_cmp(const void *k, const void *v)
+static int _seg_cmp(const void *k, const void *v)
 {
     uintptr_t va = (uintptr_t) k;
     map_segment_t *s = (map_segment_t *) v;
@@ -96,7 +96,7 @@ static inline map_segment_t *__find_va(const void* va)
                     &memheap_map->mem_segs[SYMB_SEG_INDEX],
                     memheap_map->n_segments - 1,
                     sizeof(*s),
-                    __seg_cmp);
+                    _seg_cmp);
     }
 
 #if MEMHEAP_BASE_DEBUG == 1
@@ -528,8 +528,8 @@ static inline void* va2rva(void* va,
                               void* local_base,
                               void* remote_base)
 {
-    return (void*) (remote_base > local_base ? (uintptr_t)va + (((uintptr_t)remote_base) - ((uintptr_t)local_base)) :
-                    (uintptr_t)va - (((uintptr_t)remote_base) - ((uintptr_t)local_base)));
+    return (void*) (remote_base > local_base ? (uintptr_t)va + (remote_base - local_base) :
+                    (uintptr_t)va - (local_base - remote_base));
 }
 
 mca_spml_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
@@ -599,8 +599,7 @@ uint64_t mca_memheap_base_find_offset(int pe,
 
     s = __find_va(va);
 
-    return ((s && s->is_active) ? 
-            (uint64_t) ((uintptr_t)rva - (uintptr_t)s->mkeys_cache[pe][tr_id].va_base) : 0);
+    return ((s && s->is_active) ? (rva - s->mkeys_cache[pe][tr_id].va_base) : 0);
 }
 
 int mca_memheap_base_is_symmetric_addr(const void* va)
@@ -619,11 +618,10 @@ int mca_memheap_base_detect_addr_type(void* va)
         if (s->type == MAP_SEGMENT_STATIC) {
             addr_type = ADDR_STATIC;
         } else if ((uintptr_t)va >= (uintptr_t) s->start
-                   && (uintptr_t)va < (uintptr_t) (((size_t)s->start) + mca_memheap.memheap_size)) {
+                   && (uintptr_t)va < (uintptr_t) (s->start + mca_memheap.memheap_size)) {
             addr_type = ADDR_USER;
         } else {
-            assert( (uintptr_t)va >= (uintptr_t)(((size_t)s->start) + mca_memheap.memheap_size) 
-                    && (uintptr_t)va < (uintptr_t)s->end);
+            assert( (uintptr_t)va >= (uintptr_t)(s->start + mca_memheap.memheap_size) && (uintptr_t)va < (uintptr_t)s->end);
             addr_type = ADDR_PRIVATE;
         }
     }

@@ -29,7 +29,7 @@ int mca_atomic_basic_priority_param = -1;
 /*
  * Local function
  */
-static int __basic_open(void);
+static int _basic_open(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -51,7 +51,7 @@ mca_atomic_base_component_t mca_atomic_basic_component = {
         OSHMEM_RELEASE_VERSION,
 
         /* Component open and close functions */
-        __basic_open,
+        _basic_open,
         NULL
     },
     {
@@ -66,7 +66,7 @@ mca_atomic_base_component_t mca_atomic_basic_component = {
     mca_atomic_basic_query
 };
 
-static int __basic_open(void)
+static int _basic_open(void)
 {
     mca_atomic_basic_priority_param = 75;
     (void) mca_base_component_var_register(&mca_atomic_basic_component.atomic_version,

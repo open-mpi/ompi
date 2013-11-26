@@ -18,7 +18,7 @@ static int mca_memheap_buddy_component_close(void);
 static mca_memheap_base_module_t* mca_memheap_buddy_component_init(memheap_context_t *,
                                                                    int *);
 
-static int __basic_open(void);
+static int _basic_open(void);
 
 mca_memheap_base_component_t mca_memheap_buddy_component = {
     {
@@ -29,7 +29,7 @@ mca_memheap_base_component_t mca_memheap_buddy_component = {
         OSHMEM_MINOR_VERSION,  /* MCA component minor version */
         OSHMEM_RELEASE_VERSION,  /* MCA component release version */
         
-        __basic_open,
+        _basic_open,
         mca_memheap_buddy_component_close,
         NULL
     },
@@ -41,7 +41,7 @@ mca_memheap_base_component_t mca_memheap_buddy_component = {
 };
 
 /* Open component */
-static int __basic_open(void)
+static int _basic_open(void)
 {
     return OSHMEM_SUCCESS;
 }

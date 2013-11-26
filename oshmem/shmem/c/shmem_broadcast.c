@@ -21,7 +21,7 @@
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 
-static void __shmem_broadcast(void *target,
+static void _shmem_broadcast(void *target,
                               const void *source,
                               size_t nbytes,
                               int PE_root,
@@ -44,12 +44,12 @@ static void __shmem_broadcast(void *target,
     RUNTIME_CHECK_ADDR(target);                                     \
     RUNTIME_CHECK_ADDR(source);                                     \
                                                                     \
-    __shmem_broadcast( target, source, nelems * element_size,       \
+    _shmem_broadcast( target, source, nelems * element_size,       \
                        PE_root, PE_start, logPE_stride, PE_size,    \
                        pSync);                                      \
 }
 
-static void __shmem_broadcast(void *target,
+static void _shmem_broadcast(void *target,
                               const void *source,
                               size_t nbytes,
                               int PE_root,
