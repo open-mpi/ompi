@@ -33,7 +33,7 @@ mca_memheap_base_module_t mca_memheap;
  * be pointed to by mca_memheap_base_module_t.
  */
 
-static memheap_context_t* __memheap_create(void);
+static memheap_context_t* _memheap_create(void);
 
 /**
  * Choose to init one component with the highest priority.
@@ -54,7 +54,7 @@ int mca_memheap_base_select()
     char** include = opal_argv_split(mca_memheap_base_include, ',');
     char** exclude = opal_argv_split(mca_memheap_base_exclude, ',');
 
-    context = __memheap_create();
+    context = _memheap_create();
     if (!context) {
         return OSHMEM_ERROR;
     }
@@ -203,7 +203,7 @@ static size_t memheap_size(void)
     return (size_t) memheap_align(size * factor);
 }
 
-static memheap_context_t* __memheap_create(void)
+static memheap_context_t* _memheap_create(void)
 {
     int rc = OSHMEM_SUCCESS;
     static memheap_context_t context;

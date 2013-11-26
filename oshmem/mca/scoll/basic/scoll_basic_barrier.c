@@ -21,14 +21,14 @@
 #include "oshmem/proc/proc.h"
 #include "scoll_basic.h"
 
-static int __algorithm_central_counter(struct oshmem_group_t *group,
+static int _algorithm_central_counter(struct oshmem_group_t *group,
                                        long *pSync);
-static int __algorithm_tournament(struct oshmem_group_t *group, long *pSync);
-static int __algorithm_recursive_doubling(struct oshmem_group_t *group,
+static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync);
+static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
                                           long *pSync);
-static int __algorithm_dissemination(struct oshmem_group_t *group, long *pSync);
-static int __algorithm_basic(struct oshmem_group_t *group, long *pSync);
-static int __algorithm_adaptive(struct oshmem_group_t *group, long *pSync);
+static int _algorithm_dissemination(struct oshmem_group_t *group, long *pSync);
+static int _algorithm_basic(struct oshmem_group_t *group, long *pSync);
+static int _algorithm_adaptive(struct oshmem_group_t *group, long *pSync);
 
 int mca_scoll_basic_barrier(struct oshmem_group_t *group, long *pSync, int alg)
 {
@@ -47,37 +47,37 @@ int mca_scoll_basic_barrier(struct oshmem_group_t *group, long *pSync, int alg)
             switch (alg) {
             case SCOLL_ALG_BARRIER_CENTRAL_COUNTER:
                 {
-                    rc = __algorithm_central_counter(group, pSync);
+                    rc = _algorithm_central_counter(group, pSync);
                     break;
                 }
             case SCOLL_ALG_BARRIER_TOURNAMENT:
                 {
-                    rc = __algorithm_tournament(group, pSync);
+                    rc = _algorithm_tournament(group, pSync);
                     break;
                 }
             case SCOLL_ALG_BARRIER_RECURSIVE_DOUBLING:
                 {
-                    rc = __algorithm_recursive_doubling(group, pSync);
+                    rc = _algorithm_recursive_doubling(group, pSync);
                     break;
                 }
             case SCOLL_ALG_BARRIER_DISSEMINATION:
                 {
-                    rc = __algorithm_dissemination(group, pSync);
+                    rc = _algorithm_dissemination(group, pSync);
                     break;
                 }
             case SCOLL_ALG_BARRIER_BASIC:
                 {
-                    rc = __algorithm_basic(group, pSync);
+                    rc = _algorithm_basic(group, pSync);
                     break;
                 }
             case SCOLL_ALG_BARRIER_ADAPTIVE:
                 {
-                    rc = __algorithm_adaptive(group, pSync);
+                    rc = _algorithm_adaptive(group, pSync);
                     break;
                 }
             default:
                 {
-                    rc = __algorithm_recursive_doubling(group, pSync);
+                    rc = _algorithm_recursive_doubling(group, pSync);
                 }
             }
         } else {
@@ -90,14 +90,14 @@ int mca_scoll_basic_barrier(struct oshmem_group_t *group, long *pSync, int alg)
 }
 
 /*
- This algorithm is quite simple and straightforward. But because of it’s obvious simplicity and
+ This algorithm is quite simple and straightforward. But because of itï¿½s obvious simplicity and
  the naive prove for correctness it is implemented quite often. One node asks peers if they are
  achieve barrier state. When all processors are ready it signals to go ahead.
  Outlay:
  NP-1 competing network transfers are needed to implement the counter
  The memory usage is constant (1 byte) per node.
  */
-static int __algorithm_central_counter(struct oshmem_group_t *group,
+static int _algorithm_central_counter(struct oshmem_group_t *group,
                                        long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
@@ -203,7 +203,7 @@ static int __algorithm_central_counter(struct oshmem_group_t *group,
  Outlay:
  The game scales with log2(NP) and uses 1 byte of memory.
  */
-static int __algorithm_tournament(struct oshmem_group_t *group, long *pSync)
+static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
     int round = 0;
@@ -303,7 +303,7 @@ static int __algorithm_tournament(struct oshmem_group_t *group, long *pSync)
  Outlay:
  The algorithm uses a maximum of log2(NP) + 2 network writes and P bytes memory per node.
  */
-static int __algorithm_recursive_doubling(struct oshmem_group_t *group,
+static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
                                           long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
@@ -441,7 +441,7 @@ static int __algorithm_recursive_doubling(struct oshmem_group_t *group,
  Outlay:
  The game scales with log2(NP) and uses 1 byte of memory.
  */
-static int __algorithm_dissemination(struct oshmem_group_t *group, long *pSync)
+static int _algorithm_dissemination(struct oshmem_group_t *group, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
     int round = 0;
@@ -499,7 +499,7 @@ static int __algorithm_dissemination(struct oshmem_group_t *group, long *pSync)
     return rc;
 }
 
-static int __algorithm_basic(struct oshmem_group_t *group, long *pSync)
+static int _algorithm_basic(struct oshmem_group_t *group, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
     int root_id = 0;
@@ -549,7 +549,7 @@ static int __algorithm_basic(struct oshmem_group_t *group, long *pSync)
     return rc;
 }
 
-static int __algorithm_adaptive(struct oshmem_group_t *group, long *pSync)
+static int _algorithm_adaptive(struct oshmem_group_t *group, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
     bool local_peers_only = true;
@@ -576,9 +576,9 @@ static int __algorithm_adaptive(struct oshmem_group_t *group, long *pSync)
      * otherwise use put/get way
      */
     if (local_peers_only || (group->proc_count < 32)) {
-        rc = __algorithm_basic(group, pSync);
+        rc = _algorithm_basic(group, pSync);
     } else {
-        rc = __algorithm_recursive_doubling(group, pSync);
+        rc = _algorithm_recursive_doubling(group, pSync);
     }
 
     return rc;

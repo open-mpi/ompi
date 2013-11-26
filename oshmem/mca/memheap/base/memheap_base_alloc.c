@@ -28,18 +28,18 @@
 
 extern char* mca_memheap_base_param_hca_name;
 
-static int __shm_attach(map_segment_t *, size_t, int, int);
-static void __shm_detach(map_segment_t *);
+static int _shm_attach(map_segment_t *, size_t, int, int);
+static void _shm_detach(map_segment_t *);
 
-static int __mmap_attach(map_segment_t *, size_t);
-static void __mmap_detach(map_segment_t *);
+static int _mmap_attach(map_segment_t *, size_t);
+static void _mmap_detach(map_segment_t *);
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-static int __ibv_attach(map_segment_t *, size_t);
-static void __ibv_detach(map_segment_t *);
+static int _ibv_attach(map_segment_t *, size_t);
+static void _ibv_detach(map_segment_t *);
 #endif /* MPAGE_ENABLE */
 
-static int __adaptive_attach(map_segment_t *, size_t);
+static int _adaptive_attach(map_segment_t *, size_t);
 
 int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size)
 {
@@ -66,18 +66,18 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size)
     switch (value) {
     case 0:
         /* use sysv alloc without hugepages */
-        ret = __shm_attach(s, size, 0, 1);
+        ret = _shm_attach(s, size, 0, 1);
         break;
 
     case 1:
-        ret = __shm_attach(s, size, 1, 1);
+        ret = _shm_attach(s, size, 1, 1);
         if (OSHMEM_SUCCESS != ret)
-            ret = __shm_attach(s, size, 0, 1);
+            ret = _shm_attach(s, size, 0, 1);
         break;
 
     case 2:
         /* huge pages only */
-        ret = __shm_attach(s, size, 1, 1);
+        ret = _shm_attach(s, size, 1, 1);
         if (OSHMEM_SUCCESS != ret)
             MEMHEAP_ERROR("FAILED to allocated symmetric heap using hugepages fallback is disabled, errno=%d",
                           errno);
@@ -85,7 +85,7 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size)
 
     case 3:
         /* huge pages only + cleanup shmid */
-        ret = __shm_attach(s, size, 1, 0);
+        ret = _shm_attach(s, size, 1, 0);
         if (OSHMEM_SUCCESS != ret)
             MEMHEAP_ERROR("FAILED to allocated symmetric heap using hugepages fallback is disabled, errno=%d",
                           errno);
@@ -93,31 +93,31 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size)
 
     case 4:
         /* use sysv alloc without hugepages */
-        ret = __shm_attach(s, size, 0, 0);
+        ret = _shm_attach(s, size, 0, 0);
         break;
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
         case 5:
         /* use shared memory registration (mpages) */
-        ret = __ibv_attach(s, size);
+        ret = _ibv_attach(s, size);
         if (OSHMEM_SUCCESS != ret)
-            ret = __shm_attach(s, size, 0, 1);
+            ret = _shm_attach(s, size, 0, 1);
 
         break;
 #endif /* MPAGE_ENABLE */
 
     case 100:
         /* use mmap. It will severaly impact performance of intra node communication */
-        ret = __mmap_attach(s, size);
+        ret = _mmap_attach(s, size);
         MEMHEAP_VERBOSE(1,
                         "mmap() memheap allocation will severely impact performance of intra node communication");
         break;
 
     case 101:
-        ret = __shm_attach(s, size, 1, 1);
+        ret = _shm_attach(s, size, 1, 1);
         if (OSHMEM_SUCCESS != ret) {
             MEMHEAP_ERROR("Failed to allocate hugepages. Falling back on regular allocation");
-            ret = __mmap_attach(s, size);
+            ret = _mmap_attach(s, size);
         } else {
             s->shmid = MEMHEAP_SHM_INVALID;
         }
@@ -125,7 +125,7 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size)
         break;
 
     case 102:
-        ret = __shm_attach(s, size, 1, 1);
+        ret = _shm_attach(s, size, 1, 1);
         if (OSHMEM_SUCCESS != ret) {
             MEMHEAP_ERROR("FAILED to allocated symmetric heap using hugepages fallback is disabled, errno=%d",
                           errno);
@@ -135,7 +135,7 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size)
         break;
 
     default:
-        ret = __adaptive_attach(s, size);
+        ret = _adaptive_attach(s, size);
     }
 
     if (OSHMEM_SUCCESS == ret) {
@@ -157,16 +157,16 @@ void mca_memheap_base_alloc_exit(mca_memheap_map_t *map)
 
         switch (s->type) {
         case MAP_SEGMENT_ALLOC_SHM:
-            __shm_detach(s);
+            _shm_detach(s);
             break;
 
         case MAP_SEGMENT_ALLOC_MMAP:
-            __mmap_detach(s);
+            _mmap_detach(s);
             break;
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
             case MAP_SEGMENT_ALLOC_IBV:
-            __ibv_detach(s);
+            _ibv_detach(s);
             break;
 #endif /* MPAGE_ENABLE */
 
@@ -176,34 +176,34 @@ void mca_memheap_base_alloc_exit(mca_memheap_map_t *map)
     }
 }
 
-static int __adaptive_attach(map_segment_t *s, size_t size)
+static int _adaptive_attach(map_segment_t *s, size_t size)
 {
     int rc = OSHMEM_SUCCESS;
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-    rc = __ibv_attach(s, size);
+    rc = _ibv_attach(s, size);
 #endif /* MPAGE_ENABLE */
 
     if (rc) {
-        rc = __shm_attach(s, size, 1, 1);
+        rc = _shm_attach(s, size, 1, 1);
     }
 
     if (rc) {
-        rc = __shm_attach(s, size, 0, 1);
+        rc = _shm_attach(s, size, 0, 1);
     }
 
     if (rc) {
-        rc = __shm_attach(s, size, 0, 0);
+        rc = _shm_attach(s, size, 0, 0);
     }
 
     if (rc) {
-        rc = __mmap_attach(s, size);
+        rc = _mmap_attach(s, size);
     }
 
     return rc;
 }
 
-static int __shm_attach(map_segment_t *s, size_t size, int use_hp, int do_rmid)
+static int _shm_attach(map_segment_t *s, size_t size, int use_hp, int do_rmid)
 {
     static int shm_context = 0;
     ;
@@ -245,13 +245,13 @@ static int __shm_attach(map_segment_t *s, size_t size, int use_hp, int do_rmid)
     s->shmid = shmid;
     s->start = addr;
     s->size = size;
-    s->end = (void *) (((unsigned char *)s->start) + s->size);
+    s->end = s->start + s->size;
     s->context = &shm_context;
 
     return OSHMEM_SUCCESS;
 }
 
-static void __shm_detach(map_segment_t *s)
+static void _shm_detach(map_segment_t *s)
 {
     assert(s);
 
@@ -268,7 +268,7 @@ static void __shm_detach(map_segment_t *s)
     }
 }
 
-static int __mmap_attach(map_segment_t *s, size_t size)
+static int _mmap_attach(map_segment_t *s, size_t size)
 {
     void *addr = NULL;
 
@@ -297,13 +297,13 @@ MAP_ANONYMOUS |
     s->shmid = MEMHEAP_SHM_INVALID;
     s->start = addr;
     s->size = size;
-    s->end = (void *) (((unsigned char *)s->start) + s->size);
+    s->end = s->start + s->size;
     s->context = NULL;
 
     return OSHMEM_SUCCESS;
 }
 
-static void __mmap_detach(map_segment_t *s)
+static void _mmap_detach(map_segment_t *s)
 {
     assert(s);
 
@@ -312,7 +312,7 @@ static void __mmap_detach(map_segment_t *s)
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
 
-static int __ibv_attach(map_segment_t *s, size_t size)
+static int _ibv_attach(map_segment_t *s, size_t size)
 {
     int rc = OSHMEM_SUCCESS;
     static openib_device_t memheap_device;
@@ -482,7 +482,7 @@ static int __ibv_attach(map_segment_t *s, size_t size)
     return rc;
 }
 
-static void __ibv_detach(map_segment_t *s)
+static void _ibv_detach(map_segment_t *s)
 {
     int rc = OSHMEM_SUCCESS;
     openib_device_t *device = NULL;

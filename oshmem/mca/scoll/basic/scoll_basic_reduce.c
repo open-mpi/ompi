@@ -21,35 +21,35 @@
 #include "oshmem/mca/scoll/base/base.h"
 #include "scoll_basic.h"
 
-static int __algorithm_central_counter(struct oshmem_group_t *group,
+static int _algorithm_central_counter(struct oshmem_group_t *group,
                                        struct oshmem_op_t *op,
                                        void *target,
                                        const void *source,
                                        size_t nlong,
                                        long *pSync,
                                        void *pWrk);
-static int __algorithm_tournament(struct oshmem_group_t *group,
+static int _algorithm_tournament(struct oshmem_group_t *group,
                                   struct oshmem_op_t *op,
                                   void *target,
                                   const void *source,
                                   size_t nlong,
                                   long *pSync,
                                   void *pWrk);
-static int __algorithm_recursive_doubling(struct oshmem_group_t *group,
+static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
                                           struct oshmem_op_t *op,
                                           void *target,
                                           const void *source,
                                           size_t nlong,
                                           long *pSync,
                                           void *pWrk);
-static int __algorithm_linear(struct oshmem_group_t *group,
+static int _algorithm_linear(struct oshmem_group_t *group,
                               struct oshmem_op_t *op,
                               void *target,
                               const void *source,
                               size_t nlong,
                               long *pSync,
                               void *pWrk);
-static int __algorithm_log(struct oshmem_group_t *group,
+static int _algorithm_log(struct oshmem_group_t *group,
                            struct oshmem_op_t *op,
                            void *target,
                            const void *source,
@@ -84,7 +84,7 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
             switch (alg) {
             case SCOLL_ALG_REDUCE_CENTRAL_COUNTER:
                 {
-                    rc = __algorithm_central_counter(group,
+                    rc = _algorithm_central_counter(group,
                                                      op,
                                                      target,
                                                      source,
@@ -95,7 +95,7 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_REDUCE_TOURNAMENT:
                 {
-                    rc = __algorithm_tournament(group,
+                    rc = _algorithm_tournament(group,
                                                 op,
                                                 target,
                                                 source,
@@ -106,7 +106,7 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_REDUCE_RECURSIVE_DOUBLING:
                 {
-                    rc = __algorithm_recursive_doubling(group,
+                    rc = _algorithm_recursive_doubling(group,
                                                         op,
                                                         target,
                                                         source,
@@ -117,7 +117,7 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_REDUCE_LEGACY_LINEAR:
                 {
-                    rc = __algorithm_linear(group,
+                    rc = _algorithm_linear(group,
                                             op,
                                             target,
                                             source,
@@ -128,7 +128,7 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_REDUCE_LEGACY_LOG:
                 {
-                    rc = __algorithm_log(group,
+                    rc = _algorithm_log(group,
                                          op,
                                          target,
                                          source,
@@ -139,7 +139,7 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
                 }
             default:
                 {
-                    rc = __algorithm_central_counter(group,
+                    rc = _algorithm_central_counter(group,
                                                      op,
                                                      target,
                                                      source,
@@ -171,7 +171,7 @@ int mca_scoll_basic_reduce(struct oshmem_group_t *group,
  Outlay:
  NP-1 competing network transfers are needed.
  */
-static int __algorithm_central_counter(struct oshmem_group_t *group,
+static int _algorithm_central_counter(struct oshmem_group_t *group,
                                        struct oshmem_op_t *op,
                                        void *target,
                                        const void *source,
@@ -243,7 +243,7 @@ static int __algorithm_central_counter(struct oshmem_group_t *group,
     return rc;
 }
 
-static int __algorithm_tournament(struct oshmem_group_t *group,
+static int _algorithm_tournament(struct oshmem_group_t *group,
                                   struct oshmem_op_t *op,
                                   void *target,
                                   const void *source,
@@ -365,7 +365,7 @@ static int __algorithm_tournament(struct oshmem_group_t *group,
     return rc;
 }
 
-static int __algorithm_recursive_doubling(struct oshmem_group_t *group,
+static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
                                           struct oshmem_op_t *op,
                                           void *target,
                                           const void *source,
@@ -539,7 +539,7 @@ static int __algorithm_recursive_doubling(struct oshmem_group_t *group,
     return rc;
 }
 
-static int __algorithm_linear(struct oshmem_group_t *group,
+static int _algorithm_linear(struct oshmem_group_t *group,
                               struct oshmem_op_t *op,
                               void *target,
                               const void *source,
@@ -641,7 +641,7 @@ static int __algorithm_linear(struct oshmem_group_t *group,
     return rc;
 }
 
-static int __algorithm_log(struct oshmem_group_t *group,
+static int _algorithm_log(struct oshmem_group_t *group,
                            struct oshmem_op_t *op,
                            void *target,
                            const void *source,

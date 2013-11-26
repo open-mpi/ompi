@@ -27,7 +27,7 @@
 static const int root_id = 0;
 
 #define __INTERNAL_BARRIER_FROM_SCOLL_BASIC 1
-static int __internal_barrier(mca_scoll_fca_module_t *fca_module)
+static int _internal_barrier(mca_scoll_fca_module_t *fca_module)
 {
 #if !__INTERNAL_BARRIER_FROM_SCOLL_BASIC
     struct oshmem_group_t *group = fca_module->comm;
@@ -121,7 +121,7 @@ static int have_remote_peers(struct oshmem_group_t *group,
  *  * Fills local rank information in fca_module.
  *   */
 
-static int __get_local_ranks(mca_scoll_fca_module_t *fca_module)
+static int _get_local_ranks(mca_scoll_fca_module_t *fca_module)
 {
     struct oshmem_group_t *comm = fca_module->comm;
     oshmem_proc_t* proc;
@@ -163,7 +163,7 @@ static int __get_local_ranks(mca_scoll_fca_module_t *fca_module)
     return OSHMEM_SUCCESS;
 }
 
-static int __fca_comm_new(mca_scoll_fca_module_t *fca_module)
+static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
 {
     struct oshmem_group_t *comm = fca_module->comm;
     fca_comm_new_spec_t spec;
@@ -191,7 +191,7 @@ static int __fca_comm_new(mca_scoll_fca_module_t *fca_module)
     for (i = 0; i < comm->proc_count; i++) {
         mca_scoll_fca_component.rcounts[i] = -1;
     }
-    __internal_barrier(fca_module);
+    _internal_barrier(fca_module);
     MCA_SPML_CALL(put((void *)&mca_scoll_fca_component.rcounts[my_id], (size_t)sizeof(info_size), (void *)&info_size, root_pe));
 
     if (root_pe == comm->my_pe) {
@@ -223,7 +223,7 @@ static int __fca_comm_new(mca_scoll_fca_module_t *fca_module)
                my_info,
                info_size);
     }
-    __internal_barrier(fca_module);
+    _internal_barrier(fca_module);
     if (root_pe == comm->my_pe) {
         for (i = 0; i < comm->proc_count; i++) {
             if (mca_scoll_fca_component.rcounts[i] > 0) {
@@ -260,14 +260,14 @@ static int __fca_comm_new(mca_scoll_fca_module_t *fca_module)
         free(all_info);
     }
 
-    __internal_barrier(fca_module);
+    _internal_barrier(fca_module);
 
     if (root_pe != comm->my_pe) {
         MCA_SPML_CALL(get((void *)mca_scoll_fca_component.ret,sizeof(int), (void *)mca_scoll_fca_component.ret, root_pe));
     }
 
     /* Examine comm_new return value */
-    __internal_barrier(fca_module);
+    _internal_barrier(fca_module);
     if (*mca_scoll_fca_component.ret < 0) {
         FCA_ERROR("rank %i: COMM_NEW failed: %s",
                   fca_module->rank, fca_strerror(*mca_scoll_fca_component.ret));
@@ -286,12 +286,12 @@ static int __fca_comm_new(mca_scoll_fca_module_t *fca_module)
                    sizeof(fca_module->fca_comm_desc));
         }
 
-        __internal_barrier(fca_module);
+        _internal_barrier(fca_module);
         if (root_pe != comm->my_pe) {
             MCA_SPML_CALL(get((void *)mca_scoll_fca_component.fca_comm_desc_exchangeable, sizeof(fca_module->fca_comm_desc), (void *)&fca_module->fca_comm_desc, root_pe));
         }
 
-        __internal_barrier(fca_module);
+        _internal_barrier(fca_module);
 
     }
     FCA_MODULE_VERBOSE(fca_module,
@@ -301,12 +301,12 @@ static int __fca_comm_new(mca_scoll_fca_module_t *fca_module)
     return OSHMEM_SUCCESS;
 }
 
-static int __create_fca_comm(mca_scoll_fca_module_t *fca_module)
+static int _create_fca_comm(mca_scoll_fca_module_t *fca_module)
 {
     int comm_size;
     int rc, ret;
 
-    rc = __fca_comm_new(fca_module);
+    rc = _fca_comm_new(fca_module);
     if (rc != OSHMEM_SUCCESS)
         return rc;
 
@@ -346,7 +346,7 @@ static int __create_fca_comm(mca_scoll_fca_module_t *fca_module)
     return OSHMEM_SUCCESS;
 }
 
-static void __destroy_fca_comm(mca_scoll_fca_module_t *fca_module)
+static void _destroy_fca_comm(mca_scoll_fca_module_t *fca_module)
 {
     int ret;
     struct oshmem_group_t *comm = fca_module->comm;
@@ -377,7 +377,7 @@ static void __destroy_fca_comm(mca_scoll_fca_module_t *fca_module)
     OBJ_RETAIN(fca_module->previous_ ## __api ## _module);\
 } while(0)
 
-static int __save_coll_handlers(mca_scoll_fca_module_t *fca_module)
+static int _save_coll_handlers(mca_scoll_fca_module_t *fca_module)
 {
     struct oshmem_group_t *comm = fca_module->comm;
 
@@ -406,15 +406,15 @@ static int mca_scoll_fca_module_enable(mca_scoll_base_module_t *module,
     if (rc != OSHMEM_SUCCESS)
         goto exit_fatal;
 
-    rc = __save_coll_handlers(fca_module);
+    rc = _save_coll_handlers(fca_module);
     if (rc != OSHMEM_SUCCESS)
         goto exit_fatal;
 
-    rc = __get_local_ranks(fca_module);
+    rc = _get_local_ranks(fca_module);
     if (rc != OSHMEM_SUCCESS)
         goto exit_fatal;
 
-    rc = __create_fca_comm(fca_module);
+    rc = _create_fca_comm(fca_module);
     if (rc != OSHMEM_SUCCESS)
         goto exit_fatal;
 
@@ -456,7 +456,7 @@ static void mca_scoll_fca_module_destruct(mca_scoll_fca_module_t *fca_module)
     OBJ_RELEASE(fca_module->previous_collect_module);
     OBJ_RELEASE(fca_module->previous_reduce_module);
     if (fca_module->fca_comm)
-        __destroy_fca_comm(fca_module);
+        _destroy_fca_comm(fca_module);
     free(fca_module->local_ranks);
     mca_scoll_fca_module_clear(fca_module);
 }

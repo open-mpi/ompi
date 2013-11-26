@@ -21,7 +21,7 @@
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 
-static void __shmem_collect(void *target,
+static void _shmem_collect(void *target,
                             const void *source,
                             size_t nbytes,
                             int PE_start,
@@ -43,13 +43,13 @@ static void __shmem_collect(void *target,
     RUNTIME_CHECK_ADDR(target);                                 \
     RUNTIME_CHECK_ADDR(source);                                 \
                                                                 \
-    __shmem_collect( target, source, nelems * element_size,     \
+    _shmem_collect( target, source, nelems * element_size,     \
                      PE_start, logPE_stride, PE_size,           \
                      pSync,                                     \
                      nelems_type);                              \
 }
 
-static void __shmem_collect(void *target,
+static void _shmem_collect(void *target,
                             const void *source,
                             size_t nbytes,
                             int PE_start,

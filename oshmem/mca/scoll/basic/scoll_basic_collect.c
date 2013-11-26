@@ -20,27 +20,27 @@
 #include "oshmem/mca/scoll/base/base.h"
 #include "scoll_basic.h"
 
-static int __algorithm_central_collector(struct oshmem_group_t *group,
+static int _algorithm_central_collector(struct oshmem_group_t *group,
                                          void *target,
                                          const void *source,
                                          size_t nlong,
                                          long *pSync);
-static int __algorithm_f_central_counter(struct oshmem_group_t *group,
+static int _algorithm_f_central_counter(struct oshmem_group_t *group,
                                          void *target,
                                          const void *source,
                                          size_t nlong,
                                          long *pSync);
-static int __algorithm_f_tournament(struct oshmem_group_t *group,
+static int _algorithm_f_tournament(struct oshmem_group_t *group,
                                     void *target,
                                     const void *source,
                                     size_t nlong,
                                     long *pSync);
-static int __algorithm_f_recursive_doubling(struct oshmem_group_t *group,
+static int _algorithm_f_recursive_doubling(struct oshmem_group_t *group,
                                             void *target,
                                             const void *source,
                                             size_t nlong,
                                             long *pSync);
-static int __algorithm_f_ring(struct oshmem_group_t *group,
+static int _algorithm_f_ring(struct oshmem_group_t *group,
                               void *target,
                               const void *source,
                               size_t nlong,
@@ -72,7 +72,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
             switch (alg) {
             case SCOLL_ALG_COLLECT_CENTRAL_COUNTER:
                 {
-                    rc = __algorithm_f_central_counter(group,
+                    rc = _algorithm_f_central_counter(group,
                                                        target,
                                                        source,
                                                        nlong,
@@ -81,7 +81,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_COLLECT_TOURNAMENT:
                 {
-                    rc = __algorithm_f_tournament(group,
+                    rc = _algorithm_f_tournament(group,
                                                   target,
                                                   source,
                                                   nlong,
@@ -90,7 +90,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_COLLECT_RECURSIVE_DOUBLING:
                 {
-                    rc = __algorithm_f_recursive_doubling(group,
+                    rc = _algorithm_f_recursive_doubling(group,
                                                           target,
                                                           source,
                                                           nlong,
@@ -99,7 +99,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_COLLECT_RING:
                 {
-                    rc = __algorithm_f_ring(group,
+                    rc = _algorithm_f_ring(group,
                                             target,
                                             source,
                                             nlong,
@@ -108,7 +108,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
                 }
             default:
                 {
-                    rc = __algorithm_f_central_counter(group,
+                    rc = _algorithm_f_central_counter(group,
                                                        target,
                                                        source,
                                                        nlong,
@@ -116,7 +116,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
                 }
             }
         } else {
-            rc = __algorithm_central_collector(group,
+            rc = _algorithm_central_collector(group,
                                                target,
                                                source,
                                                nlong,
@@ -141,7 +141,7 @@ int mca_scoll_basic_collect(struct oshmem_group_t *group,
  Outlay:
  NP-1 competing network transfers are needed.
  */
-static int __algorithm_f_central_counter(struct oshmem_group_t *group,
+static int _algorithm_f_central_counter(struct oshmem_group_t *group,
                                          void *target,
                                          const void *source,
                                          size_t nlong,
@@ -201,7 +201,7 @@ static int __algorithm_f_central_counter(struct oshmem_group_t *group,
     return rc;
 }
 
-static int __algorithm_f_tournament(struct oshmem_group_t *group,
+static int _algorithm_f_tournament(struct oshmem_group_t *group,
                                     void *target,
                                     const void *source,
                                     size_t nlong,
@@ -311,7 +311,7 @@ static int __algorithm_f_tournament(struct oshmem_group_t *group,
     return rc;
 }
 
-static int __algorithm_f_ring(struct oshmem_group_t *group,
+static int _algorithm_f_ring(struct oshmem_group_t *group,
                               void *target,
                               const void *source,
                               size_t nlong,
@@ -370,7 +370,7 @@ static int __algorithm_f_ring(struct oshmem_group_t *group,
     return rc;
 }
 
-static int __algorithm_f_recursive_doubling(struct oshmem_group_t *group,
+static int _algorithm_f_recursive_doubling(struct oshmem_group_t *group,
                                             void *target,
                                             const void *source,
                                             size_t nlong,
@@ -525,7 +525,7 @@ static int __algorithm_f_recursive_doubling(struct oshmem_group_t *group,
  Outlay:
  NP-1 competing network transfers are needed.
  */
-static int __algorithm_central_collector(struct oshmem_group_t *group,
+static int _algorithm_central_collector(struct oshmem_group_t *group,
                                          void *target,
                                          const void *source,
                                          size_t nlong,

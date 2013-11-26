@@ -22,13 +22,13 @@
 #include "oshmem/mca/scoll/base/base.h"
 #include "scoll_basic.h"
 
-static int __algorithm_central_counter(struct oshmem_group_t *group,
+static int _algorithm_central_counter(struct oshmem_group_t *group,
                                        int PE_root,
                                        void *target,
                                        const void *source,
                                        size_t nlong,
                                        long *pSync);
-static int __algorithm_binomial_tree(struct oshmem_group_t *group,
+static int _algorithm_binomial_tree(struct oshmem_group_t *group,
                                      int PE_root,
                                      void *target,
                                      const void *source,
@@ -61,7 +61,7 @@ int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
             switch (alg) {
             case SCOLL_ALG_BROADCAST_CENTRAL_COUNTER:
                 {
-                    rc = __algorithm_central_counter(group,
+                    rc = _algorithm_central_counter(group,
                                                      PE_root,
                                                      target,
                                                      source,
@@ -71,7 +71,7 @@ int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
                 }
             case SCOLL_ALG_BROADCAST_BINOMIAL:
                 {
-                    rc = __algorithm_binomial_tree(group,
+                    rc = _algorithm_binomial_tree(group,
                                                    PE_root,
                                                    target,
                                                    source,
@@ -81,7 +81,7 @@ int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
                 }
             default:
                 {
-                    rc = __algorithm_binomial_tree(group,
+                    rc = _algorithm_binomial_tree(group,
                                                    PE_root,
                                                    target,
                                                    source,
@@ -107,13 +107,13 @@ int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
 }
 
 /*
- This algorithm is quite simple and straightforward. But because of it’s obvious simplicity and
+ This algorithm is quite simple and straightforward. But because of itï¿½s obvious simplicity and
  the naive prove for correctness it is implemented quite often. The root send data to all.
  Outlay:
  NP-1 competing network transfers are needed to implement the counter
  The memory usage is constant (1 byte) per node.
  */
-static int __algorithm_central_counter(struct oshmem_group_t *group,
+static int _algorithm_central_counter(struct oshmem_group_t *group,
                                        int PE_root,
                                        void *target,
                                        const void *source,
@@ -164,7 +164,7 @@ static int __algorithm_central_counter(struct oshmem_group_t *group,
  Outlay:
  The game scales with log2(NP) and uses 1 byte of memory.
  */
-static int __algorithm_binomial_tree(struct oshmem_group_t *group,
+static int _algorithm_binomial_tree(struct oshmem_group_t *group,
                                      int PE_root,
                                      void *target,
                                      const void *source,

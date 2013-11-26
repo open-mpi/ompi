@@ -33,7 +33,7 @@ mca_spml_ikrit_t *mca_spml_self = NULL;
 /*
  * Local function
  */
-static int __mxm_open(void);
+static int _mxm_open(void);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -55,7 +55,7 @@ mca_atomic_base_component_t mca_atomic_mxm_component = {
         OSHMEM_RELEASE_VERSION,
 
         /* Component open and close functions */
-        __mxm_open,
+        _mxm_open,
         NULL
     },
     {
@@ -70,7 +70,7 @@ mca_atomic_base_component_t mca_atomic_mxm_component = {
     mca_atomic_mxm_query
 };
 
-static int __mxm_open(void)
+static int _mxm_open(void)
 {
     /*
      * This component is able to work using spml:ikrit component only

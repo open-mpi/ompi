@@ -35,10 +35,10 @@ typedef struct memheap_static_context {
 
 static memheap_static_context_t memheap_context;
 
-static int __load_segments(void);
-static int __check_perms(struct map_segment_desc *seg);
-static int __check_address(struct map_segment_desc *seg);
-static int __check_pathname(struct map_segment_desc *seg);
+static int _load_segments(void);
+static int _check_perms(struct map_segment_desc *seg);
+static int _check_address(struct map_segment_desc *seg);
+static int _check_pathname(struct map_segment_desc *seg);
 
 int mca_memheap_base_static_init(mca_memheap_map_t *map)
 {
@@ -48,7 +48,7 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
     assert(map);
     assert(SYMB_SEG_INDEX <= map->n_segments);
 
-    ret = __load_segments();
+    ret = _load_segments();
 
     if (OSHMEM_SUCCESS == ret) {
         int i;
@@ -62,12 +62,12 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
             s->shmid = MEMHEAP_SHM_INVALID;
             s->start = memheap_context.mem_segs[i].start;
             s->end = memheap_context.mem_segs[i].end;
-            s->size = (size_t) (((uintptr_t)s->end) - ((uintptr_t)s->start));
+            s->size = s->end - s->start;
             s->type = MAP_SEGMENT_STATIC;
             s->context = NULL;
             map->n_segments++;
 
-            total_mem += (size_t) (((uintptr_t)s->end) - ((uintptr_t)s->start));
+            total_mem += s->end - s->start;
         }
         MEMHEAP_VERBOSE(1,
                         "Memheap static memory: %llu byte(s), %d segments",
@@ -82,7 +82,7 @@ void mca_memheap_base_static_exit(mca_memheap_map_t *map)
     assert(map);
 }
 
-static int __check_perms(struct map_segment_desc *seg)
+static int _check_perms(struct map_segment_desc *seg)
 {
     if (!strcmp(seg->perms, "rw-p") || !strcmp(seg->perms, "rwxp"))
         return OSHMEM_SUCCESS;
@@ -90,7 +90,7 @@ static int __check_perms(struct map_segment_desc *seg)
     return OSHMEM_ERROR;
 }
 
-static int __check_address(struct map_segment_desc *seg)
+static int _check_address(struct map_segment_desc *seg)
 {
     extern unsigned _end;
     void* data_end = &_end;
@@ -113,7 +113,7 @@ static int __check_address(struct map_segment_desc *seg)
     return OSHMEM_SUCCESS;
 }
 
-static int __check_pathname(struct map_segment_desc *seg)
+static int _check_pathname(struct map_segment_desc *seg)
 {
     /* Probably we need to check found path but
      * To press check coverity issue following code is disabled
@@ -156,7 +156,7 @@ static int __check_pathname(struct map_segment_desc *seg)
     return OSHMEM_SUCCESS;
 }
 
-static int __load_segments(void)
+static int _load_segments(void)
 {
     FILE *fp;
     char line[1024];
@@ -182,13 +182,13 @@ static int __load_segments(void)
                (long long *) &seg.inode,
                seg.pathname);
 
-        if (OSHMEM_ERROR == __check_address(&seg))
+        if (OSHMEM_ERROR == _check_address(&seg))
             continue;
 
-        if (OSHMEM_ERROR == __check_pathname(&seg))
+        if (OSHMEM_ERROR == _check_pathname(&seg))
             continue;
 
-        if (OSHMEM_ERROR == __check_perms(&seg))
+        if (OSHMEM_ERROR == _check_perms(&seg))
             continue;
 
         MEMHEAP_VERBOSE(5, "add: %s", line);
