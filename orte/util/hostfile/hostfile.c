@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -399,6 +400,12 @@ done:
     } else {
         /* should be set by obj_new, but just to be clear */
         node->slots_given = false;
+        /* if we weren't give a count or a max, then
+         * just increment by one to support RMs that
+         * count slots by listing the node multiple
+         * times in the file
+         */
+        ++node->slots;
     }
     opal_list_append(updates, &node->super);
 
