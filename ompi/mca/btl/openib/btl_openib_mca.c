@@ -581,36 +581,6 @@ int btl_openib_register_mca_params(void)
     /* Turn of message coalescing - not sure if it works with GPU buffers */
     mca_btl_openib_component.use_message_coalescing = 0;
 
-    /* Indicates if library was built with GPU Direct RDMA support.  Not changeable.  */
-    mca_btl_openib_component.cuda_have_gdr = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT_60);
-    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_cuda_gdr_support",
-                                           "Whether CUDA GPU Direct RDMA support is built into library or not",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                           OPAL_INFO_LVL_4,
-                                           MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &mca_btl_openib_component.cuda_have_gdr);
-
-    /* Default for GPU Direct RDMA is off for now */
-    CHECK(reg_bool("cuda_want_gdr_support", NULL,
-                   "Enable or disable CUDA GPU Direct RDMA support "
-                   "(true = yes; false = no)",
-                   false, &mca_btl_openib_component.cuda_want_gdr));
-
-    if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.cuda_have_gdr) {
-        opal_output(0, "GDR support requested but library does not have it built in.");
-        return OMPI_ERROR;
-    }
-#if OPAL_CUDA_SUPPORT_60
-    if (mca_btl_openib_component.cuda_want_gdr) {
-        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
-        mca_btl_openib_module.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number - indicates set it to minimum */
-        mca_btl_openib_module.super.btl_cuda_rdma_limit = 1024 * 20;  /* default switchover is 20K to pipeline */
-    } else {
-        mca_btl_openib_module.super.btl_cuda_eager_limit = 0; /* Turns off any of the GPU Direct RDMA code */
-        mca_btl_openib_module.super.btl_cuda_rdma_limit = 0;  /* Unused */
-    }
-#endif /* OPAL_CUDA_SUPPORT_60 */
 #endif /* OPAL_CUDA_SUPPORT */
     CHECK(mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,
