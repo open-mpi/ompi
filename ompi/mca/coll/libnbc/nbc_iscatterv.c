@@ -6,6 +6,9 @@
  *                         rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -38,9 +41,10 @@ int ompi_coll_libnbc_iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Comm_size(comm, &p);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  res = MPI_Type_extent(sendtype, &sndext);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-
+  if (rank == root) {
+    res = MPI_Type_extent(sendtype, &sndext);
+    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+  }
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
   if (NULL == schedule) { printf("Error in malloc()\n"); return res; }
 
@@ -97,21 +101,23 @@ int ompi_coll_libnbc_iscatterv_inter (void* sendbuf, int *sendcounts, int *displ
     handle = (*coll_req);
     res = MPI_Comm_rank(comm, &rank);
     if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+    if (MPI_ROOT == root) {
+        res = MPI_Type_extent(sendtype, &sndext);
+        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    }
     res = MPI_Comm_remote_size(comm, &rsize);
     if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_remote_size() (%i)\n", res); return res; }
-    res = MPI_Type_extent(sendtype, &sndext);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+    handle->tmpbuf = NULL;
 
     schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
     if (NULL == schedule) { printf("Error in malloc()\n"); return res; }
-
-    handle->tmpbuf=NULL;
 
     res = NBC_Sched_create(schedule);
     if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
 
     /* receive from root */
-    if(MPI_ROOT != root && MPI_PROC_NULL != root) {
+    if (MPI_ROOT != root && MPI_PROC_NULL != root) {
         /* recv msg from root */
         res = NBC_Sched_recv(recvbuf, false, recvcount, recvtype, root, schedule);
         if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
