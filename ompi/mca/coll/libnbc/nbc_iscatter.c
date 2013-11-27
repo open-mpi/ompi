@@ -6,6 +6,9 @@
  *                         rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2013      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -153,8 +156,10 @@ int ompi_coll_libnbc_iscatter_inter(void* sendbuf, int sendcount, MPI_Datatype s
     handle = (*coll_req);
     res = MPI_Comm_rank(comm, &rank);
     if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-    res = MPI_Type_extent(sendtype, &sndext);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    if (MPI_ROOT == root) {
+        res = MPI_Type_extent(sendtype, &sndext);
+        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    }
     res = MPI_Comm_remote_size (comm, &rsize);
     if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_remote_size() (%i)\n", res); return res; }
 
