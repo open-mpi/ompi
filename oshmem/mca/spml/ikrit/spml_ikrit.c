@@ -542,16 +542,16 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
         switch (i) {
         case MXM_PTL_SHM:
             if ((int) MEMHEAP_SHM_GET_ID(shmid) != MEMHEAP_SHM_INVALID) {
-                mkeys[i].key = shmid;
+                mkeys[i].handle.key = shmid;
                 mkeys[i].va_base = 0;
             } else {
-                mkeys[i].key = 0;
+                mkeys[i].handle.key = 0;
                 mkeys[i].va_base = addr;
             }
             mkeys[i].spml_context = 0;
             break;
         case MXM_PTL_SELF:
-            mkeys[i].key = 0;
+            mkeys[i].handle.key = 0;
             mkeys[i].spml_context = 0;
             mkeys[i].va_base = addr;
             break;
@@ -559,11 +559,11 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
             mkeys[i].va_base = addr;
             mkeys[i].spml_context = 0;
 #if MXM_API < MXM_VERSION(1,5)
-            mkeys[i].ib.lkey = mkeys[i].ib.rkey = MXM_MKEY_NONE;
+            mkeys[i].handle.ib.lkey = mkeys[i].handle.ib.rkey = MXM_MKEY_NONE;
 #elif MXM_API < MXM_VERSION(2,0)
-            mkeys[i].ib.lkey = mkeys[i].ib.rkey = 0;
+            mkeys[i].handle.ib.lkey = mkeys[i].handle.ib.rkey = 0;
 #else
-            mkeys[i].ib.lkey = mkeys[i].ib.rkey = 0;
+            mkeys[i].handle.ib.lkey = mkeys[i].handle.ib.rkey = 0;
             err = mxm_mem_map(mca_spml_ikrit.mxm_context, &addr, &size, 0, 0, 0);
             if (MXM_OK != err) {
                 SPML_VERBOSE(1, "failed to register memory: %s", mxm_error_string(err));
@@ -579,7 +579,7 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d rkey %x lkey %x key %llx address 0x%llX len %llu shmid 0x%X|0x%X",
-                     oshmem_proc_local_proc->proc_name.vpid, i, mkeys[i].ib.rkey, mkeys[i].ib.lkey, (unsigned long long)mkeys[i].key, (unsigned long long)mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
+                     oshmem_proc_local_proc->proc_name.vpid, i, mkeys[i].handle.ib.rkey, mkeys[i].handle.ib.lkey, (unsigned long long)mkeys[i].handle.key, (unsigned long long)mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
 
     }
     *count = MXM_PTL_LAST;
@@ -694,7 +694,7 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
 
     SPML_VERBOSE(100,
                  "get: pe:%d ptl=%d src=%p -> dst: %p sz=%d. src_rva=%p, src_rkey=0x%lx",
-                 src, ptl_id, src_addr, dst_addr, (int)size, (void *)rva, r_mkey->key);
+                 src, ptl_id, src_addr, dst_addr, (int)size, (void *)rva, r_mkey->handle.key);
 
     /* mxm does not really cares for get lkey */
     sreq->base.mq = mca_spml_ikrit.mxm_mq;
@@ -704,7 +704,7 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     sreq->base.data.buffer.length = size;
 #if MXM_API < MXM_VERSION(1,5)
     sreq->base.data.buffer.mkey = MXM_MKEY_NONE;
-    sreq->op.mem.remote_mkey = r_mkey->ib.rkey;
+    sreq->op.mem.remote_mkey = r_mkey->handle.ib.rkey;
 #elif MXM_API < MXM_VERSION(2,0)
     sreq->base.data.buffer.memh = NULL;
     sreq->op.mem.remote_memh = NULL;
@@ -750,7 +750,7 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
 
     SPML_VERBOSE(100,
                  "shm get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p, src_rkey=0x%lx",
-                 src, src_addr, dst_addr, (int)size, (void *)rva, r_mkey->key);
+                 src, src_addr, dst_addr, (int)size, (void *)rva, r_mkey->handle.key);
     memcpy(dst_addr, (void *) (unsigned long) rva, size);
     opal_progress();
     return OSHMEM_SUCCESS;
@@ -986,7 +986,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 #if SPML_IKRIT_PUT_DEBUG == 1
 
     SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, dst_rkey=0x%lx",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->key);
+            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->handle.key);
 #endif
     if (ptl_id == MXM_PTL_SHM) {
 
@@ -1013,7 +1013,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 
 #if SPML_IKRIT_PUT_DEBUG == 1
     SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, dst_rkey=0x%lx",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->key);
+            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->handle.key);
 #endif
 
     put_req = alloc_put_req();
@@ -1065,7 +1065,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 
 #if MXM_API < MXM_VERSION(1,5)
     put_req->mxm_req.base.data.buffer.mkey = MXM_MKEY_NONE;
-    put_req->mxm_req.op.mem.remote_mkey = r_mkey->ib.rkey;
+    put_req->mxm_req.op.mem.remote_mkey = r_mkey->handle.ib.rkey;
 #elif MXM_API < MXM_VERSION(2, 0)
     put_req->mxm_req.base.data.buffer.memh = NULL;
     put_req->mxm_req.op.mem.remote_memh = NULL;
@@ -1162,7 +1162,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 
 #if SPML_IKRIT_PUT_DEBUG == 1
     SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, dst_rkey=0x%lx",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->key);
+            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->handle.key);
 #endif
     if (ptl_id == MXM_PTL_SHM) {
 
@@ -1190,7 +1190,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 
 #if SPML_IKRIT_PUT_DEBUG == 1
     SPML_VERBOSE(100, "put: pe:%d ptl=%d dst=%p <- src: %p sz=%d. dst_rva=%p, dst_rkey=0x%lx",
-            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->key);
+            dst, ptl_id, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->handle.key);
 #endif
 
     /* fill out request */
