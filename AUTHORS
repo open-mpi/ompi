@@ -38,7 +38,7 @@ emallove    Ethan Mallove               Sun, Oracle
 eugene      Eugene Loh                  Sun, Oracle
 gef         Graham Fagg                 UTK
 gingery     Ginger Young                LANL
-gleb        Gleb Natapov                Mellanox
+gleb        Gleb Natapov                Voltaire
 gshipman    Galen Shipman               LANL
 gwatson     Greg Watson                 LANL
 herault     Thomas Herault              INRIA
@@ -90,7 +90,7 @@ sami        Sami Ayyorgun               LANL
 samuel      Samuel K. Gutierrez         LANL
 santhana    Gopal Santhanaraman         OSU
 sboehm      Swen Boehm                  ORNL
-sharonm     Sharon Melamed              Mellanox
+sharonm     Sharon Melamed              Voltaire
 shiqing     Shiqing Fan                 HLRS
 sjeaugey    Sylvain Jeaugey             Bull
 surs        Sayantan Sur                OSU
@@ -117,7 +117,7 @@ HLRS = High Performance Computing Center, Stuttgart
 IU = Indiana University
 LANL = Los Alamos National Laboratory
 LBNL = Lawrence Berkeley National Laboratory
-Mellanox = Mellanox
+Voltaire = Voltaire
 Myricom = Myricom, Inc.
 NU = Northeastern University
 Oracle = Oracle
