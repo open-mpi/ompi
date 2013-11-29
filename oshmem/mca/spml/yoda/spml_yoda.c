@@ -369,7 +369,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
         /* If we have shared memory just save its id*/
         if ((ybtl->btl_type == YODA_BTL_SM)
             && ((int) MEMHEAP_SHM_GET_ID(shmid) != MEMHEAP_SHM_INVALID)) {
-            mkeys[i].key = shmid;
+            mkeys[i].handle.key = shmid;
             continue;
         }
 
@@ -432,7 +432,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
 
         SPML_VERBOSE(5,
                      "rank %d btl %s rkey %x lkey %x key %llx address 0x%p len %llu shmid 0x%X|0x%X",
-                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type), mkeys[i].ib.rkey, mkeys[i].ib.lkey, (unsigned long long)mkeys[i].key, mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
+                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type), mkeys[i].handle.ib.rkey, mkeys[i].handle.ib.lkey, (unsigned long long)mkeys[i].handle.key, mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
     }
     OBJ_DESTRUCT(&convertor);
     *count = mca_spml_yoda.n_btls;
@@ -760,7 +760,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
 
 #if SPML_YODA_DEBUG == 1
     SPML_VERBOSE(100, "put: pe:%d dst=%p <- src: %p sz=%d. dst_rva=%p, dst_rkey=0x%lx",
-                 dst, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->key);
+                 dst, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->handle.key);
 #endif
 
     ybtl = &mca_spml_yoda.btl_type_map[btl_id];
@@ -1042,7 +1042,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
     }
 #if SPML_YODA_DEBUG == 1
     SPML_VERBOSE(100, "get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p, src_rkey=0x%lx",
-                 src, src_addr, dst_addr, (int)size, (void *)rva, r_mkey->key);
+                 src, src_addr, dst_addr, (int)size, (void *)rva, r_mkey->handle.key);
 #endif
 
     ybtl = &mca_spml_yoda.btl_type_map[btl_id];

@@ -79,7 +79,7 @@ typedef struct mca_spml_mkey {
             uint32_t lkey;
         } ib;
         uint64_t key;
-    };
+    } handle;
     void* va_base;
     void *spml_context;       /* spml module can attach internal structures here */
 } mca_spml_mkey_t;
