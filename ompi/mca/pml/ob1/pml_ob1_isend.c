@@ -97,7 +97,7 @@ int mca_pml_ob1_send(void *buf,
                      ompi_communicator_t * comm)
 {
     int rc;
-    mca_pml_ob1_send_request_t *sendreq;
+    mca_pml_ob1_send_request_t *sendreq = NULL;
 
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
     if (NULL == sendreq)
