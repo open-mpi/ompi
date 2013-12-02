@@ -181,8 +181,9 @@ typedef enum udcm_message_type {
     UDCM_MESSAGE_XCONNECT   = 103,
     UDCM_MESSAGE_XRESPONSE  = 104,
     UDCM_MESSAGE_XCONNECT2  = 105,
-    UDCM_MESSAGE_XRESPONSE2 = 106
+    UDCM_MESSAGE_XRESPONSE2 = 106,
 #endif
+    UDCM_MESSAGE_ACK        = 107
 } udcm_message_type_t;
 
 typedef enum {
@@ -194,7 +195,10 @@ typedef enum {
 } udcm_reject_reason_t;
 
 typedef struct udcm_msg_hdr {
-    udcm_message_type_t type;
+    uint8_t type;
+
+    /* ack context */
+    uintptr_t rem_ctx;
 
     /* endpoint local to the sender */
     mca_btl_base_endpoint_t *rem_ep;
@@ -216,7 +220,6 @@ typedef struct udcm_msg_hdr {
         struct msg_xrc_connect {
             int32_t  rem_ep_index;
             uint8_t  rem_port_num;
-            uint16_t req_lid;
             uint32_t rem_qp_num;
             uint32_t rem_psn;
         } xreq;
@@ -229,9 +232,10 @@ typedef struct udcm_msg_hdr {
 #endif
     } data;
 
-    /* If the message type is UDCM_MESSAGE_CONNECT then
-       QPs will follow the header */
-    /* udcm_qps_t qps[]; */ /* uncomment if we ever move to C99 */
+    /* If the message type is UDCM_MESSAGE_CONNECT,
+       UDCM_MESSAGE_XRESPONSE, or UDCM_MESSAGE_XRESPONSE2
+       then queue pair/srq data will follow the header */
+    udcm_qp_t qps[];
 } udcm_msg_hdr_t;
 
 typedef struct udcm_message_recv {
@@ -313,9 +317,9 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep);
 static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep);
 static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_hdr_t *msg_hdr);
 static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_endpoint_t *rem_ep,
-                                  int msg_type);
+                                  uint8_t msg_type);
 static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_endpoint_t *rem_ep,
-                                int msg_type);
+                                    uint8_t msg_type);
 static int udcm_xrc_handle_xconnect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_hdr_t *msg_hdr);
 static int udcm_xrc_handle_xresponse (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_hdr_t *msg_hdr);
 #endif
@@ -338,14 +342,14 @@ static int udcm_xrc_handle_xresponse (mca_btl_openib_endpoint_t *lcl_ep, udcm_ms
 #define UDCM_GRH_SIZE (sizeof (struct ibv_grh))
 
 /* Priority of this connection module */
-static int udcm_priority        = 63;
+static int udcm_priority;
 
 /* Number of receive work requests to post */
-static int udcm_recv_count      = UDCM_MIN_RECV_COUNT;
-static int udcm_max_retry       = 10;
+static int udcm_recv_count;
+static int udcm_max_retry;
 
-/* Message ACK timeout */
-static int udcm_timeout         = UDCM_MIN_TIMEOUT; /* usec */
+/* Message ACK timeout in usec */
+static int udcm_timeout;
 
 /* seed for rand_r. remove me when opal gets a random number generator */
 static unsigned udcm_random_seed = 0;
@@ -369,39 +373,33 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_udcm = {
 static void udcm_component_register(void)
 {
     /* the priority is initialized in the declaration above */
+    udcm_priority = 63;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                           "connect_udcm_priority",
-                                           "The selection method priority for ud",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           "connect_udcm_priority", "Priority of the udcm "
+                                           "connection method", MCA_BASE_VAR_TYPE_INT, NULL,
+                                           0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &udcm_priority);
 
     udcm_recv_count = UDCM_MIN_RECV_COUNT;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                           "connect_udcm_recv_count",
-                                           "Number of connection buffers to post",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           "connect_udcm_recv_count", "Number of registered "
+                                           "buffers to post", MCA_BASE_VAR_TYPE_INT, NULL,
+                                           0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &udcm_recv_count);
 
     udcm_timeout = UDCM_MIN_TIMEOUT;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                           "connect_udcm_timeout",
-                                           "Microseconds to wait for ud connection response",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           "connect_udcm_timeout", "Ack timeout for udcm "
+                                           "connection messages", MCA_BASE_VAR_TYPE_INT, NULL,
+                                           0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &udcm_timeout);
 
     udcm_max_retry = 10;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                           "connect_udcm_max_retry",
-                                           "Maximum number of times to retry sending a connection message",
+                                           "connect_udcm_max_retry", "Maximum number of times "
+                                           "to retry sending a udcm connection message",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &udcm_max_retry);
 }
 
@@ -1480,8 +1478,10 @@ static int udcm_post_send (mca_btl_base_endpoint_t *lcl_ep, void *data,
     return rc;
 }
 
+/* mark: message allocation */
+
 static int udcm_new_message (mca_btl_base_endpoint_t *lcl_ep,
-                             mca_btl_base_endpoint_t *rem_ep, int type,
+                             mca_btl_base_endpoint_t *rem_ep, uint8_t type,
                              size_t length, udcm_message_sent_t **msgp)
 {
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
@@ -1499,11 +1499,12 @@ static int udcm_new_message (mca_btl_base_endpoint_t *lcl_ep,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    message->length       = length;
+    message->length        = length;
 
-    message->data->rem_ep = lcl_ep;
-    message->data->lcl_ep = rem_ep;
-    message->data->type   = type;
+    message->data->rem_ep  = lcl_ep;
+    message->data->lcl_ep  = rem_ep;
+    message->data->type    = type;
+    message->data->rem_ctx = message;
 
     message->endpoint = lcl_ep;
 
@@ -1528,7 +1529,6 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
     udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
     udcm_message_sent_t *msg;
-    udcm_qp_t *qps;
     int i, rc;
 
     BTL_VERBOSE(("sending request for endpoint %p", (void *) lcl_ep));
@@ -1543,11 +1543,9 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
     msg->data->data.req.rem_ep_index = htonl(lcl_ep->index);
     msg->data->data.req.rem_port_num = m->modex.mm_port_num;
 
-    qps = (udcm_qp_t *)(msg->data + 1);
-
     for (i = 0 ; i < mca_btl_openib_component.num_qps ; ++i) {
-        qps[i].psn    = htonl(lcl_ep->qps[i].qp->lcl_psn);
-        qps[i].qp_num = htonl(lcl_ep->qps[i].qp->lcl_qp->qp_num);
+        msg->data->qps[i].psn    = htonl(lcl_ep->qps[i].qp->lcl_psn);
+        msg->data->qps[i].qp_num = htonl(lcl_ep->qps[i].qp->lcl_qp->qp_num);
     }
 
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, m->msg_length, 0))) {
@@ -1573,7 +1571,6 @@ static int udcm_send_complete (mca_btl_base_endpoint_t *lcl_ep,
 
     rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0);
     if (0 != rc) {
-
         BTL_VERBOSE(("error posting complete"));
         return rc;
     }
@@ -1599,7 +1596,6 @@ static int udcm_send_reject (mca_btl_base_endpoint_t *lcl_ep,
 
     rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0);
     if (0 != rc) {
-
         BTL_VERBOSE(("error posting rejection"));
         return rc;
     }
@@ -1609,73 +1605,43 @@ static int udcm_send_reject (mca_btl_base_endpoint_t *lcl_ep,
     return 0;
 }
 
-static int udcm_send_ack (mca_btl_base_endpoint_t *lcl_ep)
+static int udcm_send_ack (mca_btl_base_endpoint_t *lcl_ep, uintptr_t rem_ctx)
 {
-    udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
-    udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
-    struct ibv_send_wr wr, *bad_wr;
-    int rc;
+    udcm_msg_hdr_t hdr;
 
-    /* NTH: need to lock here or we run into problems */
-    opal_mutex_lock(&m->cm_send_lock);
+    BTL_VERBOSE(("sending ack for message %p on ep %p", (void *) rem_ctx, (void *) lcl_ep));
 
-    BTL_VERBOSE(("sending ack for message on ep %p", (void *) lcl_ep));
+    hdr.type         = UDCM_MESSAGE_ACK;
+    hdr.rem_ctx      = rem_ctx;
 
-    wr.wr_id      = UDCM_WR_ACK_ID;
-    wr.next       = NULL;
-    wr.num_sge    = 0;
-    /* use imm flag to signal the other side that this is an ack */
-    wr.opcode     = IBV_WR_SEND_WITH_IMM;
-    wr.send_flags = IBV_SEND_SOLICITED | IBV_SEND_SIGNALED;
-    wr.wr.ud.ah   = udep->ah;
-
-    wr.imm_data   = 0; /* dom't care */
-
-    wr.wr.ud.remote_qpn  = UDCM_ENDPOINT_REM_MODEX(lcl_ep)->mm_qp_num;
-    wr.wr.ud.remote_qkey = 0;
-
-    rc = ibv_post_send (m->listen_qp, &wr, &bad_wr);
-    if (0 != rc) {
-        BTL_VERBOSE(("error posting ack. errno: %d, rc: %d", errno, rc));
-    } else {
-        rc = udcm_wait_for_send_completion (m);
-    }
-
-    opal_mutex_unlock (&m->cm_send_lock);
-
-    return rc;
+    return udcm_post_send (lcl_ep, &hdr, sizeof (hdr), 0);
 }
 
-static int udcm_handle_ack (udcm_module_t *m, const uint32_t id, const uint16_t slid,
+static int udcm_handle_ack (udcm_module_t *m, const uintptr_t ctx, const uint16_t slid,
                             const uint32_t rem_qp)
 {
     udcm_message_sent_t *msg, *next;
 
     opal_mutex_lock (&m->cm_timeout_lock);
 
-    BTL_VERBOSE(("got ack for message 0x%08x from slid 0x%04x qp 0x%08x", id, slid,
+    BTL_VERBOSE(("got ack for message %p from slid 0x%04x qp 0x%08x", (void *) ctx, slid,
                  rem_qp));
 
+    /* verify that the message is still active */
     OPAL_LIST_FOREACH_SAFE(msg, next, &m->flying_messages, udcm_message_sent_t) {
         const struct mca_btl_base_endpoint_t *lcl_ep = msg->endpoint;
 
-        if (NULL == msg->data || NULL == msg->endpoint) {
-            /* shouldn't happen */
-            opal_event_evtimer_del (&msg->event);
-            opal_list_remove_item(&m->flying_messages, &msg->super);
-            msg->event_active = false;
+        if ((uintptr_t) msg != ctx) {
             continue;
         }
 
-        if (slid == UDCM_ENDPOINT_REM_MODEX(lcl_ep)->mm_lid &&
-            rem_qp == UDCM_ENDPOINT_REM_MODEX(lcl_ep)->mm_qp_num) {
-            BTL_VERBOSE(("found matching message"));
+        BTL_VERBOSE(("found matching message"));
 
-            opal_list_remove_item (&m->flying_messages, &msg->super);
-            OBJ_RELEASE(msg);
+        /* found it */
+        opal_list_remove_item (&m->flying_messages, &msg->super);
+        OBJ_RELEASE(msg);
 
-            break;
-        }
+        break;
     }
 
     opal_mutex_unlock (&m->cm_timeout_lock);
@@ -1836,9 +1802,9 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
 
         msg_hdr = (udcm_msg_hdr_t *) udcm_module_get_recv_buffer (m, msg_num, true);
 
-        if (wc[i].wc_flags & IBV_WC_WITH_IMM) {
+        if (UDCM_MESSAGE_ACK == msg_hdr->type) {
             /* ack! */
-            udcm_handle_ack (m, wc[i].imm_data, wc[i].slid, wc[i].src_qp);
+            udcm_handle_ack (m, msg_hdr->rem_ctx, wc[i].slid, wc[i].src_qp);
             udcm_module_post_one_recv (m, msg_num);
 
             continue;
@@ -1861,7 +1827,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
 
         msg_hdr->lcl_ep = lcl_ep;
 
-        BTL_VERBOSE(("received message. type: %d, lcl_ep = %p, rem_ep = %p, "
+        BTL_VERBOSE(("received message. type: %u, lcl_ep = %p, rem_ep = %p, "
                      "src qpn = %d, length = %d, local buffer # = %d",
                      msg_hdr->type, (void *) msg_hdr->lcl_ep, (void *) msg_hdr->rem_ep,
                      wc[i].src_qp, wc[i].byte_len, msg_num));
@@ -1886,7 +1852,6 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         /* save message data in the endpoint */
         if (UDCM_MESSAGE_CONNECT == msg_hdr->type) {
             /* Save remote queue pair information */
-            udcm_qp_t *rem_qps = (udcm_qp_t *)(msg_hdr + 1);
             int num_qps = mca_btl_openib_component.num_qps;
 
             lcl_ep->rem_info.rem_index = ntohl(msg_hdr->data.req.rem_ep_index);
@@ -1894,9 +1859,9 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
             for (int qp_index = 0 ; qp_index < num_qps ; ++qp_index) {
                 /* Save these numbers on the endpoint for reference. */
                 lcl_ep->rem_info.rem_qps[qp_index].rem_psn    =
-                    ntohl(rem_qps[qp_index].psn);
+                    ntohl(msg_hdr->qps[qp_index].psn);
                 lcl_ep->rem_info.rem_qps[qp_index].rem_qp_num =
-                    ntohl(rem_qps[qp_index].qp_num);
+                    ntohl(msg_hdr->qps[qp_index].qp_num);
             }
         }
 
@@ -1904,13 +1869,12 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         else if (UDCM_MESSAGE_XRESPONSE == msg_hdr->type ||
                  UDCM_MESSAGE_XRESPONSE2 == msg_hdr->type) {
             /* save remote srq information */
-            udcm_qp_t *rem_qps = (udcm_qp_t *)(msg_hdr + 1);
             int num_srqs = mca_btl_openib_component.num_xrc_qps;
 
             lcl_ep->rem_info.rem_index = ntohl(msg_hdr->data.xres.rem_ep_index);
 
             for (int i = 0 ; i < num_srqs ; ++i) {
-                lcl_ep->rem_info.rem_srqs[i].rem_srq_num = ntohl(rem_qps[i].qp_num);
+                lcl_ep->rem_info.rem_srqs[i].rem_srq_num = ntohl(msg_hdr->qps[i].qp_num);
                 BTL_VERBOSE(("Received srq[%d] num = %d", i, lcl_ep->rem_info.rem_srqs[i].rem_srq_num));
             }
 
@@ -1955,7 +1919,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         opal_list_append (&m->cm_recv_msg_queue, &item->super);
         opal_mutex_unlock(&m->cm_recv_msg_queue_lock);
 
-        udcm_send_ack (lcl_ep);
+        udcm_send_ack (lcl_ep, msg_hdr->rem_ctx);
 
         /* Repost the receive */
         udcm_module_post_one_recv (m, msg_num);
@@ -2551,7 +2515,7 @@ static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg_
 /* mark: xrc message functions */
 
 static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_endpoint_t *rem_ep,
-                                  int msg_type)
+                                  uint8_t msg_type)
 {
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
     udcm_message_sent_t *msg;
@@ -2568,7 +2532,6 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
 
     msg->data->data.req.rem_ep_index = htonl(lcl_ep->index);
     msg->data->data.req.rem_port_num = m->modex.mm_port_num;
-    msg->data->data.xreq.req_lid = lcl_ep->ib_addr->lid;
 
     if (UDCM_MESSAGE_XCONNECT == msg_type) {
         BTL_VERBOSE(("Sending XConnect with qp: %d, psn: %d", lcl_ep->qps[0].qp->lcl_qp->qp_num,
@@ -2591,11 +2554,10 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
 }
 
 static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_endpoint_t *rem_ep,
-                                    int msg_type)
+                                    uint8_t msg_type)
 {
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
     udcm_message_sent_t *msg;
-    udcm_qp_t *qps;
     int rc;
 
     assert (UDCM_MESSAGE_XRESPONSE == msg_type || UDCM_MESSAGE_XRESPONSE2 == msg_type);
@@ -2612,11 +2574,9 @@ static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_bas
         msg->data->data.xres.rem_psn    = htonl(lcl_ep->xrc_recv_psn);
     }
 
-    qps = (udcm_qp_t *)(msg->data + 1);
-
     for (int i = 0; i < mca_btl_openib_component.num_xrc_qps; ++i) {
         BTL_VERBOSE(("Sending srq[%d] num  = %d", i, lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq->xrc_srq_num));
-        qps[i].qp_num = htonl(lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq->xrc_srq_num);
+        msg->data->qps[i].qp_num = htonl(lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq->xrc_srq_num);
     }
 
     rc = udcm_post_send (lcl_ep, msg->data, m->msg_length, 0);
