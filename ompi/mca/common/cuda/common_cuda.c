@@ -1680,21 +1680,31 @@ bool mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg)
  * Get the buffer ID from the memory and store it in the registration.
  * This is needed to ensure the cached registration is not stale.  If
  * we fail to get buffer ID, print an error and set buffer ID to 0.
+ * Also set SYNC_MEMOPS on any GPU registration to ensure that
+ * synchronous copies complete before the buffer is accessed.
  */
 void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg)
 {
     int res;
     unsigned long long bufID = 0;
     unsigned char *dbuf = reg->base;
+    int enable = 1;
 
     res = cuFunc.cuPointerGetAttribute(&bufID, CU_POINTER_ATTRIBUTE_BUFFER_ID,
                                        (CUdeviceptr)dbuf);
-
     if (res != CUDA_SUCCESS) {
         opal_show_help("help-mpi-common-cuda.txt", "bufferID failed", true, res);
     }
-
     reg->gpu_bufID = bufID;
+
+    res = cuFunc.cuPointerSetAttribute(&enable, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS,
+                                       (CUdeviceptr)dbuf);
+    if (CUDA_SUCCESS != res) {
+        opal_show_help("help-mpi-common-cuda.txt", "cuPointerSetAttribute failed",
+                       true, ompi_process_info.nodename, res, dbuf);
+        return OMPI_ERROR;
+    }
+
 
 }
 #endif /* OPAL_CUDA_SUPPORT_60 */       
