@@ -397,7 +397,8 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
          * ignore it
          */
         if ((MCA_BASE_VAR_SOURCE_FILE == var->mbv_source ||
-             MCA_BASE_VAR_SOURCE_OVERRIDE) && !show_file_mca_params) {
+             MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source) && 
+            !show_file_mca_params) {
             continue;
         }
         
