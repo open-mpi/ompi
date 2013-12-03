@@ -1302,8 +1302,9 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
     /* If the convertor is copying the data asynchronously, then record an event
-     * that will trigger the callback when it completes.  Mark descriptor as async.*/
-    if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
+     * that will trigger the callback when it completes.  Mark descriptor as async.
+     * No need for this in the case we are not sending any GPU data. */
+    if ((convertor->flags & CONVERTOR_CUDA_ASYNC) && (0 != max_data)) {
         mca_common_cuda_record_dtoh_event("btl_openib", (mca_btl_base_descriptor_t *)frag);
         to_base_frag(frag)->base.des_flags = flags | MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC;
     }
