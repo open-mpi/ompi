@@ -2758,6 +2758,8 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_max_btls); i++) {
         if (0 != mca_btl_openib_component.ib_num_btls &&
             distance != dev_sorted[i].distance) {
+            BTL_VERBOSE(("openib: skipping device %s; it's too far away", 
+                         ibv_get_device_name(dev_sorted[i].ib_dev)));
             break;
         }
 
