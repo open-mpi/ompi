@@ -104,16 +104,16 @@ AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 1],
                     2. OMPI fortran support is implicitly not being built because no fortran compiler could be found on your system. Configure will abort because you, a human, have explicitly asked for something that cannot be provided.])
                 AC_MSG_ERROR([Cannot continue])])
     AC_MSG_RESULT([yes])
-    OSHMEM_WANT_FORTRAN_BINDINGS=1
+    OSHMEM_FORTRAN_BINDINGS=1
 else
     AC_MSG_RESULT([no])
-    OSHMEM_WANT_FORTRAN_BINDINGS=0
+    OSHMEM_FORTRAN_BINDINGS=0
 fi],
 [AC_MSG_RESULT([no]) 
-    OSHMEM_WANT_FORTRAN_BINDINGS=0])
+    OSHMEM_FORTRAN_BINDINGS=0])
 
 AM_CONDITIONAL(OSHMEM_WANT_FORTRAN_BINDINGS,
-    [test $OSHMEM_WANT_FORTRAN_BINDINGS -eq 1])
+    [test $OSHMEM_FORTRAN_BINDINGS -eq 1])
 ])
 
 ############################################################################
