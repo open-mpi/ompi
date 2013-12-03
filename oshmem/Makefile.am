@@ -49,7 +49,7 @@ liboshmem_la_SOURCES =
 liboshmem_la_LIBADD = \
 	shmem/c/liboshmem_c.la \
 	$(c_pshmem_lib) \
-	$(fortran_shmem_lib) \
+	$(fortran_oshmem_lib) \
 	$(MCA_oshmem_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/ompi/libmpi.la
 liboshmem_la_DEPENDENCIES = $(liboshmem_la_LIBADD)
