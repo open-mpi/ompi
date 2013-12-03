@@ -6,9 +6,9 @@
 
  $HEADER$
  */
+
 #include "ompi_config.h"
 #include "coll_hcoll.h"
-
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
@@ -64,8 +64,6 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
     OBJ_RELEASE(hcoll_module->previous_ibcast_module);
     OBJ_RELEASE(hcoll_module->previous_iallreduce_module);
     OBJ_RELEASE(hcoll_module->previous_iallgather_module);
-    hcoll_destroy_context(hcoll_module->hcoll_context,
-                          (rte_grp_handle_t) hcoll_module->comm);
     mca_coll_hcoll_module_clear(hcoll_module);
 }
 
@@ -112,15 +110,13 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
 {
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*) module;
     hcoll_module->comm = comm;
-
     if (OMPI_SUCCESS != __save_coll_handlers(hcoll_module)){
         HCOL_ERROR("coll_hcol: __save_coll_handlers failed");
         return OMPI_ERROR;
     }
 
     hcoll_set_runtime_tag_offset(-100,mca_pml.pml_max_tag);
-    hcoll_set_rte_halt_flag_address(&ompi_mpi_finalized);
-    hcoll_set_rte_halt_flag_size(sizeof(ompi_mpi_finalized));
+
 
     hcoll_module->hcoll_context =
         hcoll_create_context((rte_grp_handle_t)comm);
@@ -129,6 +125,14 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
         return OMPI_ERROR;
     }
 
+    if (comm != &ompi_mpi_comm_world.comm){
+        mca_coll_hcoll_module_list_item_wrapper_t *mw =
+            OBJ_NEW(mca_coll_hcoll_module_list_item_wrapper_t);
+        mw->module = hcoll_module;
+        OBJ_RETAIN(hcoll_module->comm);
+        opal_list_append(&mca_coll_hcoll_component.active_modules,
+                         (opal_list_item_t*)mw);
+    }
 
 #if 0
     {
@@ -172,8 +176,43 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
+int mca_coll_hcoll_progress(void)
+{
+    opal_list_item_t  *item, *item_next;
+    opal_list_t *am = &mca_coll_hcoll_component.active_modules;
+    mca_coll_hcoll_module_t *module;
+    ompi_communicator_t *comm;
 
+    OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,1);
 
+    if (mca_coll_hcoll_component.progress_lock){
+        OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
+        (*hcoll_progress_fn)();
+        return OMPI_SUCCESS;
+    }
+    if (ompi_mpi_finalized){
+        hcoll_rte_p2p_disabled_notify();
+    } else {
+        item = opal_list_get_first(am);
+        while (item != opal_list_get_end(am)){
+            item_next = opal_list_get_next(item);
+            module = ((mca_coll_hcoll_module_list_item_wrapper_t *)item)->module;
+            comm = module->comm;
+            if (((opal_object_t*)comm)->obj_reference_count == 1){
+                hcoll_destroy_context(module->hcoll_context,
+                                      (rte_grp_handle_t)comm);
+                module->hcoll_context = NULL;
+                OBJ_RELEASE(comm);
+                opal_list_remove_item(am,item);
+                OBJ_RELEASE(item);
+            }
+            item = item_next;
+        }
+    }
+    (*hcoll_progress_fn)();
+    OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
+    return OMPI_SUCCESS;
+}
 
 
 /*
@@ -201,7 +240,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
            world_group, i.e. ompi_comm_world, is not ready at hcoll component open
            call */
-        opal_progress_register(hcoll_progress_fn);
+        opal_progress_register(mca_coll_hcoll_progress);
         int rc = hcoll_init();
 
         if (HCOLL_SUCCESS != rc){
@@ -233,6 +272,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     hcoll_module->super.coll_ibcast = hcoll_collectives.coll_ibcast ? mca_coll_hcoll_ibcast : NULL;
     hcoll_module->super.coll_iallgather = hcoll_collectives.coll_iallgather ? mca_coll_hcoll_iallgather : NULL;
     hcoll_module->super.coll_iallreduce = hcoll_collectives.coll_iallreduce ? mca_coll_hcoll_iallreduce : NULL;
+    hcoll_module->super.coll_gather = hcoll_collectives.coll_gather ? mca_coll_hcoll_gather : NULL;
 
     *priority = mca_coll_hcoll_component.hcoll_priority;
     module = &hcoll_module->super;
@@ -249,4 +289,8 @@ OBJ_CLASS_INSTANCE(mca_coll_hcoll_module_t,
         mca_coll_hcoll_module_destruct);
 
 
+
+OBJ_CLASS_INSTANCE(mca_coll_hcoll_module_list_item_wrapper_t,
+                   opal_list_item_t,
+                   NULL,NULL);
 

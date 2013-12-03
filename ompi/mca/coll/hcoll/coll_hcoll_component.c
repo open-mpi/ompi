@@ -202,6 +202,11 @@ static int hcoll_register(void)
                            &mca_coll_hcoll_component.hcoll_enable,
                            0));
 
+    CHECK(reg_int("datatype_fallback",NULL,
+                           "[1|0|] Enable/Disable user defined dattypes fallback",
+                           1 /*enable by default*/,
+                           &mca_coll_hcoll_component.hcoll_datatype_fallback,
+                           0));
 
     CHECK(reg_string("library_path", NULL,
                            "HCOL /path/to/libhcol.so",
@@ -221,6 +226,10 @@ static int hcoll_open(void)
 
     hcoll_rte_fns_setup();
 
+    OBJ_CONSTRUCT(&mca_coll_hcoll_component.active_modules,
+                  opal_list_t);
+
+    mca_coll_hcoll_component.progress_lock = -1;
     return OMPI_SUCCESS;
 }
 
@@ -229,13 +238,12 @@ static int hcoll_close(void)
     int rc;
     HCOL_VERBOSE(5,"HCOLL FINALIZE");
     rc = hcoll_finalize();
+    opal_progress_unregister(mca_coll_hcoll_progress);
+    OBJ_DESTRUCT(&mca_coll_hcoll_component.active_modules);
 
-
-    opal_progress_unregister(hcoll_progress_fn);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(1,"Hcol library finalize failed");
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
 }
-

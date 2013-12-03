@@ -49,8 +49,8 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OPAL_DATATYPE_MAX
     &DTE_ZERO,                  /*OPAL_DATATYPE_FLOAT2         14 */
     &DTE_FLOAT32,               /*OPAL_DATATYPE_FLOAT4         15 */
     &DTE_FLOAT64,               /*OPAL_DATATYPE_FLOAT8         16 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_FLOAT12        17 */
-    &DTE_ZERO,                  /*OPAL_DATATYPE_FLOAT16        18 */
+    &DTE_FLOAT96,               /*OPAL_DATATYPE_FLOAT12        17 */
+    &DTE_FLOAT128,              /*OPAL_DATATYPE_FLOAT16        18 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_COMPLEX8       19 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_COMPLEX16      20 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_COMPLEX32      21 */
@@ -62,9 +62,13 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OPAL_DATATYPE_MAX
 static dte_data_representation_t ompi_dtype_2_dte_dtype(ompi_datatype_t *dtype){
     int ompi_type_id = dtype->id;
     int opal_type_id = dtype->super.id;
+    dte_data_representation_t dte_data_rep;
     if (OPAL_UNLIKELY( ompi_type_id < 0 ||
                        ompi_type_id >= OPAL_DATATYPE_MAX_PREDEFINED)){
-        return DTE_ZERO;
+        dte_data_rep = DTE_ZERO;
+        dte_data_rep.rep.in_line_rep.data_handle.in_line.in_line = 0;
+        dte_data_rep.rep.in_line_rep.data_handle.pointer_to_handle = (uint64_t ) &dtype->super;
+        return dte_data_rep;
     }
     return *ompi_datatype_2_dte_data_rep[opal_type_id];
 }

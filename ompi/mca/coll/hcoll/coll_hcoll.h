@@ -59,14 +59,21 @@ struct mca_coll_hcoll_component_t {
     /** MCA parameter: Enable FCA */
     int   hcoll_enable;
 
+    /** MCA parameter: ON/OFF user defined datatype through HCOLL */
+    int   hcoll_datatype_fallback;
+
     /* FCA global stuff */
     void *hcoll_lib_handle;                               /* FCA dynamic library */
     mca_coll_hcoll_ops_t hcoll_ops;
     ompi_free_list_t requests;
+    opal_list_t  active_modules;
+    volatile uint32_t progress_lock;
 };
 typedef struct mca_coll_hcoll_component_t mca_coll_hcoll_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_coll_hcoll_component_t mca_coll_hcoll_component;
+
+
 
 
 /**
@@ -75,7 +82,7 @@ OMPI_MODULE_DECLSPEC extern mca_coll_hcoll_component_t mca_coll_hcoll_component;
 struct mca_coll_hcoll_module_t {
     mca_coll_base_module_t super;
 
-    MPI_Comm            comm;
+    ompi_communicator_t            *comm;
     int                 rank;
     void *hcoll_context;
     /* Saved handlers - for fallback */
@@ -117,6 +124,15 @@ typedef struct mca_coll_hcoll_module_t mca_coll_hcoll_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_hcoll_module_t);
 
 
+
+typedef struct mca_coll_hcoll_module_list_item_wrapper_t{
+    opal_list_item_t super;
+    mca_coll_hcoll_module_t *module;
+} mca_coll_hcoll_module_list_item_wrapper_t;
+
+OBJ_CLASS_DECLARATION(mca_coll_hcoll_module_list_item_wrapper_t);
+
+
 /* API functions */
 int mca_coll_hcoll_init_query(bool enable_progress_threads, bool enable_mpi_threads);
 mca_coll_base_module_t *mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority);
@@ -138,6 +154,15 @@ int mca_coll_hcoll_allgather(void *sbuf, int scount,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module);
+
+int mca_coll_hcoll_gather(void *sbuf, int scount,
+                          struct ompi_datatype_t *sdtype,
+                          void *rbuf, int rcount,
+                          struct ompi_datatype_t *rdtype,
+                          int root,
+                          struct ompi_communicator_t *comm,
+                          mca_coll_base_module_t *module);
+
 
 int mca_coll_hcoll_allreduce(void *sbuf, void *rbuf, int count,
                             struct ompi_datatype_t *dtype,
@@ -176,7 +201,7 @@ int mca_coll_hcoll_iallreduce(void *sbuf, void *rbuf, int count,
                             struct ompi_communicator_t *comm,
                             ompi_request_t** request,
                             mca_coll_base_module_t *module);
-
+int mca_coll_hcoll_progress(void);
 END_C_DECLS
 
 #endif
