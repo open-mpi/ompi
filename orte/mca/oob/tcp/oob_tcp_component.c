@@ -195,7 +195,9 @@ static int tcp_component_close(void)
 
     return ORTE_SUCCESS;
 }
+#if ORTE_ENABLE_STATIC_PORTS
 static char *static_port_string;
+#endif
 static char *dyn_port_string;
 
 static int tcp_component_register(void)
