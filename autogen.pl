@@ -53,7 +53,7 @@ my $include_list;
 my $exclude_list;
 
 # Minimum versions
-my $ompi_automake_version = "1.11.1";
+my $ompi_automake_version = "1.12.2";
 my $ompi_autoconf_version = "2.65";
 my $ompi_libtool_version = "2.2.6b";
 
