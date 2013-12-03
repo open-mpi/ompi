@@ -163,7 +163,7 @@ static int recv_nb(struct dte_data_representation_t data,
                    uint32_t tag,
                    rte_request_handle_t *req)
 {
-    ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+    ompi_communicator_t *comm = (ompi_communicator_t *)grp_h;
 
     if (NULL == ec_h.handle && -1 != ec_h.rank) {
         fprintf(stderr,"***Error in hcolrte_rml_recv_nb: wrong null argument: "
@@ -234,7 +234,7 @@ static int send_nb( dte_data_representation_t data,
                     uint32_t tag,
                     rte_request_handle_t *req)
 {
-    ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+    ompi_communicator_t *comm = (ompi_communicator_t *)grp_h;
 
     if (! ec_h.handle) {
         fprintf(stderr,"***Error in hcolrte_rml_send_nb: wrong null argument: "
@@ -329,7 +329,7 @@ static int get_ec_handles( int num_ec ,
     ompi_communicator_t *comm = (ompi_communicator_t *)grp_h;
     for (i=0; i<num_ec; i++){
         ompi_proc_t *proc = ompi_comm_peer_lookup(comm,ec_indexes[i]);
-        ec_handles[i].rank = proc->proc_name.vpid;
+        ec_handles[i].rank = ec_indexes[i];
         ec_handles[i].handle = (void *)proc;
     }
     return HCOLL_SUCCESS;
@@ -375,7 +375,7 @@ static int group_id(rte_grp_handle_t group){
     return ((ompi_communicator_t *)group)->c_contextid;
 }
 
-static int
+static int 
 request_free(struct ompi_request_t **ompi_req)
 {
     ompi_request_t *req = *ompi_req;

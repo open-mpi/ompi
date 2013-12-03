@@ -13,9 +13,11 @@
 AM_CPPFLAGS = $(coll_hcoll_CPPFLAGS) -DCOLL_HCOLL_HOME=\"$(coll_hcoll_HOME)\" -I$(coll_hcoll_HOME)/include/hcoll/api
 
 coll_hcoll_sources = \
-        coll_hcoll.h \
-        coll_hcoll_module.c \
-        coll_hcoll_component.c \
+		coll_hcoll.h \
+		coll_hcoll_debug.h \
+		coll_hcoll_dtypes.h \
+		coll_hcoll_module.c \
+		coll_hcoll_component.c \
 		coll_hcoll_rte.c \
 		coll_hcoll_ops.c
 
