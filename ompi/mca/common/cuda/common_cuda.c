@@ -91,6 +91,7 @@ struct cudaFunctionTable {
     int (*cuCtxGetDevice)(CUdevice *);
     int (*cuDeviceCanAccessPeer)(int *, CUdevice, CUdevice);
     int (*cuDeviceGet)(CUdevice *, int);
+    int (*cuCtxSetCurrent)(CUcontext);
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
 cudaFunctionTable_t cuFunc;
@@ -446,6 +447,7 @@ int mca_common_cuda_stage_one_init(void)
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxGetDevice);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceCanAccessPeer);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceGet);
+    OMPI_CUDA_DLSYM(libcuda_handle, cuCtxSetCurrent);
     return 0;
 }
 
@@ -1481,7 +1483,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf)
                             "res=%d, ptr=%p aborting...", res, pUserBuf);
                 ompi_rte_abort(1, NULL);
             } else {
-                res = cuCtxSetCurrent(ctx);
+                res = cuFunc.cuCtxSetCurrent(ctx);
                 if (res != CUDA_SUCCESS) {
                     opal_output(0, "CUDA: error calling cuCtxSetCurrent: "
                                 "res=%d, ptr=%p aborting...", res, pUserBuf);
