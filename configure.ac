@@ -585,7 +585,7 @@ OPAL_CONFIG_ASM
 # Fortran
 ##################################
 
-m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN])
+m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN], [ompi_fortran_happy=0])
 
 # checkpoint results
 AC_CACHE_SAVE
