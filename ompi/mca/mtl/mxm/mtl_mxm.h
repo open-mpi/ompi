@@ -18,7 +18,12 @@
 #ifndef MXM_VERSION
 #define MXM_VERSION(major, minor) (((major)<<MXM_MAJOR_BIT)|((minor)<<MXM_MINOR_BIT))
 #endif
-#if MXM_API < MXM_VERSION(2, 0)
+
+#if MXM_API < MXM_VERSION(1,5)
+#error "Unsupported MXM version, version 1.5 or above required"
+#endif
+
+#if MXM_API < MXM_VERSION(2,0)
 #include <mxm/api/mxm_addr.h>
 #endif
 
@@ -89,7 +94,6 @@ extern int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl);
 
 int ompi_mtl_mxm_module_init(void);
 
-#if MXM_API >= MXM_VERSION(1,5)
 struct ompi_mtl_mxm_message_t {
     ompi_free_list_item_t super;
 
@@ -102,7 +106,6 @@ struct ompi_mtl_mxm_message_t {
 };
 typedef struct ompi_mtl_mxm_message_t ompi_mtl_mxm_message_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_mxm_message_t);
-#endif
 
 END_C_DECLS
 
