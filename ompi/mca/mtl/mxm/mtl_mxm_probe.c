@@ -54,7 +54,6 @@ int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
                          struct ompi_message_t **message,
                          struct ompi_status_public_t *status)
 {
-#if MXM_API >= MXM_VERSION(1,5)
     mxm_error_t err;
     mxm_recv_req_t req;
 
@@ -110,7 +109,4 @@ int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
 	(*message)->count = status->_ucount;
 
     return OMPI_SUCCESS;
-#else
-    return OMPI_ERR_NOT_IMPLEMENTED;
-#endif
 }
