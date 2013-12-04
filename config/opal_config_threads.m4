@@ -217,7 +217,7 @@ AC_MSG_RESULT([$enable_opal_multi_threads])
 # C/R is no longer supported
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_THREAD], [0],
                    [Enable fault tolerance thread in Open PAL])
-AM_CONDITIONAL(WANT_FT_THREAD, 0)
+AM_CONDITIONAL(WANT_FT_THREAD, false)
 
 ])dnl
 
