@@ -193,7 +193,7 @@ static int fca_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_scoll_fca_component.fca_verbose);
+                                           &mca_scoll_fca_component.fca_enable);
 
     mca_scoll_fca_component.fca_spec_file = ""COLL_FCA_HOME"/etc/fca_mpi_spec.ini";
     (void) mca_base_component_var_register(c,
