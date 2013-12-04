@@ -56,8 +56,10 @@ get_nsec(void)
     return usnic_ticks;
 }
 
+#ifndef container_of
 #define container_of(ptr, type, member) ( \
         (type *)( ((char *)(ptr)) - offsetof(type,member) ))
+#endif
 
 /* MSGDEBUG2 prints 1 line at each BTL entry point */
 #define MSGDEBUG2 (MSGDEBUG1||0)
