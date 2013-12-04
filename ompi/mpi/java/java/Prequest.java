@@ -21,18 +21,6 @@
  *            at Syracuse University 1998
  */
 
-
-/*
- * Note: in the end there is no sensible way to use the native
- * persistent requests here.  For every `start'/`wait' cycle you need
- * to do `get...Elements', `release...Elements', otherwise the behaviour
- * is wrong if pinning isn't supported (because then get/release ops
- * need active copying to move values between C and Java).
- *
- * (Even if pinning is supported, the arrays would have to be pinned
- * almost permanently, which presumably isn't a good thing.)
- */
-
 package mpi;
 
 /**
