@@ -98,7 +98,7 @@ static int mca_spml_ikrit_component_register(void)
                                               "[integer] First N ranks on host will receive and forward put messages to other ranks running on it. Can be used to as work around Sandy Bridge far socket problem");
 
     np = mca_spml_ikrit_param_register_int("np",
-#if MXM_API > MXM_VERSION(1,5)
+#if MXM_API <= MXM_VERSION(2,0)
                                            128,
 #else
                                            0,
@@ -150,37 +150,24 @@ static int mca_spml_ikrit_component_open(void)
         return OSHMEM_ERROR;
     }
 
-#if MXM_API < MXM_VERSION(1,5)
-    mxm_context_opts_t mxm_opts;
-
-    mxm_fill_context_opts(&mxm_opts);
-    /* only enable rmda and self ptls */
-    mxm_opts.ptl_bitmap = (MXM_BIT(MXM_PTL_SELF) | MXM_BIT(MXM_PTL_RDMA));
-
+#if MXM_API < MXM_VERSION(2,1)
+    if ((MXM_OK != mxm_config_read_context_opts(&mca_spml_ikrit.mxm_ctx_opts)) ||
+        (MXM_OK != mxm_config_read_ep_opts(&mca_spml_ikrit.mxm_ep_opts)))
 #else
-    mxm_context_opts_t *mxm_opts;
-
-    err = mxm_config_read_context_opts(&mxm_opts);
-    if (MXM_OK != err) {
+    if (MXM_OK != mxm_config_read_opts(&mca_spml_ikrit.mxm_ctx_opts,
+                                       &mca_spml_ikrit.mxm_ep_opts,
+                                       "OSHMEM", NULL, 0))
+#endif
+    {
         SPML_ERROR("Failed to parse MXM configuration");
         return OSHMEM_ERROR;
     }
-#if MXM_API < MXM_VERSION(2, 0)
-    mxm_opts->ptl_bitmap = (MXM_BIT(MXM_PTL_SELF) | MXM_BIT(MXM_PTL_RDMA));
-#endif
+
+#if MXM_API < MXM_VERSION(2,0)
+    mca_spml_ikrit.mxm_ctx_opts->ptl_bitmap = (MXM_BIT(MXM_PTL_SELF) | MXM_BIT(MXM_PTL_RDMA));
 #endif
 
-#if MXM_API < MXM_VERSION(1,5)
-    err = mxm_init(&mxm_opts, &mca_spml_ikrit.mxm_context);
-#else
-    err = mxm_init(mxm_opts, &mca_spml_ikrit.mxm_context);
-#if MXM_API < MXM_VERSION(2, 0)
-    mxm_config_free(mxm_opts);
-#else
-    mxm_config_free_context_opts(mxm_opts);
-#endif
-#endif
-
+    err = mxm_init(mca_spml_ikrit.mxm_ctx_opts, &mca_spml_ikrit.mxm_context);
     if (MXM_OK != err) {
         if (MXM_ERR_NO_DEVICE == err) {
             SPML_VERBOSE(1,
@@ -210,8 +197,16 @@ static int mca_spml_ikrit_component_open(void)
 
 static int mca_spml_ikrit_component_close(void)
 {
-    if (mca_spml_ikrit.mxm_context)
+    if (mca_spml_ikrit.mxm_context) {
         mxm_cleanup(mca_spml_ikrit.mxm_context);
+#if MXM_API < MXM_VERSION(2,0)
+        mxm_config_free(mca_spml_ikrit.mxm_ep_opts);
+        mxm_config_free(mca_spml_ikrit.mxm_ctx_opts);
+#else
+        mxm_config_free_ep_opts(mca_spml_ikrit.mxm_ep_opts);
+        mxm_config_free_context_opts(mca_spml_ikrit.mxm_ctx_opts);
+#endif
+    }
     mca_spml_ikrit.mxm_context = NULL;
     return OSHMEM_SUCCESS;
 }
@@ -219,49 +214,18 @@ static int mca_spml_ikrit_component_close(void)
 static int spml_ikrit_mxm_init(void)
 {
     mxm_error_t err;
-    mxm_ep_opts_t *p_ep_opts;
-
-#if MXM_API < MXM_VERSION(1,5)
-    mxm_ep_opts_t ep_opt;
-    struct sockaddr_mxm_local_proc sa_bind_self;
-    struct sockaddr_mxm_ib_local sa_bind_rdma;
-
-    p_ep_opts = &ep_opt;
-    /* Setup the endpoint options and local addresses to bind to. */
-    mxm_fill_ep_opts(&ep_opt);
-
-    sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
-    sa_bind_self.context_id = 0;
-    sa_bind_self.process_id = oshmem_proc_local()->proc_name.vpid;
-
-    sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
-    sa_bind_rdma.lid = 0;
-    sa_bind_rdma.pkey = 0;
-    sa_bind_rdma.qp_num = 0;
-    sa_bind_rdma.sl = 0;
-
-    ep_opt.ptl_bind_addr[MXM_PTL_SELF] = (struct sockaddr*) &sa_bind_self;
-    ep_opt.ptl_bind_addr[MXM_PTL_RDMA] = (struct sockaddr*) &sa_bind_rdma;
-
-#else
-    err = mxm_config_read_ep_opts(&p_ep_opts);
-    if (err != MXM_OK) {
-        SPML_ERROR("Failed to parse MXM configuration");
-        return OSHMEM_ERROR;
-    }
 
 #if MXM_API < MXM_VERSION(2,0)
     /* Only relevant for SHM PTL - ignore */
-    p_ep_opts->job_id = 0;
-    p_ep_opts->local_rank = 0;
-    p_ep_opts->num_local_procs = 0;
-    p_ep_opts->rdma.drain_cq = 1;
-#endif
+    mca_spml_ikrit.mxm_ep_opts->job_id = 0;
+    mca_spml_ikrit.mxm_ep_opts->local_rank = 0;
+    mca_spml_ikrit.mxm_ep_opts->num_local_procs = 0;
+    mca_spml_ikrit.mxm_ep_opts->rdma.drain_cq = 1;
 #endif
 
     /* Open MXM endpoint */
     err = mxm_ep_create(mca_spml_ikrit.mxm_context,
-                        p_ep_opts,
+                        mca_spml_ikrit.mxm_ep_opts,
                         &mca_spml_ikrit.mxm_ep);
     if (MXM_OK != err) {
         orte_show_help("help-shmem-spml-ikrit.txt",
@@ -270,14 +234,6 @@ static int spml_ikrit_mxm_init(void)
                        mxm_error_string(err));
         return OSHMEM_ERROR;
     }
-
-#if MXM_API >= MXM_VERSION(1,5)
-#if MXM_API < MXM_VERSION(2,0)
-    mxm_config_free(p_ep_opts);
-#else
-    mxm_config_free_ep_opts(p_ep_opts);
-#endif
-#endif
 
     return OSHMEM_SUCCESS;
 }

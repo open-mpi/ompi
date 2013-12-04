@@ -72,6 +72,8 @@ OBJ_CLASS_DECLARATION(mxm_peer_t);
 struct mca_spml_ikrit_t {
     mca_spml_base_module_t super;
 
+    mxm_context_opts_t *mxm_ctx_opts;
+    mxm_ep_opts_t *mxm_ep_opts;
     mxm_h mxm_context;
     mxm_ep_h mxm_ep;
     mxm_mq_h mxm_mq;
