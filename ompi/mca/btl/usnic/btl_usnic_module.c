@@ -64,7 +64,13 @@ static inline void compute_sf_size(ompi_btl_usnic_send_frag_t *sfrag)
     ompi_btl_usnic_frag_t *frag;
 
     frag = &sfrag->sf_base;
+
+    assert(frag->uf_base.des_src_cnt > 0);
     assert(frag->uf_base.des_src_cnt <= 2);
+
+    /* belt and suspenders: second len should be zero if only one SGE */
+    assert(2 == frag->uf_base.des_src_cnt || 0 == frag->uf_src_seg[1].seg_len);
+
     sfrag->sf_size = 0;
     sfrag->sf_size += frag->uf_src_seg[0].seg_len;
     sfrag->sf_size += frag->uf_src_seg[1].seg_len;
