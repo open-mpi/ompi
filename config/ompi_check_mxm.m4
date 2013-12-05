@@ -44,9 +44,30 @@ AC_DEFUN([OMPI_CHECK_MXM],[
                               [ompi_check_mxm_happy="no"])],
           [ompi_check_mxm_happy="no"])
 
+
+
     CPPFLAGS="$ompi_check_mxm_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_mxm_$1_save_LDFLAGS"
     LIBS="$ompi_check_mxm_$1_save_LIBS"
+
+    AC_MSG_CHECKING(for MXM version compatibility)
+    AC_REQUIRE_CPP
+    old_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS -I$ompi_check_mxm_dir/include"
+    AC_COMPILE_IFELSE(
+            [AC_LANG_PROGRAM([[#include <mxm/api/mxm_version.h>]],
+                [[
+#if MXM_API < 15
+#error "MXM Version less than 1.5, please upgrade"
+#endif
+                ]])],
+            [ompi_mxm_version_ok="yes"],
+            [ompi_mxm_version_ok="no"])
+
+    AC_MSG_RESULT([$ompi_mxm_version_ok])
+    CFLAGS=$old_CFLAGS
+
+    AS_IF([test "$ompi_mxm_version_ok" = "no"], [ompi_check_mxm_happy="no"])
 
     AS_IF([test "$ompi_check_mxm_happy" = "yes"],
           [$2],
