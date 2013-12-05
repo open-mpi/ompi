@@ -18,6 +18,22 @@
 #include "btl_usnic_frag.h"
 #include "btl_usnic_endpoint.h"
 
+/* Invoke the descriptor callback for the frag, updating stats and clearing the
+ * _CALLBACK flag in the process. */
+#define OMPI_BTL_USNIC_DO_SEND_FRAG_CB(module, send_frag, comment)            \
+    do {                                                                      \
+        MSGDEBUG1_OUT("%s:%d: %s send callback for module=%p frag=%p\n",      \
+                      __func__, __LINE__,                                     \
+                      (comment), (void *)(module), (void *)(send_frag));      \
+        (send_frag)->sf_base.uf_base.des_cbfunc(                              \
+            &(module)->super,                                                 \
+            (send_frag)->sf_endpoint,                                         \
+            &(send_frag)->sf_base.uf_base,                                    \
+            OMPI_SUCCESS);                                                    \
+        frag->sf_base.uf_base.des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK; \
+        ++((module)->stats.pml_send_callbacks);                                     \
+    } while (0)
+
 /*
  * Reap an ACK send that is complete 
  */

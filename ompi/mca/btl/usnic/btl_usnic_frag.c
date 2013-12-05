@@ -169,9 +169,24 @@ send_frag_constructor(ompi_btl_usnic_send_frag_t *frag)
     desc->order = MCA_BTL_NO_ORDER;
     desc->des_flags = 0;
 
+    OBJ_CONSTRUCT(&frag->sf_convertor, opal_convertor_t);
     frag->sf_seg_post_cnt = 0;
 }
 
+static void
+send_frag_destructor(ompi_btl_usnic_send_frag_t *frag)
+{
+    mca_btl_base_descriptor_t *desc;
+
+    /* make sure nobody twiddled these values after the constructor */
+    desc = &frag->sf_base.uf_base;
+    assert(desc->des_src == frag->sf_base.uf_src_seg);
+    assert(0 == frag->sf_base.uf_src_seg[0].seg_len);
+    /* PML may change desc->des_dst to point elsewhere, cannot assert that it
+     * still points to our embedded segment */
+
+    OBJ_DESTRUCT(&frag->sf_convertor);
+}
 
 static void
 small_send_frag_constructor(ompi_btl_usnic_small_send_frag_t *frag)
@@ -202,6 +217,8 @@ small_send_frag_destructor(ompi_btl_usnic_small_send_frag_t *frag)
     fseg = &frag->ssf_segment;
     assert(fseg->ss_parent_frag == (struct ompi_btl_usnic_send_frag_t *)frag);
     assert(frag->ssf_base.sf_base.uf_type == OMPI_BTL_USNIC_FRAG_SMALL_SEND);
+    assert(frag->ssf_base.sf_base.uf_src_seg[0].seg_addr.pval ==
+           fseg->ss_base.us_payload.raw);
     OBJ_DESTRUCT(fseg);
 }
 
@@ -216,6 +233,7 @@ large_send_frag_constructor(ompi_btl_usnic_large_send_frag_t *lfrag)
 
     lfrag->lsf_buffer = NULL;
     OBJ_CONSTRUCT(&lfrag->lsf_seg_chain, opal_list_t);
+    lfrag->lsf_pack_on_the_fly = false;
 }
 
 static void
@@ -226,6 +244,13 @@ put_dest_frag_constructor(ompi_btl_usnic_put_dest_frag_t *pfrag)
     /* point dest to our utility segment */
     pfrag->uf_base.des_dst = pfrag->uf_dst_seg;
     pfrag->uf_base.des_dst_cnt = 1;
+}
+
+static void
+put_dest_frag_destructor(ompi_btl_usnic_put_dest_frag_t *pfrag)
+{
+    assert(pfrag->uf_base.des_dst == pfrag->uf_dst_seg);
+    assert(1 == pfrag->uf_base.des_dst_cnt);
 }
 
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_segment_t,
@@ -264,7 +289,7 @@ OBJ_CLASS_INSTANCE(ompi_btl_usnic_frag_t,
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_send_frag_t,
                    ompi_btl_usnic_frag_t,
                    send_frag_constructor,
-                   NULL);
+                   send_frag_destructor);
 
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_large_send_frag_t,
                    ompi_btl_usnic_send_frag_t,
@@ -279,4 +304,9 @@ OBJ_CLASS_INSTANCE(ompi_btl_usnic_small_send_frag_t,
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_put_dest_frag_t,
                    ompi_btl_usnic_frag_t,
                    put_dest_frag_constructor,
+                   put_dest_frag_destructor);
+
+OBJ_CLASS_INSTANCE(ompi_btl_usnic_rx_buf_t,
+                   ompi_free_list_item_t,
+                   NULL,
                    NULL);

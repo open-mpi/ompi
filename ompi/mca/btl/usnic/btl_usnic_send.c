@@ -98,13 +98,16 @@ ompi_btl_usnic_chunk_send_complete(ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_check_rts(frag->sf_endpoint);
 }
 
-/*
- * This routine handles the non-fastpath part of usnic_send().
- * The reason it is here is to prevent it getting inlined with
- * the rest of the function.
- */
+/* Responsible for completing non-fastpath parts of a put or send operation,
+ * including initializing any large frag bookkeeping fields and enqueuing the
+ * frag on the endpoint.
+ *
+ * This routine lives in this file to help prevent automatic inlining by the
+ * compiler.
+ *
+ * The "tag" only applies to sends. */
 int
-ompi_btl_usnic_send_slower(
+ompi_btl_usnic_finish_put_or_send(
     ompi_btl_usnic_module_t *module,
     ompi_btl_usnic_endpoint_t *endpoint,
     ompi_btl_usnic_send_frag_t *frag,
@@ -124,19 +127,18 @@ ompi_btl_usnic_send_slower(
         sfrag = (ompi_btl_usnic_small_send_frag_t *)frag;
         sseg = &sfrag->ssf_segment;
 
-        /*
-         * copy in user data if there is any, collapsing 2 segments into 1
+        /* Copy in user data if there is any, collapsing 2 segments into 1.
+         * We already packed via the convertor if necessary, so we only need to
+         * handle the simple memcpy case here.
          */
         if (frag->sf_base.uf_base.des_src_cnt > 1) {
+            /* no convertor */
+            assert(NULL != frag->sf_base.uf_src_seg[1].seg_addr.pval);
 
-            /* If not convertor, copy now.  Already copied in convertor case */
-            if (frag->sf_convertor == NULL) {
-                memcpy(((char *)frag->sf_base.uf_src_seg[0].seg_addr.lval +
-                         frag->sf_base.uf_src_seg[0].seg_len),
-                        frag->sf_base.uf_src_seg[1].seg_addr.pval,
-                        frag->sf_base.uf_src_seg[1].seg_len);
-
-            }
+            memcpy(((char *)frag->sf_base.uf_src_seg[0].seg_addr.lval +
+                        frag->sf_base.uf_src_seg[0].seg_len),
+                    frag->sf_base.uf_src_seg[1].seg_addr.pval,
+                    frag->sf_base.uf_src_seg[1].seg_len);
 
             /* update 1st segment length */
             frag->sf_base.uf_base.des_src_cnt = 1;
@@ -144,7 +146,6 @@ ompi_btl_usnic_send_slower(
                 frag->sf_base.uf_src_seg[1].seg_len;
         }
 
-        /* set up VERBS SG list */
         sseg->ss_base.us_sg_entry[0].length =
             sizeof(ompi_btl_usnic_btl_header_t) + frag->sf_size;
 
@@ -153,30 +154,26 @@ ompi_btl_usnic_send_slower(
         sseg->ss_base.us_btl_header->tag = tag;
     } else {
         ompi_btl_usnic_large_send_frag_t *lfrag;
-        mca_btl_base_descriptor_t *desc;
-        unsigned i;
 
+        /* Save info about the frag so that future invocations of
+         * usnic_handle_large_send can generate segments to put on the wire. */
         lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
-        desc = &frag->sf_base.uf_base;
-
-        /* Save info about the frag */
         lfrag->lsf_tag = tag;
         lfrag->lsf_cur_offset = 0;
-        lfrag->lsf_cur_ptr = desc->des_src[0].seg_addr.pval;
+        lfrag->lsf_cur_ptr = lfrag->lsf_des_src[0].seg_addr.pval;
         lfrag->lsf_cur_sge = 0;
-        lfrag->lsf_bytes_left_in_sge = desc->des_src[0].seg_len;
-        lfrag->lsf_bytes_left = desc->des_src[0].seg_len;
-        for (i=1; i<desc->des_src_cnt; ++i) {
-            lfrag->lsf_bytes_left += desc->des_src[i].seg_len;
+        lfrag->lsf_bytes_left_in_sge = lfrag->lsf_des_src[0].seg_len;
+        lfrag->lsf_bytes_left = frag->sf_size;
+
+        if (lfrag->lsf_pack_on_the_fly) {
+            lfrag->lsf_pack_bytes_left = frag->sf_size;
+        } else {
+            /* we pre-packed the convertor into a chain in prepare_src */
+            lfrag->lsf_pack_bytes_left = 0;
         }
     }
 
     /* queue this fragment into the send engine */
     rc = ompi_btl_usnic_endpoint_enqueue_frag(endpoint, frag);
-    frag->sf_base.uf_base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-
-    /* Stats */
-    ++(((ompi_btl_usnic_module_t*)module)->stats.pml_module_sends);
-
     return rc;
 }

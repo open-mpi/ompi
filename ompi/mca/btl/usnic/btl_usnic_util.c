@@ -222,3 +222,32 @@ void ompi_btl_usnic_util_abort(const char *msg, const char *file, int line,
     ompi_rte_abort(ret, NULL);
     /* Never returns */
 }
+
+
+/* Return the largest size data size that can be packed into max_len using the
+ * given convertor.  For example, a 1000 byte max_len buffer may only be able
+ * to hold 998 bytes if an indivisible convertor element straddles the 1000
+ * byte boundary.
+ *
+ * This routine internally clones the convertor and does not mutate it!
+ */
+size_t ompi_btl_usnic_convertor_pack_peek(
+    const opal_convertor_t *conv,
+    size_t max_len)
+{
+    int rc;
+    size_t packable_len, position;
+    opal_convertor_t temp;
+
+    OBJ_CONSTRUCT(&temp, opal_convertor_t);
+    position = conv->bConverted + max_len;
+    rc = opal_convertor_clone_with_position(conv, &temp, 1, &position);
+    if (OPAL_UNLIKELY(rc < 0)) {
+        BTL_ERROR(("unexpected convertor error"));
+        abort(); /* XXX */
+    }
+    assert(position >= conv->bConverted);
+    packable_len = position - conv->bConverted;
+    OBJ_DESTRUCT(&temp);
+    return packable_len;
+}

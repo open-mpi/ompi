@@ -20,6 +20,7 @@
 #
 
 AM_CPPFLAGS = $(btl_usnic_CPPFLAGS) 
+AM_CFLAGS = $(btl_usnic_CFLAGS)
 
 dist_pkgdata_DATA = \
     help-mpi-btl-usnic.txt

@@ -58,7 +58,7 @@
 #  define proc_bound() (ompi_rte_proc_is_bound)
 
 #else
-#  error OMPI version too old (<= 1.6)
+#  error OMPI version too old (< 1.6)
 #endif
 
 /* The FREE_LIST_*_MT stuff was introduced on the SVN trunk in r28722

@@ -65,6 +65,11 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
                        [$btl_usnic_have_ibv_event_gid_change],
                        [Whether we have IBV_EVENT_GID_CHANGE or not])
 
+    # In the v1.6 branch with --enable-picky we end up with warnings about
+    # otherwise fairly portable __VA_ARGS__ usage.  Suppress that here (just
+    # for the usnic BTL).
+    btl_usnic_CFLAGS="-Wno-variadic-macros"
+
     AS_IF([test "$btl_usnic_happy" = "yes"],
           [btl_usnic_WRAPPER_EXTRA_LDFLAGS="$btl_usnic_LDFLAGS"
            btl_usnic_WRAPPER_EXTRA_LIBS="$btl_usnic_LIBS"
@@ -73,6 +78,7 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
 
     # Substitute in the things needed to build USNIC
     AC_SUBST([btl_usnic_CPPFLAGS])
+    AC_SUBST([btl_usnic_CFLAGS])
     AC_SUBST([btl_usnic_LDFLAGS])
     AC_SUBST([btl_usnic_LIBS])
 ])dnl
