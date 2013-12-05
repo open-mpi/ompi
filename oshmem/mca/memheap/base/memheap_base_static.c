@@ -92,6 +92,8 @@ static int _check_perms(struct map_segment_desc *seg)
 
 static int _check_address(struct map_segment_desc *seg)
 {
+    /* FIXME Linux specific code */
+#ifdef __linux__
     extern unsigned _end;
     void* data_end = &_end;
 
@@ -110,6 +112,7 @@ static int _check_address(struct map_segment_desc *seg)
                         data_end, seg->start);
         return OSHMEM_ERROR;
     }
+#endif
     return OSHMEM_SUCCESS;
 }
 
@@ -163,7 +166,7 @@ static int _load_segments(void)
     struct map_segment_desc seg;
 
     memheap_context.n_segments = 0;
-
+    /* FIXME!!! Linux specific code */
     fp = fopen("/proc/self/maps", "r");
     if (NULL == fp) {
         MEMHEAP_ERROR("Failed to open /proc/self/maps");
