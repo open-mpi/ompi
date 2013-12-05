@@ -80,13 +80,6 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
                        [do we want java mpi bindings])
     AM_CONDITIONAL(OMPI_WANT_JAVA_BINDINGS, test "$WANT_MPI_JAVA_SUPPORT" = "1")
 
-   # Check for pinning support
-   # Uncomment when ready (or delete if we don't want it)
-    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1"],
-          [dnl OMPI_JAVA_CHECK_PINNING
-           echo ======we should check for java pinning support here...
-          ])
-
    # Are we happy?
     AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1"],
           [AC_MSG_WARN([******************************************************])
@@ -103,83 +96,4 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
         ompi/mpi/java/java/Makefile
         ompi/mpi/java/c/Makefile
     ])
-])
-
-###########################################################################
-
-AC_DEFUN([OMPI_JAVA_CHECK_PINNING],[
-###
-dnl testing if Java GC supports pinning
-###
-AC_MSG_CHECKING(whether Java garbage collector supports pinning)
-
-######################
-# JMS This has not been touched yet.  It needs to be OMPI-ified.
-# Change to AC_DEFINE (instead of the AC_SUBST of DEFPINS at the end)
-######################
-
-changequote(,)
-
-cat > conftest.java <<END
-public class conftest {
-    public static void main(String [] args) {
-        System.loadLibrary("conftest") ;
-        int a [] = new int [100] ;
-        System.exit(isCopy(a) ? 1 : 0) ;
-    }
-
-    static native boolean isCopy(int [] a) ;
-}
-END
-
-cat > conftest.c <<END
-#include "conftest.h"
-int p_xargc ; char **p_xargv ;  /* Stop AIX linker complaining */
-jboolean JNICALL Java_conftest_isCopy(JNIEnv* env, jclass cls, jintArray a) {
-
-    jboolean isCopy ;
-    (*env)->GetIntArrayElements(env, a, &isCopy) ;
-    return isCopy ;
-}
-END
-
-# For AIX shared object generation:
-cat > conftest.exp <<END
-Java_conftest_isCopy
-END
-
-changequote([,])
-
-$JAVA/bin/javac -classpath . conftest.java
-$JAVA/bin/javah -classpath . -jni conftest
-
-# Following are hacks... should find cc, etc by autoconf mechanisms
-cc -I$JAVA/include -I$JAVA/include/$JOS -c conftest.c
-case $target in
-    *aix* )
-        cc -G -bE:conftest.exp -o libconftest.so conftest.o
-        ;;
-    *)
-        cc $LDFLAG -o libconftest.so conftest.o
-        ;;
-esac
-
-
-if $JAVA/bin/java -cp "." -Djava.library.path="." conftest
-then
-  GC_SUPPORTS_PINNING=yes
-else
-  GC_SUPPORTS_PINNING=no
-fi
-
-AC_MSG_RESULT($GC_SUPPORTS_PINNING)
-
-rm -f conftest.* libconftest.so
-
-if test "$GC_SUPPORTS_PINNING" = "yes" 
-then
-  DEFPINS=-DGC_DOES_PINNING
-fi
-
-AC_SUBST(DEFPINS)
 ])

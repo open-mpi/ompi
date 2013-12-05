@@ -70,12 +70,7 @@ JNIEXPORT void JNICALL Java_mpi_Constant_setConstant(JNIEnv *env, jobject obj)
     ompi_java_setIntField(env, c, obj, "SUBVERSION", MPI_SUBVERSION);
     ompi_java_setIntField(env, c, obj, "ROOT", MPI_ROOT);
     ompi_java_setIntField(env, c, obj, "KEYVAL_INVALID", MPI_KEYVAL_INVALID);
-#ifdef GC_DOES_PINNING
     ompi_java_setIntField(env, c, obj, "BSEND_OVERHEAD", MPI_BSEND_OVERHEAD);
-#else
-    ompi_java_setIntField(env, c, obj, "BSEND_OVERHEAD",
-                          MPI_BSEND_OVERHEAD + sizeof(int));
-#endif  /* GC_DOES_PINNING */
     ompi_java_setIntField(env, c, obj, "MAX_OBJECT_NAME", MPI_MAX_OBJECT_NAME);
     ompi_java_setIntField(env, c, obj, "MAX_PORT_NAME", MPI_MAX_PORT_NAME);
     ompi_java_setIntField(env, c, obj, "MAX_DATAREP_STRING", MPI_MAX_DATAREP_STRING);
