@@ -582,7 +582,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.use_message_coalescing = 0;
 
     /* Indicates if library was built with GPU Direct RDMA support.  Not changeable.  */
-    mca_btl_openib_component.cuda_have_gdr = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT_60);
+    mca_btl_openib_component.cuda_have_gdr = OPAL_INT_TO_BOOL(OPAL_CUDA_GDR_SUPPORT);
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_cuda_gdr_support",
                                            "Whether CUDA GPU Direct RDMA support is built into library or not",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
@@ -601,7 +601,7 @@ int btl_openib_register_mca_params(void)
         opal_output(0, "GDR support requested but library does not have it built in.");
         return OMPI_ERROR;
     }
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     if (mca_btl_openib_component.cuda_want_gdr) {
         mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
         mca_btl_openib_module.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number - indicates set it to minimum */
@@ -610,7 +610,7 @@ int btl_openib_register_mca_params(void)
         mca_btl_openib_module.super.btl_cuda_eager_limit = 0; /* Turns off any of the GPU Direct RDMA code */
         mca_btl_openib_module.super.btl_cuda_rdma_limit = 0;  /* Unused */
     }
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 #endif /* OPAL_CUDA_SUPPORT */
     CHECK(mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,

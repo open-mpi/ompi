@@ -843,10 +843,10 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_register_error_fn_t btl_register_error;
     /** fault tolerant even notification */
     mca_btl_base_module_ft_event_fn_t btl_ft_event;
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     size_t      btl_cuda_eager_limit;  /**< switch from eager to RDMA */
     size_t      btl_cuda_rdma_limit;   /**< switch from RDMA to rndv pipeline */
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 

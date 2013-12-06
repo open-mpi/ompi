@@ -57,9 +57,9 @@ struct mca_mpool_base_registration_t {
     int32_t ref_count; 
     uint32_t flags;
     void *mpool_context;
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     unsigned long long gpu_bufID;
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 };  
 
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 

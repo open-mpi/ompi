@@ -36,9 +36,9 @@
 
 #include "opal/align.h"
 
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
 #include "ompi/mca/common/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/rte/rte.h"
@@ -47,9 +47,9 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_grdma.h"
 
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
 static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *addr, size_t size);
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 static void mca_mpool_grdma_pool_contructor (mca_mpool_grdma_pool_t *pool)
 {
     memset ((void *)((uintptr_t)pool + sizeof (pool->super)), 0, sizeof (*pool) - sizeof (pool->super));
@@ -236,7 +236,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
     if (!opal_list_is_empty (&mpool_grdma->pool->gc_list))
         do_unregistration_gc(mpool);
 
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     if (flags & MCA_MPOOL_FLAGS_CUDA_GPU_MEM) {
         size_t psize;
         mca_common_cuda_get_address_range(&base, &psize, addr);
@@ -245,7 +245,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
          * this call will boot it out of the cache. */
         check_for_cuda_freed_memory(mpool, base, psize);
     }
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 
     /* look through existing regs if not persistent registration requested.
      * Persistent registration are always registered and placed in the cache */
@@ -287,11 +287,11 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
     grdma_reg->base = base;
     grdma_reg->bound = bound;
     grdma_reg->flags = flags;
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     if (flags & MCA_MPOOL_FLAGS_CUDA_GPU_MEM) {
         mca_common_cuda_get_buffer_id(grdma_reg);
     }
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 
     if (false == bypass_cache) {
         rc = mpool->rcache->rcache_insert(mpool->rcache, grdma_reg, 0);
@@ -466,7 +466,7 @@ int mca_mpool_grdma_release_memory(struct mca_mpool_base_module_t *mpool,
  * that we do not have a cuMemAlloc, cuMemFree, cuMemAlloc state.  If we do
  * kick out the regisrations and deregister.  This function needs to be called
  * with the mpool->rcache->lock held. */
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
 static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *addr, size_t size)
 {
     mca_mpool_grdma_module_t *mpool_grdma = (mca_mpool_grdma_module_t *) mpool;
@@ -515,7 +515,7 @@ static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *add
 
     return rc;
 }
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 
 void mca_mpool_grdma_finalize(struct mca_mpool_base_module_t *mpool)
 {

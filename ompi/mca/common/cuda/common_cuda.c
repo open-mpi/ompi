@@ -91,9 +91,9 @@ struct cudaFunctionTable {
     int (*cuCtxGetDevice)(CUdevice *);
     int (*cuDeviceCanAccessPeer)(int *, CUdevice, CUdevice);
     int (*cuDeviceGet)(CUdevice *, int);
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     int (*cuPointerSetAttribute)(const void *, CUpointer_attribute, CUdeviceptr);
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
     int (*cuCtxSetCurrent)(CUcontext);
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
@@ -452,9 +452,9 @@ int mca_common_cuda_stage_one_init(void)
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxGetDevice);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceCanAccessPeer);
     OMPI_CUDA_DLSYM(libcuda_handle, cuDeviceGet);
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     OMPI_CUDA_DLSYM(libcuda_handle, cuPointerSetAttribute);
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_GDR_SUPPORT */
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxSetCurrent);
     return 0;
 }
@@ -842,7 +842,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     cuda_reg->base.bound = (unsigned char *)pbase + psize - 1;
     memcpy(&cuda_reg->memHandle, &memHandle, sizeof(memHandle));
 
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_SYNC_MEMOPS
     /* With CUDA 6.0, we can set an attribute on the memory pointer that will
      * ensure any synchronous copies are completed prior to any other access
      * of the memory region.  This means we do not need to record an event
@@ -870,7 +870,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
                        true, result, base);
         return OMPI_ERROR;
     }
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_SYNC_MEMOPS */
 
     return OMPI_SUCCESS;
 }
@@ -994,10 +994,10 @@ void mca_common_cuda_destruct_event(uint64_t *event)
  */
 void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
 {
-#if OPAL_CUDA_SUPPORT_60
-    /* No need for any of this with CUDA 6.0 */
+#if OPAL_CUDA_SYNC_MEMOPS
+    /* No need for any of this with SYNC_MEMOPS feature */
     return;
-#else /* OPAL_CUDA_SUPPORT_60 */
+#else /* OPAL_CUDA_SYNC_MEMOPS */
     CUipcEventHandle evtHandle;
     CUevent event;
     CUresult result;
@@ -1035,7 +1035,7 @@ void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
         opal_show_help("help-mpi-common-cuda.txt", "cuEventDestroy failed",
                        true, result);
     }
-#endif /* OPAL_CUDA_SUPPORT_60 */
+#endif /* OPAL_CUDA_SYNC_MEMOPS */
 }
 
 /*
@@ -1644,7 +1644,7 @@ int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base)
     return 0;
 }
 
-#if OPAL_CUDA_SUPPORT_60 && OMPI_GDR_SUPPORT
+#if OPAL_CUDA_GDR_SUPPORT && OMPI_GDR_SUPPORT
 /* Check to see if the memory was freed between the time it was stored in
  * the registration cache and now.  Return true if the memory was previously
  * freed.  This is indicated by the BUFFER_ID value in the registration cache
@@ -1707,5 +1707,5 @@ void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg)
 
 
 }
-#endif /* OPAL_CUDA_SUPPORT_60 */       
+#endif /* OPAL_CUDA_GDR_SUPPORT */       
 
