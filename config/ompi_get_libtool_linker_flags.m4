@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -164,6 +164,7 @@ AS_IF([test "x$enable_wrapper_rpath" = "xyes"],
        # ld-specific option).  These flags are more social than
        # DT_RPATH -- they can be overridden by LD_LIBRARY_PATH (where
        # a regular DT_RPATH cannot).
+       OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
        AC_MSG_CHECKING([if linker supports RUNPATH (vs. RPATH)])
        LDFLAGS_save=$LDFLAGS
        LDFLAGS="$LDFLAGS $rpath_args -Wl,--enable-new-dtags"
@@ -176,5 +177,6 @@ AS_IF([test "x$enable_wrapper_rpath" = "xyes"],
        AC_LANG_POP([C])
        LDFLAGS=$LDFLAGS_save
        AC_MSG_RESULT([$msg])
+       OPAL_VAR_SCOPE_POP
       ])
 ])dnl

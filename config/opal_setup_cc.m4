@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
@@ -337,6 +337,7 @@ AC_DEFUN([_OMPI_PROG_CC],[
     #
     # Check for the compiler
     #
+    OPAL_VAR_SCOPE_PUSH([ompi_cflags_save dummy ompi_cc_arvgv0])
     ompi_cflags_save="$CFLAGS"
     AC_PROG_CC
     BASECC="`basename $CC`"
@@ -346,4 +347,5 @@ AC_DEFUN([_OMPI_PROG_CC],[
     ompi_cc_argv0=[$]2
     OPAL_WHICH([$ompi_cc_argv0], [OPAL_CC_ABSOLUTE])
     AC_SUBST(OPAL_CC_ABSOLUTE)
+    OPAL_VAR_SCOPE_POP
 ])

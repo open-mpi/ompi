@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -50,7 +50,7 @@ AC_DEFUN_ONCE([_OMPI_SETUP_FC_COMPILER],[
 
 # General Fortran compiler setup
 AC_DEFUN([OMPI_SETUP_FC],[
-    OPAL_VAR_SCOPE_PUSH([ompi_fc_happy])
+    OPAL_VAR_SCOPE_PUSH([ompi_fc_happy LDFLAGS_save fc_version])
 
     # Force the intro banner to be displayed first
     AC_REQUIRE([_OMPI_SETUP_FC_BANNER])

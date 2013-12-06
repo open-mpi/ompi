@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2011 Mellanox Technologies. All rights reserved.
 
+# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -15,6 +16,8 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_HCOLL],[
+    OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_hcoll_libdir ompi_check_hcoll_incdir ompi_check_hcoll_libs ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
+
     AC_ARG_WITH([hcoll],
         [AC_HELP_STRING([--with-hcoll(=DIR)],
              [Build hcoll (Mellanox Hierarchical Collectives) support, searching for libraries in DIR])])
@@ -63,5 +66,7 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
           [AS_IF([test ! -z "$with_hcoll" -a "$with_hcoll" != "no"],
                  [AC_MSG_ERROR([HCOLL support requested but not found.  Aborting])])
            $3])
+
+    OPAL_VAR_SCOPE_POP
 ])
 

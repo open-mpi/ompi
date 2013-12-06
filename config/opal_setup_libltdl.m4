@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
@@ -145,6 +145,8 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
 # Setup to build the internal copy of libltdl
 #
 AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
+    OPAL_VAR_SCOPE_PUSH([CFLAGS_save CPPFLAGS_save])
+
     ompi_subdir_args="$ompi_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
     if test "$enable_shared" = "yes"; then
         ompi_subdir_args="$ompi_subdir_args --enable-shared"
@@ -192,4 +194,6 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         AC_MSG_ERROR([Cannot continue])
     fi
     CFLAGS="$CFLAGS_save"
+
+    OPAL_VAR_SCOPE_POP
 ])dnl

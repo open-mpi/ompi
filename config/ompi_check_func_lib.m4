@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -26,6 +26,7 @@ dnl
 # in LIBS) then lib is added to LIBS.  If func is not in lib, then
 # LIBS is not modified.
 AC_DEFUN([OMPI_CHECK_FUNC_LIB],[
+    OPAL_VAR_SCOPE_PUSH([LIBS_save])
     AS_VAR_PUSHDEF([ompi_var], [ompi_cv_func_lib_$1_$2])dnl
     AC_CACHE_CHECK([if we need -l$2 for $1],
         ompi_var,
@@ -45,4 +46,5 @@ AC_DEFUN([OMPI_CHECK_FUNC_LIB],[
     # so will check in -l$2 if we decided we needed it above
     AC_CHECK_FUNCS([$1], $3, $4)
     AS_VAR_POPDEF([ompi_var])dnl
+    OPAL_VAR_SCOPE_POP
 ])
