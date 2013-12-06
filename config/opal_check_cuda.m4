@@ -71,18 +71,27 @@ AS_IF([test "$with_cuda" = "no" -o "x$with_cuda" = "x"],
 
 # If we have CUDA support, check to see if we have CUDA 4.1 support
 AS_IF([test "$opal_check_cuda_happy"="yes"],
-    AC_CHECK_HEADER([$opal_cuda_incdir/cuda.h])
     AC_CHECK_MEMBER([struct CUipcMemHandle_st.reserved], [CUDA_SUPPORT_41=1], [CUDA_SUPPORT_41=0],
         [#include <$opal_cuda_incdir/cuda.h>]),
     [])
 
-# If we have CUDA support, check to see if we have CUDA 6.0 support.
-# Look for new CUDA 6.0 attribute.
+# If we have CUDA support, check to see if we have support for SYNC_MEMOPS
+# which was first introduced in CUDA 6.0.
 AS_IF([test "$opal_check_cuda_happy"="yes"],
-    AC_CHECK_HEADER([$opal_cuda_incdir/cuda.h])
-    AC_CHECK_DECL([CU_POINTER_ATTRIBUTE_BUFFER_ID], [CUDA_SUPPORT_60=1], [CUDA_SUPPORT_60=0],
+    AC_CHECK_DECL([CU_POINTER_ATTRIBUTE_SYNC_MEMOPS], [CUDA_SYNC_MEMOPS=1], [CUDA_SYNC_MEMOPS=0],
         [#include <$opal_cuda_incdir/cuda.h>]),
     [])
+
+# If we have CUDA support, check to see if we have CUDA 6.0 or later.
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[#include <$opal_cuda_incdir/cuda.h>]],
+        [[
+#if CUDA_VERSION < 6000
+#error "CUDA_VERSION is less than 6000"
+#endif
+        ]])],
+        [CUDA_VERSION_60_OR_GREATER=1],
+        [CUDA_VERSION_60_OR_GREATER=0])
 
 AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
@@ -103,8 +112,14 @@ AM_CONDITIONAL([OPAL_cuda_support_41], [test "x$CUDA_SUPPORT_41" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT_41],$CUDA_SUPPORT_41,
                    [Whether we have CUDA 4.1 support available])
 
-AM_CONDITIONAL([OPAL_cuda_support_60], [test "x$CUDA_SUPPORT_60" = "x1"])
-AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT_60],$CUDA_SUPPORT_60,
-                   [Whether we have CUDA 6.0 support available])
+AM_CONDITIONAL([OPAL_cuda_sync_memops], [test "x$CUDA_SYNC_MEMOPS" = "x1"])
+AC_DEFINE_UNQUOTED([OPAL_CUDA_SYNC_MEMOPS],$CUDA_SYNC_MEMOPS,
+                   [Whether we have CUDA CU_POINTER_ATTRIBUTE_SYNC_MEMOPS support available])
+
+# There is nothing specific we can check for to see if GPU Direct RDMA is available.
+# Therefore, we check to see whether we have CUDA 6.0 or later.
+AM_CONDITIONAL([OPAL_cuda_gdr_support], [test "x$CUDA_VERSION_60_OR_GREATER" = "x1"])
+AC_DEFINE_UNQUOTED([OPAL_CUDA_GDR_SUPPORT],$CUDA_VERSION_60_OR_GREATER,
+                   [Whether we have CUDA GDR support available])
 
 ])

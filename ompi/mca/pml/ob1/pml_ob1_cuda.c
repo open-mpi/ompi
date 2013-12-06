@@ -54,13 +54,13 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
                                         size_t size) {
     int rc;
 #if OPAL_CUDA_SUPPORT_41
-#if OPAL_CUDA_SUPPORT_60
+#if OPAL_CUDA_GDR_SUPPORT
     /* With some BTLs, switch to RNDV from RGET at large messages */
     if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) && 
         (sendreq->req_send.req_bytes_packed > (bml_btl->btl->btl_cuda_rdma_limit - sizeof(mca_pml_ob1_hdr_t)))) {
         return mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, 0, 0);
     }
-#endif /* OPAL_CUDA_SUPPORT_60 */    
+#endif /* OPAL_CUDA_GDR_SUPPORT */    
 
     sendreq->req_send.req_base.req_convertor.flags &= ~CONVERTOR_CUDA;
     if (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
