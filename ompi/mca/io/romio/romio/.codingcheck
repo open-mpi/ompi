@@ -39,7 +39,7 @@
 	'PFS'=> romio,
 	'PIOFS'=> romio,
 	'MPICH'=> romio,
-	'MPICH2' => romio,
+	'MPICH' => romio,
 	'MPI_OFFSET_IS_INT'=> romio,
 	'MPI_COMBINER_NAMED'=> romio,
 	'_UNICOS'=> romio,

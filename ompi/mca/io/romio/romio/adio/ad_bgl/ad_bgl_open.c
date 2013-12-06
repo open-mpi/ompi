@@ -153,7 +153,7 @@ static void scaleable_stat(ADIO_File fd)
 	    else
 	    {
 		/* Hmm.  Guess we'll assume the worst-case, that it's not GPFS
-		 * or PVFS2 below */
+		 * or BGLOCKLESSMPIO_F_TYPE (default PVFS2) below */
 		buf[1] = -1; /* bogus magic number */
 		DBGV_FPRINTF(stderr,"Statfs '%s' failed with rc=%d, errno=%d\n",dir,rc,errno);
 	    }
@@ -171,7 +171,7 @@ static void scaleable_stat(ADIO_File fd)
 
     /* data from statfs */
     if ((bgl_statfs.f_type == GPFS_SUPER_MAGIC) ||
-	    (bgl_statfs.f_type == PVFS2_SUPER_MAGIC))
+	    (bgl_statfs.f_type == bglocklessmpio_f_type))
     {
 	((ADIOI_BGL_fs*)fd->fs_ptr)->fsync_aggr = 
 	    ADIOI_BGL_FSYNC_AGGREGATION_ENABLED;
@@ -231,11 +231,6 @@ void ADIOI_BGL_Open(ADIO_File fd, int *error_code)
 
     if(fd->fd_sys != -1)
     {
-        struct stat64 bgl_stat;
-        struct statfs bgl_statfs;
-        char* dir;
-        int rc;
-
         /* Initialize the ad_bgl file system specific information */
         AD_BGL_assert(fd->fs_ptr == NULL);
         fd->fs_ptr = (ADIOI_BGL_fs*) ADIOI_Malloc(sizeof(ADIOI_BGL_fs));

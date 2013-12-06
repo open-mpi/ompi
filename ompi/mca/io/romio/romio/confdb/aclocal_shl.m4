@@ -113,7 +113,7 @@ case "$enable_sharedlibs" in
     C_LINK_SHL='${CC} -dynamiclib -undefined suppress -single_module -flat_namespace'
     CC_SHL='${CC} -fPIC'
     # No way in osx to specify the location of the shared libraries at link
-    # time (see the code in createshlib in mpich2/src/util)
+    # time (see the code in createshlib in mpich/src/util)
     # As of 10.5, -Wl,-rpath,dirname should work .  The dirname 
     # must be a single directory, not a colon-separated list (use multiple
     # -Wl,-rpath,path for each of the paths in the list).  However, os x
@@ -380,7 +380,7 @@ AC_DEFUN([PAC_CC_SUBDIR_SHLIBS],[
             fi
 	    # Libtool needs master_top_builddir
 	    if test "X$master_top_builddir" = "X" ; then
-	        AC_MSG_ERROR([Libtool requires master_top_builddir - check configure.in sources])
+	        AC_MSG_ERROR([Libtool requires master_top_builddir - check configure.ac sources])
 	    fi
 	    AC_SUBST(master_top_builddir)
 	fi
@@ -405,3 +405,104 @@ if test "$SHLIB_EXT" = "unknown" ; then
    esac
 fi
 ])
+
+dnl PAC_COMPILER_SHLIB_FLAGS(compiler-var,output-file)
+dnl
+dnl Uses confdb/config.rpath to determine important linking flags and
+dnl information.  This is mainly intended to support the compiler wrapper
+dnl scripts in MPICH ("mpicc" and friends) which cannot directly use libtool to
+dnl handle linking.  MPICH's compiler wrappers attempt to link executables with
+dnl an rpath by default.  The resulting variable assignment statements will be
+dnl placed into "output-file", which is then suitable for AC_SUBST_FILE or
+dnl sourcing in a shell script (including configure itself).
+dnl
+dnl This macro assumes that the basic tests associated with "compiler-var" have
+dnl been run already, but does not AC_REQUIRE them in order to prevent problems
+dnl with "expanded before required" when requiring the AC_PROG_{CC,F77,FC,CXX}
+dnl macros.
+dnl
+dnl Example usage:
+dnl
+dnl ----8<----
+dnl # compute flags for linking executables against shared libraries when using
+dnl # the modern Fortran compiler ($FC).
+dnl PAC_COMPILER_SHLIB_FLAGS([FC],[src/env/fc_shlib.conf])
+dnl ----8<----
+AC_DEFUN([PAC_COMPILER_SHLIB_FLAGS],[
+AC_REQUIRE_AUX_FILE([config.rpath])
+AC_REQUIRE([AC_CANONICAL_HOST])
+
+# It appears that the libtool dynamic linking strategy on Darwin is this:
+# 1. Link all shared libs with "-install_name /full/path/to/libfoo.dylib"
+# 2. Don't do anything special when linking programs, since it seems that the
+# darwin dynamic linker will always use the "install_name" field from the lib
+# that was found at program link-time.  (CONFIRMED) This is in opposition to
+# the way that Linux does it, where specifying a "-rpath" argument at program
+# link-time is important.
+#
+# There is an alternative darwin strategy for versions
+# >= 10.5, see this: http://www.cmake.org/pipermail/cmake/2010-August/038970.html
+# (goodell@ 2011-06-17)
+
+AC_MSG_CHECKING([for shared library (esp. rpath) characteristics of $1])
+
+# unfortunately, config.rpath expects the compiler in question is always CC and
+# uses several other environment variables as input
+PAC_PUSH_FLAG([CC])
+PAC_PUSH_FLAG([GCC])
+PAC_PUSH_FLAG([LD])
+# these two don't currently get overridden, but we push/pop them for safety in
+# case they do in the future
+PAC_PUSH_FLAG([LDFLAGS])
+PAC_PUSH_FLAG([with_gnu_ld])
+
+# set the temporary override values (if any)
+m4_case([$1],
+[CC],
+    [:], dnl do nothing special for CC, values are already correct
+[F77],
+    [CC="$$1"
+     GCC="$G77"
+     LD="$LD_F77"],
+[FC],
+    [CC="$$1"
+     GCC="$GCC_FC"
+     LD="$LD_FC"],
+[CXX],
+    [CC="$$1"
+     GCC="$GXX"
+     LD="$LD_CXX"],
+[m4_fatal([unknown compiler argument "$1"])])
+
+# ensure the values are available to the script
+export CC
+export GCC
+export LDFLAGS
+export LD
+export with_gnu_ld
+
+# FIXME these variables refer to each other and prefixing breaks that, so we
+# will disable the prefixing for now
+## force all variables set in $2 to be prefixed with the compiler name instead of "acl_cv_"
+#PAC_CC_PREFIX=$1_
+PAC_CC_PREFIX=
+export PAC_CC_PREFIX
+
+AS_IF([$ac_aux_dir/config.rpath "$host" > $2],[:],[AC_MSG_ERROR([unable to execute $ac_aux_dir/config.rpath])])
+
+C_LINKPATH_SHL=""
+AC_SUBST([C_LINKPATH_SHL])
+
+AS_UNSET([PAC_CC_PREFIX])
+rm -f conftest.out
+
+# restore the old values
+PAC_POP_FLAG([with_gnu_ld])
+PAC_POP_FLAG([LD])
+PAC_POP_FLAG([LDFLAGS])
+PAC_POP_FLAG([GCC])
+PAC_POP_FLAG([CC])
+
+AC_MSG_RESULT([done (results in $2)])
+])
+

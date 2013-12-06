@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2004 University of Chicago. 
@@ -12,10 +12,10 @@
 /* Generic implementation of IwriteContig calls the blocking WriteContig
  * immediately.
  */
-void ADIOI_FAKE_IwriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_FAKE_IwriteContig(ADIO_File fd, const void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, ADIO_Request *request,
-			    int *error_code)  
+			    int *error_code)
 {
     ADIO_Status status;
     MPI_Offset len;
@@ -43,8 +43,8 @@ void ADIOI_FAKE_IwriteContig(ADIO_File fd, void *buf, int count,
 /* Generic implementation of IwriteStrided calls the blocking WriteStrided
  * immediately.
  */
-void ADIOI_FAKE_IwriteStrided(ADIO_File fd, void *buf, int count, 
-			     MPI_Datatype datatype, int file_ptr_type,
+void ADIOI_FAKE_IwriteStrided(ADIO_File fd, const void *buf, int count,
+                             MPI_Datatype datatype, int file_ptr_type,
 			     ADIO_Offset offset, ADIO_Request *request,
 			     int *error_code)
 {

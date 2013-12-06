@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2001 University of Chicago. 
@@ -16,15 +16,15 @@
 
 void ADIOI_TESTFS_Open(ADIO_File fd, int *error_code);
 void ADIOI_TESTFS_Close(ADIO_File fd, int *error_code);
-void ADIOI_TESTFS_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_TESTFS_ReadContig(ADIO_File fd, void *buf, int count,
 			     MPI_Datatype datatype, int file_ptr_type,
 			     ADIO_Offset offset, ADIO_Status *status, int
 			     *error_code);
-void ADIOI_TESTFS_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_TESTFS_WriteContig(ADIO_File fd, const void *buf, int count,
 			      MPI_Datatype datatype, int file_ptr_type,
 			      ADIO_Offset offset, ADIO_Status *status, int
 			      *error_code);   
-void ADIOI_TESTFS_IwriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_TESTFS_IwriteContig(ADIO_File fd, const void *buf, int count,
 			       MPI_Datatype datatype, int file_ptr_type,
 			       ADIO_Offset offset, ADIO_Request *request, int
 			       *error_code);   
@@ -42,7 +42,7 @@ void ADIOI_TESTFS_WriteComplete(ADIO_Request *request, ADIO_Status *status,
 				int *error_code); 
 void ADIOI_TESTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, 
 			int *error_code); 
-void ADIOI_TESTFS_WriteStrided(ADIO_File fd, void *buf, int count,
+void ADIOI_TESTFS_WriteStrided(ADIO_File fd, const void *buf, int count,
 			       MPI_Datatype datatype, int file_ptr_type,
 			       ADIO_Offset offset, ADIO_Status *status,
 			       int *error_code);
@@ -50,7 +50,7 @@ void ADIOI_TESTFS_ReadStrided(ADIO_File fd, void *buf, int count,
 			      MPI_Datatype datatype, int file_ptr_type,
 			      ADIO_Offset offset, ADIO_Status *status, int
 			      *error_code);
-void ADIOI_TESTFS_WriteStridedColl(ADIO_File fd, void *buf, int count,
+void ADIOI_TESTFS_WriteStridedColl(ADIO_File fd, const void *buf, int count,
 				   MPI_Datatype datatype, int file_ptr_type,
 				   ADIO_Offset offset, ADIO_Status *status, int
 				   *error_code);
@@ -62,7 +62,7 @@ void ADIOI_TESTFS_IreadStrided(ADIO_File fd, void *buf, int count,
 			       MPI_Datatype datatype, int file_ptr_type,
 			       ADIO_Offset offset, ADIO_Request *request, int
 			       *error_code);
-void ADIOI_TESTFS_IwriteStrided(ADIO_File fd, void *buf, int count,
+void ADIOI_TESTFS_IwriteStrided(ADIO_File fd, const void *buf, int count,
 				MPI_Datatype datatype, int file_ptr_type,
 				ADIO_Offset offset, ADIO_Request *request, int
 				*error_code);
@@ -76,7 +76,7 @@ void ADIOI_TESTFS_Get_shared_fp(ADIO_File fd, int size,
 				int *error_code);
 void ADIOI_TESTFS_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, 
 				int *error_code);
-void ADIOI_TESTFS_Delete(char *filename, int *error_code);
+void ADIOI_TESTFS_Delete(const char *filename, int *error_code);
 
 #endif
 

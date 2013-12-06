@@ -213,6 +213,9 @@ int main(int argc, char **argv) {
 	    fprintf(stderr, "Found %d errors\n", nr_errors);
     }
 
+    free(blocklengths);
+    free(displacements);
+    free(buf);
     MPI_Type_free(&ftype);
     MPI_Finalize();
     return 0;

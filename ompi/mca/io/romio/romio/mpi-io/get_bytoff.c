@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -38,32 +38,30 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_File_get_byte_offset(MPI_File mpi_fh,
-			     MPI_Offset offset,
-			     MPI_Offset *disp)
+int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp)
 {
     int error_code;
-    ADIO_File fh;
+    ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_GET_BYTE_OFFSET";
 
-    fh = MPIO_File_resolve(mpi_fh);
+    adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */
-    MPIO_CHECK_FILE_HANDLE(fh, myname, error_code);
+    MPIO_CHECK_FILE_HANDLE(adio_fh, myname, error_code);
 
     if (offset < 0)
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_ARG,
 					  "**iobadoffset", 0);
-	error_code = MPIO_Err_return_file(fh, error_code);
+	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
     }
 
-    MPIO_CHECK_NOT_SEQUENTIAL_MODE(fh, myname, error_code);
+    MPIO_CHECK_NOT_SEQUENTIAL_MODE(adio_fh, myname, error_code);
     /* --END ERROR HANDLING-- */
 
-    ADIOI_Get_byte_offset(fh, offset, disp);
+    ADIOI_Get_byte_offset(adio_fh, offset, disp);
 
 fn_exit:
 

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -52,7 +52,7 @@ void ADIOI_HFS_Open(ADIO_File fd, int *error_code)
 #endif
 
 	if (fd->fd_sys == -1 ) {
-#ifdef MPICH2
+#ifdef MPICH
 	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io", 
 		"**io %s", strerror(errno));
 #elif defined(PRINT_ERR_MSG)

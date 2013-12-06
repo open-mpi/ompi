@@ -38,5 +38,8 @@
 #if defined(PACKAGE_VERSION)
 #undef PACKAGE_VERSION
 #endif
+#if defined(PACKAGE_URL)
+#undef PACKAGE_URL
+#endif
 
 #endif /* ROMIOCONF_UNDEFS_H */

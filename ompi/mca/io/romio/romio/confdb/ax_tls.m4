@@ -51,7 +51,7 @@ AC_DEFUN([AX_TLS], [
        case $ax_tls_keyword in
           none) ac_cv_tls=none ; break ;;
 	  *)
-             # MPICH2 modification: This was an AC_TRY_COMPILE before, but
+             # MPICH modification: This was an AC_TRY_COMPILE before, but
              # Darwin with non-standard compilers will accept __thread at
              # compile time but fail to link due to an undefined
              # "__emutls_get_address" symbol unless -lgcc_eh is added to the
@@ -65,7 +65,7 @@ AC_DEFUN([AX_TLS], [
 ])
 
   if test "$ac_cv_tls" != "none"; then
-    # MPICH2 modification: this was "TLS" before instead of
+    # MPICH modification: this was "TLS" before instead of
     # "MPIU_TLS_SPECIFIER", but TLS had a reasonably high chance of conflicting
     # with a system library.
     AC_DEFINE_UNQUOTED([MPIU_TLS_SPECIFIER], $ac_cv_tls, [If the compiler supports a TLS storage class define it to that here])

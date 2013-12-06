@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   Copyright (C) 2008 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -50,11 +50,14 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
     ADIO_Offset st_end_offset[2];
     ADIO_Offset *all_st_end_offsets = NULL;
     int filetype_is_contig, buftype_is_contig, is_contig;
-    ADIO_Offset orig_fp, off;
+    ADIO_Offset off;
     int interleave_count = 0, i, nprocs, myrank, nprocs_for_coll;
     int cb_enable;
     ADIO_Offset bufsize;
-    MPI_Aint extent, bufextent;
+    MPI_Aint extent;
+#ifdef DEBUG2
+    MPI_Aint bufextent;
+#endif
     int size;
     int agg_rank;
 
@@ -110,7 +113,6 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
        completing. */
 
     nprocs_for_coll = fd->hints->cb_nodes;
-    orig_fp = fd->fp_ind;
 
     if (rdwr == ADIOI_READ)
 	cb_enable = fd->hints->cb_read;
@@ -190,7 +192,9 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
     }
 
     MPI_Type_extent(datatype, &extent);
+#ifdef DEBUG2
     bufextent = extent * count;
+#endif
     MPI_Type_size(datatype, &size);
     bufsize = size * count;
 

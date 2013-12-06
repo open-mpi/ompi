@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2001 University of Chicago. 
@@ -8,7 +8,7 @@
 #include "ad_testfs.h"
 #include "adioi.h"
 
-void ADIOI_TESTFS_Delete(char *filename, int *error_code)
+void ADIOI_TESTFS_Delete(const char *filename, int *error_code)
 {
     int myrank, nprocs;
 

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2001 University of Chicago. 
@@ -15,7 +15,7 @@
  *
  * Implemented by immediately calling WriteContig()
  */
-void ADIOI_TESTFS_IwriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_TESTFS_IwriteContig(ADIO_File fd, const void *buf, int count,
 			       MPI_Datatype datatype, int file_ptr_type,
 			       ADIO_Offset offset, ADIO_Request *request, int
 			       *error_code)
@@ -40,7 +40,7 @@ void ADIOI_TESTFS_IwriteContig(ADIO_File fd, void *buf, int count,
 
 }
 
-void ADIOI_TESTFS_IwriteStrided(ADIO_File fd, void *buf, int count,
+void ADIOI_TESTFS_IwriteStrided(ADIO_File fd, const void *buf, int count,
 				MPI_Datatype datatype, int file_ptr_type,
 				ADIO_Offset offset, ADIO_Request *request, int
 				*error_code)

@@ -22,17 +22,23 @@
 #include "ad_bgl_tuning.h"
 #include "mpi.h"
 
+#if !defined(PVFS2_SUPER_MAGIC)
+  #define PVFS2_SUPER_MAGIC (0x20030528)
+#endif
+
 int 	bglmpio_timing;
 int 	bglmpio_timing2;
 int 	bglmpio_comm;
 int 	bglmpio_tunegather;
 int 	bglmpio_tuneblocking;
+long    bglocklessmpio_f_type;
 
 double	bglmpio_prof_cw    [BGLMPIO_CIO_LAST];
 double	bglmpio_prof_cr    [BGLMPIO_CIO_LAST];
 
 /* set internal variables for tuning environment variables */
-/** \page env_vars Environment Variables
+/** \page mpiio_vars MPIIO Configuration
+  \section env_sec Environment Variables
  * - BGLMPIO_COMM - Define how data is exchanged on collective
  *   reads and writes.  Possible values:
  *   - 0 - Use MPI_Alltoallv.
@@ -65,9 +71,17 @@ double	bglmpio_prof_cr    [BGLMPIO_CIO_LAST];
  *   MPI_Alltoallv to exchange domain information.
  *   - Default is 1.
  *
+ * - BGLOCKLESSMPIO_F_TYPE - Specify a filesystem type that should run
+ *   the ad_bglockless driver.   NOTE: Using romio prefixes (such as
+ *   "bgl:" or "bglockless:") on a file name will override this environment
+ *   variable.  Possible values:
+ *   - 0xnnnnnnnn - Any valid file system type (or "magic number") from
+ *                  statfs() field f_type.
+ *   - The default is 0x20030528 (PVFS2_SUPER_MAGIC)
+ *
 */
 void ad_bgl_get_env_vars() {
-    char *x;
+    char *x, *dummy;
 
     bglmpio_comm   = 0;
 	x = getenv( "BGLMPIO_COMM"         ); 
@@ -84,6 +98,11 @@ void ad_bgl_get_env_vars() {
     bglmpio_tuneblocking = 1;
 	x = getenv( "BGLMPIO_TUNEBLOCKING" ); 
 	if (x) bglmpio_tuneblocking = atoi(x);
+    bglocklessmpio_f_type = PVFS2_SUPER_MAGIC;
+    x = getenv( "BGLOCKLESSMPIO_F_TYPE" );
+    if (x) bglocklessmpio_f_type = strtol(x,&dummy,0);
+    DBG_FPRINTF(stderr,"BGLOCKLESSMPIO_F_TYPE=%ld/%#lX\n",
+            bglocklessmpio_f_type,bglocklessmpio_f_type);
 }
 
 /* report timing breakdown for MPI I/O collective call */

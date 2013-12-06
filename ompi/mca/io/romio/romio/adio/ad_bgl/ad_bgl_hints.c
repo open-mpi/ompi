@@ -3,7 +3,7 @@
 /* ---------------------------------------------------------------- */
 /**
  * \file ad_bgl_hints.c
- * \brief ???
+ * \brief BlueGene hint processing
  */
 
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
@@ -23,6 +23,24 @@
 #define	  ADIOI_BGL_IND_RD_BUFFER_SIZE_DFLT	"4194304"
 #define   ADIOI_BGL_IND_WR_BUFFER_SIZE_DFLT	"4194304"
 #define   ADIOI_BGL_NAGG_IN_PSET_HINT_NAME	"bgl_nodes_pset"
+/** \page mpiio_vars MPIIO Configuration
+ *
+ * BlueGene MPIIO configuration and performance tuning. Used by ad_bgl and ad_bglockless ADIO's.
+ *
+ * \section hint_sec Hints
+ * - bgl_nodes_pset - Specify how many aggregators to use per pset.
+ *   This hint will override the cb_nodes hint based on BlueGene psets.
+ *   - N - Use N nodes per pset as aggregators.
+ *   - Default is based on partition configuration and cb_nodes.
+ *
+ *   The following default key/value pairs may differ from other platform defaults.
+ *
+ *     - key = cb_buffer_size     value = 16777216
+ *     - key = romio_cb_read      value = enable
+ *     - key = romio_cb_write     value = enable
+ *     - key = ind_rd_buffer_size value = 4194304
+ *     - key = ind_wr_buffer_size value = 4194304
+ */
 
 /* Compute the aggregator-related parameters that are required in 2-phase collective IO of ADIO. */
 extern int 

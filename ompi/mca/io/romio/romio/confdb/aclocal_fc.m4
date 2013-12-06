@@ -1,3 +1,8 @@
+dnl PAC_FC_SEARCH_LIST - expands to a whitespace separated list of modern
+dnl fortran compilers for use with AC_PROG_FC that is more suitable for HPC
+dnl software packages
+AC_DEFUN([PAC_FC_SEARCH_LIST],
+         [ifort pgf90 pathf90 pathf95 xlf90 xlf95 xlf2003 gfortran f90 epcf90 f95 fort lf95 g95 ifc efc gfc])
 dnl /*D
 dnl PAC_PROG_FC([COMPILERS])
 dnl
@@ -15,7 +20,7 @@ dnl It is believed that under HP-UX `fort77' is the name of the native
 dnl compiler.  On some Cray systems, fort77 is a native compiler.
 dnl frt is the Fujitsu F77 compiler.
 dnl pgf77 and pgf90 are the Portland Group F77 and F90 compilers.
-dnl xlf/xlf90/xlf95 are IBM (AIX) F77/F90/F95 compilers.
+dnl xlf/xlf90/xlf95/xlf2003 are IBM (AIX) F77/F90/F95/F2003 compilers.
 dnl lf95 is the Lahey-Fujitsu compiler.
 dnl fl32 is the Microsoft Fortran "PowerStation" compiler.
 dnl af77 is the Apogee F77 compiler for Intergraph hardware running CLIX.
@@ -28,12 +33,14 @@ dnl ifc - An older Intel compiler
 dnl fc  - A compiler on some unknown system.  This has been removed because
 dnl       it may also be the name of a command for something other than
 dnl       the Fortran compiler (e.g., fc=file system check!)
+dnl gfortran - The GNU Fortran compiler (not the same as g95)
+dnl gfc - An alias for gfortran recommended in cygwin installations
 dnl D*/
+dnl NOTE: this macro suffers from a basically intractable "expanded before it
+dnl was required" problem when libtool is also used
 AC_DEFUN([PAC_PROG_FC],[
 PAC_PUSH_FLAG([FCFLAGS])
-AC_PROG_FC([m4_default([$1],
-           [ifort pgf90 pathf90 pathf95 xlf90 xlf95 f90 epcf90 f95 fort lf95 \
-            gfortran g95 ifc efc])])
+AC_PROG_FC([m4_default([$1],[PAC_FC_SEARCH_LIST])])
 PAC_POP_FLAG([FCFLAGS])
 ])
 dnl
@@ -111,6 +118,7 @@ AC_DEFUN([PAC_PROG_FC_INT_KIND],[
 # Set the default
 $1=-1
 if test "$pac_cv_prog_fc_cross" = "yes" ; then
+    AS_IF([test -z "$3"],[AC_MSG_ERROR(['$3' is empty])])
     $1="$3"
 else
     AC_LANG_PUSH(Fortran)
@@ -239,9 +247,9 @@ dnl
 dnl
 dnl PAC_FC_MODULE_INCFLAG
 AC_DEFUN([PAC_FC_MODULE_INCFLAG],[
+AC_REQUIRE([PAC_FC_MODULE_EXT])
 AC_CACHE_CHECK([for Fortran 90 module include flag],
 pac_cv_fc_module_incflag,[
-AC_REQUIRE([PAC_FC_MODULE_EXT])
 AC_LANG_PUSH(Fortran)
 AC_LANG_CONFTEST([
     AC_LANG_SOURCE([
@@ -273,9 +281,7 @@ AC_COMPILE_IFELSE([],[
         # cat conftest.$ac_ext >&AS_MESSAGE_LOG_FD
         _AC_MSG_LOG_CONFTEST
     fi
-    ],
-    []
-)
+],[])
 # Remove the conftest* after AC_LANG_CONFTEST
 rm -rf conftest.dSYM
 rm -f conftest.$ac_ext
@@ -343,7 +349,95 @@ dnl
 AC_DEFUN([PAC_FC_MODULE],[
 PAC_FC_MODULE_EXT
 PAC_FC_MODULE_INCFLAG
+PAC_FC_MODULE_OUTFLAG
 ])
+dnl
+dnl PAC_FC_MODULE_OUTFLAG
+AC_DEFUN([PAC_FC_MODULE_OUTFLAG],[
+AC_REQUIRE([PAC_FC_MODULE_EXT])
+AC_CACHE_CHECK([for Fortran 90 module output directory flag],
+               [pac_cv_fc_module_outflag],
+[
+AC_LANG_PUSH([Fortran])
+AC_LANG_CONFTEST([
+    AC_LANG_SOURCE([
+        module conf
+        integer n
+        parameter (n=1)
+        end module conf
+    ])
+])
+pac_madedir="no"
+if test ! -d conf ; then mkdir conftestdir ; pac_madedir="yes"; fi
+if test "$pac_cv_fc_module_case" = "upper" ; then
+    pac_module="CONF.$pac_cv_fc_module_ext"
+else
+    pac_module="conf.$pac_cv_fc_module_ext"
+fi
+
+# check base case that the compiler can create modules and that they endup in
+# the current directory
+AC_COMPILE_IFELSE([],[
+    if test -s "$pac_module" ; then
+        rm -f "$pac_module"
+        # Remove any temporary files, and hide the work.pc file
+        # (if the compiler generates them)
+        if test -f work.pc ; then
+            mv -f work.pc conftest.pc
+        fi
+        rm -f work.pcl
+    else
+        AC_MSG_WARN([Unable to build a simple Fortran 90 module])
+        # echo "configure: failed program was:" >&AS_MESSAGE_LOG_FD
+        # cat conftest.$ac_ext >&AS_MESSAGE_LOG_FD
+        _AC_MSG_LOG_CONFTEST
+    fi
+],[])
+
+# known flags for reasonably recent versions of various f90 compilers:
+#   gfortran -J${dir}
+#   xlf -qmoddir=${dir}
+#   pgf90 -module ${dir}
+#   ifort -module ${dir}
+#   nagfor -mdir ${dir}
+#   ftn -J ${dir}   ## the Cray fortran compiler
+#   f95 -YMOD_OUT_DIR=${dir}   ## the Absoft fortran compiler
+#   lf95 -Am -mod ${dir}    ## the Lahey/Fujitsu fortran compiler
+#   f90 -moddir=${dir}   ## the Sun f90 compiler
+#   g95 -fmod=${dir}
+#
+# If there are any compilers still out there that are totally brain-dead and
+# don't support an output directory flag, we can write a wrapper script to tell
+# users to use.  Alternatively they can use an older version of MPICH.
+
+pac_cv_fc_module_outflag=
+for mod_flag in '-J' '-J ' '-qmoddir=' '-module ' '-YMOD_OUT_DIR=' '-mdir ' '-moddir=' '-fmod=' ; do
+    rm -f conftestdir/NONEXISTENT conftestdir/*
+    PAC_PUSH_FLAG([FCFLAGS])
+    FCFLAGS="$FCFLAGS ${mod_flag}conftestdir"
+    AC_COMPILE_IFELSE([],[pac_build_success=yes],[pac_build_success=no])
+    AS_IF([test "X$pac_build_success" = Xyes],
+          [AS_IF([test -s "conftestdir/${pac_module}"],
+                 [pac_cv_fc_module_outflag="$mod_flag"])])
+    PAC_POP_FLAG([FCFLAGS])
+    AS_IF([test "X$pac_cv_fc_module_outflag" = X],[:],[break])
+done
+
+# Remove the conftest* after AC_LANG_CONFTEST
+rm -rf conftest.dSYM
+rm -f conftest.$ac_ext
+
+if test "$pac_madedir" = "yes" ; then rm -rf conftestdir ; fi
+AS_UNSET([pac_madedir])
+# Remove the conftest* after AC_LANG_CONFTEST
+# This is needed for Mac OSX 10.5
+rm -rf conftest.dSYM
+rm -f conftest*
+AC_LANG_POP(Fortran)
+])dnl end AC_CACHE_CHECK
+
+AC_SUBST([FCMODOUTFLAG],[$pac_cv_fc_module_outflag])
+])dnl end AC_DEFUN([PAC_FC_MODULE_OUTFLAG])
 dnl
 dnl PAC_FC_AND_F77_COMPATIBLE([action-if-true],[action-if-false])
 dnl
@@ -374,7 +468,7 @@ AC_COMPILE_IFELSE([
     ])
 ],[
     # pac_f77compile_ok=yes
-    mv conftest.$OBJEXT pac_f77conftest.$OBJEXT
+    PAC_RUNLOG([mv conftest.$OBJEXT pac_f77conftest.$OBJEXT])
     # Save original LIBS, prepend previously generated object file to LIBS
     saved_LIBS="$LIBS"
     LIBS="pac_f77conftest.$OBJEXT $LIBS"
@@ -413,38 +507,61 @@ dnl
 dnl
 dnl
 dnl /*D 
-dnl PAC_PROG_FC_HAS_POINTER - Determine if Fortran allows pointer type
+dnl PAC_PROG_FC_CRAY_POINTER - Check if Fortran supports Cray-style pointer.
+dnl                            If so, set pac_cv_prog_fc_has_pointer to yes
+dnl                            and find out if any extra compiler flag is
+dnl                            needed and set it as CRAYPTR_FCFLAGS.
+dnl                            i.e. CRAYPTR_FCFLAGS is meaningful only if
+dnl                            pac_cv_prog_fc_has_pointer = yes.
 dnl
 dnl Synopsis:
-dnl   PAC_PROG_FC_HAS_POINTER(action-if-true,action-if-false)
+dnl   PAC_PROG_FC_CRAY_POINTER([action-if-true],[action-if-false])
 dnl D*/
-AC_DEFUN([PAC_PROG_FC_HAS_POINTER],[
-AC_CACHE_CHECK([whether Fortran 90 has Cray-style pointer declaration],
+AC_DEFUN([PAC_PROG_FC_CRAY_POINTER],[
+AC_CACHE_CHECK([whether Fortran 90 supports Cray-style pointer],
 pac_cv_prog_fc_has_pointer,[
-AC_LANG_PUSH(Fortran)
-AC_COMPILE_IFELSE([
+AC_LANG_PUSH([Fortran])
+AC_LANG_CONFTEST([
     AC_LANG_PROGRAM([],[
         integer M
         pointer (MPTR,M)
         data MPTR/0/
     ])
-],[
-    pac_cv_prog_fc_has_pointer="yes"
-],[
-    pac_cv_prog_fc_has_pointer="no"
-]) dnl Endof AC_COMPILE_IFELSE
-AC_LANG_POP(Fortran)
+])
+saved_FCFLAGS="$FCFLAGS"
+pac_cv_prog_fc_has_pointer=no
+CRAYPTR_FCFLAGS=""
+for ptrflag in '' '-fcray-pointer' ; do
+    FCFLAGS="$saved_FCFLAGS $ptrflag"
+    AC_COMPILE_IFELSE([],[
+        pac_cv_prog_fc_has_pointer=yes
+        CRAYPTR_FCFLAGS="$ptrflag"
+        break
+    ])
+done
+dnl Restore FCFLAGS first, since user may not want to modify FCFLAGS
+FCFLAGS="$saved_FCFLAGS"
+dnl remove conftest after ac_lang_conftest
+rm -f conftest.$ac_ext
+AC_LANG_POP([Fortran])
 ])
 if test "$pac_cv_prog_fc_has_pointer" = "yes" ; then
-    ifelse([$1],,:,[$1])
+    AC_MSG_CHECKING([for Fortran 90 compiler flag for Cray-style pointer])
+    if test "X$CRAYPTR_FCFLAGS" != "X" ; then
+        AC_MSG_RESULT([$CRAYPTR_FCFLAGS])
+    else
+        AC_MSG_RESULT([none])
+    fi
+    ifelse([$1],[],[:],[$1])
 else
-    ifelse([$2],,:,[$2])
+    ifelse([$2],[],[:],[$2])
 fi
 ])
 dnl
 dnl
 dnl
 AC_DEFUN([PAC_PROG_FC_AND_C_STDIO_LIBS],[
+AC_REQUIRE([AC_HEADER_STDC])
 # To simply the code in the cache_check macro, chose the routine name
 # first, in case we need it
 confname=conf1_
@@ -464,13 +581,15 @@ pac_cv_prog_fc_and_c_stdio_libs=unknown
 AC_LANG_PUSH(C)
 AC_COMPILE_IFELSE([
     AC_LANG_SOURCE([
+#if defined(HAVE_STDIO_H) || defined(STDC_HEADERS)
 #include <stdio.h>
+#endif
 int $confname( int a )
 { printf( "The answer is %d\n", a ); fflush(stdout); return 0; }
     ])
 ],[
     pac_compile_ok=yes
-    mv conftest.$OBJEXT pac_conftest.$OBJEXT
+    PAC_RUNLOG([mv conftest.$OBJEXT pac_conftest.$OBJEXT])
     # Save LIBS and prepend object file to LIBS
     saved_LIBS="$LIBS"
     LIBS="pac_conftest.$OBJEXT $LIBS"
@@ -525,41 +644,17 @@ AC_DEFUN([PAC_FC_CHECK_COMPILER_OPTION],[
 AC_MSG_CHECKING([whether Fortran 90 compiler accepts option $1])
 pac_opt="$1"
 AC_LANG_PUSH(Fortran)
-dnl Instead of defining our own ac_link and ac_compile and do AC_TRY_EVAL
-dnl on these variables.  We modify ac_link and ac_compile used by AC_*_IFELSE
-dnl by piping the output of the command to a logfile.  The reason is that
-dnl 1) AC_TRY_EVAL is discouraged by Autoconf. 2) defining our ac_link and
-dnl ac_compile could mess up the usage and order of FCFLAGS, LDFLAGS
-dnl and LIBS in these commands, i.e. deviate from how GNU standard uses
-dnl these variables.
-dnl
-dnl Replace " >&AS_MESSAGE_LOG_FD" by "> file 2>&1" in ac_link and ac_compile
-pac_link="`echo $ac_link | sed -e 's|>.*$|> $pac_logfile 2>\&1|g'`"
-dnl echo "ac_link=\"$ac_link\""
-dnl echo "pac_link=\"$pac_link\""
-saved_ac_link="$ac_link"
-ac_link="$pac_link"
-dnl echo "ac_link=\"$ac_link\""
-
-pac_compile="`echo $ac_compile | sed -e 's|>.*$|> $pac_logfile 2>\&1|g'`"
-dnl echo "ac_compile=\"$ac_compile\""
-dnl echo "pac_compile=\"$pac_compile\""
-saved_ac_compile="$ac_compile"
-ac_compile="$pac_compile"
-dnl echo "ac_compile=\"$ac_compile\""
-
 FCFLAGS_orig="$FCFLAGS"
 FCFLAGS_opt="$pac_opt $FCFLAGS"
 pac_result="unknown"
+
 AC_LANG_CONFTEST([AC_LANG_PROGRAM()])
 FCFLAGS="$FCFLAGS_orig"
-pac_logfile="pac_test1.log"
-rm -f $pac_logfile
-AC_LINK_IFELSE([], [
+rm -f pac_test1.log
+PAC_LINK_IFELSE_LOG([pac_test1.log], [], [
     FCFLAGS="$FCFLAGS_opt"
-    pac_logfile="pac_test2.log"
-    rm -f $pac_logfile
-    AC_LINK_IFELSE([], [
+    rm -f pac_test2.log
+    PAC_LINK_IFELSE_LOG([pac_test2.log], [], [
         PAC_RUNLOG_IFELSE([diff -b pac_test1.log pac_test2.log],
                           [pac_result=yes], [pac_result=no])
     ],[
@@ -576,23 +671,20 @@ if test "$pac_result" = "yes" ; then
     AC_MSG_CHECKING([whether routines compiled with $pac_opt can be linked with ones compiled without $pac_opt])
     pac_result=unknown
     FCFLAGS="$FCFLAGS_orig"
-    pac_logfile="pac_test3.log"
-    rm -f $pac_logfile
-    AC_COMPILE_IFELSE([
+    rm -f pac_test3.log
+    PAC_COMPILE_IFELSE_LOG([pac_test3.log], [
         AC_LANG_SOURCE([
             subroutine try()
             end
         ])
     ],[
-        mv conftest.$OBJEXT pac_conftest.$OBJEXT
+        PAC_RUNLOG([mv conftest.$OBJEXT pac_conftest.$OBJEXT])
         saved_LIBS="$LIBS"
         LIBS="pac_conftest.$OBJEXT $LIBS"
 
         FCFLAGS="$FCFLAGS_opt"
-        pac_logfile="pac_test4.log"
-        rm -f $pac_logfile
-        AC_LINK_IFELSE([AC_LANG_PROGRAM()], [
-            diffcmd='diff -b pac_test3.log pac_test4.log'
+        rm -f pac_test4.log
+        PAC_LINK_IFELSE_LOG([pac_test4.log], [AC_LANG_PROGRAM()], [
             PAC_RUNLOG_IFELSE([diff -b pac_test2.log pac_test4.log],
                               [pac_result=yes], [pac_result=no])
         ],[
@@ -608,11 +700,6 @@ if test "$pac_result" = "yes" ; then
 fi
 rm -f pac_test1.log pac_test2.log
 
-dnl Restore everything in AC that has been overwritten
-ac_link="$saved_ac_link"
-ac_compile="$saved_ac_compile"
-dnl echo "ac_link=\"$ac_link\""
-dnl echo "ac_compile=\"$ac_compile\""
 dnl Restore FCFLAGS before 2nd/3rd argument commands are executed,
 dnl as 2nd/3rd argument command could be modifying FCFLAGS.
 FCFLAGS="$FCFLAGS_orig"
@@ -621,10 +708,6 @@ if test "$pac_result" = "yes" ; then
 else
      ifelse([$3],[],[:],[$3])
 fi
-
-# This is needed for Mac OSX 10.5
-rm -rf conftest.dSYM
-rm -f conftest*
 AC_LANG_POP(Fortran)
 ])
 dnl /*D
@@ -772,37 +855,46 @@ AC_DEFUN([PAC_FC_FLOAT_MODEL],[
 type="$1"
 AC_MSG_CHECKING([for precision and range of $type])
 AC_LANG_PUSH([Fortran])
-AC_LINK_IFELSE([
+rm -f pac_fconftest.out
+AC_RUN_IFELSE([
     AC_LANG_SOURCE([
         program main
         $type aa
-        print *, precision(aa), ",", range(aa)
+        open(8, file="pac_fconftest.out", form="formatted")
+        write(8,*) precision(aa), ",", range(aa)
+        close(8)
         end
     ])
 ],[
-    rm -f pac_conftest.out
-    PAC_RUNLOG([./conftest$EXEEXT > pac_conftest.out])
-    if test -s pac_conftest.out ; then
-        pac_fc_num_model="`cat pac_conftest.out | sed -e 's/  */ /g'`"
+    if test -s pac_fconftest.out ; then
+        pac_fc_num_model="`sed -e 's/  */ /g' pac_fconftest.out`"
         AC_MSG_RESULT([$pac_fc_num_model])
         ifelse([$2],[],[],[$2=$pac_fc_num_model])
     else
+        AC_MSG_RESULT([Error])
         AC_MSG_WARN([No output from test program!])
     fi
-    rm -f pac_conftest.out
+    rm -f pac_fconftest.out
 ],[
-    AC_MSG_WARN([Failed to build program to determine the precision and range of $type])
+    AC_MSG_RESULT([Error])
+    AC_MSG_WARN([Failed to run program to determine the precision and range of $type])
 ])
 AC_LANG_POP([Fortran])
 ])
 dnl
-dnl PAC_FC_SIMPLE_NUMBER_MODEL(message,test-fc-code,
-dnl                            [variable-set-if-successful-test])
-dnl message      : message of what test-fc-code is checking
-dnl test-fc-code : Fortran 90 code to check a float or integer type's data model
+dnl PAC_FC_SIMPLE_NUMBER_MODEL(message, Fortran-type, Fortran-write,
+dnl                            [variable-set-if-successful-test],
+dnl                            [cross-value])
+dnl
+dnl message        : message of what test-fc-code is checking
+dnl Fortran-type   : Fortran90 type's data model to be examined.
+dnl Fortran-write  : Fortran90 type's write statement used with write(N,*).
 dnl variable-set-if-successful-test :
-dnl                The optional variable to be set if the test-fc-code
-dnl                is successful in returning the simple data model.
+dnl                  The optional variable to be set if the codelet:
+dnl                  "Fortran-type" + "write(N,*) Fortran-write"
+dnl                  is successful in returning the simple data model.
+dnl cross-value    : value to be used for above variable when
+dnl                  cross_compiling=yes
 dnl
 dnl This is a runtime test.
 dnl
@@ -810,45 +902,60 @@ AC_DEFUN([PAC_FC_SIMPLE_NUMBER_MODEL],[
 pac_msg="$1"
 AC_MSG_CHECKING([for $pac_msg])
 AC_LANG_PUSH([Fortran])
-AC_LINK_IFELSE([
-    AC_LANG_PROGRAM([],[
+rm -f pac_fconftest.out
+AC_RUN_IFELSE([
+    AC_LANG_SOURCE([
+        program main
         $2
+        open(8, file="pac_fconftest.out", form="formatted")
+        write(8,*) $3
+        close(8)
+        end
     ])
 ],[
-    rm -f pac_conftest.out
-    PAC_RUNLOG([./conftest$EXEEXT > pac_conftest.out])
-    if test -s pac_conftest.out ; then
-        pac_fc_num_model="`cat pac_conftest.out | sed -e 's/  */ /g'`"
+    if test -s pac_fconftest.out ; then
+        pac_fc_num_model="`sed -e 's/  */ /g' pac_fconftest.out`"
         AC_MSG_RESULT([$pac_fc_num_model])
-        ifelse([$3],[],[],[$3=$pac_fc_num_model])
+        ifelse([$4],[],[],[$4=$pac_fc_num_model])
     else
+        AC_MSG_RESULT([Error])
         AC_MSG_WARN([No output from test program!])
     fi
-    rm -f pac_conftest.out
+    rm -f pac_fconftest.out
 ],[
-    AC_MSG_WARN([Failed to build program to determine $pac_msg])
+    AC_MSG_RESULT([Error])
+    AC_MSG_WARN([Failed to run program to determine $pac_msg])
+],[
+    AC_MSG_RESULT([$5])
+    ifelse([$4],[],[],[$4=$5])
 ])
 AC_LANG_POP([Fortran])
 ])
 dnl
-dnl PAC_FC_AVAIL_INTEGER_MODELS([INTEGER-MODELS-FLAG])
-dnl Both INTEGER-MODELS-FLAG is an optional variable to be set if provided.
-dnl If it isn't provided, PAC_FC_ALL_INTEGER_MODELS will be set.
+dnl PAC_FC_AVAIL_INTEGER_MODELS([INTEGER-MODELS-FLAG],[CROSS-VARIABLE])
+dnl
+dnl INTEGER-MODELS-FLAG : an optional variable to be set if provided.
+dnl                       If it isn't provided, PAC_FC_ALL_INTEGER_MODELS
+dnl                       will be set.
+dnl CROSS-VALUE         : value will be used to set INTEGER-MODELS-FLAG
+dnl                       or PAC_FC_ALL_INTEGER_MODELS if cross_compiling=yes.
 dnl
 dnl This is a runtime test.
 dnl
 AC_DEFUN([PAC_FC_AVAIL_INTEGER_MODELS],[
 AC_MSG_CHECKING([for available integer kinds])
 AC_LANG_PUSH([Fortran])
-AC_LINK_IFELSE([
+rm -f pac_fconftest.out
+AC_RUN_IFELSE([
     AC_LANG_SOURCE([
         program main
         integer r, lastkind
         lastkind=selected_int_kind(1)
+        open(8, file="pac_fconftest.out", form="formatted")
         do r=2,30
              k = selected_int_kind(r)
              if (k .ne. lastkind) then
-                  print *, r-1,",",lastkind
+                  write(8,*) r-1, ",", lastkind
                   lastkind = k
              endif
              if (k .le. 0) then
@@ -856,33 +963,44 @@ AC_LINK_IFELSE([
              endif
         enddo
         if (k.ne.lastkind) then
-            print *, 31, ",", k
+            write(8,*) 31, ",", k
         endif
+        close(8)
         end
     ])
 ],[
-    rm -f pac_conftest.out
-    PAC_RUNLOG([./conftest$EXEEXT > pac_conftest.out])
-    if test -s pac_conftest.out ; then
-        pac_flag=`cat pac_conftest.out | sed -e 's/  */ /g'| tr '\012' ','`
+    if test -s pac_fconftest.out ; then
+        pac_flag="`sed -e 's/  */ /g' pac_fconftest.out | tr '\012' ','`"
         AC_MSG_RESULT([$pac_flag])
-        pac_validKinds="`sed -e 's/  */ /g' pac_conftest.out | tr '\012' ':'`"
+        pac_validKinds="`sed -e 's/  */ /g' pac_fconftest.out | tr '\012' ':'`"
         ifelse([$1],[],[PAC_FC_ALL_INTEGER_MODELS=$pac_flag],[$1=$pac_flag])
     else
+        AC_MSG_RESULT([Error])
         AC_MSG_WARN([No output from test program!])
     fi
-    rm -f pac_conftest.out
+    rm -f pac_fconftest.out
 ],[
-    AC_MSG_WARN([Failed to build program to determine available integer models])
+    AC_MSG_RESULT([Error])
+    AC_MSG_WARN([Failed to run program to determine available integer models])
+],[
+    dnl Even when cross_compiling=yes,
+    dnl pac_validKinds needs to be set for PAC_FC_INTEGER_MODEL_MAP()
+    pac_validKinds="`echo \"$2\" | tr ',' ':'`"
+    AC_MSG_RESULT([$2])
+    ifelse([$1],[],[PAC_FC_ALL_INTEGER_MODELS=$2],[$1=$2])
 ])
 AC_LANG_POP([Fortran])
 ])
 dnl
-dnl PAC_FC_INTEGER_MODEL_MAP([INTEGER-MODEL-MAP-FLAG])
-dnl Both INTEGER-MODEL-MAP-FLAG is an optional variable to be set if provided.
-dnl If it isn't provided, PAC_FC_INTEGER_MODEL_MAP will be set.
+dnl PAC_FC_INTEGER_MODEL_MAP([INTEGER-MODEL-MAP-FLAG],[CROSS-VALUE]))
 dnl
-dnl This test expect pac_validKinds set by PAC_FC_ALL_INTEGER_MODELS.
+dnl INTEGER-MODEL-MAP-FLAG : an optional variable to be set if provided.
+dnl                          If it isn't provided, PAC_FC_INTEGER_MODEL_MAP
+dnl                          will be set.
+dnl CROSS-VALUE            : value will be used to set INTEGER-MODEL-MAP-FLAG
+dnl                          or PAC_FC_INTEGER_MODEL_MAP if cross_compiling=yes.
+dnl
+dnl This test requires $pac_validKinds set by PAC_FC_ALL_INTEGER_MODELS().
 dnl
 dnl This is a runtime test.
 dnl
@@ -893,8 +1011,6 @@ AC_MSG_CHECKING([for available integer ranges])
 AC_LANG_PUSH([C])
 AC_COMPILE_IFELSE([
     AC_LANG_SOURCE([
-#include <stdio.h>
-#include "confdefs.h"
 #ifdef F77_NAME_UPPER
 #define cisize_ CISIZE
 #define isize_ ISIZE
@@ -933,23 +1049,26 @@ if test "$pac_ccompile_ok" = "yes" ; then
                 program main
                 integer (kind=$kind) a(2)
                 integer cisize
-                print *, $range, ",", $kind, ",", cisize( a(1), a(2) )
+                open(8, file="pac_fconftest.out", form="formatted")
+                write(8,*) $range, ",", $kind, ",", cisize( a(1), a(2) )
+                close(8)
                 end
             ])
         ])
         IFS=$saved_IFS
-        AC_LINK_IFELSE([],[
-            rm -f pac_conftest.out
-            PAC_RUNLOG([./conftest$EXEEXT > pac_conftest.out])
-            if test -s pac_conftest.out ; then
-                sizes="`cat pac_conftest.out | sed -e 's/  */ /g'`"
+        rm -f pac_fconftest.out
+        AC_RUN_IFELSE([],[
+            if test -s pac_fconftest.out ; then
+                sizes="`sed -e 's/  */ /g' pac_fconftest.out`"
                 pac_flag="$pac_flag { $sizes },"
             else
                 AC_MSG_WARN([No output from test program!])
             fi
-            rm -f pac_conftest.out
+            rm -f pac_fconftest.out
         ],[
-            AC_MSG_WARN([Fortran program fails to build!])
+            AC_MSG_WARN([Fortran program fails to build or run!])
+        ],[
+            pac_flag="$2"
         ])
         IFS=:
     done

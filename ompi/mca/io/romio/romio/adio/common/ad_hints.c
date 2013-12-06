@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -40,7 +40,13 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 
     value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
     if (value == NULL) {
-	/* NEED TO HANDLE ENOMEM */
+        *error_code = MPIO_Err_create_code(*error_code,
+                                           MPIR_ERR_RECOVERABLE,
+                                           myname,
+                                           __LINE__,
+                                           MPI_ERR_OTHER,
+                                           "**nomem2",0);
+        return;
     }
 
     /* initialize info and hints to default values if they haven't been
@@ -484,7 +490,13 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		len = (strlen(value)+1) * sizeof(char);
 		fd->hints->cb_config_list = ADIOI_Malloc(len);
 		if (fd->hints->cb_config_list == NULL) {
-		    /* NEED TO HANDLE ENOMEM */
+                    *error_code = MPIO_Err_create_code(*error_code,
+                                                       MPIR_ERR_RECOVERABLE,
+                                                       myname,
+                                                       __LINE__,
+                                                       MPI_ERR_OTHER,
+                                                       "**nomem2",0);
+                    return;
 		}
 		ADIOI_Strncpy(fd->hints->cb_config_list, value, len);
 	    }
@@ -517,7 +529,13 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	len = (strlen(ADIOI_CB_CONFIG_LIST_DFLT)+1) * sizeof(char);
 	fd->hints->cb_config_list = ADIOI_Malloc(len);
 	if (fd->hints->cb_config_list == NULL) {
-	    /* NEED TO HANDLE ENOMEM */
+            *error_code = MPIO_Err_create_code(*error_code,
+                                               MPIR_ERR_RECOVERABLE,
+                                               myname,
+                                               __LINE__,
+                                               MPI_ERR_OTHER,
+                                               "**nomem2",0);
+            return;
 	}
 	ADIOI_Strncpy(fd->hints->cb_config_list, ADIOI_CB_CONFIG_LIST_DFLT, len);
     }

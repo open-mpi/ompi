@@ -5,13 +5,13 @@
 Major Changes in this version:
 ------------------------------
 * Fixed performance problems with the darray and subarray datatypes
-  when using MPICH2.
+  when using MPICH.
 
-* Better support for building against existing MPICH and MPICH2 versions.
+* Better support for building against existing MPICH and MPICH versions.
 
   When building against an existing MPICH installation, use the
-  "--with-mpi=mpich" option to ROMIO configure.  For MPICH2, use the
-  "--with-mpi=mpich2" option.  These will allow ROMIO to take advantage
+  "--with-mpi=mpich" option to ROMIO configure.  For MPICH, use the
+  "--with-mpi=mpich" option.  These will allow ROMIO to take advantage
   of internal features of these implementations.
 
 * Deprecation of SFS, HFS, and PIOFS implementations.
@@ -161,9 +161,9 @@ Major Changes in Version 1.0.3:
 Major Changes Version 1.0.2:
 ---------------------------
 
-* Implemented the shared file pointer functions (Section 9.4.4 of MPI-2) and 
-  split collective I/O functions (Section 9.4.5). Therefore, the main
-   components of the MPI-2 I/O chapter not yet implemented are 
+* Implemented the shared file pointer functions and
+  split collective I/O functions. Therefore, the main
+   components of the MPI I/O chapter not yet implemented are
   file interoperability and error handling.
 
 * Added support for using "direct I/O" on SGI's XFS file system. 
@@ -298,13 +298,13 @@ General Information
 -------------------
 
 ROMIO is a high-performance, portable implementation of MPI-IO (the
-I/O chapter in MPI-2). ROMIO's home page is at
-http://www.mcs.anl.gov/romio .  The MPI-2 standard is available at
+I/O chapter in MPI). ROMIO's home page is at
+http://www.mcs.anl.gov/romio .  The MPI standard is available at
 http://www.mpi-forum.org/docs/docs.html .
 
-This version of ROMIO includes everything defined in the MPI-2 I/O
-chapter except support for file interoperability (Sec. 9.5 of MPI-2) and
-user-defined error handlers for files (Sec. 4.13.3).  The subarray and
+This version of ROMIO includes everything defined in the MPI I/O
+chapter except support for file interoperability and
+user-defined error handlers for files.  The subarray and
 distributed array datatype constructor functions from Chapter 4
 (Sec. 4.14.4 & 4.14.5) have been implemented. They are useful for
 accessing arrays stored in files. The functions MPI_File_f2c and
@@ -587,7 +587,7 @@ Use a larger number if you still get the error message.
 
 * If a Fortran program uses a file handle created using ROMIO's C
 interface, or vice-versa, you must use the functions MPI_File_c2f 
-or MPI_File_f2c (see MPI-2 Section 4.12.4). Such a situation occurs,
+or MPI_File_f2c. Such a situation occurs,
 for example, if a Fortran program uses an I/O library written in C
 with MPI-IO calls. Similar functions MPIO_Request_f2c and
 MPIO_Request_c2f are also provided.

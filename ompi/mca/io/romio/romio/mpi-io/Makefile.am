@@ -23,8 +23,6 @@
 
 include $(top_srcdir)/Makefile.options
 
-SUBDIRS = glue/openmpi
-
 # Intentionally do *not* include iotest.c and iowait.c.  Since we're
 # using MPI_HAS_GREQUEST, ROMIO makes MPIO_Test and MPIO_Wait be just
 # plain vanilla [P]MPI_Test and [P]MPI_WAIT, which we already have

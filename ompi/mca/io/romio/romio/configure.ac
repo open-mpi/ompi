@@ -1,11 +1,12 @@
 # -*- Mode: shell-script -*-
 # build with
-# autoconf --localdir=../confdb configure.in
+# autoconf --localdir=../confdb configure.ac
 # (or wherever the confdb is)
 #
 # irrelevant / unnecessary in an Open MPI environment, but are
 # harmless and are left here solely for the sake of ease of future
 # patching/importing.
+AC_PREREQ([2.63])
 
 # Open MPI: Modifications to this file were done on an "let's do the
 # minimum possible" basis, not so that we can skip on the work or
@@ -15,13 +16,33 @@
 # irrelevant / unnecessary in an Open MPI environment, but are
 # harmless and are left here solely for the sake of ease of future
 # patching/importing.
+AC_INIT([ROMIO],
+        [Open MPI],
+        [discuss@mpich.org],
+        [romio],
+        [http://www.mpich.org/])
 
+dnl AC_CONFIG_AUX_DIR(../../../confdb)
+dnl Set the directory that contains the required install-sh, config.sub,
+dnl and config.guess .  Make sure that these are updated (in MPICH, use
+dnl the top-level confdb files).  This separate directory is used for
+dnl the moment to allow ROMIO to be separatedly distributed.
+dnl scripts.
+AC_CONFIG_AUX_DIR([confdb])
+AC_CONFIG_MACRO_DIR([confdb])
 
-AC_PREREQ(2.59)
+AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability-recursive foreign 1.12 silent-rules subdir-objects])
+AM_MAINTAINER_MODE([enable])
 
-# if this blows up, it's because you forgot to run autoheader
-# Open MPI: changed to 4 arg AC INIT
-AC_INIT([romio], [Open MPI 1.2.6], [http://www.mpich.org], [romio])
+dnl must come before LT_INIT, which AC_REQUIREs AC_PROG_CC
+PAC_PROG_CC
+
+AM_PROG_AR
+
+LT_INIT([])
+# Non-verbose make by default
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 # VERSION=1.2.6
 # AC_MSG_RESULT([Configuring ROMIO Version $VERSION])
 CONFIGURE_ARGS="$*"
@@ -29,16 +50,24 @@ if test -n "$CONFIGURE_ARGS" ; then
     echo "Configuring with args $CONFIGURE_ARGS"
 fi
 
-if test "$FROM_MPICH2" = "yes" ; then
-    CFLAGS="$MPICH2_INTERNAL_CFLAGS"
-    CXXFLAGS="$MPICH2_INTERNAL_CXXFLAGS"
-    FFLAGS="$MPICH2_INTERNAL_FFLAGS"
-    F90FLAGS="$MPICH2_INTERNAL_F90FLAGS"
-fi
-
 AC_CONFIG_HEADER(adio/include/romioconf.h)
-# Open MPI: added AH_TOP
-AH_TOP([#include "romioconf-undefs.h"])
+# Open MPI: modified AH_TOP
+AH_TOP([/*
+ *  (C) 2011 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
+#ifndef ROMIOCONF_H_INCLUDED
+#define ROMIOCONF_H_INCLUDED
+
+#include "romioconf-undefs.h"
+])
+AH_BOTTOM([
+/* quash PACKAGE and PACKAGE_* vars, see MPICH top-level configure.ac for
+ * more info */
+#include "nopackage.h"
+
+#endif /* !defined(ROMIOCONF_H_INCLUDED) */
+])
 
 # Open MPI: this configure script doesn't seem to define these
 # anywhere, so just do them manually here because "we know better"
@@ -55,6 +84,7 @@ if test -f "$srcdir/../../../../../config/ompi_mca.m4"; then
 
     top_ompi_srcdir='$(top_srcdir)/../../../../..'
     top_ompi_builddir='$(top_builddir)/../../../../..'
+    with_mpi="$top_ompi_srcdir"
     AC_MSG_RESULT([in Open MPI source tree -- good])
     AC_SUBST(top_ompi_srcdir)
     AC_SUBST(top_ompi_builddir)
@@ -72,9 +102,18 @@ NOF77=1
 NOF90=1
 ARCH=""
 arch_IRIX=""
-MPI=""
+MPI_IMPL=""
 MPI_INCLUDE_DIR=""
 ROMIO_INCLUDE=""
+
+# Used by the new build system, should contain zero or more "-Iblah" args for
+# inclusion in AM_CPPFLAGS.  Should not contain relative paths.  This probably
+# overlaps with ROMIO_INCLUDE some, but adding a new var is easier than teasing
+# apart all of the current usages of that variable and re-testing all of the
+# non-MPICH and exotic platform cases.
+MPI_H_INCLUDE=""
+AC_SUBST([MPI_H_INCLUDE])
+
 TEST_LIBNAME=""
 FILE_SYSTEM=""
 # Do not set variables to empty that may be communicated from the
@@ -82,14 +121,18 @@ FILE_SYSTEM=""
 DEBUG=no
 MIPS=0
 BITS=0
+
+AC_ARG_VAR([FROM_MPICH],[set to "yes" if building ROMIO inside of MPICH])
 FROM_MPICH=${FROM_MPICH:-no}
-FROM_MPICH2=${FROM_MPICH2:-no}
-if test "$FROM_MPICH" = yes -a "$FROM_MPICH2" = yes ; then
-    AC_MSG_WARN([Both FROM_MPICH and FROM_MPICH set to yes; at most one should  be yes])
-    
-fi
+
+AC_ARG_VAR([FROM_LAM],[set to "yes" if building ROMIO inside of LAM])
 FROM_LAM=${FROM_LAM:-no}
 if test "$FROM_LAM" = 1 ; then FROM_LAM=yes ; fi
+
+AC_ARG_VAR([FROM_OMPI],[set to "yes" if building ROMIO inside of Open MPI])
+FROM_OMPI=${FROM_OMPI:-no}
+if test "$FROM_OMPI" = 1 ; then FROM_OMPI=yes ; fi
+
 CFLAGS=${CFLAGS:-""}
 LL="lld"
 AR_LOCAL=""
@@ -144,10 +187,25 @@ MPIO_REQ_TMP_POBJECTS="iotest.p iowait.p iowaitall.p iowaitany.p iotestall.p iot
 MPIO_REQ_REAL_POBJECTS="_iotest.o _iowait.o _iowaitall.o _iowaitany.o _iotestall.o _iotestany.o _iowaitsome.o _iotestsome.o"
 #
 have_aio=no
-#
-known_filesystems="nfs ufs pfs pvfs pvfs2 testfs xfs panfs gridftp lustre bgl bglockless zoidfs"
 # Open MPI: added "open_mpi_mpi"
-known_mpi_impls="mpich2_mpi mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi open_mpi_mpi"
+known_mpi_impls="mpich_mpi mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi open_mpi_mpi"
+
+dnl An m4 macro for use with m4_foreach_w and friends.  You should modify this
+dnl list if you want to add a known file system.  The list is just whitespace
+dnl separated, so you can use newlines and tabs as well.
+m4_define([known_filesystems_m4_w],
+          [nfs ufs pfs pvfs pvfs2 testfs xfs panfs gridftp lustre bg bgl bglockless zoidfs hfs piofs sfs])dnl
+dnl
+dnl An m4 macro for use with m4_foreach and friends.  Expands to a quoted list of
+dnl quoted elements.  A bit easier to use without unintended expansion than the
+dnl whitespace version.
+m4_define([known_filesystems_m4], m4_dquote(m4_map_args_w(m4_defn([known_filesystems_m4_w]),[],[],[,])))dnl
+dnl
+# a shell var for checking arguments given via --with-file-system=...
+known_filesystems="m4_join([ ],known_filesystems_m4)"
+
+#####################################################################
+
 #
 # Defaults
 AC_ARG_ENABLE(aio,[
@@ -173,8 +231,11 @@ AC_ARG_WITH(file-system,[
 --with-file-system=name - Build with support for the named file systems],,)
 AC_ARG_WITH(pvfs2,[
 --with-pvfs2=path - Path to installation of PVFS (version 2)],,)
-AC_ARG_WITH(mpi,[
---with-mpi=name - Specify MPI implementation to build ROMIO for],,)
+AC_ARG_WITH(mpi-impl,[
+--with-mpi-impl=name - Specify MPI implementation to build ROMIO for],,)
+dnl
+AC_ARG_WITH(mpi, [
+--with-mpi=path   - Path to instalation of MPI (headers, libs, etc)],,)
 dnl
 if test "$enable_f77" != "yes" ; then
    NOF77=1
@@ -194,25 +255,12 @@ MPI=$with_mpi
 #       CC=$MPI/bin/mpicc
 #fi
 
+# start with the set of file systems that the user asked for
 FILE_SYSTEM=$with_file_system
-#
-dnl AC_CONFIG_AUX_DIR(../../../confdb)
-dnl Set the directory that contains the required install-sh, config.sub,
-dnl and config.guess .  Make sure that these are updated (in MPICH2, use
-dnl the top-level confdb files).  This separate directory is used for
-dnl the moment to allow ROMIO to be separatedly distributed.
-dnl scripts.
-AC_CONFIG_AUX_DIR(confdb)
+
 
 # Check if Make is working
 PAC_PROG_MAKE
-
-# Open MPI: Init automake
-AM_INIT_AUTOMAKE([foreign])
-
-# Open MPI: If Automake supports silent rules, enable them.
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-
 #
 # Check that an arch was set
 # If it wasn't set, try to guess using "util/tarch"
@@ -222,10 +270,10 @@ if test -s $srcdir/util/tarch -a ! -x $srcdir/util/tarch ; then
     chmod a+x $srcdir/util/tarch
 fi
 if test -z "$ARCH" -a -x $srcdir/util/tarch ; then
-    AC_MSG_CHECKING(for architecture)
+    AC_MSG_CHECKING([for architecture])
     ARCH=`$srcdir/util/tarch | sed s/-/_/g`
     if test -z "$ARCH" ; then
-       AC_MSG_RESULT(Unknown!)
+       AC_MSG_RESULT([Unknown!])
        AC_MSG_ERROR([Error: Could not guess target architecture, you must 
 set an architecture type with the environment variable ARCH]) 
     fi 
@@ -238,7 +286,7 @@ fi
 #### WE SHOULD REMOVE THIS SOON
 grep __"$ARCH"_ $srcdir/.config_params > /dev/null 2>&1
 if test $? != 0 ; then
-   AC_MSG_WARN([Unknown architecture $arch... proceeding anyway])
+   AC_MSG_WARN([Unknown architecture $ARCH... proceeding anyway])
 fi
 #
 #
@@ -274,55 +322,32 @@ AC_SUBST(top_build_dir)
 # Most of these are done for us; add the documentation directories
 #
 # mandir is the root for the man pages
-#if test -z "$mandir" ; then mandir='${prefix}/man' ; fi
-#AC_SUBST(mandir)
-#if test -z "$docdir" ; then docdir='${prefix}/doc' ; fi
-#AC_SUBST(docdir)
-#if test -z "$htmldir" ; then htmldir='${prefix}/www' ; fi
-#AC_SUBST(htmldir) 
-#
-# check for valid file system
-if test -n "$FILE_SYSTEM" ; then
-   # if multiple filesystems are passed in, they are '+'-delimited
-   # we could set the IFS to tokenize FILE_SYSTEM, but the FILE_SYSTEM env var
-   # is used in multiple places in the build system: get rid of the '+'s so we
-   # can use the 'for x in $FILE_SYSTEM ...' idiom 
-   FILE_SYSTEM=`echo $FILE_SYSTEM|sed -e 's/\+/ /g'`
-   for x in $FILE_SYSTEM
-   do
-      found=no
-      # We could also do test -d "ad_$y" to test for known file systems
-      # based on having access to the adio code.  Then adding a file 
-      # system would not require changing configure to change known_filesystems
-      for y in $known_filesystems ; do 
-          if test $x = $y ; then
-	      found=yes
-	      eval "file_system_`echo $x`=1"
-	      break
-	  fi
-      done
-      if test "$found" = "no" ; then
-         AC_MSG_WARN([Unknown file system $x... proceeding anyway])
-      fi
-   done
-fi
-#
+if test -z "$mandir" ; then mandir='${prefix}/man' ; fi
+AC_SUBST(mandir)
+if test -z "$docdir" ; then docdir='${prefix}/doc' ; fi
+AC_SUBST(docdir)
+if test -z "$htmldir" ; then htmldir='${prefix}/www' ; fi
+AC_SUBST(htmldir)
+
+
 # If we are building within a known MPI implementation, we must avoid the
 # tests about an existing implementation
-if test "$FROM_MPICH" != no -o "$FROM_MPICH2" != no -o "$FROM_LAM" != no ; then
+if test "$FROM_MPICH" != no -o "$FROM_LAM" != no -o "$FROM_OMPI" != no ; then
     WITHIN_KNOWN_MPI_IMPL=yes
 else
     WITHIN_KNOWN_MPI_IMPL=no
 fi
 
-# Open MPI: Make it think we're a known MPI implementation
-WITHIN_KNOWN_MPI_IMPL=yes
+# Open MPI: Set the MPI implementation
+if test "$FROM_OMPI" = "yes" ; then
+    MPI_IMPL=open_mpi
+fi
 
 # check for valid MPI implementation
-if test -n "$MPI" ; then
+if test -n "$MPI_IMPL" ; then
    found=no
    for mpi in $known_mpi_impls ; do
-      if test "${MPI}_mpi" = "$mpi" ; then
+      if test "${MPI_IMPL}_mpi" = "$mpi" ; then
           found=yes
 	  break
       fi
@@ -332,6 +357,12 @@ if test -n "$MPI" ; then
    fi
 fi
 #
+
+if test -n "${with_mpi}" ; then
+	MPI_INCLUDE_DIR="${with_mpi}"/include
+	MPI_LIB_DIR="${with_mpi}"/lib
+fi
+
 # check for valid MPI include directory if specified
 if test $WITHIN_KNOWN_MPI_IMPL = no ; then
    if test -n "$MPI_INCLUDE_DIR"; then
@@ -356,17 +387,7 @@ if test $WITHIN_KNOWN_MPI_IMPL = no ; then
       fi
    fi
 fi
-#
-#
-# Open MPI - bad for Automake
-#AR="${AR:-ar} cr$AR_LOCAL"
-# Open MPI - don't test for ranlib - use AC_PROG_RANLIB all the time
-#if test -z "$RANLIB" ; then
-    AC_PROG_RANLIB
-#fi
-# Open MPI - don't set make
-# MAKE=${MAKE:-make}
-#
+
 # USER_CFLAGS and USER_FFLAGS are used only in test/Makefile.in
 if test $DEBUG = "yes"; then
     USER_CFLAGS="$CFLAGS -g"
@@ -381,13 +402,13 @@ fi
 # We must first select the C and Fortran compilers.  Because of the 
 # way that the PROG_CC autoconf macro works (and all of the macros that
 # require it, including CHECK_HEADERS), that macro must occur exactly
-# once in the configure.in file, at least as of autoconf 2.57 .  
+# once in the configure.ac file, at least as of autoconf 2.57 .
 # Unfortunately, this requirement is not enforced.  To handle this,
 # we first case on the architecture; then use PROG_CC, then case on the
 # architecture again for any arch-specific features.  We also set the
 # C_DEBUG_FLAG and F77_DEBUG_FLAG in case debugging is selected.
 # 
-# For the MPICH and MPICH2 configures, the compilers will already be
+# For the MPICH and MPICH configures, the compilers will already be
 # selected, so most of the compiler-selection code will be bypassed.
 # --------------------------------------------------------------------------
 # For historical reasons
@@ -397,16 +418,6 @@ fi
 #
 C_DEBUG_FLAG="-g"
 F77_DEBUG_FLAG="-g"
-# C_OPT_FLAG=${CFLAGS:-"-O"}
-# MPICH1 uses OPTFLAGS and OPTFLAGSC to specify separate optimization
-# flags for the C compiler (this is better that adding it to the
-# undifferentiated CFLAGS, at least on input).
-if test -n "$OPTFLAGS" ; then
-    C_OPT_FLAG="$C_OPT_FLAG $OPTFLAGS"
-fi
-if test -n "$OPTFLAGSC" ; then
-    C_OPT_FLAG="$C_OPT_FLAG $OPTFLAGSC"
-fi
 # Open MPI: ignore all setting of CC, f77, FC, etc. in this section
 case $ARCH in 
      solaris|solaris86)
@@ -484,14 +495,20 @@ case $ARCH in
     ;;
 esac
 
-PAC_PROG_CC
-
-if test "$NOF77" != 1 ; then
-    # Grrr.   The autoconf test for F77 will abort the configure
-    # if no compiler is found.  We'd prefer to simply turn off
-    # support for Fortran, and/or give a more informative message.
-    PAC_PROG_F77
+dnl AC_PROG_{CXX,F77,FC} must come early in configure.ac in order to control
+dnl compiler search order and avoid some esoteric autoconf macro expansion
+dnl errors
+if test "$enable_f77" = "yes" ; then
+    # suppress default "-g -O2" from AC_PROG_F77
+    : ${FFLAGS=""}
+    AC_PROG_F77([PAC_F77_SEARCH_LIST])
 fi
+if test "$enable_f90" = "yes" ; then
+    # suppress default "-g -O2" from AC_PROG_FC
+    : ${FCFLAGS=""}
+    AC_PROG_FC([PAC_FC_SEARCH_LIST])
+fi
+
 if test "$CC" = "gcc" -a -z "$C_DEBUG_FLAG" ; then
      C_DEBUG_FLAG="-g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
 fi
@@ -505,25 +522,23 @@ fi
 # Here go the rest of the tests
 # ---------------------------------------------------------------------------
 if test -n "$arch_solaris" || test -n "$arch_solaris86" ; then
-    if test -z "$MPI" ; then
-        MPI=mpich
+    if test -z "$MPI_IMPL" ; then
+        MPI_IMPL=mpich
         mpi_mpich=1
     fi
-    if test $MPI = "mpich" ; then
+    if test $MPI_IMPL = "mpich" ; then
         TEST_CC=mpicc
         TEST_F77=mpif77
     else
         TEST_CC="$CC"
         TEST_F77="$F77"
     fi
-    #OMPI: Bad for automake: AR="ar cr"
-# solaris does not have l option to ar
 fi
 
 
 if test -n "$arch_rs6000"; then
-    if test -z "$MPI" ; then
-        MPI=mpich
+    if test -z "$MPI_IMPL" ; then
+        MPI_IMPL=mpich
         mpi_mpich=1
     fi
     AC_DEFINE(AIX,1,[Define for AIX])
@@ -535,21 +550,6 @@ if test -n "$arch_rs6000"; then
 fi    
 #
 
-if test -n "$arch_tflop" || test -n "$arch_tflops"; then
-    # TFLOP_FLAGS="-cougar -D__PUMA"
-    #OMPI: Bad for automake: AR="xar cr$AR_LOCAL"
-    #OMPI: Bad for automake: RANLIB="xranlib"
-    MPI_LIB="$MPI_LIB"
-    if test -z "$MPI" ; then
-        MPI=mpich
-        mpi_mpich=1
-    fi
-    if test -z "$FILE_SYSTEM" ; then
-        file_system_ufs=1
-        FILE_SYSTEM="ufs"
-    fi
-fi
-#
 if test -n "$arch_freebsd" || test -n "$arch_LINUX" || test -n "$arch_LINUX_ALPHA" || test -n "$arch_netbsd" || test -n "$arch_openbsd" ; then
     if test -n "$arch_freebsd" || test -n "$arch_netbsd" || test -n "$arch_openbsd"; then
         ac_cv_sizeof_long_long=${ac_cv_sizeof_long_long:-0}
@@ -557,8 +557,8 @@ if test -n "$arch_freebsd" || test -n "$arch_LINUX" || test -n "$arch_LINUX_ALPH
     fi
     # Find the CPP before the header check
     AC_PROG_CPP
-    if test -z "$MPI" ; then
-        MPI=mpich
+    if test -z "$MPI_IMPL" ; then
+        MPI_IMPL=mpich
         mpi_mpich=1
     fi
 fi    
@@ -566,13 +566,12 @@ fi
 if test -n "$arch_SX4" ; then
     have_aio=no
     AC_DEFINE(SX4,1,[Define for NEC SX4])
-    if test -z "$MPI" ; then
-        MPI=mpich
+    if test -z "$MPI_IMPL" ; then
+        MPI_IMPL=mpich
         mpi_mpich=1
     fi
+    # supply a reasonable default fs
     if test -z "$FILE_SYSTEM" ; then
-        file_system_sfs=1
-        file_system_nfs=1
         FILE_SYSTEM="sfs nfs"
     fi
     MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
@@ -583,34 +582,34 @@ fi
 if test -n "$arch_hpux" || test -n "$arch_sppux" ; then
     have_aio=no
     #OMPI: Bad for automake: RANLIB=":"
-    if test -z "$MPI"; then
+    if test -z "$MPI_IMPL"; then
         if test -f "/opt/mpi/include/mpi.h" ; then
             echo "assuming that you want to use ROMIO with HP MPI"
-            MPI=hp
+            MPI_IMPL=hp
         else 
             echo "assuming that you want to use ROMIO with MPICH"
-            MPI=mpich
+            MPI_IMPL=mpich
         fi            
     fi
-    if test $MPI = "mpich" ; then
+    if test $MPI_IMPL = "mpich" ; then
         mpi_mpich=1
         MPI_LIB="$MPI_LIB -lV3"
         CC=${CC:-cc -Ae}
         F77=${FC:-f77 +U77}
     fi
-    if test $MPI = "hp" ; then
+    if test $MPI_IMPL = "hp" ; then
         mpi_hp=1
         CC=${CC:-mpicc -Ae}
         F77=${FC:-mpif77 +U77}
     fi
-    if test $MPI = "lam" && test "$FC" != ""; then
+    if test $MPI_IMPL = "lam" && test "$FC" != ""; then
         F77="$F77 +U77"
     fi
     FTESTDEFINE="external iargc, getarg"
     if test -n "$arch_hpux" ; then
         CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
         AC_DEFINE(HPUX,1,[Define for HPUX])
-        if test $MPI = "hp" ; then
+        if test $MPI_IMPL = "hp" ; then
            F77=${FC:-mpif90 +U77}
         else
            F77=${FC:-f90 +U77}
@@ -631,8 +630,8 @@ if test -n "$arch_hpux" || test -n "$arch_sppux" ; then
 fi
 #
 if test -n "$arch_alpha" || test -n "$arch_ALPHA" ; then
-    if test -z "$MPI" ; then
-        MPI=mpich
+    if test -z "$MPI_IMPL" ; then
+        MPI_IMPL=mpich
         mpi_mpich=1
     fi
 
@@ -647,10 +646,10 @@ if test -n "$arch_CRAY" ; then
     FTESTDEFINE="integer ilen"
     F77GETARG="call pxfgetarg(i, str, ilen, ierr)"
     have_aio=no
-    # OMPI: bad for automake: RANLIB=":"
+    #OMPI: Bad for automake: RANLIB=":"
     AC_DEFINE(CRAY,1,[Define if Cray])
-    if test -z "$MPI" || test -n "$mpi_sgi" ; then
-        MPI=cray
+    if test -z "$MPI_IMPL" || test -n "$mpi_sgi" ; then
+        MPI_IMPL=cray
         mpi_cray=1
         mpi_sgi=""
 # above is to disable configure tests specific to SGI MPI
@@ -697,7 +696,7 @@ fi
 #
 if test -n "$arch_IRIX"; then
    if test $osversion = 4 ; then
-	# OMPI: Bad for automake:RANLIB="ar ts"
+	#OMPI: Bad for automake:RANLIB="ar ts"
         if test -n "$mpi_sgi"; then
             AC_MSG_ERROR([SGI\'s MPI does not work with IRIX 4.x])
         fi
@@ -706,25 +705,20 @@ if test -n "$arch_IRIX"; then
             AC_MSG_ERROR([SGI\'s MPI does not work with IRIX 5.x])
         fi
    elif test $osversion = 6 ; then
-	if test -z "$MPI"; then
-	    if test "$FROM_MPICH2" = "yes" ; then
-	        # Building with MPICH2.  Distinguish from MPICH-1
-		MPI=mpich2
-		mpi_mpich2=1
+	if test -z "$MPI_IMPL"; then
+	    if test "$FROM_MPICH" = "yes" ; then
+		MPI_IMPL=mpich
+		mpi_mpich=1
             elif test -f "/usr/include/mpi.h" ; then
                 # removed use of escaped single quotes in messages
 		# because they confuse Emacs, making it hard to 
 		# read the files (with emacs :) )
                 AC_MSG_WARN([assuming that you want to use ROMIO with the SGI MPI])
-                MPI=sgi
+                MPI_IMPL=sgi
                 mpi_sgi=1
-            else 
-	        AC_MSG_WARN([assuming that you want to use ROMIO with MPICH])
-                MPI=mpich
-                mpi_mpich=1
             fi            
 	fi
-         #OMPI: Bad for automake: RANLIB=":"
+        #OMPI: Bad for automake: RANLIB=":"
         AC_DEFINE(AIO_SIGNOTIFY_NONE,1,[Define if no signotify])
 	if test $cputype -ge 5000 ; then
             MIPS=4
@@ -737,19 +731,18 @@ if test -n "$arch_IRIX"; then
    fi
 #  check if pread64 is defined
    PAC_HAVE_PREAD64
-#
+
+   # supply a reasonable default fs
    if test -z "$FILE_SYSTEM" ; then
-       file_system_nfs=1
        FILE_SYSTEM="nfs"
        AC_MSG_CHECKING(for xfs)
        AC_TRY_COMPILE([
 #include <aio.h>],
-[aiocb64_t *t1;],file_system_xfs=1;FILE_SYSTEM="xfs $FILE_SYSTEM";)
-       if test "$file_system_xfs" = 1 ; then 
+[aiocb64_t *t1;],xfs_works=1;FILE_SYSTEM="xfs $FILE_SYSTEM";)
+       if test "$xfs_works" = 1 ; then
           AC_MSG_RESULT(yes)
        else
           AC_MSG_RESULT(no)
-          file_system_ufs=1
           FILE_SYSTEM="ufs $FILE_SYSTEM"
        fi
    fi
@@ -762,8 +755,8 @@ fi
 AC_HAVE_FUNCS(memalign)
 
 #
-# Question: Should ROMIO under MPICH2 ignore the Fortran tests, since 
-# MPICH2 provides all of the Fortran interface routines?
+# Question: Should ROMIO under MPICH ignore the Fortran tests, since
+# MPICH provides all of the Fortran interface routines?
 #
 if test $NOF77 = 0 ; then
     echo "checking Fortran external names"
@@ -792,7 +785,7 @@ AC_CHECK_HEADERS([unistd.h fcntl.h malloc.h stddef.h sys/types.h])
 #
 
 # When compiling ROMIO on Darwin with _POSIX_C_SOURCE defined (such as when
-# using --enable-strict in MPICH2), sys/types.h does not define u_short and
+# using --enable-strict in MPICH), sys/types.h does not define u_short and
 # friends unless _DARWIN_C_SOURCE is also defined (see compat(5) on a Darwin
 # box).  This would normally be fine, except sys/stat.h defines struct stat to
 # use u_long, so strict compiles fail.  One option is to also compile with
@@ -901,7 +894,7 @@ if test "$NOF77" = 0 ; then
         $FORTRAN_MPI_OFFSET j
         end
 EOF
-    if $F77 -o conftest conftest.f >>config.log 2>&1 && test -x conftest ; then
+    if $F77 -o conftest$EXEEXT conftest.f >>config.log 2>&1 && test -x conftest$EXEEXT ; then
         ac_cv_f77_offset_type_works=yes
     fi
     rm -f conftest*
@@ -916,7 +909,7 @@ EOF
         integer (kind=$MPI_OFFSET_KIND_VAL) j
         end
 EOF
-        if $F77 -o conftest conftest.f >>config.log 2>&1 && test -x conftest ; then
+        if $F77 -o conftest$EXEEXT conftest.f >>config.log 2>&1 && test -x conftest$EXEEXT ; then
             ac_cv_f77_allows_offset_kind=yes
         fi
         rm -f conftest*
@@ -956,10 +949,10 @@ fi
 if test $WITHIN_KNOWN_MPI_IMPL = no ; then
    PAC_MPI_DARRAY_SUBARRAY
 fi
-if test $FROM_MPICH2 = yes ; then
+if test $FROM_MPICH = yes ; then
    dnl Made this a message instead of a warning because the warning is
    dnl likely to confuse users.
-   AC_MSG_RESULT([Overriding Array test for MPICH2])
+   AC_MSG_RESULT([Overriding Array test for MPICH])
    unset BUILD_MPI_ARRAY
    AC_DEFINE(HAVE_MPI_DARRAY_SUBARRAY,1,[Define if Darray is available])
    HAVE_MPI_DARRAY_SUBARRAY="#define HAVE_MPI_DARRAY_SUBARRAY"
@@ -1012,7 +1005,7 @@ extern int PFoo(int);
 int main(int argc, char **argv) {
 return PFoo(0);}
 EOF
-    ac_link2='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest1.c conftest2.c $LIBS >conftest.out 2>&1'
+    ac_link2='${CC-cc} -o conftest$EXEEXT $CFLAGS $CPPFLAGS $LDFLAGS conftest1.c conftest2.c $LIBS >conftest.out 2>&1'
     if eval $ac_link2 ; then
         AC_MSG_RESULT(yes)
         AC_MSG_CHECKING([that the compiler correctly implements weak symbols])
@@ -1090,7 +1083,26 @@ if test "$HAVE_WEAK_SYMBOLS" = 1 ; then
 fi
 AC_SUBST(HAVE_WEAK_SYMBOLS)
 
+# FIXME we only build ROMIO in embedded mode for now
+AM_CONDITIONAL([BUILD_ROMIO_EMBEDDED],[true])
+# FIXME need to get this right for non-MPICH builds
+AM_CONDITIONAL([BUILD_MPIO_REQUEST],[false])
+# FIXME need to get this right for non-MPICH builds
+AM_CONDITIONAL([BUILD_MPIO_ERRHAN],[false])
 
+# if we don't have weak symbol support, we must build a separate convenience
+# library in order to provide the "PMPI_" symbols
+# Open MPI: Disable the profile library
+#AM_CONDITIONAL([BUILD_PROFILING_LIB],[test "x$HAVE_WEAK_SYMBOLS" = "x0"])
+AM_CONDITIONAL([BUILD_PROFILING_LIB],[false])
+
+# weird: we have conflated "buid ROMIO's versions of the fortran bindings" and
+# "build ROMIO"s fortran I/O tests". Of course the common situaiton is that we
+# are building as part of MPICH, which builds its own fortran bindings, but we
+# still want tests built
+AM_CONDITIONAL([BUILD_F77_BINDINGS],[test "x$NOF77" != "x1" && test "x$FROM_MPICH" != "xyes"])
+
+AM_CONDITIONAL([BUILD_F77_TESTS],[test "x$NOF77" != "x1"])
 
 #
 # Check whether the MPI Offset type is compatible with struct flock
@@ -1124,15 +1136,44 @@ fi
 # if FILE_SYSTEM is not set above, use ufs and nfs as default
 #
 if test -z "$FILE_SYSTEM" ; then
-    file_system_ufs=1
-    file_system_nfs=1
     FILE_SYSTEM="ufs nfs"
 fi
 
 # no matter what, always build testfs
-file_system_testfs=1
 FILE_SYSTEM="testfs $FILE_SYSTEM"
 
+# check for valid file system
+if test -n "$FILE_SYSTEM" ; then
+   # if multiple filesystems are passed in, they are '+'-delimited
+   # we could set the IFS to tokenize FILE_SYSTEM, but the FILE_SYSTEM env var
+   # is used in multiple places in the build system: get rid of the '+'s so we
+   # can use the 'for x in $FILE_SYSTEM ...' idiom
+   FILE_SYSTEM=`echo $FILE_SYSTEM|sed -e 's/\+/ /g'`
+   for x in $FILE_SYSTEM
+   do
+      found=no
+      # We could also do test -d "ad_$y" to test for known file systems
+      # based on having access to the adio code.  Then adding a file
+      # system would not require changing configure to change known_filesystems
+      for y in $known_filesystems ; do
+          if test $x = $y ; then
+	      found=yes
+	      eval "file_system_`echo $x`=1"
+	      break
+	  fi
+      done
+      if test "$found" = "no" ; then
+         AC_MSG_WARN([Unknown file system $x... proceeding anyway])
+      fi
+   done
+fi
+
+#############################################
+# This PVFS2 logic is special because it's hard to get it right if it comes
+# before the known_filesystems check loop above.  So we handle it down here,
+# after the loop but before the AM_CONDITIONAL m4 loop.
+#############################################
+#
 # An attempt to "do the right thing" with as little help from the end-user as
 # possible:
 # - if 'with-pvfs2' given, use that to find pvfs2-config.  complain if we
@@ -1158,6 +1199,21 @@ fi
 if test "$PVFS2_CONFIG" = "notfound" -a -n "$with_pvfs2" ; then
 	AC_MSG_ERROR([pvfs2-config not found in $with_pvfs2])
 fi
+#############################################
+
+
+# Setup an AM_CONDITIONAL named BUILD_AD_FOO for use in each adio's Makefile.mk.
+# This must come *after* the condition becomes valid, in this case after all
+# $file_system_foo variables have been set.
+#
+# If you fiddle with this, please watch the m4 quoting carefully.  m4_foreach
+# expands any macros in the "list" argument exactly once.  The defn bits ensure
+# that any macro names in "fs"'s value will not be expanded, such as if someone
+# is daft enough to "m4_define([ufs],[some crazy value])".
+m4_foreach([fs],[known_filesystems_m4],[
+AM_CONDITIONAL([BUILD_AD_]m4_toupper(defn([fs])),[test x$file_system_]defn([fs])[ = x1])
+])
+
 
 #
 # Print list of configured file systems
@@ -1166,6 +1222,7 @@ fi
 #
 AC_MSG_CHECKING([configured file systems])
 AC_MSG_RESULT([$FILE_SYSTEM])
+
 
 if test -n "$file_system_nfs" ; then
     AC_DEFINE(ROMIO_NFS,1,[Define for ROMIO with NFS])
@@ -1182,11 +1239,21 @@ fi
 if test -n "$file_system_bgl"; then	
     AC_DEFINE(ROMIO_BGL,1,[Define for ROMIO with BGL])
 fi
+if test -n "$file_system_bg"; then
+    AC_DEFINE(ROMIO_BG,1,[Define for ROMIO with BG])
+fi
 if test -n "$file_system_bglockless"; then
-    if test x"$file_system_bgl" = x ; then
-	    AC_MSG_ERROR("bglockless requested without bgl")
+    if test x"$file_system_bgl" != x; then
+        AC_DEFINE(ROMIO_BGLOCKLESS,1,[Define for lock-free ROMIO with BGL])
     fi
-    AC_DEFINE(ROMIO_BGLOCKLESS,1,[Define for lock-free ROMIO with BGL])
+
+    if test x"$file_system_bg" != x; then
+        AC_DEFINE(ROMIO_BGLOCKLESS,1,[Define for lock-free ROMIO with BG])
+    fi
+
+    if test x"$ROMIO_BGLOCKLESS" -ne x1; then
+        AC_MSG_ERROR("bglockless requested without [bgl|bg]")
+    fi
 fi
 if test -n "$file_system_hfs"; then
     AC_DEFINE(ROMIO_HFS,1,[Define for ROMIO with HFS])
@@ -1208,13 +1275,7 @@ fi
 if test -n "$file_system_lustre"; then
     AC_CHECK_HEADERS(lustre/lustre_user.h,
         AC_DEFINE(ROMIO_LUSTRE,1,[Define for ROMIO with LUSTRE]),
-        AC_MSG_ERROR([LUSTRE support requested but cannot find lustre/lustre_user.h header file]),
-        [
-        #include <unistd.h>
-        #ifdef __linux__
-        #include <linux/types.h>
-        #endif
-        ]
+        AC_MSG_ERROR([LUSTRE support requested but cannot find lustre/lustre_user.h header file])
     )
 fi
 
@@ -1341,7 +1402,7 @@ if test -n "$file_system_gridftp"; then
 	AC_DEFINE(ROMIO_GRIDFTP, 1, [Define for ROMIO with gridftp])
 fi
 
-if test -n "$file_system_bgl"; then
+if test -n "$file_system_bgl" -o -n "$file_system_bg"; then
     SYSDEP_INC=-I${prefix}/include
 else
     SYSDEP_INC=
@@ -1780,7 +1841,7 @@ if test -n "$mpi_mpich"; then
    if test -z "$arch_SX4" ; then
       MPIOF_H_INCLUDED=1
    fi
-   if test "$FROM_MPICH2" = no; then
+   if test "$FROM_MPICH" = no; then
       AC_DEFINE(NEEDS_MPI_TEST,1,[Define if mpi_test needed])
       AC_DEFINE(MPICH,1,[Define if using MPICH])
    fi
@@ -1804,22 +1865,28 @@ fi
 AC_CHECK_FUNCS(strerror)
 if test -z "$srcdir" -o "$srcdir" = "." ; then srcdir="$ROMIO_HOME" ; fi
 AC_SUBST(srcdir)
+
+# preserve these values across a config.status --recheck
+AC_ARG_VAR([master_top_srcdir],[set by the MPICH configure to indicate the MPICH source root])
+AC_ARG_VAR([master_top_builddir],[set by the MPICH configure to indicate the MPICH build root])
+
 # The master_top_srcdir is the location of the source for the building
-# package.  This is used only as part of the MPICH2 build, including 
+# package.  This is used only as part of the MPICH build, including
 # the documentation targets mandoc, htmldoc, and latexdoc
 if test -z "$master_top_srcdir" ; then
-    if test "$FROM_MPICH2" = yes ; then
+    if test "$FROM_MPICH" = yes ; then
         AC_MSG_WARN([Could not determine master_top_srcdir])
     fi
 fi
-AC_SUBST(master_top_srcdir)
 #
 # Get the master builddir (which may be imported from above)
 if test -z "$master_top_builddir" ; then
+    if test "$FROM_MPICH" = yes ; then
+        # this variable is essential to proper build operation
+        AC_MSG_ERROR([Could not determine master_top_srcdir])
+    fi
     master_top_builddir=`pwd`
 fi
-export master_top_builddir
-AC_SUBST(master_top_builddir)
 # Make sure the alternate spelling is used until we clean up all of the code
 master_topbuild_dir=$master_top_builddir
 export master_topbuild_dir
@@ -1827,14 +1894,12 @@ AC_SUBST(master_topbuild_dir)
 
 # The following definitions are needed within adio/common/status_setb.c
 if test "$FROM_MPICH" = yes ; then
-   AC_DEFINE(MPICH,1,[Define if compiling within MPICH])
-elif test "$FROM_MPICH2" = yes ; then 
-   AC_DEFINE(ROMIO_INSIDE_MPICH2,1,[Define if compiling within MPICH2])
+   AC_DEFINE(ROMIO_INSIDE_MPICH,1,[Define if compiling within MPICH])
 elif test "$FROM_MPILAM" = yes ; then
    AC_DEFINE(MPILAM,1,[Define if compiling within LAM/MPI])
 fi
 
-if test "$FROM_MPICH2" = no -a "$FROM_MPICH" = no ; then 
+if test "$FROM_MPICH" = no ; then
     if test -z "$LIBNAME"; then
         LIBNAME="$top_build_dir/lib/libmpio.a"
     fi
@@ -1852,22 +1917,17 @@ else
 	fi
     fi
 fi
-if test "$FROM_MPICH2" != no ; then
-    # use the error handlers from MPICH2
+if test "$FROM_MPICH" != no ; then
+    # use the error handlers from MPICH
     MPIO_EXTRA_OBJECTS=
     MPIO_EXTRA_TMP_POBJECTS=
     MPIO_EXTRA_REAL_POBJECTS=
     # Use generalized request to get the multiple-completion routines
     MPIO_REQOBJECTS=
-    MPIO_REQ_TMP_POBJECTS=
-    MPIO_REQ_REAL_POBJECTS=
 fi
 AC_SUBST(MPIO_EXTRA_OBJECTS)
 AC_SUBST(MPIO_EXTRA_TMP_POBJECTS)
 AC_SUBST(MPIO_EXTRA_REAL_POBJECTS)
-AC_SUBST(MPIO_REQOBJECTS)
-AC_SUBST(MPIO_REQ_TMP_POBJECTS)
-AC_SUBST(MPIO_REQ_REAL_POBJECTS)
 #
 # Use DOCTEXT instead of doctext
 AC_CHECK_PROGS(DOCTEXT,doctext,true)
@@ -1894,9 +1954,7 @@ fi
 #
 TEST_LIBNAME=$LIBNAME
 MPIRUN=mpirun
-
-if test "$MPI" = "open_mpi" ; then
-
+if test $FROM_OMPI = yes ; then
    # Open MPI does have the status set bytes functionality
 
    AC_DEFINE(HAVE_STATUS_SET_BYTES,1,[Define if have MPIR_Status_set_bytes])
@@ -1917,38 +1975,6 @@ if test "$MPI" = "open_mpi" ; then
    # Open MPI: see comments in mpi-io/mpioprof.h
    AC_DEFINE(MPIO_BUILD_PROFILING, 1, [hack to make ROMIO build without profiling])
    DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST"
-
-#
-# if MPICH, use mpicc in test programs
-#
-elif test "$FROM_MPICH" = yes ; then
-   MPICH_HOME=`dirname $ROMIO_HOME`
-   if test -z "$MPI_BIN_DIR" ; then MPI_BIN_DIR=$MPICH_HOME/bin ; fi
-   TEST_CC=$MPI_BIN_DIR/mpicc
-   MPI_LIB=""
-   ROMIO_INCLUDE=""
-   USER_CFLAGS=""
-   USER_FFLAGS=""
-   TEST_LIBNAME=""
-   MPIRUN=$MPI_BIN_DIR/mpirun
-   if test -n "$arch_SX4" || test -n "$arch_hpux" ; then
-      TEST_F77=$MPI_BIN_DIR/mpif90
-   else
-      TEST_F77=$MPI_BIN_DIR/mpif77
-   fi
-   CC=$MPI_BIN_DIR/mpicc
-   # A later test will insert the mpi2-other/info and array directories based
-   # on the value of BUILD_MPI_xxxx.  This lets MPICH2 turn these off,
-   # since MPICH2 provides these routines elsewhere
-   EXTRA_DIRS="mpi-io/fortran"
-   # Some older implementations of the ADI do not include the 
-   # MPID_Status_set_bytes routine.   This uses either the 
-   # environment variable ADI3_WITHOUT_SET_BYTES or the
-   # with arg --without-setbytes
-   if test "$ADI2_WITHOUT_SET_BYTES" != yes -a \
-           "$with_setbytes" != no ; then
-       AC_DEFINE(HAVE_STATUS_SET_BYTES,1,[Define if have MPIR_Status_set_bytes])
-   fi
 elif test $FROM_LAM = yes ; then
    # LAM does have the status set bytes functionality
    AC_DEFINE(HAVE_STATUS_SET_BYTES,1,[Define if have MPIR_Status_set_bytes])
@@ -1963,8 +1989,8 @@ elif test $FROM_LAM = yes ; then
    USER_FFLAGS=
    TEST_LIBNAME=
    EXTRA_DIRS="mpi-io/fortran mpi2-other/info mpi2-other/info/fortran mpi2-other/array mpi2-other/array/fortran"
-elif test $FROM_MPICH2 = yes ; then
-   # For now, separate the mpich2 from mpich cases
+elif test $FROM_MPICH = yes ; then
+   # For now, separate the mpich from mpich cases
    MPICH_HOME=`dirname $ROMIO_HOME`
    MPICH_HOME=`dirname $MPICH_HOME`
    MPICH_HOME=`dirname $MPICH_HOME`
@@ -1976,25 +2002,25 @@ elif test $FROM_MPICH2 = yes ; then
    # MPI_LIB="$LIBNAME"
    # To allow ROMIO to work with the LIBTOOL scripts, we want to 
    # work directly with the CC, not the mpicc, compiler.
-   # Note that in the "FROM_MPICH2" case, the CPPFLAGS and INCLUDES are already
+   # Note that in the "FROM_MPICH" case, the CPPFLAGS and INCLUDES are already
    # properly set
    #CC=${top_build_dir}/bin/mpicc
    #
-   # set the compilers to the ones in MPICH2 bin directory (master_top_builddir/bin)
-   TEST_CC=${master_top_builddir}/bin/mpicc
-   TEST_F77=${master_top_builddir}/bin/mpif77
+   # set the compilers to the ones in MPICH bin directory (master_top_builddir/bin)
+   TEST_CC='$(bindir)/mpicc'
+   TEST_F77='$(bindir)/mpif77'
+   MPI_H_INCLUDE="-I${master_top_builddir}/src/include"
    ROMIO_INCLUDE=""
    USER_CFLAGS=""
    USER_FFLAGS=""
    TEST_LIBNAME=""
-   MPIRUN=${master_top_builddir}/bin/mpiexec
+   MPIRUN='${bindir}/mpiexec'
    #
    # Turn off the building of the Fortran interface and the Info routines
    EXTRA_DIRS=""
    AC_DEFINE(HAVE_STATUS_SET_BYTES,1,[Define if status_set_bytes available])
    DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST 1"
-#  Open MPI does not have the MPIU functions
-#  AC_DEFINE(HAVE_MPIU_FUNCS,1,[Define if MPICH2 memory tracing macros defined])
+   AC_DEFINE(HAVE_MPIU_FUNCS,1,[Define if MPICH memory tracing macros defined])
 fi
 #
 #
@@ -2056,33 +2082,39 @@ FILE_SYS_DIRS=""
 for dir in $FILE_SYSTEM ; do
     FILE_SYS_DIRS="$FILE_SYS_DIRS adio/ad_$dir"
 done
+# FIXME eliminate FILE_SYS_DIRS and EXTRA_SRC_DIRS
 EXTRA_SRC_DIRS=""
-GLUE_DIR=""
-if test "$FROM_MPICH2" = yes -o "${MPI}_mpi" = "mpich2_mpi"; then
-    GLUE_DIR="mpi-io/glue/mpich2"
-elif test "$FROM_MPICH" = yes -o "${MPI}_mpi" = "mpich_mpi"; then
-    GLUE_DIR="mpi-io/glue/mpich1"
+
+mpio_glue=""
+if test "$FROM_MPICH" = yes -o "${MPI_IMPL}_mpi" = "mpich_mpi"; then
+    mpio_glue=mpich
+elif test "$FROM_OMPI" = yes -o "${MPI_IMPL}_mpi" = "open_mpi_mpi" ; then
+    mpio_glue=openmpi
 else
-    GLUE_DIR="mpi-io/glue/default"
+    mpio_glue=default
 fi
+
+AM_CONDITIONAL([MPIO_GLUE_MPICH],[test "X$mpio_glue" = "Xmpich"])
+AM_CONDITIONAL([MPIO_GLUE_OPENMPI],[test "X$mpio_glue" = "Xopenmpi"])
+AM_CONDITIONAL([MPIO_GLUE_DEFAULT],[test "X$mpio_glue" = "Xdefault"])
+
 if test "$BUILD_MPI_INFO" = 1 ; then
     EXTRA_SRC_DIRS="$EXTRA_SRC_DIRS mpi2-other/info"
-    if test "$NOF77" = 0 -a "$FROM_MPICH2" != yes ; then
+    if test "$NOF77" = 0 -a "$FROM_MPICH" != yes ; then
         EXTRA_SRC_DIRS="$EXTRA_SRC_DIRS mpi2-other/info/fortran"
     fi
 fi
 if test "$BUILD_MPI_ARRAY" = 1 ; then
     EXTRA_SRC_DIRS="$EXTRA_SRC_DIRS mpi2-other/array"
-    if test "$NOF77" = 0 -a "$FROM_MPICH2" != yes ; then
+    if test "$NOF77" = 0 -a "$FROM_MPICH" != yes ; then
         EXTRA_SRC_DIRS="$EXTRA_SRC_DIRS mpi2-other/array/fortran"
     fi
 fi
-if test "$NOF77" = 0 -a "$FROM_MPICH2" != yes ; then
+if test "$NOF77" = 0 -a "$FROM_MPICH" != yes ; then
    EXTRA_SRC_DIRS="$EXTRA_SRC_DIRS mpi-io/fortran"
 fi
 AC_SUBST(EXTRA_SRC_DIRS)
 AC_SUBST(FILE_SYS_DIRS)
-AC_SUBST(GLUE_DIR)
 
 #
 CFLAGS="$CFLAGS -DHAVE_ROMIOCONF_H"
@@ -2118,10 +2150,7 @@ AC_SUBST(SYSDEP_INC)
 # need to #defines to agree).
 AC_C_RESTRICT
 PAC_C_GNU_ATTRIBUTE
-#
-dnl CFLAGS="$CFLAGS $DEFS"
-CFLAGS="$CFLAGS -DHAVE_ROMIOCONF_H"
-#
+
 # Open MPI: we need libtool
 AM_PROG_LIBTOOL
 
@@ -2129,6 +2158,9 @@ AM_PROG_LIBTOOL
  m4_foreach([my_fs], 
   [bgl, bglockless, gridftp, lustre, nfs, panfs, pfs, pvfs, pvfs2, sfs, testfs, ufs, xfs, zoidfs],
   [AM_CONDITIONAL(BUILD_[]AS_TR_CPP(my_fs), [test -n "$file_system_]my_fs["])])
+
+# support gcov test coverage information
+PAC_ENABLE_COVERAGE
 
 echo "setting CC to $CC"
 echo "setting F77 to $F77"
@@ -2144,8 +2176,6 @@ CFLAGS="$CFLAGS $OMPI_CFLAGS "'-I$(top_builddir)/include'
 #
 # Open MPI - AM doesn't want the following:
 #   VPATH, CC, CPPFLAGS, CFLAGS, AR, RANLIB, F77, MAKE
-#VPATH='VPATH = .:${srcdir}'
-#AC_SUBST(VPATH)#
 AC_SUBST(ARCH)
 AC_SUBST(FILE_SYSTEM)
 #AC_SUBST(CC)
@@ -2155,9 +2185,8 @@ AC_SUBST(USER_CFLAGS)
 AC_SUBST(USER_FFLAGS)
 AC_SUBST(MIPS)
 AC_SUBST(BITS)
-AC_SUBST(MPI)
 #AC_SUBST(AR)
-#AC_SUBST(RANLIB)
+AC_SUBST(AR_FLAGS)
 AC_SUBST(MPI_INCLUDE_DIR)
 AC_SUBST(MPI_LIB)
 #AC_SUBST(F77)
@@ -2175,7 +2204,6 @@ AC_SUBST(F77MPIOINC)
 AC_SUBST(FTESTDEFINE)
 AC_SUBST(FORTRAN_MPI_OFFSET)
 AC_SUBST(FROM_MPICH)
-AC_SUBST(FROM_MPICH2)
 AC_SUBST(FROM_LAM)
 AC_SUBST(WITHIN_KNOWN_MPI_IMPL)
 AC_SUBST(NEEDS_MPI_FINT)
@@ -2199,7 +2227,6 @@ AC_SUBST(MPI_FARRAY6)
 AC_SUBST(MPI_FARRAY7)
 AC_SUBST(MPI_OFFSET_KIND1)
 AC_SUBST(MPI_OFFSET_KIND2)
-AC_SUBST(MPIO_REQOBJECTS)
 AC_SUBST(TEST_CC)
 AC_SUBST(TEST_F77)
 AC_SUBST(ROMIO_INCLUDE)
@@ -2209,11 +2236,6 @@ AC_SUBST(ROMIO_TCPPFLAGS)
 AC_SUBST(ROMIO_TFFLAGS)
 AC_SUBST(MPIRUN)
 AC_SUBST(FORTRAN_TEST)
-dnl
-# Open MPI - not needed with AM
-#dnl Dependency handling
-#AC_SUBST(MAKE_DEPEND_C)
-# Open MPI - LT / AM does all this for us...
 #dnl
 #dnl Support shared libraries
 #if test -z "$ENABLE_SHLIB" ; then
@@ -2228,89 +2250,45 @@ dnl
 #SHLIBNAME=`echo $LIBNAME | sed 's/\.a$//'`
 #AC_SUBST(SHLIBNAME)
 #dnl
-# Open MPI: This is no longer necessary with modern versions of autotools
 #if test ! -d adio ; then mkdir adio ; fi
 #if test ! -d adio/include ; then mkdir adio/include ; fi
 #if test ! -d mpi2-other ; then mkdir mpi2-other ; fi
 #if test ! -d mpi-io ; then mkdir mpi-io ; fi
 #if test ! -d mpi-io/glue ; then mkdir mpi-io/glue ; fi
-# 
-# Make sure we remove any configuration file incase there is out-of-date data.
-# We remove the version in include in case this is a vpath build
-# Open MPI: no longer needed with modern AC
-#rm -f adio/include/romioconf.h ${use_top_srcdir}/src/mpi/romio/adio/include/romioconf.h ${use_top_srcdir}/adio/include/romioconf.h
-#
+
 # Create makefiles for all of the adio devices.  Only the ones that 
 # are active will be called by the top level ROMIO make
 AC_OUTPUT_COMMANDS([chmod 755 util/romioinstall test/runtests])
-# Open MPI: revamp AC_OUTPUT lines to fit Makefile.am's
 AC_CONFIG_FILES([
     Makefile
-    localdefs 
-
-    adio/Makefile
-    adio/ad_bgl/Makefile
-    adio/ad_bglockless/Makefile
-    adio/ad_gridftp/Makefile
-    adio/ad_lustre/Makefile
-    adio/ad_nfs/Makefile 
-    adio/ad_ntfs/Makefile 
-    adio/ad_panfs/Makefile
-    adio/ad_pfs/Makefile
-    adio/ad_pvfs/Makefile
-    adio/ad_pvfs2/Makefile
-    adio/ad_sfs/Makefile
-    adio/ad_testfs/Makefile
-    adio/ad_ufs/Makefile
-    adio/ad_xfs/Makefile
-    adio/ad_zoidfs/Makefile
-    adio/common/Makefile
-    adio/include/Makefile
-
-    doc/Makefile
-
-    include/mpio.h
-    include/mpiof.h
-    include/Makefile
-
-    mpi-io/Makefile 
-
+    localdefs
     test/Makefile
     test/misc.c
     test/large_file.c
+    test/runtests
+    test-internal/Makefile
+    util/romioinstall
+    include/mpio.h
     test/fmisc.f
     test/fcoll_test.f
     test/pfcoll_test.f
     test/fperf.f
-    test/runtests
-
-    util/romioinstall
-
-    mpi-io/glue/openmpi/Makefile
-
-    util/Makefile
 ])
 # Open MPI: intentionally skip the following:
 # mpi2-other/info/Makefile
-# mpi2-other/info/fortran/Makefile
 # mpi2-other/array/Makefile
+# mpi2-other/info/fortran/Makefile
 # mpi2-other/array/fortran/Makefile
-# mpi-io/fortran/Makefile
-# mpi-io/glue/mpich2/Makefile
-# mpi-io/glue/mpich1/Makefile
-# mpi-io/glue/default/Makefile
-# Open MPI: according to romio-maint@mcs.anl.gov:
-# adio/ad_hfs/Makefile: old and no longer used
-# adio/ad_ntfs/Makefile: not built with GNU Autotools
-# adio/ad_piofs/Makefile: old and no longer used
+# include/mpiof.h
 AC_OUTPUT
-#
+
+
 #
 # Open MPI - don't need to remove this...
-# rm -f *.o
+#rm -f *.o
 
 # Open MPI - don't need this extra printf
-#if test $FROM_MPICH = no -a $FROM_MPICH2 = no ; then
+#if test $FROM_MPICH = no ; then
 #   AC_MSG_RESULT([Configure done. Now type make.])
 #fi
 dnl PAC_SUBDIR_CACHE_CLEANUP

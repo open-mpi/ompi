@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *   ad_panfs_open.c
  *
@@ -156,7 +156,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
             char* slash;
             struct stat stat_buf;
             int err;
-            char *value, *path, *file_name_ptr;
+            char *path;
 
             /* Check that the file does not exist before
              * trying to create it.  The ioctl itself should
@@ -327,6 +327,8 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid10.layout_visit_policy);
                         ADIOI_Info_set(fd->info, "panfs_layout_visit_policy", temp_buffer);
                         break;
+		  default:
+			  break;
                 }
             }
         }

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2007 UChicago/Argonne LLC
@@ -74,6 +74,7 @@ void ADIOI_FAILSAFE_OpenColl(ADIO_File fd, int rank,
     if (*error_code != MPI_SUCCESS) 
         (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
 
+    if(*error_code != MPI_SUCCESS) return;
     /* if we turned off EXCL earlier, then we should turn it back on */
     if (fd->access_mode != orig_amode_excl) fd->access_mode = orig_amode_excl;
 

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 1997 University of Chicago. 
@@ -97,6 +97,8 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
 	MPE_Log_get_state_eventIDs( &ADIOI_MPE_openinternal_a, 
 			&ADIOI_MPE_openinternal_b);
 	MPE_Log_get_state_eventIDs( &ADIOI_MPE_stat_a, &ADIOI_MPE_stat_b);
+	MPE_Log_get_state_eventIDs( &ADIOI_MPE_iread_a, &ADIOI_MPE_iread_b);
+	MPE_Log_get_state_eventIDs( &ADIOI_MPE_iwrite_a, &ADIOI_MPE_iwrite_b);
 
         int  comm_world_rank;
         MPI_Comm_rank( MPI_COMM_WORLD, &comm_world_rank );
@@ -122,6 +124,8 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
                                 "postwrite", "ivory" );
 	    MPE_Describe_state( ADIOI_MPE_openinternal_a, ADIOI_MPE_openinternal_b, "open system", "blue");
 	    MPE_Describe_state( ADIOI_MPE_stat_a, ADIOI_MPE_stat_b, "stat", "purple");
+	    MPE_Describe_state( ADIOI_MPE_iread_a, ADIOI_MPE_iread_b, "iread", "purple");
+	    MPE_Describe_state( ADIOI_MPE_iwrite_a, ADIOI_MPE_iwrite_b, "iwrite", "purple");
         }
     }
 #endif

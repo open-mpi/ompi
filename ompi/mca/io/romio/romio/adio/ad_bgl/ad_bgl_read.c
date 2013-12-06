@@ -203,6 +203,9 @@ void ADIOI_BGL_ReadStrided(ADIO_File fd, void *buf, int count,
 
     MPI_Type_size(fd->filetype, &filetype_size);
     if ( ! filetype_size ) {
+#ifdef HAVE_STATUS_SET_BYTES
+	MPIR_Status_set_bytes(status, datatype, 0);
+#endif
 	*error_code = MPI_SUCCESS; 
 	return;
     }

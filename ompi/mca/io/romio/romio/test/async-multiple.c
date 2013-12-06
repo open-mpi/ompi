@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- 
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *  
  *  (C) 2001 by Argonne National Laboratory.

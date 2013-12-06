@@ -21,6 +21,7 @@ __netbsd_
 __LINUX_
 __LINUX_ALPHA_
 __CRAY_
+__Darwin_
 __nfs_
 __ufs_
 __pfs_
@@ -35,5 +36,4 @@ __sgi_mpi
 __hp_mpi
 __cray_mpi
 __lam_mpi
-__Darwin
 __open_mpi

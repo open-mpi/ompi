@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /* 
  *
  *   Copyright (C) 2001 University of Chicago. 
@@ -34,5 +34,5 @@ struct ADIOI_Fns_struct ADIO_NTFS_operations = {
     ADIOI_NTFS_Flush, /* Flush */
     ADIOI_NTFS_Resize, /* Resize */
     ADIOI_GEN_Delete, /* Delete */
-    ADIOI_GEN_Feature /* Features */
+    ADIOI_NTFS_Feature /* Features */
 };

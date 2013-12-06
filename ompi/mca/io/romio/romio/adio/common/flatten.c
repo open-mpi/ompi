@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 /*
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -9,9 +9,6 @@
 /* #ifdef MPISGI
 #include "mpisgi2.h"
 #endif */
-#ifdef ROMIO_INSIDE_MPICH2
-#include "mpid_datatype.h"
-#endif
 
 #ifdef USE_DBG_LOGGING
   #define FLATTEN_DEBUG 1
@@ -27,9 +24,6 @@ void ADIOI_Flatten_datatype(MPI_Datatype datatype)
     int curr_index=0, is_contig;
     ADIOI_Flatlist_node *flat, *prev=0;
 
-#ifdef ROMIO_INSIDE_MPICH2
-  if(MPIU_DBG_SELECTED(DATATYPE,TYPICAL)) MPIDU_Datatype_debug(datatype, 4); /* use -env MPICH_DBG_OUTPUT=stdout */
-#endif
     /* check if necessary to flatten. */
  
     /* is it entirely contiguous? */
@@ -145,7 +139,6 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
   {
     DBG_FPRINTF(stderr,"ADIOI_Flatten:: types[%d]=%#llX\n",i,(unsigned long long)(unsigned long)types[i]);
   }
-  if(MPIU_DBG_SELECTED(DATATYPE,TYPICAL)) MPIDU_Datatype_debug(datatype, 4); /* use -env MPICH_DBG_OUTPUT=stdout */
   #endif
     switch (combiner) {
 #ifdef MPIIMPL_HAVE_MPI_COMBINER_DUP
@@ -458,6 +451,10 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	}
 	break;
 
+        /* FIXME: using the same code as indexed_block for
+         * hindexed_block doesn't look correct.  Needs to be carefully
+         * looked into. */
+    case MPI_COMBINER_HINDEXED_BLOCK:
     case MPI_COMBINER_INDEXED_BLOCK:
     #ifdef FLATTEN_DEBUG 
     DBG_FPRINTF(stderr,"ADIOI_Flatten:: MPI_COMBINER_INDEXED_BLOCK\n");
@@ -737,7 +734,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
 {
 #ifdef HAVE_MPIR_TYPE_GET_CONTIG_BLOCKS
-    /* MPICH2 can get us this value without all the envelope/contents calls */
+    /* MPICH can get us this value without all the envelope/contents calls */
     int blks;
     MPIR_Type_get_contig_blocks(datatype, &blks);
     *curr_index = blks;
