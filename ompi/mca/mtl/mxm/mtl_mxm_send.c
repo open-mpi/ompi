@@ -119,14 +119,11 @@ int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
-#if MXM_API < MXM_VERSION(1,5)
-    mxm_send_req.base.data.buffer.mkey   = MXM_MKEY_NONE;
-#else
-    mxm_send_req.base.data.buffer.memh   = MXM_INVALID_MEM_HANDLE;
-#endif
 
+    mxm_send_req.base.data.buffer.memh   = MXM_INVALID_MEM_HANDLE;
     mxm_send_req.op.send.tag             = tag;
     mxm_send_req.op.send.imm_data        = ompi_comm_rank(comm);
+
 #if MXM_API < MXM_VERSION(2,0)
     mxm_send_req.base.flags              = MXM_REQ_FLAG_BLOCKING;
     mxm_send_req.opcode                  = MXM_REQ_OP_SEND;
@@ -193,11 +190,7 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     mtl_mxm_request->buf    = mxm_send_req->base.data.buffer.ptr;
     mtl_mxm_request->length = mxm_send_req->base.data.buffer.length;
 
-#if MXM_API < MXM_VERSION(1,5)
-    mxm_send_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
-#else
     mxm_send_req->base.data.buffer.memh    = MXM_INVALID_MEM_HANDLE;
-#endif
     mxm_send_req->base.context             = mtl_mxm_request;
     mxm_send_req->base.completed_cb        = ompi_mtl_mxm_send_completion_cb;
 

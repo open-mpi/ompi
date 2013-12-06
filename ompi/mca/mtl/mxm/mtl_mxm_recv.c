@@ -111,12 +111,7 @@ static inline __opal_attribute_always_inline__ int
     mxm_recv_req->base.flags               = 0;
 #endif
 
-#if MXM_API < MXM_VERSION(1,5)
-    mxm_recv_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
-#else
     mxm_recv_req->base.data.buffer.memh    = MXM_INVALID_MEM_HANDLE;
-#endif
-
     mxm_recv_req->base.context             = mtl_mxm_request;
     mxm_recv_req->base.completed_cb        = ompi_mtl_mxm_recv_completion_cb;
 
@@ -160,7 +155,6 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
                         struct ompi_message_t **message,
                         struct mca_mtl_request_t *mtl_request)
 {
-#if MXM_API >= MXM_VERSION(1,5)
     int ret;
     mxm_error_t err;
     mxm_recv_req_t *mxm_recv_req;
@@ -197,7 +191,4 @@ int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
     (*message) = MPI_MESSAGE_NULL;
 
     return OMPI_SUCCESS;
-#else
-    return OMPI_ERR_NOT_IMPLEMENTED;
-#endif
 }

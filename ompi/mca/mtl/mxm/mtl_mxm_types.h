@@ -30,11 +30,8 @@ typedef struct mca_mtl_mxm_module_t {
     int                   mxm_np;
     mxm_h                 mxm_context;
     mxm_ep_h              ep;
-#if MXM_API < MXM_VERSION(1,5)
-    mxm_context_opts_t    mxm_opts;
-#else
-    mxm_context_opts_t   *mxm_opts;
-#endif
+    mxm_context_opts_t    *mxm_ctx_opts;
+    mxm_ep_opts_t         *mxm_ep_opts;
 #if MXM_API >= MXM_VERSION(2,0)
     int                   using_mem_hooks;
 #endif
@@ -51,11 +48,7 @@ extern mca_mtl_mxm_module_t ompi_mtl_mxm;
 
 typedef struct mca_mtl_mxm_component_t {
     mca_mtl_base_component_2_0_0_t super; /**< base MTL component */
-
-#if MXM_API >= MXM_VERSION(1,5)
     ompi_free_list_t mxm_messages; /* will be used for MPI_Mprobe and MPI_Mrecv calls */
-#endif
-
 } mca_mtl_mxm_component_t;
 
 
