@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -32,6 +32,8 @@ AC_DEFUN([OPAL_CHECK_PTHREAD_PIDS],[
 #
 
 AC_MSG_CHECKING([if threads have different pids (pthreads on linux)])
+
+OPAL_VAR_SCOPE_PUSH([CFLAGS_save CPPFLAGS_save LDFLAGS_save LIBS_save MSG])
 CFLAGS_save="$CFLAGS"
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 CPPFLAGS_save="$CPPFLAGS"
@@ -107,4 +109,4 @@ AS_IF([test "$OPAL_THREADS_HAVE_DIFFERENT_PIDS" = "1"],
 # if pthreads is not available, then the system does not have an insane threads
 # model
 #
-unset MSG])dnl
+OPAL_VAR_SCOPE_POP])dnl

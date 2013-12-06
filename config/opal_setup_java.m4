@@ -34,6 +34,7 @@ AC_DEFUN([OPAL_SETUP_JAVA_BANNER],[
 AC_DEFUN([OPAL_SETUP_JAVA],[
     AC_REQUIRE([OPAL_SETUP_JAVA_BANNER])
 
+    OPAL_VAR_SCOPE_PUSH([orte_java_happy bad found dir jnih PATH_save CPPFLAGS_save])
     AC_ARG_ENABLE(java,
                   AC_HELP_STRING([--enable-java],
                                  [Enable Java-based support in the system - use this option to disable all Java-based compiler tests (default: enabled)]))
@@ -202,5 +203,5 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
 
     AC_DEFINE_UNQUOTED([OPAL_HAVE_JAVA_SUPPORT], [$HAVE_JAVA_SUPPORT], [do we have Java support])
     AM_CONDITIONAL(OPAL_HAVE_JAVA_SUPPORT, test "$opal_java_happy" = "yes")
-
+    OPAL_VAR_SCOPE_POP
 ])

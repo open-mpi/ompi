@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,6 +21,7 @@
 # ORTE_CHECK_TM_LIBS_FLAGS(prefix, [LIBS or LDFLAGS])
 # ---------------------------------------------------
 AC_DEFUN([ORTE_CHECK_TM_LIBS_FLAGS],[
+    OPAL_VAR_SCOPE_PUSH([orte_check_tm_flags])
     orte_check_tm_flags=`$orte_check_tm_pbs_config --libs`
     for orte_check_tm_val in $orte_check_tm_flags; do
         if test "`echo $orte_check_tm_val | cut -c1-2`" = "-l"; then
@@ -33,12 +34,14 @@ AC_DEFUN([ORTE_CHECK_TM_LIBS_FLAGS],[
             fi
         fi
     done
+    OPAL_VAR_SCOPE_POP
 ])
 
 
 # ORTE_CHECK_TM(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([ORTE_CHECK_TM],[
+    OPAL_VAR_SCOPE_PUSH([orte_check_tm_found orte_check_tm_happy orte_check_tm_dir orte_check_tm_pbs_config LDFLAGS_save CPPFLAGS_save LIBS_save])
     AC_ARG_WITH([tm],
                 [AC_HELP_STRING([--with-tm(=DIR)],
                                 [Build TM (Torque, PBSPro, and compatible) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
@@ -142,4 +145,6 @@ AC_DEFUN([ORTE_CHECK_TM],[
           [AS_IF([test ! -z "$with_tm" -a "$with_tm" != "no"],
                  [AC_MSG_ERROR([TM support requested but not found.  Aborting])])
            $3])
+
+    OPAL_VAR_SCOPE_POP
 ])

@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2011 Mellanox Technologies. All rights reserved.
 
+# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -15,6 +16,8 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_FCA],[
+    OPAL_VAR_SCOPE_PUSH([ompi_check_fca_dir ompi_check_fca_libdir ompi_check_fca_incdir ompi_check_fca_libs ompi_check_fca_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
+
     AC_ARG_WITH([fca],
         [AC_HELP_STRING([--with-fca(=DIR)],
              [Build fca (Mellanox Fabric Collective Accelerator) support, searching for libraries in DIR])])
@@ -61,5 +64,7 @@ AC_DEFUN([OMPI_CHECK_FCA],[
           [AS_IF([test ! -z "$with_fca" -a "$with_fca" != "no"],
                  [AC_MSG_ERROR([FCA support requested but not found.  Aborting])])
            $3])
+
+    OPAL_VAR_SCOPE_POP
 ])
 

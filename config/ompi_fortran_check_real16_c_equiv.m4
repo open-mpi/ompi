@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -23,7 +23,6 @@ dnl
 # ----------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
     unset happy
-    unset CFLAGS_save
     OPAL_VAR_SCOPE_PUSH([happy define_value msg CFLAGS_save])
     AS_VAR_PUSHDEF([real16_matches_c_var], [ompi_cv_real16_c_equiv])
 

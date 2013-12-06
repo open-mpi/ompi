@@ -82,6 +82,8 @@ EOF
 #                              [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_event_libevent2021_CONFIG],[
+    OPAL_VAR_SCOPE_PUSH([CFLAGS_save CPPFLAGS_save file event_args libevent_happy])
+
     AC_CONFIG_FILES([opal/mca/event/libevent2021/Makefile])
     basedir="opal/mca/event/libevent2021"
 
@@ -178,5 +180,6 @@ AC_DEFUN([MCA_opal_event_libevent2021_CONFIG],[
            $1],
           [$2
            OPAL_HAVE_WORKING_EVENTOPS=0])
-    unset file
+
+    OPAL_VAR_SCOPE_POP
 ])

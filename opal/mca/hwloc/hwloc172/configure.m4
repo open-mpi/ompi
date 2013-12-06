@@ -67,7 +67,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc172_CONFIG],[
 
     AC_CONFIG_FILES([opal/mca/hwloc/hwloc172/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc172_save_CPPFLAGS opal_hwloc_hwloc172_save_LDFLAGS opal_hwloc_hwloc172_save_LIBS opal_hwloc_hwloc172_save_cairo opal_hwloc_hwloc172_save_xml opal_hwloc_hwloc172_basedir opal_hwloc_hwloc172_file opal_hwloc_hwloc172_save_cflags])
+    OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc172_save_CPPFLAGS opal_hwloc_hwloc172_save_LDFLAGS opal_hwloc_hwloc172_save_LIBS opal_hwloc_hwloc172_save_cairo opal_hwloc_hwloc172_save_xml opal_hwloc_hwloc172_basedir opal_hwloc_hwloc172_file opal_hwloc_hwloc172_save_cflags CPPFLAGS_save])
 
     # default to this component not providing support
     opal_hwloc_hwloc172_basedir=opal/mca/hwloc/hwloc172
