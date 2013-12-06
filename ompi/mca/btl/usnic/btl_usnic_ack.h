@@ -31,7 +31,7 @@
             &(send_frag)->sf_base.uf_base,                                    \
             OMPI_SUCCESS);                                                    \
         frag->sf_base.uf_base.des_flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK; \
-        ++((module)->stats.pml_send_callbacks);                                     \
+        ++((module)->stats.pml_send_callbacks);                               \
     } while (0)
 
 /*

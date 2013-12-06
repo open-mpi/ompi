@@ -86,7 +86,7 @@ typedef struct ompi_btl_usnic_channel_t {
 } ompi_btl_usnic_channel_t;
 
 /**
- * usNIC BTL interface
+ * usNIC verbs BTL interface
  */
 typedef struct ompi_btl_usnic_module_t {
     mca_btl_base_module_t super;
