@@ -378,8 +378,6 @@ static int snapc_full_local_start_hnp_listener(void)
 
 static int snapc_full_local_stop_hnp_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
     /*
      * Global Coordinator: Does not register a Local listener
      */
@@ -393,18 +391,11 @@ static int snapc_full_local_stop_hnp_listener(void)
 
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Local) Shutdown Coordinator Channel"));
-    
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
-                                                    ORTE_RML_TAG_SNAPC_FULL))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SNAPC_FULL);
 
     snapc_local_hnp_recv_issued = false;
-    
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 static int snapc_full_local_start_app_listener(void)
@@ -439,26 +430,17 @@ static int snapc_full_local_start_app_listener(void)
 
 static int snapc_full_local_stop_app_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-    
     if (!snapc_local_app_recv_issued ) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Local) Shutdown Application State Channel"));
-    
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
-                                                    ORTE_RML_TAG_SNAPC))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SNAPC);
 
     snapc_local_app_recv_issued = false;
-    
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 /******************

@@ -1016,19 +1016,10 @@ static int sstore_stage_global_start_listener(void)
 
 static int sstore_stage_global_stop_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
-                                                    ORTE_RML_TAG_SSTORE_INTERNAL))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SSTORE_INTERNAL);
 
     is_global_listener_active = false;
-    
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 static void sstore_stage_global_recv(int status,

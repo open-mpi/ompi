@@ -94,20 +94,14 @@ char * orte_rml_ftrm_get_contact_info(void)
 /*
  * Set CONTACT_INFO
  */
-int orte_rml_ftrm_set_contact_info(const char* contact_info)
+void orte_rml_ftrm_set_contact_info(const char* contact_info)
 {
-    int ret;
-
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: set_contact_info()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.set_contact_info ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.set_contact_info(contact_info) ) ) {
-            return ret;
-        }
+        orte_rml_ftrm_wrapped_module.set_contact_info(contact_info);
     }
-
-    return ORTE_SUCCESS;
 }
 
 
@@ -330,20 +324,14 @@ int orte_rml_ftrm_recv_buffer_nb(orte_process_name_t* peer,
 /*
  * Recv Cancel
  */
-int orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
+void orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
 {
-    int ret;
-
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_cancel()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.recv_cancel ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.recv_cancel(peer, tag) ) ) {
-            return ret;
-        }
+        orte_rml_ftrm_wrapped_module.recv_cancel(peer, tag);
     }
-
-    return ORTE_SUCCESS;
 }
 
 
@@ -436,18 +424,12 @@ int orte_rml_ftrm_ft_event(int state)
     return ORTE_SUCCESS;
 }
 
-int orte_rml_ftrm_purge(orte_process_name_t *peer)
+void orte_rml_ftrm_purge(orte_process_name_t *peer)
 {
-    int ret;
-    
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: purge()");
-    
+
     if( NULL != orte_rml_ftrm_wrapped_module.purge ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.purge(peer) ) ) {
-            return ret;
-        }
+        orte_rml_ftrm_wrapped_module.purge(peer);
     }
-    
-    return ORTE_SUCCESS;
 }

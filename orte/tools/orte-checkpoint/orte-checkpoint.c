@@ -671,22 +671,14 @@ static int start_listener(void)
 
 static int stop_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
     if( !listener_started ) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
+        return ORTE_ERROR;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
-                                                    ORTE_RML_TAG_CKPT))) {
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_CKPT);
 
     listener_started = false;
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 static void hnp_receiver(int status,
