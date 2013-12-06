@@ -290,16 +290,10 @@ static int errmgr_base_tool_stop_cmdline_listener(void)
     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                          "errmgr:base:tool: Shutdown Command Line Channel"));
     
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
-                                                    ORTE_RML_TAG_MIGRATE))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MIGRATE);
 
     errmgr_cmdline_recv_issued = false;
     
- cleanup:
     return exit_status;
 }
 

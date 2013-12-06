@@ -905,26 +905,17 @@ static int snapc_full_global_start_listener(void)
 
 static int snapc_full_global_stop_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-    
     if (!snapc_orted_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Shutdown Coordinator Channel"));
-    
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
-                                                    ORTE_RML_TAG_SNAPC_FULL))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SNAPC_FULL);
 
     snapc_orted_recv_issued = false;
-    
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 static int snapc_full_global_start_cmdline_listener(void)
@@ -959,26 +950,17 @@ static int snapc_full_global_start_cmdline_listener(void)
 
 static int snapc_full_global_stop_cmdline_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-    
     if (!snapc_cmdline_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Shutdown Command Line Channel"));
-    
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
-                                                    ORTE_RML_TAG_CKPT))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_CKPT);
 
     snapc_cmdline_recv_issued = false;
-    
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 /*****************

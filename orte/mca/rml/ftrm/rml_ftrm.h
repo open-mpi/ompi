@@ -63,7 +63,7 @@ BEGIN_C_DECLS
     /*
      * Set URI
      */
-    int orte_rml_ftrm_set_contact_info(const char* uri);
+    void orte_rml_ftrm_set_contact_info(const char* uri);
 
     /*
      * Ping
@@ -148,7 +148,7 @@ BEGIN_C_DECLS
     /*
      * Recv Cancel
      */
-    int orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
+    void orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
 
     /*
      * Register a callback on loss of connection
@@ -161,7 +161,7 @@ BEGIN_C_DECLS
      */
     int orte_rml_ftrm_ft_event(int state);
 
-    int orte_rml_ftrm_purge(orte_process_name_t *peer);
+    void orte_rml_ftrm_purge(orte_process_name_t *peer);
 
 END_C_DECLS
 
