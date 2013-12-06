@@ -84,6 +84,7 @@ if test -f "$srcdir/../../../../../config/ompi_mca.m4"; then
 
     top_ompi_srcdir='$(top_srcdir)/../../../../..'
     top_ompi_builddir='$(top_builddir)/../../../../..'
+    with_mpi="$top_ompi_srcdir"
     AC_MSG_RESULT([in Open MPI source tree -- good])
     AC_SUBST(top_ompi_srcdir)
     AC_SUBST(top_ompi_builddir)
