@@ -16,7 +16,7 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_FCA],[
-    OPAL_VAR_SCOPE_PUSH([ompi_check_fca_dir ompi_check_fca_libdir ompi_check_fca_incdir ompi_check_fca_libs ompi_check_fca_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_fca_libdir ompi_check_fca_incdir ompi_check_fca_libs ompi_check_fca_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
 
     AC_ARG_WITH([fca],
         [AC_HELP_STRING([--with-fca(=DIR)],
