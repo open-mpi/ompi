@@ -3060,10 +3060,14 @@ static void build_debugger_args(orte_app_context_t *debugger)
 void orte_timeout_wakeup(int sd, short args, void *cbdata)
 {
     orte_job_t *jdata = (orte_job_t*)cbdata;
+    char *tm;
 
     /* this function gets called when the job execution time
      * has hit a prescribed limit - so just abort
      */
+    tm = getenv("MPIEXEC_TIMEOUT");
+    orte_show_help("help-orterun.txt", "orterun:timeout",
+                   true, (NULL == tm) ? "NULL" : tm);
     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FORCED_EXIT);
