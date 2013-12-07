@@ -123,9 +123,9 @@ bool orte_orteds_term_ordered = false;
 bool orte_allowed_exit_without_sync = false;
 
 int orte_startup_timeout;
-
 int orte_timeout_usec_per_proc;
 float orte_max_timeout;
+orte_timer_t *orte_mpiexec_timeout = NULL;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
