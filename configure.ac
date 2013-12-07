@@ -1310,9 +1310,7 @@ AC_CONFIG_FILES([
 
     contrib/Makefile
 
-    contrib/dist/mofed/compile_debian_mlnx_example
     contrib/dist/mofed/debian/changelog
-    contrib/dist/mofed/debian/rules
     contrib/dist/mofed/debian/control
     contrib/dist/mofed/debian/copyright:LICENSE
 
@@ -1324,10 +1322,11 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
-],[
-    chmod +x contrib/dist/mofed/debian/rules
-    chmod +x contrib/dist/mofed/compile_debian_mlnx_example
-    ])
+])
+AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
+                [chmod +x contrib/dist/mofed/debian/rules])
+AC_CONFIG_FILES([contrib/dist/mofed/compile_debian_mlnx_example],
+                [chmod +x contrib/dist/mofed/compile_debian_mlnx_example])
 
 OPAL_CONFIG_FILES
 m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
