@@ -30,10 +30,15 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 			   ompi_check_fca_incdir="$ompi_check_fca_dir/include"
 			   ompi_check_fca_libs=fca
 
+			   coll_fca_extra_CPPFLAGS="-I$ompi_check_fca_incdir/fca -I$ompi_check_fca_incdir/fca_core"
+			   AC_SUBST([coll_fca_extra_CPPFLAGS])
+			   AC_SUBST([coll_fca_HOME], "$ompi_check_fca_dir")
+
 			   CPPFLAGS_save=$CPPFLAGS
 			   LDFLAGS_save=$LDFLAGS
 			   LIBS_save=$LIBS
-			   CPPFLAGS="$CPPFLAGS -I$ompi_check_fca_dir/include/fca -I$ompi_check_fca_dir/include/fca_core"
+			   CPPFLAGS="$CPPFLAGS $coll_fca_extra_CPPFLAGS"
+
 
 			   OPAL_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
 			   OPAL_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
@@ -43,7 +48,7 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 				   [fca_api.h],
 				   [$ompi_check_fca_libs],
 				   [fca_get_version],
-				   [-l$ompi_check_fca_libs],
+				   [],
 				   [$ompi_check_fca_dir],
 				   [$ompi_check_fca_libdir],
 				   [ompi_check_fca_happy="yes"],
