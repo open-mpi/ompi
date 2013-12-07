@@ -783,6 +783,13 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,
                          "%s state:base:check_job_completed all jobs terminated",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* stop the job timeout event, if set */
+    if (NULL != orte_mpiexec_timeout) {
+        OBJ_RELEASE(orte_mpiexec_timeout);
+        orte_mpiexec_timeout = NULL;
+    }
+
     /* set the exit status to 0 - this will only happen if it
      * wasn't already set by an error condition
      */

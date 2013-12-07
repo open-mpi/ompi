@@ -137,6 +137,8 @@ static void open_fifo (void);
 
 ORTE_DECLSPEC void* MPIR_Breakpoint(void);
 
+static void orte_timeout_wakeup(int sd, short args, void *cbdata);
+
 /*
  * Breakpoint function for parallel debuggers
  */
@@ -1020,6 +1022,23 @@ int orterun(int argc, char *argv[])
             ORTE_UPDATE_EXIT_STATUS(rc);
             goto DONE;
         }
+    }
+
+    /* check for a job timeout specification, to be provided in seconds
+     * as that is what MPICH used
+     */
+    if (NULL != (param = getenv("MPIEXEC_TIMEOUT"))) {
+        if (NULL == (orte_mpiexec_timeout = OBJ_NEW(orte_timer_t))) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERR_OUT_OF_RESOURCE);
+            goto DONE;
+        }
+        orte_mpiexec_timeout->tv.tv_sec = strtol(param, NULL, 10);
+        orte_mpiexec_timeout->tv.tv_usec = 0;
+        opal_event_evtimer_set(orte_event_base, orte_mpiexec_timeout->ev,
+                               orte_timeout_wakeup, jdata);
+        opal_event_set_priority(orte_mpiexec_timeout->ev, ORTE_ERROR_PRI);
+        opal_event_evtimer_add(orte_mpiexec_timeout->ev, &orte_mpiexec_timeout->tv);
     }
 
     /* spawn the job and its daemons */
@@ -3036,4 +3055,18 @@ static void build_debugger_args(orte_app_context_t *debugger)
             }
         }
     }
+}
+
+void orte_timeout_wakeup(int sd, short args, void *cbdata)
+{
+    orte_job_t *jdata = (orte_job_t*)cbdata;
+
+    /* this function gets called when the job execution time
+     * has hit a prescribed limit - so just abort
+     */
+    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    /* abort the job */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FORCED_EXIT);
+    /* set the global abnormal exit flag  */
+    orte_abnormal_term_ordered = true;
 }
