@@ -16,7 +16,10 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_HCOLL],[
-    OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_hcoll_libdir ompi_check_hcoll_incdir ompi_check_hcoll_libs ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
+dnl To be checked/fixed by Jeff and Alexander in Chicago at the OMPI
+dnl dev meeting in Dec 2013
+dnl    OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_hcoll_libdir ompi_check_hcoll_incdir ompi_check_hcoll_libs ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save LDFLAGS_save LIBS_save])
 
     AC_ARG_WITH([hcoll],
         [AC_HELP_STRING([--with-hcoll(=DIR)],
