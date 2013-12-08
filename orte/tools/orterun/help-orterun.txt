@@ -644,7 +644,7 @@ Please correct this value and try again.
 The user-provided time limit for job execution has been
 reached:
 
-  MPIEXEC_TIMEOUT: %s
+  MPIEXEC_TIMEOUT: %s seconds
 
 The job will now be aborted. Please check your code and/or
 adjust/remove the job execution time limit (as specified
