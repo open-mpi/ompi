@@ -29,6 +29,5 @@ AC_DEFUN([MCA_ompi_coll_fca_CONFIG],[
     AC_SUBST([coll_fca_CPPFLAGS])
     AC_SUBST([coll_fca_LDFLAGS])
     AC_SUBST([coll_fca_LIBS])
-	AC_SUBST(coll_fca_HOME, "$ompi_check_fca_dir")
 ])dnl
 
