@@ -10,7 +10,7 @@
 #
 #
 
-AM_CPPFLAGS = $(coll_hcoll_CPPFLAGS) -DCOLL_HCOLL_HOME=\"$(coll_hcoll_HOME)\" -I$(coll_hcoll_HOME)/include/hcoll/api
+AM_CPPFLAGS = $(coll_hcoll_CPPFLAGS) -DCOLL_HCOLL_HOME=\"$(coll_hcoll_HOME)\" $(coll_hcoll_extra_CPPFLAGS)
 
 coll_hcoll_sources = \
 		coll_hcoll.h \
