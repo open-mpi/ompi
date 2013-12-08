@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -464,18 +465,19 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    if (num_slots < (int)app->num_procs) {
+    nprocs = app->num_procs * orte_rmaps_base.cpus_per_rank;
+    if (num_slots < nprocs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
         /* compute how many extra procs to put on each node */
-        balance = (float)((jdata->num_procs + app->num_procs) - num_slots) / (float)opal_list_get_size(node_list);
+        balance = (float)(((jdata->num_procs + app->num_procs)*orte_rmaps_base.cpus_per_rank) - num_slots) / (float)opal_list_get_size(node_list);
         extra_procs_to_assign = (int)balance;
         if (0 < (balance - (float)extra_procs_to_assign)) {
             /* compute how many nodes need an extra proc */
-            nxtra_nodes = (jdata->num_procs + app->num_procs) - num_slots - (extra_procs_to_assign * opal_list_get_size(node_list));
+            nxtra_nodes = ((jdata->num_procs + app->num_procs)*orte_rmaps_base.cpus_per_rank) - num_slots - (extra_procs_to_assign * opal_list_get_size(node_list));
             /* add one so that we add an extra proc to the first nodes
              * until all procs are mapped
              */
@@ -525,7 +527,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             /* everybody takes at least the extras */
             num_procs_to_assign = extra_procs_to_assign;
         } else {
-            num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
+            num_procs_to_assign = (node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank + extra_procs_to_assign;
         }
 
         /* get the number of objects of this type on this node */
