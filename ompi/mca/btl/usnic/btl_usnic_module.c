@@ -1479,17 +1479,29 @@ static void module_async_event_callback(int fd, short flags, void *arg)
     /* Process the event */
     if (got_event) {
         switch (event.event_type) {
-            /* For the moment, these are the only cases usnic_verbs.ko
-               will report to us.  However, they're only listed here
-               for completeness.  We currently abort if any async
-               event occurs. */
+        case IBV_EVENT_PORT_ACTIVE:
+            /* This event should never happen, because OMPI will
+               ignore ports that are down, and we should only get this
+               event if a port *was* down and is now *up*.  But if we
+               ever do get it, it should be a harmless event -- just
+               ignore it. */
+            opal_output_verbose(10, USNIC_OUT,
+                                "btl:usnic: got IBV_EVENT_PORT_ACTIVE on %s:%d",
+                                ibv_get_device_name(module->device), 
+                                module->port_num);
+            break;
+
         case IBV_EVENT_QP_FATAL:
         case IBV_EVENT_PORT_ERR:
-        case IBV_EVENT_PORT_ACTIVE:
 #if BTL_USNIC_HAVE_IBV_EVENT_GID_CHANGE
         case IBV_EVENT_GID_CHANGE:
 #endif
         default:
+            /* For the moment, these are the only other cases
+               usnic_verbs.ko will report to us.  However, they're
+               only listed here for completeness.  We currently abort
+               if any async event other than PORT_ACTIVE occurs. */
+
             opal_show_help("help-mpi-btl-usnic.txt", "async event",
                            true, 
                            ompi_process_info.nodename,
