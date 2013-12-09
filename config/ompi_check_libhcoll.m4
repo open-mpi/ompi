@@ -1,7 +1,6 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-
 # Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -16,8 +15,7 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_HCOLL],[
-OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_hcoll_libdir ompi_check_hcoll_incdir ompi_check_hcoll_libs ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
-    OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save LDFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_hcoll_libdir ompi_check_hcoll_incdir ompi_check_hcoll_libs ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
 
     AC_ARG_WITH([hcoll],
         [AC_HELP_STRING([--with-hcoll(=DIR)],
@@ -76,4 +74,3 @@ OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_hcoll_libdir ompi_check_hcoll_inc
 
     OPAL_VAR_SCOPE_POP
 ])
-
