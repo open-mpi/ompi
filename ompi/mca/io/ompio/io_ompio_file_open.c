@@ -177,7 +177,7 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     */
     if ( true == use_sharedfp && 
 	 (!mca_io_ompio_sharedfp_lazy_open || 
-	  strcmp (ompio_fh->f_sharedfp_component->mca_component_name,
+	  !strcmp (ompio_fh->f_sharedfp_component->mca_component_name,
 		  "addproc")               )) {
         ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
                                                        filename,
