@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -253,9 +254,9 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
         /* see if dynamic allocation is enabled */
         if (mca_ras_slurm_component.dyn_alloc_enabled) {
             /* attempt to get the allocation - the function
-            * dyn_allocate will return as ORTE_ERR_ALLOCATION_PENDING
-            * if it succeeds in sending the allocation request
-            */
+             * dyn_allocate will return as ORTE_ERR_ALLOCATION_PENDING
+             * if it succeeds in sending the allocation request
+             */
             ret = dyn_allocate(jdata);
             /* return to the above layer in ras/base/ras_base_allocate.c
              * to wait for event (libevent) happening
@@ -268,16 +269,13 @@ static int orte_ras_slurm_allocate(orte_job_t *jdata, opal_list_t *nodes)
     }
     regexp = strdup(slurm_node_str);
     
-    tasks_per_node = getenv("SLURM_JOB_CPUS_PER_NODE");
+    /* get the number of process slots we were assigned on each node */
+    tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
     if (NULL == tasks_per_node) {
-        /* try an older variation */
-        tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
-        if (NULL == tasks_per_node) {
-            /* couldn't find any version - abort */
-            orte_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
-                           "SLURM_TASKS_PER_NODE");
-            return ORTE_ERR_NOT_FOUND;
-        }
+        /* couldn't find any version - abort */
+        orte_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
+                       "SLURM_TASKS_PER_NODE");
+        return ORTE_ERR_NOT_FOUND;
     }
     node_tasks = strdup(tasks_per_node);
 
