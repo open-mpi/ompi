@@ -263,6 +263,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add the srun command */
     opal_argv_append(&argc, &argv, "srun");
 
+    /* start one orted on each node */
+    opal_argv_append(&argc, &argv, "--ntasks-per-node=1");
+
     /* alert us if any orteds die during startup */
     opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
 
