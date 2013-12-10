@@ -315,6 +315,7 @@ struct mca_btl_openib_component_t {
     bool cuda_async_send;
     bool cuda_async_recv;
     bool cuda_have_gdr;
+    bool driver_have_gdr;
     bool cuda_want_gdr;
 #endif /* OPAL_CUDA_SUPPORT */
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
