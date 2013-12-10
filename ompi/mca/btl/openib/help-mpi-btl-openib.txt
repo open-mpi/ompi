@@ -723,3 +723,8 @@ installation does not have that support.  Contact Mellanox to figure
 out how to get an OFED stack with that support.
 
   Local host:              %s
+[no_fork_with_gdr]
+You cannot have fork support and CUDA GPU Direct RDMA support on at
+the same time.  Please disable one of them.
+
+  Local host:              %s
