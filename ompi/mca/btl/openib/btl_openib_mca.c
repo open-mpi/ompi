@@ -29,6 +29,7 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "btl_openib.h"
@@ -583,7 +584,7 @@ int btl_openib_register_mca_params(void)
 
     /* Indicates if library was built with GPU Direct RDMA support.  Not changeable.  */
     mca_btl_openib_component.cuda_have_gdr = OPAL_INT_TO_BOOL(OPAL_CUDA_GDR_SUPPORT);
-    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_cuda_gdr_support",
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_cuda_gdr",
                                            "Whether CUDA GPU Direct RDMA support is built into library or not",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
@@ -591,14 +592,36 @@ int btl_openib_register_mca_params(void)
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
                                            &mca_btl_openib_component.cuda_have_gdr);
 
+    /* Indicates if driver has GPU Direct RDMA support.  Not changeable.  */
+    if (OPAL_SUCCESS == opal_os_dirpath_access("/sys/kernel/mm/memory_peers/nv_mem/version", S_IRUSR)) {
+        mca_btl_openib_component.driver_have_gdr = 1;
+    } else {
+        mca_btl_openib_component.driver_have_gdr = 0;
+    }
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_driver_gdr",
+                                           "Whether Infiniband driver has GPU Direct RDMA support",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &mca_btl_openib_component.driver_have_gdr);
+
     /* Default for GPU Direct RDMA is off for now */
-    CHECK(reg_bool("cuda_want_gdr_support", NULL,
+    CHECK(reg_bool("want_cuda_gdr", NULL,
                    "Enable or disable CUDA GPU Direct RDMA support "
                    "(true = yes; false = no)",
                    false, &mca_btl_openib_component.cuda_want_gdr));
 
     if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.cuda_have_gdr) {
-        opal_output(0, "GDR support requested but library does not have it built in.");
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "CUDA_no_gdr_support", true,
+                       ompi_process_info.nodename);
+        return OMPI_ERROR;
+    }
+    if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.driver_have_gdr) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "driver_no_gdr_support", true,
+                       ompi_process_info.nodename);
         return OMPI_ERROR;
     }
 #if OPAL_CUDA_GDR_SUPPORT
