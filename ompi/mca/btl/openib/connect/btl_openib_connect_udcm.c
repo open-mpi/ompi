@@ -241,7 +241,10 @@ typedef struct udcm_msg_hdr {
 typedef struct udcm_message_recv {
     opal_list_item_t super;
 
-    udcm_msg_hdr_t msg_hdr;
+    /* it is illegal in C99 to nest structs with flexible members so we cannot 
+     * use udcm_msg_hdr_t here. if you increase the size of udcm_msg_hdr_t
+     * past 128 bytes you must increase the size of this member. */
+    unsigned char msg_hdr[128];
 } udcm_message_recv_t;
 
 static OBJ_CLASS_INSTANCE(udcm_message_recv_t, opal_list_item_t,
@@ -1504,7 +1507,7 @@ static int udcm_new_message (mca_btl_base_endpoint_t *lcl_ep,
     message->data->rem_ep  = lcl_ep;
     message->data->lcl_ep  = rem_ep;
     message->data->type    = type;
-    message->data->rem_ctx = message;
+    message->data->rem_ctx = (uintptr_t) message;
 
     message->endpoint = lcl_ep;
 
@@ -1629,8 +1632,6 @@ static int udcm_handle_ack (udcm_module_t *m, const uintptr_t ctx, const uint16_
 
     /* verify that the message is still active */
     OPAL_LIST_FOREACH_SAFE(msg, next, &m->flying_messages, udcm_message_sent_t) {
-        const struct mca_btl_base_endpoint_t *lcl_ep = msg->endpoint;
-
         if ((uintptr_t) msg != ctx) {
             continue;
         }
@@ -1913,7 +1914,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         item = OBJ_NEW(udcm_message_recv_t);
 
         /* Copy just the message header */
-        memcpy (&item->msg_hdr, msg_hdr, sizeof (item->msg_hdr));
+        memcpy (&item->msg_hdr, msg_hdr, sizeof (*msg_hdr));
 
         opal_mutex_lock(&m->cm_recv_msg_queue_lock);
         opal_list_append (&m->cm_recv_msg_queue, &item->super);
@@ -1989,18 +1990,19 @@ static void *udcm_message_callback (void *context)
     opal_mutex_lock(&m->cm_recv_msg_queue_lock);
     while ((item = (udcm_message_recv_t *)
             opal_list_remove_first (&m->cm_recv_msg_queue))) {
-        mca_btl_openib_endpoint_t *lcl_ep = item->msg_hdr.lcl_ep;
+        udcm_msg_hdr_t *msg_hdr = (udcm_msg_hdr_t *) item->msg_hdr;
+        mca_btl_openib_endpoint_t *lcl_ep = msg_hdr->lcl_ep;
         opal_mutex_unlock(&m->cm_recv_msg_queue_lock);
 
         OPAL_THREAD_LOCK(&lcl_ep->endpoint_lock);
 
-        switch (item->msg_hdr.type) {
+        switch (msg_hdr->type) {
         case UDCM_MESSAGE_CONNECT:
-            udcm_handle_connect (lcl_ep, item->msg_hdr.rem_ep);
+            udcm_handle_connect (lcl_ep, msg_hdr->rem_ep);
             OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
             break;
         case UDCM_MESSAGE_REJECT:
-            udcm_handle_reject (lcl_ep, &item->msg_hdr);
+            udcm_handle_reject (lcl_ep, msg_hdr);
             OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
             break;
         case UDCM_MESSAGE_COMPLETE:
@@ -2013,11 +2015,11 @@ static void *udcm_message_callback (void *context)
         case UDCM_MESSAGE_XRESPONSE:
             /* udcm_handle_xresponse will call mca_btl_openib_endpoint_cpc_complete
                which will drop the thread lock */
-            udcm_xrc_handle_xresponse (lcl_ep, &item->msg_hdr);
+            udcm_xrc_handle_xresponse (lcl_ep, msg_hdr);
             break;
         case UDCM_MESSAGE_XCONNECT:
         case UDCM_MESSAGE_XCONNECT2:
-            udcm_xrc_handle_xconnect (lcl_ep, &item->msg_hdr);
+            udcm_xrc_handle_xconnect (lcl_ep, msg_hdr);
             OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
             break;
 #endif
