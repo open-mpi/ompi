@@ -1223,7 +1223,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     if(opal_convertor_cuda_need_buffers(convertor) == false && 0 == reserve) {
 #else
     if(opal_convertor_need_buffers(convertor) == false && 0 == reserve) {
-#endif /* OPAL_CUDA_GDR_SUPPORT
+#endif /* OPAL_CUDA_GDR_SUPPORT */
         /* GMS  bloody HACK! */
         if(registration != NULL || max_data > btl->btl_max_send_size) {
             frag = alloc_send_user_frag();
