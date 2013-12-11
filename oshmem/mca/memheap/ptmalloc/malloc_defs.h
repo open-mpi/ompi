@@ -19,7 +19,7 @@
 #define DL_DEBUG 0
 #define FOOTERS 0
 /* print error if *alloc() is called with incorrect params */
-#define USAGE_ERROR_ACTION(m, p) do { printf("PTMALLOC: USAGE ERROR DETECTED: m=%p ptr=%p\n", m, p); } while (0)
+#define USAGE_ERROR_ACTION(m, p) do { printf("PTMALLOC: USAGE ERROR DETECTED: m=%p ptr=%p\n", (void*)m, (void*)p); } while (0)
 
 int mca_memheap_ptmalloc_getpagesize(void);
 void *mca_memheap_ptmalloc_sbrk(size_t size);
