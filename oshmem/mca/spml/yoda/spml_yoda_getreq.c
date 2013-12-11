@@ -102,6 +102,8 @@ void mca_spml_yoda_get_completion(mca_btl_base_module_t* btl,
     oshmem_request_free((oshmem_request_t**) &getreq);
 
     mca_bml_base_free(bml_btl, des);
+
+    OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, -1);
 }
 
 void mca_spml_yoda_get_response_completion(mca_btl_base_module_t* btl,
@@ -119,4 +121,6 @@ void mca_spml_yoda_get_response_completion(mca_btl_base_module_t* btl,
     }
 
     mca_bml_base_free(bml_btl, des);
+	
+    OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, -1);
 }
