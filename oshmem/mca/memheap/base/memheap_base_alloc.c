@@ -245,7 +245,7 @@ static int _shm_attach(map_segment_t *s, size_t size, int use_hp, int do_rmid)
     s->shmid = shmid;
     s->start = addr;
     s->size = size;
-    s->end = s->start + s->size;
+    s->end = (void*)((uintptr_t)s->start + s->size);
     s->context = &shm_context;
 
     return OSHMEM_SUCCESS;
@@ -297,7 +297,7 @@ MAP_ANONYMOUS |
     s->shmid = MEMHEAP_SHM_INVALID;
     s->start = addr;
     s->size = size;
-    s->end = s->start + s->size;
+    s->end = (void*)((uintptr_t)s->start + s->size);
     s->context = NULL;
 
     return OSHMEM_SUCCESS;
@@ -474,7 +474,7 @@ static int _ibv_attach(map_segment_t *s, size_t size)
             s->shmid = device->ib_mr_shared->handle;
             s->start = ib_mr->addr;
             s->size = size;
-            s->end = s->start + s->size;
+            s->end = (void*)((uintptr_t)s->start + s->size);
             s->context = &memheap_device;
         }
     }

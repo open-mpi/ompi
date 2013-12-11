@@ -73,7 +73,7 @@ typedef struct openib_device_t {
     struct ibv_context *ib_dev_context;
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
-    opal_value_array_t ib_mr_array;;
+    opal_value_array_t ib_mr_array;
     struct ibv_mr *ib_mr_shared;
 } openib_device_t;
 #endif /* MPAGE_ENABLE */

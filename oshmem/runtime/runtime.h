@@ -132,13 +132,13 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 
 #if OSHMEM_PARAM_CHECK == 1
 
-#define RUNTIME_CHECK_ERROR(format, ...)                            \
+#define RUNTIME_CHECK_ERROR(...)                                    \
     do {                                                            \
         fprintf(stderr, "[%s]%s[%s:%d:%s] ",                        \
                 orte_process_info.nodename,                         \
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
                 __FILE__, __LINE__, __func__);                      \
-        fprintf(stderr, format, ## __VA_ARGS__);                    \
+        fprintf(stderr, __VA_ARGS__);                               \
     } while(0);
 
 /**
@@ -179,7 +179,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 #define RUNTIME_CHECK_ADDR(x)    \
     if (OPAL_UNLIKELY(!MCA_MEMHEAP_CALL(is_symmetric_addr((x)))))        \
     {                                                                                   \
-        RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", (x));    \
+        RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", ((void*)x));    \
         oshmem_shmem_abort(-1);                                                         \
     }
 #define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)    \
