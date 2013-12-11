@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,7 +17,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include <string.h>
