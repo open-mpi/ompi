@@ -73,6 +73,7 @@ struct mca_spml_yoda_t {
     ompi_free_list_t rdma_frags;
     /* number of outstanding put requests */
     int32_t n_active_puts;
+    int32_t n_active_gets;
     bool enabled;
     struct yoda_btl *btl_type_map;
     int n_btls;
@@ -120,6 +121,7 @@ extern void* mca_spml_yoda_get_remote_context(void*);
 extern void mca_spml_yoda_set_remote_context(void**, void*);
 extern int mca_spml_yoda_get_remote_context_size(void*);
 extern void mca_spml_yoda_set_remote_context_size(void**, int);
+extern int mca_spml_yoda_wait_gets(void);
 
 #if OSHMEM_WAIT_COMPLETION_DEBUG == 1
 extern void condition_dbg_init(void);

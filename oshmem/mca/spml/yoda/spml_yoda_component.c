@@ -118,6 +118,7 @@ mca_spml_yoda_component_init(int* priority,
     }
 
     mca_spml_yoda.n_active_puts = 0;
+    mca_spml_yoda.n_active_gets = 0;
 
     return &mca_spml_yoda.super;
 }

@@ -283,6 +283,9 @@ int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys)
     struct yoda_btl *ybtl;
     mca_spml_yoda_context_t* yoda_context;
 
+    MCA_SPML_CALL(fence());
+    mca_spml_yoda_wait_gets();
+
     if (!mkeys) {
         return OSHMEM_SUCCESS;
     }
@@ -885,6 +888,15 @@ int mca_spml_yoda_fence(void)
     return OSHMEM_SUCCESS;
 }
 
+int mca_spml_yoda_wait_gets(void)
+{
+
+    while (0 < mca_spml_yoda.n_active_gets) {
+        opal_progress();
+    }
+    return OSHMEM_SUCCESS;
+}
+
 void* mca_spml_yoda_get_remote_context(void* spml_context)
 {
     return ((mca_spml_yoda_context_t*) spml_context)->btl_src_segment;
@@ -1125,6 +1137,8 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
                 segment = des->des_src; 
                 spml_yoda_prepare_for_get((void*)segment->seg_addr.pval, ncopied, (void*)p_src, oshmem_my_proc_id(), (void*)p_dst, (void*) getreq);
                 des->des_cbfunc = mca_spml_yoda_get_response_completion;
+				
+                OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, 1);
         }
         else{
             /*
@@ -1160,6 +1174,8 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
             frag->size = ncopied;
             des->des_cbfunc = mca_spml_yoda_get_completion;
             des->des_src = &frag->rdma_segs[0].base_seg;
+
+            OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, 1);
         }
 
         /**
