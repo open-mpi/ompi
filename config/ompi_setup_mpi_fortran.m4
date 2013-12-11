@@ -204,8 +204,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_STATUS_SIZE=0
     AC_MSG_CHECKING([for the value of MPI_STATUS_SIZE])
     bytes=`expr 4 \* $ac_cv_sizeof_int + $ac_cv_sizeof_size_t`
-    num_integers=`expr $bytes / $OMPI_SIZEOF_FORTRAN_INTEGER`
-    sanity=`expr $num_integers \* $OMPI_SIZEOF_FORTRAN_INTEGER`
+    num_integers=`expr $bytes / $ac_cv_sizeof_int`
+    sanity=`expr $num_integers \* $ac_cv_sizeof_int`
     AS_IF([test "$sanity" != "$bytes"],
           [AC_MSG_RESULT([unknown!])
            AC_MSG_WARN([WARNING: Size of C int: $ac_cv_sizeof_int])
