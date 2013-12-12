@@ -165,3 +165,20 @@ An error occurred while trying to map in the address of a function.
   Function Name: %s
   Error string:  %s
 CUDA-aware support is disabled.
+#
+[bufferID failed]
+An error occurred while trying to get the BUFFER_ID of a GPU memory
+region.  This could cause incorrect results.  Turn of GPU Direct RDMA
+support by running with --mca btl_openib_cuda_want_gdr_support 0.
+  Hostname:                             %s
+  cuPointerGetAttribute return value:   %d
+Check the cuda.h file for what the return value means.
+[cuPointerSetAttribute failed]
+The call to cuPointerSetAttribute with CU_POINTER_ATTRIBUTE_SYNC_MEMOPS
+failed. This is highly unusual and should not happen.  The program will
+continue, but report this error to the Open MPI developers.
+  Hostname:                             %s
+  cuPointerSetAttribute return value:   %d
+  Address:                              %p
+Check the cuda.h file for what the return value means.
+#
