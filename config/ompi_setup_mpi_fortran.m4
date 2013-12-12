@@ -203,11 +203,26 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # How big should MPI_STATUS_SIZE be?  (i.e., the size of
     # MPI_STATUS, expressed in units of Fortran INTEGERs).  The C
     # equivalent of MPI_Status contains 4 C ints and a size_t.
+
+    # Per the thread starting here:
+    # http://www.open-mpi.org/community/lists/users/2013/10/22882.php,
+    # the size was computed wrong for a long time.  However, we can't
+    # change the size in the middle of the v1.6 series because it
+    # would break ABI.  Hence, we have to add an additional,
+    # non-default configure switch that allows users to intentionally
+    # break ABI if they want to.
+    AC_ARG_ENABLE([abi-breaking-fortran-status-i8-fix],
+        AC_HELP_STRING([--enable-abi-breaking-fortran-status-i8-fix],
+            [If the size of Fortran INTEGERs are larger than C ints, problems can occur with MPI_STATUS_SIZE.  Enabling this option fixes the issue, but breaks ABI with the rest of the v1.5/v1.6 series.  Note that if you use MPI_STATUS_IGNORE in your Fortran application and never examine an MPI_Status INTEGER array, you do not need this fix (default: disabled).]))
+    size=$OMPI_SIZEOF_FORTRAN_INTEGER
+    AS_IF([test "$enable_abi_breaking_fortran_status_i8_fix" = "yes"],
+          [size=$ac_cv_sizeof_int])
+
     OMPI_FORTRAN_STATUS_SIZE=0
     AC_MSG_CHECKING([for the value of MPI_STATUS_SIZE])
     bytes=`expr 4 \* $ac_cv_sizeof_int + $ac_cv_sizeof_size_t`
-    num_integers=`expr $bytes / $OMPI_SIZEOF_FORTRAN_INTEGER`
-    sanity=`expr $num_integers \* $OMPI_SIZEOF_FORTRAN_INTEGER`
+    num_integers=`expr $bytes / $size`
+    sanity=`expr $num_integers \* $size`
     AS_IF([test "$sanity" != "$bytes"],
           [AC_MSG_RESULT([unknown!])
            AC_MSG_WARN([WARNING: Size of C int: $ac_cv_sizeof_int])
