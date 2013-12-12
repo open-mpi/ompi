@@ -28,8 +28,10 @@
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
-int mca_io_ompio_coll_timing_info = 0;
 int mca_io_ompio_record_offset_info = 0;
+int mca_io_ompio_coll_timing_info = 0;
+int mca_io_ompio_sharedfp_lazy_open = 1;
+
 /*
  * Private functions
  */
@@ -99,8 +101,7 @@ mca_io_base_component_2_0_0_t mca_io_ompio_component = {
         OMPI_RELEASE_VERSION,
         open_component,
         close_component,
-        NULL,
-        register_component
+        .mca_register_component_params = register_component,
     },
     {
         /* The component is checkpoint ready */
@@ -145,6 +146,24 @@ static int register_component(void)
 /*                               "Version of OMPIO", */
 /*                               false, true, NULL, NULL); */
 
+    mca_io_ompio_record_offset_info = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "record_file_offset_info",
+                                           "The information of the file offset/length",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_record_offset_info);
+
+    mca_io_ompio_coll_timing_info = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "coll_timing_info",
+                                           "Enable collective algorithm timing information",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_coll_timing_info);
+
     mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "cycle_buffer_size",
@@ -163,36 +182,15 @@ static int register_component(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_bytes_per_agg);
 
-    mca_io_ompio_record_offset_info = 0;
+    mca_io_ompio_sharedfp_lazy_open = 1;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
-                                           "record_file_offset_info",
-                                           "The information of the file offset/length",
+                                           "sharedfp_lazy_open",
+                                           "lazy allocation of internal shared file pointer structures",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_io_ompio_record_offset_info);
+                                           &mca_io_ompio_sharedfp_lazy_open);
 
-    mca_io_ompio_coll_timing_info = 0;
-    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
-					   "coll_timing_info",
-					   "Enable collective algorithm timing information",
-					   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-					   OPAL_INFO_LVL_9,
-					   MCA_BASE_VAR_SCOPE_READONLY,
-					   &mca_io_ompio_coll_timing_info);
-
-    /*
-    reg_string(&mca_io_ompio_component.io_version,
-                              "user_configure_params", 
-                              "User-specified command line parameters passed to OMPIO's configure script",
-                              false, true, 
-                              MCA_io_ompio_USER_CONFIGURE_FLAGS, NULL);
-    reg_string(&mca_io_ompio_component.io_version,
-                              "complete_configure_params", 
-                              "Complete set of command line parameters passed to OMPIO's configure script",
-                              false, true, 
-                              MCA_io_ompio_COMPLETE_CONFIGURE_FLAGS, NULL);
-    */
   
     return OMPI_SUCCESS;
 }
