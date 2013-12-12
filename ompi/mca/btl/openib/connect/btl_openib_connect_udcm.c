@@ -231,20 +231,21 @@ typedef struct udcm_msg_hdr {
         } xres;
 #endif
     } data;
+} udcm_msg_hdr_t;
+
+typedef struct udcm_msg_t {
+    udcm_msg_hdr_t hdr;
 
     /* If the message type is UDCM_MESSAGE_CONNECT,
        UDCM_MESSAGE_XRESPONSE, or UDCM_MESSAGE_XRESPONSE2
        then queue pair/srq data will follow the header */
     udcm_qp_t qps[];
-} udcm_msg_hdr_t;
+} udcm_msg_t;
 
 typedef struct udcm_message_recv {
     opal_list_item_t super;
 
-    /* it is illegal in C99 to nest structs with flexible members so we cannot 
-     * use udcm_msg_hdr_t here. if you increase the size of udcm_msg_hdr_t
-     * past 128 bytes you must increase the size of this member. */
-    unsigned char msg_hdr[128];
+    udcm_msg_hdr_t msg_hdr;
 } udcm_message_recv_t;
 
 static OBJ_CLASS_INSTANCE(udcm_message_recv_t, opal_list_item_t,
@@ -253,7 +254,7 @@ static OBJ_CLASS_INSTANCE(udcm_message_recv_t, opal_list_item_t,
 typedef struct udcm_message_sent {
     opal_list_item_t         super;
 
-    udcm_msg_hdr_t          *data;
+    udcm_msg_t              *data;
     size_t                   length;
     mca_btl_base_endpoint_t *endpoint;
 
@@ -1504,10 +1505,10 @@ static int udcm_new_message (mca_btl_base_endpoint_t *lcl_ep,
 
     message->length        = length;
 
-    message->data->rem_ep  = lcl_ep;
-    message->data->lcl_ep  = rem_ep;
-    message->data->type    = type;
-    message->data->rem_ctx = (uintptr_t) message;
+    message->data->hdr.rem_ep  = lcl_ep;
+    message->data->hdr.lcl_ep  = rem_ep;
+    message->data->hdr.type    = type;
+    message->data->hdr.rem_ctx = (uintptr_t) message;
 
     message->endpoint = lcl_ep;
 
@@ -1543,8 +1544,8 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
         return rc;
     }
 
-    msg->data->data.req.rem_ep_index = htonl(lcl_ep->index);
-    msg->data->data.req.rem_port_num = m->modex.mm_port_num;
+    msg->data->hdr.data.req.rem_ep_index = htonl(lcl_ep->index);
+    msg->data->hdr.data.req.rem_port_num = m->modex.mm_port_num;
 
     for (i = 0 ; i < mca_btl_openib_component.num_qps ; ++i) {
         msg->data->qps[i].psn    = htonl(lcl_ep->qps[i].qp->lcl_psn);
@@ -1595,7 +1596,7 @@ static int udcm_send_reject (mca_btl_base_endpoint_t *lcl_ep,
         return rc;
     }
 
-    msg->data->data.rej.reason  = htonl(rej_reason);
+    msg->data->hdr.data.rej.reason  = htonl(rej_reason);
 
     rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0);
     if (0 != rc) {
@@ -1767,7 +1768,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
 {
     mca_btl_openib_endpoint_t *lcl_ep;
     int msg_num, i, count;
-    udcm_msg_hdr_t *msg_hdr = NULL;
+    udcm_msg_t *message = NULL;
     udcm_message_recv_t *item;
     struct ibv_wc wc[20];
     udcm_endpoint_t *udep;
@@ -1801,21 +1802,21 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
             break;
         }
 
-        msg_hdr = (udcm_msg_hdr_t *) udcm_module_get_recv_buffer (m, msg_num, true);
+        message = (udcm_msg_t *) udcm_module_get_recv_buffer (m, msg_num, true);
 
-        if (UDCM_MESSAGE_ACK == msg_hdr->type) {
+        if (UDCM_MESSAGE_ACK == message->hdr.type) {
             /* ack! */
-            udcm_handle_ack (m, msg_hdr->rem_ctx, wc[i].slid, wc[i].src_qp);
+            udcm_handle_ack (m, message->hdr.rem_ctx, wc[i].slid, wc[i].src_qp);
             udcm_module_post_one_recv (m, msg_num);
 
             continue;
         }
 
-        lcl_ep = msg_hdr->lcl_ep;
+        lcl_ep = message->hdr.lcl_ep;
 
         if (NULL == lcl_ep) {
-            lcl_ep = udcm_find_endpoint (m->btl->device->endpoints,
-                                         wc[i].src_qp, wc[i].slid, msg_hdr);
+            lcl_ep = udcm_find_endpoint (m->btl->device->endpoints, wc[i].src_qp,
+                                         wc[i].slid, &message->hdr);
         }
 
         if (NULL == lcl_ep ) {
@@ -1826,11 +1827,11 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
             continue;
         }
 
-        msg_hdr->lcl_ep = lcl_ep;
+        message->hdr.lcl_ep = lcl_ep;
 
         BTL_VERBOSE(("received message. type: %u, lcl_ep = %p, rem_ep = %p, "
                      "src qpn = %d, length = %d, local buffer # = %d",
-                     msg_hdr->type, (void *) msg_hdr->lcl_ep, (void *) msg_hdr->rem_ep,
+                     message->hdr.type, (void *) message->hdr.lcl_ep, (void *) message->hdr.rem_ep,
                      wc[i].src_qp, wc[i].byte_len, msg_num));
 
         udep = UDCM_ENDPOINT_DATA(lcl_ep);
@@ -1851,42 +1852,42 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         }
 
         /* save message data in the endpoint */
-        if (UDCM_MESSAGE_CONNECT == msg_hdr->type) {
+        if (UDCM_MESSAGE_CONNECT == message->hdr.type) {
             /* Save remote queue pair information */
             int num_qps = mca_btl_openib_component.num_qps;
 
-            lcl_ep->rem_info.rem_index = ntohl(msg_hdr->data.req.rem_ep_index);
+            lcl_ep->rem_info.rem_index = ntohl(message->hdr.data.req.rem_ep_index);
 
             for (int qp_index = 0 ; qp_index < num_qps ; ++qp_index) {
                 /* Save these numbers on the endpoint for reference. */
                 lcl_ep->rem_info.rem_qps[qp_index].rem_psn    =
-                    ntohl(msg_hdr->qps[qp_index].psn);
+                    ntohl(message->qps[qp_index].psn);
                 lcl_ep->rem_info.rem_qps[qp_index].rem_qp_num =
-                    ntohl(msg_hdr->qps[qp_index].qp_num);
+                    ntohl(message->qps[qp_index].qp_num);
             }
         }
 
 #if HAVE_XRC
-        else if (UDCM_MESSAGE_XRESPONSE == msg_hdr->type ||
-                 UDCM_MESSAGE_XRESPONSE2 == msg_hdr->type) {
+        else if (UDCM_MESSAGE_XRESPONSE == message->hdr.type ||
+                 UDCM_MESSAGE_XRESPONSE2 == message->hdr.type) {
             /* save remote srq information */
             int num_srqs = mca_btl_openib_component.num_xrc_qps;
 
-            lcl_ep->rem_info.rem_index = ntohl(msg_hdr->data.xres.rem_ep_index);
+            lcl_ep->rem_info.rem_index = ntohl(message->hdr.data.xres.rem_ep_index);
 
             for (int i = 0 ; i < num_srqs ; ++i) {
-                lcl_ep->rem_info.rem_srqs[i].rem_srq_num = ntohl(msg_hdr->qps[i].qp_num);
+                lcl_ep->rem_info.rem_srqs[i].rem_srq_num = ntohl(message->qps[i].qp_num);
                 BTL_VERBOSE(("Received srq[%d] num = %d", i, lcl_ep->rem_info.rem_srqs[i].rem_srq_num));
             }
 
-            if (UDCM_MESSAGE_XRESPONSE == msg_hdr->type) {
+            if (UDCM_MESSAGE_XRESPONSE == message->hdr.type) {
                 /* swap response header data */
-                msg_hdr->data.xres.rem_psn = ntohl(msg_hdr->data.xres.rem_psn);
-                msg_hdr->data.xres.rem_qp_num = ntohl(msg_hdr->data.xres.rem_qp_num);
+                message->hdr.data.xres.rem_psn = ntohl(message->hdr.data.xres.rem_psn);
+                message->hdr.data.xres.rem_qp_num = ntohl(message->hdr.data.xres.rem_qp_num);
 
                 /* save remote qp information not included in the XRESPONSE2 message */
-                lcl_ep->rem_info.rem_qps[0].rem_psn    = msg_hdr->data.xres.rem_psn;
-                lcl_ep->rem_info.rem_qps[0].rem_qp_num = msg_hdr->data.xres.rem_qp_num;
+                lcl_ep->rem_info.rem_qps[0].rem_psn    = message->hdr.data.xres.rem_psn;
+                lcl_ep->rem_info.rem_qps[0].rem_qp_num = message->hdr.data.xres.rem_qp_num;
 
                 BTL_VERBOSE(("Received remote qp: %d, psn: %d", lcl_ep->rem_info.rem_qps[0].rem_qp_num,
                              lcl_ep->rem_info.rem_qps[0].rem_psn))
@@ -1894,17 +1895,17 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
                 /* update ib_addr with remote qp number */
                 lcl_ep->ib_addr->remote_xrc_rcv_qp_num = lcl_ep->rem_info.rem_qps[0].rem_qp_num;
             }
-        } else if (UDCM_MESSAGE_XCONNECT == msg_hdr->type ||
-                   UDCM_MESSAGE_XCONNECT2 == msg_hdr->type) {
-            lcl_ep->rem_info.rem_index = ntohl(msg_hdr->data.xreq.rem_ep_index);
+        } else if (UDCM_MESSAGE_XCONNECT == message->hdr.type ||
+                   UDCM_MESSAGE_XCONNECT2 == message->hdr.type) {
+            lcl_ep->rem_info.rem_index = ntohl(message->hdr.data.xreq.rem_ep_index);
 
             /* swap request header data */
-            msg_hdr->data.xreq.rem_qp_num = ntohl(msg_hdr->data.xreq.rem_qp_num);
-            msg_hdr->data.xreq.rem_psn = ntohl(msg_hdr->data.xreq.rem_psn);
+            message->hdr.data.xreq.rem_qp_num = ntohl(message->hdr.data.xreq.rem_qp_num);
+            message->hdr.data.xreq.rem_psn = ntohl(message->hdr.data.xreq.rem_psn);
 
-            if (UDCM_MESSAGE_XCONNECT2 == msg_hdr->type) {
+            if (UDCM_MESSAGE_XCONNECT2 == message->hdr.type) {
                 /* save the qp number for unregister */
-                lcl_ep->xrc_recv_qp_num = msg_hdr->data.xreq.rem_qp_num;
+                lcl_ep->xrc_recv_qp_num = message->hdr.data.xreq.rem_qp_num;
             }
         }
 #endif
@@ -1914,13 +1915,13 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         item = OBJ_NEW(udcm_message_recv_t);
 
         /* Copy just the message header */
-        memcpy (&item->msg_hdr, msg_hdr, sizeof (*msg_hdr));
+        memcpy (&item->msg_hdr, &message->hdr, sizeof (message->hdr));
 
         opal_mutex_lock(&m->cm_recv_msg_queue_lock);
         opal_list_append (&m->cm_recv_msg_queue, &item->super);
         opal_mutex_unlock(&m->cm_recv_msg_queue_lock);
 
-        udcm_send_ack (lcl_ep, msg_hdr->rem_ctx);
+        udcm_send_ack (lcl_ep, message->hdr.rem_ctx);
 
         /* Repost the receive */
         udcm_module_post_one_recv (m, msg_num);
@@ -1990,19 +1991,18 @@ static void *udcm_message_callback (void *context)
     opal_mutex_lock(&m->cm_recv_msg_queue_lock);
     while ((item = (udcm_message_recv_t *)
             opal_list_remove_first (&m->cm_recv_msg_queue))) {
-        udcm_msg_hdr_t *msg_hdr = (udcm_msg_hdr_t *) item->msg_hdr;
-        mca_btl_openib_endpoint_t *lcl_ep = msg_hdr->lcl_ep;
+        mca_btl_openib_endpoint_t *lcl_ep = item->msg_hdr.lcl_ep;
         opal_mutex_unlock(&m->cm_recv_msg_queue_lock);
 
         OPAL_THREAD_LOCK(&lcl_ep->endpoint_lock);
 
-        switch (msg_hdr->type) {
+        switch (item->msg_hdr.type) {
         case UDCM_MESSAGE_CONNECT:
-            udcm_handle_connect (lcl_ep, msg_hdr->rem_ep);
+            udcm_handle_connect (lcl_ep, item->msg_hdr.rem_ep);
             OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
             break;
         case UDCM_MESSAGE_REJECT:
-            udcm_handle_reject (lcl_ep, msg_hdr);
+            udcm_handle_reject (lcl_ep, &item->msg_hdr);
             OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
             break;
         case UDCM_MESSAGE_COMPLETE:
@@ -2015,11 +2015,11 @@ static void *udcm_message_callback (void *context)
         case UDCM_MESSAGE_XRESPONSE:
             /* udcm_handle_xresponse will call mca_btl_openib_endpoint_cpc_complete
                which will drop the thread lock */
-            udcm_xrc_handle_xresponse (lcl_ep, msg_hdr);
+            udcm_xrc_handle_xresponse (lcl_ep, &item->msg_hdr);
             break;
         case UDCM_MESSAGE_XCONNECT:
         case UDCM_MESSAGE_XCONNECT2:
-            udcm_xrc_handle_xconnect (lcl_ep, msg_hdr);
+            udcm_xrc_handle_xconnect (lcl_ep, &item->msg_hdr);
             OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
             break;
 #endif
@@ -2532,17 +2532,17 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
         return rc;
     }
 
-    msg->data->data.req.rem_ep_index = htonl(lcl_ep->index);
-    msg->data->data.req.rem_port_num = m->modex.mm_port_num;
+    msg->data->hdr.data.req.rem_ep_index = htonl(lcl_ep->index);
+    msg->data->hdr.data.req.rem_port_num = m->modex.mm_port_num;
 
     if (UDCM_MESSAGE_XCONNECT == msg_type) {
         BTL_VERBOSE(("Sending XConnect with qp: %d, psn: %d", lcl_ep->qps[0].qp->lcl_qp->qp_num,
                      lcl_ep->qps[0].qp->lcl_psn));
-        msg->data->data.xreq.rem_qp_num = htonl(lcl_ep->qps[0].qp->lcl_qp->qp_num);
-        msg->data->data.xreq.rem_psn    = htonl(lcl_ep->qps[0].qp->lcl_psn);
+        msg->data->hdr.data.xreq.rem_qp_num = htonl(lcl_ep->qps[0].qp->lcl_qp->qp_num);
+        msg->data->hdr.data.xreq.rem_psn    = htonl(lcl_ep->qps[0].qp->lcl_psn);
     } else {
         BTL_VERBOSE(("Sending XConnect2 with qp: %d", lcl_ep->ib_addr->remote_xrc_rcv_qp_num));
-        msg->data->data.xreq.rem_qp_num = htonl(lcl_ep->ib_addr->remote_xrc_rcv_qp_num);
+        msg->data->hdr.data.xreq.rem_qp_num = htonl(lcl_ep->ib_addr->remote_xrc_rcv_qp_num);
     }
 
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0))) {
@@ -2568,12 +2568,12 @@ static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_bas
         return rc;
     }
 
-    msg->data->data.xres.rem_ep_index = htonl(lcl_ep->index);
+    msg->data->hdr.data.xres.rem_ep_index = htonl(lcl_ep->index);
 
     if (UDCM_MESSAGE_XRESPONSE == msg_type) {
         BTL_VERBOSE(("Sending qp: %d, psn: %d", lcl_ep->xrc_recv_qp_num, lcl_ep->xrc_recv_psn));
-        msg->data->data.xres.rem_qp_num = htonl(lcl_ep->xrc_recv_qp_num);
-        msg->data->data.xres.rem_psn    = htonl(lcl_ep->xrc_recv_psn);
+        msg->data->hdr.data.xres.rem_qp_num = htonl(lcl_ep->xrc_recv_qp_num);
+        msg->data->hdr.data.xres.rem_psn    = htonl(lcl_ep->xrc_recv_psn);
     }
 
     for (int i = 0; i < mca_btl_openib_component.num_xrc_qps; ++i) {
