@@ -237,8 +237,8 @@ static int mindist_map(orte_job_t *jdata)
             OBJ_CONSTRUCT(&numa_list, opal_list_t);
             ret = opal_hwloc_get_sorted_numa_list(node->topology, orte_rmaps_base.device, &numa_list);
             if (ret > 1) {
-                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-hca-devices",
-                        true, ret, node->name);
+                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:several-devices",
+                               true, orte_rmaps_base.device, ret, node->name);
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = ORTE_ERR_TAKE_NEXT_OPTION;
                 goto error;
