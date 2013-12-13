@@ -55,8 +55,6 @@ static void opal_mutex_construct(opal_mutex_t *m)
 
 #endif /* OPAL_ENABLE_DEBUG */
 
-#elif OPAL_HAVE_SOLARIS_THREADS
-    mutex_init(&m->m_lock_solaris, USYNC_THREAD, NULL);
 #endif
 
 #if OPAL_ENABLE_DEBUG
@@ -74,8 +72,6 @@ static void opal_mutex_destruct(opal_mutex_t *m)
 {
 #if OPAL_HAVE_POSIX_THREADS
     pthread_mutex_destroy(&m->m_lock_pthread);
-#elif OPAL_HAVE_SOLARIS_THREADS
-    mutex_destroy(&m->m_lock_solaris);
 #endif
 }
 

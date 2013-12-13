@@ -40,9 +40,6 @@
 #endif
 #include <errno.h>
 #include <stdio.h>
-#elif OPAL_HAVE_SOLARIS_THREADS
-#include <thread.h>
-#include <synch.h>
 #endif
 
 #include "opal/class/opal_object.h"
@@ -55,8 +52,6 @@ struct opal_mutex_t {
 
 #if OPAL_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
-#elif OPAL_HAVE_SOLARIS_THREADS
-    mutex_t m_lock_solaris;
 #endif
 
 #if OPAL_ENABLE_DEBUG
@@ -122,28 +117,6 @@ static inline void opal_mutex_unlock(opal_mutex_t *m)
 #else
     pthread_mutex_unlock(&m->m_lock_pthread);
 #endif
-}
-
-#elif OPAL_HAVE_SOLARIS_THREADS
-
-/************************************************************************
- * Solaris threads
- ************************************************************************/
-
-
-static inline int opal_mutex_trylock(opal_mutex_t *m)
-{
-    return mutex_trylock(&m->m_lock_solaris);
-}
-
-static inline void opal_mutex_lock(opal_mutex_t *m)
-{
-    mutex_lock(&m->m_lock_solaris);
-}
-
-static inline void opal_mutex_unlock(opal_mutex_t *m)
-{
-    mutex_unlock(&m->m_lock_solaris);
 }
 
 #elif OPAL_HAVE_ATOMIC_SPINLOCKS

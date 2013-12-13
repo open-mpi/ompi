@@ -17,8 +17,6 @@
 
 #if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#elif OPAL_HAVE_SOLARIS_THREADS
-#include <thread.h>
 #endif
 
 #include "opal/constants.h"
@@ -164,35 +162,6 @@ opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
 {
     *valuep = pthread_getspecific(key);
     return OPAL_SUCCESS;
-}
-
-#elif OPAL_HAVE_SOLARIS_THREADS
-
-typedef thread_key_t opal_tsd_key_t;
-
-static inline int
-opal_tsd_key_create(opal_tsd_key_t *key,
-                    opal_tsd_destructor_t destructor)
-{
-    return thr_keycreate(key, destructor);
-}
-
-static inline int
-opal_tsd_key_delete(opal_tsd_key_t key)
-{
-    return OPAL_SUCCESS;
-}
-
-static inline int
-opal_tsd_setspecific(opal_tsd_key_t key, void *value)
-{
-    return thr_setspecific(key, value);
-}
-
-static inline int
-opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
-{
-    return thr_getspecific(key, valuep);
 }
 
 #else

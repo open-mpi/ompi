@@ -25,9 +25,6 @@ AM_CPPFLAGS +=  \
     -DMALLOC_HOOKS=1 \
     -I$(srcdir)/sysdeps/pthread
 endif
-if OPAL_HAVE_SOLARIS_THREADS
-AM_CPPFLAGS += -I$(srcdir)/sysdeps/solaris
-endif
 # this must come *after* the threads -Is
 AM_CPPFLAGS += -I$(srcdir)/sysdeps/generic
 

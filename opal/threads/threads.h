@@ -25,8 +25,6 @@
 
 #if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#elif OPAL_HAVE_SOLARIS_THREADS
-#include <thread.h>
 #endif
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -52,8 +50,6 @@ struct opal_thread_t {
     void* t_arg;
 #ifdef OPAL_HAVE_POSIX_THREADS
     pthread_t t_handle;
-#elif OPAL_HAVE_SOLARIS_THREADS
-    thread_t t_handle;
 #endif
 };
 

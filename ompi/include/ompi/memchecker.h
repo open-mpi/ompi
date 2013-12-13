@@ -193,9 +193,6 @@ static inline int memchecker_comm(MPI_Comm comm)
   opal_memchecker_base_isdefined (&comm->c_lock.m_lock_pthread.__m_lock.__spinlock, sizeof(int));
 */
 #endif
-#if OPAL_HAVE_SOLARIS_THREADS
-    opal_memchecker_base_isdefined (&comm->c_lock.m_lock_solaris, sizeof(mutex_t));
-#endif
     /*
      * The storage of a union has the size of the initialized member.
      * Here we check the whole union.
