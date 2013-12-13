@@ -103,8 +103,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
             OPAL_WRAPPER_FLAGS_ADD([CFLAGS], [$OMPI_COVERAGE_FLAGS])
             OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$OMPI_COVERAGE_FLAGS])
 
-            OPAL_UNIQ(CFLAGS)
-            OPAL_UNIQ(LDFLAGS)
+            OPAL_FLAGS_UNIQ(CFLAGS)
+            OPAL_FLAGS_UNIQ(LDFLAGS)
             AC_MSG_WARN([$OMPI_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
 
             WANT_DEBUG=1
@@ -122,7 +122,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
             CFLAGS="$CFLAGS -g"
         fi
 
-        OPAL_UNIQ(CFLAGS)
+        OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
     fi
 
@@ -177,7 +177,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         add="$add -Werror-implicit-function-declaration "
 
         CFLAGS="$CFLAGS $add"
-        OPAL_UNIQ(CFLAGS)
+        OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([$add has been added to CFLAGS (--enable-picky)])
         unset add
     fi
@@ -212,7 +212,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         fi
         CFLAGS="$CFLAGS_orig$add"
 
-        OPAL_UNIQ(CFLAGS)
+        OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([$add has been added to CFLAGS])
         unset add
     fi
@@ -241,7 +241,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         fi
 
         CFLAGS="${CFLAGS_orig}${add}"
-        OPAL_UNIQ([CFLAGS])
+        OPAL_FLAGS_UNIQ([CFLAGS])
         if test "$add" != "" ; then
             AC_MSG_WARN([$add has been added to CFLAGS])
         fi

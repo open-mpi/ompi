@@ -177,14 +177,8 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
                         [OPAL_HAVE_LTDL_ADVISE=1])
         CPPFLAGS="$CPPFLAGS_save"
 
-        # Arrgh.  This is gross.  But I can't think of any other way
-        # to do it.  :-( These files are in the build tree; don't list
-        # $srcdir here.
-        flags=`$EGREP ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`
-        OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], 
-                                [-export-dynamic $flags])
-
-        OPAL_WRAPPER_FLAGS_ADD([LIBS], [$extra_ldflags])
+        # --export-dynamic allows exported symbols to be resolved via
+        # --dlsym and friends.
         LDFLAGS="-export-dynamic $LDFLAGS"
     else
         AC_MSG_WARN([Failed to build GNU libltdl.  This usually means that something])

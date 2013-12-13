@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved. 
  *
  * $COPYRIGHT$
@@ -60,11 +60,7 @@ OPAL_DECLSPEC int opal_event_init(void);
 #define opal_event_set_priority(x, n) event_priority_set((x), (n))
 
 /* thread support APIs */
-#if OPAL_HAVE_EXTERNAL_EVENT_THREAD_SUPPORT
 #define opal_event_use_threads() evthread_use_pthreads()
-#else
-#define opal_event_use_threads()
-#endif
 
 /* Basic event APIs */
 #define opal_event_enable_debug_mode() event_enable_debug_mode()

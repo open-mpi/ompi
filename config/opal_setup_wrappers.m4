@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -21,8 +21,8 @@ dnl
 
 # OPAL_WRAPPER_FLAGS_ADD(variable, new_argument)
 # ----------------------------------------------
-# Add new_argument to the list of arguments for variable in the wrapper compilers,
-# if it's not already there.  For example:
+# Add new_argument to the list of arguments for variable in the
+# wrapper compilers, if it's not already there.  For example:
 #   OPAL_WRAPPER_FLAGS_ADD(CFLAGS, "-pthread")
 # will add -pthread to the list of CFLAGS the wrappers use when invoked.
 #
@@ -31,12 +31,12 @@ dnl
 AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
     m4_ifdef([mca_component_configure_active],
         [m4_fatal([OPAL_WRAPPER_FLAGS_ADD can not be called from a component configure])])
-    m4_if([$1], [CPPFLAGS], [OPAL_APPEND_UNIQ([wrapper_extra_cppflags], [$2])],
-          [$1], [CFLAGS], [OPAL_APPEND_UNIQ([wrapper_extra_cflags], [$2])],
-          [$1], [CXXFLAGS], [OPAL_APPEND_UNIQ([wrapper_extra_cxxflags], [$2])],
-          [$1], [FCFLAGS], [OPAL_APPEND_UNIQ([wrapper_extra_fcflags], [$2])],
-          [$1], [LDFLAGS], [OPAL_APPEND_UNIQ([wrapper_extra_ldflags], [$2])],
-          [$1], [LIBS], [OPAL_APPEND_UNIQ([wrapper_extra_libs], [$2])],
+    m4_if([$1], [CPPFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_cppflags], [$2])],
+          [$1], [CFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_cflags], [$2])],
+          [$1], [CXXFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_cxxflags], [$2])],
+          [$1], [FCFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_fcflags], [$2])],
+          [$1], [LDFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_ldflags], [$2])],
+          [$1], [LIBS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_libs], [$2])],
           [m4_fatal([Unknown wrapper flag type $1])])
 ])
 
@@ -129,10 +129,125 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     AC_MSG_RESULT([$enable_wrapper_rpath])
 ])
 
+# Check to see whether the linker supports DT_RPATH.  We'll need to
+# use config.rpath to find the flags that it needs, if it does (see
+# comments in config.rpath for an explanation of where it came from).
+AC_DEFUN([OPAL_SETUP_RPATH],[
+    OPAL_VAR_SCOPE_PUSH([rpath_libdir_save rpath_script rpath_outfile])
+    AC_MSG_CHECKING([if linker supports RPATH])
+    # Output goes into globally-visible $rpath_args.  Run this in a
+    # sub-process so that we don't pollute the current process
+    # environment.
+    rpath_script=conftest.$$.sh
+    rpath_outfile=conftest.$$.out
+    rm -f $rpath_script $rpath_outfile
+    cat > $rpath_file <<EOF
+#!/bin/sh
+
+# Slurp in the libtool config into my environment
+
+# Apparently, "libtoool --config" calls "exit", so we can't source it
+# (because if script A sources script B, and B calls "exit", then both
+# B and A will exit).  Instead, we have to send the output to a file
+# and then source that.
+$OMPI_TOP_BUILDDIR/opal/libltdl/libtool --config > $rpath_outfile
+
+chmod +x $rpath_outfile
+. ./$rpath_outfile
+rm -f $rpath_outfile
+
+# Evaluate \$hardcode_libdir_flag_spec, and substitute in LIBDIR for \$libdir
+libdir=LIBDIR
+flags="\`eval echo \$hardcode_libdir_flag_spec\`"
+echo \$flags
+
+# Done
+exit 0
+EOF
+    chmod +x $rpath_script
+    rpath_args=`./$rpath_script`
+    rm -f $rpath_script
+
+    AS_IF([test -n "$rpath_args"],
+          [WRAPPER_RPATH_SUPPORT=rpath
+           AC_MSG_RESULT([yes ($rpath_args)])],
+          [WRAPPER_RPATH_SUPPORT=unnecessary
+           AC_MSG_RESULT([yes (no extra flags needed)])])
+
+    OPAL_VAR_SCOPE_POP
+
+    # If we found RPATH support, check for RUNPATH support, too
+    AS_IF([test "$WRAPPER_RPATH_SUPPORT" = "rpath"],
+          [OPAL_SETUP_RUNPATH])
+])
+
+# Check to see if the linker supports the DT_RUNPATH flags via
+# --enable-new-dtags (a GNU ld-specific option).  These flags are more
+# social than DT_RPATH -- they can be overridden by LD_LIBRARY_PATH
+# (where a regular DT_RPATH cannot).  
+#
+# If DT_RUNPATH is supported, then we'll use *both* the RPATH and
+# RUNPATH flags in the LDFLAGS.
+AC_DEFUN([OPAL_SETUP_RUNPATH],[
+    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
+
+    AC_MSG_CHECKING([if linker supports RUNPATH])
+    # Set the output in $runpath_args
+    runpath_args=
+    LDFLAGS_save=$LDFLAGS
+    LDFLAGS="$LDFLAGS -Wl,--enable-new-dtags"
+    AC_LANG_PUSH([C])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 7;])],
+                   [WRAPPER_RPATH_SUPPORT=runpath
+                    runpath_args="-Wl,--enable-new-dtags"
+                    AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
+                   [AC_MSG_RESULT([no])])
+    AC_LANG_POP([C])
+    LDFLAGS=$LDFLAGS_save
+
+    OPAL_VAR_SCOPE_POP
+])
+
+# Called to find all -L arguments in the LDFLAGS and add in RPATH args
+# for each of them.  Then also add in an RPATH for @{libdir} (which
+# will be replaced by the wrapper compile to the installdir libdir at
+# runtime), and the RUNPATH args, if we have them.
+AC_DEFUN([RPATHIFY_LDFLAGS],[
+    OPAL_VAR_SCOPE_PUSH([rpath_out rpath_dir rpath_tmp])
+    AS_IF([test "$enable_wrapper_rpath" = "no" -o "$WRAPPER_RPATH_SUPPORT" = "disabled"],
+          [:],
+          [rpath_out=
+           for val in ${$1}; do
+               case $val in
+               -L*)
+                   rpath_dir=`echo $val | cut -c3-`
+                   rpath_tmp=`echo $rpath_args | sed -e s@LIBDIR@$rpath_dir@`
+                   rpath_out="$rpath_out $rpath_tmp"
+                   ;;
+               esac
+           done
+
+           # Now add in the RPATH args for @{libdir}, and the RUNPATH args
+           rpath_tmp=`echo $rpath_args | sed -e s/LIBDIR/@{libdir}/`
+           $1="$rpath_out $rpath_tmp $runpath_args"
+          ])
+    OPAL_VAR_SCOPE_POP
+])
+
 
 # OPAL_SETUP_WRAPPER_FINAL()
 # ---------------------------
 AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
+
+    # Setup RPATH support, if desired
+    WRAPPER_RPATH_SUPPORT=disabled
+    AS_IF([test "$enable_wrapper_rpath" = "yes"],
+          [OPAL_SETUP_RPATH])
+    AS_IF([test "$enable_wrapper_rpath" = "yes" -a "$WRAPPER_RPATH_SUPPORT" = "disabled"],
+          [AC_MSG_WARN([RPATH support requested but not available])
+           AC_MSG_ERROR([Cannot continue])])
+
+    # We now have all relevant flags.  Substitute them in everywhere.
     m4_ifdef([project_opal], [
        AC_MSG_CHECKING([for OPAL CPPFLAGS])
        if test "$WANT_INSTALL_HEADERS" = "1" ; then
@@ -164,6 +279,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
        AC_MSG_CHECKING([for OPAL LDFLAGS])
        OPAL_WRAPPER_EXTRA_LDFLAGS="$opal_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
+       RPATHIFY_LDFLAGS([OPAL_WRAPPER_EXTRA_LDFLAGS])
        AC_SUBST([OPAL_WRAPPER_EXTRA_LDFLAGS])
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LDFLAGS])
 
@@ -174,7 +290,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        # asked for, as they know better than us.
        AC_MSG_CHECKING([for OPAL LIBS])
        OPAL_WRAPPER_EXTRA_LIBS="$opal_mca_wrapper_extra_libs"
-       OPAL_APPEND_UNIQ([OPAL_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
+       OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
        OPAL_WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
        AC_SUBST([OPAL_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LIBS])
@@ -211,12 +327,13 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
        AC_MSG_CHECKING([for ORTE LDFLAGS])
        ORTE_WRAPPER_EXTRA_LDFLAGS="$orte_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
+       RPATHIFY_LDFLAGS([ORTE_WRAPPER_EXTRA_LDFLAGS])
        AC_SUBST([ORTE_WRAPPER_EXTRA_LDFLAGS])
        AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LDFLAGS])
 
        AC_MSG_CHECKING([for ORTE LIBS])
        ORTE_WRAPPER_EXTRA_LIBS="$orte_mca_wrapper_extra_libs"
-       OPAL_APPEND_UNIQ([ORTE_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
+       OPAL_FLAGS_APPEND_UNIQ([ORTE_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
        ORTE_WRAPPER_EXTRA_LIBS="$ORTE_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
        AC_SUBST([ORTE_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LIBS])
@@ -282,12 +399,13 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
        AC_MSG_CHECKING([for OMPI LDFLAGS])
        OMPI_WRAPPER_EXTRA_LDFLAGS="$ompi_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
+       RPATHIFY_LDFLAGS([OMPI_WRAPPER_EXTRA_LDFLAGS])
        AC_SUBST([OMPI_WRAPPER_EXTRA_LDFLAGS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LDFLAGS])
 
        AC_MSG_CHECKING([for OMPI LIBS])
        OMPI_WRAPPER_EXTRA_LIBS="$ompi_mca_wrapper_extra_libs"
-       OPAL_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
+       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
        OMPI_WRAPPER_EXTRA_LIBS="$OMPI_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
        AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])

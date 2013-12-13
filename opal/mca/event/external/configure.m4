@@ -44,16 +44,6 @@ AC_DEFUN([MCA_opal_event_external_POST_CONFIG],[
            CPPFLAGS="$CPPFLAGS $opal_event_external_CPPFLAGS"
            LDFLAGS="$LDFLAGS $opal_event_external_LDFLAGS"
            LIBS="$LIBS $opal_event_external_LIBS"
-
-           # These flags need to get passed to the wrapper compilers
-           # (this is unnecessary for the internal/embedded event)
-
-           # Finally, add some flags to the wrapper compiler if we're
-           # building with developer headers so that our headers can
-           # be found.
-           event_external_WRAPPER_EXTRA_CPPFLAGS="$opal_event_external_CPPFLAGS"
-           event_external_WRAPPER_EXTRA_LDFLAGS="$opal_event_external_LDFLAGS"
-           event_external_WRAPPER_EXTRA_LIBS="$opal_event_external_LIBS"
           ])
 ])dnl
 
@@ -65,24 +55,50 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([opal_event_external_CPPFLAGS_save opal_event_external_CFLAGS_save opal_event_external_LDFLAGS_save opal_event_external_LIBS_save])
 
-    AC_ARG_WITH([external-libevent],
-       [AC_HELP_STRING([--with-external-libevent=DIR],
-             [Search for event libraries in DIR.  Should only be used if an external copy of libevent is being used.])])
+    AC_ARG_WITH([libevent],
+       [AC_HELP_STRING([--with-libevent=DIR],
+             [Search for libevent headers and libraries in DIR.  Should only be used if an external copy of libevent is being used.])])
 
-    # Do we want this external component?
+    # Bozo check
+    AS_IF([test "$with_libevent" = "no"],
+          [AC_MSG_WARN([It is not possible to configure Open MPI --without-libevent])
+           AC_MSG_ERROR([Cannot continue])])
+
+    AC_ARG_WITH([libevent-libdir],
+       [AC_HELP_STRING([--with-libevent-libdir=DIR],
+             [Search for libevent libraries in DIR.  Should only be used if an external copy of libevent is being used.])])
+
+    # Make sure the user didn't specify --with-libevent=internal and
+    # --with-libevent-libdir=whatever (because you can only specify
+    # --with-libevent-libdir when external libevent is being used).
+    AS_IF([test "$with_libevent" = "internal" -a "$with_libevent_libdir" != ""],
+          [AC_MSG_WARN([Both --with-libevent=internal and --with-libevent-libdir=DIR])
+           AC_MSG_WARN([were specified, which does not make sense.])
+           AC_MSG_ERROR([Cannot continue])])
+
+    # Do we want this external component? (slightly redundant logic,
+    # but hopefully slightly more clear...)
     opal_event_external_want=no
-    AS_IF([test "$with_external_libevent" != ""], [opal_event_external_want=yes])
- 
-    # If we still want external support, try it
+    AS_IF([test "$with_libevent" = "external"], [opal_event_external_want=yes])
+    AS_IF([test "$with_libevent_libdir" != ""], [opal_event_external_want=yes])
+    AS_IF([test "$with_libevent" != "" -a "$with_libevent" != "no" -a "$with_libevent" != "internal"], [opal_event_external_want=yes])
+
+    # If we want external support, try it
     AS_IF([test "$opal_event_external_want" = "yes"],
-          [OMPI_CHECK_WITHDIR([external-libevent], [$with_event_libdir], 
+          [ # Error out if the specified dir does not exist
+           OMPI_CHECK_WITHDIR([libevent-libdir], [$with_libevent_libdir], 
                               [libevent.*])
 
-           AC_MSG_CHECKING([looking for external event in...])
-           AS_IF([test ! -z "$with_external_libevent" -a "$with_external_libevent" != "yes"],
-                 [opal_event_libdir="$with_external_libevent"
-                  AC_MSG_RESULT([$opal_event_libdir])],
-                 [AC_MSG_RESULT([default search paths])])
+           AC_MSG_CHECKING([for external libevent in])
+           AS_IF([test "$with_libevent" != "external" -a "$with_libevent" != "yes"],
+                 [opal_event_dir=$with_libevent
+                  AC_MSG_RESULT([$opal_event_dir])
+                  OMPI_CHECK_WITHDIR([libevent], [$with_libdir], 
+                                     [include/event.h])
+                 ],
+                 [AC_MSG_RESULT([(default search paths)])])
+           AS_IF([test ! -z "$with_libevent_libdir" -a "$with_libevent_libdir" != "yes"],
+                 [opal_event_libdir="$with_libevent_libdir"])
 
            opal_event_external_CPPFLAGS_save=$CPPFLAGS
            opal_event_external_CFLAGS_save=$CFLAGS
@@ -93,41 +109,60 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                               [event.h],
                               [event],
                               [event_config_new],
-                              [],
-                              [$opal_event_libdir],
+                              [-levent_pthreads],
+                              [$opal_event_dir],
                               [$opal_event_libdir],
                               [opal_event_external_support=yes],
                               [opal_event_external_support=no])
+
+           # Ensure that this libevent has the symbol
+           # "evthread_set_lock_callbacks", which will only exist if
+           # libevent was configured with thread support.
+           LIBS="$opal_event_external_LDFLAGS $LIBS"
+           AC_CHECK_LIB([event], [evthread_set_lock_callbacks],
+                        [],
+                        [AC_MSG_WARN([External libevent does not have thread support])
+                         AC_MSG_WARN([Open MPI requires libevent to be compiled with])
+                         AC_MSG_WARN([thread support enabled])
+                         AC_MSG_ERROR([Cannot continue])])
+           AC_CHECK_LIB([event_pthreads], [evthread_use_pthreads],
+                        [],
+                        [AC_MSG_WARN([External libevent does not have thread support])
+                         AC_MSG_WARN([Open MPI requires libevent to be compiled with])
+                         AC_MSG_WARN([thread support enabled])
+                         AC_MSG_ERROR([Cannot continue])])
 
            CPPFLAGS=$opal_event_external_CPPFLAGS_save
            CFLAGS=$opal_event_external_CFLAGS_save
            LDFLAGS=$opal_event_external_LDFLAGS_save
            LIBS=$opal_event_external_LIBS_save
 
-           # check for pthread support - must do this after
-           # restoring LIBS as otherwise the results of
-           # this macro will be overwritten
-           OMPI_CHECK_FUNC_LIB([evthread_use_pthreads],
-                               [event_pthreads],
-                               [opal_event_external_has_threads=1],
-                               [opal_event_external_has_threads=0])
+           AC_SUBST(opal_event_external_CPPFLAGS)
+           AC_SUBST(opal_event_external_LDFLAGS)
+           AC_SUBST(opal_event_external_LIBS)
 
-          ])
+           # These flags need to get passed to the wrapper compilers
+           # (this is unnecessary for the internal/embedded event)
+           event_external_WRAPPER_EXTRA_CPPFLAGS=$opal_event_external_CPPFLAGS
+
+           # Finally, add some flags to the wrapper compiler if we're
+           # building with developer headers so that our headers can
+           # be found.
+           event_external_WRAPPER_EXTRA_LDFLAGS=$opal_event_external_LDFLAGS
+           event_external_WRAPPER_EXTRA_LIBS=$opal_event_external_LIBS
+    ])
 
     # Done!
     AS_IF([test "$opal_event_external_support" = "yes"],
-          [AC_DEFINE_UNQUOTED([EVENT_EXTERNAL_EVENT_VERSION], 
-                              [external], 
-                              [Version of event])
-           AC_DEFINE_UNQUOTED([OPAL_HAVE_EXTERNAL_EVENT_THREAD_SUPPORT],
-                              [$opal_event_external_has_threads],
-                              [Whether the external libevent has thread support])
+          [ # If we configured successfully, set
+           # OPAL_HAVE_WORKING_EVENTOPS to 1 (it's a calculated value
+           # in the embedded Open MPI libevent, so we can only assume
+           # what it is in the installed libevent :-\ ).
+           file=$opal_event_dir/include/libevent/config.h
+           OPAL_HAVE_WORKING_EVENTOPS=1
            $1],
-          [$2])
-
-    AC_SUBST(opal_event_external_CPPFLAGS)
-    AC_SUBST(opal_event_external_LDFLAGS)
-    AC_SUBST(opal_event_external_LIBS)
+          [OPAL_HAVE_WORKING_EVENTOPS=0
+           $2])
 
     OPAL_VAR_SCOPE_POP
 ])dnl

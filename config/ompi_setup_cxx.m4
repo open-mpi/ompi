@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -160,7 +160,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
         CXXFLAGS="$CXXFLAGS -g"
-        OPAL_UNIQ(CXXFLAGS)
+        OPAL_FLAGS_UNIQ(CXXFLAGS)
         AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
     fi
 
@@ -202,7 +202,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
         fi
 
         CXXFLAGS="$CXXFLAGS $add"
-        OPAL_UNIQ(CXXFLAGS)
+        OPAL_FLAGS_UNIQ(CXXFLAGS)
         if test "$add" != "" ; then
             AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
         fi
@@ -223,7 +223,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
             add=" -finline-functions"
         fi
         CXXFLAGS="$CXXFLAGS_orig$add"
-        OPAL_UNIQ(CXXFLAGS)
+        OPAL_FLAGS_UNIQ(CXXFLAGS)
         if test "$add" != "" ; then
             AC_MSG_WARN([$add has been added to CXXFLAGS])
         fi

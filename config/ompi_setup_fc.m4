@@ -66,7 +66,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
 
     AS_IF([test $ompi_fc_happy -eq 1 -a "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no"],
           [FCFLAGS="$FCFLAGS -g"
-           OPAL_UNIQ(FCFLAGS)
+           OPAL_FLAGS_UNIQ(FCFLAGS)
            AC_MSG_WARN([-g has been added to FCFLAGS (--enable-debug)])
           ])
 
