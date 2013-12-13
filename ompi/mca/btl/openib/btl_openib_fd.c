@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
@@ -37,6 +37,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
+#include "opal/threads/threads.h"
 
 #include "ompi/constants.h"
 
