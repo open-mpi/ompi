@@ -23,12 +23,12 @@
 #include "opal/threads/mutex.h"
 
 /*
- * If we have progress threads, always default to using threads.
- * Otherwise, wait and see if some upper layer wants to use threads.
+ * Wait and see if some upper layer wants to use threads, if support
+ * exists.
  */
+#if OMPI_ENABLE_THREAD_MULTIPLE
 bool opal_uses_threads = false;
-bool opal_mutex_check_locks = false;
-
+#endif
 
 static void opal_mutex_construct(opal_mutex_t *m)
 {
@@ -59,7 +59,7 @@ static void opal_mutex_construct(opal_mutex_t *m)
     mutex_init(&m->m_lock_solaris, USYNC_THREAD, NULL);
 #endif
 
-#if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
+#if OPAL_ENABLE_DEBUG
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;

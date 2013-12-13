@@ -252,33 +252,11 @@ fi
 AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
 AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
 
-#
-# Allow enabling of ompi progress threads
-#
-AC_MSG_CHECKING([if want OMPI progress threads])
-AC_ARG_ENABLE([ompi-progress-threads],
-              [AC_HELP_STRING([--enable-ompi-progress-threads],
-              [Enable ompi progress threads - for experiment by developers only! (default: disabled)])])
-if test "$enable_ompi_progress_threads" = "yes"; then
-    AC_MSG_RESULT([yes])
-    ompi_enable_progress_threads=1
-    # requires ORTE progress threads be enabled, which in turn
-    # requires that libevent thread support be enabled
-    if test "$orte_enable_progress_threads" != "1" ; then
-        AC_MSG_WARN([OMPI progress threads requires that ORTE progress])
-        AC_MSG_WARN([threads be enabled, which in turn requires that])
-        AC_MSG_WARN([libevent thread support be enabled.])
-        AC_MSG_WARN([Please configure with:])
-        AC_MSG_WARN([--enable-orte-progress-threads --enable-event-thread-support])
-        AC_MSG_ERROR([Cannot continue])
-    fi
-else
-    AC_MSG_RESULT([no])
-    ompi_enable_progress_threads=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS],
-                   [$ompi_enable_progress_threads],
-                   [Whether we want OMPI progress threads enabled])
+dnl We no longer support the old OMPI_ENABLE_PROGRESS_THREADS.  At
+dnl some point, this should die.
+AC_DEFINE([OMPI_ENABLE_PROGRESS_THREADS],
+          [0],
+          [Whether we want OMPI progress threads enabled])
 
 ])dnl
 
