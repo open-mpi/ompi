@@ -145,8 +145,6 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                     /* not all data has been converted. Keep the state */
                     count_desc -= rc;
                     disp_desc += rc * description[pos_desc].elem.extent;
-                    if( iCount != 0 )
-                        printf( "unpack there is still room in the input buffer %ld bytes\n", (long)iCount );
                     goto save_and_return;
                 }
                 pos_desc++;  /* advance to the next data */
