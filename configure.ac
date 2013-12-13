@@ -583,7 +583,8 @@ OPAL_CONFIG_ASM
 # story; yes, it's an intentional abstraction break).  So ensure to
 # define it to a valid C type if we're not building the OMPI project.
 m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN],
-         [AC_DEFINE([ompi_fortran_logical_t], [int], [Bogus type for OPAL])
+         [ompi_fortran_happy=0
+          AC_DEFINE([ompi_fortran_logical_t], [int], [Bogus type for OPAL])
           AC_DEFINE([OMPI_FORTRAN_HANDLE_MAX], [128], [Bogus type for OPAL])
 ])
 
