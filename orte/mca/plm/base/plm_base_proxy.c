@@ -27,6 +27,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"

@@ -15,6 +15,7 @@
 
 #include "opal/util/output.h"
 #include "opal/mca/db/db.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/state/state.h"
