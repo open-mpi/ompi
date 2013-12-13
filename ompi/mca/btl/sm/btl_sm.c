@@ -15,6 +15,7 @@
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -502,6 +503,11 @@ int mca_btl_sm_add_procs(
         /* check to see if this is me */
         if(my_proc == procs[proc]) {
             my_smp_rank = mca_btl_sm_component.my_smp_rank = n_local_procs++;
+            continue;
+        }
+
+         /* sm doesn't support heterogeneous yet... */
+        if (procs[proc]->proc_arch != my_proc->proc_arch) {
             continue;
         }
 
