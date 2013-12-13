@@ -1337,6 +1337,24 @@ must fix their applications or use an older version of Open MPI.
     new, full-featured "mpi" module.  We anticipate supporting
     gfortran in the new, full-featured module in the future.
 
+Additionally, another bug that causes an ABI compatibility issue was
+discovered after 1.7.3 was released.  The bug only affects users who
+configure their Fortran compilers to use "large" INTEGERs by default,
+but still have "normal" ints for C (e.g., 8 byte Fortran INTEGERs and
+4 byte C ints).  In this case, the Fortran MPI_STATUS_SIZE value was
+computed incorrectly.
+
+Fixing this issue breakes ABI *only in the
+sizeof(INTEGER)!=sizeof(int) case*.  However, since Open MPI provides
+ABI guarantees for the v1.7/v1.8 series, this bug is only fixed if
+Open MPI is configured with the
+--enable-abi-breaking-fortran-status-i8-fix flag, which, as its name
+implies, breaks ABI.  For example:
+
+   shell$ ./configure --enable-abi-breaking-fortran-status-i8-fix \
+            CC=icc F77=ifort FC=ifort CXX=icpc \
+            FFLAGS=i8 FCFLAGS=-i8 ...
+
 Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
 (linked against Open MPI v1.3.2 shared libraries) will *not* work with
