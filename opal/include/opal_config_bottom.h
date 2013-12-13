@@ -69,7 +69,7 @@
  **********************************************************************/
 
 /* Do we have posix or solaris thread lib */
-#define OPAL_HAVE_THREADS (OPAL_HAVE_POSIX_THREADS || OPAL_HAVE_SOLARIS_THREADS)
+#define OPAL_HAVE_THREADS (OPAL_HAVE_POSIX_THREADS)
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,

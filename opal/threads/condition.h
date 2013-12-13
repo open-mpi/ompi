@@ -29,9 +29,6 @@
 #endif
 #if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#elif OPAL_HAVE_SOLARIS_THREADS
-#include <thread.h>
-#include <synch.h>
 #endif
 
 #include "opal/threads/mutex.h"

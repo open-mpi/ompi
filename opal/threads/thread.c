@@ -39,8 +39,6 @@ static void opal_thread_construct(opal_thread_t *t)
     t->t_run = 0;
 #if OPAL_HAVE_POSIX_THREADS
     t->t_handle = (pthread_t) -1;
-#elif OPAL_HAVE_SOLARIS_THREADS
-    t->t_handle = (thread_t) -1;
 #endif
 }
 
@@ -90,56 +88,6 @@ opal_thread_t *opal_thread_get_self(void)
 void opal_thread_kill(opal_thread_t *t, int sig)
 {
     pthread_kill(t->t_handle, sig);
-}
-
-
-#elif OPAL_HAVE_SOLARIS_THREADS
-
-/************************************************************************
- * Solaris threads
- ************************************************************************/
-
-int opal_thread_start(opal_thread_t *t)
-{
-    int rc;
-
-    if (OPAL_ENABLE_DEBUG) {
-        if (NULL == t->t_run || t->t_handle != (thread_t) -1) {
-            return OPAL_ERR_BAD_PARAM;
-        }
-    }
-
-    rc = thr_create(NULL, 0, (void*(*)(void*)) t->t_run, t, NULL,
-                    &t->t_handle);
-
-    return (rc == 0) ? OPAL_SUCCESS : OPAL_ERROR;
-}
-
-
-int opal_thread_join(opal_thread_t *t, void **thr_return)
-{
-    int rc = thr_join(t->t_handle, NULL, thr_return);
-    t->t_handle = (thread_t) -1;
-    return (rc == 0) ? OPAL_SUCCESS : OPAL_ERROR;
-}
-
-
-bool opal_thread_self_compare(opal_thread_t *t)
-{
-    return t->t_handle == thr_self();
-}
-
-
-opal_thread_t *opal_thread_get_self(void)
-{
-    opal_thread_t *t = OBJ_NEW(opal_thread_t);
-    t->t_handle = thr_self();
-    return t;
-}
-
-void opal_thread_kill(opal_thread_t *t, int sig)
-{
-    thr_kill(t->t_handle, sig);
 }
 
 

@@ -31,8 +31,6 @@ AC_DEFUN([OPAL_CONFIG_THREADS],[
 #
 
 # create templates
-AH_TEMPLATE([OPAL_HAVE_SOLARIS_THREADS], 
-    [Do we have native Solaris threads])
 AH_TEMPLATE([OPAL_HAVE_POSIX_THREADS], 
     [Do we have POSIX threads])
 
@@ -48,32 +46,16 @@ else
 fi
 export HAVE_POSIX_THREADS
 
-OMPI_CONFIG_SOLARIS_THREADS(HAVE_SOLARIS_THREADS=1, HAVE_SOLARIS_THREADS=0)
-AC_MSG_CHECKING([for working Solaris threads package])
-if test "$HAVE_SOLARIS_THREADS" = "1" ; then
-  AC_MSG_RESULT([yes])
-else
-  AC_MSG_RESULT([no])
-fi
-export HAVE_SOLARIS_THREADS
-
 #
-# Ask what threading we want (allow solaris / posix right now)
+# Ask what threading we want (allow posix right now)
 #
 AC_MSG_CHECKING([for type of thread support])
 AC_ARG_WITH(threads, 
   	AC_HELP_STRING([--with-threads],
-		       [Set thread type (solaris / posix)]),
+		       [Set thread type (posix)]),
 	[THREAD_TYPE=$withval])
 
-if test "$THREAD_TYPE" = "solaris"; then
-
-    if test "$HAVE_SOLARIS_THREADS" = "0"; then
-	AC_MSG_WARN(["*** You have chosen Solaris threads, which are not"])
-	AC_MSG_WARN(["*** available on your system "])
-	AC_MSG_ERROR(["*** Can not continue"])
-    fi
-elif test "$THREAD_TYPE" = "posix"; then
+if test "$THREAD_TYPE" = "posix"; then
 
     if test "$HAVE_POSIX_THREADS" = "0"; then
 	AC_MSG_WARN(["*** You have chosen POSIX threads, which are not"])
@@ -84,30 +66,15 @@ elif test "$THREAD_TYPE" = "no"; then
     THREAD_TYPE="none"
 elif test -z "$THREAD_TYPE" -o "$THREAD_TYPE" = "yes"; then
 
-    # Actual logic here - properly set THREAD_TYPE - we go for system
-    # optimized where ever possible
-    case "$host" in
-	*solaris*)
-	    if test "$HAVE_SOLARIS_THREADS" = "1"; then
-		THREAD_TYPE="solaris"
-	    elif test "$HAVE_POSIX_THREADS" = "1"; then
-		THREAD_TYPE="posix"
-	    else
-		THEAD_TYPE="none found"
-	    fi
-	    ;;
-	*)
-	    if test "$HAVE_POSIX_THREADS" = "1"; then
-		THREAD_TYPE="posix"
-	    else
-		THREAD_TYPE="none found"
-	    fi
-	    ;;
-    esac
+    if test "$HAVE_POSIX_THREADS" = "1"; then
+	THREAD_TYPE="posix"
+    else
+	THREAD_TYPE="none found"
+    fi
 else
 
     AC_MSG_WARN(["*** You have specified a thread type that I do not"])
-    AC_MSG_WARN(["*** understand.  Valid options are posix and solaris"])
+    AC_MSG_WARN(["*** understand.  Valid options are posix"])
     AC_MSG_ERROR(["*** Can not continue."])
 fi
 AC_MSG_RESULT($THREAD_TYPE)
@@ -118,19 +85,7 @@ AC_MSG_RESULT($THREAD_TYPE)
 #
 # Blah - this should be made better, but I don't know how...
 #
-if test "$THREAD_TYPE" = "solaris"; then
-    AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 1)
-    AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 0)
-
-    THREAD_CFLAGS="$STHREAD_CFLAGS"
-    THREAD_FCFLAGS="$STHREAD_FCFLAGS"
-    THREAD_CXXFLAGS="$STHREAD_CXXFLAGS"
-    THREAD_CPPFLAGS="$STHREAD_CPPFLAGS"
-    THREAD_CXXCPPFLAGS="$STHREAD_CXXCPPFLAGS"
-    THREAD_LDFLAGS="$STHREAD_LDFLAGS"
-    THREAD_LIBS="$STHREAD_LIBS"
-elif test "$THREAD_TYPE" = "posix"; then
-    AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 0)
+if test "$THREAD_TYPE" = "posix"; then
     AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 1)
 
     THREAD_CFLAGS="$PTHREAD_CFLAGS"
@@ -143,7 +98,6 @@ elif test "$THREAD_TYPE" = "posix"; then
 
     OPAL_CHECK_PTHREAD_PIDS
 else
-    AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 0)
     AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 0)
 
     TRHEAD_CFLAGS=
@@ -172,7 +126,6 @@ EOF
 fi
 
 AM_CONDITIONAL(OPAL_HAVE_POSIX_THREADS, test "$THREAD_TYPE" = "posix")
-AM_CONDITIONAL(OPAL_HAVE_SOLARIS_THREADS, test "$THREAD_TYPE" = "solaris")
 
 # Make sure we have threads
 if test "$THREAD_TYPE" = "none" ; then
