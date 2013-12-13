@@ -241,8 +241,9 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
     AS_IF([test -z "$opal_verbs_dir"],
           [openib_include_dir="/usr/include"],
           [openib_include_dir="$opal_verbs_dir/include"])
+    $1_CPPFLAGS="$$1_CPPFLAGS -I$openib_include_dir/infiniband"
 
-    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS -I$openib_include_dir/infiniband"
+    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
     LIBS="$ompi_check_openib_$1_save_LIBS"
 
