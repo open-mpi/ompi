@@ -272,6 +272,17 @@ static int mca_btl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.pending_send_fl, opal_free_list_t);
+
+    mca_btl_sm_component.sm_seg = NULL;
+#if OMPI_BTL_SM_HAVE_KNEM
+    mca_btl_sm.knem_fd = -1;
+    mca_btl_sm.knem_status_array = NULL;
+    mca_btl_sm.knem_frag_array = NULL;
+    mca_btl_sm.knem_status_num_used = 0;
+    mca_btl_sm.knem_status_first_avail = 0;
+    mca_btl_sm.knem_status_first_used = 0;
+#endif
+
     return OMPI_SUCCESS;
 }
 
@@ -295,6 +306,7 @@ static int mca_btl_sm_component_close(void)
         mca_btl_sm.knem_status_array = NULL;
     }
     if (-1 != mca_btl_sm.knem_fd) {
+        printf("closing knem fd=%d\n", mca_btl_sm.knem_fd);
         close(mca_btl_sm.knem_fd);
         mca_btl_sm.knem_fd = -1;
     }
@@ -786,16 +798,6 @@ mca_btl_sm_component_init(int *num_btls,
 
 #if OMPI_BTL_SM_HAVE_KNEM
     if (mca_btl_sm_component.use_knem) {
-        /* Set knem_status_num_used outside the check for use_knem so that
-           we can only have to check one thing (knem_status_num_used) in
-           the progress loop. */
-        mca_btl_sm.knem_fd = -1;
-        mca_btl_sm.knem_status_array = NULL;
-        mca_btl_sm.knem_frag_array = NULL;
-        mca_btl_sm.knem_status_num_used = 0;
-        mca_btl_sm.knem_status_first_avail = 0;
-        mca_btl_sm.knem_status_first_used = 0;
-
         if (0 != mca_btl_sm_component.use_knem) {
             /* Open the knem device.  Try to print a helpful message if we
                fail to open it. */
