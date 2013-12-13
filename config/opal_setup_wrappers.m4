@@ -141,7 +141,7 @@ AC_DEFUN([OPAL_SETUP_RPATH],[
     rpath_script=conftest.$$.sh
     rpath_outfile=conftest.$$.out
     rm -f $rpath_script $rpath_outfile
-    cat > $rpath_file <<EOF
+    cat > $rpath_script <<EOF
 #!/bin/sh
 
 # Slurp in the libtool config into my environment
