@@ -84,12 +84,12 @@ int mca_btl_base_param_register(mca_base_component_t *version,
     }
     (void) mca_base_component_var_register(version, "cuda_eager_limit", "Maximum size (in bytes, including header) of \"GPU short\" messages (must be >= 1).",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_cuda_eager_limit);
     (void) mca_base_component_var_register(version, "cuda_rdma_limit", "Size (in bytes, including header) of GPU buffer when switch to rndv protocol and pipeline.",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_cuda_rdma_limit);
 #endif /* OPAL_CUDA_GDR_SUPPORT */

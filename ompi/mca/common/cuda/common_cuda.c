@@ -1644,7 +1644,7 @@ int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base)
     return 0;
 }
 
-#if OPAL_CUDA_GDR_SUPPORT && OMPI_GDR_SUPPORT
+#if OPAL_CUDA_GDR_SUPPORT
 /* Check to see if the memory was freed between the time it was stored in
  * the registration cache and now.  Return true if the memory was previously
  * freed.  This is indicated by the BUFFER_ID value in the registration cache
@@ -1702,10 +1702,7 @@ void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg)
     if (CUDA_SUCCESS != res) {
         opal_show_help("help-mpi-common-cuda.txt", "cuPointerSetAttribute failed",
                        true, ompi_process_info.nodename, res, dbuf);
-        return OMPI_ERROR;
     }
-
-
 }
 #endif /* OPAL_CUDA_GDR_SUPPORT */       
 
