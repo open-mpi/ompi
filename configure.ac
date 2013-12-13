@@ -1156,18 +1156,9 @@ fi
 AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
 AS_IF([test "$WANT_MPI_CXX_SUPPORT" != "1"],[CXX=no])
 
-dnl Not all versions of LT set the PACKAGE_VERSION
-m4_ifdef([LT_PACKAGE_VERSION], [], [m4_define([LT_PACKAGE_VERSION], [1.5.22])])
-
-m4_if(m4_version_compare(m4_defn([LT_PACKAGE_VERSION]), 2.0), -1, [
-AC_LIBLTDL_CONVENIENCE(opal/libltdl)
-AC_LIBTOOL_DLOPEN
-AC_PROG_LIBTOOL
-], [
 LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
 LTDL_CONVENIENCE
 LT_INIT([dlopen win32-dll])
-])
 
 # What's the suffix of shared libraries?  Inspired by generated
 # Libtool code (even though we don't support several of these
