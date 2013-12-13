@@ -124,7 +124,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     AC_MSG_CHECKING([if want wrapper compiler rpath support])
     AC_ARG_ENABLE([wrapper-rpath],
                   [AS_HELP_STRING([--enable-wrapper-rpath],
-                  [enable rpath support in the wrapper compilers (default=no)])])
+                  [enable rpath/runpath support in the wrapper compilers (default=yes)])])
     AS_IF([test "$enable_wrapper_rpath" != "no"], [enable_wrapper_rpath=yes])
     AC_MSG_RESULT([$enable_wrapper_rpath])
 ])
