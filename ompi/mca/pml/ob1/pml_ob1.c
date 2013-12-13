@@ -372,6 +372,8 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         if (SIZE_MAX == sm->btl_module->btl_cuda_eager_limit) {
             sm->btl_module->btl_cuda_eager_limit = sizeof(mca_pml_ob1_hdr_t);
         }
+        /* If size is 0, then this value is unused.  If it is non-zero then do some
+         * extra checking of it. */
         if (0 != sm->btl_module->btl_cuda_eager_limit) {
             if (sm->btl_module->btl_cuda_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
                 opal_show_help("help-mpi-pml-ob1.txt", "cuda_eager_limit_too_small",

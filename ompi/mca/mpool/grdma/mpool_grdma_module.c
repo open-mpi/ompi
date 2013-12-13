@@ -476,12 +476,12 @@ static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *add
 
     mpool->rcache->rcache_find(mpool->rcache, addr, size, &reg);
     if (NULL == reg) {
-        return 0;
+        return OMPI_SUCCESS;
     }
 
     /* If not previously freed memory, just return 0 */
     if (!(mca_common_cuda_previously_freed_memory(reg))) {
-        return 0;
+        return OMPI_SUCCESS;
     }
 
     /* mpool->rcache->rcache_dump_range(mpool->rcache, 0, (size_t)-1, "Before free"); */

@@ -588,7 +588,7 @@ int btl_openib_register_mca_params(void)
                                            "Whether CUDA GPU Direct RDMA support is built into library or not",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                           OPAL_INFO_LVL_4,
+                                           OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
                                            &mca_btl_openib_component.cuda_have_gdr);
 
@@ -602,14 +602,14 @@ int btl_openib_register_mca_params(void)
                                            "Whether Infiniband driver has GPU Direct RDMA support",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                           OPAL_INFO_LVL_4,
+                                           OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_CONSTANT,
                                            &mca_btl_openib_component.driver_have_gdr);
 
     /* Default for GPU Direct RDMA is off for now */
     CHECK(reg_bool("want_cuda_gdr", NULL,
                    "Enable or disable CUDA GPU Direct RDMA support "
-                   "(true = yes; false = no)",
+                   "(true = enabled; false = disabled)",
                    false, &mca_btl_openib_component.cuda_want_gdr));
 
     if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.cuda_have_gdr) {
