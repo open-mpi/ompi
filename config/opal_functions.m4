@@ -271,17 +271,6 @@ for val in ${$1}; do
 	ompi_i="`expr $ompi_i + 1`"
     done
 
-    # Check for special cases where we do want to allow repeated
-    # arguments (per
-    # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
-
-    case $val in
-    -Xclang)  
-            ompi_found=0 
-            ompi_i=`expr $ompi_count + 1`
-            ;;
-    esac
-
     # If we didn't find the token, add it to the "array"
 
     if test "$ompi_found" = "0"; then
@@ -348,6 +337,122 @@ for arg in $2; do
     fi
 done
 unset ompi_found
+])
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+# Remove all duplicate -I, -L, and -l flags from the variable named $1
+AC_DEFUN([OPAL_FLAGS_UNIQ],[
+    # 1 is the variable name to be uniq-ized
+    ompi_name=$1
+
+    # Go through each item in the variable and only keep the unique ones
+
+    ompi_count=0
+    for val in ${$1}; do
+        ompi_done=0
+        ompi_i=1
+        ompi_found=0
+
+        # Loop over every token we've seen so far
+
+        ompi_done="`expr $ompi_i \> $ompi_count`"
+        while test "$ompi_found" = "0" -a "$ompi_done" = "0"; do
+
+            # Have we seen this token already?  Prefix the comparison
+            # with "x" so that "-Lfoo" values won't be cause an error.
+
+	    ompi_eval="expr x$val = x\$ompi_array_$ompi_i"
+	    ompi_found=`eval $ompi_eval`
+
+            # Check the ending condition
+
+	    ompi_done="`expr $ompi_i \>= $ompi_count`"
+
+            # Increment the counter
+
+	    ompi_i="`expr $ompi_i + 1`"
+        done
+
+        # Check for special cases where we do want to allow repeated
+        # arguments (per
+        # http://www.open-mpi.org/community/lists/devel/2012/08/11362.php).
+
+        case $val in
+        -Xclang)
+                ompi_found=0
+                ompi_i=`expr $ompi_count + 1`
+                ;;
+        esac
+
+        # If we didn't find the token, add it to the "array"
+
+        if test "$ompi_found" = "0"; then
+	    ompi_eval="ompi_array_$ompi_i=$val"
+	    eval $ompi_eval
+	    ompi_count="`expr $ompi_count + 1`"
+        else
+	    ompi_i="`expr $ompi_i - 1`"
+        fi
+    done
+
+    # Take all the items in the "array" and assemble them back into a
+    # single variable
+
+    ompi_i=1
+    ompi_done="`expr $ompi_i \> $ompi_count`"
+    ompi_newval=
+    while test "$ompi_done" = "0"; do
+        ompi_eval="ompi_newval=\"$ompi_newval \$ompi_array_$ompi_i\""
+        eval $ompi_eval
+
+        ompi_eval="unset ompi_array_$ompi_i"
+        eval $ompi_eval
+
+        ompi_done="`expr $ompi_i \>= $ompi_count`"
+        ompi_i="`expr $ompi_i + 1`"
+    done
+
+    # Done; do the assignment
+
+    ompi_newval="`echo $ompi_newval`"
+    ompi_eval="$ompi_name=\"$ompi_newval\""
+    eval $ompi_eval
+
+    # Clean up
+
+    unset ompi_name ompi_i ompi_done ompi_newval ompi_eval ompi_count
+])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+# OPAL_FLAGS_APPEND_UNIQ(variable, new_argument)
+# ----------------------------------------------
+# Append new_argument to variable if:
+#
+# - the argument does not begin with -I, -L, or -l, or
+# - the argument begins with -I, -L, or -l, and it's not already in variable
+#
+# This macro assumes a space seperated list.
+AC_DEFUN([OPAL_FLAGS_APPEND_UNIQ], [
+    OPAL_VAR_SCOPE_PUSH([opal_tmp opal_append])
+
+    for arg in $2; do
+        opal_tmp=`echo $arg | cut -c1-2`
+        opal_append=1
+        AS_IF([test "$opal_tmp" = "-I" -o "$opal_tmp" = "-L" -o "$opal_tmp" = "-l"],
+              [for val in ${$1}; do
+                   AS_IF([test "x$val" = "x$arg"], [opal_append=0])
+               done])
+        AS_IF([test "$opal_append" = "1"],
+              [AS_IF([test -z "$$1"], [$1=$arg], [$1="$$1 $arg"])])
+    done
+
+    OPAL_VAR_SCOPE_POP
 ])
 
 dnl #######################################################################

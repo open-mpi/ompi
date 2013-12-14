@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
@@ -37,7 +37,7 @@ AC_DEFUN([MCA_ompi_btl_openib_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/btl/openib/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([cpcs have_threads])
+    OPAL_VAR_SCOPE_PUSH([cpcs have_threads LDFLAGS_save LIBS_save])
     cpcs="oob"
 
     OMPI_CHECK_OPENFABRICS([btl_openib],

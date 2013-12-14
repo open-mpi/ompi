@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 
 #include "opal/util/output.h"
 #include "opal/mca/db/db.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/state/state.h"

@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
@@ -103,8 +103,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
             OPAL_WRAPPER_FLAGS_ADD([CFLAGS], [$OMPI_COVERAGE_FLAGS])
             OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$OMPI_COVERAGE_FLAGS])
 
-            OPAL_UNIQ(CFLAGS)
-            OPAL_UNIQ(LDFLAGS)
+            OPAL_FLAGS_UNIQ(CFLAGS)
+            OPAL_FLAGS_UNIQ(LDFLAGS)
             AC_MSG_WARN([$OMPI_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
 
             WANT_DEBUG=1
@@ -122,7 +122,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
             CFLAGS="$CFLAGS -g"
         fi
 
-        OPAL_UNIQ(CFLAGS)
+        OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
     fi
 
@@ -177,7 +177,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         add="$add -Werror-implicit-function-declaration "
 
         CFLAGS="$CFLAGS $add"
-        OPAL_UNIQ(CFLAGS)
+        OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([$add has been added to CFLAGS (--enable-picky)])
         unset add
     fi
@@ -212,7 +212,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         fi
         CFLAGS="$CFLAGS_orig$add"
 
-        OPAL_UNIQ(CFLAGS)
+        OPAL_FLAGS_UNIQ(CFLAGS)
         AC_MSG_WARN([$add has been added to CFLAGS])
         unset add
     fi
@@ -241,7 +241,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         fi
 
         CFLAGS="${CFLAGS_orig}${add}"
-        OPAL_UNIQ([CFLAGS])
+        OPAL_FLAGS_UNIQ([CFLAGS])
         if test "$add" != "" ; then
             AC_MSG_WARN([$add has been added to CFLAGS])
         fi
@@ -337,6 +337,7 @@ AC_DEFUN([_OMPI_PROG_CC],[
     #
     # Check for the compiler
     #
+    OPAL_VAR_SCOPE_PUSH([ompi_cflags_save dummy ompi_cc_arvgv0])
     ompi_cflags_save="$CFLAGS"
     AC_PROG_CC
     BASECC="`basename $CC`"
@@ -346,4 +347,5 @@ AC_DEFUN([_OMPI_PROG_CC],[
     ompi_cc_argv0=[$]2
     OPAL_WHICH([$ompi_cc_argv0], [OPAL_CC_ABSOLUTE])
     AC_SUBST(OPAL_CC_ABSOLUTE)
+    OPAL_VAR_SCOPE_POP
 ])

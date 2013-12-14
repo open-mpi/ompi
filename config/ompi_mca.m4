@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -792,13 +792,13 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
         AS_LITERAL_IF([$3], 
             [m4_foreach(flags, [LDFLAGS, LIBS],
                     [AS_IF([test "$$2_$3_WRAPPER_EXTRA_]flags[" = ""],
-                           [OPAL_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_]flags)],
-                           [OPAL_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_WRAPPER_EXTRA_]flags)])
+                           [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_]flags)],
+                           [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_WRAPPER_EXTRA_]flags)])
                         ])],
             [m4_foreach(flags, [LDFLAGS, LIBS],
                     [[str="line=\$$2_$3_WRAPPER_EXTRA_]flags["]
                       eval "$str"
-                      OPAL_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$line])])])
+                      OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$line])])])
     fi
 
     # if needed, copy over WRAPPER_EXTRA_CPPFLAGS.  Since a configure script
@@ -809,7 +809,7 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
            [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
             AS_IF([test "$8" = "static" -a "$stop_at_first" = "1"],
               [AS_IF([test "$with_devel_headers" = "yes"], 
-                     [OPAL_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
+                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
               [AC_MSG_WARN([ignoring $2_$3_WRAPPER_EXTRA_CPPFLAGS ($$2_$3_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])])
 ])
 

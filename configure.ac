@@ -74,13 +74,14 @@ AS_IF([test "$host" != "$target"],
        AC_MSG_WARN([Cross-compiling is only partially supported])
        AC_MSG_WARN([Proceed at your own risk!])])
 # AC_USE_SYSTEM_EXTENSIONS alters CFLAGS (e.g., adds -g -O2)
+OPAL_VAR_SCOPE_PUSH([CFLAGS_save])
 CFLAGS_save=$CFLAGS
 AC_USE_SYSTEM_EXTENSIONS
 # AC_USE_SYSTEM_EXTENSIONS will modify CFLAGS if nothing was in there
 # beforehand.  We don't want that.  So if there was nothing in
 # CFLAGS, put nothing back in there.
 AS_IF([test -z "$CFLAGS_save"], [CFLAGS=])
-CFLAGS_save=
+OPAL_VAR_SCOPE_POP
 
 #
 # Init automake
@@ -449,6 +450,7 @@ OMPI_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
 # <stdbool.h> or any other help)
 #
 
+OPAL_VAR_SCOPE_PUSH([MSG])
 AC_MSG_CHECKING(for C bool type)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT],
@@ -458,11 +460,13 @@ AC_DEFINE_UNQUOTED(OPAL_NEED_C_BOOL, $OPAL_NEED_C_BOOL,
     [Whether the C compiler supports "bool" without any other help (such as <stdbool.h>)])
 AC_MSG_RESULT([$MSG])
 AC_CHECK_SIZEOF(_Bool)
+OPAL_VAR_SCOPE_POP
 
 #
 # Check for other compiler characteristics
 #
 
+OPAL_VAR_SCOPE_PUSH([CFLAGS_save])
 if test "$GCC" = "yes"; then
 
     # gcc 2.96 will emit oodles of warnings if you use "inline" with
@@ -481,7 +485,7 @@ if test "$GCC" = "yes"; then
     # This also works nicely for gcc 3.x because "inline" will work on
     # the first check, and all is fine.  :-)
 
-    CFLAGS_save="$CFLAGS"
+    CFLAGS_save=$CFLAGS
     CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY -Werror -ansi"
 fi
 AC_C_INLINE
@@ -495,8 +499,9 @@ if test "x$ompi_cv_c_compiler_vendor" != "xmicrosoft"; then
 fi
 OMPI_C_WEAK_SYMBOLS
 if test "$GCC" = "yes"; then
-    CFLAGS="$CFLAGS_save"
+    CFLAGS=$CFLAGS_save
 fi
+OPAL_VAR_SCOPE_POP
 
 if test "x$CC" = "xicc"; then
     OMPI_CHECK_ICC_VARARGS
@@ -654,6 +659,7 @@ AC_CHECK_HEADERS([net/if.h], [], [],
 # above).  If we do have it, then check to see if it actually works.
 # Define OPAL_USE_STDBOOL_H as approrpaite.
 AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
+OPAL_VAR_SCOPE_PUSH([MSG])
 AC_MSG_CHECKING([if <stdbool.h> works])
 if test "$have_stdbool_h" = "1"; then
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
@@ -670,6 +676,7 @@ fi
 AC_DEFINE_UNQUOTED(OPAL_USE_STDBOOL_H, $OPAL_USE_STDBOOL_H,
     [Whether to use <stdbool.h> or not])
 AC_MSG_RESULT([$MSG])
+OPAL_VAR_SCOPE_POP
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -704,6 +711,7 @@ AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC, AF_INET6, PF_INET6],
 #endif])
 
 # SA_RESTART in signal.h
+OPAL_VAR_SCOPE_PUSH([MSG])
 AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
 AC_EGREP_CPP(yes, [
 #include <signal.h>
@@ -713,6 +721,7 @@ AC_EGREP_CPP(yes, [
 AC_DEFINE_UNQUOTED(OPAL_HAVE_SA_RESTART, $VALUE,
     [Whether we have SA_RESTART in <signal.h> or not])
 AC_MSG_RESULT([$MSG])
+OPAL_VAR_SCOPE_POP
 
 AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [], [
 #include <sys/types.h>

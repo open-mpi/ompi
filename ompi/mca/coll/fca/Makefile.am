@@ -2,6 +2,7 @@
 #
 #
 # Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -10,7 +11,7 @@
 #
 #
 
-AM_CPPFLAGS = $(coll_fca_CPPFLAGS) -DCOLL_FCA_HOME=\"$(coll_fca_HOME)\" -I$(coll_fca_HOME)/include/fca -I$(coll_fca_HOME)/include/fca_core
+AM_CPPFLAGS = $(coll_fca_CPPFLAGS) -DCOLL_FCA_HOME=\"$(coll_fca_HOME)\" $(coll_fca_extra_CPPFLAGS)
 
 #dist_pkgdata_DATA = help-coll-fca.txt
 coll_fca_sources = \

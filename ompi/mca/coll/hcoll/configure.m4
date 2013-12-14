@@ -2,6 +2,7 @@
 #
 #
 # Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,11 +29,10 @@ AC_DEFUN([MCA_ompi_coll_hcoll_CONFIG],[
            $1],
           [$2])
 
-    # substitute in the things needed to build fca
+    # substitute in the things needed to build hcoll
     AC_SUBST([coll_hcoll_CFLAGS])
     AC_SUBST([coll_hcoll_CPPFLAGS])
     AC_SUBST([coll_hcoll_LDFLAGS])
     AC_SUBST([coll_hcoll_LIBS])
-	AC_SUBST(coll_hcoll_HOME, "$ompi_check_hcoll_dir")
 ])dnl
 

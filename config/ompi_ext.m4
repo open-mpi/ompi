@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -637,12 +637,12 @@ EOF
     # m4_configure components)
     m4_foreach(flags, [LDFLAGS, LIBS],
         [AS_IF([test "$mpiext_$1_WRAPPER_EXTRA_]flags[" = ""],
-                [OPAL_APPEND_UNIQ([ompi_mca_wrapper_extra_]m4_tolower(flags), [$mpiext_$1_]flags)],
-                [OPAL_APPEND_UNIQ([ompi_mca_wrapper_extra_]m4_tolower(flags), [$mpiext_$1_WRAPPER_EXTRA_]flags)])
+                [OPAL_FLAGS_APPEND_UNIQ([ompi_mca_wrapper_extra_]m4_tolower(flags), [$mpiext_$1_]flags)],
+                [OPAL_FLAGS_APPEND_UNIQ([ompi_mca_wrapper_extra_]m4_tolower(flags), [$mpiext_$1_WRAPPER_EXTRA_]flags)])
         ])
 
     AS_IF([test "$mpiext_$1_WRAPPER_EXTRA_CPPFLAGS" != ""],
-        [OPAL_APPEND_UNIQ([ompi_mca_wrapper_extra_cppflags], [$mpiext_$1_WRAPPER_EXTRA_CPPFLAGS])])
+        [OPAL_FLAGS_APPEND_UNIQ([ompi_mca_wrapper_extra_cppflags], [$mpiext_$1_WRAPPER_EXTRA_CPPFLAGS])])
 ])
 
 

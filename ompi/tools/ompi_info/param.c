@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -311,6 +311,8 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort mpi_f08 subarrays", "bindings:use_mpi_f08:subarrays-supported", 
                   fortran_build_f08_subarrays);
 
+    opal_info_out("Wrapper compiler rpath", "compiler:all:rpath", 
+                  WRAPPER_RPATH_SUPPORT);
     opal_info_out("C compiler", "compiler:c:command", OPAL_CC);
     opal_info_out("C compiler absolute", "compiler:c:absolute", 
                   OPAL_CC_ABSOLUTE);

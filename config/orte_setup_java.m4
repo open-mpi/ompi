@@ -14,7 +14,6 @@ dnl Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -23,18 +22,18 @@ dnl $HEADER$
 dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
-AC_DEFUN([OPAL_SETUP_JAVA_BANNER],[
+AC_DEFUN([ORTE_SETUP_JAVA_BANNER],[
     ompi_show_subtitle "Java compiler" 
 ])
 
-# OPAL_SETUP_JAVA()
+# ORTE_SETUP_JAVA()
 # ----------------
 # Do everything required to setup the Java compiler.  Safe to AC_REQUIRE
 # this macro.
-AC_DEFUN([OPAL_SETUP_JAVA],[
-    AC_REQUIRE([OPAL_SETUP_JAVA_BANNER])
-
+AC_DEFUN([ORTE_SETUP_JAVA],[
     OPAL_VAR_SCOPE_PUSH([orte_java_happy bad found dir jnih PATH_save CPPFLAGS_save])
+    AC_REQUIRE([ORTE_SETUP_JAVA_BANNER])
+
     AC_ARG_ENABLE(java,
                   AC_HELP_STRING([--enable-java],
                                  [Enable Java-based support in the system - use this option to disable all Java-based compiler tests (default: enabled)]))
@@ -51,7 +50,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
 
     if test "$enable_java" = "no"; then
         HAVE_JAVA_SUPPORT=0
-        opal_java_happy=no
+        orte_java_happy=no
     else
         # Check for bozo case: ensure a directory was specified
         AS_IF([test "$with_jdk_dir" = "yes" -o "$with_jdk_dir" = "no"],
@@ -94,7 +93,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
                AC_MSG_CHECKING([OSX locations])
                AS_IF([test -d $dir],
-                     [AC_MSG_RESULT([found ($dir)])
+                     [AC_MSG_RESULT([found])
                       found=1
                       with_jdk_headers=$dir 
                       with_jdk_bindir=/usr/bin],
@@ -113,7 +112,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                          [with_jdk_headers=`dirname $jnih`
                           OPAL_WHICH([javac], [with_jdk_bindir])
                           AS_IF([test -n "$with_jdk_bindir"],
-                                [AC_MSG_RESULT([found ($with_jdk_headers)])
+                                [AC_MSG_RESULT([found])
                                  found=1
                                  with_jdk_bindir=`dirname $with_jdk_bindir`],
                                 [with_jdk_headers=])],
@@ -123,7 +122,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                                 [with_jdk_headers=`dirname $jnih`
                                  OPAL_WHICH([javac], [with_jdk_bindir])
                                  AS_IF([test -n "$with_jdk_bindir"],
-                                       [AC_MSG_RESULT([found ($with_jdk_headers)])
+                                       [AC_MSG_RESULT([found])
                                         found=1
                                         with_jdk_bindir=`dirname $with_jdk_bindir`],
                                        [with_jdk_headers=])],
@@ -135,7 +134,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                    dir=/usr/java
                    AC_MSG_CHECKING([Solaris locations])
                    AS_IF([test -d $dir -a -r "$dir/include/jni.h"], 
-                         [AC_MSG_RESULT([found ($dir)])
+                         [AC_MSG_RESULT([found])
                           with_jdk_headers=$dir/include
                           with_jdk_bindir=$dir/bin
                           found=1],
@@ -149,7 +148,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
             OMPI_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])
 
             # Look for various Java-related programs
-            opal_java_happy=no
+            orte_java_happy=no
             PATH_save=$PATH
             AS_IF([test -n "$with_jdk_bindir" -a "$with_jdk_bindir" != "yes" -a "$with_jdk_bindir" != "no"], 
                   [PATH="$with_jdk_bindir:$PATH"])
@@ -160,48 +159,49 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
 
             # Check to see if we have all 3 programs.
             AS_IF([test -z "$JAVAC" -o -z "$JAVAH" -o -z "$JAR"],
-                  [opal_java_happy=no
+                  [orte_java_happy=no
                    HAVE_JAVA_SUPPORT=0],
-                  [opal_java_happy=yes
+                  [orte_java_happy=yes
                    HAVE_JAVA_SUPPORT=1])
 
             # Look for jni.h
-            AS_IF([test "$opal_java_happy" = "yes"],
+            AS_IF([test "$orte_java_happy" = "yes"],
                   [CPPFLAGS_save=$CPPFLAGS
                    # silence a stupid Mac warning
                    CPPFLAGS="$CPPFLAGS -DTARGET_RT_MAC_CFM=0"
                    AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_headers" != "yes" -a "$with_jdk_headers" != "no"],
-                         [OPAL_JDK_CPPFLAGS="-I$with_jdk_headers"
+                         [ORTE_JDK_CPPFLAGS="-I$with_jdk_headers"
                           # Some flavors of JDK also require -I<blah>/linux.
                           # See if that's there, and if so, add a -I for that,
                           # too.  Ugh.
                           AS_IF([test -d "$with_jdk_headers/linux"],
-                                [OPAL_JDK_CPPFLAGS="$OPAL_JDK_CPPFLAGS -I$with_jdk_headers/linux"])
+                                [ORTE_JDK_CPPFLAGS="$ORTE_JDK_CPPFLAGS -I$with_jdk_headers/linux"])
                           # Solaris JDK also require -I<blah>/solaris.
                           # See if that's there, and if so, add a -I for that,
                           # too.  Ugh.
                           AS_IF([test -d "$with_jdk_headers/solaris"],
-                                [OPAL_JDK_CPPFLAGS="$OPAL_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
+                                [ORTE_JDK_CPPFLAGS="$ORTE_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
 
-                          CPPFLAGS="$CPPFLAGS $OPAL_JDK_CPPFLAGS"])
+                          CPPFLAGS="$CPPFLAGS $ORTE_JDK_CPPFLAGS"])
                    AC_CHECK_HEADER([jni.h], [], 
-                                   [opal_java_happy=no])
+                                   [orte_java_happy=no])
                    CPPFLAGS=$CPPFLAGS_save
                   ])
         else
-            opal_java_happy=no;
+            orte_java_happy=no;
             HAVE_JAVA_SUPPORT=no;
         fi
-        AC_SUBST(OPAL_JDK_CPPFLAGS)
+        AC_SUBST(ORTE_JDK_CPPFLAGS)
     fi
 
    # Are we happy?
     AC_MSG_CHECKING([Java support available])
-    AS_IF([test "$opal_java_happy" = "no"],
+    AS_IF([test "$orte_java_happy" = "no"],
           [AC_MSG_RESULT([no])],
           [AC_MSG_RESULT([yes])])
 
-    AC_DEFINE_UNQUOTED([OPAL_HAVE_JAVA_SUPPORT], [$HAVE_JAVA_SUPPORT], [do we have Java support])
-    AM_CONDITIONAL(OPAL_HAVE_JAVA_SUPPORT, test "$opal_java_happy" = "yes")
+    AC_DEFINE_UNQUOTED([ORTE_HAVE_JAVA_SUPPOR]T, [$HAVE_JAVA_SUPPORT], [do we have Java support])
+    AM_CONDITIONAL(ORTE_HAVE_JAVA_SUPPORT, test "$orte_java_happy" = "yes")
+
     OPAL_VAR_SCOPE_POP
 ])
