@@ -129,12 +129,14 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     command = ORTE_PLM_LAUNCH_JOB_CMD;
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_PLM_CMD))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
     }
     
     /* pack the jdata object */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &jdata, 1, ORTE_JOB))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
         goto CLEANUP;
         
     }
@@ -154,6 +156,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
+        OBJ_RELEASE(ps);
         goto CLEANUP;
     }
     
