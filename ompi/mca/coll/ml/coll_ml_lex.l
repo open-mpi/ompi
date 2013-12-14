@@ -1,4 +1,5 @@
 %option nounput
+%option noinput
 
 %{ /* -*- C -*- */
 #include "opal_config.h"
