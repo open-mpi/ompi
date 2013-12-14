@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -14,7 +14,7 @@
 #include "oshmem/mca/spml/spml.h"
 #include "ompi/mca/btl/btl.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/bml/base/base.h"
 #include "oshmem/mca/spml/yoda/spml_yoda.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_putreq.h"
@@ -91,4 +91,3 @@ void mca_spml_yoda_put_completion(mca_btl_base_module_t* btl,
     oshmem_request_free((oshmem_request_t**) &putreq);
     mca_bml_base_free(bml_btl, des);
 }
-

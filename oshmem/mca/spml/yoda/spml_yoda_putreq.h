@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -15,7 +15,7 @@
 #include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/bml/bml.h" 
+#include "ompi/mca/bml/bml.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_rdmafrag.h"
 #include "oshmem/mca/spml/yoda/spml_yoda.h"
 #include "orte/runtime/orte_globals.h"
@@ -31,8 +31,7 @@ typedef struct mca_spml_yoda_put_request_t mca_spml_yoda_put_request_t;
 
 OBJ_CLASS_DECLARATION(mca_spml_yoda_put_request_t);
 
-static inline mca_spml_yoda_put_request_t *mca_spml_yoda_putreq_alloc(int dst)
-{
+static inline mca_spml_yoda_put_request_t *mca_spml_yoda_putreq_alloc(int dst) {
     ompi_free_list_item_t *item;
     mca_spml_yoda_put_request_t *putreq;
 
