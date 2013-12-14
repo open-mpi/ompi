@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -69,6 +69,7 @@ mca_spml_yoda_module_t mca_spml_yoda = {
 static inline mca_bml_base_btl_t *get_next_btl(int dst, int *btl_id);
 
 static inline void spml_yoda_prepare_for_get(void* buffer, size_t size, void* p_src, int dst, void* p_dst, void* p_getreq);
+
 static int btl_name_to_id(char *btl_name)
 {
     if (0 == strcmp(btl_name, "sm")) {
@@ -102,10 +103,10 @@ static inline void calc_nfrags(mca_bml_base_btl_t* bml_btl,
                                int *nfrags,
                                int use_send)
 {
-    if (use_send){
+    if (use_send) {
         *frag_size = bml_btl->btl->btl_max_send_size - SPML_YODA_SEND_CONTEXT_SIZE;
     }
-    else{
+    else {
         *frag_size = bml_btl->btl->btl_max_send_size;
     }
     *nfrags = 1 + (size - 1) / (*frag_size);
@@ -116,7 +117,7 @@ static inline void mca_spml_yoda_bml_alloc( mca_bml_base_btl_t* bml_btl,
                                             uint8_t order, size_t size, uint32_t flags,
                                             int use_send)
 {
-    if (use_send){
+    if (use_send) {
         size = (0 == size ? size : size + SPML_YODA_SEND_CONTEXT_SIZE);
     }
     mca_bml_base_alloc(bml_btl,
@@ -128,25 +129,25 @@ static inline void mca_spml_yoda_bml_alloc( mca_bml_base_btl_t* bml_btl,
 
 static inline void spml_yoda_prepare_for_put(void* buffer, size_t size, void* p_src, void* p_dst, int use_send)
 {
-    if (use_send){
+    if (use_send) {
         memcpy((void*) buffer, &size, sizeof(size));
         memcpy((void*) ( ((char*) buffer) + sizeof(size)), &p_dst, sizeof(p_dst));
         memcpy((void*) ( ((char*) buffer) + sizeof(size) + sizeof(p_dst)), p_src, size);
     }
-    else{
+    else {
         memcpy((void*) (  (unsigned char*) buffer), p_src, size);
     }
 }
 
 static inline void spml_yoda_prepare_for_get_response(void* buffer, size_t size, void* p_src, void* p_dst, void* p_getreq, int use_send)
 {
-    if (use_send){
+    if (use_send) {
         memcpy((void*) buffer, &size, sizeof(size));
         memcpy((void*) ( ((char*) buffer) + sizeof(size)), &p_dst, sizeof(p_dst));
         memcpy((void*) ( ((char*) buffer) + sizeof(size) + sizeof(p_dst)), p_src, size);
         memcpy((void*) ( ((char*) buffer) + sizeof(size) + sizeof(p_dst) + size), &p_getreq, sizeof(p_getreq));
     }
-    else{
+    else {
         memcpy((void*) (  (unsigned char*) buffer), p_src, size);
     }
 }
@@ -161,9 +162,9 @@ static inline void spml_yoda_prepare_for_get(void* buffer, size_t size, void* p_
 }
 
 static void mca_yoda_put_callback(mca_btl_base_module_t* btl,
-                                      mca_btl_base_tag_t tag,
-                                      mca_btl_base_descriptor_t* des,
-                                      void* cbdata )
+                                  mca_btl_base_tag_t tag,
+                                  mca_btl_base_descriptor_t* des,
+                                  void* cbdata )
 {
     size_t* size;
     void** l_addr;
@@ -174,9 +175,9 @@ static void mca_yoda_put_callback(mca_btl_base_module_t* btl,
 }
 
 static void mca_yoda_get_callback(mca_btl_base_module_t* btl,
-                                      mca_btl_base_tag_t tag,
-                                      mca_btl_base_descriptor_t* des,
-                                      void* cbdata )
+                                  mca_btl_base_tag_t tag,
+                                  mca_btl_base_descriptor_t* des,
+                                  void* cbdata )
 {
     void** p, ** p_src, **p_dst;
     size_t* size;
@@ -232,8 +233,9 @@ static void mca_yoda_get_callback(mca_btl_base_module_t* btl,
 
     /* Put via send*/
     rc = mca_bml_base_send(bml_btl, des_loc, MCA_SPML_YODA_GET_RESPONSE);
-    if (1 == rc)
+    if (1 == rc) {
         rc = OSHMEM_SUCCESS;
+    }
 
     if (OPAL_UNLIKELY(OSHMEM_SUCCESS != rc)) {
         if (OSHMEM_ERR_OUT_OF_RESOURCE == rc) {
@@ -245,16 +247,16 @@ static void mca_yoda_get_callback(mca_btl_base_module_t* btl,
         }
         /* exit with errro */
         SPML_ERROR("shmem error: ret = %i, send_pe = %i, dest_pe = %i",
-               rc, oshmem_my_proc_id(), *dst);
+                   rc, oshmem_my_proc_id(), *dst);
         oshmem_shmem_abort(-1);
         rc = OSHMEM_ERROR;
     }
 }
 
 static void mca_yoda_get_response_callback(mca_btl_base_module_t* btl,
-                                      mca_btl_base_tag_t tag,
-                                      mca_btl_base_descriptor_t* des,
-                                      void* cbdata )
+                                           mca_btl_base_tag_t tag,
+                                           mca_btl_base_descriptor_t* des,
+                                           void* cbdata )
 {
     size_t* size;
     void** l_addr;
@@ -306,8 +308,7 @@ int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys)
         }
         yoda_context->btl_src_segment_size = 0;
 
-        if (yoda_context->registration)
-        {
+        if (yoda_context->registration) {
             ybtl->btl->btl_mpool->mpool_deregister(ybtl->btl->btl_mpool,
                                                    yoda_context->registration);
         }
@@ -370,8 +371,8 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
         }
 
         /* If we have shared memory just save its id*/
-        if ((ybtl->btl_type == YODA_BTL_SM)
-            && ((int) MEMHEAP_SHM_GET_ID(shmid) != MEMHEAP_SHM_INVALID)) {
+        if ((YODA_BTL_SM == ybtl->btl_type)
+                && ((int) MEMHEAP_SHM_GET_ID(shmid) != MEMHEAP_SHM_INVALID)) {
             mkeys[i].handle.key = shmid;
             continue;
         }
@@ -389,8 +390,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
                                                      0,
                                                      &convertor);
 
-            if (NULL != ybtl->btl->btl_mpool && NULL != ybtl->btl->btl_mpool->mpool_register)
-            {
+            if (NULL != ybtl->btl->btl_mpool && NULL != ybtl->btl->btl_mpool->mpool_register) {
                 iov.iov_len = size;
                 iov.iov_base = NULL;
 
@@ -424,7 +424,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
             yoda_context->btl_src_segment_size = ybtl->btl->btl_seg_size;
             if (0 != yoda_context->btl_src_segment_size) {
                 yoda_context->btl_src_segment =
-                    malloc(yoda_context->btl_src_segment_size);
+                        malloc(yoda_context->btl_src_segment_size);
                 memcpy(yoda_context->btl_src_segment,
                        des->des_src,
                        yoda_context->btl_src_segment_size);
@@ -472,7 +472,7 @@ static int create_btl_list(void)
     SPML_VERBOSE(50, "found %d capable btls", size);
 
     mca_spml_yoda.btl_type_map =
-        (struct yoda_btl *) calloc(size, sizeof(struct yoda_btl));
+            (struct yoda_btl *) calloc(size, sizeof(struct yoda_btl));
     if (!mca_spml_yoda.btl_type_map)
         return OSHMEM_ERROR;
 
@@ -487,7 +487,7 @@ static int create_btl_list(void)
 
         SPML_VERBOSE(50, "found btl (%s) btl_id=%d", btl_name, btl_id);
         mca_spml_yoda.btl_type_map[mca_spml_yoda.n_btls].btl =
-            btl_sm->btl_module;
+                btl_sm->btl_module;
         mca_spml_yoda.btl_type_map[mca_spml_yoda.n_btls].btl_type = btl_id;
         mca_spml_yoda.n_btls++;
     }
@@ -512,7 +512,7 @@ static int _find_btl_id(mca_bml_base_btl_t *bml_btl)
 }
 
 /* for each proc create transport ids which are indexes into global
- * btl list&map 
+ * btl list&map
  */
 static int create_btl_idx(int dst_pe)
 {
@@ -531,15 +531,15 @@ static int create_btl_idx(int dst_pe)
 
     if (0 >= size) {
         /* Possibly this is SM BTL with KNEM disabled? Then we should use send based get/put */
-        /* 
+        /*
            This hack is necessary for the case when KNEM is not available.
            In this case we still want to use send/recv of SM BTL for put and get
            but SM BTL is not in the rdma list anymore
         */
         size = mca_bml_base_btl_array_get_size(btl_array =
-                                               &endpoint->btl_eager);
-        if (size > 0) {
-            /*Chose SHMEM capable btl from eager array. Not filter now: take the first 
+                &endpoint->btl_eager);
+        if (0 < size) {
+            /*Chose SHMEM capable btl from eager array. Not filter now: take the first
               (but could appear on demand).*/
             for (shmem_index = 0; shmem_index < size; shmem_index++) {
                 bml_btl = mca_bml_base_btl_array_get_index(btl_array, shmem_index);
@@ -548,8 +548,7 @@ static int create_btl_idx(int dst_pe)
                 break;
             }
         }
-        else
-        {
+        else {
             SPML_ERROR("no SHMEM capable transport for dest pe=%d", dst_pe);
             return OSHMEM_ERROR;
         }
@@ -564,12 +563,12 @@ static int create_btl_idx(int dst_pe)
     for (i = 0; i < size; i++) {
         bml_btl = mca_bml_base_btl_array_get_index(btl_array,
                                                    (shmem_index >= 0) ?
-                                                   (shmem_index) : (i));
+                                                       (shmem_index) : (i));
         btl_id = _find_btl_id(bml_btl);
         SPML_VERBOSE(50,
                      "dst_pe(%d) use btl (%s) btl_id=%d",
                      dst_pe, bml_btl->btl->btl_component->btl_version.mca_component_name, btl_id);
-        if (btl_id < 0) {
+        if (0 > btl_id) {
             SPML_ERROR("unknown btl: dst_pe(%d) use btl (%s) btl_id=%d",
                        dst_pe, bml_btl->btl->btl_component->btl_version.mca_component_name, btl_id);
             return OSHMEM_ERROR;
@@ -582,8 +581,9 @@ static int create_btl_idx(int dst_pe)
 
 static int destroy_btl_list(void)
 {
-    if (mca_spml_yoda.btl_type_map)
+    if (mca_spml_yoda.btl_type_map) {
         free(mca_spml_yoda.btl_type_map);
+    }
 
     return OSHMEM_SUCCESS;
 }
@@ -593,8 +593,9 @@ static int destroy_btl_idx(int dst_pe)
     oshmem_proc_t *proc;
 
     proc = oshmem_proc_group_find(oshmem_group_all, dst_pe);
-    if (proc->transport_ids)
+    if (proc->transport_ids) {
         free(proc->transport_ids);
+    }
 
     return OSHMEM_SUCCESS;
 }
@@ -605,13 +606,15 @@ int mca_spml_yoda_add_procs(oshmem_proc_t** procs, size_t nprocs)
     int rc;
     size_t i;
 
-    if (nprocs == 0)
+    if (0 == nprocs) {
         return OSHMEM_SUCCESS;
+    }
 
     OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
     rc = opal_bitmap_init(&reachable, (int) nprocs);
-    if (OSHMEM_SUCCESS != rc)
+    if (OSHMEM_SUCCESS != rc) {
         return rc;
+    }
 
     rc = mca_bml.bml_add_procs(nprocs, (ompi_proc_t**) procs, &reachable);
 
@@ -621,18 +624,21 @@ int mca_spml_yoda_add_procs(oshmem_proc_t** procs, size_t nprocs)
     }
 
     rc = mca_bml.bml_register_error(mca_spml_yoda_error_handler);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     /* create btl index and map */
     rc = create_btl_list();
-    if (OSHMEM_SUCCESS != rc)
+    if (OSHMEM_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     for (i = 0; i < nprocs; i++) {
         rc = create_btl_idx(i);
-        if (OSHMEM_SUCCESS != rc)
+        if (OSHMEM_SUCCESS != rc) {
             goto cleanup_and_return;
+        }
     }
 
 cleanup_and_return:
@@ -681,15 +687,15 @@ static inline mca_bml_base_btl_t *get_next_btl(int dst, int *btl_id)
 
     if (0 >= size) {
         /* Possibly this is SM BTL with KNEM disabled? Then we should use send based get/put */
-        /* 
+        /*
            This hack is necessary for the case when KNEM is not available.
            In this case we still want to use send/recv of SM BTL for put and get
            but SM BTL is not in the rdma list anymore
         */
         size = mca_bml_base_btl_array_get_size(btl_array =
-                                               &endpoint->btl_eager);
-        if (size > 0) {
-            /*Chose SHMEM capable btl from eager array. Not filter now: take the first 
+                &endpoint->btl_eager);
+        if (0 < size) {
+            /*Chose SHMEM capable btl from eager array. Not filter now: take the first
               (but could appear on demand).*/
             for (shmem_index = 0; shmem_index < size; shmem_index++) {
                 bml_btl = mca_bml_base_btl_array_get_index(btl_array, shmem_index);
@@ -771,8 +777,8 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
     /* check if we doing put into shm attached segment and if so
      * just do memcpy
      */
-    if ((ybtl->btl_type == YODA_BTL_SM)
-        && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
+    if ((YODA_BTL_SM == ybtl->btl_type)
+            && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
         memcpy((void *) (unsigned long) rva, src_addr, size);
         return OSHMEM_SUCCESS;
     }
@@ -808,7 +814,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
         /* copy data to allocated buffer*/
         segment = des->des_src;
         spml_yoda_prepare_for_put((void*)segment->seg_addr.pval, ncopied,
-                                   (void*)p_src, (void*)p_dst, put_via_send);
+                                  (void*)p_src, (void*)p_dst, put_via_send);
 
         /* Preparing destination buffer */
 
@@ -816,13 +822,13 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
         assert( (NULL != yoda_context) && (0 != yoda_context->btl_src_segment_size));
 
         memcpy(&frag->rdma_segs[0].base_seg,
-               yoda_context->btl_src_segment,
-               yoda_context->btl_src_segment_size);
+                yoda_context->btl_src_segment,
+                yoda_context->btl_src_segment_size);
 
         frag->rdma_segs[0].base_seg.seg_addr.lval = (uintptr_t) p_dst;
         frag->rdma_segs[0].base_seg.seg_len = (put_via_send ?
-                                               ncopied + SPML_YODA_SEND_CONTEXT_SIZE :
-                                               ncopied);
+                                                   ncopied + SPML_YODA_SEND_CONTEXT_SIZE :
+                                                   ncopied);
         des->des_dst = &frag->rdma_segs[0].base_seg;
 
         frag->rdma_req = putreq;
@@ -912,7 +918,7 @@ void mca_spml_yoda_set_remote_context(void** spml_context,
         yoda_context = (mca_spml_yoda_context_t*) malloc(sizeof(*yoda_context));
     }
     yoda_context->btl_src_segment =
-        (mca_btl_base_segment_t*) spml_remote_context;
+            (mca_btl_base_segment_t*) spml_remote_context;
     *(spml_context) = yoda_context;
 }
 
@@ -984,7 +990,7 @@ int mca_spml_yoda_enable(bool enable)
  * shmem_get reads data from a remote address
  * in the symmetric heap via RDMA READ.
  * Get operation:
- * 1. Get the rkey to the remote address. 
+ * 1. Get the rkey to the remote address.
  * 2. Allocate a get request.
  * 3. Allocated a temporary pre-registered buffer
  *    to copy the data to.
@@ -998,7 +1004,7 @@ int mca_spml_yoda_enable(bool enable)
  *
  * src_addr - address on remote pe.
  * size - the amount on bytes to be read.
- * dst_addr - address on the local pe. 
+ * dst_addr - address on the local pe.
  * src - the pe of remote process.
  */
 int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
@@ -1064,8 +1070,8 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
     /* check if we doing get into shm attached segment and if so
      * just do memcpy
      */
-    if ((ybtl->btl_type == YODA_BTL_SM)
-        && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(src_addr) && src_addr != rva)) {
+    if ((YODA_BTL_SM == ybtl->btl_type)
+            && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(src_addr) && src_addr != rva)) {
         memcpy(dst_addr, (void *) rva, size);
         /* must call progress here to avoid deadlock. Scenarion:
          * pe1 pols pe2 via shm get. pe2 tries to get static variable from node one, which goes to sm btl
@@ -1083,8 +1089,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
      * we make GET via SEND
      */
     frag_size = ncopied;
-    if ((NULL == l_mkey) || get_via_send)
-    {
+    if ((NULL == l_mkey) || get_via_send) {
         calc_nfrags(bml_btl, size, &frag_size, &nfrags, get_via_send);
     }
 
@@ -1104,14 +1109,14 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
         getreq->parent = &get_holder;
 
         ncopied = i < nfrags - 1 ? frag_size :(unsigned) ((char *) dst_addr + size - p_dst);
-            frag->allocated = 0;
+        frag->allocated = 0;
         /* Prepare destination descriptor*/
         yoda_context = r_mkey->spml_context;
         assert(0 != yoda_context->btl_src_segment_size);
         memcpy(&frag->rdma_segs[0].base_seg,
-               yoda_context->btl_src_segment,
-               yoda_context->btl_src_segment_size);
-	    
+                yoda_context->btl_src_segment,
+                yoda_context->btl_src_segment_size);
+
         frag->rdma_segs[0].base_seg.seg_len = (get_via_send ? ncopied + SPML_YODA_SEND_CONTEXT_SIZE : ncopied);
         if (get_via_send) {
             frag->use_send = 1;
@@ -1121,26 +1126,26 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
              * The local buffer will store the data read
              * from the remote address.
              */
-                mca_spml_yoda_bml_alloc(bml_btl,
-                                        &des,
-                                        MCA_BTL_NO_ORDER,
-                                        (int)frag_size,
-                                        MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
-                                        get_via_send);
-                if (OPAL_UNLIKELY(!des || !des->des_src)) {
-                    SPML_ERROR("shmem OOM error need %d bytes", ncopied);
-                    SPML_ERROR("src=%p nfrags = %d frag_size=%d",
-                               src_addr, nfrags, frag_size);
-                    oshmem_shmem_abort(-1);
-                }
+            mca_spml_yoda_bml_alloc(bml_btl,
+                                    &des,
+                                    MCA_BTL_NO_ORDER,
+                                    (int)frag_size,
+                                    MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
+                                    get_via_send);
+            if (OPAL_UNLIKELY(!des || !des->des_src)) {
+                SPML_ERROR("shmem OOM error need %d bytes", ncopied);
+                SPML_ERROR("src=%p nfrags = %d frag_size=%d",
+                           src_addr, nfrags, frag_size);
+                oshmem_shmem_abort(-1);
+            }
 
-                segment = des->des_src; 
-                spml_yoda_prepare_for_get((void*)segment->seg_addr.pval, ncopied, (void*)p_src, oshmem_my_proc_id(), (void*)p_dst, (void*) getreq);
-                des->des_cbfunc = mca_spml_yoda_get_response_completion;
-				
-                OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, 1);
+            segment = des->des_src;
+            spml_yoda_prepare_for_get((void*)segment->seg_addr.pval, ncopied, (void*)p_src, oshmem_my_proc_id(), (void*)p_dst, (void*) getreq);
+            des->des_cbfunc = mca_spml_yoda_get_response_completion;
+
+            OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, 1);
         }
-        else{
+        else {
             /*
              * Register src memory if do GET via GET
              */
@@ -1195,7 +1200,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
         /**
          *  Do GET operation
          */
-        if (get_via_send){
+        if (get_via_send) {
             rc = mca_bml_base_send(bml_btl, des, MCA_SPML_YODA_GET);
             if (1 == rc)
                 rc = OSHMEM_SUCCESS;

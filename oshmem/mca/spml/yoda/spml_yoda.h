@@ -2,13 +2,13 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- *  @file 
+ *  @file
  */
 
 #ifndef MCA_SPML_YODA_H
@@ -24,9 +24,9 @@
 
 #include "orte/runtime/orte_globals.h"
 
-#include "ompi/mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/class/ompi_free_list.h" 
+#include "ompi/class/ompi_free_list.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef OSHMEM_WAIT_COMPLETION_DEBUG
@@ -114,8 +114,10 @@ extern mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
                                                uint64_t shmid,
                                                int *count);
 extern int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys);
-extern int mca_spml_yoda_add_procs(oshmem_proc_t** procs, size_t nprocs);
-extern int mca_spml_yoda_del_procs(oshmem_proc_t** procs, size_t nprocs);
+extern int mca_spml_yoda_add_procs(oshmem_proc_t** procs,
+                                   size_t nprocs);
+extern int mca_spml_yoda_del_procs(oshmem_proc_t** procs,
+                                   size_t nprocs);
 extern int mca_spml_yoda_fence(void);
 extern void* mca_spml_yoda_get_remote_context(void*);
 extern void mca_spml_yoda_set_remote_context(void**, void*);

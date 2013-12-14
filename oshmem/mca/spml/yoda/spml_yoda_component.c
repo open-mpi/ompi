@@ -2,16 +2,16 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "oshmem_config.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/mca/spml/spml.h"
-#include "ompi/mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h"
 #include "spml_yoda_component.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_rdmafrag.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_putreq.h"
@@ -25,22 +25,23 @@ mca_spml_yoda_component_init(int* priority,
                              bool enable_progress_threads,
                              bool enable_mpi_threads);
 static int mca_spml_yoda_component_fini(void);
+
 mca_spml_base_component_2_0_0_t mca_spml_yoda_component = {
 
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
     {
-      MCA_SPML_BASE_VERSION_2_0_0,
-    
-      "yoda",                        /* MCA component name */
-      OSHMEM_MAJOR_VERSION,          /* MCA component major version */
-      OSHMEM_MINOR_VERSION,          /* MCA component minor version */
-      OSHMEM_RELEASE_VERSION,        /* MCA component release version */
-      mca_spml_yoda_component_open,  /* component open */
-      mca_spml_yoda_component_close, /* component close */
-      NULL,
-      mca_spml_yoda_component_register
+        MCA_SPML_BASE_VERSION_2_0_0,
+
+        "yoda",                        /* MCA component name */
+        OSHMEM_MAJOR_VERSION,          /* MCA component major version */
+        OSHMEM_MINOR_VERSION,          /* MCA component minor version */
+        OSHMEM_RELEASE_VERSION,        /* MCA component release version */
+        mca_spml_yoda_component_open,  /* component open */
+        mca_spml_yoda_component_close, /* component close */
+        NULL,
+        mca_spml_yoda_component_register
     },
     {
         /* The component is checkpoint ready */
@@ -49,7 +50,7 @@ mca_spml_base_component_2_0_0_t mca_spml_yoda_component = {
 
     mca_spml_yoda_component_init,    /* component init */
     mca_spml_yoda_component_fini     /* component finalize */
-    
+
 };
 
 static inline int mca_spml_yoda_param_register_int(const char *param_name,
@@ -85,8 +86,7 @@ static int mca_spml_yoda_component_register(void)
     return OSHMEM_SUCCESS;
 }
 
-static int mca_spml_yoda_component_open(void)
-{
+static int mca_spml_yoda_component_open(void) {
     return mca_base_framework_open(&ompi_bml_base_framework, MCA_BASE_OPEN_DEFAULT);
 }
 
@@ -94,7 +94,7 @@ static int mca_spml_yoda_component_close(void)
 {
     int rc;
     if (OMPI_SUCCESS != (rc = mca_base_framework_close(&ompi_bml_base_framework))) {
-         return rc;
+        return rc;
     }
     return OSHMEM_SUCCESS;
 }
@@ -125,8 +125,9 @@ mca_spml_yoda_component_init(int* priority,
 
 int mca_spml_yoda_component_fini(void)
 {
-    if(!mca_spml_yoda.enabled)
+    if (!mca_spml_yoda.enabled) {
         return OSHMEM_SUCCESS; /* never selected.. return success.. */
+    }
     mca_spml_yoda.enabled = false;  /* not anymore */
 
     OBJ_DESTRUCT(&mca_spml_yoda.lock);
