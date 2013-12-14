@@ -23,8 +23,12 @@ enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm,filem-rsh
 enable_contrib_no_build=libnbc,vt
 with_memory_manager=no
 with_tm=no
-with_slurm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
 with_mpi_param_check=no
+if [ -n "$SLURMHOME" ] then
+    with_slurm=$SLURMHOME
+    with_pmi=$SLURMHOME
+fi
+
