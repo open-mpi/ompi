@@ -758,6 +758,7 @@ static void opal_memory_linux_malloc_init_hook(void)
         return;
     }
 
+#if MEMORY_LINUX_UMMUNOTIFY
     /* Next, check if ummunotify is present on the system. If it is,
        then we don't need to do the following ptmalloc2 hacks.
        open/mmap on the device may fail during init, but if /dev/ummunotify
@@ -766,6 +767,7 @@ static void opal_memory_linux_malloc_init_hook(void)
     if (access("/dev/ummunotify", F_OK) == 0) {
         return;
     }
+#endif
 
     /* Yes, checking for an MPI MCA parameter here is an abstraction
        violation.  Cope.  Yes, even checking for *any* MCA parameter
