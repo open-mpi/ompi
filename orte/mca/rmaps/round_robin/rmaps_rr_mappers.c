@@ -465,8 +465,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    nprocs = app->num_procs * orte_rmaps_base.cpus_per_rank;
-    if (num_slots < nprocs) {
+    if (num_slots < (app->num_procs * orte_rmaps_base.cpus_per_rank)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -528,12 +527,16 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             num_procs_to_assign = extra_procs_to_assign;
         } else {
             num_procs_to_assign = (node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank + extra_procs_to_assign;
+            if (app->num_procs < num_procs_to_assign) {
+                /* might have more slots than procs */
+                num_procs_to_assign = app->num_procs;
+            }
         }
 
         /* get the number of objects of this type on this node */
         nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps:rr:byobj: found %d objs on node %s", nobjs, node->name);
+                            "mca:rmaps:rr:byobj: nprocs-to-assign %d for %d objs on node %s", num_procs_to_assign, nobjs, node->name);
         /* if there are no objects of this type, then report the error
          * and abort - this can happen, for example, on systems that
          * don't report "sockets" as an independent object

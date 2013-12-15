@@ -643,8 +643,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     }
 
-    if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding) ||
-        OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+    if (OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         /* no binding requested */
         return ORTE_SUCCESS;
     }
