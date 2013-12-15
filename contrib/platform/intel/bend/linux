@@ -25,7 +25,7 @@ with_tm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
-if [ -n "$SLURMHOME" ] then
+if [ -n "$SLURMHOME" ] ; then
     with_slurm=$SLURMHOME
     with_pmi=$SLURMHOME
 fi
