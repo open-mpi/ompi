@@ -47,12 +47,14 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 {
     orte_job_t *jdata;
     orte_job_map_t *map;
-    int rc;
+    int rc, i;
     bool did_map;
     opal_list_item_t *item;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_vpid_t nprocs;
+    orte_app_context_t *app;
 
     /* convenience */
     jdata = caddy->jdata;
@@ -87,9 +89,36 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             OBJ_RELEASE(caddy);
             return;
         }
-        /* load it with the system defaults */
-        map->mapping = orte_rmaps_base.mapping;
-        map->ranking = orte_rmaps_base.ranking;
+        /* compute the number of procs */
+        nprocs = 0;
+        for (i=0; i < jdata->apps->size; i++) {
+            if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                nprocs += app->num_procs;
+            }
+        }
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: nprocs %s",
+                            ORTE_VPID_PRINT(nprocs));
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            map->mapping = orte_rmaps_base.mapping;
+        } else {
+            /* default based on number of procs */
+            if (nprocs <= 2) {
+                ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+            } else {
+                ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
+            }
+        }
+        if (ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(orte_rmaps_base.ranking)) {
+            map->ranking = orte_rmaps_base.ranking;
+        } else {
+            /* default based on number of procs */
+            if (nprocs <= 2) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+            } else {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SOCKET);
+            }
+        }
 #if OPAL_HAVE_HWLOC
         map->binding = opal_hwloc_binding_policy;
 #endif
@@ -108,16 +137,33 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (!jdata->map->display_map) {
             jdata->map->display_map = orte_rmaps_base.display_map;
         }
+        /* compute the number of procs */
+        nprocs = 0;
+        for (i=0; i < jdata->apps->size; i++) {
+            if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                nprocs += app->num_procs;
+            }
+        }
         /* set the default mapping policy IFF it wasn't provided */
         if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-            ORTE_SET_MAPPING_POLICY(jdata->map->mapping, orte_rmaps_base.mapping);
+            /* default based on number of procs */
+            if (nprocs <= 2) {
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+            } else {
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
+            }
         }
         if (!ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping));
         }
         /* ditto for rank and bind policies */
         if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
-            ORTE_SET_RANKING_POLICY(jdata->map->ranking, orte_rmaps_base.ranking);
+            /* default based on number of procs */
+            if (nprocs <= 2) {
+                ORTE_SET_RANKING_POLICY(jdata->map->ranking, ORTE_RANK_BY_SLOT);
+            } else {
+                ORTE_SET_RANKING_POLICY(jdata->map->ranking, ORTE_RANK_BY_SOCKET);
+            }
         }
 #if OPAL_HAVE_HWLOC
         if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {

@@ -146,6 +146,7 @@ static int rank_span(orte_job_t *jdata,
                     }
                     cnt++;
                         
+                    /* insert the proc into the jdata array - no harm if already there */
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                         ORTE_ERROR_LOG(rc);
                         return rc;
@@ -253,6 +254,7 @@ static int rank_fill(orte_job_t *jdata,
                 }
                 cnt++;
                         
+                /* insert the proc into the jdata array - no harm if already there */
                 if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
@@ -275,7 +277,7 @@ static int rank_by(orte_job_t *jdata,
                    unsigned cache_level)
 {
     hwloc_obj_t obj;
-    int num_objs, i, j;
+    int num_objs, i, j, rc;
     orte_vpid_t num_ranked=0;
     orte_node_t *node;
     orte_proc_t *proc;
@@ -378,7 +380,11 @@ static int rank_by(orte_job_t *jdata,
                     cnt++;
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:rank_by: assigned rank %s", ORTE_VPID_PRINT(proc->name.vpid));
-
+                    /* insert the proc into the jdata array - no harm if already there */
+                    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
                    /* flag that one was mapped */
                     all_done = false;
                     /* track where the highest vpid landed - this is our
@@ -453,10 +459,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                         continue;
                     }
                     proc->name.vpid = vpid++;
-                    /* insert the proc into the jdata->procs array - can't already
-                     * be there as the only way to this point in the code is for the
-                     * vpid to have been INVALID
-                     */
+                    /* insert the proc into the jdata array - no harm if already there */
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                         ORTE_ERROR_LOG(rc);
                         return rc;
@@ -510,15 +513,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                      */
                     jdata->bookmark = node;
                 }
-                /* some mappers require that we insert the proc into the jdata->procs
-                 * array, while others will have already done it - so check and
-                 * do the operation if required
-                 */
-                if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
-                    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }                    
+                /* insert the proc into the jdata array - no harm if already there */
+                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
                 }
             }
         }

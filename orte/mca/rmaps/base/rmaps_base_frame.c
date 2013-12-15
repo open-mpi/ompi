@@ -102,7 +102,7 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
     rmaps_base_mapping_policy = NULL;
     var_id = mca_base_var_register("orte", "rmaps", "base", "mapping_policy",
 #if OPAL_HAVE_HWLOC
-                                   "Mapping Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node | seq | dist], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
+                                   "Mapping Policy [slot (default:np<=2) | hwthread | core | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node | seq | dist], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #else
                                    "Mapping Policy [slot (default) | node], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #endif
@@ -117,7 +117,7 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
     rmaps_base_ranking_policy = NULL;
     (void) mca_base_var_register("orte", "rmaps", "base", "ranking_policy",
 #if OPAL_HAVE_HWLOC
-                                           "Ranking Policy [slot (default) | hwthread | core | l1cache | l2cache | l3cache | socket | numa | board | node], with modifier :SPAN or :FILL",
+                                           "Ranking Policy [slot (default:np<=2) | hwthread | core | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node], with modifier :SPAN or :FILL",
 #else
                                            "Ranking Policy [slot (default) | node]",
 #endif
@@ -262,6 +262,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     if (NULL == rmaps_base_mapping_policy) {
         ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYSLOT);
+        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SPAN);
         ORTE_UNSET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
     } else {
         ck = opal_argv_split(rmaps_base_mapping_policy, ':');
@@ -294,7 +295,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             ck2 = opal_argv_split(ck[1], ',');
             for (i=0; NULL != ck2[i]; i++) {
                 if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
-                    orte_rmaps_base.mapping |= ORTE_MAPPING_SPAN;
+                    ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SPAN);
                 } else if (0 == strncasecmp(ck2[i], "oversubscribe", strlen(ck2[i]))) {
                     if (ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
                         /* error - cannot redefine the default mapping policy */
@@ -364,7 +365,33 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (NULL == rmaps_base_ranking_policy) {
-        ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_SLOT);
+        /* check for map-by object directives - we set the
+         * ranking to match if one was given
+         */
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            if (ORTE_MAPPING_BYCORE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_CORE);
+            } else if (ORTE_MAPPING_BYNODE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_NODE);
+            } else if (ORTE_MAPPING_BYL1CACHE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_L1CACHE);
+            } else if (ORTE_MAPPING_BYL2CACHE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_L2CACHE);
+            } else if (ORTE_MAPPING_BYL3CACHE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_L3CACHE);
+            } else if (ORTE_MAPPING_BYSOCKET & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_SOCKET);
+            } else if (ORTE_MAPPING_BYNUMA & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_NUMA);
+            } else if (ORTE_MAPPING_BYBOARD & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_BOARD);
+            } else if (ORTE_MAPPING_BYHWTHREAD & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
+                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_HWTHREAD);
+            }
+        } else {
+            /* if no map-by was given, default to by-slot */
+            ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_SLOT);
+        }
     } else {
         ck = opal_argv_split(rmaps_base_ranking_policy, ':');
         if (2 < opal_argv_count(ck)) {
@@ -460,26 +487,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_NODE);
         ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
-
-#if OPAL_HAVE_HWLOC
-    if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
-        /* if MAP BY DIST then we set binding policy to numa UNLESS the binding has
-         * already been set to something else
-         */
-        if (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYDIST) {
-            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_NUMA);
-        } else if (1 < orte_rmaps_base.cpus_per_rank) {
-            /* if the cpus/rank > 1, then we have to bind to cores UNLESS the binding has
-             * already been set to something else
-             */
-            if (opal_hwloc_use_hwthreads_as_cpus) {
-                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
-            } else {
-                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
-            }
-        }
-    }
-#endif
 
     /* Should we schedule on the local node or not? */
     if (rmaps_base_no_schedule_local) {
