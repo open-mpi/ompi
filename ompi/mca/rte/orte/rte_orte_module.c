@@ -153,11 +153,6 @@ int ompi_rte_db_fetch(const orte_process_name_t *nm,
     if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)nm, key, data, type))) {
         return rc;
     }
-    /* update the hostname */
-    proct = ompi_proc_find(nm);
-    if (NULL == proct->proc_hostname) {
-        opal_db.fetch_pointer((opal_identifier_t*)nm, ORTE_DB_HOSTNAME, (void**)&proct->proc_hostname, OPAL_STRING);
-    }
     return OMPI_SUCCESS;
 }
 
@@ -170,11 +165,6 @@ int ompi_rte_db_fetch_pointer(const orte_process_name_t *nm,
 
     if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)nm, key, data, type))) {
         return rc;
-    }
-    /* update the hostname */
-    proct = ompi_proc_find(nm);
-    if (NULL == proct->proc_hostname) {
-        opal_db.fetch_pointer((opal_identifier_t*)nm, ORTE_DB_HOSTNAME, (void**)&proct->proc_hostname, OPAL_STRING);
     }
     return OMPI_SUCCESS;
 }
@@ -190,11 +180,6 @@ int ompi_rte_db_fetch_multiple(const orte_process_name_t *nm,
     if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)nm,
                                                      OPAL_SCOPE_GLOBAL, key, kvs))) {
         return rc;
-    }
-    /* update the hostname */
-    proct = ompi_proc_find(nm);
-    if (NULL == proct->proc_hostname) {
-        opal_db.fetch_pointer((opal_identifier_t*)nm, ORTE_DB_HOSTNAME, (void**)&proct->proc_hostname, OPAL_STRING);
     }
     return OMPI_SUCCESS;
 }
