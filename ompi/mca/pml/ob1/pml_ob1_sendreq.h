@@ -366,6 +366,12 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
     size_t eager_limit = btl->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t);
     int rc;
 
+#if OPAL_CUDA_GDR_SUPPORT
+    if (btl->btl_cuda_eager_limit && (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA)) {
+        eager_limit = btl->btl_cuda_eager_limit - sizeof(mca_pml_ob1_hdr_t);
+    }
+#endif /* OPAL_CUDA_GDR_SUPPORT */
+
     if( OPAL_LIKELY(size <= eager_limit) ) {
         switch(sendreq->req_send.req_send_mode) {
         case MCA_PML_BASE_SEND_SYNCHRONOUS:

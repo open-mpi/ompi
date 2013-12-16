@@ -29,6 +29,7 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "btl_openib.h"
@@ -581,6 +582,58 @@ int btl_openib_register_mca_params(void)
     /* Turn of message coalescing - not sure if it works with GPU buffers */
     mca_btl_openib_component.use_message_coalescing = 0;
 
+    /* Indicates if library was built with GPU Direct RDMA support.  Not changeable.  */
+    mca_btl_openib_component.cuda_have_gdr = OPAL_INT_TO_BOOL(OPAL_CUDA_GDR_SUPPORT);
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_cuda_gdr",
+                                           "Whether CUDA GPU Direct RDMA support is built into library or not",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &mca_btl_openib_component.cuda_have_gdr);
+
+    /* Indicates if driver has GPU Direct RDMA support.  Not changeable.  */
+    if (OPAL_SUCCESS == opal_os_dirpath_access("/sys/kernel/mm/memory_peers/nv_mem/version", S_IRUSR)) {
+        mca_btl_openib_component.driver_have_gdr = 1;
+    } else {
+        mca_btl_openib_component.driver_have_gdr = 0;
+    }
+    (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version, "have_driver_gdr",
+                                           "Whether Infiniband driver has GPU Direct RDMA support",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_CONSTANT,
+                                           &mca_btl_openib_component.driver_have_gdr);
+
+    /* Default for GPU Direct RDMA is off for now */
+    CHECK(reg_bool("want_cuda_gdr", NULL,
+                   "Enable or disable CUDA GPU Direct RDMA support "
+                   "(true = enabled; false = disabled)",
+                   false, &mca_btl_openib_component.cuda_want_gdr));
+
+    if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.cuda_have_gdr) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "CUDA_no_gdr_support", true,
+                       ompi_process_info.nodename);
+        return OMPI_ERROR;
+    }
+    if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.driver_have_gdr) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                       "driver_no_gdr_support", true,
+                       ompi_process_info.nodename);
+        return OMPI_ERROR;
+    }
+#if OPAL_CUDA_GDR_SUPPORT
+    if (mca_btl_openib_component.cuda_want_gdr) {
+        mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
+        mca_btl_openib_module.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number - indicates set it to minimum */
+        mca_btl_openib_module.super.btl_cuda_rdma_limit = 1024 * 20;  /* default switchover is 20K to pipeline */
+    } else {
+        mca_btl_openib_module.super.btl_cuda_eager_limit = 0; /* Turns off any of the GPU Direct RDMA code */
+        mca_btl_openib_module.super.btl_cuda_rdma_limit = 0;  /* Unused */
+    }
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 #endif /* OPAL_CUDA_SUPPORT */
     CHECK(mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,
@@ -739,6 +792,20 @@ int btl_openib_verify_mca_params (void)
         mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
     } else {
         mca_btl_openib_module.super.btl_flags &= ~MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV;
+    }
+    /* Cannot have fork support and GDR on at the same time.  If the user asks for both,
+     * then print a message and return error.  If the user does not explicitly ask for
+     * fork support, then turn it off in the presence of GDR.  */
+    if (mca_btl_openib_component.cuda_want_gdr && mca_btl_openib_component.cuda_have_gdr &&
+        mca_btl_openib_component.driver_have_gdr) {
+        if (1 == mca_btl_openib_component.want_fork_support) {
+              opal_show_help("help-mpi-btl-openib.txt", "no_fork_with_gdr",
+                             true, ompi_process_info.nodename);
+              return OMPI_ERR_BAD_PARAM;
+        }
+        if (-1 == mca_btl_openib_component.want_fork_support) {
+            mca_btl_openib_component.want_fork_support = 0;
+        }
     }
 #endif
 

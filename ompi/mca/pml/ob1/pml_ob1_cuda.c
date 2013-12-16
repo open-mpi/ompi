@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,6 +54,14 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
                                         size_t size) {
     int rc;
 #if OPAL_CUDA_SUPPORT_41
+#if OPAL_CUDA_GDR_SUPPORT
+    /* With some BTLs, switch to RNDV from RGET at large messages */
+    if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) && 
+        (sendreq->req_send.req_bytes_packed > (bml_btl->btl->btl_cuda_rdma_limit - sizeof(mca_pml_ob1_hdr_t)))) {
+        return mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, 0, 0);
+    }
+#endif /* OPAL_CUDA_GDR_SUPPORT */    
+
     sendreq->req_send.req_base.req_convertor.flags &= ~CONVERTOR_CUDA;
     if (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
         unsigned char *base;
@@ -120,7 +128,7 @@ size_t mca_pml_ob1_rdma_cuda_btls(
 
             if( NULL != btl_mpool ) {
                 /* register the memory */
-                btl_mpool->mpool_register(btl_mpool, base, size, 0, &reg);
+                btl_mpool->mpool_register(btl_mpool, base, size, MCA_MPOOL_FLAGS_CUDA_GPU_MEM, &reg);
             }
 
             if(NULL == reg)

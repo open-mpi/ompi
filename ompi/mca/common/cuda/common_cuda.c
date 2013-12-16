@@ -158,7 +158,10 @@ int cuda_event_ipc_first_used, cuda_event_dtoh_first_used, cuda_event_htod_first
 int cuda_event_ipc_num_used, cuda_event_dtoh_num_used, cuda_event_htod_num_used;
 
 /* Size of array holding events */
-int cuda_event_max = 200;
+int cuda_event_max = 400;
+static int cuda_event_ipc_most = 0;
+static int cuda_event_dtoh_most = 0;
+static int cuda_event_htod_most = 0;
 
 /* Handle to libcuda.so */
 opal_lt_dlhandle libcuda_handle;
@@ -281,7 +284,6 @@ int mca_common_cuda_stage_one_init(void)
                                  &mca_common_cuda_async);
 
     /* Use this parameter to increase the number of outstanding events allows */
-    cuda_event_max = 200;
     (void) mca_base_var_register("ompi", "mpi", "common_cuda", "event_max",
                                  "Set number of oustanding CUDA events",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -1055,6 +1057,15 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    if (cuda_event_ipc_num_used > cuda_event_ipc_most) {
+        cuda_event_ipc_most = cuda_event_ipc_num_used;
+        /* Just print multiples of 10 */
+        if (0 == (cuda_event_ipc_most % 10)) {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "Maximum ipc events used is now %d", cuda_event_ipc_most);
+        }
+    }
+
     /* This is the standard way to run.  Running with synchronous copies is available
      * to measure the advantages of asynchronous copies. */
     if (OPAL_LIKELY(mca_common_cuda_async)) {
@@ -1162,6 +1173,15 @@ int mca_common_cuda_record_dtoh_event(char *msg, struct mca_btl_base_descriptor_
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    if (cuda_event_dtoh_num_used > cuda_event_dtoh_most) {
+        cuda_event_dtoh_most = cuda_event_dtoh_num_used;
+        /* Just print multiples of 10 */
+        if (0 == (cuda_event_dtoh_most % 10)) {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "Maximum DtoH events used is now %d", cuda_event_dtoh_most);
+        }
+    }
+
     result = cuFunc.cuEventRecord(cuda_event_dtoh_array[cuda_event_dtoh_first_avail], dtohStream);
     if (CUDA_SUCCESS != result) {
         opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
@@ -1195,6 +1215,15 @@ int mca_common_cuda_record_htod_event(char *msg, struct mca_btl_base_descriptor_
         opal_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
                        true, cuda_event_max, cuda_event_max+100, cuda_event_max+100);
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (cuda_event_htod_num_used > cuda_event_htod_most) {
+        cuda_event_htod_most = cuda_event_htod_num_used;
+        /* Just print multiples of 10 */
+        if (0 == (cuda_event_htod_most % 10)) {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "Maximum HtoD events used is now %d", cuda_event_htod_most);
+        }
     }
 
     result = cuFunc.cuEventRecord(cuda_event_htod_array[cuda_event_htod_first_avail], htodStream);
@@ -1598,3 +1627,82 @@ int mca_common_cuda_device_can_access_peer(int *access, int dev1, int dev2)
     }
     return 0;
 }
+
+int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base)
+{
+    CUresult result;
+    result = cuFunc.cuMemGetAddressRange((CUdeviceptr *)pbase, psize, (CUdeviceptr)base);
+    if (CUDA_SUCCESS != result) {
+        opal_show_help("help-mpi-common-cuda.txt", "cuMemGetAddressRange failed",
+                       true, result, base);
+        return OMPI_ERROR;
+    } else {
+        opal_output_verbose(50, mca_common_cuda_output,
+                            "CUDA: cuMemGetAddressRange passed: addr=%p, pbase=%p, psize=%lu ",
+                            base, *(char **)pbase, *psize);
+    }
+    return 0;
+}
+
+#if OPAL_CUDA_GDR_SUPPORT
+/* Check to see if the memory was freed between the time it was stored in
+ * the registration cache and now.  Return true if the memory was previously
+ * freed.  This is indicated by the BUFFER_ID value in the registration cache
+ * not matching the BUFFER_ID of the buffer we are checking.  Return false
+ * if the registration is still good.
+ */
+bool mca_common_cuda_previously_freed_memory(mca_mpool_base_registration_t *reg)
+{
+    int res;
+    unsigned long long bufID;
+    unsigned char *dbuf = reg->base;
+
+    res = cuFunc.cuPointerGetAttribute(&bufID, CU_POINTER_ATTRIBUTE_BUFFER_ID,
+                                       (CUdeviceptr)dbuf);
+    /* If we cannot determine the BUFFER_ID, then print a message and default
+     * to forcing the registration to be kicked out. */
+    if (res != CUDA_SUCCESS) {
+        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed",
+                       true, ompi_process_info.nodename, res);
+        return true;
+    }
+    opal_output_verbose(50, mca_common_cuda_output,
+                        "CUDA: base=%p, bufID=%llu, reg->gpu_bufID=%llu, %s", dbuf, bufID, reg->gpu_bufID,
+                        (reg->gpu_bufID == bufID ? "BUFFER_ID match":"BUFFER_ID do not match"));
+    if (bufID != reg->gpu_bufID) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*
+ * Get the buffer ID from the memory and store it in the registration.
+ * This is needed to ensure the cached registration is not stale.  If
+ * we fail to get buffer ID, print an error and set buffer ID to 0.
+ * Also set SYNC_MEMOPS on any GPU registration to ensure that
+ * synchronous copies complete before the buffer is accessed.
+ */
+void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg)
+{
+    int res;
+    unsigned long long bufID = 0;
+    unsigned char *dbuf = reg->base;
+    int enable = 1;
+
+    res = cuFunc.cuPointerGetAttribute(&bufID, CU_POINTER_ATTRIBUTE_BUFFER_ID,
+                                       (CUdeviceptr)dbuf);
+    if (res != CUDA_SUCCESS) {
+        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed", true, res);
+    }
+    reg->gpu_bufID = bufID;
+
+    res = cuFunc.cuPointerSetAttribute(&enable, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS,
+                                       (CUdeviceptr)dbuf);
+    if (CUDA_SUCCESS != res) {
+        opal_show_help("help-mpi-common-cuda.txt", "cuPointerSetAttribute failed",
+                       true, ompi_process_info.nodename, res, dbuf);
+    }
+}
+#endif /* OPAL_CUDA_GDR_SUPPORT */       
+

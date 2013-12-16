@@ -36,6 +36,9 @@
 
 #include "opal/align.h"
 
+#if OPAL_CUDA_GDR_SUPPORT
+#include "ompi/mca/common/cuda/common_cuda.h"
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/rte/rte.h"
@@ -44,6 +47,9 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_grdma.h"
 
+#if OPAL_CUDA_GDR_SUPPORT
+static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *addr, size_t size);
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 static void mca_mpool_grdma_pool_contructor (mca_mpool_grdma_pool_t *pool)
 {
     memset ((void *)((uintptr_t)pool + sizeof (pool->super)), 0, sizeof (*pool) - sizeof (pool->super));
@@ -230,6 +236,17 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
     if (!opal_list_is_empty (&mpool_grdma->pool->gc_list))
         do_unregistration_gc(mpool);
 
+#if OPAL_CUDA_GDR_SUPPORT
+    if (flags & MCA_MPOOL_FLAGS_CUDA_GPU_MEM) {
+        size_t psize;
+        mca_common_cuda_get_address_range(&base, &psize, addr);
+        bound = base + psize - 1;
+        /* Check to see if this memory is in the cache and if it has been freed. If so,
+         * this call will boot it out of the cache. */
+        check_for_cuda_freed_memory(mpool, base, psize);
+    }
+#endif /* OPAL_CUDA_GDR_SUPPORT */
+
     /* look through existing regs if not persistent registration requested.
      * Persistent registration are always registered and placed in the cache */
     if(!(bypass_cache || persist)) {
@@ -270,6 +287,11 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
     grdma_reg->base = base;
     grdma_reg->bound = bound;
     grdma_reg->flags = flags;
+#if OPAL_CUDA_GDR_SUPPORT
+    if (flags & MCA_MPOOL_FLAGS_CUDA_GPU_MEM) {
+        mca_common_cuda_get_buffer_id(grdma_reg);
+    }
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 
     if (false == bypass_cache) {
         rc = mpool->rcache->rcache_insert(mpool->rcache, grdma_reg, 0);
@@ -439,6 +461,61 @@ int mca_mpool_grdma_release_memory(struct mca_mpool_base_module_t *mpool,
 
     return rc;
 }
+
+/* Make sure this registration request is not stale.  In other words, ensure
+ * that we do not have a cuMemAlloc, cuMemFree, cuMemAlloc state.  If we do
+ * kick out the regisrations and deregister.  This function needs to be called
+ * with the mpool->rcache->lock held. */
+#if OPAL_CUDA_GDR_SUPPORT
+static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *addr, size_t size)
+{
+    mca_mpool_grdma_module_t *mpool_grdma = (mca_mpool_grdma_module_t *) mpool;
+    mca_mpool_base_registration_t *regs[GRDMA_MPOOL_NREGS];
+    int reg_cnt, i, rc = OMPI_SUCCESS;
+    mca_mpool_base_registration_t *reg;
+
+    mpool->rcache->rcache_find(mpool->rcache, addr, size, &reg);
+    if (NULL == reg) {
+        return OMPI_SUCCESS;
+    }
+
+    /* If not previously freed memory, just return 0 */
+    if (!(mca_common_cuda_previously_freed_memory(reg))) {
+        return OMPI_SUCCESS;
+    }
+
+    /* mpool->rcache->rcache_dump_range(mpool->rcache, 0, (size_t)-1, "Before free"); */
+
+    /* This memory has been freed.  Find all registrations and delete */
+    do {
+        reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, reg->base, reg->bound - reg->base + 1,
+                                                 regs, GRDMA_MPOOL_NREGS);
+        for(i = 0 ; i < reg_cnt ; ++i) {
+            regs[i]->flags |= MCA_MPOOL_FLAGS_INVALID;
+            if (regs[i]->ref_count) {
+                opal_output(0, "Release FAILED: ref_count=%d, base=%p, bound=%p, size=%d",
+                            regs[i]->ref_count, regs[i]->base, regs[i]->bound,
+                            (int) (regs[i]->bound - regs[i]->base + 1));
+                /* memory is being freed, but there are registration in use that
+                 * covers the memory. This can happen even in a correct program,
+                 * but may also be an user error. We can't tell. Mark the
+                 * registration as invalid. It will not be used any more and
+                 * will be unregistered when ref_count will become zero */
+                rc = OMPI_ERROR; /* tell caller that something was wrong */
+            } else {
+                opal_list_remove_item(&mpool_grdma->pool->lru_list,(opal_list_item_t *) regs[i]);
+                /* Now deregister.  Do not use gc_list as we need to kick this out now. */
+                dereg_mem(regs[i]);
+            }
+        }
+    } while(reg_cnt == GRDMA_MPOOL_NREGS);
+
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+    /* mpool->rcache->rcache_dump_range(mpool->rcache, 0, (size_t)-1, "After free");*/
+
+    return rc;
+}
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 
 void mca_mpool_grdma_finalize(struct mca_mpool_base_module_t *mpool)
 {
