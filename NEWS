@@ -19,6 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+Copyright (c) 2013      Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -58,12 +59,34 @@ Trunk (not on release branches yet)
   support CUDA IPC.  Earlier versions would get error and abort.
 - Do not build the MPI C++ bindings by default.  They must be enabled
   via --enable-mpi-cxx.
-- Adding a new parallel I/O component and multiple new frameworks to 
-  support parallel I/O operations.
+
+
+1.7.4
+-----
+ **********************************************************************
+ *      CRITICAL CHANGE
+ *
+ * As of release 1.7.4, OpenMPI's default mapping, ranking, and binding
+ * settings have changed:
+ *
+ * Mapping:
+ *   if #procs <= 2, default to map-by core
+ *   if #procs > 2, default to map-by socket
+ * Ranking:
+ *   default to rank-by <obj>, where <obj> is whatever object we
+ *   mapped against
+ * Binding:
+ *   default to bind-to core
+ *
+ * Users can override any of these settings individually using the
+ * corresponding MCA parameter. Note that multi-threaded applications
+ * in particular may want to override at least the binding default
+ * to allow threads to use multiple cores.
+ **********************************************************************
 - ErrMgr framework redesigned to better support fault tolerance development
   activities. See the following RFC for details:
   http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
-- Added database framework to ORTE and changed all modex operations
+- Added database framework to OPAL and changed all modex operations
   to flow thru it, also included additional system info in the
   available data
 - Added staged state machine to support sequential work flows
@@ -79,15 +102,17 @@ Trunk (not on release branches yet)
   executables on systems that support it.  This behavior can be
   disabled via --disable-wrapper-rpath.  See note in README about ABI
   issues when using rpath in MPI applications.
-
-
-1.7.4
------
-
+- Added a new parallel I/O component and multiple new frameworks to 
+  support parallel I/O operations.
 - Made <mpi.h> include chain be C++11 compliant.  Thanks to Jeremiah
   Willcock for reporting the issue.
 - Fixed regression where Open MPI installed libevent files.  Thanks to
   Dominique Orban for bringing the issue to our attention.
+- Fixed MPI_STATUS_SIZE Fortran issue when used with 8-byte Fortran
+  INTEGERs and 4-byte C ints.  Since this issue affects ABI, it is
+  only enabled if Open MPI is configured with
+  --enable-abi-breaking-fortran-status-i8-fix.  Thanks to Jim Parker
+  for supplying the initial patch.
 
 
 1.7.3
