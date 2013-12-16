@@ -39,13 +39,19 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_atomic_base_framework;
 #define __ATOMIC_FILE__ __FILE__
 #endif
 
-#define ATOMIC_VERBOSE(level, format, ...) \
-	    opal_output_verbose(level, oshmem_atomic_base_framework.framework_output, "%s:%d - %s() " format, \
-				                        __ATOMIC_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...);
 
-#define ATOMIC_ERROR(format, ... ) \
-	    opal_output_verbose(0, oshmem_atomic_base_framework.framework_output, "Error: %s:%d - %s() " format, \
-				                        __ATOMIC_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+#ifdef OPAL_ENABLE_DEBUG
+#define ATOMIC_VERBOSE(level, ...) \
+    oshmem_output_verbose(level, oshmem_atomic_base_framework.framework_output, \
+        "%s:%d - %s()", __ATOMIC_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+#else
+#define ATOMIC_VERBOSE(level, ...)
+#endif
+
+#define ATOMIC_ERROR(...) \
+    oshmem_output_verbose(0, oshmem_atomic_base_framework.framework_output, \
+        "Error %s:%d - %s()", __ATOMIC_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 END_C_DECLS
 

@@ -21,11 +21,18 @@ OSHMEM_DECLSPEC extern int shmem_api_logger_output;
 #define __SPML_FILE__ __FILE__
 #endif
 
-#define SHMEM_API_VERBOSE(level, format, ...) \
-            opal_output_verbose(level, shmem_api_logger_output, "%s:%d - %s() " format, \
-                                                            __SPML_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...);
 
-#define SHMEM_API_ERROR(format, ... ) \
-            opal_output_verbose(0, shmem_api_logger_output, "Error: %s:%d - %s() " format, \
-                                                            __SPML_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+#ifdef OPAL_ENABLE_DEBUG
+#define SHMEM_API_VERBOSE(level, ...) \
+    oshmem_output_verbose(level, shmem_api_logger_output, \
+        "%s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+#else
+#define SHMEM_API_VERBOSE(level, ...)
+#endif
+
+#define SHMEM_API_ERROR(...) \
+    oshmem_output_verbose(0, shmem_api_logger_output, \
+        "Error: %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+
 #endif /*SHMEM_API_LOGGER_H*/

@@ -123,3 +123,14 @@ int oshmem_shmem_abort(int errcode)
 
     return OSHMEM_SUCCESS;
 }
+
+void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...)
+{
+    va_list args;
+    char *buffer;
+    va_start(args, format);
+    asprintf(&buffer, "%s %s", prefix, format);
+    opal_output_verbose(level, output_id, buffer, file, line, function, args);
+    va_end(args);
+    free(buffer);
+}
