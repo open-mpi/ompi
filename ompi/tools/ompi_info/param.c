@@ -40,10 +40,6 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_info_support.h"
 
-#if OMPI_RTE_ORTE
-#include "orte/util/show_help.h"
-#endif
-
 #include "ompi/tools/ompi_info/ompi_info.h"
 #include "ompi/include/mpi_portable_platform.h"
 
