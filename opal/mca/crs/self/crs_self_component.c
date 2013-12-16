@@ -90,9 +90,9 @@ static int crs_self_register (void)
     mca_crs_self_component.super.priority = 20;
     ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
                                            "priority", "Priority of the CRS self component "
-                                           "(default: 20)", MCA_BASE_VAR_TYPE_INT, NULL,
+                                           "(default: 20)", MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_ALL_EQ,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL_EQ,
                                            &mca_crs_self_component.super.priority);
     if (0 > ret) {
         return ret;
@@ -102,8 +102,8 @@ static int crs_self_register (void)
     ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
                                            "verbose",
                                            "Verbose level for the CRS self component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL,MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_crs_self_component.super.verbose);
     if (0 > ret) {
         return ret;
@@ -116,8 +116,8 @@ static int crs_self_register (void)
     ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
                                            "prefix",
                                            "Prefix for user defined callback functions",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_crs_self_component.prefix);
     if (0 > ret) {
         return ret;
@@ -126,8 +126,8 @@ static int crs_self_register (void)
     ret = mca_base_component_var_register (&mca_crs_self_component.super.base_version,
                                            "do_restart",
                                            "Start execution by calling restart callback",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9, MPI_BASE_VAR_SCOPE_LOCAL,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_crs_self_component.do_restart);
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }

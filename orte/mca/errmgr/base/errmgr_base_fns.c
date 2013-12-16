@@ -366,7 +366,7 @@ void orte_errmgr_base_migrate_state_notify(int state)
     }
 }
 
-void orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc)
+int orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc)
 {
     if (NULL != proc) {
         switch(state) {
