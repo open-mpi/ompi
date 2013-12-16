@@ -513,7 +513,7 @@ int global_coord_end_ckpt(orte_snapc_base_quiesce_t *datum)
     if( currently_migrating ) {
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) End Ckpt: Flush the modex cached data\n"));
-        if (ORTE_SUCCESS != (ret = orte_db.remove(NULL, NULL))) {
+        if (OPAL_SUCCESS != (ret = opal_db.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -1138,7 +1138,7 @@ void snapc_full_global_orted_recv(int status,
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Job State Update (quick)"));
 
-            snapc_full_process_job_update_cmd(&sender, buffer, true);
+            snapc_full_process_job_update_cmd(sender, buffer, true);
             break;
 
         case ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD:
@@ -1974,7 +1974,7 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
 
 static int snapc_full_establish_snapshot_dir(bool empty_metadata)
 {
-    const char **value = NULL;
+    char **value = NULL;
     int idx = 0;
 
     /*********************
@@ -1998,7 +1998,7 @@ static int snapc_full_establish_snapshot_dir(bool empty_metadata)
         opal_show_help("help-orte-restart.txt", "amca_param_not_found", true);
     }
     if( 0 < idx ) {
-        mca_base_var_get_value (idx, &value, sizeof (value), NULL, NULL);
+        mca_base_var_get_value (idx, &value, NULL, NULL);
 
         if (*value) {
             orte_sstore.set_attr(global_snapshot.ss_handle,

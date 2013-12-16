@@ -191,7 +191,7 @@ int mca_bml_r2_ft_event(int state)
 
             for(p = 0; p < (int)num_procs; ++p) {
                 if( NULL != procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-                    OBJ_RELEASE((mca_bml_base_endpoint_t*) procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
+                    OBJ_RELEASE(procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
                     procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
                 }
 
@@ -263,9 +263,9 @@ int mca_bml_r2_ft_event(int state)
         mca_base_var_get_value(param_type, &btl_list, NULL, NULL);
         opal_output_verbose(11, ompi_cr_output,
                             "Restart (New BTL MCA): <%s>\n", btl_list ? btl_list[0] : "");
-        if( NULL != param_list ) {
-            free(param_list);
-            param_list = NULL;
+        if( NULL != btl_list ) {
+            free(btl_list);
+            btl_list = NULL;
         }
 
         /*
@@ -286,7 +286,7 @@ int mca_bml_r2_ft_event(int state)
 
         for(p = 0; p < (int)num_procs; ++p) {
             if( NULL != procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-                OBJ_RELEASE((mca_bml_base_endpoint_t*) procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
+                OBJ_RELEASE(procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
                 procs[p]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
             }
 

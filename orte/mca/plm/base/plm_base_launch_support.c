@@ -400,9 +400,12 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
     /*
      * Notify the Global SnapC component regarding new job (even if it was restarted)
      */
-    if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
-        /* Silent Failure :/ JJH */
-        ORTE_ERROR_LOG(rc);
+    {
+        int rc;
+        if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
+            /* Silent Failure :/ JJH */
+            ORTE_ERROR_LOG(rc);
+        }
     }
 #endif
 

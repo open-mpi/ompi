@@ -235,3 +235,8 @@ static int sstore_stage_close(void)
 
     return ORTE_SUCCESS;
 }
+
+static int sstore_stage_register(void)
+{
+    return ORTE_SUCCESS;
+}

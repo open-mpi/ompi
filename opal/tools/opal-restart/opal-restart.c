@@ -247,7 +247,7 @@ main(int argc, char *argv[])
      * restart on this node because it doesn't have the proper checkpointer
      * available. 
      */
-    if( OPAL_SUCCESS != (ret = opal_crs_base_open()) ) {
+    if( OPAL_SUCCESS != (ret = opal_crs_base_open(MCA_BASE_OPEN_DEFAULT)) ) {
         opal_show_help("help-opal-restart.txt", "comp_select_failure", true,
                        "crs", ret);
         exit_status = ret;

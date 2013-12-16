@@ -99,6 +99,12 @@ static int current_cr_state = OPAL_CRS_NONE;
 static orte_sstore_base_handle_t current_ss_handle = ORTE_SSTORE_HANDLE_INVALID, last_ss_handle = ORTE_SSTORE_HANDLE_INVALID;
 static opal_crs_base_ckpt_options_t *current_options = NULL;
 
+static void snapc_full_app_callback_recv(int status,
+                                         orte_process_name_t* sender,
+                                         opal_buffer_t* buffer,
+                                         orte_rml_tag_t tag,
+                                         void* cbdata);
+
 /************************
  * Function Definitions
  ************************/
@@ -1672,4 +1678,13 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
     }
 
     return exit_status;
+}
+
+/* dummy implementation of a callback function to get it to compile again */
+static void snapc_full_app_callback_recv(int status,
+                                         orte_process_name_t* sender,
+                                         opal_buffer_t* buffer,
+                                         orte_rml_tag_t tag,
+                                         void* cbdata)
+{
 }

@@ -422,7 +422,7 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (ret = orte_db.remove(NULL, NULL))) {
+        if (OPAL_SUCCESS != (ret = opal_db.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

@@ -145,7 +145,7 @@ int orte_ess_base_tool_setup(void)
     /*
      * Setup the SnapC
      */
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_open())) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_snapc_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_open";
         goto error;
@@ -175,7 +175,7 @@ int orte_ess_base_tool_finalize(void)
     orte_wait_finalize();
 
 #if OPAL_ENABLE_FT_CR == 1
-    orte_snapc_base_close();
+    mca_base_framework_close(&orte_snapc_base_framework);
 #endif
 
     /* if I am a tool, then all I will have done is

@@ -185,8 +185,7 @@ orte_rml_oob_ft_event(int state) {
         ;
     }
 
-    if( ORTE_SUCCESS != 
-        (ret = orte_oob.ft_event(state)) ) {
+    if( ORTE_SUCCESS != (ret = orte_rml_oob_ft_event(state)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -208,7 +207,7 @@ orte_rml_oob_ft_event(int state) {
             goto cleanup;
         }
 
-        if( ORTE_SUCCESS != (ret = mca_oob_base_select())) {
+        if( ORTE_SUCCESS != (ret = orte_oob_base_select())) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

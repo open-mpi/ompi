@@ -32,6 +32,7 @@ const char *orte_snapc_full_component_version_string =
  */
 static int snapc_full_open(void);
 static int snapc_full_close(void);
+static int snapc_full_register(void);
 
 bool orte_snapc_full_skip_app   = false;
 bool orte_snapc_full_timing_enabled = false;
@@ -74,7 +75,7 @@ orte_snapc_full_component_t mca_snapc_full_component = {
     }
 };
 
-static int snaps_full_register (void)
+static int snapc_full_register (void)
 {
     mca_base_component_t *component = &mca_snapc_full_component.super.base_version;
     /*
@@ -129,7 +130,7 @@ static int snaps_full_register (void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_LOCAL,
                                             &orte_snapc_full_progress_meter);
-    orte_snapc_full_progress_meter = (value % 101);
+    orte_snapc_full_progress_meter %= 101;
 
     return ORTE_SUCCESS;
 }
@@ -148,7 +149,7 @@ static int snapc_full_open(void)
     }
 
     /* recheck the progress meter (it may have changed between register and open) */
-    orte_snapc_full_progress_meter = (value % 101);
+    orte_snapc_full_progress_meter %= 101;
 
     /*
      * Debug Output
