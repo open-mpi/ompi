@@ -23,6 +23,7 @@ Dave Goodell <dgoodell@cisco.com> <dgoodell@open-mpi-git-mirror.example.com>
 Jeff Squyres <jsquyres@cisco.com> <jsquyres@open-mpi-git-mirror.example.com>
 Reese Faucette <rfaucett@cisco.com> <rfaucett@open-mpi-git-mirror.example.com>
 Bill D'Amico <bdamico@cisco.com> <damico@open-mpi-git-mirror.example.com>
+Adrian Reber <adrian.reber@hs-esslingen.de> <adrian@open-mpi-git-mirror.example.com>
 
 # fix Manjunath's name, it was inadvertently truncated in commit c4e17f1
 Manjunath Gorentla Venkata <manjugv@open-mpi-git-mirror.example.com>

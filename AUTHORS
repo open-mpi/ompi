@@ -9,6 +9,7 @@ Username    Name                        Affiliation(s)
 abbyz       Abhishek Kulkarni           IU
 adi         Adrian Knoth                UJ
 adkulkar    Abhishek Kulkarni           IU
+adrian      Adrian Reber                HE
 afriedle    Andrew Friedley             IU, SNL
 alekseys    Aleksey Senin               Mellanox
 alex        Alex Margolin               Mellanox
@@ -113,6 +114,7 @@ Affiliation abbreviations:
 
 Chelsio = Chelsio Communications, Inc.
 Cisco = Cisco Systems, Inc.
+HE = Hochschule Esslingen
 HLRS = High Performance Computing Center, Stuttgart
 IU = Indiana University
 LANL = Los Alamos National Laboratory
