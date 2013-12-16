@@ -28,6 +28,10 @@ Adrian Reber <adrian.reber@hs-esslingen.de> <adrian@open-mpi-git-mirror.example.
 # fix Manjunath's name, it was inadvertently truncated in commit c4e17f1
 Manjunath Gorentla Venkata <manjugv@open-mpi-git-mirror.example.com>
 
+George Bosilca <bosilca@icl.utk.edu> <bosilca@open-mpi-git-mirror.example.com>
+Aurelien Bouteiller <bouteill@icl.utk.edu> <bouteill@open-mpi-git-mirror.example.com>
+Thomas Herault <herault@icl.utk.edu> <herault@open-mpi-git-mirror.example.com>
+
 # If you want your name to be rendered properly in these situations, please
 # remove it from the list below, place it above, uncomment it, and change
 # "proper.name@proper.domain" to the appropriate values.  This template list
@@ -44,8 +48,6 @@ Manjunath Gorentla Venkata <manjugv@open-mpi-git-mirror.example.com>
 #Anya Tatashina <proper.name@proper.domain> <Anya@open-mpi-git-mirror.example.com>
 #Avneesh Pant <proper.name@proper.domain> <apant@open-mpi-git-mirror.example.com>
 #Brad Benton <proper.name@proper.domain> <bbenton@open-mpi-git-mirror.example.com>
-#George Bosilca <proper.name@proper.domain> <bosilca@open-mpi-git-mirror.example.com>
-#Aurelien Bouteiller <proper.name@proper.domain> <bouteill@open-mpi-git-mirror.example.com>
 #Brian Barrett <proper.name@proper.domain> <brbarret@open-mpi-git-mirror.example.com>
 #Alex Brick <proper.name@proper.domain> <bricka@open-mpi-git-mirror.example.com>
 #Laura Casswell <proper.name@proper.domain> <casswell@open-mpi-git-mirror.example.com>
@@ -66,7 +68,6 @@ Manjunath Gorentla Venkata <manjugv@open-mpi-git-mirror.example.com>
 #Gleb Natapov <proper.name@proper.domain> <gleb@open-mpi-git-mirror.example.com>
 #Galen Shipman <proper.name@proper.domain> <gshipman@open-mpi-git-mirror.example.com>
 #Greg Watson <proper.name@proper.domain> <gwatson@open-mpi-git-mirror.example.com>
-#Thomas Herault <proper.name@proper.domain> <herault@open-mpi-git-mirror.example.com>
 #Nathan Hjelm <proper.name@proper.domain> <hjelmn@open-mpi-git-mirror.example.com>
 #Sven Stork <proper.name@proper.domain> <hpcstork@open-mpi-git-mirror.example.com>
 #Torsten Hoefler <proper.name@proper.domain> <htor@open-mpi-git-mirror.example.com>
