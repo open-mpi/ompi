@@ -14,6 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2129,10 +2130,15 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
     }
 
-    /* Get the numprocs */
+    /* check for bozo error */
+    if (0 > orterun_globals.num_procs) {
+        orte_show_help("help-orterun.txt", "orterun:negative-nprocs",
+                       true, orte_basename, app->argv[0],
+                       orterun_globals.num_procs, NULL);
+        return ORTE_ERR_FATAL;
+    }
 
     app->num_procs = (orte_std_cntr_t)orterun_globals.num_procs;
-
     /* If the user didn't specify the number of processes to run, then we
        default to launching an app process using every slot. We can't do
        anything about that here - we leave it to the RMAPS framework's

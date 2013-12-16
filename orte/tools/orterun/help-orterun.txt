@@ -475,3 +475,12 @@ where PID can be either "PID" or "pid".
 name given was:
 
 File: %s
+#
+[orterun:negative-nprocs]
+%s has detected that one or more applications was given a negative
+number of processes to run:
+
+  Application:  %s
+  Num procs:    %d
+
+Please correct this value and try again.
