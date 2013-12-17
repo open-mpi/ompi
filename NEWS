@@ -113,6 +113,7 @@ Trunk (not on release branches yet)
   only enabled if Open MPI is configured with
   --enable-abi-breaking-fortran-status-i8-fix.  Thanks to Jim Parker
   for supplying the initial patch.
+- Add support for Intel Phi SCIF transport
 
 
 1.7.3
