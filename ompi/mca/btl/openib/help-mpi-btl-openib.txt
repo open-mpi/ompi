@@ -13,6 +13,7 @@
 # Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -708,3 +709,22 @@ parameters:
   Local host:              %s
   Registerable memory:     %lu MiB
   Total memory:            %lu MiB
+
+%s
+[CUDA_no_gdr_support]
+You requested to run with CUDA GPU Direct RDMA support but the Open MPI
+library was not built with that support.  The Open MPI library must be
+configured with CUDA 6.0 or later.
+
+  Local host:              %s
+[driver_no_gdr_support]
+You requested to run with CUDA GPU Direct RDMA support but this OFED
+installation does not have that support.  Contact Mellanox to figure
+out how to get an OFED stack with that support.
+
+  Local host:              %s
+[no_fork_with_gdr]
+You cannot have fork support and CUDA GPU Direct RDMA support on at
+the same time.  Please disable one of them.
+
+  Local host:              %s

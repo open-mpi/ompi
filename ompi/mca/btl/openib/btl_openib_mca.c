@@ -628,7 +628,7 @@ int btl_openib_register_mca_params(void)
     if (mca_btl_openib_component.cuda_want_gdr) {
         mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_CUDA_GET;
         mca_btl_openib_module.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number - indicates set it to minimum */
-        mca_btl_openib_module.super.btl_cuda_rdma_limit = 1024 * 20;  /* default switchover is 20K to pipeline */
+        mca_btl_openib_module.super.btl_cuda_rdma_limit = 30000;  /* default switchover is 30,000 to pipeline */
     } else {
         mca_btl_openib_module.super.btl_cuda_eager_limit = 0; /* Turns off any of the GPU Direct RDMA code */
         mca_btl_openib_module.super.btl_cuda_rdma_limit = 0;  /* Unused */
