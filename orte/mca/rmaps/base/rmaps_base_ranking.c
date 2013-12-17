@@ -97,6 +97,9 @@ static int rank_span(orte_job_t *jdata,
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rank_span: found %d objects on node %s with %d procs",
                                 num_objs, node->name, (int)node->num_procs);
+            if (0 == num_objs) {
+                return ORTE_ERR_NOT_SUPPORTED;
+            }
 
             /* for each object */
             for (i=0; i < num_objs && cnt < app->num_procs; i++) {
@@ -205,6 +208,9 @@ static int rank_fill(orte_job_t *jdata,
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rank_fill: found %d objects on node %s with %d procs",
                             num_objs, node->name, (int)node->num_procs);
+        if (0 == num_objs) {
+            return ORTE_ERR_NOT_SUPPORTED;
+        }
 
         /* for each object */
         for (i=0; i < num_objs && cnt < app->num_procs; i++) {
@@ -321,6 +327,9 @@ static int rank_by(orte_job_t *jdata,
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rank_by: found %d objects on node %s with %d procs",
                             num_objs, node->name, (int)node->num_procs);
+        if (0 == num_objs) {
+            return ORTE_ERR_NOT_SUPPORTED;
+        }
         /* collect all the objects */
         for (i=0; i < num_objs; i++) {
             obj = opal_hwloc_base_get_obj_by_type(node->topology, target,
@@ -420,6 +429,118 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
 
     map = jdata->map;
 
+    /* start with the rank-by object options - if the object isn't
+     * included in the topology, then we obviously cannot rank by it.
+     * However, if this was the default ranking policy (as opposed to
+     * something given by the user), then fall back to rank-by slot
+     */
+#if OPAL_HAVE_HWLOC
+    if (ORTE_RANK_BY_NUMA == ORTE_GET_RANKING_POLICY(map->ranking)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: computing ranks by NUMA for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_NODE, 0))) {
+            if (ORTE_ERR_NOT_SUPPORTED == rc &&
+                !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+                goto rankbyslot;
+            }
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    if (ORTE_RANK_BY_SOCKET == ORTE_GET_RANKING_POLICY(map->ranking)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: computing ranks by socket for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_SOCKET, 0))) {
+            if (ORTE_ERR_NOT_SUPPORTED == rc &&
+                !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+                goto rankbyslot;
+            }
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    if (ORTE_RANK_BY_L3CACHE == ORTE_GET_RANKING_POLICY(map->ranking)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: computing ranks by L3cache for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 3))) {
+            if (ORTE_ERR_NOT_SUPPORTED == rc &&
+                !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+                goto rankbyslot;
+            }
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    if (ORTE_RANK_BY_L2CACHE == ORTE_GET_RANKING_POLICY(map->ranking)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: computing ranks by L2cache for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 2))) {
+            if (ORTE_ERR_NOT_SUPPORTED == rc &&
+                !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+                goto rankbyslot;
+            }
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    if (ORTE_RANK_BY_L1CACHE == ORTE_GET_RANKING_POLICY(map->ranking)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: computing ranks by L1cache for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 1))) {
+            if (ORTE_ERR_NOT_SUPPORTED == rc &&
+                !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+                goto rankbyslot;
+            }
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    if (ORTE_RANK_BY_CORE == ORTE_GET_RANKING_POLICY(map->ranking)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: computing ranks by core for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CORE, 0))) {
+            if (ORTE_ERR_NOT_SUPPORTED == rc &&
+                !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+                goto rankbyslot;
+            }
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+
+    if (ORTE_RANK_BY_HWTHREAD == ORTE_GET_RANKING_POLICY(map->ranking)) {
+        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps: computing ranks by hwthread for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_PU, 0))) {
+            if (ORTE_ERR_NOT_SUPPORTED == rc &&
+                !(ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(map->ranking))) {
+                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
+                goto rankbyslot;
+            }
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+#endif
+
     if (ORTE_RANK_BY_NODE == ORTE_GET_RANKING_POLICY(map->ranking) ||
         ORTE_RANK_BY_BOARD == ORTE_GET_RANKING_POLICY(map->ranking)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -480,6 +601,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
 
+ rankbyslot:
     if (ORTE_RANK_BY_SLOT == ORTE_GET_RANKING_POLICY(map->ranking)) {
         /* assign the ranks sequentially */
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -523,78 +645,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
     
-#if OPAL_HAVE_HWLOC
-    if (ORTE_RANK_BY_NUMA == ORTE_GET_RANKING_POLICY(map->ranking)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: computing ranks by NUMA for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_NODE, 0))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    if (ORTE_RANK_BY_SOCKET == ORTE_GET_RANKING_POLICY(map->ranking)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: computing ranks by socket for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_SOCKET, 0))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    if (ORTE_RANK_BY_L3CACHE == ORTE_GET_RANKING_POLICY(map->ranking)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: computing ranks by L3cache for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 3))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    if (ORTE_RANK_BY_L2CACHE == ORTE_GET_RANKING_POLICY(map->ranking)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: computing ranks by L2cache for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 2))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    if (ORTE_RANK_BY_L1CACHE == ORTE_GET_RANKING_POLICY(map->ranking)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: computing ranks by L1cache for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 1))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    if (ORTE_RANK_BY_CORE == ORTE_GET_RANKING_POLICY(map->ranking)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: computing ranks by core for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CORE, 0))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    if (ORTE_RANK_BY_HWTHREAD == ORTE_GET_RANKING_POLICY(map->ranking)) {
-        opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps: computing ranks by hwthread for job %s",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_PU, 0))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-#endif
-
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
