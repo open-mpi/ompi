@@ -306,7 +306,6 @@ static int mca_btl_sm_component_close(void)
         mca_btl_sm.knem_status_array = NULL;
     }
     if (-1 != mca_btl_sm.knem_fd) {
-        printf("closing knem fd=%d\n", mca_btl_sm.knem_fd);
         close(mca_btl_sm.knem_fd);
         mca_btl_sm.knem_fd = -1;
     }
