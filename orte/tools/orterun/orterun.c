@@ -2133,7 +2133,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* check for bozo error */
     if (0 > orterun_globals.num_procs) {
         orte_show_help("help-orterun.txt", "orterun:negative-nprocs",
-                       true, orte_basename, app->argv[0],
+                       true, orterun_basename, app->argv[0],
                        orterun_globals.num_procs, NULL);
         return ORTE_ERR_FATAL;
     }
