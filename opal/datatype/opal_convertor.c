@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013      Research Organization for Information Science 
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -535,12 +537,10 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
             uint32_t required_stack_length = datatype->btypes[OPAL_DATATYPE_LOOP] + 1; \
                                                                         \
             if( required_stack_length > convertor->stack_size ) {       \
+                assert(convertor->pStack == convertor->static_stack);   \
                 convertor->stack_size = required_stack_length;          \
                 convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * \
                                                             convertor->stack_size ); \
-            } else {                                                    \
-                convertor->pStack = convertor->static_stack;            \
-                convertor->stack_size = DT_STATIC_STACK_SIZE;           \
             }                                                           \
         }                                                               \
         opal_convertor_create_stack_at_begining( convertor, opal_datatype_local_sizes ); \
