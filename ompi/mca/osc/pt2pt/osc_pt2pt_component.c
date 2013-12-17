@@ -333,10 +333,18 @@ static int
 component_fragment_cb(ompi_request_t *request)
 {
     int ret;
-    ompi_osc_pt2pt_buffer_t *buffer =
-        (ompi_osc_pt2pt_buffer_t*) request->req_complete_cb_data;
-    ompi_osc_pt2pt_module_t *module = 
-        (ompi_osc_pt2pt_module_t*) buffer->data;
+    ompi_osc_pt2pt_buffer_t *buffer;
+    ompi_osc_pt2pt_module_t *module;
+
+    if (request->req_status._cancelled) {
+        opal_output_verbose(5, ompi_osc_base_framework.framework_output,
+                            "pt2pt request was canceled");
+        ompi_request_free(&request);
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+
+    buffer = (ompi_osc_pt2pt_buffer_t*) request->req_complete_cb_data;
+    module = (ompi_osc_pt2pt_module_t*) buffer->data;
 
     assert(request->req_status._ucount >= (int) sizeof(ompi_osc_pt2pt_base_header_t));
 
