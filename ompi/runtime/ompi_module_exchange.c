@@ -71,7 +71,7 @@ ompi_modex_recv(const mca_base_component_t *component,
     }
     
     /* the fetch API returns a pointer to the data */
-    rc = ompi_rte_db_fetch(&proc->proc_name, key, (void**)&boptr, OPAL_BYTE_OBJECT);
+    rc = ompi_rte_db_fetch(proc, key, (void**)&boptr, OPAL_BYTE_OBJECT);
 
     if (OMPI_SUCCESS == rc) {
         /* xfer the data - it was allocated in the call */
@@ -102,7 +102,7 @@ int ompi_modex_recv_pointer(const mca_base_component_t *component,
     }
     
     /* the fetch_poointer API returns a pointer to the data */
-    rc = ompi_rte_db_fetch_pointer(&proc->proc_name, name, buffer, type);
+    rc = ompi_rte_db_fetch_pointer(proc, name, buffer, type);
     free(name);
 
     return rc;
@@ -138,7 +138,7 @@ ompi_modex_recv_string(const char* key,
     *size = 0;
 
     /* the fetch API returns a copy of the data */
-    rc = ompi_rte_db_fetch(&source_proc->proc_name, key, (void**)&boptr, OPAL_BYTE_OBJECT);
+    rc = ompi_rte_db_fetch(source_proc, key, (void**)&boptr, OPAL_BYTE_OBJECT);
 
     if (OMPI_SUCCESS == rc) {
         /* xfer the data for local use */
@@ -163,7 +163,7 @@ int ompi_modex_recv_string_pointer(const char* key,
     *buffer = NULL;
 
     /* the fetch_pointer API returns a pointer to the data */
-    rc = ompi_rte_db_fetch_pointer(&source_proc->proc_name, key, (void**)buffer, type);
+    rc = ompi_rte_db_fetch_pointer(source_proc, key, (void**)buffer, type);
 
     return rc;
 }
@@ -188,7 +188,7 @@ int ompi_modex_recv_key_value(const char* key,
     int rc;
 
     /* the fetch API returns the data */
-    rc = ompi_rte_db_fetch(&source_proc->proc_name, key, (void**)value, type);
+    rc = ompi_rte_db_fetch(source_proc, key, (void**)value, type);
 
     return rc;
 }
