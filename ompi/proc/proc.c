@@ -234,14 +234,23 @@ int ompi_proc_complete_init(void)
             }
 
             if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
-                /* retrieve the hostname */
+                /* IF the number of procs falls below the specified cutoff,
+                 * then we assume the job is small enough that retrieving
+                 * the hostname (which will typically cause retrieval of
+                 * ALL modex info for this proc) will have no appreciable
+                 * impact on launch scaling
+                 */
                 ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
                 if (OMPI_SUCCESS != ret) {
                     break;
                 }
             } else {
                 /* just set the hostname to NULL for now - we'll fill it in
-                 * as modex_recv's are called for procs we will talk to
+                 * as modex_recv's are called for procs we will talk to, thus
+                 * avoiding retrieval of ALL modex info for this proc until
+                 * required. Transports that delay calling modex_recv until
+                 * first message will therefore scale better than those that
+                 * call modex_recv on all procs during init.
                  */
                 proc->proc_hostname = NULL;
             }
@@ -470,14 +479,23 @@ int ompi_proc_refresh(void) {
                 break;
             }
             if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
-                /* retrieve the hostname */
+                /* IF the number of procs falls below the specified cutoff,
+                 * then we assume the job is small enough that retrieving
+                 * the hostname (which will typically cause retrieval of
+                 * ALL modex info for this proc) will have no appreciable
+                 * impact on launch scaling
+                 */
                 ret = ompi_modex_recv_string_pointer(OMPI_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
                 if (OMPI_SUCCESS != ret) {
                     break;
                 }
             } else {
                 /* just set the hostname to NULL for now - we'll fill it in
-                 * as modex_recv's are called for procs we will talk to
+                 * as modex_recv's are called for procs we will talk to, thus
+                 * avoiding retrieval of ALL modex info for this proc until
+                 * required. Transports that delay calling modex_recv until
+                 * first message will therefore scale better than those that
+                 * call modex_recv on all procs during init.
                  */
                 proc->proc_hostname = NULL;
             }

@@ -143,43 +143,52 @@ int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
     return opal_db.store((opal_identifier_t*)nm, OPAL_SCOPE_GLOBAL, key, data, type);
 }
 
-int ompi_rte_db_fetch(const orte_process_name_t *nm,
+int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                       const char *key,
                       void **data, opal_data_type_t type)
 {
-    ompi_proc_t *proct;
     int rc;
 
-    if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)nm, key, data, type))) {
+    if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
         return rc;
+    }
+    /* update the hostname upon first call to modex-recv for this proc */
+    if (NULL == proc->proc_hostname) {
+        opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, (void**)&proc->proc_hostname, OPAL_STRING);
     }
     return OMPI_SUCCESS;
 }
 
-int ompi_rte_db_fetch_pointer(const orte_process_name_t *nm,
+int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
                               const char *key,
                               void **data, opal_data_type_t type)
 {
-    ompi_proc_t *proct;
     int rc;
 
-    if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)nm, key, data, type))) {
+    if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
         return rc;
+    }
+    /* update the hostname upon first call to modex-recv for this proc */
+    if (NULL == proc->proc_hostname) {
+        opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, (void**)&proc->proc_hostname, OPAL_STRING);
     }
     return OMPI_SUCCESS;
 }
 
-int ompi_rte_db_fetch_multiple(const orte_process_name_t *nm,
+int ompi_rte_db_fetch_multiple(const struct ompi_proc_t *proc,
                                const char *key,
                                opal_list_t *kvs)
 {
-    ompi_proc_t *proct;
     int rc;
 
     /* MPI processes are only concerned with shared info */
-    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)nm,
+    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)(&proc->proc_name),
                                                      OPAL_SCOPE_GLOBAL, key, kvs))) {
         return rc;
+    }
+    /* update the hostname upon first call to modex-recv for this proc */
+    if (NULL == proc->proc_hostname) {
+        opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, (void**)&proc->proc_hostname, OPAL_STRING);
     }
     return OMPI_SUCCESS;
 }

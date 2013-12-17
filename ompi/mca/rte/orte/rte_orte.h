@@ -21,6 +21,7 @@
 #include "ompi/constants.h"
 
 #include "ompi/info/info.h"
+struct ompi_proc_t;
 
 #include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -89,13 +90,13 @@ OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 /* Database operations */
 OMPI_DECLSPEC int ompi_rte_db_store(const ompi_process_name_t *nm, const char* key,
                                     const void *data, opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch(const ompi_process_name_t *nm,
+OMPI_DECLSPEC int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                                     const char *key,
                                     void **data, opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch_pointer(const ompi_process_name_t *nm,
+OMPI_DECLSPEC int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
                                             const char *key,
                                             void **data, opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch_multiple(const ompi_process_name_t *nm,
+OMPI_DECLSPEC int ompi_rte_db_fetch_multiple(const struct ompi_proc_t *proc,
                                              const char *key,
                                              opal_list_t *kvs);
 OMPI_DECLSPEC int ompi_rte_db_remove(const ompi_process_name_t *nm,
