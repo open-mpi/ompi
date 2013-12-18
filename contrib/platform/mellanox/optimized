@@ -14,7 +14,9 @@ with_devel_headers=yes
 with_oshmem=yes
 
 mellanox_autodetect=${mellanox_autodetect:="no"}
-if [ $mellanox_autodetect="yes" ]; then
+
+if [ "$mellanox_autodetect" == "yes" ]; then
+
     mxm_dir=${mxm_dir:="$(pkg-config --variable=prefix mxm)"}
     if [ -d $mxm_dir ]; then
         with_mxm=$mxm_dir
@@ -40,6 +42,7 @@ if [ $mellanox_autodetect="yes" ]; then
         with_slurm=$slurm_dir
         with_pmi=$slurm_dir
     fi
+
 fi
 
 CXXFLAGS="-O3"
