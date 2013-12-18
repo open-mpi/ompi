@@ -103,6 +103,11 @@ included in the vX.Y.Z section and be denoted as:
   --enable-abi-breaking-fortran-status-i8-fix.  Thanks to Jim Parker
   for supplying the initial patch.
 - Add support for Intel Phi SCIF transport
+- For CUDA-aware MPI configured with CUDA 6.0, use new pointer
+  attribute to avoid extra synchronization in stream 0 when using
+  CUDA IPC between GPUs on the same node.
+- For CUDA-aware MPI configured with CUDA 6.0, compile in support
+  of GPU Direct RDMA in openib BTL to improve small message latency.
 
 
 1.7.3
