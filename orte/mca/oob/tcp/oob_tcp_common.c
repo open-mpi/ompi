@@ -79,7 +79,7 @@ void orte_oob_tcp_set_socket_options(int sd)
     int optval;
     optval = 1;
     if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
-        opal_backtrace_print(stderr);
+        opal_backtrace_print(stderr, NULL, 1);
         opal_output(0, "[%s:%d] setsockopt(TCP_NODELAY) failed: %s (%d)", 
                     __FILE__, __LINE__, 
                     strerror(opal_socket_errno),
