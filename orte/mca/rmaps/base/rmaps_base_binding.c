@@ -121,7 +121,8 @@ static int bind_upwards(orte_job_t *jdata,
              */
             if (!support->cpubind->set_thisproc_cpubind &&
                 !support->cpubind->set_thisthread_cpubind) {
-                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
+                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy) ||
+                    !(OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                     /* we are not required to bind, so ignore this */
                     continue;
                 }
@@ -276,7 +277,8 @@ static int bind_downwards(orte_job_t *jdata,
              */
             if (!support->cpubind->set_thisproc_cpubind &&
                 !support->cpubind->set_thisthread_cpubind) {
-                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
+                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy) ||
+                    !(OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                     /* we are not required to bind, so ignore this */
                     continue;
                 }
@@ -440,7 +442,8 @@ static int bind_in_place(orte_job_t *jdata,
              */
             if (!support->cpubind->set_thisproc_cpubind &&
                 !support->cpubind->set_thisthread_cpubind) {
-                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
+                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy) ||
+                    !(OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                     /* we are not required to bind, so ignore this */
                     continue;
                 }
@@ -643,8 +646,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         return rc;
     }
 
-    if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding) ||
-        OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+    if (OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         /* no binding requested */
         return ORTE_SUCCESS;
     }

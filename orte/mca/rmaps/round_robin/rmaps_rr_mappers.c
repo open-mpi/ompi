@@ -465,8 +465,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    nprocs = app->num_procs * orte_rmaps_base.cpus_per_rank;
-    if (num_slots < nprocs) {
+    if (num_slots < (app->num_procs * orte_rmaps_base.cpus_per_rank)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -528,20 +527,54 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             num_procs_to_assign = extra_procs_to_assign;
         } else {
             num_procs_to_assign = (node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank + extra_procs_to_assign;
+            if (app->num_procs < num_procs_to_assign) {
+                /* might have more slots than procs */
+                num_procs_to_assign = app->num_procs;
+            }
         }
 
         /* get the number of objects of this type on this node */
         nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
-                            "mca:rmaps:rr:byobj: found %d objs on node %s", nobjs, node->name);
+                            "mca:rmaps:rr:byobj: nprocs-to-assign %d for %d objs on node %s", num_procs_to_assign, nobjs, node->name);
         /* if there are no objects of this type, then report the error
          * and abort - this can happen, for example, on systems that
-         * don't report "sockets" as an independent object
+         * don't report "sockets" as an independent object. However, IF
+         * this object is the default one - i.e., not specified by the
+         * user - then we can fall back to mapping by slot
          */
         if (0 == nobjs) {
-            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
+            if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
                            true,  hwloc_obj_type_string(target), node->name);
-            return ORTE_ERR_SILENT;
+                return ORTE_ERR_SILENT;
+            } else {
+                /* this was the default mapping policy, so clear the map
+                 * of any prior work and indicate that map-by slot is reqd
+                 */
+                for (i=0; i < jdata->map->nodes->size; i++) {
+                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, i))) {
+                        continue;
+                    }
+                    for (idx=0; idx < node->procs->size; idx++) {
+                        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, idx))) {
+                            continue;
+                        }
+                        if (proc->name.jobid != jdata->jobid) {
+                            continue;
+                        }
+                        --node->num_procs;
+                        OBJ_RELEASE(proc);
+                        opal_pointer_array_set_item(node->procs, idx, NULL);
+                    }
+                    if (0 == node->num_procs) {
+                        node->mapped = false;
+                        OBJ_RELEASE(node);
+                        opal_pointer_array_set_item(jdata->map->nodes, i, NULL);
+                    }
+                }
+                return ORTE_ERR_NOT_SUPPORTED;
+            }
         }
 
         /* compute the number of procs to go on each object */
