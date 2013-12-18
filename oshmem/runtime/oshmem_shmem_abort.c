@@ -90,7 +90,7 @@ int oshmem_shmem_abort(int errcode)
             /* This will print an message if it's unable to print the
              backtrace, so we don't need an additional "else" clause
              if opal_backtrace_print() is not supported. */
-            opal_backtrace_print(stderr);
+            opal_backtrace_print(stderr, NULL, 1);
         }
     }
 
