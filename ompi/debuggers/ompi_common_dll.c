@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -334,7 +334,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         mqs_type* qh_type, *cg_union_type, *cart_type, *graph_type, *dist_graph_type;
         int offset = 0;
 
-        missing_in_action = "mca_topo_base_module_2_1_0_t";
+        missing_in_action = "mca_topo_base_module_t";
         qh_type = mqs_find_type(image, missing_in_action, mqs_lang_c);
         if( !qh_type ) {
             goto type_missing;
@@ -342,7 +342,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         i_info->ompi_mca_topo_base_module_t.type = qh_type;
         i_info->ompi_mca_topo_base_module_t.size = mqs_sizeof(qh_type);
 
-        /* There is a union of 2 structs in this struct -- get the
+        /* There is a union of 3 structs in this struct -- get the
            offsets for fields of both of them. */
         /* Union type */
         missing_in_action = "mca_topo_base_comm_cgd_union_2_1_0_t";
