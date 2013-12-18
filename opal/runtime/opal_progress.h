@@ -206,11 +206,7 @@ static inline bool opal_progress_spin(volatile bool* complete)
  * Don't use this variable; use the opal_progress_recursion_depth()
  * function.
  */
-OPAL_DECLSPEC extern 
-#if OPAL_ENABLE_MULTI_THREADS
-volatile 
-#endif
-uint32_t opal_progress_recursion_depth_counter;
+OPAL_DECLSPEC extern uint32_t opal_progress_recursion_depth_counter;
 
 /**
  * Return the current level of recursion -- 0 means that we are not
@@ -220,6 +216,7 @@ uint32_t opal_progress_recursion_depth_counter;
  */
 static inline uint32_t opal_progress_recursion_depth(void) 
 {
+    opal_atomic_mb();
     return opal_progress_recursion_depth_counter;
 }
 

@@ -354,8 +354,8 @@ void orte_info_do_config(bool want_all)
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     
     /* setup strings that require allocation */    
-    if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
-        asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+    if (OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
+        asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", 
                  (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
                  OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
     } else {

@@ -29,9 +29,6 @@
 #endif
 #if OPAL_HAVE_POSIX_THREADS
 #include <pthread.h>
-#elif OPAL_HAVE_SOLARIS_THREADS
-#include <thread.h>
-#include <synch.h>
 #endif
 
 #include "opal/threads/mutex.h"
@@ -50,12 +47,6 @@ struct opal_condition_t {
     opal_object_t super;
     volatile int c_waiting;
     volatile int c_signaled;
-#if OPAL_HAVE_POSIX_THREADS
-    pthread_cond_t c_cond;
-#elif OPAL_HAVE_SOLARIS_THREADS
-    cond_t c_cond;
-#endif
-    char *name;
 };
 typedef struct opal_condition_t opal_condition_t;
 
@@ -64,22 +55,9 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
 
 static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 {
-    int rc = 0;
     c->c_waiting++;
 
-#if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
-    if (opal_mutex_check_locks && 0 == m->m_lock_debug) {                                         \
-        opal_output(0, "Warning -- mutex not locked in condition_wait"); \
-    }                                                                   \
-    m->m_lock_debug--;
-#endif
-
     if (opal_using_threads()) {
-#if OPAL_HAVE_POSIX_THREADS && OPAL_ENABLE_MULTI_THREADS
-        rc = pthread_cond_wait(&c->c_cond, &m->m_lock_pthread);
-#elif OPAL_HAVE_SOLARIS_THREADS && OPAL_ENABLE_MULTI_THREADS
-        rc = cond_wait(&c->c_cond, &m->m_lock_solaris);
-#else
         if (c->c_signaled) {
             c->c_waiting--;
             opal_mutex_unlock(m);
@@ -94,7 +72,6 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
             OPAL_CR_TEST_CHECKPOINT_READY_STALL();
             opal_mutex_lock(m);
         }
-#endif
     } else {
         while (c->c_signaled == 0) {
             opal_progress();
@@ -102,13 +79,9 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
         }
     }
 
-#if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
-    m->m_lock_debug++;
-#endif
-
     c->c_signaled--;
     c->c_waiting--;
-    return rc;
+    return 0;
 }
 
 static inline int opal_condition_timedwait(opal_condition_t *c,
@@ -119,24 +92,8 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
     struct timeval absolute;
     int rc = 0;
 
-#if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
-    if (opal_mutex_check_locks && 0 == m->m_lock_debug) {                                         \
-        opal_output(0, "Warning -- mutex not locked in condition_wait"); \
-    }                                                                   \
-    m->m_lock_debug--;
-#endif
-
     c->c_waiting++;
     if (opal_using_threads()) {
-#if OPAL_HAVE_POSIX_THREADS && OPAL_ENABLE_MULTI_THREADS
-        rc = pthread_cond_timedwait(&c->c_cond, &m->m_lock_pthread, abstime);
-#elif OPAL_HAVE_SOLARIS_THREADS && OPAL_ENABLE_MULTI_THREADS
-        /* deal with const-ness */
-        timestruc_t to;
-        to.tv_sec = abstime->tv_sec;
-        to.tv_nsec = abstime->tv_nsec;
-        rc = cond_timedwait(&c->c_cond, &m->m_lock_solaris, &to);
-#else
         absolute.tv_sec = abstime->tv_sec;
         absolute.tv_usec = abstime->tv_nsec * 1000;
         gettimeofday(&tv,NULL);
@@ -150,7 +107,6 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
                          (tv.tv_sec <= absolute.tv_sec ||
                           (tv.tv_sec == absolute.tv_sec && tv.tv_usec < absolute.tv_usec)));
         }
-#endif
     } else {
         absolute.tv_sec = abstime->tv_sec;
         absolute.tv_usec = abstime->tv_nsec * 1000;
@@ -165,10 +121,6 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
         }
     }
 
-#if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
-    m->m_lock_debug++;
-#endif
-
     if (c->c_signaled != 0) c->c_signaled--;
     c->c_waiting--;
     return rc;
@@ -178,15 +130,6 @@ static inline int opal_condition_signal(opal_condition_t *c)
 {
     if (c->c_waiting) {
         c->c_signaled++;
-#if OPAL_HAVE_POSIX_THREADS && OPAL_ENABLE_MULTI_THREADS
-        if(opal_using_threads()) {
-            pthread_cond_signal(&c->c_cond);
-        }
-#elif OPAL_HAVE_SOLARIS_THREADS && OPAL_ENABLE_MULTI_THREADS
-        if(opal_using_threads()) {
-            cond_signal(&c->c_cond);
-        }
-#endif
     }
     return 0;
 }
@@ -194,19 +137,6 @@ static inline int opal_condition_signal(opal_condition_t *c)
 static inline int opal_condition_broadcast(opal_condition_t *c)
 {
     c->c_signaled = c->c_waiting;
-#if OPAL_HAVE_POSIX_THREADS && OPAL_ENABLE_MULTI_THREADS
-    if (opal_using_threads()) {
-        if( 1 == c->c_waiting ) {
-            pthread_cond_signal(&c->c_cond);
-        } else {
-            pthread_cond_broadcast(&c->c_cond);
-        }
-    }
-#elif OPAL_HAVE_SOLARIS_THREADS && OPAL_ENABLE_MULTI_THREADS
-    if (opal_using_threads()) {
-        cond_broadcast(&c->c_cond);
-    }
-#endif
     return 0;
 }
 

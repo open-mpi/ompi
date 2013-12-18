@@ -20,7 +20,7 @@
 
 #include "opal/threads/tsd.h"
 
-#if !OPAL_HAVE_POSIX_THREADS && !OPAL_HAVE_SOLARIS_THREADS && !defined(__WINDOWS__)
+#if !OPAL_HAVE_POSIX_THREADS
 
 #define TSD_ENTRIES 32
 

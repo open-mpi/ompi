@@ -252,5 +252,11 @@ fi
 AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
 AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
 
+dnl We no longer support the old OMPI_ENABLE_PROGRESS_THREADS.  At
+dnl some point, this should die.
+AC_DEFINE([OMPI_ENABLE_PROGRESS_THREADS],
+          [0],
+          [Whether we want OMPI progress threads enabled])
+
 ])dnl
 
