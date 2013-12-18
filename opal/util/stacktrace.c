@@ -53,12 +53,10 @@ static char *unable_to_print_msg = "Unable to print stack trace!\n";
 /**
  * This function is being called as a signal-handler in response
  * to a user-specified signal (e.g. SIGFPE or SIGSEGV).
- * For Linux/Glibc, it then uses backtrace and backtrace_symbols
- * to figure the current stack and then prints that out to stdout.
+ * For Linux/Glibc, it then uses backtrace and backtrace_symbols_fd
+ * to figure the current stack and print that out to stderr.
  * Where available, the BSD libexecinfo is used to provide Linux/Glibc
- * compatible backtrace and backtrace_symbols functions.
- * Yes, printf and malloc are not signal-safe per se, but should be 
- * on Linux?
+ * compatible backtrace and backtrace_symbols_fd functions.
  *
  *  @param signo with the signal number raised 
  *  @param info with information regarding the reason/send of the signal
@@ -72,9 +70,8 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     char print_buffer[1024];
     char * tmp = print_buffer;
     int size = sizeof (print_buffer);
-    int ret, traces_size;
+    int ret;
     char *si_code_str = "";
-    char **traces;
 
     /* write out the footer information */
     memset (print_buffer, 0, sizeof (print_buffer));
@@ -82,18 +79,8 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
                    HOSTFORMAT "*** Process received signal ***\n",
                    stacktrace_hostname, getpid());
     write(fileno(stderr), print_buffer, ret);
-    fflush(stderr);
 
 
-    /*
-     * Yes, we are doing printf inside a signal-handler.
-     * However, backtrace itself calls malloc (which may not be signal-safe,
-     * under linux, printf and malloc are)
-     *
-     * We could use backtrace_symbols_fd and write directly into an
-     * filedescriptor, however, without formatting -- also this fd 
-     * should be opened in a sensible way...
-     */
     memset (print_buffer, 0, sizeof (print_buffer));
 
 #ifdef HAVE_STRSIGNAL
@@ -342,28 +329,14 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 
     /* write out the signal information generated above */
     write(fileno(stderr), print_buffer, sizeof(print_buffer)-size);
-    fflush(stderr);
 
     /* print out the stack trace */
-    ret = opal_backtrace_buffer(&traces, &traces_size);
-    if (OPAL_SUCCESS == ret) {
-        int i;
-        /* since we have the opportunity, strip off the bottom two
-           function calls, which will be this function and
-           opal_backtrace_buffer(). */
-        for (i = 2 ; i < traces_size ; ++i) {
-            ret = snprintf(print_buffer, sizeof(print_buffer),
-                           HOSTFORMAT "[%2d] %s\n",
-                           stacktrace_hostname, getpid(), i - 2, traces[i]);
-            if (ret > 0) {
-                write(fileno(stderr), print_buffer, ret);
-            } else {
-                write(fileno(stderr), unable_to_print_msg, 
-                      strlen(unable_to_print_msg));
-            }
-        }
-    } else {
-        opal_backtrace_print(stderr);
+    snprintf(print_buffer, sizeof(print_buffer), HOSTFORMAT,
+             stacktrace_hostname, getpid());
+    print_buffer[sizeof(print_buffer) - 1] = '\0';
+    ret = opal_backtrace_print(stderr, print_buffer, 2);
+    if (OPAL_SUCCESS != ret) {
+        write(fileno(stderr), unable_to_print_msg, strlen(unable_to_print_msg));
     }
 
     /* write out the footer information */
@@ -376,7 +349,6 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     } else {
         write(fileno(stderr), unable_to_print_msg, strlen(unable_to_print_msg));
     }
-    fflush(stderr);
 }
 
 #endif /* OPAL_WANT_PRETTY_PRINT_STACKTRACE */
@@ -393,12 +365,12 @@ void opal_stackframe_output(int stream)
         int i;
         /* since we have the opportunity, strip off the bottom two
            function calls, which will be this function and
-           opa_backtrace_buffer(). */
+           opal_backtrace_buffer(). */
         for (i = 2; i < traces_size; ++i) {
             opal_output(stream, "%s", traces[i]);
         }
     } else {
-        opal_backtrace_print(stderr);
+        opal_backtrace_print(stderr, NULL, 2);
     }
 }
 

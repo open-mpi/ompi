@@ -23,9 +23,10 @@
 #include "opal/constants.h"
 #include "opal/mca/backtrace/backtrace.h"
 
-void
-opal_backtrace_print(FILE *file)
+int
+opal_backtrace_print(FILE *file, char *prefix, int strip)
 {
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 
