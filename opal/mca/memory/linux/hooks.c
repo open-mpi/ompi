@@ -764,9 +764,10 @@ void opal_memory_linux_malloc_init_hook(void)
 
 #if MEMORY_LINUX_UMMUNOTIFY
     /* Next, check if ummunotify is present on the system. If it is,
-       then we don't need to do the following ptmalloc2 hacks.
-       open/mmap on the device may fail during init, but if /dev/ummunotify
-       exists, we assume that the user/administrator *wants* to use
+       and if we were compile with ummunotify support, then we don't
+       need to do the following ptmalloc2 hacks.  open/mmap on the
+       device may fail during init, but if /dev/ummunotify exists, we
+       assume that the user/administrator *wants* to use
        ummunotify. */
     if (access("/dev/ummunotify", F_OK) == 0) {
         return;
