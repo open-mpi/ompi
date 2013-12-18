@@ -62,6 +62,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "oob_tcp.h"
@@ -541,6 +542,9 @@ static void tcp_peer_connected(mca_oob_tcp_peer_t* peer)
     if (NULL != peer->active_addr) {
         peer->active_addr->retries = 0;
     }
+
+    /* update the route */
+    orte_routed.update_route(&peer->name, &peer->name);
 
     /* initiate send of first message on queue */
     if (NULL == peer->send_msg) {
