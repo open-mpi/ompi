@@ -73,8 +73,9 @@ Trunk (not on release branches yet)
  *   if #procs <= 2, default to map-by core
  *   if #procs > 2, default to map-by socket
  * Ranking:
- *   default to rank-by <obj>, where <obj> is whatever object we
- *   mapped against
+ *   if default mapping is used, then default to rank-by slot
+ *   if map-by <obj> is given, then default to rank-by <obj>,
+ *      where <obj> is whatever object we mapped against
  * Binding:
  *   default to bind-to core
  *
