@@ -109,16 +109,9 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
             }
         }
-        if (ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(orte_rmaps_base.ranking)) {
-            map->ranking = orte_rmaps_base.ranking;
-        } else {
-            /* default based on number of procs */
-            if (nprocs <= 2) {
-                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SLOT);
-            } else {
-                ORTE_SET_RANKING_POLICY(map->ranking, ORTE_RANK_BY_SOCKET);
-            }
-        }
+        /* ranking was already handled, so just use it here */
+        map->ranking = orte_rmaps_base.ranking;
+
 #if OPAL_HAVE_HWLOC
         map->binding = opal_hwloc_binding_policy;
 #endif
@@ -158,12 +151,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
         /* ditto for rank and bind policies */
         if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
-            /* default based on number of procs */
-            if (nprocs <= 2) {
-                ORTE_SET_RANKING_POLICY(jdata->map->ranking, ORTE_RANK_BY_SLOT);
-            } else {
-                ORTE_SET_RANKING_POLICY(jdata->map->ranking, ORTE_RANK_BY_SOCKET);
-            }
+            jdata->map->ranking = orte_rmaps_base.ranking;
         }
 #if OPAL_HAVE_HWLOC
         if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
