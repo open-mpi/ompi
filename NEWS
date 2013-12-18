@@ -308,6 +308,15 @@ Trunk (not on release branches yet)
 1.6.6 (unreleased)
 ------------------
 
+- Correctly handle the invalid status for NULL and inactive requests.
+  Thanks to KAWASHIMA Takahiro for submitting the initial patch.
+- Fixed MPI_STATUS_SIZE Fortran issue when used with 8-byte Fortran
+  INTEGERs and 4-byte C ints.  Since this issue affects ABI, it is
+  only enabled if Open MPI is configured with
+  --enable-abi-breaking-fortran-status-i8-fix.  Thanks to Jim Parker
+  for supplying the initial patch.
+- Fix datatype issue for sending from the middle of non-contiguous
+  data.
 - Fixed failure error with pty support.  Thanks to Michal Pecio for
   the patch.
 - Fixed debugger support for direct-launched jobs.
