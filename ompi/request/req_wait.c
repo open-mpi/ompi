@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -295,6 +295,10 @@ int ompi_request_default_wait_all( size_t count,
         for( i = 0; i < count; i++, rptr++ ) {
             request = *rptr;
             assert( true == request->req_complete );
+            if( request->req_state == OMPI_REQUEST_INACTIVE ) {
+                OMPI_STATUS_SET(&statuses[i], &ompi_status_empty);
+                continue;
+            }
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
@@ -303,6 +307,7 @@ int ompi_request_default_wait_all( size_t count,
 
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
+                continue;
             } else {
                 /* Only free the request if there is no error on it */
                 if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
@@ -472,7 +477,6 @@ finished:
         for (i = 0; i < num_requests_done; i++) {
             request = requests[indices[i]];
             assert( true == request->req_complete );
-            /* return status */
             /* Per note above, we have to call gen request query_fn even
                if STATUS_IGNORE was provided */
             if (OMPI_REQUEST_GEN == request->req_type) {
