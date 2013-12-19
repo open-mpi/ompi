@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,13 +27,7 @@
 #include "opal/datatype/opal_datatype_internal.h"
 
 #if OPAL_ENABLE_DEBUG
-
 #include "opal/util/output.h"
-
-extern bool opal_pack_debug;
-#define DO_DEBUG(INST)  if( opal_pack_debug ) { INST }
-#else
-#define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */
 
 #include "opal/datatype/opal_datatype_checksum.h"
