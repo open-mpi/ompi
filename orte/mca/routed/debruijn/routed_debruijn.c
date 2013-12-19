@@ -5,6 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -278,11 +279,7 @@ static int update_route(orte_process_name_t *target,
         return ORTE_SUCCESS;
     }
     
-    /* THIS CAME FROM OUR OWN JOB FAMILY... */
-    
-    opal_output(0, "%s CALL TO UPDATE ROUTE FOR OWN JOB FAMILY", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    
-    return ORTE_ERR_NOT_SUPPORTED;
+    return ORTE_SUCCESS;
 }
 
 static inline unsigned int debruijn_next_hop (int target)
