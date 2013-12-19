@@ -43,7 +43,6 @@ bool opal_progress_debug = false;
  * default parameters 
  */
 static int opal_progress_event_flag = OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK;
-volatile int32_t opal_progress_thread_count = 0;
 int opal_progress_spin_count = 10000;
 
 
@@ -72,9 +71,6 @@ static int32_t event_progress_delta = 0;
 /* users of the event library from MPI cause the tick rate to 
    be every time */
 static int32_t num_event_users = 0;
-
-/* How deep are we in opal_progress recursion? */
-uint32_t opal_progress_recursion_depth_counter = 0;
 
 #if OPAL_ENABLE_DEBUG
 static int debug_output = -1;
@@ -155,8 +151,6 @@ opal_progress(void)
     size_t i;
     int events = 0;
 
-    opal_atomic_add(&opal_progress_recursion_depth_counter, 1);
-
     if( opal_progress_event_flag != 0 ) {
 #if OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
@@ -202,8 +196,6 @@ opal_progress(void)
         sched_yield();
     }
 #endif  /* defined(HAVE_SCHED_YIELD) */
-
-    opal_atomic_add(&opal_progress_recursion_depth_counter, -1);
 }
 
 
