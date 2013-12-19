@@ -10,6 +10,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "ompi/proc/proc.h"
 #include "opal/memoryhooks/memory.h"
 #include "ompi/runtime/mpiruntime.h"
