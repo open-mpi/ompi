@@ -560,6 +560,24 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
                 free(proc_info);
                 return ret;
             }
+            /* the vpid and nodename for this proc are no longer packed
+             * in the ORTE_PROC packing routines to save space for other
+             * uses, so we have to unpack them separately
+             */
+            cnt = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &proc_info[n]->pid, &cnt, OPAL_PID))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&answer);
+                free(proc_info);
+                return ret;
+            }
+            cnt = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &proc_info[n]->nodename, &cnt, OPAL_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&answer);
+                free(proc_info);
+                return ret;
+            }
         }
         *proc_info_array = proc_info;
         *num_procs = (int)cnt_procs;
