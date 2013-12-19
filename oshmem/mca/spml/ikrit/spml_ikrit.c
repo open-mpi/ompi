@@ -58,10 +58,10 @@ static int spml_ikrit_get_ep_address(spml_ikrit_mxm_ep_conn_info_t *ep_info,
     size_t addrlen;
     mxm_error_t err;
 
-    addrlen = sizeof(ep_info->ptl_addr[ptlid]);
+    addrlen = sizeof(ep_info->addr.ptl_addr[ptlid]);
     err = mxm_ep_address(mca_spml_ikrit.mxm_ep,
                          ptlid,
-                         (struct sockaddr *) &ep_info->ptl_addr[ptlid],
+                         (struct sockaddr *) &ep_info->addr.ptl_addr[ptlid],
                          &addrlen);
     if (MXM_OK != err) {
         orte_show_help("help-spml-ikrit.txt",
@@ -411,7 +411,7 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         return OSHMEM_ERROR;
     }
 #else
-    err = mxm_ep_get_address(mca_spml_ikrit.mxm_ep, ep_info[my_rank].ep_addr, &mxm_addr_len);
+    err = mxm_ep_get_address(mca_spml_ikrit.mxm_ep, ep_info[my_rank].addr.ep_addr, &mxm_addr_len);
     if (MXM_OK != err) {
         orte_show_help("help-shmem-spml-ikrit.txt", "unable to get endpoint address", true,
                 mxm_error_string(err));
@@ -436,12 +436,12 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 
 #if MXM_API < MXM_VERSION(2,0)
         conn_reqs[i].ptl_addr[MXM_PTL_SELF] =
-                (struct sockaddr *) &ep_info[i].ptl_addr[MXM_PTL_SELF];
+                (struct sockaddr *) &ep_info[i].addr.ptl_addr[MXM_PTL_SELF];
         conn_reqs[i].ptl_addr[MXM_PTL_SHM] = NULL;
         conn_reqs[i].ptl_addr[MXM_PTL_RDMA] =
-                (struct sockaddr *) &ep_info[i].ptl_addr[MXM_PTL_RDMA];
+                (struct sockaddr *) &ep_info[i].addr.ptl_addr[MXM_PTL_RDMA];
 #else
-        err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, ep_info[i].ep_addr, &mca_spml_ikrit.mxm_peers[i]->mxm_conn);
+        err = mxm_ep_connect(mca_spml_ikrit.mxm_ep, ep_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i]->mxm_conn);
         if (MXM_OK != err) {
             SPML_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
             goto bail;
@@ -1096,7 +1096,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     if (MXM_OK != put_req->mxm_req.base.error) {
         OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, -1);
         SPML_ERROR("put request %p failed: %s - aborting",
-                   put_req, mxm_error_string(put_req->mxm_req.base.error));
+                   (void*)put_req, mxm_error_string(put_req->mxm_req.base.error));
         oshmem_shmem_abort(-1);
         return OSHMEM_ERROR;
     }

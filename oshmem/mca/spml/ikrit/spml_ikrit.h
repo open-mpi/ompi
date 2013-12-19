@@ -108,7 +108,7 @@ typedef struct spml_ikrit_mxm_ep_conn_info_t {
     union {
         struct sockaddr_storage  ptl_addr[MXM_PTL_LAST];
         char ep_addr[MXM_MAX_ADDR_LEN];
-    };
+    } addr;
 } spml_ikrit_mxm_ep_conn_info_t;
 
 extern mca_spml_ikrit_t mca_spml_ikrit;
