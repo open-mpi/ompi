@@ -931,6 +931,8 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&module->chunk_segs);
     OBJ_DESTRUCT(&module->senders);
 
+    mca_mpool_base_module_destroy(module->super.btl_mpool);
+
     /* destroy the PD after all the CQs and AHs have been destroyed, otherwise
      * we get a minor leak in libusnic_verbs */
     rc = ibv_dealloc_pd(module->pd);
@@ -942,8 +944,6 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     if (-1 == rc) {
         BTL_ERROR(("failed to ibv_close_device"));
     }
-
-    mca_mpool_base_module_destroy(module->super.btl_mpool);
 
     return OMPI_SUCCESS;
 }
@@ -1446,8 +1446,8 @@ static int usnic_dereg_mr(void* reg_data,
 
     if (ud_reg->mr != NULL) {
         if (ibv_dereg_mr(ud_reg->mr)) {
-            opal_output(0, "%s: error unpinning UD memory: %s\n",
-                        __func__, strerror(errno));
+            opal_output(0, "%s: error unpinning UD memory mr=%p: %s\n",
+                        __func__, ud_reg->mr, strerror(errno));
             return OMPI_ERROR;
         }
     }
@@ -1670,13 +1670,6 @@ ompi_btl_usnic_channel_finalize(
     ompi_btl_usnic_module_t *module,
     struct ompi_btl_usnic_channel_t *channel)
 {
-    /* gets set right after constructor called, lets us know recv_segs
-     * have been constructed
-     */
-    if (channel->recv_segs.ctx == module) {
-        OBJ_DESTRUCT(&channel->recv_segs);
-    }
-
     if (NULL != channel->qp) {
         ibv_destroy_qp(channel->qp);
         channel->qp = NULL;
@@ -1686,6 +1679,15 @@ ompi_btl_usnic_channel_finalize(
     if (NULL != channel->cq) {
         ibv_destroy_cq(channel->cq);
         channel->cq = NULL;
+    }
+
+    /* gets set right after constructor called, lets us know recv_segs
+     * have been constructed.  Make sure to wait until queues destroyed to destroy
+     * the recv_segs
+     */
+    if (channel->recv_segs.ctx == module) {
+        assert(NULL == channel->qp && NULL == channel->cq);
+        OBJ_DESTRUCT(&channel->recv_segs);
     }
 }
 
