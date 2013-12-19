@@ -54,9 +54,7 @@ void opal_convertor_destroy_masters( void );
 
 #if OPAL_ENABLE_DEBUG
 extern bool opal_pack_debug;
-#define DO_DEBUG(INST)  if( opal_pack_debug ) { INST }
-#else
-#define DO_DEBUG(INST)
+extern bool opal_unpack_debug;
 #endif  /* OPAL_ENABLE_DEBUG */
 
 END_C_DECLS

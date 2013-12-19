@@ -13,6 +13,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -475,6 +476,11 @@ static inline int GET_FIRST_NON_LOOP( const union dt_elem_desc* _pElem )
 OPAL_DECLSPEC int opal_datatype_contain_basic_datatypes( const struct opal_datatype_t* pData, char* ptr, size_t length );
 OPAL_DECLSPEC int opal_datatype_dump_data_flags( unsigned short usflags, char* ptr, size_t length );
 OPAL_DECLSPEC int opal_datatype_dump_data_desc( union dt_elem_desc* pDesc, int nbElems, char* ptr, size_t length );
+
+#if OPAL_ENABLE_DEBUG
+extern bool opal_position_debug;
+extern bool opal_copy_debug;
+#endif  /* OPAL_ENABLE_DEBUG */
 
 END_C_DECLS
 #endif  /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */

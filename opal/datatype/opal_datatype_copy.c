@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +37,6 @@
 
 
 #if OPAL_ENABLE_DEBUG
-extern bool opal_copy_debug;
 #define DO_DEBUG(INST)  if( opal_copy_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
