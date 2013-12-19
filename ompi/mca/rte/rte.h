@@ -134,14 +134,18 @@
  *        The implementation of this function must store a COPY of the data
  *        provided - the data is NOT guaranteed to be valid after return
  *        from the call.
- *     3. ompi_rte_db_fetch -
- *        int ompi_rte_db_fetch(const ompi_process_name_t *proc,
+ *     3. ompi_rte_db_fetch - 
+ *        NOTE: Fetch accepts an 'ompi_proc_t'. 
+ *        int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
  *                              const char *key,
- *                              void **data, opal_data_type_t type);
- *     4. ompi_rte_db_fetch_pointer
- *        int ompi_rte_db_fetch_pointer(const ompi_process_name_t *proc,
- *                                                      const char *key,
- *                                                    void **data, opal_data_type_t type);
+ *                              void **data, 
+ *                              opal_data_type_t type);
+ *     4. ompi_rte_db_fetch_pointer -
+ *        NOTE: Fetch accepts an 'ompi_proc_t'. 
+ *        int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
+ *                                      const char *key,
+ *                                      void **data, 
+ *                                      opal_data_type_t type);
  *     5. Pre-defined db keys (with associated values after rte_init)
  *        a. OMPI_DB_HOSTNAME
  *        b. OMPI_DB_LOCALITY
