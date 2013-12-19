@@ -108,6 +108,13 @@ included in the vX.Y.Z section and be denoted as:
   CUDA IPC between GPUs on the same node.
 - For CUDA-aware MPI configured with CUDA 6.0, compile in support
   of GPU Direct RDMA in openib BTL to improve small message latency.
+- Updated ROMIO from MPICH v3.0.4.
+- MPI-3: Added support for remaining non-blocking collectives.
+- MPI-3: Added support for neighborhood collectives.
+- MPI-3: Updated C bindings with consistent use of [].
+- MPI-3: Added the const keyword to read-only buffers.
+- MPI-3: Added support for non-blocking communicator duplication.
+- MPI-3: Added support for non-collective communicator creation.
 
 
 1.7.3
