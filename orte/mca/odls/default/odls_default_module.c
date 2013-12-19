@@ -15,6 +15,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2013      Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -441,9 +442,12 @@ static int do_child(orte_app_context_t* context,
                     if (NULL == msg) {
                         msg = "failed to convert bitmap list to hwloc bitmap";
                     }
-                    if (OPAL_BINDING_REQUIRED(jobdat->map->binding)) {
-                        /* If binding is required, send an error up the pipe (which exits
-                           -- it doesn't return). */
+                    if (OPAL_BINDING_REQUIRED(jobdat->map->binding) &&
+                        (OPAL_BIND_GIVEN & jobdat->map->binding)) {
+                        /* If binding is required and a binding directive was explicitly
+                         * given (i.e., we are not binding due to a default policy),
+                         * send an error up the pipe (which exits -- it doesn't return).
+                         */
                         send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
                                              "binding generic error",
                                              orte_process_info.nodename, 
@@ -459,7 +463,8 @@ static int do_child(orte_app_context_t* context,
                 }
                 /* bind as specified */
                 rc = hwloc_set_cpubind(opal_hwloc_topology, cpuset, 0);
-                if (rc < 0) {
+                /* if we got an error and this wasn't a default binding policy, then report it */
+                if (rc < 0  && (OPAL_BIND_GIVEN & jobdat->map->binding)) {
                     char *tmp = NULL;
                     if (errno == ENOSYS) {
                         msg = "hwloc indicates cpu binding not supported";
@@ -514,8 +519,11 @@ static int do_child(orte_app_context_t* context,
                     opal_unsetenv(param, &environ_copy);
                     free(param);
                 }
-                /* set memory affinity policy */
-                if (ORTE_SUCCESS != opal_hwloc_base_set_process_membind_policy()) {
+                /* set memory affinity policy - if we get an error, don't report
+                 * anything unless the user actually specified the binding policy
+                 */
+                rc = opal_hwloc_base_set_process_membind_policy();
+                if (ORTE_SUCCESS != rc  && (OPAL_BIND_GIVEN & jobdat->map->binding)) {
                     if (errno == ENOSYS) {
                         msg = "hwloc indicates memory binding not supported";
                     } else if (errno == EXDEV) {
