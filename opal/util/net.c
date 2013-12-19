@@ -264,12 +264,15 @@ opal_net_samenetwork(const struct sockaddr *addr1,
             } else {
                 prefixlen = plen;
             }
-            const struct sockaddr_in *inaddr1 = (struct sockaddr_in*) addr1;
-            const struct sockaddr_in *inaddr2 = (struct sockaddr_in*) addr2;
+            struct sockaddr_in inaddr1, inaddr2;
+            /* Use temporary variables and memcpy's so that we don't
+               run into bus errors on Solaris/SPARC */
+            memcpy(&inaddr1, addr1, sizeof(inaddr1));
+            memcpy(&inaddr2, addr2, sizeof(inaddr2));
             uint32_t netmask = opal_net_prefix2netmask (prefixlen);
 
-            if((inaddr1->sin_addr.s_addr & netmask) ==
-               (inaddr2->sin_addr.s_addr & netmask)) {
+            if((inaddr1.sin_addr.s_addr & netmask) ==
+               (inaddr2.sin_addr.s_addr & netmask)) {
                 return true;
             }
             return false;
@@ -278,10 +281,13 @@ opal_net_samenetwork(const struct sockaddr *addr1,
 #if OPAL_ENABLE_IPV6
     case AF_INET6:
         {
-            const struct sockaddr_in6 *inaddr1 = (struct sockaddr_in6*) addr1;
-            const struct sockaddr_in6 *inaddr2 = (struct sockaddr_in6*) addr2;
-            struct in6_addr *a6_1 = (struct in6_addr*) &inaddr1->sin6_addr;
-            struct in6_addr *a6_2 = (struct in6_addr*) &inaddr2->sin6_addr;
+            struct sockaddr_in6 inaddr1, inaddr2;
+            /* Use temporary variables and memcpy's so that we don't
+               run into bus errors on Solaris/SPARC */
+            memcpy(&inaddr1, addr1, sizeof(inaddr1));
+            memcpy(&inaddr2, addr2, sizeof(inaddr2));
+            struct in6_addr *a6_1 = (struct in6_addr*) &inaddr1.sin6_addr;
+            struct in6_addr *a6_2 = (struct in6_addr*) &inaddr2.sin6_addr;
 
             if (0 == plen) {
                 prefixlen = 64;
