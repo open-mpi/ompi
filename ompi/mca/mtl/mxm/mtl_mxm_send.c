@@ -9,6 +9,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/show_help.h"
 
 #include "mtl_mxm.h"
 #include "mtl_mxm_types.h"

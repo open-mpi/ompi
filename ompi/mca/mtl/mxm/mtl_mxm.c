@@ -17,6 +17,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/util/show_help.h"
 
 #include "mtl_mxm.h"
 #include "mtl_mxm_types.h"
