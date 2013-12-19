@@ -81,7 +81,7 @@ static int mca_spml_yoda_component_register(void)
             mca_spml_yoda_param_register_int("free_list_inc", 16, 0);
     mca_spml_yoda.priority =
             mca_spml_yoda_param_register_int("priority",
-                                             20,
+                                             10,
                                              "[integer] yoda priority");
     return OSHMEM_SUCCESS;
 }

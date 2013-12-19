@@ -127,10 +127,23 @@ int oshmem_shmem_abort(int errcode)
 void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...)
 {
     va_list args;
-    char *buffer;
+    char *buff, *str;
+    int ret = 0;
+
+    UNREFERENCED_PARAMETER(ret);
+
     va_start(args, format);
-    asprintf(&buffer, "%s %s", prefix, format);
-    opal_output_verbose(level, output_id, buffer, file, line, function, args);
+
+    ret = vasprintf(&str, format, args);
+    assert(-1 != ret);
+
+    ret = asprintf(&buff, "%s %s", prefix, str);
+    assert(-1 != ret);
+
+    opal_output_verbose(level, output_id, buff, file, line, function);
+
     va_end(args);
-    free(buffer);
+
+    free(buff);
+    free(str);
 }
