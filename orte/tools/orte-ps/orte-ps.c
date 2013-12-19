@@ -852,7 +852,7 @@ static int gather_nodes(orte_ps_mpirun_info_t *hnpinfo) {
                                                              &hnpinfo->num_nodes, &hnpinfo->nodes))) {
         ORTE_ERROR_LOG(ret);
     }
-    
+    opal_output(0, "RECEIVED %d NODES", hnpinfo->num_nodes);
     return ret;
 }
 

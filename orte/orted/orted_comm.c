@@ -758,7 +758,8 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             orte_proc_t *proc;
             orte_vpid_t vpid;
             int32_t i, num_procs;
-                
+            char *nid;
+
             /* setup the answer */
             answer = OBJ_NEW(opal_buffer_t);
                 
@@ -801,8 +802,25 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                             ORTE_ERROR_LOG(ret);
                             goto CLEANUP;
                         }
+                        /* the vpid and nodename for this proc are no longer packed
+                         * in the ORTE_PROC packing routines to save space for other
+                         * uses, so we have to pack them separately
+                         */
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &proc->pid, 1, OPAL_PID))) {
+                            ORTE_ERROR_LOG(ret);
+                            goto CLEANUP;
+                        }
+                        if (NULL == proc->node) {
+                            nid = "UNKNOWN";
+                        } else {
+                            nid = proc->node->name;
+                        }
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &nid, 1, OPAL_STRING))) {
+                            ORTE_ERROR_LOG(ret);
+                            goto CLEANUP;
+                        }
                         break;
-                    }
+                    }                    
                 }
             } else {
                 /* count number of procs */
@@ -824,6 +842,23 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                         if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &proc, 1, ORTE_PROC))) {
                             ORTE_ERROR_LOG(ret);
                             OBJ_RELEASE(answer);
+                            goto CLEANUP;
+                        }
+                        /* the vpid and nodename for this proc are no longer packed
+                         * in the ORTE_PROC packing routines to save space for other
+                         * uses, so we have to pack them separately
+                         */
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &proc->pid, 1, OPAL_PID))) {
+                            ORTE_ERROR_LOG(ret);
+                            goto CLEANUP;
+                        }
+                        if (NULL == proc->node) {
+                            nid = "UNKNOWN";
+                        } else {
+                            nid = proc->node->name;
+                        }
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &nid, 1, OPAL_STRING))) {
+                            ORTE_ERROR_LOG(ret);
                             goto CLEANUP;
                         }
                     }
