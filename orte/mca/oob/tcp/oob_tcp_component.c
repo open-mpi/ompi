@@ -1129,7 +1129,6 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
     /* get the peer object */
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
                                                          ui64, (void**)&pr) || NULL == pr) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         goto cleanup;
     }
     

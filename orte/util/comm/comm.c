@@ -56,6 +56,10 @@ static void quicktime_cb(int fd, short event, void *cbdata)
 	opal_event_free(quicktime);
 	quicktime = NULL;
     }
+
+    /* cancel the recv */
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL);
+
     error_exit = ORTE_ERR_SILENT;
     /* declare it fired */
     timer_fired = true;
