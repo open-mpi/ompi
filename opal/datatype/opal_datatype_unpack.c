@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,11 +30,6 @@
 
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
-
-extern bool opal_unpack_debug;
-#define DO_DEBUG(INST)  if( opal_unpack_debug ) { INST }
-#else
-#define DO_DEBUG(INST)
 #endif  /* OPAL_ENABLE_DEBUG */
 
 #include "opal/datatype/opal_datatype_checksum.h"

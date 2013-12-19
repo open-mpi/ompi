@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,15 +18,11 @@
 
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal_stdint.h"
 
 #if OPAL_ENABLE_DEBUG
 #include "opal/util/output.h"
-
-extern int opal_pack_debug;
-#define DO_DEBUG(INST)  if( opal_pack_debug ) { INST }
-#else
-#define DO_DEBUG(INST)
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
 
 /**
  * This function always work in local representation. This means no representation
@@ -68,8 +65,8 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
         return 1;  /* we're done */
     }
 
-    DO_DEBUG( opal_output( 0, "opal_convertor_raw( %p, {%p, %u}, %lu )\n", (void*)pConvertor,
-                           (void*)iov, *iov_count, (unsigned long)*length ); );
+    DO_DEBUG( opal_output( 0, "opal_convertor_raw( %p, {%p, %" PRIu32 "}, %"PRIsize_t " )\n", (void*)pConvertor,
+                           (void*)iov, *iov_count, *length ); );
 
     description = pConvertor->use_desc->desc;
 
