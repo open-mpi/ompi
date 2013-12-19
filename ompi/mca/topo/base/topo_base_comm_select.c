@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -262,11 +262,9 @@ static void fill_null_pointers(int type, mca_topo_base_module_t *module)
         if (NULL == module->topo.cart.cartdim_get) {
             module->topo.cart.cartdim_get = mca_topo_base_cartdim_get;
         }
-/*
         if (NULL == module->topo.cart.cart_map) {
             module->topo.cart.cart_map = mca_topo_base_cart_map;
         }
-*/
         if (NULL == module->topo.cart.cart_rank) {
             module->topo.cart.cart_rank = mca_topo_base_cart_rank;
         }
@@ -283,11 +281,9 @@ static void fill_null_pointers(int type, mca_topo_base_module_t *module)
         if (NULL == module->topo.graph.graph_get) {
             module->topo.graph.graph_get = mca_topo_base_graph_get;
         }
-/*
         if (NULL == module->topo.graph.graph_map) {
             module->topo.graph.graph_map = mca_topo_base_graph_map;
         }
-*/
         if (NULL == module->topo.graph.graphdims_get) {
             module->topo.graph.graphdims_get = mca_topo_base_graphdims_get;
         }
