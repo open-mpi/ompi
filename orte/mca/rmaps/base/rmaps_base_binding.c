@@ -173,17 +173,20 @@ static int bind_upwards(orte_job_t *jdata,
             }
             /* bozo check */
             if (NULL == proc->locale) {
-                opal_output(0, "BIND UPWARDS: LOCALE FOR PROC %s IS NULL", ORTE_NAME_PRINT(&proc->name));
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "BIND UPWARDS: LOCALE FOR PROC %s IS NULL",
+                                    ORTE_NAME_PRINT(&proc->name));
                 return ORTE_ERR_SILENT;
             }
             /* starting at the locale, move up thru the parents
              * to find the target object type
              */
             for (obj = proc->locale->parent; NULL != obj; obj = obj->parent) {
-                opal_output(0, "%s bind:upward target %s type %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            hwloc_obj_type_string(target),
-                            hwloc_obj_type_string(obj->type));
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "%s bind:upward target %s type %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    hwloc_obj_type_string(target),
+                                    hwloc_obj_type_string(obj->type));
                 if (target == obj->type) {
                     if (HWLOC_OBJ_CACHE == target && cache_level != obj->attr->cache.depth) {
                         continue;
