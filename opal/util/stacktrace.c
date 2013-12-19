@@ -140,7 +140,7 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 #ifdef FPE_FLTRES
             case FPE_FLTRES: si_code_str = "Floating point inexact result"; break;
 #endif
-#ifdef FBE_FLTINV
+#ifdef FPE_FLTINV
             case FPE_FLTINV: si_code_str = "Invalid floating point operation"; break;
 #endif
 #ifdef FPE_FLTSUB
@@ -333,7 +333,6 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     /* print out the stack trace */
     snprintf(print_buffer, sizeof(print_buffer), HOSTFORMAT,
              stacktrace_hostname, getpid());
-    print_buffer[sizeof(print_buffer) - 1] = '\0';
     ret = opal_backtrace_print(stderr, print_buffer, 2);
     if (OPAL_SUCCESS != ret) {
         write(fileno(stderr), unable_to_print_msg, strlen(unable_to_print_msg));
