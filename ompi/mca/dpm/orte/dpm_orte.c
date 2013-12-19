@@ -685,7 +685,7 @@ static int spawn(int count, const char *array_of_commands[],
     orte_app_context_t *app;
     bool local_spawn, non_mpi;
     bool local_bynode = false;
-    
+
     /* parse the info object */
     /* check potentially for:
        - "host": desired host where to spawn the processes
@@ -815,6 +815,11 @@ static int spawn(int count, const char *array_of_commands[],
                 app->add_host = opal_argv_split(host, ',');
             }
             
+            ompi_info_get (array_of_info[i], "env", sizeof(host)-1, host, &flag);
+            if ( flag ) {
+                opal_argv_append_nosize(&app->env, host);
+            }
+
             /* 'path', 'arch', 'file', 'soft'  -- to be implemented */ 
             
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
