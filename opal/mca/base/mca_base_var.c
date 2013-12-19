@@ -131,7 +131,7 @@ static int fixup_files(char **file_list, char * path, bool rel_path_search);
 static int read_files (char *file_list, opal_list_t *file_values);
 static int mca_base_var_cache_files (bool rel_path_search);
 static int var_set_initial (mca_base_var_t *var);
-static int var_get (int index, mca_base_var_t **var_out, bool original);
+static int var_get (int vari, mca_base_var_t **var_out, bool original);
 static int var_value_string (mca_base_var_t *var, char **value_string);
 
 /*
@@ -420,7 +420,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
 /*
  * Look up an integer MCA parameter.
  */
-int mca_base_var_get_value (int index, const void *value,
+int mca_base_var_get_value (int vari, const void *value,
                             mca_base_var_source_t *source,
                             const char **source_file)
 {
@@ -428,7 +428,7 @@ int mca_base_var_get_value (int index, const void *value,
     void **tmp = (void **) value;
     int ret;
 
-    ret = var_get (index, &var, true);
+    ret = var_get (vari, &var, true);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
@@ -623,13 +623,13 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
 /*
  * Set a variable
  */
-int mca_base_var_set_value (int index, const void *value, size_t size, mca_base_var_source_t source,
+int mca_base_var_set_value (int vari, const void *value, size_t size, mca_base_var_source_t source,
                             const char *source_file)
 {
     mca_base_var_t *var;
     int ret;
 
-    ret = var_get (index, &var, true);
+    ret = var_get (vari, &var, true);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
@@ -669,12 +669,12 @@ int mca_base_var_set_value (int index, const void *value, size_t size, mca_base_
 /*
  * Deregister a parameter
  */
-int mca_base_var_deregister(int index)
+int mca_base_var_deregister(int vari)
 {
     mca_base_var_t *var;
     int ret;
 
-    ret = var_get (index, &var, false);
+    ret = var_get (vari, &var, false);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
@@ -708,7 +708,7 @@ int mca_base_var_deregister(int index)
     return OPAL_SUCCESS;
 }
 
-static int var_get (int index, mca_base_var_t **var_out, bool original)
+static int var_get (int vari, mca_base_var_t **var_out, bool original)
 {
     mca_base_var_t *var;
 
@@ -721,11 +721,11 @@ static int var_get (int index, mca_base_var_t **var_out, bool original)
         return OPAL_ERROR;
     }
 
-    if (index < 0) {
+    if (vari < 0) {
         return OPAL_ERR_BAD_PARAM;
     }
 
-    var = opal_pointer_array_get_item (&mca_base_vars, index);
+    var = opal_pointer_array_get_item (&mca_base_vars, vari);
     if (NULL == var) {
         return OPAL_ERR_BAD_PARAM;
     }
@@ -759,7 +759,7 @@ int mca_base_var_env_name(const char *param_name,
 /*
  * Find the index for an MCA parameter based on its names.
  */
-static int var_find_by_name (const char *full_name, int *index, bool invalidok)
+static int var_find_by_name (const char *full_name, int *vari, bool invalidok)
 {
     mca_base_var_t *var;
     void *tmp;
@@ -774,7 +774,7 @@ static int var_find_by_name (const char *full_name, int *index, bool invalidok)
     (void) var_get ((int)(uintptr_t) tmp, &var, false);
 
     if (invalidok || VAR_IS_VALID(var[0])) {
-        *index = (int)(uintptr_t) tmp;
+        *vari = (int)(uintptr_t) tmp;
         return OPAL_SUCCESS;
     }
 
@@ -786,7 +786,7 @@ static int var_find (const char *project_name, const char *framework_name,
                      bool invalidok)
 {
     char *full_name;
-    int ret, index;
+    int ret, vari;
 
     ret = mca_base_var_generate_full_name4 (NULL, framework_name, component_name,
                                             variable_name, &full_name);
@@ -794,12 +794,17 @@ static int var_find (const char *project_name, const char *framework_name,
         return OPAL_ERROR;
     }
 
-    ret = var_find_by_name(full_name, &index, invalidok);
+    ret = var_find_by_name(full_name, &vari, invalidok);
 
     /* NTH: should we verify the name components match? */
 
     free (full_name);
-    return (OPAL_SUCCESS != ret) ? ret : index;
+
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    return vari;
 }
 
 /*
@@ -814,17 +819,17 @@ int mca_base_var_find (const char *project_name, const char *framework_name,
 /*
  * Find the index for an MCA parameter based on full name.
  */
-int mca_base_var_find_by_name (const char *full_name, int *index)
+int mca_base_var_find_by_name (const char *full_name, int *vari)
 {
-    return var_find_by_name (full_name, index, false);
+    return var_find_by_name (full_name, vari, false);
 }
 
-int mca_base_var_set_flag (int index, mca_base_var_flag_t flag, bool set)
+int mca_base_var_set_flag (int vari, mca_base_var_flag_t flag, bool set)
 {
     mca_base_var_t *var;
     int ret;
 
-    ret = var_get (index, &var, true);
+    ret = var_get (vari, &var, true);
     if (OPAL_SUCCESS != ret || VAR_IS_SYNONYM(var[0])) {
         return OPAL_ERR_BAD_PARAM;
     }
@@ -838,9 +843,9 @@ int mca_base_var_set_flag (int index, mca_base_var_flag_t flag, bool set)
 /*
  * Return info on a parameter at an index
  */
-int mca_base_var_get (int index, const mca_base_var_t **var)
+int mca_base_var_get (int vari, const mca_base_var_t **var)
 {
-    return var_get (index, (mca_base_var_t **) var, false);
+    return var_get (vari, (mca_base_var_t **) var, false);
 }
 
 /*
@@ -1682,7 +1687,12 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
 
         ret = (0 > ret) ? OPAL_ERR_OUT_OF_RESOURCE : OPAL_SUCCESS;
     } else {
-        ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->intval, &tmp);
+        /* we use an enumerator to handle string->bool and bool->string conversion */
+        if (MCA_BASE_VAR_TYPE_BOOL == var->mbv_type) {
+            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->boolval, &tmp);
+        } else {
+            ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->intval, &tmp);
+        }
 
         *value_string = strdup (tmp);
         if (NULL == value_string) {
@@ -1752,7 +1762,7 @@ int mca_base_var_get_count (void)
     return mca_base_var_count;
 }
 
-int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_type)
+int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_type)
 {
     const char *framework, *component, *full_name;
     int i, line_count, line = 0, enum_count = 0;
@@ -1761,7 +1771,7 @@ int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_ty
     mca_base_var_t *var, *original=NULL;
     mca_base_var_group_t *group;
 
-    ret = var_get(index, &var, false);
+    ret = var_get(vari, &var, false);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
