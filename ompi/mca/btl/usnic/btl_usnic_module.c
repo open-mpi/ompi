@@ -1447,7 +1447,7 @@ static int usnic_dereg_mr(void* reg_data,
     if (ud_reg->mr != NULL) {
         if (ibv_dereg_mr(ud_reg->mr)) {
             opal_output(0, "%s: error unpinning UD memory mr=%p: %s\n",
-                        __func__, ud_reg->mr, strerror(errno));
+                        __func__, (void*) ud_reg->mr, strerror(errno));
             return OMPI_ERROR;
         }
     }
