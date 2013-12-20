@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -60,13 +60,13 @@ static void opal_datatype_destruct( opal_datatype_t* datatype )
             datatype->desc.length = 0;
             datatype->desc.used   = 0;
         }
-        if( datatype->opt_desc.desc != NULL ) {
-            if( datatype->opt_desc.desc != datatype->desc.desc )
-                free( datatype->opt_desc.desc );
-            datatype->opt_desc.length = 0;
-            datatype->opt_desc.used   = 0;
-            datatype->opt_desc.desc   = NULL;
-        }
+    }
+    if( datatype->opt_desc.desc != NULL ) {
+        if( datatype->opt_desc.desc != datatype->desc.desc )
+            free( datatype->opt_desc.desc );
+        datatype->opt_desc.length = 0;
+        datatype->opt_desc.used   = 0;
+        datatype->opt_desc.desc   = NULL;
     }
     /**
      * As the default description and the optimized description can point to the
