@@ -855,7 +855,7 @@ main(int argc, char *argv[])
         bool have_static_lib;
         bool have_dyn_lib;
         bool use_static_libs;
-        char *filename;
+        char *filename1, *filename2;
         struct stat buf;
 
         opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].link_flags);
@@ -877,15 +877,15 @@ main(int argc, char *argv[])
 
         */
 
-        filename = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].static_lib_file, NULL );
-        if (0 == stat(filename, &buf)) {
+        filename1 = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].static_lib_file, NULL );
+        if (0 == stat(filename1, &buf)) {
             have_static_lib = true;
         } else {
             have_static_lib = false;
         }
 
-        filename = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].dyn_lib_file, NULL );
-        if (0 == stat(filename, &buf)) {
+        filename2 = opal_os_path( false, options_data[user_data_idx].path_libdir, options_data[user_data_idx].dyn_lib_file, NULL );
+        if (0 == stat(filename2, &buf)) {
             have_dyn_lib = true;
         } else {
             have_dyn_lib = false;
@@ -899,6 +899,13 @@ main(int argc, char *argv[])
                static or dynamic form. */
             if (have_static_lib || have_dyn_lib) {
                 use_static_libs = true;
+            } else {
+                fprintf(stderr, "The linkall option has failed as we were unable to find either static or dynamic libs\n"
+                        "Files looked for:\n  Static: %s\n  Dynamic: %s\n",
+                        filename1, filename2);
+                free(filename1);
+                free(filename2);
+                exit(1);
             }
         } else if (flags & COMP_WANT_STATIC) {
             /* If --static (or something like it) was specified, if we
@@ -920,6 +927,8 @@ main(int argc, char *argv[])
                 use_static_libs = true;
             }
         }
+        free(filename1);
+        free(filename2);
 
         if (use_static_libs) {
             opal_argv_insert(&exec_argv, exec_argc, options_data[user_data_idx].libs_static);
