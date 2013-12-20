@@ -134,10 +134,12 @@ static int bind_upwards(orte_job_t *jdata,
              * expected. Per hwloc, Linux memory binding is at the thread,
              * and not process, level. Thus, hwloc sets the "thisproc" flag
              * to "false" on all Linux systems, and uses the "thisthread" flag
-             * to indicate binding capability
+             * to indicate binding capability - don't warn if the user didn't
+             * specifically request binding
              */
             if (!support->membind->set_thisproc_membind &&
-                !support->membind->set_thisthread_membind) {
+                !support->membind->set_thisthread_membind &&
+                (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                 if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
                     membind_warned = true;
@@ -148,13 +150,11 @@ static int bind_upwards(orte_job_t *jdata,
             }
         }
 
-        if (!orte_hetero_nodes) {
-            /* if the nodes are homogeneous, we share topologies in order
-             * to save space, so we need to reset the usage info to reflect
-             * our own current state
-             */
-            reset_usage(node, jdata->jobid);
-        }
+        /* we share topologies in order
+         * to save space, so we need to reset the usage info to reflect
+         * our own current state
+         */
+        reset_usage(node, jdata->jobid);
 
         /* cycle thru the procs */
         for (j=0; j < node->procs->size; j++) {
@@ -203,9 +203,12 @@ static int bind_upwards(orte_job_t *jdata,
                         orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-available-cpus", true, node->name);
                         return ORTE_ERR_SILENT;
                     }
-                    /* error out if adding a proc would cause overload and that wasn't allowed */
+                    /* error out if adding a proc would cause overload and that wasn't allowed,
+                     * and it wasn't a default binding policy (i.e., the user requested it)
+                     */
                     if (ncpus < data->num_bound &&
-                        !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)) {
+                        !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
+                        (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                         orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
                                        opal_hwloc_base_print_binding(map->binding), node->name,
                                        data->num_bound, ncpus);
@@ -294,10 +297,12 @@ static int bind_downwards(orte_job_t *jdata,
              * expected. Per hwloc, Linux memory binding is at the thread,
              * and not process, level. Thus, hwloc sets the "thisproc" flag
              * to "false" on all Linux systems, and uses the "thisthread" flag
-             * to indicate binding capability
+             * to indicate binding capability - don't warn if the user didn't
+             * specifically request binding
              */
             if (!support->membind->set_thisproc_membind &&
-                !support->membind->set_thisthread_membind) {
+                !support->membind->set_thisthread_membind &&
+                (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                 if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
                     membind_warned = true;
@@ -309,13 +314,11 @@ static int bind_downwards(orte_job_t *jdata,
             }
         }
 
-        if (!orte_hetero_nodes) {
-            /* if the nodes are homogeneous, we share topologies in order
-             * to save space, so we need to reset the usage info to reflect
-             * our own current state
-             */
-            reset_usage(node, jdata->jobid);
-        }
+        /* we share topologies in order
+         * to save space, so we need to reset the usage info to reflect
+         * our own current state
+         */
+        reset_usage(node, jdata->jobid);
 
         /* cycle thru the procs */
         for (j=0; j < node->procs->size; j++) {
@@ -370,9 +373,12 @@ static int bind_downwards(orte_job_t *jdata,
                     trg_obj->userdata = data;
                 }
                 data->num_bound++;
-                /* error out if adding a proc would cause overload and that wasn't allowed */
+                /* error out if adding a proc would cause overload and that wasn't allowed,
+                 * and it wasn't a default binding policy (i.e., the user requested it)
+                 */
                 if (ncpus < data->num_bound &&
-                    !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)) {
+                    !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
+                    (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
                                    opal_hwloc_base_print_binding(map->binding), node->name,
                                    data->num_bound, ncpus);
@@ -458,10 +464,12 @@ static int bind_in_place(orte_job_t *jdata,
              * expected. Per hwloc, Linux memory binding is at the thread,
              * and not process, level. Thus, hwloc sets the "thisproc" flag
              * to "false" on all Linux systems, and uses the "thisthread" flag
-             * to indicate binding capability
+             * to indicate binding capability - don't warn if the user didn't
+             * specifically request binding
              */
             if (!support->membind->set_thisproc_membind &&
-                !support->membind->set_thisthread_membind) {
+                !support->membind->set_thisthread_membind &&
+                (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                 if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
                     membind_warned = true;
@@ -472,13 +480,11 @@ static int bind_in_place(orte_job_t *jdata,
             }
         }
 
-        if (!orte_hetero_nodes) {
-            /* if the nodes are homogeneous, we share topologies in order
-             * to save space, so we need to reset the usage info to reflect
-             * our own current state
-             */
-            reset_usage(node, jdata->jobid);
-        }
+        /* we share topologies in order
+         * to save space, so we need to reset the usage info to reflect
+         * our own current state
+         */
+        reset_usage(node, jdata->jobid);
 
         /* cycle thru the procs */
         for (j=0; j < node->procs->size; j++) {
@@ -511,9 +517,12 @@ static int bind_in_place(orte_job_t *jdata,
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-available-cpus", true, node->name);
                 return ORTE_ERR_SILENT;
             }
-            /* error out if adding a proc would cause overload and that wasn't allowed */
+            /* error out if adding a proc would cause overload and that wasn't allowed,
+             * and it wasn't a default binding policy (i.e., the user requested it)
+             */
             if (ncpus < data->num_bound &&
-                !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)) {
+                !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
+                (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
                                opal_hwloc_base_print_binding(map->binding), node->name,
                                data->num_bound, ncpus);

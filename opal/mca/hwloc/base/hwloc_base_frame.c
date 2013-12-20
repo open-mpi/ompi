@@ -189,9 +189,8 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
                 
         /* binding specification */
         if (NULL == opal_hwloc_base_binding_policy) {
+            /* default to bind-to core, and that no binding policy was specified */
             opal_hwloc_binding_policy = OPAL_BIND_TO_CORE;
-            /* mark that no binding policy was specified */
-            opal_hwloc_binding_policy &= ~OPAL_BIND_GIVEN;
         } else if (0 == strncasecmp(opal_hwloc_base_binding_policy, "none", strlen("none"))) {
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_NONE);
         } else {
