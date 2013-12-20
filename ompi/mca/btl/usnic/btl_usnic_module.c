@@ -2020,7 +2020,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
      * simply won't be used in that case.
      */
     module->first_pool = 16; /* 64 kiB */
-    module->last_pool = fls(module->super.btl_eager_limit-1);
+    module->last_pool = usnic_fls(module->super.btl_eager_limit-1);
     module->module_recv_buffers = calloc(module->last_pool+1,
             sizeof(ompi_free_list_t));
     assert(module->module_recv_buffers != NULL);

@@ -211,7 +211,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
                 /* See which data pool this should come from,
                  * or if it should be malloc()ed
                  */
-                pool = fls(chunk_hdr->ch_frag_size-1);
+                pool = usnic_fls(chunk_hdr->ch_frag_size-1);
                 if (pool >= module->first_pool &&
                         pool <= module->last_pool) {
                     ompi_free_list_item_t* item;
