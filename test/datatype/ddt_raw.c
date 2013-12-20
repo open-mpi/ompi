@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
@@ -133,6 +133,7 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
 	printf( "Not all raw description was been extracted (%lu bytes missing)\n",
 		(unsigned long) remaining_length );
     }
+    free(iov);
     return OMPI_SUCCESS;
 }
 
