@@ -120,6 +120,7 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         # Otherwise, if we try to AC RUN_IFELSE anything here in
         # configure, it might die because it can't find the libraries
         # we just linked against.
+        OPAL_VAR_SCOPE_PUSH([found_l token tmp dir])
         found_l=0
         eval "tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LIBS"
         for token in $tmp; do
@@ -138,6 +139,7 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                        ;;
                    esac
                done])
+        OPAL_VAR_SCOPE_POP
     ])
 
     AM_CONDITIONAL(OPAL_HAVE_HWLOC, test $OPAL_HAVE_HWLOC -eq 1)
