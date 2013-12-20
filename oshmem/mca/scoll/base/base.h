@@ -51,8 +51,6 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_scoll_base_framework;
 #define __SCOLL_FILE__ __FILE__
 #endif
 
-void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...);
-
 #ifdef OPAL_ENABLE_DEBUG
 #define SCOLL_VERBOSE(level, ...) \
     oshmem_output_verbose(level, oshmem_scoll_base_framework.framework_output, \

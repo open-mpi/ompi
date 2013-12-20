@@ -122,6 +122,7 @@ enum {
 #define MEMCHECKER(x)
 #endif /* OMPI_WANT_MEMCHECKER */
 
+void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...);
 
 #endif /* OSHMEM_CONSTANTS_H */
 
