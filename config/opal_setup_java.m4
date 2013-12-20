@@ -34,7 +34,7 @@ AC_DEFUN([OPAL_SETUP_JAVA_BANNER],[
 AC_DEFUN([OPAL_SETUP_JAVA],[
     AC_REQUIRE([OPAL_SETUP_JAVA_BANNER])
 
-    OPAL_VAR_SCOPE_PUSH([orte_java_happy bad found dir jnih PATH_save CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([opal_java_happy opal_java_bad opal_java_found opal_java_dir opal_java_jnih opal_java_PATH_save opal_java_CPPFLAGS_save])
     AC_ARG_ENABLE(java,
                   AC_HELP_STRING([--enable-java],
                                  [Enable Java-based support in the system - use this option to disable all Java-based compiler tests (default: enabled)]))
@@ -66,12 +66,14 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
 
         # Check for bozo case: either specify --with-jdk-dir or
         # (--with-jdk-bindir, --with-jdk-headers) -- not both.
-        bad=0
+        opal_java_bad=0
         AS_IF([test -n "$with_jdk_dir" -a -n "$with_jdk_bindir" -o \
-                    -n "$with_jdk_dir" -a -n "$with_jdk_headers"],[bad=1])
+                    -n "$with_jdk_dir" -a -n "$with_jdk_headers"],
+              [opal_java_bad=1])
         AS_IF([test -z "$with_jdk_bindir" -a -n "$with_jdk_headers" -o \
-                    -n "$with_jdk_bindir" -a -z "$with_jdk_headers"],[bad=1])
-        AS_IF([test "$bad" = "1"],
+                    -n "$with_jdk_bindir" -a -z "$with_jdk_headers"],
+              [opal_java_bad=1])
+        AS_IF([test "$opal_java_bad" = "1"],
               [AC_MSG_WARN([Either specify --with-jdk-dir or both of (--with-jdk_bindir, --with-jdk-headers) -- not both.])
                AC_MSG_ERROR([Cannot continue])])
 
@@ -90,73 +92,73 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
         AS_IF([test -z "$with_jdk_bindir"],
               [ # OS X Snow Leopard and Lion (10.6 and 10.7 -- did not
                 # check prior versions)
-               found=0
-               dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
+               opal_java_found=0
+               opal_java_dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
                AC_MSG_CHECKING([OSX locations])
-               AS_IF([test -d $dir],
-                     [AC_MSG_RESULT([found ($dir)])
-                      found=1
-                      with_jdk_headers=$dir 
+               AS_IF([test -d $opal_java_dir],
+                     [AC_MSG_RESULT([found ($opal_java_dir)])
+                      opal_java_found=1
+                      with_jdk_headers=$opal_java_dir 
                       with_jdk_bindir=/usr/bin],
                      [AC_MSG_RESULT([not found])])
 
-               if test "$found" = "0"; then
+               if test "$opal_java_found" = "0"; then
                    # Various Linux
                    if test -z "$JAVA_HOME"; then
-                       dir='/usr/lib/jvm/java-*-openjdk-*/include/'
+                       opal_java_dir='/usr/lib/jvm/java-*-openjdk-*/include/'
                    else
-                       dir=$JAVA_HOME/include
+                       opal_java_dir=$JAVA_HOME/include
                    fi
-                   jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
+                   opal_java_jnih=`ls $opal_java_dir/jni.h 2>/dev/null | head -n 1`
                    AC_MSG_CHECKING([Linux locations])
-                   AS_IF([test -r "$jnih"], 
-                         [with_jdk_headers=`dirname $jnih`
+                   AS_IF([test -r "$opal_java_jnih"], 
+                         [with_jdk_headers=`dirname $opal_java_jnih`
                           OPAL_WHICH([javac], [with_jdk_bindir])
                           AS_IF([test -n "$with_jdk_bindir"],
                                 [AC_MSG_RESULT([found ($with_jdk_headers)])
-                                 found=1
+                                 opal_java_found=1
                                  with_jdk_bindir=`dirname $with_jdk_bindir`],
                                 [with_jdk_headers=])],
-                         [dir='/usr/lib/jvm/default-java/include/'
-                          jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
-                          AS_IF([test -r "$jnih"], 
-                                [with_jdk_headers=`dirname $jnih`
+                         [opal_java_dir='/usr/lib/jvm/default-java/include/'
+                          opal_java_jnih=`ls $opal_java_dir/jni.h 2>/dev/null | head -n 1`
+                          AS_IF([test -r "$opal_java_jnih"], 
+                                [with_jdk_headers=`dirname $opal_java_jnih`
                                  OPAL_WHICH([javac], [with_jdk_bindir])
                                  AS_IF([test -n "$with_jdk_bindir"],
                                        [AC_MSG_RESULT([found ($with_jdk_headers)])
-                                        found=1
+                                        opal_java_found=1
                                         with_jdk_bindir=`dirname $with_jdk_bindir`],
                                        [with_jdk_headers=])],
                                  [AC_MSG_RESULT([not found])])])
                fi
 
-               if test "$found" = "0"; then
+               if test "$opal_java_found" = "0"; then
                    # Solaris
-                   dir=/usr/java
+                   opal_java_dir=/usr/java
                    AC_MSG_CHECKING([Solaris locations])
-                   AS_IF([test -d $dir -a -r "$dir/include/jni.h"], 
-                         [AC_MSG_RESULT([found ($dir)])
-                          with_jdk_headers=$dir/include
-                          with_jdk_bindir=$dir/bin
-                          found=1],
+                   AS_IF([test -d $opal_java_dir -a -r "$opal_java_dir/include/jni.h"], 
+                         [AC_MSG_RESULT([found ($opal_java_dir)])
+                          with_jdk_headers=$opal_java_dir/include
+                          with_jdk_bindir=$opal_java_dir/bin
+                          opal_java_found=1],
                          [AC_MSG_RESULT([not found])])
                fi
               ],
-              [found=1])
+              [opal_java_found=1])
 
-        if test "$found" = "1"; then
+        if test "$opal_java_found" = "1"; then
             OMPI_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
             OMPI_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])
 
             # Look for various Java-related programs
             opal_java_happy=no
-            PATH_save=$PATH
+            opal_java_PATH_save=$PATH
             AS_IF([test -n "$with_jdk_bindir" -a "$with_jdk_bindir" != "yes" -a "$with_jdk_bindir" != "no"], 
                   [PATH="$with_jdk_bindir:$PATH"])
             AC_PATH_PROG(JAVAC, javac)
             AC_PATH_PROG(JAVAH, javah)
             AC_PATH_PROG(JAR, jar)
-            PATH=$PATH_save
+            PATH=$opal_java_PATH_save
 
             # Check to see if we have all 3 programs.
             AS_IF([test -z "$JAVAC" -o -z "$JAVAH" -o -z "$JAR"],
@@ -167,7 +169,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
 
             # Look for jni.h
             AS_IF([test "$opal_java_happy" = "yes"],
-                  [CPPFLAGS_save=$CPPFLAGS
+                  [opal_java_CPPFLAGS_save=$CPPFLAGS
                    # silence a stupid Mac warning
                    CPPFLAGS="$CPPFLAGS -DTARGET_RT_MAC_CFM=0"
                    AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_headers" != "yes" -a "$with_jdk_headers" != "no"],
@@ -186,7 +188,7 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                           CPPFLAGS="$CPPFLAGS $OPAL_JDK_CPPFLAGS"])
                    AC_CHECK_HEADER([jni.h], [], 
                                    [opal_java_happy=no])
-                   CPPFLAGS=$CPPFLAGS_save
+                   CPPFLAGS=$opal_java_CPPFLAGS_save
                   ])
         else
             opal_java_happy=no;
