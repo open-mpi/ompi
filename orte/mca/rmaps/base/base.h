@@ -122,6 +122,12 @@ ORTE_DECLSPEC int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
                                                opal_list_t *nodes,
                                                bool remove);
 
+ORTE_DECLSPEC int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
+                                                     char **device, char *spec);
+ORTE_DECLSPEC int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
+                                                     orte_mapping_policy_t mapping,
+                                                     char *spec);
+
 END_C_DECLS
 
 #endif

@@ -12,11 +12,11 @@ int main(int argc, char* argv[])
     char hostname[512];
     pid_t pid;
 
-        pid = getpid();
-        printf("[pid %ld] starting up!\n", (long)pid);
+    pid = getpid();
+    printf("[pid %ld] starting up!\n", (long)pid);
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-printf("%d completed MPI_Init\n", rank);
+    printf("%d completed MPI_Init\n", rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_get_parent(&parent);
     /* If we get COMM_NULL back, then we're the parent */
@@ -24,7 +24,7 @@ printf("%d completed MPI_Init\n", rank);
         pid = getpid();
         printf("Parent [pid %ld] about to spawn!\n", (long)pid);
         if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, MPI_INFO_NULL, 
-                       0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
+                                                0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
             printf("Child failed to spawn\n");
             return rc;
         }

@@ -86,6 +86,8 @@ OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
 OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
                                                                           char *cpuset1, char *cpuset2);
 
+OPAL_DECLSPEC int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec);
+
 /**
  * Loads opal_hwloc_my_cpuset (global variable in
  * opal/mca/hwloc/hwloc.h) for this process.  opal_hwloc_my_cpuset
