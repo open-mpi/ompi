@@ -179,7 +179,7 @@ OPAL_DECLSPEC int opal_ifindextomac(int if_index, uint8_t if_mac[6]);
  *  @param if_index (IN)  Interface index
  *  @param if_mtu (OUT)   Interface's MTU
  */
-OPAL_DECLSPEC int opal_ifindextomtu(int if_index, int *if_mtu);
+OPAL_DECLSPEC int opal_ifindextomtu(int if_index, int *mtu);
 
 /**
  *  Lookup an interface by index and return its flags.

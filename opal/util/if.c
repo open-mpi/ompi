@@ -479,7 +479,7 @@ int opal_ifindextomac(int if_index, uint8_t mac[6])
  *  MTU assigned to the interface.
  */
 
-int opal_ifindextomtu(int if_index, int *if_mtu)
+int opal_ifindextomtu(int if_index, int *mtu)
 {
     opal_if_t* intf;
 
@@ -487,7 +487,7 @@ int opal_ifindextomtu(int if_index, int *if_mtu)
         intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
         intf = (opal_if_t*)opal_list_get_next(intf)) {
         if (intf->if_index == if_index) {
-            *if_mtu = intf->if_mtu;
+            *mtu = intf->ifmtu;
             return OPAL_SUCCESS;
         }
     }

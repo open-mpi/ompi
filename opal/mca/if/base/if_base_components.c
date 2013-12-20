@@ -86,5 +86,5 @@ static void opal_if_construct(opal_if_t *obj)
     obj->if_mask = 0;
     obj->if_bandwidth = 0;
     memset(obj->if_mac, 0, sizeof(obj->if_mac));
-    obj->if_mtu = 0;
+    obj->ifmtu = 0;
 }
