@@ -37,8 +37,8 @@ Error: You specified a jobid (%d) without also specifying a vpid.
 Error: The specified vpid (%d) is not valid for job %d.
 #
 [stale-hnp]
-An attempt was made to obtain ps information from a non-responsive
-HNP:
+An attempt was made to obtain ps information from at least
+one non-responsive HNP:
 
 HNP name: %s
 

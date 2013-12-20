@@ -223,7 +223,8 @@ main(int argc, char *argv[])
     opal_list_t hnp_list;
     opal_list_item_t* item = NULL;
     orte_ps_mpirun_info_t hnpinfo;
-    
+    bool reported = false;
+
     /***************
      * Initialize
      ***************/
@@ -277,9 +278,10 @@ main(int argc, char *argv[])
             /* this could be due to a stale session directory - if so,
              * just skip this entry, but don't abort
              */
-            if (ORTE_ERR_SILENT == ret) {
+            if (!reported && ORTE_ERR_SILENT == ret) {
                 orte_show_help("help-orte-ps.txt", "stale-hnp", true,
                                ORTE_NAME_PRINT(&(hnpinfo.hnp->name)));
+                reported = true;
                 continue;
             }
             goto cleanup;
@@ -850,7 +852,7 @@ static int gather_nodes(orte_ps_mpirun_info_t *hnpinfo) {
                                                              &hnpinfo->num_nodes, &hnpinfo->nodes))) {
         ORTE_ERROR_LOG(ret);
     }
-    
+    opal_output(0, "RECEIVED %d NODES", hnpinfo->num_nodes);
     return ret;
 }
 

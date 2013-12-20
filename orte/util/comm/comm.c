@@ -56,6 +56,10 @@ static void quicktime_cb(int fd, short event, void *cbdata)
 	opal_event_free(quicktime);
 	quicktime = NULL;
     }
+
+    /* cancel the recv */
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL);
+
     error_exit = ORTE_ERR_SILENT;
     /* declare it fired */
     timer_fired = true;
@@ -551,6 +555,24 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
         for (n=0; n < cnt_procs; n++) {
             cnt = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &proc_info[n], &cnt, ORTE_PROC))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&answer);
+                free(proc_info);
+                return ret;
+            }
+            /* the vpid and nodename for this proc are no longer packed
+             * in the ORTE_PROC packing routines to save space for other
+             * uses, so we have to unpack them separately
+             */
+            cnt = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &proc_info[n]->pid, &cnt, OPAL_PID))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&answer);
+                free(proc_info);
+                return ret;
+            }
+            cnt = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &proc_info[n]->nodename, &cnt, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_DESTRUCT(&answer);
                 free(proc_info);

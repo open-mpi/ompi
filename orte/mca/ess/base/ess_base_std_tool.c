@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,10 +35,12 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/base/base.h"
+#include "orte/mca/state/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
@@ -65,8 +68,30 @@ int orte_ess_base_tool_setup(void)
         orte_process_info.proc_type |= ORTE_PROC_NON_MPI;
     }
     
+    /* open and setup the state machine */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_select";
+        goto error;
+    }
+
     /* Setup the communication infrastructure */
-    
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_select";
+        goto error;
+    }
+
     /* Runtime Messaging Layer */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
