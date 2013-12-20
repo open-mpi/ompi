@@ -299,7 +299,7 @@ int mca_common_cuda_stage_one_init(void)
      * turned it off, we do not need to continue with any CUDA specific
      * initialization.  Do this after MCA parameter registration. */
     if (!ompi_mpi_cuda_support)
-        return;
+        return 1;
 
     if (0 != (retval = opal_lt_dlinit())) {
         if (OPAL_ERR_NOT_SUPPORTED == retval) {
