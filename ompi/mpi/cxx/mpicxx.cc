@@ -116,6 +116,16 @@ const Datatype LONG_DOUBLE_COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_ldblcplex));
 Intracomm COMM_WORLD(MPI_COMM_WORLD);
 Intracomm COMM_SELF(MPI_COMM_SELF);
 
+// Reported by Paul Hargrove: MIN and MAX are defined on OpenBSD, so
+// we need to #undef them.  See
+// http://www.open-mpi.org/community/lists/devel/2013/12/13521.php.
+#ifdef MAX
+#undef MAX
+#endif
+#ifdef MIN
+#undef MIN
+#endif
+
 // collective operations
 const Op MAX(MPI_MAX);
 const Op MIN(MPI_MIN);
