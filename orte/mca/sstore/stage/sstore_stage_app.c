@@ -466,6 +466,8 @@ static int pull_handle_info(orte_sstore_stage_app_snapshot_info_t *handle_info )
                          "sstore:stage:(app): pull() from %s -> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON)));
+#ifdef ENABLE_FT_FIXED
+    /* This is the old, now broken code */
     if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer(ORTE_PROC_MY_DAEMON,
                                                     &buffer,
                                                     ORTE_RML_TAG_SSTORE_INTERNAL,
@@ -475,6 +477,9 @@ static int pull_handle_info(orte_sstore_stage_app_snapshot_info_t *handle_info )
         goto cleanup;
     }
 
+#endif /* ENABLE_FT_FIXED */
+    orte_rml.recv_buffer_nb(ORTE_PROC_MY_DAEMON, ORTE_RML_TAG_SSTORE_INTERNAL,
+                            0, orte_rml_recv_callback, NULL);
     count = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SSTORE_STAGE_CMD))) {
         ORTE_ERROR_LOG(ret);

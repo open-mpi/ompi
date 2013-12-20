@@ -341,8 +341,6 @@ int local_coord_release_job(orte_jobid_t jobid)
  ******************/
 static int snapc_full_local_start_hnp_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
     /*
      * Global Coordinator: Do not register a Local listener
      */
@@ -360,20 +358,12 @@ static int snapc_full_local_start_hnp_listener(void)
     /*
      * Coordinator command listener
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                       ORTE_RML_TAG_SNAPC_FULL,
-                                                       ORTE_RML_PERSISTENT,
-                                                       snapc_full_local_hnp_cmd_recv,
-                                                       NULL))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SNAPC_FULL,
+                            ORTE_RML_PERSISTENT, snapc_full_local_hnp_cmd_recv, NULL);
 
     snapc_local_hnp_recv_issued = true;
-    
- cleanup:
-    return exit_status;
+
+    return ORTE_SUCCESS;
 }
 
 static int snapc_full_local_stop_hnp_listener(void)
@@ -400,8 +390,6 @@ static int snapc_full_local_stop_hnp_listener(void)
 
 static int snapc_full_local_start_app_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
     if (snapc_local_app_recv_issued) {
         return ORTE_SUCCESS;
     }
@@ -412,20 +400,12 @@ static int snapc_full_local_start_app_listener(void)
     /*
      * Coordinator command listener
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                       ORTE_RML_TAG_SNAPC,
-                                                       ORTE_RML_PERSISTENT,
-                                                       snapc_full_local_app_cmd_recv,
-                                                       NULL))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SNAPC,
+                            ORTE_RML_PERSISTENT, snapc_full_local_app_cmd_recv,
+                            NULL);
 
     snapc_local_app_recv_issued = true;
-
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 static int snapc_full_local_stop_app_listener(void)

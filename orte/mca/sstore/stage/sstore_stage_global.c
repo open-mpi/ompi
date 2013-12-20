@@ -992,26 +992,15 @@ static orte_sstore_stage_global_snapshot_info_t *find_handle_info(orte_sstore_ba
 
 static int sstore_stage_global_start_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
     if( is_global_listener_active ) {
         return ORTE_SUCCESS;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                       ORTE_RML_TAG_SSTORE_INTERNAL,
-                                                       ORTE_RML_PERSISTENT,
-                                                       sstore_stage_global_recv,
-                                                       NULL))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SSTORE_INTERNAL,
+                            ORTE_RML_PERSISTENT, sstore_stage_global_recv, NULL);
 
     is_global_listener_active = true;
-    
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 static int sstore_stage_global_stop_listener(void)

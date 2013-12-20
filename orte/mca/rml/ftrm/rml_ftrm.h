@@ -109,39 +109,20 @@ BEGIN_C_DECLS
                                      void* cbdata);
 
     /*
-     * Recv
-     */
-    int orte_rml_ftrm_recv(orte_process_name_t* peer,
-                           struct iovec *msg,
-                           int count,
-                           orte_rml_tag_t tag,
-                           int flags);
-
-    /*
      * Recv Non-blocking
      */
-    int orte_rml_ftrm_recv_nb(orte_process_name_t* peer,
-                              struct iovec* msg,
-                              int count,
+    void orte_rml_ftrm_recv_nb(orte_process_name_t* peer,
                               orte_rml_tag_t tag,
-                              int flags,
+                              bool persistent,
                               orte_rml_callback_fn_t cbfunc,
                               void* cbdata);
 
     /*
-     * Recv Buffer
-     */
-    int orte_rml_ftrm_recv_buffer(orte_process_name_t* peer,
-                                  opal_buffer_t *buf,
-                                  orte_rml_tag_t tag,
-                                  int flags);
-
-    /*
      * Recv Buffer Non-blocking
      */
-    int orte_rml_ftrm_recv_buffer_nb(orte_process_name_t* peer,
+    void orte_rml_ftrm_recv_buffer_nb(orte_process_name_t* peer,
                                      orte_rml_tag_t tag,
-                                     int flags,
+                                     bool persistent,
                                      orte_rml_buffer_callback_fn_t cbfunc,
                                      void* cbdata);
     

@@ -513,21 +513,11 @@ static int tool_finalize(void) {
 
 static int start_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                       ORTE_RML_TAG_MIGRATE,
-                                                       ORTE_RML_PERSISTENT,
-                                                       hnp_receiver,
-                                                       NULL))) {
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MIGRATE,
+                            ORTE_RML_PERSISTENT, hnp_receiver, NULL);
 
     listener_started = true;
-
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 static int stop_listener(void)

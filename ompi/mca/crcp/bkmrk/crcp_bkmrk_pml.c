@@ -4717,7 +4717,6 @@ static int ft_event_post_drain_acks(void)
     ompi_crcp_bkmrk_pml_drain_message_ack_ref_t * drain_msg_ack = NULL;
     opal_list_item_t* item = NULL;
     size_t req_size;
-    int ret;
 
     req_size  = opal_list_get_size(&drained_msg_ack_list);
     if(req_size <= 0) {
@@ -4739,17 +4738,8 @@ static int ft_event_post_drain_acks(void)
         drain_msg_ack = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t*)item;
 
         /* Post the receive */
-        if( OMPI_SUCCESS != (ret = ompi_rte_recv_buffer_nb( &drain_msg_ack->peer,
-                                                            OMPI_CRCP_COORD_BOOKMARK_TAG,
-                                                            0,
-                                                            drain_message_ack_cbfunc,
-                                                            NULL) ) ) {
-            opal_output(mca_crcp_bkmrk_component.super.output_handle,
-                        "crcp:bkmrk: %s <-- %s: Failed to post a RML receive to the peer\n",
-                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                        OMPI_NAME_PRINT(&(drain_msg_ack->peer)));
-            return ret;
-        }
+        ompi_rte_recv_buffer_nb(&drain_msg_ack->peer, OMPI_CRCP_COORD_BOOKMARK_TAG,
+                                0, drain_message_ack_cbfunc, NULL);
     }
 
     return OMPI_SUCCESS;
@@ -5322,26 +5312,14 @@ static int send_bookmarks(int peer_idx)
 static int recv_bookmarks(int peer_idx)
 {
     ompi_process_name_t peer_name;
-    int exit_status = OMPI_SUCCESS;
-    int ret;
 
     START_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
 
     peer_name.jobid  = OMPI_PROC_MY_NAME->jobid;
     peer_name.vpid   = peer_idx;
 
-    if ( 0 > (ret = ompi_rte_recv_buffer_nb(&peer_name,
-                                            OMPI_CRCP_COORD_BOOKMARK_TAG,
-                                            0,
-                                            recv_bookmarks_cbfunc,
-                                            NULL) ) ) {
-        opal_output(mca_crcp_bkmrk_component.super.output_handle,
-                    "crcp:bkmrk: recv_bookmarks: Failed to post receive bookmark from peer %s: Return %d\n",
-                    OMPI_NAME_PRINT(&peer_name),
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    ompi_rte_recv_buffer_nb(&peer_name, OMPI_CRCP_COORD_BOOKMARK_TAG,
+                            0, recv_bookmarks_cbfunc, NULL);
 
     ++total_recv_bookmarks;
 
@@ -5350,7 +5328,7 @@ static int recv_bookmarks(int peer_idx)
     /* JJH Doesn't make much sense to print this. The real bottleneck is always the send_bookmarks() */
     /*DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_EX_PEER_R, peer_idx, 1);*/
 
-    return exit_status;
+    return OMPI_SUCCESS;
 }
 
 static void recv_bookmarks_cbfunc(int status,
@@ -5616,6 +5594,8 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     /*
      * Recv the ACK msg
      */
+#ifdef ENABLE_FT_FIXED
+    /* This is the old, now broken code */
     if ( 0 > (ret = ompi_rte_recv_buffer(&peer_ref->proc_name, buffer,
                                          OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
@@ -5626,6 +5606,9 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
         exit_status = ret;
         goto cleanup;
     }
+#endif /* ENABLE_FT_FIXED */
+    ompi_rte_recv_buffer_nb(&peer_ref->proc_name, OMPI_CRCP_COORD_BOOKMARK_TAG, 0,
+                            orte_rml_recv_callback, NULL);
 
     UNPACK_BUFFER(buffer, recv_response, 1, OPAL_UINT32,
                   "crcp:bkmrk: send_msg_details: Failed to unpack the ACK from peer buffer.");
@@ -5790,6 +5773,8 @@ static int do_recv_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     /*
      * Recv the msg
      */
+#ifdef ENABLE_FT_FIXED
+    /* This is the old, now broken code */
     if ( 0 > (ret = ompi_rte_recv_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: do_recv_msg_detail: %s <-- %s Failed to receive buffer from peer. Return %d\n",
@@ -5799,6 +5784,8 @@ static int do_recv_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
         exit_status = ret;
         goto cleanup;
     }
+#endif /* ENABLE_FT_FIXED */
+    ompi_rte_recv_buffer_nb(&peer_ref->proc_name, OMPI_CRCP_COORD_BOOKMARK_TAG, 0, orte_rml_recv_callback, NULL);
 
     /* Pull out the communicator ID */
     UNPACK_BUFFER(buffer, (*comm_id), 1, OPAL_UINT32,

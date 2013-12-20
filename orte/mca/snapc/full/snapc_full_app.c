@@ -289,12 +289,16 @@ int app_coord_finalize()
          * need to wait until the checkpoint is finished before finishing.
          */
         OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+#ifdef ENABLE_FT_FIXED
+        /* This is the old, now broken code */
         if (0 > (ret = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             OBJ_DESTRUCT(&buffer);
             goto cleanup;
         }
+#endif /* ENABLE_FT_FIXED */
+        orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, NULL);
 
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
@@ -1534,12 +1538,16 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
             /*
              * Wait for a response regarding completion
              */
+#ifdef ENABLE_FT_FIXED
+            /* This is the old, now broken code */
             if (0 > (ret = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 OBJ_DESTRUCT(&buffer);
                 goto cleanup;
             }
+#endif /* ENABLE_FT_FIXED */
+            orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, NULL);
 
             count = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
@@ -1604,12 +1612,16 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
             /*
              * Wait for a response regarding completion
              */
+#ifdef ENABLE_FT_FIXED
+            /* This is the old, now broken code */
             if (0 > (ret = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 OBJ_DESTRUCT(&buffer);
                 goto cleanup;
             }
+#endif /* ENABLE_FT_FIXED */
+            orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, NULL);
 
             count = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {

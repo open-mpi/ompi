@@ -73,9 +73,7 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_send_buffer,
     orte_rml_ftrm_send_buffer_nb,
 
-    orte_rml_ftrm_recv,
     orte_rml_ftrm_recv_nb,
-    orte_rml_ftrm_recv_buffer,
     orte_rml_ftrm_recv_buffer_nb,
     orte_rml_ftrm_recv_cancel,
 

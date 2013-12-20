@@ -248,8 +248,6 @@ int orte_errmgr_base_migrate_update(int status)
  ********************/
 static int errmgr_base_tool_start_cmdline_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
-
     if (errmgr_cmdline_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
@@ -262,20 +260,12 @@ static int errmgr_base_tool_start_cmdline_listener(void)
      */
     errmgr_cmdline_sender.jobid = ORTE_JOBID_INVALID;
     errmgr_cmdline_sender.vpid  = ORTE_VPID_INVALID;
-    if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                       ORTE_RML_TAG_MIGRATE,
-                                                       0,
-                                                       errmgr_base_tool_cmdline_recv,
-                                                       NULL))) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MIGRATE,
+                            0, errmgr_base_tool_cmdline_recv, NULL);
 
     errmgr_cmdline_recv_issued = true;
 
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 
 
