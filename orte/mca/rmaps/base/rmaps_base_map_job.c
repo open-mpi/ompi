@@ -100,12 +100,18 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                             "mca:rmaps: nprocs %s",
                             ORTE_VPID_PRINT(nprocs));
         if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps mapping given - using default");
             map->mapping = orte_rmaps_base.mapping;
         } else {
             /* default based on number of procs */
             if (nprocs <= 2) {
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps mapping not given - using byslot");
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
             } else {
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps mapping not given - using bysocket");
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
             }
         }
@@ -141,8 +147,12 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
             /* default based on number of procs */
             if (nprocs <= 2) {
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps mapping not set by user - using byslot");
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
             } else {
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps mapping not set by user - using bysocket");
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
             }
         }
