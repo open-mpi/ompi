@@ -99,7 +99,6 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
     opal_convertor_t* convertor;
     TIMER_DATA_TYPE start, end;
     long total_time;
-    int i;
     uint32_t iov_count = iov_num;
     size_t max_data = 0, remaining_length;
 
