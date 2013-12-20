@@ -212,7 +212,6 @@ int opal_util_init_sys_limits(char **errmsg)
         }
     }
 
- cleanup:
     if (NULL != lim) {
         opal_argv_free(lim);
     }

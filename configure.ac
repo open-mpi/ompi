@@ -1093,6 +1093,16 @@ AC_INCLUDES_DEFAULT
 #include <sys/resource.h>
 #endif])
 
+#
+# Do we have RLIMIT_AS in <sys/resources.h>? (e.g., Solaris does not)
+#
+
+AC_CHECK_DECLS([RLIMIT_AS], [], [], [
+AC_INCLUDES_DEFAULT
+#if HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif])
+
 # checkpoint results
 AC_CACHE_SAVE
 
