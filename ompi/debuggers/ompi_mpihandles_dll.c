@@ -92,9 +92,7 @@ opal_condition_t ompi_request_cond;
 size_t ompi_request_waiting;
 opal_mutex_t ompi_request_lock;
 opal_mutex_t opal_event_lock;
-uint32_t opal_progress_recursion_depth_counter;
 int opal_progress_spin_count;
-volatile int32_t opal_progress_thread_count;
 bool opal_mutex_check_locks;
 bool opal_uses_threads;
 #endif /* defined(__SUNPRO_C) */
