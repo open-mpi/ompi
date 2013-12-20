@@ -131,6 +131,8 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     pid_t pid;
     bool running;
     int8_t flag;
+    int i;
+    char **env;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive processing msg",
@@ -178,7 +180,21 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             NULL == child_app->prefix_dir) {
             child_app->prefix_dir = strdup(app->prefix_dir);
         }
-                    
+
+        /* if the user asked to forward any envars, cycle through the app contexts
+         * in the comm_spawn request and add them
+         */
+        if (NULL != orte_forwarded_envars) {
+            for (i=0; i < jdata->apps->size; i++) {
+                if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                    continue;
+                }
+                env = opal_environ_merge(orte_forwarded_envars, app->env);
+                opal_argv_free(app->env);
+                app->env = env;
+            }
+        }
+
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive adding hosts",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

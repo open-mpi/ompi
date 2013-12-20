@@ -180,6 +180,7 @@ int orte_stat_history_size;
 
 /* envars to forward */
 char *orte_forward_envars = NULL;
+char **orte_forwarded_envars = NULL;
 
 /* map-reduce mode */
 bool orte_map_reduce = false;
