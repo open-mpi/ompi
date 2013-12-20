@@ -131,12 +131,14 @@ int opal_util_init_sys_limits(char **errmsg)
          * and max file size
          */
         if (0 == strcmp(lim[0], "1")) {
+#if HAVE_DECL_RLIMIT_NOFILE
             if (OPAL_SUCCESS !=
                 opal_setlimit(RLIMIT_NOFILE, "max", &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "openfiles", "max");
                 return OPAL_ERROR;
             }
             opal_sys_limits.num_files = value;
+#endif
 #if HAVE_DECL_RLIMIT_NPROC
             if (OPAL_SUCCESS != opal_setlimit(RLIMIT_NPROC, "max", &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "maxchildren", "max");
@@ -144,48 +146,60 @@ int opal_util_init_sys_limits(char **errmsg)
             }
             opal_sys_limits.num_procs = value;
 #endif
+#if HAVE_DECL_RLIMIT_FSIZE
             if (OPAL_SUCCESS !=
                 opal_setlimit(RLIMIT_FSIZE, "max", &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "filesize", "max");
                 return OPAL_ERROR;
             }
             opal_sys_limits.file_size = value;
+#endif
             break;
         } else if (0 == strcmp(lim[0], "0")) {
             /* user didn't want anything set */
-            goto cleanup;
+            break;
         }
- 
+
         /* process them separately */
         if (0 == strcmp(lim[0], "core")) {
+#if HAVE_DECL_RLIMIT_CORE
             if (OPAL_SUCCESS != opal_setlimit(RLIMIT_CORE, setlim, &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "openfiles", setlim);
                 return OPAL_ERROR;
             }
+#endif
         } else if (0 == strcmp(lim[0], "filesize")) {
+#if HAVE_DECL_RLIMIT_FSIZE
             if (OPAL_SUCCESS != opal_setlimit(RLIMIT_FSIZE, setlim, &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "filesize", setlim);
                 return OPAL_ERROR;
             }
             opal_sys_limits.file_size = value;
+#endif
         } else if (0 == strcmp(lim[0], "maxmem")) {
+#if HAVE_DECL_RLIMIT_AS
             if (OPAL_SUCCESS != opal_setlimit(RLIMIT_AS, setlim, &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "maxmem", setlim);
                 return OPAL_ERROR;
             }
+#endif
         } else if (0 == strcmp(lim[0], "openfiles")) {
+#if HAVE_DECL_RLIMIT_NOFILE
             if (OPAL_SUCCESS != opal_setlimit(RLIMIT_NOFILE, setlim, &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "openfiles", setlim);
                 return OPAL_ERROR;
             }
             opal_sys_limits.num_files = value;
+#endif
         } else if (0 == strcmp(lim[0], "stacksize")) {
+#if HAVE_DECL_RLIMIT_STACK
             if (OPAL_SUCCESS != opal_setlimit(RLIMIT_STACK, setlim, &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "stacksize", setlim);
                 return OPAL_ERROR;
             }
-#if HAVE_DECL_RLIMIT_NPROC
+#endif
         } else if (0 == strcmp(lim[0], "maxchildren")) {
+#if HAVE_DECL_RLIMIT_NPROC
             if (OPAL_SUCCESS != opal_setlimit(RLIMIT_NPROC, setlim, &value)) {
                 *errmsg = opal_show_help_string("help-opal-util.txt", "sys-limit-failed", true, "maxchildren", setlim);
                 return OPAL_ERROR;
@@ -198,7 +212,6 @@ int opal_util_init_sys_limits(char **errmsg)
         }
     }
 
- cleanup:
     if (NULL != lim) {
         opal_argv_free(lim);
     }

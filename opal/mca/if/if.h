@@ -95,7 +95,8 @@ typedef struct opal_if_t {
     uint32_t            if_mask;
     uint32_t            if_bandwidth;
     uint8_t             if_mac[6];
-    int                 if_mtu;
+    int                 ifmtu; /* Can't use if_mtu because of a
+                                  #define collision on some BSDs */
 } opal_if_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_if_t);
 
