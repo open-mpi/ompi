@@ -718,6 +718,7 @@ ORTE_DECLSPEC extern int orte_stat_history_size;
 
 /* envars to forward */
 ORTE_DECLSPEC extern char *orte_forward_envars;
+ORTE_DECLSPEC extern char **orte_forwarded_envars;
 
 /* map-reduce mode */
 ORTE_DECLSPEC extern bool orte_map_reduce;

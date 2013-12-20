@@ -1680,14 +1680,20 @@ static int create_app(int argc, char* argv[],
 
             if (NULL != strchr(param, '=')) {
                 opal_argv_append_nosize(&app->env, param);
+                /* save it for any comm_spawn'd apps */
+                opal_argv_append_nosize(&orte_forwarded_envars, param);
             } else {
                 value = getenv(param);
                 if (NULL != value) {
                     if (NULL != strchr(value, '=')) {
                         opal_argv_append_nosize(&app->env, value);
+                        /* save it for any comm_spawn'd apps */
+                        opal_argv_append_nosize(&orte_forwarded_envars, value);
                     } else {
                         asprintf(&value2, "%s=%s", param, value);
                         opal_argv_append_nosize(&app->env, value2);
+                        /* save it for any comm_spawn'd apps */
+                        opal_argv_append_nosize(&orte_forwarded_envars, value2);
                         free(value2);
                     }
                 } else {
@@ -1705,15 +1711,21 @@ static int create_app(int argc, char* argv[],
             if (NULL != strchr(vars[i], '=')) {
                 /* user supplied a value */
                 opal_argv_append_nosize(&app->env, vars[i]);
+                /* save it for any comm_spawn'd apps */
+                opal_argv_append_nosize(&orte_forwarded_envars, vars[i]);
             } else {
                 /* get the value from the environ */
                 value = getenv(vars[i]);
                 if (NULL != value) {
                     if (NULL != strchr(value, '=')) {
                         opal_argv_append_nosize(&app->env, value);
+                        /* save it for any comm_spawn'd apps */
+                        opal_argv_append_nosize(&orte_forwarded_envars, value);
                     } else {
                         asprintf(&value2, "%s=%s", vars[i], value);
                         opal_argv_append_nosize(&app->env, value2);
+                        /* save it for any comm_spawn'd apps */
+                        opal_argv_append_nosize(&orte_forwarded_envars, value2);
                         free(value2);
                     }
                 } else {
@@ -1729,6 +1741,8 @@ static int create_app(int argc, char* argv[],
     if (NULL != orterun_globals.path) {
         asprintf(&value, "OMPI_exec_path=%s", orterun_globals.path);
         opal_argv_append_nosize(&app->env, value);
+        /* save it for any comm_spawn'd apps */
+        opal_argv_append_nosize(&orte_forwarded_envars, value);
         free(value);
     }
 
