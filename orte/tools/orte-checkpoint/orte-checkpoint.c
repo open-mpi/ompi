@@ -833,7 +833,9 @@ static int notify_process_for_checkpoint(opal_crs_base_ckpt_options_t *options)
         goto cleanup;
     }
 
-    if ( 0 > (ret = orte_rml.send_buffer(&(orterun_hnp->name), buffer, ORTE_RML_TAG_CKPT, 0)) ) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(&(orterun_hnp->name), buffer,
+                                                       ORTE_RML_TAG_CKPT, hnp_receiver,
+                                                       NULL))) {
         exit_status = ret;
         goto cleanup;
     }

@@ -68,9 +68,7 @@ orte_rml_module_t orte_rml_ftrm_module = {
 
     orte_rml_ftrm_ping,
 
-    orte_rml_ftrm_send,
     orte_rml_ftrm_send_nb,
-    orte_rml_ftrm_send_buffer,
     orte_rml_ftrm_send_buffer_nb,
 
     orte_rml_ftrm_recv_nb,

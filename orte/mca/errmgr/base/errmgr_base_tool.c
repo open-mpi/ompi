@@ -221,7 +221,9 @@ int orte_errmgr_base_migrate_update(int status)
         goto cleanup;
     }
 
-    if (0 > (ret = orte_rml.send_buffer(&errmgr_cmdline_sender, loc_buffer, ORTE_RML_TAG_MIGRATE, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(&errmgr_cmdline_sender,
+                                                       loc_buffer, ORTE_RML_TAG_MIGRATE,
+                                                       orte_rml_send_callback, NULL))) {
         opal_output(orte_errmgr_base_framework.framework_output,
                     "errmgr:base:tool:update() Error: Send (status) Failure (ret = %d)\n",
                     ret);

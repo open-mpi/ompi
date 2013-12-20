@@ -1345,7 +1345,9 @@ static int snapc_full_local_update_coord(int state, bool quick)
     }
 
  send_data:
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+                                                       ORTE_RML_TAG_SNAPC_FULL,
+                                                       orte_rml_send_callback, 0))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;

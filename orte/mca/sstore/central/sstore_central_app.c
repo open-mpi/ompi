@@ -462,7 +462,9 @@ static int pull_handle_info(orte_sstore_central_app_snapshot_info_t *handle_info
         goto cleanup;
     }
 
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buffer, ORTE_RML_TAG_SSTORE_INTERNAL, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, &buffer,
+                                                       ORTE_RML_TAG_SSTORE_INTERNAL,
+                                                       orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -586,7 +588,9 @@ static int push_handle_info(orte_sstore_central_app_snapshot_info_t *handle_info
         }
     }
 
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buffer, ORTE_RML_TAG_SSTORE_INTERNAL, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, &buffer,
+                                                       ORTE_RML_TAG_SSTORE_INTERNAL,
+                                                       orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;

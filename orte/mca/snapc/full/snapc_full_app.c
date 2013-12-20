@@ -197,7 +197,9 @@ int app_coord_init()
             goto cleanup;
         }
 
-        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+                                                           ORTE_RML_TAG_SNAPC_FULL,
+                                                           orte_rml_send_callback, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             OBJ_DESTRUCT(&buffer);
@@ -272,7 +274,9 @@ int app_coord_finalize()
             goto cleanup;
         }
 
-        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+                                                           ORTE_RML_TAG_SNAPC_FULL,
+                                                           orte_rml_send_callback, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             OBJ_DESTRUCT(&buffer);
@@ -838,7 +842,9 @@ static int snapc_full_app_finished_msg(int cr_state) {
         goto cleanup;
     }
 
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buffer, ORTE_RML_TAG_SNAPC, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, &buffer,
+                                                       ORTE_RML_TAG_SNAPC,
+                                                       orte_rml_send_callback, 0))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -1271,7 +1277,9 @@ static int snapc_full_app_ft_event_update_process_info(orte_process_name_t proc,
     }
 #endif
 
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buffer, ORTE_RML_TAG_SNAPC, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, &buffer,
+                                                       ORTE_RML_TAG_SNAPC,
+                                                       orte_rml_send_callback, 0))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -1484,7 +1492,9 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
             }
         }
 
-        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+                                                           ORTE_RML_TAG_SNAPC_FULL,
+                                                           orte_rml_send_callback, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             OBJ_DESTRUCT(&buffer);

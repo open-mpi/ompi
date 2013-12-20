@@ -1243,8 +1243,11 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
             goto cleanup;
         }
 
-        if (0 > (ret = orte_rml.send_buffer(sender, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, &buffer,
+                                                           ORTE_RML_TAG_SNAPC_FULL,
+                                                           orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
+            /* FIXME: buffer not cleaned up */
             goto cleanup;
         }
         OBJ_DESTRUCT(&buffer);
@@ -1296,8 +1299,11 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
             goto cleanup;
         }
 
-        if (0 > (ret = orte_rml.send_buffer(sender, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, &buffer,
+                                                           ORTE_RML_TAG_SNAPC_FULL,
+                                                           orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
+            /* FIXME: buffer not cleaned up */
             goto cleanup;
         }
         OBJ_DESTRUCT(&buffer);
@@ -1437,8 +1443,11 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
             goto cleanup;
         }
 
-        if (0 > (ret = orte_rml.send_buffer(sender, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, &buffer,
+                                                           ORTE_RML_TAG_SNAPC_FULL,
+                                                           orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
+            /* FIXME: buffer not cleaned up */
             goto cleanup;
         }
         OBJ_DESTRUCT(&buffer);

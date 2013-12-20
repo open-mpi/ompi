@@ -5077,7 +5077,7 @@ static int wait_quiesce_drained(void)
                                  "crcp:bkmrk: %s --> %s Send ACKs to Peer\n",
                                  OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                                  OMPI_NAME_PRINT(&(cur_peer_ref->proc_name)) ));
-            
+
             /* Send All Clear to Peer */
             if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
                 exit_status = OMPI_ERROR;
@@ -5087,7 +5087,9 @@ static int wait_quiesce_drained(void)
             PACK_BUFFER(buffer, response, 1, OPAL_SIZE, "");
 
             /* JJH - Performance Optimization? - Why not post all isends, then wait? */
-            if ( 0 > ( ret = ompi_rte_send_buffer(&(cur_peer_ref->proc_name), buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
+            if (ORTE_SUCCESS != (ret = ompi_rte_send_buffer_nb(&(cur_peer_ref->proc_name),
+                                                               buffer, OMPI_CRCP_COORD_BOOKMARK_TAG,
+                                                               orte_rml_send_callback, NULL))) {
                 exit_status = ret;
                 goto cleanup;
             }
@@ -5288,7 +5290,9 @@ static int send_bookmarks(int peer_idx)
     PACK_BUFFER(buffer, (peer_ref->total_msgs_recvd),     1, OPAL_UINT32,
                 "crcp:bkmrk: send_bookmarks: Unable to pack total_msgs_recvd");
 
-    if ( 0 > ( ret = ompi_rte_send_buffer(&peer_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
+    if (ORTE_SUCCESS != (ret = ompi_rte_send_buffer_nb(&peer_name, buffer,
+                                                       OMPI_CRCP_COORD_BOOKMARK_TAG,
+                                                       orte_rml_send_callback, NULL))) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: send_bookmarks: Failed to send bookmark to peer %s: Return %d\n",
                     OMPI_NAME_PRINT(&peer_name),
@@ -5567,13 +5571,14 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     /*
      * Do the send...
      */
-    if ( 0 > ( ret = ompi_rte_send_buffer(&peer_ref->proc_name, buffer,
-                                          OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
+    if (ORTE_SUCCESS != (ret = ompi_rte_send_buffer_nb(&peer_ref->proc_name, buffer,
+                                                       OMPI_CRCP_COORD_BOOKMARK_TAG,
+                                                       orte_rml_send_callback, NULL))) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: do_send_msg_detail: Unable to send message details to peer %s: Return %d\n",
                     OMPI_NAME_PRINT(&peer_ref->proc_name),
                     ret);
-            
+
         exit_status = OMPI_ERROR;
         goto cleanup;
     }
@@ -6185,8 +6190,10 @@ static int do_recv_msg_detail_resp(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                 "crcp:bkmrk: recv_msg_details: Unable to ask peer for more messages");
     PACK_BUFFER(buffer, total_found, 1, OPAL_UINT32,
                 "crcp:bkmrk: recv_msg_details: Unable to ask peer for more messages");
-        
-    if ( 0 > ( ret = ompi_rte_send_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
+
+    if (ORTE_SUCCESS != (ret = ompi_rte_send_buffer_nb(&peer_ref->proc_name, buffer,
+                                                       OMPI_CRCP_COORD_BOOKMARK_TAG,
+                                                       orte_rml_send_callback, NULL))) {
         opal_output(mca_crcp_bkmrk_component.super.output_handle,
                     "crcp:bkmrk: recv_msg_detail_resp: Unable to send message detail response to peer %s: Return %d\n",
                     OMPI_NAME_PRINT(&peer_ref->proc_name),
