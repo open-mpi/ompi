@@ -21,6 +21,7 @@
 
 #include "opal_config.h"
 #include "opal_ddt_lib.h"
+#include "opal/runtime/opal.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_internal.h"
 #include "opal/datatype/opal_convertor.h"
@@ -541,6 +542,6 @@ int main( int argc, char* argv[] )
 
     /* clean-ups all data allocations */
     opal_datatype_finalize();
-
+    opal_finalize();
     return OPAL_SUCCESS;
 }

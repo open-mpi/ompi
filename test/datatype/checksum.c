@@ -48,7 +48,7 @@ int main( int argc, char* argv[] )
     sparse_array = (my_data_t*)malloc( sizeof(my_data_t) * SIZE );
     array = (int*)malloc( sizeof(int) * SIZE );
     packed = (int*)malloc( sizeof(int) * SIZE );
-    
+   
     /**
      * Initialize the sparse data using the index.
      */
@@ -142,5 +142,13 @@ int main( int argc, char* argv[] )
         manual_checksum = OPAL_CSUM_PARTIAL( packed, sizeof(int) * SIZE, &ui1, &ui2 );
     }
     printf( "manual checksum     %x\n", manual_checksum );
+
+    free(sparse_array);
+    free(array);
+    free(packed);
+
+    /* clean-ups all data allocations */
+    ompi_datatype_finalize();
+
     return 0;
 }

@@ -452,6 +452,8 @@ int32_t ompi_datatype_init( void )
 {
     int32_t i;
 
+    opal_datatype_init();
+
     /* Create the f2c translation table */
     OBJ_CONSTRUCT(&ompi_datatype_f_to_c_table, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_datatype_f_to_c_table,
@@ -623,7 +625,7 @@ int32_t ompi_datatype_init( void )
     /**
      * Now make sure all non-contiguous types are marked as such.
      */
-    for( i = 0; i < ompi_mpi_offset.dt.d_f_to_c_index; i++ ) {
+    for( i = 0; i < ompi_mpi_count.dt.d_f_to_c_index; i++ ) {
         opal_datatype_t* datatype = (opal_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
 
         if( (datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size ) {
@@ -632,7 +634,6 @@ int32_t ompi_datatype_init( void )
             datatype->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
         }
     }
-
     ompi_datatype_default_convertors_init();
     return OMPI_SUCCESS;
 }
@@ -645,15 +646,12 @@ int32_t ompi_datatype_finalize( void )
      */
 
     /* As they are statically allocated they cannot be released.
-     * XXX But we can call OBJ_DESTRUCT, just to free all internally allocated ressources.
+     * But we can call OBJ_DESTRUCT, just to free all internally allocated ressources.
      */
-#if 0
-    int i;
-
-    for( i = 0; i < OMPI_DATATYPE_MAX_PREDEFINED; i++ ) {
-        OBJ_DESTRUCT( ompi_datatype_basicDatatypes[i] );
+    for( int i = 0; i < ompi_mpi_count.dt.d_f_to_c_index; i++ ) {
+        opal_datatype_t* datatype = (opal_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
+        OBJ_DESTRUCT(datatype);
     }
-#endif /* 0 */
 
     /* Get rid of the Fortran2C translation table */
     OBJ_DESTRUCT(&ompi_datatype_f_to_c_table);

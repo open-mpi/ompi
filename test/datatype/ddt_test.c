@@ -20,6 +20,7 @@
 
 #include "ompi_config.h"
 #include "ddt_lib.h"
+#include "opal/runtime/opal.h"
 #include "opal/datatype/opal_convertor.h"
 #include <time.h>
 #include <stdlib.h>
@@ -113,6 +114,23 @@ static int test_upper( unsigned int length )
 }
 
 /**
+ * Computing the correct buffer length for moving a multiple of a datatype
+ * is not an easy task. Define a function to centralize the complexity in a
+ * single location.
+ */
+size_t compute_buffer_length(ompi_datatype_t* pdt, int count)
+{
+    MPI_Aint extent, lb, true_extent, true_lb;
+    size_t length;
+
+    ompi_datatype_get_extent(pdt, &lb, &extent);
+    ompi_datatype_get_true_extent(pdt, &true_lb, &true_extent); (void)true_lb;
+    length = true_lb + true_extent + (count - 1) * extent;
+
+    return  length;
+}
+
+/**
  *  Conversion function. They deal with data-types in 3 ways, always making local copies.
  * In order to allow performance testings, there are 3 functions:
  *  - one copying directly from one memory location to another one using the
@@ -123,22 +141,19 @@ static int test_upper( unsigned int length )
  */
 static int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
 {
-    MPI_Aint extent;
     void *pdst, *psrc;
     TIMER_DATA_TYPE start, end;
     long total_time;
+    size_t length;
 
-    ompi_datatype_type_extent( pdt, &extent );
+    length = compute_buffer_length(pdt, count);
 
-    pdst = malloc( extent * count );
-    psrc = malloc( extent * count );
+    pdst = malloc(length);
+    psrc = malloc(length);
 
-    {
-        int i;
-        for( i = 0; i < (count * extent); i++ )
-            ((char*)psrc)[i] = i % 128 + 32;
-    }
-    memset( pdst, 0, count * extent );
+    for( int i = 0; i < length; i++ )
+	((char*)psrc)[i] = i % 128 + 32;
+    memset(pdst, 0, length);
 
     cache_trash();  /* make sure the cache is useless */
 
@@ -150,8 +165,8 @@ static int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
     GET_TIME( end );
     total_time = ELAPSED_TIME( start, end );
     printf( "direct local copy in %ld microsec\n", total_time );
-    free( pdst );
-    free( psrc );
+    free(pdst);
+    free(psrc);
 
     return OMPI_SUCCESS;
 }
@@ -161,7 +176,6 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
                                       ompi_datatype_t* recv_type, int recv_count,
                                       int chunk )
 {
-    MPI_Aint send_extent, recv_extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
@@ -170,21 +184,18 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
     int32_t length = 0, done1 = 0, done2 = 0;
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
+    size_t slength, rlength;
 
-    ompi_datatype_type_extent( send_type, &send_extent );
-    ompi_datatype_type_extent( recv_type, &recv_extent );
-
-    pdst  = malloc( recv_extent * recv_count );
-    psrc  = malloc( send_extent * send_count );
+    rlength = compute_buffer_length(recv_type, recv_count);
+    slength = compute_buffer_length(send_type, send_count);
+    pdst  = malloc( rlength );
+    psrc  = malloc( slength );
     ptemp = malloc( chunk );
 
-    /* fill up the receiver with ZEROS */
-    {
-        int i;
-        for( i = 0; i < (send_count * send_extent); i++ )
+    /* initialize the buffers to prevent valgrind from complaining */
+    for( int i = 0; i < slength; i++ )
             ((char*)psrc)[i] = i % 128 + 32;
-    }
-    memset( pdst, 0, recv_count * recv_extent );
+    memset(pdst, 0, rlength);
 
     send_convertor = opal_convertor_create( remote_arch, 0 );
     if( OPAL_SUCCESS != opal_convertor_prepare_for_send( send_convertor, &(send_type->super), send_count, psrc ) ) {
@@ -246,7 +257,6 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
 
 static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 {
-    MPI_Aint extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
     opal_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
@@ -256,17 +266,14 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
-    ompi_datatype_type_extent( pdt, &extent );
+    max_data = compute_buffer_length(pdt, count);
 
-    pdst  = malloc( extent * count );
-    psrc  = malloc( extent * count );
-    ptemp = malloc( chunk );
+    pdst  = malloc(max_data);
+    psrc  = malloc(max_data);
+    ptemp = malloc(chunk);
 
-    {
-        int i = 0;
-        for( ; i < (count * extent); ((char*)psrc)[i] = i % 128 + 32, i++ );
-    }
-    memset( pdst, 0, count * extent );
+    for( int i = 0; i < length; ((char*)psrc)[i] = i % 128 + 32, i++ );
+    memset( pdst, 0, length );
 
     send_convertor = opal_convertor_create( remote_arch, 0 );
     if( OPAL_SUCCESS != opal_convertor_prepare_for_send( send_convertor, &(pdt->super), count, psrc ) ) {
@@ -336,6 +343,7 @@ int main( int argc, char* argv[] )
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500;
 
+    opal_init_util(&argc, &argv);
     ompi_datatype_init();
 
     /**
@@ -512,6 +520,7 @@ int main( int argc, char* argv[] )
     pdt = test_create_blacs_type();
     if( outputFlags & CHECK_PACK_UNPACK ) {
         ompi_datatype_dump( pdt );
+        local_copy_ddt_count(pdt, 2);
         local_copy_ddt_count(pdt, 4500);
         local_copy_with_convertor( pdt, 4500, 956 );
         local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 956 );

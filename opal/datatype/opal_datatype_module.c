@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -201,6 +201,11 @@ int32_t opal_datatype_init( void )
 
     opal_arch_compute_local_id( &opal_local_arch );
 
+    /**
+     * Force he initialization of the opal_datatype_t class. This will allow us to
+     * call OBJ_DESTRUCT without going too deep in the initialization process.
+     */
+    opal_class_initialize(OBJ_CLASS(opal_datatype_t));
     for( i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++ ) {
         datatype = opal_datatype_basicDatatypes[i];
 

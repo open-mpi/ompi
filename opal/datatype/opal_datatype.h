@@ -114,8 +114,8 @@ struct opal_datatype_t {
     OPAL_PTRDIFF_TYPE  lb;       /**< lower bound in memory */
     OPAL_PTRDIFF_TYPE  ub;       /**< upper bound in memory */
     /* --- cacheline 1 boundary (64 bytes) --- */
-    uint32_t           align;    /**< data should be aligned to */
     size_t             nbElems;  /**< total number of elements inside the datatype */
+    uint32_t           align;    /**< data should be aligned to */
 
     /* Attribute fields */
     char               name[OPAL_MAX_OBJECT_NAME];  /**< name of the datatype */
