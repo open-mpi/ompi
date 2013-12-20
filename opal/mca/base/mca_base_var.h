@@ -462,22 +462,22 @@ OPAL_DECLSPEC int mca_base_var_register_synonym (int synonym_for, const char *pr
 /**
  * Deregister a MCA variable or synonym
  *
- * @param index Index returned from mca_base_var_register() or
+ * @param vari Index returned from mca_base_var_register() or
  * mca_base_var_register_synonym().
  *
- * Deregistering a variable does not free the index or any memory assoicated
- * with the variable. All memory will be freed and the index released when
+ * Deregistering a variable does not free the variable or any memory assoicated
+ * with it. All memory will be freed and the variable index released when
  * mca_base_var_finalize() is called.
  *
  * If an enumerator is associated with this variable it will be dereferenced.
  */
-OPAL_DECLSPEC int mca_base_var_deregister(int index);
+OPAL_DECLSPEC int mca_base_var_deregister(int vari);
 
 
 /**
  * Get the current value of an MCA variable.
  *
- * @param[in] index Index of variable
+ * @param[in] vari Index of variable
  * @param[in,out] value Pointer to copy the value to. Can be NULL.
  * @param[in,out] value_size Size of memory pointed to by value.
  * copied size will be returned in value_size.
@@ -494,14 +494,14 @@ OPAL_DECLSPEC int mca_base_var_deregister(int index);
  * Note: The value can be changed by the registering code without using
  * the mca_base_var_* interface so the source may be incorrect.
  */
-OPAL_DECLSPEC int mca_base_var_get_value (int index, const void *value,
+OPAL_DECLSPEC int mca_base_var_get_value (int vari, const void *value,
                                           mca_base_var_source_t *source,
                                           const char **source_file);
 
 /**
  * Sets an "override" value for an integer MCA variable.
  *
- * @param[in] index Index of MCA variable to set
+ * @param[in] vari Index of MCA variable to set
  * @param[in] value Pointer to the value to set. Should point to
  * a char * for string variables or a int * for integer variables.
  * @param[in] size Size of value.
@@ -519,7 +519,7 @@ OPAL_DECLSPEC int mca_base_var_get_value (int index, const void *value,
  * a synonym the variable the synonym represents) if the value is
  * settable.
  */
-OPAL_DECLSPEC int mca_base_var_set_value (int index, const void *value, size_t size,
+OPAL_DECLSPEC int mca_base_var_set_value (int vari, const void *value, size_t size,
                                           mca_base_var_source_t source,
                                           const char *source_file);
 
@@ -548,7 +548,7 @@ OPAL_DECLSPEC int mca_base_var_env_name(const char *param_name,
  * @param param_name     Name of the variable.
  *
  * @retval OPAL_ERROR If the variable was not found.
- * @retval index If the variable was found.
+ * @retval vari If the variable was found.
  *
  * It is not always convenient to widely propagate a variable's index
  * value, or it may be necessary to look up the variable from a
@@ -565,11 +565,11 @@ OPAL_DECLSPEC int mca_base_var_find (const char *project_name,
  * Find the index for a variable based on its full name
  *
  * @param full_name [in] Full name of the variable
- * @param index [out]    Index of the variable
+ * @param vari [out]    Index of the variable
  *
  * See mca_base_var_find().
  */
-OPAL_DECLSPEC int mca_base_var_find_by_name (const char *full_name, int *index);
+OPAL_DECLSPEC int mca_base_var_find_by_name (const char *full_name, int *vari);
 
 /**
  * Check that two MCA variables were not both set to non-default
@@ -610,7 +610,7 @@ OPAL_DECLSPEC int mca_base_var_check_exclusive (const char *project,
 /**
  * Set or unset a flag on a variable.
  *
- * @param[in] index Index of variable
+ * @param[in] vari Index of variable
  * @param[in] flag Flag(s) to set or unset.
  * @param[in] set Boolean indicating whether to set flag(s).
  *
@@ -618,13 +618,13 @@ OPAL_DECLSPEC int mca_base_var_check_exclusive (const char *project,
  * @returns OPAL_ERR_BAD_PARAM If the variable is not registered.
  * @returns OPAL_ERROR Otherwise
  */
-OPAL_DECLSPEC int mca_base_var_set_flag(int index, mca_base_var_flag_t flag,
+OPAL_DECLSPEC int mca_base_var_set_flag(int vari, mca_base_var_flag_t flag,
                                         bool set);
 
 /**
  * Obtain basic info on a single variable (name, help message, etc)
  *
- * @param[in] index Valid variable index.
+ * @param[in] vari Valid variable index.
  * @param[out] var Storage for the variable pointer.
  *
  * @retval OPAL_SUCCESS Upon success.
@@ -633,7 +633,7 @@ OPAL_DECLSPEC int mca_base_var_set_flag(int index, mca_base_var_flag_t flag,
  * The returned pointer belongs to the MCA variable system. Do not
  * modify/free/retain the pointer.
  */
-OPAL_DECLSPEC int mca_base_var_get (int index, const mca_base_var_t **var);
+OPAL_DECLSPEC int mca_base_var_get (int vari, const mca_base_var_t **var);
 
 /**
  * Obtain the number of variables that have been registered.
@@ -696,14 +696,14 @@ typedef enum {
 /**
  * Dump strings describing the MCA variable at an index.
  *
- * @param[in]  index       Variable index
+ * @param[in]  vari        Variable index
  * @param[out] out         Array of strings describing this variable
  * @param[in]  output_type Type of output desired
  *
  * This function returns an array of strings describing the variable. All strings
  * and the array must be freed by the caller.
  */
-OPAL_DECLSPEC int mca_base_var_dump(int index, char ***out, mca_base_var_dump_type_t output_type);
+OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_type);
 
 END_C_DECLS
 
