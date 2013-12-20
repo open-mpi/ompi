@@ -15,8 +15,11 @@
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
 
-/* Linux kernel fls() */
-static __always_inline int fls(int x)
+/* avoid "defined but not used" warnings */
+static int __opal_attribute_always_inline__ usnic_fls(int x)
+    __opal_attribute_unused__;
+
+static int __opal_attribute_always_inline__ usnic_fls(int x)
 {
     int r = 32;
 
