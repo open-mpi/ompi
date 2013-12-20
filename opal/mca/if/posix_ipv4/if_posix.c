@@ -263,22 +263,22 @@ static int if_posix_open(void)
         /* generate CIDR and assign to netmask */
         intf->if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr);
             
-#ifdef SIOCGIFHWADDR
-            /* get the MAC address */
-            if (ioctl(sd, SIOCGIFHWADDR, ifr) < 0) {
-                opal_output(0, "btl_usnic_opal_ifinit: ioctl(SIOCGIFHWADDR) failed with errno=%d", errno);
-                break;
-            }
-            memcpy(intf->if_mac, ifr->ifr_hwaddr.sa_data, 6);
+#if defined(SIOCGIFHWADDR) && defined(HAVE_STRUCT_IFREQ_IFR_HWADDR)
+        /* get the MAC address */
+        if (ioctl(sd, SIOCGIFHWADDR, ifr) < 0) {
+            opal_output(0, "opal_ifinit: ioctl(SIOCGIFHWADDR) failed with errno=%d", errno);
+            break;
+        }
+        memcpy(intf->if_mac, ifr->ifr_hwaddr.sa_data, 6);
 #endif
 
 #if defined(SIOCGIFMTU) && defined(HAVE_STRUCT_IFREQ_IFR_MTU)
-            /* get the MTU */
-            if (ioctl(sd, SIOCGIFMTU, ifr) < 0) {
-                opal_output(0, "btl_usnic_opal_ifinit: ioctl(SIOCGIFMTU) failed with errno=%d", errno);
-                break;
-            }
-            intf->if_mtu = ifr->ifr_mtu;
+        /* get the MTU */
+        if (ioctl(sd, SIOCGIFMTU, ifr) < 0) {
+            opal_output(0, "opal_ifinit: ioctl(SIOCGIFMTU) failed with errno=%d", errno);
+            break;
+        }
+        intf->ifmtu = ifr->ifr_mtu;
 #endif
 
         opal_list_append(&opal_if_list, &(intf->super));

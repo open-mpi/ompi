@@ -42,7 +42,9 @@ AC_DEFUN([MCA_opal_if_posix_ipv4_CONFIG], [
          )
 
     AS_IF([test "$opal_if_posix_ipv4_happy" = "yes"],
-          [AC_CHECK_MEMBERS([struct ifreq.ifr_mtu], [], [],
+          [AC_CHECK_MEMBERS([struct ifreq.ifr_hwaddr], [], [],
+                           [[#include <net/if.h>]])
+           AC_CHECK_MEMBERS([struct ifreq.ifr_mtu], [], [],
                            [[#include <net/if.h>]])
           ])
 
