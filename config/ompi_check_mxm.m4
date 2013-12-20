@@ -29,15 +29,20 @@ AC_DEFUN([OMPI_CHECK_MXM],[
 
     AS_IF([test "$with_mxm" != "no"],
           [AS_IF([test ! -z "$with_mxm" -a "$with_mxm" != "yes"],
-                 [ompi_check_mxm_dir="$with_mxm"])
+                 [
+                    ompi_check_mxm_dir="$with_mxm"
+                    ompi_check_mxm_libdir="$with_mxm/lib"
+                 ])
            AS_IF([test ! -z "$with_mxm_libdir" -a "$with_mxm_libdir" != "yes"],
                  [ompi_check_mxm_libdir="$with_mxm_libdir"])
+
+           ompi_check_mxm_rpath="-Wl,-rpath=$ompi_check_mxm_libdir"
 
            OMPI_CHECK_PACKAGE([$1],
                               [mxm/api/mxm_api.h],
                               [mxm],
                               [mxm_cleanup],
-			      [],
+                              [$ompi_check_mxm_rpath],
                               [$ompi_check_mxm_dir],
                               [$ompi_check_mxm_libdir],
                               [ompi_check_mxm_happy="yes"],
