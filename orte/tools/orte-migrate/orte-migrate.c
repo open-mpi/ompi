@@ -681,7 +681,9 @@ static int notify_hnp(void)
         goto cleanup;
     }
 
-    if ( 0 > (ret = orte_rml.send_buffer(&(orterun_hnp->name), buffer, ORTE_RML_TAG_MIGRATE, 0)) ) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(&(orterun_hnp->name), buffer,
+                                                       ORTE_RML_TAG_MIGRATE, orte_rml_send_callback,
+                                                       NULL))) {
         exit_status = ret;
         goto cleanup;
     }

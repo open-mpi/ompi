@@ -71,32 +71,14 @@ BEGIN_C_DECLS
     int orte_rml_ftrm_ping(const char* uri, const struct timeval* tv);
 
     /*
-     * Send
-     */
-    int orte_rml_ftrm_send(orte_process_name_t* peer,
-                           struct iovec *msg,
-                           int count,
-                           int tag,
-                           int flags);
-
-    /*
      * Send Non-blocking
      */
     int orte_rml_ftrm_send_nb(orte_process_name_t* peer,
                               struct iovec* msg,
                               int count,
                               orte_rml_tag_t tag,
-                              int flags,
                               orte_rml_callback_fn_t cbfunc,
                               void* cbdata);
-
-    /*
-     * Send Buffer
-     */
-    int orte_rml_ftrm_send_buffer(orte_process_name_t* peer,
-                                  opal_buffer_t* buffer,
-                                  orte_rml_tag_t tag,
-                                  int flags);
 
     /*
      * Send Buffer Non-blocking
@@ -104,7 +86,6 @@ BEGIN_C_DECLS
     int orte_rml_ftrm_send_buffer_nb(orte_process_name_t* peer,
                                      opal_buffer_t* buffer,
                                      orte_rml_tag_t tag,
-                                     int flags,
                                      orte_rml_buffer_callback_fn_t cbfunc,
                                      void* cbdata);
 

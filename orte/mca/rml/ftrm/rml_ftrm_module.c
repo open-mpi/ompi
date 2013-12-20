@@ -126,71 +126,23 @@ int orte_rml_ftrm_ping(const char* uri, const struct timeval* tv)
 
 
 /*
- * Send
- */
-int orte_rml_ftrm_send(orte_process_name_t* peer,
-                       struct iovec *msg,
-                       int count,
-                       int tag,
-                       int flags)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: send(%s, %d, %d, %d )",
-                        ORTE_NAME_PRINT(peer), count, tag, flags);
-
-    if( NULL != orte_rml_ftrm_wrapped_module.send ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send(peer, msg, count, tag, flags) ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
  * Send Non-blocking
  */
 int orte_rml_ftrm_send_nb(orte_process_name_t* peer,
                           struct iovec* msg,
                           int count,
                           orte_rml_tag_t tag,
-                          int flags,
                           orte_rml_callback_fn_t cbfunc,
                           void* cbdata)
 {
     int ret;
 
     opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: send_nb(%s, %d, %d, %d )",
-                        ORTE_NAME_PRINT(peer), count, tag, flags);
+                        "orte_rml_ftrm: send_nb(%s, %d, %d )",
+                        ORTE_NAME_PRINT(peer), count, tag);
 
     if( NULL != orte_rml_ftrm_wrapped_module.send_nb ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_nb(peer, msg, count, tag, flags, cbfunc, cbdata) ) ) {
-            return ret;
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * Send Buffer
- */
-int orte_rml_ftrm_send_buffer(orte_process_name_t* peer,
-                              opal_buffer_t* buffer,
-                              orte_rml_tag_t tag,
-                              int flags)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: send_buffer(%s, %d, %d )",
-                        ORTE_NAME_PRINT(peer), tag, flags);
-
-    if( NULL != orte_rml_ftrm_wrapped_module.send_buffer ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_buffer(peer, buffer, tag, flags) ) ) {
+        if(ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_nb(peer, msg, count, tag, cbfunc, cbdata))) {
             return ret;
         }
     }
@@ -204,18 +156,17 @@ int orte_rml_ftrm_send_buffer(orte_process_name_t* peer,
 int orte_rml_ftrm_send_buffer_nb(orte_process_name_t* peer,
                                  opal_buffer_t* buffer,
                                  orte_rml_tag_t tag,
-                                 int flags,
                                  orte_rml_buffer_callback_fn_t cbfunc,
                                  void* cbdata)
 {
     int ret;
 
     opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: send_buffer_nb(%s, %d, %d )",
-                        ORTE_NAME_PRINT(peer), tag, flags);
+                        "orte_rml_ftrm: send_buffer_nb(%s, %d )",
+                        ORTE_NAME_PRINT(peer), tag);
 
     if( NULL != orte_rml_ftrm_wrapped_module.send_buffer_nb ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_buffer_nb(peer, buffer, tag, flags, cbfunc, cbdata) ) ) {
+        if(ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_buffer_nb(peer, buffer, tag, cbfunc, cbdata))) {
             return ret;
         }
     }
