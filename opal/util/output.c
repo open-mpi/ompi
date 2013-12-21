@@ -344,13 +344,6 @@ void opal_output_close(int output_id)
 #endif
     }
 
-    /* Somewhat of a hack to free up the temp_str */
-
-    if (NULL != temp_str) {
-        free(temp_str);
-        temp_str = NULL;
-        temp_str_len = 0;
-    }
     OPAL_THREAD_UNLOCK(&mutex);
 }
 
@@ -492,6 +485,11 @@ void opal_output_finalize(void)
 
         free (output_prefix);
         free (output_dir);
+        if(NULL != temp_str) {
+	    free(temp_str);
+	    temp_str = NULL;
+	    temp_str_len = 0;
+	}
         OBJ_DESTRUCT(&verbose);
         OBJ_DESTRUCT(&mutex);
     }
@@ -745,13 +743,11 @@ static int open_file(int i)
 
         /* Actually open the file */
         info[i].ldi_fd = open(filename, flags, 0644);
+        free(filename);  /* release the filename in all cases */
         if (-1 == info[i].ldi_fd) {
             info[i].ldi_used = false;
-            free(filename);
             return OPAL_ERR_IN_ERRNO;
         }
-
-        free(filename);
 
         /* Make the file be close-on-exec to prevent child inheritance
          * problems */
