@@ -35,7 +35,6 @@ int mca_base_select(const char *type_name, int output_id,
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
-    opal_list_item_t *item = NULL;
     int priority = 0, best_priority = INT32_MIN;
 
     *best_module = NULL;
@@ -49,10 +48,7 @@ int mca_base_select(const char *type_name, int output_id,
      * Traverse the list of available components.
      * For each call their 'query' functions to determine relative priority.
      */
-    for (item  = opal_list_get_first(components_available);
-         item != opal_list_get_end(components_available);
-         item  = opal_list_get_next(item) ) {
-        cli = (mca_base_component_list_item_t *) item;
+    OPAL_LIST_FOREACH(cli, components_available, mca_base_component_list_item_t) {
         component = (mca_base_component_t *) cli->cli_component;
 
         /*
@@ -118,7 +114,7 @@ int mca_base_select(const char *type_name, int output_id,
     opal_output_verbose(5, output_id,
                         "mca:base:select:(%5s) Selected component [%s]",
                         type_name, (*best_component)->mca_component_name);
-    
+
     /*
      * Close the non-selected components
      */
