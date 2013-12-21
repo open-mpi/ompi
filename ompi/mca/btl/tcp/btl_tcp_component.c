@@ -499,7 +499,7 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
  * (a.b.c.d/e), resolve them to an interface name (Currently only
  * supporting IPv4).  If unresolvable, warn and remove.
  */
-static char **split_and_resolve(char **orig_str, char *name)
+static char **split_and_resolve(char **orig_str, char *name, bool reqd)
 {
     int i, ret, save, if_index;
     char **argv, *str, *tmp;
@@ -571,7 +571,7 @@ static char **split_and_resolve(char **orig_str, char *name)
         }
         
         /* If we didn't find a match, keep trying */
-        if (if_index < 0) {
+        if (if_index < 0 && reqd) {
             opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
                            true, name, ompi_process_info.nodename, tmp,
                            "Did not find interface matching this subnet");
@@ -678,7 +678,7 @@ static int mca_btl_tcp_component_create_instances(void)
 
     /* if the user specified an interface list - use these exclusively */
     argv = include = split_and_resolve(&mca_btl_tcp_component.tcp_if_include,
-                                       "include");
+                                       "include", true);
     while(argv && *argv) {
         char* if_name = *argv;
         int if_index = opal_ifnametokindex(if_name);
@@ -703,7 +703,7 @@ static int mca_btl_tcp_component_create_instances(void)
      * a BTL for each interface that was not excluded.
     */
     exclude = split_and_resolve(&mca_btl_tcp_component.tcp_if_exclude,
-                                "exclude");
+                                "exclude", false);
     {
         int i;
         for(i = 0; i < kif_count; i++) {
