@@ -325,6 +325,7 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_module_t *mod,
     hdr.dst = peer->name;
     hdr.type = MCA_OOB_TCP_IDENT;
     hdr.tag = 0;
+    hdr.nbytes = 0;
     MCA_OOB_TCP_HDR_HTON(&hdr);
     if (0 > tcp_peer_send_blocking(mod, peer, &hdr, sizeof(hdr))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
