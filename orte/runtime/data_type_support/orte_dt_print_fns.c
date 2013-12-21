@@ -339,9 +339,9 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
             *output = tmp;
             return ORTE_SUCCESS;
         }
-        asprintf(&tmp, "\n%sData for node: %s\tNum procs: %ld",
+        asprintf(&tmp, "\n%sData for node: %s\tNum slots: %ld\tMax slots: %ld\tNum procs: %ld",
                  pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
-                 (long)src->num_procs);
+                 (long)src->slots, (long)src->slots_max, (long)src->num_procs);
         /* does this node have any aliases? */
         if (NULL != src->alias) {
             for (i=0; NULL != src->alias[i]; i++) {
