@@ -233,11 +233,7 @@ static int orte_rmaps_base_close(void)
  */
 static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 {
-    int i, rc;
-    orte_mapping_policy_t tmp=0;
-    orte_ranking_policy_t rtmp=0;
-    char **ck, **ck2;
-    size_t len;
+    int rc;
 
     /* init the globals */
     OBJ_CONSTRUCT(&orte_rmaps_base.selected_modules, opal_list_t);
@@ -260,187 +256,16 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 #endif
 
-    if (NULL == rmaps_base_mapping_policy) {
-        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYSLOT);
-        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SPAN);
-        ORTE_UNSET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
-    } else {
-        ck = opal_argv_split(rmaps_base_mapping_policy, ':');
-        if (2 < opal_argv_count(ck)) {
-            /* incorrect format */
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
-            opal_argv_free(ck);
-            return ORTE_ERR_SILENT;
-        }
-        if (2 == opal_argv_count(ck)) {
-            /* if the policy is "dist", then we set the policy to that value
-             * and save the second argument as the device
-             */
-#if OPAL_HAVE_HWLOC
-            if (0 == strncasecmp(ck[0], "dist", strlen(ck[0]))) {
-                tmp = ORTE_MAPPING_BYDIST;
-                ck2 = opal_argv_split(ck[1], ',');
-                if (ck2[0] != NULL) {
-                    orte_rmaps_base.device = strdup(ck2[0]);
-                    for (i=1; NULL != ck2[i]; i++) {
-                        if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
-                            orte_rmaps_base.mapping |= ORTE_MAPPING_SPAN;
-                        } 
-                    }
-                }
-                opal_argv_free(ck2);
-                goto setpolicy;
-            }
-#endif
-            ck2 = opal_argv_split(ck[1], ',');
-            for (i=0; NULL != ck2[i]; i++) {
-                if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
-                    ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SPAN);
-                } else if (0 == strncasecmp(ck2[i], "oversubscribe", strlen(ck2[i]))) {
-                    if (ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-                        /* error - cannot redefine the default mapping policy */
-                        orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
-                                       "oversubscribe", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-                        return ORTE_ERR_SILENT;
-                    }
-                    ORTE_UNSET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                    ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SUBSCRIBE_GIVEN);
-                } else if (0 == strncasecmp(ck2[i], "nooversubscribe", strlen(ck2[i]))) {
-                    if (ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-                        /* error - cannot redefine the default mapping policy */
-                        orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
-                                       "nooversubscribe", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-                        return ORTE_ERR_SILENT;
-                    }
-                    ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                    ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SUBSCRIBE_GIVEN);
-                } else {
-                    /* unrecognized modifier */
-                    orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, "mapping", ck2[i]);
-                    opal_argv_free(ck);
-                    opal_argv_free(ck2);
-                    return ORTE_ERR_SILENT;
-                }
-            }
-            opal_argv_free(ck2);
-        }
-        len = strlen(ck[0]);
-        if (0 == strncasecmp(ck[0], "slot", len)) {
-            tmp = ORTE_MAPPING_BYSLOT;
-        } else if (0 == strncasecmp(ck[0], "node", len)) {
-            tmp = ORTE_MAPPING_BYNODE;
-#if OPAL_HAVE_HWLOC
-        } else if (0 == strncasecmp(ck[0], "core", len)) {
-            tmp = ORTE_MAPPING_BYCORE;
-        } else if (0 == strncasecmp(ck[0], "l1cache", len)) {
-            tmp = ORTE_MAPPING_BYL1CACHE;
-        } else if (0 == strncasecmp(ck[0], "l2cache", len)) {
-            tmp = ORTE_MAPPING_BYL2CACHE;
-        } else if (0 == strncasecmp(ck[0], "l3cache", len)) {
-            tmp = ORTE_MAPPING_BYL3CACHE;
-        } else if (0 == strncasecmp(ck[0], "socket", len)) {
-            tmp = ORTE_MAPPING_BYSOCKET;
-        } else if (0 == strncasecmp(ck[0], "numa", len)) {
-            tmp = ORTE_MAPPING_BYNUMA;
-        } else if (0 == strncasecmp(ck[0], "board", len)) {
-            tmp = ORTE_MAPPING_BYBOARD;
-        } else if (0 == strncasecmp(ck[0], "hwthread", len)) {
-            tmp = ORTE_MAPPING_BYHWTHREAD;
-            /* if we are mapping processes to individual hwthreads, then
-             * we need to treat those hwthreads as separate cpus
-             */
-            opal_hwloc_use_hwthreads_as_cpus = true;
-#endif
-        } else {
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
-            opal_argv_free(ck);
-            return ORTE_ERR_SILENT;
-        }
-#if OPAL_HAVE_HWLOC
-    setpolicy:
-#endif
-        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, tmp);
-        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
-        opal_argv_free(ck);
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&orte_rmaps_base.mapping,
+                                                                 &orte_rmaps_base.device,
+                                                                 rmaps_base_mapping_policy))) {
+        return rc;
     }
 
-    if (NULL == rmaps_base_ranking_policy) {
-        /* check for map-by object directives - we set the
-         * ranking to match if one was given
-         */
-        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-            if (ORTE_MAPPING_BYCORE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_CORE);
-            } else if (ORTE_MAPPING_BYNODE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_NODE);
-            } else if (ORTE_MAPPING_BYL1CACHE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_L1CACHE);
-            } else if (ORTE_MAPPING_BYL2CACHE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_L2CACHE);
-            } else if (ORTE_MAPPING_BYL3CACHE & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_L3CACHE);
-            } else if (ORTE_MAPPING_BYSOCKET & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_SOCKET);
-            } else if (ORTE_MAPPING_BYNUMA & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_NUMA);
-            } else if (ORTE_MAPPING_BYBOARD & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_BOARD);
-            } else if (ORTE_MAPPING_BYHWTHREAD & ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
-                ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_HWTHREAD);
-            }
-        } else {
-            /* if no map-by was given, default to by-slot */
-            ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_SLOT);
-        }
-    } else {
-        ck = opal_argv_split(rmaps_base_ranking_policy, ':');
-        if (2 < opal_argv_count(ck)) {
-            /* incorrect format */
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
-            opal_argv_free(ck);
-            return ORTE_ERR_SILENT;
-        }
-        if (2 == opal_argv_count(ck)) {
-            if (0 == strncasecmp(ck[1], "span", strlen(ck[1]))) {
-                orte_rmaps_base.ranking |= ORTE_RANKING_SPAN;
-            } else if (0 == strncasecmp(ck[1], "fill", strlen(ck[1]))) {
-                orte_rmaps_base.ranking |= ORTE_RANKING_FILL;
-            } else {
-                /* unrecognized modifier */
-                orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, "ranking", ck[1]);
-                opal_argv_free(ck);
-                return ORTE_ERR_SILENT;
-            }
-        }
-        len = strlen(ck[0]);
-        if (0 == strncasecmp(ck[0], "slot", len)) {
-            rtmp = ORTE_RANK_BY_SLOT;
-        } else if (0 == strncasecmp(ck[0], "node", len)) {
-            rtmp = ORTE_RANK_BY_NODE;
-#if OPAL_HAVE_HWLOC
-        } else if (0 == strncasecmp(ck[0], "hwthread", len)) {
-            rtmp = ORTE_RANK_BY_HWTHREAD;
-        } else if (0 == strncasecmp(ck[0], "core", len)) {
-            rtmp = ORTE_RANK_BY_CORE;
-        } else if (0 == strncasecmp(ck[0], "l1cache", len)) {
-            rtmp = ORTE_RANK_BY_L1CACHE;
-        } else if (0 == strncasecmp(ck[0], "l2cache", len)) {
-            rtmp = ORTE_RANK_BY_L2CACHE;
-        } else if (0 == strncasecmp(ck[0], "l3cache", len)) {
-            rtmp = ORTE_RANK_BY_L3CACHE;
-        } else if (0 == strncasecmp(ck[0], "socket", len)) {
-            rtmp = ORTE_RANK_BY_SOCKET;
-        } else if (0 == strncasecmp(ck[0], "numa", len)) {
-            rtmp = ORTE_RANK_BY_NUMA;
-        } else if (0 == strncasecmp(ck[0], "board", len)) {
-            rtmp = ORTE_RANK_BY_BOARD;
-#endif
-        } else {
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
-            return ORTE_ERR_SILENT;
-        }
-        ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, rtmp);
-        ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&orte_rmaps_base.ranking,
+                                                                 orte_rmaps_base.mapping,
+                                                                 rmaps_base_ranking_policy))) {
+        return rc;
     }
 
     if (rmaps_base_byslot) {
@@ -553,3 +378,208 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, rmaps, "ORTE Mapping Subsystem",
 OBJ_CLASS_INSTANCE(orte_rmaps_base_selected_module_t,
                    opal_list_item_t,
                    NULL, NULL);
+
+
+int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
+                                       char **device, char *spec)
+{
+    char **ck, **ck2;
+    orte_mapping_policy_t tmp;
+    int i;
+    size_t len;
+
+    /* set defaults */
+    tmp = 0;
+    *device = NULL;
+
+    if (NULL == spec) {
+        ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
+        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SPAN);
+        ORTE_UNSET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
+    } else {
+        ck = opal_argv_split(spec, ':');
+        if (2 < opal_argv_count(ck)) {
+            /* incorrect format */
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
+            opal_argv_free(ck);
+            return ORTE_ERR_SILENT;
+        }
+        if (2 == opal_argv_count(ck)) {
+            /* if the policy is "dist", then we set the policy to that value
+             * and save the second argument as the device
+             */
+#if OPAL_HAVE_HWLOC
+            if (0 == strncasecmp(ck[0], "dist", strlen(ck[0]))) {
+                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
+                ck2 = opal_argv_split(ck[1], ',');
+                if (ck2[0] != NULL) {
+                    *device = strdup(ck2[0]);
+                    for (i=1; NULL != ck2[i]; i++) {
+                        if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
+                            ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SPAN);
+                        } 
+                    }
+                }
+                opal_argv_free(ck2);
+                goto setpolicy;
+            }
+#endif
+            ck2 = opal_argv_split(ck[1], ',');
+            for (i=0; NULL != ck2[i]; i++) {
+                if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
+                    ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SPAN);
+                } else if (0 == strncasecmp(ck2[i], "oversubscribe", strlen(ck2[i]))) {
+                    if (ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(tmp)) {
+                        ORTE_UNSET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+                        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SUBSCRIBE_GIVEN);
+                    } else if (0 == strncasecmp(ck2[i], "nooversubscribe", strlen(ck2[i]))) {
+                        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+                        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SUBSCRIBE_GIVEN);
+                    } else {
+                        /* unrecognized modifier */
+                        orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, "mapping", ck2[i]);
+                        opal_argv_free(ck);
+                        opal_argv_free(ck2);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
+                opal_argv_free(ck2);
+            }
+        }
+        len = strlen(ck[0]);
+        if (0 == strncasecmp(ck[0], "slot", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSLOT);
+        } else if (0 == strncasecmp(ck[0], "node", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNODE);
+#if OPAL_HAVE_HWLOC
+        } else if (0 == strncasecmp(ck[0], "core", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYCORE);
+        } else if (0 == strncasecmp(ck[0], "l1cache", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL1CACHE);
+        } else if (0 == strncasecmp(ck[0], "l2cache", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL2CACHE);
+        } else if (0 == strncasecmp(ck[0], "l3cache", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL3CACHE);
+        } else if (0 == strncasecmp(ck[0], "socket", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
+        } else if (0 == strncasecmp(ck[0], "numa", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNUMA);
+        } else if (0 == strncasecmp(ck[0], "board", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYBOARD);
+        } else if (0 == strncasecmp(ck[0], "hwthread", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYHWTHREAD);
+            /* if we are mapping processes to individual hwthreads, then
+             * we need to treat those hwthreads as separate cpus
+             */
+            opal_hwloc_use_hwthreads_as_cpus = true;
+#endif
+        } else {
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
+            opal_argv_free(ck);
+            return ORTE_ERR_SILENT;
+        }
+        opal_argv_free(ck);
+        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
+    }
+
+#if OPAL_HAVE_HWLOC
+ setpolicy:
+#endif
+    *policy = tmp;
+
+    return ORTE_SUCCESS;
+}
+
+int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
+                                       orte_mapping_policy_t mapping,
+                                       char *spec)
+{
+    orte_ranking_policy_t tmp;
+    char **ck;
+    size_t len;
+
+    /* set default */
+    tmp = 0;
+
+    if (NULL == spec) {
+        /* check for map-by object directives - we set the
+         * ranking to match if one was given
+         */
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
+            if (ORTE_MAPPING_BYCORE & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_CORE);
+            } else if (ORTE_MAPPING_BYNODE & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NODE);
+            } else if (ORTE_MAPPING_BYL1CACHE & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L1CACHE);
+            } else if (ORTE_MAPPING_BYL2CACHE & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L2CACHE);
+            } else if (ORTE_MAPPING_BYL3CACHE & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L3CACHE);
+            } else if (ORTE_MAPPING_BYSOCKET & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SOCKET);
+            } else if (ORTE_MAPPING_BYNUMA & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NUMA);
+            } else if (ORTE_MAPPING_BYBOARD & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_BOARD);
+            } else if (ORTE_MAPPING_BYHWTHREAD & ORTE_GET_MAPPING_POLICY(mapping)) {
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_HWTHREAD);
+            }
+        } else {
+            /* if no map-by was given, default to by-slot */
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SLOT);
+        }
+    } else {
+        ck = opal_argv_split(spec, ':');
+        if (2 < opal_argv_count(ck)) {
+            /* incorrect format */
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", policy);
+            opal_argv_free(ck);
+            return ORTE_ERR_SILENT;
+        }
+        if (2 == opal_argv_count(ck)) {
+            if (0 == strncasecmp(ck[1], "span", strlen(ck[1]))) {
+                ORTE_SET_RANKING_DIRECTIVE(tmp, ORTE_RANKING_SPAN);
+            } else if (0 == strncasecmp(ck[1], "fill", strlen(ck[1]))) {
+                ORTE_SET_RANKING_DIRECTIVE(tmp, ORTE_RANKING_FILL);
+            } else {
+                /* unrecognized modifier */
+                orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, "ranking", ck[1]);
+                opal_argv_free(ck);
+                return ORTE_ERR_SILENT;
+            }
+        }
+        len = strlen(ck[0]);
+        if (0 == strncasecmp(ck[0], "slot", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SLOT);
+        } else if (0 == strncasecmp(ck[0], "node", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NODE);
+#if OPAL_HAVE_HWLOC
+        } else if (0 == strncasecmp(ck[0], "hwthread", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_HWTHREAD);
+        } else if (0 == strncasecmp(ck[0], "core", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_CORE);
+        } else if (0 == strncasecmp(ck[0], "l1cache", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L1CACHE);
+        } else if (0 == strncasecmp(ck[0], "l2cache", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L2CACHE);
+        } else if (0 == strncasecmp(ck[0], "l3cache", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L3CACHE);
+        } else if (0 == strncasecmp(ck[0], "socket", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SOCKET);
+        } else if (0 == strncasecmp(ck[0], "numa", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NUMA);
+        } else if (0 == strncasecmp(ck[0], "board", len)) {
+            ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_BOARD);
+#endif
+        } else {
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
+            return ORTE_ERR_SILENT;
+        }
+        opal_argv_free(ck);
+        ORTE_SET_RANKING_DIRECTIVE(tmp, ORTE_RANKING_GIVEN);
+    }
+
+    *policy = tmp;
+    return ORTE_SUCCESS;
+}

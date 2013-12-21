@@ -472,17 +472,22 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             return ORTE_ERR_SILENT;
         }
         /* compute how many extra procs to put on each node */
-        balance = (float)(((jdata->num_procs + app->num_procs)*orte_rmaps_base.cpus_per_rank) - num_slots) / (float)opal_list_get_size(node_list);
-        extra_procs_to_assign = (int)balance;
-        if (0 < (balance - (float)extra_procs_to_assign)) {
-            /* compute how many nodes need an extra proc */
-            nxtra_nodes = ((jdata->num_procs + app->num_procs)*orte_rmaps_base.cpus_per_rank) - num_slots - (extra_procs_to_assign * opal_list_get_size(node_list));
-            /* add one so that we add an extra proc to the first nodes
-             * until all procs are mapped
-             */
-            extra_procs_to_assign++;
-            /* flag that we added one */
-            add_one = true;
+        if (1 == opal_list_get_size(node_list)) {
+            /* if there is only one node, then they all have to go on it */
+            extra_procs_to_assign = app->num_procs;
+        } else {
+            balance = (float)(((jdata->num_procs + app->num_procs)*orte_rmaps_base.cpus_per_rank) - num_slots) / (float)opal_list_get_size(node_list);
+            extra_procs_to_assign = (int)balance;
+            if (0 < (balance - (float)extra_procs_to_assign)) {
+                /* compute how many nodes need an extra proc */
+                nxtra_nodes = ((jdata->num_procs + app->num_procs)*orte_rmaps_base.cpus_per_rank) - num_slots - (extra_procs_to_assign * opal_list_get_size(node_list));
+                /* add one so that we add an extra proc to the first nodes
+                 * until all procs are mapped
+                 */
+                extra_procs_to_assign++;
+                /* flag that we added one */
+                add_one = true;
+            }
         }
     }
 

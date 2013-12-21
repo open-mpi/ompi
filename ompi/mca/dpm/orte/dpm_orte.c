@@ -40,6 +40,7 @@
 #include "opal/util/opal_getcwd.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/db/db.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -647,19 +648,19 @@ static int spawn(int count, const char *array_of_commands[],
     int have_wdir=0;
     int flag=0;
     char cwd[OPAL_PATH_MAX];
-    char host[OPAL_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
-    char prefix[OPAL_PATH_MAX];
-    char stdin_target[OPAL_PATH_MAX];
-    char params[OPAL_PATH_MAX];
-    char mapper[OPAL_PATH_MAX];
+    char host[OPAL_MAX_INFO_VAL];  /*** should define OMPI_HOST_MAX ***/
+    char prefix[OPAL_MAX_INFO_VAL];
+    char stdin_target[OPAL_MAX_INFO_VAL];
+    char params[OPAL_MAX_INFO_VAL];
+    char mapper[OPAL_MAX_INFO_VAL];
     int npernode;
-    char slot_list[OPAL_PATH_MAX];
+    char slot_list[OPAL_MAX_INFO_VAL];
 
     orte_job_t *jdata;
     orte_app_context_t *app;
     bool local_spawn, non_mpi;
-    bool local_bynode = false;
-    
+    char **envars;
+
     /* parse the info object */
     /* check potentially for:
        - "host": desired host where to spawn the processes
@@ -671,7 +672,9 @@ static int spawn(int count, const char *array_of_commands[],
        - "add-hostfile": add the hosts in the hostfile to the
        known list of available resources and spawn
        these procs on them
-       - "prefix": the path to the root of the directory tree where ompi
+       - "env": a newline-delimited list of envar values to be
+       placed into the app's environment (of form "foo=bar")
+       - "ompi_prefix": the path to the root of the directory tree where ompi
        executables and libraries can be found on all nodes
        used to spawn these procs
        - "arch": desired architecture
@@ -679,6 +682,19 @@ static int spawn(int count, const char *array_of_commands[],
        - "path": list of directories where to look for the executable
        - "file": filename, where additional information is provided.
        - "soft": see page 92 of MPI-2.
+       - "mapper": indicate the mapper to be used for the job
+       - "display_map": display the map of the spawned job
+       - "npernode": number of procs/node to spawn
+       - "pernode": spawn one proc/node
+       - "ppr": spawn specified number of procs per specified object
+       - "map_by": specify object by which the procs should be mapped
+       - "rank_by": specify object by which the procs should be ranked
+       - "bind_to": specify object to which the procs should be bound
+       - "ompi_preload_binary": move binaries to nodes prior to execution
+       - "ompi_preload_files": move specified files to nodes prior to execution
+       - "ompi_non_mpi": spawned job will not call MPI_Init
+       - "ompi_param": list of MCA params to be in the spawned job's environment
+       - "env": newline (\n) delimited list of envar values to be passed to spawned procs
     */
 
     /* setup the job object */
@@ -789,6 +805,16 @@ static int spawn(int count, const char *array_of_commands[],
                 app->add_host = opal_argv_split(host, ',');
             }
             
+            /* check for env */
+            ompi_info_get (array_of_info[i], "env", sizeof(host)-1, host, &flag);
+            if ( flag ) {
+                envars = opal_argv_split(host, '\n');
+                for (j=0; NULL != envars[j]; j++) {
+                    opal_argv_append_nosize(&app->env, envars[j]);
+                }
+                opal_argv_free(envars);
+            }
+
             /* 'path', 'arch', 'file', 'soft'  -- to be implemented */ 
             
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
@@ -847,9 +873,10 @@ static int spawn(int count, const char *array_of_commands[],
                     }
                 }
                 if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    /* not allowed to provide multiple mapping policies */
                     return OMPI_ERROR;
                 }
-                jdata->map->mapping |= ORTE_MAPPING_PPR;
+                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_PPR);
                 asprintf(&(jdata->map->ppr), "%d:n", npernode);
             }
             ompi_info_get (array_of_info[i], "pernode", sizeof(slot_list) - 1, slot_list, &flag);
@@ -862,9 +889,10 @@ static int spawn(int count, const char *array_of_commands[],
                     }
                 }
                 if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    /* not allowed to provide multiple mapping policies */
                     return OMPI_ERROR;
                 }
-                jdata->map->mapping |= ORTE_MAPPING_PPR;
+                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_PPR);
                 jdata->map->ppr = strdup("1:n");
             }
             ompi_info_get (array_of_info[i], "ppr", sizeof(slot_list) - 1, slot_list, &flag);
@@ -877,14 +905,15 @@ static int spawn(int count, const char *array_of_commands[],
                     }
                 }
                 if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    /* not allowed to provide multiple mapping policies */
                     return OMPI_ERROR;
                 }
-                jdata->map->mapping |= ORTE_MAPPING_PPR;
+                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_PPR);
                 jdata->map->ppr = strdup(slot_list);
             }
 
-            /* check for 'map_byxxx' */
-            ompi_info_get_bool(array_of_info[i], "map_by_node", &local_bynode, &flag);
+            /* check for 'map_by' */
+            ompi_info_get(array_of_info[i], "map_by", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 if (NULL == jdata->map) {
                     jdata->map = OBJ_NEW(orte_job_map_t);
@@ -894,256 +923,17 @@ static int spawn(int count, const char *array_of_commands[],
                     }
                 }
                 if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    /* not allowed to provide multiple mapping policies */
                     return OMPI_ERROR;
                 }
-                jdata->map->mapping |= ORTE_MAPPING_BYNODE;
-            }
-#if OPAL_HAVE_HWLOC
-            ompi_info_get_bool(array_of_info[i], "map_by_board", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping,
+                                                                             NULL, slot_list))) {
+                    return rc;
                 }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYBOARD;
-            }
-            ompi_info_get_bool(array_of_info[i], "map_by_numa", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYNUMA;
-            }
-            ompi_info_get_bool(array_of_info[i], "map_by_socket", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYSOCKET;
-            }
-            ompi_info_get_bool(array_of_info[i], "map_by_l3cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYL3CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "map_by_l2cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYL2CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "map_by_l1cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYL1CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "map_by_core", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYCORE;
-            }
-            ompi_info_get_bool(array_of_info[i], "map_by_hwthread", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->mapping |= ORTE_MAPPING_BYHWTHREAD;
-            }
-#endif
-
-            /* check for 'rank_byxxx' */
-            ompi_info_get_bool(array_of_info[i], "rank_by_node", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_NODE;
-            }
-#if OPAL_HAVE_HWLOC
-            ompi_info_get_bool(array_of_info[i], "rank_by_board", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_BOARD;
-            }
-            ompi_info_get_bool(array_of_info[i], "rank_by_numa", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_NUMA;
-            }
-            ompi_info_get_bool(array_of_info[i], "rank_by_socket", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_SOCKET;
-            }
-            ompi_info_get_bool(array_of_info[i], "rank_by_l3cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_L3CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "rank_by_l2cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_L2CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "rank_by_l1cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_L1CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "rank_by_core", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_CORE;
-            }
-            ompi_info_get_bool(array_of_info[i], "rank_by_hwthread", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (0 != jdata->map->ranking) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->ranking = ORTE_RANK_BY_HWTHREAD;
             }
 
-            /* check for 'bind_toxxx' */
-            ompi_info_get_bool(array_of_info[i], "bind_if_supported", &local_bynode, &flag);
+            /* check for 'rank_by' */
+            ompi_info_get(array_of_info[i], "rank_by", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 if (NULL == jdata->map) {
                     jdata->map = OBJ_NEW(orte_job_map_t);
@@ -1152,20 +942,19 @@ static int spawn(int count, const char *array_of_commands[],
                         return ORTE_ERR_OUT_OF_RESOURCE;
                     }
                 }
-                jdata->map->binding |= OPAL_BIND_IF_SUPPORTED;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_overload_allowed", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
+                if (ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
+                    /* not allowed to provide multiple ranking policies */
+                    return OMPI_ERROR;
                 }
-                jdata->map->binding |= OPAL_BIND_ALLOW_OVERLOAD;
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking, 
+                                                                             jdata->map->mapping, slot_list))) {
+                    return rc;
+                }
             }
-            ompi_info_get_bool(array_of_info[i], "bind_to_none", &local_bynode, &flag);
+
+#if OPAL_HAVE_HWLOC
+            /* check for 'bind_to' */
+            ompi_info_get(array_of_info[i], "bind_to", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 if (NULL == jdata->map) {
                     jdata->map = OBJ_NEW(orte_job_map_t);
@@ -1175,121 +964,12 @@ static int spawn(int count, const char *array_of_commands[],
                     }
                 }
                 if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    /* not allowed to provide multiple binding policies */
                     return OMPI_ERROR;
                 }
-                jdata->map->binding |= OPAL_BIND_TO_NONE;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_board", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
+                if (ORTE_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding, slot_list))) {
+                    return rc;
                 }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_BOARD;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_numa", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_NUMA;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_socket", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_SOCKET;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_l3cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_L3CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_l2cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_L2CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_l1cache", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_L1CACHE;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_core", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_CORE;
-            }
-            ompi_info_get_bool(array_of_info[i], "bind_to_hwthread", &local_bynode, &flag);
-            if ( flag ) {
-                if (NULL == jdata->map) {
-                    jdata->map = OBJ_NEW(orte_job_map_t);
-                    if (NULL == jdata->map) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                }
-                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                    return OMPI_ERROR;
-                }
-                jdata->map->binding |= OPAL_BIND_TO_HWTHREAD;
             }
 #endif
 
