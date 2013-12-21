@@ -68,25 +68,16 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
 {
     mca_mpool_base_component_t* component = NULL; 
     mca_mpool_base_module_t* module = NULL; 
-    opal_list_item_t* item;
+    mca_base_component_list_item_t *cli;
     mca_mpool_base_selected_module_t *sm;
 
-    for (item = opal_list_get_first(&ompi_mpool_base_framework.framework_components);
-         item != opal_list_get_end(&ompi_mpool_base_framework.framework_components);
-         item = opal_list_get_next(item)) {
-         mca_base_component_list_item_t *cli = 
-           (mca_base_component_list_item_t *) item;
-         component = 
-           (mca_mpool_base_component_t *) cli->cli_component;
+    OPAL_LIST_FOREACH(cli, &ompi_mpool_base_framework.framework_components, mca_base_component_list_item_t) {
+         component = (mca_mpool_base_component_t *) cli->cli_component;
          if(0 == strcmp(component->mpool_version.mca_component_name, name)) {
+             module = component->mpool_init(resources);
              break;
          }
     }
-
-    if (opal_list_get_end(&ompi_mpool_base_framework.framework_components) == item) {
-        return NULL;
-    }
-    module = component->mpool_init(resources); 
     if ( NULL == module ) {
         return NULL;
     }
@@ -107,9 +98,9 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
            leave_pinned variables may have been set by a user MCA
            param or elsewhere in the code base).  Yes, we could have
            coded this more succinctly, but this is more clear. Do not
-	   check memory hooks if the mpool explicity asked us not to. */
+           check memory hooks if the mpool explicity asked us not to. */
         if ((ompi_mpi_leave_pinned > 0 || ompi_mpi_leave_pinned_pipeline) &&
-	    !(module->flags & MCA_MPOOL_FLAGS_NO_HOOKS)) {
+            !(module->flags & MCA_MPOOL_FLAGS_NO_HOOKS)) {
             use_mem_hooks = 1;
         }
 
@@ -136,13 +127,9 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
 
 mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
 {
-    opal_list_item_t* item;
-    
-    for (item = opal_list_get_first(&mca_mpool_base_modules);
-         item != opal_list_get_end(&mca_mpool_base_modules);
-         item = opal_list_get_next(item)) {
-        mca_mpool_base_selected_module_t *mli =
-            (mca_mpool_base_selected_module_t *) item;
+    mca_mpool_base_selected_module_t *mli;
+
+    OPAL_LIST_FOREACH(mli, &mca_mpool_base_modules, mca_mpool_base_selected_module_t) {
         if(0 == strcmp(mli->mpool_component->mpool_version.mca_component_name,
                        name)) {
             return mli->mpool_module;
@@ -155,15 +142,11 @@ mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
 
 int mca_mpool_base_module_destroy(mca_mpool_base_module_t *module)
 {
-    opal_list_item_t* item;
-    mca_mpool_base_selected_module_t *sm;
+    mca_mpool_base_selected_module_t *sm, *next;
 
-    for (item = opal_list_get_first(&mca_mpool_base_modules);
-            item != opal_list_get_end(&mca_mpool_base_modules);
-            item = opal_list_get_next(item)) {
-        sm = (mca_mpool_base_selected_module_t *) item;
+    OPAL_LIST_FOREACH_SAFE(sm, next, &mca_mpool_base_modules, mca_mpool_base_selected_module_t) {
         if (module == sm->mpool_module) {
-            opal_list_remove_item(&mca_mpool_base_modules,item);
+            opal_list_remove_item(&mca_mpool_base_modules, (opal_list_item_t*)sm);
             if (NULL != sm->mpool_module->mpool_finalize) {
                 sm->mpool_module->mpool_finalize(sm->mpool_module);
             }

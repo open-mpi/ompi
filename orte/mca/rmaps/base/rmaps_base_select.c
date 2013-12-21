@@ -34,7 +34,6 @@ static bool selected = false;
  */
 int orte_rmaps_base_select(void)
 {
-    opal_list_item_t *item, *itm2;
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
@@ -48,12 +47,9 @@ int orte_rmaps_base_select(void)
         return ORTE_SUCCESS;
     }
     selected = true;
-    
+
     /* Query all available components and ask if they have a module */
-    for (item = opal_list_get_first(&orte_rmaps_base_framework.framework_components);
-         opal_list_get_end(&orte_rmaps_base_framework.framework_components) != item;
-         item = opal_list_get_next(item)) {
-        cli = (mca_base_component_list_item_t *) item;
+    OPAL_LIST_FOREACH(cli, &orte_rmaps_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_base_component_t *) cli->cli_component;
 
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -91,13 +87,10 @@ int orte_rmaps_base_select(void)
 
         /* maintain priority order */
         inserted = false;
-        for (itm2 = opal_list_get_first(&orte_rmaps_base.selected_modules);
-             itm2 != opal_list_get_end(&orte_rmaps_base.selected_modules);
-             itm2 = opal_list_get_next(itm2)) {
-            mod = (orte_rmaps_base_selected_module_t*)itm2;
+        OPAL_LIST_FOREACH(mod, &orte_rmaps_base.selected_modules, orte_rmaps_base_selected_module_t) {
             if (priority > mod->pri) {
                 opal_list_insert_pos(&orte_rmaps_base.selected_modules,
-                                     itm2, &newmodule->super);
+                                     (opal_list_item_t*)mod, &newmodule->super);
                 inserted = true;
                 break;
             }
@@ -111,10 +104,7 @@ int orte_rmaps_base_select(void)
     if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
         opal_output(0, "%s: Final mapper priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* show the prioritized list */
-        for (itm2 = opal_list_get_first(&orte_rmaps_base.selected_modules);
-             itm2 != opal_list_get_end(&orte_rmaps_base.selected_modules);
-             itm2 = opal_list_get_next(itm2)) {
-            mod = (orte_rmaps_base_selected_module_t*)itm2;
+        OPAL_LIST_FOREACH(mod, &orte_rmaps_base.selected_modules, orte_rmaps_base_selected_module_t) {
             opal_output(0, "\tMapper: %s Priority: %d", mod->component->mca_component_name, mod->pri);
         }
     }
