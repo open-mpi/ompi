@@ -41,7 +41,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ras/ras_types.h"
+#include "orte/mca/ras/base/base.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/util/hostfile/hostfile_lex.h"
@@ -176,7 +176,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             }
             node_name[len-1] = '\0';  /* truncate */
             
-            OPAL_OUTPUT_VERBOSE((3, orte_debug_output,
+            OPAL_OUTPUT_VERBOSE((3, orte_ras_base_framework.framework_output,
                                  "%s hostfile: node %s is being excluded",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
             
@@ -221,7 +221,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node_name = strdup(orte_process_info.nodename);
         }
 
-        OPAL_OUTPUT_VERBOSE((3, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((3, orte_ras_base_framework.framework_output,
                              "%s hostfile: node %s is being included - keep all is %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
                              keep_all ? "TRUE" : "FALSE"));
@@ -502,27 +502,29 @@ unlock:
 int orte_util_add_hostfile_nodes(opal_list_t *nodes,
                                  char *hostfile)
 {
-    opal_list_t exclude;
+    opal_list_t exclude, adds;
     opal_list_item_t *item, *itm;
     int rc;
+    orte_node_t *nd, *node;
+    bool found;
 
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s hostfile: checking hostfile %s for nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
 
     OBJ_CONSTRUCT(&exclude, opal_list_t);
-    
-    /* parse the hostfile and add the contents to the list */
-    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, nodes, &exclude, false))) {
+    OBJ_CONSTRUCT(&adds, opal_list_t);
+
+    /* parse the hostfile and add any new contents to the list */
+    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, &adds, &exclude, false))) {
         goto cleanup;
     }
     
-    /* parse the nodes to check for any relative node directives */
-    for (item = opal_list_get_first(nodes);
-         item != opal_list_get_end(nodes);
+    /* check for any relative node directives */
+    for (item = opal_list_get_first(&adds);
+         item != opal_list_get_end(&adds);
          item = opal_list_get_next(item)) {
-        orte_node_t *node=(orte_node_t*)item;
+        node=(orte_node_t*)item;
         
         if ('+' == node->name[0]) {
             orte_show_help("help-hostfile.txt", "hostfile:relative-syntax",
@@ -533,16 +535,16 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
     }
     
     /* remove from the list of nodes those that are in the exclude list */
-    while(NULL != (item = opal_list_remove_first(&exclude))) {
-        orte_node_t *exnode = (orte_node_t*)item;
+    while (NULL != (item = opal_list_remove_first(&exclude))) {
+        nd = (orte_node_t*)item;
         /* check for matches on nodes */
-        for (itm = opal_list_get_first(nodes);
-             itm != opal_list_get_end(nodes);
+        for (itm = opal_list_get_first(&adds);
+             itm != opal_list_get_end(&adds);
              itm = opal_list_get_next(itm)) {
-            orte_node_t *node=(orte_node_t*)itm;
-            if (0 == strcmp(exnode->name, node->name)) {
+            node = (orte_node_t*)itm;
+            if (0 == strcmp(nd->name, node->name)) {
                 /* match - remove it */
-                opal_list_remove_item(nodes, itm);
+                opal_list_remove_item(&adds, itm);
                 OBJ_RELEASE(itm);
                 break;
             }
@@ -550,8 +552,28 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
         OBJ_RELEASE(item);
     }
     
+    /* transfer across all unique nodes */
+    while (NULL != (item = opal_list_remove_first(&adds))) {
+        nd = (orte_node_t*)item;
+        for (itm = opal_list_get_first(nodes);
+             itm != opal_list_get_end(nodes);
+             itm = opal_list_get_next(itm)) {
+            node = (orte_node_t*)itm;
+            if (0 == strcmp(nd->name, node->name)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            opal_list_append(nodes, &nd->super);
+        } else {
+            OBJ_RELEASE(item);
+        }
+    }
+
 cleanup:
-    OBJ_DESTRUCT(&exclude);
+    OPAL_LIST_DESTRUCT(&exclude);
+    OPAL_LIST_DESTRUCT(&adds);
 
     return rc;
 }
@@ -574,7 +596,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     opal_list_t keep;
     bool found;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                         "%s hostfile: filtering nodes through hostfile %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
 
@@ -822,7 +844,7 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     orte_node_t *node_from_pool, *newnode;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s hostfile: creating ordered list of hosts from hostfile %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
     

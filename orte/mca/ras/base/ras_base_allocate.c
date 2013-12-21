@@ -52,13 +52,12 @@
 /* function to display allocation */
 void orte_ras_base_display_alloc(void)
 {
-    char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
+    char *tmp=NULL, *tmp2, *tmp3;
     int i, istart;
     orte_node_t *alloc;
     
     if (orte_xml_output) {
         asprintf(&tmp, "<allocation>\n");
-        pfx = "\t";
     } else {
         asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
     }
@@ -71,7 +70,16 @@ void orte_ras_base_display_alloc(void)
         if (NULL == (alloc = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             continue;
         }
-        opal_dss.print(&tmp2, pfx, alloc, ORTE_NODE);
+        if (orte_xml_output) {
+            /* need to create the output in XML format */
+            asprintf(&tmp2, "\t<host name=\"%s\" slots=\"%d\" max_slots=\"%d\" slots_inuse=\"%d\">\n",
+                     (NULL == alloc->name) ? "UNKNOWN" : alloc->name,
+                     (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse);
+        } else {
+            asprintf(&tmp2, "\t%s: slots=%d max_slots=%d slots_inuse=%d\n",
+                     (NULL == alloc->name) ? "UNKNOWN" : alloc->name,
+                     (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse);
+        }
         if (NULL == tmp) {
             tmp = tmp2;
         } else {
@@ -85,7 +93,7 @@ void orte_ras_base_display_alloc(void)
         fprintf(orte_xml_fp, "%s</allocation>\n", tmp);
         fflush(orte_xml_fp);
     } else {
-        opal_output(orte_clean_output, "%s\n\n=================================================================\n", tmp);
+        opal_output(orte_clean_output, "%s=================================================================\n", tmp);
     }
     free(tmp);    
 }
@@ -103,7 +111,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     orte_std_cntr_t i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    bool default_hostfile_used;
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate",
@@ -229,17 +236,31 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
      * the resulting list contains the UNION of all nodes specified
      * in hostfiles from across all app_contexts
      *
-     * Any app that has no hostfile but has a dash-host, will have
-     * those nodes added to the list
-     *
-     * Any app that fails to have a hostfile or a dash-host will be given the
-     * default hostfile, if we have it
+     * We then continue to add any hosts provided by dash-host and
+     * the default hostfile, if we have it. We will then filter out
+     * all the non-desired hosts (i.e., those not specified by
+     * -host and/or -hostfile) when we start the mapping process
      *
      * Note that any relative node syntax found in the hostfiles will
      * generate an error in this scenario, so only non-relative syntax
      * can be present
      */
-    default_hostfile_used = false;
+    if (NULL != orte_default_hostfile) {
+        OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
+                             "%s ras:base:allocate parsing default hostfile %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_default_hostfile));
+        
+        /* a default hostfile was provided - parse it */
+        if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                               orte_default_hostfile))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&nodes);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+    }
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
@@ -279,25 +300,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                 OBJ_RELEASE(caddy);
                 return;
             }
-        } else if (!default_hostfile_used) {
-            if (NULL != orte_default_hostfile) {
-                OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
-                                     "%s ras:base:allocate parsing default hostfile %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     orte_default_hostfile));
-        
-                /* a default hostfile was provided - parse it */
-                if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                                       orte_default_hostfile))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&nodes);
-                    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                    OBJ_RELEASE(caddy);
-                    return;
-                }
-            }
-            /* only look at it once */
-            default_hostfile_used = true;
         }
     }
 
