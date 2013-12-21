@@ -1,4 +1,5 @@
 %option nounput
+%option noinput
 
 %{ /* -*- C -*- */
 /*
