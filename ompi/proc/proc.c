@@ -175,7 +175,7 @@ static int ompi_proc_set_locality(ompi_proc_t *proc)
             char *cpu_bitmap;
 
             /* retrieve the binding for the other proc */
-            if (OMPI_SUCCESS != opal_db.fetch((opal_identifier_t*)&proc, OPAL_DB_CPUSET,
+            if (OMPI_SUCCESS != opal_db.fetch((opal_identifier_t*)&proc->proc_name, OPAL_DB_CPUSET,
                                               (void**)&cpu_bitmap, OPAL_STRING)) {
                 /* we don't know their cpuset, so nothing more we can say */
                 locality = OPAL_PROC_ON_NODE;
