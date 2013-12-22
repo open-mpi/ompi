@@ -39,7 +39,7 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
                                        mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    int i, j, size, rank, err, max_size;
+    int i, j, size, rank, err=MPI_SUCCESS, max_size;
     MPI_Request *preq;
     char *tmp_buffer;
     ptrdiff_t ext;
