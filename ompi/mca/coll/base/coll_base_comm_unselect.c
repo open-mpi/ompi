@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Oak Rigde National Laboratory. 
  *                         All rights reserved.
+ * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,10 +25,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "mpi.h"
-#include "ompi/communicator/communicator.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
 
 #define CLOSE(comm, func)                                       \
@@ -76,7 +77,6 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iscan);
     CLOSE(comm, iscatter);
     CLOSE(comm, iscatterv);
-
 
     /* All done */
     return OMPI_SUCCESS;
