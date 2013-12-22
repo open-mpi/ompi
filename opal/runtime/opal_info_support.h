@@ -22,21 +22,21 @@
 
 BEGIN_C_DECLS
 
-extern const char *opal_info_path_prefix;
+OPAL_DECLSPEC extern const char *opal_info_path_prefix;
 
-extern const char *opal_info_type_all;
-extern const char *opal_info_type_opal;
-extern const char *opal_info_component_all;
+OPAL_DECLSPEC extern const char *opal_info_type_all;
+OPAL_DECLSPEC extern const char *opal_info_type_opal;
+OPAL_DECLSPEC extern const char *opal_info_component_all;
 extern const char *opal_info_param_all;
 
-extern const char *opal_info_ver_full;
+OPAL_DECLSPEC extern const char *opal_info_ver_full;
 extern const char *opal_info_ver_major;
 extern const char *opal_info_ver_minor;
 extern const char *opal_info_ver_release;
 extern const char *opal_info_ver_greek;
 extern const char *opal_info_ver_repo;
 
-extern const char *opal_info_ver_all;
+OPAL_DECLSPEC extern const char *opal_info_ver_all;
 extern const char *opal_info_ver_mca;
 extern const char *opal_info_ver_type;
 extern const char *opal_info_ver_component;
@@ -52,7 +52,6 @@ typedef struct {
 } opal_info_component_map_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_info_component_map_t);
 
-END_C_DECLS
 
 OPAL_DECLSPEC int opal_info_init(int argc, char **argv,
                                  opal_cmd_line_t *opal_info_cmd_line);
@@ -108,5 +107,7 @@ OPAL_DECLSPEC void opal_info_out_int(const char *pretty_message,
 OPAL_DECLSPEC int opal_info_register_project_frameworks (const char *project_name,
                                                          mca_base_framework_t **frameworks,
                                                          opal_pointer_array_t *component_map);
+
+END_C_DECLS
 
 #endif

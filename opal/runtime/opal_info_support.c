@@ -252,7 +252,7 @@ static int info_register_framework (mca_base_framework_t *framework, opal_pointe
 int opal_info_register_project_frameworks (const char *project_name, mca_base_framework_t **frameworks,
                                            opal_pointer_array_t *component_map)
 {
-    int i, rc;
+    int i, rc=OPAL_SUCCESS;
 
     for (i=0; NULL != frameworks[i]; i++) {
         if (OPAL_SUCCESS != (rc = info_register_framework(frameworks[i], component_map))) {
@@ -510,7 +510,7 @@ void opal_info_do_params(bool want_all_in, bool want_internal,
 
 void opal_info_err_params(opal_pointer_array_t *component_map)
 {
-    opal_info_component_map_t *map, *mptr;
+    opal_info_component_map_t *map=NULL, *mptr;
     int i;
 
     /* all we want to do is display the LAST entry in the
