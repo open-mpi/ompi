@@ -59,7 +59,9 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 
     NULL
 };
-static ompi_btl_openib_connect_base_component_t **available = NULL;
+
+/* increase this count if any more cpcs are added */
+static ompi_btl_openib_connect_base_component_t *available[5];
 static int num_available = 0;
 
 static char *btl_openib_cpc_include;
@@ -108,11 +110,6 @@ int ompi_btl_openib_connect_base_register(void)
 
     /* Parse the if_[in|ex]clude paramters to come up with a list of
        CPCs that are available */
-    available = (ompi_btl_openib_connect_base_component_t **) calloc(1, sizeof(all));
-    if (NULL == available) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
     /* If we have an "include" list, then find all those CPCs and put
        them in available[] */
     if (NULL != btl_openib_cpc_include) {
@@ -197,6 +194,7 @@ int ompi_btl_openib_connect_base_register(void)
         }
     }
 
+    free (all_cpc_names);
     return OMPI_SUCCESS;
 }
 
@@ -511,13 +509,9 @@ void ompi_btl_openib_connect_base_finalize(void)
 {
     int i;
 
-    if (NULL != available) {
-        for (i = 0; NULL != available[i]; ++i) {
-            if (NULL != available[i]->cbc_finalize) {
-                available[i]->cbc_finalize();
-            }
+    for (i = 0 ; i < num_available ; ++i) {
+        if (NULL != available[i]->cbc_finalize) {
+            available[i]->cbc_finalize();
         }
-        free(available);
-        available = NULL;
     }
 }

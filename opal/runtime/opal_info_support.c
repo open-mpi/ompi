@@ -225,6 +225,7 @@ int opal_info_init(int argc, char **argv,
 
 void opal_info_finalize(void)
 {
+    opal_info_close_components ();
     mca_base_close();
     opal_finalize_util();
 }

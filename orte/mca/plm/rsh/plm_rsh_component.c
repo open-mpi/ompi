@@ -174,7 +174,7 @@ static int rsh_component_register(void)
                                             &mca_plm_rsh_component.no_tree_spawn);
 
     /* local rsh/ssh launch agent */
-    mca_plm_rsh_component.agent = strdup ("ssh : rsh");
+    mca_plm_rsh_component.agent = "ssh : rsh";
     var_id = mca_base_component_var_register (c, "agent",
                                               "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
                                               MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,

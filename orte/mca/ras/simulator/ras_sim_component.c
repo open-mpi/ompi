@@ -67,7 +67,7 @@ static int ras_sim_register(void)
 {
     mca_base_component_t *component = &mca_ras_simulator_component.super.base_version;
 
-    mca_ras_simulator_component.slots = strdup ("1");
+    mca_ras_simulator_component.slots = "1";
     (void) mca_base_component_var_register (component, "slots",
                                             "Comma-separated list of number of slots on each node to simulate",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -75,7 +75,7 @@ static int ras_sim_register(void)
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_ras_simulator_component.slots);
 
-    mca_ras_simulator_component.slots_max = strdup ("0");
+    mca_ras_simulator_component.slots_max = "0";
     (void) mca_base_component_var_register (component, "max_slots",
                                             "Comma-separated list of number of max slots on each node to simulate",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
