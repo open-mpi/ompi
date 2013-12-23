@@ -23,6 +23,7 @@
 #include "opal/class/opal_hash_table.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "ompi/include/mpi.h"
 
 BEGIN_C_DECLS
 
@@ -42,6 +43,7 @@ OSHMEM_DECLSPEC extern int oshmem_mpi_thread_provided;
 /** Identifier of the main thread */
 OSHMEM_DECLSPEC extern struct opal_thread_t *oshmem_mpi_main_thread;
 
+OSHMEM_DECLSPEC extern MPI_Comm oshmem_comm_world;
 /*
  * SHMEM_Init_thread constants
  */

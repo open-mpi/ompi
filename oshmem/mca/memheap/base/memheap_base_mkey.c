@@ -48,11 +48,15 @@
 #define MEMHEAP_RKEY_RESP           0xA2
 #define MEMHEAP_RKEY_RESP_FAIL      0xA3
 
+#define MEMHEAP_MKEY_MAXSIZE   4096
+
 struct oob_comm {
     opal_mutex_t lck;
     opal_condition_t cond;
     mca_spml_mkey_t *mkeys;
     int mkeys_rcvd;
+    MPI_Request recv_req;
+    char buf[MEMHEAP_MKEY_MAXSIZE];
 };
 
 #define MEMHEAP_VERBOSE_FASTPATH(...)
@@ -60,6 +64,8 @@ struct oob_comm {
 static mca_memheap_map_t* memheap_map = NULL;
 
 struct oob_comm memheap_oob;
+
+static int send_buffer(int pe, opal_buffer_t *msg);
 
 /* pickup list of rkeys and remote va */
 static int memheap_oob_get_mkeys(int pe,
@@ -112,24 +118,36 @@ static inline map_segment_t *__find_va(const void* va)
     return s;
 }
 
-static int do_mkey_req(opal_buffer_t *msg, int pe, int seg)
+/**
+ * @param all_trs
+ * 0 - pack mkeys for transports to given pe
+ * 1 - pack mkeys for ALL possible transports. value of pe is ignored
+ */
+static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
 {
-    uint8_t msg_type;
     oshmem_proc_t *proc;
     int i, n, tr_id;
     mca_spml_mkey_t *mkey;
 
-    msg_type = MEMHEAP_RKEY_RESP;
-    opal_dss.pack(msg, &msg_type, 1, OPAL_UINT8);
-
     /* go over all transports to remote pe and pack mkeys */
-    n = oshmem_get_transport_count(pe);
-    proc = oshmem_proc_group_find(oshmem_group_all, pe);
+    if (!all_trs) {
+        n = oshmem_get_transport_count(pe);
+        proc = oshmem_proc_group_find(oshmem_group_all, pe);
+    }
+    else {
+        proc = NULL;
+        n = memheap_map->num_transports;
+    }
+
     opal_dss.pack(msg, &n, 1, OPAL_UINT32);
     MEMHEAP_VERBOSE(5, "found %d transports to %d", n, pe);
     for (i = 0; i < n; i++) {
-        tr_id = proc->transport_ids[i];
-
+        if (!all_trs) {
+            tr_id = proc->transport_ids[i];
+        }
+        else {
+            tr_id = i;
+        }
         mkey = mca_memheap_base_get_mkey(__seg2base_va(seg), tr_id);
         if (!mkey) {
             MEMHEAP_ERROR("seg#%d tr_id: %d failed to find local mkey",
@@ -235,17 +253,21 @@ static void memheap_attach_segment(mca_spml_mkey_t *mkey, int tr_id)
     }
 }
 
-static void do_mkey_resp(opal_buffer_t *msg)
+
+static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
 {
     int32_t cnt;
     int32_t n;
     int32_t tr_id;
     int i;
+    oshmem_proc_t *proc;
 
+    proc = oshmem_proc_group_find(oshmem_group_all, remote_pe);
     cnt = 1;
     opal_dss.unpack(msg, &n, &cnt, OPAL_UINT32);
     for (i = 0; i < n; i++) {
         opal_dss.unpack(msg, &tr_id, &cnt, OPAL_UINT32);
+
         opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].handle.key, &cnt, OPAL_UINT64);
         opal_dss.unpack(msg,
                         &memheap_oob.mkeys[tr_id].va_base,
@@ -264,7 +286,8 @@ static void do_mkey_resp(opal_buffer_t *msg)
             }
         }
 
-        memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags))
+            memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
 
         MEMHEAP_VERBOSE(5,
                         "tr_id: %d key %llx base_va %p",
@@ -272,15 +295,8 @@ static void do_mkey_resp(opal_buffer_t *msg)
     }
 }
 
-static void memheap_buddy_rml_recv_cb(int status,
-                                      orte_process_name_t* process_name,
-                                      opal_buffer_t* buffer,
-                                      orte_rml_tag_t tag,
-                                      void* cbdata)
+static void do_recv(int source_pe, opal_buffer_t* buffer)
 {
-    MEMHEAP_VERBOSE(5,
-                    "**** get request from %u:%d",
-                    process_name->jobid, process_name->vpid);
     int32_t cnt = 1;
     int rc;
     opal_buffer_t *msg;
@@ -311,14 +327,16 @@ static void memheap_buddy_rml_recv_cb(int status,
             return;
         }
 
-        if (OSHMEM_SUCCESS != do_mkey_req(msg, process_name->vpid, seg)) {
+        msg_type = MEMHEAP_RKEY_RESP;
+        opal_dss.pack(msg, &msg_type, 1, OPAL_UINT8);
+
+        if (OSHMEM_SUCCESS != pack_local_mkeys(msg, source_pe, seg, 0)) {
             OBJ_RELEASE(msg);
             goto send_fail;
         }
 
-        rc = orte_rml.send_buffer_nb(process_name, msg, OMPI_RML_TAG_SHMEM, orte_rml_send_callback, NULL);
-
-        if (0 > rc) {
+        rc = send_buffer(source_pe, msg);
+        if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("FAILED to send rml message %d", rc);
             ORTE_ERROR_LOG(rc);
             goto send_fail;
@@ -328,7 +346,7 @@ static void memheap_buddy_rml_recv_cb(int status,
     case MEMHEAP_RKEY_RESP:
         MEMHEAP_VERBOSE(5, "*** RKEY RESP");
         OPAL_THREAD_LOCK(&memheap_oob.lck);
-        do_mkey_resp(buffer);
+        unpack_remote_mkeys(buffer, source_pe);
         memheap_oob.mkeys_rcvd = MEMHEAP_RKEY_RESP;
         opal_condition_broadcast(&memheap_oob.cond);
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
@@ -356,12 +374,95 @@ static void memheap_buddy_rml_recv_cb(int status,
     msg_type = MEMHEAP_RKEY_RESP_FAIL;
     opal_dss.pack(msg, &msg_type, 1, OPAL_UINT8);
 
-    rc = orte_rml.send_buffer_nb(process_name, msg, OMPI_RML_TAG_SHMEM, orte_rml_send_callback, NULL);
-    if (0 > rc) {
+    rc = send_buffer(source_pe, msg);
+    if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
         ORTE_ERROR_LOG(rc);
     }
 
+}
+
+/**
+ * simple/fast version of MPI_Test that 
+ * - only works with persistant request
+ * - does not do any progress
+ * - can be safely called from within opal_progress()
+ */
+static inline int my_MPI_Test(ompi_request_t ** rptr,
+                              int *completed,
+                              ompi_status_public_t * status)
+{
+    ompi_request_t *request = *rptr;
+
+    assert(request->req_persistent);
+
+    if (request->req_complete) {
+        int old_error;
+
+        *completed = true;
+        *status = request->req_status;
+        old_error = status->MPI_ERROR;
+        status->MPI_ERROR = old_error;
+
+        request->req_state = OMPI_REQUEST_INACTIVE;
+        return request->req_status.MPI_ERROR;
+    }
+
+    *completed = false;
+    return OMPI_SUCCESS;
+}
+
+int oshmem_mkey_recv_cb(void)
+{
+    MPI_Status status;
+    int flag;
+    int n;
+    int rc;
+    opal_buffer_t *msg;
+    int32_t size;
+    void *tmp_buf;
+
+    n = 0;
+    while (1) {
+        my_MPI_Test(&memheap_oob.recv_req, &flag, &status);
+        if (OPAL_LIKELY(0 == flag)) {
+            return n;
+        }
+        MPI_Get_count(&status, MPI_BYTE, &size);
+        MEMHEAP_VERBOSE(5, "OOB request from PE: %d, size %d", status.MPI_SOURCE, size);
+        n++;
+
+        /* to avoid deadlock we must start request
+         * before processing it. Data are copied to
+         * the tmp buffer
+         */
+        tmp_buf = malloc(size);
+        if (NULL == tmp_buf) {
+            MEMHEAP_ERROR("not enough memory");
+            ORTE_ERROR_LOG(0);
+            return n;
+        }
+        memcpy(tmp_buf, (void*)memheap_oob.buf, size);
+        msg = OBJ_NEW(opal_buffer_t);
+        if (NULL == msg) {
+            MEMHEAP_ERROR("not enough memory");
+            ORTE_ERROR_LOG(0);
+            return n;
+        }
+        opal_dss.load(msg, (void*)tmp_buf, size);
+
+        rc = MPI_Start(&memheap_oob.recv_req);
+        if (MPI_SUCCESS != rc) {
+            MEMHEAP_ERROR("Failed to post recv request %d", rc);
+            ORTE_ERROR_LOG(rc);
+            return n;
+        }
+
+        do_recv(status.MPI_SOURCE, msg);
+
+        OBJ_RELEASE(msg);
+    }
+    return 1;  
 }
 
 int memheap_oob_init(mca_memheap_map_t *map)
@@ -373,29 +474,58 @@ int memheap_oob_init(mca_memheap_map_t *map)
     OBJ_CONSTRUCT(&memheap_oob.lck, opal_mutex_t);
     OBJ_CONSTRUCT(&memheap_oob.cond, opal_condition_t);
 
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                 OMPI_RML_TAG_SHMEM,
-                                 ORTE_RML_PERSISTENT,
-                                 memheap_buddy_rml_recv_cb,
-                                 NULL );
+    rc = MPI_Recv_init(memheap_oob.buf, sizeof(memheap_oob.buf), MPI_BYTE,
+            MPI_ANY_SOURCE, 0, 
+            oshmem_comm_world,  
+            &memheap_oob.recv_req);
+    if (MPI_SUCCESS != rc) {
+        MEMHEAP_ERROR("Failed to created recv request %d", rc);
+        return rc;
+    }
+
+    rc = MPI_Start(&memheap_oob.recv_req);
+    if (MPI_SUCCESS != rc) {
+        MEMHEAP_ERROR("Failed to post recv request %d", rc);
+        return rc;
+    }
+
+    opal_progress_register(oshmem_mkey_recv_cb);
 
     return rc;
 }
 
 void memheap_oob_destruct(void)
 {
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_SHMEM);
+    opal_progress_unregister(oshmem_mkey_recv_cb);
+
+    MPI_Cancel(&memheap_oob.recv_req);
+    MPI_Request_free(&memheap_oob.recv_req);
+
     OBJ_DESTRUCT(&memheap_oob.lck);
     OBJ_DESTRUCT(&memheap_oob.cond);
 }
 
+static int send_buffer(int pe, opal_buffer_t *msg)
+{
+    void *buffer;
+    int32_t size;
+    int rc;
+
+    opal_dss.unload(msg, &buffer, &size);
+    rc = MPI_Send(buffer, size, MPI_BYTE, pe, 0, oshmem_comm_world);
+    free(buffer);
+    OBJ_RELEASE(msg);
+
+    MEMHEAP_VERBOSE(5, "message sent: dst=%d, rc=%d, %d bytes!", pe, rc, size);
+    return rc;
+}
+
 static int memheap_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
 {
-    orte_process_name_t name;
     opal_buffer_t *msg;
-    int rc;
     uint8_t cmd;
     int i;
+    int rc;
 
     if (OSHMEM_SUCCESS == MCA_SPML_CALL(oob_get_mkeys(pe, seg, mkeys))) {
         for (i = 0; i < memheap_map->num_transports; i++) {
@@ -415,9 +545,6 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
     memheap_oob.mkeys = mkeys;
     memheap_oob.mkeys_rcvd = 0;
 
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
-    name.vpid = pe;
-
     msg = OBJ_NEW(opal_buffer_t);
     if (!msg) {
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
@@ -429,15 +556,13 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
     cmd = MEMHEAP_RKEY_REQ;
     opal_dss.pack(msg, &cmd, 1, OPAL_UINT8);
     opal_dss.pack(msg, &seg, 1, OPAL_UINT32);
-    rc = orte_rml.send_buffer_nb(&name, msg, OMPI_RML_TAG_SHMEM, orte_rml_send_callback, NULL);
-    if (0 > rc) {
-        OBJ_RELEASE(msg);
+
+    rc = send_buffer(pe, msg);
+    if (MPI_SUCCESS != rc) {
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
         return OSHMEM_ERROR;
     }
-
-    MEMHEAP_VERBOSE(5, "message sent: %d bytes!", rc);
 
     while (!memheap_oob.mkeys_rcvd) {
         opal_condition_wait(&memheap_oob.cond, &memheap_oob.lck);
@@ -459,59 +584,88 @@ void mca_memheap_modex_recv_all(void)
     int i;
     int j;
     int nprocs, my_pe;
-    oshmem_proc_t *proc;
-    mca_spml_mkey_t *mkey;
-    void* dummy_rva;
+    opal_buffer_t *msg;
+    void *send_buffer;
+    char *rcv_buffer;
+    void *dummy_buffer;
+    int32_t size, dummy_size;
+    int rc;
 
-    if (!mca_memheap_base_key_exchange)
+    if (!mca_memheap_base_key_exchange) {
+        MPI_Barrier(oshmem_comm_world);
         return;
+    }
 
-    /* init rkey cache */
     nprocs = oshmem_num_procs();
     my_pe = oshmem_my_proc_id();
 
-    /* Note:
-     * Doing exchange via rml till we figure out problem with grpcomm.modex and barrier
-     */
-    for (i = 0; i < nprocs; i++) {
-        if (i == my_pe)
-            continue;
-
-        proc = oshmem_proc_group_find(oshmem_group_all, i);
-        for (j = 0; j < memheap_map->n_segments; j++) {
-            mkey =
-                    mca_memheap_base_get_cached_mkey(i,
-                                                     memheap_map->mem_segs[j].start,
-                                                     proc->transport_ids[0],
-                                                     &dummy_rva);
-            if (!mkey) {
-                MEMHEAP_ERROR("Failed to receive mkeys");
-                oshmem_shmem_abort(-1);
-            }
-        }
-
+    /* serialize our own mkeys */
+    msg = OBJ_NEW(opal_buffer_t);
+    if (NULL == msg) {
+        MEMHEAP_ERROR("failed to get msg buffer");
+        oshmem_shmem_abort(-1);
+        return;
     }
 
-    /*
-     * There is an issue with orte_grpcomm.barrier usage as
-     * ess/pmi directs to use grpcomm/pmi in case slurm srun() call grpcomm/pmi calls PMI_Barrier() 
-     * that is a function of external library.
-     * There is no opal_progress() in such way. As a result slow PEs send a request (MEMHEAP_RKEY_REQ) to
-     * fast PEs waiting on barrier and do not get a respond (MEMHEAP_RKEY_RESP).
-     *
-     * there are following ways to solve one:
-     * 1. calculate requests from remote PEs and do ORTE_PROGRESSED_WAIT waiting for expected value;
-     * 2. use shmem_barrier_all();
-     * 3. rework pmi/barrier to use opal_progress();
-     * 4. use orte_grpcomm.barrier carefully;
-     * 
-     * It seems there is no need to use orte_grpcomm.barrier here
-     */
+    for (j = 0; j < memheap_map->n_segments; j++) {
+        pack_local_mkeys(msg, 0, j, 1);
+    }
 
-    if (memheap_map->mem_segs[HEAP_SEG_INDEX].shmid != MEMHEAP_SHM_INVALID) {
+    /* Do allgather */
+    opal_dss.unload(msg, &send_buffer, &size);
+    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %d segments", size, memheap_map->n_segments);
+    rcv_buffer = malloc(size * nprocs);
+    if (NULL == msg) {
+        MEMHEAP_ERROR("failed to allocate recieve buffer");
+        oshmem_shmem_abort(-1);
+    }
+
+    rc = MPI_Allgather(send_buffer, size, MPI_BYTE, 
+            rcv_buffer, size, MPI_BYTE, oshmem_comm_world);
+
+    if (MPI_SUCCESS != rc) {
+        MEMHEAP_ERROR("allgather failed");
+        oshmem_shmem_abort(-1);
+    }
+
+    /* deserialize mkeys */
+    OPAL_THREAD_LOCK(&memheap_oob.lck);
+    for (i = 0; i < nprocs; i++) {
+        if (i == my_pe) {
+            continue;
+        }
+
+        opal_dss.load(msg, rcv_buffer + i*size, size);
+        for (j = 0; j < memheap_map->n_segments; j++) {
+            map_segment_t *s;
+
+            s = &memheap_map->mem_segs[j];
+            if (NULL != s->mkeys_cache[i]) {
+                MEMHEAP_VERBOSE(10, "PE%d: segment%d already exists, mkey will be replaced", i, j);
+            } else {
+                s->mkeys_cache[i] = (mca_spml_mkey_t *) calloc(memheap_map->num_transports,
+                        sizeof(mca_spml_mkey_t));
+                if (NULL == s->mkeys_cache[i]) {
+                    MEMHEAP_ERROR("PE%d: segment%d: Failed to allocate mkeys cache entry", i, j);
+                    oshmem_shmem_abort(-1);
+                }
+            }
+            memheap_oob.mkeys = s->mkeys_cache[i];
+            unpack_remote_mkeys(msg, i);
+        }
+        opal_dss.unload(msg, &dummy_buffer, &dummy_size);
+    }
+
+    OPAL_THREAD_UNLOCK(&memheap_oob.lck);
+    free(send_buffer);
+    free(rcv_buffer);
+    OBJ_RELEASE(msg);
+
+
+    if (3 == mca_memheap_base_alloc_type || 4 == mca_memheap_base_alloc_type) {
         /* unfortunately we must do barrier here to assure that everyone are attached to our segment
-         * good thing that this code path only invoked on older linuxes (-mca shmalloc_use_hugepages 3|4)
-         * try to minimize damage here by waiting 5 seconds and doing progress
+         * good thing that this code path only invoked on older linuxes (-mca memheap_base_alloc_type 3|4)
+         * that does not support IPC_RMID op on attached segments.
          */
         shmem_barrier_all();
         /* keys exchanged, segments attached, now we can safely cleanup */

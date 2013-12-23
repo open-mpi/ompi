@@ -285,8 +285,8 @@ int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys)
     struct yoda_btl *ybtl;
     mca_spml_yoda_context_t* yoda_context;
 
-    MCA_SPML_CALL(fence());
-    mca_spml_yoda_wait_gets();
+	MCA_SPML_CALL(fence());
+	mca_spml_yoda_wait_gets();
 
     if (!mkeys) {
         return OSHMEM_SUCCESS;
@@ -362,6 +362,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
     for (i = 0; i < mca_spml_yoda.n_btls; i++) {
 
         ybtl = &mca_spml_yoda.btl_type_map[i];
+        mkeys[i].va_base = addr;
 
         if (!ybtl->use_cnt) {
             SPML_VERBOSE(10,
@@ -374,6 +375,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
         if ((YODA_BTL_SM == ybtl->btl_type)
                 && ((int) MEMHEAP_SHM_GET_ID(shmid) != MEMHEAP_SHM_INVALID)) {
             mkeys[i].handle.key = shmid;
+            mkeys[i].va_base = 0;
             continue;
         }
 
@@ -430,8 +432,6 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
                        yoda_context->btl_src_segment_size);
             }
         }
-
-        mkeys[i].va_base = addr;
 
         SPML_VERBOSE(5,
                      "rank %d btl %s rkey %x lkey %x key %llx address 0x%p len %llu shmid 0x%X|0x%X",
