@@ -153,21 +153,18 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 				   sh->comm, sh->comm->c_coll.coll_gather_module );
     
     if ( 0 == rank ) {
-	for (i = 0; i < size; i++){
-	    prev_offset = offbuff[0];
-	    offbuff[0]   = sh->global_offset;
-		
-	    for (i = 1; i < size ; i++){
-		temp = offbuff[i];
-		offbuff[i] = offbuff[i - 1] + prev_offset;
-		prev_offset = temp;
-	    }
+        prev_offset = offbuff[0];
+        offbuff[0]   = sh->global_offset;
+	
+        for (i = 1; i < size ; i++){
+            temp = offbuff[i];
+            offbuff[i] = offbuff[i - 1] + prev_offset;
+            prev_offset = temp;
+        }
 	    
-	    for (i = 0; i < size; i++){
-		global_offset = offbuff[size - 1] + prev_offset;
-	    }
-	    	    
-	}
+        for (i = 0; i < size; i++){
+            global_offset = offbuff[size - 1] + prev_offset;
+        }	    	    
     }
 
 
