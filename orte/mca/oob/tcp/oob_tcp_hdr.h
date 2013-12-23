@@ -55,7 +55,7 @@ typedef struct {
     /* the rml tag where this message is headed */
     orte_rml_tag_t tag;
     /* number of bytes in message */
-    size_t nbytes;
+    uint32_t nbytes;
 } mca_oob_tcp_hdr_t;
 /**
  * Convert the message header to host byte order
