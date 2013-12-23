@@ -345,7 +345,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         /* There is a union of 3 structs in this struct -- get the
            offsets for fields of both of them. */
         /* Union type */
-        missing_in_action = "mca_topo_base_comm_cgd_union_2_1_0_t";
+        missing_in_action = "mca_topo_base_module_t";
         cg_union_type = mqs_find_type(image, missing_in_action, mqs_lang_c);
         if (!cg_union_type) {
             goto type_missing;
