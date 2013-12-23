@@ -103,6 +103,8 @@ int oshmem_mpi_thread_requested = SHMEM_THREAD_SINGLE;
 int oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
 long *preconnect_value = 0;
 
+MPI_Comm oshmem_comm_world;
+
 opal_thread_t *oshmem_mpi_main_thread = NULL;
 
 /* Constants for the Fortran layer.  These values are referred to via
@@ -219,6 +221,8 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         if (!ompi_mpi_initialized && !ompi_mpi_finalized) {
             ret = ompi_mpi_init(argc, argv, requested, provided);
         }
+        MPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
+
         if (OSHMEM_SUCCESS == ret) {
             ret = _shmem_init(argc, argv, requested, provided);
         }
@@ -226,7 +230,9 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         if (OSHMEM_SUCCESS == ret) {
             oshmem_shmem_initialized = true;
 
+            /* this is a collective op, implies barrier */
             MCA_MEMHEAP_CALL(get_all_mkeys());
+
             oshmem_shmem_preconnect_all();
 #if OSHMEM_OPAL_THREAD_ENABLE
             pthread_t thread_id;

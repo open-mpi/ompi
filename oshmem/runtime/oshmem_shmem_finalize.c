@@ -72,6 +72,7 @@ int oshmem_shmem_finalize(void)
 
         if ((OSHMEM_SUCCESS == ret) && ompi_mpi_initialized
                 && !ompi_mpi_finalized) {
+            MPI_Comm_free(&oshmem_comm_world);
             ret = ompi_mpi_finalize();
         }
 
