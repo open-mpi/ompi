@@ -240,7 +240,7 @@ static int hcoll_close(void)
     rc = hcoll_finalize();
     opal_progress_unregister(mca_coll_hcoll_progress);
     OBJ_DESTRUCT(&mca_coll_hcoll_component.active_modules);
-
+    memset(&mca_coll_hcoll_component.active_modules,0,sizeof(mca_coll_hcoll_component.active_modules));
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(1,"Hcol library finalize failed");
         return OMPI_ERROR;
