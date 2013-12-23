@@ -722,31 +722,38 @@ static void recv_handler(int sd, short flags, void *cbdata)
     mca_oob_tcp_conn_op_t *op = (mca_oob_tcp_conn_op_t*)cbdata;
     mca_oob_tcp_hdr_t hdr;
     int rc;
+    size_t cnt;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:tcp:recv:handler called",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    /* Some mem checkers don't realize that hdr will guarantee to be
-       fully filled in during the read(), below :-( */
-    OPAL_DEBUG_ZERO(hdr);
+    /* ensure all is zero'd */
+    memset(&hdr, 0, sizeof(hdr));
 
     /* recv the process identifier */
-    while ((rc = recv(sd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
-        if (rc >= 0) {
+    cnt = 0;
+    while (cnt < sizeof(hdr)) {
+        rc = recv(sd, (char *)&hdr, sizeof(hdr), 0);
+        if (0 == rc) {
             if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
                 opal_output(0, "%s mca_oob_tcp_recv_handler: peer closed connection",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             CLOSE_THE_SOCKET(sd);
             goto cleanup;
+        } else if (rc < 0) {
+            if (opal_socket_errno != EINTR && 
+                opal_socket_errno != EAGAIN && 
+                opal_socket_errno != EWOULDBLOCK) {
+                opal_output(0, "%s mca_oob_tcp_recv_handler: recv() failed: %s (%d)\n",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
+                CLOSE_THE_SOCKET(sd);
+                goto cleanup;
+            }
+            continue;
         }
-        if (opal_socket_errno != EINTR) {
-            opal_output(0, "%s mca_oob_tcp_recv_handler: recv() failed: %s (%d)\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-            CLOSE_THE_SOCKET(sd);
-            goto cleanup;
-        }
+        cnt += rc;
     }
     MCA_OOB_TCP_HDR_NTOH(&hdr);
 
