@@ -297,12 +297,15 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
 static int read_bytes(mca_oob_tcp_peer_t* peer)
 {
     int rc;
+    int retries;
 
-    /* read until all bytes recvd or error */
-    while (0 < peer->recv_msg->rdbytes) {
+    /* read until all bytes recvd or error - but limit the number of tries */
+    retries = 0;
+    while (0 < peer->recv_msg->rdbytes && retries < mca_oob_tcp_component.max_retries) {
         rc = read(peer->sd, peer->recv_msg->rdptr, peer->recv_msg->rdbytes);
         if (rc < 0) {
             if(opal_socket_errno == EINTR) {
+                retries++;
                 continue;
             } else if (opal_socket_errno == EAGAIN) {
                 /* tell the caller to keep this message on active,
@@ -321,13 +324,12 @@ static int read_bytes(mca_oob_tcp_peer_t* peer)
              * the error back to the RML and let the caller know
              * to abort this message
              */
-            if (opal_output_get_verbosity(orte_oob_base_framework.framework_output) >= OOB_TCP_DEBUG_FAIL) {
-                opal_output(0, "%s-%s mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer->name)),
-                            strerror(opal_socket_errno),
-                            opal_socket_errno);
-            }
+            opal_output_verbose(OOB_TCP_DEBUG_FAIL, orte_oob_base_framework.framework_output,
+                                "%s-%s mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&(peer->name)),
+                                strerror(opal_socket_errno),
+                                opal_socket_errno);
             // mca_oob_tcp_peer_close(peer);
             // if (NULL != mca_oob_tcp.oob_exception_callback) {
             // mca_oob_tcp.oob_exception_callback(&peer->name, ORTE_RML_PEER_DISCONNECTED);
@@ -337,11 +339,10 @@ static int read_bytes(mca_oob_tcp_peer_t* peer)
             /* the remote peer closed the connection - report that condition
              * and let the caller know
              */
-            if (opal_output_get_verbosity(orte_oob_base_framework.framework_output) >= OOB_TCP_DEBUG_FAIL) {
-                opal_output(0, "%s-%s mca_oob_tcp_msg_recv: peer closed connection", 
-                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                   ORTE_NAME_PRINT(&(peer->name)));
-            }
+            opal_output_verbose(OOB_TCP_DEBUG_FAIL, orte_oob_base_framework.framework_output,
+                                "%s-%s mca_oob_tcp_msg_recv: peer closed connection", 
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&(peer->name)));
             /* stop all events */
             if (peer->recv_ev_active) {
                 opal_event_del(&peer->recv_event);
@@ -368,7 +369,14 @@ static int read_bytes(mca_oob_tcp_peer_t* peer)
         /* we were able to read something, so adjust counters and location */
         peer->recv_msg->rdbytes -= rc;
         peer->recv_msg->rdptr += rc;
+        retries = 0;
     }
+
+    if (0 < peer->recv_msg->rdbytes) {
+        /* we failed to read it all */
+        return ORTE_ERR_COMM_FAILURE;
+    }
+
     /* we read the full data block */
     return ORTE_SUCCESS;
 }
@@ -470,8 +478,15 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                     peer->recv_msg->data = NULL;  // make sure
                 } else {
                     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                        "%s:tcp:recv:handler allocate data region",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                                        "%s:tcp:recv:handler allocate data region of size %lu",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (unsigned long)peer->recv_msg->hdr.nbytes);
+                    /* FIXME: if the data region is absurdly large, then something is wrong */
+                    if (500000000 < peer->recv_msg->hdr.nbytes) {
+                        opal_output(0, "%s: ABSURDLY LARGE MESSAGE OF SIZE %lu",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (unsigned long)peer->recv_msg->hdr.nbytes);
+                        mca_oob_tcp_peer_close(mod, peer);
+                        return;
+                    }
                     /* allocate the data region */
                     peer->recv_msg->data = (char*)malloc(peer->recv_msg->hdr.nbytes);
                     /* point to it */

@@ -327,7 +327,7 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_module_t *mod,
     hdr.tag = 0;
     hdr.nbytes = 0;
     MCA_OOB_TCP_HDR_HTON(&hdr);
-    if (0 > tcp_peer_send_blocking(mod, peer, &hdr, sizeof(hdr))) {
+    if (ORTE_SUCCESS != tcp_peer_send_blocking(mod, peer, &hdr, sizeof(hdr))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
         return ORTE_ERR_UNREACH;
     }
@@ -478,7 +478,7 @@ static int tcp_peer_send_blocking(mca_oob_tcp_module_t *mod,
                     opal_socket_errno);
                 peer->state = MCA_OOB_TCP_FAILED;
                 mca_oob_tcp_peer_close(mod, peer);
-                return -1;
+                return ORTE_ERR_UNREACH;
             }
             continue;
         }
@@ -490,7 +490,7 @@ static int tcp_peer_send_blocking(mca_oob_tcp_module_t *mod,
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer->name)));
 
-    return cnt;
+    return ORTE_SUCCESS;
 }
 
 /*
@@ -507,6 +507,9 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_module_t *mod,
                         "%s RECV CONNECT ACK FROM %s ON SOCKET %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name), peer->sd);
+
+    /* ensure all is zero'd */
+    memset(&hdr, 0, sizeof(hdr));
 
     if (tcp_peer_recv_blocking(mod, peer, &hdr, sizeof(hdr))) {
         /* If the peer state is CONNECT_ACK, then we were waiting for
