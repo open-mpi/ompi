@@ -142,6 +142,11 @@ static int tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.peers, opal_hash_table_t);
     opal_hash_table_init(&mca_oob_tcp_component.peers, 32);
 
+#if OPAL_ENABLE_IPV6
+    mca_oob_tcp_component.ipv6conns = NULL;
+    mca_oob_tcp_component.ipv6ports = NULL;
+#endif
+
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS != 
         mca_base_var_check_exclusive("orte",
@@ -191,6 +196,15 @@ static int tcp_component_close(void)
     if (NULL != mca_oob_tcp_component.ipv4ports) {
         opal_argv_free(mca_oob_tcp_component.ipv4ports);
     }
+
+#if OPAL_ENABLE_IPV6
+    if (NULL != mca_oob_tcp_component.ipv6conns) {
+        opal_argv_free(mca_oob_tcp_component.ipv6conns);
+    }
+    if (NULL != mca_oob_tcp_component.ipv6ports) {
+        opal_argv_free(mca_oob_tcp_component.ipv6ports);
+    }
+#endif
 
     OBJ_DESTRUCT(&mca_oob_tcp_component.peers);
 
