@@ -290,6 +290,12 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
                         op->mod->if_name,
                         ORTE_NAME_PRINT(&peer->name));
  
+    /* setup our recv to catch the return ack call */
+    if (!peer->recv_ev_active) {
+        opal_event_add(&peer->recv_event, 0);
+        peer->recv_ev_active = true;
+    }
+
     /* send our globally unique process identifier to the peer */
     if (ORTE_SUCCESS == (rc = tcp_peer_send_connect_ack(op->mod, peer))) {
         peer->state = MCA_OOB_TCP_CONNECT_ACK;
