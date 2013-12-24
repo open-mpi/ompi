@@ -555,6 +555,7 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
     /* transfer across all unique nodes */
     while (NULL != (item = opal_list_remove_first(&adds))) {
         nd = (orte_node_t*)item;
+        found = false;
         for (itm = opal_list_get_first(nodes);
              itm != opal_list_get_end(nodes);
              itm = opal_list_get_next(itm)) {
