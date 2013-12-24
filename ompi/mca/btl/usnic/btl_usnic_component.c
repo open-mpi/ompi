@@ -318,7 +318,7 @@ static int parse_vendor_part_ids(void)
     for (i = 0; !isspace(str[i]) && '\0' != str[i]; ++i) {
         continue;
     }
-    if (!isdigit(str[i])) {
+    if ('\0' != str[i] && !isdigit(str[i])) {
         ret = OMPI_ERR_BAD_PARAM;
         goto out;
     }
