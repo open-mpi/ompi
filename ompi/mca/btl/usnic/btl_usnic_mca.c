@@ -128,8 +128,7 @@ static int reg_int(const char* param_name,
 
 int ompi_btl_usnic_component_register(void)
 {
-    int i, tmp, ret = 0;
-    char *str, **parts;
+    int tmp, ret = 0;
     static int max_modules;
     static int stats_relative;
     static int want_numa_device_assignment;
@@ -142,7 +141,6 @@ int ompi_btl_usnic_component_register(void)
     static int eager_limit;
     static int rndv_eager_limit;
     static int pack_lazy_threshold;
-    static char *vendor_part_ids;
 
 #define CHECK(expr) do {\
         tmp = (expr); \
@@ -166,20 +164,18 @@ int ompi_btl_usnic_component_register(void)
                      REGSTR_EMPTY_OK, OPAL_INFO_LVL_1));
 
     /* Cisco Sereno-based VICs are part ID 207 */
-    vendor_part_ids = NULL;
     CHECK(reg_string("vendor_part_ids",
                      "Comma-delimited list verbs vendor part IDs to search for/use",
-                     "207", &vendor_part_ids, 0, OPAL_INFO_LVL_5));
-    parts = opal_argv_split(vendor_part_ids, ',');
-    mca_btl_usnic_component.vendor_part_ids = 
-        calloc(sizeof(uint32_t), opal_argv_count(parts) + 1);
-    if (NULL == mca_btl_usnic_component.vendor_part_ids) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    for (i = 0, str = parts[0]; NULL != str; str = parts[++i]) {
-        mca_btl_usnic_component.vendor_part_ids[i] = (uint32_t) atoi(str);
-    }
-    opal_argv_free(parts);
+                     "207", 
+                     &mca_btl_usnic_component.vendor_part_ids_string,
+                     0, OPAL_INFO_LVL_5));
+    /* Initialize the array to NULL here so that it can be checked as
+       a sentinel value later.  The value will be analyzed in
+       component_init because it requires allocating memory.  This is
+       not a problem for MPI processes, but ompi_info only calls this
+       register function without calling component finalize (meaning:
+       the allocated memory would not be freed/leaked).  */
+    mca_btl_usnic_component.vendor_part_ids = NULL;
 
     CHECK(reg_int("stats",
                   "A non-negative integer specifying the frequency at which each USNIC BTL will output statistics (default: 0 seconds, meaning that statistics are disabled)",

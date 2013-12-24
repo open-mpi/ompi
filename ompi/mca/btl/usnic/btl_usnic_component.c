@@ -200,10 +200,6 @@ static int usnic_component_close(void)
          in their destructor */
     OBJ_DESTRUCT(&mca_btl_usnic_component.usnic_procs);
 
-    if (NULL != mca_btl_usnic_component.vendor_part_ids) {
-        free(mca_btl_usnic_component.vendor_part_ids);
-    }
-
     if (usnic_clock_timer_event_set) {
         opal_event_del(&usnic_clock_timer_event);
         usnic_clock_timer_event_set = false;
@@ -297,6 +293,68 @@ static int check_reg_mem_basics(void)
        safety/hueristic check. */
     return OMPI_SUCCESS;
 #endif
+}
+
+
+/*
+ * Parse the value returned in the btl_usnic_vendor_part_ids MCA param
+ */
+static int parse_vendor_part_ids(void)
+{
+    int i, ret = OMPI_SUCCESS;
+    char *str = mca_btl_usnic_component.vendor_part_ids_string;
+    char **parts = NULL;
+
+    /* Defensive programming; this should never actually happen */
+    if (NULL == mca_btl_usnic_component.vendor_part_ids_string) {
+        ret = OMPI_ERR_BAD_PARAM;
+        mca_btl_usnic_component.vendor_part_ids_string = strdup("<empty>");
+        goto out;
+    }
+
+    /* Make sure the string starts with (optional whitespace and) a
+       number: stop at the first non-whitespace and see if it's a
+       digit. */
+    for (i = 0; !isspace(str[i]) && '\0' != str[i]; ++i) {
+        continue;
+    }
+    if (!isdigit(str[i])) {
+        ret = OMPI_ERR_BAD_PARAM;
+        goto out;
+    }
+
+    /* Ok, we have at least one number */
+    parts = 
+        opal_argv_split(mca_btl_usnic_component.vendor_part_ids_string, ',');
+    mca_btl_usnic_component.vendor_part_ids = 
+        calloc(sizeof(uint32_t), opal_argv_count(parts) + 1);
+    if (NULL == mca_btl_usnic_component.vendor_part_ids) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto out;
+    }
+    for (i = 0, str = parts[0]; NULL != str; str = parts[++i]) {
+        mca_btl_usnic_component.vendor_part_ids[i] = (uint32_t) atoi(str);
+    }
+
+ out:
+    if (NULL != parts) {
+        opal_argv_free(parts);
+    }
+
+    /* If the parameter was bad, show a help message */
+    if (OMPI_ERR_BAD_PARAM == ret) {
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "bad value for btl_usnic_vendor_part_ids",
+                       true,
+                       mca_btl_usnic_component.vendor_part_ids_string);
+    }
+
+    /* Free the value that we got back from the MCA param (the MCA var
+       system maintains its own interncal copy) */
+    free(mca_btl_usnic_component.vendor_part_ids_string);
+    mca_btl_usnic_component.vendor_part_ids_string = NULL;
+
+    return ret;
 }
 
 static int read_device_sysfs(ompi_btl_usnic_module_t *module, const char *name)
@@ -421,6 +479,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
     if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+        opal_output_verbose(5, USNIC_OUT,
+                            "btl:usnic: MPI_THREAD_MULTIPLE not supported; skipping this component");
         return NULL;
     }
 
@@ -436,6 +496,12 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     /* Do quick sanity check to ensure that we can lock memory (which
        is required for verbs registered memory). */
     if (OMPI_SUCCESS != check_reg_mem_basics()) {
+        return NULL;
+    }
+
+    /* Parse the vendor part IDs returned in
+       btl_usnic_vendor_part_ids */
+    if (OMPI_SUCCESS != parse_vendor_part_ids()) {
         return NULL;
     }
 
