@@ -48,6 +48,46 @@ static void mca_coll_hcoll_module_construct(mca_coll_hcoll_module_t *hcoll_modul
 
 static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module)
 {
+    opal_list_item_t  *item, *item_next;
+    opal_list_t *am;
+    mca_coll_hcoll_module_t *module;
+    ompi_communicator_t *comm;
+    int context_destroyed;
+
+    am = &mca_coll_hcoll_component.active_modules;
+
+    if (hcoll_module->comm == &ompi_mpi_comm_world.comm){
+        /* If we get here then we are detroying MPI_COMM_WORLD now. So,
+         * it is safe to destory all the other communicators and corresponding
+         * hcoll contexts that could still be on the "active_modules" list.
+         */
+        item = opal_list_get_first(am);
+        while (item != opal_list_get_end(am)){
+            item_next = opal_list_get_next(item);
+            module = ((mca_coll_hcoll_module_list_item_wrapper_t *)item)->module;
+            comm = module->comm;
+            context_destroyed = 0;
+            while(!context_destroyed){
+                hcoll_destroy_context(module->hcoll_context,
+                                      (rte_grp_handle_t)comm,
+                                      &context_destroyed);
+            }
+            module->hcoll_context = NULL;
+            OBJ_RELEASE(comm);
+            opal_list_remove_item(am,item);
+            OBJ_RELEASE(item);
+            item = item_next;
+        }
+
+        /* Now destory the comm_world hcoll context as well */
+        context_destroyed = 0;
+        while(!context_destroyed){
+            hcoll_destroy_context(hcoll_module->hcoll_context,
+                                  (rte_grp_handle_t)hcoll_module->comm,
+                                  &context_destroyed);
+        }
+    }
+
     OBJ_RELEASE(hcoll_module->previous_barrier_module);
     OBJ_RELEASE(hcoll_module->previous_bcast_module);
     OBJ_RELEASE(hcoll_module->previous_reduce_module);
@@ -64,6 +104,7 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
     OBJ_RELEASE(hcoll_module->previous_ibcast_module);
     OBJ_RELEASE(hcoll_module->previous_iallreduce_module);
     OBJ_RELEASE(hcoll_module->previous_iallgather_module);
+
     mca_coll_hcoll_module_clear(hcoll_module);
 }
 
@@ -134,56 +175,19 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
                          (opal_list_item_t*)mw);
     }
 
-#if 0
-    {
-        printf("\033[33mrank %d: DOING EXTRA TEST\033[0m\n",ompi_comm_rank(comm));
-        fflush(stdout);
-        sleep(1);
-        rte_ec_handle_t handle;
-        rte_grp_handle_t world_group = hcoll_rte_functions.rte_world_group_fn();
-        int peer;
-        const int max_count = 10000000;
-        const int step = max_count/100;
-        int buf = 0;
-        int i;
-        rte_request_handle_t req;
-        peer = (ompi_comm_rank(comm)+1)%2;
-        hcoll_rte_functions.get_ec_handles_fn(1,&peer,world_group,&handle);
-
-        for (i=1; i<max_count+1; i++){
-            if (0 == ompi_comm_rank(comm)){
-                if (i/step*step == i){
-                    printf("%d %% done...\n",i/step);fflush(stdout);
-                }
-                buf = 1;
-                hcoll_rte_functions.send_fn(DTE_INT32,1,&buf,handle,world_group,0,&req);
-            } else {
-                hcoll_rte_functions.recv_fn(DTE_INT32,1,&buf,handle,world_group,0,&req);
-            }
-            int completed = 0;
-            hcoll_rte_functions.test_fn(&req,&completed);
-            while(!completed){
-                hcoll_rte_functions.test_fn(&req,&completed);
-                /*hcoll_rte_functions.rte_progress_fn();*/
-                opal_progress();
-            }
-        }
-        printf("\033[32mrank %d: EXTRA TEST PASS\033[0m\n",ompi_comm_rank(comm));
-        fflush(stdout);
-        sleep(1);
-    }
-#endif
     return OMPI_SUCCESS;
 }
 
 int mca_coll_hcoll_progress(void)
 {
     opal_list_item_t  *item, *item_next;
-    opal_list_t *am = &mca_coll_hcoll_component.active_modules;
+    opal_list_t *am;
     mca_coll_hcoll_module_t *module;
     ompi_communicator_t *comm;
-
+    int context_destroyed;
     OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,1);
+
+    am = &mca_coll_hcoll_component.active_modules;
 
     if (mca_coll_hcoll_component.progress_lock){
         OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
@@ -192,23 +196,36 @@ int mca_coll_hcoll_progress(void)
     }
     if (ompi_mpi_finalized){
         hcoll_rte_p2p_disabled_notify();
-    } else {
-        item = opal_list_get_first(am);
-        while (item != opal_list_get_end(am)){
-            item_next = opal_list_get_next(item);
-            module = ((mca_coll_hcoll_module_list_item_wrapper_t *)item)->module;
-            comm = module->comm;
-            if (((opal_object_t*)comm)->obj_reference_count == 1){
-                hcoll_destroy_context(module->hcoll_context,
-                                      (rte_grp_handle_t)comm);
+    }
+
+    item = opal_list_get_first(am);
+    while (item != opal_list_get_end(am)){
+        item_next = opal_list_get_next(item);
+        module = ((mca_coll_hcoll_module_list_item_wrapper_t *)item)->module;
+        comm = module->comm;
+        if (((opal_object_t*)comm)->obj_reference_count == 1){
+            /* Ok, if we are here then nobody owns a communicator pointed with comm except
+             * for coll_hcoll. Hence, it is safe to remove the hcoll context firstly and
+             * call release on the communicator.
+             *
+             * The call to hcoll_destroy_context is not blocking. The last parameter on the return
+             * indicates whether the context has been destroyd (1) or not (0). In the latter
+             * case one should call destroy again after some progressing
+             */
+            context_destroyed = 0;
+            hcoll_destroy_context(module->hcoll_context,
+                                  (rte_grp_handle_t)comm,
+                                  &context_destroyed);
+            if (context_destroyed){
                 module->hcoll_context = NULL;
                 OBJ_RELEASE(comm);
                 opal_list_remove_item(am,item);
                 OBJ_RELEASE(item);
             }
-            item = item_next;
         }
+        item = item_next;
     }
+
     (*hcoll_progress_fn)();
     OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
     return OMPI_SUCCESS;
@@ -226,6 +243,8 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     mca_coll_base_module_t *module;
     mca_coll_hcoll_module_t *hcoll_module;
     static bool libhcoll_initialized = false;
+    int rc;
+
     *priority = 0;
     module = NULL;
 
@@ -237,11 +256,10 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     {
         /* libhcoll should be initialized here since current implmentation of
            mxm bcol in libhcoll needs world_group fully functional during init
-
            world_group, i.e. ompi_comm_world, is not ready at hcoll component open
            call */
         opal_progress_register(mca_coll_hcoll_progress);
-        int rc = hcoll_init();
+        rc = hcoll_init();
 
         if (HCOLL_SUCCESS != rc){
             mca_coll_hcoll_component.hcoll_enable = 0;
