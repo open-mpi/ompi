@@ -768,7 +768,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
      * info, though. We are setting the environment up on a
      * per-context basis, and will add the individual proc
      * info later. This also sets the mca param to select
-     * the "env" component in the SDS framework.
+     * the "env" component in the ESS framework.
      */
     orte_ess_env_put(vpid_range, num_local_procs, environ_copy);
     
@@ -776,6 +776,14 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     (void) mca_base_var_env_name ("orte_tmpdir_base", &param);
     opal_setenv(param, orte_process_info.tmpdir_base, true, environ_copy);
     free(param);
+
+    /* since we are launching via orted, ensure the app
+     * doesn't open any of the PMI components even if we
+     * are in a PMI environment - saves overhead. Don't
+     * override any existing directives, though!
+     */
+    opal_setenv("OMPI_MCA_grpcomm", "^pmi", false, environ_copy);
+    opal_setenv("OMPI_MCA_db", "^pmi", false, environ_copy);
 
     return ORTE_SUCCESS;
 }
