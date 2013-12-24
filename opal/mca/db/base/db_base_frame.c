@@ -45,8 +45,15 @@ opal_db_base_t opal_db_base;
 
 static int opal_db_base_close(void)
 {
-    if (NULL != opal_db.finalize) {
-        opal_db.finalize();
+    opal_db_active_module_t *mod;
+
+    /* cycle across all the active db modules and let them cleanup - order
+     * doesn't matter in this case
+     */
+    OPAL_LIST_FOREACH(mod, &opal_db_base.store_order, opal_db_active_module_t) {
+        if (NULL != mod->module->finalize) {
+            mod->module->finalize();
+        }
     }
 
     return mca_base_framework_components_close(&opal_db_base_framework, NULL);

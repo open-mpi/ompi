@@ -107,7 +107,27 @@ static int init(void)
 
 static void finalize(void)
 {
-    opal_hash_table_remove_all(&hash_data);
+    proc_data_t *proc_data;
+    uint64_t key;
+    char *node;
+
+    /* to assist in getting a clean valgrind, cycle thru the hash table
+     * and release all data stored in it
+     */
+    if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(&hash_data, &key,
+                                                             (void**)&proc_data,
+                                                             (void**)&node)) {
+        if (NULL != proc_data) {
+            OBJ_RELEASE(proc_data);
+        }
+        while (OPAL_SUCCESS == opal_hash_table_get_next_key_uint64(&hash_data, &key,
+                                                                   (void**)&proc_data,
+                                                                   node, (void**)&node)) {
+            if (NULL != proc_data) {
+                OBJ_RELEASE(proc_data);
+            }
+        }
+    }
     OBJ_DESTRUCT(&hash_data);
 }
 
