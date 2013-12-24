@@ -297,15 +297,12 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
 static int read_bytes(mca_oob_tcp_peer_t* peer)
 {
     int rc;
-    int retries;
 
-    /* read until all bytes recvd or error - but limit the number of tries */
-    retries = 0;
-    while (0 < peer->recv_msg->rdbytes && retries < mca_oob_tcp_component.max_retries) {
+    /* read until all bytes recvd or error */
+    while (0 < peer->recv_msg->rdbytes) {
         rc = read(peer->sd, peer->recv_msg->rdptr, peer->recv_msg->rdbytes);
         if (rc < 0) {
             if(opal_socket_errno == EINTR) {
-                retries++;
                 continue;
             } else if (opal_socket_errno == EAGAIN) {
                 /* tell the caller to keep this message on active,
@@ -369,12 +366,6 @@ static int read_bytes(mca_oob_tcp_peer_t* peer)
         /* we were able to read something, so adjust counters and location */
         peer->recv_msg->rdbytes -= rc;
         peer->recv_msg->rdptr += rc;
-        retries = 0;
-    }
-
-    if (0 < peer->recv_msg->rdbytes) {
-        /* we failed to read it all */
-        return ORTE_ERR_COMM_FAILURE;
     }
 
     /* we read the full data block */
@@ -480,13 +471,6 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                         "%s:tcp:recv:handler allocate data region of size %lu",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (unsigned long)peer->recv_msg->hdr.nbytes);
-                    /* FIXME: if the data region is absurdly large, then something is wrong */
-                    if (500000000 < peer->recv_msg->hdr.nbytes) {
-                        opal_output(0, "%s: ABSURDLY LARGE MESSAGE OF SIZE %lu",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (unsigned long)peer->recv_msg->hdr.nbytes);
-                        mca_oob_tcp_peer_close(mod, peer);
-                        return;
-                    }
                     /* allocate the data region */
                     peer->recv_msg->data = (char*)malloc(peer->recv_msg->hdr.nbytes);
                     /* point to it */
