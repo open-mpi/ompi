@@ -1,6 +1,6 @@
 /*   
  * Copyright (c) 2009      Sun Microsystems, Inc  All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc  All rights reserved.
+  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -23,13 +23,19 @@
 
 #include <stdlib.h>
 
-#define GAP_CHECK(NAME, BASE, F1, F2, CGAP) {      \
-   offset = (size_t)&BASE.F1 - (size_t)&BASE;       \
-   exp_offset = ((size_t)&BASE.F2 - (size_t)&BASE) + sizeof(BASE.F2);	\
-   printf(NAME" = %lu, %lu ", offset, sizeof(BASE.F1)); \
-   if (CGAP && offset != exp_offset) printf("***"); \
-   printf("\n"); \
-   }
+/*
+ * See if there is a gap between two fields in a given struct
+ */
+#define GAP_CHECK(NAME, BASE, F1, F2, CGAP) \
+    {                                                                   \
+        offset = (size_t)&BASE.F1 - (size_t)&BASE;                      \
+        exp_offset = ((size_t)&BASE.F2 - (size_t)&BASE) + sizeof(BASE.F2); \
+        printf(NAME " offset from base = %lu, sizeof %lu ", offset, sizeof(BASE.F1)); \
+        if (CGAP && offset != exp_offset) {                             \
+            printf("(*** gap between " #F1 " and " #F2 " ***)");        \
+        }                                                               \
+        printf("\n");                                                   \
+    }
 
 
 int main(int argc, char **argv) {
