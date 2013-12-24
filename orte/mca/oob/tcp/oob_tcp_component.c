@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -179,6 +179,7 @@ static int tcp_component_close(void)
     /* cleanup modules */
     for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
         if (NULL != (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
+            free(mod->if_name);
             free(mod);
         }
     }
