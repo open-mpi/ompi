@@ -128,6 +128,7 @@ void opal_tree_init(opal_tree_t *tree, opal_tree_comp_fn_t comp,
     tree->serialize = serialize;
     tree->deserialize = deserialize;
     tree->get_key = get_key;
+    opal_tree_get_root(tree)->opal_tree_num_children = 0;
 }
 
 /*
