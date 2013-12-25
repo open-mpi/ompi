@@ -228,6 +228,7 @@ static int btl_openib_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
+    mca_btl_openib_component.memory_registration_verbose = -1;
 
     srand48(getpid() * time(NULL));
     return OMPI_SUCCESS;
@@ -283,6 +284,9 @@ static int btl_openib_component_close(void)
         __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
     }
 #endif
+
+    /* close memory registration debugging output */
+    opal_output_close (mca_btl_openib_component.memory_registration_verbose);
 
     return rc;
 }
@@ -2975,6 +2979,10 @@ btl_openib_component_init(int *num_btl_modules,
         opal_argv_free(mca_btl_openib_component.if_exclude_list);
         mca_btl_openib_component.if_exclude_list = NULL;
     }
+
+    mca_btl_openib_component.memory_registration_verbose = opal_output_open(NULL);
+    opal_output_set_verbosity (mca_btl_openib_component.memory_registration_verbose,
+                               mca_btl_openib_component.memory_registration_verbose_level);
 
     /* setup the fork warning message as we are sensitive
      * to memory corruption issues when fork is called

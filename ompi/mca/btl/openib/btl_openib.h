@@ -302,6 +302,7 @@ struct mca_btl_openib_component_t {
     int gid_index;
     /** Whether we want a dynamically resizing srq, enabled by default */
     bool enable_srq_resize;
+    int memory_registration_verbose_level;
     int memory_registration_verbose;
 #if BTL_OPENIB_FAILOVER_ENABLED
     int verbose_failover;

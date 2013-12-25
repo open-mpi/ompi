@@ -534,9 +534,8 @@ int btl_openib_register_mca_params(void)
     /* Help debug memory registration issues */
     CHECK(reg_int("memory_registration_verbose", NULL,
                   "Output some verbose memory registration information "
-                  "(0 = no output, nonzero = output)", 0, &tmp1, 0));
-    mca_btl_openib_component.memory_registration_verbose = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_btl_openib_component.memory_registration_verbose, tmp1);
+                  "(0 = no output, nonzero = output)", 0,
+		  &mca_btl_openib_component.memory_registration_verbose_level, 0));
 
     /* Info only */
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
@@ -654,12 +653,7 @@ int btl_openib_register_mca_params(void)
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
             (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
 
-    mca_btl_openib_component.default_recv_qps = strdup(default_qps);
-    if(NULL == mca_btl_openib_component.default_recv_qps) {
-        BTL_ERROR(("Unable to allocate memory for default receive queues string.\n"));
-        return OMPI_ERROR;
-    }
-
+    mca_btl_openib_component.default_recv_qps = default_qps;
     CHECK(reg_string("receive_queues", NULL,
                      "Colon-delimited, comma-delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
                      default_qps, &mca_btl_openib_component.receive_queues,
