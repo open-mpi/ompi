@@ -70,9 +70,10 @@ static int pubsub_pmi_component_close(void)
 
 static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    /* for now, only use PMI when direct launched */
-    if (NULL != ompi_process_info.my_hnp_uri &&
-        mca_common_pmi_init ()) {
+    /* if we are indirectly launched via orted, the
+     * selection will have been turned "off" for us
+     */
+    if (mca_common_pmi_init ()) {
         *priority = my_priority;
         *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
         return OMPI_SUCCESS;

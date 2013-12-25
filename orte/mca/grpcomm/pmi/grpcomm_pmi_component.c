@@ -78,9 +78,10 @@ int orte_grpcomm_pmi_close(void)
 
 int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    /* only use PMI when direct launched */
-    if (NULL == orte_process_info.my_hnp_uri &&
-        ORTE_PROC_IS_APP &&
+    /* if we are indirectly launched via orted, the
+     * selection will have been turned "off" for us
+     */
+    if (ORTE_PROC_IS_APP &&
         mca_common_pmi_init ()) {
         /* if PMI is available, make it available for use by MPI procs */
         *priority = my_priority;
