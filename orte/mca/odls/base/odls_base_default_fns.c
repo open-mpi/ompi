@@ -779,11 +779,14 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
 
     /* since we are launching via orted, ensure the app
      * doesn't open any of the PMI components even if we
-     * are in a PMI environment - saves overhead. Don't
-     * override any existing directives, though!
+     * are in a PMI environment - saves overhead, and avoids
+     * issues with bugs in some PMI implementations regarding
+     * behavior after calling fork. Don't override any existing
+     * directives, though!
      */
     opal_setenv("OMPI_MCA_grpcomm", "^pmi", false, environ_copy);
     opal_setenv("OMPI_MCA_db", "^pmi", false, environ_copy);
+    opal_setenv("OMPI_MCA_pubsub", "^pmi", false, environ_copy);
 
     return ORTE_SUCCESS;
 }
