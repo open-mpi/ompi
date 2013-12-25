@@ -67,7 +67,7 @@ struct oob_comm memheap_oob;
 
 static int send_buffer(int pe, opal_buffer_t *msg);
 
-int oshmem_mkey_recv_cb(void);
+static int oshmem_mkey_recv_cb(void);
 
 /* pickup list of rkeys and remote va */
 static int memheap_oob_get_mkeys(int pe,
