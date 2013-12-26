@@ -79,12 +79,13 @@ static void opal_tree_item_destruct(opal_tree_item_t *item)
 
 static void opal_tree_construct(opal_tree_t *tree)
 {
+    OBJ_CONSTRUCT( &(tree->opal_tree_sentinel), opal_tree_item_t );
+
 #if OPAL_ENABLE_DEBUG
     /* These refcounts should never be used in assertions because they
        should never be removed from this list, added to another list,
        etc.  So set them to sentinel values. */
 
-    OBJ_CONSTRUCT( &(tree->opal_tree_sentinel), opal_tree_item_t );
     tree->opal_tree_sentinel.opal_tree_item_refcount  = 1;
     tree->opal_tree_sentinel.opal_tree_item_belong_to = tree;
 #endif
