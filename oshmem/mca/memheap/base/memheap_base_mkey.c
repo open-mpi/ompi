@@ -594,7 +594,7 @@ void mca_memheap_modex_recv_all(void)
     int rc;
 
     if (!mca_memheap_base_key_exchange) {
-        MPI_Barrier(oshmem_comm_world);
+        oshmem_shmem_barrier();
         return;
     }
 
@@ -622,9 +622,7 @@ void mca_memheap_modex_recv_all(void)
         oshmem_shmem_abort(-1);
     }
 
-    rc = MPI_Allgather(send_buffer, size, MPI_BYTE, 
-            rcv_buffer, size, MPI_BYTE, oshmem_comm_world);
-
+    rc = oshmem_shmem_allgather(send_buffer, rcv_buffer, size);
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("allgather failed");
         oshmem_shmem_abort(-1);

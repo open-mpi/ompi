@@ -365,6 +365,7 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
 int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 {
     spml_ikrit_mxm_ep_conn_info_t *ep_info = NULL;
+    spml_ikrit_mxm_ep_conn_info_t my_ep_info;
 #if MXM_API < MXM_VERSION(2,0)
     mxm_conn_req_t *conn_reqs;
     int timeout;
@@ -403,15 +404,15 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 
 #if MXM_API < MXM_VERSION(2,0)
     if (OSHMEM_SUCCESS
-            != spml_ikrit_get_ep_address(&ep_info[my_rank], MXM_PTL_SELF)) {
+            != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_SELF)) {
         return OSHMEM_ERROR;
     }
     if (OSHMEM_SUCCESS
-            != spml_ikrit_get_ep_address(&ep_info[my_rank], MXM_PTL_RDMA)) {
+            != spml_ikrit_get_ep_address(&my_ep_info, MXM_PTL_RDMA)) {
         return OSHMEM_ERROR;
     }
 #else
-    err = mxm_ep_get_address(mca_spml_ikrit.mxm_ep, ep_info[my_rank].addr.ep_addr, &mxm_addr_len);
+    err = mxm_ep_get_address(mca_spml_ikrit.mxm_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
     if (MXM_OK != err) {
         orte_show_help("help-shmem-spml-ikrit.txt", "unable to get endpoint address", true,
                 mxm_error_string(err));
@@ -421,7 +422,7 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 
     opal_progress_register(spml_ikrit_progress);
 
-    oshmem_shmem_exchange_allgather(ep_info,
+    oshmem_shmem_allgather(&my_ep_info, ep_info,
                            sizeof(spml_ikrit_mxm_ep_conn_info_t));
 
     /* Get the EP connection requests for all the processes from modex */
