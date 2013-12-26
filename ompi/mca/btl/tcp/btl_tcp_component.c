@@ -571,10 +571,12 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         }
         
         /* If we didn't find a match, keep trying */
-        if (if_index < 0 && reqd) {
-            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, ompi_process_info.nodename, tmp,
-                           "Did not find interface matching this subnet");
+        if (if_index < 0) {
+            if (reqd) {
+                opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                               true, name, ompi_process_info.nodename, tmp,
+                               "Did not find interface matching this subnet");
+            }
             free(tmp);
             continue;
         }
