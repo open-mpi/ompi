@@ -91,6 +91,8 @@ struct mca_spml_ikrit_t {
     bool enabled;
     opal_list_t active_peers;
     int n_relays; /* number of procs/node serving as relays */
+
+    char *mxm_tls;
 };
 
 typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
