@@ -74,7 +74,8 @@ static int db_pmi_component_query(opal_db_base_module_t **module,
 {
     if (!restrict_local) {
         /* only use PMI if available - the ESS pmi module
-         * will force our selection if we are direct-launched
+         * will force our selection if we are direct-launched,
+         * and the orted will turn us "off" if indirectly launched
          */
         if (mca_common_pmi_init()) {
             *store_priority = my_store_priority;
