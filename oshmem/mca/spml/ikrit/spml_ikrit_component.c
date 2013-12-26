@@ -77,6 +77,22 @@ static inline int mca_spml_ikrit_param_register_int(const char* param_name,
     return param_value;
 }
 
+static void  mca_spml_ikrit_param_register_string(const char* param_name,
+                                                    char* default_value,
+                                                    const char *help_msg,
+                                                    char **storage)
+{
+    *storage = default_value;
+    (void) mca_base_component_var_register(&mca_spml_ikrit_component.spmlm_version,
+                                           param_name,
+                                           help_msg,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           storage);
+
+}
+
 static int mca_spml_ikrit_component_register(void)
 {
     int np;
@@ -91,6 +107,11 @@ static int mca_spml_ikrit_component_register(void)
             mca_spml_ikrit_param_register_int("priority",
                                               20,
                                               "[integer] ikrit priority");
+
+    mca_spml_ikrit_param_register_string("mxm_tls",
+                                         "ud,self",
+                                         "[string] TL channels for MXM",
+                                         &mca_spml_ikrit.mxm_tls);
 
     mca_spml_ikrit.n_relays =
             mca_spml_ikrit_param_register_int("use_relays",
@@ -154,6 +175,7 @@ static int mca_spml_ikrit_component_open(void)
     if ((MXM_OK != mxm_config_read_context_opts(&mca_spml_ikrit.mxm_ctx_opts)) ||
         (MXM_OK != mxm_config_read_ep_opts(&mca_spml_ikrit.mxm_ep_opts)))
 #else
+    setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 0);
     if (MXM_OK != mxm_config_read_opts(&mca_spml_ikrit.mxm_ctx_opts,
                                        &mca_spml_ikrit.mxm_ep_opts,
                                        "OSHMEM", NULL, 0))
