@@ -121,11 +121,14 @@ int oshmem_shmem_finalize(void);
 OSHMEM_DECLSPEC int oshmem_shmem_abort(int errcode);
 
 /**
- * Exchange initial info between processes
+ * Allgather between all PEs
  */
-OSHMEM_DECLSPEC int oshmem_shmem_exchange_allgather(void *buf, int buf_size);
+OSHMEM_DECLSPEC int oshmem_shmem_allgather(void *send_buf, void *rcv_buf, int elem_size);
 
-OSHMEM_DECLSPEC int oshmem_shmem_exchange_bcast(void *buf, int buf_size, int root);
+/**
+ * Barrier between all PEs
+ */
+OSHMEM_DECLSPEC void oshmem_shmem_barrier(void);
 
 /**
  * Register OSHMEM specific runtime parameters

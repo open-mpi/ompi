@@ -310,21 +310,6 @@ OSHMEM_DECLSPEC int oshmem_proc_unpack(opal_buffer_t *buf,
                                        int *newproclistsize,
                                        oshmem_proc_t ***newproclist);
 
-/**
- * Refresh the OSHMEM process subsystem
- *
- * Refresh the Open SHMEM process subsystem. This function will update
- * the list of proc instances in the current pe set with
- * data from the run-time environemnt.
- *
- * @note This is primarily used when restarting a process and thus
- * need to update the jobid and node name.
- *
- * @retval OSHMEM_SUCESS  System successfully refreshed
- * @retval OSHMEM_ERROR   Refresh failed due to unspecified error
- */
-OSHMEM_DECLSPEC int oshmem_proc_refresh(void);
-
 static inline int oshmem_proc_pe(oshmem_proc_t *proc)
 {
     return (proc ? (int) proc->proc_name.vpid : -1);
