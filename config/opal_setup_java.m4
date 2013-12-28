@@ -34,7 +34,7 @@ AC_DEFUN([OPAL_SETUP_JAVA_BANNER],[
 AC_DEFUN([OPAL_SETUP_JAVA],[
     AC_REQUIRE([OPAL_SETUP_JAVA_BANNER])
 
-    OPAL_VAR_SCOPE_PUSH([opal_java_happy opal_java_bad opal_java_found opal_java_dir opal_java_jnih opal_java_PATH_save opal_java_CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([opal_java_bad opal_java_found opal_java_dir opal_java_jnih opal_java_PATH_save opal_java_CPPFLAGS_save])
     AC_ARG_ENABLE(java,
                   AC_HELP_STRING([--enable-java],
                                  [Enable Java-based support in the system - use this option to disable all Java-based compiler tests (default: enabled)]))
