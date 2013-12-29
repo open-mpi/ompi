@@ -120,6 +120,8 @@ static int mca_mpool_base_close(void)
      0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
       opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
   }
+
+  mca_mpool_base_tree_fini();
   /* All done */
 
   return OMPI_SUCCESS;
