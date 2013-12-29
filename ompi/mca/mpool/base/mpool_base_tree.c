@@ -91,6 +91,16 @@ int mca_mpool_base_tree_init(void) {
     return rc;
 }
 
+/*
+ *
+ */
+int mca_mpool_base_tree_fini(void)
+{
+    OBJ_DESTRUCT(&mca_mpool_base_tree);
+    OBJ_DESTRUCT(&mca_mpool_base_tree_item_free_list);
+    OBJ_DESTRUCT(&tree_lock);
+}
+
 /* 
  * insert an item in the rb tree 
  */ 
