@@ -235,6 +235,15 @@ portals4_init_query(bool enable_progress_threads,
     ptl_md_t md;
     ptl_me_t me;
 
+    /* Make sure someone is populating the proc table, since we're not
+       in a really good position to do so */
+    if (NULL == ompi_proc_local()->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
+        opal_output_verbose(1, ompi_coll_base_framework.framework_output,
+                            "%s:%d: Proc table not previously populated",
+                            __FILE__, __LINE__);
+        return OMPI_ERROR;
+    }
+
     /* Initialize Portals and create a physical, matching interface */
     ret = PtlInit();
     if (PTL_OK != ret) {
