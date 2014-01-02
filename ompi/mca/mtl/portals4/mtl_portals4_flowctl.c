@@ -52,7 +52,7 @@ ompi_mtl_portals4_flowctl_init(void)
     ompi_mtl_portals4.flowctl.fanout_req.type = portals4_req_flowctl;
     ompi_mtl_portals4.flowctl.fanout_req.event_callback = flowctl_fanout_callback;
 
-    ompi_mtl_portals4.flowctl.epoch_counter = 0;
+    ompi_mtl_portals4.flowctl.epoch_counter = -1;
 
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_ONLY_TRUNCATE,
@@ -235,9 +235,10 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
     /* if epoch isn't 0, that means setup trees has been called, which
        means that this add_procs is a dynamic process, which we don't
        support */
-    if (ompi_mtl_portals4.flowctl.epoch_counter != 0) {
+    if (ompi_mtl_portals4.flowctl.epoch_counter != -1) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
+    ompi_mtl_portals4.flowctl.epoch_counter = 0;
 
     ompi_mtl_portals4.flowctl.num_procs = npeers;
     ompi_mtl_portals4.flowctl.root =
@@ -317,16 +318,17 @@ static int
 start_recover(void)
 {
     int ret;
+    int64_t epoch_counter;
 
     ompi_mtl_portals4.flowctl.flowctl_active = true;
-    ompi_mtl_portals4.flowctl.epoch_counter++;
+    epoch_counter = opal_atomic_add_64(&ompi_mtl_portals4.flowctl.epoch_counter, 1);
 
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                         "Entering flowctl_start_recover %d",
-                         ompi_mtl_portals4.flowctl.epoch_counter);
+                        "Entering flowctl_start_recover %d",
+                        epoch_counter);
 
     /* re-arm trigger/alarm for next time */
-    ret = setup_alarm(ompi_mtl_portals4.flowctl.epoch_counter);
+    ret = setup_alarm(epoch_counter);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d setup_alarm failed: %d\n",
@@ -335,7 +337,7 @@ start_recover(void)
     }
 
     /* setup barrier tree for getting us out of flow control */
-    ret = setup_barrier(ompi_mtl_portals4.flowctl.epoch_counter);
+    ret = setup_barrier(epoch_counter);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d setup_barrier failed: %d\n",
@@ -397,7 +399,7 @@ start_recover(void)
  error:
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                          "Exiting flowctl_start_recover %d",
-                         ompi_mtl_portals4.flowctl.epoch_counter));
+                         epoch_counter));
 
     return ret;
 }

@@ -46,7 +46,7 @@ struct ompi_mtl_portals4_flowctl_t {
 
     /** Flow control epoch counter.  Triggered events should be
         based on epoch counter. */
-    uint32_t epoch_counter;
+    int64_t epoch_counter;
 
     /** Flow control trigger CT.  Only has meaning at root. */
     ptl_handle_ct_t trigger_ct_h;
