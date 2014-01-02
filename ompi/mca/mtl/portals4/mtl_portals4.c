@@ -63,6 +63,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
 {
     int ret, me;
     size_t i;
+    bool new_found = false;
 
     /* Get the list of ptl_process_id_t from the runtime and copy into structure */
     for (i = 0 ; i < nprocs ; ++i) {
@@ -108,6 +109,8 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
             }
             *peer_id = *modex_id;
             procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = peer_id;
+
+            new_found = true;
         } else {
             ptl_process_t *proc = (ptl_process_t*) procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
             if (proc->phys.nid != modex_id->phys.nid ||
@@ -121,12 +124,14 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
     }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    ret = ompi_mtl_portals4_flowctl_add_procs(me, nprocs, procs);
-    if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: flowctl_add_procs failed: %d\n",
-                            __FILE__, __LINE__, ret);
-        return ret;
+    if (new_found) {
+        ret = ompi_mtl_portals4_flowctl_add_procs(me, nprocs, procs);
+        if (OMPI_SUCCESS != ret) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: flowctl_add_procs failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            return ret;
+        }
     }
 #endif
 
