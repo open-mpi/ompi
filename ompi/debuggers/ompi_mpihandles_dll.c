@@ -481,6 +481,8 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
             (*info)->comm_bitflags |= MPIDBG_COMM_INFO_CARTESIAN;
         } else if (0 != (flags & OMPI_COMM_GRAPH)) {
             (*info)->comm_bitflags |= MPIDBG_COMM_INFO_GRAPH;
+        } else if (0 != (flags & OMPI_COMM_DIST_GRAPH)) {
+            (*info)->comm_bitflags |= MPIDBG_COMM_INFO_DIST_GRAPH;
         }
     }
     if (0 != (flags & OMPI_COMM_ISFREED)) {
@@ -545,7 +547,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
         /* Alloc space for copying arrays */
         (*info)->comm_cart_num_dims = ndims =
             ompi_fetch_int(process, 
-                           topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.cart.ndims,
+                           topo + i_info->mca_topo_base_module_t.offset.mtc.cart.ndims,
                            p_info);
         (*info)->comm_cart_dims = mqs_malloc(ndims * sizeof(int));
         if (NULL == (*info)->comm_cart_dims) {
@@ -553,18 +555,26 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
         }
         (*info)->comm_cart_periods = mqs_malloc(ndims * sizeof(int8_t));
         if (NULL == (*info)->comm_cart_periods) {
-            mqs_free((*info)->comm_cart_dims);
-            (*info)->comm_cart_dims = NULL;
+            mqs_free((*info)->comm_cart_dims); (*info)->comm_cart_dims = NULL;
+            return MPIDBG_ERR_NO_MEM;
+        }
+        (*info)->comm_cart_coords = mqs_malloc(ndims * sizeof(int8_t));
+        if (NULL == (*info)->comm_cart_coords) {
+            mqs_free((*info)->comm_cart_periods); (*info)->comm_cart_periods = NULL;
+            mqs_free((*info)->comm_cart_dims);    (*info)->comm_cart_dims = NULL;
             return MPIDBG_ERR_NO_MEM;
         }
 
         /* Retrieve the dimension and periodic description data from
            the two arrays on the image's communicator */
         dims = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.cart.dims,
+                                 topo + i_info->mca_topo_base_module_t.offset.mtc.cart.dims,
                                  p_info);
         periods = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.cart.periods,
+                                 topo + i_info->mca_topo_base_module_t.offset.mtc.cart.periods,
+                                 p_info);
+        coords = ompi_fetch_pointer(process, 
+                                 topo + i_info->mca_topo_base_module_t.offset.mtc.cart.coords,
                                  p_info);
 
         for (i = 0; i < ndims; ++i) {
@@ -582,7 +592,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
         /* Alloc space for copying the indexes */
         (*info)->comm_graph_num_nodes = nnodes = 
             ompi_fetch_int(process, 
-                           topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.graph.nnodes,
+                           topo + i_info->mca_topo_base_module_t.offset.mtc.graph.nnodes,
                            p_info);
         (*info)->comm_graph_index = mqs_malloc(nnodes * sizeof(int));
         if (NULL == (*info)->comm_graph_index) {
@@ -591,7 +601,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
 
         /* Retrieve the index data */
         index = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.graph.index,
+                                 topo + i_info->mca_topo_base_module_t.offset.mtc.graph.index,
                                  p_info);
         for (i = 0; i < nnodes; ++i) {
             (*info)->comm_graph_index[i] = 
@@ -608,7 +618,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
 
         /* Retrieve the edge data */
         edges = ompi_fetch_pointer(process, 
-                                 topo + i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc.graph.edges,
+                                 topo + i_info->mca_topo_base_module_t.offset.mtc.graph.edges,
                                  p_info);
         for (i = 0; 
              i < (*info)->comm_graph_index[(*info)->comm_graph_num_nodes - 1]; 
