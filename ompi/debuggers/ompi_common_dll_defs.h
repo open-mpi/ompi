@@ -210,6 +210,7 @@ typedef struct
                 int ndims;
                 int dims;
                 int periods;
+                int coords;
             } mtc_cart;
             struct {
                 int nnodes;
@@ -227,7 +228,7 @@ typedef struct
             } mtc_dist_graph;
             int reorder;
         } offset;
-    } ompi_mca_topo_base_module_t;
+    } mca_topo_base_module_t;
     /* MPI_Status */
     struct {
         mqs_type *type;
