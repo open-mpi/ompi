@@ -261,6 +261,22 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             return;
         }
     }
+    if (NULL != orte_rankfile) {
+        OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
+                             "%s ras:base:allocate parsing rankfile %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_rankfile));
+        
+        /* a rankfile was provided - parse it */
+        if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
+                                                               orte_rankfile))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&nodes);
+            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
+        }
+    }
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
