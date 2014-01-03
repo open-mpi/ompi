@@ -28,7 +28,7 @@ if [ "$mellanox_autodetect" == "yes" ]; then
     fi
 
     hcoll_dir=${hcoll_dir:="$(pkg-config --variable=prefix hcoll)"}
-    if [ -d $hcol_dir ]; then
+    if [ -d $hcoll_dir ]; then
         with_hcoll=$hcoll_dir
     fi
 
