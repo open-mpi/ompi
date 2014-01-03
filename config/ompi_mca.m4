@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -217,14 +218,14 @@ AC_DEFUN([OMPI_MCA],[
     m4_ifdef([mca_project_list], [],
              [m4_fatal([Could not find project list - please rerun autogen.pl!])])
 
-    # now configre all the projects, frameworks, and components.  Most
+    # now configure all the projects, frameworks, and components.  Most
     # of the hard stuff is in here
     MCA_PROJECT_SUBDIRS=
     m4_foreach(mca_project, [mca_project_list], 
                [# BWB: Until projects have seperate configure scripts
                 # and can skip running all of ORTE, just avoid recursing
                 # into orte sub directory if orte disabled
-                if test "mca_project" = "ompi" || test "mca_project" = "opal" || test "mca_project" = "orte" -a "$with_orte" != "no" || test "mca_project" = "oshmem" -a "$enable_oshmem" != "no" ; then
+                if test "mca_project" = "ompi" -a "$enable_mpi" != "no" || test "mca_project" = "opal" || test "mca_project" = "orte" -a "$with_orte" != "no" || test "mca_project" = "oshmem" -a "$enable_oshmem" != "no" || test "mca_project" = "orcm" -a "$enable_orcm" != "no" ; then
                    MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
                 fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
