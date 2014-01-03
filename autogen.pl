@@ -4,6 +4,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2013      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -1039,13 +1040,22 @@ if (! -e "oshmem") {
     debug "No oshmem subdirectory found - will not build OSHMEM\n";
 }
 
-if ($no_ompi_arg == 1 && $no_orte_arg == 0) {
-    $project_name_long = "Open MPI Run Time Environment";
-    $project_name_short = "open-rte";
-} 
-if ($no_ompi_arg == 1 && $no_orte_arg == 1) {
-    $project_name_long = "Open Portability Access Layer";
-    $project_name_short = "open-pal";
+if (-e "orcm") {
+    # bozo check - ORCM requires ORTE
+    if ($no_orte_arg == 1) {
+        print "Cannot build ORCM without ORTE\n";
+        my_exit(1);
+    }
+    $project_name_long = "Open Resilient Cluster Manager";
+    $project_name_short = "open-rcm";
+} elsif ($no_ompi_arg == 1) {
+    if ($no_orte_arg == 0) {
+        $project_name_long = "Open MPI Run Time Environment";
+        $project_name_short = "open-rte";
+    } else {
+        $project_name_long = "Open Portability Access Layer";
+        $project_name_short = "open-pal";
+    }
 }
 
 #---------------------------------------------------------------------------
@@ -1206,11 +1216,14 @@ push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
     if (!$no_ompi_arg);
 push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 })
     if (!$no_ompi_arg && !$no_orte_arg && !$no_oshmem_arg);
+push(@{$projects}, { name => "orcm", dir => "orcm", need_base => 1 })
+    if (-e "orcm");
 
 $m4 .= "dnl Separate m4 define for each project\n";
 foreach my $p (@$projects) {
     $m4 .= "m4_define([project_$p->{name}], [1])\n";
 }
+
 $m4 .= "\ndnl Project names
 m4_define([project_name_long], [$project_name_long])
 m4_define([project_name_short], [$project_name_short])\n";

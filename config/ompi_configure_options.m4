@@ -16,6 +16,7 @@ dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -26,6 +27,13 @@ dnl
 
 AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
 ompi_show_subtitle "OMPI Configuration options"
+
+#
+# Disable MPI layer?
+#
+AC_ARG_ENABLE([mpi],
+  [AC_HELP_STRING([--disable-mpi],
+     [Disable building the MPI layer (default:enabled)])])
 
 #
 # Do we want to enable MPI interface warnings (e.g. deprecated
