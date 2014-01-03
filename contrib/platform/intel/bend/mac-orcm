@@ -1,3 +1,4 @@
+enable_mpi=no
 enable_oshmem=no
 enable_sensors=yes
 enable_mpi_thread_multiple=yes
