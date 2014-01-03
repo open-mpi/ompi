@@ -71,28 +71,23 @@ static struct timeval check_time;
 
 static int init(void)
 {
-    int rc;
-
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                          "%s initializing heartbeat recvs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* setup to receive heartbeats */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_CM) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                          ORTE_RML_TAG_HEARTBEAT,
-                                                          ORTE_RML_PERSISTENT,
-                                                          recv_beats, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                ORTE_RML_TAG_HEARTBEAT,
+                                ORTE_RML_PERSISTENT,
+                                recv_beats, NULL);
     }
 
     if (ORTE_PROC_IS_HNP) {
         daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     }
 
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 static void finalize(void)
@@ -150,9 +145,9 @@ static void sample(void)
     }
 
     /* send heartbeat */
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                          ORTE_RML_TAG_HEARTBEAT, 0,
-                                          orte_rml_send_callback, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                                      ORTE_RML_TAG_HEARTBEAT,
+                                                      orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }
