@@ -451,6 +451,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                         } 
                     }
                 }
+                ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
                 opal_argv_free(ck2);
                 goto setpolicy;
             }
