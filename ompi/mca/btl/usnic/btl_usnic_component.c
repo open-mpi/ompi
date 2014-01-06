@@ -207,6 +207,10 @@ static int usnic_component_close(void)
 
     free(mca_btl_usnic_component.usnic_all_modules);
     free(mca_btl_usnic_component.usnic_active_modules);
+    if (NULL != mca_btl_usnic_component.vendor_part_ids) {
+        free(mca_btl_usnic_component.vendor_part_ids);
+        mca_btl_usnic_component.vendor_part_ids = NULL;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -299,42 +303,39 @@ static int check_reg_mem_basics(void)
 /*
  * Parse the value returned in the btl_usnic_vendor_part_ids MCA param
  */
-static int parse_vendor_part_ids(void)
+static int parse_vendor_part_ids(const char *str, uint32_t **part_ids)
 {
     int i, ret = OMPI_SUCCESS;
-    char *str = mca_btl_usnic_component.vendor_part_ids_string;
     char **parts = NULL;
+    uint32_t *ids;
+    long id;
+
+    *part_ids = NULL;
 
     /* Defensive programming; this should never actually happen */
-    if (NULL == mca_btl_usnic_component.vendor_part_ids_string) {
+    if (NULL == str) {
         ret = OMPI_ERR_BAD_PARAM;
-        mca_btl_usnic_component.vendor_part_ids_string = strdup("<empty>");
+        str = "<empty>";
         goto out;
     }
 
-    /* Make sure the string starts with (optional whitespace and) a
-       number: stop at the first non-whitespace and see if it's a
-       digit. */
-    for (i = 0; !isspace(str[i]) && '\0' != str[i]; ++i) {
-        continue;
-    }
-    if ('\0' != str[i] && !isdigit(str[i])) {
-        ret = OMPI_ERR_BAD_PARAM;
-        goto out;
-    }
-
-    /* Ok, we have at least one number */
-    parts = 
-        opal_argv_split(mca_btl_usnic_component.vendor_part_ids_string, ',');
-    mca_btl_usnic_component.vendor_part_ids = 
-        calloc(sizeof(uint32_t), opal_argv_count(parts) + 1);
-    if (NULL == mca_btl_usnic_component.vendor_part_ids) {
+    /* Split into a comma-delimited list */
+    parts = opal_argv_split(str, ',');
+    ids = calloc(sizeof(uint32_t), opal_argv_count(parts) + 1);
+    if (NULL == ids) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto out;
     }
     for (i = 0, str = parts[0]; NULL != str; str = parts[++i]) {
-        mca_btl_usnic_component.vendor_part_ids[i] = (uint32_t) atoi(str);
+        id = strtol(str, NULL, 0);
+        if (id > UINT32_MAX || id <= 0 ||
+            ERANGE == errno || EINVAL == errno) {
+            ret = OMPI_ERR_BAD_PARAM;
+            goto out;
+        }
+        ids[i] = (uint32_t) id;
     }
+    *part_ids = ids;
 
  out:
     if (NULL != parts) {
@@ -345,14 +346,8 @@ static int parse_vendor_part_ids(void)
     if (OMPI_ERR_BAD_PARAM == ret) {
         opal_show_help("help-mpi-btl-usnic.txt",
                        "bad value for btl_usnic_vendor_part_ids",
-                       true,
-                       mca_btl_usnic_component.vendor_part_ids_string);
+                       true, str);
     }
-
-    /* Free the value that we got back from the MCA param (the MCA var
-       system maintains its own interncal copy) */
-    free(mca_btl_usnic_component.vendor_part_ids_string);
-    mca_btl_usnic_component.vendor_part_ids_string = NULL;
 
     return ret;
 }
@@ -501,9 +496,16 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     /* Parse the vendor part IDs returned in
        btl_usnic_vendor_part_ids */
-    if (OMPI_SUCCESS != parse_vendor_part_ids()) {
+    if (OMPI_SUCCESS != 
+        parse_vendor_part_ids(mca_btl_usnic_component.vendor_part_ids_string,
+                              &mca_btl_usnic_component.vendor_part_ids)) {
         return NULL;
     }
+
+    /* Free the value that we got back from the MCA param (the MCA var
+       system maintains its own interncal copy) */
+    free(mca_btl_usnic_component.vendor_part_ids_string);
+    mca_btl_usnic_component.vendor_part_ids_string = NULL;
 
     /************************************************************************
      * Below this line, we assume that usnic is loaded on all procs,
