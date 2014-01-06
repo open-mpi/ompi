@@ -126,7 +126,6 @@ CTree<string>* addToTree(string parent, uint32_t pid, string child,
 	if (cur_pos == NULL) {
 
 		CTree<string> *children = new CTree<string> ();
-		children = children;
 		children->item = parent;
 		children->str_hash = pid;
 

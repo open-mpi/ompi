@@ -126,7 +126,8 @@ class DefinitionsC::GroupCountersC
 public:
 
    // constructor
-   GroupCountersC( DefinitionsC & _defs ) : m_defs( _defs ) {}
+//   GroupCountersC( DefinitionsC & _defs ) : m_defs( _defs ) {}
+  GroupCountersC() {}
 
    // destructor
    ~GroupCountersC() {}
@@ -190,7 +191,7 @@ public:
 private:
 
    // reference to parent class instance
-   DefinitionsC & m_defs;
+//   DefinitionsC & m_defs;
 
    // set of global process group tokens which have counters
    std::set<uint32_t> m_procGrps;
@@ -255,7 +256,8 @@ class DefinitionsC::ProcessGroupsC
 public:
 
    // constructor
-   ProcessGroupsC( DefinitionsC & _defs ) : m_defs( _defs ) {}
+//   ProcessGroupsC( DefinitionsC & _defs ) : m_defs( _defs ) {}
+   ProcessGroupsC() {}
 
    // destructor
    ~ProcessGroupsC()
@@ -451,7 +453,7 @@ private:
    std::vector<UniqueMembersS*> m_uniqueMembers;
 
    // reference to parent class instance
-   DefinitionsC & m_defs;
+//   DefinitionsC & m_defs;
 
 };
 
