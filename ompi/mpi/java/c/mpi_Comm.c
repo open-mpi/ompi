@@ -1965,18 +1965,17 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatterBlock(
     return (jlong)request;
 }
 
-JNIEXPORT void JNICALL Java_mpi_Comm_reduceLocal_1jni(
-                       JNIEnv *env, jobject jthis,
-                       jobject inbuf, jobject inoutbuf,
-                       jint count, jobject type, jobject op)
+JNIEXPORT void JNICALL Java_mpi_Comm_reduceLocal(
+        JNIEnv *env, jobject jthis, jobject inbuf, jint inoff,
+        jobject inoutbuf, jint inoutoff, jint count, jobject type, jobject op)
 {
     MPI_Datatype mpi_type =
         (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypeHandle));
 
     int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypeBaseType);
     void *inptr, *inbase, *inoutptr, *inoutbase;
-    inptr = ompi_java_getBufPtr(&inbase, env, inbuf, baseType, 0);
-    inoutptr = ompi_java_getBufPtr(&inoutbase, env, inoutbuf, baseType, 0);
+    inptr = ompi_java_getBufPtr(&inbase, env, inbuf, baseType, inoff);
+    inoutptr = ompi_java_getBufPtr(&inoutbase, env, inoutbuf, baseType, inoutoff);
 
     int rc = MPI_Reduce_local(inptr, inoutptr, count, mpi_type,
                               ompi_java_op_getHandle(env, op, baseType));

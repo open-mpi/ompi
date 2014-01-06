@@ -2678,12 +2678,28 @@ public final void reduceLocal(Object inbuf, Object inoutbuf, int count,
 {
     MPI.check();
     op.setDatatype(type);
-    reduceLocal_jni(inbuf, inoutbuf, count, type, op);
+
+    int inoff    = 0,
+        inoutoff = 0;
+
+    if(isHeapBuffer(inbuf))
+    {
+        inoff = ((Buffer)inbuf).arrayOffset();
+        inbuf = ((Buffer)inbuf).array();
+    }
+
+    if(isHeapBuffer(inoutbuf))
+    {
+        inoutoff = ((Buffer)inoutbuf).arrayOffset();
+        inoutbuf = ((Buffer)inoutbuf).array();
+    }
+
+    reduceLocal(inbuf, inoff, inoutbuf, inoutoff, count, type, op);
 }
 
-private native void reduceLocal_jni(Object inbuf, Object inoutbuf, int count,
-                                    Datatype datatype, Op op)
-                                    throws MPIException;
+private native void reduceLocal(
+        Object inbuf, int inoff, Object inoutbuf, int inoutoff,
+        int count, Datatype datatype, Op op) throws MPIException;
 
 /**
  * Sets the print name for the communicator.
