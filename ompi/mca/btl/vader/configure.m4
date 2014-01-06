@@ -19,8 +19,7 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_XPMEM], [
-#    OPAL_VAR_SCOPE_PUSH([ompi_check_xpmem_happy ompi_check_xpmem_$1_save_CPPFLAGS ompi_check_xpmem_dir])
-
+    OPAL_VAR_SCOPE_PUSH([ompi_check_xpmem_happy])
     AC_ARG_WITH([xpmem],
                 [AC_HELP_STRING([--with-xpmem(=DIR)],
                 [Build with XPMEM kernel module support, searching for headers in DIR])])
@@ -46,7 +45,7 @@ AC_DEFUN([OMPI_CHECK_XPMEM], [
           [AS_IF([test ! -z "$with_xpmem" -a "$with_xpmem" != "no"],
                  [AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])])
            $3])
-#    OPAL_VAR_SCOPE_POP
+    OPAL_VAR_SCOPE_POP
 ])dnl
 
 # MCA_btl_sm_CONFIG([action-if-can-compile],
@@ -55,25 +54,33 @@ AC_DEFUN([OMPI_CHECK_XPMEM], [
 AC_DEFUN([MCA_ompi_btl_vader_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/btl/vader/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([btl_vader_xpmem_happy])
-    OMPI_CHECK_XPMEM([btl_vader],
-                     [btl_vader_xpmem_happy=1],
-                     [btl_vader_xpmem_happy=0])
+    OPAL_VAR_SCOPE_PUSH([btl_vader_xpmem_happy btl_vader_cma_happy])
 
-    AC_DEFINE_UNQUOTED([OMPI_BTL_VADER_HAVE_XPMEM],
-                       [$btl_vader_xpmem_happy],
-                       [If XPMEM support can be enabled within vader])
+    btl_vader_cma_happy=0
+    btl_vader_xpmem_happy=0
 
-    # at this point, we can only build vader if we have XPMEM support
-    AS_IF([test "$btl_vader_xpmem_happy" = "1"],
-          [$1],
-          [$2])
+    # default to using XPMEM if it is available
+    OMPI_CHECK_XPMEM([btl_vader], [btl_vader_xpmem_happy=1], [])
+
+    AC_DEFINE_UNQUOTED([OMPI_BTL_VADER_HAVE_XPMEM], [$btl_vader_xpmem_happy],
+        [If XPMEM support can be enabled within vader])
+
+    if test $btl_vader_xpmem_happy = 0 ; then
+        # check for CMA if requested. it won't be used if xpmem was available
+	OMPI_CHECK_CMA([btl_vader], [btl_vader_cma_happy=1], [])
+    fi
+
+    AC_DEFINE_UNQUOTED([OMPI_BTL_VADER_HAVE_CMA], [$btl_vader_cma_happy],
+        [If CMA support can be enabled within vader])
+
+    OPAL_VAR_SCOPE_POP
+
+    # always happy
+    [$1]
 
     # substitute in the things needed to build with XPMEM support
     AC_SUBST([btl_vader_CFLAGS])
     AC_SUBST([btl_vader_CPPFLAGS])
     AC_SUBST([btl_vader_LDFLAGS])
     AC_SUBST([btl_vader_LIBS])
-
-#    OPAL_VAR_SCOPE_POP
 ])dnl

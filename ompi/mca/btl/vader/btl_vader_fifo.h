@@ -50,50 +50,10 @@
 typedef struct vader_fifo_t {
     volatile int64_t fifo_head;
     volatile int64_t fifo_tail;
-    /* pad out to fill a cache line (64 or 128 bytes) */
-    char pad[128 - 2 * sizeof (int64_t)];
 } vader_fifo_t;
 
-static inline int vader_fifo_init (vader_fifo_t *fifo)
-{
-    fifo->fifo_head = fifo->fifo_tail = VADER_FIFO_FREE;
-
-    return OMPI_SUCCESS;
-}
-
-static inline void _vader_fifo_write (vader_fifo_t *fifo, int64_t value)
-{
-    int64_t prev;
-
-    opal_atomic_wmb ();
-    prev = opal_atomic_swap_64 (&fifo->fifo_tail, value);
-    opal_atomic_rmb ();
-
-    assert (prev != value);
-
-    if (OPAL_LIKELY(VADER_FIFO_FREE != prev)) {
-        mca_btl_vader_hdr_t *hdr = (mca_btl_vader_hdr_t *) relative2virtual (prev);
-        hdr->next = value;
-    } else {
-        fifo->fifo_head = value;
-    }
-
-    opal_atomic_wmb ();
-}
-
-/* write a frag (relative to this process' base) to another rank's fifo */
-static inline void vader_fifo_write (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
-{
-    hdr->next = VADER_FIFO_FREE;
-    _vader_fifo_write (ep->fifo, virtual2relative ((char *) hdr));
-}
-
-/* write a frag (relative to the remote process' base) to the remote fifo. note the remote peer must own hdr */
-static inline void vader_fifo_write_back (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
-{
-    hdr->next = VADER_FIFO_FREE;
-    _vader_fifo_write(ep->fifo, virtual2relativepeer (ep, (char *) hdr));
-}
+/* large enough to ensure the fifo is on its own cache line */
+#define MCA_BTL_VADER_FIFO_SIZE 128
 
 static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
 {
@@ -130,6 +90,48 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
     opal_atomic_wmb ();
 
     return hdr; 
+}
+
+static inline int vader_fifo_init (vader_fifo_t *fifo)
+{
+    fifo->fifo_head = fifo->fifo_tail = VADER_FIFO_FREE;
+    mca_btl_vader_component.my_fifo = fifo;
+
+    return OMPI_SUCCESS;
+}
+
+static inline void vader_fifo_write (vader_fifo_t *fifo, int64_t value)
+{
+    int64_t prev;
+
+    opal_atomic_wmb ();
+    prev = opal_atomic_swap_64 (&fifo->fifo_tail, value);
+    opal_atomic_rmb ();
+
+    assert (prev != value);
+
+    if (OPAL_LIKELY(VADER_FIFO_FREE != prev)) {
+        mca_btl_vader_hdr_t *hdr = (mca_btl_vader_hdr_t *) relative2virtual (prev);
+        hdr->next = value;
+    } else {
+        fifo->fifo_head = value;
+    }
+
+    opal_atomic_wmb ();
+}
+
+/* write a frag (relative to this process' base) to another rank's fifo */
+static inline void vader_fifo_write_ep (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+{
+    hdr->next = VADER_FIFO_FREE;
+    vader_fifo_write (ep->fifo, virtual2relative ((char *) hdr));
+}
+
+/* write a frag (relative to the remote process' base) to the remote fifo. note the remote peer must own hdr */
+static inline void vader_fifo_write_back (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+{
+    hdr->next = VADER_FIFO_FREE;
+    vader_fifo_write(ep->fifo, virtual2relativepeer (ep, (char *) hdr));
 }
 
 #endif /* MCA_BTL_VADER_FIFO_H */

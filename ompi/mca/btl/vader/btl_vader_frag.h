@@ -26,20 +26,22 @@
 
 #include "ompi_config.h"
 
-#define MCA_BTL_VADER_FLAG_INLINE      0
-#define MCA_BTL_VADER_FLAG_SINGLE_COPY 1
-#define MCA_BTL_VADER_FLAG_FBOX        2
-#define MCA_BTL_VADER_FLAG_COMPLETE    4
+enum {
+    MCA_BTL_VADER_FLAG_INLINE      = 0,
+    MCA_BTL_VADER_FLAG_SINGLE_COPY = 1,
+    MCA_BTL_VADER_FLAG_COMPLETE    = 2,
+};
 
 struct mca_btl_vader_frag_t;
+struct mca_btl_vader_fbox_t;
 
 struct mca_btl_vader_hdr_t {
     volatile intptr_t next; /* next item in fifo. many peers may touch this */
     struct mca_btl_vader_frag_t *frag;
     mca_btl_base_tag_t tag; /* tag associated with this fragment (used to lookup callback) */
     uint8_t flags;          /* vader send flags */
-    int src_smp_rank;       /* smp rank of owning process */
-    size_t len;             /* length of data following this header */
+    uint16_t src_smp_rank;  /* smp rank of owning process */
+    int32_t len;            /* length of data following this header */
     struct iovec sc_iov;    /* io vector containing pointer to single-copy data */
 };
 typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
@@ -51,15 +53,15 @@ struct mca_btl_vader_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_base_segment_t segments[2];
     struct mca_btl_base_endpoint_t *endpoint;
+    struct mca_btl_vader_fbox_t *fbox;
     mca_btl_vader_hdr_t *hdr; /* in the shared memory region */
     ompi_free_list_t *my_list;
 };
 
 typedef struct mca_btl_vader_frag_t mca_btl_vader_frag_t;
 
-OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
-
-static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_free_list_t *list) {
+static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_free_list_t *list,
+                              struct mca_btl_base_endpoint_t *endpoint) {
     ompi_free_list_item_t *item;
 
     OMPI_FREE_LIST_GET_MT(list, item);
@@ -71,19 +73,38 @@ static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_fr
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
 
-        (*frag)->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;
-        (*frag)->my_list = list;
+        (*frag)->endpoint = endpoint;
     }
 
     return OMPI_SUCCESS;
 }
 
-void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag);
+static inline void mca_btl_vader_frag_return (mca_btl_vader_frag_t *frag)
+{
+    frag->hdr->flags = 0;
+    frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
+    frag->base.des_src     = frag->segments;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst     = frag->segments;
+    frag->base.des_dst_cnt = 1;
+    frag->fbox = NULL;
 
-#define MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag)                            \
-    mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_eager)
-#define MCA_BTL_VADER_FRAG_ALLOC_USER(frag)                             \
-    mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_user)
+    OMPI_FREE_LIST_RETURN_MT(frag->my_list, (ompi_free_list_item_t *)frag);
+}
+
+OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
+
+#define MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, endpoint)                  \
+    mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_eager, endpoint)
+
+#if !OMPI_BTL_VADER_HAVE_XPMEM
+#define MCA_BTL_VADER_FRAG_ALLOC_MAX(frag, endpoint)                    \
+    mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_max_send, endpoint)
+#endif
+
+#define MCA_BTL_VADER_FRAG_ALLOC_USER(frag, endpoint)                   \
+    mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_user, endpoint)
+
 #define MCA_BTL_VADER_FRAG_RETURN(frag) mca_btl_vader_frag_return(frag)
 
 

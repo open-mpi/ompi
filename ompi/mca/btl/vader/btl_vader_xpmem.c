@@ -14,6 +14,8 @@
 #include "btl_vader_xpmem.h"
 #include "opal/mca/memchecker/base/base.h"
 
+#if OMPI_BTL_VADER_HAVE_XPMEM
+
 /* largest address we can attach to using xpmem */
 #define VADER_MAX_ADDRESS ((uintptr_t)0x7ffffffff000)
 
@@ -115,3 +117,5 @@ void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_b
         OBJ_RELEASE (reg);
     }
 }
+
+#endif /* OMPI_BTL_VADER_HAVE_XPMEM */
