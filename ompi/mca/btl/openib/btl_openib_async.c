@@ -1,8 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +50,7 @@ static int return_status = OMPI_ERROR;
 static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_poll);
 static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll, opal_list_t *ignore_qp_err_list);
 static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *hcas_poll, int index,
-				    opal_list_t *ignore_qp_err_list);
+                                    opal_list_t *ignore_qp_err_list);
 static const char *openib_event_to_str (enum ibv_event_type event);
 static int send_command_comp(int in);
 
@@ -171,8 +174,8 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
 
     BTL_VERBOSE(("Got cmd %d", cmd.a_cmd));
     if (OPENIB_ASYNC_CMD_FD_ADD == cmd.a_cmd) {
-	fd = cmd.fd;
-	BTL_VERBOSE(("Got fd %d", fd));
+        fd = cmd.fd;
+        BTL_VERBOSE(("Got fd %d", fd));
         BTL_VERBOSE(("Adding device [%d] to async event poll[%d]",
                      fd, devices_poll->active_poll_size));
         flags = fcntl(fd, F_GETFL);
@@ -204,8 +207,8 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
     } else if (OPENIB_ASYNC_CMD_FD_REMOVE == cmd.a_cmd) {
         bool fd_found = false;
 
-	fd = cmd.fd;
-	BTL_VERBOSE(("Got fd %d", fd));
+        fd = cmd.fd;
+        BTL_VERBOSE(("Got fd %d", fd));
 
         /* Removing device from poll */
         BTL_VERBOSE(("Removing device [%d] from async event poll [%d]",
@@ -232,24 +235,24 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
             return OMPI_ERROR;
         }
     } else if (OPENIB_ASYNC_IGNORE_QP_ERR == cmd.a_cmd) {
-	mca_btl_openib_qp_list *new_qp;
-	new_qp = OBJ_NEW(mca_btl_openib_qp_list);
-	BTL_VERBOSE(("Ignore errors on QP %p", (void *)cmd.qp));
-	new_qp->qp = cmd.qp;
-	opal_list_append(ignore_qp_err_list, (opal_list_item_t *)new_qp);
-	send_command_comp(OPENIB_ASYNC_IGNORE_QP_ERR);
+        mca_btl_openib_qp_list *new_qp;
+        new_qp = OBJ_NEW(mca_btl_openib_qp_list);
+        BTL_VERBOSE(("Ignore errors on QP %p", (void *)cmd.qp));
+        new_qp->qp = cmd.qp;
+        opal_list_append(ignore_qp_err_list, (opal_list_item_t *)new_qp);
+        send_command_comp(OPENIB_ASYNC_IGNORE_QP_ERR);
 
     } else if (OPENIB_ASYNC_THREAD_EXIT == cmd.a_cmd) {
         /* Got 0 - command to close the thread */
-	opal_list_item_t *item;
+        opal_list_item_t *item;
         BTL_VERBOSE(("Async event thread exit"));
         free(devices_poll->async_pollfd);
         return_status = OMPI_SUCCESS;
 
-	while ((item = opal_list_remove_first(ignore_qp_err_list))) {
-	    OBJ_RELEASE(item);
-	}
-	OBJ_DESTRUCT(ignore_qp_err_list);
+        while ((item = opal_list_remove_first(ignore_qp_err_list))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(ignore_qp_err_list);
 
         pthread_exit(&return_status);
     }
@@ -315,7 +318,7 @@ srq_limit_event_exit:
 
 /* Function handle async device events */
 static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_poll, int index,
-				    opal_list_t *ignore_qp_err_list)
+                                    opal_list_t *ignore_qp_err_list)
 {
     int j;
     mca_btl_openib_device_t *device = NULL;
@@ -374,28 +377,28 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
             case IBV_EVENT_CQ_ERR:
             case IBV_EVENT_QP_FATAL:
-	      if (event_type == IBV_EVENT_QP_FATAL) {
-		  opal_list_item_t *item;
-		  mca_btl_openib_qp_list *qp_item;
-		  bool in_ignore_list = false;
+              if (event_type == IBV_EVENT_QP_FATAL) {
+                  opal_list_item_t *item;
+                  mca_btl_openib_qp_list *qp_item;
+                  bool in_ignore_list = false;
 
-		  BTL_VERBOSE(("QP is in err state %p", (void *)event.element.qp));
+                  BTL_VERBOSE(("QP is in err state %p", (void *)event.element.qp));
 
-		  /* look through ignore list */
-		  for (item = opal_list_get_first(ignore_qp_err_list);
-		       item != opal_list_get_end(ignore_qp_err_list);
-		       item = opal_list_get_next(item)) {
-		      qp_item = (mca_btl_openib_qp_list *)item;
-		      if (qp_item->qp == event.element.qp) {
-			  BTL_VERBOSE(("QP %p is in error ignore list",
-				       (void *)event.element.qp));
-			  in_ignore_list = true;
-			  break;
-		      }
-		  }
-		  if (in_ignore_list)
-		      break;
-	      }
+                  /* look through ignore list */
+                  for (item = opal_list_get_first(ignore_qp_err_list);
+                       item != opal_list_get_end(ignore_qp_err_list);
+                       item = opal_list_get_next(item)) {
+                      qp_item = (mca_btl_openib_qp_list *)item;
+                      if (qp_item->qp == event.element.qp) {
+                          BTL_VERBOSE(("QP %p is in error ignore list",
+                                       (void *)event.element.qp));
+                          in_ignore_list = true;
+                          break;
+                      }
+                  }
+                  if (in_ignore_list)
+                      break;
+              }
 
             case IBV_EVENT_QP_REQ_ERR:
             case IBV_EVENT_QP_ACCESS_ERR:
@@ -457,7 +460,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
 /* This Async event thread is handling all async event of
  * all btls/devices in openib component
  */
-void* btl_openib_async_thread(void * async)
+static void* btl_openib_async_thread(void * async)
 {
     int rc;
     int i;
@@ -499,7 +502,7 @@ void* btl_openib_async_thread(void * async)
                     if (0 == i) {
                         /* 0 poll we use for comunication with main thread */
                         if (OMPI_SUCCESS != btl_openib_async_commandh(&devices_poll,
-								      &ignore_qp_err_list)) {
+                                                                      &ignore_qp_err_list)) {
                             free(devices_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process.  "
                                         "Fatal error, stoping asynch event thread"));
@@ -508,7 +511,7 @@ void* btl_openib_async_thread(void * async)
                     } else {
                         /* We get device event */
                         if (btl_openib_async_deviceh(&devices_poll, i,
-						     &ignore_qp_err_list)) {
+                                                     &ignore_qp_err_list)) {
                             free(devices_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process.  "
                                         "Fatal error, stoping asynch event thread"));
@@ -675,5 +678,37 @@ void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t 
     /* Maybe the qp already was modified by other process - ignoring error */
 }
 #endif
+
+int start_async_event_thread(void)
+{
+    if (0 != mca_btl_openib_component.async_thread) {
+        return OMPI_SUCCESS;
+    }
+
+    /* Set the error counter to zero */
+    mca_btl_openib_component.error_counter = 0;
+
+    /* Create pipe for communication with async event thread */
+    if (pipe(mca_btl_openib_component.async_pipe)) {
+        BTL_ERROR(("Failed to create pipe for communication with "
+                   "async event thread"));
+        return OMPI_ERROR;
+    }
+
+    if (pipe(mca_btl_openib_component.async_comp_pipe)) {
+        BTL_ERROR(("Failed to create comp pipe for communication with "
+                   "main thread"));
+        return OMPI_ERROR;
+    }
+
+    /* Starting async event thread for the component */
+    if (pthread_create(&mca_btl_openib_component.async_thread, NULL,
+                       (void*(*)(void*)) btl_openib_async_thread, NULL)) {
+        BTL_ERROR(("Failed to create async event thread"));
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
 
 #endif

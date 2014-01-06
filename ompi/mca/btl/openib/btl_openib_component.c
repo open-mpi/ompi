@@ -660,36 +660,6 @@ static inline int param_register_uint(const char* param_name, unsigned int defau
     return *storage;
 }
 
-#if OPAL_HAVE_THREADS
-static int start_async_event_thread(void)
-{
-    /* Set the error counter to zero */
-    mca_btl_openib_component.error_counter = 0;
-
-    /* Create pipe for communication with async event thread */
-    if(pipe(mca_btl_openib_component.async_pipe)) {
-        BTL_ERROR(("Failed to create pipe for communication with "
-                    "async event thread"));
-        return OMPI_ERROR;
-    }
-
-    if(pipe(mca_btl_openib_component.async_comp_pipe)) {
-        BTL_ERROR(("Failed to create comp pipe for communication with "
-                    "main thread"));
-        return OMPI_ERROR;
-    }
-
-    /* Starting async event thread for the component */
-    if(pthread_create(&mca_btl_openib_component.async_thread, NULL,
-                (void*(*)(void*))btl_openib_async_thread, NULL)) {
-        BTL_ERROR(("Failed to create async event thread"));
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-#endif
-
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                          uint8_t port_num, uint16_t pkey_index,
                          struct ibv_port_attr *ib_port_attr)
@@ -928,6 +898,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     OBJ_CONSTRUCT(&device->device_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&device->send_free_control, ompi_free_list_t);
     device->max_inline_data = 0;
+    device->ready_for_use = false;
 }
 
 static void device_destruct(mca_btl_openib_device_t *device)
@@ -1038,187 +1009,6 @@ device_error:
 
 OBJ_CLASS_INSTANCE(mca_btl_openib_device_t, opal_object_t, device_construct,
         device_destruct);
-
-static int prepare_device_for_use(mca_btl_openib_device_t *device)
-{
-    mca_btl_openib_frag_init_data_t *init_data;
-    int rc, qp, length;
-
-#if OPAL_HAVE_THREADS
-    if(mca_btl_openib_component.use_async_event_thread) {
-	mca_btl_openib_async_cmd_t async_command;
-        if(0 == mca_btl_openib_component.async_thread) {
-            /* async thread is not yet started, so start it here */
-            if(start_async_event_thread() != OMPI_SUCCESS)
-                return OMPI_ERROR;
-        }
-        device->got_fatal_event = false;
-        device->got_port_event = false;
-	async_command.a_cmd = OPENIB_ASYNC_CMD_FD_ADD;
-	async_command.fd = device->ib_dev_context->async_fd;
-        if (write(mca_btl_openib_component.async_pipe[1],
-                    &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
-            BTL_ERROR(("Failed to write to pipe [%d]",errno));
-            return OMPI_ERROR;
-        }
-        /* wait for ok from thread */
-        if (OMPI_SUCCESS !=
-            btl_openib_async_command_done(device->ib_dev_context->async_fd)) {
-            return OMPI_ERROR;
-        }
-    }
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-    /* Prepare data for thread, but not starting it */
-    OBJ_CONSTRUCT(&device->thread, opal_thread_t);
-    device->thread.t_run = mca_btl_openib_progress_thread;
-    device->thread.t_arg = device;
-    device->progress = false;
-#endif
-#endif
-
-#if HAVE_XRC
-    /* if user configured to run with XRC qp and the device doesn't
-     * support it - we should ignore this device. Maybe we have another
-     * one that has XRC support
-     */
-    if (!(device->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
-            MCA_BTL_XRC_ENABLED) {
-        opal_show_help("help-mpi-btl-openib.txt",
-                "XRC on device without XRC support", true,
-                mca_btl_openib_component.num_xrc_qps,
-                ibv_get_device_name(device->ib_dev),
-                ompi_process_info.nodename);
-        return OMPI_ERROR;
-    }
-
-    if (MCA_BTL_XRC_ENABLED) {
-        if (OMPI_SUCCESS != mca_btl_openib_open_xrc_domain(device)) {
-            BTL_ERROR(("XRC Internal error. Failed to open xrc domain"));
-            return OMPI_ERROR;
-        }
-    }
-#endif
-
-    device->endpoints = OBJ_NEW(opal_pointer_array_t);
-    opal_pointer_array_init(device->endpoints, 10, INT_MAX, 10);
-    opal_pointer_array_add(&mca_btl_openib_component.devices, device);
-    if (mca_btl_openib_component.max_eager_rdma > 0 &&
-        device->use_eager_rdma) {
-        device->eager_rdma_buffers =
-            (mca_btl_base_endpoint_t **) calloc(mca_btl_openib_component.max_eager_rdma * device->btls,
-                                            sizeof(mca_btl_openib_endpoint_t*));
-        if(NULL == device->eager_rdma_buffers) {
-            BTL_ERROR(("Memory allocation fails"));
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-    }
-
-    init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
-    if (NULL == init_data) {
-        if (mca_btl_openib_component.max_eager_rdma > 0 &&
-            device->use_eager_rdma) {
-            /* cleanup */
-            free (device->eager_rdma_buffers);
-            device->eager_rdma_buffers = NULL;
-        }
-        BTL_ERROR(("Memory allocation fails"));
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    length = sizeof(mca_btl_openib_header_t) +
-        sizeof(mca_btl_openib_footer_t) +
-        sizeof(mca_btl_openib_eager_rdma_header_t);
-
-    init_data->order = MCA_BTL_NO_ORDER;
-    init_data->list = &device->send_free_control;
-
-    rc = ompi_free_list_init_ex_new(&device->send_free_control,
-                sizeof(mca_btl_openib_send_control_frag_t), opal_cache_line_size,
-                OBJ_CLASS(mca_btl_openib_send_control_frag_t), length,
-                mca_btl_openib_component.buffer_alignment,
-                mca_btl_openib_component.ib_free_list_num, -1,
-                mca_btl_openib_component.ib_free_list_inc,
-                device->mpool, mca_btl_openib_frag_init,
-                init_data);
-    if (OMPI_SUCCESS != rc) {
-        /* If we're "out of memory", this usually means that we ran
-           out of registered memory, so show that error message */
-        if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
-            OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
-            errno = ENOMEM;
-            mca_btl_openib_show_init_error(__FILE__, __LINE__,
-                                           "ompi_free_list_init_ex_new",
-                                           ibv_get_device_name(device->ib_dev));
-        }
-        return rc;
-    }
-
-    /* setup all the qps */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
-        if (NULL == init_data) {
-            BTL_ERROR(("Memory allocation fails"));
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-        /* Initialize pool of send fragments */
-        length = sizeof(mca_btl_openib_header_t) +
-            sizeof(mca_btl_openib_header_coalesced_t) +
-            sizeof(mca_btl_openib_control_header_t) +
-            sizeof(mca_btl_openib_footer_t) +
-            mca_btl_openib_component.qp_infos[qp].size;
-
-        init_data->order = qp;
-        init_data->list = &device->qps[qp].send_free;
-
-        rc = ompi_free_list_init_ex_new(init_data->list,
-                    sizeof(mca_btl_openib_send_frag_t), opal_cache_line_size,
-                    OBJ_CLASS(mca_btl_openib_send_frag_t), length,
-                    mca_btl_openib_component.buffer_alignment,
-                    mca_btl_openib_component.ib_free_list_num,
-                    mca_btl_openib_component.ib_free_list_max,
-                    mca_btl_openib_component.ib_free_list_inc,
-                    device->mpool, mca_btl_openib_frag_init,
-                                        init_data);
-        if (OMPI_SUCCESS != rc) {
-            /* If we're "out of memory", this usually means that we
-               ran out of registered memory, so show that error
-               message */
-            if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
-                OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
-                errno = ENOMEM;
-                mca_btl_openib_show_init_error(__FILE__, __LINE__,
-                                               "ompi_free_list_init_ex_new",
-                                               ibv_get_device_name(device->ib_dev));
-            }
-            return OMPI_ERROR;
-        }
-
-        init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
-        length = sizeof(mca_btl_openib_header_t) +
-            sizeof(mca_btl_openib_header_coalesced_t) +
-            sizeof(mca_btl_openib_control_header_t) +
-            sizeof(mca_btl_openib_footer_t) +
-            mca_btl_openib_component.qp_infos[qp].size;
-
-        init_data->order = qp;
-        init_data->list = &device->qps[qp].recv_free;
-
-        if(OMPI_SUCCESS != ompi_free_list_init_ex_new(init_data->list,
-                    sizeof(mca_btl_openib_recv_frag_t), opal_cache_line_size,
-                    OBJ_CLASS(mca_btl_openib_recv_frag_t),
-                    length, mca_btl_openib_component.buffer_alignment,
-                    mca_btl_openib_component.ib_free_list_num,
-                    mca_btl_openib_component.ib_free_list_max,
-                    mca_btl_openib_component.ib_free_list_inc,
-                    device->mpool, mca_btl_openib_frag_init,
-                    init_data)) {
-            return OMPI_ERROR;
-        }
-    }
-
-    return OMPI_SUCCESS;
-}
 
 static int
 get_port_list(mca_btl_openib_device_t *device, int *allowed_ports)
@@ -2922,44 +2712,6 @@ btl_openib_component_init(int *num_btl_modules,
             goto no_btls;
         }
         ++i;
-
-        /* For each btl module that we made - find every
-           base device that doesn't have device->qps setup on it yet (remember
-           that some modules may share the same device, so when going through
-           to loop, we may hit a device that was already setup earlier in
-           the loop).
-
-           We may to call for prepare_device_for_use() only after adding the btl
-           to mca_btl_openib_component.openib_btls, since the prepare_device_for_use
-           adds device to async thread that require access to
-           mca_btl_openib_component.openib_btls.
-        */
-
-        if (NULL == device->qps) {
-            /* Setup the device qps info */
-            device->qps = (mca_btl_openib_device_qp_t*)
-                calloc(mca_btl_openib_component.num_qps,
-                       sizeof(mca_btl_openib_device_qp_t));
-            if (NULL == device->qps) {
-                BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
-                goto no_btls;
-            }
-
-            for (qp_index = 0; qp_index < mca_btl_openib_component.num_qps; qp_index++) {
-                OBJ_CONSTRUCT(&device->qps[qp_index].send_free, ompi_free_list_t);
-                OBJ_CONSTRUCT(&device->qps[qp_index].recv_free, ompi_free_list_t);
-            }
-
-            /* Do finial init on device */
-            ret = prepare_device_for_use(device);
-            if (OMPI_SUCCESS != ret) {
-                opal_show_help("help-mpi-btl-openib.txt",
-                               "error in device init", true,
-                               ompi_process_info.nodename,
-                               ibv_get_device_name(device->ib_dev));
-                goto no_btls;
-            }
-        }
     }
     /* If we got nothing, then error out */
     if (0 == i) {
