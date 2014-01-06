@@ -42,8 +42,12 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
+#if OMPI_BTL_VADER_HAVE_XPMEM
 /* xpmem is required by vader atm */
 #include <xpmem.h>
+#else
+#include "opal/mca/shmem/base/base.h"
+#endif
 
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
@@ -77,8 +81,12 @@ struct vader_fifo_t;
  * Modex data
  */
 struct vader_modex_t {
+#if OMPI_BTL_VADER_HAVE_XPMEM
     xpmem_segid_t seg_id;
     void *segment_base;
+#else
+    opal_shmem_ds_t seg_ds;
+#endif
 };
 
 /**
@@ -90,19 +98,28 @@ struct mca_btl_vader_component_t {
     int vader_free_list_max;                /**< maximum size of free lists */
     int vader_free_list_inc;                /**< number of elements to alloc
                                              * when growing free lists */
+#if OMPI_BTL_VADER_HAVE_XPMEM
     xpmem_segid_t my_seg_id;                /* this rank's xpmem segment id */
+#else
+    opal_shmem_ds_t seg_ds;                 /* this rank's shared memory segment */
+#endif
+
     char *my_segment;                       /* this rank's base pointer */
     size_t segment_size;                    /* size of my_segment */
     size_t segment_offset;                  /* start of unused portion of my_segment */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
     ompi_free_list_t vader_frags_eager;     /**< free list of vader send frags */
+#if !OMPI_BTL_VADER_HAVE_XPMEM
+    ompi_free_list_t vader_frags_max_send;
+#endif
     ompi_free_list_t vader_frags_user;      /**< free list of vader put/get frags */
 
     int memcpy_limit;                       /** Limit where we switch from memmove to memcpy */
     int log_attach_align;                   /** Log of the alignment for xpmem segments */
-    int max_inline_send;                    /** Limit for copy-in-copy-out fragments */
+    unsigned int max_inline_send;           /** Limit for copy-in-copy-out fragments */
 
     struct mca_btl_base_endpoint_t *endpoints;
+    struct vader_fifo_t *my_fifo;
 };
 typedef struct mca_btl_vader_component_t mca_btl_vader_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_vader_component_t mca_btl_vader_component;
