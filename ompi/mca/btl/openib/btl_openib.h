@@ -412,6 +412,8 @@ typedef struct mca_btl_openib_device_t {
     uint32_t max_inline_data;
     /* Registration limit and current count */
     uint64_t mem_reg_max, mem_reg_active;
+    /* Device is ready for use */
+    bool ready_for_use;
 } mca_btl_openib_device_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_device_t);
 

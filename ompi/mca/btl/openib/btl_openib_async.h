@@ -13,7 +13,7 @@
 #define MCA_BTL_OPENIB_ASYNC_H
 #include "btl_openib_endpoint.h"
 
-void*      btl_openib_async_thread(void *one_hca);
+int        start_async_event_thread(void);
 void       mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep);
 int        btl_openib_async_command_done(int exp);
 #if HAVE_XRC
