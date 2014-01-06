@@ -118,7 +118,8 @@ DefinitionsC::DefinitionsC()
 
    // create instance of sub-class GroupCountersC
    //
-   m_groupCntrs = new GroupCountersC( *this );
+//   m_groupCntrs = new GroupCountersC( *this );
+   m_groupCntrs = new GroupCountersC();
    vt_assert( m_groupCntrs );
 
    // create instance of sub-class CommentsC
@@ -128,7 +129,8 @@ DefinitionsC::DefinitionsC()
 
    // create instance of sub-class ProcessGroupsC
    //
-   m_procGrps = new ProcessGroupsC( *this );
+//   m_procGrps = new ProcessGroupsC( *this );
+   m_procGrps = new ProcessGroupsC();
    vt_assert( m_procGrps );
 }
 

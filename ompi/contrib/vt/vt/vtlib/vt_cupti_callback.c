@@ -1574,10 +1574,10 @@ void vt_cupticb_resource(CUpti_CallbackId cbid,
           /* mark the stream as destroyed to be available for reuse */
           vt_cuptiact_markStreamAsDestroyed(resData->context, 
                                             strmID);
+
+          vt_cntl_msg(2, "[CUPTI Callbacks] Destroying stream %d (context %d)",
+                         strmID, resData->context);
         }
-        
-        vt_cntl_msg(2, "[CUPTI Callbacks] Destroying stream %d (context %d)", 
-                       strmID, resData->context);
       }
       
       break;
