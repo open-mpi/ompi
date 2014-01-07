@@ -222,7 +222,7 @@ int btl_openib_register_mca_params(void)
     char default_qps[100];
     uint32_t mid_qp_size;
     char *msg, *str;
-    int ret, tmp, tmp1;
+    int ret, tmp;
 
     ret = OMPI_SUCCESS;
 #define CHECK(expr) do {\
