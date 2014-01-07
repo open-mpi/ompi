@@ -55,7 +55,7 @@ sources = \
 
 # Help file
 
-dist_pkgdata_DATA = help-mpi-common-sm.txt
+dist_ompidata_DATA = help-mpi-common-sm.txt
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules
@@ -90,7 +90,7 @@ libmca_common_sm_noinst_la_SOURCES = $(libmca_common_sm_la_SOURCES)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif
 

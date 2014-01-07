@@ -42,7 +42,7 @@ fbtl_pvfs2_sources = \
 
 AM_CPPFLAGS = $(fbtl_pvfs2_CPPFLAGS)
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fbtl_pvfs2_la_SOURCES = $(fbtl_pvfs2_sources)
 mca_fbtl_pvfs2_la_LIBADD = $(fbtl_pvfs2_LIBS)

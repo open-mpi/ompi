@@ -22,7 +22,7 @@
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES
 
-nodist_pkgdata_DATA = \
+nodist_ompidata_DATA = \
 	ortecc-wrapper-data.txt \
 	ortec++-wrapper-data.txt
 

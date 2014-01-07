@@ -76,10 +76,8 @@ $(nodist_liboshmem_c_pshmem_la_SOURCES):
 	fi
 
 if WANT_INSTALL_HEADERS
-oshmemdir = $(includedir)/openshmem/oshmem/shmem/c/profile
+oshmemdir = $(ompiincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
-else
-oshmemdir = $(includedir)
 endif
 
 # These files were created by targets above

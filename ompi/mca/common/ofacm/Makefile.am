@@ -11,7 +11,7 @@
 
 AM_CPPFLAGS = $(common_ofacm_CPPFLAGS)
 
-dist_pkgdata_DATA = \
+dist_ompidata_DATA = \
         help-mpi-common-ofacm-base.txt \
         help-mpi-common-ofacm-oob.txt
 headers = \
@@ -57,7 +57,7 @@ libmca_common_ofacm_noinst_la_SOURCES = $(libmca_common_ofacm_la_SOURCES)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/common/ofacm
+ompidir = $(ompiincludedir)/ompi/mca/common/ofacm
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

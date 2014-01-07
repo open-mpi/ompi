@@ -64,9 +64,7 @@ headers =
 liboshmem_c_la_SOURCES = $(OSHMEM_API_SOURCES)
 
 if WANT_INSTALL_HEADERS
-oshmemdir = $(includedir)/openshmem/oshmem/shmem/c
+oshmemdir = $(ompiincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
-else
-oshmemdir = $(includedir)
 endif
 

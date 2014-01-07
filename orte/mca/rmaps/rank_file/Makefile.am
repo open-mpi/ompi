@@ -21,7 +21,7 @@
 
 AM_LFLAGS = -Porte_rmaps_rank_file_
 LEX_OUTPUT_ROOT = lex.orte_rmaps_rank_file_
-dist_pkgdata_DATA = help-rmaps_rank_file.txt
+dist_ompidata_DATA = help-rmaps_rank_file.txt
 
 sources = \
         rmaps_rank_file.c \
@@ -42,7 +42,7 @@ component_noinst = libmca_rmaps_rank_file.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmaps_rank_file_la_SOURCES = $(sources)
 mca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version

@@ -19,7 +19,7 @@
 
 AM_CPPFLAGS = $(orte_oob_ud_CPPFLAGS)
 
-dist_pkgdata_DATA = help-oob-ud.txt
+dist_ompidata_DATA = help-oob-ud.txt
 
 sources = \
 	oob_ud_component.c \
@@ -48,7 +48,7 @@ component_noinst = libmca_oob_ud.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_ud_la_SOURCES = $(sources)
 mca_oob_ud_la_LDFLAGS = -module -avoid-version $(orte_oob_ud_LDFLAGS)

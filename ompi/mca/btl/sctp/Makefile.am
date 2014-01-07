@@ -55,7 +55,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_sctp_la_SOURCES = $(component_sources)
 mca_btl_sctp_la_LDFLAGS = -module -avoid-version $(btl_sctp_LDFLAGS)

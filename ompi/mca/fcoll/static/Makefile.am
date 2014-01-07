@@ -41,7 +41,7 @@ component_noinst = libmca_fcoll_static.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fcoll_static_la_SOURCES = $(sources)
 mca_fcoll_static_la_LDFLAGS = -module -avoid-version

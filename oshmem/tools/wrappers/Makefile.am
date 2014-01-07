@@ -13,7 +13,7 @@
 .PHONY: all
 
 
-dist_pkgdata_DATA =  \
+dist_ompidata_DATA =  \
 	shmemcc-wrapper-data.txt \
 	shmemfort-wrapper-data.txt
 

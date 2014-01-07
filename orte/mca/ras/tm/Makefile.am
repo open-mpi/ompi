@@ -19,7 +19,7 @@
 
 # Use the top-level Makefile.options
 
-dist_pkgdata_DATA = help-ras-tm.txt
+dist_ompidata_DATA = help-ras-tm.txt
 
 
 AM_CPPFLAGS = $(ras_tm_CPPFLAGS)
@@ -46,7 +46,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_ras_tm_la_SOURCES = $(component_sources)
 mca_ras_tm_la_LDFLAGS = -module -avoid-version $(ras_tm_LDFLAGS)

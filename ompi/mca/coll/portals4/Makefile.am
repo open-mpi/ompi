@@ -23,7 +23,7 @@ component_install =
 endif
 
 AM_CPPFLAGS = $(coll_portals4_CPPFLAGS)
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_portals4_la_SOURCES = $(local_sources)
 mca_coll_portals4_la_LIBADD = $(coll_portals4_LIBS)

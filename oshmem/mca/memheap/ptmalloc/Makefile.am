@@ -27,7 +27,7 @@ component_noinst = libmca_memheap_ptmalloc.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_memheap_ptmalloc_la_SOURCES = $(ptmalloc_sources)
 mca_memheap_ptmalloc_la_LDFLAGS = -module -avoid-version

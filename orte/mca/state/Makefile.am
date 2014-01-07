@@ -13,7 +13,7 @@ noinst_LTLIBRARIES = libmca_state.la
 libmca_state_la_SOURCES =
 
 # pkgdata setup
-dist_pkgdata_DATA =
+dist_ompidata_DATA =
 
 # local files
 headers = state.h state_types.h
@@ -21,7 +21,7 @@ libmca_state_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/$(subdir)
+ortedir = $(ompiincludedir)/$(subdir)
 nobase_orte_HEADERS = $(headers)
 endif
 

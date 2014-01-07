@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = base/help-ompi-dpm-base.txt
+dist_ompidata_DATA = base/help-ompi-dpm-base.txt
 
 headers += \
         base/base.h

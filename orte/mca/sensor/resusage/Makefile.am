@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-sensor-resusage.txt
+dist_ompidata_DATA = help-orte-sensor-resusage.txt
 
 sources = \
         sensor_resusage.c \
@@ -27,7 +27,7 @@ component_noinst = libmca_sensor_resusage.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sensor_resusage_la_SOURCES = $(sources)
 mca_sensor_resusage_la_LDFLAGS = -module -avoid-version

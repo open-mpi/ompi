@@ -29,7 +29,7 @@ component_noinst = libmca_sharedfp_sm.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sharedfp_sm_la_SOURCES = $(sources)
 mca_sharedfp_sm_la_LDFLAGS = -module -avoid-version

@@ -19,7 +19,7 @@
 
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-dist_pkgdata_DATA += runtime/help-mpi-runtime.txt
+dist_ompidata_DATA += runtime/help-mpi-runtime.txt
 
 headers += \
         runtime/mpiruntime.h \

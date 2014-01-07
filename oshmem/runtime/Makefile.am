@@ -9,7 +9,7 @@
 
 # This makefile.am does not stand on its own - it is included from oshmem/Makefile.am
 
-dist_pkgdata_DATA += runtime/help-shmem-runtime.txt
+dist_ompidata_DATA += runtime/help-shmem-runtime.txt
 
 
 headers += \

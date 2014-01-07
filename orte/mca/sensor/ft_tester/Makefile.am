@@ -25,7 +25,7 @@ component_noinst = libmca_sensor_ft_tester.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sensor_ft_tester_la_SOURCES = $(sources)
 mca_sensor_ft_tester_la_LDFLAGS = -module -avoid-version

@@ -22,7 +22,7 @@ r2_sources  = \
         bml_r2_ft.c \
         bml_r2_ft.h
 
-dist_pkgdata_DATA = help-mca-bml-r2.txt
+dist_ompidata_DATA = help-mca-bml-r2.txt
 
 if MCA_BUILD_ompi_bml_r2_DSO
 component_noinst =
@@ -33,7 +33,7 @@ component_install =
 endif
 
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_bml_r2_la_SOURCES = $(r2_sources)
 mca_bml_r2_la_LDFLAGS = -module -avoid-version

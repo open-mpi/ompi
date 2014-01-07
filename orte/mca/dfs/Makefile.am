@@ -17,7 +17,7 @@ libmca_dfs_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/$(subdir)
+ortedir = $(ompiincludedir)/$(subdir)
 nobase_orte_HEADERS = $(headers)
 endif
 

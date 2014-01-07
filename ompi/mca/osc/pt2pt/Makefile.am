@@ -45,7 +45,7 @@ component_noinst = libmca_osc_pt2pt.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_pt2pt_la_SOURCES = $(pt2pt_sources)
 mca_osc_pt2pt_la_LDFLAGS = -module -avoid-version

@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = -DPML_BFO=1
 
-dist_pkgdata_DATA = \
+dist_ompidata_DATA = \
 	help-mpi-pml-bfo.txt
 
 EXTRA_DIST = post_configure.sh
@@ -66,7 +66,7 @@ component_noinst = libmca_pml_bfo.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_bfo_la_SOURCES = $(bfo_sources)
 mca_pml_bfo_la_LDFLAGS = -module -avoid-version

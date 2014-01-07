@@ -52,7 +52,7 @@ component_noinst = libmca_coll_demo.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_demo_la_SOURCES = $(sources)
 mca_coll_demo_la_LDFLAGS = -module -avoid-version

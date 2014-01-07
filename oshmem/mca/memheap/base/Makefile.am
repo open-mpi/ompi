@@ -9,7 +9,7 @@
 
 AM_CPPFLAGS = $(oshmem_verbs_CPPFLAGS)
 
-dist_pkgdata_DATA += base/help-shmem-mca.txt 
+dist_ompidata_DATA += base/help-shmem-mca.txt 
 
 headers += \
         base/base.h 

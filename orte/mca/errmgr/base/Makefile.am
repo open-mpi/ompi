@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA += base/help-errmgr-base.txt
+dist_ompidata_DATA += base/help-errmgr-base.txt
 
 headers += \
         base/errmgr_private.h \

@@ -36,10 +36,10 @@ endif
 
 # Specific information for DSO builds.
 #
-# The DSO should install itself in $(pkglibdir) (by default,
+# The DSO should install itself in $(ompilibdir) (by default,
 # $prefix/lib/openmpi).
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_op_x86_la_SOURCES = $(component_sources)
 mca_op_x86_la_LDFLAGS = -module -avoid-version

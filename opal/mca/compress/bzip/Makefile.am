@@ -11,7 +11,7 @@
 AM_CPPFLAGS = \
     $(LTDLINCL)
 
-dist_pkgdata_DATA = help-opal-compress-bzip.txt
+dist_ompidata_DATA = help-opal-compress-bzip.txt
 
 sources = \
         compress_bzip.h \
@@ -30,7 +30,7 @@ component_noinst = libmca_compress_bzip.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_compress_bzip_la_SOURCES = $(sources)
 mca_compress_bzip_la_LDFLAGS = -module -avoid-version

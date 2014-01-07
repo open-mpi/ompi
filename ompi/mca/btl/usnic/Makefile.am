@@ -22,7 +22,7 @@
 AM_CPPFLAGS = $(btl_usnic_CPPFLAGS) 
 AM_CFLAGS = $(btl_usnic_CFLAGS)
 
-dist_pkgdata_DATA = \
+dist_ompidata_DATA = \
     help-mpi-btl-usnic.txt
 
 sources = \
@@ -70,7 +70,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_usnic_la_SOURCES = $(component_sources)
 mca_btl_usnic_la_LDFLAGS = -module -avoid-version $(btl_usnic_LDFLAGS) 

@@ -29,7 +29,7 @@ component_noinst = libmca_io_ompio.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_io_ompio_la_SOURCES = $(sources)
 mca_io_ompio_la_LDFLAGS = -module -avoid-version

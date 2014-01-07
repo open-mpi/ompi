@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-mpi-btl-smcuda.txt
+dist_ompidata_DATA = help-mpi-btl-smcuda.txt
 
 libmca_btl_smcuda_la_sources = \
     btl_smcuda.c \
@@ -44,7 +44,7 @@ endif
 # See ompi/mca/common/cuda/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_smcuda_la_SOURCES = $(libmca_btl_smcuda_la_sources)
 mca_btl_smcuda_la_LDFLAGS = -module -avoid-version

@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-plm-rsh.txt
+dist_ompidata_DATA = help-plm-rsh.txt
 
 sources = \
         plm_rsh.h \
@@ -36,7 +36,7 @@ component_noinst = libmca_plm_rsh.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_plm_rsh_la_SOURCES = $(sources)
 mca_plm_rsh_la_LDFLAGS = -module -avoid-version

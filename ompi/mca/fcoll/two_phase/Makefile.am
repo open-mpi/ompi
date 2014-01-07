@@ -42,7 +42,7 @@ component_noinst = libmca_fcoll_two_phase.la
 component_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fcoll_two_phase_la_SOURCES = $(sources)
 mca_fcoll_two_phase_la_LDFLAGS = -module -avoid-version

@@ -36,7 +36,7 @@ endif
 # See ompi/mca/btl/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sbgp_ibnet_la_SOURCES = $(sources)
 mca_sbgp_ibnet_la_LDFLAGS = -module -avoid-version $(sbgp_ibnet_LDFLAGS) $(btl_openib_LDFLAGS) 

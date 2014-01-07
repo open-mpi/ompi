@@ -38,7 +38,7 @@ endif
 # See ompi/mca/common/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_sm_la_SOURCES = $(sources)
 mca_mpool_sm_la_LDFLAGS = -module -avoid-version

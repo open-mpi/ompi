@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-rmaps-seq.txt
+dist_ompidata_DATA = help-orte-rmaps-seq.txt
 
 sources = \
         rmaps_seq.c \
@@ -36,7 +36,7 @@ component_noinst = libmca_rmaps_seq.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmaps_seq_la_SOURCES = $(sources)
 mca_rmaps_seq_la_LDFLAGS = -module -avoid-version

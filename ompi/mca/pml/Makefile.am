@@ -27,7 +27,7 @@ libmca_pml_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 nobase_ompi_HEADERS = $(headers)
 nobase_nodist_ompi_HEADERS = $(nodist_headers)
 endif

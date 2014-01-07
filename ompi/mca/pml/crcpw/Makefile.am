@@ -32,7 +32,7 @@ component_install =
 endif
 
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_crcpw_la_SOURCES = $(crcpw_sources)
 mca_pml_crcpw_la_LDFLAGS = -module -avoid-version

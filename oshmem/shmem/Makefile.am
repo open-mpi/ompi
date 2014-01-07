@@ -9,4 +9,4 @@
 
 headers += shmem/shmem_api_logger.h \
            shmem/shmem_lock.h
-dist_pkgdata_DATA += shmem/c/help-shmem-api.txt
+dist_ompidata_DATA += shmem/c/help-shmem-api.txt
