@@ -337,6 +337,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Synonym for cpus-per-proc" },
 
     /* backward compatiblity */
+    { "rmaps_base_bycore", '\0', "bycore", "bycore", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to map and rank processes round-robin by core" },
     { "rmaps_base_bynode", '\0', "bynode", "bynode", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to map and rank processes round-robin by node" },

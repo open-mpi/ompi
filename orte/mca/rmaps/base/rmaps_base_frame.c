@@ -59,6 +59,7 @@ char *orte_rmaps_base_pattern = NULL;
  */
 static char *rmaps_base_mapping_policy = NULL;
 static char *rmaps_base_ranking_policy = NULL;
+static bool rmaps_base_bycore = false;
 static bool rmaps_base_byslot = false;
 static bool rmaps_base_bynode = false;
 static bool rmaps_base_no_schedule_local = false;
@@ -127,6 +128,13 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
                                 &rmaps_base_ranking_policy);
 
     /* backward compatibility */
+    rmaps_base_bycore = false;
+    (void) mca_base_var_register("orte", "rmaps", "base", "bycore",
+                                 "Whether to map and rank processes round-robin by core",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &rmaps_base_bycore);
+
     rmaps_base_byslot = false;
     (void) mca_base_var_register("orte", "rmaps", "base", "byslot",
                                  "Whether to map and rank processes round-robin by slot",
@@ -266,6 +274,29 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
                                                                  orte_rmaps_base.mapping,
                                                                  rmaps_base_ranking_policy))) {
         return rc;
+    }
+
+    if (rmaps_base_bycore) {
+        /* set mapping policy to bycore - error if something else already set */
+        if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
+            ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) != ORTE_MAPPING_BYCORE) {
+            /* error - cannot redefine the default mapping policy */
+            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
+                           "bycore", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
+            return ORTE_ERR_SILENT;
+        }
+        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYCORE);
+        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+        /* set ranking policy to bycore - error if something else already set */
+        if ((ORTE_RANKING_GIVEN & ORTE_GET_RANKING_DIRECTIVE(orte_rmaps_base.ranking)) &&
+            ORTE_GET_RANKING_POLICY(orte_rmaps_base.ranking) != ORTE_RANK_BY_CORE) {
+            /* error - cannot redefine the default ranking policy */
+            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "ranking",
+                           "bycore", orte_rmaps_base_print_ranking(orte_rmaps_base.ranking));
+            return ORTE_ERR_SILENT;
+        }
+        ORTE_SET_RANKING_POLICY(orte_rmaps_base.ranking, ORTE_RANK_BY_CORE);
+        ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
 
     if (rmaps_base_byslot) {
