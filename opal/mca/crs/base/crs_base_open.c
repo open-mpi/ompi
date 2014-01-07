@@ -21,16 +21,8 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/constants.h"
-#include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-#include "opal/util/output.h"
 
 #include "opal/mca/crs/base/static-components.h"
 
@@ -90,7 +82,7 @@ int opal_crs_base_open(mca_base_open_flag_t flags)
     if( !opal_cr_is_enabled ) {
         opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:open: FT is not enabled, skipping!");
-        return OPAL_ERR_NOT_AVAILABLE;;
+        return OPAL_SUCCESS;
     }
 
     return mca_base_framework_components_open (&opal_crs_base_framework, flags);
