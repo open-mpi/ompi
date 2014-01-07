@@ -2680,7 +2680,6 @@ btl_openib_component_init(int *num_btl_modules,
     i = 0;
     while (NULL != (item = opal_list_remove_first(&btl_list))) {
         mca_btl_openib_device_t *device;
-        int qp_index;
 
         ib_selected = (mca_btl_base_selected_module_t*)item;
         openib_btl = (mca_btl_openib_module_t*)ib_selected->btl_module;
