@@ -130,6 +130,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 #endif
 
         if (!MTL_PORTALS4_IS_SHORT_MSG(ev->match_bits) && ompi_mtl_portals4.protocol == rndv) {
+            /* If it's not a short message and we're doing rndv, we
+               only have the first part of the message.  Issue the get
+               to pull the second part of the message. */
             ret = read_msg((char*) ptl_request->delivery_ptr + ompi_mtl_portals4.eager_limit,
                            ((msg_length > ptl_request->delivery_len) ?
                             ptl_request->delivery_len : msg_length) - ompi_mtl_portals4.eager_limit,
@@ -143,7 +146,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             }
 
         } else {
-            /* make sure the data is in the right place */
+            /* If we're either using the eager protocol or were a
+               short message, all data has been received, so complete
+               the message. */
             ret = ompi_mtl_datatype_unpack(ptl_request->convertor,
                                            ev->start,
                                            ev->mlength);
@@ -174,8 +179,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             PtlMDRelease(ptl_request->md_h);
             goto callback_error;
         }
-        /* set the status - most of this filled in right after issuing
-           the PtlGet */
+
+        /* set the received length in the status, now that we know
+           excatly how much data was sent. */
         ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
         if (ompi_mtl_portals4.protocol == rndv) {
             ptl_request->super.super.ompi_req->req_status._ucount +=
