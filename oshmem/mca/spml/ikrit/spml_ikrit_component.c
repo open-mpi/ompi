@@ -109,7 +109,7 @@ static int mca_spml_ikrit_component_register(void)
                                               "[integer] ikrit priority");
 
     mca_spml_ikrit_param_register_string("mxm_tls",
-                                         "ud,self",
+                                         "rc,ud,self",
                                          "[string] TL channels for MXM",
                                          &mca_spml_ikrit.mxm_tls);
 

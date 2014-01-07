@@ -22,7 +22,6 @@
 
 #include "orte/types.h"
 #include "orte/runtime/orte_globals.h"
-#include "ompi/mca/bml/bml.h"
 
 BEGIN_C_DECLS
 

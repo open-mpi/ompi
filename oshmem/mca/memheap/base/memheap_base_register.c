@@ -79,6 +79,10 @@ static int _dereg_segment(map_segment_t *s)
             if (j == my_pe)
                 continue;
             if (s->mkeys_cache[j]) {
+                if (s->mkeys_cache[j]->len) {
+                    free(s->mkeys_cache[j]->u.data);
+                    s->mkeys_cache[j]->len = 0;
+                }
                 free(s->mkeys_cache[j]);
                 s->mkeys_cache[j] = NULL;
             }

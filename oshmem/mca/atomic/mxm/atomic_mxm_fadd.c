@@ -36,6 +36,7 @@ int mca_atomic_mxm_fadd(void *target,
     int ptl_id;
     mxm_send_req_t sreq;
     mxm_error_t mxm_err;
+    static char dummy_buf[8];
 
     my_pe = oshmem_my_proc_id();
     ptl_id = -1;
@@ -106,8 +107,8 @@ int mca_atomic_mxm_fadd(void *target,
 
     /* Do we need atomic 'add' or atomic 'fetch and add'? */
     if (NULL == prev) {
-        sreq.base.data.buffer.ptr = NULL;
-        sreq.base.data.buffer.length = 0;
+        sreq.base.data.buffer.ptr = dummy_buf;
+        sreq.base.data.buffer.length = nlong;
         sreq.base.data.buffer.memh = MXM_INVALID_MEM_HANDLE;
 #if MXM_API < MXM_VERSION(2,0)
         sreq.base.flags = MXM_REQ_FLAG_SEND_SYNC;

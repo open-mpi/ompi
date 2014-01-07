@@ -82,8 +82,6 @@ typedef struct mca_spml_yoda_t mca_spml_yoda_module_t;
 
 struct mca_spml_yoda_context_t {
     mca_btl_base_descriptor_t* btl_src_descriptor;
-    int btl_src_segment_size;
-    mca_btl_base_segment_t* btl_src_segment;
     mca_mpool_base_registration_t* registration;
 };
 typedef struct mca_spml_yoda_context_t mca_spml_yoda_context_t;

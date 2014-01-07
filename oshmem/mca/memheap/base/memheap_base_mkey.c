@@ -157,26 +157,18 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
             return OSHMEM_ERROR;
         }
         opal_dss.pack(msg, &tr_id, 1, OPAL_UINT32);
-        opal_dss.pack(msg, &mkey->handle.key, 1, OPAL_UINT64);
         opal_dss.pack(msg, &mkey->va_base, 1, OPAL_UINT64);
-
-        if (NULL != MCA_SPML_CALL(get_remote_context_size)) {
-            uint32_t context_size =
-                    (mkey->spml_context == NULL ) ?
-                            0 :
-                            (uint32_t) MCA_SPML_CALL(get_remote_context_size(mkey->spml_context));
-            opal_dss.pack(msg, &context_size, 1, OPAL_UINT32);
-            if (0 != context_size) {
-                opal_dss.pack(msg,
-                              MCA_SPML_CALL(get_remote_context(mkey->spml_context)),
-                              context_size,
-                              OPAL_BYTE);
+        if (0 == mkey->va_base) {
+            opal_dss.pack(msg, &mkey->u.key, 1, OPAL_UINT64);
+        } else {
+            opal_dss.pack(msg, &mkey->len, 1, OPAL_UINT16);
+            if (0 < mkey->len) {
+                opal_dss.pack(msg, mkey->u.data, mkey->len, OPAL_BYTE);
             }
         }
-
         MEMHEAP_VERBOSE(5,
-                        "seg#%d tr_id: %d key %llx base_va %p",
-                        seg, tr_id, (unsigned long long)mkey->handle.key, mkey->va_base);
+                        "seg#%d tr_id: %d %s",
+                        seg, tr_id, mca_spml_base_mkey2str(mkey));
     }
     return OSHMEM_SUCCESS;
 }
@@ -188,70 +180,70 @@ static void memheap_attach_segment(mca_spml_mkey_t *mkey, int tr_id)
      * - key is set as (type|shmid);
      * - va_base is set as 0;
      */
-    if (!mkey->va_base
-            && ((int) MEMHEAP_SHM_GET_ID(mkey->handle.key) != MEMHEAP_SHM_INVALID)) {
-        MEMHEAP_VERBOSE(5,
-                        "shared memory usage tr_id: %d key %llx base_va %p shmid 0x%X|0x%X",
-                        tr_id,
-                        (unsigned long long)mkey->handle.key,
-                        mkey->va_base,
-                        MEMHEAP_SHM_GET_TYPE(mkey->handle.key),
-                        MEMHEAP_SHM_GET_ID(mkey->handle.key));
+    assert(mkey->va_base == 0);
 
-        if (MEMHEAP_SHM_GET_TYPE(mkey->handle.key) == MAP_SEGMENT_ALLOC_SHM) {
-            mkey->va_base = shmat(MEMHEAP_SHM_GET_ID(mkey->handle.key),
-                                             0,
-                                             0);
-        } else if (MEMHEAP_SHM_GET_TYPE(mkey->handle.key) == MAP_SEGMENT_ALLOC_IBV) {
+    if (MEMHEAP_SHM_INVALID == (int) MEMHEAP_SHM_GET_ID(mkey->u.key)) {
+        return;
+    }
+
+    MEMHEAP_VERBOSE(5,
+            "shared memory usage tr_id: %d key %llx base_va %p shmid 0x%X|0x%X",
+            tr_id,
+            (unsigned long long)mkey->u.key,
+            mkey->va_base,
+            MEMHEAP_SHM_GET_TYPE(mkey->u.key),
+            MEMHEAP_SHM_GET_ID(mkey->u.key));
+
+    if (MAP_SEGMENT_ALLOC_SHM == MEMHEAP_SHM_GET_TYPE(mkey->u.key)) {
+        mkey->va_base = shmat(MEMHEAP_SHM_GET_ID(mkey->u.key),
+                0,
+                0);
+    } else if (MAP_SEGMENT_ALLOC_IBV == MEMHEAP_SHM_GET_TYPE(mkey->u.key)) {
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-            openib_device_t *device = NULL;
-            struct ibv_mr *ib_mr;
-            void *addr;
-            static int mr_count;
+        openib_device_t *device = NULL;
+        struct ibv_mr *ib_mr;
+        void *addr;
+        static int mr_count;
 
-            int access_flag = IBV_ACCESS_LOCAL_WRITE |
+        int access_flag = IBV_ACCESS_LOCAL_WRITE |
             IBV_ACCESS_REMOTE_WRITE |
             IBV_ACCESS_REMOTE_READ |
             IBV_ACCESS_NO_RDMA;
 
-            device = (openib_device_t *)memheap_map->mem_segs[HEAP_SEG_INDEX].context;
-            assert(device);
+        device = (openib_device_t *)memheap_map->mem_segs[HEAP_SEG_INDEX].context;
+        assert(device);
 
-            /* workaround mtt problem - request aligned addresses */
-            ++mr_count;
-            addr = (void *)((uintptr_t)mca_memheap_base_start_address + mca_memheap_base_mr_interleave_factor*1024ULL*1024ULL*1024ULL*mr_count);
-            ib_mr = ibv_reg_shared_mr(MEMHEAP_SHM_GET_ID(mkey->handle.key),
-                    device->ib_pd, addr, access_flag);
-            if (NULL == ib_mr)
-            {
-                mkey->va_base = (void*)-1;
-                MEMHEAP_ERROR("error to ibv_reg_shared_mr() errno says %d: %s",
-                        errno, strerror(errno));
-            }
-            else
-            {
-                if (ib_mr->addr != addr) {
-                    MEMHEAP_WARN("Failed to map shared region to address %p got addr %p. Try to increase 'memheap_mr_interleave_factor' from %d", addr, ib_mr->addr, mca_memheap_base_mr_interleave_factor);
-                }
-
-                opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
-                mkey->va_base = ib_mr->addr;
-            }
-#endif /* MPAGE_ENABLE */
+        /* workaround mtt problem - request aligned addresses */
+        ++mr_count;
+        addr = (void *)((uintptr_t)mca_memheap_base_start_address + mca_memheap_base_mr_interleave_factor*1024ULL*1024ULL*1024ULL*mr_count);
+        ib_mr = ibv_reg_shared_mr(MEMHEAP_SHM_GET_ID(mkey->u.key),
+                device->ib_pd, addr, access_flag);
+        if (NULL == ib_mr) {
+            mkey->va_base = (void*)-1;
+            MEMHEAP_ERROR("error to ibv_reg_shared_mr() errno says %d: %s",
+                    errno, strerror(errno));
         } else {
-            MEMHEAP_ERROR("tr_id: %d key %llx attach failed: incorrect shmid 0x%X|0x%X",
-                          tr_id, 
-                          (unsigned long long)mkey->handle.key,
-                          MEMHEAP_SHM_GET_TYPE(mkey->handle.key),
-                          MEMHEAP_SHM_GET_ID(mkey->handle.key));
-            oshmem_shmem_abort(-1);
-        }
+            if (ib_mr->addr != addr) {
+                MEMHEAP_WARN("Failed to map shared region to address %p got addr %p. Try to increase 'memheap_mr_interleave_factor' from %d", addr, ib_mr->addr, mca_memheap_base_mr_interleave_factor);
+            }
 
-        if ((void *) -1 == (void *) mkey->va_base) {
-            MEMHEAP_ERROR("tr_id: %d key %llx attach failed: errno = %d",
-                          tr_id, (unsigned long long)mkey->handle.key, errno);
-            oshmem_shmem_abort(-1);
+            opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
+            mkey->va_base = ib_mr->addr;
         }
+#endif /* MPAGE_ENABLE */
+    } else {
+        MEMHEAP_ERROR("tr_id: %d key %llx attach failed: incorrect shmid 0x%X|0x%X",
+                tr_id,
+                (unsigned long long)mkey->u.key,
+                MEMHEAP_SHM_GET_TYPE(mkey->u.key),
+                MEMHEAP_SHM_GET_ID(mkey->u.key));
+        oshmem_shmem_abort(-1);
+    }
+
+    if ((void *) -1 == (void *) mkey->va_base) {
+        MEMHEAP_ERROR("tr_id: %d key %llx attach failed: errno = %d",
+                tr_id, (unsigned long long)mkey->u.key, errno);
+        oshmem_shmem_abort(-1);
     }
 }
 
@@ -268,32 +260,36 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
     cnt = 1;
     opal_dss.unpack(msg, &n, &cnt, OPAL_UINT32);
     for (i = 0; i < n; i++) {
+        cnt = 1;
         opal_dss.unpack(msg, &tr_id, &cnt, OPAL_UINT32);
-
-        opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].handle.key, &cnt, OPAL_UINT64);
+        cnt = 1;
         opal_dss.unpack(msg,
                         &memheap_oob.mkeys[tr_id].va_base,
                         &cnt,
                         OPAL_UINT64);
 
-        if (NULL != MCA_SPML_CALL(set_remote_context_size)) {
-            int32_t context_size;
-            opal_dss.unpack(msg, &context_size, &cnt, OPAL_UINT32);
-            if (0 != context_size) {
-                MCA_SPML_CALL(set_remote_context_size(&(memheap_oob.mkeys[tr_id].spml_context), context_size));
-                void* context;
-                context = calloc(1, context_size);
-                opal_dss.unpack(msg, context, &context_size, OPAL_BYTE);
-                MCA_SPML_CALL(set_remote_context(&(memheap_oob.mkeys[tr_id].spml_context),context));
+        if (0 == memheap_oob.mkeys[tr_id].va_base) {
+            cnt = 1;
+            opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].u.key, &cnt, OPAL_UINT64);
+            if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags))
+                memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
+        } else {
+            cnt = 1;
+            opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].len, &cnt, OPAL_UINT16);
+            if (0 < memheap_oob.mkeys[tr_id].len) {
+                memheap_oob.mkeys[tr_id].u.data = malloc(memheap_oob.mkeys[tr_id].len);
+                if (NULL == memheap_oob.mkeys[tr_id].u.data) {
+                    MEMHEAP_ERROR("Failed allocate %d bytes", memheap_oob.mkeys[tr_id].len);
+                    oshmem_shmem_abort(-1);
+                }
+                cnt = memheap_oob.mkeys[tr_id].len;
+                opal_dss.unpack(msg, memheap_oob.mkeys[tr_id].u.data, &cnt, OPAL_BYTE);
             }
         }
 
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags))
-            memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
-
         MEMHEAP_VERBOSE(5,
-                        "tr_id: %d key %llx base_va %p",
-                        tr_id, (unsigned long long)memheap_oob.mkeys[tr_id].handle.key, memheap_oob.mkeys[tr_id].va_base);
+                        "tr_id: %d %s",
+                        tr_id, mca_spml_base_mkey2str(&memheap_oob.mkeys[tr_id]));
     }
 }
 
@@ -533,11 +529,10 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
         for (i = 0; i < memheap_map->num_transports; i++) {
             mkeys[i].va_base = __seg2base_va(seg);
             MEMHEAP_VERBOSE(5,
-                            "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d key %llx base_va %p",
+                            "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s",
                             pe,
                             i,
-                            (unsigned long long)mkeys[i].handle.key,
-                            mkeys[i].va_base);
+                            mca_spml_base_mkey2str(&mkeys[i]));
         }
         return OSHMEM_SUCCESS;
     }
@@ -707,14 +702,14 @@ mca_spml_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
     if (pe == oshmem_my_proc_id()) {
         *rva = va;
         MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (local) %lx %p", pe, va,
-                s->mkeys[btl_id].handle.key, *rva);
+                s->mkeys[btl_id].u.key, *rva);
         return &s->mkeys[btl_id];
     }
 
     if (OPAL_LIKELY(s->mkeys_cache[pe])) {
         mkey = &s->mkeys_cache[pe][btl_id];
         *rva = va2rva(va, s->start, mkey->va_base);
-        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (cached) %lx %p", pe, (void *)va, mkey->handle.key, (void *)*rva);
+        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (cached) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
         return mkey;
     }
 
@@ -732,7 +727,7 @@ mca_spml_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
     mkey = &s->mkeys_cache[pe][btl_id];
     *rva = va2rva(va, s->start, mkey->va_base);
 
-    MEMHEAP_VERBOSE_FASTPATH(5, "rkey: pe=%d va=%p -> (remote lookup) %lx %p", pe, (void *)va, mkey->handle.key, (void *)*rva);
+    MEMHEAP_VERBOSE_FASTPATH(5, "rkey: pe=%d va=%p -> (remote lookup) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
     return mkey;
 }
 
