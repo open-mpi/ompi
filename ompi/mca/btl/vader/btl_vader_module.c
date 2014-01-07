@@ -263,7 +263,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
     }
 
     /* make sure that my local rank has been defined */
-    if (ORTE_LOCAL_RANK_INVALID == MCA_BTL_VADER_LOCAL_RANK) {
+    if (OMPI_LOCAL_RANK_INVALID == MCA_BTL_VADER_LOCAL_RANK) {
         return OMPI_ERROR;
     }
 
