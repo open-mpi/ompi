@@ -14,13 +14,8 @@
 
 #include "opal_config.h"
 
-#include <string.h>
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/include/opal/constants.h"
-#include "opal/mca/compress/compress.h"
 #include "opal/mca/compress/base/base.h"
-#include "opal/util/output.h"
 
 #include "opal/mca/compress/base/static-components.h"
 
@@ -45,13 +40,6 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, compress, NULL, opal_compress_base_register, op
 
 static int opal_compress_base_register (mca_base_register_flag_t flags)
 {
-    /* Compression currently only used with C/R */
-    if( !opal_cr_is_enabled ) {
-        opal_output_verbose(10, opal_compress_base_framework.framework_output,
-                            "compress:open: FT is not enabled, skipping!");
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
-
     return OPAL_SUCCESS;
 }
 
