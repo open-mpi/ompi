@@ -227,18 +227,7 @@ private native long createIntercomm(
 
 /**
  * Blocking send operation.
- * <p>
- * Java binding of the MPI operation {@code MPI_SEND}.
- * <p>
- * The actual argument associated with {@code buf} must be
- * one-dimensional array. The value {@code offset} is a subscript in
- * this array, defining the position of the first item of the message.
- * <p>
- * If the {@code datatype} argument represents an MPI basic type, its
- * value must agree with the element type of {@code buf}---either
- * a primitive type or a reference (object) type.  If the
- * {@code datatype} argument represents an MPI derived type, its
- * <em>base type</em> must agree with the element type of {@code buf}.
+ * <p>Java binding of the MPI operation {@code MPI_SEND}.
  * @param buf   send buffer array
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
@@ -267,19 +256,7 @@ private native void send(Object buf, int offset, int count,
 
 /**
  * Blocking receive operation.
- * <p>
- * Java binding of the MPI operation {@code MPI_RECV}.
- * <p>
- * The actual argument associated with {@code buf} must be
- * one-dimensional array.  The value {@code offset} is a subscript in
- * this array, defining the position into which the first item of the
- * incoming message will be copied.
- * <p>
- * If the {@code datatype} argument represents an MPI basic type, its
- * value must agree with the element type of {@code buf}---either
- * a primitive type or a reference (object) type.  If the
- * {@code datatype} argument represents an MPI derived type, its
- * <em>base type</em> must agree with the element type of {@code buf}
+ * <p>Java binding of the MPI operation {@code MPI_RECV}.
  * @param buf    receive buffer array
  * @param count  number of items in receive buffer
  * @param type   datatype of each item in receive buffer
@@ -1272,13 +1249,7 @@ private native long iGather(
 /**
  * Extends functionality of {@code gather} by allowing varying
  * counts of data from each process.
- * <p>
- * Java binding of the MPI operation {@code MPI_GATHERV}.
- * <p>
- * The sizes of arrays {@code recvcounts} and {@code displs} should be the
- * size of the group.  Entry <em>i</em> of {@code displs} specifies the
- * displacement relative to element {@code recvoffset} of {@code recvbuf}
- * at which to place incoming data.
+ * <p>Java binding of the MPI operation {@code MPI_GATHERV}.
  * @param sendbuf   send buffer array
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
@@ -1318,15 +1289,9 @@ public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
 /**
  * Extends functionality of {@code gather} by allowing varying
  * counts of data from each process.
- * <p>
- * Java binding of the MPI operation {@code MPI_GATHERV} using
+ * <p>Java binding of the MPI operation {@code MPI_GATHERV} using
  * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
  * This method must be used in the root process.
- * <p>
- * The sizes of arrays {@code recvcounts} and {@code displs} should be the
- * size of the group.  Entry <em>i</em> of {@code displs} specifies the
- * displacement relative to element {@code recvoffset} of {@code recvbuf}
- * at which to place incoming data.
  * @param recvbuf   receive buffer array
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
@@ -1388,13 +1353,7 @@ private native void gatherv(
 /**
  * Extends functionality of {@code gather} by allowing varying
  * counts of data from each process.
- * <p>
- * Java binding of the MPI operation {@code MPI_IGATHERV}.
- * <p>
- * The sizes of arrays {@code recvcounts} and {@code displs} should be the
- * size of the group.  Entry <em>i</em> of {@code displs} specifies the
- * displacement relative to element {@code recvoffset} of {@code recvbuf}
- * at which to place incoming data.
+ * <p>Java binding of the MPI operation {@code MPI_IGATHERV}.
  * @param sendbuf   send buffer array
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
@@ -1422,15 +1381,9 @@ public final Request iGatherv(
 /**
  * Extends functionality of {@code gather} by allowing varying
  * counts of data from each process.
- * <p>
- * Java binding of the MPI operation {@code MPI_IGATHERV} using
+ * <p>Java binding of the MPI operation {@code MPI_IGATHERV} using
  * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
  * This method must be used in the root process.
- * <p>
- * The sizes of arrays {@code recvcounts} and {@code displs} should be the
- * size of the group.  Entry <em>i</em> of {@code displs} specifies the
- * displacement relative to element {@code recvoffset} of {@code recvbuf}
- * at which to place incoming data.
  * @param recvbuf   receive buffer array
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
