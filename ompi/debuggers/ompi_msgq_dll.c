@@ -586,7 +586,7 @@ static int rebuild_communicator_list (mqs_process *proc)
     mqs_image * image        = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
     communicator_t **commp, *old;
-    int i, commcount = 0, context_id, local_rank;
+    int i, commcount = 0, context_id;
     mqs_tword_t comm_size, lowest_free, number_free;
     mqs_taddr_t comm_addr_base;
     mqs_taddr_t comm_ptr;
@@ -648,10 +648,6 @@ static int rebuild_communicator_list (mqs_process *proc)
         context_id = ompi_fetch_int( proc,
                                      comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
                                      p_info );
-        local_rank = ompi_fetch_int( proc,
-                                     comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank,
-                                     p_info );
-
         /* Do we already have this communicator ? */
         old = find_communicator(p_info, context_id);
         if( NULL == old ) {
@@ -663,7 +659,9 @@ static int rebuild_communicator_list (mqs_process *proc)
             extra->communicator_list = old;
             old->comm_ptr             = comm_ptr;
             old->comm_info.unique_id  = context_id;
-            old->comm_info.local_rank = local_rank;
+            old->comm_info.local_rank = ompi_fetch_int(proc,
+                                                       comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank,
+                                                       p_info);
             old->group = NULL;
 
             DEBUG(VERBOSE_COMM,("Create new communicator 0x%lx with context_id %d and local_rank %d\n",
