@@ -438,7 +438,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     pending->proc = proc;
     pending->ptl_request = ptl_request;
 
-    if (OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0) {
+    if (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
         OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, 1);
         opal_list_append(&ompi_mtl_portals4.flowctl.pending_sends,
                          &pending->super.super);
