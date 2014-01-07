@@ -4,7 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  *                         All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -43,32 +43,32 @@ opal_crs_base_module_t opal_crs = {
 opal_crs_base_component_t opal_crs_base_selected_component;
 
 extern bool opal_crs_base_do_not_select;
-static int opal_crs_base_register (mca_base_register_flag_t flags);
+static int opal_crs_base_register(mca_base_register_flag_t flags);
 
 /* Use default select */
 MCA_BASE_FRAMEWORK_DECLARE(opal, crs, "Checkpoint and Restart Service (CRS)",
                            opal_crs_base_register, opal_crs_base_open,
                            opal_crs_base_close, mca_crs_base_static_components, 0);
 
-static int opal_crs_base_register (mca_base_register_flag_t flags)
+static int opal_crs_base_register(mca_base_register_flag_t flags)
 {
     int ret;
     /*
-     * Note: If we are a tool, then we will manually run the selection routine 
-     *       for the checkpointer.  The tool will set the MCA parameter 
-     *       'crs_base_do_not_select' before opal_init and then reset it after to 
+     * Note: If we are a tool, then we will manually run the selection routine
+     *       for the checkpointer.  The tool will set the MCA parameter
+     *       'crs_base_do_not_select' before opal_init and then reset it after to
      *       disable the selection logic.
      *       This is useful for opal_restart because it reads the metadata file
      *       that indicates the checkpointer to be used after calling opal_init.
      *       Therefore it would need to select a specific module, but it doesn't
-     *       know which one until later. It will set the MCA parameter 'crs' 
+     *       know which one until later. It will set the MCA parameter 'crs'
      *       before calling select.
      */
-    ret = mca_base_framework_var_register (&opal_crs_base_framework, "do_not_select",
-                                           "Do not do the selection of the CRS component",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE |
-                                           MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_crs_base_do_not_select);
+    ret = mca_base_framework_var_register(&opal_crs_base_framework, "do_not_select",
+                                          "Do not do the selection of the CRS component",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE |
+                                          MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_crs_base_do_not_select);
 
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }
@@ -79,11 +79,11 @@ static int opal_crs_base_register (mca_base_register_flag_t flags)
  */
 int opal_crs_base_open(mca_base_open_flag_t flags)
 {
-    if( !opal_cr_is_enabled ) {
+    if(!opal_cr_is_enabled) {
         opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:open: FT is not enabled, skipping!");
         return OPAL_SUCCESS;
     }
 
-    return mca_base_framework_components_open (&opal_crs_base_framework, flags);
+    return mca_base_framework_components_open(&opal_crs_base_framework, flags);
 }

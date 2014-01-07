@@ -6,9 +6,9 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -33,12 +33,13 @@ opal_compress_base_module_t opal_compress = {
 
 opal_compress_base_component_t opal_compress_base_selected_component;
 
-static int opal_compress_base_register (mca_base_register_flag_t flags);
+static int opal_compress_base_register(mca_base_register_flag_t flags);
 
-MCA_BASE_FRAMEWORK_DECLARE(opal, compress, NULL, opal_compress_base_register, opal_compress_base_open,
+MCA_BASE_FRAMEWORK_DECLARE(opal, compress, "COMPRESS MCA",
+                           opal_compress_base_register, opal_compress_base_open,
                            opal_compress_base_close, mca_compress_base_static_components, 0);
 
-static int opal_compress_base_register (mca_base_register_flag_t flags)
+static int opal_compress_base_register(mca_base_register_flag_t flags)
 {
     return OPAL_SUCCESS;
 }
@@ -50,12 +51,12 @@ static int opal_compress_base_register (mca_base_register_flag_t flags)
 int opal_compress_base_open(mca_base_open_flag_t flags)
 {
     /* Compression currently only used with C/R */
-    if( !opal_cr_is_enabled ) {
+    if(!opal_cr_is_enabled) {
         opal_output_verbose(10, opal_compress_base_framework.framework_output,
                             "compress:open: FT is not enabled, skipping!");
         return OPAL_SUCCESS;
     }
 
     /* Open up all available components */
-    return mca_base_framework_components_open (&opal_compress_base_framework, flags);
+    return mca_base_framework_components_open(&opal_compress_base_framework, flags);
 }
