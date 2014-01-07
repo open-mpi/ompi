@@ -120,22 +120,22 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         # Otherwise, if we try to AC RUN_IFELSE anything here in
         # configure, it might die because it can't find the libraries
         # we just linked against.
-        OPAL_VAR_SCOPE_PUSH([found_l token tmp dir])
-        found_l=0
-        eval "tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LIBS"
-        for token in $tmp; do
-            case $token in
-            -l*) found_l=1 ;;
+        OPAL_VAR_SCOPE_PUSH([opal_hwloc_base_found_l opal_hwloc_base_token opal_hwloc_base_tmp opal_hwloc_base_dir])
+        opal_hwloc_base_found_l=0
+        eval "opal_hwloc_base_tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LIBS"
+        for opal_hwloc_base_token in $opal_hwloc_base_tmp; do
+            case $opal_hwloc_base_token in
+            -l*) opal_hwloc_base_found_l=1 ;;
             esac
         done
-        AS_IF([test $found_l -eq 1],
-              [eval "tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LDFLAGS"
-               for token in $tmp; do
-                   case $token in
+        AS_IF([test $opal_hwloc_base_found_l -eq 1],
+              [eval "opal_hwloc_base_tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LDFLAGS"
+               for opal_hwloc_base_token in $opal_hwloc_base_tmp; do
+                   case $opal_hwloc_base_token in
                    -L*)
-                       dir=`echo $token | cut -c3-`
-                       export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$dir
-                       AC_MSG_WARN([Adding to LD_LIBRARY_PATH: $dir])
+                       opal_hwloc_base_dir=`echo $opal_hwloc_base_token | cut -c3-`
+                       export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$opal_hwloc_base_dir
+                       AC_MSG_WARN([Adding to LD_LIBRARY_PATH: $opal_hwloc_base_dir])
                        ;;
                    esac
                done])

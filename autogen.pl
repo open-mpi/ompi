@@ -970,9 +970,6 @@ sub patch_autotools_output {
     verbose "$indent_str"."Patching configure for IBM xlf libtool bug\n";
     $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
 
-    verbose "$indent_str"."Patching configure for Libtool setting of dir variable\n";
-    $c =~ s/( +)(ECHO="\$dir\/echo")/\1\2\n\1unset dir/;
-
     open(OUT, ">configure.patched") || my_die "Can't open configure.patched";
     print OUT $c;
     close(OUT);
