@@ -1318,7 +1318,7 @@ m4_ifdef([project_ompi], [AC_SUBST(FFLAGS)
 #
 # Aggregate MCA parameters directory
 #
-AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(pkgdatadir)/amca-param-sets'])
+AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(ompidatadir)/amca-param-sets'])
 
 ############################################################################
 # final wrapper compiler config
@@ -1396,6 +1396,16 @@ case "`uname`" in
     ;;
 esac
 
+# ompidatadir, ompilibdir, and ompiinclude are essentially the same as
+# pkg*dir, but will always be */openmpi.  This is to make it a bit
+# easier to deal with the problem of opal, orte, and ompi built from
+# their own tarballs, with their own PACKAGE variables.
+ompidatadir='${datadir}/openmpi'
+ompilibdir='${libdir}/openmpi'
+ompiincludedir='${includedir}/openmpi'
+AC_SUBST(ompidatadir)
+AC_SUBST(ompilibdir)
+AC_SUBST(ompiincludedir)
 
 ompi_show_subtitle "Final output"
 

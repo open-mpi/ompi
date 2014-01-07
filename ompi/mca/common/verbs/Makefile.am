@@ -23,7 +23,7 @@ sources = \
 	common_verbs_port.c \
 	common_verbs_qp_type.c
 
-dist_pkgdata_DATA = \
+dist_ompidata_DATA = \
         help-ompi-common-verbs.txt
 
 # To simplify components that link to this library, we will *always*
@@ -58,7 +58,7 @@ libmca_common_verbs_noinst_la_SOURCES = $(libmca_common_verbs_la_SOURCES)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/ompi/mca/common/verbs
+ompidir = $(ompiincludedir)/ompi/mca/common/verbs
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

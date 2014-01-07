@@ -17,7 +17,7 @@ libmca_rte_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 nobase_ompi_HEADERS = $(headers)
 endif
 

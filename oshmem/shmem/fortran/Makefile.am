@@ -116,9 +116,7 @@ liboshmem_fortran_la_SOURCES = \
                     shmem_fence_f.c
 
 if WANT_INSTALL_HEADERS
-oshmemdir = $(includedir)/openshmem/oshmem/shmem/fortran
+oshmemdir = $(ompiincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
-else
-oshmemdir = $(includedir)
 endif
 

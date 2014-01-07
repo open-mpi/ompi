@@ -22,7 +22,7 @@ noinst_LTLIBRARIES = libmpiext_cr_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(includedir)/openmpi/ompi/mpiext/cr/c
+ompidir = $(ompiincludedir)/ompi/mpiext/cr/c
 
 # This is the header file that is installed.
 ompi_HEADERS = mpiext_cr_c.h

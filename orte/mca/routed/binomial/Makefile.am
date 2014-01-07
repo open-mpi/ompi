@@ -28,7 +28,7 @@ component_noinst = libmca_routed_binomial.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_routed_binomial_la_SOURCES = $(sources)
 mca_routed_binomial_la_LDFLAGS = -module -avoid-version

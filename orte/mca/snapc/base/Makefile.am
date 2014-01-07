@@ -25,4 +25,4 @@ libmca_snapc_la_SOURCES += \
         base/snapc_base_select.c \
 	base/snapc_base_fns.c
 
-dist_pkgdata_DATA = base/help-orte-snapc-base.txt
+dist_ompidata_DATA = base/help-orte-snapc-base.txt

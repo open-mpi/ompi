@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = $(plm_lsf_CPPFLAGS)
 
-dist_pkgdata_DATA = help-plm-lsf.txt
+dist_ompidata_DATA = help-plm-lsf.txt
 
 sources = \
         plm_lsf.h \
@@ -40,7 +40,7 @@ component_noinst = libmca_plm_lsf.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_plm_lsf_la_SOURCES = $(sources)
 mca_plm_lsf_la_LDFLAGS = -module -avoid-version $(plm_lsf_LDFLAGS)

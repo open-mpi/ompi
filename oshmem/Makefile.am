@@ -61,18 +61,15 @@ liboshmem_la_LDFLAGS = \
 headers =
 noinst_LTLIBRARIES =
 include_HEADERS =
-nobase_oshmem_HEADERS =
-dist_pkgdata_DATA =
+dist_ompidata_DATA =
 liboshmem_la_SOURCES += $(headers)
 nodist_man_MANS =
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-oshmemdir = $(includedir)/oshmem/oshmem
-nobase_oshmem_HEADERS += $(headers)
-else
-oshmemdir = $(includedir)
+oshmemdir = $(ompiincludedir)/$(subdir)
+nobase_oshmem_HEADERS = $(headers)
 endif
 
 include op/Makefile.am

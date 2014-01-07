@@ -18,7 +18,7 @@
 AM_CPPFLAGS = \
     $(LTDLINCL)
 
-dist_pkgdata_DATA = help-opal-crs-self.txt
+dist_ompidata_DATA = help-opal-crs-self.txt
 
 sources = \
         crs_self.h \
@@ -37,7 +37,7 @@ component_noinst = libmca_crs_self.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_self_la_SOURCES = $(sources)
 mca_crs_self_la_LDFLAGS = -module -avoid-version

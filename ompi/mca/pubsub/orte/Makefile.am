@@ -11,7 +11,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-ompi-pubsub-orte.txt
+dist_ompidata_DATA = help-ompi-pubsub-orte.txt
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -30,7 +30,7 @@ local_sources = \
 	pubsub_orte.h \
 	pubsub_orte_component.c
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pubsub_orte_la_SOURCES = $(local_sources)
 mca_pubsub_orte_la_LDFLAGS = -module -avoid-version $(pubsub_orte_LDFLAGS)

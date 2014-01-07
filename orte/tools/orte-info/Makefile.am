@@ -45,7 +45,7 @@ if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-info
 
-dist_pkgdata_DATA = help-orte-info.txt
+dist_ompidata_DATA = help-orte-info.txt
 
 nodist_man_MANS = $(man_pages)
 

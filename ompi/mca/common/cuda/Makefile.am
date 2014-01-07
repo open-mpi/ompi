@@ -51,7 +51,7 @@ headers = \
 sources = \
         common_cuda.c
 
-dist_pkgdata_DATA = help-mpi-common-cuda.txt
+dist_ompidata_DATA = help-mpi-common-cuda.txt
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules
@@ -90,7 +90,7 @@ libmca_common_cuda_noinst_la_LIBADD = $(common_cuda_LIBS)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif
 

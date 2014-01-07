@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = \
+dist_ompidata_DATA = \
 	help-shmem-spml-ikrit.txt
 
 AM_CPPFLAGS = $(spml_ikrit_CPPFLAGS)
@@ -28,7 +28,7 @@ component_noinst = libmca_spml_ikrit.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_spml_ikrit_la_SOURCES = $(ikrit_sources)
 mca_spml_ikrit_la_LIBADD = $(spml_ikrit_LIBS)

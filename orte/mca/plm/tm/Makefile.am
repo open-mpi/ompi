@@ -19,7 +19,7 @@
 
 AM_CPPFLAGS = $(plm_tm_CPPFLAGS)
 
-dist_pkgdata_DATA = help-plm-tm.txt
+dist_ompidata_DATA = help-plm-tm.txt
 
 sources = \
         plm_tm.h \
@@ -42,7 +42,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_plm_tm_la_SOURCES = $(component_sources)
 mca_plm_tm_la_LDFLAGS = -module -avoid-version $(plm_tm_LDFLAGS)

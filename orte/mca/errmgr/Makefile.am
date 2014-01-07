@@ -26,11 +26,11 @@ headers = errmgr.h
 libmca_errmgr_la_SOURCES += $(headers)
 
 # pkgdata setup
-dist_pkgdata_DATA =
+dist_ompidata_DATA =
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/$(subdir)
+ortedir = $(ompiincludedir)/$(subdir)
 nobase_orte_HEADERS = $(headers)
 endif
 

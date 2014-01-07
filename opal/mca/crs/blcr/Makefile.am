@@ -18,7 +18,7 @@
 CFLAGS = $(crs_blcr_CFLAGS)
 AM_CPPFLAGS = $(crs_blcr_CPPFLAGS)
 
-dist_pkgdata_DATA = help-opal-crs-blcr.txt
+dist_ompidata_DATA = help-opal-crs-blcr.txt
 
 sources = \
         crs_blcr.h \
@@ -37,7 +37,7 @@ component_noinst  = libmca_crs_blcr.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_blcr_la_SOURCES  = $(sources)
 mca_crs_blcr_la_LDFLAGS  = -module -avoid-version $(crs_blcr_LDFLAGS)

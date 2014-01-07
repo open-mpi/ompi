@@ -28,7 +28,7 @@ component_noinst = libmca_grpcomm_pmi.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_grpcomm_pmi_la_SOURCES = $(sources)
 mca_grpcomm_pmi_la_LDFLAGS = -module -avoid-version $(grpcomm_pmi_LDFLAGS)

@@ -25,7 +25,7 @@ component_noinst = libmca_memheap_buddy.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_memheap_buddy_la_SOURCES = $(buddy_sources)
 mca_memheap_buddy_la_LDFLAGS = -module -avoid-version

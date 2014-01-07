@@ -12,7 +12,7 @@
 #
 
 
-dist_pkgdata_DATA = help-ompi-dpm-orte.txt
+dist_ompidata_DATA = help-ompi-dpm-orte.txt
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -31,7 +31,7 @@ local_sources = \
 	dpm_orte.h \
 	dpm_orte_component.c
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_dpm_orte_la_SOURCES = $(local_sources)
 mca_dpm_orte_la_LDFLAGS = -module -avoid-version $(dpm_orte_LDFLAGS)

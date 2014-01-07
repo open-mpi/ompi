@@ -45,7 +45,7 @@ fs_pvfs2_sources = \
 
 AM_CPPFLAGS = $(fs_pvfs2_CPPFLAGS)
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fs_pvfs2_la_SOURCES = $(fs_pvfs2_sources)
 mca_fs_pvfs2_la_LIBADD = $(fs_pvfs2_LIBS)

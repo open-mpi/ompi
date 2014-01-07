@@ -61,7 +61,7 @@ endif HWLOC_HAVE_SCHED_SETAFFINITY
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/$(subdir)
+opaldir = $(ompiincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 nobase_nodist_opal_HEADERS = $(nodist_headers)
 endif

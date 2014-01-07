@@ -46,7 +46,7 @@ endif
 
 AM_CPPFLAGS = $(btl_portals_CPPFLAGS)
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_bcol_basesmuma_la_SOURCES = $(sources)
 mca_bcol_basesmuma_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)

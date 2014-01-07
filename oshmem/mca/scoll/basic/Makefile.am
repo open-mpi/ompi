@@ -30,7 +30,7 @@ component_noinst = libmca_scoll_basic.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_scoll_basic_la_SOURCES = $(sources)
 mca_scoll_basic_la_LDFLAGS = -module -avoid-version

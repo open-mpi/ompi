@@ -69,7 +69,7 @@ libdatatype_la_LIBADD = libdatatype_reliable.la
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/$(subdir)
+opaldir = $(ompiincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif
 

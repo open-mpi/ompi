@@ -24,7 +24,7 @@ component_noinst = libmca_db_print.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_db_print_la_CPPFLAGS = $(db_print_CPPFLAGS)
 mca_db_print_la_SOURCES = $(sources)

@@ -14,7 +14,7 @@ noinst_LTLIBRARIES = libmca_db.la
 libmca_db_la_SOURCES =
 
 # pkgdata setup
-dist_pkgdata_DATA =
+dist_ompidata_DATA =
 
 # local files
 headers = db.h db_types.h
@@ -22,7 +22,7 @@ libmca_db_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/$(subdir)
+opaldir = $(ompiincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
 

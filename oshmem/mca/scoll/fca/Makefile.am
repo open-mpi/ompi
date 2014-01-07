@@ -26,7 +26,7 @@ component_noinst = libmca_scoll_fca.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_scoll_fca_la_SOURCES = $(scoll_fca_sources)
 mca_scoll_fca_la_LIBADD = $(scoll_fca_LIBS)

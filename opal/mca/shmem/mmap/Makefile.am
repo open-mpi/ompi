@@ -37,9 +37,9 @@ component_install =
 endif
 
 # help file
-dist_pkgdata_DATA = help-opal-shmem-mmap.txt
+dist_ompidata_DATA = help-opal-shmem-mmap.txt
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_shmem_mmap_la_SOURCES = $(sources)
 mca_shmem_mmap_la_LDFLAGS = -module -avoid-version

@@ -31,15 +31,8 @@ include_HEADERS += shmem.fh
 nodist_include_HEADERS = \
         shmem.h
 
-if WANT_INSTALL_HEADERS 
-oshmemdir = $(includedir)/oshmem
-nobase_dist_oshmem_HEADERS = $(headers)
-nobase_nodist_oshmem_HEADERS = $(nodist_headers)
-else
-oshmemdir = $(includedir)
 nobase_dist_noinst_HEADERS = $(headers)
 nobase_nodist_noinst_HEADERS = $(nodist_headers)
-endif
 
 distclean-local:
 

@@ -27,11 +27,11 @@ libmca_mpool_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 nobase_ompi_HEADERS = $(headers)
 endif
 
-dist_pkgdata_DATA =
+dist_ompidata_DATA =
 include base/Makefile.am
 
 distclean-local:

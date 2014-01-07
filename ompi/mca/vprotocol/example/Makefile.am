@@ -33,7 +33,7 @@ local_sources = \
         vprotocol_example_probe.c \
         vprotocol_example_wait.h \
         vprotocol_example_wait.c 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_vprotocol_example_la_SOURCES = $(local_sources)
 mca_vprotocol_example_la_LIBADD = 

@@ -29,7 +29,7 @@ component_noinst = libmca_fs_ufs.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fs_ufs_la_SOURCES = $(sources)
 mca_fs_ufs_la_LDFLAGS = -module -avoid-version
