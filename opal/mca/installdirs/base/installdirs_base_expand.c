@@ -24,23 +24,25 @@
    pass values through AC_SUBST without being munged by m4 (e.g., if
    we want to pass "@{libdir}" and not have it replaced by m4 to be
    whatever the actual value of the shell variable is. */
-#define EXPAND_STRING(field)                                            \
+#define EXPAND_STRING(name) EXPAND_STRING2(name, name)
+
+#define EXPAND_STRING2(ompiname, fieldname)                             \
     do {                                                                \
-        if (NULL != (start_pos = strstr(retval, "${" #field "}"))) {    \
+        if (NULL != (start_pos = strstr(retval, "${" #fieldname "}"))) { \
             tmp = retval;                                               \
             *start_pos = '\0';                                          \
-            end_pos = start_pos + strlen("${" #field "}");              \
+            end_pos = start_pos + strlen("${" #fieldname "}");          \
             asprintf(&retval, "%s%s%s", tmp,                            \
-                     opal_install_dirs.field + destdir_offset,          \
+                     opal_install_dirs.ompiname + destdir_offset,       \
                      end_pos);                                          \
             free(tmp);                                                  \
             changed = true;                                             \
-        } else if (NULL != (start_pos = strstr(retval, "@{" #field "}"))) { \
+        } else if (NULL != (start_pos = strstr(retval, "@{" #fieldname "}"))) { \
             tmp = retval;                                               \
             *start_pos = '\0';                                          \
-            end_pos = start_pos + strlen("@{" #field "}");              \
+            end_pos = start_pos + strlen("@{" #fieldname "}");          \
             asprintf(&retval, "%s%s%s", tmp,                            \
-                     opal_install_dirs.field + destdir_offset,          \
+                     opal_install_dirs.ompiname + destdir_offset,       \
                      end_pos);                                          \
             free(tmp);                                                  \
             changed = true;                                             \
@@ -139,9 +141,9 @@ opal_install_dirs_expand_internal(const char* input, bool is_setup)
             EXPAND_STRING(includedir);
             EXPAND_STRING(infodir);
             EXPAND_STRING(mandir);
-            EXPAND_STRING(pkgdatadir);
-            EXPAND_STRING(pkglibdir);
-            EXPAND_STRING(pkgincludedir);
+            EXPAND_STRING2(ompidatadir, pkgdatadir);
+            EXPAND_STRING2(ompilibdir, pkglibdir);
+            EXPAND_STRING2(ompiincludedir, pkgincludedir);
         } while (changed);
     }
 

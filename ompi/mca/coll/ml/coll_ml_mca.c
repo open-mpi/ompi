@@ -276,7 +276,7 @@ int mca_coll_ml_register_params(void)
                 , 0, &mca_coll_ml_component.use_brucks_smsg_alltoall, 0));
 
     asprintf(&str, "%s/mca-coll-ml.config",
-            opal_install_dirs.pkgdatadir);
+            opal_install_dirs.ompidatadir);
     if (NULL == str) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
