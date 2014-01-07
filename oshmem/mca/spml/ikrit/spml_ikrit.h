@@ -101,9 +101,8 @@ typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;
 
 #if MXM_API >= MXM_VERSION(2,0)
 #define MXM_PTL_SHM  0
-#define MXM_PTL_SELF 1
-#define MXM_PTL_RDMA 2
-#define MXM_PTL_LAST 3
+#define MXM_PTL_RDMA 1
+#define MXM_PTL_LAST 2
 #endif
 
 typedef struct spml_ikrit_mxm_ep_conn_info_t {

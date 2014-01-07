@@ -71,18 +71,29 @@ typedef mca_spml_base_component_2_0_0_t mca_spml_base_component_t;
  */
 /**
  * memory key
+ * We have two kinds of keys:
+ * - shared memory type of keys. Memory segment must be attached before access
+ *   such keys use va_base = 0 and key
+ * - ib type of key. Key is passed with each put/get op.
+ *   use va_base = <remote vaddr>, key is stored in mkey struct
  */
 typedef struct mca_spml_mkey {
-    union {
-        struct {
-            uint32_t rkey;
-            uint32_t lkey;
-        } ib;
-        uint64_t key;
-    } handle;
     void* va_base;
+    uint16_t len;
+    union {
+        void *data;
+        uint64_t key;
+    } u;
     void *spml_context;       /* spml module can attach internal structures here */
 } mca_spml_mkey_t;
+
+static inline char *mca_spml_base_mkey2str(mca_spml_mkey_t *mkey)
+{
+    static char buf[64];
+
+    snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%0X", mkey->va_base, mkey->len, mkey->u.key);
+    return buf;
+}
 
 /**
  * Downcall from MCA layer to enable the PML/BTLs.
@@ -237,14 +248,6 @@ typedef int (*mca_spml_base_module_fence_fn_t)(void);
  */
 typedef int (*mca_spml_base_module_wait_nb_fn_t)(void*);
 
-typedef void* (*mca_spml_base_module_get_remote_context_fn_t)(void*);
-
-typedef void (*mca_spml_base_module_set_remote_context_fn_t)(void**, void*);
-
-typedef int (*mca_spml_base_module_get_remote_context_size_fn_t)(void*);
-
-typedef void (*mca_spml_base_module_set_remote_context_size_fn_t)(void**, int);
-
 /**
  *  SPML instance.
  */
@@ -268,10 +271,6 @@ struct mca_spml_base_module_1_0_0_t {
     mca_spml_base_module_wait_fn_t spml_wait;
     mca_spml_base_module_wait_nb_fn_t spml_wait_nb;
     mca_spml_base_module_fence_fn_t spml_fence;
-    mca_spml_base_module_get_remote_context_fn_t spml_get_remote_context;
-    mca_spml_base_module_set_remote_context_fn_t spml_set_remote_context;
-    mca_spml_base_module_get_remote_context_size_fn_t spml_get_remote_context_size;
-    mca_spml_base_module_set_remote_context_size_fn_t spml_set_remote_context_size;
 
     void *self;
 };

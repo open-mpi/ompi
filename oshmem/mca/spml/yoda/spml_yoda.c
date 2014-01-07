@@ -57,10 +57,6 @@ mca_spml_yoda_module_t mca_spml_yoda = {
         mca_spml_base_wait,
         mca_spml_base_wait_nb,
         mca_spml_yoda_fence,
-        mca_spml_yoda_get_remote_context,
-        mca_spml_yoda_set_remote_context,
-        mca_spml_yoda_get_remote_context_size,
-        mca_spml_yoda_set_remote_context_size,
 
         (void *)&mca_spml_yoda
     }
@@ -302,12 +298,6 @@ int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys)
             ybtl->btl->btl_free(ybtl->btl, yoda_context->btl_src_descriptor);
             yoda_context->btl_src_descriptor = NULL;
         }
-        if (yoda_context->btl_src_segment) {
-            free(yoda_context->btl_src_segment);
-            yoda_context->btl_src_segment = NULL;
-        }
-        yoda_context->btl_src_segment_size = 0;
-
         if (yoda_context->registration) {
             ybtl->btl->btl_mpool->mpool_deregister(ybtl->btl->btl_mpool,
                                                    yoda_context->registration);
@@ -372,15 +362,15 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
         }
 
         /* If we have shared memory just save its id*/
-        if ((YODA_BTL_SM == ybtl->btl_type)
-                && ((int) MEMHEAP_SHM_GET_ID(shmid) != MEMHEAP_SHM_INVALID)) {
-            mkeys[i].handle.key = shmid;
+        if (YODA_BTL_SM == ybtl->btl_type
+                && MEMHEAP_SHM_INVALID != (int) MEMHEAP_SHM_GET_ID(shmid)) {
+            mkeys[i].u.key = shmid;
             mkeys[i].va_base = 0;
             continue;
         }
 
         yoda_context = calloc(1, sizeof(*yoda_context));
-        mkeys[i].spml_context = (void*) yoda_context;
+        mkeys[i].spml_context = yoda_context;
 
         yoda_context->registration = NULL;
         if (NULL != ybtl->btl->btl_prepare_src) {
@@ -421,21 +411,16 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
                 SPML_ERROR("%s: failed to register source memory. ",
                            btl_type2str(ybtl->btl_type));
             }
-            /* copy source descriptor to local structures*/
+
             yoda_context->btl_src_descriptor = des;
-            yoda_context->btl_src_segment_size = ybtl->btl->btl_seg_size;
-            if (0 != yoda_context->btl_src_segment_size) {
-                yoda_context->btl_src_segment =
-                        malloc(yoda_context->btl_src_segment_size);
-                memcpy(yoda_context->btl_src_segment,
-                       des->des_src,
-                       yoda_context->btl_src_segment_size);
-            }
+            mkeys[i].u.data = des->des_src;
+            mkeys[i].len  = ybtl->btl->btl_seg_size;
         }
 
         SPML_VERBOSE(5,
-                     "rank %d btl %s rkey %x lkey %x key %llx address 0x%p len %llu shmid 0x%X|0x%X",
-                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type), mkeys[i].handle.ib.rkey, mkeys[i].handle.ib.lkey, (unsigned long long)mkeys[i].handle.key, mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
+                     "rank %d btl %s address 0x%p len %llu shmid 0x%X|0x%X",
+                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type), 
+                     mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
     }
     OBJ_DESTRUCT(&convertor);
     *count = mca_spml_yoda.n_btls;
@@ -735,7 +720,6 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
     unsigned ncopied = 0;
     unsigned int frag_size = 0;
     char *p_src, *p_dst;
-    mca_spml_yoda_context_t* yoda_context;
     void* rva;
     mca_spml_mkey_t *r_mkey;
     int btl_id = 0;
@@ -768,8 +752,8 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
     }
 
 #if SPML_YODA_DEBUG == 1
-    SPML_VERBOSE(100, "put: pe:%d dst=%p <- src: %p sz=%d. dst_rva=%p, dst_rkey=0x%lx",
-                 dst, dst_addr, src_addr, (int)size, (void *)rva, r_mkey->handle.key);
+    SPML_VERBOSE(100, "put: pe:%d dst=%p <- src: %p sz=%d. dst_rva=%p, %s",
+                 dst, dst_addr, src_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
 #endif
 
     ybtl = &mca_spml_yoda.btl_type_map[btl_id];
@@ -818,12 +802,11 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
 
         /* Preparing destination buffer */
 
-        yoda_context = (mca_spml_yoda_context_t*) r_mkey->spml_context;
-        assert( (NULL != yoda_context) && (0 != yoda_context->btl_src_segment_size));
+        assert( NULL != r_mkey->u.data && 0 != r_mkey->len);
 
         memcpy(&frag->rdma_segs[0].base_seg,
-                yoda_context->btl_src_segment,
-                yoda_context->btl_src_segment_size);
+                r_mkey->u.data,
+                r_mkey->len);
 
         frag->rdma_segs[0].base_seg.seg_addr.lval = (uintptr_t) p_dst;
         frag->rdma_segs[0].base_seg.seg_len = (put_via_send ?
@@ -903,42 +886,6 @@ int mca_spml_yoda_wait_gets(void)
     return OSHMEM_SUCCESS;
 }
 
-void* mca_spml_yoda_get_remote_context(void* spml_context)
-{
-    return ((mca_spml_yoda_context_t*) spml_context)->btl_src_segment;
-}
-
-void mca_spml_yoda_set_remote_context(void** spml_context,
-                                      void* spml_remote_context)
-{
-    mca_spml_yoda_context_t * yoda_context;
-    yoda_context = *(spml_context);
-
-    if (NULL == yoda_context) {
-        yoda_context = (mca_spml_yoda_context_t*) malloc(sizeof(*yoda_context));
-    }
-    yoda_context->btl_src_segment =
-            (mca_btl_base_segment_t*) spml_remote_context;
-    *(spml_context) = yoda_context;
-}
-
-int mca_spml_yoda_get_remote_context_size(void* spml_context)
-{
-    return ((mca_spml_yoda_context_t*) spml_context)->btl_src_segment_size;
-}
-
-void mca_spml_yoda_set_remote_context_size(void** spml_context,
-                                           int spml_remote_context_size)
-{
-    mca_spml_yoda_context_t *yoda_context;
-    yoda_context = *(spml_context);
-
-    if (NULL == yoda_context) {
-        yoda_context = calloc(1, sizeof(*yoda_context));
-    }
-    yoda_context->btl_src_segment_size = spml_remote_context_size;
-    *(spml_context) = yoda_context;
-}
 
 int mca_spml_yoda_enable(bool enable)
 {
@@ -1024,7 +971,6 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
     struct mca_spml_yoda_getreq_parent get_holder;
     struct yoda_btl *ybtl;
     int btl_id = 0;
-    mca_spml_yoda_context_t* yoda_context;
     int get_via_send;
     const opal_datatype_t *datatype = &opal_datatype_wchar;
     opal_convertor_t convertor;
@@ -1059,8 +1005,8 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
         oshmem_shmem_abort(-1);
     }
 #if SPML_YODA_DEBUG == 1
-    SPML_VERBOSE(100, "get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p, src_rkey=0x%lx",
-                 src, src_addr, dst_addr, (int)size, (void *)rva, r_mkey->handle.key);
+    SPML_VERBOSE(100, "get: pe:%d src=%p -> dst: %p sz=%d. src_rva=%p, %s",
+                 src, src_addr, dst_addr, (int)size, (void *)rva, mca_spml_base_mkey2str(r_mkey));
 #endif
 
     ybtl = &mca_spml_yoda.btl_type_map[btl_id];
@@ -1111,11 +1057,10 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
         ncopied = i < nfrags - 1 ? frag_size :(unsigned) ((char *) dst_addr + size - p_dst);
         frag->allocated = 0;
         /* Prepare destination descriptor*/
-        yoda_context = r_mkey->spml_context;
-        assert(0 != yoda_context->btl_src_segment_size);
+        assert(0 != r_mkey->len);
         memcpy(&frag->rdma_segs[0].base_seg,
-                yoda_context->btl_src_segment,
-                yoda_context->btl_src_segment_size);
+                r_mkey->u.data,
+                r_mkey->len);
 
         frag->rdma_segs[0].base_seg.seg_len = (get_via_send ? ncopied + SPML_YODA_SEND_CONTEXT_SIZE : ncopied);
         if (get_via_send) {
