@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,15 +16,16 @@
 #include "btl_usnic_module.h"
 
 /* avoid "defined but not used" warnings */
-static int __opal_attribute_always_inline__ usnic_fls(int x)
+static inline int __opal_attribute_always_inline__ usnic_fls(int x)
     __opal_attribute_unused__;
 
-static int __opal_attribute_always_inline__ usnic_fls(int x)
+static inline int __opal_attribute_always_inline__ usnic_fls(int x)
 {
     int r = 32;
 
-    if (!x)
+    if (!x) {
         return 0;
+    }
     if (!(x & 0xffff0000u)) {
         x <<= 16;
         r -= 16;
@@ -48,8 +49,7 @@ static int __opal_attribute_always_inline__ usnic_fls(int x)
 }
 
 /* a helper function that just declutters convertor packing */
-static inline
-int
+static inline void
 usnic_convertor_pack_simple(
     opal_convertor_t *convertor,
     void *dest,
@@ -69,8 +69,6 @@ usnic_convertor_pack_simple(
         BTL_ERROR(("opal_convertor_pack error"));
         abort();    /* XXX */
     }
-
-    return OMPI_SUCCESS;
 }
 
 /*
