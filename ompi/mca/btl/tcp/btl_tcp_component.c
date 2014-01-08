@@ -277,7 +277,7 @@ static int mca_btl_tcp_component_register(void)
                                            "warn_all_unfound_interfaces",
                                            "Issue a warning for all unfound interfaces included in if_exclude",
                                            MCA_BASE_VAR_TYPE_BOOL,
-                                           NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           NULL, 0, 0, OPAL_INFO_LVL_2,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_tcp_component.report_all_unfound_interfaces);
 
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
