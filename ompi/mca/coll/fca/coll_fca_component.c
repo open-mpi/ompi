@@ -1194,7 +1194,7 @@ static int fca_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_fca_component.fca_verbose);
 
-    mca_coll_fca_component.fca_enable = 1;
+    mca_coll_fca_component.fca_enable = 0;
     (void) mca_base_component_var_register(c, "enable",
                                            "[1|0|] Enable/Disable Fabric Collective Accelerator",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -1218,7 +1218,7 @@ static int fca_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_fca_component.fca_np);
 
-    mca_coll_fca_component.fca_enable_barrier = OMPI_FCA_BCAST;
+    mca_coll_fca_component.fca_enable_barrier = OMPI_FCA_BARRIER;
     (void) mca_base_component_var_register(c, "enable_barrier",
                                            "[1|0|] Enable/Disable FCA Barrier support",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
