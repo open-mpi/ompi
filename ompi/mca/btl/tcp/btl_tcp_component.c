@@ -272,6 +272,14 @@ static int mca_btl_tcp_component_register(void)
     free(message);
 #endif
 
+    mca_btl_tcp_component.report_all_unfound_interfaces = false;
+    (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
+                                           "warn_all_unfound_interfaces",
+                                           "Issue a warning for all unfound interfaces included in if_exclude",
+                                           MCA_BASE_VAR_TYPE_BOOL,
+                                           NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_tcp_component.report_all_unfound_interfaces);
+
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
     mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
     mca_btl_tcp_module.super.btl_rndv_eager_limit = 64*1024;
@@ -572,7 +580,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
-            if (reqd) {
+            if (reqd || mca_btl_tcp_component.report_all_unfound_interfaces) {
                 opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
                                true, name, ompi_process_info.nodename, tmp,
                                "Did not find interface matching this subnet");
