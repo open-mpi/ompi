@@ -202,8 +202,6 @@ opal_byte_object_t orte_pidmap;
 /* user debugger */
 char *orte_base_user_debugger = NULL;
 
-char *orte_selected_oob_component = NULL;
-
 int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;
 bool orte_xml_output = false;
