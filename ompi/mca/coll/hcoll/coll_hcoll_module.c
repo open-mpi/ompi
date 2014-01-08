@@ -226,7 +226,9 @@ int mca_coll_hcoll_progress(void)
         item = item_next;
     }
 
-    (*hcoll_progress_fn)();
+    if (!ompi_mpi_finalized) {
+        (*hcoll_progress_fn)();
+    }
     OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
     return OMPI_SUCCESS;
 }
@@ -294,7 +296,6 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     *priority = mca_coll_hcoll_component.hcoll_priority;
     module = &hcoll_module->super;
-
 
 exit:
     return module;
