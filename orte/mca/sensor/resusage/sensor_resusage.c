@@ -70,6 +70,7 @@ static int init(void)
 
 static void finalize(void)
 {
+    return;
 }
 
 static void sample(void)
@@ -150,8 +151,10 @@ static void sample(void)
                 continue;
             }
             stats = OBJ_NEW(opal_pstats_t);
-            if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, stats, NULL))) {
-                ORTE_ERROR_LOG(rc);
+            if (ORTE_SUCCESS != opal_pstat.query(child->pid, stats, NULL)) {
+                /* may hit a race condition where the process has
+                 * terminated, so just ignore any error
+                 */
                 OBJ_RELEASE(stats);
                 continue;
             }
@@ -171,12 +174,14 @@ static void sample(void)
         }
     }
 
-    /* xfer the data for transmission */
-    bptr = &buf;
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(orte_sensor_base.samples, &bptr, 1, OPAL_BUFFER))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return;
+    /* xfer any data for transmission */
+    if (0 < buf.bytes_used) {
+        bptr = &buf;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(orte_sensor_base.samples, &bptr, 1, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&buf);
+            return;
+        }
     }
     OBJ_DESTRUCT(&buf);
 
