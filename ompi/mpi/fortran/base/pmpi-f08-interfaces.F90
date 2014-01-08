@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
@@ -23,6 +23,7 @@ subroutine PMPI_Bsend_f08(buf,count,datatype,dest,tag,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -39,6 +40,7 @@ subroutine PMPI_Bsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -55,6 +57,7 @@ interface  PMPI_Buffer_attach
 subroutine PMPI_Buffer_attach_f08(buffer,size,ierror)
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buffer
    !$PRAGMA IGNORE_TKR buffer
    !DIR$ IGNORE_TKR buffer
    !IBM* IGNORE_TKR buffer
@@ -68,6 +71,7 @@ interface  PMPI_Buffer_detach
 subroutine PMPI_Buffer_detach_f08(buffer_addr,size,ierror)
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buffer_addr
    !$PRAGMA IGNORE_TKR buffer_addr
    !DIR$ IGNORE_TKR buffer_addr
    !IBM* IGNORE_TKR buffer_addr
@@ -102,6 +106,7 @@ subroutine PMPI_Ibsend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -131,6 +136,7 @@ subroutine PMPI_Irecv_f08(buf,count,datatype,source,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -148,6 +154,7 @@ subroutine PMPI_Irsend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -165,6 +172,7 @@ subroutine PMPI_Isend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -182,6 +190,7 @@ subroutine PMPI_Issend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -210,6 +219,7 @@ subroutine PMPI_Recv_f08(buf,count,datatype,source,tag,comm,status,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -227,6 +237,7 @@ subroutine PMPI_Recv_init_f08(buf,count,datatype,source,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -264,6 +275,7 @@ subroutine PMPI_Rsend_f08(buf,count,datatype,dest,tag,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -280,6 +292,7 @@ subroutine PMPI_Rsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -297,6 +310,7 @@ subroutine PMPI_Send_f08(buf,count,datatype,dest,tag,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -314,6 +328,7 @@ subroutine PMPI_Sendrecv_f08(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -333,6 +348,7 @@ subroutine PMPI_Sendrecv_replace_f08(buf,count,datatype,dest,sendtag,source,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -350,6 +366,7 @@ subroutine PMPI_Send_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -367,6 +384,7 @@ subroutine PMPI_Ssend_f08(buf,count,datatype,dest,tag,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -383,6 +401,7 @@ subroutine PMPI_Ssend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -524,6 +543,7 @@ subroutine PMPI_Get_address_f08(location,address,ierror)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: location
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: location
    !$PRAGMA IGNORE_TKR location
    !DIR$ IGNORE_TKR location
    !IBM* IGNORE_TKR location
@@ -560,6 +580,7 @@ subroutine PMPI_Pack_f08(inbuf,incount,datatype,outbuf,outsize,position,comm,ier
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
@@ -580,6 +601,7 @@ subroutine PMPI_Pack_external_f08(datarep,inbuf,incount,datatype,outbuf,outsize,
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
@@ -879,6 +901,7 @@ subroutine PMPI_Unpack_f08(inbuf,insize,position,outbuf,outcount,datatype,comm, 
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
@@ -900,6 +923,7 @@ subroutine PMPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcoun
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
    !DIR$ IGNORE_TKR inbuf, outbuf
    !IBM* IGNORE_TKR inbuf, outbuf
@@ -919,6 +943,7 @@ subroutine PMPI_Allgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvt
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -937,6 +962,7 @@ subroutine PMPI_Iallgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -956,6 +982,7 @@ subroutine PMPI_Allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,dis
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -975,6 +1002,7 @@ subroutine PMPI_Iallgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,di
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -994,6 +1022,7 @@ subroutine PMPI_Allreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1012,6 +1041,7 @@ subroutine PMPI_Iallreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ie
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1032,6 +1062,7 @@ subroutine PMPI_Alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvty
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1050,6 +1081,7 @@ subroutine PMPI_Ialltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvt
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1069,6 +1101,7 @@ subroutine PMPI_Alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvco
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1087,6 +1120,7 @@ subroutine PMPI_Ialltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvc
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1106,6 +1140,7 @@ subroutine PMPI_Alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvc
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1124,6 +1159,7 @@ subroutine PMPI_Ialltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1161,6 +1197,7 @@ subroutine PMPI_Bcast_f08(buffer,count,datatype,root,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buffer
    !$PRAGMA IGNORE_TKR buffer
    !DIR$ IGNORE_TKR buffer
    !IBM* IGNORE_TKR buffer
@@ -1177,6 +1214,7 @@ subroutine PMPI_Ibcast_f08(buffer,count,datatype,root,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buffer
    !$PRAGMA IGNORE_TKR buffer
    !DIR$ IGNORE_TKR buffer
    !IBM* IGNORE_TKR buffer
@@ -1194,6 +1232,7 @@ subroutine PMPI_Exscan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1212,6 +1251,7 @@ subroutine PMPI_Iexscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierro
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1232,6 +1272,7 @@ subroutine PMPI_Gather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1250,6 +1291,7 @@ subroutine PMPI_Igather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtyp
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1269,6 +1311,7 @@ subroutine PMPI_Gatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1288,6 +1331,7 @@ subroutine PMPI_Igatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displ
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1338,6 +1382,7 @@ subroutine PMPI_Reduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1356,6 +1401,7 @@ subroutine PMPI_Ireduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,request,
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1375,6 +1421,7 @@ subroutine PMPI_Reduce_local_f08(inbuf,inoutbuf,count,datatype,op,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, inoutbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, inoutbuf
    !$PRAGMA IGNORE_TKR inbuf, inoutbuf
    !DIR$ IGNORE_TKR inbuf, inoutbuf
    !IBM* IGNORE_TKR inbuf, inoutbuf
@@ -1393,6 +1440,7 @@ subroutine PMPI_Reduce_scatter_f08(sendbuf,recvbuf,recvcounts,datatype,op,comm, 
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1412,6 +1460,7 @@ subroutine PMPI_Ireduce_scatter_f08(sendbuf,recvbuf,recvcounts,datatype,op,comm,
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1432,6 +1481,7 @@ subroutine PMPI_Reduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,c
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1451,6 +1501,7 @@ subroutine PMPI_Ireduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1470,6 +1521,7 @@ subroutine PMPI_Scan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1488,6 +1540,7 @@ subroutine PMPI_Iscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1508,6 +1561,7 @@ subroutine PMPI_Scatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtyp
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1526,6 +1580,7 @@ subroutine PMPI_Iscatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvty
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1545,6 +1600,7 @@ subroutine PMPI_Scatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcoun
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -1564,6 +1620,7 @@ subroutine PMPI_Iscatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcou
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -2541,6 +2598,7 @@ subroutine PMPI_Free_mem_f08(base,ierror)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
    !$PRAGMA IGNORE_TKR base
    !DIR$ IGNORE_TKR base
    !IBM* IGNORE_TKR base
@@ -2858,6 +2916,7 @@ subroutine PMPI_Accumulate_f08(origin_addr,origin_count,origin_datatype,target_r
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
    !$PRAGMA IGNORE_TKR origin_addr
    !DIR$ IGNORE_TKR origin_addr
    !IBM* IGNORE_TKR origin_addr
@@ -2878,6 +2937,7 @@ subroutine PMPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
    !$PRAGMA IGNORE_TKR origin_addr
    !DIR$ IGNORE_TKR origin_addr
    !IBM* IGNORE_TKR origin_addr
@@ -2897,6 +2957,7 @@ subroutine PMPI_Put_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
    !$PRAGMA IGNORE_TKR origin_addr
    !DIR$ IGNORE_TKR origin_addr
    !IBM* IGNORE_TKR origin_addr
@@ -2924,6 +2985,7 @@ subroutine PMPI_Win_create_f08(base,size,disp_unit,info,comm,win,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
    !$PRAGMA IGNORE_TKR base
    !DIR$ IGNORE_TKR base
    !IBM* IGNORE_TKR base
@@ -3242,6 +3304,7 @@ subroutine PMPI_File_iread_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3260,6 +3323,7 @@ subroutine PMPI_File_iread_at_f08(fh,offset,buf,count,datatype,request,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3277,6 +3341,7 @@ subroutine PMPI_File_iread_shared_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3294,6 +3359,7 @@ subroutine PMPI_File_iwrite_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3312,6 +3378,7 @@ subroutine PMPI_File_iwrite_at_f08(fh,offset,buf,count,datatype,request,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3328,6 +3395,7 @@ subroutine PMPI_File_iwrite_shared_f08(fh,buf,count,datatype,request,ierror)
    use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3369,6 +3437,7 @@ subroutine PMPI_File_read_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3386,6 +3455,7 @@ subroutine PMPI_File_read_all_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3403,6 +3473,7 @@ subroutine PMPI_File_read_all_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3419,6 +3490,7 @@ subroutine PMPI_File_read_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3435,6 +3507,7 @@ subroutine PMPI_File_read_at_f08(fh,offset,buf,count,datatype,status,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3453,6 +3526,7 @@ subroutine PMPI_File_read_at_all_f08(fh,offset,buf,count,datatype,status,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3471,6 +3545,7 @@ subroutine PMPI_File_read_at_all_begin_f08(fh,offset,buf,count,datatype,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3487,6 +3562,7 @@ subroutine PMPI_File_read_at_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3502,6 +3578,7 @@ subroutine PMPI_File_read_ordered_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3519,6 +3596,7 @@ subroutine PMPI_File_read_ordered_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3535,6 +3613,7 @@ subroutine PMPI_File_read_ordered_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3550,6 +3629,7 @@ subroutine PMPI_File_read_shared_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3642,6 +3722,7 @@ subroutine PMPI_File_write_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3659,6 +3740,7 @@ subroutine PMPI_File_write_all_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3676,6 +3758,7 @@ subroutine PMPI_File_write_all_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3692,6 +3775,7 @@ subroutine PMPI_File_write_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3708,6 +3792,7 @@ subroutine PMPI_File_write_at_f08(fh,offset,buf,count,datatype,status,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3726,6 +3811,7 @@ subroutine PMPI_File_write_at_all_f08(fh,offset,buf,count,datatype,status,ierror
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3744,6 +3830,7 @@ subroutine PMPI_File_write_at_all_begin_f08(fh,offset,buf,count,datatype,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3760,6 +3847,7 @@ subroutine PMPI_File_write_at_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3775,6 +3863,7 @@ subroutine PMPI_File_write_ordered_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3792,6 +3881,7 @@ subroutine PMPI_File_write_ordered_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3808,6 +3898,7 @@ subroutine PMPI_File_write_ordered_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3823,6 +3914,7 @@ subroutine PMPI_File_write_shared_f08(fh,buf,count,datatype,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3861,6 +3953,7 @@ end interface  PMPI_Register_datarep
 !   use :: mpi_f08_types
 !   implicit none
 !   !DEC$ ATTRIBUTES NO_ARG_CHECK :: x
+!   !GCC$ ATTRIBUTES NO_ARG_CHECK :: x
 !   !$PRAGMA IGNORE_TKR x
 !   !DIR$ IGNORE_TKR x
 !   !IBM* IGNORE_TKR x
@@ -3938,6 +4031,7 @@ interface  PMPI_F_sync_reg
 subroutine PMPI_F_sync_reg_f08(buf)
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -3985,6 +4079,7 @@ subroutine PMPI_Imrecv_f08(buf,count,datatype,message,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Message, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -4002,6 +4097,7 @@ subroutine PMPI_Mrecv_f08(buf,count,datatype,message,status,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Message, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
@@ -4020,6 +4116,7 @@ subroutine PMPI_Neighbor_allgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvco
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4038,6 +4135,7 @@ subroutine PMPI_Ineighbor_allgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvc
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4057,6 +4155,7 @@ subroutine PMPI_Neighbor_allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvc
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4076,6 +4175,7 @@ subroutine PMPI_Ineighbor_allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4096,6 +4196,7 @@ subroutine PMPI_Neighbor_alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcou
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4114,6 +4215,7 @@ subroutine PMPI_Ineighbor_alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvco
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4133,6 +4235,7 @@ subroutine PMPI_Neighbor_alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvb
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4151,6 +4254,7 @@ subroutine PMPI_Ineighbor_alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4170,6 +4274,7 @@ subroutine PMPI_Neighbor_alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
@@ -4189,6 +4294,7 @@ subroutine PMPI_Ineighbor_alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,rec
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
    !DIR$ IGNORE_TKR sendbuf, recvbuf
    !IBM* IGNORE_TKR sendbuf, recvbuf
