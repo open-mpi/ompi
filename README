@@ -322,20 +322,22 @@ Compiler Notes
     (but are, as yet, currently untested).  It is expected that this
     support will mature over time.
 
-    The gfortran compiler is *not* supported with the mpi_f08 module
-    (gfortran lacks some necessary modern Fortran features, sorry).
+    As of v4.9, the GNU Fortran compiler (gfortran) is *not* supported
+    with the mpi_f08 module (gfortran lacks some necessary modern
+    Fortran features, sorry).
 
   - All Fortran compilers support the mpif.h/shmem.fh-based bindings.
 
-  - If Open MPI is built with a non-GNU Fortran compiler, all MPI
-    subroutines will be prototyped in the mpi module, meaning that all
-    calls to MPI subroutines will have their parameter types checked
-    at compile time.
+  - If Open MPI is built with a non-gfortran compiler or with gfortran
+    >=v4.9, all MPI subroutines will be prototyped in the mpi module,
+    meaning that all calls to MPI subroutines will have their parameter
+    types checked at compile time.
 
-  - If Open MPI is built with a GNU Fortran compiler (gfortran), it
-    will compile a limited "mpi" module -- not all MPI subroutines
-    will be prototyped due to both poor design of the mpi module in
-    the MPI-2 specification and a lack of features in gfortran.
+  - If Open MPI is built with gfortran <v4.9, it will compile a
+    limited "mpi" module -- not all MPI subroutines will be prototyped
+    due to both poor design of the mpi module in the MPI-2
+    specification and a lack of features in older versions of
+    gfortran.
 
     Specifically, all MPI subroutines with no "choice" buffers are
     prototyped and will receive strong parameter type checking at
