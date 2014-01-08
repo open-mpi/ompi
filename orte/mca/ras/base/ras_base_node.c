@@ -152,9 +152,10 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
         } else {
             /* insert the object onto the orte_nodes global array */
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
-                                 "%s ras:base:node_insert node %s",
+                                 "%s ras:base:node_insert node %s slots %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (NULL == node->name) ? "NULL" : node->name));
+                                 (NULL == node->name) ? "NULL" : node->name,
+                                 node->slots));
             if (orte_managed_allocation) {
                 /* the slots are always treated as sacred
                  * in managed allocations

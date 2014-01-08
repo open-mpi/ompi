@@ -301,6 +301,13 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         }
         /* add a slot */
         node->slots++;
+        /* mark the slots as "given" since we take them as being the
+         * number specified via the rankfile
+         */
+        node->slots_given = true;
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
+                             "%s hostfile: node %s slots %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots));
         /* do we need to record an alias for this node? */
         if (NULL != node_alias) {
             /* add to list of aliases for this node - only add if unique */
@@ -567,6 +574,9 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
         }
         if (!found) {
             opal_list_append(nodes, &nd->super);
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
+                                 "%s hostfile: adding node %s slots %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nd->name, nd->slots));
         } else {
             OBJ_RELEASE(item);
         }
