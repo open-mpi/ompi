@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved. 
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 #include "oshmem/types.h"
 #include "oshmem/constants.h"
 
+#include "opal_stdint.h"
 #include "opal/mca/mca.h"
 #include "oshmem/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
@@ -91,7 +93,7 @@ static inline char *mca_spml_base_mkey2str(mca_spml_mkey_t *mkey)
 {
     static char buf[64];
 
-    snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%0X", mkey->va_base, mkey->len, mkey->u.key);
+    snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%" PRIu64, mkey->va_base, mkey->len, mkey->u.key);
     return buf;
 }
 
