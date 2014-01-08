@@ -328,7 +328,7 @@ int ompi_mpi_register_params(void)
                                  "Whether CUDA GPU buffer support is enabled or not",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                  OPAL_INFO_LVL_4,
-                                 MCA_BASE_VAR_SCOPE_LOCAL,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_cuda_support);
     if (ompi_mpi_cuda_support && !ompi_mpi_built_with_cuda_support) {
         opal_show_help("help-mpi-runtime.txt", "no cuda support",
