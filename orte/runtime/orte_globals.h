@@ -730,9 +730,6 @@ ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;
 /* maximum size of virtual machine - used to subdivide allocation */
 ORTE_DECLSPEC extern int orte_max_vm_size;
 
-/* record the selected oob component */
-ORTE_DECLSPEC extern char *orte_selected_oob_component;
-
 /* global nidmap/pidmap for daemons to give to apps */
 ORTE_DECLSPEC extern opal_byte_object_t orte_nidmap;
 ORTE_DECLSPEC extern opal_byte_object_t orte_pidmap;
