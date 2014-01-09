@@ -272,6 +272,14 @@ static int mca_btl_tcp_component_register(void)
     free(message);
 #endif
 
+    mca_btl_tcp_component.report_all_unfound_interfaces = false;
+    (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
+                                           "warn_all_unfound_interfaces",
+                                           "Issue a warning for all unfound interfaces included in if_exclude",
+                                           MCA_BASE_VAR_TYPE_BOOL,
+                                           NULL, 0, 0, OPAL_INFO_LVL_2,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_tcp_component.report_all_unfound_interfaces);
+
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
     mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
     mca_btl_tcp_module.super.btl_rndv_eager_limit = 64*1024;
@@ -499,7 +507,7 @@ static int mca_btl_tcp_create(int if_kindex, const char* if_name)
  * (a.b.c.d/e), resolve them to an interface name (Currently only
  * supporting IPv4).  If unresolvable, warn and remove.
  */
-static char **split_and_resolve(char **orig_str, char *name)
+static char **split_and_resolve(char **orig_str, char *name, bool reqd)
 {
     int i, ret, save, if_index;
     char **argv, *str, *tmp;
@@ -572,9 +580,11 @@ static char **split_and_resolve(char **orig_str, char *name)
         
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
-            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, ompi_process_info.nodename, tmp,
-                           "Did not find interface matching this subnet");
+            if (reqd || mca_btl_tcp_component.report_all_unfound_interfaces) {
+                opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
+                               true, name, ompi_process_info.nodename, tmp,
+                               "Did not find interface matching this subnet");
+            }
             free(tmp);
             continue;
         }
@@ -678,7 +688,7 @@ static int mca_btl_tcp_component_create_instances(void)
 
     /* if the user specified an interface list - use these exclusively */
     argv = include = split_and_resolve(&mca_btl_tcp_component.tcp_if_include,
-                                       "include");
+                                       "include", true);
     while(argv && *argv) {
         char* if_name = *argv;
         int if_index = opal_ifnametokindex(if_name);
@@ -703,7 +713,7 @@ static int mca_btl_tcp_component_create_instances(void)
      * a BTL for each interface that was not excluded.
     */
     exclude = split_and_resolve(&mca_btl_tcp_component.tcp_if_exclude,
-                                "exclude");
+                                "exclude", false);
     {
         int i;
         for(i = 0; i < kif_count; i++) {

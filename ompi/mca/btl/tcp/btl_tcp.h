@@ -96,6 +96,11 @@ struct mca_btl_tcp_component_t {
     /* If btl_tcp_if_seq was specified, this is the one interface
        (name) that we're supposed to use. */
     char *tcp_if_seq;
+
+    /* do we want to warn on all excluded interfaces
+     * that are not found?
+     */
+    bool report_all_unfound_interfaces;
 }; 
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 
