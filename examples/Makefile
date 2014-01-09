@@ -63,11 +63,20 @@ EXAMPLES = \
 	 Ring.class \
 	 connectivity_c
 
-# Default target. 
-all: hello_c ring_c connectivity_c mpi
+# Default target.  Always build the C MPI examples.  Only build the
+# others if we have the appropriate Open MPI / OpenSHMEM language
+# bindings.
 
-# Always build the C example.  Only build the others
-# if Open MPI was build with the relevant language bindings.
+all: hello_c ring_c connectivity_c
+	@ if which ompi_info 2>&1 >/dev/null; then \
+	    $(MAKE) mpi; \
+	fi
+	@ if which oshmem_info 2>&1 >/dev/null; then \
+	    $(MAKE) oshmem; \
+	fi
+
+# MPI examples
+
 mpi:
 	@ if ompi_info --parsable | grep bindings:cxx:yes >/dev/null; then \
 	    $(MAKE) hello_cxx ring_cxx; \
@@ -84,6 +93,10 @@ mpi:
 	@ if ompi_info --parsable | grep bindings:java:yes >/dev/null; then \
 	    $(MAKE) Hello.class Ring.class; \
 	fi
+
+# OpenSHMEM examples
+
+oshmem:
 	@ if oshmem_info --parsable | grep oshmem:bindings:c:yes >/dev/null; then \
 	    $(MAKE) hello_oshmem; \
 	    $(MAKE) ring_oshmem; \
