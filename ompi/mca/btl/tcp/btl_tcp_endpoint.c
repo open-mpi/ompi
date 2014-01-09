@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -511,9 +512,9 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
 
 void mca_btl_tcp_set_socket_options(int sd)
 {
-    int optval;
 #if defined(TCP_NODELAY)
-    optval = mca_btl_tcp_component.tcp_not_use_nodelay;
+    int optval;
+    optval = !mca_btl_tcp_component.tcp_not_use_nodelay;
     if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
         BTL_ERROR(("setsockopt(TCP_NODELAY) failed: %s (%d)", 
                    strerror(opal_socket_errno), opal_socket_errno));
