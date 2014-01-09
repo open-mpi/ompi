@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #include "ompi/proc/proc.h"
 #include "ompi/patterns/comm/coll_ops.h"
