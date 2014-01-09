@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
-# Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,14 +31,23 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
                         [btl_usnic_happy="yes"],
                         [btl_usnic_happy="no"])
 
-    # We only want to build on Linux.  We also use the clock_gettime()
-    # function, which conveniently only happens to exist on Linux.  So
-    # just check for that.
+    # We only want to build on 64 bit Linux.
     AS_IF([test "$btl_usnic_happy" = "yes"],
-          [AC_CHECK_FUNC([clock_gettime],
+          [AC_CHECK_SIZEOF([void *])
+           AC_MSG_CHECKING([for 64 bit Linux])
+           case $host_os in
+               *linux*)
+                   AS_IF([test $ac_cv_sizeof_void_p -eq 8],
                          [btl_usnic_happy=yes],
                          [btl_usnic_happy=no])
-          ])
+                   ;;
+               *)
+                   btl_usnic_happy=no
+                   ;;
+           esac
+           AC_MSG_RESULT([$btl_usnic_happy])
+          ]
+    )
 
     # Do we have the IBV_TRANSPORT_USNIC / IBV_NODE_USNIC defines?
     # (note: if we have one, we have both)
