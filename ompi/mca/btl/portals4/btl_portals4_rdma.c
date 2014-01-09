@@ -26,7 +26,7 @@ mca_btl_portals4_put(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
                     struct mca_btl_base_descriptor_t* descriptor)
 {
-    opal_output(0, "mca_btl_portals4_put not implemented\n");
+    opal_output(ompi_btl_base_framework.framework_output, "mca_btl_portals4_put not implemented\n");
 
     MPI_Abort(MPI_COMM_WORLD, 10);
     return OMPI_SUCCESS;
@@ -38,6 +38,7 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
                     struct mca_btl_base_descriptor_t* descriptor)
 {
+    mca_btl_portals4_module_t *portals4_btl = (mca_btl_portals4_module_t *) btl_base;
     mca_btl_portals4_segment_t *src_seg = (mca_btl_portals4_segment_t *) descriptor->des_src;
     mca_btl_portals4_frag_t *frag = (mca_btl_portals4_frag_t*) descriptor;
     ptl_md_t md;
@@ -46,8 +47,6 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
     OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output,
 	"mca_btl_portals4_get frag=%p src_seg=%p frag->md_h=%d\n", (void *)frag, (void *)src_seg, frag->md_h));
 
-    assert(&mca_btl_portals4_module == (mca_btl_portals4_module_t*) btl_base);
-
     frag->endpoint = btl_peer;
     frag->hdr.tag = MCA_BTL_TAG_MAX;
 
@@ -55,10 +54,10 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
     md.start = (void *)frag->segments[0].base.seg_addr.pval;
     md.length = frag->segments[0].base.seg_len;
     md.options = 0;
-    md.eq_handle = mca_btl_portals4_module.recv_eq_h;
+    md.eq_handle = portals4_btl->recv_eq_h;
     md.ct_handle = PTL_CT_NONE;
 
-    ret = PtlMDBind(mca_btl_portals4_module.portals_ni_h,
+    ret = PtlMDBind(portals4_btl->portals_ni_h,
                     &md,
                     &frag->md_h);
 
@@ -76,7 +75,7 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
                  0,
                  md.length,
                  btl_peer->ptl_proc,
-                 mca_btl_portals4_module.recv_idx,
+                 portals4_btl->recv_idx,
                  frag->match_bits, /* match bits */
                  0,
                  frag);

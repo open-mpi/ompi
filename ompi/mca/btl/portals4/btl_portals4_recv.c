@@ -36,7 +36,7 @@ mca_btl_portals4_recv_enable(mca_btl_portals4_module_t *btl)
     int i;
 
     /* create the recv blocks */
-    for (i = 0 ; i < btl->portals_recv_mds_num ; ++i) {
+    for (i = 0 ; i < mca_btl_portals4_component.portals_recv_mds_num ; ++i) {
         mca_btl_portals4_recv_block_t *block =
             mca_btl_portals4_recv_block_init(btl);
         if (NULL == block) {
@@ -74,12 +74,11 @@ mca_btl_portals4_recv_block_init(mca_btl_portals4_module_t *btl)
 
     block = OBJ_NEW(mca_btl_portals4_recv_block_t);
     block->btl = btl;
-    block->length = btl->portals_recv_mds_size;
+    block->length = mca_btl_portals4_component.portals_recv_mds_size;
     block->start = malloc(block->length);
     if (block->start == NULL) return NULL;
 
     block->me_h = PTL_INVALID_HANDLE;
-    block->md_h = PTL_INVALID_HANDLE;
 
     block->full = false;
     block->pending = 0;
