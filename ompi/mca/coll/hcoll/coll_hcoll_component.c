@@ -226,8 +226,7 @@ static int hcoll_open(void)
 
     hcoll_rte_fns_setup();
 
-    OBJ_CONSTRUCT(&mca_coll_hcoll_component.active_modules,
-                  opal_list_t);
+    OBJ_CONSTRUCT(&mca_coll_hcoll_component.active_modules, opal_list_t);
 
     mca_coll_hcoll_component.progress_lock = -1;
     return OMPI_SUCCESS;
@@ -236,8 +235,14 @@ static int hcoll_open(void)
 static int hcoll_close(void)
 {
     int rc;
+
+    if (false == mca_coll_hcoll_component.hcoll_enable) {
+        return OMPI_SUCCESS;
+    }
+
     HCOL_VERBOSE(5,"HCOLL FINALIZE");
     rc = hcoll_finalize();
+
     opal_progress_unregister(mca_coll_hcoll_progress);
     OBJ_DESTRUCT(&mca_coll_hcoll_component.active_modules);
     memset(&mca_coll_hcoll_component.active_modules,0,sizeof(mca_coll_hcoll_component.active_modules));
