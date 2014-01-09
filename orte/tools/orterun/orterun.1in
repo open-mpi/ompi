@@ -185,12 +185,21 @@ On each node, launch one process -- equivalent to \fI-npernode\fP 1.
 .
 .
 .P
-To map processes to nodes:
+To map processes:
 .
 .
 .TP
-.B -loadbalance\fR,\fP --loadbalance
-Uniform distribution of ranks across all nodes. See more detailed description below.
+.B --map-by <foo>
+Map to the specified object, defaults to \fIsocket\fP. Supported options
+include slot, hwthread, core, socket, numa, board, and node.
+.
+.TP
+.B -bycore\fR,\fP --bycore
+Map processes by core (deprecated in favor of --map-by core)
+.
+.TP
+.B -bysocket\fR,\fP --bysocket
+Map processes by socket (deprecated in favor of --map-by socket)
 .
 .TP
 .B -nolocal\fR,\fP --nolocal
@@ -215,22 +224,29 @@ ranks in a round-robin, "by node" manner.
 .
 .
 .P
+To rank processes:
+.
+.
+.TP
+.B --rank-by <foo>
+Rank in round-robin fashion according to the specified object,
+defaults to \fIslot\fP. Supported options
+include slot, hwthread, core, socket, numa, board, and node.
+.
+.
+.
+.
+.P
 For process binding:
 .
 .TP
-.B -bycore\fR,\fP --bycore
-Associate processes with successive cores
-if used with one of the \fI-bind-to-*\fP options.
-.
-.TP
-.B -bysocket\fR,\fP --bysocket
-Associate processes with successive processor sockets
-if used with one of the \fI-bind-to-*\fP options.
+.B --bind-to <foo>
+Bind processes to the specified object, defaults to \fIcore\fP. Supported options
+include slot, hwthread, core, socket, numa, board, and none.
 .
 .TP
 .B -cpus-per-proc\fR,\fP --cpus-per-proc <#perproc>
-Use the number of cores per process
-if used with one of the \fI-bind-to-*\fP options.
+Bind each process to the specified number of cpus.
 .
 .TP
 .B -cpus-per-rank\fR,\fP --cpus-per-rank <#perrank>
@@ -238,15 +254,15 @@ Alias for \fI-cpus-per-proc\fP.
 .
 .TP
 .B -bind-to-core\fR,\fP --bind-to-core
-Bind processes to cores.
+Bind processes to cores (deprecated in favor of --bind-to core)
 .
 .TP
 .B -bind-to-socket\fR,\fP --bind-to-socket
-Bind processes to processor sockets.
+Bind processes to processor sockets  (deprecated in favor of --bind-to socket)
 .
 .TP
 .B -bind-to-none\fR,\fP --bind-to-none
-Do not bind processes.  (Default.)
+Do not bind processes  (deprecated in favor of --bind-to none)
 .
 .TP
 .B -report-bindings\fR,\fP --report-bindings
@@ -696,15 +712,9 @@ Consider the same hostfile as above, again with \fI-np\fP 6:
 
   mpirun                  0 1 2 3      4 5
 
-  mpirun -loadbalance     0 1          2 3          4 5
-
   mpirun -bynode          0 3          1 4          2 5
 
   mpirun -nolocal                      0 1 2 3      4 5
-.
-.PP
-The \fI-loadbalance\fP option tries to spread processes out fairly among the
-nodes.
 .
 .PP
 The \fI-bynode\fP option does likewise but numbers the processes in "by node"
