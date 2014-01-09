@@ -278,10 +278,13 @@ int orte_ess_base_proc_binding(void)
         /* report the binding, if requested */
         if (opal_hwloc_report_bindings) {
             char tmp1[1024], tmp2[1024];
-            opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), mycpus);
-            opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), mycpus);
-            opal_output(0, "MCW rank %d bound to %s: %s",
-                        ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), mycpus)) {
+                opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", ORTE_PROC_MY_NAME->vpid);
+            } else {
+                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), mycpus);
+                opal_output(0, "MCW rank %d bound to %s: %s",
+                            ORTE_PROC_MY_NAME->vpid, tmp1, tmp2);
+            }
         }
     }
     hwloc_bitmap_free(mycpus);
