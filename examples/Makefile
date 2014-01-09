@@ -101,19 +101,19 @@ clean:
 # Don't rely on default rules for the Fortran and Java examples
 
 hello_mpifh: hello_mpifh.f
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 ring_mpifh: ring_mpifh.f
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 
 hello_usempi: hello_usempi.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 ring_usempi: ring_usempi.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 
 hello_usempif08: hello_usempif08.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 ring_usempif08: ring_usempif08.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 
 Hello.class: Hello.java
 	$(JAVAC) Hello.java
@@ -121,12 +121,12 @@ Ring.class: Ring.java
 	$(JAVAC) Ring.java
 
 hello_oshmem: hello_oshmem_c.c
-	$(SHMEMCC) $(CFLAGS) $^ -o $@
+	$(SHMEMCC) $(CFLAGS) $? -o $@
 hello_oshmemfh: hello_oshmemfh.f90
-	$(SHMEMFC) $(FCFLAGS) $^ -o $@
+	$(SHMEMFC) $(FCFLAGS) $? -o $@
 
 ring_oshmem: ring_oshmem_c.c
-	$(SHMEMCC) $(CFLAGS) $^ -o $@
+	$(SHMEMCC) $(CFLAGS) $? -o $@
 ring_oshmemfh: ring_oshmemfh.f90
-	$(SHMEMFC) $(FCFLAGS) $^ -o $@
+	$(SHMEMFC) $(FCFLAGS) $? -o $@
 
