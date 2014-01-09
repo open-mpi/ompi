@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -748,6 +748,45 @@ AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
 AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
 AC_CHECK_MEMBERS([siginfo_t.si_band],,,[#include <signal.h>])
 
+#
+# Checks for struct member names in struct statfs
+#
+AC_CHECK_MEMBERS([struct statfs.f_type], [], [], [
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_STS_STATFS_H
+#include <sys/statfs.h>
+#endif
+])
+
+AC_CHECK_MEMBERS([struct statfs.f_fstypename], [], [], [
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_STS_STATFS_H
+#include <sys/statfs.h>
+#endif
+])
+
+#
+# Checks for struct member names in struct statvfs
+#
+AC_CHECK_MEMBERS([struct statvfs.f_basetype], [], [], [
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_STS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+])
+
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -775,7 +814,13 @@ OMPI_CHECK_FUNC_LIB([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo dbopen dbm_open])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo dbopen dbm_open statfs statvfs])
+
+# Sanity check: ensure that we got at least one of statfs or statvfs.
+if test $ac_cv_func_statfs = no -a $ac_cv_func_statvfs = no; then
+    AC_MSG_WARN([neither statfs() and statvfs() were found])
+    AC_MSG_ERROR([Cannot continue])
+fi
 
 # On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
 # confused.  On others, it's in the standard library, but stubbed with
