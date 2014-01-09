@@ -450,7 +450,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
      * to the next node. Thus, procs tend to be "front loaded" onto the
      * list of nodes, as opposed to being "load balanced" in the span mode
      */
-    if (ORTE_MAPPING_SPAN & jdata->map->mapping) {
+    if (ORTE_MAPPING_SPAN & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
         return byobj_span(jdata, app, node_list, num_slots,
                           num_procs, target, cache_level);
     }

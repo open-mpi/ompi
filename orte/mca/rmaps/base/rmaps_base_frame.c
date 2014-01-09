@@ -425,8 +425,6 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
 
     if (NULL == spec) {
         ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
-        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SPAN);
-        ORTE_UNSET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
     } else {
         ck = opal_argv_split(spec, ':');
         if (2 < opal_argv_count(ck)) {

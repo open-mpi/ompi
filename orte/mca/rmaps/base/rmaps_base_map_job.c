@@ -114,6 +114,26 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                     "mca:rmaps mapping not given - using bysocket");
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
             }
+            /* check for oversubscribe directives */
+            if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                if (orte_managed_allocation) {
+                    /* by default, we do not allow oversubscription in managed environments */
+                    ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+                } else {
+                    ORTE_UNSET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+                }
+            } else {
+                /* pass along the directive */
+                if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+                    ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+                } else {
+                    ORTE_UNSET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+                }
+            }
+            /* check for no-use-local directive */
+            if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+                ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
+            }
         }
         /* ranking was already handled, so just use it here */
         map->ranking = orte_rmaps_base.ranking;
@@ -156,8 +176,25 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
             }
         }
-        if (!ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
-            ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping));
+        /* check for oversubscribe directives */
+        if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+            if (orte_managed_allocation) {
+                /* by default, we do not allow oversubscription in managed environments */
+                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+            } else {
+                ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+            }
+        } else {
+            /* pass along the directive */
+            if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+            } else {
+                ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+            }
+        }
+        /* check for no-use-local directive */
+        if (ORTE_MAPPING_NO_USE_LOCAL & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
         }
         /* ditto for rank and bind policies */
         if (!ORTE_RANKING_POLICY_IS_SET(jdata->map->ranking)) {
