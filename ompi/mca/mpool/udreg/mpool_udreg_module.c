@@ -208,7 +208,7 @@ static void *mca_mpool_udreg_reg_func (void *addr, uint64_t len, void *reg_conte
                                              addr, len, udreg_reg);
     if (OMPI_SUCCESS != rc) {
         OMPI_FREE_LIST_RETURN_MT(&mpool_udreg->reg_list, item);
-        mpool_udreg = NULL;
+        udreg_reg = NULL;
     }
 
     return udreg_reg;
