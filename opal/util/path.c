@@ -13,6 +13,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -524,8 +525,7 @@ opal_path_df(const char *path,
     int err = 0;
 #if defined(__SVR4) && defined(__sun)
     struct statvfs buf;
-#elif defined(__linux__) || defined (__BSD) ||                                 \
-      (defined(__APPLE__) && defined(__MACH__))
+#else
     struct statfs buf;
 #endif
 
@@ -537,8 +537,7 @@ opal_path_df(const char *path,
     do {
 #if defined(__SVR4) && defined(__sun)
         rc = statvfs(path, &buf);
-#elif defined(__linux__) || defined (__BSD) ||                                 \
-      (defined(__APPLE__) && defined(__MACH__))
+#else
         rc = statfs(path, &buf);
 #endif
         err = errno;
