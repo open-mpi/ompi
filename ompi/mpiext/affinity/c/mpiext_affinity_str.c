@@ -35,6 +35,8 @@
 #include "ompi/mpiext/affinity/c/mpiext_affinity_c.h"
 
 static const char FUNC_NAME[] = "OMPI_Affinity";
+static const char ompi_nobind_str[] = "Open MPI did not bind this process";
+static const char not_bound_str[] = "Not bound (i.e., bound to all processors)";
 
 static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
@@ -97,16 +99,18 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If OMPI did not bind, indicate that */
     if (!ompi_rte_proc_is_bound) {
-        const char tmp[] = "This process is not bound";
-        strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+        strncpy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX - 1);
         return OMPI_SUCCESS;
     }
 
-    ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
-                                   orte_proc_applied_binding);
+    if (NULL == orte_proc_applied_binding) {
+        ret = OPAL_ERR_NOT_BOUND;
+    } else {
+        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
+                                       orte_proc_applied_binding);
+    }
     if (OPAL_ERR_NOT_BOUND == ret) {
-        const char tmp[] = "Not bound (or bound to all available processors)";
-        strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+        strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
         ret = OMPI_SUCCESS;
     }
     return ret;
@@ -146,8 +150,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are not bound, indicate that */
     if (!bound) {
-        const char tmp[] = "Not bound (or bound to all available processors)";
-        strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+        strncat(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
         ret = OMPI_SUCCESS;
     }
 
@@ -156,8 +159,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
         ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
                                        boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
-            const char tmp[] = "Not bound (or bound to all available processors)";
-            strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+            strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
             ret = OMPI_SUCCESS;
         }
     }
@@ -287,17 +289,19 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If OMPI did not bind, indicate that */
     if (!ompi_rte_proc_is_bound) {
-        const char tmp[] = "This process is not bound";
-        strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+        strncpy(str, ompi_nobind_str, OMPI_AFFINITY_STRING_MAX - 1);
         return OMPI_SUCCESS;
     }
 
     /* Find out what OMPI bound us to and prettyprint it */
-    ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
-                                      orte_proc_applied_binding);
+    if (NULL == orte_proc_applied_binding) {
+        ret = OPAL_ERR_NOT_BOUND;
+    } else {
+        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
+                                          orte_proc_applied_binding);
+    }
     if (OPAL_ERR_NOT_BOUND == ret) {
-        const char tmp[] = "Not bound (or bound to all available processors)";
-        strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+        strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
         ret = OMPI_SUCCESS;
     }
 
@@ -337,8 +341,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are not bound, indicate that */
     if (!bound) {
-        const char tmp[] = "Not bound (or bound to all available processors)";
-        strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+        strncat(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
         ret = OMPI_SUCCESS;
     }
 
@@ -347,8 +350,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
         ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
                                           boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
-            const char tmp[] = "Not bound (or bound to all available processors)";
-            strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
+            strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
             ret = OMPI_SUCCESS;
         }
     }
