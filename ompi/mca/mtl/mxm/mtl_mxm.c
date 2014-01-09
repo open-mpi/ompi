@@ -56,9 +56,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
     uint32_t job_key;
     unsigned long long *uu;
     char *generated_key;
-    uint16_t *jkp;
 
-    jkp = (uint16_t *) unique_job_key;
     uu = (unsigned long long *) unique_job_key;
 
     generated_key = getenv("OMPI_MCA_orte_precondition_transports");
@@ -275,7 +273,7 @@ int ompi_mtl_mxm_module_init(void)
     mxm_error_t err;
     uint32_t jobid;
     uint64_t mxlr;
-    ompi_proc_t *mp, **procs;
+    ompi_proc_t **procs;
     unsigned ptl_bitmap;
     size_t totps, proc;
     int lr, nlps;
@@ -284,7 +282,6 @@ int ompi_mtl_mxm_module_init(void)
     mxlr = 0;
     lr = -1;
 
-    mp = ompi_proc_local();
     jobid = ompi_mtl_mxm_get_job_id();
     if (0 == jobid) {
     	MXM_ERROR("Failed to generate jobid");
@@ -397,7 +394,6 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 #if MXM_API < MXM_VERSION(2,0)
     ompi_mtl_mxm_ep_conn_info_t *ep_info;
     mxm_conn_req_t *conn_reqs;
-    int timeout;
 #endif
     void *ep_address;
     size_t ep_address_len;
