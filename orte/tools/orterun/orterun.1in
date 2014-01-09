@@ -218,13 +218,13 @@ each node.
 .B -bynode\fR,\fP --bynode
 Launch processes one per node, cycling by node in a round-robin
 fashion.  This spreads processes evenly among nodes and assigns
-ranks in a round-robin, "by node" manner.
+MPI_COMM_WORLD ranks in a round-robin, "by node" manner.
 .
 .
 .
 .
 .P
-To rank processes:
+To order processes' ranks in MPI_COMM_WORLD:
 .
 .
 .TP
@@ -293,23 +293,25 @@ To manage standard I/O:
 .
 .TP
 .B -output-filename\fR,\fP --output-filename \fR<filename>\fP
-Redirect the stdout, stderr, and stddiag of all ranks to a rank-unique version of
+Redirect the stdout, stderr, and stddiag of all processes to a process-unique version of
 the specified filename. Any directories in the filename will automatically be created.
-Each output file will consist of filename.rank, where the rank will be left-filled with
+Each output file will consist of filename.id, where the id will be the
+processes' rank in MPI_COMM_WORLD, left-filled with
 zero's for correct ordering in listings.
 .
 .
 .TP
 .B -stdin\fR,\fP --stdin <rank>
-The MPI rank that is to receive stdin. The default is to forward stdin to rank=0, but this
-option can be used to forward stdin to any rank. It is also acceptable to specify \fInone\fP,
-indicating that no ranks are to receive stdin.
+The MPI_COMM_WORLD rank of the process that is to receive stdin. The
+default is to forward stdin to MPI_COMM_WORLD rank 0, but this option
+can be used to forward stdin to any process. It is also acceptable to
+specify \fInone\fP, indicating that no processes are to receive stdin.
 .
 .
 .TP
 .B -tag-output\fR,\fP --tag-output
-Tag each line of output to stdout, stderr, and stddiag with \fB[jobid, rank]<stdxxx>\fP indicating the process jobid
-and rank that generated the output, and the channel which generated it.
+Tag each line of output to stdout, stderr, and stddiag with \fB[jobid, MCW_rank]<stdxxx>\fP indicating the process jobid
+and MPI_COMM_WORLD rank of the process that generated the output, and the channel which generated it.
 .
 .
 .TP
@@ -324,9 +326,10 @@ Provide all output to stdout, stderr, and stddiag in an xml format.
 .
 .TP
 .B -xterm\fR,\fP --xterm \fR<ranks>\fP
-Display the specified ranks in separate xterm windows. The ranks are specified
+Display the output from the processes identified by their
+MPI_COMM_WORLD ranks in separate xterm windows. The ranks are specified
 as a comma-separated list of ranges, with a -1 indicating all. A separate
-window will be created for each specified rank.
+window will be created for each specified process.
 .B Note:
 xterm will normally terminate the window upon termination of the process running
 within it. However, by adding a "!" to the end of the list of specified ranks,
@@ -693,13 +696,13 @@ Now,
 .
 .TP 4
 mpirun -hostfile myhostfile -np 6 ./a.out
-will launch ranks 0-3 on node aa and ranks 4-5 on node bb.  The remaining
+will launch processes 0-3 on node aa and processes 4-5 on node bb.  The remaining
 slots in the hostfile will not be used since the \fI-np\fP option indicated
 that only 6 processes should be launched.
 .
 .SS Mapping Processes to Nodes:  Using Policies
 .
-The examples above illustrate the default mapping of process ranks
+The examples above illustrate the default mapping of process processes
 to nodes.  This mapping can also be controlled with various
 \fImpirun\fP options that describe mapping policies.
 .
@@ -786,7 +789,7 @@ each running \fIuptime\fP on nodes bb and cc, respectively.
 .
 .SS Mapping Processes to Nodes:  Using Arbitrary Mappings
 .
-The mapping of process ranks to nodes can be prescribed not just
+The mapping of process processes to nodes can be prescribed not just
 with general policies but also, if necessary, using arbitrary mappings
 that cannot be described by a simple policy.  One can use the "sequential
 mapper," which reads the hostfile line by line, assigning processes
@@ -796,13 +799,13 @@ as before
 .
 .TP 4
 mpirun -hostfile myhostfile ./a.out
-will launch three processes, on ranks aa, bb, and cc, respectively.
+will launch three processes, on nodes aa, bb, and cc, respectively.
 The slot counts don't matter;  one process is launched per line on
 whatever node is listed on the line.
 .
 .PP
-Another way to specify arbitrary mappings is with a rank file, which
-gives you detailed control over process binding as well.  Rank files
+Another way to specify arbitrary mappings is with a rankfile, which
+gives you detailed control over process binding as well.  Rankfiles
 are discussed below.
 .
 .SS Process Binding
@@ -1075,7 +1078,7 @@ by orterun.
 .
 .SS Process Termination / Signal Handling
 .
-During the run of an MPI application, if any rank dies abnormally
+During the run of an MPI application, if any process dies abnormally
 (either exiting before invoking \fIMPI_FINALIZE\fP, or dying as the result of a
 signal), \fImpirun\fP will print out an error message and kill the rest of the
 MPI application.
@@ -1256,11 +1259,11 @@ are spawned by that job are designated "secondary" jobs):
 if all processes in the primary job normally terminate with exit status 0, we return 0
 .IP \[bu]
 if one or more processes in the primary job normally terminate with non-zero exit status, 
-we return the exit status of the lowest rank to have a non-zero status
+we return the exit status of the process with the lowest MPI_COMM_WORLD rank to have a non-zero status
 .IP \[bu]
 if all processes in the primary job normally terminate with exit status 0, and one or more
 processes in a secondary job normally terminate with non-zero exit status, we (a) return
-the exit status of the lowest rank in the lowest jobid to have a non-zero status, and (b)
+the exit status of the process with the lowest MPI_COMM_WORLD rank in the lowest jobid to have a non-zero status, and (b)
 output a message summarizing the exit status of the primary and all secondary jobs.
 .IP \[bu]
 if the cmd line option --report-child-jobs-separately is set, we will return -only- the
@@ -1325,14 +1328,14 @@ parameters.
 .
 .SH RETURN VALUE
 .
-\fImpirun\fP returns 0 if all ranks started by \fImpirun\fP exit after calling
+\fImpirun\fP returns 0 if all processes started by \fImpirun\fP exit after calling
 MPI_FINALIZE.  A non-zero value is returned if an internal error occurred in
-mpirun, or one or more ranks exited before calling MPI_FINALIZE.  If an
+mpirun, or one or more processes exited before calling MPI_FINALIZE.  If an
 internal error occurred in mpirun, the corresponding error code is returned.
-In the event that one or more ranks exit before calling MPI_FINALIZE, the
-return value of the rank of the process that \fImpirun\fP first notices died
+In the event that one or more processes exit before calling MPI_FINALIZE, the
+return value of the MPI_COMM_WORLD rank of the process that \fImpirun\fP first notices died
 before calling MPI_FINALIZE will be returned.  Note that, in general, this will
-be the first rank that died but is not guaranteed to be so.
+be the first process that died but is not guaranteed to be so.
 .
 .\" **************************
 .\"    See Also Section
