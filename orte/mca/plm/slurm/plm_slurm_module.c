@@ -451,11 +451,21 @@ static int plm_slurm_terminate_orteds(void)
      * exit. Instead, we simply trigger an exit for ourselves
      */
     if (primary_pid_set) {
-        /* tell them to die without sending a reply - we will rely on the
-         * waitpid to tell us when they have exited!
-         */
-        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
-            ORTE_ERROR_LOG(rc);
+        if (orte_abnormal_term_ordered) {
+            /* cannot know if a daemon is able to
+             * tell us it died, so just ensure they
+             * all terminate
+             */
+            if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
+                ORTE_ERROR_LOG(rc);
+            }
+        } else {
+            /* we need them to "phone home"
+             * so we can know that they have exited
+             */
+            if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
     } else {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
