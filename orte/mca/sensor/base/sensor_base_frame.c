@@ -79,15 +79,15 @@ static int orte_sensor_base_register(mca_base_register_flag_t flags)
 
 static int orte_sensor_base_close(void)
 {
-    orte_sensor_base_module_t *i_module;
+    orte_sensor_active_module_t *i_module;
     int i;
     
     for (i=0; i < orte_sensor_base.modules.size; i++) {
-        if (NULL == (i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
+        if (NULL == (i_module = (orte_sensor_active_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
             continue;
         }
-        if (NULL != i_module->finalize) {
-            i_module->finalize();
+        if (NULL != i_module->module->finalize) {
+            i_module->module->finalize();
         }
     }
     OBJ_DESTRUCT(&orte_sensor_base.modules);
