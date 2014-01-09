@@ -1765,15 +1765,22 @@ int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset)
 
     str[0] = tmp[stmp] = '\0';
 
+    /* if the cpuset is all zero, then not bound */
+    if (hwloc_bitmap_iszero(cpuset)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
+
     /* if the cpuset includes all available cpus, then we are unbound */
     root = hwloc_get_root_obj(opal_hwloc_topology);
-    if (NULL != root->userdata) {
-        sum = (opal_hwloc_topo_data_t*)root->userdata;
-        if (NULL != sum->available) {
-            if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
-                return OPAL_ERR_NOT_BOUND;
-            }
-        }
+    if (NULL == root->userdata) {
+        opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+    }
+    sum = (opal_hwloc_topo_data_t*)root->userdata;
+    if (NULL == sum->available) {
+       return OPAL_ERROR;
+    }
+    if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
+        return OPAL_ERR_NOT_BOUND;
     }
 
     if (OPAL_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map))) {
@@ -1822,15 +1829,22 @@ int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
 
     str[0] = tmp[stmp] = '\0';
 
+    /* if the cpuset is all zero, then not bound */
+    if (hwloc_bitmap_iszero(cpuset)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
+
     /* if the cpuset includes all available cpus, then we are unbound */
     root = hwloc_get_root_obj(opal_hwloc_topology);
-    if (NULL != root->userdata) {
-        sum = (opal_hwloc_topo_data_t*)root->userdata;
-        if (NULL != sum->available) {
-            if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
-                return OPAL_ERR_NOT_BOUND;
-            }
-        }
+    if (NULL == root->userdata) {
+        opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+    }
+    sum = (opal_hwloc_topo_data_t*)root->userdata;
+    if (NULL == sum->available) {
+       return OPAL_ERROR;
+    }
+    if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
+        return OPAL_ERR_NOT_BOUND;
     }
 
     /* Iterate over all existing sockets */

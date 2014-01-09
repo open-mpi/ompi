@@ -55,7 +55,12 @@ static void reset_usage(orte_node_t *node, orte_jobid_t jobid)
 {
     int j;
     orte_proc_t *proc;
-    opal_hwloc_obj_data_t *data;
+    opal_hwloc_obj_data_t *data=NULL;
+
+    opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
+                        "%s reset_usage: node %s has %d procs on it",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        node->name, node->num_procs);
 
     /* start by clearing any existing info */
     opal_hwloc_base_clear_usage(node->topology);
@@ -69,14 +74,30 @@ static void reset_usage(orte_node_t *node, orte_jobid_t jobid)
         }
         /* ignore procs from this job */
         if (proc->name.jobid == jobid) {
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
+                                "%s reset_usage: ignoring proc %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&proc->name));
             continue;
         }
         if (NULL == proc->bind_location) {
             /* this proc isn't bound - ignore it */
+            opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
+                                "%s reset_usage: proc %s has no bind location",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&proc->name));
             continue;
         }
         data = (opal_hwloc_obj_data_t*)proc->bind_location->userdata;
+        if (NULL == data) {
+            data = OBJ_NEW(opal_hwloc_obj_data_t);
+            proc->bind_location->userdata = data;
+        }
         data->num_bound++;
+        opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
+                            "%s reset_usage: proc %s is bound - total %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&proc->name), data->num_bound);
     }
 }
 
@@ -403,13 +424,23 @@ static int bind_downwards(orte_job_t *jdata,
                  * and it wasn't a default binding policy (i.e., the user requested it)
                  */
                 if (ncpus < data->num_bound &&
-                    !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
-                    (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
-                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
-                                   opal_hwloc_base_print_binding(map->binding), node->name,
-                                   data->num_bound, ncpus);
-                    hwloc_bitmap_free(totalcpuset);
-                    return ORTE_ERR_SILENT;
+                    !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)) {
+                    if (OPAL_BIND_GIVEN & opal_hwloc_binding_policy) {
+                        orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
+                                       opal_hwloc_base_print_binding(map->binding), node->name,
+                                       data->num_bound, ncpus);
+                        hwloc_bitmap_free(totalcpuset);
+                        return ORTE_ERR_SILENT;
+                    } else {
+                        /* if this is the default binding policy, then just don't
+                         * bind this proc
+                         */
+                        data->num_bound--;  // maintain count
+                        /* show the proc as not bound */
+                        proc->bind_location = NULL;
+                        hwloc_bitmap_zero(totalcpuset);
+                        break;
+                    }
                 }
                 /* bind the proc here */
                 cpus = opal_hwloc_base_get_available_cpus(node->topology, trg_obj);
@@ -422,13 +453,19 @@ static int bind_downwards(orte_job_t *jdata,
             hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, totalcpuset);
             if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
                 char tmp1[1024], tmp2[1024];
-                opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), totalcpuset);
-                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), totalcpuset);
-                opal_output(orte_rmaps_base_framework.framework_output,
-                            "%s BOUND PROC %s[%s] TO %s: %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&proc->name), node->name,
-                            tmp1, tmp2);
+                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), totalcpuset)) {
+                    opal_output(orte_rmaps_base_framework.framework_output,
+                                "%s PROC %s ON %s IS NOT BOUND",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&proc->name), node->name);
+                } else {
+                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), totalcpuset);
+                    opal_output(orte_rmaps_base_framework.framework_output,
+                                "%s BOUND PROC %s[%s] TO %s: %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&proc->name), node->name,
+                                tmp1, tmp2);
+                }
             }
         }
     }
