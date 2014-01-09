@@ -56,10 +56,18 @@ EXAMPLES = \
 	 Ring.class \
 	 connectivity_c
 
-# Default target.  Always build the C example.  Only build the others
-# if Open MPI was build with the relevant language bindings.
+# Default target.  Always build the C MPI examples.  Only build the
+# others if we have the appropriate Open MPI / OpenSHMEM language
+# bindings.
 
 all: hello_c ring_c connectivity_c
+	@ if which ompi_info 2>&1 >/dev/null; then \
+	    $(MAKE) mpi; \
+	fi
+
+# MPI examples
+
+mpi:
 	@ if ompi_info --parsable | grep bindings:cxx:yes >/dev/null; then \
 	    $(MAKE) hello_cxx ring_cxx; \
 	fi
@@ -84,19 +92,19 @@ clean:
 # Don't rely on default rules for the Fortran and Java examples
 
 hello_mpifh: hello_mpifh.f
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 ring_mpifh: ring_mpifh.f
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 
 hello_usempi: hello_usempi.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 ring_usempi: ring_usempi.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 
 hello_usempif08: hello_usempif08.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 ring_usempif08: ring_usempif08.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(FC) $(FCFLAGS) $? -o $@
 
 Hello.class: Hello.java
 	$(JAVAC) Hello.java
