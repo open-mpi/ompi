@@ -1760,8 +1760,21 @@ int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset)
     char tmp[BUFSIZ];
     const int stmp = sizeof(tmp) - 1;
     int **map;
+    hwloc_obj_t root;
+    opal_hwloc_topo_data_t *sum;
 
     str[0] = tmp[stmp] = '\0';
+
+    /* if the cpuset includes all available cpus, then we are unbound */
+    root = hwloc_get_root_obj(opal_hwloc_topology);
+    if (NULL != root->userdata) {
+        sum = (opal_hwloc_topo_data_t*)root->userdata;
+        if (NULL != sum->available) {
+            if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
+                return OPAL_ERR_NOT_BOUND;
+            }
+        }
+    }
 
     if (OPAL_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map))) {
         return ret;
@@ -1804,8 +1817,21 @@ int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
     int core_index, pu_index;
     const int stmp = sizeof(tmp) - 1;
     hwloc_obj_t socket, core, pu;
+    hwloc_obj_t root;
+    opal_hwloc_topo_data_t *sum;
 
     str[0] = tmp[stmp] = '\0';
+
+    /* if the cpuset includes all available cpus, then we are unbound */
+    root = hwloc_get_root_obj(opal_hwloc_topology);
+    if (NULL != root->userdata) {
+        sum = (opal_hwloc_topo_data_t*)root->userdata;
+        if (NULL != sum->available) {
+            if (0 != hwloc_bitmap_isincluded(sum->available, cpuset)) {
+                return OPAL_ERR_NOT_BOUND;
+            }
+        }
+    }
 
     /* Iterate over all existing sockets */
     for (socket = hwloc_get_obj_by_type(opal_hwloc_topology, 
