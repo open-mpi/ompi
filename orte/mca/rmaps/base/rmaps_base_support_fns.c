@@ -497,14 +497,26 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      node->name, node->slots - node->slots_inuse));
                 num_slots += node->slots - node->slots_inuse;
+        } else if (!(ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
+                /* nothing needed to do here - we don't add slots to the
+                 * count as we don't have any available. Just let the mapper
+                 * do what it needs to do to meet the request
+                 */
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
+                                     "%s node %s is fully used, but available for oversubscrition",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     node->name));
+        } else {
+            /* if we cannot use it, remove it from list */
+            opal_list_remove_item(allocated_nodes, item);
+            OBJ_RELEASE(item);  /* "un-retain" it */
         }
-
         /** go on to next item */
         item = next;
     }
 
     /* Sanity check to make sure we have resources available */
-    if (0 == num_slots) {
+    if (0 == opal_list_get_size(allocated_nodes)) {
         if (silent) {
             /* let the caller know that the resources exist,
              * but are currently busy
