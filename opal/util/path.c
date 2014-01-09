@@ -522,7 +522,7 @@ again:
     for (i = 0; i < FS_TYPES_NUM; i++) {
 #if defined(HAVE_STATFS)
         /* These are uses of struct statfs */
-#    if defined(HAVE_STRUCT_STATFS_F_FSNAME)
+#    if defined(HAVE_STRUCT_STATFS_F_FSTYPENAME)
         if (0 == fsrc &&
             0 == strncasecmp(fs_types[i].f_fsname, fsbuf.f_fstypename, 
                              sizeof(fsbuf.f_fstypename))) {
