@@ -23,9 +23,6 @@
 #include <portals4.h>
 #include <btl_portals4_frag.h>
 
-#define MEMORY_MAX_SIZE   ((long int)1<<48)
-#define EXTENDED_ADDR     (0xffff000000000000)
-
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 #include "opal/datatype/opal_convertor.h"
@@ -41,9 +38,11 @@ struct mca_btl_portals4_component_t {
     /* base BTL component */
     mca_btl_base_component_2_0_0_t super;
     
-    /* output channel for debugging */
-    int portals_verbosity;
- 
+    unsigned int num_btls;
+    unsigned int max_btls; /* Maximum number of accepted Portals4 cards */
+
+    struct mca_btl_portals4_module_t** btls; /* array of available BTL modules */
+
     /* initial size of free lists */
     int portals_free_list_init_num;
     /* max size of free lists */
@@ -56,6 +55,19 @@ struct mca_btl_portals4_component_t {
 
     /* do I need a portals ACK? */
     int portals_need_ack;
+
+    /** Length of the receive event queues */
+    int recv_queue_size;
+
+    /* number outstanding sends and local rdma */
+    int32_t portals_max_outstanding_ops;
+
+    /* incoming send message receive memory descriptors */
+    int portals_recv_mds_num;
+    int portals_recv_mds_size;
+
+    /** Event queue handles table used in PtlEQPoll */
+    ptl_handle_eq_t *eqs_h;
 };
 
 typedef struct mca_btl_portals4_component_t mca_btl_portals4_component_t;
@@ -68,17 +80,14 @@ struct mca_btl_portals4_module_t {
        know when to do activation / shutdown */
     int32_t portals_num_procs;
 
-    /* Process_id */
-    ptl_process_t ptl_process_id;
+    /* number of the interface (btl) */
+    uint32_t interface_num;
 
     /* fragment free lists */
     ompi_free_list_t portals_frag_eager;
     ompi_free_list_t portals_frag_max;
     ompi_free_list_t portals_frag_user;
 
-    /* incoming send message receive memory descriptors */
-    int portals_recv_mds_num;
-    int portals_recv_mds_size;
     opal_list_t portals_recv_blocks;
 
     /** Length of the receive event queues */
@@ -116,10 +125,6 @@ struct mca_btl_portals4_module_t {
 };
 
 typedef struct mca_btl_portals4_module_t mca_btl_portals4_module_t;
-
-extern mca_btl_portals4_module_t mca_btl_portals4_module;
-
-#define REQ_RECV_TABLE_ID    12
 
 /* match/ignore bit manipulation
  *
@@ -168,15 +173,15 @@ extern mca_btl_portals4_module_t mca_btl_portals4_module;
  * memory.
  */
 static inline void
-ompi_btl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr)
+ompi_btl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr, mca_btl_portals4_module_t *portals4_btl)
 {
 #if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
     int mask = (1ULL << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1)) - 1;
     int which = (((uintptr_t) ptr) >> (OMPI_PORTALS4_MAX_MD_SIZE - 1)) & mask;
-    *md_h = mca_btl_portals4_module.send_md_hs[which];
+    *md_h = portals4_btl->send_md_hs[which];
     *base_ptr = (void*) (which * (1ULL << (OMPI_PORTALS4_MAX_MD_SIZE - 1)));
 #else
-    *md_h = mca_btl_portals4_module.send_md_h;
+    *md_h = portals4_btl->send_md_h;
     *base_ptr = 0;
 #endif
 }
@@ -193,6 +198,7 @@ mca_btl_portals4_get_num_mds(void)
 }
 
 int mca_btl_portals4_component_progress(void);
+void mca_btl_portals4_free_module(mca_btl_portals4_module_t *portals4_btl);
 
 /* BTL interface functions */
 int mca_btl_portals4_finalize(struct mca_btl_base_module_t* btl_base);

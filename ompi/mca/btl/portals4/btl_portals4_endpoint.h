@@ -29,15 +29,6 @@ BEGIN_C_DECLS
  * An instance of mca_btl_base_endpoint_t is associated w/ each process
  * and BTL pair at startup. However, connections to the endpoint
  * are established dynamically on an as-needed basis:
- *
- * The MTL, OSC, and COLL components expect the ptl_process_t to be
- * hanging off the PORTALS4 tag in the proc_endpoints.  That's not
- * entirely convenient for the BTL, since we get an endpoint, not an
- * ompi_proc_t.  So we store the ptl_process_t in both places.  Since
- * the btl_base_endpoint_t is just a ptl_process_t, we use the same
- * storage for both.  During tear-down, it's entirely possible that
- * the MTL is going to free the PORTALS4 memory, so we need to be
- * careful during del_procs.
  */
 struct mca_btl_base_endpoint_t {
     ptl_process_t ptl_proc;

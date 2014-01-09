@@ -29,7 +29,6 @@ struct mca_btl_portals4_recv_block_t {
     void *start; 
     size_t length;
     ptl_handle_me_t me_h;
-    ptl_handle_md_t md_h;
 
     volatile bool full;
     volatile int32_t pending;
@@ -70,6 +69,7 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
     ptl_me_t me;
     ptl_process_t remote_proc;
     ptl_match_bits_t match_bits, ignore_bits;
+    mca_btl_portals4_module_t *btl = block->btl;
 
     if (NULL == block->start) return OMPI_ERROR;
 
@@ -79,7 +79,7 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
     me.start = block->start;
     me.length = block->length;
     me.ct_handle = PTL_CT_NONE;
-    me.min_free = mca_btl_portals4_module.super.btl_eager_limit;
+    me.min_free = btl->super.btl_eager_limit;
     me.uid = PTL_UID_ANY;
     me.options =
         PTL_ME_OP_PUT |
@@ -98,19 +98,20 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
     block->full = false;
     opal_atomic_mb();
 
-    ret = PtlMEAppend(mca_btl_portals4_module.portals_ni_h,
-                      mca_btl_portals4_module.recv_idx,
+    ret = PtlMEAppend(btl->portals_ni_h,
+                      btl->recv_idx,
                       &me,
                       PTL_PRIORITY_LIST,
                       block,
                       &block->me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, ompi_btl_base_framework.framework_output,
-                            "%s:%d: PtlMEAppend failed: %d",
-                            __FILE__, __LINE__, ret);
+                            "%s:%d: PtlMEAppend failed on NI %d: %d",
+                            __FILE__, __LINE__, btl->interface_num, ret);
         return OMPI_ERROR;
     }
-    OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "PtlMEAppend (recv) block=%p me_h=%d start=%p len=%x\n", (void *)block, block->me_h, block->start, (unsigned int) block->length));
+    OPAL_OUTPUT_VERBOSE((90, ompi_btl_base_framework.framework_output, "PtlMEAppend (recv) block=%p me_h=%d start=%p len=%x NI=%d\n",
+        (void *)block, block->me_h, block->start, (unsigned int) block->length, btl->interface_num));
 
     return OMPI_SUCCESS;
 }
