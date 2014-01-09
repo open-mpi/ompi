@@ -490,22 +490,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                  node->name, node->slots, node->slots_inuse));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
-        } else {
-            if (node->slots > node->slots_inuse) {
+        } else if (node->slots > node->slots_inuse) {
                 /* add the available slots */
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                      "%s node %s has %d slots available",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     node->name, node->slots));
+                                     node->name, node->slots - node->slots_inuse));
                 num_slots += node->slots - node->slots_inuse;
-            } else {
-                /* always allocate at least one */
-                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                     "%s node %s has %d slots %d used",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     node->name, node->slots, node->slots_inuse));
-                num_slots++;
-            }
         }
 
         /** go on to next item */
