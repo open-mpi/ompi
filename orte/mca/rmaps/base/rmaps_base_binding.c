@@ -157,6 +157,9 @@ static int bind_upwards(orte_job_t *jdata,
          */
         if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
             HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "Unable to bind-to core by default on node %s as no cores detected",
+                                node->name);
             continue;
         }
 
@@ -331,6 +334,9 @@ static int bind_downwards(orte_job_t *jdata,
          */
         if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
             HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "Unable to bind-to core by default on node %s as no cores detected",
+                                node->name);
             continue;
         }
 
@@ -507,6 +513,9 @@ static int bind_in_place(orte_job_t *jdata,
          */
         if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
             HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "Unable to bind-to core by default on node %s as no cores detected",
+                                node->name);
             continue;
         }
 
