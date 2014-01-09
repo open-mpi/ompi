@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -374,7 +374,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     /* Mapping options */
     { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Mapping Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
+      "Mapping Policy [slot | hwthread | core | socket (default) | numa | board | node]" },
 
       /* Ranking options */
     { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
@@ -384,7 +384,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       /* Binding options */
     { "hwloc_base_binding_policy", '\0', NULL, "bind-to", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Policy for binding processes [none (default) | hwthread | core | socket | numa | board] (supported qualifiers: overload-allowed,if-supported)" },
+      "Policy for binding processes [none | hwthread | core (default) | socket | numa | board] (supported qualifiers: overload-allowed,if-supported)" },
 
     /* backward compatiblity */
     { "hwloc_base_bind_to_core", '\0', "bind-to-core", "bind-to-core", 0,
