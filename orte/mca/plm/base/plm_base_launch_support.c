@@ -725,7 +725,9 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         }
         daemon->state = ORTE_PROC_STATE_RUNNING;
         daemon->rml_uri = rml_uri;
-        
+        /* record that this daemon is alive */
+        daemon->alive = true;
+
         /* unpack the node name */
         idx = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nodename, &idx, OPAL_STRING))) {
@@ -1253,13 +1255,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         } else {
             opal_argv_append(argc, argv, tmp_value[0]);
         }
-    }
-
-    if (NULL != orte_selected_oob_component) {
-        /* ensure we all use the same OOB component */
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "oob");
-        opal_argv_append(argc, argv, orte_selected_oob_component);
     }
 
     /* pass along any cmd line MCA params provided to mpirun,
