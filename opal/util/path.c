@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -31,6 +31,9 @@
 #ifdef HAVE_SHLWAPI_H
 #include <shlwapi.h>
 #endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
 #endif
@@ -46,6 +49,9 @@
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
 #endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
 #endif
@@ -55,6 +61,13 @@
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
 #include "opal/util/argv.h"
+
+/*
+ * Sanity check to ensure we have either statfs or statvfs
+ */
+#if !defined(HAVE_STATFS) && !defined(HAVE_STATVFS)
+#error Must have either statfs() or statvfs()
+#endif
 
 static void path_env_load(char *path, int *pargc, char ***pargv);
 static char *list_env_get(char *var, char **list);
@@ -428,13 +441,14 @@ char* opal_find_absolute_path( char* app_name )
 bool opal_path_nfs(char *fname)
 {
     int i;
-    int rc;
+    int fsrc, vfsrc;
     int trials;
     char * file = strdup (fname);
-#if defined(__SVR4) && defined(__sun)
-    struct statvfs buf;
-#elif defined(__linux__) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
-    struct statfs buf;
+#if defined(HAVE_STATFS)
+    struct statfs fsbuf;
+#endif
+#if defined(HAVE_STATVFS)
+    struct statvfs vfsbuf;
 #endif
     /*
      * Be sure to update the test (test/util/opal_path_nfs.c) 
@@ -448,26 +462,31 @@ bool opal_path_nfs(char *fname)
         {LL_SUPER_MAGIC,                   MASK4, "lustre"},
         {NFS_SUPER_MAGIC,                  MASK2, "nfs"},
         {PAN_KERNEL_FS_CLIENT_SUPER_MAGIC, MASK4, "panfs"},
-        {GPFS_SUPER_MAGIC, MASK4, "gpfs"}
+        {GPFS_SUPER_MAGIC,                 MASK4, "gpfs"}
     };
 #define FS_TYPES_NUM (int)(sizeof (fs_types)/sizeof (fs_types[0]))
 
     /*
-     * First, get the OS-dependent struct stat(v)fs buf
-     * This may return the ESTALE error on NFS, if the underlying file/path has changed
+     * First, get the OS-dependent struct stat(v)fs buf.  This may
+     * return the ESTALE error on NFS, if the underlying file/path has
+     * changed.
      */
 again:
+#if defined(HAVE_STATFS)
     trials = 5;
     do {
-#if defined(__SVR4) && defined(__sun)
-        rc = statvfs (file, &buf);
-#elif defined(__linux__) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
-        rc = statfs (file, &buf);
+        fsrc = statfs(file, &fsbuf);
+    } while (-1 == fsrc && ESTALE == errno && (0 < --trials));
 #endif
-    } while (-1 == rc && ESTALE == errno && (0 < --trials));
+#if defined(HAVE_STATVFS)
+    trials = 5;
+    do {
+        vfsrc = statvfs(file, &vfsbuf);
+    } while (-1 == vfsrc && ESTALE == errno && (0 < --trials));
+#endif
 
     /* In case some error with the current filename, try the directory */
-    if (-1 == rc) {
+    if (-1 == fsrc && -1 == vfsrc) {
         char * last_sep;
 
         OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: stat(v)fs on file:%s failed errno:%d directory:%s\n",
@@ -486,23 +505,33 @@ again:
     }
 
     /* Next, extract the magic value */
-#if defined(__SVR4) && defined(__sun)
-    for (i = 0; i < FS_TYPES_NUM; i++) 
-        if (0 == strncasecmp (fs_types[i].f_fsname, buf.f_basetype, FSTYPSZ))
+    for (i = 0; i < FS_TYPES_NUM; i++) {
+#if defined(HAVE_STATFS)
+        /* These are uses of struct statfs */
+#    if defined(HAVE_STRUCT_STATFS_F_FSNAME)
+        if (0 == fsrc &&
+            0 == strncasecmp(fs_types[i].f_fsname, fsbuf.f_fstypename, 
+                             sizeof(fsbuf.f_fstypename))) {
             goto found;
-#elif (defined(__APPLE__) && defined(__MACH__))
-    for (i = 0; i < FS_TYPES_NUM; i++)
-        if (0 == strncasecmp (fs_types[i].f_fsname, buf.f_fstypename, MFSTYPENAMELEN))
+        }
+#    endif
+#    if defined(HAVE_STRUCT_STATFS_F_TYPE)
+        if (0 == fsrc &&
+            fs_types[i].f_fsid == (fsbuf.f_type & fs_types[i].f_mask)) {
             goto found;
-#elif defined(__BSD)
-    for (i = 0; i < FS_TYPES_NUM; i++)
-        if (0 == strncasecmp (fs_types[i].f_fsname, buf.f_fstypename, MFSNAMELEN))
-            goto found;
-#elif defined(__linux__)
-    for (i = 0; i < FS_TYPES_NUM; i++)
-        if (fs_types[i].f_fsid == (buf.f_type & fs_types[i].f_mask))
-            goto found;
+        }
+#    endif
 #endif
+#if defined(HAVE_STATVFS)
+        /* This is a use of struct statvfs */
+#    if defined(HAVE_STRUCT_STATVFS_F_BASETYPE) && defined(FSTYPSZ)
+        if (0 == vfsrc &&
+            0 == strncasecmp(fs_types[i].f_fsname, vfsbuf.f_basetype, FSTYPSZ)) {
+            goto found;
+        }
+#    endif
+#endif
+    }
 
     free (file);
     return false;
@@ -523,10 +552,10 @@ opal_path_df(const char *path,
     int rc = -1;
     int trials = 5;
     int err = 0;
-#if defined(__SVR4) && defined(__sun)
-    struct statvfs buf;
-#else
+#if defined(HAVE_STATFS)
     struct statfs buf;
+#elif defined(HAVE_STATVFS)
+    struct statvfs buf;
 #endif
 
     if (NULL == path || NULL == out_avail) {
@@ -535,10 +564,10 @@ opal_path_df(const char *path,
     *out_avail = 0;
 
     do {
-#if defined(__SVR4) && defined(__sun)
-        rc = statvfs(path, &buf);
-#else
+#if defined(HAVE_STATFS)
         rc = statfs(path, &buf);
+#elif defined(HAVE_STATVFS)
+        rc = statvfs(path, &buf);
 #endif
         err = errno;
     } while (-1 == rc && ESTALE == err && (--trials > 0));
