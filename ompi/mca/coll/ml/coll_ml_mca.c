@@ -50,7 +50,8 @@ enum {
 mca_base_var_enum_value_t fragmentation_enable_enum[] = {
     {0, "disable"},
     {1, "enable"},
-    {2, "auto"}
+    {2, "auto"},
+    {-1, NULL}
 };
 
 /*
