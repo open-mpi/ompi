@@ -14,7 +14,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -358,7 +358,8 @@ int mca_mpool_udreg_register(mca_mpool_base_module_t *mpool, void *addr,
                (urc = UDREG_Register (mpool_udreg->udreg_handle, addr, size, &udreg_entry))) {
             /* try to remove one unused reg and retry */
             if (!mca_mpool_udreg_evict (mpool)) {
-                break;
+                *reg = NULL;
+                return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
 
@@ -369,14 +370,11 @@ int mca_mpool_udreg_register(mca_mpool_base_module_t *mpool, void *addr,
         while (NULL == (udreg_reg = mca_mpool_udreg_reg_func (addr, size, mpool))) {
             /* try to remove one unused reg and retry */
             if (!mca_mpool_udreg_evict (mpool)) {
-                break;
+                *reg = NULL;
+                return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
         udreg_reg->mpool_context = NULL;
-    }
-
-    if (NULL == udreg_reg) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     udreg_reg->flags = flags;
