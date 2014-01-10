@@ -372,7 +372,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
             ret = hdl->hdl_send(hdl, hdl->endpoint, hdl_desc);
             if (ret !=  OMPI_SUCCESS) {
                 BASESMUMA_VERBOSE(1, ("send eror on rank %d ........", my_rank));
-                goto ERROR;
+                goto exit_ERROR;
             }
         }
     }else if(LEAF_NODE == my_fanout_read_tree->my_node_type) {
@@ -401,7 +401,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
 #endif
 		if (OMPI_SUCCESS != ret) {
             BASESMUMA_VERBOSE(1, ("recvi eror on rank %d ........", my_rank));
-            goto ERROR;
+            goto exit_ERROR;
         }
 
         status = false;
@@ -430,11 +430,11 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
 
         ret = hdl->hdl_recv(hdl, hdl->endpoint, hdl_desc);
 		if (OMPI_SUCCESS != ret) {
-            goto ERROR;
+            goto exit_ERROR;
         }
 		if (OMPI_SUCCESS != ret) {
             BASESMUMA_VERBOSE(1, ("recvi eror on rank %d ........", my_rank));
-            goto ERROR;
+            goto exit_ERROR;
         }
 		
         /* Signal to children that they may read the data from my shared buffer */
@@ -449,7 +449,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
             ret = hdl->hdl_send(hdl, hdl->endpoint, hdl_desc);
             if (ret !=  OMPI_SUCCESS) {
                 BASESMUMA_VERBOSE(1, ("send eror on rank %d ........", my_rank));
-                goto ERROR;
+                goto exit_ERROR;
             }
         }
         goto Release;
@@ -467,7 +467,7 @@ Release:
     my_ctl_pointer->starting_flag_value += 1;
 
     return BCOL_FN_COMPLETE;
-ERROR:
+exit_ERROR:
     return OMPI_ERROR;
 }
 #endif 

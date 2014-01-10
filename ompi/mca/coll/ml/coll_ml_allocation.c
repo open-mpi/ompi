@@ -47,12 +47,12 @@ ml_memory_block_desc_t *mca_coll_ml_allocate_block(
     if (!memory_block->block){
         ML_ERROR(("lmngr failed."));
         ret = NULL;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     return memory_block;
 
-ERROR:
+exit_ERROR:
     if (memory_block){
         free(memory_block);
         return ret;
@@ -99,13 +99,13 @@ int mca_coll_ml_initialize_block(
     if (NULL == ml_memblock){
         ML_ERROR(("Memory block not initialized"));
         ret = OMPI_ERROR;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     if (ml_memblock->size_block < (num_buffers * num_banks * buffer_size) ){
         ML_ERROR(("Not enough memory for all buffers  and banks in the memory block"));
         ret = OMPI_ERROR;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     pbuff_descs = (ml_payload_buffer_desc_t*) malloc(sizeof(ml_payload_buffer_desc_t)
@@ -136,19 +136,19 @@ int mca_coll_ml_initialize_block(
             num_banks);
     if (NULL == ml_memblock->bank_release_counters) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     ml_memblock->ready_for_memsync = (bool *)malloc(sizeof(bool) * num_banks);
     if (NULL == ml_memblock->ready_for_memsync) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     ml_memblock->bank_is_busy = (bool *)malloc(sizeof(bool) * num_banks);
     if (NULL == ml_memblock->bank_is_busy) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto ERROR;
+        goto exit_ERROR;
     }
 
     /* Set index for first bank to sync */
@@ -177,7 +177,7 @@ int mca_coll_ml_initialize_block(
 
     return ret;
 
-ERROR:
+exit_ERROR:
     /* Free all buffer descriptors */
     if (pbuff_descs){
         free(pbuff_descs);
