@@ -98,7 +98,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot assigning %d procs to node %s",
                             (int)num_procs_to_assign, node->name);
-         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
+
+        for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
             /* add this node to the map - do it only once */
             if (!node->mapped) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
@@ -507,18 +508,8 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                            true, node->name);
             return ORTE_ERR_SILENT;
         }
-        /* add this node to the map, if reqd */
-        if (!node->mapped) {
-            if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                ORTE_ERROR_LOG(idx);
-                return idx;
-            }
-            node->mapped = true;
-            OBJ_RETAIN(node);  /* maintain accounting on object */
-            ++(jdata->map->num_nodes);
-        }
 
-         /* compute the number of procs to go on this node */
+        /* compute the number of procs to go on this node */
         if (add_one) {
             if (0 == nxtra_nodes) {
                 --extra_procs_to_assign;
@@ -538,6 +529,29 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             }
         }
 
+        /* if this would oversubscribe the node and the user hasn't permitted
+         * oversubscription, then don't use it - since the total number of
+         * slots is adequate for this app, there should be room somewhere else
+         */
+        if (node->slots < (node->slots_inuse + num_procs_to_assign) &&
+            ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: mapping no-span would oversubscribe node %s - ignoring it",
+                                node->name);
+            continue;
+        }
+
+        /* add this node to the map, if reqd */
+        if (!node->mapped) {
+            if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                ORTE_ERROR_LOG(idx);
+                return idx;
+            }
+            node->mapped = true;
+            OBJ_RETAIN(node);  /* maintain accounting on object */
+            ++(jdata->map->num_nodes);
+        }
+
         /* get the number of objects of this type on this node */
         nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
@@ -551,7 +565,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
         if (0 == nobjs) {
             if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
-                           true,  hwloc_obj_type_string(target), node->name);
+                               true,  hwloc_obj_type_string(target), node->name);
                 return ORTE_ERR_SILENT;
             } else {
                 /* this was the default mapping policy, so clear the map

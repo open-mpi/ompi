@@ -433,6 +433,23 @@ static int do_child(orte_app_context_t* context,
 
             /* Set process affinity, if given */
             if (NULL != child->cpu_bitmap) {
+                if (0 == strlen(child->cpu_bitmap)) {
+                    /* this proc is not bound */
+                    if (opal_hwloc_report_bindings) {
+                        opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
+                        /* avoid reporting it twice */
+                        (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
+                        opal_unsetenv(param, &environ_copy);
+                        free(param);
+                    }
+                    /* Set an info MCA param that tells
+                       the launched processes that it was bound by us (e.g., so that
+                       MPI_INIT doesn't try to bind itself) */
+                    (void) mca_base_var_env_name ("orte_bound_at_launch", &param);
+                    opal_setenv(param, "1", true, &environ_copy);
+                    free(param);
+                    goto PROCEED;
+                }
                 /* convert the list to a cpu bitmap */
                 cpuset = hwloc_bitmap_alloc();
                 if (0 != (rc = hwloc_bitmap_list_sscanf(cpuset, child->cpu_bitmap))) {
