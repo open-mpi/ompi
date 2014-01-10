@@ -13,8 +13,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #  include <sys/mman.h>
 #endif
-#ifdef HAVE_MALLOC_H
-#  include <malloc.h>
+/* <malloc.h> is only needed if we don't have posix_memalign() */
+#if defined(hwloc_getpagesize) && !defined(HAVE_POSIX_MEMALIGN) && defined(HAVE_MEMALIGN) && defined(HAVE_MALLOC_H)
+#include <malloc.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
