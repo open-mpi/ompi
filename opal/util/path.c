@@ -20,6 +20,8 @@
  */
 
 #include "opal_config.h"
+#include "opal/constants.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
