@@ -88,6 +88,10 @@ void ompi_info_do_config(bool want_all)
     char *fortran_build_f08_subarrays;
     char *fortran_have_optional_args;
     char *fortran_have_bind_c;
+    char *fortran_have_iso_c_binding;
+    char *fortran_have_bind_c_sub;
+    char *fortran_have_bind_c_type;
+    char *fortran_have_bind_c_type_name;
     char *fortran_have_private;
     char *fortran_have_abstract;
     char *fortran_have_asynchronous;
@@ -162,6 +166,12 @@ void ompi_info_do_config(bool want_all)
     fortran_have_optional_args = OMPI_FORTRAN_HAVE_OPTIONAL_ARGS ?
         "yes" : "no";
     fortran_have_bind_c = OMPI_FORTRAN_HAVE_BIND_C ? "yes" : "no";
+    fortran_have_iso_c_binding = OMPI_FORTRAN_HAVE_ISO_C_BINDING ?
+        "yes" : "no";
+    fortran_have_bind_c_sub = OMPI_FORTRAN_HAVE_BIND_C_SUB ? "yes" : "no";
+    fortran_have_bind_c_type = OMPI_FORTRAN_HAVE_BIND_C_TYPE ? "yes" : "no";
+    fortran_have_bind_c_type_name = OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME ? 
+        "yes" : "no";
     fortran_have_private = OMPI_FORTRAN_HAVE_PRIVATE ? "yes" : "no";
     fortran_have_abstract = OMPI_FORTRAN_HAVE_ABSTRACT ? "yes" : "no";
     fortran_have_asynchronous = OMPI_FORTRAN_HAVE_ASYNCHRONOUS ? "yes" : "no";
@@ -362,9 +372,21 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort optional args", 
                   "compiler:fortran:optional_arguments",
                   fortran_have_optional_args);
-    opal_info_out("Fort BIND(C)", 
+    opal_info_out("Fort BIND(C) (all)", 
                   "compiler:fortran:bind_c",
                   fortran_have_bind_c);
+    opal_info_out("Fort ISO_C_BINDING",
+                  "compiler:fortran:iso_c_binding",
+                  fortran_have_iso_c_binding);
+    opal_info_out("Fort SUBROUTINE BIND(C)", 
+                  "compiler:fortran:subroutine_bind_c",
+                  fortran_have_bind_c_sub);
+    opal_info_out("Fort TYPE,BIND(C)", 
+                  "compiler:fortran:type_bind_c",
+                  fortran_have_bind_c_type);
+    opal_info_out("Fort T,BIND(C,name=\"a\")", 
+                  "compiler:fortran:type_name_bind_c",
+                  fortran_have_bind_c_type_name);
     opal_info_out("Fort PRIVATE", 
                   "compiler:fortran:private",
                   fortran_have_private);

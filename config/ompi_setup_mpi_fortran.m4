@@ -37,6 +37,10 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_IGNORE_TKR=0
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     OMPI_FORTRAN_HAVE_BIND_C=0
+    OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
+    OMPI_FORTRAN_HAVE_BIND_C_SUB=0
+    OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
+    OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
     OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=0
     OMPI_FORTRAN_HAVE_PRIVATE=0
 
@@ -335,13 +339,48 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     # If we got all the stuff from above, then also look for the new
     # F08 syntax that we can use for the use_mpif08 module.
+
+    # The overall "_BIND_C" variable will be set to 1 if we have all
+    # the necessary forms of BIND(C)
     OMPI_FORTRAN_HAVE_BIND_C=0
+
+    OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [ # If we don't have BIND(C), we won't build mpi_f08 at all
-           OMPI_FORTRAN_CHECK_BIND_C(
-               [OMPI_FORTRAN_HAVE_BIND_C=1],
-               [OMPI_FORTRAN_HAVE_BIND_C=0
+          [ # If we don't have ISO C bindings, we won't build mpi_f08 at all
+           OMPI_FORTRAN_CHECK_ISO_C_BINDING(
+               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=1],
+               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
+    OMPI_FORTRAN_HAVE_BIND_C_SUB=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
+           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [ # If we don't have SUBROUTINE BIND(C), we won't build mpi_f08 at all
+           OMPI_FORTRAN_CHECK_BIND_C_SUB(
+               [OMPI_FORTRAN_HAVE_BIND_C_SUB=1],
+               [OMPI_FORTRAN_HAVE_BIND_C_SUB=0
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
+    OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
+           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [ # If we don't have TYPE, BIND(C), we won't build mpi_f08 at all
+           OMPI_FORTRAN_CHECK_BIND_C_SUB(
+               [OMPI_FORTRAN_HAVE_BIND_C_TYPE=1],
+               [OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
+    OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
+           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [ # If we don't have TYPE, BIND(C, name="foo"), we won't build mpi_f08 at all
+           OMPI_FORTRAN_CHECK_BIND_C_SUB(
+               [ # If we got here, we have all the required forms of
+                 # BIND(C), so set the top-level _BIND_C variable to 1.
+                OMPI_FORTRAN_HAVE_BIND_C=1
+                OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=1],
+               [OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
@@ -596,7 +635,19 @@ end type test_mpi_handle],
                        [For ompi_info: Whether the Fortran compiler supports the Fortran 2008 "assumed rank" syntax or not])
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C,
                        [$OMPI_FORTRAN_HAVE_BIND_C],
-                       [For ompi_info: Whether we want to use BIND(C) in the mpi_f08 module or not (based on "good" or "bad" compiler determination, i.e., whether we are using fortran wrapper functions for choice buffers or not)])
+                       [For ompi_info: Whether the compiler supports all forms of BIND(C) that we need])
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_ISO_C_BINDING,
+                       [$OMPI_FORTRAN_HAVE_ISO_C_BINDING],
+                       [For ompi_info: Whether the compiler supports ISO_C_BINDING or not])
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_SUB,
+                       [$OMPI_FORTRAN_HAVE_BIND_C_SUB],
+                       [For ompi_info: Whether the compiler supports SUBROUTINE ... BIND(C) or not])
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_TYPE,
+                       [$OMPI_FORTRAN_HAVE_BIND_C_TYPE],
+                       [For ompi_info: Whether the compiler supports TYPE, BIND(C) or not])
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME,
+                       [$OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME],
+                       [For ompi_info: Whether the compiler supports TYPE, BIND(C, NAME="name") or not])
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_OPTIONAL_ARGS], 
                        [$OMPI_FORTRAN_HAVE_OPTIONAL_ARGS],
                        [For ompi_info: whether the Fortran compiler supports optional arguments or not])
