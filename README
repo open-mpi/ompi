@@ -556,7 +556,6 @@ Network Support
     - Intel Phi SCIF
     - SMCUDA
     - SCTP
-    - uDAPL
     - Cisco usNIC
     - uGNI (Cray Gemini, Ares)
     - vader (XPMEM)
@@ -816,20 +815,6 @@ INSTALLATION OPTIONS
 
 NETWORKING SUPPORT / OPTIONS
 
---with-elan=<directory>
-  Specify the directory where the Quadrics Elan library and header
-  files are located.  This option is generally only necessary if the
-  Elan headers and libraries are not in default compiler/linker
-  search paths.
-
-  Elan is the support library for Quadrics-based networks.
-
---with-elan-libdir=<directory>
-  Look in directory for the Quadrics Elan libraries.  By default, Open
-  MPI will look in <elan directory>/lib and <elan directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
-
 --with-fca=<directory>
   Specify the directory where the Mellanox FCA library and
   header files are located.  
@@ -940,26 +925,6 @@ NETWORKING SUPPORT / OPTIONS
 
 --with-scif=<dir>
   Look in directory for Intel SCIF support libraries
-
---with-udapl=<directory>
-  Specify the directory where the UDAPL libraries and header files are
-  located.  Note that UDAPL support is disabled by default on Linux;
-  the --with-udapl flag must be specified in order to enable it.
-  Specifying the directory argument is generally only necessary if the
-  UDAPL headers and libraries are not in default compiler/linker
-  search paths.
-
-  UDAPL is the support library for high performance networks in Oracle
-  Message Passing Toolkit, and also available on Linux OpenFabrics
-  networks (although the "openib" options are preferred for Linux
-  OpenFabrics networks, not UDAPL).  To be clear: the UDAPL BTL is
-  *not* recommended for Linux/OpenFabrics platforms.
-
---with-udapl-libdir=<directory>
-  Look in directory for the UDAPL libraries.  By default, Open MPI
-  will look in <udapl directory>/lib and <udapl directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
 
 RUN-TIME SYSTEM SUPPORT
 
