@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +26,13 @@
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
 #include <infiniband/verbs.h>
 #endif /* MPAGE_ENABLE */
+
+#if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
+#    define MAP_ANONYMOUS MAP_ANON
+#endif /* MAP_ANONYMOUS and MAP_ANON */
+#if !defined(MAP_FAILED)
+#    define MAP_FAILED ((char*)-1)
+#endif /* MAP_FAILED */
 
 extern char* mca_memheap_base_param_hca_name;
 
@@ -278,10 +286,8 @@ static int _mmap_attach(map_segment_t *s, size_t size)
                 size,
                 PROT_READ | PROT_WRITE,
                 MAP_SHARED |
-#if defined (__APPLE__)
-MAP_ANON |
-#elif defined (__GNUC__)
-MAP_ANONYMOUS |
+#if defined(MAP_ANONYMOUS)
+                MAP_ANONYMOUS |
 #endif
                 MAP_FIXED,
                 0,
