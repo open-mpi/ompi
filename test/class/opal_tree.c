@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     opal_tree_t tree, x;
     opal_buffer_t *serial_tree;
     size_t i, j, tree_size, size_levels, size_elements, total_elements;
-    int err_order, err_ancestor, err_parent, rc;
+    int err_order, err_ancestor, rc;
     unsigned key;
     test_data_t *elements;
     opal_tree_item_t *item, *rm_item;
@@ -126,7 +126,6 @@ int main(int argc, char **argv)
     /* check that we have correct tree ordering */
     err_order = 0;
     err_ancestor = 0;
-    err_parent = 0;
     if (!opal_tree_is_empty(&tree)) {
         item = opal_tree_get_root(&tree);
         i = 0;
@@ -186,6 +185,9 @@ int main(int argc, char **argv)
     tree_size=opal_tree_get_size(&tree);
     item = opal_tree_find_with(opal_tree_get_root(&tree), (void*)&key);
     rm_item = opal_tree_remove_subtree(item);
+    if (NULL == rm_item) {
+        test_failure(" rm_item should not be NULL");
+    }
     /* validate the tree count adjusted */
     if (5 != (tree_size - opal_tree_get_size(&tree))) {
 	test_failure(" failed subtree removal tree size test");	
