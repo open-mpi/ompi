@@ -44,11 +44,11 @@ static void test(bool thread_usage){
     value_t *test_data;
     int len_test_data,i,test_len_in_array,error_cnt;
     int ele_index;
-    int use_threads,error_code;
+    int error_code;
     value_t value;
 
     /* initialize thread levels */
-    use_threads=(int)opal_set_using_threads(thread_usage);
+    opal_set_using_threads(thread_usage);
     
     array=OBJ_NEW(opal_pointer_array_t);
     assert(array);
