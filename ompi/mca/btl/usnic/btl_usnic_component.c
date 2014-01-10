@@ -949,7 +949,7 @@ static int usnic_component_progress(void)
             if (ibv_poll_cq(channel->cq, 1, &wc) == 1) {
                 if (OPAL_LIKELY(wc.opcode == IBV_WC_RECV &&
                                 wc.status == IBV_WC_SUCCESS)) {
-                    rseg = (ompi_btl_usnic_recv_segment_t*)wc.wr_id;
+                    rseg = (ompi_btl_usnic_recv_segment_t*)(intptr_t)wc.wr_id;
                     ompi_btl_usnic_recv_fast(module, rseg, channel);
                     fastpath_ok = false;    /* prevent starvation */
                     return 1;
