@@ -246,7 +246,7 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
         }
         for (i=0;i<k;i++){
             per_process[i].offset =
-                (OMPI_MPI_OFFSET_TYPE)iov[i].iov_base;
+                (OMPI_MPI_OFFSET_TYPE)(intptr_t)iov[i].iov_base;
             per_process[i].length =
                 (MPI_Aint)iov[i].iov_len;
             per_process[i].process_id = fh->f_rank;
