@@ -3,6 +3,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -384,7 +385,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
     input_file.file_name=cs->sm_ctl_structs->map_path;
     input_file.size=cs->sm_ctl_structs->map_size;
     input_file.size_ctl_structure=0;
-    input_file.data_seg_alignment=CACHE_LINE_SIZE;
+    input_file.data_seg_alignment=BASESMUMA_CACHE_LINE_SIZE;
     input_file.mpool_size=cs->sm_ctl_structs->map_size;
     ret=bcol_basesmuma_smcm_allgather_connection(
         sm_bcol_module,
