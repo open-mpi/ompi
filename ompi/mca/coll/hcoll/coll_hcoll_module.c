@@ -10,6 +10,8 @@
 #include "ompi_config.h"
 #include "coll_hcoll.h"
 
+int hcoll_comm_attr_keyval;
+
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
@@ -57,6 +59,7 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
     am = &mca_coll_hcoll_component.active_modules;
 
     if (hcoll_module->comm == &ompi_mpi_comm_world.comm){
+#if 0
         /* If we get here then we are detroying MPI_COMM_WORLD now. So,
          * it is safe to destory all the other communicators and corresponding
          * hcoll contexts that could still be on the "active_modules" list.
@@ -86,6 +89,10 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
                                   (rte_grp_handle_t)hcoll_module->comm,
                                   &context_destroyed);
         }
+#endif
+        if (OMPI_SUCCESS != ompi_attr_free_keyval(COMM_ATTR, &hcoll_comm_attr_keyval, 0)) {
+            HCOL_VERBOSE(1,"hcoll ompi_attr_free_keyval failed");
+        }
     }
 
     OBJ_RELEASE(hcoll_module->previous_barrier_module);
@@ -104,6 +111,11 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
     OBJ_RELEASE(hcoll_module->previous_ibcast_module);
     OBJ_RELEASE(hcoll_module->previous_iallreduce_module);
     OBJ_RELEASE(hcoll_module->previous_iallgather_module);
+    context_destroyed = 0;
+    hcoll_destroy_context(hcoll_module->hcoll_context,
+                                  (rte_grp_handle_t)hcoll_module->comm,
+                                  &context_destroyed);
+    assert(context_destroyed);
 
     mca_coll_hcoll_module_clear(hcoll_module);
 }
@@ -142,7 +154,18 @@ static int __save_coll_handlers(mca_coll_hcoll_module_t *hcoll_module)
     return OMPI_SUCCESS;
 }
 
+/*
+** Communicator free callback
+*/
+int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, void *extra)
+{
 
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*) attr_val;
+
+    hcoll_group_destroy_notify(hcoll_module->hcoll_context);
+    return OMPI_SUCCESS;
+
+}
 /*
  * Initialize module on the communicator
  */
@@ -150,6 +173,7 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
                                         struct ompi_communicator_t *comm)
 {
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*) module;
+    int ret;
     hcoll_module->comm = comm;
     if (OMPI_SUCCESS != __save_coll_handlers(hcoll_module)){
         HCOL_ERROR("coll_hcol: __save_coll_handlers failed");
@@ -166,6 +190,7 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
         return OMPI_ERROR;
     }
 
+#if 0
     if (comm != &ompi_mpi_comm_world.comm){
         mca_coll_hcoll_module_list_item_wrapper_t *mw =
             OBJ_NEW(mca_coll_hcoll_module_list_item_wrapper_t);
@@ -173,6 +198,13 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
         OBJ_RETAIN(hcoll_module->comm);
         opal_list_append(&mca_coll_hcoll_component.active_modules,
                          (opal_list_item_t*)mw);
+    }
+#endif
+
+    ret = ompi_attr_set_c(COMM_ATTR, comm, &comm->c_keyhash, hcoll_comm_attr_keyval, (void *)hcoll_module, false);
+    if (OMPI_SUCCESS != ret) {
+        HCOL_VERBOSE(1,"hcoll ompi_attr_set_c failed");
+        return OMPI_ERROR;
     }
 
     return OMPI_SUCCESS;
@@ -197,7 +229,7 @@ int mca_coll_hcoll_progress(void)
     if (ompi_mpi_finalized){
         hcoll_rte_p2p_disabled_notify();
     }
-
+#if 0
     item = opal_list_get_first(am);
     while (item != opal_list_get_end(am)){
         item_next = opal_list_get_next(item);
@@ -225,10 +257,9 @@ int mca_coll_hcoll_progress(void)
         }
         item = item_next;
     }
+#endif
 
-    if (!ompi_mpi_finalized) {
-        (*hcoll_progress_fn)();
-    }
+    (*hcoll_progress_fn)();
     OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
     return OMPI_SUCCESS;
 }
@@ -245,6 +276,9 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     mca_coll_base_module_t *module;
     mca_coll_hcoll_module_t *hcoll_module;
     static bool libhcoll_initialized = false;
+    ompi_attribute_fn_ptr_union_t del_fn;
+    ompi_attribute_fn_ptr_union_t copy_fn;
+    int err;
     int rc;
 
     *priority = 0;
@@ -269,6 +303,15 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
             HCOL_VERBOSE(0,"Hcol library init failed");
             return NULL;
         }
+
+        copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*) MPI_COMM_NULL_COPY_FN;
+        del_fn.attr_communicator_delete_fn = hcoll_comm_attr_del_fn; 
+        err = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn, &hcoll_comm_attr_keyval, NULL ,0, NULL);
+        if (OMPI_SUCCESS != err) {
+            HCOL_VERBOSE(0,"Hcol comm keyval create failed");
+            return NULL;
+        }
+
         libhcoll_initialized = true;
     }
     hcoll_module = OBJ_NEW(mca_coll_hcoll_module_t);

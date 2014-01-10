@@ -19,6 +19,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/op/op.h"
 
 #include "hcoll_api.h"
