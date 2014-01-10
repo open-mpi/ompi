@@ -180,7 +180,7 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
         return OMPI_ERROR;
     }
 
-    hcoll_set_runtime_tag_offset(-100,mca_pml.pml_max_tag);
+    hcoll_set_runtime_tag_offset(MCA_COLL_BASE_TAG_HCOLL_BASE, mca_pml.pml_max_tag);
 
 
     hcoll_module->hcoll_context =
