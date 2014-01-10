@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oak Ridge National Laboratory.  
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -35,10 +35,35 @@
 #define DEBUG
 */
 
+/*
+ * On Linux, if this test is run with no command line params, it will
+ * run "mount" and analyze the output.  It will slurp up all mount
+ * points and figure out if they are network mounts or not.  Then it
+ * will send each of the mount points through opal_path_nfs() and
+ * compare the answer it gets to the answer it slurped from the output
+ * of "mount".
+ *
+ * On all platforms, if you provide one or more command line options,
+ * each command line option is given to opal_path_nfs() and the result
+ * is sent to stdout.
+ */
+
 #if !defined(__linux__)
-/* This test currently only works on Linux */
 int main(int argc, char* argv[])
 {
+    if (argc > 1) {
+        int i;
+
+        printf("Interactive opal_path_nfs() test:\n");
+        for (i = 1; i < argc; i++) {
+            printf ("Is dir[%d]:%s one of the detected network file systems? %s\n",
+                    i, argv[i], opal_path_nfs (argv[i]) ? "Yes": "No");
+        }
+
+        return 0;
+    }
+
+    printf("No filename was given; nothing to do\n");
     return 77;
 }
 
