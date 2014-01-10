@@ -544,7 +544,7 @@ int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t
 
   OPAL_THREAD_LOCK(&comminfo->mutex);
   tmp_tag = comminfo->tag--;
-  if (tmp_tag == (-1 * mca_pml.pml_max_tag)) {
+  if (tmp_tag == MCA_COLL_BASE_TAG_NONBLOCKING_END) {
       tmp_tag = comminfo->tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
       NBC_DEBUG(2,"resetting tags ...\n"); 
   }
