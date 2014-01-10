@@ -135,7 +135,7 @@ ompi_btl_usnic_finish_put_or_send(
             /* no convertor */
             assert(NULL != frag->sf_base.uf_src_seg[1].seg_addr.pval);
 
-            memcpy(((char *)frag->sf_base.uf_src_seg[0].seg_addr.lval +
+            memcpy(((char *)(intptr_t)frag->sf_base.uf_src_seg[0].seg_addr.lval +
                         frag->sf_base.uf_src_seg[0].seg_len),
                     frag->sf_base.uf_src_seg[1].seg_addr.pval,
                     frag->sf_base.uf_src_seg[1].seg_len);

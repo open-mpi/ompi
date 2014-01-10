@@ -400,7 +400,7 @@ prepare_src_small(
         assert(payload_len <= module->max_frag_payload);
         usnic_convertor_pack_simple(
                 convertor,
-                (IOVBASE_TYPE*)(frag->sf_base.uf_src_seg[0].seg_addr.lval + reserve),
+                (IOVBASE_TYPE*)(intptr_t)(frag->sf_base.uf_src_seg[0].seg_addr.lval + reserve),
                 *size,
                 size);
         payload_len = reserve + *size;
@@ -1335,7 +1335,7 @@ usnic_send(
 
         /* make a copy of the data for retrans */
         if (frag->sf_base.uf_base.des_src_cnt > 1) {
-            memcpy(((char *)frag->sf_base.uf_src_seg[0].seg_addr.lval +
+            memcpy(((char *)(intptr_t)frag->sf_base.uf_src_seg[0].seg_addr.lval +
                      frag->sf_base.uf_src_seg[0].seg_len),
                     frag->sf_base.uf_src_seg[1].seg_addr.pval,
                     frag->sf_base.uf_src_seg[1].seg_len);
