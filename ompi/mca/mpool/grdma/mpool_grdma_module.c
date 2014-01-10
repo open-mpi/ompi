@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
@@ -30,9 +30,7 @@
 
 #include <errno.h>
 #include <string.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
+#include <stdlib.h>
 
 #include "opal/align.h"
 

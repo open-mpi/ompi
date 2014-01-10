@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -25,9 +25,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"

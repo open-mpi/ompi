@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,9 +24,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h> 
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
