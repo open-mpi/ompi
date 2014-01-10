@@ -15,7 +15,7 @@ Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013      Intel, Inc. All rights reserved 
+Copyright (c) 2013-2014 Intel, Inc. All rights reserved 
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -103,7 +103,7 @@ General notes
   - Linux (various flavors/distros), 32 bit, with gcc
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, and Portland (*)
-  - OS X (10.5, 10.6, 10.7), 32 and 64 bit (x86_64), with gcc and
+  - OS X (10.5, 10.6, 10.7, 10.8, 10.9), 32 and 64 bit (x86_64), with gcc and
     Absoft compilers (*)
 
   (*) Be sure to read the Compiler Notes, below.
@@ -443,10 +443,12 @@ Network Support
     - OpenFabrics: InfiniBand, iWARP, and RoCE
     - Loopback (send-to-self)
     - Myrinet MX and Open-MX
-    - Portals
+    - Portals4
     - Quadrics Elan
     - Shared memory
     - TCP
+    - Intel Phi SCIF
+    - SMCUDA
     - SCTP
     - uDAPL
     - Cisco usNIC
@@ -460,7 +462,7 @@ Network Support
     - Myrinet MX and Open-MX
     - InfiniPath PSM
     - Mellanox MXM
-    - Portals
+    - Portals4
 
     Open MPI will, by default, choose to use "cm" when the InfiniPath
     PSM or the Mellanox MXM MTL can be used.  Otherwise, "ob1" will be
@@ -528,7 +530,7 @@ Network Support
   Open MPI assumes that only naive one-sided communication
   capabilities are provided by the low level communication layers.
   However, modern communication layers such as Myrinet MX, InfiniPath
-  PSM, or Portals, natively implement highly-optimized two-sided
+  PSM, or Portals4, natively implement highly-optimized two-sided
   communication semantics.  To leverage these capabilities, Open MPI
   provides the "cm" PML and corresponding MTL components to transfer
   messages rather than bytes.  The MTL interface implements a shorter
@@ -764,22 +766,22 @@ NETWORKING SUPPORT / OPTIONS
 --with-openib-libdir=<directory>
   DEPRECATED synonym for --with-verbs-libdir.
 
---with-portals=<directory>
-  Specify the directory where the Portals libraries and header files
-  are located.  This option is generally only necessary if the Portals
+--with-portals4=<directory>
+  Specify the directory where the Portals4 libraries and header files
+  are located.  This option is generally only necessary if the Portals4
   headers and libraries are not in default compiler/linker search
   paths.
 
-  Portals is the support library for Cray interconnects, but is also
-  available on other platforms (e.g., there is a Portals library
+  Portals4 is the support library for Cray interconnects, but is also
+  available on other platforms (e.g., there is a Portals4 library
   implemented over regular TCP).
 
---with-portals-config=<type>
-  Configuration to use for Portals support. The following <type>
-  values are possible: "utcp", "xt3", "xt3-modex" (default: utcp).
+--with-portals4-libdir=<libdir>
+  Location of libraries to link with for Portals4 support.
 
---with-portals-libs=<libs>
-  Additional libraries to link with for Portals support.
+--with-portals4-max-md-size=SIZE
+--with-portals4-max-va-size=SIZE
+  Set configuration values for Portals 4
 
 --with-psm=<directory>
   Specify the directory where the Intel InfiniPath PSM library and
@@ -793,6 +795,9 @@ NETWORKING SUPPORT / OPTIONS
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
+
+--with-scif=<dir>
+  Look in directory for Intel SCIF support libraries
 
 RUN-TIME SYSTEM SUPPORT
 
