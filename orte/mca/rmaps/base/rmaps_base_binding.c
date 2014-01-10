@@ -150,6 +150,19 @@ static int bind_upwards(orte_job_t *jdata,
             }
         }
 
+        /* some systems do not report cores, and so we can get a situation where our
+         * default binding policy will fail for no necessary reason. So if we are
+         * computing a binding due to our default policy, and no cores are found
+         * on this node, just silently skip it - we will not bind
+         */
+        if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
+            HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "Unable to bind-to core by default on node %s as no cores detected",
+                                node->name);
+            continue;
+        }
+
         /* we share topologies in order
          * to save space, so we need to reset the usage info to reflect
          * our own current state
@@ -312,6 +325,19 @@ static int bind_downwards(orte_job_t *jdata,
                     return ORTE_ERR_SILENT;
                 }
             }
+        }
+
+        /* some systems do not report cores, and so we can get a situation where our
+         * default binding policy will fail for no necessary reason. So if we are
+         * computing a binding due to our default policy, and no cores are found
+         * on this node, just silently skip it - we will not bind
+         */
+        if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
+            HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "Unable to bind-to core by default on node %s as no cores detected",
+                                node->name);
+            continue;
         }
 
         /* we share topologies in order
@@ -478,6 +504,19 @@ static int bind_in_place(orte_job_t *jdata,
                     return ORTE_ERR_SILENT;
                 }
             }
+        }
+
+        /* some systems do not report cores, and so we can get a situation where our
+         * default binding policy will fail for no necessary reason. So if we are
+         * computing a binding due to our default policy, and no cores are found
+         * on this node, just silently skip it - we will not bind
+         */
+        if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
+            HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "Unable to bind-to core by default on node %s as no cores detected",
+                                node->name);
+            continue;
         }
 
         /* we share topologies in order
