@@ -1386,12 +1386,12 @@ static void dump_endpoint(ompi_btl_usnic_endpoint_t *endpoint)
 
     OPAL_LIST_FOREACH(frag, &endpoint->endpoint_frag_send_queue,
                       ompi_btl_usnic_frag_t) {
+        ompi_btl_usnic_small_send_frag_t *ssfrag;
+        ompi_btl_usnic_large_send_frag_t *lsfrag;
+
         snprintf(str, sizeof(str), "      --> frag %p, %s", (void *)frag,
                  usnic_frag_type(frag->uf_type));
         switch (frag->uf_type) {
-            ompi_btl_usnic_small_send_frag_t *ssfrag = NULL;
-            ompi_btl_usnic_large_send_frag_t *lsfrag = NULL;
-
             case OMPI_BTL_USNIC_FRAG_LARGE_SEND:
                 lsfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
                 snprintf(tmp, sizeof(tmp), " tag=%"PRIu8" id=%"PRIu32" offset=%llu/%llu post_cnt=%"PRIu32" ack_bytes_left=%llu\n",
