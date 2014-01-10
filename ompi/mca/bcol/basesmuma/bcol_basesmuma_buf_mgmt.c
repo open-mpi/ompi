@@ -3,6 +3,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -392,7 +393,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
 	input_file.file_name = sm_reg_data->file_name;
 	input_file.size = sm_reg_data->size;
 	input_file.size_ctl_structure = 0;
-	input_file.data_seg_alignment = CACHE_LINE_SIZE;
+	input_file.data_seg_alignment = BASESMUMA_CACHE_LINE_SIZE;
 	input_file.mpool_size = sm_reg_data->size;
 
 	/* call the connection manager and map my shared memory peers' file

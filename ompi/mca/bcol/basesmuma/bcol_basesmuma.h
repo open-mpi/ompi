@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +49,7 @@ OBJ_CLASS_DECLARATION(list_data_t);
  * synchronous, and get the upper 48 bits from the local process space.
  */
 
-#define CACHE_LINE_SIZE 128 
+#define BASESMUMA_CACHE_LINE_SIZE 128
 
 #define SHIFT_UP   <<
 #define SHIFT_DOWN >>
@@ -426,7 +427,7 @@ typedef struct mca_bcol_basesmuma_component_t mca_bcol_basesmuma_component_t;
 
         /* pading */
         /* Note: need to change this so it takes less memory */
-        char padding[CACHE_LINE_SIZE-3*sizeof(uint64_t)];
+        char padding[BASESMUMA_CACHE_LINE_SIZE-3*sizeof(uint64_t)];
     };
 
     typedef struct mca_bcol_basesmuma_nb_request_process_shared_mem_t
@@ -489,7 +490,7 @@ typedef struct mca_bcol_basesmuma_component_t mca_bcol_basesmuma_component_t;
 #endif
 	    /* padding */
         /* ok, no room to pad anymore */
-	    /*char padding[CACHE_LINE_SIZE-5*sizeof(int64_t)-8*sizeof(int)];*/
+	    /*char padding[BASESMUMA_CACHE_LINE_SIZE-5*sizeof(int64_t)-8*sizeof(int)];*/
     };
     typedef struct mca_bcol_basesmuma_ctl_struct_t mca_bcol_basesmuma_ctl_struct_t;
 
