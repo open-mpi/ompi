@@ -354,7 +354,7 @@ int mca_mpool_udreg_register(mca_mpool_base_module_t *mpool, void *addr,
 
     if (false == bypass_cache) {
         /* Get a udreg entry for this region */
-        while (UDREG_RC_ERROR_RESOURCE ==
+        while (UDREG_RC_SUCCESS !=
                (urc = UDREG_Register (mpool_udreg->udreg_handle, addr, size, &udreg_entry))) {
             /* try to remove one unused reg and retry */
             if (!mca_mpool_udreg_evict (mpool)) {
