@@ -115,7 +115,7 @@ int app_coord_init()
     opal_cr_notify_callback_fn_t prev_notify_func;
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_INIT;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer;
     orte_grpcomm_collective_t *coll;
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
@@ -175,38 +175,36 @@ int app_coord_init()
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
                              "app) Startup Barrier: Send INIT to HNP...!"));
 
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+        buffer = OBJ_NEW(opal_buffer_t);
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
+            OBJ_RELEASE(buffer);
             return ORTE_ERROR;
         }
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
+            OBJ_RELEASE(buffer);
             return ORTE_ERROR;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(op_event), 1, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(op_event), 1, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
+            OBJ_RELEASE(buffer);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
                                                            ORTE_RML_TAG_SNAPC_FULL,
                                                            orte_rml_send_callback, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
+            OBJ_RELEASE(buffer);
             return ORTE_ERROR;
         }
-
-        OBJ_DESTRUCT(&buffer);
     }
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
@@ -223,7 +221,7 @@ int app_coord_finalize()
     int ret, exit_status = ORTE_SUCCESS;
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_FIN;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer;
     orte_std_cntr_t count;
     orte_grpcomm_collective_t *coll;
 
@@ -252,38 +250,36 @@ int app_coord_finalize()
                              "app) Shutdown Barrier: Send FIN to HNP...!"));
 
         /* Tell HNP that we are finalizing */
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+        buffer = OBJ_NEW(opal_buffer_t);
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
+            OBJ_RELEASE(buffer);
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
-            goto cleanup;
-        }
-
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(op_event), 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
+            OBJ_RELEASE(buffer);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(op_event), 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            OBJ_RELEASE(buffer);
+            goto cleanup;
+        }
+
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
                                                            ORTE_RML_TAG_SNAPC_FULL,
                                                            orte_rml_send_callback, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
+            OBJ_RELEASE(buffer);
             goto cleanup;
         }
-
-        OBJ_DESTRUCT(&buffer);
 
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
                              "app) Shutdown Barrier: Waiting on FIN_ACK...!"));
@@ -292,7 +288,7 @@ int app_coord_finalize()
          * We could have been checkpointing just as we entered finalize, so we
          * need to wait until the checkpoint is finished before finishing.
          */
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+        buffer = OBJ_NEW(opal_buffer_t);
 #ifdef ENABLE_FT_FIXED
         /* This is the old, now broken code */
         if (0 > (ret = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
