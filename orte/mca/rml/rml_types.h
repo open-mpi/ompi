@@ -142,6 +142,10 @@ BEGIN_C_DECLS
 /* sensor data */
 #define ORTE_RML_TAG_SENSOR_DATA            47
 
+/* direct modex support */
+#define ORTE_RML_TAG_DIRECT_MODEX           48
+#define ORTE_RML_TAG_DIRECT_MODEX_RESP      49
+
 #define ORTE_RML_TAG_MAX                   100
 
 

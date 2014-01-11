@@ -339,7 +339,7 @@ int ompi_mpi_register_params(void)
     (void) mca_base_var_register ("ompi", "ompi", NULL, "hostname_cutoff",
                                   "If the number of processes in the application exceeds the provided value,"
                                   "hostnames for remote processes will not be retrieved by applications [default: UINT32_MAX]",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &ompi_hostname_cutoff);
 
