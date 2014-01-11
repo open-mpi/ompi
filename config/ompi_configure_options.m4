@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -228,37 +228,6 @@ AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 0],
 AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [$OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [Whether we built the 'use mpi_f08' prototype subarray-based implementation or not (i.e., whether to build the use-mpi-f08-desc prototype or the regular use-mpi-f08 implementation)])
-
-#
-# What is the max array rank that we want to support in the f90
-# bindings?  Now only relevant for the ompi/mpi/fortran/use-mpi dir,
-# which is now gfortran-only (because all other Fortran compilers will
-# compile ompi/mpi/fortran/use-mpi-ignore-tkr).
-#
-
-OMPI_FORTRAN_MAX_ARRAY_RANK=4
-AC_MSG_CHECKING([max supported gfortran array dimension in the "use mpi" Fortran module])
-AC_ARG_WITH(gfortran-max-array-dim,
-    AC_HELP_STRING([--with-gfortran-max-array-dim=<DIM>],
-                   [The maximum array dimension supported in the gfortran-only "use mpi" module (default: $OMPI_FORTRAN_MAX_ARRAY_RANK).  This option is ignored when using other Fortran compilers]))
-with_f90_max_array_dim=$gfortran_max_array_dim
-if test ! -z "$with_f90_max_array_dim" -a "$with_f90_max_array_dim" != "no"; then
-    # Ensure it's a number (hopefully an integer!), and >=1 and <=7
-    happy=1
-    expr $with_f90_max_array_dim + 1 > /dev/null 2> /dev/null
-    AS_IF([test "$?" != "0"], [happy=0],
-          [expr $with_f90_max_array_dim \>= 1 \& $with_f90_max_array_dim \<= 7 > /dev/null 2>/dev/null
-           AS_IF([test "$?" != "0"], [happy=0])])
-
-    # If badness in the above tests, bail
-    AS_IF([test "$happy" = "0"],
-          [AC_MSG_RESULT([bad value ($with_f90_max_array_dim)])
-           AC_MSG_WARN([--with-f90-max-array-dim value must be >=1 and <=7])
-           AC_MSG_ERROR([Cannot continue])])
-    OMPI_FORTRAN_MAX_ARRAY_RANK="$with_f90_max_array_dim"
-fi
-AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
-AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
 
 dnl We no longer support the old OMPI_ENABLE_PROGRESS_THREADS.  At
 dnl some point, this should die.
