@@ -366,7 +366,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have TYPE, BIND(C), we won't build mpi_f08 at all
-           OMPI_FORTRAN_CHECK_BIND_C_SUB(
+           OMPI_FORTRAN_CHECK_BIND_C_TYPE(
                [OMPI_FORTRAN_HAVE_BIND_C_TYPE=1],
                [OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
@@ -375,7 +375,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have TYPE, BIND(C, name="foo"), we won't build mpi_f08 at all
-           OMPI_FORTRAN_CHECK_BIND_C_SUB(
+           OMPI_FORTRAN_CHECK_BIND_C_TYPE_NAME(
                [ # If we got here, we have all the required forms of
                  # BIND(C), so set the top-level _BIND_C variable to 1.
                 OMPI_FORTRAN_HAVE_BIND_C=1
