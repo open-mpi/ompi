@@ -744,7 +744,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VFS_H
 #include <sys/vfs.h>
 #endif
-#ifdef HAVE_STS_STATFS_H
+#ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
 #endif
 ])
@@ -760,7 +760,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VFS_H
 #include <sys/vfs.h>
 #endif
-#ifdef HAVE_STS_STATFS_H
+#ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
 #endif
 ])
@@ -770,7 +770,14 @@ AC_INCLUDES_DEFAULT
 #
 AC_CHECK_MEMBERS([struct statvfs.f_basetype], [], [], [
 AC_INCLUDES_DEFAULT
-#ifdef HAVE_STS_STATVFS_H
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+])
+
+AC_CHECK_MEMBERS([struct statvfs.f_fstypename], [], [], [
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_STATVFS_H
 #include <sys/statvfs.h>
 #endif
 ])
