@@ -69,6 +69,16 @@
 #error Must have either statfs() or statvfs()
 #endif
 
+/*
+ * Note that some OS's (e.g., NetBSD and Solaris) have statfs(), but
+ * no struct statfs (!).  So check to make sure we have struct statfs
+ * before allowing the use of statfs().
+ */
+#if defined(HAVE_STATFS) && (defined(HAVE_STRUCT_STATFS_F_FSTYPENAME) || \
+                             defined(HAVE_STRUCT_STATFS_F_TYPE))
+#define USE_STATFS 1
+#endif
+
 static void path_env_load(char *path, int *pargc, char ***pargv);
 static char *list_env_get(char *var, char **list);
 
@@ -414,7 +424,11 @@ char* opal_find_absolute_path( char* app_name )
  *          with f_fstypename, contains a string of length MFSNAMELEN
  *          return 0 success, -1 on failure with errno set.
  *          compliant with: 4.4BSD.
- * Mac OSX (10.6.2):
+ * NetBSD:
+ *   statvfs (const char *path, struct statvfs *buf);
+ *          with f_fstypename, contains a string of length VFS_NAMELEN
+ *          return 0 success, -1 on failure with errno set.
+ * Mac OSX (10.6.2 through 10.9):
  *   statvfs(const char * restrict path, struct statvfs * restrict buf);
  *          with fsid    Not meaningful in this implementation.
  *          is just a wrapper around statfs()
@@ -444,7 +458,7 @@ bool opal_path_nfs(char *fname)
     int fsrc, vfsrc;
     int trials;
     char * file = strdup (fname);
-#if defined(HAVE_STATFS)
+#if defined(USE_STATFS)
     struct statfs fsbuf;
 #endif
 #if defined(HAVE_STATVFS)
@@ -472,7 +486,7 @@ bool opal_path_nfs(char *fname)
      * changed.
      */
 again:
-#if defined(HAVE_STATFS)
+#if defined(USE_STATFS)
     trials = 5;
     do {
         fsrc = statfs(file, &fsbuf);
@@ -506,7 +520,7 @@ again:
 
     /* Next, extract the magic value */
     for (i = 0; i < FS_TYPES_NUM; i++) {
-#if defined(HAVE_STATFS)
+#if defined(USE_STATFS)
         /* These are uses of struct statfs */
 #    if defined(HAVE_STRUCT_STATFS_F_FSTYPENAME)
         if (0 == fsrc &&
@@ -522,11 +536,20 @@ again:
         }
 #    endif
 #endif
+
 #if defined(HAVE_STATVFS)
-        /* This is a use of struct statvfs */
-#    if defined(HAVE_STRUCT_STATVFS_F_BASETYPE) && defined(FSTYPSZ)
+        /* These are uses of struct statvfs */
+#    if defined(HAVE_STRUCT_STATVFS_F_BASETYPE)
         if (0 == vfsrc &&
-            0 == strncasecmp(fs_types[i].f_fsname, vfsbuf.f_basetype, FSTYPSZ)) {
+            0 == strncasecmp(fs_types[i].f_fsname, vfsbuf.f_basetype,
+                             sizeof(vfsbuf.f_basetype))) {
+            goto found;
+        }
+#    endif
+#    if defined(HAVE_STRUCT_STATVFS_F_FSTYPENAME)
+        if (0 == vfsrc &&
+            0 == strncasecmp(fs_types[i].f_fsname, vfsbuf.f_fstypename,
+                             sizeof(vfsbuf.f_fstypename))) {
             goto found;
         }
 #    endif
@@ -552,7 +575,7 @@ opal_path_df(const char *path,
     int rc = -1;
     int trials = 5;
     int err = 0;
-#if defined(HAVE_STATFS)
+#if defined(USE_STATFS)
     struct statfs buf;
 #elif defined(HAVE_STATVFS)
     struct statvfs buf;
@@ -564,7 +587,7 @@ opal_path_df(const char *path,
     *out_avail = 0;
 
     do {
-#if defined(HAVE_STATFS)
+#if defined(USE_STATFS)
         rc = statfs(path, &buf);
 #elif defined(HAVE_STATVFS)
         rc = statvfs(path, &buf);
