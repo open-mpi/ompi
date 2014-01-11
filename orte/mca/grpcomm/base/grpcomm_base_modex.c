@@ -247,6 +247,10 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            OPAL_OUTPUT_VERBOSE((10, orte_grpcomm_base_framework.framework_output,
+                                 "%s STORING MODEX DATA FROM %s FOR %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&pname), kv->key));
             /* if this is me, dump the data - we already have it in the db */
             if (ORTE_PROC_MY_NAME->jobid == pname.jobid &&
                 ORTE_PROC_MY_NAME->vpid == pname.vpid) {
@@ -318,6 +322,9 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, opal_scope_t scope)
     
     /* if there are entries, store them */
     while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&data))) {
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:base:pack_modex: packing entry for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), kv->key));
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &kv, 1, OPAL_VALUE))) {
             ORTE_ERROR_LOG(rc);
             break;
