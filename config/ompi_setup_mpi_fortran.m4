@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -361,20 +361,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_BIND_C=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
-    # Check whether BIND(C) can be used with default LOGICAL
-    # parameters (per https://svn.open-mpi.org/trac/ompi/ticket/3523
-    # and http://lists.mpi-forum.org/mpi-comments/2013/02/0076.php).
-    # For the moment (Feb 2013), MPI-3 says we have to use LOGICAL
-    # (not LOGICAL(BIND=C_BOOL)).  So if the compiler doesn't allow
-    # this behavior, then disable the F08 bindings.
-    OMPI_FORTRAN_BINDC_LIKES_LOGICAL=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [OMPI_FORTRAN_CHECK_BIND_C_LOGICAL(
-               [OMPI_FORTRAN_BIND_C_LIKES_LOGICAL=1],
-               [OMPI_FORTRAN_BIND_C_LIKES_LOGICAL=0
-                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
-
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
@@ -561,9 +547,6 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_BUILD_FORTRAN_USEMPI_BINDINGS, 
                        $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS,
                        [Whether we will build the MPI Fortran "use mpi" bindings or not])
-    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_MODULE_SIZE,
-                       ["$OMPI_FORTRAN_MODULE_SIZE"],
-                       [Only relevant for Fortran compilers that do not support ignore TKR functionality: size of the "use mpi" and "use mpi_f08" modules])
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_IGNORE_TKR,
                        [$OMPI_FORTRAN_HAVE_IGNORE_TKR],
                        [Whether the Fortran compiler supports ignore TKR functionality or not])
