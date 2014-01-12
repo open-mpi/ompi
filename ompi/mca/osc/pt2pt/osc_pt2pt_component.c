@@ -339,7 +339,6 @@ component_fragment_cb(ompi_request_t *request)
     if (request->req_status._cancelled) {
         opal_output_verbose(5, ompi_osc_base_framework.framework_output,
                             "pt2pt request was canceled");
-        ompi_request_free(&request);
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
