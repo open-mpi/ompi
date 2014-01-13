@@ -95,11 +95,16 @@ static int mca_scoll_base_close(void)
         mca_scoll_sync_array = NULL;
     }
 
-    return OSHMEM_SUCCESS;
+    return mca_base_framework_components_close(&oshmem_scoll_base_framework, NULL);
 }
 
 static int mca_scoll_base_open(mca_base_open_flag_t flags)
 {
+    /* Open up all available components */
+    if (OPAL_SUCCESS !=
+            mca_base_framework_components_open(&oshmem_scoll_base_framework, flags)) {
+        return OSHMEM_ERROR;
+    }
     return OSHMEM_SUCCESS;
 }
 
