@@ -16,6 +16,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -63,6 +64,7 @@
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/rte/rte.h"
+#include "ompi/mca/rte/base/base.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
@@ -406,6 +408,12 @@ int ompi_mpi_finalize(void)
     /* Leave the RTE */
 
     if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
+        return ret;
+    }
+
+    /* now close the rte framework */
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_rte_base_framework) ) ) {
+        OMPI_ERROR_LOG(ret);
         return ret;
     }
 
