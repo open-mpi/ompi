@@ -17,10 +17,13 @@
 # $HEADER$
 #
 
-noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
+noinst_LTLIBRARIES = \
+        libdebuggers.la \
+        libompi_debugger_canary.la \
+        libompi_predefined_pad_canary.la
 ompilib_LTLIBRARIES = libompi_dbg_msgq.la
 
-check_PROGRAMS = predefined_gap_test
+check_PROGRAMS = predefined_gap_test predefined_pad_test
 if OPAL_HAVE_DLOPEN
 check_PROGRAMS += dlopen_test
 endif
@@ -71,6 +74,19 @@ common = ompi_common_dll_defs.h ompi_common_dll.c
 libompi_dbg_msgq_la_SOURCES = ompi_msgq_dll.c ompi_msgq_dll_defs.h $(common)
 libompi_dbg_msgq_la_CFLAGS = -g
 libompi_dbg_msgq_la_LDFLAGS = -module -avoid-version
+
+# These are checks for the padding on predefined MPI object types.
+# They are here in the debuggers/ directory (vs., for example,
+# runtime/) because a) we already had some canary tests here in this
+# directory, and b) the runtime/ directory is built by subdir objects,
+# and "make check" will *build* a test in runtime/, but it won't *run*
+# it.  :-(
+predefined_pad_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+predefined_pad_test_LDADD = $(top_builddir)/ompi/libmpi.la
+predefined_pad_test_DEPENDENCIES = $(ompi_predefined_LDADD)
+
+libompi_predefined_pad_canary_la_SOURCES = \
+        ompi_predefined_pad_canary.c
 
 # Conditionally install the header files
 
