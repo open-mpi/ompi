@@ -80,17 +80,6 @@ const char *var_type_names[] = {
     "double"
 };
 
-const char *var_type_formats[] = {
-    "%d",
-    "%u",
-    "%lu",
-    "%llu",
-    "%" PRIsize_t,
-    "%s",
-    "%d",
-    "%lf"
-};
-
 const size_t var_type_sizes[] = {
     sizeof (int),
     sizeof (unsigned),
@@ -1679,10 +1668,35 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
     }
 
     if (NULL == var->mbv_enumerator) {
-        if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type) {
-            ret = asprintf (value_string, "%s", value->stringval ? value->stringval : "");
-        } else {
-            ret = asprintf (value_string, var_type_formats[var->mbv_type], value[0]);
+        switch (var->mbv_type) {
+        case MCA_BASE_VAR_TYPE_INT:
+            ret = asprintf (value_string, "%d", value->intval);
+            break;
+        case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
+            ret = asprintf (value_string, "%u", value->uintval);
+            break;
+        case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
+            ret = asprintf (value_string, "%lu", value->ulval);
+            break;
+        case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
+            ret = asprintf (value_string, "%llu", value->ullval);
+            break;
+        case MCA_BASE_VAR_TYPE_SIZE_T:
+            ret = asprintf (value_string, "%" PRIsize_t, value->sizetval);
+            break;
+        case MCA_BASE_VAR_TYPE_STRING:
+            ret = asprintf (value_string, "%s", 
+                            value->stringval ? value->stringval : "");
+            break;
+        case MCA_BASE_VAR_TYPE_BOOL:
+            ret = asprintf (value_string, "%d", value->boolval);
+            break;
+        case MCA_BASE_VAR_TYPE_DOUBLE:
+            ret = asprintf (value_string, "%lf", value->lfval);
+            break;
+        default:
+            ret = -1;
+            break;
         }
 
         ret = (0 > ret) ? OPAL_ERR_OUT_OF_RESOURCE : OPAL_SUCCESS;
