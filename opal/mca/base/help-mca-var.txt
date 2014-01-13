@@ -43,12 +43,14 @@ on the command line.  Deprecated MCA variables should be avoided;
 they may disappear in future releases.
 
   Deprecated variable: %s
+  New variable:        %s
 #
 [deprecated-mca-cli]
 A deprecated MCA variable value was specified on the command line.  Deprecated
 MCA variables should be avoided; they may disappear in future releases.
 
   Deprecated variable: %s
+  New variable:        %s
 #
 [deprecated-mca-file]
 A deprecated MCA variable value was specified in an MCA variable
@@ -57,6 +59,7 @@ in future releases.
 
   Deprecated variable: %s
   Source file:         %s
+  New variable:        %s
 #
 [mutually-exclusive-vars]
 Two mutually-exclusive MCA variables were specified.  This can result
@@ -94,7 +97,7 @@ in the override variable file (openmpi-mca-params-override.conf).
 The user-supplied value was ignored.
 #
 [invalid-value]
-An invalid value was supplied for an enum variable.
+An invalid value was supplied for an MCA variable.
 
   Variable     : %s
   Value        : %s
