@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -27,7 +27,7 @@ dnl
 AC_DEFUN([OMPI_FORTRAN_CHECK_PROCEDURE],[
     AS_VAR_PUSHDEF([procedure_var], [ompi_cv_fortran_procedure])
 
-    AC_CACHE_CHECK([if Fortran compiler supports procedure], procedure_var,
+    AC_CACHE_CHECK([if Fortran compiler supports PROCEDURE], procedure_var,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[MODULE proc_mod
 INTERFACE
