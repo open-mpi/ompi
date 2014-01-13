@@ -17,10 +17,7 @@
 # $HEADER$
 #
 
-noinst_LTLIBRARIES = \
-        libdebuggers.la \
-        libompi_debugger_canary.la \
-        libompi_predefined_pad_canary.la
+noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 ompilib_LTLIBRARIES = libompi_dbg_msgq.la
 
 check_PROGRAMS = predefined_gap_test predefined_pad_test
@@ -84,9 +81,6 @@ libompi_dbg_msgq_la_LDFLAGS = -module -avoid-version
 predefined_pad_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 predefined_pad_test_LDADD = $(top_builddir)/ompi/libmpi.la
 predefined_pad_test_DEPENDENCIES = $(ompi_predefined_LDADD)
-
-libompi_predefined_pad_canary_la_SOURCES = \
-        ompi_predefined_pad_canary.c
 
 # Conditionally install the header files
 
