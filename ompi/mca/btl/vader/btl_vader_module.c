@@ -214,7 +214,6 @@ static int fini_vader_endpoint (struct mca_btl_base_endpoint_t *ep)
     if (ep->peer_smp_rank != MCA_BTL_VADER_LOCAL_RANK) {
 #if OMPI_BTL_VADER_HAVE_XPMEM
         xpmem_release (ep->apid);
-        OBJ_RELEASE(ep->rcache);
 #else
         opal_shmem_segment_detach (&ep->seg_ds);
 #endif
