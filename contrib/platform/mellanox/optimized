@@ -7,13 +7,18 @@ with_mpi_param_check=no
 enable_heterogeneous=no
 enable_ft_thread=no
 enable_orterun_prefix_by_default=yes
-enable_debug_symbols=yes
 enable_oshmem_fortran=yes
 with_verbs=yes
 with_devel_headers=yes
 with_oshmem=yes
 
 mellanox_autodetect=${mellanox_autodetect:="no"}
+mellanox_debug=${mellanox_debug:="no"}
+
+if [ "$mellanox_debug" == "yes" ]; then
+    enable_debug_symbols=yes
+    enable_debug=yes
+fi
 
 if [ "$mellanox_autodetect" == "yes" ]; then
 
@@ -45,7 +50,7 @@ if [ "$mellanox_autodetect" == "yes" ]; then
 
 fi
 
-CXXFLAGS="-O3"
-CCASFLAGS="-O3"
-FCFLAGS="-O3"
-CFLAGS="-O3"
+CXXFLAGS="-O3 -g"
+CCASFLAGS="-O3 -g"
+FCFLAGS="-O3 -g"
+CFLAGS="-O3 -g"
