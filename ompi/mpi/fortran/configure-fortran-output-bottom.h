@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 !
-! Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 !
@@ -43,6 +43,13 @@
 #define OMPI_PRIVATE , PRIVATE
 #else
 #define OMPI_PRIVATE
+#endif
+
+! PROTECTED or not
+#if OMPI_FORTRAN_HAVE_PROTECTED
+#define OMPI_PROTECTED , PROTECTED
+#else
+#define OMPI_PROTECTED
 #endif
 
 #endif

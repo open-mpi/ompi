@@ -395,15 +395,23 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_PRIVATE=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [ # Does the compiler support the "private" 
+          [ # Does the compiler support "private"
            OMPI_FORTRAN_CHECK_PRIVATE(
                [OMPI_FORTRAN_HAVE_PRIVATE=1],
                [OMPI_FORTRAN_HAVE_PRIVATE=0])])
 
+    OMPI_FORTRAN_HAVE_PROTECTED=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
+           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [ # Does the compiler support "protected"
+           OMPI_FORTRAN_CHECK_PROTECTED(
+               [OMPI_FORTRAN_HAVE_PROTECTED=1],
+               [OMPI_FORTRAN_HAVE_PROTECTED=0])])
+
     OMPI_FORTRAN_HAVE_ABSTRACT=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [ # Does the compiler support the "abstract" 
+          [ # Does the compiler support "abstract"
            OMPI_FORTRAN_CHECK_ABSTRACT(
                [OMPI_FORTRAN_HAVE_ABSTRACT=1],
                [OMPI_FORTRAN_HAVE_ABSTRACT=0])])
@@ -411,7 +419,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_ASYNCHRONOUS=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [ # Does the compiler support the "asynchronous" 
+          [ # Does the compiler support "asynchronous"
            OMPI_FORTRAN_CHECK_ASYNCHRONOUS(
                [OMPI_FORTRAN_HAVE_ASYNCHRONOUS=1],
                [OMPI_FORTRAN_HAVE_ASYNCHRONOUS=0])])
@@ -419,7 +427,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_PROCEDURE=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [ # Does the compiler support the "procedure" 
+          [ # Does the compiler support "procedure"
            OMPI_FORTRAN_CHECK_PROCEDURE(
                [OMPI_FORTRAN_HAVE_PROCEDURE=1],
                [OMPI_FORTRAN_HAVE_PROCEDURE=0])])
@@ -657,6 +665,12 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PRIVATE], 
                        [$OMPI_FORTRAN_HAVE_PRIVATE],
                        [For mpi-f08-types.f90 and ompi_info: whether the compiler supports the "private" keyword or not (used in MPI_Status)])
+
+    # For configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
+    AC_SUBST([OMPI_FORTRAN_HAVE_PROTECTED])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROTECTED], 
+                       [$OMPI_FORTRAN_HAVE_PROTECTED],
+                       [For mpi-f08-types.f90 and .F90 and ompi_info: whether the compiler supports the "protected" keyword or not])
 
     # For configure-fortran-output.h, mpi-f08-interfaces-callbacks.F90
     # (and ompi_info)
