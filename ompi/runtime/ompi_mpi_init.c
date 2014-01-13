@@ -15,6 +15,7 @@
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -77,6 +78,7 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/rte/rte.h"
+#include "ompi/mca/rte/base/base.h"
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
@@ -451,6 +453,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         free(tmp);
         putenv(av);
     }
+
+    /* open the rte framework */
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_rte_base_framework, 0))) {
+        error = "ompi_rte_base_open() failed";
+        goto error;
+    }
+    /* no select is required as this is a static framework */
 
     /* Setup RTE - note that we are an MPI process  */
     if (OMPI_SUCCESS != (ret = ompi_rte_init(NULL, NULL))) {
