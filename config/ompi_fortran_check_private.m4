@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -27,7 +27,7 @@ dnl
 AC_DEFUN([OMPI_FORTRAN_CHECK_PRIVATE],[
     AS_VAR_PUSHDEF([private_var], [ompi_cv_fortran_private])
 
-    AC_CACHE_CHECK([if Fortran compiler supports private], private_var,
+    AC_CACHE_CHECK([if Fortran compiler supports PRIVATE], private_var,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[module test_for_private
    type :: derived_with_private

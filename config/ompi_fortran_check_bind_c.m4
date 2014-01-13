@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -48,7 +48,7 @@ end program]])],
 AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_SUB],[
     AS_VAR_PUSHDEF([bind_c_sub_var], [ompi_cv_fortran_have_bind_c_sub])
 
-    AC_CACHE_CHECK([for Fortran SUBROUTINE BIND(C)], bind_c_sub_var,
+    AC_CACHE_CHECK([if Fortran compiler supports SUBROUTINE BIND(C)], bind_c_sub_var,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[program check_for_bind_c_sub
    use, intrinsic :: iso_c_binding
@@ -73,7 +73,7 @@ end program]])],
 AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_TYPE],[
     AS_VAR_PUSHDEF([bind_c_type_var], [ompi_cv_fortran_have_bind_c_type])
 
-    AC_CACHE_CHECK([for Fortran TYPE, BIND(C)], bind_c_type_var,
+    AC_CACHE_CHECK([if Fortran compiler supports TYPE, BIND(C)], bind_c_type_var,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[module bindc_test
    use, intrinsic :: iso_c_binding
@@ -96,7 +96,7 @@ end module]])],
 AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_TYPE_NAME],[
     AS_VAR_PUSHDEF([bind_c_type_name_var], [ompi_cv_fortran_have_bind_c_type_name])
 
-    AC_CACHE_CHECK([for Fortran TYPE(type), BIND(C, NAME="name")], bind_c_type_name_var,
+    AC_CACHE_CHECK([if Fortran compiler supports TYPE(type), BIND(C, NAME="name")], bind_c_type_name_var,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[module bindc_test
    use, intrinsic :: iso_c_binding
