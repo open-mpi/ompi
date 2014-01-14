@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -536,6 +536,17 @@ int btl_openib_register_mca_params(void)
                   "Output some verbose memory registration information "
                   "(0 = no output, nonzero = output)", 0,
 		  &mca_btl_openib_component.memory_registration_verbose_level, 0));
+
+    /* Help see which devices are being used */
+    CHECK(reg_int("device_selection_verbose", NULL,
+                  "Output some verbose device selection information "
+                  "(0 = no output, nonzero = output)", 0,
+                  &mca_btl_openib_component.device_selection_verbose, REGINT_GE_ZERO));
+
+    CHECK(reg_int("ignore_locality", NULL,
+                  "Ignore any locality information and use all devices "
+                  "(0 = use locality informaiton and use only close devices, nonzero = ignore locality information)", 0,
+                  &mca_btl_openib_component.ignore_locality, REGINT_GE_ZERO));
 
     /* Info only */
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
