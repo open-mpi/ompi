@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -304,6 +304,8 @@ struct mca_btl_openib_component_t {
     bool enable_srq_resize;
     int memory_registration_verbose_level;
     int memory_registration_verbose;
+    int device_selection_verbose;
+    int ignore_locality;
 #if BTL_OPENIB_FAILOVER_ENABLED
     int verbose_failover;
 #endif
