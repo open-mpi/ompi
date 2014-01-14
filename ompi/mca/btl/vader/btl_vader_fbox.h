@@ -26,7 +26,7 @@
  * critical path */
 #define MCA_BTL_VADER_LAST_FBOX 63
 /* two bytes are reserved for tag and size (update if the header is modified) */
-#define MCA_BTL_VADER_FBOX_HDR_SIZE 2
+#define MCA_BTL_VADER_FBOX_HDR_SIZE 4
 #define MCA_BTL_VADER_FBOX_MAX_SIZE (MCA_BTL_VADER_FBOX_SIZE - MCA_BTL_VADER_FBOX_HDR_SIZE)
 /* total size of all the fast boxes assigned to a particular peer */
 #define MCA_BTL_VADER_FBOX_PEER_SIZE (MCA_BTL_VADER_FBOX_SIZE * (MCA_BTL_VADER_LAST_FBOX + 1))
@@ -34,10 +34,10 @@
 typedef struct mca_btl_vader_fbox_t {
     union {
         struct {
-            uint8_t size;
-            uint8_t tag;
+            uint16_t size;
+            uint16_t tag;
         } hdr_data;
-        uint16_t ival;
+        uint32_t ival;
     } hdr;
 
     uint8_t data[MCA_BTL_VADER_FBOX_MAX_SIZE];
