@@ -93,7 +93,7 @@ AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AC_ARG_ENABLE(oshmem-fortran,
 AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
-if [test "$enable_oshmem_fortran" != "no"] && [test $OMPI_WANT_FORTRAN_BINDINGS -eq 1]; then
+if test "$enable_oshmem_fortran" != "no" -a "$ompi_fortran_happy" = 1; then
 # If no OMPI FORTRAN, bail
    AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0],
                [AC_MSG_RESULT([bad value OMPI_WANT_FORTRAN_BINDINGS: ($OMPI_WANT_FORTRAN_BINDINGS)])
@@ -111,51 +111,3 @@ AM_CONDITIONAL(OSHMEM_WANT_FORTRAN_BINDINGS,
     [test $OSHMEM_FORTRAN_BINDINGS -eq 1])
 
 ]) dnl
-
-############################################################################
-
-AC_DEFUN([OSHMEM_SETUP_CFLAGS],[
-
-
-OMPI_C_COMPILER_VENDOR([oshmem_c_vendor])
-
-OMPI_CHECK_OPENFABRICS([oshmem_verbs],
-                        [oshmem_verbs_happy="yes"],
-                        [oshmem_verbs_happy="no"])
-
-# substitute in the things needed to build MEMHEAP BASE
-AC_SUBST([oshmem_verbs_CFLAGS])
-AC_SUBST([oshmem_verbs_CPPFLAGS])
-AC_SUBST([oshmem_verbs_LDFLAGS])
-AC_SUBST([oshmem_verbs_LIBS])
-
-# If we have the oshmem_verbs stuff available, find out what we've got
-AS_IF(
-    [test "$oshmem_verbs_happy" = "yes"],
-    [
-        OSHMEM_LIBSHMEM_EXTRA_LDFLAGS="$OSHMEM_LIBSHMEM_EXTRA_LDFLAGS $oshmem_verbs_LDFLAGS"
-        OSHMEM_LIBSHMEM_EXTRA_LIBS="$OSHMEM_LIBSHMEM_EXTRA_LIBS $oshmem_verbs_LIBS"
-
-        # ibv_reg_shared_mr was added in MOFED 1.8
-        oshmem_have_mpage=0
-
-        oshmem_verbs_save_CPPFLAGS="$CPPFLAGS"
-        oshmem_verbs_save_LDFLAGS="$LDFLAGS"
-        oshmem_verbs_save_LIBS="$LIBS"
-
-        CPPFLAGS="$CPPFLAGS $oshmem_verbs_CPPFLAGS"
-        LDFLAGS="$LDFLAGS $oshmem_verbs_LDFLAGS"
-        LIBS="$LIBS $oshmem_verbs_LIBS"
-
-        AC_CHECK_DECLS([IBV_ACCESS_ALLOCATE_MR,IBV_ACCESS_SHARED_MR_USER_READ],
-               [oshmem_have_mpage=2], [],
-               [#include <infiniband/verbs.h>])
-
-        CPPFLAGS="$oshmem_verbs_save_CPPFLAGS"
-        LDFLAGS="$oshmem_verbs_save_LDFLAGS"
-        LIBS="$oshmem_verbs_save_LIBS"
-
-        AC_DEFINE_UNQUOTED(MPAGE_ENABLE, $oshmem_have_mpage,
-            [Whether we can use M-PAGE supported since MOFED 1.8])
-    ])
-])dnl
