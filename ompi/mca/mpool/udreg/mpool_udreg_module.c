@@ -281,6 +281,12 @@ static int mca_mpool_udreg_alloc_huge (mca_mpool_udreg_module_t *mpool, size_t s
     return 0;
 }
 
+
+static void mca_mpool_udreg_free_huge (mca_mpool_udreg_hugepage_alloc_t *alloc) {
+    opal_list_remove_item (&alloc->huge_table->allocations, &alloc->super);
+    OBJ_RELEASE(alloc);
+}
+
 /**
   * allocate function
   */
@@ -320,8 +326,13 @@ void* mca_mpool_udreg_alloc(mca_mpool_base_module_t *mpool, size_t size,
 #endif
     }
 
-    if(OMPI_SUCCESS != mca_mpool_udreg_register(mpool, addr, size, flags, reg)) {
-        free(base_addr);
+    if (OMPI_SUCCESS != mca_mpool_udreg_register(mpool, addr, size, flags, reg)) {
+        if (udreg_module->huge_page) {
+            mca_mpool_udreg_free_huge ((mca_mpool_udreg_hugepage_alloc_t *) base_addr);
+        } else {
+            free(base_addr);
+        }
+
         return NULL;
     }
 
@@ -398,11 +409,6 @@ void* mca_mpool_udreg_realloc(mca_mpool_base_module_t *mpool, void *addr,
     mca_mpool_udreg_free(mpool, addr, old_reg);
 
     return new_mem;
-}
-
-static void mca_mpool_udreg_free_huge (mca_mpool_udreg_hugepage_alloc_t *alloc) {
-    opal_list_remove_item (&alloc->huge_table->allocations, &alloc->super);
-    OBJ_RELEASE(alloc);
 }
 
 /**
