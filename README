@@ -159,9 +159,14 @@ Compiler Notes
   might want to double check that you have the latest bug fixes and
   patches for your compiler.
 
-- Building Open MPI on a NetBSD-6 AMD64 system will run into obscure
-  compile-time failures if f95/g95 is found in the path.  You can work
-  around such problems by removing g95 from your path.
+- On NetBSD-6 (at least AMD64 and i386), and possibly on OpenBSD,
+  libtool misidentifies properties of f95/g95, leading to obscure
+  compile-time failures if used to build Open MPI.  You can work
+  around this issue by ensuring that libtool will not use f95/g95
+  (e.g., by specifying FC=<some_other_compiler>, or otherwise ensuring
+  a different Fortran compiler will be found earlier in the path than
+  f95/g95), or by disabling the Fortran MPI bindings with
+  --disable-mpi-fortran.
 
 - Absoft 11.5.2 plus a service pack from September 2012 (which Absoft
   says is available upon request), or a version later than 11.5.2
@@ -259,9 +264,6 @@ Compiler Notes
   users these days (our informal testing shows that not many users are
   still using GCC 3.x).  Contact Pathscale support if you continue to
   have problems with Open MPI's C++ bindings.
-
-- There is currently a known issue with the PGI compilers on OS X
-  Lion.  See https://svn.open-mpi.org/trac/ompi/ticket/3011.
 
 - Using the Absoft compiler to build the MPI Fortran bindings on Suse
   9.3 is known to fail due to a Libtool compatibility issue.
