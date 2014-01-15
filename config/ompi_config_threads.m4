@@ -41,7 +41,7 @@ AC_ARG_ENABLE([mpi_thread_multiple],
     [AC_HELP_STRING([--enable-mpi-thread-multiple],
                     [Enable MPI_THREAD_MULTIPLE support (default: disabled)])])
 
-if test "$enable_mpi_threads" = "yes" ; then
+if test "$enable_mpi_thread_multiple" = "yes" ; then
     ompi_want_mpi_threads=1
     OMPI_ENABLE_THREAD_MULTIPLE=1
     AC_MSG_RESULT([Enabled])
