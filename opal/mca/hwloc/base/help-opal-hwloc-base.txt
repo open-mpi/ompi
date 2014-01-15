@@ -1,6 +1,7 @@
 # -*- text -*-
 #
-# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -83,3 +84,17 @@ to be redefined:
   Prior policy:  %s
 
 Please check that only one policy is defined.
+#
+[deprecated]
+The following MCA parameter has been deprecated and will
+be replaced in future releases as follows:
+
+  Command line option:
+    Deprecated:  %s
+    Replacement: %s
+
+  MCA param:
+    Deprecated : %s
+    Replacement: %s
+
+Please update to the new syntax.
