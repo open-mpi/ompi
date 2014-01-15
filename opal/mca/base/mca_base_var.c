@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -566,8 +566,8 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
     case MCA_BASE_VAR_TYPE_SIZE_T:
         ret = int_from_string(src, var->mbv_enumerator, &int_value);
         if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == ret ||
-            (MCA_BASE_VAR_TYPE_INT == var->mbv_type &&
-             (sizeof(int) < 8 && (int_value & 0xffffffff00000000ull)))) {
+            (MCA_BASE_VAR_TYPE_INT == var->mbv_type && ((int) int_value != (int64_t) int_value)) ||
+            (MCA_BASE_VAR_TYPE_UNSIGNED_INT == var->mbv_type && ((unsigned int) int_value != int_value))) {
             if (var->mbv_enumerator) {
                 char *valid_values;
                 (void) var->mbv_enumerator->dump(var->mbv_enumerator, &valid_values);
@@ -1268,12 +1268,13 @@ static int register_variable (const char *project_name, const char *framework_na
         }
     }
 
+    /* go ahead and mark this variable as valid */
+    var->mbv_flags |= MCA_BASE_VAR_FLAG_VALID;
+
     ret = var_set_initial (var);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
-
-    var->mbv_flags |= MCA_BASE_VAR_FLAG_VALID;
 
     /* All done */
     return var_index;
@@ -1358,11 +1359,12 @@ static int var_set_from_env (mca_base_var_t *var)
 {
     const char *var_full_name = var->mbv_full_name;
     bool deprecated = VAR_IS_DEPRECATED(var[0]);
+    bool is_synonym = VAR_IS_SYNONYM(var[0]);
     char *source, *source_env;
     char *value, *value_env;
     int ret;
     
-    if (VAR_IS_SYNONYM(var[0])) {
+    if (is_synonym) {
         ret = var_get (var->mbv_synonym_for, &var, true);
         if (OPAL_SUCCESS != ret) {
             return OPAL_ERROR;
@@ -1428,19 +1430,26 @@ static int var_set_from_env (mca_base_var_t *var)
     }
 
     if (deprecated) {
+        const char *new_variable = "None (going away)";
+
+        if (is_synonym) {
+            new_variable = var->mbv_full_name;
+        }
+
         switch (var->mbv_source) {
         case MCA_BASE_VAR_SOURCE_ENV:
             opal_show_help("help-mca-var.txt", "deprecated-mca-env",
-                           true, var->mbv_full_name);
+                           true, var_full_name, new_variable);
             break;
         case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
             opal_show_help("help-mca-var.txt", "deprecated-mca-cli",
-                           true, var->mbv_full_name);
+                           true, var_full_name, new_variable);
             break;
         case MCA_BASE_VAR_SOURCE_FILE:
         case MCA_BASE_VAR_SOURCE_OVERRIDE:
             opal_show_help("help-mca-var.txt", "deprecated-mca-file",
-                           true, var->mbv_full_name, var->mbv_source_file);
+                           true, var_full_name, var->mbv_source_file,
+                           new_variable);
             break;
 
         case MCA_BASE_VAR_SOURCE_DEFAULT:
