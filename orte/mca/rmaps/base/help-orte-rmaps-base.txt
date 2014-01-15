@@ -10,9 +10,10 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved. 
+# Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -215,3 +216,17 @@ with the version of hwloc being used by OMPI.
   File: %s
 
 Please correct the problem and try again.
+#
+[deprecated]
+The following MCA parameter has been deprecated and will
+be replaced in future releases as follows:
+
+  Command line option:
+    Deprecated:  %s
+    Replacement: %s
+
+  MCA param:
+    Deprecated : %s
+    Replacement: %s
+
+Please update to the new syntax.

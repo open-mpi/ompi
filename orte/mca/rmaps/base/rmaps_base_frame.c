@@ -84,13 +84,15 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
     orte_rmaps_base_n_pernode = 0;
     (void) mca_base_var_register("orte", "rmaps", "base", "n_pernode",
                                  "Launch n procs/node", MCA_BASE_VAR_TYPE_INT,
-                                 NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_n_pernode);
 
     orte_rmaps_base_n_persocket = 0;
     (void) mca_base_var_register("orte", "rmaps", "base", "n_persocket",
                                  "Launch n procs/socket", MCA_BASE_VAR_TYPE_INT,
-                                 NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_n_persocket);
 
     orte_rmaps_base_pattern = NULL;
@@ -276,7 +278,10 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         return rc;
     }
 
-    if (rmaps_base_bycore) {
+   if (rmaps_base_bycore) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "bycore", "map-by core",
+                       "rmaps_base_bycore", "rmaps_base_mapping_policy=core");
         /* set mapping policy to bycore - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) != ORTE_MAPPING_BYCORE) {
@@ -300,6 +305,9 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (rmaps_base_byslot) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "byslot", "map-by slot",
+                       "rmaps_base_byslot", "rmaps_base_mapping_policy=slot");
         /* set mapping policy to byslot - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) != ORTE_MAPPING_BYSLOT) {
@@ -323,6 +331,9 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (rmaps_base_bynode) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "bynode", "map-by node",
+                       "rmaps_base_bynode", "rmaps_base_mapping_policy=node");
         /* set mapping policy to bynode - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) != ORTE_MAPPING_BYNODE) {
