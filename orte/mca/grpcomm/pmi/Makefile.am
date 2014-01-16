@@ -12,9 +12,10 @@
 AM_CPPFLAGS = $(grpcomm_pmi_CPPFLAGS)
 
 sources = \
-        grpcomm_pmi.h \
+	grpcomm_pmi.h \
 	grpcomm_pmi_module.c \
-        grpcomm_pmi_component.c
+	grpcomm_pmi_component.c \
+	pmi2_pmap_parser.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
