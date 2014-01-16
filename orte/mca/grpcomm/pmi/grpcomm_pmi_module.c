@@ -138,6 +138,10 @@ static int pmi_allgather(orte_grpcomm_collective_t *coll)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
+#if WANT_PMI2_SUPPORT
+int *pmi2_parse_pmap(char *pmap, int my_rank, int *node, int *nlrs);
+#endif
+
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
@@ -157,9 +161,9 @@ static int modex(orte_grpcomm_collective_t *coll)
 #if WANT_PMI2_SUPPORT
     {
         char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-        int found, sid, nodes, k;
-        orte_vpid_t n;
-        char *p;
+        int found;
+        int my_node;
+
         rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
         if (!found || PMI_SUCCESS != rc) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
             opal_output(0, "%s could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)",
@@ -167,34 +171,18 @@ static int modex(orte_grpcomm_collective_t *coll)
             return ORTE_ERROR;
         }
 
-        i = 0; n = 0; local_rank_count = 0;
-        if (NULL != (p = strstr(pmapping, "(vector"))) {
-            while (NULL != (p = strstr(p+1, ",("))) {
-                if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &local_rank_count)) {
-                    for (k = 0; k < nodes; k++) {
-                        if ((ORTE_PROC_MY_NAME->vpid >= n) &&
-                            (ORTE_PROC_MY_NAME->vpid < (n + local_rank_count))) {
-                            break;
-                        }
-                        n += local_rank_count;
-                    }
-                }
-            }
-        }
-        free(pmapping);
-
-        if (local_rank_count > 0) {
-            local_ranks = (int*)malloc(local_rank_count * sizeof(int));
-            for (i=0; i < local_rank_count; i++) {
-                local_ranks[i] = n + i;
-            }
-        }
-
+        local_ranks = pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &my_node, &local_rank_count);
         if (NULL == local_ranks) {
             opal_output(0, "%s could not get PMI_process_mapping",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             return ORTE_ERROR;
         }
+
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                "%s: pmapping: %s my_node=%d lr_count=%d\n",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmapping, my_node, local_rank_count));
+       
+        free(pmapping);
     }
 #else
     rc = PMI_Get_clique_size (&local_rank_count);
