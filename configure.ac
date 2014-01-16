@@ -1226,9 +1226,11 @@ fi
 # a helpful tip from Dave Goodell, set the precious variables for
 # compilers to "no" that we don't want.  Libtool's m4 configry will
 # interpret this as "I won't be using this language; don't bother
-# setting it up."
+# setting it up."  Note that we do this only for Fortran; we *don't*
+# do this for C++, because even if we're not building the MPI C++
+# bindings, we *do* still want to setup the mpicxx wrapper if we have
+# a C++ compiler.
 AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
-AS_IF([test "$WANT_MPI_CXX_SUPPORT" != "1"],[CXX=no])
 
 LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
 LTDL_CONVENIENCE
