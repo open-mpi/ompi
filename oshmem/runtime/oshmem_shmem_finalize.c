@@ -105,8 +105,10 @@ static int _shmem_finalize(void)
     if (OSHMEM_SUCCESS != (ret = oshmem_group_cache_list_free())) {
         return ret;
     }
-    /* this is a special group which is not cached. We can only release its collectives at this point */
+    /* We need to call mca_scoll_base_group_unselect explicitly for each group
+     * that are not freed by oshmem_group_cache_list_free. We can only release its collectives at this point */
     mca_scoll_base_group_unselect(oshmem_group_all);
+    mca_scoll_base_group_unselect(oshmem_group_self);
 
     /* Close down MCA modules */
 
