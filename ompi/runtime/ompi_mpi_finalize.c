@@ -60,7 +60,9 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/rte/rte.h"
@@ -391,6 +393,9 @@ int ompi_mpi_finalize(void)
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_coll_base_framework))) {
+        return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_bml_base_framework))) {
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_mpool_base_framework))) {
