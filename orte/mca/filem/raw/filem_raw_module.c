@@ -942,6 +942,10 @@ static int link_archive(orte_filem_raw_incoming_t *inbnd)
                              "%s filem:raw: path %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              path));
+        /* protect against an empty result */
+        if (0 == strlen(path)) {
+            continue;
+        }
         /* trim the trailing cr */
         path[strlen(path)-1] = '\0';
         /* ignore directories */
