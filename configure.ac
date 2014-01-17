@@ -1351,7 +1351,6 @@ fi
 
 m4_ifdef([project_orte], [ORTE_SETUP_DEBUGGER_FLAGS],
          [m4_ifdef([project_ompi], [ORTE_SETUP_DEBUGGER_FLAGS])])
-m4_ifdef([project_oshmem], [OSHMEM_SETUP_CFLAGS])
 m4_ifdef([project_orcm], [ORCM_SETUP_CFLAGS])
 
 #
