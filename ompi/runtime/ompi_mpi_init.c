@@ -605,13 +605,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_bml_base_init(OMPI_ENABLE_PROGRESS_THREADS,
-                                 OMPI_ENABLE_THREAD_MULTIPLE))) {
-        error = "mca_bml_base_init() failed";
-        goto error;
-    }
-
-    if (OMPI_SUCCESS != 
         (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_pml_base_select() failed";
