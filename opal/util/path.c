@@ -499,12 +499,17 @@ again:
     } while (-1 == vfsrc && ESTALE == errno && (0 < --trials));
 #endif
 
-    /* In case some error with the current filename, try the directory */
+    /* In case some error with the current filename, try the parent
+       directory */
     if (-1 == fsrc && -1 == vfsrc) {
         char * last_sep;
 
         OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: stat(v)fs on file:%s failed errno:%d directory:%s\n",
                              fname, errno, file));
+        if (EPERM == errno) {
+            free(file);
+            return false;
+        }
 
         last_sep = strrchr(file, OPAL_PATH_SEP[0]);
         /* Stop the search, when we have searched past root '/' */
