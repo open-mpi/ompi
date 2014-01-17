@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2013 Inria.  All rights reserved.
+ * Copyright © 2009-2014 Inria.  All rights reserved.
  * Copyright © 2009-2013 Université Bordeaux 1
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright © 2010 IBM
@@ -2676,20 +2676,23 @@ look_sysfsnode(struct hwloc_topology *topology,
 
   {
       hwloc_obj_t * nodes = calloc(nbnodes, sizeof(hwloc_obj_t));
-      float * distances = calloc(nbnodes*nbnodes, sizeof(float));
       unsigned *indexes = calloc(nbnodes, sizeof(unsigned));
+      float * distances;
+      int failednodes = 0;
       unsigned index_;
 
-      if (NULL == indexes || NULL == distances || NULL == nodes) {
+      if (NULL == nodes || NULL == indexes) {
           free(nodes);
           free(indexes);
-          free(distances);
           hwloc_bitmap_free(nodeset);
+          nbnodes = 0;
           goto out;
       }
 
-      /* Get node indexes now. We need them in order since Linux groups
-       * sparse distances but keep them in order in the sysfs distance files.
+      /* Unsparsify node indexes.
+       * We'll need them later because Linux groups sparse distances
+       * and keeps them in order in the sysfs distance files.
+       * It'll simplify things in the meantime.
        */
       index_ = 0;
       hwloc_bitmap_foreach_begin (osnode, nodeset) {
@@ -2699,14 +2702,14 @@ look_sysfsnode(struct hwloc_topology *topology,
       hwloc_bitmap_free(nodeset);
 
 #ifdef HWLOC_DEBUG
-      hwloc_debug("%s", "numa distance indexes: ");
+      hwloc_debug("%s", "NUMA indexes: ");
       for (index_ = 0; index_ < nbnodes; index_++) {
 	hwloc_debug(" %u", indexes[index_]);
       }
       hwloc_debug("%s", "\n");
 #endif
 
-      /* Get actual distances now */
+      /* Create NUMA objects */
       for (index_ = 0; index_ < nbnodes; index_++) {
           char nodepath[SYSFS_NUMA_NODE_PATH_LEN];
           hwloc_bitmap_t cpuset;
@@ -2716,8 +2719,11 @@ look_sysfsnode(struct hwloc_topology *topology,
 
           sprintf(nodepath, "%s/node%u/cpumap", path, osnode);
           cpuset = hwloc_parse_cpumap(nodepath, data->root_fd);
-          if (!cpuset)
-              continue;
+          if (!cpuset) {
+	    /* This NUMA object won't be inserted, we'll ignore distances */
+	    failednodes++;
+	    continue;
+	  }
 
           node = hwloc_alloc_setup_object(HWLOC_OBJ_NODE, osnode);
           node->cpuset = cpuset;
@@ -2729,9 +2735,36 @@ look_sysfsnode(struct hwloc_topology *topology,
           hwloc_debug_1arg_bitmap("os node %u has cpuset %s\n",
                                   osnode, node->cpuset);
           res_obj = hwloc_insert_object_by_cpuset(topology, node);
-          assert(node == res_obj); /* if we got merged, somebody else added NODEs earlier, things went wrong?! */
+	  if (node == res_obj) {
+	    nodes[index_] = node;
+	  } else {
+	    /* We got merged somehow, could be a buggy BIOS reporting wrong NUMA node cpuset.
+	     * This object disappeared, we'll ignore distances */
+	    failednodes++;
+	  }
+      }
 
-          nodes[index_] = node;
+      if (failednodes) {
+	/* failed to read/create some nodes, don't bother reading/fixing
+	 * a distance matrix that would likely be wrong anyway.
+	 */
+	nbnodes -= failednodes;
+	distances = NULL;
+      } else {
+	distances = calloc(nbnodes*nbnodes, sizeof(float));
+      }
+
+      if (NULL == distances) {
+          free(nodes);
+          free(indexes);
+          goto out;
+      }
+
+      /* Get actual distances now */
+      for (index_ = 0; index_ < nbnodes; index_++) {
+          char nodepath[SYSFS_NUMA_NODE_PATH_LEN];
+
+	  osnode = indexes[index_];
 
 	  /* Linux nodeX/distance file contains distance from X to other localities (from ACPI SLIT table or so),
 	   * store them in slots X*N...X*N+N-1 */
