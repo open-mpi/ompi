@@ -135,6 +135,27 @@ Compiler Notes
   might want to double check that you have the latest bug fixes and
   patches for your compiler.
 
+- Users have reported issues with older versions of the PGI compiler
+  suite when using Open MPI's (non-default) --enable-debug configure
+  option.  Per the above advice of using the most recent version of a
+  compiler series, the Open MPI team recommends using the latest
+  version of the PGI suite, and/or not using the --enable-debug
+  configure option.  If it helps, here's what we have found with some
+  (not comprehensive) testing of various versions of the PGI compiler
+  suite:
+
+    pgi-8 : NO known good version with --enable-debug
+    pgi-9 : 9.0-4 known GOOD
+    pgi-10: 10.0-0 known GOOD
+    pgi-11: NO known good version with --enable-debug
+    pgi-12: 12.10 known GOOD (and 12.8 and 12.9 both known BAD with
+            --enable-debug)
+    pgi-13: 13.10 known GOOD
+
+- Similarly, there is a known PGI compiler issue with long source
+  directories that was resolved in 9.0-4 (9.0-3 is known to be
+  broken in this regard).
+
 - On NetBSD-6 (at least AMD64 and i386), and possibly on OpenBSD,
   libtool misidentifies properties of f95/g95, leading to obscure
   compile-time failures if used to build Open MPI.  You can work
