@@ -11,7 +11,6 @@
 #include "oshmem_config.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/mca/spml/spml.h"
-#include "ompi/mca/bml/base/base.h"
 #include "spml_yoda_component.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_rdmafrag.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_putreq.h"
@@ -86,16 +85,13 @@ static int mca_spml_yoda_component_register(void)
     return OSHMEM_SUCCESS;
 }
 
-static int mca_spml_yoda_component_open(void) {
-    return mca_base_framework_open(&ompi_bml_base_framework, MCA_BASE_OPEN_DEFAULT);
+static int mca_spml_yoda_component_open(void)
+{
+    return OSHMEM_SUCCESS;
 }
 
 static int mca_spml_yoda_component_close(void)
 {
-    int rc;
-    if (OMPI_SUCCESS != (rc = mca_base_framework_close(&ompi_bml_base_framework))) {
-        return rc;
-    }
     return OSHMEM_SUCCESS;
 }
 
