@@ -159,7 +159,7 @@ Compiler Notes
   might want to double check that you have the latest bug fixes and
   patches for your compiler.
 
-- Users have reported issued with older versions of the PGI compiler
+- Users have reported issues with older versions of the PGI compiler
   suite when using Open MPI's (non-default) --enable-debug configure
   option.  Per the above advice of using the most recent version of a
   compiler series, the Open MPI team recommends using the latest
