@@ -109,7 +109,7 @@ static char *hostfile_parse_string(void)
     return strdup(orte_util_hostfile_value.sval);
 }
 
-static orte_node_t* hostfile_lookup(opal_list_t* nodes, const char* name)
+static orte_node_t* hostfile_lookup(opal_list_t* nodes, const char* name, bool keep)
 {
     opal_list_item_t* item;
     for(item =  opal_list_get_first(nodes);
@@ -117,18 +117,20 @@ static orte_node_t* hostfile_lookup(opal_list_t* nodes, const char* name)
         item =  opal_list_get_next(item)) {
         orte_node_t* node = (orte_node_t*)item;
         if(strcmp(node->name, name) == 0) {
-            opal_list_remove_item(nodes, item);
+            if (!keep) {
+                opal_list_remove_item(nodes, item);
+            }
             return node;
         }
     }
     return NULL;
 }
 
-static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exclude, bool keep_all)
+static int hostfile_parse_line(int token, opal_list_t* updates,
+                               opal_list_t* exclude, bool keep_all)
 {
     int rc;
     orte_node_t* node;
-    bool got_count = false;
     bool got_max = false;
     char* value;
     char** argv;
@@ -193,7 +195,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             
             /* Do we need to make a new node object?  First check to see
              if it's already in the exclude list */
-            if (NULL == (node = hostfile_lookup(exclude, node_name))) {
+            if (NULL == (node = hostfile_lookup(exclude, node_name, keep_all))) {
                 node = OBJ_NEW(orte_node_t);
                 node->name = node_name;
                 if (NULL != username) {
@@ -226,24 +228,24 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
                              keep_all ? "TRUE" : "FALSE"));
 
-        /* Do we need to make a new node object?  First check to see
-         * if we are keeping everything or if it's already in the updates
-         * list. Because we check keep_all first, if that is set we will
-         * not do the hostfile_lookup call, and thus won't remove the
-         * pre-existing node from the updates list
-         */
-        if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
+        /* Do we need to make a new node object? */
+        if (NULL == (node = hostfile_lookup(updates, node_name, keep_all))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
+            node->slots = 1;
             if (NULL != username) {
                 node->username = strdup(username);
             }
-        }
-        /* do we need to record an alias for this node? */
-        if (NULL != node_alias) {
-            /* add to list of aliases for this node - only add if unique */
-            opal_argv_append_unique_nosize(&node->alias, node_alias, false);
-            free(node_alias);
+        } else {
+            /* this node was already found once - add a slot and mark slots as "given" */
+            node->slots++;
+            node->slots_given = true;
+            /* do we need to record an alias for this node? */
+            if (NULL != node_alias) {
+                /* add to list of aliases for this node - only add if unique */
+                opal_argv_append_unique_nosize(&node->alias, node_alias, false);
+                free(node_alias);
+            }
         }
     } else if (ORTE_HOSTFILE_RELATIVE == token) {
         /* store this for later processing */
@@ -286,33 +288,30 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
         }
         opal_argv_free (argv);
-        /* Do we need to make a new node object?  First check to see
-         * if we are keeping everything or if it's already in the updates
-         * list. Because we check keep_all first, if that is set we will
-         * not do the hostfile_lookup call, and thus won't remove the
-         * pre-existing node from the updates list
-         */
-        if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
+        /* Do we need to make a new node object? */
+        if (NULL == (node = hostfile_lookup(updates, node_name, keep_all))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
+            node->slots = 1;
             if (NULL != username) {
                 node->username = strdup(username);
             }
-        }
-        /* add a slot */
-        node->slots++;
-        /* mark the slots as "given" since we take them as being the
-         * number specified via the rankfile
-         */
-        node->slots_given = true;
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
-                             "%s hostfile: node %s slots %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots));
-        /* do we need to record an alias for this node? */
-        if (NULL != node_alias) {
-            /* add to list of aliases for this node - only add if unique */
-            opal_argv_append_unique_nosize(&node->alias, node_alias, false);
-            free(node_alias);
+        } else {
+            /* add a slot */
+            node->slots++;
+            /* mark the slots as "given" since we take them as being the
+             * number specified via the rankfile
+             */
+            node->slots_given = true;
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
+                                 "%s hostfile: node %s slots %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots));
+            /* do we need to record an alias for this node? */
+            if (NULL != node_alias) {
+                /* add to list of aliases for this node - only add if unique */
+                opal_argv_append_unique_nosize(&node->alias, node_alias, false);
+                free(node_alias);
+            }
         }
         /* skip to end of line */
         while (!orte_util_hostfile_done &&
@@ -326,7 +325,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         return ORTE_ERROR;
     }
     
-    got_count = false;
     while (!orte_util_hostfile_done) {
         token = orte_util_hostfile_lex();
         
@@ -352,8 +350,18 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
-            node->slots += rc;
-            got_count = true;
+            if (node->slots_given) {
+                /* multiple definitions were given for the
+                 * slot count - this is not allowed
+                 */
+                orte_show_help("help-hostfile.txt", "slots-given",
+                               true,
+                               cur_hostfile_name, node->name);
+                OBJ_RELEASE(node);
+                return ORTE_ERROR;
+            }
+            node->slots = rc;
+            node->slots_given = true;
 
             /* Ensure that slots_max >= slots */
             if (node->slots_max != 0 && node->slots_max < node->slots) {
@@ -399,20 +407,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
     }
 
 done:
-    if (got_count) {
-        node->slots_given = true;
-    } else if (got_max) {
+    if (got_max && !node->slots_given) {
         node->slots = node->slots_max;
         node->slots_given = true;
-    } else {
-        /* should be set by obj_new, but just to be clear */
-        node->slots_given = false;
-        /* if we weren't give a count or a max, then
-         * just increment by one to support RMs that
-         * count slots by listing the node multiple
-         * times in the file
-         */
-        ++node->slots;
     }
     opal_list_append(updates, &node->super);
 
@@ -424,7 +421,8 @@ done:
  * Parse the specified file into a node list.
  */
 
-static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_t* exclude, bool keep_all)
+static int hostfile_parse(const char *hostfile, opal_list_t* updates,
+                          opal_list_t* exclude, bool keep_all)
 {
     int token;
     int rc = ORTE_SUCCESS;

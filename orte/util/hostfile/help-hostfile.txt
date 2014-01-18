@@ -124,4 +124,16 @@ nodes that are in the allocation can be used in the hostfile. You
 may find relative node syntax to be a useful alternative to
 specifying absolute node names see the orte_hosts man page for
 further information.
+#
+[slots-given]
+A hostfile was provided that contains multiple definitions
+of the slot count for at least one node:
 
+  hostfile:  %s
+  node:      %s
+
+You can either list a node multiple times, once for each slot,
+or you can provide a single line that contains "slot=N". Mixing
+the two methods is not supported.
+
+Please correct the hostfile and try again.
