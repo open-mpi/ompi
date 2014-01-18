@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,6 +45,9 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
 {
     int amode;
     int old_mask, perm;
+    int rank, ret;
+
+    rank = ompi_comm_rank ( comm );
 
     if (fh->f_perm == OMPIO_PERM_NULL)  {
         old_mask = umask(022);
@@ -56,21 +59,34 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
     }
 
     amode = 0;
-    
-    if (access_mode & MPI_MODE_CREATE)
-        amode = amode | O_CREAT;
+
     if (access_mode & MPI_MODE_RDONLY)
         amode = amode | O_RDONLY;
     if (access_mode & MPI_MODE_WRONLY)
         amode = amode | O_WRONLY;
     if (access_mode & MPI_MODE_RDWR)
         amode = amode | O_RDWR;
-    if (access_mode & MPI_MODE_EXCL)
-        amode = amode | O_EXCL;
+    
+    if ( 0 == rank ) {
+	/* MODE_CREATE and MODE_EXCL can only be set by one process */
+	if ( access_mode & MPI_MODE_CREATE )
+	    amode = amode | O_CREAT;
+	if (access_mode & MPI_MODE_EXCL)
+	    amode = amode | O_EXCL;
+	fh->fd = open (filename, amode, perm);
+	ret = fh->fd;
+    }
 
-    fh->fd = open (filename, amode, perm);
-    if (-1 == fh->fd) {
-        return OMPI_ERROR;
+    comm->c_coll.coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll.coll_bcast_module);
+    if ( -1 == ret ) {
+	fh->fd = ret;
+	return OMPI_ERROR;
+    }
+    if ( 0 != rank ) {
+	fh->fd = open (filename, amode, perm);
+	if (-1 == fh->fd) {
+	    return OMPI_ERROR;
+	}
     }
 
     return OMPI_SUCCESS;
