@@ -1,7 +1,7 @@
 enable_oshmem=no
 enable_sensors=yes
 enable_orterun_prefix_by_default=yes
-enable_mpi_thread_multiple=yes
+enable_mpi_thread_multiple=no
 enable_mem_debug=no
 enable_mem_profile=no
 enable_debug_symbols=yes
