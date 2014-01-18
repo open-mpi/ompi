@@ -382,18 +382,13 @@ int orte_ess_base_orted_setup(char **hosts)
                              (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
                              orte_process_info.nodename));
         
-        /* if the session directory was created by some prior
-         * initialization, then don't redo it here
-         */
-        if (NULL == orte_process_info.top_session_dir) {
-            if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                        orte_process_info.tmpdir_base,
-                                                        orte_process_info.nodename, NULL,
-                                                        ORTE_PROC_MY_NAME))) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_session_dir";
-                goto error;
-            }
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir";
+            goto error;
         }
         /* Once the session directory location has been established, set
            the opal_output env file location to be in the

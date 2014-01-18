@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -416,10 +416,10 @@ static void process_send(int fd, short args, void *cbdata)
                         "%s:[%s:%d] processing send to peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst));
+                        ORTE_NAME_PRINT(&op->msg->peer));
 
     /* do we have a route to this peer (could be direct)? */
-    hop = orte_routed.get_route(&op->msg->dst);
+    hop = orte_routed.get_route(&op->msg->peer);
     /* do we know this hop? */
     if (NULL == (peer = mca_oob_tcp_peer_lookup(op->mod, &hop))) {
         /* push this back to the component so it can try
@@ -477,7 +477,7 @@ static void send_nb(struct mca_oob_tcp_module_t *md,
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s tcp:send_nb to peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst));
+                        ORTE_NAME_PRINT(&msg->peer));
 
     /* push this into our event base for processing */
     ORTE_ACTIVATE_TCP_POST_SEND(mod, msg, process_send);

@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -113,10 +112,9 @@ ORTE_DECLSPEC extern orte_rml_component_t *orte_rml_component;
 /* structure to send RML messages - used internally */
 typedef struct {
     opal_list_item_t super;
-    orte_process_name_t dst;     // targeted recipient
-    orte_process_name_t origin;  // original sender
-    int status;                  // returned status on send
-    orte_rml_tag_t tag;          // targeted tag
+    orte_process_name_t peer;  // targeted recipient
+    int status;                // returned status on send
+    orte_rml_tag_t tag;        // targeted tag
 
     /* user's send callback functions and data */
     union {
@@ -130,11 +128,6 @@ typedef struct {
     int count;
     /* pointer to the user's buffer */
     opal_buffer_t *buffer;
-    /* pointer to data - used when transferring
-     * messages between transports. #bytes is
-     * in the "count" field
-     */
-    char *data;
 } orte_rml_send_t;
 OBJ_CLASS_DECLARATION(orte_rml_send_t);
 
@@ -215,18 +208,18 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
         opal_output_verbose(5, orte_rml_base_framework.framework_output, \
                             "%s-%s Send message complete at %s:%d",     \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            ORTE_NAME_PRINT(&((m)->dst)),               \
+                            ORTE_NAME_PRINT(&((m)->peer)),              \
                             __FILE__, __LINE__);                        \
         if (NULL != (m)->iov) {                                         \
             if (NULL != (m)->cbfunc.iov) {                              \
                 (m)->cbfunc.iov((m)->status,                            \
-                                &((m)->dst),                            \
+                                &((m)->peer),                           \
                                 (m)->iov, (m)->count,                   \
                                 (m)->tag, (m)->cbdata);                 \
             }                                                           \
         } else {                                                        \
             /* non-blocking buffer send */                              \
-            (m)->cbfunc.buffer((m)->status, &((m)->dst),                \
+            (m)->cbfunc.buffer((m)->status, &((m)->peer),               \
                                (m)->buffer,                             \
                                (m)->tag, (m)->cbdata);                  \
         }                                                               \

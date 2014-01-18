@@ -12,7 +12,6 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -95,7 +94,7 @@ static void send_self_exe(int fd, short args, void* data)
 static void send_msg(int fd, short args, void *cbdata)
 {
     orte_rml_send_request_t *req = (orte_rml_send_request_t*)cbdata;
-    orte_process_name_t *peer = &(req->post.dst);
+    orte_process_name_t *peer = &(req->post.peer);
     orte_rml_tag_t tag = req->post.tag;
     orte_rml_recv_t *rcv;
     orte_rml_send_t *snd;
@@ -182,8 +181,7 @@ static void send_msg(int fd, short args, void *cbdata)
     }
 
     snd = OBJ_NEW(orte_rml_send_t);
-    snd->dst = *peer;
-    snd->origin = *ORTE_PROC_MY_NAME;
+    snd->peer = *peer;
     snd->tag = tag;
     if (NULL != req->post.iov) {
         snd->iov = req->post.iov;
@@ -225,7 +223,7 @@ int orte_rml_oob_send_nb(orte_process_name_t* peer,
      * race conditions and threads
      */
     req = OBJ_NEW(orte_rml_send_request_t);
-    req->post.dst = *peer;
+    req->post.peer = *peer;
     req->post.iov = iov;
     req->post.count = count;
     req->post.tag = tag;
@@ -263,7 +261,7 @@ int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
      * race conditions and threads
      */
     req = OBJ_NEW(orte_rml_send_request_t);
-    req->post.dst = *peer;
+    req->post.peer = *peer;
     req->post.buffer = buffer;
     req->post.tag = tag;
     req->post.cbfunc.buffer = cbfunc;

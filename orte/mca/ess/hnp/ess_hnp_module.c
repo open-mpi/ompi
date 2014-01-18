@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -301,32 +301,6 @@ static int rte_init(void)
             goto error;
         }
     }
-
-
-    /* setup my session directory */
-    if (orte_create_session_dirs) {
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                             orte_process_info.nodename));
-        
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_session_dir";
-            goto error;
-        }
-        
-        /* Once the session directory location has been established, set
-           the opal_output hnp file location to be in the
-           proc-specific session directory. */
-        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                         "output-", NULL, NULL);
-    }
-
     /* Setup the communication infrastructure */
     
     /*
@@ -355,30 +329,6 @@ static int rte_init(void)
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_select";
         goto error;
-    }
-
-    if (orte_create_session_dirs) {
-        /* save my contact info in a file for others to find */
-        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-        free(jobfam_dir);
-        
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                             "%s writing contact file %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             contact_path));
-        
-        if (ORTE_SUCCESS != (ret = orte_write_hnp_contact_file(contact_path))) {
-            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                                 "%s writing contact file failed with error %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_ERROR_NAME(ret)));
-        } else {
-            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                                 "%s wrote contact file",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        }
-        free(contact_path);
     }
 
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
@@ -630,10 +580,56 @@ static int rte_init(void)
 
     /* we are also officially a daemon, so better update that field too */
     orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
-
+    
     /* setup the orte_show_help system to recv remote output */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                             ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
+
+    /* setup my session directory */
+    if (orte_create_session_dirs) {
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
+                             orte_process_info.nodename));
+        
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir";
+            goto error;
+        }
+        
+        /* Once the session directory location has been established, set
+           the opal_output hnp file location to be in the
+           proc-specific session directory. */
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                         "output-", NULL, NULL);
+        
+        /* save my contact info in a file for others to find */
+        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+        free(jobfam_dir);
+        
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                             "%s writing contact file %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             contact_path));
+        
+        if (ORTE_SUCCESS != (ret = orte_write_hnp_contact_file(contact_path))) {
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s writing contact file failed with error %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_ERROR_NAME(ret)));
+        } else {
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s wrote contact file",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        }
+        free(contact_path);
+    }
 
     /* setup the routed info - the selected routed component
      * will know what to do. 
@@ -769,17 +765,6 @@ static int rte_init(void)
     return ORTE_SUCCESS;
 
  error:
-    /* remove my contact info file, if we have session directories */
-    if (NULL != orte_process_info.job_session_dir) {
-        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
-        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
-        free(jobfam_dir);
-        unlink(contact_path);
-        free(contact_path);
-    }
-    /* ensure we scrub the session directory tree */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",

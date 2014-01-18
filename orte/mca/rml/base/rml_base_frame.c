@@ -5,7 +5,6 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -229,15 +228,9 @@ static void send_cons(orte_rml_send_t *ptr)
     ptr->iov = NULL;
     ptr->buffer = NULL;
 }
-static void send_des(orte_rml_send_t *ptr)
-{
-    if (NULL != ptr->data) {
-        free(ptr->data);
-    }
-}
 OBJ_CLASS_INSTANCE(orte_rml_send_t,
                    opal_list_item_t,
-                   send_cons, send_des);
+                   send_cons, NULL);
 
 static void send_req_cons(orte_rml_send_request_t *ptr)
 {
