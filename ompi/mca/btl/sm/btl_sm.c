@@ -35,7 +35,7 @@
 #include <sys/mman.h>
 #endif  /* HAVE_SYS_MMAN_H */
 
-#ifdef OMPI_BTL_SM_CMA_NEED_SYSCALL_DEFS
+#if OMPI_BTL_SM_HAVE_CMA && defined(OMPI_BTL_SM_CMA_NEED_SYSCALL_DEFS)
 #include "opal/sys/cma.h"
 #endif /* OMPI_BTL_SM_CMA_NEED_SYSCALL_DEFS */
 

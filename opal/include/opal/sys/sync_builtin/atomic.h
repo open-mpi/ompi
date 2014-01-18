@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,6 +42,12 @@ static inline void opal_atomic_wmb(void)
     __sync_synchronize();
 }
 
+#if OPAL_WANT_SMP_LOCKS
+#define MB() opal_atomic_mb()
+#else
+#define MB()
+#endif
+
 /**********************************************************************
  *
  * Atomic math operations
@@ -72,13 +78,13 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 #define OPAL_HAVE_ATOMIC_ADD_32 1
 static inline int32_t opal_atomic_add_32(volatile int32_t *addr, int32_t delta)
 {
-    return __sync_fetch_and_add(addr, delta);
+    return __sync_add_and_fetch(addr, delta);
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
 {
-    return __sync_fetch_and_sub(addr, delta);
+    return __sync_sub_and_fetch(addr, delta);
 }
 
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
@@ -104,13 +110,13 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
 #define OPAL_HAVE_ATOMIC_ADD_64 1
 static inline int64_t opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
 {
-    return __sync_fetch_and_add(addr, delta);
+    return __sync_add_and_fetch(addr, delta);
 }
 
 #define OPAL_HAVE_ATOMIC_SUB_64 1
 static inline int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 {
-    return __sync_fetch_and_sub(addr, delta);
+    return __sync_sub_and_fetch(addr, delta);
 }
 
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
