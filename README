@@ -15,7 +15,7 @@ Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2011      University of Houston. All rights reserved.
-Copyright (c) 2013      Intel, Inc. All rights reserved 
+Copyright (c) 2013-2014 Intel, Inc. All rights reserved 
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -473,10 +473,6 @@ MPI Functionality and Features
   from Open MPI.  If there is interest, it is trivially easy to extend
   it to printf for other MPI functions.  Patches and/or suggestions
   would be greatfully appreciated on the Open MPI developer's list.
-
-- ROMIO is not supported on OpenBSD.  You will need to specify the
-  --disable-io-romio flag to configure when building on OpenBSD.
-
 
 OSHMEM Functionality and Features
 ------------------------------
