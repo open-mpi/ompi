@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,7 +110,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
         0,   // reserve space for an assigned index
-        100, // default priority of this transport
+        80,  // default priority of this transport
         component_available,
         component_startup,
         component_shutdown,
@@ -658,10 +658,10 @@ static int component_send(orte_rml_send_t *msg)
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "%s oob:tcp:send_nb to peer %s:%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->peer), msg->tag);
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag);
 
     /* do we know some way of potentially reaching this peer? */
-    memcpy(&ui64, (char*)&msg->peer, sizeof(uint64_t));
+    memcpy(&ui64, (char*)&msg->dst, sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
                                                          ui64, (void**)&pr)) {
         /* nope - let someone else try */

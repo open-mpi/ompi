@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,6 +101,10 @@ OBJ_CLASS_INSTANCE(mca_oob_base_component_t,
                    opal_list_item_t,
                    NULL, NULL);
 
+OBJ_CLASS_INSTANCE(orte_oob_send_t, 
+                   opal_object_t, 
+                   NULL, NULL); 
+
 static void pr_cons(orte_oob_base_peer_t *ptr)
 {
     ptr->component = NULL;
@@ -113,4 +118,3 @@ static void pr_des(orte_oob_base_peer_t *ptr)
 OBJ_CLASS_INSTANCE(orte_oob_base_peer_t,
                    opal_object_t,
                    pr_cons, pr_des);
-
