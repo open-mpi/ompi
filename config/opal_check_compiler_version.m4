@@ -30,11 +30,11 @@ AC_DEFUN([OPAL_CHECK_COMPILER], [
     AC_CACHE_CHECK([for compiler $lower], opal_cv_compiler_[$1],
     [
             CPPFLAGS_orig=$CPPFLAGS
-            CPPFLAGS="-I${top_ompi_srcdir}/ompi/include $CPPFLAGS"
+            CPPFLAGS="-I${top_ompi_srcdir}/opal/include/opal $CPPFLAGS"
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi_portable_platform.h"
+#include "opal_portable_platform.h"
 
 int main (int argc, char * argv[])
 {
@@ -62,11 +62,11 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRING], [
     AC_CACHE_CHECK([for compiler $lower], opal_cv_compiler_[$1],
     [
             CPPFLAGS_orig=$CPPFLAGS
-            CPPFLAGS="-I${top_ompi_srcdir}/ompi/include $CPPFLAGS"
+            CPPFLAGS="-I${top_ompi_srcdir}/opal/include/opal $CPPFLAGS"
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi_portable_platform.h"
+#include "opal_portable_platform.h"
 
 int main (int argc, char * argv[])
 {
@@ -95,11 +95,11 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRINGIFY], [
     AC_CACHE_CHECK([for compiler $lower], opal_cv_compiler_[$1],
     [
             CPPFLAGS_orig=$CPPFLAGS
-            CPPFLAGS="-I${top_ompi_srcdir}/ompi/include $CPPFLAGS"
+            CPPFLAGS="-I${top_ompi_srcdir}/opal/include/opal $CPPFLAGS"
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi_portable_platform.h"
+#include "opal_portable_platform.h"
 
 int main (int argc, char * argv[])
 {
