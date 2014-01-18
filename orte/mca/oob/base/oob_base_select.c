@@ -91,23 +91,21 @@ int orte_oob_base_select(void)
         OPAL_LIST_FOREACH(cmp, &orte_oob_base.actives, mca_base_component_list_item_t) {
             c3 = (mca_oob_base_component_t *) cmp->cli_component;
             if (c3->priority < component->priority) {
-                opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                    "mca:oob:select: Inserting component %s before %s",
-                                    component->oob_base.mca_component_name,
-                                    c3->oob_base.mca_component_name);
-                c2 = OBJ_NEW(mca_base_component_list_item_t);
-                c2->cli_component = (mca_base_component_t*)component;
-                opal_list_insert_pos(&orte_oob_base.actives,
-                                     &cmp->super, &c2->super);
-                added = true;
-                break;
+                continue;
             }
+            opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                "mca:oob:select: Inserting component");
+            c2 = OBJ_NEW(mca_base_component_list_item_t);
+            c2->cli_component = (mca_base_component_t*)component;
+            opal_list_insert_pos(&orte_oob_base.actives,
+                                 &c2->super, &cmp->super);
+            added = true;
+            break;
         }
         if (!added) {
             /* add to end */
             opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                                "mca:oob:select: Adding component %s to end",
-                                component->oob_base.mca_component_name);
+                                "mca:oob:select: Adding component to end");
             c2 = OBJ_NEW(mca_base_component_list_item_t);
             c2->cli_component = (mca_base_component_t*)component;
             opal_list_append(&orte_oob_base.actives, &c2->super);
