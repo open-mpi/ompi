@@ -171,7 +171,7 @@ int MPIOI_File_read(MPI_File fh,
     /* --END ERROR HANDLING-- */
 
     if (e32_buf != NULL) {
-        error_code = MPIU_read_external32_conversion_fn(xbuf, datatype,
+        error_code = MPIU_read_external32_conversion_fn(buf, datatype,
                 count, e32_buf);
 	ADIOI_Free(e32_buf);
     }
