@@ -194,7 +194,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             }
             
             /* Do we need to make a new node object?  First check to see
-             if it's already in the exclude list */
+               if it's already in the exclude list */
             if (NULL == (node = hostfile_lookup(exclude, node_name, keep_all))) {
                 node = OBJ_NEW(orte_node_t);
                 node->name = node_name;
@@ -203,9 +203,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 }
             }
             /* Note that we need to add this back to the exclude list.
-             If it was found, we just removed it (in hostfile_lookup()),
-             so this puts it back. If it was not found, then we have to
-             add it to the exclude list anyway. */
+               If it was found, we just removed it (in hostfile_lookup()),
+               so this puts it back. If it was not found, then we have to
+               add it to the exclude list anyway. */
             opal_list_append(exclude, &node->super);
             return ORTE_SUCCESS;
         }
@@ -240,12 +240,12 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             /* this node was already found once - add a slot and mark slots as "given" */
             node->slots++;
             node->slots_given = true;
-            /* do we need to record an alias for this node? */
-            if (NULL != node_alias) {
-                /* add to list of aliases for this node - only add if unique */
-                opal_argv_append_unique_nosize(&node->alias, node_alias, false);
-                free(node_alias);
-            }
+        }
+        /* do we need to record an alias for this node? */
+        if (NULL != node_alias) {
+            /* add to list of aliases for this node - only add if unique */
+            opal_argv_append_unique_nosize(&node->alias, node_alias, false);
+            free(node_alias);
         }
     } else if (ORTE_HOSTFILE_RELATIVE == token) {
         /* store this for later processing */
@@ -299,20 +299,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         } else {
             /* add a slot */
             node->slots++;
-            /* mark the slots as "given" since we take them as being the
-             * number specified via the rankfile
-             */
-            node->slots_given = true;
             OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                                  "%s hostfile: node %s slots %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots));
-            /* do we need to record an alias for this node? */
-            if (NULL != node_alias) {
-                /* add to list of aliases for this node - only add if unique */
-                opal_argv_append_unique_nosize(&node->alias, node_alias, false);
-                free(node_alias);
-            }
         }
+        /* mark the slots as "given" since we take them as being the
+         * number specified via the rankfile
+         */
+        node->slots_given = true;
         /* skip to end of line */
         while (!orte_util_hostfile_done &&
                ORTE_HOSTFILE_NEWLINE != token) {
@@ -406,7 +400,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         }
     }
 
-done:
+ done:
     if (got_max && !node->slots_given) {
         node->slots = node->slots_max;
         node->slots_given = true;
