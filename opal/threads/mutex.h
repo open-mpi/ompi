@@ -279,6 +279,7 @@ OPAL_THREAD_ADD32(volatile int32_t *addr, int delta)
     return ret;
 }
 
+#if OPAL_HAVE_ATOMIC_MATH_64
 static inline int64_t
 OPAL_THREAD_ADD64(volatile int64_t *addr, int delta)
 {
@@ -292,6 +293,7 @@ OPAL_THREAD_ADD64(volatile int64_t *addr, int delta)
 
     return ret;
 }
+#endif
 
 static inline size_t
 OPAL_THREAD_ADD_SIZE_T(volatile size_t *addr, int delta)
