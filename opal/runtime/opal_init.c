@@ -225,6 +225,9 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_DATA_VALUE_NOT_FOUND:
         retval = "Data for specified key not found";
         break;
+    case OPAL_ERR_CONNECTION_FAILED:
+        retval = "Connection failed";
+        break;
     default:
         retval = NULL;
     }
