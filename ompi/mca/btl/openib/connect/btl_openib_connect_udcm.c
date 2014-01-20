@@ -1452,7 +1452,7 @@ static int udcm_post_send (mca_btl_base_endpoint_t *lcl_ep, void *data,
         sge.length = length;
         sge.lkey   = m->cm_mr->lkey;
 
-        memcpy ((void *)sge.addr, data, length);
+        memcpy ((uintptr_t *)sge.addr, data, length);
     } else {
         sge.addr   = (uintptr_t) data;
         sge.length = length;
