@@ -104,7 +104,11 @@ static char *orte_getline(FILE *fp)
     return NULL;
 }
 
-
+/* FOR FUTURE: extend to read cooling device speeds in
+ *     current speed: /sys/class/thermal/cooling_deviceN/cur_state
+ *     max speed: /sys/class/thermal/cooling_deviceN/max_state
+ *     type: /sys/class/thermal/cooling_deviceN/type
+ */
 static int init(void)
 {
     int ret;
