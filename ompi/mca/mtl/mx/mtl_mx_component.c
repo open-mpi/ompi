@@ -111,7 +111,7 @@ ompi_mtl_mx_component_close(void)
     if( 0 == ompi_mtl_mx_component_initialized ) {
         int ret = ompi_common_mx_finalize();
         if(OMPI_SUCCESS != ret) { 
-            return NULL;
+            return OMPI_ERROR;
         }
      }
     return OMPI_SUCCESS;
