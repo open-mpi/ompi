@@ -54,21 +54,22 @@ struct mca_coll_hcoll_component_t {
     /** MCA parameter: Verbose level of this component */
     int hcoll_verbose;
 
-    /** MCA parameter: Path to libfca.so */
-    char* hcoll_lib_path;
-
     /** MCA parameter: Enable FCA */
     int   hcoll_enable;
+
+    /** MCA parameter: Minimal number of processes in the communicator
+        for the corresponding hcoll context to be created */
+    int hcoll_np;
+
+    /** Whether or not hcoll_init was ever called */
+    bool libhcoll_initialized;
 
     /** MCA parameter: ON/OFF user defined datatype through HCOLL */
     int   hcoll_datatype_fallback;
 
     /* FCA global stuff */
-    void *hcoll_lib_handle;                               /* FCA dynamic library */
     mca_coll_hcoll_ops_t hcoll_ops;
     ompi_free_list_t requests;
-    opal_list_t  active_modules;
-    volatile uint32_t progress_lock;
 };
 typedef struct mca_coll_hcoll_component_t mca_coll_hcoll_component_t;
 
@@ -125,13 +126,6 @@ typedef struct mca_coll_hcoll_module_t mca_coll_hcoll_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_hcoll_module_t);
 
 
-
-typedef struct mca_coll_hcoll_module_list_item_wrapper_t{
-    opal_list_item_t super;
-    mca_coll_hcoll_module_t *module;
-} mca_coll_hcoll_module_list_item_wrapper_t;
-
-OBJ_CLASS_DECLARATION(mca_coll_hcoll_module_list_item_wrapper_t);
 
 
 /* API functions */

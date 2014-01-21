@@ -56,10 +56,9 @@ mca_coll_hcoll_component_t mca_coll_hcoll_component = {
         mca_coll_hcoll_init_query,
         mca_coll_hcoll_comm_query,
     },
-    90,
-    0,
-    "",
-    1
+    90, /* priority */
+    0,  /* verbose level */
+    1   /* hcoll_enable */
 };
 
 
@@ -72,11 +71,6 @@ int mca_coll_hcoll_get_lib(void)
             0, sizeof(mca_coll_hcoll_component.hcoll_ops));
 
     return OMPI_SUCCESS;
-}
-
-static void mca_coll_hcoll_close_lib(void)
-{
-
 }
 
 /*
@@ -94,7 +88,6 @@ enum {
     REGSTR_EMPTY_OK = 0x01,
     REGSTR_MAX = 0x88
 };
-
 
 
 /*
@@ -129,7 +122,6 @@ static int reg_string(const char* param_name,
 
     return OMPI_SUCCESS;
 }
-
 
 
 /*
@@ -177,42 +169,43 @@ static int hcoll_register(void)
 
     ret = OMPI_SUCCESS;
 
-#define CHECK(expr) do {                    \
-            tmp = (expr);                       \
-            if (OMPI_SUCCESS != tmp) ret = tmp; \
-         } while (0)
-
+#define CHECK(expr) do {                        \
+        tmp = (expr);                           \
+        if (OMPI_SUCCESS != tmp) ret = tmp;     \
+    } while (0)
 
 
     CHECK(reg_int("priority",NULL,
-                "Priority of the hcol coll component",
-                           90,
-                           &mca_coll_hcoll_component.hcoll_priority,
-                           0));
+                  "Priority of the hcol coll component",
+                  90,
+                  &mca_coll_hcoll_component.hcoll_priority,
+                  0));
 
     CHECK(reg_int("verbose", NULL,
-                "Verbose level of the hcol coll component",
-                           0,
-                           &mca_coll_hcoll_component.hcoll_verbose,
-                           0));
+                  "Verbose level of the hcol coll component",
+                  0,
+                  &mca_coll_hcoll_component.hcoll_verbose,
+                  0));
 
     CHECK(reg_int("enable",NULL,
-                           "[1|0|] Enable/Disable HCOL",
-                           1 /*enable by default*/,
-                           &mca_coll_hcoll_component.hcoll_enable,
-                           0));
+                  "[1|0|] Enable/Disable HCOL",
+                  1 /*enable by default*/,
+                  &mca_coll_hcoll_component.hcoll_enable,
+                  0));
+
+    CHECK(reg_int("np",NULL,
+                  "Minimal number of processes in the communicator"
+                  " for the corresponding hcoll context to be created (default: 32)",
+                  2 /*enable by default*/,
+                  &mca_coll_hcoll_component.hcoll_np,
+                  0));
 
     CHECK(reg_int("datatype_fallback",NULL,
-                           "[1|0|] Enable/Disable user defined dattypes fallback",
-                           1 /*enable by default*/,
-                           &mca_coll_hcoll_component.hcoll_datatype_fallback,
-                           0));
+                  "[1|0|] Enable/Disable user defined dattypes fallback",
+                  1 /*enable by default*/,
+                  &mca_coll_hcoll_component.hcoll_datatype_fallback,
+                  0));
 
-    CHECK(reg_string("library_path", NULL,
-                           "HCOL /path/to/libhcol.so",
-                           ""COLL_HCOLL_HOME"/libhcol.so",
-                           &mca_coll_hcoll_component.hcoll_lib_path,
-                           0));
 
     return ret;
 }
@@ -220,23 +213,25 @@ static int hcoll_register(void)
 static int hcoll_open(void)
 {
     int rc;
+    mca_coll_hcoll_component_t *cm;
+    cm  = &mca_coll_hcoll_component;
 
     mca_coll_hcoll_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_coll_hcoll_output, mca_coll_hcoll_component.hcoll_verbose);
+    opal_output_set_verbosity(mca_coll_hcoll_output, cm->hcoll_verbose);
 
     hcoll_rte_fns_setup();
 
-    OBJ_CONSTRUCT(&mca_coll_hcoll_component.active_modules, opal_list_t);
-
-    mca_coll_hcoll_component.progress_lock = -1;
+    cm->libhcoll_initialized = false;
     return OMPI_SUCCESS;
 }
 
 static int hcoll_close(void)
 {
     int rc;
+    mca_coll_hcoll_component_t *cm;
+    cm = &mca_coll_hcoll_component;
 
-    if (false == mca_coll_hcoll_component.hcoll_enable) {
+    if (false == cm->libhcoll_initialized) {
         return OMPI_SUCCESS;
     }
 
@@ -244,8 +239,6 @@ static int hcoll_close(void)
     rc = hcoll_finalize();
 
     opal_progress_unregister(mca_coll_hcoll_progress);
-    OBJ_DESTRUCT(&mca_coll_hcoll_component.active_modules);
-    memset(&mca_coll_hcoll_component.active_modules,0,sizeof(mca_coll_hcoll_component.active_modules));
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(1,"Hcol library finalize failed");
         return OMPI_ERROR;
