@@ -32,8 +32,7 @@ mca_btl_ugni_prepare_src_send_nodata (struct mca_btl_base_module_t *btl,
         return NULL;
     }
 
-    BTL_VERBOSE(("preparing src for send fragment. size = %u",
-                 (unsigned int)(*size + reserve)));
+    BTL_VERBOSE(("preparing src for send fragment. size = %u", (unsigned int) reserve));
 
     frag->hdr_size = reserve + sizeof (frag->hdr.send);
 
