@@ -367,8 +367,8 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
             wr = wr->next = &to_recv_frag(item)->rd_desc;
         OPAL_OUTPUT((-1, "Posting recv (QP num %d): WR ID %p, SG addr %p, len %d, lkey %d",
                      ep->qps[qp].qp->lcl_qp->qp_num,
-                     (void*) wr->wr_id,
-                     (void*) wr->sg_list[0].addr,
+                     (void*) ((uintptr_t*)wr->wr_id),
+                     (void*)((uintptr_t*) wr->sg_list[0].addr),
                      wr->sg_list[0].length,
                      wr->sg_list[0].lkey));
     }

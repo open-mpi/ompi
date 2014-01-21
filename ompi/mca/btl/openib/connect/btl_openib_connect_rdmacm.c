@@ -908,13 +908,13 @@ static int handle_connect_request(struct rdma_cm_event *event)
             goto out1;
         }
         OPAL_OUTPUT((-1, "Posted CTS receiver buffer (%p) for peer %s, qp index %d (QP num %d), WR ID %p, SG addr %p, len %d, lkey %d",
-                     (void*) wr->sg_list[0].addr,
+                     (void*)((uintptr_t*) wr->sg_list[0].addr),
                      (NULL == endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
                      "unknown" : endpoint->endpoint_proc->proc_ompi->proc_hostname,
                      qpnum,
                      endpoint->qps[qpnum].qp->lcl_qp->qp_num,
-                     (void*) wr->wr_id,
-                     (void*) wr->sg_list[0].addr,
+                     (void*)((uintptr_t*) wr->wr_id),
+                     (void*)((uintptr_t*) wr->sg_list[0].addr),
                      wr->sg_list[0].length,
                      wr->sg_list[0].lkey));
     }
@@ -1385,7 +1385,7 @@ static int finish_connect(id_context_t *context)
                 goto out1;
             }
             OPAL_OUTPUT((-1, "Posted initiator CTS buffer (%p, length %d) for peer %s, qp index %d (QP num %d)",
-                         (void*) wr->sg_list[0].addr,
+                         (void*)((uintptr_t*) wr->sg_list[0].addr),
                          wr->sg_list[0].length,
                          (NULL == contents->endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
                          "unknown" : contents->endpoint->endpoint_proc->proc_ompi->proc_hostname,

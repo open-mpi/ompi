@@ -269,7 +269,7 @@ static int check_if_device_support_modify_srq(mca_btl_openib_module_t *openib_bt
         return rc;
     }
 
-    sge_elem.addr = (uint64_t) &buff;
+    sge_elem.addr = (uint64_t)((uintptr_t) &buff);
     sge_elem.length = sizeof(buff);
 
     wr1.num_sge = wr2.num_sge = 1;
