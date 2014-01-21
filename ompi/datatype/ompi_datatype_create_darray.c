@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -172,7 +172,7 @@ int32_t ompi_datatype_create_darray(int size,
                                     int const* gsize_array,
                                     int const* distrib_array,
                                     int const* darg_array,
-                                    int const* psize_array, 
+                                    int const* psize_array,
                                     int order,
                                     const ompi_datatype_t* oldtype,
                                     ompi_datatype_t** newtype)
@@ -262,9 +262,9 @@ int32_t ompi_datatype_create_darray(int size,
     /* set displacement and UB correctly.  Use struct instead of
        resized for same reason as subarray */
     {
-        ptrdiff_t displs[3];
+        ptrdiff_t displs[3], tmp_size;
         ompi_datatype_t *types[3];
-        int tmp_size, blength[3] = { 1, 1, 1};
+        int blength[3] = { 1, 1, 1};
 
         displs[1] = st_offsets[start_loop];
         tmp_size = 1;
