@@ -1273,9 +1273,6 @@ fi
 # a C++ compiler.
 AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
 
-AM_CONDITIONAL(OSHMEM_WANT_FORTRAN_BINDINGS,
-    [test "$ompi_fortran_happy" == "1" -a "$OSHMEM_FORTRAN_BINDINGS" == "1"])
-
 LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
 LTDL_CONVENIENCE
 LT_INIT([dlopen win32-dll])
