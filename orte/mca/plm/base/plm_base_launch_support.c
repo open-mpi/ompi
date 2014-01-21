@@ -148,16 +148,6 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                         }
                     }
                 }
-            } else {
-                /* set any non-specified slot counts to 1 */
-                for (i=0; i < orte_node_pool->size; i++) {
-                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                        continue;
-                    }
-                    if (!node->slots_given) {
-                        node->slots = 1;
-                    }
-                }
             }
         }
     }
