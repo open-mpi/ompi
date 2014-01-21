@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +36,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
                                       const ompi_datatype_t* oldtype,
                                       ompi_datatype_t** newtype)
 {
-    MPI_Datatype last_type; 
+    MPI_Datatype last_type;
     int32_t i, step, end_loop;
     MPI_Aint size, displ, extent;
 
@@ -70,8 +72,8 @@ int32_t ompi_datatype_create_subarray(int ndims,
                                  oldtype, newtype );
 
     last_type = *newtype;
-    size = size_array[i] * size_array[i+step];
-    displ = start_array[i] + start_array[i+step] * size_array[i];
+    size = (MPI_Aint)size_array[i] * (MPI_Aint)size_array[i+step];
+    displ = (MPI_Aint)start_array[i] + (MPI_Aint)start_array[i+step] * (MPI_Aint)size_array[i];
     for( i += 2 * step; i != end_loop; i += step ) {
         ompi_datatype_create_hvector( subsize_array[i], 1, size * extent,
                                       last_type, newtype );
@@ -81,7 +83,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
         last_type = *newtype;
     }
 
- replace_subarray_type:    
+ replace_subarray_type:
     /**
      * We cannot use resized here. Resized will only set the soft lb and ub markers
      * without moving the real data inside. What we need is to force the displacement
