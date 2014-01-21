@@ -68,11 +68,10 @@ retry1:
 #endif
 	beqz   $2, retry1
 done1:                 
-	.set reorder          
-
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
+	.set reorder          
 END(opal_atomic_cmpset_32)
 
 
@@ -104,11 +103,10 @@ done2:
 #ifdef __linux__
 	.set mips0
 #endif
-	.set reorder          
-
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
+	.set reorder          
 END(opal_atomic_cmpset_acq_32)
 
 	
@@ -140,16 +138,15 @@ retry3:
 #endif
 	beqz   $2, retry3   
 done3:                 
-	.set reorder          
-
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
+	.set reorder          
 END(opal_atomic_cmpset_rel_32)
 	
 #ifdef __mips64	
 LEAF(opal_atomic_cmpset_64)
-		.set noreorder        
+	.set noreorder        
 retry4:                
 	lld    $3, 0($4)         
 	bne    $3, $5, done4   
@@ -157,11 +154,10 @@ retry4:
 	scd    $2, 0($4)         
 	beqz   $2, retry4   
 done4:                 
-	.set reorder          
-
-	xor	$4,$3,$5
+	xor	$3,$3,$5
 	j	ra
-	sltu	$3,$4,1
+	sltu	$2,$3,1
+	.set reorder          
 END(opal_atomic_cmpset_64)
 
 
@@ -174,11 +170,11 @@ retry5:
 	scd    $2, 0($4)         
 	beqz   $2, retry5   
 done5:                 
-	.set reorder          
 	sync
-	xor	$4,$3,$5
+	xor	$3,$3,$5
 	j	ra
-	sltu	$3,$4,1
+	sltu	$2,$3,1
+	.set reorder          
 END(opal_atomic_cmpset_acq_64)
 
 
@@ -192,10 +188,9 @@ retry6:
 	scd    $2, 0($4)         
 	beqz   $2, retry6   
 done6:                 
-	.set reorder          
-
-	xor	$4,$3,$5
+	xor	$3,$3,$5
 	j	ra
-	sltu	$3,$4,1
+	sltu	$2,$3,1
+	.set reorder          
 END(opal_atomic_cmpset_rel_64)
 #endif /* __mips64 */
