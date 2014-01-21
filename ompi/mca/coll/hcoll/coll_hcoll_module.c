@@ -18,7 +18,6 @@ int hcoll_comm_attr_keyval;
  */
 int mca_coll_hcoll_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
-
     return OMPI_SUCCESS;
 }
 
@@ -50,73 +49,45 @@ static void mca_coll_hcoll_module_construct(mca_coll_hcoll_module_t *hcoll_modul
 
 static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module)
 {
-    opal_list_item_t  *item, *item_next;
-    opal_list_t *am;
     mca_coll_hcoll_module_t *module;
     ompi_communicator_t *comm;
     int context_destroyed;
 
-    am = &mca_coll_hcoll_component.active_modules;
-
     if (hcoll_module->comm == &ompi_mpi_comm_world.comm){
-#if 0
-        /* If we get here then we are detroying MPI_COMM_WORLD now. So,
-         * it is safe to destory all the other communicators and corresponding
-         * hcoll contexts that could still be on the "active_modules" list.
-         */
-        item = opal_list_get_first(am);
-        while (item != opal_list_get_end(am)){
-            item_next = opal_list_get_next(item);
-            module = ((mca_coll_hcoll_module_list_item_wrapper_t *)item)->module;
-            comm = module->comm;
-            context_destroyed = 0;
-            while(!context_destroyed){
-                hcoll_destroy_context(module->hcoll_context,
-                                      (rte_grp_handle_t)comm,
-                                      &context_destroyed);
-            }
-            module->hcoll_context = NULL;
-            OBJ_RELEASE(comm);
-            opal_list_remove_item(am,item);
-            OBJ_RELEASE(item);
-            item = item_next;
-        }
-
-        /* Now destory the comm_world hcoll context as well */
-        context_destroyed = 0;
-        while(!context_destroyed){
-            hcoll_destroy_context(hcoll_module->hcoll_context,
-                                  (rte_grp_handle_t)hcoll_module->comm,
-                                  &context_destroyed);
-        }
-#endif
         if (OMPI_SUCCESS != ompi_attr_free_keyval(COMM_ATTR, &hcoll_comm_attr_keyval, 0)) {
             HCOL_VERBOSE(1,"hcoll ompi_attr_free_keyval failed");
         }
     }
 
-    OBJ_RELEASE(hcoll_module->previous_barrier_module);
-    OBJ_RELEASE(hcoll_module->previous_bcast_module);
-    OBJ_RELEASE(hcoll_module->previous_reduce_module);
-    OBJ_RELEASE(hcoll_module->previous_allreduce_module);
-    OBJ_RELEASE(hcoll_module->previous_allgather_module);
-    OBJ_RELEASE(hcoll_module->previous_allgatherv_module);
-    OBJ_RELEASE(hcoll_module->previous_gather_module);
-    OBJ_RELEASE(hcoll_module->previous_gatherv_module);
-    OBJ_RELEASE(hcoll_module->previous_alltoall_module);
-    OBJ_RELEASE(hcoll_module->previous_alltoallv_module);
-    OBJ_RELEASE(hcoll_module->previous_alltoallw_module);
-    OBJ_RELEASE(hcoll_module->previous_reduce_scatter_module);
-    OBJ_RELEASE(hcoll_module->previous_ibarrier_module);
-    OBJ_RELEASE(hcoll_module->previous_ibcast_module);
-    OBJ_RELEASE(hcoll_module->previous_iallreduce_module);
-    OBJ_RELEASE(hcoll_module->previous_iallgather_module);
-    context_destroyed = 0;
-    hcoll_destroy_context(hcoll_module->hcoll_context,
-                                  (rte_grp_handle_t)hcoll_module->comm,
-                                  &context_destroyed);
-    assert(context_destroyed);
+    /* If the hcoll_context is null then we are destroying the hcoll_module
+       that didn't initialized fallback colls/modules.
+       Then just clear and return. Otherwise release module pointers and
+       destroy hcoll context*/
 
+    if (hcoll_module->hcoll_context != NULL){
+        OBJ_RELEASE(hcoll_module->previous_barrier_module);
+        OBJ_RELEASE(hcoll_module->previous_bcast_module);
+        OBJ_RELEASE(hcoll_module->previous_reduce_module);
+        OBJ_RELEASE(hcoll_module->previous_allreduce_module);
+        OBJ_RELEASE(hcoll_module->previous_allgather_module);
+        OBJ_RELEASE(hcoll_module->previous_allgatherv_module);
+        OBJ_RELEASE(hcoll_module->previous_gather_module);
+        OBJ_RELEASE(hcoll_module->previous_gatherv_module);
+        OBJ_RELEASE(hcoll_module->previous_alltoall_module);
+        OBJ_RELEASE(hcoll_module->previous_alltoallv_module);
+        OBJ_RELEASE(hcoll_module->previous_alltoallw_module);
+        OBJ_RELEASE(hcoll_module->previous_reduce_scatter_module);
+        OBJ_RELEASE(hcoll_module->previous_ibarrier_module);
+        OBJ_RELEASE(hcoll_module->previous_ibcast_module);
+        OBJ_RELEASE(hcoll_module->previous_iallreduce_module);
+        OBJ_RELEASE(hcoll_module->previous_iallgather_module);
+
+        context_destroyed = 0;
+        hcoll_destroy_context(hcoll_module->hcoll_context,
+                              (rte_grp_handle_t)hcoll_module->comm,
+                              &context_destroyed);
+        assert(context_destroyed);
+    }
     mca_coll_hcoll_module_clear(hcoll_module);
 }
 
@@ -130,9 +101,10 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
 } while(0)
 
 
-static int __save_coll_handlers(mca_coll_hcoll_module_t *hcoll_module)
+static int mca_coll_hcoll_save_coll_handlers(mca_coll_hcoll_module_t *hcoll_module)
 {
-    ompi_communicator_t *comm = hcoll_module->comm;
+    ompi_communicator_t *comm;
+    comm = hcoll_module->comm;
 
     HCOL_SAVE_PREV_COLL_API(barrier);
     HCOL_SAVE_PREV_COLL_API(bcast);
@@ -154,13 +126,16 @@ static int __save_coll_handlers(mca_coll_hcoll_module_t *hcoll_module)
     return OMPI_SUCCESS;
 }
 
+
+
 /*
 ** Communicator free callback
 */
 int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, void *extra)
 {
 
-    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*) attr_val;
+    mca_coll_hcoll_module_t *hcoll_module;
+    hcoll_module = (mca_coll_hcoll_module_t*) attr_val;
 
     hcoll_group_destroy_notify(hcoll_module->hcoll_context);
     return OMPI_SUCCESS;
@@ -172,36 +147,14 @@ int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, void *extr
 static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
                                         struct ompi_communicator_t *comm)
 {
-    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*) module;
     int ret;
-    hcoll_module->comm = comm;
-    if (OMPI_SUCCESS != __save_coll_handlers(hcoll_module)){
-        HCOL_ERROR("coll_hcol: __save_coll_handlers failed");
+
+    if (OMPI_SUCCESS != mca_coll_hcoll_save_coll_handlers((mca_coll_hcoll_module_t *)module)){
+        HCOL_ERROR("coll_hcol: mca_coll_hcoll_save_coll_handlers failed");
         return OMPI_ERROR;
     }
 
-    hcoll_set_runtime_tag_offset(MCA_COLL_BASE_TAG_HCOLL_BASE, mca_pml.pml_max_tag);
-
-
-    hcoll_module->hcoll_context =
-        hcoll_create_context((rte_grp_handle_t)comm);
-    if (NULL == hcoll_module->hcoll_context){
-        HCOL_VERBOSE(1,"hcoll_create_context returned NULL");
-        return OMPI_ERROR;
-    }
-
-#if 0
-    if (comm != &ompi_mpi_comm_world.comm){
-        mca_coll_hcoll_module_list_item_wrapper_t *mw =
-            OBJ_NEW(mca_coll_hcoll_module_list_item_wrapper_t);
-        mw->module = hcoll_module;
-        OBJ_RETAIN(hcoll_module->comm);
-        opal_list_append(&mca_coll_hcoll_component.active_modules,
-                         (opal_list_item_t*)mw);
-    }
-#endif
-
-    ret = ompi_attr_set_c(COMM_ATTR, comm, &comm->c_keyhash, hcoll_comm_attr_keyval, (void *)hcoll_module, false);
+    ret = ompi_attr_set_c(COMM_ATTR, comm, &comm->c_keyhash, hcoll_comm_attr_keyval, (void *)module, false);
     if (OMPI_SUCCESS != ret) {
         HCOL_VERBOSE(1,"hcoll ompi_attr_set_c failed");
         return OMPI_ERROR;
@@ -212,55 +165,11 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
 
 int mca_coll_hcoll_progress(void)
 {
-    opal_list_item_t  *item, *item_next;
-    opal_list_t *am;
-    mca_coll_hcoll_module_t *module;
-    ompi_communicator_t *comm;
-    int context_destroyed;
-    OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,1);
-
-    am = &mca_coll_hcoll_component.active_modules;
-
-    if (mca_coll_hcoll_component.progress_lock){
-        OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
-        (*hcoll_progress_fn)();
-        return OMPI_SUCCESS;
-    }
     if (ompi_mpi_finalized){
         hcoll_rte_p2p_disabled_notify();
     }
-#if 0
-    item = opal_list_get_first(am);
-    while (item != opal_list_get_end(am)){
-        item_next = opal_list_get_next(item);
-        module = ((mca_coll_hcoll_module_list_item_wrapper_t *)item)->module;
-        comm = module->comm;
-        if (((opal_object_t*)comm)->obj_reference_count == 1){
-            /* Ok, if we are here then nobody owns a communicator pointed with comm except
-             * for coll_hcoll. Hence, it is safe to remove the hcoll context firstly and
-             * call release on the communicator.
-             *
-             * The call to hcoll_destroy_context is not blocking. The last parameter on the return
-             * indicates whether the context has been destroyd (1) or not (0). In the latter
-             * case one should call destroy again after some progressing
-             */
-            context_destroyed = 0;
-            hcoll_destroy_context(module->hcoll_context,
-                                  (rte_grp_handle_t)comm,
-                                  &context_destroyed);
-            if (context_destroyed){
-                module->hcoll_context = NULL;
-                OBJ_RELEASE(comm);
-                opal_list_remove_item(am,item);
-                OBJ_RELEASE(item);
-            }
-        }
-        item = item_next;
-    }
-#endif
 
     (*hcoll_progress_fn)();
-    OPAL_THREAD_ADD32(&mca_coll_hcoll_component.progress_lock,-1);
     return OMPI_SUCCESS;
 }
 
@@ -275,54 +184,73 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_base_module_t *module;
     mca_coll_hcoll_module_t *hcoll_module;
-    static bool libhcoll_initialized = false;
     ompi_attribute_fn_ptr_union_t del_fn;
     ompi_attribute_fn_ptr_union_t copy_fn;
+    mca_coll_hcoll_component_t *cm;
     int err;
     int rc;
-
+    cm = &mca_coll_hcoll_component;
     *priority = 0;
     module = NULL;
 
-    if (!mca_coll_hcoll_component.hcoll_enable){
+    if (!cm->hcoll_enable){
         goto exit;
     }
 
-    if (!libhcoll_initialized)
+    if (OMPI_COMM_IS_INTER(comm) || ompi_comm_size(comm) < cm->hcoll_np
+        || ompi_comm_size(comm) < 2){
+        goto exit;
+    }
+
+
+    if (!cm->libhcoll_initialized)
     {
         /* libhcoll should be initialized here since current implmentation of
            mxm bcol in libhcoll needs world_group fully functional during init
            world_group, i.e. ompi_comm_world, is not ready at hcoll component open
            call */
         opal_progress_register(mca_coll_hcoll_progress);
+
+        hcoll_set_runtime_tag_offset(MCA_COLL_BASE_TAG_HCOLL_BASE, mca_pml.pml_max_tag);
+
+        HCOL_VERBOSE(10,"Calling hcoll_init();");
         rc = hcoll_init();
 
         if (HCOLL_SUCCESS != rc){
-            mca_coll_hcoll_component.hcoll_enable = 0;
+            cm->hcoll_enable = 0;
             opal_progress_unregister(hcoll_progress_fn);
-            HCOL_VERBOSE(0,"Hcol library init failed");
+            HCOL_ERROR("Hcol library init failed");
             return NULL;
         }
 
         copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*) MPI_COMM_NULL_COPY_FN;
-        del_fn.attr_communicator_delete_fn = hcoll_comm_attr_del_fn; 
+        del_fn.attr_communicator_delete_fn = hcoll_comm_attr_del_fn;
         err = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn, &hcoll_comm_attr_keyval, NULL ,0, NULL);
         if (OMPI_SUCCESS != err) {
-            HCOL_VERBOSE(0,"Hcol comm keyval create failed");
+            HCOL_ERROR("Hcol comm keyval create failed");
             return NULL;
         }
 
-        libhcoll_initialized = true;
+        cm->libhcoll_initialized = true;
     }
     hcoll_module = OBJ_NEW(mca_coll_hcoll_module_t);
     if (!hcoll_module){
         goto exit;
     }
 
-    if (ompi_comm_size(comm) < 2 || OMPI_COMM_IS_INTER(comm)){
+    hcoll_module->comm = comm;
+
+    HCOL_VERBOSE(10,"Creating hcoll_context for comm %p, comm_id %d, comm_size %d",
+                 (void*)comm,comm->c_contextid,ompi_comm_size(comm));
+
+    hcoll_module->hcoll_context =
+        hcoll_create_context((rte_grp_handle_t)comm);
+
+    if (NULL == hcoll_module->hcoll_context){
+        HCOL_VERBOSE(1,"hcoll_create_context returned NULL");
+        OBJ_RELEASE(hcoll_module);
         goto exit;
     }
-
 
 
     hcoll_module->super.coll_module_enable = mca_coll_hcoll_module_enable;
@@ -337,7 +265,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     hcoll_module->super.coll_iallreduce = hcoll_collectives.coll_iallreduce ? mca_coll_hcoll_iallreduce : NULL;
     hcoll_module->super.coll_gather = hcoll_collectives.coll_gather ? mca_coll_hcoll_gather : NULL;
 
-    *priority = mca_coll_hcoll_component.hcoll_priority;
+    *priority = cm->hcoll_priority;
     module = &hcoll_module->super;
 
 exit:
@@ -351,8 +279,4 @@ OBJ_CLASS_INSTANCE(mca_coll_hcoll_module_t,
         mca_coll_hcoll_module_destruct);
 
 
-
-OBJ_CLASS_INSTANCE(mca_coll_hcoll_module_list_item_wrapper_t,
-                   opal_list_item_t,
-                   NULL,NULL);
 
