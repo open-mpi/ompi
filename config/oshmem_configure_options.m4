@@ -93,7 +93,7 @@ AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AC_ARG_ENABLE(oshmem-fortran,
 AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
-if test "$enable_oshmem_fortran" != "no" -a "$ompi_fortran_happy" = 1; then
+if test "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail
    AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0],
                [AC_MSG_RESULT([bad value OMPI_WANT_FORTRAN_BINDINGS: ($OMPI_WANT_FORTRAN_BINDINGS)])
@@ -107,7 +107,9 @@ else
     AC_MSG_RESULT([no])
     OSHMEM_FORTRAN_BINDINGS=0
 fi
-AM_CONDITIONAL(OSHMEM_WANT_FORTRAN_BINDINGS,
-    [test $OSHMEM_FORTRAN_BINDINGS -eq 1])
 
+#
+# We can't set am_conditional here since it's yet unknown if there is valid Fortran compiler avaliable
+#
+#
 ]) dnl
