@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -24,8 +24,8 @@ static inline void mca_btl_ugni_eager_frag_constructor (mca_btl_ugni_base_frag_t
     struct mca_btl_ugni_reg_t *reg =
         (struct mca_btl_ugni_reg_t *) frag->base.super.registration;
 
-    memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
-    frag->segments[0].base.seg_addr.pval = frag->base.super.ptr;
+    mca_btl_ugni_base_frag_constructor (frag);
+
     frag->segments[0].memory_handle = reg->memory_hdl;
 }
 
