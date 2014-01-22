@@ -31,12 +31,14 @@ sources = \
         bcol_iboffload_barrier.c \
         bcol_iboffload_bcast.h \
         bcol_iboffload_bcast.c \
+        bcol_iboffload_allgather.c \
         bcol_iboffload_collreq.h \
         bcol_iboffload_collreq.c \
         bcol_iboffload_qp_info.c \
         bcol_iboffload_qp_info.h \
         bcol_iboffload_fanin.c \
-        bcol_iboffload_fanout.c 
+        bcol_iboffload_fanout.c \
+        bcol_iboffload_allreduce.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

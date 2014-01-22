@@ -731,9 +731,9 @@ static void load_func(mca_bcol_base_module_t *super)
     super->bcol_function_init_table[BCOL_BARRIER] = mca_bcol_iboffload_barrier_register;
     super->bcol_function_init_table[BCOL_BCAST] = mca_bcol_iboffload_bcast_register;
     /*super->bcol_function_init_table[BCOL_ALLTOALL] = mca_bcol_iboffload_alltoall_register;*/
-    /*super->bcol_function_init_table[BCOL_ALLGATHER] = mca_bcol_iboffload_allgather_register;*/
+    super->bcol_function_init_table[BCOL_ALLGATHER] = mca_bcol_iboffload_allgather_register;
     super->bcol_function_init_table[BCOL_SYNC] = mca_bcol_iboffload_memsync_register;
-    /*super->bcol_function_init_table[BCOL_ALLREDUCE] = mca_bcol_iboffload_allreduce_register;*/
+    super->bcol_function_init_table[BCOL_ALLREDUCE] = mca_bcol_iboffload_allreduce_register;
 
     super->bcol_memory_init = mca_bcol_iboffload_init_buffer_memory;
 
@@ -1523,7 +1523,7 @@ int mca_bcol_iboffload_exchange_rem_addr(mca_bcol_iboffload_endpoint_t *ep)
     coll_request->user_handle_freed = true;
     /* complete the exchange - progress releases full request descriptors */
     while (!BCOL_IS_COMPLETED(coll_request)) {
-        opal_progress();
+        mca_bcol_iboffload_component_progress();
     }
 
     IBOFFLOAD_VERBOSE(10, ("RDMA addr exchange with comm rank: %d was finished.\n",

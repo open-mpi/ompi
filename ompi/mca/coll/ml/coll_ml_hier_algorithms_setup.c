@@ -300,7 +300,10 @@ int ml_coll_hier_allreduce_setup(mca_coll_ml_module_t *ml_module)
     return ret;
 }
 
-
+#if 0
+/*
+ * Manju: New setup function in coll_ml_hier_algorithms_reduce_setup.c
+ */
 /* Ishai: Reduce is not an hier algorithm (it is rooted) - it needs a different ML algorithm */
 /* Need to rewrite */
 int ml_coll_hier_reduce_setup(mca_coll_ml_module_t *ml_module)
@@ -320,6 +323,7 @@ int ml_coll_hier_reduce_setup(mca_coll_ml_module_t *ml_module)
     ml_module->topo_list[topo_index].hierarchical_algorithms[BCOL_BCAST] = NULL;
     return ret;
 }
+#endif
 
 int ml_coll_barrier_constant_group_data_setup(
                 mca_coll_ml_topology_t *topo_info,

@@ -69,6 +69,7 @@ mca_bcol_ptpcoll_component_t mca_bcol_ptpcoll_component = {
 
             ptpcoll_open,
             ptpcoll_close,
+	    .mca_register_component_params = mca_bcol_ptpcoll_register_mca_params
         },
 
         /* Initialization / querying functions */
@@ -109,14 +110,6 @@ OBJ_CLASS_INSTANCE(mca_bcol_ptpcoll_collreq_t,
  */
 static int ptpcoll_open(void)
 {
-    int rc;
-
-    rc = mca_bcol_ptpcoll_register_mca_params();
-    if (OMPI_SUCCESS != rc) {
-        PTPCOLL_VERBOSE(10, ("Failed to register parametres for the component"));
-        return OMPI_ERROR;
-    }
-
     return OMPI_SUCCESS;
 }
 

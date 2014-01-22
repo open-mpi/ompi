@@ -282,6 +282,10 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
     module->super.group_net = OMPI_SBGP_SOCKET;
 
     /* test to see if process is bound */
+    /* this needs to change. Process may have been bound by an
+     * some entity other than OPAL. Just because the binding
+     * policy  isn't set doesn't mean it's not bound
+     */
     if( OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) ) {
 
         /* pa affinity not set, so socket index will be set to -1 */
@@ -331,7 +335,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
     end debug print*/
 
     /* if no other local procs found skip to end */
-    if( 1 >= cnt ) {
+    if( 1 > cnt ) {
       goto NoLocalPeers;
     }
 
@@ -419,7 +423,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
 
 #if 0
     /*debug print*/
-    
+    /*
     {
         int ii;
         fprintf(stderr,"Ranks per socket: %d\n",cnt);
@@ -429,8 +433,8 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
         fprintf(stderr,"\n");
         fflush(stderr);
     }
+    */
 #endif
-
    /* end debug*/
 
 

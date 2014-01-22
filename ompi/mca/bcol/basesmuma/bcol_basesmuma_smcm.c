@@ -179,7 +179,7 @@ int bcol_basesmuma_smcm_allgather_connection(
 	if( !backing_files ) {
             rc=OMPI_ERR_OUT_OF_RESOURCE;
             goto Error;
-        }
+    }
         *back_files=backing_files;
 
         /* check to see if we have already mapped all the files, if we have

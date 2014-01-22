@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2009-2010 UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2009-2010 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2009-2012 UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2009-2012 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *

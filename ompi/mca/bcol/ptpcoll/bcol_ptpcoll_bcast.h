@@ -453,7 +453,7 @@ int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_modul
     int pow2_distance;
     int my_left_boundary_rank;
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
-    int group_root_index;
+    int group_root_index = 0;
     void *curr_data_buffer = NULL;
     int tag = 
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].tag;

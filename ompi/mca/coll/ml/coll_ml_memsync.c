@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +38,7 @@ static int mca_coll_ml_memsync_recycle_memory(mca_coll_ml_collective_operation_p
            ML_MEMSYNC == coll_op->fragment_data.current_coll_op);
 
     ML_VERBOSE(10,("MEMSYNC: bank %d was recycled coll_op %p", bank, coll_op));
-    
+
     /* set the bank as free */
 
     ml_memblock->bank_is_busy[bank] = false;
@@ -61,11 +64,11 @@ static int mca_coll_ml_memsync_recycle_memory(mca_coll_ml_collective_operation_p
                 }
                 break;
             case OMPI_ERR_TEMP_OUT_OF_RESOURCE: 
-                ML_VERBOSE(10, ("Already on hte list %p", pending_op));
+                ML_VERBOSE(10, ("Already on the list %p", pending_op));
                 have_resources = false;
                 break;
             default:
-                ML_ERROR(("Error happend %d", rc));
+                ML_ERROR(("Error happened %d", rc));
                 return rc;
         }
     }
@@ -133,8 +136,6 @@ int mca_coll_ml_memsync_intra(mca_coll_ml_module_t *ml_module, int bank_index)
 
     ML_VERBOSE(8, ("MEMSYNC start"));
 
-    OBJ_RETAIN(ml_module->comm);
-
     if (OPAL_UNLIKELY(0 == opal_list_get_size(&ml_module->active_bcols_list))) {
         /* Josh's change: In the case where only p2p is active, we have no way
          * to reset the bank release counters to zero, I am doing that here since it
@@ -147,12 +148,11 @@ int mca_coll_ml_memsync_intra(mca_coll_ml_module_t *ml_module, int bank_index)
          * ptp case. 
          */
         mca_coll_ml_collective_operation_progress_t dummy_coll;
+
         dummy_coll.coll_module = (mca_coll_base_module_t *) ml_module;
         dummy_coll.fragment_data.current_coll_op = ML_MEMSYNC;
         dummy_coll.full_message.bank_index_to_recycle = bank_index;
-        dummy_coll.fragment_data.offset_into_user_buffer = 100; /* must be non-zero, 
-                                                                 * else assert fails in recycle flow 
-                                                                 */
+
         /* Handling special case when memory syncronization is not required */
         rc = mca_coll_ml_memsync_recycle_memory(&dummy_coll);
         if(OPAL_UNLIKELY(rc != OMPI_SUCCESS)){
@@ -160,6 +160,9 @@ int mca_coll_ml_memsync_intra(mca_coll_ml_module_t *ml_module, int bank_index)
             return rc;
         } 
     } else {
+        /* retain the communicator until the operation is finished. the communicator
+         * will be released by CHECK_AND_RECYCLE */
+        OBJ_RETAIN(ml_module->comm);
 
         rc = mca_coll_ml_memsync_launch(ml_module, &req, bank_index);
         if (OPAL_UNLIKELY(rc != OMPI_SUCCESS)) {

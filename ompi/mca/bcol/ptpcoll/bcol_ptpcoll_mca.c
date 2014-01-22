@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -141,12 +144,15 @@ int mca_bcol_ptpcoll_register_mca_params(void)
     CHECK(reg_int("priority", NULL,
                   "PTPCOLL component priority"
                   "(from 0(low) to 90 (high))", 90, &cm->super.priority, 0));
+
     CHECK(reg_int("verbose", NULL,
                   "Output some verbose PTPCOLL information "
                   "(0 = no output, nonzero = output)", 0, &cm->verbose, REGINT_GE_ZERO));
+
     CHECK(reg_int("k_nomial_radix", NULL,
                   "The radix of K-Nomial Tree "
                   "(starts from 2)", 2, &cm->k_nomial_radix, REGINT_GE_ONE));
+
     CHECK(reg_int("narray_radix", NULL,
                   "The radix of Narray Tree "
                   "(starts from 2)", 2, &cm->narray_radix, REGINT_GE_ONE));
@@ -160,9 +166,9 @@ int mca_bcol_ptpcoll_register_mca_params(void)
                   "(starts from 8)", 8, &cm->num_to_probe, REGINT_GE_ONE));
 
     CHECK(reg_int("bcast_small_msg_known_root_alg", NULL,
-                "Algoritm selection for bcast small messages known root"
-                "(1 - K-nomial, 2 - N-array)", 1, &cm->bcast_small_messages_known_root_alg,
-                REGINT_GE_ZERO));
+                  "Algoritm selection for bcast small messages known root"
+                  "(1 - K-nomial, 2 - N-array)", 1, &cm->bcast_small_messages_known_root_alg,
+                  REGINT_GE_ZERO));
 
     CHECK(reg_int("bcast_large_msg_known_root_alg", NULL,
                   "Algoritm selection for bcast large messages known root"
@@ -186,11 +192,6 @@ int mca_bcol_ptpcoll_register_mca_params(void)
     CHECK(reg_bool("can_use_user_buffers", NULL,
                 "User memory can be used by the collective algorithms",
                 1, &cm->super.can_use_user_buffers));
-
-    CHECK(reg_int("use_brucks_smsg_alltoall_rdma", NULL,
-                "Use brucks algorithm for smsg alltoall and RDMA semantics 1 = No Temp buffer recycling"
-                "1 = Alg with no Temp Buffer Recycling (faster), 2 = Alg with temp Buffer Recycling (slower)",
-                0, &cm->use_brucks_smsg_alltoall_rdma, 0));
 
     return ret;
 }
