@@ -102,38 +102,38 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         }
 
         frag = mca_btl_ugni_prepare_src_send (btl, endpoint, convertor, order, header_size,
-                                              &packed_size, flags & ~MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-        if (OPAL_UNLIKELY(NULL == frag || packed_size != payload_size)) {
+                                              &packed_size, flags);
+        assert (packed_size == payload_size);
+        if (OPAL_UNLIKELY(NULL == frag)) {
             break;
         }
 
         frag->hdr.send.lag = (tag << 24) | total_size;
         memcpy (frag->segments[0].base.seg_addr.pval, header, header_size);
 
+        frag->flags = MCA_BTL_UGNI_FRAG_IGNORE;
+
         rc = mca_btl_ugni_send_frag (endpoint, frag);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+            mca_btl_ugni_frag_return (frag);
             break;
         }
 
         if (!(frag->flags & MCA_BTL_UGNI_FRAG_BUFFERED)) {
             /* wait until the frag is received by the remote end */
-            while (!(frag->flags & MCA_BTL_UGNI_FRAG_COMPLETE)) {
+            while (!(frag->flags & MCA_BTL_UGNI_FRAG_SMSG_COMPLETE)) {
                 mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) btl);
             }
         }
 
-        frag->flags |= MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+        frag->flags &= ~MCA_BTL_UGNI_FRAG_IGNORE;
 
-        if (frag->flags & MCA_BTL_UGNI_FRAG_COMPLETE) {
+        if (frag->flags & MCA_BTL_UGNI_FRAG_SMSG_COMPLETE) {
             mca_btl_ugni_frag_return (frag);
         }
 
         return OMPI_SUCCESS;
     } while (0);
-
-    if (frag) {
-        mca_btl_ugni_frag_return (frag);
-    }
 
     *descriptor = NULL;
     return OMPI_ERR_OUT_OF_RESOURCE;
