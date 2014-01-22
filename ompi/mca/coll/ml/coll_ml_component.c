@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,54 +62,35 @@ mca_coll_ml_component_t mca_coll_ml_component = {
 
     /* First, fill in the super */
 
-    {
+    .super = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
 
-        {
+        .collm_version = {
             MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
 
-            "ml",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            .mca_component_name = "ml",
+            .mca_component_major_version = OMPI_MAJOR_VERSION,
+            .mca_component_minor_version = OMPI_MINOR_VERSION,
+            .mca_component_release_version = OMPI_RELEASE_VERSION,
 
-            /* Component open and close functions */
+            /* Component open, close, and register functions */
 
-            ml_open,
-            ml_close,
+            .mca_open_component = ml_open,
+            .mca_close_component = ml_close,
             .mca_register_component_params = mca_coll_ml_register_params
         },
-        {
+        .collm_data = {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
         },
 
         /* Initialization / querying functions */
-        mca_coll_ml_init_query,
-        mca_coll_ml_comm_query,
+        .collm_init_query = mca_coll_ml_init_query,
+        .collm_comm_query = mca_coll_ml_comm_query,
     },
-
-    /* ml-component specifc information */
-
-    /* (default) priority */
-    0,
-    /* Number of levels */
-    0,
-    /* subgrouping components to use */
-    NULL,
-    /* basic collectives components to use */
-    NULL,
-    /* verbose */
-    0,
-    /* max of communicators */
-    0,
-    /* min size of comm */
-    0,
-    /* base_sequence_number */
-    0,
 };
 
 void mca_coll_ml_abort_ml(char *message)
@@ -160,124 +143,63 @@ static int coll_ml_progress()
     /* progress sequential collective operations */
     /* RLG - need to do better here for parallel progress */
     OPAL_THREAD_LOCK(&(cm->sequential_collectives_mutex));
-    for (seq_coll_op  = (mca_coll_ml_collective_operation_progress_t *)opal_list_get_first(SEQ_L);
-         seq_coll_op != (mca_coll_ml_collective_operation_progress_t *)opal_list_get_end(SEQ_L);
-         seq_coll_op  = (mca_coll_ml_collective_operation_progress_t *)opal_list_get_next((opal_list_item_t *)seq_coll_op)){
-
-        fn_idx      = seq_coll_op->sequential_routine.current_active_bcol_fn;
-        /* initialize the task */
-
-        if(SEQ_TASK_IN_PROG == seq_coll_op->sequential_routine.current_bcol_status){
-            progress_fn = seq_coll_op->coll_schedule->
-                component_functions[fn_idx].bcol_function->progress_fn;
-        }else{
-            /* PPP Pasha - apparently task setup should be called only here. see linr 190 */
-            progress_fn = seq_coll_op->coll_schedule->
-                            component_functions[fn_idx].bcol_function->coll_fn;
-            seq_coll_op->sequential_routine.current_bcol_status =
-                SEQ_TASK_IN_PROG;
-        }
-
-        const_args  = &seq_coll_op->coll_schedule->component_functions[fn_idx].constant_group_data;
-        /* RLG - note need to move to useing coll_ml_utility_data_t as
-         * collective argument, rather than  coll_ml_function_t
-         */
-        rc = progress_fn(&(seq_coll_op->variable_fn_params), (coll_ml_function_t *)const_args);
-        if (BCOL_FN_COMPLETE == rc) {
-            /* done with this routine */
-            seq_coll_op->sequential_routine.current_active_bcol_fn++;
-            /* this is totally hardwired for bcast, need a general call-back */
-            /*seq_coll_op->variable_fn_params.root_flag = true;*/
+    OPAL_LIST_FOREACH_SAFE(seq_coll_op, seq_coll_op_tmp, SEQ_L, mca_coll_ml_collective_operation_progress_t) {
+        do {
             fn_idx      = seq_coll_op->sequential_routine.current_active_bcol_fn;
-            if (seq_coll_op->sequential_routine.current_active_bcol_fn  ==
-                    seq_coll_op->coll_schedule->n_fns) {
-                /* done with this collective - recycle descriptor */
+            /* initialize the task */
 
-                /* remove from the progress list */
-                seq_coll_op_tmp = (mca_coll_ml_collective_operation_progress_t *)
-                    opal_list_remove_item(SEQ_L, (opal_list_item_t *)seq_coll_op);
-
-                /* handle fragment completion */
-                rc = coll_ml_fragment_completion_processing(seq_coll_op);
-
-                if (OMPI_SUCCESS != rc) {
-                    mca_coll_ml_abort_ml("Failed to run coll_ml_fragment_completion_processing");
-                }
-                /* make sure that for will pick up right one */
-                seq_coll_op = seq_coll_op_tmp;
-            }else {
-                /* task setup */
-                /* Pasha - Another call for task setup ? Why ?*/
-                rc = seq_coll_op->sequential_routine.seq_task_setup(seq_coll_op);
-                /* else, start firing bcol functions */
-                while(true) {
-
-                    fn_idx      = seq_coll_op->sequential_routine.current_active_bcol_fn;
-                    const_args  = &seq_coll_op->coll_schedule->
-                        component_functions[fn_idx].constant_group_data;
-                    coll_fn = seq_coll_op->coll_schedule->
-                        component_functions[fn_idx].bcol_function->coll_fn;
-                    rc = coll_fn(&seq_coll_op->variable_fn_params,
-                            (coll_ml_function_t *) const_args);
-
-                    if (BCOL_FN_COMPLETE == rc) {
-
-                        seq_coll_op->sequential_routine.current_active_bcol_fn++;
-                        fn_idx  = seq_coll_op->sequential_routine.current_active_bcol_fn;
-
-                        /* done with this routine,
-                         * check for collective completion */
-                        if (seq_coll_op->sequential_routine.current_active_bcol_fn  ==
-                                seq_coll_op->coll_schedule->n_fns) {
-                            /* remove from the progress list */
-                            seq_coll_op_tmp = (mca_coll_ml_collective_operation_progress_t *)
-                                opal_list_remove_item(SEQ_L, (opal_list_item_t *)seq_coll_op);
-
-                            /* handle fragment completion */
-                            rc = coll_ml_fragment_completion_processing(seq_coll_op);
-                            if (OMPI_SUCCESS != rc) {
-                                mca_coll_ml_abort_ml("Failed to run coll_ml_fragment_completion_processing");
-                            }
-
-                            /* make sure that for will pick up right one */
-                            seq_coll_op = seq_coll_op_tmp;
-
-                            /* break out of while loop */
-                            break;
-                        }else {
-                            /* setup the next task */
-                            /* sequential task setup */
-                            seq_coll_op->sequential_routine.seq_task_setup(seq_coll_op);
-                        }
-
-                    }else if (BCOL_FN_NOT_STARTED == rc) {
-
-                        seq_coll_op->sequential_routine.current_bcol_status = SEQ_TASK_PENDING;
-
-                        break;
-                    } else {
-                        break;
-                    }
-
-                }
+            if (SEQ_TASK_IN_PROG == seq_coll_op->sequential_routine.current_bcol_status){
+                progress_fn = seq_coll_op->coll_schedule->
+                    component_functions[fn_idx].bcol_function->progress_fn;
+            } else {
+                /* PPP Pasha - apparently task setup should be called only here. see linr 190 */
+                progress_fn = seq_coll_op->coll_schedule->
+                    component_functions[fn_idx].bcol_function->coll_fn;
             }
 
+            const_args  = &seq_coll_op->coll_schedule->component_functions[fn_idx].constant_group_data;
+            /* RLG - note need to move to useing coll_ml_utility_data_t as
+             * collective argument, rather than  coll_ml_function_t
+             */
+            rc = progress_fn(&(seq_coll_op->variable_fn_params), (coll_ml_function_t *)const_args);
+            if (BCOL_FN_COMPLETE == rc) {
+                /* done with this routine */
+                seq_coll_op->sequential_routine.current_active_bcol_fn++;
+                /* this is totally hardwired for bcast, need a general call-back */
 
-        } else if (BCOL_FN_NOT_STARTED == rc ){
-            seq_coll_op->sequential_routine.current_bcol_status = SEQ_TASK_PENDING;
-        }
+                fn_idx = seq_coll_op->sequential_routine.current_active_bcol_fn;
+                if (fn_idx == seq_coll_op->coll_schedule->n_fns) {
+                    /* done with this collective - recycle descriptor */
 
+                    /* remove from the progress list */
+                    (void) opal_list_remove_item(SEQ_L, (opal_list_item_t *)seq_coll_op);
+
+                    /* handle fragment completion */
+                    rc = coll_ml_fragment_completion_processing(seq_coll_op);
+
+                    if (OMPI_SUCCESS != rc) {
+                        mca_coll_ml_abort_ml("Failed to run coll_ml_fragment_completion_processing");
+                    }
+                } else {
+                    rc = seq_coll_op->sequential_routine.seq_task_setup(seq_coll_op);
+                    seq_coll_op->sequential_routine.current_bcol_status = SEQ_TASK_PENDING;
+                    continue;
+                }
+            } else if (BCOL_FN_NOT_STARTED == rc) {
+                seq_coll_op->sequential_routine.current_bcol_status = SEQ_TASK_PENDING;
+            } else if (BCOL_FN_STARTED == rc) {
+                seq_coll_op->sequential_routine.current_bcol_status = SEQ_TASK_IN_PROG;
+            }
+
+            break;
+        } while (true);
     }
     OPAL_THREAD_UNLOCK(&(cm->sequential_collectives_mutex));
 
     /* general dag's */
     /* see if active tasks can be progressed */
     OPAL_THREAD_LOCK(&(cm->active_tasks_mutex));
-    for (task_status  = (mca_coll_ml_task_status_t *)opal_list_get_first(ACTIVE_L);
-         task_status != (mca_coll_ml_task_status_t *)opal_list_get_end(ACTIVE_L);
-         task_status  = (mca_coll_ml_task_status_t *)opal_list_get_next(task_status)
-        )
-    {
+    OPAL_LIST_FOREACH(task_status, ACTIVE_L, mca_coll_ml_task_status_t) {
         /* progress task */
         progress_fn = task_status->bcol_fn->progress_fn;
         const_args = &task_status->ml_coll_operation->coll_schedule->
@@ -300,10 +222,7 @@ static int coll_ml_progress()
 
     /* see if new tasks can be initiated */
     OPAL_THREAD_LOCK(&(cm->pending_tasks_mutex));
-    for (task_status  = (mca_coll_ml_task_status_t *) opal_list_get_first(PENDING_L);
-         task_status != (mca_coll_ml_task_status_t *) opal_list_get_end(PENDING_L);
-         task_status  = (mca_coll_ml_task_status_t *) opal_list_get_next(task_status))
-    {
+    OPAL_LIST_FOREACH_SAFE(task_status, task_status_tmp, PENDING_L, mca_coll_ml_task_status_t) {
         /* check to see if dependencies are satisfied */
         int n_dependencies = task_status->rt_num_dependencies;
         int n_dependencies_satisfied = task_status->n_dep_satisfied;
@@ -323,15 +242,13 @@ static int coll_ml_progress()
                 }
             } else if ( BCOL_FN_STARTED == rc ) {
                 ML_VERBOSE(3, ("GOT BCOL_STARTED!"));
-                task_status_tmp = (mca_coll_ml_task_status_t *)
-                    opal_list_remove_item(PENDING_L, (opal_list_item_t *)task_status);
+                (void) opal_list_remove_item(PENDING_L, (opal_list_item_t *)task_status);
                 /* RLG - is there potential for deadlock here ?  Need to
                  * look at this closely
                  */
                 OPAL_THREAD_LOCK(&(cm->active_tasks_mutex));
                 opal_list_append(ACTIVE_L, (opal_list_item_t *)task_status);
                 OPAL_THREAD_UNLOCK(&(cm->active_tasks_mutex));
-                task_status = task_status_tmp;
             } else if( BCOL_FN_NOT_STARTED == rc ) {
                 /* nothing to do */
                 ML_VERBOSE(10, ("GOT BCOL_FN_NOT_STARTED!"));
@@ -342,6 +259,7 @@ static int coll_ml_progress()
                  * the way the code is implemented now */
                 ML_VERBOSE(3, ("GOT error !"));
                 rc = OMPI_ERROR;
+                OMPI_ERRHANDLER_RETURN(rc,MPI_COMM_WORLD,rc,"Error returned from bcol function: aborting");
                 break;
             }
         }
@@ -357,14 +275,11 @@ static int coll_ml_progress()
 
 static void adjust_coll_config_by_mca_param(void)
 {
-    assert(false == mca_coll_ml_component.use_static_bcast ||
-           false == mca_coll_ml_component.use_sequential_bcast);
-
     /* setting bcast mca params */
-    if (mca_coll_ml_component.use_static_bcast) {
+    if (COLL_ML_STATIC_BCAST == mca_coll_ml_component.bcast_algorithm) {
         mca_coll_ml_component.coll_config[ML_BCAST][ML_SMALL_MSG].algorithm_id = ML_BCAST_SMALL_DATA_KNOWN;
         mca_coll_ml_component.coll_config[ML_BCAST][ML_LARGE_MSG].algorithm_id = ML_BCAST_LARGE_DATA_KNOWN;
-    } else if (mca_coll_ml_component.use_sequential_bcast){
+    } else if (COLL_ML_SEQ_BCAST == mca_coll_ml_component.bcast_algorithm) {
         mca_coll_ml_component.coll_config[ML_BCAST][ML_SMALL_MSG].algorithm_id = ML_BCAST_SMALL_DATA_SEQUENTIAL;
         mca_coll_ml_component.coll_config[ML_BCAST][ML_LARGE_MSG].algorithm_id = ML_BCAST_LARGE_DATA_SEQUENTIAL;
     } else { /* Unknown root */
@@ -468,7 +383,7 @@ static int ml_close(void)
 
     mca_coll_ml_component_t *cs = &mca_coll_ml_component;
 
-    /* There is not need to release/close resource if the 
+    /* There is not need to release/close resource if the
      * priority was set to zero */
     if (cs->ml_priority <= 0) {
         return OMPI_SUCCESS;

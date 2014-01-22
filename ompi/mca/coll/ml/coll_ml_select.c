@@ -138,7 +138,7 @@ static int add_to_invoke_table(mca_bcol_base_module_t *bcol_module,
                for (i=range_min; i<=range_max; i++) {
                     bcol_module->filtered_fns_table[data_src_type][waiting_semantic][bcoll_type][i][j][k] 
                                                                     = fn_filtered; 
-                    ML_VERBOSE(11, ("Putting functions %d %d %d %d %p", bcoll_type, i, j, k, fn_filtered));
+                    ML_VERBOSE(21, ("Putting functions %d %d %d %d %p", bcoll_type, i, j, k, fn_filtered));
                }
             }
         }
@@ -323,10 +323,8 @@ int mca_select_bcol_function(mca_bcol_base_module_t *bcol_module,
                             bcol_fn_arguments->dtype); 
     if ((BCOL_ALLREDUCE == bcoll_type) || (BCOL_REDUCE == bcoll_type)) {
         /* needs to be resolved, the op structure has changed, there is no field called "op_type" */
-        /*
         fn_filtered =
             bcol_module->filtered_fns_table[data_src_type][waiting_type][bcoll_type][msg_range][bcol_fn_arguments->dtype->id][bcol_fn_arguments->op->op_type];
-       */     
     }
     else {
         fn_filtered =

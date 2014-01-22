@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,7 +149,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_
         )
 {
     /* local variables */
-    int cnt,proc,local;
+    int cnt,proc,local,last_local_proc;
     mca_sbgp_basesmuma_module_t *module;
 
     module=OBJ_NEW(mca_sbgp_basesmuma_module_t);
@@ -157,27 +160,21 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_
     module->super.group_comm = comm;
     module->super.group_list = NULL;
     module->super.group_net = OMPI_SBGP_MUMA;
-    cnt=0;
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        /* debug
-        if( odd ) {
-            if( !(1&proc) )
-                continue;
-        } else {
-            if( (1&proc) )
-                continue;
-        }
-         end debug */
-        local=OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
-        if( local ) {
+    for (proc = 0, cnt = 0, last_local_proc = 0 ; proc < n_procs_in ; ++proc) {
+        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
+        if (local) {
+            last_local_proc = proc;
             cnt++;
         }
     }
     /* if no other local procs found skip to end */
+
     if( 2 > cnt ) {
         /* There's always at least one - namely myself */
-        assert( 1 == cnt);
-        module->super.group_size=1;
+        assert(1 == cnt);
+        module->super.group_size = 1;
+        module->super.group_list = (int *) malloc (sizeof (int));
+        module->super.group_list[0] = last_local_proc;
         /* let ml handle this case */
         goto OneLocalPeer;
     }
@@ -190,21 +187,11 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_
             goto Error;
         }
     }
-    cnt=0;
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        /* debug
-        if( odd ) {
-            if( !(1&proc) )
-                continue;
-        } else {
-            if( (1&proc) )
-                continue;
-        }
-         end debug */
-        local=OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
+
+    for (proc = 0, cnt = 0 ; proc < n_procs_in ; ++proc) {
+        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
         if( local ) {
-            module->super.group_list[cnt]=proc;
-            cnt++;
+            module->super.group_list[cnt++] = proc;
         }
     }
 OneLocalPeer:

@@ -230,6 +230,12 @@ struct mca_bcol_ptpcoll_ml_buffer_desc_t {
     int          iteration;         /* buffer iteration in knomial, binomail, etc. algorithms */
     int          tag;               /* tag number that is attached to this operation */
     int          status;       /* operation status */
+    /* Fixme: Probably we can get rid of these fields by redesigning
+     * the reduce implementation
+     */
+    int          reduction_status; /* used for reduction to cache internal
+                                      reduction status */
+    bool          reduce_init_called;
 };
 typedef struct mca_bcol_ptpcoll_ml_buffer_desc_t mca_bcol_ptpcoll_ml_buffer_desc_t;
 

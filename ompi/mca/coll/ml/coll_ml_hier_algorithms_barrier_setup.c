@@ -17,7 +17,9 @@
 
 static int mca_coll_ml_build_barrier_schedule(
                                     mca_coll_ml_topology_t *topo_info,
-                                    mca_coll_ml_collective_operation_description_t **coll_desc)
+                                    mca_coll_ml_collective_operation_description_t
+                                    **coll_desc,
+                                    mca_coll_ml_module_t *ml_module)
 {
     int i_hier, rc, i_fn, n_fcns, i,
         n_hiers = topo_info->n_levels;
@@ -50,6 +52,10 @@ static int mca_coll_ml_build_barrier_schedule(
            but it calls for all fan-in/out steps */
         call_for_top_func = false;
         n_fcns = 2 * n_hiers;
+    }
+
+    if( ml_module->max_fn_calls < n_fcns ) {
+        ml_module->max_fn_calls = n_fcns;
     }
 
     /* Set dependencies equal to number of hierarchies */
@@ -170,7 +176,7 @@ int ml_coll_hier_barrier_setup(mca_coll_ml_module_t *ml_module)
            &ml_module->topo_list[ml_module->collectives_topology_map[ML_BARRIER][ML_SMALL_MSG]];
 
     rc = mca_coll_ml_build_barrier_schedule(topo_info,
-                            &ml_module->coll_ml_barrier_function);
+                            &ml_module->coll_ml_barrier_function, ml_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         /* Make sure to reset the barrier pointer to NULL */
         topo_info->hierarchical_algorithms[BCOL_BARRIER] = NULL;

@@ -409,12 +409,11 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
         /*
         if(comp_fn->coll_fn_started){
             fprintf(stderr,"this statement is true\n");
-        } else{
+        } else {
             fprintf(stderr,"done setting to false \n");
         }
         */
        
-
         comp_fn->task_comp_fn = mca_coll_ml_task_comp_dynamic_root_small_message;
         /* assert(NULL != comp_fn->bcol_function); */
         /* Constants */

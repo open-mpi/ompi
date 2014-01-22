@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,7 +128,6 @@ static int mca_bcol_base_set_components_to_use(opal_list_t *bcol_components_avai
                 opal_list_t *bcol_components_in_use)
 {
     /* local variables */
-    opal_list_item_t *b_item;
     const mca_base_component_t *b_component;
 
     mca_base_component_list_item_t *b_cli;
@@ -156,12 +158,9 @@ static int mca_bcol_base_set_components_to_use(opal_list_t *bcol_components_avai
     /* loop over list of components requested */
     for (i = 0; i < cnt; i++) {
         /* loop over discovered components */
-        for (b_item = opal_list_get_first(bcol_components_avail);
-                opal_list_get_end(bcol_components_avail) != b_item;
-                b_item = opal_list_get_next(b_item)) {
-
-            b_cli = (mca_base_component_list_item_t *) b_item;
+        OPAL_LIST_FOREACH(b_cli, bcol_components_avail, mca_base_component_list_item_t) {
             b_component = b_cli->cli_component;
+
 
             b_component_name = b_component->mca_component_name;
             b_str_len = strlen(b_component_name);

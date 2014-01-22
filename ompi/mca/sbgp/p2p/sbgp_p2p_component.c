@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -141,103 +144,73 @@ static mca_sbgp_base_module_t * mca_sbgp_p2p_select_procs(struct ompi_proc_t ** 
         )
 {
     /* local variables */
-    int cnt,proc;
+    int cnt, proc, my_rank;
     mca_sbgp_p2p_module_t *module;
-    int my_rank,i_btl;
-
-    module=OBJ_NEW(mca_sbgp_p2p_module_t);
-    if (!module ) {
-        return NULL;
-    }
-    module->super.group_size=0;
-    module->super.group_comm = comm;
-    module->super.group_net = OMPI_SBGP_P2P;
 
     /* find my rank in the group */
-    my_rank=-1;
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        if(ompi_proc_local() == procs[proc]) {
-            my_rank=proc;
+    for (my_rank = -1, proc = 0 ; proc < n_procs_in ; ++proc) {
+        if (ompi_proc_local() == procs[proc]) {
+            my_rank = proc;
         }
     }
 
     /* I am not in the list - so will form no local subgroup */
-   if( 0 > my_rank ){
-       return NULL;
-   }
-
-   /* count the number of ranks in the group */
-   cnt=0;
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        mca_bml_base_endpoint_t* endpoint = 
-            (mca_bml_base_endpoint_t*) procs[proc]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-
-        if(my_rank == proc ) {
-            cnt++;
-            continue;
-        }
-        /* loop over btls */
-        for( i_btl=0 ; i_btl < (int) mca_bml_base_btl_array_get_size(&(endpoint->btl_eager)) ; i_btl++ ) {
-            if(key) {
-                /* I am checking for specific btl */
-                if( strcmp(endpoint->btl_eager.bml_btls[i_btl].btl->btl_component->btl_version.mca_component_name,key)) {
-                    cnt++;
-                    break;
-
-                }
-            } else {
-                /* I will take any btl */
-                cnt++;
-                break;
-            }
-        }
+    if (0 > my_rank) {
+        return NULL;
     }
-/* debug
-fprintf(stderr," AAA cnt %d n_procs_in %d \n",cnt,n_procs_in);
-fflush(stderr);
- end debug */
+
+    module = OBJ_NEW(mca_sbgp_p2p_module_t);
+    if (!module ) {
+        return NULL;
+    }
+
+    module->super.group_size = 0;
+    module->super.group_comm = comm;
+    module->super.group_net = OMPI_SBGP_P2P;
 
     /* allocate resources */
-    module->super.group_size=cnt;
-    if( cnt > 0 ) {
-        module->super.group_list=(int *)malloc(sizeof(int)*
-                module->super.group_size);
-        if( NULL == module->super.group_list ) {
-            goto Error;
-        }
+    module->super.group_list = (int *) calloc (n_procs_in, sizeof (int));
+    if (NULL == module->super.group_list) {
+        goto Error;
     }
 
-   cnt=0;
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        mca_bml_base_endpoint_t* endpoint = 
+    for (cnt = 0, proc = 0 ; proc < n_procs_in ; ++proc) {
+#if defined(OMPI_PROC_ENDPOINT_TAG_BML)
+        mca_bml_base_endpoint_t* endpoint =
             (mca_bml_base_endpoint_t*) procs[proc]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+#endif
 
-        if(my_rank == proc ) {
-            module->super.group_list[cnt]=proc;
-            cnt++;
+        if (my_rank == proc || !key) {
+            module->super.group_list[cnt++] = proc;
             continue;
         }
-        /* loop over btls */
 
-        for( i_btl=0 ;
-                i_btl < (int) mca_bml_base_btl_array_get_size(&(endpoint->btl_eager)) ;
-                i_btl++ ) {
-            if(key) {
+#if defined(OMPI_PROC_ENDPOINT_TAG_BML)
+        if (NULL != endpoint) {
+            int num_btls = mca_bml_base_btl_array_get_size(&(endpoint->btl_eager));
+            /* loop over btls */
+
+            for (int i_btl = 0 ; num_btls ; ++i_btl) {
                 /* I am checking for specific btl */
-                if( strcmp(endpoint->btl_eager.bml_btls[i_btl].btl->
-                            btl_component->btl_version.mca_component_name,key)) {
-                    module->super.group_list[cnt]=proc;
-                    cnt++;
+                if (strcmp(endpoint->btl_eager.bml_btls[i_btl].btl->
+                           btl_component->btl_version.mca_component_name, key)) {
+                    module->super.group_list[cnt++] = proc;
                     break;
-
                 }
-            } else {
-                /* I will take any btl */
-                module->super.group_list[cnt]=proc;
-                cnt++;
-                break;
             }
         }
+#endif
+    }
+
+    if (0 == cnt) {
+	goto Error;
+    }
+
+    module->super.group_size = cnt;
+    module->super.group_list = (int *) realloc (module->super.group_list, sizeof (int) * cnt);
+    if (NULL == module->super.group_list) {
+        /* Shouldn't ever happen */
+        goto Error;
     }
 
     /* successful return */
@@ -246,9 +219,9 @@ fflush(stderr);
     /* return with error */
 Error:
     /* clean up */
-    if( NULL != module->super.group_list ) {
-        free(module->super.group_list);
-        module->super.group_list=NULL;
+    if (NULL != module->super.group_list) {
+        free (module->super.group_list);
+        module->super.group_list = NULL;
     }
     OBJ_RELEASE(module);
 

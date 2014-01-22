@@ -109,6 +109,29 @@ typedef void (ompi_op_java_handler_fn_t)(void *, void *, int *,
 #define OMPI_OP_FLAGS_COMMUTE      0x0040
 
 
+
+
+/* This enum as well as op_type field in ompi_op_t is placed back here to support
+ * HCOL allreduce at the moment. It is a part of bgate repository only. This conflict with OMPI v1.7
+ * is to be resolved some other way.
+ * */
+enum ompi_op_type {
+    OMPI_OP_NULL,
+    OMPI_OP_MAX,
+    OMPI_OP_MIN,
+    OMPI_OP_SUM,
+    OMPI_OP_PROD,
+    OMPI_OP_LAND,
+    OMPI_OP_BAND,
+    OMPI_OP_LOR,
+    OMPI_OP_BOR,
+    OMPI_OP_LXOR,
+    OMPI_OP_BXOR,
+    OMPI_OP_MAXLOC,
+    OMPI_OP_MINLOC,
+    OMPI_OP_REPLACE,
+    OMPI_OP_NUM_OF_TYPES
+};
 /**
  * Back-end type of MPI_Op
  */
@@ -118,6 +141,8 @@ struct ompi_op_t {
 
     /** Name, for debugging purposes */
     char o_name[MPI_MAX_OBJECT_NAME];
+
+    enum ompi_op_type op_type;
 
     /** Flags about the op */
     uint32_t o_flags;

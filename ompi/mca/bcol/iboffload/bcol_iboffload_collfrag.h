@@ -90,6 +90,10 @@ struct mca_bcol_iboffload_collfrag_t {
      * there isn't any wait in the coll request
      */
     int32_t last_wait_num;
+    /* fragment descriptor for non contiguous data */
+    bcol_fragment_descriptor_t *bcol_frag_info;
+    /* frag-len of ml buffer */
+    int frag_len;
 };
 typedef struct mca_bcol_iboffload_collfrag_t mca_bcol_iboffload_collfrag_t;
 OBJ_CLASS_DECLARATION(mca_bcol_iboffload_collfrag_t);

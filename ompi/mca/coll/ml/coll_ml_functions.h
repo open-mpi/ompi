@@ -86,6 +86,17 @@ enum {
     ML_NUM_ALLREDUCE_FUNCTIONS
 };
 
+/* Reduce functions */
+enum {
+    /* small data algorithm */
+    ML_SMALL_DATA_REDUCE,
+
+    /* Large data algorithm */
+    ML_LARGE_DATA_REDUCE,
+
+    /* number of functions */
+    ML_NUM_REDUCE_FUNCTIONS
+};
 /* Alltoall functions */
 enum {
     /* small data algorithm */

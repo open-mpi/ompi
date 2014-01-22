@@ -78,37 +78,32 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
     }
 
     /* Allreduce */
-    /* 
     if (!mca_coll_ml_component.use_knomial_allreduce) { 
 		ret = ml_coll_hier_allreduce_setup(ml_module); 
 	} else {
 		ret = ml_coll_hier_allreduce_setup_new(ml_module);
 	}
-    */
 
 	if( OMPI_SUCCESS != ret ) {
         return ret;
     }
-   
+
 
     /* Alltoall */
-    /* 
+    /*
     ret = ml_coll_hier_alltoall_setup_new(ml_module);
     
     if( OMPI_SUCCESS != ret ) {
         return ret;
     }
     */
-    
-    
+
     /* Allgather */
-    /*
     ret = ml_coll_hier_allgather_setup(ml_module);
     
     if( OMPI_SUCCESS != ret ) {
         return ret;
     }
-    */
     
     /* Gather */
     /*
@@ -120,12 +115,10 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
     */
 
     /* Reduce */
-    
     ret = ml_coll_hier_reduce_setup(ml_module);
     if( OMPI_SUCCESS != ret ) {
         return ret;
     }
-    
 
     /* Scatter */
     /*
@@ -134,6 +127,7 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
         return ret;
     }
     */
+
     ret = ml_coll_memsync_setup(ml_module);
     if( OMPI_SUCCESS != ret ) {
         return ret;
@@ -150,7 +144,9 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
     /* Pasha: Do we have to keep the max_dag_size ? 
        In most generic case, it will be equal to max_fn_calls */
     ml_module->max_dag_size = ml_module->max_fn_calls;
+
     assert(ml_module->max_dag_size > 0);
+
     /* initialize the mca_coll_ml_collective_operation_progress_t free list */
     /* NOTE: as part of initialization each routine needs to make sure that
      * the module element max_dag_size is set large enough - space for

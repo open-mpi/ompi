@@ -18,14 +18,22 @@ sources = \
         bcol_basesmuma_module.c \
         bcol_basesmuma_buf_mgmt.c \
         bcol_basesmuma_mem_mgmt.c \
-        bcol_basesmuma_fanin.c \
+	bcol_basesmuma_fanin.c \
         bcol_basesmuma_fanout.c \
         bcol_basesmuma_progress.c \
+        bcol_basesmuma_reduce.h \
+        bcol_basesmuma_reduce.c \
+        bcol_basesmuma_allreduce.c \
         bcol_basesmuma_setup.c \
-        bcol_basesmuma_rk_barrier.c \
+	bcol_basesmuma_rd_barrier.c  \
         bcol_basesmuma_rd_nb_barrier.c \
+        bcol_basesmuma_rk_barrier.c \
         bcol_basesmuma_utils.c    \
         bcol_basesmuma_bcast_prime.c \
+        bcol_basesmuma_lmsg_knomial_bcast.c \
+        bcol_basesmuma_lmsg_bcast.c \
+        bcol_basesmuma_gather.c \
+        bcol_basesmuma_allgather.c \
         bcol_basesmuma_smcm.h \
         bcol_basesmuma_smcm.c 
 

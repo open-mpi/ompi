@@ -267,9 +267,18 @@ int mca_bcol_iboffload_register_params(void)
                   "Increment size of free lists (must be >= 1)",
                   32, &mca_bcol_iboffload_component.free_list_inc,
                   REGINT_GE_ONE));
+    /* rdma mpool no longer exists - must use the grdma mpool component, should resolve errors in
+     * mtt testing
+     */
+    /*
     CHECK(reg_string("mpool", NULL,
                      "Name of the memory pool to be used (it is unlikely that you will ever want to change this",
                      "rdma", &mca_bcol_iboffload_component.mpool_name,
+                     0));
+    */
+    CHECK(reg_string("mpool", NULL,
+                     "Name of the memory pool to be used (it is unlikely that you will ever want to change this",
+                     "grdma", &mca_bcol_iboffload_component.mpool_name,
                      0));
     CHECK(reg_int("cq_size", "cq_size",
                   "Size of the OpenFabrics completion "

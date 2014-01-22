@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +46,10 @@ struct mca_bcol_base_coll_fn_desc_t;
 #define MSG_RANGE_INITIAL (1024)*12
 #define MSG_RANGE_INC      10
 #define BCOL_THRESHOLD_UNLIMITED (INT_MAX)
+/* Maximum size of a bcol's header. This allows us to correctly calculate the message
+ * thresholds. If the header of any bcol exceeds this value then increase this one
+ * to match. */
+#define BCOL_HEADER_MAX 96
 
 #define BCOL_HEAD_ALIGN 32   /* will turn into an MCA parameter after debug */
 
@@ -115,30 +122,6 @@ enum {
     BCOL_FN_COMPLETE    = (OMPI_ERR_MAX - 3)
 };
 
-/* Originally this enum was placed in ompi/op/op.h file. It should be moved back
- * when we are ready to lobby for its inclusion. Since we are releasing only the
- * bcast and barrier initially and this struct supports the allreduce, we are not 
- * going to worry about it now. Note that in the same h-file, op.h, the struct "ompi_op_t"
- * also has a field that we introduced called "enum ompi_op_type op_type" that this needs to
- * be resolved also.
- */
-enum ompi_op_type {
-    OMPI_OP_NULL,
-    OMPI_OP_MAX,
-    OMPI_OP_MIN,
-    OMPI_OP_SUM,
-    OMPI_OP_PROD,
-    OMPI_OP_LAND,
-    OMPI_OP_BAND,
-    OMPI_OP_LOR,
-    OMPI_OP_BOR,
-    OMPI_OP_LXOR,
-    OMPI_OP_BXOR,
-    OMPI_OP_MAXLOC,
-    OMPI_OP_MINLOC,
-    OMPI_OP_REPLACE,
-    OMPI_OP_NUM_OF_TYPES
-};
 
 
 /**
@@ -344,6 +327,24 @@ typedef struct {
     int n_fns_need_ordering; /* The number of functions are called for bcols need ordering */
 } mca_bcol_base_order_info_t;
 
+/* structure that encapsultes information propagated amongst multiple
+ * fragments whereby completing the entire ensemble of fragments is
+ * necessary in order to complete the entire collective
+ */
+struct bcol_fragment_descriptor_t {
+    /* start iterator */
+    int head;
+    /* end iterator */
+    int tail;
+    /* current iteration */
+    int start_iter;
+    /* number of full iterations this frag */
+    int num_iter;
+    /* end iter */
+    int end_iter;
+};
+typedef struct bcol_fragment_descriptor_t bcol_fragment_descriptor_t;
+
 struct bcol_function_args_t {
     /* full message sequence number */
     int64_t sequence_num;
@@ -373,16 +374,19 @@ struct bcol_function_args_t {
     int rbuf_offset;
     /* for bcol opaque data */
     void *bcol_opaque_data;
-    /* An output argument that will be used by BCOL funstion to tell ML that the result of the BCOL is in rbuf */
+    /* An output argument that will be used by BCOL function to tell ML that the result of the BCOL is in rbuf */
     bool result_in_rbuf;
-    bool root_flag; /* True if the rank is root of operation */
-    int status; /* Used for non-blocking collective completion */
-    uint32_t frag_size; /* fragment size for large messages */
-    int hier_factor; /* factor used when bcast is invoked as a service function back down
-                      *  the tree in allgather for example, the pacl_len is not the actual
-                      *  len of the data needing bcasting
-                       */
+    bool root_flag;      /* True if the rank is root of operation */
+    bool need_dt_support; /* will trigger alternate code path for some colls */
+    int status;          /* Used for non-blocking collective completion */
+    uint32_t frag_size;  /* fragment size for large messages */
+    int hier_factor;     /* factor used when bcast is invoked as a service function back down
+                          * the tree in allgather for example, the pacl_len is not the actual
+                          * len of the data needing bcasting
+                          */
     mca_bcol_base_order_info_t order_info;
+    bcol_fragment_descriptor_t frag_info;
+
 };
 
 typedef struct bcol_function_args_t bcol_function_args_t;
@@ -657,6 +661,15 @@ struct mca_bcol_base_descriptor_t {
 /* Vasily: will be described in the future */
 };
 typedef struct mca_bcol_base_descriptor_t mca_bcol_base_descriptor_t;
+
+static inline __opal_attribute_always_inline__ size_t
+             mca_bcol_base_get_buff_length(ompi_datatype_t *dtype, int count)
+{
+    ptrdiff_t lb, extent;
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+
+    return (size_t) (extent * count);
+}
 
 #define MCA_BCOL_CHECK_ORDER(module, bcol_function_args)                     \
     do {                                                                     \

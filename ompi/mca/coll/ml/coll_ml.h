@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,6 +91,13 @@ enum {
     ML_IFANIN,
     ML_IFANOUT,
     ML_NUM_OF_FUNCTIONS
+};
+
+/* ML broadcast algorithms */
+enum {
+    COLL_ML_STATIC_BCAST,
+    COLL_ML_SEQ_BCAST,
+    COLL_ML_UNKNOWN_BCAST,
 };
 
 struct mca_bcol_base_module_t;
@@ -210,8 +220,6 @@ typedef struct coll_ml_collective_description_t coll_ml_collective_description_t
 struct rank_properties_t {
     int rank;
     int leaf;
-    int n_connected_subgroups;
-    int *list_connected_subgroups;
     int num_of_ranks_represented;
 }; typedef struct rank_properties_t rank_properties_t;
 
@@ -237,16 +245,10 @@ struct sub_group_params_t {
 
     /*
      * level in the hierarchy - subgroups at the same
-     * level don't
-     * overlap.
+     * level don't overlap. May not be the same as the
+     * sbgp level.
      */
     int level_in_hierarchy;
-
-    /*
-     * Connected nodes
-     */
-    int n_connected_nodes;
-    int *list_connected_nodes;
 
     /*
      * Information on the ranks in the subgroup.  This includes
@@ -255,11 +257,6 @@ struct sub_group_params_t {
      */
     rank_properties_t *rank_data;
 
-    /*
-     * Temp list of ranks
-     */
-    int *list_ranks;
-
     /* level one index - for example,
        for( i = 0; i < level_one_index; i++) will loop
        through all level one subgroups, this is significant
@@ -267,7 +264,6 @@ struct sub_group_params_t {
        i.e. all ranks appear once and only once at level one
      */
     int level_one_index;
-
 };
 typedef struct sub_group_params_t sub_group_params_t;
 
@@ -397,6 +393,7 @@ do {                                                                \
     /* pasha - why we duplicate it ? */                             \
     (coll_op)->variable_fn_params.src_desc = desc;                  \
     (coll_op)->variable_fn_params.hier_factor = 1;                  \
+    (coll_op)->variable_fn_params.need_dt_support = false;          \
 } while (0)
 
 /*Full message descriptor*/
@@ -486,9 +483,6 @@ struct mca_coll_ml_component_t {
     /** MCA parameter: Priority of this component */
     int ml_priority;
 
-    /** MCA parameter: Number of levels */
-    int ml_n_levels;
-
     /** MCA parameter: subgrouping components to use */
     char *subgroups_string;
 
@@ -519,17 +513,14 @@ struct mca_coll_ml_component_t {
 
     int use_knomial_allreduce;
 
-    /* Use global knowledge bcast algorithm */
-    bool use_static_bcast;
-
     /* use hdl_framework */
     bool use_hdl_bcast;
 
     /* Enable / Disable fragmentation (0 - off, 1 - on, 2 - auto) */
     int enable_fragmentation;
 
-    /* Use sequential bcast algorithm */
-    bool use_sequential_bcast;
+    /* Broadcast algorithm */
+    int bcast_algorithm;
 
     /* frag size that is used by list memory_manager */
     size_t lmngr_block_size;
@@ -583,6 +574,9 @@ struct mca_coll_ml_component_t {
 
     /* Temporary hack for IMB test - not all bcols have alltoall */
     bool disable_alltoall;
+
+    /* Disable Reduce */
+    bool disable_reduce;
 
     /* Brucks alltoall mca and other params */
     int use_brucks_smsg_alltoall;
@@ -727,6 +721,11 @@ struct mca_coll_ml_module_t {
     mca_coll_ml_collective_operation_description_t *
         coll_ml_allreduce_functions[ML_NUM_ALLREDUCE_FUNCTIONS];
 
+    /** Reduce functions */
+    mca_coll_ml_collective_operation_description_t *
+        coll_ml_reduce_functions[ML_NUM_REDUCE_FUNCTIONS];
+
+
     /** scatter */
     mca_coll_ml_collective_operation_description_t *
         coll_ml_scatter_functions[ML_NUM_SCATTER_FUNCTIONS];
@@ -764,9 +763,6 @@ struct mca_coll_ml_module_t {
     uint64_t fragment_size;
     uint32_t ml_fragment_size;
 
-    /* For carto graph */
-    /* opal_carto_graph_t *sm_graph; */
-    /* opal_carto_graph_t *ib_graph; */
     /* Bcast index table. Pasha: Do we need to define something more generic ?
      the table  x 2 (large/small)*/
     int bcast_fn_index_table[2];
@@ -784,6 +780,9 @@ struct mca_coll_ml_module_t {
     /* On this list we keep coll_op descriptors that were not
      * be able to start, since no ml buffers were available */
     opal_list_t waiting_for_memory_list;
+
+    /* fallback collectives */
+    mca_coll_base_comm_coll_t fallback;
 };
 
 typedef struct mca_coll_ml_module_t mca_coll_ml_module_t;
@@ -812,24 +811,45 @@ int mca_coll_ml_ibarrier_intra(struct ompi_communicator_t *comm,
                                ompi_request_t **req,
                                mca_coll_base_module_t *module);
 
+/* Allreduce with EXTRA TOPO using - blocking */
 int mca_coll_ml_allreduce_dispatch(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
+/* Allreduce with EXTRA TOPO using - Non-blocking */
+int mca_coll_ml_allreduce_dispatch_nb(void *sbuf, void *rbuf, int count,
+                                   ompi_datatype_t *dtype, ompi_op_t *op,
+                                   ompi_communicator_t *comm,
+                                   ompi_request_t **req,
+                                   mca_coll_base_module_t *module);
+
 /* Allreduce - blocking */
-int mca_coll_ml_allreduce_intra(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module);
 
-int mca_coll_ml_memsync_intra(mca_coll_ml_module_t *module, int bank_index);
+/* Allreduce - Non-blocking */
+int mca_coll_ml_allreduce_nb(void *sbuf, void *rbuf, int count,
+                                struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                struct ompi_communicator_t *comm,
+                                ompi_request_t **req,
+                                mca_coll_base_module_t *module);
 
-/* Reduce blocking */
+/* Reduce - Blocking */
 int mca_coll_ml_reduce(void *sbuf, void *rbuf, int count,
         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
-        int root,
-        struct ompi_communicator_t *comm,
+        int root, struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module);
+
+int mca_coll_ml_reduce_nb(void *sbuf, void *rbuf, int count,
+        struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+        int root, struct ompi_communicator_t *comm,
+        ompi_request_t **req,
+        mca_coll_base_module_t *module);
+
+int mca_coll_ml_memsync_intra(mca_coll_ml_module_t *module, int bank_index);
+
 
 int coll_ml_progress_individual_message(mca_coll_ml_fragment_t *frag_descriptor);
 
@@ -902,6 +922,17 @@ int mca_coll_ml_fulltree_iboffload_only_hierarchy_discovery(mca_coll_ml_module_t
 
 void mca_coll_ml_allreduce_matrix_init(mca_coll_ml_module_t *ml_module,
                      const mca_bcol_base_component_2_0_0_t *bcol_component);
+static inline int mca_coll_ml_err(const char* fmt, ...)
+{
+    va_list list;
+    int ret;
+
+    va_start(list, fmt);
+    ret = vfprintf(stderr, fmt, list);
+    va_end(list);
+    return ret;
+}
+
 
 #define ML_ERROR(args)                                       \
 do {                                                     \

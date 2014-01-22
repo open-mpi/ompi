@@ -73,6 +73,14 @@ static int algorithm_name_to_id(char *name)
         return ML_SMALL_DATA_ALLREDUCE;
     if (!strcasecmp(name,"ML_LARGE_DATA_ALLREDUCE"))
         return ML_LARGE_DATA_ALLREDUCE;
+    if (!strcasecmp(name,"ML_SMALL_DATA_REDUCE"))
+        return ML_SMALL_DATA_ALLREDUCE;
+    if (!strcasecmp(name,"ML_LARGE_DATA_REDUCE"))
+        return ML_LARGE_DATA_ALLREDUCE;
+    if (!strcasecmp(name,"ML_SMALL_DATA_REDUCE"))
+        return ML_SMALL_DATA_REDUCE;
+    if (!strcasecmp(name,"ML_LARGE_DATA_REDUCE"))
+        return ML_LARGE_DATA_REDUCE;
     if (!strcasecmp(name,"ML_NUM_ALLREDUCE_FUNCTIONS"))
         return ML_NUM_ALLREDUCE_FUNCTIONS;
     if (!strcasecmp(name,"ML_SMALL_DATA_ALLTOALL"))
