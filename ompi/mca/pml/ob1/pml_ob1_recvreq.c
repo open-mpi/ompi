@@ -670,7 +670,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        ompi_rte_abort(-1, NULL);
     }
 
     bytes_remaining = mca_pml_ob1_compute_segment_length_remote (btl->btl_seg_size, (void *)(hdr + 1),
@@ -689,7 +689,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         MCA_PML_OB1_RDMA_FRAG_ALLOC(frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
             /* GLB - FIX */
-             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+             OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
              ompi_rte_abort(-1, NULL);
         }
 
