@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -280,7 +280,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
    if (rmaps_base_bycore) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "bycore", "map-by core",
+                       "--bycore", "--map-by core",
                        "rmaps_base_bycore", "rmaps_base_mapping_policy=core");
         /* set mapping policy to bycore - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
@@ -306,7 +306,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     if (rmaps_base_byslot) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "byslot", "map-by slot",
+                       "--byslot", "--map-by slot",
                        "rmaps_base_byslot", "rmaps_base_mapping_policy=slot");
         /* set mapping policy to byslot - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
@@ -332,7 +332,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     if (rmaps_base_bynode) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "bynode", "map-by node",
+                       "--bynode", "--map-by node",
                        "rmaps_base_bynode", "rmaps_base_mapping_policy=node");
         /* set mapping policy to bynode - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
