@@ -62,8 +62,9 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
                                            ompi_proc_t *dst_proc, mca_bml_base_endpoint_t* endpoint,
                                            ompi_communicator_t * comm)
 {
+    mca_btl_base_descriptor_t *des = NULL;
     mca_pml_ob1_match_hdr_t match;
-    mca_bml_base_btl_t* bml_btl;
+    mca_bml_base_btl_t *bml_btl;
     OPAL_PTRDIFF_TYPE lb, extent;
     opal_convertor_t convertor;
     size_t size = 0;
@@ -86,8 +87,6 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
         opal_convertor_copy_and_prepare_for_send (dst_proc->proc_convertor,
                                                   (const struct opal_datatype_t *) datatype,
 						  count, buf, 0, &convertor);
-
-        /* find out the packed size of the data */
         opal_convertor_get_packed_size (&convertor, &size);
     }
 
@@ -100,12 +99,16 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
     /* try to send immediately */
     rc = mca_bml_base_sendi (bml_btl, &convertor, &match, OMPI_PML_OB1_MATCH_HDR_LEN,
                              size, MCA_BTL_NO_ORDER, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
-                             MCA_PML_OB1_HDR_TYPE_MATCH, NULL);
+                             MCA_PML_OB1_HDR_TYPE_MATCH, &des);
     if (count > 0) {
         opal_convertor_cleanup (&convertor);
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        if (des) {
+            mca_bml_base_free (bml_btl, des);
+        }
+
 	return rc;
     }
 
