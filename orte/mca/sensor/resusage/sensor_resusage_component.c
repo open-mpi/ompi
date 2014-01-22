@@ -44,7 +44,8 @@ orte_sensor_resusage_component_t mca_sensor_resusage_component = {
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
+        "procresource,noderesource"
     }
 };
 

@@ -43,7 +43,8 @@ orte_sensor_base_component_t mca_sensor_heartbeat_component = {
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
+    "heartbeat"
 };
 
 

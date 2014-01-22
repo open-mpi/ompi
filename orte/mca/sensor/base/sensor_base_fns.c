@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -117,7 +118,7 @@ void orte_sensor_base_sample(int fd, short args, void *cbdata)
             opal_output_verbose(5, orte_sensor_base_framework.framework_output,
                                 "%s sensor:base: sampling component %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                i_module->component->mca_component_name);
+                                i_module->component->base_version.mca_component_name);
             i_module->module->sample();
         }
     }
@@ -147,7 +148,7 @@ void orte_sensor_base_log(char *comp, opal_buffer_t *data)
         if (NULL == (i_module = (orte_sensor_active_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
             continue;
         }
-        if (0 == strcmp(comp, i_module->component->mca_component_name)) {
+        if (0 == strcmp(comp, i_module->component->base_version.mca_component_name)) {
             if (NULL != i_module->module->log) {
                 i_module->module->log(data);
             }
