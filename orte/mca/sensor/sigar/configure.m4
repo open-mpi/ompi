@@ -20,38 +20,32 @@ AC_DEFUN([MCA_orte_sensor_sigar_CONFIG], [
 
     # do not build if support not requested
     AS_IF([test "$with_sigar" != "no"],
-        [case "${host}" in
-            i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|sparc*-*linux*)
-            AS_IF([test -r "/proc/cpuinfo"],
-                [sensor_linux_happy="yes"],
-                [sensor_linux_happy="no"])
-            ;;
-            *)
-            sensor_linux_happy="no"
-            ;;
-         esac
+          [AS_IF([test "$opal_found_linux" = "yes" || test "$opal_found_apple" = "yes"],
+                 [AS_IF([test "$opal_found_apple" = "yes"], 
+                        [libname="sigar-universal-macosx"], [libname="sigar"])
 
-         AS_IF([test "$sensor_linux_happy" = "yes"], 
-               [libname="sigar"], [libname="sigar-universal-macosx"])
+                  AS_IF([test ! -z "$with_sigar" -a "$with_sigar" != "yes"],
+                        [orte_check_sigar_dir="$with_sigar"])
 
-         AS_IF([test ! -z "$with_sigar" -a "$with_sigar" != "yes"],
-               [orte_check_sigar_dir="$with_sigar"])
-
-         OMPI_CHECK_PACKAGE([sensor_sigar],
-                            [sigar.h],
-                            [$libname],
-                            [sigar_proc_cpu_get],
-                            [],
-                            [$orte_check_sigar_dir],
-                            [],
-                            [$1],
-                            [AC_MSG_WARN([SIGAR SENSOR SUPPORT REQUESTED])
-                             AC_MSG_WARN([BUT REQUIRED LIBRARY OR HEADER NOT FOUND])
-                             AC_MSG_ERROR([CANNOT CONTINUE])
-                             $2])],
+                  OMPI_CHECK_PACKAGE([sensor_sigar],
+                                     [sigar.h],
+                                     [$libname],
+                                     [sigar_proc_cpu_get],
+                                     [],
+                                     [$orte_check_sigar_dir],
+                                     [],
+                                     [$1],
+                                     [AC_MSG_WARN([SIGAR SENSOR SUPPORT REQUESTED])
+                                      AC_MSG_WARN([BUT REQUIRED LIBRARY OR HEADER NOT FOUND])
+                                      AC_MSG_ERROR([CANNOT CONTINUE])
+                                      $2])],
+                 [AC_MSG_WARN([SIGAR SENSOR SUPPORT REQUESTED])
+                  AC_MSG_WARN([BUT ONLY SUPPORTED ON LINUX AND MAC])
+                  AC_MSG_ERROR([CANNOT CONTINUE])
+                  $2])],
           [$2])
 
-    AC_DEFINE_UNQUOTED(ORTE_SIGAR_LINUX, [test "$sensor_linux_happy" = "yes"],
+    AC_DEFINE_UNQUOTED(ORTE_SIGAR_LINUX, [test "$opal_found_linux" = "yes"],
                        [Which name to use for the sigar library on this OS])
     AC_SUBST(sensor_sigar_CPPFLAGS)
     AC_SUBST(sensor_sigar_LDFLAGS)

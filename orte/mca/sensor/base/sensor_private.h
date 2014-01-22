@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -50,7 +51,7 @@ typedef struct {
 
 typedef struct {
     opal_object_t super;
-    mca_base_component_t *component;
+    orte_sensor_base_component_t *component;
     orte_sensor_base_module_t *module;
     int priority;
 } orte_sensor_active_module_t;

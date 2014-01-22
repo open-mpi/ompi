@@ -45,7 +45,8 @@ orte_sensor_ft_tester_component_t mca_sensor_ft_tester_component = {
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
+        NULL
     }
 };
 

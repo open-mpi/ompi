@@ -40,7 +40,8 @@ orte_sensor_sigar_component_t mca_sensor_sigar_component = {
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
+        "procresource,noderesource"
     }
 };
 
@@ -58,7 +59,7 @@ static int orte_sensor_sigar_query(mca_base_module_t **module, int *priority)
      * even if we aren't going to sample as we have to be
      * present in order to log any received results
      */
-    *priority = 50;  /* ahead of heartbeat */
+    *priority = 150;  /* ahead of heartbeat and resusage */
     *module = (mca_base_module_t *)&orte_sensor_sigar_module;
     return ORTE_SUCCESS;
 }

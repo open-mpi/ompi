@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -81,6 +82,7 @@ typedef orte_sensor_base_module_1_0_0_t orte_sensor_base_module_t;
 struct orte_sensor_base_component_1_0_0_t {
     mca_base_component_t base_version;
     mca_base_component_data_t base_data;
+    char *data_measured;
 };
 typedef struct orte_sensor_base_component_1_0_0_t orte_sensor_base_component_1_0_0_t;
 typedef orte_sensor_base_component_1_0_0_t orte_sensor_base_component_t;
