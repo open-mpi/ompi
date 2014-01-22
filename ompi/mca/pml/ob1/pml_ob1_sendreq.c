@@ -359,7 +359,7 @@ mca_pml_ob1_copy_frag_completion( mca_btl_base_module_t* btl,
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_FRAG);
     if(OPAL_UNLIKELY(rc < 0)) {
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        ompi_rte_abort(-1, NULL);
     }
 }
 #endif /* OPAL_CUDA_SUPPORT */
