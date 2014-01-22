@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -193,7 +193,7 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
 
         if (opal_hwloc_base_bind_to_core) {
             opal_show_help("help-opal-hwloc-base.txt", "deprecated", true,
-                           "bind-to-core","bind-to core",
+                           "--bind-to-core", "--bind-to core",
                            "hwloc_base_bind_to_core", "hwloc_base_binding_policy=core");
             /* set binding policy to core - error if something else already set */
             if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
@@ -208,7 +208,7 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
 
         if (opal_hwloc_base_bind_to_socket) {
             opal_show_help("help-opal-hwloc-base.txt", "deprecated", true,
-                           "bind-to-socket", "bind-to socket",
+                           "--bind-to-socket", "--bind-to socket",
                            "hwloc_base_bind_to_socket", "hwloc_base_binding_policy=socket");
             /* set binding policy to socket - error if something else already set */
             if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
