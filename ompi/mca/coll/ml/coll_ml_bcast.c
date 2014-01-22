@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -724,6 +724,7 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
      * on this stage only contiguous data is supported */
     ompi_datatype_type_size(dtype, &dt_size);
     pack_len = count * dt_size;
+    ompi_datatype_get_extent (dtype, &lb, &extent);
 
     actual_buf = (void *) ((uintptr_t) buf + lb);
 
