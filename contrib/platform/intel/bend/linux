@@ -19,13 +19,14 @@ enable_cxx_exceptions=no
 enable_mpi_java=yes
 enable_io_romio=no
 enable_vt=no
-enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm
 enable_contrib_no_build=libnbc,vt
 with_memory_manager=no
 with_tm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
+with_coretemp=yes
+with_sigar=yes
 if [ -n "$SLURMHOME" ] ; then
     with_slurm=$SLURMHOME
     with_pmi=$SLURMHOME
