@@ -573,7 +573,7 @@ void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvr
     result = mca_common_cuda_record_htod_event("pml", des);
     if (OMPI_SUCCESS != result) {
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        ompi_rte_abort(-1, NULL);
     }
 }
 
