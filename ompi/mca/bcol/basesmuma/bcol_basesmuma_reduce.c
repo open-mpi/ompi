@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -35,11 +35,6 @@ int bcol_basesmuma_reduce_init(mca_bcol_base_module_t *super)
 {
     mca_bcol_base_coll_fn_comm_attributes_t comm_attribs;
     mca_bcol_base_coll_fn_invoke_attributes_t inv_attribs;
-
-    mca_bcol_basesmuma_module_t *basesmuma_module =
-        (mca_bcol_basesmuma_module_t *) super;
-
-    int group_size = basesmuma_module->colls_no_user_data.size_of_group;
 
     comm_attribs.bcoll_type = BCOL_REDUCE;
     comm_attribs.comm_size_min = 0;

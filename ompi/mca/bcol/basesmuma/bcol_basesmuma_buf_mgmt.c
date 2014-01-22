@@ -347,7 +347,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
      */
 
     /* local variables */
-    int ret = OMPI_SUCCESS, i, j, k, l;
+    int ret = OMPI_SUCCESS, i, j;
     sm_buffer_mgmt *pload_mgmt;
     mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
     bcol_basesmuma_registration_data_t *sm_reg_data =

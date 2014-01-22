@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -330,7 +330,7 @@ int mca_coll_ml_allgather_start (void *sbuf, int scount,
     pack_len = scount * sdt_size;
 
     if (in_place) {
-        sbuf = rbuf + ompi_comm_rank(comm) * pack_len;
+        sbuf = (char *) rbuf + ompi_comm_rank(comm) * pack_len;
     }
 
     /* Allocate collective schedule and pack message */

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -54,7 +54,6 @@ int bcol_basesmuma_k_nomial_allgather_init(bcol_function_args_t *input_args,
                                            struct coll_ml_function_t *const_args)
 {
     /* local variables */
-    /* XXX -- FIXME -- This is never set */
     int8_t  flag_offset;
     volatile int8_t ready_flag;
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) const_args->bcol_module;
@@ -109,6 +108,8 @@ int bcol_basesmuma_k_nomial_allgather_init(bcol_function_args_t *input_args,
 
     /* Set pointer to current proc ctrl region */
     my_ctl_pointer = data_buffs[my_rank].ctl_struct;
+    /* NTH: copied from progress */
+    flag_offset = my_ctl_pointer->starting_flag_value[bcol_id];
 
     /* initialize headers and ready flag */
     BASESMUMA_HEADER_INIT(my_ctl_pointer, ready_flag, sequence_number, bcol_id);
