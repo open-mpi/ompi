@@ -425,7 +425,6 @@ int mca_coll_ml_allreduce(void *sbuf, void *rbuf, int count,
     int ret;
 
     if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
-        fprintf (stderr, "Falling back for allreduce\n");
         /* coll/ml does not handle non-communative operations at this time. fallback
          * on another collective module */
         return ml_module->fallback.coll_allreduce (sbuf, rbuf, count, dtype, op, comm,
@@ -459,7 +458,6 @@ int mca_coll_ml_allreduce_nb(void *sbuf, void *rbuf, int count,
     int ret;
 
     if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
-        fprintf (stderr, "Falling back for iallreduce\n");
         /* coll/ml does not handle non-communative operations at this time. fallback
          * on another collective module */
         return ml_module->fallback.coll_iallreduce (sbuf, rbuf, count, dtype, op, comm, req,
