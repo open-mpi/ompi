@@ -104,12 +104,18 @@ AC_ARG_ENABLE(mpi-fortran,
     AC_HELP_STRING([--enable-mpi-fortran],
                    [specify which Fortran MPI bindings to build: all (or yes), none (or no), mpifh (build only mpif.h support), usempi (build mpif.h and the mpi module), or usempif08 (build mpifh, the mpi module, and the mpi_f08 module) (default: "all" if Fortran compiler found)]))
 
-AS_IF([test "x$enable_mpi_fortran" = "x"],
-      [enable_mpi_fortran=yes])
-
+OMPI_FORTRAN_USER_REQUESTED=0
 case "x$enable_mpi_fortran" in
+    x)
+        AC_MSG_RESULT([yes (all/default)])
+        OMPI_WANT_FORTRAN_MPIFH_BINDINGS=1
+        OMPI_WANT_FORTRAN_USEMPI_BINDINGS=1
+        OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS=1
+        ;;
+
     xyes|xall)
         AC_MSG_RESULT([yes (all)])
+        OMPI_FORTRAN_USER_REQUESTED=1
         OMPI_WANT_FORTRAN_MPIFH_BINDINGS=1
         OMPI_WANT_FORTRAN_USEMPI_BINDINGS=1
         OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS=1
@@ -124,6 +130,7 @@ case "x$enable_mpi_fortran" in
 
     xmpifh)
         AC_MSG_RESULT([yes (mpif.h)])
+        OMPI_FORTRAN_USER_REQUESTED=1
         OMPI_WANT_FORTRAN_MPIFH_BINDINGS=1
         OMPI_WANT_FORTRAN_USEMPI_BINDINGS=0
         OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS=0
@@ -131,6 +138,7 @@ case "x$enable_mpi_fortran" in
 
     xusempi)
         AC_MSG_RESULT([yes (mpif.h, mpi module)])
+        OMPI_FORTRAN_USER_REQUESTED=1
         OMPI_WANT_FORTRAN_MPIFH_BINDINGS=1
         OMPI_WANT_FORTRAN_USEMPI_BINDINGS=1
         OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS=0
@@ -138,6 +146,7 @@ case "x$enable_mpi_fortran" in
 
     xusempif08)
         AC_MSG_RESULT([yes (mpif.h, mpi and mpi_f08 modules)])
+        OMPI_FORTRAN_USER_REQUESTED=1
         OMPI_WANT_FORTRAN_MPIFH_BINDINGS=1
         OMPI_WANT_FORTRAN_USEMPI_BINDINGS=1
         OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS=1
