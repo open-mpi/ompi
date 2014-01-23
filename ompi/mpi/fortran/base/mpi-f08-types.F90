@@ -172,13 +172,13 @@ module mpi_f08_types
 
 !... Special sentinel constants
 !------------------------------
-  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore") OMPI_PROTECTED   :: MPI_STATUS_IGNORE
-  type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore") OMPI_PROTECTED :: MPI_STATUSES_IGNORE(1)
-  integer, bind(C, name="mpi_fortran_bottom") OMPI_PROTECTED          :: MPI_BOTTOM
-  integer, bind(C, name="mpi_fortran_in_place") OMPI_PROTECTED        :: MPI_IN_PLACE
-  integer, bind(C, name="mpi_fortran_argv_null") OMPI_PROTECTED       :: MPI_ARGV_NULL
-  integer, bind(C, name="mpi_fortran_argvs_null") OMPI_PROTECTED      :: MPI_ARGVS_NULL
-  integer, bind(C, name="mpi_fortran_errcodes_ignore") OMPI_PROTECTED :: MPI_ERRCODES_IGNORE
+  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore") :: MPI_STATUS_IGNORE
+  type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore") :: MPI_STATUSES_IGNORE(1)
+  integer, bind(C, name="mpi_fortran_bottom")          :: MPI_BOTTOM
+  integer, bind(C, name="mpi_fortran_in_place")        :: MPI_IN_PLACE
+  integer, bind(C, name="mpi_fortran_argv_null")       :: MPI_ARGV_NULL
+  integer, bind(C, name="mpi_fortran_argvs_null")      :: MPI_ARGVS_NULL
+  integer, bind(C, name="mpi_fortran_errcodes_ignore") :: MPI_ERRCODES_IGNORE
 
 !... Interfaces for operators with handles
 !-----------------------------------------
