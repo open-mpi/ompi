@@ -27,14 +27,6 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
 
 lib_LTLIBRARIES = libmpi_usempif08.la
 
-# These are MP3 functions that are not yet in the trunk (i.e., and
-# therefore not yet in this mpi3 fortran branch)
-mpi3_not_yet_in_trunk = \
-        dist_graph_create_adjacent_f08.F90 \
-        dist_graph_create_f08.F90 \
-        dist_graph_neighbors_count_f08.F90 \
-        dist_graph_neighbors_f08.F90
-
 mpi_api_files = \
         abort_f08.F90 \
         accumulate_f08.F90 \
@@ -361,14 +353,6 @@ endif
 # don't have time to figure it out.  So just wholesale copy the file
 # list.  :-(
 #pmpi_api_files = $(mpi_api_files:%=profile/p%)
-
-# These are MP3 functions that are not yet in the trunk (i.e., and
-# therefore not yet in this mpi3 fortran branch)
-pmpi3_not_yet_in_trunk = \
-        profile/pdist_graph_create_adjacent_f08.F90 \
-        profile/pdist_graph_create_f08.F90 \
-        profile/pdist_graph_neighbors_count_f08.F90 \
-        profile/pdist_graph_neighbors_f08.F90
 
 pmpi_api_files = \
         profile/pabort_f08.F90 \
