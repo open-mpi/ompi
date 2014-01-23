@@ -306,28 +306,22 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [AC_MSG_WARN([*** Could not determine the fortran compiler flag to indicate where modules reside])
                 AC_MSG_ERROR([*** Cannot continue])])
 
-           # This is all we need to build the "use mpi" module.  It's
-           # an extra bonus if we have ignore TKR functionality (i.e.,
-           # we'll build the "use mpi" module *better* if we have
-           # ignore TKR, but we can build it with the legacy
-           # implementation if we don't).
-           OMPI_BUILD_FORTRAN_USEMPI_BINDINGS=1
-           OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-tkr
-           OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi
-
            # Look for ignore TKR syntax
-           OMPI_FORTRAN_CHECK_IGNORE_TKR(
-               [OMPI_FORTRAN_HAVE_IGNORE_TKR=1
-
-                OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-ignore-tkr
-                OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi_ignore_tkr
-
-                # We now know that we can now build the mpi module
-                # with at least ignore TKR functionality
-                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=1
-                OMPI_FORTRAN_F08_PREDECL=$OMPI_FORTRAN_IGNORE_TKR_PREDECL
-                OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE])
+           OMPI_FORTRAN_CHECK_IGNORE_TKR([OMPI_FORTRAN_HAVE_IGNORE_TKR=1])
           ])
+
+    # If we got here, we can build the mpi module if it was requested.
+    # Decide whether to build the ignore TKR version or the
+    # non-ignore-TKR/legacy version.
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1],
+          [OMPI_BUILD_FORTRAN_USEMPI_BINDINGS=1
+           AS_IF([test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
+                 [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-ignore-tkr
+                  OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi_ignore_tkr],
+                 [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-tkr
+                  OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi])
+          ])
+
     AC_MSG_CHECKING([if building Fortran 'use mpi' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1],
           [AC_MSG_RESULT([yes])],
@@ -339,6 +333,15 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     # If we got all the stuff from above, then also look for the new
     # F08 syntax that we can use for the use_mpif08 module.
+
+    # We need to have ignore TKR functionality to build the mpi_f08
+    # module
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 &&
+           test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
+          [OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=1
+           OMPI_FORTRAN_F08_PREDECL=$OMPI_FORTRAN_IGNORE_TKR_PREDECL
+           OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE
+          ])
 
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
