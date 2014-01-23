@@ -11,7 +11,7 @@
 
 AM_CPPFLAGS     = -DOSHMEM_PROFILING_DEFINES=0 -DOSHMEM_HAVE_WEAK_SYMBOLS=0
 
-if OSHMEM_WANT_FORTRAN_BINDINGS
+if OSHMEM_BUILD_FORTRAN_BINDINGS
 oshmem_fortran_lib       = liboshmem_fortran.la
 else
 oshmem_fortran_lib       =

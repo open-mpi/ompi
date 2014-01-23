@@ -604,7 +604,7 @@ void oshmem_info_do_config(bool want_all)
     /* This block displays all the options with which the current
      * installation of oshmem was configured. */
     {
-        char *oshmem_fortran = OSHMEM_WANT_FORTRAN_BINDINGS ? "yes" : "no";
+        char *oshmem_fortran = OSHMEM_BUILD_FORTRAN_BINDINGS ? "yes" : "no";
         char *oshmem_compat = OSHMEM_SPEC_COMPAT ? "yes" : "no";
         char *oshmem_param_check = OSHMEM_PARAM_CHECK ? "yes" : "no";
         char *oshmem_profiling = OSHMEM_PROFILING ? "yes" : "no";
