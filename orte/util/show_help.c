@@ -624,10 +624,10 @@ int orte_show_help_norender(const char *filename, const char *topic,
     
     /* if we are the HNP, or the RML has not yet been setup,
      * or ROUTED has not been setup,
-     * or we weren't given an HNP, then all we can do
-     * is process this locally
+     * or we weren't given an HNP, or we are running in standalone
+     * mode, then all we can do is process this locally
      */
-    if (ORTE_PROC_IS_HNP ||
+    if (ORTE_PROC_IS_HNP || orte_standalone_operation ||
         NULL == orte_rml.send_buffer_nb ||
         NULL == orte_routed.get_route ||
         NULL == orte_process_info.my_hnp_uri) {
