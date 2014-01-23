@@ -262,7 +262,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 bml_btl->btl_flags = btl->btl_flags; 
                 if( (bml_btl->btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == btl->btl_put) ) {
                     opal_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
-                                " the %s BTL without any PUT function attached. Disard the flag !",
+                                " the %s BTL without any PUT function attached. Discard the flag !",
                                 bml_btl->btl->btl_component->btl_version.mca_component_name);
                     bml_btl->btl_flags ^= MCA_BTL_FLAGS_PUT;
                 }
