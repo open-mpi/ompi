@@ -36,14 +36,12 @@ module mpi_f08
 #include "mpi-f-interfaces-bind.h"
 #include "pmpi-f-interfaces-bind.h"
 
-! The MPI attribute callback functions need to be explictly called out
-! so that they don't end up in the MPI namespace.  See a longer
-! explanation in attr_fn-f90-interfaces.h.
-!
-!  include "ompi/mpi/fortran/use-mpi/attr_fn-f90-interfaces.h"
+! The MPI attribute callback functions
 
-! Similarly, we need the MPI_CONVERSION_FN_NULL function
-!
-!  include "ompi/mpi/fortran/use-mpi/conversion_fn_null-f90-interface.h"
+  include "ompi/mpi/fortran/base/attr_fn-f90-interfaces.h"
+
+! The MPI_CONVERSION_FN_NULL function
+
+  include "ompi/mpi/fortran/base/conversion_fn_null-f90-interface.h"
 
 end module mpi_f08
