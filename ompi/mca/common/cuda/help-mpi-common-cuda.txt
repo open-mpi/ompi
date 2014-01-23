@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2011-2013 NVIDIA.  All rights reserved.
+# Copyright (c) 2011-2014 NVIDIA.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -96,12 +96,14 @@ Check the cuda.h file for what the return value means.
 [cuEventCreate failed]
 The call to cuEventCreate failed. This is a unrecoverable error and will
 cause the program to abort.
+  Hostname:                     %s
   cuEventCreate return value:   %d
 Check the cuda.h file for what the return value means.
 #
 [cuEventRecord failed]
 The call to cuEventRecord failed. This is a unrecoverable error and will
 cause the program to abort.
+  Hostname:                     %s
   cuEventRecord return value:   %d
 Check the cuda.h file for what the return value means.
 #
@@ -138,6 +140,7 @@ Check the cuda.h file for what the return value means.
 [cuStreamCreate failed]
 The call to cuStreamCreate failed.  This is a unrecoverable error and will
 cause the program to abort.
+  Hostname:                      %s
   cuStreamCreate return value:   %d
 Check the cuda.h file for what the return vale means.
 #
@@ -180,5 +183,12 @@ continue, but report this error to the Open MPI developers.
   Hostname:                             %s
   cuPointerSetAttribute return value:   %d
   Address:                              %p
+Check the cuda.h file for what the return value means.
+#
+[cuEventSynchronize failed]
+The call to cuEventSynchronize failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  Hostname:                             %s
+  cuEventSynchronize return value:      %d
 Check the cuda.h file for what the return value means.
 #
