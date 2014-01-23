@@ -313,7 +313,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # If we got here, we can build the mpi module if it was requested.
     # Decide whether to build the ignore TKR version or the
     # non-ignore-TKR/legacy version.
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1],
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+           test $ompi_fortran_happy -eq 1],
           [OMPI_BUILD_FORTRAN_USEMPI_BINDINGS=1
            AS_IF([test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
                  [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-ignore-tkr
