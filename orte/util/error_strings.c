@@ -41,6 +41,9 @@ int orte_err2str(int errnum, const char **errmsg)
 {
     const char *retval;
     switch (errnum) {
+    case ORTE_SUCCESS:
+        retval = "Success";
+        break;
     case ORTE_ERR_RECV_LESS_THAN_POSTED:
         retval = "Receive was less than posted size";
         break;
