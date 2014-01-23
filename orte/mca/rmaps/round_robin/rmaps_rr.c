@@ -128,8 +128,10 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         jdata->bookmark = orte_rmaps_base_get_starting_point(&node_list, jdata);
         
         if (0 == app->num_procs) {
-            /* set the num_procs to equal the number of slots on these mapped nodes */
-            app->num_procs = num_slots;
+            /* set the num_procs to equal the number of slots on these
+             * mapped nodes, taking into account the number of cpus/rank
+             */
+            app->num_procs = num_slots / orte_rmaps_base.cpus_per_rank;
         }
         
         /* Make assignments */
