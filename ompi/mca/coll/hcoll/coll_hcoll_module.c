@@ -194,12 +194,12 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     module = NULL;
 
     if (!cm->hcoll_enable){
-        goto exit;
+        return NULL;
     }
 
     if (OMPI_COMM_IS_INTER(comm) || ompi_comm_size(comm) < cm->hcoll_np
         || ompi_comm_size(comm) < 2){
-        goto exit;
+        return NULL;
     }
 
 
@@ -227,15 +227,22 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         del_fn.attr_communicator_delete_fn = hcoll_comm_attr_del_fn;
         err = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn, &hcoll_comm_attr_keyval, NULL ,0, NULL);
         if (OMPI_SUCCESS != err) {
+            cm->hcoll_enable = 0;
+            hcoll_finalize();
+            opal_progress_unregister(hcoll_progress_fn);
             HCOL_ERROR("Hcol comm keyval create failed");
             return NULL;
         }
 
-        cm->libhcoll_initialized = true;
     }
     hcoll_module = OBJ_NEW(mca_coll_hcoll_module_t);
     if (!hcoll_module){
-        goto exit;
+        if (!cm->libhcoll_initialized) {
+            cm->hcoll_enable = 0;
+            hcoll_finalize();
+            opal_progress_unregister(hcoll_progress_fn);
+        }
+        return NULL;
     }
 
     hcoll_module->comm = comm;
@@ -249,7 +256,12 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     if (NULL == hcoll_module->hcoll_context){
         HCOL_VERBOSE(1,"hcoll_create_context returned NULL");
         OBJ_RELEASE(hcoll_module);
-        goto exit;
+        if (!cm->libhcoll_initialized) {
+            cm->hcoll_enable = 0;
+            hcoll_finalize();
+            opal_progress_unregister(hcoll_progress_fn);
+        }
+        return NULL;
     }
 
 
@@ -268,7 +280,10 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     *priority = cm->hcoll_priority;
     module = &hcoll_module->super;
 
-exit:
+    if (!cm->libhcoll_initialized) {
+        cm->libhcoll_initialized = true;
+    }
+
     return module;
 }
 
