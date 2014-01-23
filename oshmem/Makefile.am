@@ -17,7 +17,7 @@ c_pshmem_lib =
 endif
 
 # Do we have the Fortran bindings?
-if OSHMEM_WANT_FORTRAN_BINDINGS
+if OSHMEM_BUILD_FORTRAN_BINDINGS
 fortran_oshmem_lib = shmem/fortran/liboshmem_fortran.la
 else
 fortran_oshmem_lib =
