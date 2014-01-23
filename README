@@ -1202,9 +1202,21 @@ MPI FUNCTIONALITY
   developers would very much like to hear your feedback about this
   interface.  See README.JAVA.txt for more details.
 
---disable-mpi-fortran
-  Disable building the Fortran MPI bindings. Mutually exclusive to 
-  --enable-oshmem-fortran.
+--enable-mpi-fortran[=BINDING]
+  By default, Open MPI will attempt to build all 3 Fortran bindings:
+  mpif.h, the "mpi" module, and the "mpi_f08" module.  The following
+  options are available to modify this behavior:
+
+  * With no value for BINDING (i.e., just "--enable-mpi-fortran"):
+    synonym for BINDING=all
+  * BINDING=all or yes: attempt to build all 3 Fortran bindings
+  * BINDING=mpifh: build mpif.h support
+  * BINDING=usempi: build mpif.h and "mpi" module support
+  * BINDING=usempif08: build mpif.h, "mpi" module, and "mpi_f08"
+    module support
+  * BINDING=none or no: synonym for --disable-mpi-fortran, which will
+    prevent any of the Fortran bindings from building.  This is
+    mutually exclusive with --enable-oshmem-fortran.
 
 --disable-oshmem-fortran
   Disable building the Fortran OSHMEM bindings.
