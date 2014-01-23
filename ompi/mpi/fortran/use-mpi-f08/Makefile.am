@@ -432,6 +432,10 @@ pmpi_api_files = \
         profile/pcomm_split_f08.F90 \
         profile/pcomm_test_inter_f08.F90 \
         profile/pdims_create_f08.F90 \
+        profile/pdist_graph_create_adjacent_f08.F90 \
+        profile/pdist_graph_create_f08.F90 \
+        profile/pdist_graph_neighbors_count_f08.F90 \
+        profile/pdist_graph_neighbors_f08.F90 \
         profile/perrhandler_free_f08.F90 \
         profile/perror_class_f08.F90 \
         profile/perror_string_f08.F90 \
