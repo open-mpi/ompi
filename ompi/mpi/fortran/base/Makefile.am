@@ -19,6 +19,10 @@
 
 noinst_LTLIBRARIES =
 
+EXTRA_DIST = \
+     attr_fn-f90-interfaces.h \
+     conversion_fn_null-f90-interface.h
+
 #-----------------------------------------------------------------------------
 
 # If we're building any Fortran bindings, then we need to build the
