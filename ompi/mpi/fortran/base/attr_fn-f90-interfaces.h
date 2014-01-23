@@ -11,13 +11,6 @@
 ! $HEADER$
 !
 
-! Note about these declarations: these are "external" functions in
-! mpif-common.h.  However, if we don't declare them here, compilers will add
-! them to the "mpi" module namespace, and result in linker errors if MPI
-! F90 applications try to use them.  Because the implementations of
-! these functions are not in the MPI module namespace -- they're the F77
-! functions.
-
 interface
 
   subroutine mpi_type_null_delete_fn( type, type_keyval, attribute_val_out, &

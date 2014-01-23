@@ -2841,4 +2841,143 @@ subroutine pompi_mrecv_f(buf,count,datatype,message,status,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_mrecv_f
 
+subroutine pompi_neighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                             comm,ierror) &
+                             BIND(C, name="pompi_neighbor_allgather_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_neighbor_allgather_f
+
+subroutine pompi_ineighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                             comm,request,ierror) &
+                             BIND(C, name="pompi_ineighbor_allgather_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ineighbor_allgather_f
+
+subroutine pompi_neighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
+                              recvtype,comm,ierror) &
+                              BIND(C, name="pompi_neighbor_allgatherv_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount
+   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_neighbor_allgatherv_f
+
+subroutine pompi_ineighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
+                              recvtype,comm,request,ierror) &
+                              BIND(C, name="pompi_ineighbor_allgatherv_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount
+   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ineighbor_allgatherv_f
+
+subroutine pompi_neighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                            comm,ierror) &
+                            BIND(C, name="pompi_neighbor_alltoall_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_neighbor_alltoall_f
+
+subroutine pompi_ineighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                            comm,request,ierror) &
+                            BIND(C, name="pompi_ineighbor_alltoall_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ineighbor_alltoall_f
+
+subroutine pompi_neighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
+                             rdispls,recvtype,comm,ierror) &
+                             BIND(C, name="pompi_neighbor_alltoallv_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_neighbor_alltoallv_f
+
+subroutine pompi_ineighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
+                             rdispls,recvtype,comm,request,ierror) &
+                             BIND(C, name="pompi_ineighbor_alltoallv_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   INTEGER, INTENT(IN) :: sendtype, recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ineighbor_alltoallv_f
+
+subroutine pompi_neighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
+                             rdispls,recvtypes,comm,ierror) &
+                             BIND(C, name="pompi_neighbor_alltoallw_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), recvcounts(*)
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
+   INTEGER, INTENT(IN) :: sendtypes, recvtypes
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_neighbor_alltoallw_f
+
+subroutine pompi_ineighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
+                             rdispls,recvtypes,comm,request,ierror) &
+                             BIND(C, name="pompi_ineighbor_alltoallw_f")
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), recvcounts(*)
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
+   INTEGER, INTENT(IN) :: sendtypes, recvtypes
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ineighbor_alltoallw_f
+
 end interface

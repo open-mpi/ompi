@@ -151,10 +151,7 @@ endif
 # mpi.F90 is the only f90 source file directly in libmpif90 that gets
 # distributed.  
 
-libmpi_usempi_la_SOURCES = \
-     attr_fn-f90-interfaces.h \
-     conversion_fn_null-f90-interface.h \
-     mpi.F90
+libmpi_usempi_la_SOURCES = mpi.F90
 libmpi_usempi_la_LIBADD = \
      $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la
 
