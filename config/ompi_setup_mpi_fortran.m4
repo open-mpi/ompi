@@ -98,7 +98,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # Check to see if any of the MPI Fortran bindings were
     # specifically requested.  If so, and we weren't able to setup the
     # Fortran compiler properly, it's an error.
-    AS_IF([test $ompi_fortran_happy -eq 0 -a "$enable_mpi_fortran" = "yes"],
+    AS_IF([test $ompi_fortran_happy -eq 0 -a $OMPI_FORTRAN_USER_REQUESTED -eq 1],
           [AC_MSG_WARN([MPI Fortran bindings requested, but no suitable Fortran compiler found])
           AC_MSG_ERROR([Cannot continue])])
 
