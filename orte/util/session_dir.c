@@ -147,9 +147,7 @@ orte_session_dir_get_name(char **fulldirpath,
     if (NULL != pwdent) {
         user = strdup(pwdent->pw_name);
     } else {
-        orte_show_help("help-orte-runtime.txt",
-                       "orte:session:dir:nopwname", true);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        asprintf(&user, "%d", uid);
     }
     
     /*
