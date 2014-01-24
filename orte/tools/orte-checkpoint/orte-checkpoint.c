@@ -834,7 +834,7 @@ static int notify_process_for_checkpoint(opal_crs_base_ckpt_options_t *options)
     }
 
     if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(&(orterun_hnp->name), buffer,
-                                                       ORTE_RML_TAG_CKPT, hnp_receiver,
+                                                       ORTE_RML_TAG_CKPT, orte_rml_send_callback,
                                                        NULL))) {
         exit_status = ret;
         goto cleanup;
@@ -845,11 +845,6 @@ static int notify_process_for_checkpoint(opal_crs_base_ckpt_options_t *options)
                         ORTE_JOBID_PRINT(jobid));
 
  cleanup:
-    if( NULL != buffer) {
-        OBJ_RELEASE(buffer);
-        buffer = NULL;
-    }
-
     if( ORTE_SUCCESS != exit_status ) {
         opal_show_help("help-orte-checkpoint.txt", "unable_to_connect", true,
                        orte_checkpoint_globals.pid);
