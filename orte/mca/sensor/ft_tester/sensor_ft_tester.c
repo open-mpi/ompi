@@ -2,6 +2,7 @@
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -62,7 +63,7 @@ static void sample(void)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* are we including ourselves? */
-    if ((ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_CMSLAVE) &&
+    if (ORTE_PROC_IS_DAEMON &&
         0 < mca_sensor_ft_tester_component.daemon_fail_prob) {
         OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                              "%s sample:ft_tester considering killing me!",

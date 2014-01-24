@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-sensor-sigar.txt
+dist_ompidata_DATA = help-orte-sensor-sigar.txt
 
 sources = \
         sensor_sigar.c \

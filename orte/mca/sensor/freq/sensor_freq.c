@@ -219,6 +219,7 @@ static void freq_sample(void)
     time_t now;
     char time_str[40];
     char *timestamp_str;
+    bool packed;
 
     opal_output_verbose(2, orte_sensor_base_framework.framework_output,
                         "%s sampling freq",
@@ -226,6 +227,16 @@ static void freq_sample(void)
 
     /* prep to store the results */
     OBJ_CONSTRUCT(&data, opal_buffer_t);
+    packed = false;
+
+    /* pack our name */
+    freq = strdup("freq");
+    if (OPAL_SUCCESS != (ret = opal_dss.pack(&data, &freq, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&data);
+        return;
+    }
+    free(freq);
 
     /* store our hostname */
     if (OPAL_SUCCESS != (ret = opal_dss.pack(&data, &orte_process_info.nodename, 1, OPAL_STRING))) {
@@ -256,6 +267,10 @@ static void freq_sample(void)
     free(timestamp_str);
 
     OPAL_LIST_FOREACH(trk, &tracking, corefreq_tracker_t) {
+        opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                            "%s processing freq file %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            trk->file);
         /* read the temp */
         if (NULL == (fp = fopen(trk->file, "r"))) {
             continue;
@@ -272,17 +287,20 @@ static void freq_sample(void)
                 free(freq);
                 return;
             }
+            packed = true;
             free(freq);
         }
         fclose(fp);
     }
 
     /* xfer the data for transmission */
-    bptr = &data;
-    if (OPAL_SUCCESS != (ret = opal_dss.pack(orte_sensor_base.samples, &bptr, 1, OPAL_BUFFER))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&data);
-        return;
+    if (packed) {
+        bptr = &data;
+        if (OPAL_SUCCESS != (ret = opal_dss.pack(orte_sensor_base.samples, &bptr, 1, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_DESTRUCT(&data);
+            return;
+        }
     }
     OBJ_DESTRUCT(&data);
 }
@@ -322,12 +340,12 @@ static void freq_log(opal_buffer_t *sample)
     }
 
     opal_output_verbose(3, orte_sensor_base_framework.framework_output,
-                        "%s Received log from host %s with %d cores",
+                        "%s Received freq log from host %s with %d cores",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == hostname) ? "NULL" : hostname, ncores);
 
     /* xfr to storage */
-    kv = malloc((ncores+1) * sizeof(opal_value_t));
+    kv = malloc((ncores+2) * sizeof(opal_value_t));
 
     /* load the sample time at the start */
     OBJ_CONSTRUCT(&kv[0], opal_value_t);
@@ -336,27 +354,37 @@ static void freq_log(opal_buffer_t *sample)
     kv[0].data.string = strdup(sampletime);
     free(sampletime);
 
+    /* load the hostname */
+    OBJ_CONSTRUCT(&kv[1], opal_value_t);
+    kv[1].key = strdup("hostname");
+    kv[1].type = OPAL_STRING;
+    kv[1].data.string = strdup(hostname);
+
+    /* protect against segfault if we jump to cleanup */
     for (i=0; i < ncores; i++) {
-        OBJ_CONSTRUCT(&kv[i+1], opal_value_t);
-        asprintf(&kv[i+1].key, "core%d", i);
-        kv[i+1].type = OPAL_FLOAT;
+        OBJ_CONSTRUCT(&kv[i+2], opal_value_t);
+    }
+
+    for (i=0; i < ncores; i++) {
+        asprintf(&kv[i+2].key, "core%d", i);
+        kv[i+2].type = OPAL_FLOAT;
         n=1;
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(sample, &fval, &n, OPAL_FLOAT))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        kv[i+1].data.fval = fval;
+        kv[i+2].data.fval = fval;
     }
 
     /* store it */
-    if (ORTE_SUCCESS != (rc = opal_db.add_log("freq", kv, ncores+1))) {
+    if (ORTE_SUCCESS != (rc = opal_db.add_log("freq", kv, ncores+2))) {
         /* don't bark about it - just quietly disable the log */
         log_enabled = false;
     }
 
  cleanup:
     /* cleanup the xfr storage */
-    for (i=0; i < ncores+1; i++) {
+    for (i=0; i < ncores+2; i++) {
         OBJ_DESTRUCT(&kv[i]);
     }
     if (NULL != hostname) {

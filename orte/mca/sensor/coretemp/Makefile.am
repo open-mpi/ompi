@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-sensor-coretemp.txt
+dist_ompidata_DATA = help-orte-sensor-coretemp.txt
 
 sources = \
         sensor_coretemp.c \

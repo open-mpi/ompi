@@ -67,13 +67,13 @@ typedef struct {
     char *label;
     float critical_temp;
     float max_temp;
-} core_tracker_t;
-static void ctr_con(core_tracker_t *trk)
+} coretemp_tracker_t;
+static void ctr_con(coretemp_tracker_t *trk)
 {
     trk->file = NULL;
     trk->label = NULL;
 }
-static void ctr_des(core_tracker_t *trk)
+static void ctr_des(coretemp_tracker_t *trk)
 {
     if (NULL != trk->file) {
         free(trk->file);
@@ -82,7 +82,7 @@ static void ctr_des(core_tracker_t *trk)
         free(trk->label);
     }
 }
-OBJ_CLASS_INSTANCE(core_tracker_t,
+OBJ_CLASS_INSTANCE(coretemp_tracker_t,
                    opal_list_item_t,
                    ctr_con, ctr_des);
 
@@ -111,29 +111,22 @@ static char *orte_getline(FILE *fp)
  */
 static int init(void)
 {
-    int ret;
     DIR *cur_dirp = NULL, *tdir;
     struct dirent *dir_entry, *entry;
     char *dirname, *filename, *ptr, *tmp;
     size_t tlen = strlen("temp");
     size_t ilen = strlen("_input");
     FILE *fp;
-    core_tracker_t *trk;
+    coretemp_tracker_t *trk;
     int socket;
 
     OBJ_CONSTRUCT(&tracking, opal_list_t);
 
-    if (ORTE_SUCCESS != (ret = opal_os_dirpath_access("/sys/bus/platform/devices", 0))) {
-        /* if the directory doesn't exist, or we don't have
-         * access to it, then disqualify us
-         */
-        return ret;
-    }
-    
     /*
      * Open up the base directory so we can get a listing
      */
     if (NULL == (cur_dirp = opendir("/sys/bus/platform/devices"))) {
+        OBJ_DESTRUCT(&tracking);
         return ORTE_ERROR;
     }
 
@@ -175,7 +168,7 @@ static int init(void)
                 continue;
             }
             /* track the info for this core */
-            trk = OBJ_NEW(core_tracker_t);
+            trk = OBJ_NEW(coretemp_tracker_t);
             trk->socket = socket;
             trk->file = opal_os_path(false, dirname, entry->d_name, NULL);
             /* take the part up to the first underscore as this will
@@ -252,7 +245,7 @@ static void stop(orte_jobid_t jobid)
 static void coretemp_sample(void)
 {
     int ret;
-    core_tracker_t *trk;
+    coretemp_tracker_t *trk;
     FILE *fp;
     char *temp;
     float degc;
@@ -261,9 +254,20 @@ static void coretemp_sample(void)
     time_t now;
     char time_str[40];
     char *timestamp_str;
+    bool packed;
 
     /* prep to store the results */
     OBJ_CONSTRUCT(&data, opal_buffer_t);
+    packed = false;
+
+    /* pack our name */
+    temp = strdup("coretemp");
+    if (OPAL_SUCCESS != (ret = opal_dss.pack(&data, &temp, 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&data);
+        return;
+    }
+    free(temp);
 
     /* store our hostname */
     if (OPAL_SUCCESS != (ret = opal_dss.pack(&data, &orte_process_info.nodename, 1, OPAL_STRING))) {
@@ -293,7 +297,7 @@ static void coretemp_sample(void)
     }
     free(timestamp_str);
 
-    OPAL_LIST_FOREACH(trk, &tracking, core_tracker_t) {
+    OPAL_LIST_FOREACH(trk, &tracking, coretemp_tracker_t) {
         /* read the temp */
         fp = fopen(trk->file, "r");
         while (NULL != (temp = orte_getline(fp))) {
@@ -309,6 +313,7 @@ static void coretemp_sample(void)
                 return;
             }
             free(temp);
+            packed = true;
             /* check for exceed critical temp */
             if (trk->critical_temp < degc) {
                 /* alert the errmgr - this is a critical problem */
@@ -328,11 +333,13 @@ static void coretemp_sample(void)
     }
 
     /* xfer the data for transmission */
-    bptr = &data;
-    if (OPAL_SUCCESS != (ret = opal_dss.pack(orte_sensor_base.samples, &bptr, 1, OPAL_BUFFER))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&data);
-        return;
+    if (packed) {
+        bptr = &data;
+        if (OPAL_SUCCESS != (ret = opal_dss.pack(orte_sensor_base.samples, &bptr, 1, OPAL_BUFFER))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_DESTRUCT(&data);
+            return;
+        }
     }
     OBJ_DESTRUCT(&data);
 }
@@ -377,7 +384,7 @@ static void coretemp_log(opal_buffer_t *sample)
                         (NULL == hostname) ? "NULL" : hostname, ncores);
 
     /* xfr to storage */
-    kv = malloc((ncores+1) * sizeof(opal_value_t));
+    kv = malloc((ncores+2) * sizeof(opal_value_t));
 
     /* load the sample time at the start */
     OBJ_CONSTRUCT(&kv[0], opal_value_t);
@@ -386,27 +393,37 @@ static void coretemp_log(opal_buffer_t *sample)
     kv[0].data.string = strdup(sampletime);
     free(sampletime);
 
+    /* load the hostname */
+    OBJ_CONSTRUCT(&kv[1], opal_value_t);
+    kv[1].key = strdup("hostname");
+    kv[1].type = OPAL_STRING;
+    kv[1].data.string = strdup(hostname);
+
+    /* protect against segfault if we jump to cleanup */
     for (i=0; i < ncores; i++) {
-        OBJ_CONSTRUCT(&kv[i+1], opal_value_t);
-        asprintf(&kv[i+1].key, "core%d", i);
-        kv[i+1].type = OPAL_FLOAT;
+        OBJ_CONSTRUCT(&kv[i+2], opal_value_t);
+    }
+
+    for (i=0; i < ncores; i++) {
+        asprintf(&kv[i+2].key, "core%d", i);
+        kv[i+2].type = OPAL_FLOAT;
         n=1;
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(sample, &fval, &n, OPAL_FLOAT))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        kv[i+1].data.fval = fval;
+        kv[i+2].data.fval = fval;
     }
 
     /* store it */
-    if (ORTE_SUCCESS != (rc = opal_db.add_log("coretemp", kv, ncores+1))) {
+    if (ORTE_SUCCESS != (rc = opal_db.add_log("coretemp", kv, ncores+2))) {
         /* don't bark about it - just quietly disable the log */
         log_enabled = false;
     }
 
  cleanup:
     /* cleanup the xfr storage */
-    for (i=0; i < ncores+1; i++) {
+    for (i=0; i < ncores+2; i++) {
         OBJ_DESTRUCT(&kv[i]);
     }
     if (NULL != hostname) {
