@@ -375,6 +375,18 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_BIND_C_TYPE=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
+    # Per discussion on the devel list starting here:
+    # http://www.open-mpi.org/community/lists/devel/2014/01/13799.php
+    # we need a new litmus test to disqualify older Fortran compilers
+    # (e.g., Pathscale 4.0.12) that *seem* to support all the Right
+    # Things, but a) do not support BIND(C, name="super_long_name") or
+    # b) run into an internal error when compiling our mpi_f08 module.
+    # Testing for b) is sketchy at best.  But OMPI has some BIND(C)
+    # names that are >32 characters, and the same compilers that
+    # exhibit b) also seem to not support BIND(C) names that are >32
+    # characters (i.e., a)).  Hence, the following BIND(C) test checks
+    # to ensure that BIND(C, name="foo") works, where "foo" is
+    # actually a name >32 characters.
     OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
