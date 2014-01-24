@@ -120,6 +120,8 @@ static int add_log(const char *table,
         /* record that we have it */
         vstr = strdup(table);
         opal_pointer_array_add(&tables, vstr);
+        /* start with the table name */
+        opal_argv_append_nosize(&cmdargs, table);
         /* create and print the column headers */
         for (i=0; i < nkvs; i++) {
             opal_argv_append_nosize(&cmdargs, kvs[i].key);
@@ -130,6 +132,9 @@ static int add_log(const char *table,
         opal_argv_free(cmdargs);
         cmdargs = NULL;
     }
+
+    /* put the table at the start */
+    opal_argv_append_nosize(&cmdargs, table);
 
     /* cycle through the provided values and print them */
     for (i=0; i < nkvs; i++) {
