@@ -76,7 +76,7 @@ static int init(void)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* setup to receive heartbeats */
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_CM) {
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_AGGREGATOR) {
         orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                 ORTE_RML_TAG_HEARTBEAT,
                                 ORTE_RML_PERSISTENT,
