@@ -678,7 +678,7 @@ static int rte_init(void)
         error = "orte_sstore_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, !ORTE_PROC_IS_DAEMON))) {
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, ORTE_PROC_IS_APP))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
         goto error;
