@@ -73,8 +73,6 @@ opal_atomic_cmpset_acq_64:
 	mov ar.ccv=r33;;
 	cmpxchg8.acq r32=[r32],r34,ar.ccv
 	;;
-	sxt4 r32 = r32
-	;;
 	cmp.eq p6, p7 = r33, r32
 	;;
 	(p6) addl r8 = 1, r0
@@ -90,8 +88,6 @@ opal_atomic_cmpset_rel_64:
 	.body
 	mov ar.ccv=r33;;
 	cmpxchg8.rel r32=[r32],r34,ar.ccv
-	;;
-	sxt4 r32 = r32
 	;;
 	cmp.eq p6, p7 = r33, r32
 	;;
