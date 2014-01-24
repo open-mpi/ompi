@@ -96,6 +96,9 @@ end module]])],
 AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_TYPE_NAME],[
     AS_VAR_PUSHDEF([bind_c_type_name_var], [ompi_cv_fortran_have_bind_c_type_name])
 
+    # See comment in ompi_setup_mpi_fortran.m4: it is important that
+    # the bind(c) name in this text is longer than 32 characters.
+
     AC_CACHE_CHECK([if Fortran compiler supports TYPE(type), BIND(C, NAME="name")], bind_c_type_name_var,
        [AC_LANG_PUSH([Fortran])
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[module bindc_test
@@ -104,7 +107,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_TYPE_NAME],[
        integer :: value
    end type foo
 
-   type(foo), bind(c, name="c_name") :: bar
+   type(foo), bind(c, name="really_long_name_longer_than_32_chars") :: bar
 end module]])],
              [AS_VAR_SET(bind_c_type_name_var, yes)],
              [AS_VAR_SET(bind_c_type_name_var, no)])
