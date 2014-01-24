@@ -1492,26 +1492,32 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
                        char *nodename, int *argc, char ***argv)
 {
     orte_plm_rsh_shell_t remote_shell, local_shell;
-    struct passwd *p;
     char *param;
     int rc;
-    
+
     /* What is our local shell? */
     local_shell = ORTE_PLM_RSH_SHELL_UNKNOWN;
-    p = getpwuid(getuid());
-    if( NULL == p ) {
-        /* This user is unknown to the system. Therefore, there is no reason we
-         * spawn whatsoever in his name. Give up with a HUGE error message.
-         */
-        orte_show_help( "help-plm-rsh.txt", "unknown-user", true, (int)getuid() );
-        return ORTE_ERR_FATAL;
+
+#if OPAL_ENABLE_GETPWUID
+    {
+        struct passwd *p;
+
+        p = getpwuid(getuid());
+        if( NULL == p ) {
+            /* This user is unknown to the system. Therefore, there is no reason we
+             * spawn whatsoever in his name. Give up with a HUGE error message.
+             */
+            orte_show_help( "help-plm-rsh.txt", "unknown-user", true, (int)getuid() );
+            return ORTE_ERR_FATAL;
+        }
+        param = p->pw_shell;
+        local_shell = find_shell(p->pw_shell);
     }
-    param = p->pw_shell;
-    local_shell = find_shell(p->pw_shell);
-    
+#endif
+
     /* If we didn't find it in getpwuid(), try looking at the $SHELL
-     environment variable (see https://svn.open-mpi.org/trac/ompi/ticket/1060)
-     */
+       environment variable (see https://svn.open-mpi.org/trac/ompi/ticket/1060)
+    */
     if (ORTE_PLM_RSH_SHELL_UNKNOWN == local_shell && 
         NULL != (param = getenv("SHELL"))) {
         local_shell = find_shell(param);
@@ -1554,12 +1560,12 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
                          remote_shell, orte_plm_rsh_shell_name[remote_shell]));
     
     /* Do we need to source .profile on the remote side?
-     - sh: yes (see bash(1))
-     - ksh: yes (see ksh(1))
-     - bash: no (see bash(1))
-     - [t]csh: no (see csh(1) and tcsh(1))
-     - zsh: no (see http://zsh.sourceforge.net/FAQ/zshfaq03.html#l19)
-     */
+       - sh: yes (see bash(1))
+       - ksh: yes (see ksh(1))
+       - bash: no (see bash(1))
+       - [t]csh: no (see csh(1) and tcsh(1))
+       - zsh: no (see http://zsh.sourceforge.net/FAQ/zshfaq03.html#l19)
+    */
     
     if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
         ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
