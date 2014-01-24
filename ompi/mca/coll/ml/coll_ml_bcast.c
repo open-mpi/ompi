@@ -773,7 +773,7 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
 
     /* Fill in the function arguments */
     coll_op->variable_fn_params.sequence_num =
-        OPAL_THREAD_ADD64(&(ml_module->collective_sequence_num), 1);
+        OPAL_THREAD_ADD32(&(ml_module->collective_sequence_num), 1);
     coll_op->variable_fn_params.count = count;
     coll_op->variable_fn_params.dtype = dtype;
 
