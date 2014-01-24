@@ -273,6 +273,18 @@ Compiler Notes
   *** environment variables are IGNORED.
   ********************************************************************
   ********************************************************************
+  
+  As a direct result, it is STRONGLY recommended that you specify a
+  Fortran compiler that uses file suffixes to determine Fortran code
+  layout (e.g., free form vs. fixed).  For example, with some versions
+  of the IBM XLF compiler, it is preferable to use FC=xlf instead of
+  FC=xlf90, because xlf will automatically determine the difference
+  between free form and fixed Fortran source code.
+
+  However, many Fortran compiler allow specifying additional
+  command-line arguments to indicate which Fortran dialect to use.
+  For example, if FC=xlf90, you may need to use "mpifort --qfixed ..."
+  to compile fixed format Fortran source files.
 
   You can use ompi_info to see with which Fortran compiler Open MPI
   was configured and compiled.
@@ -306,11 +318,13 @@ Compiler Notes
 
   - The mpi_f08 module is new and has been tested with the Intel
     Fortran compiler.  Other modern Fortran compilers may also work
-    (but are, as yet, currently untested).  It is expected that this
+    (but are, as yet, only lightly tested).  It is expected that this
     support will mature over time.
 
-    The gfortran compiler is *not* supported with the mpi_f08 module
-    (gfortran lacks some necessary modern Fortran features, sorry).
+    As of this release, the GNU Fortran compiler (gfortran) is *not*
+    supported with the mpi_f08 module.  It is likely that a future
+    release of Open MPI will provide an mpi_f08 module that will be
+    compatible with gfortran >= v4.9.
 
   - All Fortran compilers support the mpif.h-based bindings.
 
@@ -326,17 +340,10 @@ Compiler Notes
 
     Specifically, all MPI subroutines with no "choice" buffers are
     prototyped and will receive strong parameter type checking at
-    run-time (e.g., MPI_INIT, MPI_COMM_RANK, etc.).
-
-    MPI subroutines with one choice buffer (e.g., MPI_SEND) are
-    prototyped for all intrinsic Fortran types for scalars and ranks 1
-    through 4 (the --with-gfortran-max-array-dim configure switch can
-    be used to increase the max array rank supported to up to 7).
-
-    MPI subroutines with two choice buffers (e.g., MPI_GATHER) are
-    *not* prototyped.  These subroutines can still be called in MPI
-    applications; they just will not receive strong parameter type
-    checking.
+    run-time (e.g., MPI_INIT, MPI_COMM_RANK, etc.).  Per guidance from
+    the MPI-3 specification, all MPI subroutines with "choice" buffers
+    are specifically *not* included in the "mpi" module, and their
+    parameters will not be checked at compile time.
 
 
 General Run-Time Support Notes

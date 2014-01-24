@@ -97,15 +97,46 @@ ORTE
 .TP
 OMPI
 \fImpicc\fR, \fImpic++\fR, \fImpicxx\fR, \fImpiCC\fR (only on systems with
-case-senstive file systems), \fImpif77\fR, and \fImpif90\fR.  Note
+case-senstive file systems), and \fImpifort\fR (and its legacy/deprecated
+names \fImpif77\fR and \fImpif90\fR).  Note
 that \fImpic++\fR, \fImpicxx\fR, and \fImpiCC\fR all invoke the same
 underlying C++ compiler with the same options.  All are provided as
 compatibility with other MPI implementations.
 .
+.
+.SS Fortran Notes
 .PP
-The Fortran wrapper compilers for MPI (\fImpif77\fR and \fImpif90\fR)
-will be inoperative and will return an error on use if Fortran 77 /
-Fortran 90 support was not built into the MPI layer.
+The Fortran wrapper compiler for MPI (\fImpifort\fR, and its
+legacy/deprecated names \fImpif77\fR and \fImpif90\fR) can compile and
+link MPI applications that use any/all of the MPI Fortran bindings:
+.IR mpif.h ,
+the
+.I mpi
+module, and the
+.I mpi_f08
+module (assuming Open MPI was installed with support for each of these
+Fortran bindings).  Specifically: it is no longer necessary to use
+different wrapper compilers for applications that use
+.I mpif.h
+vs. applications that use the
+.I mpi
+module -- just use
+.I mpifort
+for all Fortran MPI applications.
+.
+.PP
+Note, however, that the Fortran compiler may require additional
+command-line options to enforce a specific Fortran dialect.  For
+example, in some versions of the IBM XLF compiler, if xlf90 is the
+underlying Fortran compiler,
+.IR -qfixed
+may be necessary to compile fixed-format Fortran source files.
+.
+.PP 
+Finally, note that
+.I mpifort
+will be inoperative and will return an error on use if Fortran support
+was not built into the MP Ilayer.
 .
 .
 .SS Overview
@@ -226,18 +257,9 @@ C++ compiler flags
 .
 .
 .TP
-F77
-Fortran 77 compiler
-.
-.TP
-FFLAGS
-Fortran 77 compiler flags
-.
-.
-.TP
 FC
-Fortran 90 compiler
+Fortran compiler
 .
 .TP
 FCFLAGS
-Fortran 90 compiler flags
+Fortran compiler flags

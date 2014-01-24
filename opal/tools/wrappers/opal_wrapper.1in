@@ -14,17 +14,23 @@ invoked as the back-end by the Open MPI wrapper commands such as:
 .BR mpicc ,
 .BR mpiCC ,
 .BR mpic++ ,
-.BR mpif77 ,
 and
-.BR mpif90 .
+.BR mpifort 
+(and its legacy/deprecated names
+.BR mpif77
+and
+.BR mpif90 ).
 .PP
 Some Open MPI installations may have additional wrapper commands,
 and/or have renamed the wrapper compilers listed above to avoid
 executable name conflicts with other MPI implementations.  Hence, you
 may also have wrapper compilers installed including the following
 names:
-.BR mpif90.openmpi ,
-.BR mpif77.openmpi ,
+.BR mpifort.openmpi 
+(and the legacy/deprecated names
+.BR mpif90.openmpi 
+and
+.BR mpif77.openmpi ),
 .BR mpicxx.openmpi ,
 .BR mpiCC.openmpi ,
 .BR mpicc.openmpi ,
@@ -45,10 +51,8 @@ installation:
 .BR mpicc (1),
 .BR mpiCC (1),
 .BR mpic++ (1),
-.BR mpif77 (1),
-.BR mpif90 (1),
-.BR mpif90.openmpi (1),
-.BR mpif77.openmpi (1),
+.BR mpifort (1),
+.BR mpifort.openmpi (1),
 .BR mpicxx.openmpi (1),
 .BR mpiCC.openmpi (1),
 .BR mpicc.openmpi (1),
