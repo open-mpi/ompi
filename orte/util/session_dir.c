@@ -132,23 +132,38 @@ orte_session_dir_get_name(char **fulldirpath,
     int exit_status = ORTE_SUCCESS;
     size_t len;
     int uid;
-    struct passwd *pwdent;
     
     /* Ensure that system info is set */
     orte_proc_info();
 
-     /* get the name of the user */
+    /* get the name of the user */
     uid = getuid();
+#if OPAL_ENABLE_GETPWUID
+    {
+        struct passwd *pwdent;
+
 #ifdef HAVE_GETPWUID
-    pwdent = getpwuid(uid);
+        pwdent = getpwuid(uid);
+        if (NULL == pwdent) {
+            /* this indicates a problem with the passwd system,
+             * so pretty-print a message just for info
+             */
+            orte_show_help("help-orte-runtime.txt",
+                           "orte:session:dir:nopwname", true);
+        }
 #else
-    pwdent = NULL;
+        pwdent = NULL;
 #endif
-    if (NULL != pwdent) {
-        user = strdup(pwdent->pw_name);
-    } else {
-        asprintf(&user, "%d", uid);
+        if (NULL != pwdent) {
+            user = strdup(pwdent->pw_name);
+        } else {
+            asprintf(&user, "%d", uid);
+        }
     }
+#else
+    asprintf(&user, "%d", uid);
+#endif
+
     
     /*
      * set the 'hostname'
@@ -253,7 +268,7 @@ orte_session_dir_get_name(char **fulldirpath,
         }
         
     }    /* If we were not given a proc at all, then we just set it to frontend
-     */
+          */
     else {
         sessions = strdup(frontend); /* must dup this to avoid double-free later */
     }
