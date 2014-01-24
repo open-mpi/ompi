@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -147,63 +147,63 @@ orte_checkpoint_globals_t orte_checkpoint_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,
-      'h', NULL, "help", 
+      'h', NULL, "help",
       0,
       &orte_checkpoint_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL,
-      'v', NULL, "verbose", 
+      'v', NULL, "verbose",
       0,
       &orte_checkpoint_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
     { NULL,
-      'V', NULL, NULL, 
+      'V', NULL, NULL,
       1,
       &orte_checkpoint_globals.verbose_level, OPAL_CMD_LINE_TYPE_INT,
       "Set the verbosity level (For additional debugging information)" },
 
     { NULL,
-      '\0', NULL, "term", 
+      '\0', NULL, "term",
       0,
       &(orte_checkpoint_globals.term), OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the application after checkpoint (Cannot be used with --stop)" },
 
     { NULL,
-      '\0', NULL, "stop", 
+      '\0', NULL, "stop",
       0,
       &(orte_checkpoint_globals.stop), OPAL_CMD_LINE_TYPE_BOOL,
       "Send SIGSTOP to application just after checkpoint (checkpoint will not finish until SIGCONT is sent) (Cannot be used with --term)" },
 
     { NULL,
-      'w', NULL, "nowait", 
+      'w', NULL, "nowait",
       0,
       &orte_checkpoint_globals.nowait, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not wait for the application to finish checkpointing before returning" },
 
     { NULL,
-      's', NULL, "status", 
+      's', NULL, "status",
       0,
       &orte_checkpoint_globals.status, OPAL_CMD_LINE_TYPE_BOOL,
       "Display status messages describing the progression of the checkpoint" },
 
     { "hnp-jobid",
-      '\0', NULL, "hnp-jobid", 
+      '\0', NULL, "hnp-jobid",
       1,
       &orte_checkpoint_globals.req_hnp, OPAL_CMD_LINE_TYPE_INT,
       "This should be the jobid of the HNP whose applications you wish "
       "to checkpoint." },
 
     { "hnp-pid",
-      '\0', NULL, "hnp-pid", 
+      '\0', NULL, "hnp-pid",
       1,
       &orte_checkpoint_globals.pid, OPAL_CMD_LINE_TYPE_INT,
       "This should be the pid of the mpirun whose applications you wish "
       "to checkpoint." },
 
     { NULL,
-      'l', NULL, "list", 
+      'l', NULL, "list",
       0,
       &orte_checkpoint_globals.list_only, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a list of checkpoint files available on this machine" },
@@ -216,13 +216,13 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       "Enable C/R Enhanced Debugging" },
 
     { NULL,
-      '\0', "attach", "attach", 
+      '\0', "attach", "attach",
       0,
       &(orte_checkpoint_globals.attach_debugger), OPAL_CMD_LINE_TYPE_BOOL,
       "Wait for the debugger to attach directly after taking the checkpoint." },
 
     { NULL,
-      '\0', "detach", "detach", 
+      '\0', "detach", "detach",
       0,
       &(orte_checkpoint_globals.detach_debugger), OPAL_CMD_LINE_TYPE_BOOL,
       "Do not wait for the debugger to reattach after taking the checkpoint." },
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
         opal_output_verbose(10, orte_checkpoint_globals.output,
                             "\t Connected to Mpirun %s",
                             ORTE_NAME_PRINT(&orterun_hnp->name));
-         
+
         if(orte_checkpoint_globals.options->term) {
             opal_output_verbose(10, orte_checkpoint_globals.output,
                                 "\t Terminating after checkpoint\n");
@@ -387,7 +387,7 @@ static int parse_args(int argc, char *argv[]) {
         goto cleanup;
     }
 #endif
-    
+
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     mca_base_open();
@@ -417,8 +417,8 @@ static int parse_args(int argc, char *argv[]) {
         exit(0);
     }
 
-    /** 
-     * Put all of the MCA arguments in the environment 
+    /**
+     * Put all of the MCA arguments in the environment
      */
     mca_base_cmd_line_process_args(&cmd_line, &app_env, &global_env);
 
@@ -474,10 +474,10 @@ static int parse_args(int argc, char *argv[]) {
     }
 
     /*
-     * If the user did not supply an hnp jobid, then they must 
+     * If the user did not supply an hnp jobid, then they must
      *  supply the PID of MPIRUN
      */
-    if(0 >= argc && 
+    if(0 >= argc &&
        ORTE_JOBID_INVALID != orte_checkpoint_globals.req_hnp) {
         exit_status = ORTE_SUCCESS;
         goto cleanup;
@@ -490,7 +490,7 @@ static int parse_args(int argc, char *argv[]) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
-    
+
     /*
      * JJH: No wait is currently not implemented or tested
      */
@@ -521,7 +521,7 @@ static int find_hnp(void) {
     opal_list_t hnp_list;
     opal_list_item_t *item;
     orte_hnp_contact_t *hnpcandidate;
-    
+
     /* get the list of local hnp's available to us and setup
      * contact info for them into the RML
      */
@@ -535,7 +535,7 @@ static int find_hnp(void) {
         exit_status = ret;
         goto cleanup;
     }
-    
+
     /* search the list for the desired hnp */
     while (NULL != (item = opal_list_remove_first(&hnp_list))) {
         hnpcandidate = (orte_hnp_contact_t*)item;
@@ -602,7 +602,7 @@ static int ckpt_init(int argc, char *argv[]) {
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
-    
+
     /***************************
      * We need all of OPAL and the TOOLS portion of ORTE - this
      * sets us up so we can talk to any HNP over the wire
@@ -646,7 +646,7 @@ static int ckpt_finalize(void) {
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
         exit_status = ret;
     }
-    
+
     return exit_status;
 }
 
@@ -692,7 +692,7 @@ static void hnp_receiver(int status,
         ORTE_ERROR_LOG(rc);
         return;
     }
-    
+
     switch (command) {
         case ORTE_SNAPC_GLOBAL_UPDATE_CMD:
             opal_output_verbose(10, orte_checkpoint_globals.output,
@@ -747,7 +747,7 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      * If the job is not able to be checkpointed, then return
      */
     if( ORTE_SNAPC_CKPT_STATE_NO_CKPT == orte_checkpoint_globals.ckpt_status) {
-        opal_show_help("help-orte-checkpoint.txt", "non-ckptable", 
+        opal_show_help("help-orte-checkpoint.txt", "non-ckptable",
                        true,
                        orte_checkpoint_globals.pid);
         is_checkpoint_finished = true;
@@ -877,12 +877,12 @@ static int pretty_print_status(void) {
 
     if( NULL != global_snapshot_handle ) {
         opal_output(0,
-                    "[%6.2f / %6.2f] %*s - %s\n", 
+                    "[%6.2f / %6.2f] %*s - %s\n",
                     (cur_time - timer_last), (cur_time - timer_start),
                     25, state_str, global_snapshot_handle);
     } else {
         opal_output(0,
-                    "[%6.2f / %6.2f] %*s - ...\n", 
+                    "[%6.2f / %6.2f] %*s - ...\n",
                     (cur_time - timer_last), (cur_time - timer_start),
                     25, state_str);
     }
@@ -910,7 +910,7 @@ static int pretty_print_reference(void)
     printf("Snapshot Ref.: %3d %s\n",
            global_sequence_num,
            global_snapshot_handle);
-    
+
     return ORTE_SUCCESS;
 }
 
