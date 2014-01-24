@@ -65,7 +65,7 @@ static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
     coll_op->variable_fn_params.buffer_index = src_buffer_desc->buffer_index;
 
     coll_op->variable_fn_params.sequence_num =
-        OPAL_THREAD_ADD64(&(ml_module->collective_sequence_num), 1);
+        OPAL_THREAD_ADD32(&(ml_module->collective_sequence_num), 1);
 
     /* Pointer to a coll finalize function */
     coll_op->process_fn = NULL;

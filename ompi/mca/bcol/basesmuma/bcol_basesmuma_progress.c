@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,7 @@
 int bcol_basesmuma_progress(void)
 {
     /* local variables */
-   volatile int64_t *cntr;
+    volatile int32_t *cntr;
     mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
 
     /* check to see if release of memory blocks needs to be done */
@@ -54,12 +56,12 @@ int bcol_basesmuma_progress(void)
                        ctl_buffs_mgmt[index].bank_gen_counter);
                      */
 
-                    cntr= (volatile int64_t *) &(item_ptr->coll_buff->
+                    cntr= (volatile int32_t *) &(item_ptr->coll_buff->
                                 ctl_buffs_mgmt[index].bank_gen_counter);
                     item_ptr=(sm_nbbar_desc_t*)opal_list_remove_item((opal_list_t *)list,
                             ( opal_list_item_t *)item_ptr);
                     /* increment the generation number */
-                    OPAL_THREAD_ADD64(cntr,1);
+                    OPAL_THREAD_ADD32(cntr,1);
                 }
             }
 

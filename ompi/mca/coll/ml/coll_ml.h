@@ -404,7 +404,7 @@ struct mca_coll_ml_descriptor_t {
     ompi_request_t super; /*base request*/
     struct ompi_datatype_t *datatype; /*ompi datatype*/
     size_t count; /*count of user datatype elements*/
-    uint64_t sequence_num; /*sequence number for collective operation*/
+    uint32_t sequence_num; /*sequence number for collective operation*/
     size_t frags_limit; /*upper limit on # of fragments*/
     size_t frags_start; /*number of fragments started*/
 
@@ -685,10 +685,10 @@ struct mca_coll_ml_module_t {
     int max_fn_calls;
 
     /* collective sequence number - unique id for barrier type operations */
-    int64_t no_data_collective_sequence_num;
+    int32_t no_data_collective_sequence_num;
 
     /* collective sequence number - unique id for each collective */
-    int64_t collective_sequence_num;
+    int32_t collective_sequence_num;
 
     /** ompi free list of full message descriptors **/
     ompi_free_list_t message_descriptors;
@@ -963,7 +963,7 @@ void mca_coll_ml_abort_ml(char *message);
                         s_offset, r_offset, frag_len, buf)                \
 do {                                                                      \
             op->variable_fn_params.sequence_num =                         \
-            OPAL_THREAD_ADD64(&((ml)->collective_sequence_num), 1);       \
+            OPAL_THREAD_ADD32(&((ml)->collective_sequence_num), 1);       \
             op->variable_fn_params.count = cnt;                           \
             op->variable_fn_params.dtype = datatype;                      \
             op->variable_fn_params.buffer_index = (b_desc)->buffer_index; \
