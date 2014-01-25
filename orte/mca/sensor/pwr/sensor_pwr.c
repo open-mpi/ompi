@@ -42,6 +42,7 @@
 #include "opal/mca/db/db.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -110,6 +111,7 @@ static int read_msr(int fd, long long *value, int offset)
     *value = (long long)data;
     return ORTE_SUCCESS;
 }
+static int check_cpu_type(void);
 
 
 static int init(void)
@@ -120,13 +122,25 @@ static int init(void)
     corepwr_tracker_t *trk;
     long long units;
 
+    /* always construct this so we don't segfault in finalize */
     OBJ_CONSTRUCT(&tracking, opal_list_t);
+
+    /* we only handle certain cpu types as we have to know the binary
+     * layout of the msr file
+     */
+    if (ORTE_SUCCESS != check_cpu_type()) {
+        /* we provided a show help down below */
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
 
     /*
      * Open up the base directory so we can get a listing
      */
     if (NULL == (cur_dirp = opendir("/dev/cpu"))) {
         OBJ_DESTRUCT(&tracking);
+        orte_show_help("help-orte-sensor-pwr.txt", "no-access",
+                       true, orte_process_info.nodename,
+                       "/dev/cpu");
         return ORTE_ERROR;
     }
 
@@ -173,6 +187,8 @@ static int init(void)
 
     if (0 == opal_list_get_size(&tracking)) {
         /* nothing to read */
+        orte_show_help("help-orte-sensor-pwr.txt", "no-cores-found",
+                       true, orte_process_info.nodename);
         return ORTE_ERROR;
     }
 
@@ -211,6 +227,10 @@ static void pwr_sample(void)
     float power;
     char *temp;
     bool packed;
+
+    if (0 == opal_list_get_size(&tracking)) {
+        return;
+    }
 
     opal_output_verbose(2, orte_sensor_base_framework.framework_output,
                         "%s sampling power",
@@ -260,12 +280,20 @@ static void pwr_sample(void)
     OPAL_LIST_FOREACH_SAFE(trk, nxt, &tracking, corepwr_tracker_t) {
         if (0 >= (fd = open(trk->file, O_RDONLY))) {
             /* disable this one - cannot read the file */
+            opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                "%s access denied to pwr file %s - removing it",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                trk->file);
             opal_list_remove_item(&tracking, &trk->super);
             OBJ_RELEASE(trk);
             continue;
         }
         if (ORTE_SUCCESS != read_msr(fd, &value, MSR_PKG_POWER_INFO)) {
             /* disable this one - cannot read the file */
+            opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                "%s failed to read pwr file %s - removing it",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                trk->file);
             opal_list_remove_item(&tracking, &trk->super);
             OBJ_RELEASE(trk);
             close(fd);
@@ -380,4 +408,70 @@ static void pwr_log(opal_buffer_t *sample)
         free(hostname);
     }
 
+}
+
+
+/* list of supported chipsets */
+#define CPU_SANDYBRIDGE		42
+#define CPU_SANDYBRIDGE_EP	45
+#define CPU_IVYBRIDGE		58
+#define CPU_IVYBRIDGE_EP	62
+#define CPU_HASWELL		60
+
+
+/* go thru our topology and check the sockets
+ * to see if they contain a match - at this time,
+ * we don't support hetero sockets, so any mismatch
+ * will disqualify us
+ */ 
+static int check_cpu_type(void)
+{
+    hwloc_obj_t obj;
+    unsigned k;
+
+    if (NULL == (obj = hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET, 0))) {
+        /* there are no sockets identified in this machine */
+        orte_show_help("help-orte-sensor-pwr.txt", "no-sockets", true);
+        return ORTE_ERROR;
+    }
+
+    while (NULL != obj) {
+        for (k=0; k < obj->infos_count; k++) {
+            if (0 == strcmp(obj->infos[k].name, "model") &&
+                NULL != obj->infos[k].value) {
+                mca_sensor_pwr_component.model = strtoul(obj->infos[k].value, NULL, 10);
+                
+                switch (mca_sensor_pwr_component.model) {
+		case CPU_SANDYBRIDGE:
+                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                        "sensor:pwr Found Sandybridge CPU");
+                    return ORTE_SUCCESS;
+		case CPU_SANDYBRIDGE_EP:
+                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                        "sensor:pwr Found Sandybridge-EP CPU");
+                    return ORTE_SUCCESS;
+		case CPU_IVYBRIDGE:
+                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                        "sensor:pwr Found Ivybridge CPU");
+                    return ORTE_SUCCESS;
+		case CPU_IVYBRIDGE_EP:
+                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                        "sensor:pwr Found Ivybridge-EP CPU");
+                    return ORTE_SUCCESS;
+		case CPU_HASWELL:
+                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                        "sensor:pwr Found Haswell CPU");
+                    return ORTE_SUCCESS;
+		default:
+                    orte_show_help("help-orte-sensor-pwr.txt", "unsupported-model",
+                                   true, mca_sensor_pwr_component.model);
+                    return ORTE_ERROR;
+                }
+            }
+        }
+        obj = obj->next_sibling;
+    }
+    orte_show_help("help-orte-sensor-pwr.txt", "no-topo-info",
+                   true, mca_sensor_pwr_component.model);
+    return ORTE_ERROR;
 }

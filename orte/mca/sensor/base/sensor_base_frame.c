@@ -124,6 +124,10 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, sensor, "ORTE Monitoring Sensors",
                            orte_sensor_base_open, orte_sensor_base_close,
                            mca_sensor_base_static_components, 0);
 
+static void cons(orte_sensor_active_module_t *t)
+{
+    t->sampling = true;
+}
 OBJ_CLASS_INSTANCE(orte_sensor_active_module_t,
                    opal_object_t,
-                   NULL, NULL);
+                   cons, NULL);

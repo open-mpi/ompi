@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014     Intel, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -10,11 +10,20 @@
 #
 # This is the US/English general help file for the memory usage sensor
 #
-[mem-limit-exceeded]
-A process has exceeded the specified limit on memory usage:
+[req-dir-not-found]
+Frequency monitoring was requested, but this node
+lacks the required directory:
 
-Node:         %s
-Process rank: %s
-Memory used:  %luGbytes
-Memory limit: %luGbytes
+  Node:  %s
+  Directory:  %s
 
+Operation will continue, but frequencies will not be monitored.
+#
+[no-cores-found]
+Frequency monitoring was requested, but this node
+does not appear to have the required core-level files, or
+you lack authority to access them:
+
+  Node:  %s
+
+Operation will continue, but frequencies will not be monitored.

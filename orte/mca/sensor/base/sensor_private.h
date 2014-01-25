@@ -54,6 +54,7 @@ typedef struct {
     orte_sensor_base_component_t *component;
     orte_sensor_base_module_t *module;
     int priority;
+    bool sampling;
 } orte_sensor_active_module_t;
 OBJ_CLASS_DECLARATION(orte_sensor_active_module_t);
 

@@ -21,16 +21,9 @@ AC_DEFUN([MCA_orte_sensor_freq_CONFIG], [
     # do not build if support not requested
     AS_IF([test "$with_freq" != "no"],
           [AS_IF([test "$opal_found_linux" = "yes"],
-                 [AS_IF([test -r "/sys/devices/system/cpu/cpu0/cpufreq/"],
-                        [sensor_freq_happy=yes],
-                        [AC_MSG_WARN([Core frequency sensing was requested but the required directory])
-                         AC_MSG_WARN([was not found])
-                         sensor_freq_happy=no])],
-                 [AC_MSG_WARN([Core frequency sensing was requested but is only supported on Linux systems])
-                  sensor_freq_happy=no])
-           AS_IF([test "$sensor_freq_happy" = "yes"],
                  [$1],
-                 [AC_MSG_ERROR([Cannot continue])
+                 [AC_MSG_WARN([Core frequency sensing was requested but is only supported on Linux systems])
+                  AC_MSG_ERROR([Cannot continue])
                   $2])
           ],
           [$2])
