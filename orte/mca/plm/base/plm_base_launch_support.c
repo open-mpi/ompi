@@ -515,7 +515,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     }
 
     /* track that we automatically are considered to have reported - used
-     * only to report out launch progress
+     * only to report launch progress
      */
     caddy->jdata->num_daemons_reported++;
 
