@@ -26,70 +26,6 @@
 
 static const int root_id = 0;
 
-#define __INTERNAL_BARRIER_FROM_SCOLL_BASIC 1
-static int _internal_barrier(mca_scoll_fca_module_t *fca_module)
-{
-#if !__INTERNAL_BARRIER_FROM_SCOLL_BASIC
-    struct oshmem_group_t *group = fca_module->comm;
-    int rc = OSHMEM_SUCCESS;
-    int root_id = 0;
-    int PE_root = oshmem_proc_pe(group->proc_array[root_id]);
-    int i = 0;
-
-    if (PE_root != group->my_pe)
-    {
-        rc = MCA_SPML_CALL(send(NULL, 0, PE_root, MCA_SPML_BASE_PUT_STANDARD));
-        if (OSHMEM_SUCCESS != rc) {
-            return rc;
-        }
-
-        rc = MCA_SPML_CALL(recv(NULL, 0, PE_root));
-        if (OSHMEM_SUCCESS != rc) {
-            return rc;
-        }
-    }
-
-    /* The root collects and broadcasts the messages. */
-
-    else
-    {
-        int pe_cur = 0;
-
-        for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++)
-        {
-            pe_cur = oshmem_proc_pe(group->proc_array[i]);
-            if (pe_cur != PE_root)
-            {
-                rc = MCA_SPML_CALL(recv(NULL, 0, SHMEM_ANY_SOURCE));
-            }
-            if (OSHMEM_SUCCESS != rc) {
-                return rc;
-            }
-        }
-
-        for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++)
-        {
-            pe_cur = oshmem_proc_pe(group->proc_array[i]);
-            if (pe_cur != PE_root)
-            {
-                rc = MCA_SPML_CALL(send(NULL, 0, pe_cur, MCA_SPML_BASE_PUT_STANDARD));
-            }
-            if (OSHMEM_SUCCESS != rc) {
-                return rc;
-            }
-        }
-    }
-
-    return rc;
-#else
-    long pSync = _SHMEM_SYNC_VALUE;
-    /*we use 4th algorithm for barrier from scoll/basic.  It does not use pSync, 
-     * so we pass to that function just regular long value in order to meet function defenition requirements*/
-    return fca_module->previous_barrier(fca_module->comm,
-                                        &pSync,
-                                        SCOLL_ALG_BARRIER_BASIC);
-#endif
-}
 int mca_scoll_fca_init_query(bool enable_progress_threads,
                              bool enable_mpi_threads)
 {
@@ -191,7 +127,7 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
     for (i = 0; i < comm->proc_count; i++) {
         mca_scoll_fca_component.rcounts[i] = -1;
     }
-    _internal_barrier(fca_module);
+    oshmem_shmem_barrier(); 
     MCA_SPML_CALL(put((void *)&mca_scoll_fca_component.rcounts[my_id], (size_t)sizeof(info_size), (void *)&info_size, root_pe));
 
     if (root_pe == comm->my_pe) {
@@ -223,7 +159,7 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
                my_info,
                info_size);
     }
-    _internal_barrier(fca_module);
+    oshmem_shmem_barrier();
     if (root_pe == comm->my_pe) {
         for (i = 0; i < comm->proc_count; i++) {
             if (mca_scoll_fca_component.rcounts[i] > 0) {
@@ -260,14 +196,14 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
         free(all_info);
     }
 
-    _internal_barrier(fca_module);
+    oshmem_shmem_barrier();
 
     if (root_pe != comm->my_pe) {
         MCA_SPML_CALL(get((void *)mca_scoll_fca_component.ret,sizeof(int), (void *)mca_scoll_fca_component.ret, root_pe));
     }
 
     /* Examine comm_new return value */
-    _internal_barrier(fca_module);
+    oshmem_shmem_barrier();
     if (*mca_scoll_fca_component.ret < 0) {
         FCA_ERROR("rank %i: COMM_NEW failed: %s",
                   fca_module->rank, fca_strerror(*mca_scoll_fca_component.ret));
@@ -286,12 +222,12 @@ static int _fca_comm_new(mca_scoll_fca_module_t *fca_module)
                    sizeof(fca_module->fca_comm_desc));
         }
 
-        _internal_barrier(fca_module);
+        oshmem_shmem_barrier();
         if (root_pe != comm->my_pe) {
             MCA_SPML_CALL(get((void *)mca_scoll_fca_component.fca_comm_desc_exchangeable, sizeof(fca_module->fca_comm_desc), (void *)&fca_module->fca_comm_desc, root_pe));
         }
 
-        _internal_barrier(fca_module);
+        oshmem_shmem_barrier();
 
     }
     FCA_MODULE_VERBOSE(fca_module,
