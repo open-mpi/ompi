@@ -26,7 +26,6 @@ static int orte_sensor_pwr_open(void);
 static int orte_sensor_pwr_close(void);
 static int orte_sensor_pwr_query(mca_base_module_t **module, int *priority);
 static int pwr_component_register(void);
-static int check_cpu_type(void);
 
 orte_sensor_pwr_component_t mca_sensor_pwr_component = {
     {
@@ -60,15 +59,6 @@ static int orte_sensor_pwr_open(void)
 
 static int orte_sensor_pwr_query(mca_base_module_t **module, int *priority)
 {
-    /* we only handle certain cpu types as we have to know the binary
-     * layout of the msr file
-     */
-    if (ORTE_SUCCESS != check_cpu_type()) {
-        *priority = 0;
-        *module = NULL;
-        return ORTE_ERROR;
-    }
-
     *priority = 50;  /* ahead of heartbeat */
     *module = (mca_base_module_t *)&orte_sensor_pwr_module;
     return ORTE_SUCCESS;
@@ -95,69 +85,4 @@ static int pwr_component_register(void)
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             & mca_sensor_pwr_component.test);
     return ORTE_SUCCESS;
-}
-
-/* list of supported chipsets */
-#define CPU_SANDYBRIDGE		42
-#define CPU_SANDYBRIDGE_EP	45
-#define CPU_IVYBRIDGE		58
-#define CPU_IVYBRIDGE_EP	62
-#define CPU_HASWELL		60
-
-
-/* go thru our topology and check the sockets
- * to see if they contain a match - at this time,
- * we don't support hetero sockets, so any mismatch
- * will disqualify us
- */ 
-static int check_cpu_type(void)
-{
-    hwloc_obj_t obj;
-    unsigned k;
-
-    if (NULL == (obj = hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET, 0))) {
-        /* there are no sockets identified in this machine */
-        orte_show_help("help-orte-sensor-pwr.txt", "no-sockets", true);
-        return ORTE_ERROR;
-    }
-
-    while (NULL != obj) {
-        for (k=0; k < obj->infos_count; k++) {
-            if (0 == strcmp(obj->infos[k].name, "model") &&
-                NULL != obj->infos[k].value) {
-                mca_sensor_pwr_component.model = strtoul(obj->infos[k].value, NULL, 10);
-                
-                switch (mca_sensor_pwr_component.model) {
-		case CPU_SANDYBRIDGE:
-                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
-                                        "sensor:pwr Found Sandybridge CPU");
-                    return ORTE_SUCCESS;
-		case CPU_SANDYBRIDGE_EP:
-                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
-                                        "sensor:pwr Found Sandybridge-EP CPU");
-                    return ORTE_SUCCESS;
-		case CPU_IVYBRIDGE:
-                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
-                                        "sensor:pwr Found Ivybridge CPU");
-                    return ORTE_SUCCESS;
-		case CPU_IVYBRIDGE_EP:
-                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
-                                        "sensor:pwr Found Ivybridge-EP CPU");
-                    return ORTE_SUCCESS;
-		case CPU_HASWELL:
-                    opal_output_verbose(2, orte_sensor_base_framework.framework_output,
-                                        "sensor:pwr Found Haswell CPU");
-                    return ORTE_SUCCESS;
-		default:
-                    orte_show_help("help-orte-sensor-pwr.txt", "unsupported-model",
-                                   true, mca_sensor_pwr_component.model);
-                    return ORTE_ERROR;
-                }
-            }
-        }
-        obj = obj->next_sibling;
-    }
-    orte_show_help("help-orte-sensor-pwr.txt", "no-topo-info",
-                   true, mca_sensor_pwr_component.model);
-    return ORTE_ERROR;
 }

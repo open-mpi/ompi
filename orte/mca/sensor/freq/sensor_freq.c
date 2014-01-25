@@ -36,6 +36,7 @@
 #include "opal/mca/db/db.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -114,6 +115,7 @@ static int init(void)
     FILE *fp;
     corefreq_tracker_t *trk;
 
+    /* always construct this so we don't segfault in finalize */
     OBJ_CONSTRUCT(&tracking, opal_list_t);
 
     /*
@@ -121,6 +123,9 @@ static int init(void)
      */
     if (NULL == (cur_dirp = opendir("/sys/devices/system/cpu"))) {
         OBJ_DESTRUCT(&tracking);
+        orte_show_help("help-orte-sensor-freq.txt", "req-dir-not-found",
+                       true, orte_process_info.nodename,
+                       "/sys/devices/system/cpu");
         return ORTE_ERROR;
     }
 
@@ -182,6 +187,8 @@ static int init(void)
 
     if (0 == opal_list_get_size(&tracking)) {
         /* nothing to read */
+        orte_show_help("help-orte-sensor-freq.txt", "no-cores-found",
+                       true, orte_process_info.nodename);
         return ORTE_ERROR;
     }
 
@@ -210,7 +217,7 @@ static void stop(orte_jobid_t jobid)
 static void freq_sample(void)
 {
     int ret;
-    corefreq_tracker_t *trk;
+    corefreq_tracker_t *trk, *nxt;
     FILE *fp;
     char *freq;
     float ghz;
@@ -220,6 +227,10 @@ static void freq_sample(void)
     char time_str[40];
     char *timestamp_str;
     bool packed;
+
+    if (0 == opal_list_get_size(&tracking)) {
+        return;
+    }
 
     opal_output_verbose(2, orte_sensor_base_framework.framework_output,
                         "%s sampling freq",
@@ -266,13 +277,20 @@ static void freq_sample(void)
     }
     free(timestamp_str);
 
-    OPAL_LIST_FOREACH(trk, &tracking, corefreq_tracker_t) {
+    OPAL_LIST_FOREACH_SAFE(trk, nxt, &tracking, corefreq_tracker_t) {
         opal_output_verbose(2, orte_sensor_base_framework.framework_output,
                             "%s processing freq file %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             trk->file);
-        /* read the temp */
+        /* read the freq */
         if (NULL == (fp = fopen(trk->file, "r"))) {
+            /* we can't be read, so remove it from the list */
+            opal_output_verbose(2, orte_sensor_base_framework.framework_output,
+                                "%s access denied to freq file %s - removing it",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                trk->file);
+            opal_list_remove_item(&tracking, &trk->super);
+            OBJ_RELEASE(trk);
             continue;
         }
         while (NULL != (freq = orte_getline(fp))) {

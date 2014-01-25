@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014     Intel, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -8,13 +8,26 @@
 # 
 # $HEADER$
 #
-# This is the US/English general help file for the memory usage sensor
+# This is the US/English general help file
 #
-[mem-limit-exceeded]
-A process has exceeded the specified limit on memory usage:
+[req-dir-not-found]
+Core temperature monitoring was requested, but this node
+lacks the required directory:
 
-Node:         %s
-Process rank: %s
-Memory used:  %luGbytes
-Memory limit: %luGbytes
+  Node:  %s
+  Directory:  %s
 
+This usually indicates that the "coretemp" kernel module
+has not been loaded. Operation will continue, but core
+temperatures will not be monitored.
+#
+[no-cores-found]
+Core temperature monitoring was requested, but this node
+does not appear to have the required core-level files, or
+you lack authority to access them:
+
+  Node:  %s
+
+This usually indicates that the "coretemp" kernel module
+has not been loaded. Operation will continue, but core
+temperatures will not be monitored.

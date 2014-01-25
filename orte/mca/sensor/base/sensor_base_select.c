@@ -219,8 +219,16 @@ int orte_sensor_base_select(void)
         }
         if( NULL != i_module->module->init ) {
             if (ORTE_SUCCESS != i_module->module->init()) {
-                /* can't run after all */
-                opal_pointer_array_set_item(&orte_sensor_base.modules, i, NULL);
+                /* can't sample - however, if we are the HNP
+                 * or an aggregator, then we need this module
+                 * anyway so we can log incoming data
+                 */
+                if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_AGGREGATOR) {
+                    i_module->sampling = false;
+                } else {
+                    opal_pointer_array_set_item(&orte_sensor_base.modules, i, NULL);
+                    OBJ_RELEASE(i_module);
+                }
             }
         }
     }
