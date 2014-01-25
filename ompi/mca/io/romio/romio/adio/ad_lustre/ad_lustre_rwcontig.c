@@ -8,7 +8,6 @@
  *   Copyright (C) 2008 Sun Microsystems, Lustre group
  */
 
-#define _XOPEN_SOURCE 600
 #include <stdlib.h>
 #include <malloc.h>
 #include "ad_lustre.h"
