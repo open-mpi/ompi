@@ -98,7 +98,7 @@ int orte_oob_base_select(void)
             c2 = OBJ_NEW(mca_base_component_list_item_t);
             c2->cli_component = (mca_base_component_t*)component;
             opal_list_insert_pos(&orte_oob_base.actives,
-                                 &c2->super, &cmp->super);
+                                 &cmp->super, &c2->super);
             added = true;
             break;
         }

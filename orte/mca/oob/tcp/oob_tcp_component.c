@@ -658,10 +658,10 @@ static int component_send(orte_rml_send_t *msg)
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "%s oob:tcp:send_nb to peer %s:%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->peer), msg->tag);
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag);
 
     /* do we know some way of potentially reaching this peer? */
-    memcpy(&ui64, (char*)&msg->peer, sizeof(uint64_t));
+    memcpy(&ui64, (char*)&msg->dst, sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
                                                          ui64, (void**)&pr)) {
         /* nope - let someone else try */
@@ -1191,6 +1191,7 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     uint64_t ui64;
     int k;
     mca_oob_tcp_component_peer_t *pr;
+    orte_rml_send_t *snd;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:unknown hop called for peer %s on interface %s",
@@ -1198,14 +1199,21 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(&mop->hop),
                         mop->mod->if_name);
 
+    if (orte_finalizing || orte_abnormal_term_ordered) {
+        /* just ignore the problem */
+        OBJ_RELEASE(mop);
+        return;
+    }
+
     /* retrieve the hop's name */
     memcpy(&ui64, (char*)&(mop->hop), sizeof(uint64_t));
 
     /* get the peer object */
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
                                                          ui64, (void**)&pr) || NULL == pr) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        /* cleanup */
         goto cleanup;
+
     }
     
     /* ensure we mark that this peer isn't reachable by this module */
@@ -1228,20 +1236,24 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
         }
     }
 
-    /* if we get here, then we have no other modules - so we report
-     * the error back to the OOB and let it try other components
-     * or declare a problem
-     */
-    if (!orte_finalizing && !orte_abnormal_term_ordered) {
-        /* if this was a lifeline, then alert */
-        if (ORTE_SUCCESS != orte_routed.route_lost(&mop->hop)) {
-            ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
-        } else {
-            ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
-        }
-    }
-
  cleanup:
+    /* post the message to the OOB so it can see
+     * if another component can transfer it
+     */
+    MCA_OOB_TCP_HDR_NTOH(&mop->snd->hdr);
+    snd = OBJ_NEW(orte_rml_send_t);
+    snd->dst = mop->snd->hdr.dst;
+    snd->origin = mop->snd->hdr.origin;
+    snd->tag = mop->snd->hdr.tag;
+    snd->data = mop->snd->data;
+    snd->count = mop->snd->hdr.nbytes;
+    snd->cbfunc.iov = NULL;
+    snd->cbdata = NULL;
+    /* activate the OOB send state */
+    ORTE_OOB_SEND(snd);
+    /* protect the data */
+    mop->snd->data = NULL;
+
     OBJ_RELEASE(mop);
 }
 
