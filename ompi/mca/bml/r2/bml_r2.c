@@ -158,12 +158,11 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     }
     
     /* Select only the procs that don't yet have the BML proc struct. This prevent
-     * us from calling btl->add_procs several this on the same destination proc.
+     * us from calling btl->add_procs several times on the same destination proc.
      */
     for(p_index = 0; p_index < nprocs; p_index++) { 
         struct ompi_proc_t* proc = procs[p_index]; 
 
-        OBJ_RETAIN(proc); 
         if(NULL !=  proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) { 
             continue;  /* go to the next proc */
         }
@@ -174,6 +173,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
+        OBJ_RETAIN(proc);
         new_procs[n_new_procs++] = proc; 
     }
 
@@ -442,7 +442,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for(p =0; p < nprocs; p++) { 
+    for(p = 0; p < nprocs; p++) { 
         ompi_proc_t *proc = procs[p]; 
         if(((opal_object_t*)proc)->obj_reference_count == 1) { 
             del_procs[n_del_procs++] = proc; 
@@ -644,11 +644,11 @@ int mca_bml_r2_finalize( void )
     mca_bml_r2.num_btl_progress = 0;
 
     if( NULL != mca_bml_r2.btl_modules) {
-        free( mca_bml_r2.btl_modules);
+        free(mca_bml_r2.btl_modules);
         mca_bml_r2.btl_modules = NULL;
     }
     if( NULL != mca_bml_r2.btl_progress ) {
-        free( mca_bml_r2.btl_progress);
+        free(mca_bml_r2.btl_progress);
         mca_bml_r2.btl_progress = NULL;
     }
 
