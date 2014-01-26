@@ -1413,6 +1413,8 @@ opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t top
     opal_output_verbose(5, opal_hwloc_base_framework.framework_output,
                         "locality: %s",
                         opal_hwloc_base_print_locality(locality));
+    hwloc_bitmap_free(loc1);
+    hwloc_bitmap_free(loc2);
 
     return locality;
 }
