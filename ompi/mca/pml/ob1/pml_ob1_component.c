@@ -305,8 +305,9 @@ int mca_pml_ob1_component_fini(void)
     OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
     OBJ_DESTRUCT(&mca_pml_ob1.lock);
 
-    if(OMPI_SUCCESS != (rc = mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator))) {
-        return rc;
+    if( NULL != mca_pml_ob1.allocator ) {
+        (void)mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator);
+        mca_pml_ob1.allocator = NULL;
     }
 
 #if 0
