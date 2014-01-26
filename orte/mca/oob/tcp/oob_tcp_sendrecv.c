@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -172,11 +172,15 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                         /* send the buffer data as a single block */
                         msg->sdptr = msg->msg->buffer->base_ptr;
                         msg->sdbytes = msg->msg->buffer->bytes_used;
-                    } else {
+                    } else if (NULL != msg->msg->iov) {
                         /* start with the first iovec */
                         msg->sdptr = msg->msg->iov[0].iov_base;
                         msg->sdbytes = msg->msg->iov[0].iov_len;
                         msg->iovnum = 0;
+                    } else {
+                        /* just send the data */
+                        msg->sdptr = msg->msg->data;
+                        msg->sdbytes = msg->msg->count;
                     }
                     /* fall thru and let the send progress */
                 } else if (ORTE_ERR_RESOURCE_BUSY == rc ||
@@ -220,7 +224,20 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                         ORTE_RML_SEND_COMPLETE(msg->msg);
                         OBJ_RELEASE(msg);
                         peer->send_msg = NULL;
-                    }  else {
+                    } else if (NULL != msg->msg->data) {
+                        /* this was a relay we have now completed - no need to
+                         * notify the RML as the local proc didn't initiate
+                         * the send
+                         */
+                        opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                                            "%s MESSAGE RELAY COMPLETE TO %s OF %d BYTES ON SOCKET %d",
+                                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                            ORTE_NAME_PRINT(&(peer->name)),
+                                            (int)ntohl(msg->hdr.nbytes), peer->sd);
+                        msg->msg->status = ORTE_SUCCESS;
+                        OBJ_RELEASE(msg);
+                        peer->send_msg = NULL;
+                    } else {
                         /* rotate to the next iovec */
                         msg->iovnum++;
                         if (msg->iovnum < msg->msg->count) {

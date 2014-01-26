@@ -227,6 +227,7 @@ static void send_cons(orte_rml_send_t *ptr)
     ptr->cbdata = NULL;
     ptr->iov = NULL;
     ptr->buffer = NULL;
+    ptr->data = NULL;
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_t,
                    opal_list_item_t,

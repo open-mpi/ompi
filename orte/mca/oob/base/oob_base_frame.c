@@ -100,6 +100,10 @@ OBJ_CLASS_INSTANCE(mca_oob_base_component_t,
                    opal_list_item_t,
                    NULL, NULL);
 
+OBJ_CLASS_INSTANCE(orte_oob_send_t,
+                   opal_object_t,
+                   NULL, NULL);
+
 static void pr_cons(orte_oob_base_peer_t *ptr)
 {
     ptr->component = NULL;

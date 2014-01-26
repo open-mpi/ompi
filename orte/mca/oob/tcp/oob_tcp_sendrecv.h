@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -111,11 +111,11 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
                             "%s:[%s:%d] queue send to %s",              \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((m)->peer)));             \
+                            ORTE_NAME_PRINT(&((m)->dst)));              \
         msg = OBJ_NEW(mca_oob_tcp_send_t);                              \
         /* setup the header */                                          \
-        msg->hdr.origin = *ORTE_PROC_MY_NAME;                           \
-        msg->hdr.dst = (m)->peer;                                       \
+        msg->hdr.origin = (m)->origin;                                  \
+        msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
         /* point to the actual message */                               \
@@ -123,11 +123,13 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         /* set the total number of bytes to be sent */                  \
         if (NULL != (m)->buffer) {                                      \
             msg->hdr.nbytes = (m)->buffer->bytes_used;                  \
-        } else {                                                        \
+        } else if (NULL != (m)->iov) {                                  \
             msg->hdr.nbytes = 0;                                        \
             for (i=0; i < (m)->count; i++) {                            \
                 msg->hdr.nbytes += (m)->iov[i].iov_len;                 \
             }                                                           \
+        } else {                                                        \
+            msg->hdr.nbytes = (m)->count;                               \
         }                                                               \
         /* prep header for xmission */                                  \
         MCA_OOB_TCP_HDR_HTON(&msg->hdr);                                \
@@ -152,11 +154,11 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
                             "%s:[%s:%d] queue pending to %s",           \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((m)->peer)));             \
+                            ORTE_NAME_PRINT(&((m)->dst)));              \
         msg = OBJ_NEW(mca_oob_tcp_send_t);                              \
         /* setup the header */                                          \
-        msg->hdr.origin = *ORTE_PROC_MY_NAME;                           \
-        msg->hdr.dst = (m)->peer;                                       \
+        msg->hdr.origin = (m)->origin;                                  \
+        msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
         /* point to the actual message */                               \
@@ -164,11 +166,13 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         /* set the total number of bytes to be sent */                  \
         if (NULL != (m)->buffer) {                                      \
             msg->hdr.nbytes = (m)->buffer->bytes_used;                  \
-        } else {                                                        \
+        } else if (NULL != (m)->iov) {                                  \
             msg->hdr.nbytes = 0;                                        \
             for (i=0; i < (m)->count; i++) {                            \
                 msg->hdr.nbytes += (m)->iov[i].iov_len;                 \
             }                                                           \
+        } else {                                                        \
+            msg->hdr.nbytes = (m)->count;                               \
         }                                                               \
         /* prep header for xmission */                                  \
         MCA_OOB_TCP_HDR_HTON(&msg->hdr);                                \
@@ -228,7 +232,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_op_t);
                             "%s:[%s:%d] post send to %s",               \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((ms)->peer)));            \
+                            ORTE_NAME_PRINT(&((ms)->dst)));             \
         mop = OBJ_NEW(mca_oob_tcp_msg_op_t);                            \
         mop->mod = (m);                                                 \
         mop->msg = (ms);                                                \
@@ -267,6 +271,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
             proxy = (r);                                                \
             /* create a send object for this message */                 \
             snd = OBJ_NEW(mca_oob_tcp_send_t);                          \
+            mop->snd = snd;                                             \
             /* transfer and prep the header */                          \
             snd->hdr = proxy->hdr;                                      \
             MCA_OOB_TCP_HDR_HTON(&snd->hdr);                            \
