@@ -106,9 +106,19 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         } else {
             /* default based on number of procs */
             if (nprocs <= 2) {
-                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "mca:rmaps mapping not given - using byslot");
-                ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+                if (1 < orte_rmaps_base.cpus_per_rank) {
+                    /* assigning multiple cpus to a rank requires that we map to
+                     * objects that have multiple cpus in them, so default
+                     * to byslot if nothing else was specified by the user.
+                     */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps mapping not given - using byslot");
+                    ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+                } else {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps mapping not given - using bycore");
+                    ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYCORE);
+                }
             } else {
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps mapping not given - using bysocket");
@@ -167,9 +177,19 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
             /* default based on number of procs */
             if (nprocs <= 2) {
-                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "mca:rmaps mapping not set by user - using byslot");
-                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                if (1 < orte_rmaps_base.cpus_per_rank) {
+                    /* assigning multiple cpus to a rank requires that we map to
+                     * objects that have multiple cpus in them, so default
+                     * to byslot if nothing else was specified by the user.
+                     */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps mapping not given - using byslot");
+                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
+                } else {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps mapping not given - using bycore");
+                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYCORE);
+                }
             } else {
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "mca:rmaps mapping not set by user - using bysocket");

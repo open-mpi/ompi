@@ -355,6 +355,43 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         ORTE_SET_RANKING_DIRECTIVE(orte_rmaps_base.ranking, ORTE_RANKING_GIVEN);
     }
 
+    if (1 < orte_rmaps_base.cpus_per_rank) {
+        /* check to see if we were told to map at too low a level */
+        if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
+            ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) > ORTE_MAPPING_BYSOCKET) {
+                orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
+                               orte_rmaps_base.cpus_per_rank,
+                               orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
+                return ORTE_ERR_SILENT;
+        }
+        /* if we were asked for multiple cpus/proc, then we have to
+         * bind to those cpus - any other binding policy is an
+         * error
+         */
+        if (OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+            if (opal_hwloc_use_hwthreads_as_cpus) {
+                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
+            } else {
+                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
+            }
+        } else {
+            if (opal_hwloc_use_hwthreads_as_cpus &&
+                (OPAL_BIND_TO_HWTHREAD != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy))) {
+                orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
+                               orte_rmaps_base.cpus_per_rank, "use-hwthreads-as-cpus",
+                               opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
+                               "bind-to hwthread");
+                return ORTE_ERR_SILENT;
+            } else if (OPAL_BIND_TO_CORE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+                orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
+                               orte_rmaps_base.cpus_per_rank, "cores as cpus",
+                               opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
+                               "bind-to core");
+                return ORTE_ERR_SILENT;
+            }
+        }
+    }
+
     /* Should we schedule on the local node or not? */
     if (rmaps_base_no_schedule_local) {
         orte_rmaps_base.mapping |= ORTE_MAPPING_NO_USE_LOCAL;
