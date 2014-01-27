@@ -13,6 +13,7 @@
 # Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,8 +25,8 @@
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_PMI],[
     AC_ARG_WITH([pmi],
-                [AC_HELP_STRING([--with-pmi],
-                                [Build PMI support (default: no)])],
+                [AC_HELP_STRING([--with-pmi(=DIR)],
+                                [Build PMI support, optionally adding DIR to the search path (default: no)])],
 	                        [], with_pmi=no)
 
     opal_enable_pmi=0
