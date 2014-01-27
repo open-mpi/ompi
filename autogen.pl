@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -940,7 +940,7 @@ sub patch_autotools_output {
     # Below is essentially an upstream patch for Libtool which we want 
     # made available to Open MPI users running older versions of Libtool
 
-    foreach my $tag (("", "_F77", "_FC")) {
+    foreach my $tag (("", "_FC")) {
 
         # We have to change the search pattern and substitution on each
         # iteration to take into account the tag changing
