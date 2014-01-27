@@ -315,9 +315,11 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             /* record that we heard back from a daemon during app launch */
             if (running && NULL != jdata) {
                 jdata->num_daemons_reported++;
-                if (0 == jdata->num_daemons_reported % 100 ||
-                    jdata->num_daemons_reported == orte_process_info.num_procs) {
-                    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REPORT_PROGRESS);
+                if (orte_report_launch_progress) {
+                    if (0 == jdata->num_daemons_reported % 100 ||
+                        jdata->num_daemons_reported == orte_process_info.num_procs) {
+                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REPORT_PROGRESS);
+                    }
                 }
             }
             /* prepare for next job */
