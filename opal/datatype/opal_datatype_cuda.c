@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,13 +47,16 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
         opal_cuda_support_init();
     }
 
+    /* This is needed to handle case where convertor is not fully initialized
+     * like when trying to do a sendi with convertor on the statck */
+    convertor->cbmemcpy = (memcpy_fct_t)&opal_cuda_memcpy;
+
     /* If not enabled, then nothing else to do */
     if (!opal_cuda_enabled) {
         return;
     }
 
     if (ftable.gpu_is_gpu_buffer(pUserBuf)) {
-        convertor->cbmemcpy = (memcpy_fct_t)&opal_cuda_memcpy;
         convertor->flags |= CONVERTOR_CUDA;
     }
 }
