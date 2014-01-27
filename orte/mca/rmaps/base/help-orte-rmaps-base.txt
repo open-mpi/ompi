@@ -231,3 +231,31 @@ been deprecated and replaced as follows:
 
 The deprecated forms *will* disappear in a future version of Open MPI.
 Please update to the new syntax.
+#
+[mismatch-binding]
+A request for multiple cpus-per-proc was given, but a conflicting binding
+policy was specified:
+
+  #cpus-per-proc:  %d
+  type of cpus:    %s
+  binding policy given: %s
+
+The correct binding policy for the given type of cpu is:
+
+  correct binding policy:  %s
+
+This is the binding policy we would apply by default for this
+situation, so no binding need be specified. Please correct the
+situation and try again.
+#
+[mapping-too-low]
+A request for multiple cpus-per-proc was given, but a directive
+was also give to map to an object level that is unlikely to
+have multiple cpus underneath it:
+
+  #cpus-per-proc:  %d
+  map-by:          %s
+
+Please specify a mapping level that is no lower than socket, or
+else let us define a default mapping that will allow multiple
+cpus-per-proc.
