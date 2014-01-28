@@ -105,7 +105,7 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
     rmaps_base_mapping_policy = NULL;
     var_id = mca_base_var_register("orte", "rmaps", "base", "mapping_policy",
 #if OPAL_HAVE_HWLOC
-                                   "Mapping Policy [slot (default:np<=2) | hwthread | core | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node | seq | dist], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
+                                   "Mapping Policy [slot | hwthread | core (default:np<=2) | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node | seq | dist], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #else
                                    "Mapping Policy [slot (default) | node], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #endif
