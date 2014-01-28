@@ -17,6 +17,7 @@
 #include "oshmem_config.h"
 #include "oshmem/request/request.h"
 #include "oshmem/mca/spml/spml.h"
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/spml/base/spml_base_request.h"
