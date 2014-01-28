@@ -1426,22 +1426,38 @@ updated to point to the shared libraries in any successive v1.7.x or
 v1.8 release and still work properly (e.g., via the LD_LIBRARY_PATH
 environment variable or other operating system mechanism).
 
-A bug that causes an ABI compatibility issue was discovered after
-1.7.3 was released.  The bug only affects users who configure their
-Fortran compilers to use "large" INTEGERs by default, but still have
-"normal" ints for C (e.g., 8 byte Fortran INTEGERs and 4 byte C ints).
-In this case, the Fortran MPI_STATUS_SIZE value was computed
-incorrectly.
+* A bug that causes an ABI compatibility issue was discovered after
+  v1.7.3 was released.  The bug only affects users who configure their
+  Fortran compilers to use "large" INTEGERs by default, but still have
+  "normal" ints for C (e.g., 8 byte Fortran INTEGERs and 4 byte C
+  ints).  In this case, the Fortran MPI_STATUS_SIZE value was computed
+  incorrectly.
 
-Fixing this issue breakes ABI *only in the sizeof(INTEGER) !=
-sizeof(int) case*.  However, since Open MPI provides ABI guarantees
-for the v1.7/v1.8 series, this bug is only fixed if Open MPI is
-configured with the --enable-abi-breaking-fortran-status-i8-fix flag,
-which, as its name implies, breaks ABI.  For example:
+  Fixing this issue breakes ABI *only in the sizeof(INTEGER) !=
+  sizeof(int) case*.  However, since Open MPI provides ABI guarantees
+  for the v1.7/v1.8 series, this bug is only fixed if Open MPI is
+  configured with the --enable-abi-breaking-fortran-status-i8-fix
+  flag, which, as its name implies, breaks ABI.  For example:
 
-   shell$ ./configure --enable-abi-breaking-fortran-status-i8-fix \
-            CC=icc F77=ifort FC=ifort CXX=icpc \
-            FFLAGS=i8 FCFLAGS=-i8 ...
+    shell$ ./configure --enable-abi-breaking-fortran-status-i8-fix \
+             CC=icc F77=ifort FC=ifort CXX=icpc \
+             FFLAGS=i8 FCFLAGS=-i8 ...
+
+* A second bug was discovered after v1.7.3 was released that causes
+  ABI to be broken for gfortran users who are using the "mpi" Fortran
+  module.  In short, for versions of gfortran that do not support
+  "ignore TKR" functionality (i.e., gfortran <=v4.8), Open MPI was
+  providing interfaces for MPI subroutines with choice buffers (e.g.,
+  MPI_Send) in the Fortran mpi module.  The MPI-3.0 specification
+  expressly states not to do this.  To be consistent with MPI-3, Open
+  MPI v1.7.4 therefore removed all MPI interfaces with choice buffers
+  from the no-ignore-TKR version of the Fortran mpi module, even
+  though this breaks ABI between v1.7.3 and v1.7.4.  Affected users
+  should be able to recompile their MPI applications with v1.7.4 with
+  no changes.
+
+  Other Fortran compilers that provide "ignore TKR" functionality are
+  not affected by this change.
 
 Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
