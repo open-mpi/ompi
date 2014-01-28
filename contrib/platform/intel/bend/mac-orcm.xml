@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- orcm configuration file. -->
+
+<!-- CRITICAL NOTE: A node can only appear ONCE in orcm-group  -->
+
+<configuration>
+
+<orcm-aggregators>
+  <nodes>
+    <value>localhost</value>
+  </nodes>
+  <port>
+    <value>55805</value>
+  </port>
+  <mca-params>
+    <value>sensor_base_sample_rate=5,db_print=+</value>
+  </mca-params>
+</orcm-aggregators>
+
+</configuration>

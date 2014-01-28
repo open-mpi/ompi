@@ -1,5 +1,6 @@
+enable_orcm=no
 enable_oshmem=no
-enable_sensors=yes
+enable_sensors=no
 enable_mpi_thread_multiple=yes
 enable_mem_debug=yes
 enable_mem_profile=no

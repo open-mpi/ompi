@@ -1,3 +1,4 @@
+enable_mpi=no
 enable_oshmem=no
 enable_sensors=yes
 enable_orterun_prefix_by_default=yes
@@ -27,6 +28,12 @@ with_tm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
+with_sqlite3=no
+with_sigar=yes
+with_coretemp=yes
+with_freq=yes
+with_pwr=yes
+with_postgres=yes
 if [ -n "$SLURMHOME" ] ; then
     with_slurm=$SLURMHOME
     with_pmi=$SLURMHOME
