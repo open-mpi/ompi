@@ -364,6 +364,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
                                orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
                 return ORTE_ERR_SILENT;
         }
+#if OPAL_HAVE_HWLOC
         /* if we were asked for multiple cpus/proc, then we have to
          * bind to those cpus - any other binding policy is an
          * error
@@ -390,6 +391,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
                 return ORTE_ERR_SILENT;
             }
         }
+#endif
     }
 
     /* Should we schedule on the local node or not? */
