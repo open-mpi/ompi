@@ -177,8 +177,8 @@ Compiler Notes
     pgi-13: 13.10 known GOOD
 
 - Similarly, there is a known Fortran PGI compiler issue with long
-  source directories that was resolved in 9.0-4 (9.0-3 is known to be
-  broken in this regard).
+  source directory path names that was resolved in 9.0-4 (9.0-3 is
+  known to be broken in this regard).
 
 - On NetBSD-6 (at least AMD64 and i386), and possibly on OpenBSD,
   libtool misidentifies properties of f95/g95, leading to obscure
@@ -313,7 +313,7 @@ Compiler Notes
   FC=xlf90, because xlf will automatically determine the difference
   between free form and fixed Fortran source code.
 
-  However, many Fortran compiler allow specifying additional
+  However, many Fortran compilers allow specifying additional
   command-line arguments to indicate which Fortran dialect to use.
   For example, if FC=xlf90, you may need to use "mpifort --qfixed ..."
   to compile fixed format Fortran source files.
@@ -356,6 +356,27 @@ Compiler Notes
 
   The following notes apply to the above-listed Fortran bindings:
 
+  - All Fortran compilers support the mpif.h/shmem.fh-based bindings.
+
+  - The level of support provided by the mpi module is based on your
+    Fortran compiler.
+
+    If Open MPI is built with a non-GNU Fortran compiler, or if Open
+    MPI is built with the GNU Fortran compiler >= v4.9, all MPI
+    subroutines will be prototyped in the mpi module.  All calls to
+    MPI subroutines will therefore have their parameter types checked
+    at compile time.
+
+    If Open MPI is built with an old gfortran (i.e., < v4.9), a
+    limited "mpi" module will be built.  Due to the limitations of
+    these compilers, and per guidance from the MPI-3 specification,
+    all MPI subroutines with "choice" buffers are specifically *not*
+    included in the "mpi" module, and their parameters will not be
+    checked at compile time.  Specifically, all MPI subroutines with
+    no "choice" buffers are prototyped and will receive strong
+    parameter type checking at run-time (e.g., MPI_INIT,
+    MPI_COMM_RANK, etc.).
+
   - The mpi_f08 module is new and has been tested with the Intel
     Fortran compiler.  Other modern Fortran compilers may also work
     (but are, as yet, only lightly tested).  It is expected that this
@@ -363,38 +384,17 @@ Compiler Notes
 
     There is a bug in Open MPI's mpi_f08 module that will (correctly)
     cause a compile failure when Open MPI is built with a
-    strict-adherence Fortran compiler.  As of this writing, such
-    compilers include the (as-yet-unreleased) GNU Fortran compiler
-    v4.9 and the Pathscale EKOPath 5.0 compiler (although Pathscale
-    has committed to releasing version 5.1 that works around Open
-    MPI's bug -- kudos!).  A future version of Open MPI will fix this
-    bug.  See https://svn.open-mpi.org/trac/ompi/ticket/4157 for more
-    details.
+    strict-adherence Fortran compiler.  As of this writing (January
+    2014), such compilers include the (as-yet-unreleased) GNU Fortran
+    compiler v4.9 and the Pathscale EKOPath 5.0 compiler (although
+    Pathscale has committed to releasing version 5.1 that works around
+    Open MPI's bug -- kudos!).  A future version of Open MPI will fix
+    this bug.  See https://svn.open-mpi.org/trac/ompi/ticket/4157 for
+    more details.
 
-    The GNU Fortran compiler (gfortran) version < v4.9 is *not*
-    supported with the mpi_f08 module.  Per the previous paragraph, it
-    is likely that a future release of Open MPI will provide an
-    mpi_f08 module that will be compatible with gfortran >= v4.9.
-
-  - All Fortran compilers support the mpif.h/shmem.fh-based bindings.
-
-  - If Open MPI is built with a non-gfortran compiler or with gfortran
-    >=v4.9, all MPI subroutines will be prototyped in the mpi module,
-    meaning that all calls to MPI subroutines will have their parameter
-    types checked at compile time.
-
-  - If Open MPI is built with gfortran <v4.9, it will compile a
-    limited "mpi" module -- not all MPI subroutines will be prototyped
-    due to both poor design of the mpi module in the MPI-2
-    specification and a lack of features in older versions of
-    gfortran.
-
-    Specifically, all MPI subroutines with no "choice" buffers are
-    prototyped and will receive strong parameter type checking at
-    run-time (e.g., MPI_INIT, MPI_COMM_RANK, etc.).  Per guidance from
-    the MPI-3 specification, all MPI subroutines with "choice" buffers
-    are specifically *not* included in the "mpi" module, and their
-    parameters will not be checked at compile time.
+    Many older Fortran compilers do not provide enough modern Fortran
+    features to support the mpi_f08 module.  For example, gfortran <
+    v4.9 does provide enough support for the mpi_f08 module.
 
 
 General Run-Time Support Notes
@@ -431,7 +431,9 @@ General Run-Time Support Notes
 MPI Functionality and Features
 ------------------------------
 
-- All MPI-2.2 and most MPI-3 functionality is supported.
+- All MPI-2.2 and nearly all MPI-3 functionality is supported.  The
+  only MPI-3 functionality that is missing is the new MPI-3 remote
+  memory access (aka "one-sided") functionality.
 
 - When using MPI deprecated functions, some compilers will emit
   warnings.  For example:
@@ -461,6 +463,8 @@ MPI Functionality and Features
   above devices may *work*, but the latency is likely to be fairly
   high.  Specifically, efforts so far have concentrated on
   *correctness*, not *performance* (yet).
+
+  YMMV.
 
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
   portable C datatype can be found that matches the Fortran type
@@ -520,7 +524,6 @@ MPI Collectives
 - The "fca" coll component: the Mellanox Fabric Collective Accelerator
   (FCA) is a solution for offloading collective operations from the
   MPI process onto Mellanox QDR InfiniBand switch CPUs and HCAs.
-
 
 - The "ML" coll component is an implementation of MPI collective 
   operations that takes advantage of communication hierarchies 
@@ -588,13 +591,10 @@ Network Support
 
     - OpenFabrics: InfiniBand, iWARP, and RoCE
     - Loopback (send-to-self)
-    - Myrinet MX and Open-MX
-    - Portals4
     - Shared memory
     - TCP
     - Intel Phi SCIF
     - SMCUDA
-    - SCTP
     - Cisco usNIC
     - uGNI (Cray Gemini, Ares)
     - vader (XPMEM)
@@ -617,9 +617,9 @@ Network Support
       or
       shell$ mpirun --mca pml cm ...
 
-- Similarly, there are two OSHMEM network models available: "yoda", and "ikrit". "yoda"
-  also uses the BTL components for many supported network. "ikrit" interfaces directly with 
-  Mellanox MXM.
+- Similarly, there are two OSHMEM network models available: "yoda",
+  and "ikrit". "yoda" also uses the BTL components for many supported
+  network. "ikrit" interfaces directly with Mellanox MXM.
 
   - "yoda" supports a variety of networks that can be used:
     
@@ -630,9 +630,9 @@ Network Support
 
   - "ikrit" only supports Mellanox MXM. 
  
-- MXM is the Mellanox Messaging Accelerator library utilizing a full range of IB
-  transports to provide the following messaging services to the upper
-  level MPI/OSHMEM libraries:
+- MXM is the Mellanox Messaging Accelerator library utilizing a full
+  range of IB transports to provide the following messaging services
+  to the upper level MPI/OSHMEM libraries:
 
   - Usage of all available IB transports 
   - Native RDMA support
@@ -677,38 +677,9 @@ Network Support
   v2.6.15 with libibverbs v1.1 or later (first released as part of
   OFED v1.2), per restrictions imposed by the OFED network stack.
 
-- Myrinet MX (and Open-MX) support is shared between the 2 internal
-  devices, the MTL and the BTL.  The design of the BTL interface in
-  Open MPI assumes that only naive one-sided communication
-  capabilities are provided by the low level communication layers.
-  However, modern communication layers such as Myrinet MX, InfiniPath
-  PSM, or Portals4, natively implement highly-optimized two-sided
-  communication semantics.  To leverage these capabilities, Open MPI
-  provides the "cm" PML and corresponding MTL components to transfer
-  messages rather than bytes.  The MTL interface implements a shorter
-  code path and lets the low-level network library decide which
-  protocol to use (depending on issues such as message length,
-  internal resources and other parameters specific to the underlying
-  interconnect).  However, Open MPI cannot currently use multiple MTL
-  modules at once.  In the case of the MX MTL, process loopback and
-  on-node shared memory communications are provided by the MX library.
-  Moreover, the current MX MTL does not support message pipelining
-  resulting in lower performances in case of non-contiguous
-  data-types.
-
-  The "ob1" PML and BTL components use Open MPI's internal
-  on-node shared memory and process loopback devices for high
-  performance.  The BTL interface allows multiple devices to be used
-  simultaneously.  For the MX BTL it is recommended that the first
-  segment (which is as a threshold between the eager and the
-  rendezvous protocol) should always be at most 4KB, but there is no
-  further restriction on the size of subsequent fragments.
-
-  The MX MTL is recommended in the common case for best performance on
-  10G hardware when most of the data transfers cover contiguous memory
-  layouts.  The MX BTL is recommended in all other cases, such as when
-  using multiple interconnects at the same time (including TCP), or
-  transferring non contiguous data-types.
+- The Myrinet MX BTL has been removed; MX support is now only
+  available through the MX MTL.  Please use a prior version of Open
+  MPI is you need the MX BTL support.
 
 - Linux "knem" support is used when the "sm" (shared memory) BTL is
   compiled with knem support (see the --with-knem configure option)
@@ -766,7 +737,17 @@ shell$ make all install
 ---------------------------------------------------------------------------
 
 There are many available configure options (see "./configure --help"
-for a full list); a summary of the more commonly used ones follows:
+for a full list); a summary of the more commonly used ones is included
+below.
+
+Note that for many of Open MPI's --with-<foo> options, Open MPI will,
+by default, search for header files and/or libraries for <foo>.  If
+the relevant files are found, Open MPI will built support for <foo>;
+if they are not found, Open MPI will skip building support for <foo>.
+However, if you specify --with-<foo> on the configure command line and
+Open MPI is unable to find relevant support for <foo>, configure will
+assume that it was unable to provide a feature that was specifically
+requested and will abort so that a human can resolve out the issue.
 
 INSTALLATION OPTIONS
 
@@ -832,8 +813,8 @@ INSTALLATION OPTIONS
 
 --enable-dlopen
   Build all of Open MPI's components as standalone Dynamic Shared
-  Objects (DSO's) that are loaded at run-time.  The opposite of this
-  option, --disable-dlopen, causes two things: 
+  Objects (DSO's) that are loaded at run-time (this is the default).
+  The opposite of this option, --disable-dlopen, causes two things:
 
   1. All of Open MPI's components will be built as part of Open MPI's
      normal libraries (e.g., libmpi).  
@@ -929,7 +910,7 @@ NETWORKING SUPPORT / OPTIONS
   available on other platforms (e.g., there is a Portals4 library
   implemented over regular TCP).
 
---with-portals4-libdir=<libdir>
+--with-portals4-libdir=<directory>
   Location of libraries to link with for Portals4 support.
 
 --with-portals4-max-md-size=SIZE
@@ -979,10 +960,10 @@ RUN-TIME SYSTEM SUPPORT
   this option.
 
 --enable-sensors
-  Enable internal sensors (default: disabled)
+  Enable internal sensors (default: disabled).
 
 --enable-orte-static-ports
-   Enable orte static ports for tcp oob. (default: enabled)
+   Enable orte static ports for tcp oob (default: enabled).
 
 --with-alps
   Force the building of for the Cray Alps run-time environment.  If
@@ -1016,17 +997,16 @@ RUN-TIME SYSTEM SUPPORT
   most cases.  This option is only needed for special configurations.
 
 --with-pmi
-  Build PMI support (by default, it is not built).  If PMI support
-  cannot be found, configure will abort. If the pmi2.h header is found 
-  in addition to pmi.h, then support for PMI2 will be built. 
+  Build PMI support (by default, it is not built).  If the pmi2.h
+  header is found in addition to pmi.h, then support for PMI2 will be
+  built.
 
 --with-slurm
-  Force the building of SLURM scheduler support.  If SLURM support
-  cannot be found, configure will abort.
+  Force the building of SLURM scheduler support.
 
 --with-sge
   Specify to build support for the Oracle Grid Engine (OGE) resource
-  manager and/or the open Grid Engine.  OGE support is disabled by
+  manager and/or the Open Grid Engine.  OGE support is disabled by
   default; this option must be specified to build OMPI's OGE support.
 
   The Oracle Grid Engine (OGE) and open Grid Engine packages are
@@ -1074,36 +1054,29 @@ MISCELLANEOUS SUPPORT LIBRARIES
   which covers most cases.  This option is only needed for special
   configurations.
 
---with-esmtp=<directory>
-  Specify the directory where the libESMTP libraries and header files are
-  located.  This option is generally only necessary of the libESMTP
-  headers and libraries are not included in the default
-  compiler/linker search paths.
+--with-libevent(=value)
+  This option specifies where to find the libevent support headers and
+  library.  The following VALUEs are permitted:
 
-  libESMTP is a support library for sending e-mail.
+    internal:    Use Open MPI's internal copy of libevent.
+    external:    Use an external libevent installation (rely on default
+                 compiler and linker paths to find it)
+    <no value>:  Same as "internal".
+    <directory>: Specify the location of a specific libevent
+                 installation to use
 
---with-ftb=<directory>
-  Specify the directory where the Fault Tolerant Backplane (FTB)
-  libraries and header files are located.  This option is generally
-  only necessary if the BLCR headers and libraries are not in default
-  compiler/linker search paths.
-
---with-ftb-libdir=<directory>
-  Look in directory for the FTB libraries.  By default, Open MPI will
-  look in <ftb directory>/lib and <ftb directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
-
---with-libevent=<location>
-  Specify location of libevent to use with Open MPI.  If <location> is
-  "internal", Open MPI's internal copy of libevent is used.  If
-  <location> is "external", Open MPI will search in default locations
-  for an libevent installation.  Finally, if <location> is a
-  directory, that directory will be searched for a valid libevent
-  installation, just like other --with-FOO=<directory> configure
-  options.
+  By default (or if --with-libevent is specified with no VALUE), Open
+  MPI will build and use the copy of libeveny that it has in its
+  source tree.  However, if the VALUE is "external", Open MPI will
+  look for the relevant libevent header file and library in default
+  compiler / linker locations.  Or, VALUE can be a directory tree
+  where the libevent header file and library can be found.  This
+  option allows operating systems to include Open MPI and use their
+  default libevent installation instead of Open MPI's bundled libevent.
 
   libevent is a support library that provides event-based processing,
-  timers, and signal handlers.  Open MPI requires libevent to build.
+  timers, and signal handlers.  Open MPI requires libevent to build;
+  passing --without-libevent will cause configure to abort.
 
 --with-libevent-libdir=<directory>
   Look in directory for the libevent libraries.  This option is only
@@ -1111,13 +1084,26 @@ MISCELLANEOUS SUPPORT LIBRARIES
   installation.  Just like other --with-FOO-libdir configure options,
   this option is only needed for special configurations.
 
---with-hwloc=<location>
-  Build hwloc support.  If <location> is "internal", Open MPI's
-  internal copy of hwloc is used.  If <location> is "external", Open
-  MPI will search in default locations for an hwloc installation.
-  Finally, if <location> is a directory, that directory will be
-  searched for a valid hwloc installation, just like other
-  --with-FOO=<directory> configure options.
+--with-hwloc(=value)
+  Build hwloc support (default: enabled).  This option specifies where
+  to find the hwloc support headers and library.  The following values
+  are permitted:
+
+    internal:    Use Open MPI's internal copy of hwloc.
+    external:    Use an external hwloc installation (rely on default
+                 compiler and linker paths to find it)
+    <no value>:  Same as "internal".
+    <directory>: Specify the location of a specific hwloc
+                 installation to use
+
+  By default (or if --with-hwloc is specified with no VALUE), Open MPI
+  will build and use the copy of hwloc that it has in its source tree.
+  However, if the VALUE is "external", Open MPI will look for the
+  relevant hwloc header files and library in default compiler / linker
+  locations.  Or, VALUE can be a directory tree where the hwloc header
+  file and library can be found.  This option allows operating systems
+  to include Open MPI and use their default hwloc installation instead
+  of Open MPI's bundled hwloc.
 
   hwloc is a support library that provides processor and memory
   affinity information for NUMA platforms.
@@ -1147,9 +1133,9 @@ MISCELLANEOUS SUPPORT LIBRARIES
   hwloc can discover PCI devices and locality, which can be useful for
   Open MPI in assigning message passing resources to MPI processes.
 
---with-libltdl[=VALUE]
+--with-libltdl(=value)
   This option specifies where to find the GNU Libtool libltdl support
-  library.  The following VALUEs are permitted:
+  library.  The following values are permitted:
 
     internal:    Use Open MPI's internal copy of libltdl.
     external:    Use an external libltdl installation (rely on default
@@ -1173,32 +1159,33 @@ MISCELLANEOUS SUPPORT LIBRARIES
   Disable building the simple "libompitrace" library (see note above
   about libompitrace)
 
---with-valgrind=<directory>
+--with-valgrind(=<directory>)
   Directory where the valgrind software is installed.  If Open MPI
-  finds Valgrind's header files, it will include support for
-  Valgrind's memory-checking debugger.  
+  finds Valgrind's header files, it will include additional support
+  for Valgrind's memory-checking debugger.
 
   Specifically, it will eliminate a lot of false positives from
-  running Valgrind on MPI applications.
+  running Valgrind on MPI applications.  There is a minor performance
+  penalty for enabling this option.
 
 --disable-vt
-  Disable building VampirTrace.
+  Disable building the VampirTrace that is bundled with Open MPI.
 
 MPI FUNCTIONALITY
 
 --with-mpi-param-check(=value)
-  "value" can be one of: always, never, runtime.  If --with-mpi-param
-  is not specified, "runtime" is the default.  If --with-mpi-param
-  is specified with no value, "always" is used.  Using
-  --without-mpi-param-check is equivalent to "never".
+  Whether or not to check MPI function parameters for errors at
+  runtime.  The following values are permitted:
 
-  - always: the parameters of MPI functions are always checked for
-    errors 
-  - never: the parameters of MPI functions are never checked for
-    errors 
-  - runtime: whether the parameters of MPI functions are checked
-    depends on the value of the MCA parameter mpi_param_check
-    (default: yes).
+    always:  MPI function parameters are always checked for errors 
+    never:   MPI function parameters are never checked for errors 
+    runtime: Whether MPI function parameters are checked depends on
+             the value of the MCA parameter mpi_param_check (default:
+             yes).
+    yes:     Synonym for "always" (same as --with-mpi-param-check).
+    no:      Synonym for "none" (same as --without-mpi-param-check).
+
+  If --with-mpi-param is not specified, "runtime" is the default.
 
 --with-threads=value
   Since thread support is only partially tested, it is disabled by
@@ -1216,13 +1203,10 @@ MPI FUNCTIONALITY
   This is currently disabled by default.
 
 --enable-mpi-cxx
-  Enable building the C++ MPI bindings.  The MPI C++ bindings were
-  deprecated in MPI-2.2 and deleted in MPI-3.0.  Open MPI no longer
-  builds its C++ bindings by default.  It is likely that the C++
-  bindings will be removed from Open MPI at some point in the future.
+  Enable building the C++ MPI bindings (default: disabled).
 
-  Note that disabling building the C++ bindings does *not* disable all
-  C++ checks during configure.
+  The MPI C++ bindings were deprecated in MPI-2.2, and removed from
+  the MPI standard in MPI-3.0.
 
 --enable-mpi-java
   Enable building of an EXPERIMENTAL Java MPI interface (disabled by
@@ -1235,22 +1219,23 @@ MPI FUNCTIONALITY
   developers would very much like to hear your feedback about this
   interface.  See README.JAVA.txt for more details.
 
---enable-mpi-fortran[=BINDING]
+--enable-mpi-fortran(=value)
   By default, Open MPI will attempt to build all 3 Fortran bindings:
   mpif.h, the "mpi" module, and the "mpi_f08" module.  The following
-  options are available to modify this behavior:
+  values are permitted:
 
-  * With no value for BINDING (i.e., just "--enable-mpi-fortran"):
-    synonym for BINDING=all
-  * BINDING=all or yes: attempt to build all 3 Fortran bindings; skip
-    any binding that cannot be built
-  * BINDING=mpifh: build mpif.h support
-  * BINDING=usempi: build mpif.h and "mpi" module support
-  * BINDING=usempif08: build mpif.h, "mpi" module, and "mpi_f08"
-    module support
-  * BINDING=none or no: synonym for --disable-mpi-fortran, which will
-    prevent any of the Fortran bindings from building.  This is
-    mutually exclusive with --enable-oshmem-fortran.
+    all:        Synonym for "yes".
+    yes:        Attempt to build all 3 Fortran bindings; skip
+                any binding that cannot be built (same as
+                --enable-mpi-fortran).
+    mpifh:      Build mpif.h support.
+    usempi:     Build mpif.h and "mpi" module support.
+    usempif08:  Build mpif.h, "mpi" module, and "mpi_f08"
+                module support.
+    none:       Synonym for "no".
+    no:         Do not build any MPI Fortran support (same as
+                --disable-mpi-fortran).  This is mutually exclusive
+                with --enable-oshmem-fortran.
 
 --disable-oshmem-fortran
   Disable building the Fortran OSHMEM bindings.
@@ -1295,6 +1280,8 @@ MPI FUNCTIONALITY
   with different endian representations).  Heterogeneous support is
   disabled by default because it imposes a minor performance penalty.
 
+  *** THIS FUNCTIONALITY IS CURRENTLY BROKEN - DO NOT USE ***
+
 --with-wrapper-cflags=<cflags>
 --with-wrapper-cxxflags=<cxxflags>
 --with-wrapper-fflags=<fflags>
@@ -1305,17 +1292,17 @@ MPI FUNCTIONALITY
   MPI's "wrapper" compilers (e.g., mpicc -- see below for more
   information about Open MPI's wrapper compilers).  By default, Open
   MPI's wrapper compilers use the same compilers used to build Open
-  MPI and specify an absolute minimum set of additional flags that are
-  necessary to compile/link MPI/OSHMEM applications. These configure options
-  give system administrators the ability to embed additional flags in
+  MPI and specify a minimum set of additional flags that are necessary
+  to compile/link MPI applications.  These configure options give
+  system administrators the ability to embed additional flags in
   OMPI's wrapper compilers (which is a local policy decision).  The
   meanings of the different flags are:
 
-  <cflags>: Flags passed by the mpicc wrapper to the C compiler
+  <cflags>:   Flags passed by the mpicc wrapper to the C compiler
   <cxxflags>: Flags passed by the mpic++ wrapper to the C++ compiler
-  <fcflags>: Flags passed by the mpifort wrapper to the Fortran compiler
-  <ldflags>: Flags passed by all the wrappers to the linker
-  <libs>: Flags passed by all the wrappers to the linker
+  <fcflags>:  Flags passed by the mpifort wrapper to the Fortran compiler
+  <ldflags>:  Flags passed by all the wrappers to the linker
+  <libs>:     Flags passed by all the wrappers to the linker
 
   There are other ways to configure Open MPI's wrapper compiler
   behavior; see the Open MPI FAQ for more information.
@@ -1352,7 +1339,7 @@ For example:
     setting different compilers (vs. setting environment variables and
     then invoking "./configure").  The above form will save all
     variables and values in the config.log file, which makes
-    post-mortem analysis easier when problems occur.
+    post-mortem analysis easier if problems occur.
 
 Note that if you intend to compile Open MPI with a "make" other than
 the default one in your PATH, then you must either set the $MAKE
@@ -1580,60 +1567,35 @@ Open MPI provided forward application binary interface (ABI)
 compatibility for MPI applications starting with v1.3.2.  Prior to
 that version, no ABI guarantees were provided.  
 
-NOTE: Prior to v1.3.2, subtle and strange failures are almost
-      guaranteed to occur if applications were compiled and linked
-      against shared libraries from one version of Open MPI and then
-      run with another.  The Open MPI team strongly discourages making
-      any ABI assumptions before v1.3.2.
-
 Starting with v1.3.2, Open MPI provides forward ABI compatibility in
 all versions of a given feature release series and its corresponding
 super stable series.  For example, on a single platform, an MPI
-application linked against Open MPI v1.3.2 shared libraries can be
-updated to point to the shared libraries in any successive v1.3.x or
-v1.4 release and still work properly (e.g., via the LD_LIBRARY_PATH
+application linked against Open MPI v1.7.2 shared libraries can be
+updated to point to the shared libraries in any successive v1.7.x or
+v1.8 release and still work properly (e.g., via the LD_LIBRARY_PATH
 environment variable or other operating system mechanism).
 
-For the v1.7 series, this means that all releases of v1.7.x and v1.8.x
-will be ABI compatible, per the above definition.
+A bug that causes an ABI compatibility issue was discovered after
+1.7.3 was released.  The bug only affects users who configure their
+Fortran compilers to use "large" INTEGERs by default, but still have
+"normal" ints for C (e.g., 8 byte Fortran INTEGERs and 4 byte C ints).
+In this case, the Fortran MPI_STATUS_SIZE value was computed
+incorrectly.
 
-Note that in v1.5.4, a fix was applied to the "large" size of the "use
-mpi" F90 MPI bindings module: two of MPI_SCATTERV's parameters had the
-wrong type and were corrected.  Note that this fix *only* applies if
-Open MPI was configured with a Fortran 90 compiler and the
---with-mpi-f90-size=large configure option.
+Fixing this issue breakes ABI *only in the sizeof(INTEGER) !=
+sizeof(int) case*.  However, since Open MPI provides ABI guarantees
+for the v1.7/v1.8 series, this bug is only fixed if Open MPI is
+configured with the --enable-abi-breaking-fortran-status-i8-fix flag,
+which, as its name implies, breaks ABI.  For example:
 
-However, in order to preserve the ABI with respect to prior v1.5.x
-releases, the old/incorrect MPI_SCATTERV interface was preserved in
-1.5.5 and all 1.6.x releases.  A new/corrected interface was added
-(note that Fortran 90 has function overloading, similar to C++; hence,
-both the old and new interface can be accessed via "call
-MPI_Scatterv(...)").
-
-The incorrect interface was removed in Open MPI v1.7.
-
-To be clear: applications that use the old/incorrect MPI_SCATTERV
-binding will no longer be able to compile properly (*).  Developers
-must fix their applications or use an older version of Open MPI.
-
-(*) Note that using this incorrect MPI_SCATTERV interface will not be
-    recongized in v1.7 if you are using gfortran (as of gfortran
-    v4.8).
-
-    This is because gfortran <=v4.8 does not (yet) have the support
-    Open MPI needs for its new, full-featured "mpi" and "mpi_f08"
-    modules.  Hence, Open MPI falls back to the same "mpi" module from
-    the v1.6 series, but the "large" size of that module -- which
-    contains the MPI_SCATTERV interface -- been disabled because it is
-    broken.  Further, this "large" sized (old) "mpi" module has been
-    deemed unworthy of fixing because it has been wholly replaced by a
-    new, full-featured "mpi" module.  We anticipate supporting
-    gfortran in the new, full-featured module in the future.
+   shell$ ./configure --enable-abi-breaking-fortran-status-i8-fix \
+            CC=icc F77=ifort FC=ifort CXX=icpc \
+            FFLAGS=i8 FCFLAGS=-i8 ...
 
 Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
-(linked against Open MPI v1.3.2 shared libraries) will *not* work with
-Open MPI v1.5 shared libraries.
+(linked against Open MPI v1.7.2 shared libraries) will likely *not*
+work with Open MPI v1.9 shared libraries.
 
 ===========================================================================
 
@@ -1664,12 +1626,15 @@ The following options may be helpful:
             displayed by using an appropriate <framework> and/or
             <component> name.
 --level <level>
-            Show MCA parameters up to level <level> (<level> defaults
-            to 1 if not specified; 9 is the maximum value).  Use
-            "ompi_info --param <framework> <component> --level 9" to
-            see *all* MCA parameters for a given component.  See "The
-            Modular Component Architecture (MCA)" section, below, for
-            a fuller explanation.
+            By default, ompi_info only shows "Level 1" MCA parameters
+            -- parameters that can affect whether MPI processes can
+            run successfully or not (e.g., determining which network
+            interfaces to use).  The --level option will display all
+            MCA parameters from level 1 to <level> (the max <level>
+            value is 9).  Use "ompi_info --param <framework>
+            <component> --level 9" to see *all* MCA parameters for a
+            given component.  See "The Modular Component Architecture
+            (MCA)" section, below, for a fuller explanation.
 
 Changing the values of these parameters is explained in the "The
 Modular Component Architecture (MCA)" section, below.
@@ -1801,10 +1766,10 @@ Customizing the behavior of the wrapper compilers is possible (e.g.,
 changing the compiler [not recommended] or specifying additional
 compiler/linker flags); see the Open MPI FAQ for more information.
 
-Alternatively, starting in the Open MPI v1.5 series, Open MPI also
-installs pkg-config(1) configuration files under $libdir/pkgconfig.
-If pkg-config is configured to find these files, then compiling /
-linking Open MPI programs can be performed like this:
+Alternatively, Open MPI also installs pkg-config(1) configuration
+files under $libdir/pkgconfig.  If pkg-config is configured to find
+these files, then compiling / linking Open MPI programs can be
+performed like this:
 
   shell$ gcc hello_world_mpi.c -o hello_world_mpi -g \
               `pkg-config ompi-c --cflags --libs`
@@ -1950,7 +1915,7 @@ spml      - OSHMEM "pml-like" layer: supports one-sided,
 Back-end run-time environment (RTE) component frameworks:
 ---------------------------------------------------------
 
-dfs       - Distributed filesystem
+dfs       - Distributed file system
 errmgr    - RTE error manager
 ess       - RTE environment-specfic services
 filem     - Remote file management
