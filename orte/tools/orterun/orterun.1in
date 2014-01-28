@@ -576,6 +576,18 @@ Disable the automatic --prefix behavior
 There may be other options listed with \fImpirun --help\fP.
 .
 .
+.SS Environment Variables
+.
+.TP
+.B MPIEXEC_TIMEOUT
+The maximum number of seconds that
+.I mpirun 
+.RI ( mpiexec )
+will run.  After this many seconds, 
+.I mpirun
+will abort the launched job and exit.
+.
+.
 .\" **************************
 .\"    Description Section
 .\" **************************
