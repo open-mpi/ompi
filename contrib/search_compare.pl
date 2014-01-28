@@ -179,6 +179,7 @@ foreach $src (@src_tree) {
                     my $diff = diff $tgt, $src, { STYLE => "Unified" };
                     print MYFILE $diff . "\n";
                 } elsif ($update_arg) {
+                    print "Updating $src to $tgt\n";
                     copy("$src", "$tgt") or die "Copy failed: src=$src tgt=$tgt\n";
                 }
             }
