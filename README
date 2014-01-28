@@ -321,10 +321,20 @@ Compiler Notes
     (but are, as yet, only lightly tested).  It is expected that this
     support will mature over time.
 
-    As of this release, the GNU Fortran compiler (gfortran) is *not*
-    supported with the mpi_f08 module.  It is likely that a future
-    release of Open MPI will provide an mpi_f08 module that will be
-    compatible with gfortran >= v4.9.
+    There is a bug in Open MPI's mpi_f08 module that will (correctly)
+    cause a compile failure when Open MPI is built with a
+    strict-adherence Fortran compiler.  As of this writing, such
+    compilers include the (as-yet-unreleased) GNU Fortran compiler
+    v4.9 and the Pathscale EKOPath 5.0 compiler (although Pathscale
+    has committed to releasing version 5.1 that works around Open
+    MPI's bug -- kudos!).  A future version of Open MPI will fix this
+    bug.  See https://svn.open-mpi.org/trac/ompi/ticket/4157 for more
+    details.
+
+    The GNU Fortran compiler (gfortran) version < v4.9 is *not*
+    supported with the mpi_f08 module.  Per the previous paragraph, it
+    is likely that a future release of Open MPI will provide an
+    mpi_f08 module that will be compatible with gfortran >= v4.9.
 
   - All Fortran compilers support the mpif.h-based bindings.
 
@@ -1047,7 +1057,8 @@ MPI FUNCTIONALITY
 
   * With no value for BINDING (i.e., just "--enable-mpi-fortran"):
     synonym for BINDING=all
-  * BINDING=all or yes: attempt to build all 3 Fortran bindings
+  * BINDING=all or yes: attempt to build all 3 Fortran bindings; skip
+    any binding that cannot be built
   * BINDING=mpifh: build mpif.h support
   * BINDING=usempi: build mpif.h and "mpi" module support
   * BINDING=usempif08: build mpif.h, "mpi" module, and "mpi_f08"

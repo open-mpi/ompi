@@ -465,6 +465,22 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_PROCEDURE=1],
                [OMPI_FORTRAN_HAVE_PROCEDURE=0])])
 
+    # Per https://svn.open-mpi.org/trac/ompi/ticket/4157, temporarily
+    # disqualify the fortran compiler if it exhibits the behavior
+    # described in that ticket.  Short version: OMPI does something
+    # non-Fortran that we don't have time to fix 1.7.4.  So we just
+    # disqualify Fortran compilers who actually enforce this issue,
+    # and we'll fix OMPI to be Fortran-compliant after 1.7.4
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+           test $OMPI_FORTRAN_HAVE_PROCEDURE -eq 1 && \
+           test $OMPI_FORTRAN_HAVE_ABSTRACT -eq 1],
+          [ # Check for ticket 4157
+           OMPI_FORTRAN_CHECK_TICKET_4157(
+               [],
+               [ # If we don't have this, don't build the mpi_f08 module
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
     OMPI_FORTRAN_F08_HANDLE_SIZE=4
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
