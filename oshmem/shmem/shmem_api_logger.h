@@ -12,16 +12,19 @@
  */
 #ifndef SHMEM_API_LOGGER_H
 #define SHMEM_API_LOGGER_H
+
 #include "oshmem_config.h"
 #include "opal/util/output.h"
+
+#include "oshmem/util/oshmem_util.h"
+
 OSHMEM_DECLSPEC extern int shmem_api_logger_output;
+
 #ifdef __BASE_FILE__
 #define __SPML_FILE__ __BASE_FILE__
 #else
 #define __SPML_FILE__ __FILE__
 #endif
-
-void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...);
 
 #ifdef OPAL_ENABLE_DEBUG
 #define SHMEM_API_VERBOSE(level, ...) \

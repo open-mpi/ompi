@@ -124,26 +124,3 @@ int oshmem_shmem_abort(int errcode)
     return OSHMEM_SUCCESS;
 }
 
-void oshmem_output_verbose(int level, int output_id, const char* prefix, const char* file, int line, const char* function, const char* format, ...)
-{
-    va_list args;
-    char *buff, *str;
-    int ret = 0;
-
-    UNREFERENCED_PARAMETER(ret);
-
-    va_start(args, format);
-
-    ret = vasprintf(&str, format, args);
-    assert(-1 != ret);
-
-    ret = asprintf(&buff, "%s %s", prefix, str);
-    assert(-1 != ret);
-
-    opal_output_verbose(level, output_id, buff, file, line, function);
-
-    va_end(args);
-
-    free(buff);
-    free(str);
-}

@@ -15,6 +15,7 @@
 
 #include "opal/mca/mca.h"
 #include "oshmem/mca/atomic/atomic.h"
+#include "oshmem/util/oshmem_util.h"
 
 BEGIN_C_DECLS
 

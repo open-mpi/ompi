@@ -15,6 +15,7 @@
 #include "shmem.h"
 #include "opal/mca/mca.h"
 #include "oshmem/mca/scoll/scoll.h"
+#include "oshmem/util/oshmem_util.h"
 #include "scoll_fca_api.h"
 #include "scoll_fca_debug.h"
 

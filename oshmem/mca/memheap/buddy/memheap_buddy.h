@@ -21,6 +21,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"
+#include "oshmem/util/oshmem_util.h"
 #include "opal/class/opal_hash_table.h"
 #include "ompi/mca/btl/btl.h"
 #include <string.h>

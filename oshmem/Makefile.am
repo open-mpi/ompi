@@ -78,6 +78,7 @@ include request/Makefile.am
 include runtime/Makefile.am
 include shmem/Makefile.am
 include tools/Makefile.am
+include util/Makefile.am
 
 # Ensure that the man page directory exists before we try to make man
 # page files (because oshmem/shmem/man/man3 has no config.status-generated
