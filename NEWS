@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -76,6 +76,99 @@ included in the vX.Y.Z section and be denoted as:
  * in particular may want to override at least the binding default
  * to allow threads to use multiple cores.
  **********************************************************************
+- Various bug fixes for the mpi_f08 Fortran bindings.
+
+- Fix ROMIO compile error with Lustre 2.4.  Thanks to Adam Moody for
+  reporting the issue. 
+- Various fixes for 32 bit platforms.
+- Add ability to selectively disable building the mpi or mpi_f08
+  module.  See the README file for details.
+- Fix MX MTL finalization issue.
+- Fix ROMIO issue when opening a file with MPI_MODE_EXCL.
+- Fix PowerPC and MIPS assembly issues.
+- Various fixes to the hcoll and FCA collective offload modules.
+- Prevent integer when creating datatypes.  Thanks to original patch from
+  Gilles Gouaillardet.
+- Port some upstream hwloc fixes to Open MPI's embedded copy for
+  working around buggy NUMA node cpusets and including mising header
+  files.  Thanks to Jeff Becker and Paul Hargrove for reporting the
+  issues.
+- Fix recursive invocation issues in the MXM MTL.
+- Various bug fixes to the new MCA parameter back-end system.
+- Have the posix fbtl module link against -laio on NetBSD platforms.
+  Thanks to Paul Hargrove for noticing the issue.
+- Various updates and fixes to network filesystem detection to support
+  more operating systems.
+- Add gfortran v4.9 "ignore TKR" syntax to the mpi Fortran module.
+- Various compiler fixes for several BSD-based platforms.  Thanks to
+  Paul Hargrove for reporting the issues.
+- Fix when MPI_COMM_SPAWN[_MULTIPLE] is used on oversubscribed
+  systems.
+- Change the output from --report bindings to simply state that a
+  process is not bound, instead of reporting that it is bound to all
+  processors.
+- Per MPI-3.0 guidance, remove support for all MPI subroutines with
+  choice buffers from the TKR-based mpi Fortran module.  Thanks to Jed
+  Brown for raising the issue.
+- Only allow the usnic BTL to build on 64 bit platforms.
+- Various bug fixes to SLURM support, to include ensuring proper
+  exiting on abnormal termination.
+- Ensure that MPI_COMM_SPAWN[_MULTIPLE] jobs get the same mapping
+  directives that were used with mpirun.
+- Fixed the application of TCP_NODELAY.
+- Change the TCP BTL to not warn if a non-existent interface is
+  ignored.
+- Restored the "--bycore" mpirun option for backwards compatibility.
+- Fixed debugger attach functionality.  Thanks to Ashley Pittman for
+  reporting the issue and suggesting the fix.
+- Fixed faulty MPI_IBCAST when invoked on a communicator with only
+  one process.
+- Add new Mellanox device IDs to the openib BTL.
+- Progress towards cleaning up various internal memory leaks as
+  reported by Valgrind.
+- Fixed some annoying flex-generated warnings that have been there for
+  years.  Thanks to Tom Fogal for the initial patch.
+- Support user-provided environment variables via the "env" info key
+  to MPI_COMM_SPAWN[_MULTIPLE].  Thanks to Tom Fogal for the feature
+  request.
+- Fix uninitialized variable in MPI_DIST_GRAPH_CREATE.
+- Fix a variety of memory errors on SPARC platforms.  Thanks to
+  Siegmar Gross for reporting and testing all the issues.
+- Remove Solaris threads support.  When building on Solaris, pthreads
+  will be used.
+- Correctly handle the convertor internal stack for persistent
+  receives.  Thanks to Guillaume Gouaillardet for identifying the
+  problem.
+- Add support for using an external libevent via --with-libevent.  See
+  the README for more details.
+- Various OMPIO updates and fixes.
+- Add support for the MPIEXEC_TIMEOUT environment variable.  If set,
+  mpirun will terminate the job after this many seconds.
+- Update the internal copy of ROMIO to that which shipped in MPICH
+  3.0.4.
+- Various performance tweaks and improvements in the usnic BTL,
+  including now reporting MPI_T performance variables for each usnic
+  device.
+- Fix to not access send datatypes for non-root processes with
+  MPI_ISCATTER[V] and MPI_IGATHER[V].  Thanks to Pierre Jolivet for
+  supplying the initial patch.
+- Update VampirTrace to 5.14.4.9.
+- Fix ptmalloc2 hook disable when used with ummunotify.
+- Change the default connection manager for the openib BTL to be based
+  on UD verbs data exchanges instead of ORTE OOB data exchanges.
+- Fix Fortran compile error when compiling with 8-byte INTEGERs and
+  4-byte ints.
+- Fix C++11 issue identified by Jeremiah Willcock.
+- Many changes, updates, and bug fixes to the ORTE run-time layer.
+- Correctly handle MPI_REDUCE_SCATTER with recvcounts of 0.
+- Update man pages for MPI-3, and add some missing man pages for
+  MPI-2.x functions.
+- Updated mpi_f08 module in accordance with post-MPI-3.0 errata which
+  basically removed BIND(C) from all interfaces.
+- Fixed MPI_IN_PLACE detection for MPI_SCATTER[V] in Fortran
+  routines.  Thanks to Charles Gerlach for identifying the issue.
+- Added support for routable RoCE to the openib BTL.
+- Update embedded hwloc to v1.7.2.
 - ErrMgr framework redesigned to better support fault tolerance development
   activities. See the following RFC for details:
   http://www.open-mpi.org/community/lists/devel/2010/03/7589.php
@@ -90,7 +183,8 @@ included in the vX.Y.Z section and be denoted as:
   transmits files across the daemon network
 - Native Windows support has been removed. A cygwin package is
   available from that group for Windows-based use.
-- Added MPI Java bindings
+- Added new MPI Java bindings.  See the Javadocs for more details on
+  the API.
 - Wrapper compilers now add rpath support by default to generated
   executables on systems that support it.  This behavior can be
   disabled via --disable-wrapper-rpath.  See note in README about ABI
@@ -102,7 +196,7 @@ included in the vX.Y.Z section and be denoted as:
   only enabled if Open MPI is configured with
   --enable-abi-breaking-fortran-status-i8-fix.  Thanks to Jim Parker
   for supplying the initial patch.
-- Add support for Intel Phi SCIF transport
+- Add support for Intel Phi SCIF transport.
 - For CUDA-aware MPI configured with CUDA 6.0, use new pointer
   attribute to avoid extra synchronization in stream 0 when using
   CUDA IPC between GPUs on the same node.
