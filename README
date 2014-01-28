@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -58,7 +58,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (22 February 2012):
+base as of this writing (January 2014):
 
 General notes
 -------------
@@ -793,7 +793,6 @@ INSTALLATION OPTIONS
   it may have some effect on --enable-static.
 
 --disable-wrapper-rpath
-
   By default, the wrapper compilers (e.g., mpicc) will enable "rpath"
   support in generated executables on systems that support it.  That
   is, they will include a file reference to the location of Open MPI's
@@ -1093,6 +1092,24 @@ MISCELLANEOUS SUPPORT LIBRARIES
   Look in directory for the FTB libraries.  By default, Open MPI will
   look in <ftb directory>/lib and <ftb directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
+
+--with-libevent=<location>
+  Specify location of libevent to use with Open MPI.  If <location> is
+  "internal", Open MPI's internal copy of libevent is used.  If
+  <location> is "external", Open MPI will search in default locations
+  for an libevent installation.  Finally, if <location> is a
+  directory, that directory will be searched for a valid libevent
+  installation, just like other --with-FOO=<directory> configure
+  options.
+
+  libevent is a support library that provides event-based processing,
+  timers, and signal handlers.  Open MPI requires libevent to build.
+
+--with-libevent-libdir=<directory>
+  Look in directory for the libevent libraries.  This option is only
+  usable when building Open MPI against an external libevent
+  installation.  Just like other --with-FOO-libdir configure options,
+  this option is only needed for special configurations.
 
 --with-hwloc=<location>
   Build hwloc support.  If <location> is "internal", Open MPI's
