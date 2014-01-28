@@ -26,7 +26,7 @@ greek=rc2
 # If want_repo_rev=1, then the repo revision number will be included
 # in the overall Open MPI version number in some form.
 
-want_repo_rev=0
+want_repo_rev=1
 
 # If repo_rev=-1, then the repository version number will be obtained
 # dynamically at run time, either: 
