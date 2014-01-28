@@ -1070,10 +1070,7 @@ MPI FUNCTIONALITY
   This is currently disabled by default.
 
 --enable-mpi-cxx
-  Enable building the C++ MPI bindings (default: disabled).  Note that
-  this does *not* disable the C++ checks during configure; some of
-  Open MPI's tools are written in C++ and therefore require a C++
-  compiler to be built.
+  Enable building the C++ MPI bindings (default: disabled).
 
   The MPI C++ bindings were deprecated in MPI-2.2, and removed from
   the MPI standard in MPI-3.0.
