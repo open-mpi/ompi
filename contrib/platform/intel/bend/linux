@@ -1,5 +1,6 @@
+enable_orcm=no
 enable_oshmem=no
-enable_sensors=yes
+enable_sensors=no
 enable_orterun_prefix_by_default=yes
 enable_mpi_thread_multiple=no
 enable_mem_debug=no
@@ -26,8 +27,6 @@ with_tm=no
 with_devel_headers=yes
 with_portals=no
 with_valgrind=no
-with_coretemp=yes
-with_sigar=yes
 if [ -n "$SLURMHOME" ] ; then
     with_slurm=$SLURMHOME
     with_pmi=$SLURMHOME
