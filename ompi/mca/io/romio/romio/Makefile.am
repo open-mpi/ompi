@@ -64,7 +64,8 @@ AM_CPPFLAGS += $(MPI_H_INCLUDE)
 # handle the "include" directory here
 AM_CPPFLAGS += -I$(top_builddir)/include -I$(top_srcdir)/include
 # nodist_ b/c these are created by config.status and should not be distributed
-nodist_include_HEADERS += include/mpio.h
+# Open MPI: do not install mpio.h
+noinst_HEADERS += include/mpio.h
 noinst_HEADERS += include/io_romio_conv.h
 
 # ------------------------------------------------------------------------
