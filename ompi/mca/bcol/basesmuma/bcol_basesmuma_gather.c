@@ -56,7 +56,6 @@ int bcol_basesmuma_k_nomial_gather_init(bcol_function_args_t *input_args,
                                         coll_ml_function_t *c_input_args)
 {
     /* local variables */
-    int group_size;
     int leading_dim, buff_idx, idx;
     int src, i, j, k_temp1, k_temp2;
     int pseudo_root, proxy_root, pseudo_base_adj;
@@ -122,7 +121,6 @@ int bcol_basesmuma_k_nomial_gather_init(bcol_function_args_t *input_args,
     /* Get addressing information */
     my_rank = bcol_module->super.sbgp_partner_module->my_index;
 
-    group_size = bcol_module->colls_no_user_data.size_of_group;
     leading_dim=bcol_module->colls_no_user_data.size_of_group;
     idx=SM_ARRAY_INDEX(leading_dim,buff_idx,0);
     data_buffs=(volatile mca_bcol_basesmuma_payload_t *)

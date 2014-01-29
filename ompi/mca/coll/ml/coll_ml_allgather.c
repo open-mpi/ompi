@@ -563,7 +563,7 @@ int mca_coll_ml_allgather_start (void *sbuf, int scount,
 
     /* Fill in the function arguments */
     coll_op->variable_fn_params.sequence_num =
-        OPAL_THREAD_ADD64(&(ml_module->collective_sequence_num), 1);
+        OPAL_THREAD_ADD32(&(ml_module->collective_sequence_num), 1);
     coll_op->variable_fn_params.hier_factor = comm_size;
 
     MCA_COLL_ML_SET_ORDER_INFO(coll_op, n_fragments);

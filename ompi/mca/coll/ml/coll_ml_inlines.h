@@ -215,7 +215,7 @@ static inline __opal_attribute_always_inline__ int coll_ml_task_dependency_proce
     for (dep_task = 0; dep_task < n_dependent_tasks; dep_task++)
     {
         int task_index;
-        task_index = task->rt_dependent_task_indecies[dep_task];
+        task_index = task->rt_dependent_task_indices[dep_task];
         my_schedule_instance->dag_description.status_array[task_index].n_dep_satisfied++;
     }
 

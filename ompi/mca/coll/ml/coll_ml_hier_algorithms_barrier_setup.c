@@ -125,8 +125,8 @@ static int mca_coll_ml_build_barrier_schedule(
         ML_VERBOSE(10, ("func indx %d set to %p", i_fn, comp_fn->bcol_function));
 
         if (comp_fn->num_dependent_tasks > 0) {
-            comp_fn->dependent_task_indecies = (int *) calloc(comp_fn->num_dependent_tasks, sizeof(int));
-            if (OPAL_UNLIKELY(NULL == comp_fn->dependent_task_indecies)) {
+            comp_fn->dependent_task_indices = (int *) calloc(comp_fn->num_dependent_tasks, sizeof(int));
+            if (OPAL_UNLIKELY(NULL == comp_fn->dependent_task_indices)) {
                 ML_ERROR(("Can't allocate memory.\n"));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto Barrier_Setup_Error;
@@ -134,10 +134,10 @@ static int mca_coll_ml_build_barrier_schedule(
 
             /* All indexes follow after this one */
             for (i = 0; i < comp_fn->num_dependent_tasks; ++i) {
-                comp_fn->dependent_task_indecies[i] = i_fn + i + 1;
+                comp_fn->dependent_task_indices[i] = i_fn + i + 1;
             }
         } else {
-                comp_fn->dependent_task_indecies = NULL;
+                comp_fn->dependent_task_indices = NULL;
         }
             
 

@@ -115,7 +115,7 @@ static void mca_coll_ml_zero_dep_bcast(mca_coll_ml_task_status_t *task_status, i
     /* no real dependency, set everything to zero */
     task_status->rt_num_dependencies = 0;
     task_status->rt_num_dependent_tasks = 0;
-    task_status->rt_dependent_task_indecies = NULL;
+    task_status->rt_dependent_task_indices = NULL;
 }
 
 /*
@@ -217,7 +217,7 @@ static int mca_coll_ml_build_bcast_dynamic_schedule_no_attributes(
         strcpy (comp_fn->fn_name, "BCAST_TEST_SMALL_DYNAMIC");
         comp_fn->num_dependent_tasks = 0;
         comp_fn->num_dependencies = 0;
-        comp_fn->dependent_task_indecies = NULL;
+        comp_fn->dependent_task_indices = NULL;
         comp_fn->bcol_function =
             bcol_module->filtered_fns_table[DATA_SRC_UNKNOWN][NON_BLOCKING][BCOL_BCAST][bcol_func_index][0][0];
         comp_fn->task_comp_fn = mca_coll_ml_task_comp_dynamic_root_small_message;
@@ -524,7 +524,7 @@ static void mca_coll_ml_static_bcast_root(mca_coll_ml_task_status_t *task_status
 {
     task_status->rt_num_dependencies = 0;
     task_status->rt_num_dependent_tasks = 0;
-    task_status->rt_dependent_task_indecies = 0;
+    task_status->rt_dependent_task_indices = 0;
 }
 
 static void mca_coll_ml_static_bcast_non_root(mca_coll_ml_task_status_t *task_status, int index,
@@ -535,13 +535,13 @@ static void mca_coll_ml_static_bcast_non_root(mca_coll_ml_task_status_t *task_st
     if (task_status->ml_coll_operation->variable_fn_params.root_route->level == index) {
         task_status->rt_num_dependencies = 0;
         task_status->rt_num_dependent_tasks = func->num_dependent_tasks;
-        task_status->rt_dependent_task_indecies = func->dependent_task_indecies;
+        task_status->rt_dependent_task_indices = func->dependent_task_indices;
         task_status->ml_coll_operation->variable_fn_params.root =
             task_status->ml_coll_operation->variable_fn_params.root_route->rank;
     } else {
         task_status->rt_num_dependencies = 1;           /* wait for root */
         task_status->rt_num_dependent_tasks = 0;        /* no depended task */
-        task_status->rt_dependent_task_indecies = NULL; /* NULL */
+        task_status->rt_dependent_task_indices = NULL; /* NULL */
     }
 }
 
@@ -650,9 +650,9 @@ static int mca_coll_ml_build_bcast_known_schedule_no_attributes(
         }
 
         if (0 != comp_fn->num_dependent_tasks) {
-            comp_fn->dependent_task_indecies = (int *)calloc(n_hiers, sizeof(int));
+            comp_fn->dependent_task_indices = (int *)calloc(n_hiers, sizeof(int));
             for (j = 0; j < n_hiers; j++) {
-                comp_fn->dependent_task_indecies[j] = j; /* only root will use this one */
+                comp_fn->dependent_task_indices[j] = j; /* only root will use this one */
             }
         }
 
