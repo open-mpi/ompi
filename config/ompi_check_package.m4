@@ -38,8 +38,7 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
     AS_IF([test "$3" = "/usr" -o "$3" = "/usr/local"],
            [ # try as is...
             AC_VERBOSE([looking for header without includes])
-            AC_CHECK_HEADER([$2], [ompi_check_package_header_happy="yes"],
-                            [ompi_check_package_header_happy="no"])
+            AC_CHECK_HEADERS([$2], [ompi_check_package_header_happy="yes"], [])
             AS_IF([test "$ompi_check_package_header_happy" = "no"],
                   [# no go on the as is - reset the cache and try again
                    unset ompi_Header])])
@@ -48,7 +47,8 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
           [AS_IF([test "$3" != ""],
                  [$1_CPPFLAGS="$$1_CPPFLAGS -I$3/include"
                   CPPFLAGS="$CPPFLAGS -I$3/include"])
-          AC_CHECK_HEADER([$2], [$4], [$5], [$6])],
+          AC_CHECK_HEADERS([$2], [ompi_check_package_header_happy="yes"], [], [$6])
+	  AS_IF([test "$ompi_check_package_header_happy" = "yes"], [$4], [$5])],
           [$4])
     unset ompi_check_package_header_happy
     

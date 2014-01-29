@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -26,7 +26,7 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
 {
     struct mca_rcache_base_module_t *rcache = endpoint->rcache;
     mca_mpool_base_registration_t *regs[10], *reg = NULL;
-    struct xpmem_addr xpmem_addr;
+    xpmem_addr_t xpmem_addr;
     uintptr_t base, bound;
     int rc, i;
 
@@ -82,8 +82,12 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
         reg->base  = (unsigned char *) base;
         reg->bound = (unsigned char *) bound;
         reg->flags = flags;
-        
+
+#if defined(HAVE_SN_XPMEM_H)
+        xpmem_addr.id     = endpoint->apid;
+#else
         xpmem_addr.apid   = endpoint->apid;
+#endif
         xpmem_addr.offset = base;
 
         reg->alloc_base = xpmem_attach (xpmem_addr, bound - base, NULL);
