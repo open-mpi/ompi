@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -30,7 +30,15 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_frag.h"
 
-#define VADER_FIFO_FREE  ((int64_t)-2)
+#if OPAL_HAVE_ATOMIC_MATH_64
+#define vader_item_cmpset(x, y, z) opal_atomic_cmpset_64((volatile int64_t *)(x), (int64_t)(y), (int64_t)(z))
+#define vader_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
+#else
+#define vader_item_cmpset(x, y, z) opal_atomic_cmpset_32((volatile int32_t *)(x), (int32_t)(y), (int32_t)(z))
+#define vader_item_swap(x, y)      opal_atomic_swap_32((volatile int32_t *)(x), (int32_t)(y))
+#endif
+
+#define VADER_FIFO_FREE  ((intptr_t)-2)
 
 /*
  * Shared Memory FIFOs
@@ -48,8 +56,8 @@
 
 /* lock free fifo */
 typedef struct vader_fifo_t {
-    volatile int64_t fifo_head;
-    volatile int64_t fifo_tail;
+    volatile intptr_t fifo_head;
+    volatile intptr_t fifo_tail;
 } vader_fifo_t;
 
 /* large enough to ensure the fifo is on its own cache line */
@@ -58,11 +66,11 @@ typedef struct vader_fifo_t {
 static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
 {
     mca_btl_vader_hdr_t *hdr;
-    int64_t value;
+    intptr_t value;
 
     opal_atomic_rmb ();
 
-    value = opal_atomic_swap_64 (&fifo->fifo_head, VADER_FIFO_FREE);
+    value = vader_item_swap (&fifo->fifo_head, VADER_FIFO_FREE);
     if (VADER_FIFO_FREE == value) {
         /* fifo is empty or we lost the race with another thread */
         return NULL;
@@ -75,8 +83,7 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
     if (OPAL_UNLIKELY(VADER_FIFO_FREE == hdr->next)) {
         opal_atomic_rmb();
 
-        if (!opal_atomic_cmpset_ptr (&fifo->fifo_tail, (void *)value,
-                                     (void *)VADER_FIFO_FREE)) {
+        if (!vader_item_cmpset (&fifo->fifo_tail, value, VADER_FIFO_FREE)) {
             while (VADER_FIFO_FREE == hdr->next) {
                 opal_atomic_rmb ();
             }
@@ -100,12 +107,12 @@ static inline int vader_fifo_init (vader_fifo_t *fifo)
     return OMPI_SUCCESS;
 }
 
-static inline void vader_fifo_write (vader_fifo_t *fifo, int64_t value)
+static inline void vader_fifo_write (vader_fifo_t *fifo, intptr_t value)
 {
-    int64_t prev;
+    intptr_t prev;
 
     opal_atomic_wmb ();
-    prev = opal_atomic_swap_64 (&fifo->fifo_tail, value);
+    prev = vader_item_swap (&fifo->fifo_tail, value);
     opal_atomic_rmb ();
 
     assert (prev != value);

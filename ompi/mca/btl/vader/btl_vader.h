@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -43,8 +43,16 @@
 #endif /* HAVE_UNISTD_H */
 
 #if OMPI_BTL_VADER_HAVE_XPMEM
-/* xpmem is required by vader atm */
-#include <xpmem.h>
+  #if defined(HAVE_XPMEM_H)
+    #include <xpmem.h>
+
+    typedef struct xpmem_addr xpmem_addr_t;
+  #elif defined(HAVE_SN_XPMEM_H)
+    #include <sn/xpmem.h>
+
+    typedef int64_t xpmem_segid_t;
+    typedef int64_t xpmem_apid_t;
+  #endif
 #else
 #include "opal/mca/shmem/base/base.h"
 #endif
@@ -153,19 +161,19 @@ OMPI_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
 
 
 /* This only works for finding the relative address for a pointer within my_segment */
-static inline int64_t virtual2relative (char *addr)
+static inline intptr_t virtual2relative (char *addr)
 {
-    return (int64_t)(uintptr_t) (addr - mca_btl_vader_component.my_segment) | ((int64_t)MCA_BTL_VADER_LOCAL_RANK << 32);
+    return (intptr_t) (addr - mca_btl_vader_component.my_segment) | ((int64_t)MCA_BTL_VADER_LOCAL_RANK << 32);
 }
 
-static inline int64_t virtual2relativepeer (struct mca_btl_base_endpoint_t *endpoint, char *addr)
+static inline intptr_t virtual2relativepeer (struct mca_btl_base_endpoint_t *endpoint, char *addr)
 {
-    return (int64_t)(uintptr_t) (addr - endpoint->segment_base) | ((int64_t)endpoint->peer_smp_rank << 32);
+    return (intptr_t) (addr - endpoint->segment_base) | ((int64_t)endpoint->peer_smp_rank << 32);
 }
 
-static inline void *relative2virtual (int64_t offset)
+static inline void *relative2virtual (intptr_t offset)
 {
-    return (void *)(uintptr_t)((offset & 0xffffffffull) + mca_btl_vader_component.endpoints[offset >> 32].segment_base);
+    return (void *)((offset & 0xffffffffull) + mca_btl_vader_component.endpoints[offset >> 32].segment_base);
 }
 
 /* memcpy is faster at larger sizes but is undefined if the
