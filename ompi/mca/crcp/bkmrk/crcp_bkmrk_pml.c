@@ -5514,6 +5514,7 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
 {
     int ret, exit_status = OMPI_SUCCESS;
     opal_buffer_t *buffer = NULL;
+    orte_rml_recv_cb_t *rb = NULL;
     int32_t recv_response = RECV_MATCH_RESP_ERROR;
     int32_t num_resolv = -1;
     int32_t p_total_found = -1;
@@ -5582,46 +5583,24 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
         exit_status = OMPI_ERROR;
         goto cleanup;
     }
-        
-    if( NULL != buffer) {
-        OBJ_RELEASE(buffer);
-        buffer = NULL;
-    }
-            
-    /*
-     * Check return value from peer to see if we found a match.
-     */
-    if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
-        exit_status = OMPI_ERROR;
-        goto cleanup;
-    }
-        
+
     /*
      * Recv the ACK msg
      */
-#ifdef ENABLE_FT_FIXED
-    /* This is the old, now broken code */
-    if ( 0 > (ret = ompi_rte_recv_buffer(&peer_ref->proc_name, buffer,
-                                         OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
-        opal_output(mca_crcp_bkmrk_component.super.output_handle,
-                    "crcp:bkmrk: do_send_msg_detail: %s --> %s Failed to receive ACK buffer from peer. Return %d\n",
-                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-#endif /* ENABLE_FT_FIXED */
+    rb = OBJ_NEW(orte_rml_recv_cb_t);
+    rb->active = true;
     ompi_rte_recv_buffer_nb(&peer_ref->proc_name, OMPI_CRCP_COORD_BOOKMARK_TAG, 0,
-                            orte_rml_recv_callback, NULL);
+                            orte_rml_recv_callback, rb);
+    ORTE_WAIT_FOR_COMPLETION(rb->active);
 
-    UNPACK_BUFFER(buffer, recv_response, 1, OPAL_UINT32,
+    UNPACK_BUFFER(&rb->data, recv_response, 1, OPAL_UINT32,
                   "crcp:bkmrk: send_msg_details: Failed to unpack the ACK from peer buffer.");
-    UNPACK_BUFFER(buffer, num_resolv,  1, OPAL_UINT32,
+    UNPACK_BUFFER(&rb->data, num_resolv,  1, OPAL_UINT32,
                   "crcp:bkmrk: send_msg_details: Failed to unpack the num_resolv from peer buffer.");
-    UNPACK_BUFFER(buffer, p_total_found, 1, OPAL_UINT32,
+    UNPACK_BUFFER(&rb->data, p_total_found, 1, OPAL_UINT32,
                   "crcp:bkmrk: send_msg_details: Failed to unpack the total_found from peer buffer.");
-    
+
+    OBJ_RELEASE(rb);
     /* Mark message as matched */
     msg_ref->matched += num_resolv;
     *num_matches      = num_resolv;
@@ -5767,55 +5746,38 @@ static int do_recv_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                               size_t *count, size_t *datatype_size,
                               int *p_num_sent)
 {
-    opal_buffer_t * buffer = NULL;
+    orte_rml_recv_cb_t *rb = NULL;
     int exit_status = OMPI_SUCCESS;
     int ret;
-
-    if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
-        goto cleanup;
-    }
 
     /*
      * Recv the msg
      */
-#ifdef ENABLE_FT_FIXED
-    /* This is the old, now broken code */
-    if ( 0 > (ret = ompi_rte_recv_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
-        opal_output(mca_crcp_bkmrk_component.super.output_handle,
-                    "crcp:bkmrk: do_recv_msg_detail: %s <-- %s Failed to receive buffer from peer. Return %d\n",
-                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                    OMPI_NAME_PRINT(&(peer_ref->proc_name)),
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-#endif /* ENABLE_FT_FIXED */
-    ompi_rte_recv_buffer_nb(&peer_ref->proc_name, OMPI_CRCP_COORD_BOOKMARK_TAG, 0, orte_rml_recv_callback, NULL);
+    rb = OBJ_NEW(orte_rml_recv_cb_t);
+    rb->active = true;
+    ompi_rte_recv_buffer_nb(&peer_ref->proc_name, OMPI_CRCP_COORD_BOOKMARK_TAG, 0, orte_rml_recv_callback, rb);
+    ORTE_WAIT_FOR_COMPLETION(rb->active);
 
     /* Pull out the communicator ID */
-    UNPACK_BUFFER(buffer, (*comm_id), 1, OPAL_UINT32,
+    UNPACK_BUFFER(&rb->data, (*comm_id), 1, OPAL_UINT32,
                   "crcp:bkmrk: recv_msg_details: Failed to unpack the communicator ID");
-    UNPACK_BUFFER(buffer, (*rank), 1, OPAL_INT,
+    UNPACK_BUFFER(&rb->data, (*rank), 1, OPAL_INT,
                   "crcp:bkmrk: recv_msg_details: Failed to unpack the communicator rank ID");
-    
+
     /* Pull out the message details */
-    UNPACK_BUFFER(buffer, (*tag), 1, OPAL_INT,
+    UNPACK_BUFFER(&rb->data, (*tag), 1, OPAL_INT,
                   "crcp:bkmrk: recv_msg_details: Failed to unpack the tag");
-    UNPACK_BUFFER(buffer, (*count), 1, OPAL_SIZE,
+    UNPACK_BUFFER(&rb->data, (*count), 1, OPAL_SIZE,
                   "crcp:bkmrk: recv_msg_details: Failed to unpack the count");
-    UNPACK_BUFFER(buffer, (*datatype_size), 1, OPAL_SIZE,
+    UNPACK_BUFFER(&rb->data, (*datatype_size), 1, OPAL_SIZE,
                   "crcp:bkmrk: recv_msg_details: Failed to unpack the datatype size");
 
     /* Pull out the counts */
-    UNPACK_BUFFER(buffer, (*p_num_sent), 1, OPAL_INT,
+    UNPACK_BUFFER(&rb->data, (*p_num_sent), 1, OPAL_INT,
                   "crcp:bkmrk: recv_msg_details: Failed to unpack the sent count");
 
- cleanup:
-    if( NULL != buffer) {
-        OBJ_RELEASE(buffer);
-        buffer = NULL;
-    }
-
+cleanup:
+    OBJ_RELEASE(rb);
     return exit_status;
 }
 
