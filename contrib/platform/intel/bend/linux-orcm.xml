@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- orcm configuration file. -->
+
+<!-- CRITICAL NOTE: A node can only appear ONCE in orcm-group -->
+
+<configuration>
+
+<orcm-aggregators>
+  <nodes>
+    <value>bend001</value>
+  </nodes>
+  <port>
+    <value>55805</value>
+  </port>
+  <mca-params>
+    <value>sensor_base_sample_rate=5,sensor_base_log_samples=1,db_print_file=+</value>
+  </mca-params>
+</orcm-aggregators>
+
+<orcm-daemons>
+  <nodes>
+    <value>bend002</value>
+  </nodes>
+  <port>
+    <value>55810</value>
+  </port>
+  <mca-params>
+    <value>sensor_base_sample_rate=5,sensor_heartbeat_rate=10,sensor_base_log_samples=1</value>
+  </mca-params>
+</orcm-daemons>
+
+</configuration>
