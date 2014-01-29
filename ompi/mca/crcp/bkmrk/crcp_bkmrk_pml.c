@@ -3301,7 +3301,7 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
                                 bool keep_active,
                                 bool remove)
 {
-    int ret, exit_status = OMPI_SUCCESS;
+    int ret;
     ompi_crcp_bkmrk_pml_message_content_ref_t *new_content = NULL, *prev_content = NULL;
     ompi_request_t *request = NULL;
     bool loc_already_drained = false;
@@ -3366,7 +3366,7 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
         (*new_msg_ref)->proc_name.vpid  = to_peer_ref->proc_name.vpid;
     }
 
-    return exit_status;
+    return ret;
 }
 
 static int traffic_message_find_mark_persistent(ompi_crcp_bkmrk_pml_traffic_message_ref_t *msg_ref,
@@ -3474,7 +3474,7 @@ static int traffic_message_create_drain_message(bool post_drain,
 {
     ompi_crcp_bkmrk_pml_drain_message_ref_t *drain_msg_ref = NULL;
     ompi_crcp_bkmrk_pml_message_content_ref_t *new_content = NULL, *prev_content = NULL;
-    int m_iter, m_total, ret;
+    int m_iter, m_total;
 
     *num_posted = 0;
 
@@ -4787,9 +4787,9 @@ static void drain_message_ack_cbfunc(int status,
     }
 
     opal_output(mca_crcp_bkmrk_component.super.output_handle,
-                "crcp:bkmrk: %s --> %s ERROR: Unable to match ACK to peer\n",
+                "crcp:bkmrk: %s --> %s ERROR: Unable to match ACK to peer (%d)\n",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                OMPI_NAME_PRINT(sender) );
+                OMPI_NAME_PRINT(sender), exit_status);
 
  cleanup:
     return;
@@ -5327,7 +5327,6 @@ static int recv_bookmarks(int peer_idx)
 
     ++total_recv_bookmarks;
 
- cleanup:
     END_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
     /* JJH Doesn't make much sense to print this. The real bottleneck is always the send_bookmarks() */
     /*DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_EX_PEER_R, peer_idx, 1);*/
@@ -5368,13 +5367,14 @@ static void recv_bookmarks_cbfunc(int status,
     peer_ref->matched_msgs_recvd = tmp_int;
 
     OPAL_OUTPUT_VERBOSE((15, mca_crcp_bkmrk_component.super.output_handle,
-                         "crcp:bkmrk: %s <-- %s Received bookmark (S[%6d] R[%6d]) vs. (S[%6d] R[%6d])\n",
+                         "crcp:bkmrk: %s <-- %s Received bookmark (S[%6d] R[%6d]) vs. (S[%6d] R[%6d]) (%d)\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          OMPI_NAME_PRINT(sender),
                          peer_ref->matched_msgs_sent,
                          peer_ref->matched_msgs_recvd,
                          peer_ref->total_msgs_sent,
-                         peer_ref->total_msgs_recvd));
+                         peer_ref->total_msgs_recvd,
+                         exit_status));
 
  cleanup:
     --total_recv_bookmarks;
