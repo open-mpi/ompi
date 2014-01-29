@@ -709,7 +709,7 @@ static int process_global_push(orte_process_name_t* peer, opal_buffer_t* buffer,
 static int process_app_pull(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_central_local_snapshot_info_t *handle_info)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t loc_buffer;
+    opal_buffer_t *loc_buffer = NULL;
     orte_sstore_central_cmd_flag_t command;
     orte_sstore_central_local_app_snapshot_info_t *app_info = NULL;
 
@@ -721,55 +721,59 @@ static int process_app_pull(orte_process_name_t* peer, opal_buffer_t* buffer, or
     /*
      * Push back the requested information
      */
-    OBJ_CONSTRUCT(&loc_buffer, opal_buffer_t);
+    loc_buffer = OBJ_NEW(opal_buffer_t);
 
     command = ORTE_SSTORE_CENTRAL_PUSH;
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &command, 1, ORTE_SSTORE_CENTRAL_CMD )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &command, 1, ORTE_SSTORE_CENTRAL_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &(handle_info->id), 1, ORTE_SSTORE_HANDLE )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &(handle_info->id), 1, ORTE_SSTORE_HANDLE))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &(handle_info->seq_num), 1, OPAL_INT )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &(handle_info->seq_num), 1, OPAL_INT))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &(handle_info->global_ref_name), 1, OPAL_STRING )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &(handle_info->global_ref_name), 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &(app_info->local_location), 1, OPAL_STRING )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &(app_info->local_location), 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&loc_buffer, &(app_info->metadata_filename), 1, OPAL_STRING )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &(app_info->metadata_filename), 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(peer, &loc_buffer,
-                                                       ORTE_RML_TAG_SSTORE_INTERNAL,
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(peer, loc_buffer, ORTE_RML_TAG_SSTORE_INTERNAL,
                                                        orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
+    /* loc_buffer should not be released here; the callback releases it */
+    loc_buffer = NULL;
 
  cleanup:
-    OBJ_DESTRUCT(&loc_buffer);
+    if (NULL != loc_buffer) {
+        OBJ_RELEASE(loc_buffer);
+        loc_buffer = NULL;
+    }
 
     return exit_status;
 }
@@ -847,7 +851,7 @@ static int wait_all_apps_updated(orte_sstore_central_local_snapshot_info_t *hand
 static int pull_handle_info(orte_sstore_central_local_snapshot_info_t *handle_info )
 {
     int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_sstore_central_cmd_flag_t command;
 
     /*
@@ -861,25 +865,25 @@ static int pull_handle_info(orte_sstore_central_local_snapshot_info_t *handle_in
         return ORTE_SUCCESS;
     }
 
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    buffer = OBJ_NEW(opal_buffer_t);
 
     /*
      * Ask the daemon to send us the info that we need
      */
     command = ORTE_SSTORE_CENTRAL_PULL;
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SSTORE_CENTRAL_CMD )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SSTORE_CENTRAL_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(handle_info->id), 1, ORTE_SSTORE_HANDLE )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(handle_info->id), 1, ORTE_SSTORE_HANDLE))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
                                                        ORTE_RML_TAG_SSTORE_INTERNAL,
                                                        orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -887,8 +891,14 @@ static int pull_handle_info(orte_sstore_central_local_snapshot_info_t *handle_in
         goto cleanup;
     }
 
+    /* buffer should not be released here; the callback releases it */
+    buffer = NULL;
+
  cleanup:
-    OBJ_DESTRUCT(&buffer);
+    if (NULL != buffer) {
+        OBJ_RELEASE(buffer);
+        buffer = NULL;
+    }
 
     return exit_status;
 }
@@ -896,29 +906,29 @@ static int pull_handle_info(orte_sstore_central_local_snapshot_info_t *handle_in
 static int push_handle_info(orte_sstore_central_local_snapshot_info_t *handle_info )
 {
     int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_sstore_central_cmd_flag_t command;
     orte_sstore_central_local_app_snapshot_info_t *app_info = NULL;
     opal_list_item_t *item = NULL;
     size_t list_size;
 
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    buffer = OBJ_NEW(opal_buffer_t);
 
     command = ORTE_SSTORE_CENTRAL_PUSH;
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SSTORE_CENTRAL_CMD )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SSTORE_CENTRAL_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(handle_info->id), 1, ORTE_SSTORE_HANDLE )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(handle_info->id), 1, ORTE_SSTORE_HANDLE))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
     list_size = opal_list_get_size(handle_info->app_info_handle);
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &list_size, 1, OPAL_SIZE )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &list_size, 1, OPAL_SIZE))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -932,20 +942,20 @@ static int push_handle_info(orte_sstore_central_local_snapshot_info_t *handle_in
         item  = opal_list_get_next(item) ) {
         app_info = (orte_sstore_central_local_app_snapshot_info_t*)item;
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(app_info->name), 1, ORTE_NAME )) ) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(app_info->name), 1, ORTE_NAME))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(app_info->ckpt_skipped), 1, OPAL_BOOL )) ) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(app_info->ckpt_skipped), 1, OPAL_BOOL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
 
         if( !app_info->ckpt_skipped ) {
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(app_info->crs_comp), 1, OPAL_STRING )) ) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(app_info->crs_comp), 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
@@ -953,7 +963,7 @@ static int push_handle_info(orte_sstore_central_local_snapshot_info_t *handle_in
         }
     }
 
-    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
                                                        ORTE_RML_TAG_SSTORE_INTERNAL,
                                                        orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -961,8 +971,14 @@ static int push_handle_info(orte_sstore_central_local_snapshot_info_t *handle_in
         goto cleanup;
     }
 
+    /* buffer should not be released here; the callback releases it */
+    buffer = NULL;
+
  cleanup:
-    OBJ_DESTRUCT(&buffer);
+    if (NULL != buffer) {
+        OBJ_RELEASE(buffer);
+        buffer = NULL;
+    }
 
     return exit_status;
 }
