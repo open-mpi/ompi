@@ -115,7 +115,7 @@ int app_coord_init()
     opal_cr_notify_callback_fn_t prev_notify_func;
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_INIT;
-    opal_buffer_t *buffer;
+    opal_buffer_t *buffer = NULL;
     orte_grpcomm_collective_t *coll;
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
@@ -221,7 +221,7 @@ int app_coord_finalize()
     int ret, exit_status = ORTE_SUCCESS;
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     orte_snapc_base_request_op_event_t op_event = ORTE_SNAPC_OP_FIN;
-    opal_buffer_t *buffer;
+    opal_buffer_t *buffer = NULL;
     orte_std_cntr_t count;
     orte_grpcomm_collective_t *coll;
 
@@ -298,17 +298,18 @@ int app_coord_finalize()
             goto cleanup;
         }
 #endif /* ENABLE_FT_FIXED */
-        orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, NULL);
+        orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, buffer);
 
+        /* wait for completion */
         count = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
 
         count = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &op_event, &count, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &op_event, &count, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -332,6 +333,11 @@ int app_coord_finalize()
 
  cleanup:
     /* cleanup */
+    if (NULL != buffer) {
+        OBJ_RELEASE(buffer);
+        buffer = NULL;
+    }
+
     OBJ_RELEASE(coll);
 
     /*
@@ -347,7 +353,7 @@ int app_coord_finalize()
         app_comm_pipe_w = NULL;
     }
 
-    return ORTE_SUCCESS;
+    return exit_status;
 }
 
 /******************
@@ -821,24 +827,24 @@ static int app_notify_resp_stage_3(int cr_state, bool skip_fin_msg)
 
 static int snapc_full_app_finished_msg(int cr_state) {
     int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_snapc_cmd_flag_t command = ORTE_SNAPC_LOCAL_FINISH_CMD;
 
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    buffer = OBJ_NEW(opal_buffer_t);
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_CMD )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &cr_state, 1, OPAL_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &cr_state, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, &buffer,
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
                                                        ORTE_RML_TAG_SNAPC,
                                                        orte_rml_send_callback, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -846,8 +852,9 @@ static int snapc_full_app_finished_msg(int cr_state) {
         goto cleanup;
     }
 
+    return ORTE_SUCCESS;
  cleanup:
-    OBJ_DESTRUCT(&buffer);
+    OBJ_RELEASE(buffer);
 
     return exit_status;
 }
@@ -1241,39 +1248,39 @@ int app_coord_ft_event(int state) {
 static int snapc_full_app_ft_event_update_process_info(orte_process_name_t proc, pid_t proc_pid)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_snapc_cmd_flag_t command = ORTE_SNAPC_LOCAL_UPDATE_CMD;
 
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    buffer = OBJ_NEW(opal_buffer_t);
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_CMD )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
     /* JJH CLEANUP: Do we really need this, it is equal to sender */
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc, 1, ORTE_NAME))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &proc, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &proc_pid, 1, OPAL_PID))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &proc_pid, 1, OPAL_PID))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
 #if OPAL_ENABLE_CRDEBUG == 1
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &MPIR_debug_with_checkpoint, 1, OPAL_BOOL))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &MPIR_debug_with_checkpoint, 1, OPAL_BOOL))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 #endif
 
-    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, &buffer,
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
                                                        ORTE_RML_TAG_SNAPC,
                                                        orte_rml_send_callback, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -1281,8 +1288,9 @@ static int snapc_full_app_ft_event_update_process_info(orte_process_name_t proc,
         goto cleanup;
     }
 
+    return ORTE_SUCCESS;
  cleanup:
-    OBJ_DESTRUCT(&buffer);
+    OBJ_RELEASE(buffer);
 
     return exit_status;
 }
@@ -1291,7 +1299,7 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_std_cntr_t count;
     int op_event, op_state;
     char *seq_str = NULL, *tmp_str = NULL;
@@ -1376,39 +1384,34 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
         /*
          * Send request to HNP
          */
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+        buffer = OBJ_NEW(opal_buffer_t);
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(datum->event), 1, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(datum->event), 1, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
             goto cleanup;
         }
 
         if( ORTE_SNAPC_OP_RESTART == datum->event) {
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(datum->seq_num), 1, OPAL_INT))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(datum->seq_num), 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
-                OBJ_DESTRUCT(&buffer);
                 goto cleanup;
             }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(datum->global_handle), 1, OPAL_STRING))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(datum->global_handle), 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
-                OBJ_DESTRUCT(&buffer);
                 goto cleanup;
             }
         }
@@ -1438,10 +1441,9 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
             /*
              * Send information
              */
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(datum->mig_num), 1, OPAL_INT))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(datum->mig_num), 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
-                OBJ_DESTRUCT(&buffer);
                 goto cleanup;
             }
 
@@ -1455,17 +1457,15 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
                                      (OPAL_INT_TO_BOOL((datum->mig_off_node)[i]) ? 'T' : 'F')
                                      ));
 
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &((datum->mig_vpids)[i]), 1, OPAL_INT))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &((datum->mig_vpids)[i]), 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(ret);
                     exit_status = ret;
-                    OBJ_DESTRUCT(&buffer);
                     goto cleanup;
                 }
                 tmp_str = strdup((datum->mig_host_pref)[i]);
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &tmp_str, 1, OPAL_STRING))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &tmp_str, 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(ret);
                     exit_status = ret;
-                    OBJ_DESTRUCT(&buffer);
                     goto cleanup;
                 }
                 if( NULL != tmp_str ) {
@@ -1473,31 +1473,27 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
                     tmp_str = NULL;
                 }
 
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &((datum->mig_vpid_pref)[i]), 1, OPAL_INT))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &((datum->mig_vpid_pref)[i]), 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(ret);
                     exit_status = ret;
-                    OBJ_DESTRUCT(&buffer);
                     goto cleanup;
                 }
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &((datum->mig_off_node)[i]), 1, OPAL_INT))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &((datum->mig_off_node)[i]), 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(ret);
                     exit_status = ret;
-                    OBJ_DESTRUCT(&buffer);
                     goto cleanup;
                 }
             }
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
-                                                           ORTE_RML_TAG_SNAPC_FULL,
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_SNAPC_FULL,
                                                            orte_rml_send_callback, 0))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
-            OBJ_DESTRUCT(&buffer);
             goto cleanup;
         }
-
-        OBJ_DESTRUCT(&buffer);
+        /* buffer should not be released here; the callback releases it */
+        buffer = NULL;
     }
 
     /*
@@ -1539,7 +1535,7 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
                 goto cleanup;
             }
 
-            OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+            buffer = OBJ_NEW(opal_buffer_t);
 
             /*
              * Wait for a response regarding completion
@@ -1553,30 +1549,29 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
                 goto cleanup;
             }
 #endif /* ENABLE_FT_FIXED */
-            orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, NULL);
+            orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, buffer);
+            /* wait for completion */
 
             count = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
             }
 
             count = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &op_event, &count, OPAL_INT))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &op_event, &count, OPAL_INT))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
             }
 
             count = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &op_state, &count, OPAL_INT))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &op_state, &count, OPAL_INT))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
             }
-
-            OBJ_DESTRUCT(&buffer);
 
             orte_sstore.get_attr(last_ss_handle,
                                  SSTORE_METADATA_GLOBAL_SNAP_SEQ,
@@ -1613,7 +1608,7 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
                                  "App) Request_op: Leader waiting for Migrate release (%3d)...",
                                  datum->event));
 
-            OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+            buffer = OBJ_NEW(opal_buffer_t);
 
             /*
              * Wait for a response regarding completion
@@ -1627,30 +1622,29 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
                 goto cleanup;
             }
 #endif /* ENABLE_FT_FIXED */
-            orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, NULL);
+            orte_rml.recv_buffer_nb(ORTE_PROC_MY_HNP, ORTE_RML_TAG_SNAPC_FULL, 0, snapc_full_app_callback_recv, buffer);
+            /* wait for completion */
 
             count = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &count, ORTE_SNAPC_FULL_CMD))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
             }
 
             count = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &op_event, &count, OPAL_INT))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &op_event, &count, OPAL_INT))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
             }
 
             count = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&buffer, &op_state, &count, OPAL_INT))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &op_state, &count, OPAL_INT))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
             }
-
-            OBJ_DESTRUCT(&buffer);
 
             OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                                  "App) Request_op: Leader continuing from Migration (%3d)...",
@@ -1685,6 +1679,11 @@ int app_coord_request_op(orte_snapc_base_request_op_t *datum)
 
 
  cleanup:
+    if (NULL != buffer) {
+        OBJ_RELEASE(buffer);
+        buffer = NULL;
+    }
+
     if( NULL != seq_str ) {
         free(seq_str);
         seq_str = NULL;

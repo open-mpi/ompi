@@ -626,7 +626,7 @@ static int snapc_full_local_send_restart_proc_info(void)
     int ret, exit_status = ORTE_SUCCESS;
     orte_snapc_full_app_snapshot_t *vpid_snapshot = NULL;
     opal_list_item_t* item = NULL;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_RESTART_PROC_INFO;
     size_t num_vpids = 0;
 
@@ -647,6 +647,7 @@ static int snapc_full_local_send_restart_proc_info(void)
         return ORTE_SUCCESS;
     }
 
+    buffer = OBJ_NEW(opal_buffer_t);
     /*
      * Local Coordinator: Send Global Coordinator the information
      * [ hostname, num_pids, {pids} ]
@@ -656,21 +657,19 @@ static int snapc_full_local_send_restart_proc_info(void)
         return exit_status;
     }
 
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(orte_process_info.nodename), 1, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(orte_process_info.nodename), 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &num_vpids, 1, OPAL_SIZE))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &num_vpids, 1, OPAL_SIZE))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -681,7 +680,7 @@ static int snapc_full_local_send_restart_proc_info(void)
         item  = opal_list_get_next(item) ) {
         vpid_snapshot = (orte_snapc_full_app_snapshot_t*)item;
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(vpid_snapshot->process_pid), 1, OPAL_PID))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(vpid_snapshot->process_pid), 1, OPAL_PID))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -689,14 +688,17 @@ static int snapc_full_local_send_restart_proc_info(void)
 
     }
 
-    if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_SNAPC_FULL, 0))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_SNAPC_FULL,
+                                                       orte_rml_send_callback, 0))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
+    return ORTE_SUCCESS;
+
  cleanup:
-    OBJ_DESTRUCT(&buffer);
+    OBJ_RELEASE(buffer);
 
     return exit_status;
 }
@@ -1309,26 +1311,26 @@ static int local_define_pipe_names(orte_snapc_full_app_snapshot_t *vpid_snapshot
 static int snapc_full_local_update_coord(int state, bool quick)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_snapc_full_cmd_flag_t command;
 
     /*
      * Local Coordinator: Send Global Coordinator state information
      */
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    buffer = OBJ_NEW(opal_buffer_t);
 
     if( quick ) {
         command = ORTE_SNAPC_FULL_UPDATE_ORTED_STATE_QUICK_CMD;
     } else {
         command = ORTE_SNAPC_FULL_UPDATE_ORTED_STATE_CMD;
     }
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD )) ) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &state, 1, OPAL_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &state, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -1345,7 +1347,7 @@ static int snapc_full_local_update_coord(int state, bool quick)
     }
 
  send_data:
-    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, &buffer,
+    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
                                                        ORTE_RML_TAG_SNAPC_FULL,
                                                        orte_rml_send_callback, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -1353,8 +1355,10 @@ static int snapc_full_local_update_coord(int state, bool quick)
         goto cleanup;
     }
 
+    return ORTE_SUCCESS;
+
  cleanup:
-    OBJ_DESTRUCT(&buffer);
+    OBJ_RELEASE(buffer);
 
     return exit_status;
 }

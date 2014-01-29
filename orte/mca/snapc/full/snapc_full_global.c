@@ -1170,7 +1170,7 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
     orte_jobid_t jobid;
     int op_event, op_state;
     opal_crs_base_ckpt_options_t *options = NULL;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     orte_snapc_full_cmd_flag_t command = ORTE_SNAPC_FULL_REQUEST_OP_CMD;
     int seq_num = -1, i;
     char * global_handle = NULL, *tmp_str = NULL;
@@ -1231,26 +1231,25 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
                              "Global) process_request_op(): Send Finalize ACK to the job"));
 
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        buffer = OBJ_NEW(opal_buffer_t);
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
         op_event = ORTE_SNAPC_OP_FIN_ACK;
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &op_event, 1, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &op_event, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, &buffer,
-                                                           ORTE_RML_TAG_SNAPC_FULL,
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, buffer, ORTE_RML_TAG_SNAPC_FULL,
                                                            orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
-            /* FIXME: buffer not cleaned up */
             goto cleanup;
         }
-        OBJ_DESTRUCT(&buffer);
+        /* buffer should not be released here; the callback releases it */
+        buffer = NULL;
     }
     /************************************
      * Start a checkpoint operation
@@ -1283,30 +1282,29 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
         /*
          * Tell the sender that the operation is finished
          */
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        buffer = OBJ_NEW(opal_buffer_t);
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &op_event, 1, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &op_event, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &op_state, 1, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &op_state, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, &buffer,
-                                                           ORTE_RML_TAG_SNAPC_FULL,
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, buffer, ORTE_RML_TAG_SNAPC_FULL,
                                                            orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
-            /* FIXME: buffer not cleaned up */
             goto cleanup;
         }
-        OBJ_DESTRUCT(&buffer);
+        /* buffer should not be released here; the callback releases it */
+        buffer = NULL;
     }
     /************************************
      * Start the Restart operation
@@ -1426,31 +1424,28 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                              "Global) ------ Finished Migration. Release processes (%15s )-----",
                              ORTE_NAME_PRINT(sender) ));
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+        buffer = OBJ_NEW(opal_buffer_t);
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &op_event, 1, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &op_event, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
         op_state = 0;
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &op_state, 1, OPAL_INT))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &op_state, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
 
-        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, &buffer,
-                                                           ORTE_RML_TAG_SNAPC_FULL,
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(sender, buffer, ORTE_RML_TAG_SNAPC_FULL,
                                                            orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
-            /* FIXME: buffer not cleaned up */
             goto cleanup;
         }
-        OBJ_DESTRUCT(&buffer);
 
         OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                              "Global) ------ Finished Migration. Released processes (%15s )-----",
@@ -1504,8 +1499,12 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
                              op_event));
     }
 
+cleanup:
+    if (NULL != buffer) {
+        OBJ_RELEASE(buffer);
+        buffer = NULL;
+    }
 
- cleanup:
     if( NULL != options ) {
         OBJ_RELEASE(options);
         options = NULL;
@@ -2105,7 +2104,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_snapc_full_cmd_flag_t command;
-    opal_buffer_t buffer;
+    opal_buffer_t *buffer = NULL;
     char * state_str = NULL;
     orte_proc_t *proc = NULL;
     opal_list_item_t *item = NULL;
@@ -2114,7 +2113,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     /*
      * Update all Local Coordinators (broadcast operation)
      */
-    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    buffer = OBJ_NEW(opal_buffer_t);
 
     if( quick ) {
         command = ORTE_SNAPC_FULL_UPDATE_JOB_STATE_QUICK_CMD;
@@ -2122,19 +2121,19 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
         command = ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &command, 1, ORTE_SNAPC_FULL_CMD))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &jobid, 1, ORTE_JOBID))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &jobid, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &ckpt_state, 1, OPAL_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &ckpt_state, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -2144,19 +2143,19 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
         goto process_msg;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_sstore.pack_handle(NULL, &buffer, handle))) {
+    if (ORTE_SUCCESS != (ret = orte_sstore.pack_handle(NULL, buffer, handle))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if( ORTE_SUCCESS != (ret = orte_snapc_base_pack_options(&buffer, options)) ) {
+    if(ORTE_SUCCESS != (ret = orte_snapc_base_pack_options(buffer, options))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(currently_migrating), 1, OPAL_BOOL))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(currently_migrating), 1, OPAL_BOOL))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -2165,7 +2164,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     if( currently_migrating ) {
         num_procs = opal_list_get_size(migrating_procs);
 
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &num_procs, 1, OPAL_SIZE))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &num_procs, 1, OPAL_SIZE))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -2175,7 +2174,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
              item != opal_list_get_end(migrating_procs);
              item  = opal_list_get_next(item)) {
             proc = (orte_proc_t*)item;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(&buffer, &(proc->name), 1, ORTE_NAME))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &(proc->name), 1, ORTE_NAME))) {
                 ORTE_ERROR_LOG(ret);
                 exit_status = ret;
                 goto cleanup;
@@ -2191,7 +2190,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     free(state_str);
     state_str = NULL;
 
-    if( ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buffer, ORTE_RML_TAG_SNAPC_FULL)) ) {
+    if( ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, buffer, ORTE_RML_TAG_SNAPC_FULL))) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;
@@ -2207,7 +2206,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
         state_str = NULL;
     }
 
-    OBJ_DESTRUCT(&buffer);
+    OBJ_RELEASE(buffer);
 
     return exit_status;
 }
