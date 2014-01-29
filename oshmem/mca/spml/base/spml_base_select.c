@@ -14,15 +14,13 @@
 #include <string.h>
 #endif
 
-#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/show_help.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/constants.h"
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/base.h"
@@ -138,7 +136,7 @@ int mca_spml_base_select(bool enable_progress_threads, bool enable_mpi_threads)
     /* Finished querying all components.  Check for the bozo case. */
 
     if (NULL == best_component) {
-        orte_show_help("help-shmem-mca.txt",
+        opal_show_help("help-shmem-mca.txt",
                        "find-available:none-found",
                        true,
                        "spml");

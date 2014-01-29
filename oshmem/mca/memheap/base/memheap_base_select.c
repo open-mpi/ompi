@@ -11,15 +11,14 @@
 #include "oshmem_config.h"
 
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "opal/runtime/opal.h"
 
 mca_memheap_base_module_t mca_memheap;
 
@@ -151,7 +150,7 @@ int mca_memheap_base_select()
 
     /* Verify that some module was initialized */
     if (NULL == mca_memheap_base_module_initialized) {
-        orte_show_help("help-shmem-mca.txt",
+        opal_show_help("help-shmem-mca.txt",
                        "find-available:none-found",
                        true,
                        "memheap");

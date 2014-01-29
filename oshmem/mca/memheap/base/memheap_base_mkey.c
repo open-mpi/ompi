@@ -13,16 +13,10 @@
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/runtime/orte_globals.h"
-
-#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/dpm/dpm.h"
 
 #include "oshmem/proc/proc.h"
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
@@ -303,7 +297,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
 
     MEMHEAP_VERBOSE(5, "unpacking %d of %d", cnt, OPAL_UINT8);
     rc = opal_dss.unpack(buffer, &msg_type, &cnt, OPAL_UINT8);
-    if (ORTE_SUCCESS != rc) {
+    if (OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         goto send_fail;
     }
@@ -312,7 +306,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
     case MEMHEAP_RKEY_REQ:
         cnt = 1;
         rc = opal_dss.unpack(buffer, &seg, &cnt, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             MEMHEAP_ERROR("bad RKEY_REQ msg");
             goto send_fail;
         }
