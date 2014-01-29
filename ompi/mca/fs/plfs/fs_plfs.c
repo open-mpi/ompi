@@ -142,6 +142,9 @@ int mca_fs_plfs_component_file_unquery (mca_io_ompio_file_t *file)
 
 int mca_fs_plfs_module_init (mca_io_ompio_file_t *file)
 {
+    /* Make sure the file type is not overwritten by the last queried 
+	 * component */
+    file->f_fstype = PLFS;
     return OMPI_SUCCESS;
 }
 
