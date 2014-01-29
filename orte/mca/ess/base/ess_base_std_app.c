@@ -380,8 +380,11 @@ void orte_ess_base_app_abort(int status, bool report)
     /* CRS cleanup since it may have a named pipe and thread active */
     orte_cr_finalize();
     
-    /* If we were asked to report this termination, do so */
-    if (report) {
+    /* If we were asked to report this termination, do so - except
+     * in cases of abnormal termination ordered by the RTE as
+     * this means we can't rely on being able to communicate
+     */
+    if (report && !orte_abnormal_term_ordered) {
         buf = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD);
         orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
