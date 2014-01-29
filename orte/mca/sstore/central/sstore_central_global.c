@@ -143,9 +143,6 @@ static void sstore_central_global_recv(int status,
                                        opal_buffer_t* buffer,
                                        orte_rml_tag_t tag,
                                        void* cbdata);
-static void sstore_central_global_process_cmd(int fd,
-                                              short event,
-                                              void *cbdata);
 static int process_local_pull(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_central_global_snapshot_info_t *handle_info);
 static int process_local_push(orte_process_name_t* peer, opal_buffer_t* buffer, orte_sstore_central_global_snapshot_info_t *handle_info);
 

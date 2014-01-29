@@ -1861,7 +1861,7 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
                                               opal_buffer_t* buffer,
                                               bool quick)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret;
     orte_std_cntr_t count;
     orte_jobid_t jobid;
     int   job_ckpt_state = ORTE_SNAPC_CKPT_STATE_NONE;
@@ -1885,29 +1885,25 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
     count = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &jobid, &count, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
+        return;
     }
 
     count = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job_ckpt_state, &count, OPAL_INT))) {
         ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
+        return;
     }
 
     if( !quick ) {
         if (ORTE_SUCCESS != (ret = orte_sstore.unpack_handle(sender, buffer, &ss_handle)) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return;
         }
 
         options = OBJ_NEW(opal_crs_base_ckpt_options_t);
         if( ORTE_SUCCESS != (ret = orte_snapc_base_unpack_options(buffer, options)) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return;
         }
         /* In this case we want to use the current_options that are cached
          * so that we do not have to send them every time.
@@ -1917,7 +1913,6 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(loc_migrating), &count, OPAL_BOOL))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
             goto cleanup;
         }
 
@@ -1925,7 +1920,6 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
             count = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &loc_num_procs, &count, OPAL_SIZE))) {
                 ORTE_ERROR_LOG(ret);
-                exit_status = ret;
                 goto cleanup;
             }
 
@@ -1933,7 +1927,6 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
                 count = 1;
                 if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &count, ORTE_NAME))) {
                     ORTE_ERROR_LOG(ret);
-                    exit_status = ret;
                     goto cleanup;
                 }
                 /* JJH: Update local info as needed */
@@ -1946,8 +1939,6 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
                                                              ss_handle,
                                                              global_snapshot.options) ) ) {
         ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
     }
 
  cleanup:

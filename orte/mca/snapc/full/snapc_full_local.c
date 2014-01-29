@@ -767,7 +767,7 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
                                                     opal_buffer_t* buffer,
                                                     bool quick)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret;
     orte_jobid_t jobid;
     int job_ckpt_state;
     orte_std_cntr_t count;
@@ -793,28 +793,24 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
     count = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &jobid, &count, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
+        return;
     }
 
     count = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job_ckpt_state, &count, OPAL_INT))) {
         ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
+        return;
     }
 
     if( !quick ) {
         if (ORTE_SUCCESS != (ret = orte_sstore.unpack_handle(sender, buffer, &ss_handle)) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
+            return;
         }
 
         options = OBJ_NEW(opal_crs_base_ckpt_options_t);
         if( ORTE_SUCCESS != (ret = orte_snapc_base_unpack_options(buffer, options)) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
             goto cleanup;
         }
         /* In this case we want to use the current_local_options that are cached
@@ -825,7 +821,6 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(loc_migrating), &count, OPAL_BOOL))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
             goto cleanup;
         }
 
@@ -835,7 +830,6 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
             count = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &loc_num_procs, &count, OPAL_SIZE))) {
                 ORTE_ERROR_LOG(ret);
-                exit_status = ret;
                 goto cleanup;
             }
 
@@ -843,7 +837,6 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
                 count = 1;
                 if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc_name, &count, ORTE_NAME))) {
                     ORTE_ERROR_LOG(ret);
-                    exit_status = ret;
                     goto cleanup;
                 }
 
@@ -871,8 +864,7 @@ static void snapc_full_local_process_job_update_cmd(orte_process_name_t* sender,
                                                             ss_handle,
                                                             local_global_snapshot.options)) ) {
         ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
+        return;
     }
 
  cleanup:
@@ -1697,7 +1689,7 @@ static int snapc_full_local_end_ckpt_handshake(orte_snapc_full_app_snapshot_t *v
 
 static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret;
     orte_snapc_full_app_snapshot_t *vpid_snapshot = NULL;
     int ckpt_state;
     int loc_min_state;
@@ -1718,7 +1710,6 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
                         "Local) Error: Unable to read state from named pipe (%s). %d\n",
                         vpid_snapshot->comm_pipe_r, ret);
             ORTE_ERROR_LOG(ORTE_ERROR);
-            exit_status = ORTE_ERROR;
             goto cleanup;
         }
 
@@ -1736,7 +1727,6 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
                 ORTE_SNAPC_CKPT_STATE_INC_PREPED == loc_min_state ) {
                 if( ORTE_SUCCESS != (ret = snapc_full_local_update_coord(ORTE_SNAPC_CKPT_STATE_INC_PREPED, false) ) ) {
                     ORTE_ERROR_LOG(ret);
-                    exit_status = ret;
                     goto cleanup;
                 }
             }
@@ -1764,13 +1754,11 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
                              "Local) Read Event: Flush the modex cached data\n"));
         if (OPAL_SUCCESS != (ret = opal_db.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
             goto cleanup;
         }
         orte_grpcomm.finalize();
         if (ORTE_SUCCESS != (ret = orte_grpcomm.init())) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
             goto cleanup;
         }
         flushed_modex = true;
@@ -1783,8 +1771,6 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
         /* JJH - The error path needs some more work */
         if( ORTE_SUCCESS != (ret = snapc_full_local_update_coord(ORTE_SNAPC_CKPT_STATE_ERROR, true) ) ) {
             ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
         }
         goto cleanup;
     }
@@ -1810,7 +1796,6 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
         if( ORTE_SNAPC_GLOBAL_COORD_TYPE != (orte_snapc_coord_type & ORTE_SNAPC_GLOBAL_COORD_TYPE)) {
             if( ORTE_SUCCESS != (ret = snapc_full_local_update_coord(loc_min_state, false) ) ) {
                 ORTE_ERROR_LOG(ret);
-                exit_status = ret;
                 goto cleanup;
             }
         }
@@ -1829,7 +1814,6 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
             if( sstore_local_procs_finished ) {
                 if( ORTE_SUCCESS != (ret = orte_snapc_full_local_reset_coord()) ) {
                     ORTE_ERROR_LOG(ret);
-                    exit_status = ret;
                     goto cleanup;
                 }
             }
@@ -1839,7 +1823,6 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
         if( ORTE_SNAPC_GLOBAL_COORD_TYPE == (orte_snapc_coord_type & ORTE_SNAPC_GLOBAL_COORD_TYPE)) {
             if( ORTE_SUCCESS != (ret = snapc_full_local_update_coord(loc_min_state, false) ) ) {
                 ORTE_ERROR_LOG(ret);
-                exit_status = ret;
                 goto cleanup;
             }
         }
