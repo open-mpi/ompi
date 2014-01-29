@@ -124,6 +124,13 @@ static void proc_errors(int fd, short args, void *cbdata)
                        orte_process_info.nodename,
                        ORTE_NAME_PRINT(&caddy->name),
                        (NULL == nodename) ? "Unknown" : nodename);
+        /* flag that we must abnormally terminate as far as the
+         * RTE is concerned
+         */
+        orte_abnormal_term_ordered = true;
+    } else if (ORTE_PROC_STATE_LIFELINE_LOST == caddy->proc_state) {
+        /* we need to die, so mark us so */
+        orte_abnormal_term_ordered = true;
     }
 
     orte_errmgr_base_execute_error_callbacks(&errors);
