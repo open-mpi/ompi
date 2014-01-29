@@ -101,8 +101,8 @@ Trunk (not on release branches yet)
 - Fix ROMIO issue when opening a file with MPI_MODE_EXCL.
 - Fix PowerPC and MIPS assembly issues.
 - Various fixes to the hcoll and FCA collective offload modules.
-- Prevent integer when creating datatypes.  Thanks to original patch from
-  Gilles Gouaillardet.
+- Prevent integer overflow when creating datatypes.  Thanks to
+  original patch from Gilles Gouaillardet.
 - Port some upstream hwloc fixes to Open MPI's embedded copy for
   working around buggy NUMA node cpusets and including mising header
   files.  Thanks to Jeff Becker and Paul Hargrove for reporting the
