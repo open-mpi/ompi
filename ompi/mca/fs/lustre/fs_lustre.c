@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -140,11 +140,14 @@ int mca_fs_lustre_component_file_unquery (mca_io_ompio_file_t *file)
     * does not have anything to do since there are no steps which need 
     * to be undone if this module is not selected */
 
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 int mca_fs_lustre_module_init (mca_io_ompio_file_t *file)
 {
+    /* Make sure the file type is not overwritten by the last queried 
+	 * component */
+    file->f_fstype = LUSTRE;
     return OMPI_SUCCESS;
 }
 

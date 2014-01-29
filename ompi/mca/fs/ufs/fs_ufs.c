@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -83,6 +83,9 @@ int mca_fs_ufs_component_file_unquery (mca_io_ompio_file_t *file)
 
 int mca_fs_ufs_module_init (mca_io_ompio_file_t *file)
 {
+    /* Make sure the file type is not overwritten by the last queried 
+	 * component */
+    file->f_fstype = UFS;
     return OMPI_SUCCESS;
 }
 
