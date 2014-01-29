@@ -601,7 +601,9 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
 
+#if OPAL_HAVE_HWLOC
  rankbyslot:
+#endif
     if (ORTE_RANK_BY_SLOT == ORTE_GET_RANKING_POLICY(map->ranking)) {
         /* assign the ranks sequentially */
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
