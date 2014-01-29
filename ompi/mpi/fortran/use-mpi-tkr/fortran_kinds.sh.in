@@ -26,14 +26,11 @@ ckinds="@OMPI_FORTRAN_CKINDS@"
 
 # In prior versions of Open MPI, we used to allow the user to choose
 # which "size" of "use mpi" module to build: tiny, small, medium, and
-# large.  Large never really worked.  
-#
-# According to MPI-3 p610:34-41, if ignore TKR is not supported, we
-# should not provide interfaces for MPI subroutines with choice
-# buffers.  So we default to "small" (in 1.7-1.7.3, we defaulted to
-# "medium", but then MPI-3 p610 was pointed out to us in Jan 2014, so
-# we changed the default back to "small").
-size=small
+# large.  Large never really worked.  And now we have better
+# implementations, so we're just going to hard-code to "medium" here,
+# in case someone still builds this interface (e.g., if they're using
+# gfortran).
+size=medium
 
 # fix up for broken generation scripts that don't properly compute the
 # ranks variable before using it
