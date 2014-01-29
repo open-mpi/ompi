@@ -11,8 +11,7 @@
 
 #include "oshmem_config.h"
 
-#include "opal/util/output.h"
-#include "orte/util/show_help.h"
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 
