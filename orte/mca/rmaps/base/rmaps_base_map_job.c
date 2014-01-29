@@ -104,6 +104,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                 "mca:rmaps mapping given - using default");
             map->mapping = orte_rmaps_base.mapping;
         } else {
+#if OPAL_HAVE_HWLOC
             /* default based on number of procs */
             if (nprocs <= 2) {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
@@ -124,6 +125,10 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                     "mca:rmaps mapping not given - using bysocket");
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
             }
+#else
+            /* in the absence of hwloc, default to map-by slot */
+            ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+#endif
             /* check for oversubscribe directives */
             if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
                 if (orte_managed_allocation) {
@@ -175,6 +180,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
         /* set the default mapping policy IFF it wasn't provided */
         if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+#if OPAL_HAVE_HWLOC
             /* default based on number of procs */
             if (nprocs <= 2) {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
@@ -195,6 +201,10 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                     "mca:rmaps mapping not set by user - using bysocket");
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
             }
+#else
+            /* in the absence of hwloc, default to map-by slot */
+            ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+#endif
         }
         /* check for oversubscribe directives */
         if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
