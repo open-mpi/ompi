@@ -3,16 +3,16 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -118,7 +118,7 @@ static int snapc_full_global_checkpoint(opal_crs_base_ckpt_options_t *options);
 static int snapc_full_global_notify_checkpoint(orte_jobid_t jobid,
                                                opal_crs_base_ckpt_options_t *options);
 static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
-                                                     int ckpt_state, 
+                                                     int ckpt_state,
                                                      orte_sstore_base_handle_t handle,
                                                      bool quick,
                                                      opal_crs_base_ckpt_options_t *options);
@@ -361,7 +361,7 @@ int global_coord_release_job(orte_jobid_t jobid) {
      * Make sure we are not waiting on a checkpoint to complete
      */
     if( is_orte_checkpoint_connected ) {
-        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
+        if( ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender,
                                                                                 global_snapshot.ss_handle,
                                                                                 ORTE_SNAPC_CKPT_STATE_ERROR)) ) {
             ORTE_ERROR_LOG(ret);
@@ -382,7 +382,7 @@ int global_coord_release_job(orte_jobid_t jobid) {
     }
 
     OBJ_DESTRUCT(&global_snapshot);
-    
+
     return exit_status;
 }
 
@@ -648,7 +648,7 @@ static int global_init_job_structs(void)
 
         mask = ORTE_NS_CMP_JOBID;
 
-        if (OPAL_EQUAL == 
+        if (OPAL_EQUAL ==
                 orte_util_compare_name_fields(mask, &orted_snapshot->process_name, ORTE_PROC_MY_NAME)) {
             global_coord_has_local_children = true;
         }
@@ -1046,7 +1046,7 @@ static void snapc_full_global_cmdline_recv(int status,
             ORTE_ERROR_LOG(ret);
             goto cleanup;
         }
-        
+
     }
     /*
      * Terminate the connection (Not currently implemented)
@@ -1068,7 +1068,7 @@ static void snapc_full_global_cmdline_recv(int status,
         ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
         goto cleanup;
     }
-    
+
  cleanup:
     if( NULL != options ) {
         OBJ_RELEASE(options);
@@ -1144,7 +1144,7 @@ void snapc_full_global_orted_recv(int status,
         case ORTE_SNAPC_FULL_RESTART_PROC_INFO:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Update hostname/pid associations"));
- 
+
             snapc_full_process_restart_proc_info_cmd(sender, buffer);
             break;
 
@@ -1459,7 +1459,7 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
                              "Global) process_request_op(): Starting quiesce (%2d)\n",
                              op_event));
 
-        options = OBJ_NEW(opal_crs_base_ckpt_options_t);        
+        options = OBJ_NEW(opal_crs_base_ckpt_options_t);
         options->inc_prep_only = true;
         if( ORTE_SUCCESS != (ret = snapc_full_global_checkpoint(options) ) ) {
             ORTE_ERROR_LOG(ret);
@@ -1595,7 +1595,7 @@ static int snapc_full_process_orted_update_cmd(orte_process_name_t* sender,
         SNAPC_FULL_SET_TIMER(SNAPC_FULL_TIMER_RUNNING);
 
         if( is_orte_checkpoint_connected &&
-            ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
+            ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender,
                                                                                 global_snapshot.ss_handle,
                                                                                 current_job_ckpt_state)) ) {
             ORTE_ERROR_LOG(ret);
@@ -1627,7 +1627,7 @@ static int snapc_full_process_orted_update_cmd(orte_process_name_t* sender,
                              "Global)    All Processes have been stopped!\n"));
 
         if( is_orte_checkpoint_connected &&
-            ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
+            ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender,
                                                                                 global_snapshot.ss_handle,
                                                                                 current_job_ckpt_state)) ) {
             ORTE_ERROR_LOG(ret);
@@ -1774,7 +1774,7 @@ static int snapc_full_process_orted_update_cmd(orte_process_name_t* sender,
          * Notify the orte-checkpoint command
          */
         if( is_orte_checkpoint_connected &&
-            ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
+            ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender,
                                                                                 global_snapshot.ss_handle,
                                                                                 current_job_ckpt_state)) ) {
             ORTE_ERROR_LOG(ret);
@@ -2039,7 +2039,7 @@ static int snapc_full_global_checkpoint(opal_crs_base_ckpt_options_t *options)
     }
 
  cleanup:
-    return exit_status; 
+    return exit_status;
 }
 
 static int  snapc_full_global_notify_checkpoint(orte_jobid_t jobid,
@@ -2088,7 +2088,7 @@ static int  snapc_full_global_notify_checkpoint(orte_jobid_t jobid,
  * Job/Proc State Set/Get Routines
  **********************************/
 static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
-                                                     int    ckpt_state, 
+                                                     int    ckpt_state,
                                                      orte_sstore_base_handle_t handle,
                                                      bool quick,
                                                      opal_crs_base_ckpt_options_t *options)
@@ -2222,7 +2222,7 @@ int global_coord_job_state_update(orte_jobid_t jobid,
      ************************/
     current_job_ckpt_state = job_ckpt_state;
     if( is_orte_checkpoint_connected &&
-        ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender, 
+        ORTE_SUCCESS != (ret = orte_snapc_base_global_coord_ckpt_update_cmd(&orte_checkpoint_sender,
                                                                             global_snapshot.ss_handle,
                                                                             current_job_ckpt_state)) ) {
         ORTE_ERROR_LOG(ret);
@@ -2654,7 +2654,7 @@ static void snapc_full_report_progress(orte_snapc_full_orted_snapshot_t *orted_s
     perc_done = (total-report_progress_cur_loc_finished)/(total*1.0);
     perc_done = (perc_done-1)*(-100.0);
 
-    if( perc_done >= (report_progress_last_reported_loc_finished + orte_snapc_full_progress_meter) || 
+    if( perc_done >= (report_progress_last_reported_loc_finished + orte_snapc_full_progress_meter) ||
         report_progress_last_reported_loc_finished == 0.0 ) {
         report_progress_last_reported_loc_finished = perc_done;
         opal_output(0, "snapc_full: progress:   %10.2f %c Locally Finished\n",
