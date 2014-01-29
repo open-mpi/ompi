@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -113,7 +113,7 @@ int app_coord_init()
     orte_grpcomm_collective_t *coll;
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
-                         "App) Initalized for Application %s\n", 
+                         "App) Initalized for Application %s\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /*
@@ -141,7 +141,7 @@ int app_coord_init()
     }
 
     OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
-                         "app) Named Pipes (%s) (%s), Signal (%d)", 
+                         "app) Named Pipes (%s) (%s), Signal (%d)",
                          app_comm_pipe_r, app_comm_pipe_w, opal_cr_entry_point_signal));
 
     /*
@@ -563,7 +563,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
         OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Restarting... (%s : %d)\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app_pid));
-        
+
         current_options->term = false;
         /* Do not respond to the non-existent command line tool */
         goto ckpt_cleanup;
@@ -876,7 +876,7 @@ static int snapc_full_app_notify_reopen_files(void)
             return ORTE_ERROR;
         }
     }
-    
+
     app_comm_pipe_r_fd = open(app_comm_pipe_r, O_RDWR);
     if(app_comm_pipe_r_fd < 0) {
         opal_output(mca_snapc_full_component.super.output_handle,
@@ -901,7 +901,7 @@ static int snapc_full_app_notify_reopen_files(void)
             return ORTE_ERROR;
         }
     }
-    
+
     app_comm_pipe_w_fd = open(app_comm_pipe_w, O_WRONLY);
     if(app_comm_pipe_w_fd < 0) {
         opal_output(mca_snapc_full_component.super.output_handle,
@@ -909,7 +909,7 @@ static int snapc_full_app_notify_reopen_files(void)
                     app_comm_pipe_w, app_comm_pipe_w_fd);
         return ORTE_ERROR;
     }
-    
+
     return ORTE_SUCCESS;
 #endif  /* HAVE_MKFIFO */
 }
@@ -1011,7 +1011,7 @@ static int snapc_full_app_ckpt_handshake_start(opal_cr_ckpt_cmd_state_t resp)
     }
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                         "App) %s Received Options... Responding with %d\n", 
+                         "App) %s Received Options... Responding with %d\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)resp));
 
     /*
@@ -1041,18 +1041,18 @@ static int snapc_full_app_ckpt_handshake_start(opal_cr_ckpt_cmd_state_t resp)
      */
     else if( OPAL_CHECKPOINT_CMD_NULL == resp ) {
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                             "App) notify_response: Non-checkpointable application, cannot start (%d)", 
+                             "App) notify_response: Non-checkpointable application, cannot start (%d)",
                              getpid()));
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
     /*
-     * Respond that some error has occurred such that the application is 
+     * Respond that some error has occurred such that the application is
      * not able to be checkpointed
      */
     else if( OPAL_CHECKPOINT_CMD_ERROR == resp ) {
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                             "App) notify_response: Error generated, cannot start (%d)", 
+                             "App) notify_response: Error generated, cannot start (%d)",
                              getpid()));
         ORTE_ERROR_LOG(ret);
         goto cleanup;
@@ -1062,7 +1062,7 @@ static int snapc_full_app_ckpt_handshake_start(opal_cr_ckpt_cmd_state_t resp)
      * Respond signalng that we wish to respond to this request
      */
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                         "App) notify_response: Starting checkpoint request (%d)", 
+                         "App) notify_response: Starting checkpoint request (%d)",
                          getpid()));
 
     /*
@@ -1192,7 +1192,7 @@ int app_coord_ft_event(int state) {
     /******** Restart Recovery ********/
     else if (OPAL_CRS_RESTART == state ) {
         OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
-                             "App) Initalized for Application %s (Restart) (%5d)\n", 
+                             "App) Initalized for Application %s (Restart) (%5d)\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), getpid()));
 
         /*

@@ -3,16 +3,16 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -297,7 +297,7 @@ int local_coord_release_job(orte_jobid_t jobid)
             item != opal_list_get_end(&(local_global_snapshot.local_snapshots));
             item  = opal_list_get_next(item) ) {
             vpid_snapshot = (orte_snapc_full_app_snapshot_t*)item;
-            
+
             if(ORTE_SNAPC_CKPT_STATE_NONE      != vpid_snapshot->super.state &&
                ORTE_SNAPC_CKPT_STATE_ERROR     != vpid_snapshot->super.state &&
                ORTE_SNAPC_CKPT_STATE_ESTABLISHED  != vpid_snapshot->super.state &&
@@ -351,7 +351,7 @@ static int snapc_full_local_start_hnp_listener(void)
     if (snapc_local_hnp_recv_issued ) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Local) Startup Coordinator Channel"));
 
@@ -733,7 +733,7 @@ void snapc_full_local_hnp_cmd_recv(int status,
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
-    
+
     switch (command) {
         case ORTE_SNAPC_FULL_UPDATE_JOB_STATE_QUICK_CMD:
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
@@ -902,7 +902,7 @@ int local_coord_job_state_update(orte_jobid_t jobid,
 
     /*
      * Update the vpid structure if we need to.
-     * Really only need to if we don't have valid information (PID) 
+     * Really only need to if we don't have valid information (PID)
      * for the application.
      */
     if( ORTE_SUCCESS != (ret = snapc_full_local_get_vpids() ) ) {
@@ -988,7 +988,7 @@ int local_coord_job_state_update(orte_jobid_t jobid,
     else {
         ;
     }
-    
+
  cleanup:
     if( NULL != state_str ) {
         free(state_str);
@@ -1047,7 +1047,7 @@ static int local_coord_job_state_update_finished_local_vpid(orte_snapc_full_app_
 
     if( ORTE_SUCCESS != (ret = snapc_full_local_end_ckpt_handshake(vpid_snapshot) ) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to finish the handshake with peer %s. %d\n", 
+                    "Local) Error: Unable to finish the handshake with peer %s. %d\n",
                     ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
         ORTE_ERROR_LOG(ORTE_ERROR);
         return ORTE_ERROR;
@@ -1086,7 +1086,7 @@ static int snapc_full_local_start_checkpoint_all(int ckpt_state,
             ret = snapc_full_local_get_vpids();
             if( ORTE_SUCCESS != ret || vpid_snapshot->process_pid == 0 ) {
                 opal_output( mca_snapc_full_component.super.output_handle,
-                             "local) Cannot checkpoint an invalid pid (%d)\n", 
+                             "local) Cannot checkpoint an invalid pid (%d)\n",
                              vpid_snapshot->process_pid);
                 ORTE_ERROR_LOG(ORTE_ERROR);
                 exit_status = ORTE_ERROR;
@@ -1121,7 +1121,7 @@ static int snapc_full_local_start_checkpoint_all(int ckpt_state,
          */
         if( 0 != (ret = kill(vpid_snapshot->process_pid, opal_cr_entry_point_signal) ) ) {
             opal_output(mca_snapc_full_component.super.output_handle,
-                        "local) Error: Failed to signal process %d with signal %d. %d\n", 
+                        "local) Error: Failed to signal process %d with signal %d. %d\n",
                         (int) vpid_snapshot->process_pid,
                         opal_cr_entry_point_signal,
                         ret);
@@ -1142,7 +1142,7 @@ static int snapc_full_local_start_checkpoint_all(int ckpt_state,
 
         if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_open_comm(vpid_snapshot) ) ) {
             opal_output(mca_snapc_full_component.super.output_handle,
-                        "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
+                        "local) Error: Unable to initiate the handshake with peer %s. %d\n",
                         ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
             ORTE_ERROR_LOG(ORTE_ERROR);
             exit_status = ORTE_ERROR;
@@ -1164,7 +1164,7 @@ static int snapc_full_local_start_checkpoint_all(int ckpt_state,
 
         if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_handshake_opts(vpid_snapshot, options) ) ) {
             opal_output(mca_snapc_full_component.super.output_handle,
-                        "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
+                        "local) Error: Unable to initiate the handshake with peer %s. %d\n",
                         ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
             ORTE_ERROR_LOG(ORTE_ERROR);
             exit_status = ORTE_ERROR;
@@ -1184,7 +1184,7 @@ static int snapc_full_local_start_checkpoint_all(int ckpt_state,
 
         if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_handshake(vpid_snapshot) ) ) {
             opal_output(mca_snapc_full_component.super.output_handle,
-                        "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
+                        "local) Error: Unable to initiate the handshake with peer %s. %d\n",
                         ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
             ORTE_ERROR_LOG(ORTE_ERROR);
             exit_status = ORTE_ERROR;
@@ -1405,15 +1405,15 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
         if( max_wait_time > 0 &&
             (s_time == (max_wait_time/2) ||
              s_time == (max_wait_time/4) ||
-             s_time == (3*max_wait_time/4) ) ) { 
+             s_time == (3*max_wait_time/4) ) ) {
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "WARNING: Pid (%d) not responding [%d / %d]",
                                  vpid_snapshot->process_pid, s_time, max_wait_time));
         }
     }
 
-    if( max_wait_time > 0 && s_time == max_wait_time ) { 
-        /* The file doesn't exist, 
+    if( max_wait_time > 0 && s_time == max_wait_time ) {
+        /* The file doesn't exist,
          * This means that the process didn't open up a named pipe for us
          * to access their checkpoint notification routine. Therefore,
          * the application either:
@@ -1442,7 +1442,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
     vpid_snapshot->comm_pipe_w_fd = open(vpid_snapshot->comm_pipe_w, O_WRONLY);
     if(vpid_snapshot->comm_pipe_w_fd < 0) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "local) Error: Unable to open name pipe (%s). %d\n", 
+                    "local) Error: Unable to open name pipe (%s). %d\n",
                     vpid_snapshot->comm_pipe_w, vpid_snapshot->comm_pipe_w_fd);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1451,7 +1451,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
     vpid_snapshot->comm_pipe_r_fd = open(vpid_snapshot->comm_pipe_r, O_RDONLY);
     if(vpid_snapshot->comm_pipe_r_fd < 0) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "local) Error: Unable to open name pipe (%s). %d\n", 
+                    "local) Error: Unable to open name pipe (%s). %d\n",
                     vpid_snapshot->comm_pipe_r, vpid_snapshot->comm_pipe_r_fd);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1494,7 +1494,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(currently_migrating);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write migrating (%d) to named pipe (%s), %d\n", 
+                    "Local) Error: Unable to write migrating (%d) to named pipe (%s), %d\n",
                     vpid_snapshot->migrating, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1503,7 +1503,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(vpid_snapshot->migrating);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write migrating (%d) to named pipe (%s), %d\n", 
+                    "Local) Error: Unable to write migrating (%d) to named pipe (%s), %d\n",
                     vpid_snapshot->migrating, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1512,7 +1512,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(options->term);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write term (%d) to named pipe (%s), %d\n", 
+                    "Local) Error: Unable to write term (%d) to named pipe (%s), %d\n",
                     options->term, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1521,7 +1521,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(options->stop);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write stop (%d) to named pipe (%s), %d\n", 
+                    "Local) Error: Unable to write stop (%d) to named pipe (%s), %d\n",
                     options->stop, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1530,7 +1530,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(options->inc_prep_only);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write inc_prep_only (%d) to named pipe (%s), %d\n", 
+                    "Local) Error: Unable to write inc_prep_only (%d) to named pipe (%s), %d\n",
                     options->stop, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1539,7 +1539,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(options->inc_recover_only);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write inc_recover_only (%d) to named pipe (%s), %d\n", 
+                    "Local) Error: Unable to write inc_recover_only (%d) to named pipe (%s), %d\n",
                     options->stop, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1549,7 +1549,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(options->attach_debugger);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "local) Error: Unable to write attach_debugger (%d) to named pipe (%s), %d\n", 
+                    "local) Error: Unable to write attach_debugger (%d) to named pipe (%s), %d\n",
                     options->attach_debugger, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1558,7 +1558,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     opt_rep = (int)(options->detach_debugger);
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &opt_rep, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "local) Error: Unable to write detach_debugger (%d) to named pipe (%s), %d\n", 
+                    "local) Error: Unable to write detach_debugger (%d) to named pipe (%s), %d\n",
                     options->detach_debugger, vpid_snapshot->comm_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1571,7 +1571,7 @@ static int snapc_full_local_start_ckpt_handshake_opts(orte_snapc_full_app_snapsh
     if( sizeof(orte_sstore_base_handle_t) != (ret = write(vpid_snapshot->comm_pipe_w_fd,
                                                           &(local_global_snapshot.ss_handle), sizeof(orte_sstore_base_handle_t) )) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write sstore handle (%d) to named pipe (%s). %d\n", 
+                    "Local) Error: Unable to write sstore handle (%d) to named pipe (%s). %d\n",
                     (int)(local_global_snapshot.ss_handle), vpid_snapshot->comm_pipe_w, ret);
         ORTE_ERROR_LOG(OPAL_ERROR);
         exit_status = OPAL_ERROR;
@@ -1592,7 +1592,7 @@ static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_app_snapshot_t 
      */
     if( sizeof(int) != (ret = read(vpid_snapshot->comm_pipe_r_fd, &value, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to read length from named pipe (%s). %d\n", 
+                    "Local) Error: Unable to read length from named pipe (%s). %d\n",
                     vpid_snapshot->comm_pipe_r, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -1601,7 +1601,7 @@ static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_app_snapshot_t 
     /* Check the response to make sure we can checkpoint this process */
     if( OPAL_CHECKPOINT_CMD_IN_PROGRESS == value ) {
         orte_show_help("help-opal-checkpoint.txt",
-                       "ckpt:in_progress", 
+                       "ckpt:in_progress",
                        true,
                        vpid_snapshot->process_pid);
         exit_status = OPAL_ERROR;
@@ -1609,7 +1609,7 @@ static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_app_snapshot_t 
     }
     else if( OPAL_CHECKPOINT_CMD_NULL == value ) {
         orte_show_help("help-opal-checkpoint.txt",
-                       "ckpt:req_null", 
+                       "ckpt:req_null",
                        true,
                        vpid_snapshot->process_pid);
         exit_status = OPAL_ERROR;
@@ -1617,7 +1617,7 @@ static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_app_snapshot_t 
     }
     else if ( OPAL_CHECKPOINT_CMD_ERROR == value ) {
         orte_show_help("help-opal-checkpoint.txt",
-                       "ckpt:req_error", 
+                       "ckpt:req_error",
                        true,
                        vpid_snapshot->process_pid);
         exit_status = OPAL_ERROR;
@@ -1637,7 +1637,7 @@ static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_app_snapshot_t 
      */
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &value, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to write to named pipe (%s). %d\n", 
+                    "Local) Error: Unable to write to named pipe (%s). %d\n",
                     vpid_snapshot->comm_pipe_w, ret);
         ORTE_ERROR_LOG(OPAL_ERROR);
         exit_status = OPAL_ERROR;
@@ -1669,7 +1669,7 @@ static int snapc_full_local_end_ckpt_handshake(orte_snapc_full_app_snapshot_t *v
      */
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &last_cmd, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
-                    "Local) Error: Unable to release process %s (%d)\n", 
+                    "Local) Error: Unable to release process %s (%d)\n",
                     ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -2032,7 +2032,7 @@ static orte_snapc_full_app_snapshot_t *find_vpid_snapshot(orte_process_name_t *n
 
         mask = ORTE_NS_CMP_ALL;
 
-        if (OPAL_EQUAL == 
+        if (OPAL_EQUAL ==
                 orte_util_compare_name_fields(mask, name, &vpid_snapshot->super.process_name)) {
             return vpid_snapshot;
         }
