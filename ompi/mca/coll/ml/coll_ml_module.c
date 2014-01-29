@@ -951,7 +951,7 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
      *    the subcommunicator.
      *
      *  The information needed for each rank in the subgroup are the
-     *    group indicies for which it is a proxy.
+     *    group indices for which it is a proxy.
      */
     /*
      * fill in the vertecies in the hierarchichal communications graph

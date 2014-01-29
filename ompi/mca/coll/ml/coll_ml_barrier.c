@@ -29,7 +29,7 @@ static void mca_coll_ml_barrier_task_setup(
 {
     task_status->rt_num_dependencies = func->num_dependencies;
     task_status->rt_num_dependent_tasks = func->num_dependent_tasks;
-    task_status->rt_dependent_task_indecies = func->dependent_task_indecies;
+    task_status->rt_dependent_task_indices = func->dependent_task_indices;
 }
 
 static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,

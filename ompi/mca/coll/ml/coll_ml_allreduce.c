@@ -394,7 +394,7 @@ int parallel_allreduce_start(void *sbuf, void *rbuf, int count,
 
     /* Fill in the function arguments */
     coll_op->variable_fn_params.sequence_num =
-        OPAL_THREAD_ADD64(&(ml_module->collective_sequence_num), 1);
+        OPAL_THREAD_ADD32(&(ml_module->collective_sequence_num), 1);
     coll_op->sequential_routine.current_active_bcol_fn = 0;
     coll_op->variable_fn_params.dtype = dtype;
     coll_op->variable_fn_params.op = op;

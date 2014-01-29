@@ -434,7 +434,7 @@ int parallel_reduce_start (void *sbuf, void *rbuf, int count,
     coll_op->global_root = root;
 
     coll_op->variable_fn_params.sequence_num =
-        OPAL_THREAD_ADD64(&(ml_module->collective_sequence_num), 1);
+        OPAL_THREAD_ADD32(&(ml_module->collective_sequence_num), 1);
     coll_op->sequential_routine.current_active_bcol_fn = 0;
     /* set the task setup callback  */
     coll_op->sequential_routine.seq_task_setup = mca_coll_ml_reduce_task_setup;

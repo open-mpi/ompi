@@ -99,7 +99,7 @@ struct mca_coll_ml_compound_functions_t {
      * collective operation, with these indecies referencing elements
      * in this array.
      */
-    int *dependent_task_indecies;
+    int *dependent_task_indices;
 
 };
 
@@ -191,7 +191,7 @@ struct mca_coll_ml_task_status_t{
     /* ***************************************************************
      * Pasha:
      * I'm adding to the status: num_dependencies, num_dependent_tasks and
-     * dependent_task_indecies. The information originally resided on mca_coll_ml_compound_functions_t.
+     * dependent_task_indices. The information originally resided on mca_coll_ml_compound_functions_t.
      * For collective operation with static nature it is not problem.
      * But for Bcast operation, where run time parameters, like root, actually
      * define the dependency. rt prefix mean run-time.
@@ -213,7 +213,7 @@ struct mca_coll_ml_task_status_t{
      * collective operation, with these indecies referencing elements
      * in this array.
      */
-    int *rt_dependent_task_indecies;
+    int *rt_dependent_task_indices;
     /*
      *
      * ***************************************************************/

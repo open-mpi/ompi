@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,13 +31,13 @@ static void mca_coll_ml_static_reduce_non_root(mca_coll_ml_task_status_t *task_s
     if (task_status->ml_coll_operation->variable_fn_params.root_route->level == index) {
         task_status->rt_num_dependencies = func->num_dependencies;
         task_status->rt_num_dependent_tasks = 0;
-        task_status->rt_dependent_task_indecies = NULL;
+        task_status->rt_dependent_task_indices = NULL;
         task_status->ml_coll_operation->variable_fn_params.root =
                                 task_status->ml_coll_operation->variable_fn_params.root_route->rank;
     } else {
         task_status->rt_num_dependencies = 0;
         task_status->rt_num_dependent_tasks = 1;
-        task_status->rt_dependent_task_indecies = task_status->ml_coll_operation->variable_fn_params.root_route->level;
+        task_status->rt_dependent_task_indices = &task_status->ml_coll_operation->variable_fn_params.root_route->level;
     }
 
 }
@@ -44,7 +47,7 @@ static void mca_coll_ml_static_reduce_root(mca_coll_ml_task_status_t *task_statu
 {
         task_status->rt_num_dependencies = func->num_dependencies;
         task_status->rt_num_dependent_tasks = 0;
-        task_status->rt_dependent_task_indecies = NULL;
+        task_status->rt_dependent_task_indices = NULL;
 }
 
 /*
