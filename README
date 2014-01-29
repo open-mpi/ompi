@@ -1443,22 +1443,6 @@ environment variable or other operating system mechanism).
              CC=icc F77=ifort FC=ifort CXX=icpc \
              FFLAGS=i8 FCFLAGS=-i8 ...
 
-* A second bug was discovered after v1.7.3 was released that causes
-  ABI to be broken for gfortran users who are using the "mpi" Fortran
-  module.  In short, for versions of gfortran that do not support
-  "ignore TKR" functionality (i.e., gfortran <=v4.8), Open MPI was
-  providing interfaces for MPI subroutines with choice buffers (e.g.,
-  MPI_Send) in the Fortran mpi module.  The MPI-3.0 specification
-  expressly states not to do this.  To be consistent with MPI-3, Open
-  MPI v1.7.4 therefore removed all MPI interfaces with choice buffers
-  from the no-ignore-TKR version of the Fortran mpi module, even
-  though this breaks ABI between v1.7.3 and v1.7.4.  Affected users
-  should be able to recompile their MPI applications with v1.7.4 with
-  no changes.
-
-  Other Fortran compilers that provide "ignore TKR" functionality are
-  not affected by this change.
-
 Open MPI reserves the right to break ABI compatibility at new feature
 release series.  For example, the same MPI application from above
 (linked against Open MPI v1.7.2 shared libraries) will likely *not*
