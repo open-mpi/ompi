@@ -163,3 +163,30 @@ opal_finalize(void)
 
     return OPAL_SUCCESS;
 }
+
+
+void opal_finalize_test(void)
+{
+    /* Clear out all the registered MCA params */
+    mca_base_var_finalize();
+
+    (void) mca_base_framework_close(&opal_installdirs_base_framework);
+
+    /* finalize the mca */
+    mca_base_close();
+
+    /* finalize the show_help system */
+    opal_show_help_finalize();
+
+    /* finalize the output system.  This has to come *after* the
+       malloc code, as the malloc code needs to call into this, but
+       the malloc code turning off doesn't affect opal_output that
+       much */
+    opal_output_finalize();
+    
+    /* close the dss */
+    opal_dss_close();
+
+    /* finalize the class/object system */
+    opal_class_finalize();
+}
