@@ -57,6 +57,13 @@ AC_CONFIG_MACRO_DIR(config)
 # because it twiddles random bits of autoconf
 OMPI_LOAD_PLATFORM
 
+# if orcm is present, mark its presence so corresponding
+# components know they should build, and load any config file
+m4_ifdef([project_orcm],
+         [orcm_is_present="yes"
+          ORCM_LOAD_CONFIGURATION],
+         [orcm_is_present="no"])
+
 #
 # Start it up
 #
@@ -99,13 +106,6 @@ AM_SILENT_RULES([yes])
 
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
-
-# Set up project specific AM_CONDITIONALs
-AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [true], [false]))
-AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [true], [false]))
-AM_CONDITIONAL([PROJECT_OSHMEM], m4_ifdef([project_oshmem], [true], [false]))
-AM_CONDITIONAL([PROJECT_ORCM], m4_ifdef([project_orcm], [true], [false]))
-
 
 ompi_show_subtitle "Checking versions"
 
@@ -271,6 +271,13 @@ m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
 m4_ifdef([project_orcm], [ORCM_CONFIGURE_OPTIONS])
+
+# Set up project specific AM_CONDITIONALs
+AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi] && test "$enable_ompi" != "no", [true], [false]))
+AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte] && test "$enable_orte" != "no", [true], [false]))
+AM_CONDITIONAL([PROJECT_OSHMEM], m4_ifdef([project_oshmem] && test "$enable_oshmem" != "no", [true], [false]))
+AM_CONDITIONAL([PROJECT_ORCM], m4_ifdef([project_orcm] && test "$enable_orcm" != "no", [true], [false]))
+
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
