@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,3 +32,13 @@ in the environment. Returned value %d instead of ORTE_SUCCESS.
 Open RTE was unable to initialize properly.  The error occured while
 attempting to %s.  Returned value %d instead of ORTE_SUCCESS.
 
+#
+[orted:cannot-bind]
+A request was made to bind the Open RTE daemons to
+a core that does not exist on this node:
+
+  node:  %s
+  cores: %s
+
+The MCA param directing this behavior is orte_daemon_cores.
+Please correct the request and try again.

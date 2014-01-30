@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -214,6 +214,7 @@ bool orte_report_silent_errors = false;
    param */
 bool orte_in_parallel_debugger = false;
 
+char *orte_daemon_cores = NULL;
 
 int orte_dt_init(void)
 {

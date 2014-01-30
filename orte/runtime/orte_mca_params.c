@@ -753,5 +753,14 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_soft_locations);
 
+    /* allow specification of the cores to be used by daemons */
+    orte_daemon_cores = NULL;
+    (void) mca_base_var_register ("orte", "orte", NULL, "daemon_cores",
+                                  "Restrict the ORTE daemons (including mpirun) to operate on the specified cores",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &orte_daemon_cores);
+
+
     return ORTE_SUCCESS;
 }

@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,6 +70,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/parse_options.h"
 #include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -368,6 +369,59 @@ int orte_daemon(int argc, char *argv[])
      * we continue to have a reference count on them. So we have to finalize them twice...
      */
     opal_finalize_util();
+
+#if OPAL_HAVE_HWLOC
+    /* bind ourselves if so directed */
+    if (NULL != orte_daemon_cores) {
+        char **cores=NULL, tmp[128];
+        hwloc_obj_t pu;
+        hwloc_cpuset_t ours, pucpus, res;
+        int core;
+
+        /* could be a collection of comma-delimited ranges, so
+         * use our handy utility to parse it
+         */
+        orte_util_parse_range_options(orte_daemon_cores, &cores);
+        if (NULL != cores) {
+            ours = hwloc_bitmap_alloc();
+            hwloc_bitmap_zero(ours);
+            pucpus = hwloc_bitmap_alloc();
+            res = hwloc_bitmap_alloc();
+            for (i=0; NULL != cores[i]; i++) {
+                core = strtoul(cores[i], NULL, 10);
+                if (NULL == (pu = opal_hwloc_base_get_pu(opal_hwloc_topology, core))) {
+                    /* turn off the show help forwarding as we won't
+                     * be able to cycle the event library to send
+                     */
+                    orte_show_help_finalize();
+                    /* the message will now come out locally */
+                    orte_show_help("help-orted.txt", "orted:cannot-bind",
+                                   true, orte_process_info.nodename,
+                                   orte_daemon_cores);
+                    ret = ORTE_ERR_NOT_SUPPORTED;
+                    goto DONE;
+                }
+                hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                hwloc_bitmap_or(res, ours, pucpus);
+                hwloc_bitmap_copy(ours, res);
+            }
+            /* if the result is all zeros, then don't bind */
+            if (!hwloc_bitmap_iszero(ours)) {
+                (void)hwloc_set_cpubind(opal_hwloc_topology, ours, 0);
+                if (opal_hwloc_report_bindings) {
+                    opal_hwloc_base_cset2mapstr(tmp, sizeof(tmp), ours);
+                    opal_output(0, "Daemon %s is bound to cores %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
+                }
+            }
+            /* cleanup */
+            hwloc_bitmap_free(ours);
+            hwloc_bitmap_free(pucpus);
+            hwloc_bitmap_free(res);
+            opal_argv_free(cores);
+        }
+    }
+#endif
 
     if ((int)ORTE_VPID_INVALID != orted_globals.fail) {
         orted_globals.abort=false;
@@ -807,6 +861,7 @@ int orte_daemon(int argc, char *argv[])
     if (orte_debug_daemons_flag) {
         opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
+    ret = ORTE_SUCCESS;
 
     /* loop the event lib until an exit event is detected */
     while (orte_event_base_active) {
@@ -818,7 +873,7 @@ int orte_daemon(int argc, char *argv[])
 
  DONE:
     /* update the exit status, in case it wasn't done */
-    ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
+    ORTE_UPDATE_EXIT_STATUS(ret);
 
     /* cleanup and leave */
     orte_finalize();
