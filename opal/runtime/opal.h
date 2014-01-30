@@ -83,6 +83,21 @@ OPAL_DECLSPEC int opal_init_util(int* pargc, char*** pargv);
 OPAL_DECLSPEC int opal_finalize_util(void);
 
 /**
+ * Initialize a very thin OPAL layer for test purposes
+ * @retval OPAL_SUCCESS Upon success.
+ * @retval OPAL_ERROR Upon failure.
+ */
+OPAL_DECLSPEC int opal_init_test(void);
+
+/**
+ * Finalize the OPAL layer, excluding the MCA system. 
+ *
+ * @retval OPAL_SUCCESS Upon success.
+ * @retval OPAL_ERROR Upon failure.
+ */
+OPAL_DECLSPEC void opal_finalize_test(void);
+
+/**
  * Internal function.  Do not call.
  */
 OPAL_DECLSPEC int opal_register_params(void);

@@ -54,8 +54,10 @@ int main(int argc, char* argv[])
      * process them.
      */
     mca_base_cmd_line_process_args(&cmd_line, &environ, &environ);
-    if (0 > (rc = opal_init(&argc, &argv))) {
-        fprintf(stderr, "opal_db: couldn't init opal - error code %d\n", rc);
+
+    /* init the OPAL framework, but only the test-required level */
+    if (0 > (rc = opal_init_test())) {
+        fprintf(stderr, "opal_db: couldn't init opal test - error code %d\n", rc);
         return rc;
     }
     
@@ -176,7 +178,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    mca_base_framework_close(&opal_db_base_framework);
+
     fprintf(stderr, "%s: SUCCESS\n", argv[0]);
-    opal_finalize();
+    opal_finalize_test();
     return 0;
 }

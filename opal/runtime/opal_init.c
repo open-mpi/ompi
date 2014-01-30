@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -497,3 +497,86 @@ opal_init(int* pargc, char*** pargv)
     return ret;
 }
 
+int opal_init_test(void)
+{
+    int ret;
+    char *error;
+
+    /* initialize the memory allocator */
+    opal_malloc_init();
+
+    /* initialize the output system */
+    opal_output_init();
+
+    /* initialize install dirs code */
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_installdirs_base_framework, 0))) {
+        fprintf(stderr, "opal_installdirs_base_open() failed -- process will likely abort (%s:%d, returned %d instead of OPAL_SUCCESS)\n",
+                __FILE__, __LINE__, ret);
+        return ret;
+    }
+    
+    /* initialize the help system */
+    opal_show_help_init();
+
+    /* register handler for errnum -> string converstion */
+    if (OPAL_SUCCESS != 
+        (ret = opal_error_register("OPAL",
+                                   OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
+        error = "opal_error_register";
+        goto return_error;
+    }
+
+    /* keyval lex-based parser */
+    if (OPAL_SUCCESS != (ret = opal_util_keyval_parse_init())) {
+        error = "opal_util_keyval_parse_init";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_net_init())) {
+        error = "opal_net_init";
+        goto return_error;
+    }
+
+    /* Setup the parameter system */
+    if (OPAL_SUCCESS != (ret = mca_base_var_init())) {
+        error = "mca_base_var_init";
+        goto return_error;
+    }
+
+    /* register params for opal */
+    if (OPAL_SUCCESS != (ret = opal_register_params())) {
+        error = "opal_register_params";
+        goto return_error;
+    }
+
+    /* pretty-print stack handlers */
+    if (OPAL_SUCCESS != (ret = opal_util_register_stackhandlers())) {
+        error = "opal_util_register_stackhandlers";
+        goto return_error;
+    }
+
+    /* Initialize the data storage service. */
+    if (OPAL_SUCCESS != (ret = opal_dss_open())) {
+        error = "opal_dss_open";
+        goto return_error;
+    }
+
+    /* initialize the mca */
+    if (OPAL_SUCCESS != (ret = mca_base_open())) {
+        error = "mca_base_open";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = mca_base_framework_register(&opal_event_base_framework, 0))) {
+        error = "opal_event_register";
+        goto return_error;
+    }
+
+    return OPAL_SUCCESS;
+
+ return_error:
+    opal_show_help( "help-opal-runtime.txt",
+                    "opal_init:startup:internal-failure", true,
+                    error, ret );
+    return ret;
+}
