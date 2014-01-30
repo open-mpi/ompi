@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -175,7 +175,7 @@ static int create_listen(void)
      * port in the range.  Otherwise, tcp_port_min will be 0, which
      * means "pick any port"
      */
-    if (ORTE_PROC_IS_DAEMON) {
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_AGGREGATOR) {
         if (NULL != mca_oob_tcp_component.tcp_static_ports) {
             /* if static ports were provided, take the
              * first entry in the list

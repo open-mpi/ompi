@@ -145,7 +145,7 @@ static void sample(void)
     }
 
     /* send heartbeat */
-    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
                                                       ORTE_RML_TAG_HEARTBEAT,
                                                       orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
