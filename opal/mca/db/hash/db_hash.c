@@ -240,6 +240,14 @@ static int store(const opal_identifier_t *uid,
             kv->data.string = NULL;
         }
         break;
+    case OPAL_UINT64:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_UINT64;
+        kv->data.uint64 = *(uint64_t*)(data);
+        break;
     case OPAL_UINT32:
         if (NULL == data) {
             OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
@@ -271,6 +279,14 @@ static int store(const opal_identifier_t *uid,
         }
         kv->type = OPAL_UINT;
         kv->data.uint = *(unsigned int*)(data);
+        break;
+    case OPAL_FLOAT:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_FLOAT;
+        kv->data.fval = *(float*)(data);
         break;
     case OPAL_BYTE_OBJECT:
         kv->type = OPAL_BYTE_OBJECT;
@@ -335,6 +351,7 @@ static int store_pointer(const opal_identifier_t *uid,
         opal_list_remove_item(&proc_data->data, &k2->super);
         OBJ_RELEASE(k2);
     }
+    kv->scope |= OPAL_SCOPE_REFER;  // mark that this value was stored by reference and doesn't belong to us
     opal_list_append(&proc_data->data, &kv->super);
     return OPAL_SUCCESS;
 }
@@ -390,6 +407,11 @@ static int fetch(const opal_identifier_t *uid,
         } else {
             *data = NULL;
         }
+    case OPAL_UINT64:
+        if (OPAL_UINT64 != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint64, 8);
         break;
     case OPAL_UINT32:
         if (OPAL_UINT32 != kv->type) {
@@ -414,6 +436,12 @@ static int fetch(const opal_identifier_t *uid,
             return OPAL_ERR_TYPE_MISMATCH;
         }
         memcpy(*data, &kv->data.uint, sizeof(unsigned int));
+        break;
+    case OPAL_FLOAT:
+        if (OPAL_FLOAT != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.fval, sizeof(float));
         break;
     case OPAL_BYTE_OBJECT:
         if (OPAL_BYTE_OBJECT != kv->type) {
@@ -478,6 +506,12 @@ static int fetch_pointer(const opal_identifier_t *uid,
         }
         *data = kv->data.string;
         break;
+    case OPAL_UINT64:
+        if (OPAL_UINT64 != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        *data = &kv->data.uint64;
+        break;
     case OPAL_UINT32:
         if (OPAL_UINT32 != kv->type) {
             return OPAL_ERR_TYPE_MISMATCH;
@@ -507,6 +541,12 @@ static int fetch_pointer(const opal_identifier_t *uid,
             return OPAL_ERR_TYPE_MISMATCH;
         }
         *data = &kv->data.bo;
+        break;
+    case OPAL_FLOAT:
+        if (OPAL_FLOAT != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        *data = &kv->data.fval;
         break;
     default:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
@@ -619,7 +659,10 @@ static int remove_data(const opal_identifier_t *uid, const char *key)
          kv != (opal_value_t*) opal_list_get_end(&proc_data->data);
          kv = (opal_value_t*) opal_list_get_next(kv)) {
         if (0 == strcmp(key, kv->key)) {
-            OBJ_RELEASE(kv);
+            opal_list_remove_item(&proc_data->data, &kv->super);
+            if (!(kv->scope & OPAL_SCOPE_REFER)) {
+                OBJ_RELEASE(kv);
+            }
             break;
         }
     }
