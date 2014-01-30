@@ -880,10 +880,8 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
                     OPAL_ASM_SUPPORT_64BIT=0
                     ompi_cv_asm_arch="SPARC"
 AC_MSG_WARN([Sparc v8 target is not supported in this release of Open MPI.])
-AC_MSG_WARN([You must specify the target architecture v8plus])
-AC_MSG_WARN([(cc: -xarch=v8plus, gcc: -mcpu=v9) for CFLAGS, CXXFLAGS,])
-AC_MSG_WARN([FFLAGS, and FCFLAGS to compile Open MPI in 32 bit mode on])
-AC_MSG_WARN([Sparc processors])
+AC_MSG_WARN([You must specify the target architecture v8plus to compile])
+AC_MSG_WARN([Open MPI in 32 bit mode on Sparc processors (see the README).])
 AC_MSG_ERROR([Can not continue.])
                 else
                     OPAL_ASM_SUPPORT_64BIT=1
