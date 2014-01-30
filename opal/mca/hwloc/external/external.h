@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -8,7 +8,7 @@
  * $HEADER$
  *
  * When this component is used, this file is included in the rest of
- * the OPAL/ORTE/OMPI code base via opal/mca/event/event.h.  As such,
+ * the OPAL/ORTE/OMPI code base via opal/mca/hwloc/hwloc.h.  As such,
  * this header represents the public interface to this static component.
  */
 
