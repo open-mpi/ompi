@@ -14,6 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -631,6 +632,11 @@ static void component_shutdown(void)
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    if (ORTE_PROC_IS_HNP && mca_oob_tcp_component.listen_thread_active) {
+        mca_oob_tcp_component.listen_thread_active = 0;
+        opal_thread_join(&mca_oob_tcp_component.listen_thread, NULL);
+    }
 
     while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.listeners))) {
         OBJ_RELEASE(item);
