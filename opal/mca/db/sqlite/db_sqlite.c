@@ -56,6 +56,7 @@ opal_db_base_module_t opal_db_sqlite_module = {
     NULL,
     NULL,
     NULL,
+    NULL,
     add_log
 };
 

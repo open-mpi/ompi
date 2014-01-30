@@ -28,7 +28,10 @@ char *opal_db_postgres_file;
 
 static int postgres_component_open(void);
 static int postgres_component_close(void);
-static int postgres_component_query(mca_base_module_t **module, int *priority);
+static int postgres_component_query(opal_db_base_module_t **module,
+                                    int *store_priority,
+                                    int *fetch_priority,
+                                    bool restrict_local);
 static int postgres_component_register(void);
 
 /*
@@ -49,13 +52,14 @@ opal_db_postgres_component_t mca_db_postgres_component = {
             /* Component open and close functions */
             postgres_component_open,
             postgres_component_close,
-            postgres_component_query,
+            NULL,
             postgres_component_register
         },
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        },
+        postgres_component_query
     }
 };
 
@@ -66,19 +70,24 @@ static int postgres_component_open(void)
 }
 
 
-static int postgres_component_query(mca_base_module_t **module, int *priority)
+static int postgres_component_query(opal_db_base_module_t **module,
+                                    int *store_priority,
+                                    int *fetch_priority,
+                                    bool restrict_local)
 {
 
     if (NULL != mca_db_postgres_component.dbname &&
         NULL != mca_db_postgres_component.table &&
         NULL != mca_db_postgres_component.user &&
         NULL != mca_db_postgres_component.pguri) {
-        *priority = 3;  /* ahead of sqlite3 */
-        *module = (mca_base_module_t*)&opal_db_postgres_module;
+        *store_priority = 3; /* ahead of sqlite3 */
+        *fetch_priority = 3;
+        *module = &opal_db_postgres_module;
         return OPAL_SUCCESS;
     }
 
-    *priority = 0;
+    *store_priority = 0;
+    *fetch_priority = 0;
     *module = NULL;
     return OPAL_ERROR;
 }
