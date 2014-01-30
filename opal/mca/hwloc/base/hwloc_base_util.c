@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,7 +48,7 @@
  * only find PUs (!).  On such platforms, then do the same calculation
  * but with PUs instead of COREs.
  */
-static hwloc_obj_t get_pu(hwloc_topology_t topo,  int lid)
+hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,  int lid)
 {
     hwloc_obj_type_t obj_type = HWLOC_OBJ_CORE;
     hwloc_obj_t obj;
@@ -130,7 +130,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
             case 1:
                 /* only one cpu given - get that object */
                 cpu = strtoul(range[0], NULL, 10);
-                if (NULL == (pu = get_pu(topo, cpu))) {
+                if (NULL == (pu = opal_hwloc_base_get_pu(topo, cpu))) {
                     opal_argv_free(ranges);
                     opal_argv_free(range);
                     return OPAL_ERROR;
@@ -144,7 +144,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                 start = strtoul(range[0], NULL, 10);
                 end = strtoul(range[1], NULL, 10);
                 for (cpu=start; cpu <= end; cpu++) {
-                    if (NULL == (pu = get_pu(topo, cpu))) {
+                    if (NULL == (pu = opal_hwloc_base_get_pu(topo, cpu))) {
                         opal_argv_free(ranges);
                         opal_argv_free(range);
                         hwloc_bitmap_free(avail);
@@ -1265,7 +1265,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                 for (j=0; NULL != list[j]; j++) {
                     core_id = atoi(list[j]);
                     /* find the specified logical available cpu */
-                    if (NULL == (pu = get_pu(topo, core_id))) {
+                    if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id))) {
                         opal_argv_free(range);
                         opal_argv_free(item);
                         return OPAL_ERROR;
@@ -1283,7 +1283,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                 upper_range = atoi(range[1]);
                 for (core_id=lower_range; core_id <= upper_range; core_id++) {
                     /* find the specified logical available cpu */
-                    if (NULL == (pu = get_pu(topo, core_id))) {
+                    if (NULL == (pu = opal_hwloc_base_get_pu(topo, core_id))) {
                         opal_argv_free(range);
                         opal_argv_free(item);
                         return OPAL_ERROR;

@@ -128,3 +128,11 @@ Error message received from:
 Message:
 
 %s
+#
+[incorrectly-bound]
+WARNING: Open MPI incorrectly bound a process to the daemon's cores.
+This is a warning only; your job will continue.
+
+  Local host:        %s
+  Application name:  %s
+  Location:          %s:%d

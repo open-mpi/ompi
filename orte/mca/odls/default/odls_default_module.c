@@ -15,7 +15,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -430,9 +430,32 @@ static int do_child(orte_app_context_t* context,
 #if OPAL_HAVE_HWLOC
         {
             hwloc_cpuset_t cpuset;
+            hwloc_obj_t root;
+            opal_hwloc_topo_data_t *sum;
 
             /* Set process affinity, if given */
-            if (NULL != child->cpu_bitmap) {
+            if (NULL == child->cpu_bitmap) {
+                /* if the daemon is bound, then we need to "free" this proc */
+                if (NULL != orte_daemon_cores) {
+                    root = hwloc_get_root_obj(opal_hwloc_topology);
+                    if (NULL == root->userdata) {
+                        send_warn_show_help(write_fd,
+                                            "help-orte-odls-default.txt", "incorrectly bound",
+                                            orte_process_info.nodename, context->app,
+                                            __FILE__, __LINE__);
+                    }
+                    sum = (opal_hwloc_topo_data_t*)root->userdata;
+                    /* bind this proc to all available processors */
+                    hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
+                }
+                if (opal_hwloc_report_bindings) {
+                    opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
+                    /* avoid reporting it twice */
+                    (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
+                    opal_unsetenv(param, &environ_copy);
+                    free(param);
+                }
+            } else {
                 if (0 == strlen(child->cpu_bitmap)) {
                     /* this proc is not bound */
                     if (opal_hwloc_report_bindings) {
@@ -441,6 +464,19 @@ static int do_child(orte_app_context_t* context,
                         (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
                         opal_unsetenv(param, &environ_copy);
                         free(param);
+                    }
+                    /* if the daemon is bound, then we need to "free" this proc */
+                    if (NULL != orte_daemon_cores) {
+                        root = hwloc_get_root_obj(opal_hwloc_topology);
+                        if (NULL == root->userdata) {
+                            send_warn_show_help(write_fd,
+                                                "help-orte-odls-default.txt", "incorrectly bound",
+                                                orte_process_info.nodename, context->app,
+                                                __FILE__, __LINE__);
+                        }
+                        sum = (opal_hwloc_topo_data_t*)root->userdata;
+                        /* bind this proc to all available processors */
+                        hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
                     }
                     /* Set an info MCA param that tells
                        the launched processes that it was bound by us (e.g., so that
