@@ -57,13 +57,6 @@ AC_CONFIG_MACRO_DIR(config)
 # because it twiddles random bits of autoconf
 OMPI_LOAD_PLATFORM
 
-# if orcm is present, mark its presence so corresponding
-# components know they should build, and load any config file
-m4_ifdef([project_orcm],
-         [orcm_is_present="yes"
-          ORCM_LOAD_CONFIGURATION],
-         [orcm_is_present="no"])
-
 #
 # Start it up
 #
@@ -125,11 +118,6 @@ m4_ifdef([project_oshmem],
                             [$srcdir/VERSION],
                             [oshmem/include/oshmem/version.h])])
 
-m4_ifdef([project_orcm],
-         [OPAL_SAVE_VERSION([ORCM], [Open Resilient Cluster Manager],
-                            [$srcdir/VERSION],
-                            [orcm/include/orcm/version.h])])
-
 OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
 
@@ -159,8 +147,6 @@ m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
          [AC_SUBST(liboshmem_so_version)])
-m4_ifdef([project_orcm],
-         [AC_SUBST(liborcm_so_version)])
 AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libmca_opal_common_pmi_so_version)
 AC_SUBST(libopen_pal_so_version)
@@ -187,8 +173,6 @@ m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/ompi_config.h ompi/include/mpi.h])])
 m4_ifdef([project_oshmem],
          [AC_CONFIG_HEADER([oshmem/include/oshmem_config.h oshmem/include/shmem.h])])
-m4_ifdef([project_orcm],
-         [AC_CONFIG_HEADER([orcm/include/orcm_config.h orcm/include/orcm.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -270,13 +254,11 @@ OPAL_CHECK_CUDA
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
-m4_ifdef([project_orcm], [ORCM_CONFIGURE_OPTIONS])
 
 # Set up project specific AM_CONDITIONALs
 AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi] && test "$enable_ompi" != "no", [true], [false]))
 AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte] && test "$enable_orte" != "no", [true], [false]))
 AM_CONDITIONAL([PROJECT_OSHMEM], m4_ifdef([project_oshmem] && test "$enable_oshmem" != "no", [true], [false]))
-AM_CONDITIONAL([PROJECT_ORCM], m4_ifdef([project_orcm] && test "$enable_orcm" != "no", [true], [false]))
 
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
@@ -1349,7 +1331,7 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     # rather than have successive assignments to these shell
     # variables, lest the $(foo) names try to get evaluated here.
     # Yuck!
-    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include]) m4_ifdef([project_oshmem], [-I$(top_srcdir)/oshmem/include]) m4_ifdef([project_orcm], [-I$(top_srcdir)/orcm/include])'" $CPPFLAGS"
+    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include]) m4_ifdef([project_oshmem], [-I$(top_srcdir)/oshmem/include])'" $CPPFLAGS"
     # C++ is only relevant if we're building OMPI
     m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
 else
@@ -1363,7 +1345,6 @@ fi
 
 m4_ifdef([project_orte], [ORTE_SETUP_DEBUGGER_FLAGS],
          [m4_ifdef([project_ompi], [ORTE_SETUP_DEBUGGER_FLAGS])])
-m4_ifdef([project_orcm], [ORCM_SETUP_CFLAGS])
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
@@ -1503,6 +1484,5 @@ OPAL_CONFIG_FILES
 m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
 m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
-m4_ifdef([project_orcm], [ORCM_CONFIG_FILES])
 
 AC_OUTPUT
