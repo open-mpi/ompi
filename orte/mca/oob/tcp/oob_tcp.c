@@ -413,10 +413,10 @@ static void process_send(int fd, short args, void *cbdata)
     orte_process_name_t hop;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing send to peer %s",
+                        "%s:[%s:%d] processing send to peer %s:%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst));
+                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag);
 
     /* do we have a route to this peer (could be direct)? */
     hop = orte_routed.get_route(&op->msg->dst);
@@ -446,12 +446,13 @@ static void process_send(int fd, short args, void *cbdata)
         goto cleanup;
     }
 
+    /* add the message to the queue for sending after the
+     * connection is formed
+     */
+    MCA_OOB_TCP_QUEUE_PENDING(op->msg, peer);
+
     if (MCA_OOB_TCP_CONNECTING != peer->state &&
         MCA_OOB_TCP_CONNECT_ACK != peer->state) {
-        /* add the message to the queue for sending after the
-         * connection is formed
-         */
-        MCA_OOB_TCP_QUEUE_PENDING(op->msg, peer);
         /* we have to initiate the connection - again, we do not
          * want to block while the connection is created.
          * So throw us into an event that will create
