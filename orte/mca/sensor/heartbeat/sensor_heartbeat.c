@@ -116,15 +116,22 @@ static void sample(void)
 {
     opal_buffer_t *buf;
     int rc;
+    orte_process_name_t *tgt;
 
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
         return;
     }
 
-    /* if my HNP hasn't been defined yet, ignore - nobody listening yet */
-    if (ORTE_JOBID_INVALID == ORTE_PROC_MY_HNP->jobid ||
-        ORTE_VPID_INVALID == ORTE_PROC_MY_HNP->vpid) {
+    if (ORTE_PROC_IS_CM) {
+        /* we send to our daemon */
+        tgt = ORTE_PROC_MY_DAEMON;
+    } else {
+        tgt = ORTE_PROC_MY_HNP;
+    }
+    /* if my target hasn't been defined yet, ignore - nobody listening yet */
+    if (ORTE_JOBID_INVALID ==tgt->jobid ||
+        ORTE_VPID_INVALID == tgt->vpid) {
         opal_output_verbose(1, orte_sensor_base_framework.framework_output,
                             "%s sensor:heartbeat: HNP is not defined",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -145,7 +152,7 @@ static void sample(void)
     }
 
     /* send heartbeat */
-    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
+    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(tgt, buf,
                                                       ORTE_RML_TAG_HEARTBEAT,
                                                       orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
