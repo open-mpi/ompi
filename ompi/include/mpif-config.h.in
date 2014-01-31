@@ -68,3 +68,13 @@
       parameter (MPI_MAX_INFO_VAL=@OPAL_MAX_INFO_VAL@-1)
       parameter (MPI_MAX_PORT_NAME=@OPAL_MAX_PORT_NAME@-1)
       parameter (MPI_MAX_DATAREP_STRING=@OPAL_MAX_DATAREP_STRING@-1)
+
+!
+! MPI F08 conformance
+!
+      logical MPI_SUBARRAYS_SUPPORTED
+      logical MPI_ASYNC_PROTECTS_NONBLOCKING
+      parameter (MPI_SUBARRAYS_SUPPORTED=@OMPI_FORTRAN_SUBARRAYS_SUPPORTED@)
+      ! Hard-coded for .false. for now
+      parameter (MPI_ASYNC_PROTECTS_NONBLOCKING = .false.)
+
