@@ -142,6 +142,10 @@ int main(int argc, char *argv[])
 
     /* Execute the desired action(s) */    
     want_all = opal_cmd_line_is_taken(ompi_info_cmd_line, "all");
+    if (want_all) {
+        opal_info_out("Package", "package", OPAL_PACKAGE_STRING);
+        ompi_info_show_ompi_version(opal_info_ver_full);
+    }
     if (want_all || opal_cmd_line_is_taken(ompi_info_cmd_line, "path")) {
         opal_info_do_path(want_all, ompi_info_cmd_line);
         acted = true;
