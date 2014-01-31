@@ -198,7 +198,8 @@ Compiler Notes
   as of Solaris Studio 12.1,  and later compilers, one should not 
   specify -xarch=v8plus or -xarch=v9.  The use of the options
   -m32 and -m64 for producing 32 and 64 bit targets, respectively,
-  are now preferred by the Solaris Studio compilers.
+  are now preferred by the Solaris Studio compilers.  GCC may
+  require either "-m32" or "-mcpu=v9 -m32", depending on GCC version.
 
 - It has been noticed that if one uses CXX=sunCC, in which sunCC
   is a link in the Solaris Studio compiler release, that the OMPI 
