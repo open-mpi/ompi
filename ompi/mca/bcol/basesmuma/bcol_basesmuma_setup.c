@@ -396,6 +396,9 @@ int base_bcol_basesmuma_setup_ctl_struct(
         sm_bcol_module->super.sbgp_partner_module->group_comm,
         input_file, cs->clt_base_fname,
         false);
+    if (OMPI_SUCCESS != ret) {
+        goto exit_ERROR;
+    }
 
     /* fill in the pointer to other ranks scartch shared memory */
     sm_bcol_module->shared_memory_scratch_space=
