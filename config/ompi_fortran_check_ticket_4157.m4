@@ -18,6 +18,9 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_TICKET_4157],[
 
     AC_CACHE_CHECK([for ticket 4157 issues], ticket_4157_var,
        [AC_LANG_PUSH([Fortran])
+        rm -rf conftest.$$.d
+        mkdir conftest.$$.d
+        cd conftest.$$.d
         AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
 MODULE MY_ABSTRACT_MODULE
   ABSTRACT INTERFACE
@@ -91,6 +94,8 @@ END PROGRAM TEST_ABSTRACT_PROCEDURE
              [AS_VAR_SET(ticket_4157_var, happy)],
              [AS_VAR_SET(ticket_4157_var, unhappy)])
         AC_LANG_POP([Fortran])
+        cd ..
+        rm -rf contest.$$.d
        ])
 
     AS_VAR_IF(ticket_4157_var, [happy], [$1], [$2])
