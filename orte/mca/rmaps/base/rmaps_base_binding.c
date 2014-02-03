@@ -967,10 +967,9 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
             }
         }
         return rc;
-    } else {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
-        return ORTE_ERR_NOT_SUPPORTED;
     }
 
-    return ORTE_SUCCESS;
+    /* if we get here, then the binding policy isn't supported */
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+    return ORTE_ERR_NOT_SUPPORTED;
 }
