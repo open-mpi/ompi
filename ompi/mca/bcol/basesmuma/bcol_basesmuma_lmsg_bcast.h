@@ -286,7 +286,7 @@ int sm_portals_root_scatter(sg_state_t *sg_state)
 	 sg_state->msg_posted = true ;
 
 	/*
-	MB();
+	opal_atomic_wmb();
 	*/
 	sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 
@@ -321,7 +321,7 @@ int sm_portals_extra_root_scatter(sg_state_t *sg_state)
 
 	}
 
-	MB();
+	opal_atomic_wmb();
 	sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 
 
@@ -381,7 +381,7 @@ int sm_portals_secondary_root_scatter(sg_state_t *sg_state)
 						   | PTL_MD_MANAGE_REMOTE | PTL_MD_TRUNCATE | PTL_MD_EVENT_AUTO_UNLINK_ENABLE);
 		sg_state->msg_posted = true ;
 	}
-    MB();
+    opal_atomic_wmb();
     sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 
 	return OMPI_SUCCESS;
@@ -437,7 +437,7 @@ int sm_portals_internode_scatter(sg_state_t *sg_state)
 		sg_state->msg_posted = true;
 	}
 	/*
-    MB();
+    opal_atomic_wmb();
 	 */
     sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 
@@ -485,7 +485,7 @@ int sm_portals_bcasts_allgather_phase(sg_state_t *sg_state)
 								sg_state->local_sg_offset, sg_state->length);
 
 		sg_state->ready_flag++;
-		MB();
+		opal_atomic_wmb();
 	sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 
 		/* Block until partner is at this level of recursive-doubling stage */
