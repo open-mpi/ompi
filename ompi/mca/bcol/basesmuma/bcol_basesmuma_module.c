@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -34,384 +34,6 @@
 #include "bcol_basesmuma_portals.h"
 #endif
 
-
-
-#if 0
-
-/* debug */
-static mca_bcol_basesmuma_module_t *test_sm_module;
-
-int test_addressing(int seq_num,
-                    mca_bcol_base_module_t *b_module)
-{
-
-    /* local variables */
-    int ret=OMPI_SUCCESS, idx, leading_dim, loop_cnt, exchange, flag_to_set, i;
-    int pair_rank, flag_offset;
-    mca_bcol_basesmuma_ctl_struct_t **ctl_structs;
-    netpatterns_pair_exchange_node_t *my_exchange_node;
-    int extra_rank, my_rank, pow_2;
-    mca_bcol_basesmuma_ctl_struct_t volatile *partner_ctl;
-    mca_bcol_basesmuma_ctl_struct_t volatile *my_ctl;
-    int64_t sequence_number,seq_actual,seq_exp,flag_actual,flag_exp ;
-    bool found;
-    int buff_index, first_instance=0;
-    mca_bcol_basesmuma_module_t *bcol_module=
-        (mca_bcol_basesmuma_module_t *)b_module;
-
-    /* get the pointer to the segment of control structures */
-    my_exchange_node=&(bcol_module->recursive_doubling_tree);
-    my_rank=bcol_module->super.sbgp_partner_module->my_index;
-    pow_2=bcol_module->super.sbgp_partner_module->pow_2;
-
-    /* figure out what instance of the basesmuma bcol I am */
-    leading_dim=bcol_module->colls_no_user_data.size_of_group;
-    sequence_number=seq_num;
-    buff_index=sequence_number & (bcol_module->colls_no_user_data.mask);
-    idx=SM_ARRAY_INDEX(leading_dim,buff_index,0);
-    ctl_structs=(mca_bcol_basesmuma_ctl_struct_t **)
-        bcol_module->colls_no_user_data.ctl_buffs+idx;
-    my_ctl=ctl_structs[my_rank];
-    for(i=0 ; i < leading_dim ; i++ ) {
-        partner_ctl=ctl_structs[i];
-        seq_actual=partner_ctl->sequence_number;
-        flag_actual=partner_ctl->flag;
-        seq_exp=i;
-        flag_exp=sequence_number;
-        if( seq_actual != seq_exp ) {
-            fprintf(stderr," Error sn expected %ld  got %ld \n",
-                    seq_exp,seq_actual);
-            fflush(stderr);
-        }
-        if( flag_actual != flag_exp ) {
-            fprintf(stderr," Error flag expected %ld  got %ld \n",
-                    flag_exp,flag_actual);
-            fflush(stderr);
-        }
-    }
-}
-static void test_resrouce_recycle()
-{
-    int i,j, grp_size, my_rank;
-    int idx,sum;
-    mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
-    int num_bufs= cs->basesmuma_num_mem_banks*
-        cs->basesmuma_num_regions_per_bank;
-    int64_t sn=100;
-    bcol_function_args_t fun_args;
-    mca_bcol_basesmuma_ctl_struct_t **ctl_structs;
-
-    fprintf(stderr," num buffs %d \n",num_bufs);
-    fflush(stderr);
-
-    sm_nbbar_desc_t *sm_desc=
-        &((test_sm_module->colls_no_user_data.ctl_buffs_mgmt[0].nb_barrier_desc));
-
-    grp_size=sm_desc->sm_module->super.sbgp_partner_module->group_size;
-    my_rank=sm_desc->sm_module->super.sbgp_partner_module->my_index;
-
-    /* need to hack the sequence number offset, as this is set after this
-     * routine is called */
-    test_sm_module->super.squence_number_offset=100;
-
-    for( i=0 ; i < num_bufs +2 ; i++ ) {
-        /* get my ctl structure index in this buffer set */
-        idx=SM_ARRAY_INDEX(grp_size,i,0);
-        ctl_structs=(mca_bcol_basesmuma_ctl_struct_t **)
-            test_sm_module->colls_no_user_data.ctl_buffs+idx;
-        ctl_structs[my_rank]->sequence_number=(int64_t)my_rank;
-        ctl_structs[my_rank]->flag=(int64_t)i;
-    }
-
-    /* mark that I am here */
-    idx=SM_ARRAY_INDEX(grp_size,(num_bufs+1),0);
-    ctl_structs=(mca_bcol_basesmuma_ctl_struct_t **)
-        test_sm_module->colls_no_user_data.ctl_buffs+idx;
-    ctl_structs[my_rank]->index=(int64_t)1;
-
-    /* make sure all have arrived */
-
-    sum=0;
-    while(sum < grp_size ) {
-        sum=0;
-        idx=SM_ARRAY_INDEX(grp_size,(num_bufs+1),0);
-        ctl_structs=(mca_bcol_basesmuma_ctl_struct_t **)
-            test_sm_module->colls_no_user_data.ctl_buffs+idx;
-        for( i=0 ; i < grp_size ; i++ ) {
-            sum+=ctl_structs[i]->index;
-        }
-
-    }
-
-    /* check to see what values we see */
-    for( i=0 ; i < num_bufs +2 ; i++ ) {
-        idx=SM_ARRAY_INDEX(grp_size,i,0);
-        ctl_structs=(mca_bcol_basesmuma_ctl_struct_t **)
-            test_sm_module->colls_no_user_data.ctl_buffs+idx;
-        for( j=0 ; j < grp_size ; j++ ) {
-            if( ctl_structs[j]->sequence_number != j ) {
-                fprintf(stderr," Error sn %ld expected %ld i %d j %d my %d \n",
-                        ctl_structs[i]->sequence_number,j, i,j,my_rank);
-                fflush(stderr);
-            }
-            if( ctl_structs[j]->flag != i ) {
-                fprintf(stderr," Error sn %ld expected %ld \n",
-                        ctl_structs[i]->flag,i);
-                fflush(stderr);
-            }
-
-        }
-    }
-
-    for( i=0 ; i < num_bufs ; i++ ) {
-        test_addressing((int64_t)i,test_sm_module);
-    }
-    /*
-      fun_args.n_of_this_type_in_collective=2;
-      for( i=0 ; i < 2*grp_size ; i++ ) {
-
-      if( my_rank == (i%grp_size) ) {
-      sleep(3);
-      }
-
-      fun_args.sequence_num=sn;
-      sn++;
-      bcol_basesmuma_fanin(&fun_args,
-      (mca_bcol_base_module_t *)test_sm_module);
-      bcol_basesmuma_fanout(&fun_args,
-      (mca_bcol_base_module_t *)test_sm_module);
-
-      if( my_rank == (i%grp_size) ) {
-      fprintf(stderr," hi from %d \n",my_rank);
-      fflush(stderr);
-      }
-
-      }
-      for( i=0 ; i < 2*grp_size ; i++ ) {
-
-      if( my_rank == (i%grp_size) ) {
-      sleep(3);
-      }
-      bcol_basesmuma_rd_nb_barrier_init_admin(sm_desc);
-      while( sm_desc->collective_phase != NB_BARRIER_DONE ) {
-      bcol_basesmuma_rd_nb_barrier_progress_admin(sm_desc);
-      }
-      sm_desc->sm_module->colls_no_user_data.ctl_buffs_mgmt[0].bank_gen_counter++;
-      if( my_rank == (i%grp_size) ) {
-      fprintf(stderr," hi from %d \n",my_rank);
-      fflush(stderr);
-      }
-
-      }
-    */
-
-
-    /*
-      for( i = 0 ; i < num_bufs+1 ; i++ ) {
-      indx=bcol_basesmuma_get_buff_index(&(test_sm_module->colls_no_user_data),
-      (uint64_t)i);
-      fprintf(stderr," indx %d \n ",indx);
-      fflush(stderr);
-      opal_progress();
-      if( -1 != indx ) {
-      ret=bcol_basesmuma_free_buff(&(test_sm_module->colls_no_user_data),
-      (uint64_t)i);
-      if( OMPI_SUCCESS != ret ) {
-      fprintf(stderr," Error when returning %d \n",i);
-      fflush(stderr);
-      }
-      }
-      }
-    */
-
-}
-/* end debug */
-#endif
-
-#if 0  /* this routine (with appropriate bug fixes) is correct when
-        * the subgroup is a single socket.  However, it is not correct
-        * if used over several sockets - the data is correct, but dermining
-        * the tree radix based on that is not.
-        */
-/*
- * Local function
- * Get the maximal number of processors sharing the
- * same socket within a sub-group.
- * @param my_rank - the rank of the executing process.
- * @param group_comm - pointer to the sbgp's communicator.
- * @return - maximal number of procs sharing a socket.
- */
-static int get_num_of_ranks_sharing_socket(int my_rank, struct ompi_communicator_t *group_comm)
-{
-    int i;
-    int rc;
-    int ret;
-    int proc;
-    int local;
-    bool bound;
-    int cnt = 0;
-    int socket_tmp;
-    int group_size;
-
-    int32_t pcnt = 1;
-    int num_sockets;
-    opal_list_t peers;
-    int n_local_peers;
-    int num_processors;
-    int core_index = -1;
-    int my_socket_index = -1;
-    int* num_proc_per_socket;
-
-    orte_namelist_t *peer;
-    struct ompi_proc_t** procs = NULL;
-    opal_paffinity_base_cpu_set_t my_cpu_set;
-    opal_buffer_t* sbuffer = OBJ_NEW(opal_buffer_t);
-    opal_buffer_t* rbuffer = OBJ_NEW(opal_buffer_t);
-
-
-    /* Set proc info */
-    procs = ompi_comm_local_group_procs(group_comm);
-    group_size = ompi_comm_size(group_comm);
-
-    /* Get the number of processors on this node */
-    ret = opal_paffinity_base_get_processor_info(&num_processors);
-    if((OMPI_SUCCESS != ret) || (OMPI_SUCCESS != rc)){
-        return 0;
-    }
-
-
-    /* Get process affinity mask */
-    OPAL_PAFFINITY_CPU_ZERO(my_cpu_set);
-    ret = opal_paffinity_base_get(&my_cpu_set);
-    OPAL_PAFFINITY_PROCESS_IS_BOUND(my_cpu_set, &bound);
-    if(!bound) {
-        return 0;
-    }else{
-        /* figure out how many sockets are in this system */
-        rc = opal_paffinity_base_get_socket_info(&num_sockets);
-        if((OMPI_SUCCESS != ret) || (OMPI_SUCCESS != rc)){
-            return 0;
-        }
-
-        /* No sockets*/
-        if(num_sockets == 0){
-            return 0;
-        }
-
-        /* All subgroup members share the same socket on the node */
-        if(num_sockets == 1){
-            return group_size;
-        }
-
-        /* Allocate a buffer that counts the number of sockets on a node */
-        num_proc_per_socket = (int*)calloc(num_sockets, sizeof(int));
-        if(NULL == num_proc_per_socket){
-            return 0;
-        }
-        /* Loop over processors on this node */
-        /*  for (proc = 0 ; proc < num_processors ; proc++) {
-            if (OPAL_PAFFINITY_CPU_ISSET(proc, my_cpu_set)) {
-            ret = opal_paffinity_base_get_map_to_socket_core(proc,
-            &socket_tmp, &core_index);
-
-            if(my_socket_index != socket_tmp) {
-            my_socket_index = socket_tmp;
-            break;
-            }
-            }
-            }*/
-    }
-
-
-    /*
-     * The subgroup devided according to node hierarchy,
-     * therefore several sockets might be shared by the groups procs.
-     */
-
-    /* Construct peers list */
-    n_local_peers = 0;
-    OBJ_CONSTRUCT(&peers, opal_list_t);
-    for(proc = 0; proc < group_size; proc++){
-        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
-        if (local) {
-            peer = OBJ_NEW(orte_namelist_t);
-            peer->name.jobid = group_comm->c_local_group->grp_proc_pointers[proc]->proc_name.jobid;
-            peer->name.vpid = group_comm->c_local_group->grp_proc_pointers[proc]->proc_name.vpid;
-            opal_list_append(&peers, &peer->item);
-            n_local_peers++;
-        }
-    }
-
-
-    /*Pack socket index */
-    ret = opal_dss.pack(sbuffer, &my_socket_index, 1, OPAL_INT32);
-    if (ORTE_SUCCESS != ret){
-        fprintf(stderr, " pack returned error %d for my_socket_index \n",ret);
-        fflush(stderr);
-        return -1; /*ret;*/
-    }
-
-    /*Allgather data over the communicator */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.allgather_list(&peers, sbuffer, rbuffer))) {
-        fprintf(stderr," orte_grpcomm.allgather_list returned error %d \n", ret);
-        fflush(stderr);
-        return -1;
-    }
-
-    /* Is every socket being shared by the same number of procs?
-     * If not we should go over each proc index and find maximal socket */
-
-    /* TODO: Need to find maximal number of procs
-     * sharing the same socket on the node in case
-     * there is more than one socket on the node
-     * and that the sbgp type is according to node
-     * and not socket */
-    /*Unpack the data and find fellow socketeers*/
-    cnt = 0;
-    for (proc = 0; proc < n_local_peers; proc++) {
-
-        int rem_socket_index;
-
-        /*Unpack socket_index*/
-        ret = opal_dss.unpack(rbuffer, &rem_socket_index, &pcnt, OPAL_INT32);
-        if (ORTE_SUCCESS != ret) {
-            fprintf(stderr," Unpack returned error %d for rem_socket_index\n", ret);
-            fflush(stderr);
-            return -1;
-        }
-
-        /*Populate the list*/
-        /*    if (rem_socket_index == my_socket_index) {
-              cnt++;
-              }*/
-        num_proc_per_socket[rem_socket_index]++;
-    }
-
-    /* Find the maximal number of procs sharing the same socket */
-    for(i = 0; i < num_sockets; i++){
-        if(cnt < num_proc_per_socket[i]){
-            cnt = num_proc_per_socket[i];
-        }
-    }
-
-
-    /*Free resources*/
-    OBJ_DESTRUCT(&peers);
-    OBJ_RELEASE(sbuffer);
-    OBJ_RELEASE(rbuffer);
-    free(num_proc_per_socket);
-
-    return cnt;
-}
-#endif
-
-#if 0
-/*
- * Local functions
- */
-static int basesmuma_module_enable(mca_bcol_base_module_t *module,
-                                   struct ompi_communicator_t *comm);
-#endif
 
 /*
  * Local functions
@@ -549,7 +171,6 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
     /*
       fprintf(stderr,"AAA colls_with_user_data.ctl_buffs %p \n",
       sm_module->colls_with_user_data.ctl_buffs_mgmt);
-      fflush(stderr);
       end debug */
 
     if(sm_module->colls_with_user_data.ctl_buffs_mgmt){
@@ -758,8 +379,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                                                     sizeof(mca_bcol_base_module_t *));
 
     if( !sm_modules ) {
-        fprintf(stderr,"In base_bcol_masesmuma_setup_library_buffers failed to allocate memory for sm_modules\n");
-        fflush(stderr);
+        opal_output (0, "In base_bcol_masesmuma_setup_library_buffers failed to allocate memory for sm_modules\n");
         return NULL;
     }
 
@@ -770,8 +390,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                                                        module->group_size,module->my_index,
                                                        &(sm_module->recursive_doubling_tree));
     if(OMPI_SUCCESS != ret) {
-        fprintf(stderr,"Error setting up recursive_doubling_tree \n");
-        fflush(stderr);
+        opal_output (0, "Error setting up recursive_doubling_tree \n");
         return NULL;
     }
 
@@ -781,8 +400,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     ret=netpatterns_setup_narray_tree(cs->radix_fanin,
                                       my_rank,module->group_size,&(sm_module->fanin_node));
     if(OMPI_SUCCESS != ret) {
-        fprintf(stderr,"Error setting up fanin tree \n");
-        fflush(stderr);
+        opal_output (0, "Error setting up fanin tree \n");
         return NULL;
     }
 
@@ -791,8 +409,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     ret=netpatterns_setup_narray_tree(cs->radix_fanout,
                                       my_rank,module->group_size,&(sm_module->fanout_node));
     if(OMPI_SUCCESS != ret) {
-        fprintf(stderr,"Error setting up fanout tree \n");
-        fflush(stderr);
+        opal_output (0, "Error setting up fanout tree \n");
         return NULL;
     }
 
@@ -868,8 +485,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                                                       sm_module->super.sbgp_partner_module->group_size,
                                                       &(sm_module->scatter_kary_tree));
     if(OMPI_SUCCESS != ret) {
-        fprintf(stderr,"In base_bcol_masesmuma_setup_library_buffers and scatter k-ary tree setup failed \n");
-        fflush(stderr);
+        opal_output (0, "In base_bcol_masesmuma_setup_library_buffers and scatter k-ary tree setup failed \n");
         return NULL;
     }
 
@@ -877,8 +493,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     ret=base_bcol_basesmuma_setup_library_buffers(sm_module, cs);
 
     if(OMPI_SUCCESS != ret) {
-        fprintf(stderr,"In base_bcol_masesmuma_setup_library_buffers and mpool was not successfully setup!\n");
-        fflush(stderr);
+        opal_output (0, "In base_bcol_masesmuma_setup_library_buffers and mpool was not successfully setup!\n");
         return NULL;
     }
 
@@ -902,14 +517,12 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                              cs->payload_base_fname,
                              (int)getpid());
         if( 0 > name_length ) {
-            fprintf(stderr,"Failed to assign the shared memory payload file a name\n");
-            fflush(stderr);
+            opal_output (0, "Failed to assign the shared memory payload file a name\n");
             return NULL;
         }
         /* make sure name is not too long */
         if ( OPAL_PATH_MAX < (name_length-1) ) {
-            fprintf(stderr,"Shared memory file name is too long!\n");
-            fflush(stderr);
+            opal_output (0, "Shared memory file name is too long!\n");
             return NULL;
         }
         /* set the name and alignment characteristics */
@@ -1005,8 +618,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     /* blocking recursive double barrier test */
     /*
       {
-      fprintf(stderr,"BBB About to hit the barrier test\n");
-      fflush(stderr);
+      opal_output (0, "BBB About to hit the barrier test\n");
       int rc;
       bcol_function_args_t bogus;
       rc = bcol_basesmuma_rd_barrier_init(&(sm_module->super));
@@ -1018,19 +630,6 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     /* in this case we only expect a single network context.
        in the future we should loop around this */
     sm_modules[0] = &(sm_module->super);
-
-#if 0
-    /* debug  */
-    /* test resource recycling */
-    test_sm_module=sm_module;
-    /* debug */
-    fprintf(stderr," ZZZZ sn %lld \n",sm_module->squence_number_offset);
-    fflush(stderr);
-    /* end debug */
-    test_resrouce_recycle();
-
-    /* end debug */
-#endif
 
     return sm_modules;
 
@@ -1044,30 +643,6 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
 
     return NULL;
 }
-
-
-
-#if 0
-/*
- * Init module on the communicator
- */
-static int
-basesmuma_module_enable(mca_bcol_base_module_t *module,
-                        struct ompi_communicator_t *comm)
-{
-    /* local variables */
-    char output_buffer[2*MPI_MAX_OBJECT_NAME];
-
-    memset(&output_buffer[0],0,sizeof(output_buffer));
-    snprintf(output_buffer,sizeof(output_buffer),"%s (cid %d)", comm->c_name,
-             comm->c_contextid);
-    opal_output_verbose(10, ompi_bcol_base_framework.framework_output,
-                        "bcol:basesmuma:enable: new communicator: %s", output_buffer);
-
-    /* All done */
-    return OMPI_SUCCESS;
-}
-#endif
 
 OBJ_CLASS_INSTANCE(mca_bcol_basesmuma_module_t,
                    mca_bcol_base_module_t,
