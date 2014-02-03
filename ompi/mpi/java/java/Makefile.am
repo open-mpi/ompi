@@ -8,10 +8,18 @@
 # $HEADER$
 #
 
-# These are the source files.  However, Automake doesn't directly know
-# about them, and we compile them via *.java below (ick!).  So we just
-# list them here in EXTRA_DIST so that they get picked up by "make
-# dist".
+#
+# We generate three general things in this directory:
+#
+# 1. *.java files get compiled into mpi/*.class files.
+# 2. The mpi/*.class files are then assembled into an mpi.jar file.
+# 3. The mpi/*.class files are analyzed to make *.h JNI files.
+#
+
+# These are the Java source files.  However, Automake doesn't directly
+# know about them, and we compile them via *.java below (ick!).  So we
+# just list them here in EXTRA_DIST so that they get picked up by
+# "make dist".
 JAVA_SRC_FILES = \
         CartComm.java     \
         CartParms.java    \
@@ -48,7 +56,6 @@ JAVA_SRC_FILES = \
 	UserFunction.java \
 	Win.java
 
-JAVA_CLASS_FILES = $(JAVA_SRC_FILES:%.java=mpi/%.class) mpi/*$*.class
 EXTRA_DIST = $(JAVA_SRC_FILES)
 
 # Only do this stuff if we want the Java bindings
@@ -95,7 +102,15 @@ ompi__v_JAVAH_0 = @echo "  JAVAH " `basename $@`;
 
 OMPI_V_JAR = $(ompi__v_JAR_$V)
 ompi__v_JAR_ = $(ompi__v_JAR_$AM_DEFAULT_VERBOSITY)
-ompi__v_JAR_0 = @echo "  JAR  " `basename $@`;
+ompi__v_JAR_0 = @echo "    JAR " `basename $@`;
+
+OMPI_V_JAVADOC = $(ompi__v_JAVADOC_$V)
+ompi__v_JAVADOC_ = $(ompi__v_JAVADOC_$AM_DEFAULT_VERBOSITY)
+ompi__v_JAVADOC_0 = @echo "JAVADOC " `basename $@`;
+
+OMPI_V_JAVADOC_QUIET = $(ompi__v_JAVADOC_QUIET_$V)
+ompi__v_JAVADOC_QUIET_ = $(ompi__v_JAVADOC_QUIET_$AM_DEFAULT_VERBOSITY)
+ompi__v_JAVADOC_QUIET_0 = -quiet
 
 OMPI_V_MKDIR = $(ompi__v_MKDIR_$V)
 ompi__v_MKDIR_ = $(ompi__v_MKDIR_$AM_DEFAULT_VERBOSITY)
@@ -108,14 +123,21 @@ ompi__v_MKDIR_0 = @echo "  MKDIR " $@;
 # could well be due to my own misunderstanding of Java or the
 # compiler.  Shrug.
 #
-# So instead of listing all the .class files, just use mpi/MPI.class
-# as a token class file for both the rule and all the dependencies
-# below.
+# So instead of listing all the .class files, since the rule below
+# will generate *all* the .class files simulanteously, just use
+# mpi/MPI.class as a token class file for both the rule and all the
+# dependencies below.
 #
 # Note too, that all of them will be recompiled if any of them change,
 # since Automake doesn't know how to automatically generate
-# dependencies for Java source files.  So I made the token stamp1.class
+# dependencies for Java source files.  So I made the token MPI.class
 # file dependent upon *all* the .java source files.
+#
+# Note that the javac compile will generate all the .class files in
+# the "mpi" subdirectory, because that's the java package that they're
+# in.  This, along with the fact that the .java files seem to have
+# circular references, prevents us from using a .foo.bar: generic
+# Makefile rule. :-(
 mpi/MPI.class: $(JAVA_SRC_FILES)
 	$(OMPI_V_JAVAC) CLASSPATH=. ; \
 	export CLASSPATH ; \
@@ -123,19 +145,18 @@ mpi/MPI.class: $(JAVA_SRC_FILES)
 
 # Similar to above, all the generated .h files are dependent upon the
 # token mpi/MPI.class file.  Hence, all the classes will be generated
-# first, then we'll individuall generate each of the .h files.
+# first, then we'll individually generate each of the .h files.
 $(JAVA_H): mpi/MPI.class
 	$(OMPI_V_JAVAH) sourcename=mpi.`echo $@ | sed -e s/^mpi_// -e s/.h$$//`; \
 	CLASSPATH=. ; \
 	export CLASSPATH ; \
 	$(JAVAH) -d . -jni $$sourcename
 
-# Generate the .jar file from all the class files.  Use the token
-# mpi/MPI.class file (see explanation above).  If we try to use
-# JAVA_CLASS_FILES in the dependency here, make will complain that it
-# doesn't know how to build all the files.
+# Generate the .jar file from all the class files.  List mpi/MPI.class
+# as a dependency so that it fires the rule above that will generate
+# *all* the mpi/*.class files.
 mpi.jar: mpi/MPI.class
-	$(OMPI_V_JAR) $(JAR) cf mpi.jar $(JAVA_CLASS_FILES)
+	$(OMPI_V_JAR) $(JAR) cf mpi.jar mpi/*.class
 
 # Install the jar file into libdir.  Use the DATA Automake primary,
 # because Automake will complain if you try to use LIBRARIES with a
@@ -147,20 +168,20 @@ java_DATA = mpi.jar
 
 # List all the header files in BUILT_SOURCES so that Automake's "all"
 # target will build them.  This will also force the building of the
-# JAVA_CLASS_FILES.
-BUILT_SOURCES = $(JAVA_H)
+# mpi/*.class files (for the jar file).
+BUILT_SOURCES = $(JAVA_H) doc
 
 # Convenience for building Javadoc docs
 jdoc: doc
 
-# Make the "doc" target (and subdir) dependent upon mpi.jar; if
+# Make the "doc" target (and subdir) dependent upon mpi/MPI.class; if
 # mpi.jar is ever rebuilt, then also make the docs eligible to be
 # rebuilt.
-doc: mpi.jar
-	javadoc -d doc $(srcdir)/*.java
+doc: mpi/MPI.class
+	$(OMPI_V_JAVADOC) javadoc $(OMPI_V_JAVADOC_QUIET) -d doc $(srcdir)/*.java
 	@touch doc
 
-jdoc-install: jdoc
+jdoc-install: doc
 	-$(MKDIR_P) $(docdir)/javadoc
 	cp -rp doc/* $(docdir)/javadoc
 
@@ -170,9 +191,13 @@ jdoc-uninstall:
 install-data-hook: jdoc-install
 uninstall-local: jdoc-uninstall
 
-# Clean up all the things that this Makefile.am generates.  The
-# generated .class files are all within the "mpi" subdirectory.
-CLEANFILES += -rf mpi/* $(JAVA_H) doc
+# Clean up all the things that this Makefile.am generates.
+CLEANFILES += $(JAVA_H) mpi.jar
+
+# Can only put *files* in CLEANFILES; need to remove the generated doc
+# and mpi directories separately.
+clean-local:
+	-rm -rf doc mpi
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
