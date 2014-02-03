@@ -251,6 +251,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 
     /* disable if there are no local peers */
     if (0 == MCA_BTL_VADER_NUM_LOCAL_PEERS) {
+        BTL_VERBOSE(("No peers to communicate with. Disabling vader."));
         return NULL;
     }
 
@@ -277,6 +278,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     component->my_seg_id = xpmem_make (0, 0xffffffffffffffffll, XPMEM_PERMIT_MODE,
                                        (void *)0666);
     if (-1 == component->my_seg_id) {
+        BTL_VERBOSE(("Could not create xpmem segment"));
         free (btls);
         return NULL;
     }
@@ -284,6 +286,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     component->my_segment = mmap (NULL, mca_btl_vader_component.segment_size, PROT_READ |
                                   PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if ((void *)-1 == component->my_segment) {
+        BTL_VERBOSE(("Could not create anonymous memory segment"));
         free (btls);
         return NULL;
     }
@@ -301,12 +304,14 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
         rc = opal_shmem_segment_create (&mca_btl_vader_component.seg_ds, sm_file, mca_btl_vader_component.segment_size);
         free (sm_file);
         if (OPAL_SUCCESS != rc) {
+            BTL_VERBOSE(("Could not create shared memory segment"));
             free (btls);
             return NULL;
         }
 
         component->my_segment = opal_shmem_segment_attach (&mca_btl_vader_component.seg_ds);
         if (NULL == component->my_segment) {
+            BTL_VERBOSE(("Could not attach to just created shared memory segment"));
             goto failed;
         }
     }
@@ -320,11 +325,13 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     /* initialize my fifo */
     rc = vader_fifo_init ((struct vader_fifo_t *) component->my_segment);
     if (OMPI_SUCCESS != rc) {
+        BTL_VERBOSE(("Error initializing FIFO"));
         goto failed;
     }
 
     rc = mca_btl_base_vader_modex_send ();
     if (OMPI_SUCCESS != rc) {
+        BTL_VERBOSE(("Error sending modex"));
         goto failed;
     }
 

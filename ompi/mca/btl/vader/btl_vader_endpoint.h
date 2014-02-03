@@ -25,7 +25,14 @@
 #define MCA_BTL_VADER_ENDPOINT_H
 
 #if OMPI_BTL_VADER_HAVE_XPMEM
-#include <xpmem.h>
+  #if defined(HAVE_XPMEM_H)
+    #include <xpmem.h>
+  #elif defined(HAVE_SN_XPMEM_H)
+    #include <sn/xpmem.h>
+
+    typedef int64_t xpmem_apid_t;
+  #endif
+
 #else
 #include "opal/mca/shmem/base/base.h"
 #endif
