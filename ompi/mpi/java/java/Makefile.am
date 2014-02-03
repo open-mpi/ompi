@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2011	Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -151,8 +151,24 @@ java_DATA = mpi.jar
 BUILT_SOURCES = $(JAVA_H)
 
 # Convenience for building Javadoc docs
-jdoc:
+jdoc: doc
+
+# Make the "doc" target (and subdir) dependent upon mpi.jar; if
+# mpi.jar is ever rebuilt, then also make the docs eligible to be
+# rebuilt.
+doc: mpi.jar
 	javadoc -d doc $(srcdir)/*.java
+	@touch doc
+
+jdoc-install: jdoc
+	-$(MKDIR_P) $(docdir)/javadoc
+	cp -rp doc/* $(docdir)/javadoc
+
+jdoc-uninstall:
+	-rm -rf $(docdir)/javadoc
+
+install-data-hook: jdoc-install
+uninstall-local: jdoc-uninstall
 
 # Clean up all the things that this Makefile.am generates.  The
 # generated .class files are all within the "mpi" subdirectory.
