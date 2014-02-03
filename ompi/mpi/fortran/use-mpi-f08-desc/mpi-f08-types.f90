@@ -78,12 +78,6 @@ module mpi_f08_types
    end type MPI_Status
 
   !
-  ! New constants (Fortran only) introduced in MPI-3
-  !
-  logical, parameter :: MPI_SUBARRAYS_SUPPORTED = .true.
-  logical, parameter :: MPI_ASYNCHRONOUS_PROTECTS_NONBL = .false.
-
-  !
   ! Typedefs from C
   !
 
