@@ -207,7 +207,7 @@ MAIN_PHASE:
     /* we start the recursive k - ing phase */
     for( *iteration = 0; *iteration < pow_k; (*iteration)++) {
         /* announce my arrival */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flags[ALLGATHER_FLAG][bcol_id] = ready_flag;
         /* calculate the number of active requests */
         CALC_ACTIVE_REQUESTS(active_requests,exchange_node->rank_exchanges[*iteration],tree_order);
@@ -271,7 +271,7 @@ MAIN_PHASE:
     /* finish off the last piece, send the data back to the extra  */
     if( 0 < exchange_node->n_extra_sources ) {
         /* simply announce my arrival */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flags[ALLGATHER_FLAG][bcol_id] = ready_flag;
 
     }
@@ -433,7 +433,7 @@ MAIN_PHASE:
     /* start the recursive k - ing phase */
     for( *iter=*iteration; *iter < pow_k; (*iter)++) {
         /* I am ready at this level */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flags[ALLGATHER_FLAG][bcol_id] = ready_flag;
         if( 0 == *active_requests ) {
             /* flip some bits, if we don't have active requests from a previous visit */
@@ -499,7 +499,7 @@ MAIN_PHASE:
     /* finish off the last piece, send the data back to the extra  */
     if( 0 < exchange_node->n_extra_sources ) {
         /* simply announce my arrival */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flags[ALLGATHER_FLAG][bcol_id] = ready_flag;
 
     }

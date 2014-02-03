@@ -2,6 +2,8 @@
  * Copyright (c) 2009-2012 UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,7 +74,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
     /* signal that I have arrived */
     my_ctl->flag = -1;
 
-    MB();
+    opal_atomic_wmb ();
 
 	/* don't need to set this flag anymore */
     my_ctl->sequence_number = bank_genaration;

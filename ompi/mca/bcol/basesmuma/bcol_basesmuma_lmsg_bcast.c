@@ -215,7 +215,7 @@ int bcol_basesmuma_lmsg_scatter_allgather_portals_bcast_old(bcol_function_args_t
         /* important that these be set before my children
          * see the ready flag raised
          */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flag = ready_flag;
 
 		/* Wait for my scatter partner */
@@ -342,7 +342,7 @@ Probe:
         /* important that these be set before my children
          * see the ready flag raised
          */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flag = ready_flag;
 
 		wait_for_peers(my_rank, my_lmsg_ctl_pointer->n_sends, data_buffs,
@@ -415,7 +415,7 @@ Probe:
 				msg_posted = true;
 				/* set the memory barrier to ensure completion
 				 * and signal I am done getting scatter data*/
-			MB();
+			opal_atomic_wmb ();
 			my_ctl_pointer->flag = ready_flag;
 
 				wait_for_peers(my_rank, my_lmsg_ctl_pointer->n_sends, data_buffs,
@@ -441,7 +441,7 @@ Probe:
 								remote_offset, length);
 
 				/* signal that I am done reading data from parent */
-		    MB();
+		    opal_atomic_wmb ();
 	        my_ctl_pointer->flag = ready_flag;
 			}
 
@@ -499,7 +499,7 @@ Allgather:
 
 
 	ready_flag++;
-    MB();
+    opal_atomic_wmb ();
     my_ctl_pointer->flag = ready_flag;
 
 	/*
@@ -533,7 +533,7 @@ Allgather:
 								local_sg_offset, length);
 
 		ready_flag++;
-		MB();
+		opal_atomic_wmb ();
 	my_ctl_pointer->flag = ready_flag;
 
 		/* Block until partner completed this level of recursive-doubling stage */
@@ -753,7 +753,7 @@ int bcol_basesmuma_lmsg_scatter_allgather_portals_bcast(bcol_function_args_t *in
 		 /* important that these be set before my children
          * see the ready flag raised
          */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flags[BCAST_FLAGS] = ready_flag;
         BASESMUMA_VERBOSE(1,("I am the root(ctl_pointer %x) of the data flag value %d",my_ctl_pointer, my_ctl_pointer->flag));
 		/* Wait for my scatter partner */
@@ -879,7 +879,7 @@ Probe:
 		/* important that these be set before my children
          * see the ready flag raised
          */
-        MB();
+        opal_atomic_wmb ();
         my_ctl_pointer->flags[BCAST_FLAG] = ready_flag;
 
 		wait_for_peers_nb(my_rank, my_ctl_pointer->n_sends, ctl_structs,
@@ -949,7 +949,7 @@ Probe:
 					  );
 				msg_posted = true;
 				/* set the memory barrier to ensure completion */
-			MB();
+			opal_atomic_wmb ();
 		/* signal that I am done */
 			my_ctl_pointer->flags[BCAST_FLAG] = ready_flag;
 
@@ -977,7 +977,7 @@ Probe:
 								remote_offset, length);
 
 				/* signal that I am done reading data from parent */
-		    MB();
+		    opal_atomic_wmb ();
 	        my_ctl_pointer->flags[BCAST_FLAG] = ready_flag;
 			}
 
@@ -1034,7 +1034,7 @@ Allgather:
 	}
 
 	ready_flag++;
-    MB();
+    opal_atomic_wmb ();
     my_ctl_pointer->flags[BCAST_FLAG] = ready_flag;
 
     for( i = 1; i < pow_2_levels; i++) {
@@ -1064,7 +1064,7 @@ Allgather:
 								local_sg_offset, length);
 
 		ready_flag++;
-		MB();
+		opal_atomic_wmb ();
 	my_ctl_pointer->flags[BCAST_FLAG] = ready_flag;
 
 		/* Block until partner is at this level of recursive-doubling stage */
@@ -1257,7 +1257,7 @@ Extra :
 		rc = sm_portals_root_scatter(sg_state);
 
 		/* gvm Fix: Redudant
-		MB();
+		opal_atomic_wmb ();
 		*/
 
 		sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
@@ -1433,7 +1433,7 @@ Scatter_parent_wait:
 
 				/* signal that I am done reading data from parent */
 				/*
-		    MB();
+		    opal_atomic_wmb ();
 				*/
 	        sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 			}
@@ -1487,7 +1487,7 @@ Allgather:
 	BASESMUMA_VERBOSE(5,("Done with allgather phase"));
 	/* I reached an allgather phase */
 	sg_state->ready_flag++;
-    MB();
+    opal_atomic_wmb ();
     sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 
 	rc = sm_portals_bcasts_allgather_phase(sg_state);
@@ -1840,7 +1840,7 @@ Allgather:
 	}
 
 	sg_state->ready_flag++;
-    MB();
+    opal_atomic_wmb ();
     sg_state->my_ctl_pointer->flag = sg_state->ready_flag;
 
 	rc = sm_portals_bcasts_allgather_phase(sg_state);

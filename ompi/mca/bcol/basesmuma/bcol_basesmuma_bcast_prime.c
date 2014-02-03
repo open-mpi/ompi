@@ -165,7 +165,7 @@ int bcol_basesmuma_bcast_k_nomial_knownroot(bcol_function_args_t *input_args,
     } else {
     ready_flag =  my_ctl_pointer->flags[BCAST_FLAG][bcol_id];
     }
-    MB();
+    opal_atomic_wmb ();
     my_ctl_pointer->sequence_number = sequence_number;
   */
 
@@ -178,7 +178,7 @@ int bcol_basesmuma_bcast_k_nomial_knownroot(bcol_function_args_t *input_args,
     /*
      * signal ready flag
      */
-    MB();
+    opal_atomic_wmb ();
     my_ctl_pointer->flags[BCAST_FLAG][bcol_id] = ready_flag;
 
     /* root is finished */
@@ -214,7 +214,7 @@ int bcol_basesmuma_bcast_k_nomial_knownroot(bcol_function_args_t *input_args,
   /* copy the data */
   memcpy(data_addr, (void *) parent_data_pointer, pack_len);
   /* set the memory barrier to ensure completion */
-  MB();
+  opal_atomic_wmb ();
   /* signal that I am done */
   my_ctl_pointer->flags[BCAST_FLAG][bcol_id] = ready_flag;
 
@@ -312,7 +312,7 @@ int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
      * set the radix_mask */
     radix_mask = pow_k_group_size;
     /* send to children */
-    MB();
+    opal_atomic_wmb ();
     BASESMUMA_K_NOMIAL_SEND_CHILDREN(radix_mask,
                                      radix,0,
                                      my_rank,group_size, ready_flag);
@@ -347,7 +347,7 @@ int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
       radix_mask /= radix;
 
       /* send to children */
-      MB();
+      opal_atomic_wmb ();
       BASESMUMA_K_NOMIAL_SEND_CHILDREN(radix_mask,
                                        radix, relative_rank,
                                        my_rank, group_size, ready_flag);
@@ -515,7 +515,7 @@ int bcol_basesmuma_binary_scatter_allgather_segment(bcol_function_args_t *input_
     /* important that these be set before my children
      * see the ready flag raised
      */
-    MB();
+    opal_atomic_wmb ();
     my_ctl_pointer->flag = ready_flag;
 
     /* root is finished */
@@ -638,7 +638,7 @@ int bcol_basesmuma_binary_scatter_allgather_segment(bcol_function_args_t *input_
     my_ctl_pointer->n_sends = parent_ctl_pointer->n_sends;
 
     /* set the memory barrier */
-    MB();
+    opal_atomic_wmb ();
 
     /* fire the ready flag */
     my_ctl_pointer->flag = ready_flag;
@@ -696,7 +696,7 @@ int bcol_basesmuma_binary_scatter_allgather_segment(bcol_function_args_t *input_
                (size_t)length);
       }
       /* set the memory barrier to ensure completion */
-      MB();
+      opal_atomic_wmb ();
       /* signal that I am done */
       my_ctl_pointer->flag = ready_flag;
       /* set my status */
@@ -746,14 +746,14 @@ int bcol_basesmuma_binary_scatter_allgather_segment(bcol_function_args_t *input_
     local_offset = my_ctl_pointer->offset_zip;
     /* compute the correct length */
     length = length*(1<<(start - 1));
-    /* careful! skip over the MB() to avoid the
+    /* careful! skip over the opal_atomic_wmb () to avoid the
      * cost on every re-entry
      */
     goto Loop;
   }
 
 
-  MB();
+  opal_atomic_wmb ();
   /* I am ready, set the flag */
   my_ctl_pointer->flag = ready_flag;
 
@@ -813,7 +813,7 @@ int bcol_basesmuma_binary_scatter_allgather_segment(bcol_function_args_t *input_
         /* bump the ready flag */
         ready_flag++;
         /* ensure completion */
-        MB();
+        opal_atomic_wmb ();
 
         /* fire the flag for the next level */
         my_ctl_pointer->flag = ready_flag;
