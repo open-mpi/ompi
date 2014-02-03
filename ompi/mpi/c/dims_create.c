@@ -21,6 +21,8 @@
 
 #include "ompi_config.h"
 
+#include <math.h>
+
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
