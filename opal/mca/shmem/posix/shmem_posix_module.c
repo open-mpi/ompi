@@ -13,7 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- *
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,9 +27,15 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif  /* HAVE_FCNTL_H */
+#if OPAL_HAVE_SOLARIS && !defined(_POSIX_C_SOURCE)
+  #define _POSIX_C_SOURCE 200112L /* Required for shm_{open,unlink} decls */
+  #include <sys/mman.h>
+  #undef _POSIX_C_SOURCE
+#else
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif /* HAVE_SYS_MMAN_H */
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
@@ -209,9 +215,9 @@ segment_create(opal_shmem_ds_t *ds_buf,
         rc = OPAL_ERROR;
         goto out;
     }
-    else if (MAP_FAILED == (seg_hdrp = mmap(NULL, real_size,
-                                            PROT_READ | PROT_WRITE, MAP_SHARED,
-                                            ds_buf->seg_id, 0))) {
+    else if (MAP_FAILED == (seg_hdrp = (opal_shmem_seg_hdr_t*)mmap(NULL, real_size,
+                                                                   PROT_READ | PROT_WRITE, MAP_SHARED,
+                                                                   ds_buf->seg_id, 0))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
@@ -285,7 +291,7 @@ out:
             shm_unlink(ds_buf->seg_name);
         }
         if (MAP_FAILED != seg_hdrp) {
-            munmap(seg_hdrp, real_size);
+            munmap((void*)seg_hdrp, real_size);
         }
         /* always invalidate in this error path */
         shmem_ds_reset(ds_buf);
@@ -313,9 +319,9 @@ segment_attach(opal_shmem_ds_t *ds_buf)
             return NULL;
         }
         else if (MAP_FAILED == (ds_buf->seg_base_addr =
-                                    mmap(NULL, ds_buf->seg_size,
-                                         PROT_READ | PROT_WRITE, MAP_SHARED,
-                                         ds_buf->seg_id, 0))) {
+                                (unsigned char*)mmap(NULL, ds_buf->seg_size,
+                                                     PROT_READ | PROT_WRITE, MAP_SHARED,
+                                                     ds_buf->seg_id, 0))) {
             int err = errno;
             char hn[MAXHOSTNAMELEN];
             gethostname(hn, MAXHOSTNAMELEN - 1);
@@ -375,7 +381,7 @@ segment_detach(opal_shmem_ds_t *ds_buf)
          ds_buf->seg_id, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
-    if (0 != munmap(ds_buf->seg_base_addr, ds_buf->seg_size)) {
+    if (0 != munmap((void*)ds_buf->seg_base_addr, ds_buf->seg_size)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);

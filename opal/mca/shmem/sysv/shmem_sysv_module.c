@@ -275,7 +275,7 @@ out:
     if (OPAL_SUCCESS != rc) {
         /* best effort to delete the segment. */
         if ((void *)-1 != seg_hdrp) {
-            shmdt(seg_hdrp);
+            shmdt((char*)seg_hdrp);
         }
         shmctl(ds_buf->seg_id, IPC_RMID, NULL);
 
@@ -339,7 +339,7 @@ segment_detach(opal_shmem_ds_t *ds_buf)
          ds_buf->seg_id, (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
-    if (0 != shmdt(ds_buf->seg_base_addr)) {
+    if (0 != shmdt((char*)ds_buf->seg_base_addr)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
