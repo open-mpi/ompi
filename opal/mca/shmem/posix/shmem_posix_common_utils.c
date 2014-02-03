@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -31,9 +32,15 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif /* HAVE_STRING_H */
+#if OPAL_HAVE_SOLARIS && !defined(_POSIX_C_SOURCE)
+  #define _POSIX_C_SOURCE 200112L /* Required for shm_{open,unlink} decls */
+  #include <sys/mman.h>
+  #undef _POSIX_C_SOURCE
+#else
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif /* HAVE_SYS_MMAN_H */
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
