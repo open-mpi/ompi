@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
 #
@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-AM_CFLAGS = \
+AM_CPPFLAGS = \
             -DOPAL_CONFIGURE_USER="\"@OPAL_CONFIGURE_USER@\"" \
             -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\"" \
             -DOPAL_CONFIGURE_DATE="\"@OPAL_CONFIGURE_DATE@\"" \
@@ -26,15 +26,15 @@ AM_CFLAGS = \
             -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
 if OSHMEM_PROFILING
-    AM_CFLAGS += -DOSHMEM_PROFILING=1
+    AM_CPPFLAGS += -DOSHMEM_PROFILING=1
 else
-    AM_CFLAGS += -DOSHMEM_PROFILING=0
+    AM_CPPFLAGS += -DOSHMEM_PROFILING=0
 endif
 
 if OSHMEM_BUILD_FORTRAN_BINDINGS
-    AM_CFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=1
+    AM_CPPFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=1
 else
-    AM_CFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=0
+    AM_CPPFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=0
 endif
 
 include $(top_srcdir)/Makefile.man-page-rules

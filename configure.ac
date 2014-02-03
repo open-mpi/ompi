@@ -594,6 +594,11 @@ OPAL_CONFIG_ASM
 
 m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN], [ompi_fortran_happy=0])
 
+AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
+    [test "$ompi_fortran_happy" == "1" -a \
+          "$OMPI_WANT_FORTRAN_BINDINGS" == "1" -a \
+          "$oshmem_fortran_enable" != "no"])
+
 # checkpoint results
 AC_CACHE_SAVE
 
@@ -1261,11 +1266,6 @@ fi
 # bindings, we *do* still want to setup the mpicxx wrapper if we have
 # a C++ compiler.
 AS_IF([test "$OMPI_WANT_FORTRAN_BINDINGS" != "1"],[F77=no FC=no])
-
-AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
-    [test "$ompi_fortran_happy" == "1" -a \
-          "$OMPI_WANT_FORTRAN_BINDINGS" == "1" -a \
-          "$oshmem_fortran_enable" != "no"])
 
 LT_CONFIG_LTDL_DIR([opal/libltdl], [subproject])
 LTDL_CONVENIENCE
