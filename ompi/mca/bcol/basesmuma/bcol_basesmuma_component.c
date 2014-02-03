@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,11 +40,11 @@ static int basesmuma_register(void);
 static int basesmuma_open(void);
 static int basesmuma_close(void);
 static int mca_bcol_basesmuma_deregister_ctl_sm(
-    mca_bcol_basesmuma_component_t *bcol_component);
+                                                mca_bcol_basesmuma_component_t *bcol_component);
 
 
 static inline int mca_bcol_basesmuma_param_register_int(
-        const char* param_name, int default_value, int *storage)
+                                                        const char* param_name, int default_value, int *storage)
 {
     *storage = default_value;
     return mca_base_component_var_register(&mca_bcol_basesmuma_component.super.bcol_version, param_name,
@@ -51,7 +54,7 @@ static inline int mca_bcol_basesmuma_param_register_int(
 }
 
 static inline int mca_bcol_basesmuma_param_register_bool(
-        const char* param_name, bool default_value, bool *storage)
+                                                         const char* param_name, bool default_value, bool *storage)
 {
     *storage = default_value;
     return mca_base_component_var_register(&mca_bcol_basesmuma_component.super.bcol_version, param_name,
@@ -72,7 +75,7 @@ mca_bcol_basesmuma_component_t mca_bcol_basesmuma_component = {
     {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
-        
+
         {
             MCA_BCOL_BASE_VERSION_2_0_0,
 
@@ -92,7 +95,7 @@ mca_bcol_basesmuma_component_t mca_bcol_basesmuma_component = {
         },
 
         /* Initialization / querying functions */
-        
+
         mca_bcol_basesmuma_init_query,
         mca_bcol_basesmuma_comm_query,
         NULL,
@@ -194,7 +197,7 @@ static int basesmuma_open(void)
         ret=OMPI_ERROR;
         goto exit_ERROR;
     }
-    
+
     /*
      * Make sure that the the number of buffers is a power of 2
      */
@@ -205,9 +208,9 @@ static int basesmuma_open(void)
         goto exit_ERROR;
     }
 
-	/* Portals initialization */
-	cs->portals_init = false;
-	cs->portals_info = NULL;
+    /* Portals initialization */
+    cs->portals_init = false;
+    cs->portals_info = NULL;
 
     /*
      * initialization
@@ -218,10 +221,10 @@ static int basesmuma_open(void)
     mutex_ptr= &(cs->nb_admin_barriers_mutex);
     OBJ_CONSTRUCT(mutex_ptr, opal_mutex_t);
 
-	/* Control structures object construct 
-	 */
-     OBJ_CONSTRUCT(&(cs->ctl_structures), opal_list_t);
-	
+    /* Control structures object construct
+     */
+    OBJ_CONSTRUCT(&(cs->ctl_structures), opal_list_t);
+
     /* shared memory has not been registered yet */
     cs->mpool_inited = false;
 
@@ -244,51 +247,49 @@ static int basesmuma_open(void)
 
     return ret;
 
-exit_ERROR:
+ exit_ERROR:
     return ret;
 }
 
 /*
  * release the control structure backing file
  */
-static int mca_bcol_basesmuma_deregister_ctl_sm(
-    mca_bcol_basesmuma_component_t *bcol_component)
+static int mca_bcol_basesmuma_deregister_ctl_sm(mca_bcol_basesmuma_component_t *bcol_component)
 {
 
-	/* local variables */
-	int ret;
-        bcol_basesmuma_smcm_mmap_t *sm_ctl_structs;
+    /* local variables */
+    int ret;
+    bcol_basesmuma_smcm_mmap_t *sm_ctl_structs;
 
-        /* get a handle on the backing file */
-        sm_ctl_structs=bcol_component->sm_ctl_structs;
-	/* Nothing to free */
-	if (!sm_ctl_structs){
-		return OMPI_SUCCESS;
-	}
+    /* get a handle on the backing file */
+    sm_ctl_structs=bcol_component->sm_ctl_structs;
+    /* Nothing to free */
+    if (!sm_ctl_structs){
+        return OMPI_SUCCESS;
+    }
 
-	/* unmap the shared memory file */
-	ret=munmap((void *) sm_ctl_structs->map_addr, sm_ctl_structs->map_size);
-       	if( 0 > ret) {
-		fprintf(stderr,"Failed to munmap the shared memory file %s \n",
-                    sm_ctl_structs->map_path);
-		fflush(stderr);
-		return OMPI_ERROR;
-	}
+    /* unmap the shared memory file */
+    ret=munmap((void *) sm_ctl_structs->map_addr, sm_ctl_structs->map_size);
+    if( 0 > ret) {
+        opal_output (0, "Failed to munmap the shared memory file %s \n",
+                     sm_ctl_structs->map_path);
+        return OMPI_ERROR;
+    }
 
-	/* set the pointer to NULL */
-	/*sm_ctl_structs->map_addr = NULL;*/
-	 	 
-	/* remove the file */
-	/*ret = remove(sm_ctl_structs->map_path);*/
-	if( 0 > ret) {
-		fprintf(stderr,"Failed to remove the shared memory file %s \n",
-                sm_ctl_structs->map_path);
-                perror("Failed to remove the shared memory file");
-		fflush(stderr);
-		return OMPI_ERROR;
-	}
+    /* set the pointer to NULL */
+    /*sm_ctl_structs->map_addr = NULL;*/
 
-	return OMPI_SUCCESS;
+    /* remove the file */
+#if 0
+    ret = remove(sm_ctl_structs->map_path);
+    if( 0 > ret) {
+        opal_output (0, "Failed to remove the shared memory file %s. reason = %s\n",
+                     sm_ctl_structs->map_path, strerror (errno));
+        return OMPI_ERROR;
+    }
+#endif
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -300,14 +301,14 @@ static int basesmuma_close(void)
     int ret;
     bcol_basesmuma_registration_data_t *net_ctx;
     bcol_base_network_context_t *net_reg;
-	mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
+    mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
 
-	/* gvm Leak FIX */
+    /* gvm Leak FIX */
     while(!opal_list_is_empty(&(cs->ctl_structures))) {
         opal_list_item_t *item;
         item = opal_list_remove_first(&(cs->ctl_structures));
-		OBJ_DESTRUCT(item);
-	}
+        OBJ_DESTRUCT(item);
+    }
     OBJ_DESTRUCT(&(cs->ctl_structures));
 
 
@@ -348,11 +349,11 @@ static int basesmuma_close(void)
     return OMPI_SUCCESS;
 }
 
-/* query to see if the component is available for use, and can 
- * satisfy the thread and progress requirements 
+/* query to see if the component is available for use, and can
+ * satisfy the thread and progress requirements
  */
 int mca_bcol_basesmuma_init_query(bool enable_progress_threads,
-        bool enable_mpi_threads)
+                                  bool enable_mpi_threads)
 {
     /* done */
     return OMPI_SUCCESS;
@@ -363,68 +364,68 @@ int mca_bcol_basesmuma_init_query(bool enable_progress_threads,
  */
 int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs)
 {
-	/* local variables */
-	int name_length, ret;
-	size_t ctl_length;
-        char *name, *ctl_mem;
+    /* local variables */
+    int name_length, ret;
+    size_t ctl_length;
+    char *name, *ctl_mem;
 
-        /* set the file name */
-        name_length=asprintf(&name,
-                "%s"OPAL_PATH_SEP"%s""%0d",
-                ompi_process_info.job_session_dir,
-                cs->clt_base_fname,
-                (int)getpid());
-        if( 0 > name_length ) {
-            return OMPI_ERROR;
-        }
-        /* make sure name is not too long */
-        if ( OPAL_PATH_MAX < (name_length-1) ) {
-            return OMPI_ERROR;
-        } 
+    /* set the file name */
+    name_length=asprintf(&name,
+                         "%s"OPAL_PATH_SEP"%s""%0d",
+                         ompi_process_info.job_session_dir,
+                         cs->clt_base_fname,
+                         (int)getpid());
+    if( 0 > name_length ) {
+        return OMPI_ERROR;
+    }
+    /* make sure name is not too long */
+    if ( OPAL_PATH_MAX < (name_length-1) ) {
+        return OMPI_ERROR;
+    }
 
-        /* compute segment length */
+    /* compute segment length */
 
-        ctl_length=(cs->basesmuma_num_mem_banks*
-            cs->basesmuma_num_regions_per_bank+cs->basesmuma_num_mem_banks)
-            *sizeof(mca_bcol_basesmuma_ctl_struct_t)*cs->n_groups_supported;
-        /* need two banks of memory per group - for algorithms that have
-         * user payload, and those that don't
-         */
-        ctl_length*=2;
+    ctl_length=(cs->basesmuma_num_mem_banks*
+                cs->basesmuma_num_regions_per_bank+cs->basesmuma_num_mem_banks)
+        *sizeof(mca_bcol_basesmuma_ctl_struct_t)*cs->n_groups_supported;
+    /* need two banks of memory per group - for algorithms that have
+     * user payload, and those that don't
+     */
+    ctl_length*=2;
 
-        /* add space for internal library management purposes */
-        ctl_length+=cs->my_scratch_shared_memory_size;
+    /* add space for internal library management purposes */
+    ctl_length+=cs->my_scratch_shared_memory_size;
 
-        /* round up to multiple of page size */
-        ctl_length=(ctl_length-1)/getpagesize()+1;
-        ctl_length*=getpagesize();
+    /* round up to multiple of page size */
+    ctl_length=(ctl_length-1)/getpagesize()+1;
+    ctl_length*=getpagesize();
 
-        /* allocate memory that will be mmaped */
-	ctl_mem=(char *)valloc(ctl_length);
-        if( !ctl_mem) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+    /* allocate memory that will be mmaped */
+    ctl_mem=(char *)valloc(ctl_length);
+    if( !ctl_mem) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
-        /* allocate the shared file */
-        cs->sm_ctl_structs=bcol_basesmuma_smcm_mem_reg(ctl_mem,
-        	ctl_length,getpagesize(),name);
-	if( !cs->sm_ctl_structs) {
-            fprintf(stderr," In mca_bcol_basesmuma_allocate_sm_ctl_memory failed to allocathe backing file %s \n",name);
-            ret=OMPI_ERR_OUT_OF_RESOURCE;
-            goto Error;
-        }
+    /* allocate the shared file */
+    cs->sm_ctl_structs=bcol_basesmuma_smcm_mem_reg(ctl_mem,
+                                                   ctl_length,getpagesize(),name);
+    if( !cs->sm_ctl_structs) {
+        opal_output (0, "In mca_bcol_basesmuma_allocate_sm_ctl_memory failed to allocathe backing file %s\n", name);
+        ret=OMPI_ERR_OUT_OF_RESOURCE;
+        goto Error;
+    }
 
-        /* free the memory allocated by asprintf for the file name -
-         * in mca_base_smcm_mem_reg this name is copied into a new
-         * memory location */
+    /* free the memory allocated by asprintf for the file name -
+     * in mca_base_smcm_mem_reg this name is copied into a new
+     * memory location */
+    free(name);
+
+    /* successful return */
+    return OMPI_SUCCESS;
+
+ Error:
+    if(name) {
         free(name);
-
-	/* successful return */
-	return OMPI_SUCCESS;
-
-Error:
-        if(name) {
-            free(name);
-        }
-        return ret;
+    }
+    return ret;
 }

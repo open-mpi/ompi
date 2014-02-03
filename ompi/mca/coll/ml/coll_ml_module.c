@@ -1649,7 +1649,8 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         n_procs_in = 0, group_index = 0, n_remain = 0,
         i, j, ret = OMPI_SUCCESS, my_rank_in_list = 0,
         n_procs_selected = 0, original_group_size = 0, i_am_done = 0,
-        local_leader, my_rank_in_subgroup, my_rank_in_remaining_list = 0;
+        local_leader, my_rank_in_subgroup, my_rank_in_remaining_list = 0,
+        my_rank_in_comm;
 
     int32_t my_lowest_group_index = -1, my_highest_group_index = -1;
 
@@ -1708,6 +1709,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         map_to_comm_ranks[i] = i;
     }
 
+    my_rank_in_comm = ompi_comm_rank (ml_module->comm);
     n_procs_in = ompi_comm_size(ml_module->comm);
     original_group_size = n_procs_in;
 
@@ -1856,8 +1858,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             /* I need to contribute to the vector */
             for (group_index = 0; group_index < n_procs_selected; group_index++) {
                 /* set my rank within the group */
-                if (map_to_comm_ranks[module->group_list[group_index]] ==
-                    ompi_comm_rank(ml_module->comm)) {
+                if (map_to_comm_ranks[module->group_list[group_index]] == my_rank_in_comm) {
                     my_rank_in_subgroup=group_index;
                     module->my_index = group_index;
                     /* currently the indecies are still given in terms of
@@ -1876,28 +1877,22 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                 lleader_index = coll_ml_select_leader(ml_module,module, map_to_comm_ranks,
                                                       copy_procs,n_procs_selected);
 
-                local_leader = module->group_list[lleader_index];
+                local_leader = map_to_comm_ranks[module->group_list[lleader_index]];
 #endif
 #else
 
                 /* local leader is rank within list or remaining ranks */
-                local_leader=module->group_list[0];
+                local_leader = map_to_comm_ranks[module->group_list[0]];
 
 #endif
-                ML_VERBOSE(10,("The local leader selected for hierarchy %d is %d \n",
+                ML_VERBOSE(10,("The local leader selected for hierarchy %d is rank %d \n",
                                i_hier, local_leader));
 
-                if(local_leader == my_rank_in_remaining_list ) {
-
-                    /* transform to rank within the communicator */
-                    local_leader=map_to_comm_ranks[local_leader];
-                    ll_p1=local_leader+1;
+                ll_p1 = local_leader + 1;
+                if (local_leader == my_rank_in_comm) {
                     in_allgather_value =
                         index_proc_selected[my_rank_in_remaining_list] = -ll_p1;
                 } else {
-                    /* transform to rank within the communicator */
-                    local_leader=map_to_comm_ranks[local_leader];
-                    ll_p1=local_leader+1;
                     in_allgather_value =
                         index_proc_selected[my_rank_in_remaining_list] = ll_p1;
                 }
