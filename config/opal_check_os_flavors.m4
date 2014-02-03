@@ -43,6 +43,13 @@ AC_DEFUN([OPAL_CHECK_OS_FLAVORS],
     OPAL_CHECK_OS_FLAVOR_SPECIFIC([__linux__], [linux])
     OPAL_CHECK_OS_FLAVOR_SPECIFIC([__sun__], [sun])
 
+    AS_IF([test "$opal_found_sun" = "yes"],
+          [opal_have_solaris=1],
+          [opal_have_solaris=0])
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_SOLARIS],
+                       [$opal_have_solaris],
+                       [Whether or not we have solaris])
+
     # check for sockaddr_in (a good sign we have TCP)
     AC_CHECK_TYPES([struct sockaddr_in], 
                    [opal_found_sockaddr=yes],
