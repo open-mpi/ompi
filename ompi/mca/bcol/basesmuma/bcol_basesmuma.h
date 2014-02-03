@@ -1171,7 +1171,7 @@ do{                                                                             
     /* increment the starting flag by one and return */                            \
     flag_offset = my_ctl_pointer->starting_flag_value[bcol_id];                    \
     ready_flag = flag_offset + 1;                                                  \
-    MB();                                                                          \
+    opal_atomic_wmb();                                                                          \
     my_ctl_pointer->sequence_number = sequence_number;                             \
 }while(0)
 

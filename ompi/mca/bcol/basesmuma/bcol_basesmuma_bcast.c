@@ -236,7 +236,7 @@ int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
         memcpy(data_addr, (void *)parent_data_pointer,pack_len);
 		
         /* Signal to children that they may read the data from my shared buffer */
-        MB();
+        opal_atomic_wmb();
         my_ctl_pointer->flags[BCAST_FLAG][bcol_id] = ready_flag;
     }
 
@@ -438,7 +438,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
         }
 		
         /* Signal to children that they may read the data from my shared buffer */
-        MB();
+        opal_atomic_wmb();
         hdl_desc->des_src = hdl_seg;
         hdl_desc->des_src_cnt = 1; 
         for (ridx = 0; ridx < my_fanout_read_tree->n_children; ridx++) {

@@ -72,7 +72,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
     /* signal that I have arrived */
     my_ctl->flag = -1;
 
-    MB();
+    opal_atomic_wmb();
 
 	/* don't need to set this flag anymore */
     my_ctl->sequence_number = bank_genaration;
