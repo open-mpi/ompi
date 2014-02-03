@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -698,7 +698,7 @@ int bcol_basesmuma_k_nomial_gather(bcol_function_args_t *input_args,
                       exchange_node->rank_exchanges[i][j], buff_offset + exchange_node->payload_info[i][j].r_offset,
                       exchange_node->payload_info[i][j].r_len*pack_len);
                     */
-                    MB();
+                    opal_atomic_wmb ();
                     knt++;
                     if(knt == exchange_node->n_actual_exchanges) {
                         /* this is the trick to break the root out,
@@ -1063,7 +1063,7 @@ int bcol_basesmuma_k_nomial_gather(bcol_function_args_t *input_args,
                               fprintf(stderr,"hello n_actual_exch is %d \n",
                               exchange_node->n_actual_exchanges);
                             */
-                            MB();
+                            opal_atomic_wmb ();
                             my_ctl_pointer->gflag = ready_flag;
 
                             goto LAST_STEP;

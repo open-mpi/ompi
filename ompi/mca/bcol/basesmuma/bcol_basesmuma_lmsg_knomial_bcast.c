@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -214,7 +216,7 @@ int bcol_basesmuma_lmsg_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
 	mca_bcol_basesmuma_portals_get_msg(cs, parent_lmsg_ctl_pointer, userbuf, pack_len);
 
     /* set the memory barrier to ensure completion */
-    MB();
+    opal_atomic_wmb ();
     /* signal that I am done */
     my_ctl_pointer->flag = ready_flag;
 

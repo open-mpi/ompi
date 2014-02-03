@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -409,7 +409,7 @@ int bcol_basesmuma_allreduce_intra_recursive_doubling(bcol_function_args_t *inpu
     }
 
     /* signal that I have arrived */
-    /* MB(); */
+    /* opal_atomic_wmb (); */
     my_ctl_pointer->sequence_number = sequence_number;
 
     /* If we use this buffer more than once by an sm module in
@@ -581,7 +581,7 @@ int bcol_basesmuma_allreduce_intra_recursive_doubling(bcol_function_args_t *inpu
             /*
              * Signal parent that data is ready
              */
-            MB();
+            opal_atomic_wmb ();
             /*my_ctl_pointer->flags[ALLREDUCE_FLAG] = ready_flag;*/
             my_ctl_pointer->flag = ready_flag;
 

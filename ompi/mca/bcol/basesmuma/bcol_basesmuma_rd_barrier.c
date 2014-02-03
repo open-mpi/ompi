@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -91,7 +91,7 @@ int bcol_basesmuma_recursive_double_barrier(bcol_function_args_t *input_args,
     my_ctl->flag = -1;
     /* don't need to set this flag anymore */
     my_ctl->sequence_number = sequence_number;
-    /* MB();*/
+    /* opal_atomic_wmb ();*/
 
     if(0 < my_exchange_node->n_extra_sources) {
         if (EXCHANGE_NODE == my_exchange_node->node_type) {
