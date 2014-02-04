@@ -1307,6 +1307,8 @@ AC_SUBST(OPAL_DYN_LIB_SUFFIX)
 
 OPAL_SETUP_LIBLTDL
 
+# Need the libtool binary before the rpathify stuff
+LT_OUTPUT
 
 ############################################################################
 # final compiler config
