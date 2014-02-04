@@ -15,7 +15,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -482,7 +482,6 @@ static int do_child(orte_app_context_t* context,
                 rc = hwloc_set_cpubind(opal_hwloc_topology, cpuset, 0);
                 /* if we got an error and this wasn't a default binding policy, then report it */
                 if (rc < 0  && (OPAL_BIND_GIVEN & jobdat->map->binding)) {
-                    char *tmp = NULL;
                     if (errno == ENOSYS) {
                         msg = "hwloc indicates cpu binding not supported";
                     } else if (errno == EXDEV) {
@@ -503,15 +502,7 @@ static int do_child(orte_app_context_t* context,
                                             "help-orte-odls-default.txt", "not bound",
                                             orte_process_info.nodename, context->app, msg,
                                             __FILE__, __LINE__);
-                        if (NULL != tmp) {
-                            free(tmp);
-                            free(msg);
-                        }
                         goto PROCEED;
-                    }
-                    if (NULL != tmp) {
-                        free(tmp);
-                        free(msg);
                     }
                 }
                 if (0 == rc && opal_hwloc_report_bindings) {
