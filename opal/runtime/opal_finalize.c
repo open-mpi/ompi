@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +42,7 @@
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
+#include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/event/base/base.h"
@@ -123,6 +124,9 @@ opal_finalize(void)
 
     /* close the checkpoint and restart service */
     opal_cr_finalize();
+
+    /* close the security framework */
+    (void) mca_base_framework_close(&opal_sec_base_framework);
 
 #if OPAL_ENABLE_FT_CR    == 1
     (void) mca_base_framework_close(&opal_compress_base_framework);

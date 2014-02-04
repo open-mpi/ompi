@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +51,7 @@
 #include "opal_stdint.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/sec/sec.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/error.h"
@@ -316,24 +317,46 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
     OBJ_RELEASE(op);
 }
 
+/* send a handshake that includes our process identifier, our
+ * version string, and a security token to ensure we are talking
+ * to another OMPI process
+ */
 static int tcp_peer_send_connect_ack(mca_oob_tcp_module_t *mod,
                                       mca_oob_tcp_peer_t* peer)
 {
-    mca_oob_tcp_hdr_t hdr;
+    uint8_t *msg;
+    mca_oob_tcp_hdr_t *hdr;
+    int rc;
+    size_t sdsize;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s SEND CONNECT ACK", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    /* send a handshake that includes our process identifier
-     * to ensure we are talking to another OMPI process
-    */
-    hdr.origin = *ORTE_PROC_MY_NAME;
-    hdr.dst = peer->name;
-    hdr.type = MCA_OOB_TCP_IDENT;
-    hdr.tag = 0;
-    hdr.nbytes = 0;
-    MCA_OOB_TCP_HDR_HTON(&hdr);
-    if (ORTE_SUCCESS != tcp_peer_send_blocking(mod, peer, &hdr, sizeof(hdr))) {
+    /* malloc a fixed size */
+    sdsize = OPAL_SEC_CRED_MAX_SIZE + sizeof(mca_oob_tcp_hdr_t) + strlen(orte_version_string) + 1;  // need to include the NULL
+    msg = (uint8_t*)malloc(sdsize);
+    memset(msg, 0, sdsize);
+
+    /* load the header */
+    hdr = (mca_oob_tcp_hdr_t*)msg;
+    hdr->origin = *ORTE_PROC_MY_NAME;
+    hdr->dst = peer->name;
+    hdr->type = MCA_OOB_TCP_IDENT;
+    hdr->tag = 0;
+    hdr->nbytes = 0;
+    MCA_OOB_TCP_HDR_HTON(hdr);
+
+    /* load the version string */
+    memcpy(msg+sizeof(mca_oob_tcp_hdr_t), orte_version_string, strlen(orte_version_string));
+
+    /* load our security credential, stepping over to leave the NULL at end of version string */
+    if (OPAL_SUCCESS != (rc = opal_sec.get_token((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                 (opal_sec_cred_t)(msg+sizeof(mca_oob_tcp_hdr_t)+strlen(orte_version_string)+1),
+                                                 OPAL_SEC_CRED_MAX_SIZE))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    if (ORTE_SUCCESS != tcp_peer_send_blocking(mod, peer, msg, sdsize)) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
         return ORTE_ERR_UNREACH;
     }
@@ -507,17 +530,25 @@ static int tcp_peer_send_blocking(mca_oob_tcp_module_t *mod,
 int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_module_t *mod,
                                        mca_oob_tcp_peer_t* peer)
 {
-    mca_oob_tcp_hdr_t hdr;
+    uint8_t *msg;
+    mca_oob_tcp_hdr_t *hdr;
+    char *version;
+    int rc;
+    size_t rsize;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s RECV CONNECT ACK FROM %s ON SOCKET %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name), peer->sd);
 
-    /* ensure all is zero'd */
-    memset(&hdr, 0, sizeof(hdr));
+    /* malloc a fixed size */
+    rsize = OPAL_SEC_CRED_MAX_SIZE + sizeof(mca_oob_tcp_hdr_t) + strlen(orte_version_string) + 1; // need to include the NULL
+    msg = (uint8_t*)malloc(rsize);
 
-    if (tcp_peer_recv_blocking(mod, peer, &hdr, sizeof(hdr))) {
+    /* ensure all is zero'd */
+    memset(msg, 0, rsize);
+
+    if (tcp_peer_recv_blocking(mod, peer, msg, rsize)) {
         /* If the peer state is CONNECT_ACK, then we were waiting for
          * the connection to be ack'd
          */
@@ -538,21 +569,28 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_module_t *mod,
         return ORTE_ERR_UNREACH;
     }
 
-    MCA_OOB_TCP_HDR_NTOH(&hdr);
-    if (hdr.type != MCA_OOB_TCP_IDENT) {
+    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s connect-ack recvd from %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&peer->name));
+
+    /* check the header */
+    hdr = (mca_oob_tcp_hdr_t*)msg;
+    MCA_OOB_TCP_HDR_NTOH(hdr);
+    if (hdr->type != MCA_OOB_TCP_IDENT) {
         opal_output(0, "tcp_peer_recv_connect_ack: invalid header type: %d\n", 
-                    hdr.type);
+                    hdr->type);
         peer->state = MCA_OOB_TCP_FAILED;
         mca_oob_tcp_peer_close(mod, peer);
         return ORTE_ERR_UNREACH;
     }
 
     /* compare the peers name to the expected value */
-    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->name, &hdr.origin)) {
+    if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->name, &hdr->origin)) {
         opal_output(0, "%s tcp_peer_recv_connect_ack: "
             "received unexpected process identifier %s from %s\n",
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(&(hdr.origin)),
+            ORTE_NAME_PRINT(&(hdr->origin)),
             ORTE_NAME_PRINT(&(peer->name)));
         peer->state = MCA_OOB_TCP_FAILED;
         mca_oob_tcp_peer_close(mod, peer);
@@ -560,9 +598,34 @@ int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_module_t *mod,
     }
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s connect-ack recvd from %s",
+                        "%s connect-ack header from %s is okay",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name));
+
+    /* check that this is from a matching version */
+    version = (char*)(msg + sizeof(mca_oob_tcp_hdr_t));
+    if (0 != strcmp(version, orte_version_string)) {
+        opal_output(0, "%s tcp_peer_recv_connect_ack: "
+                    "received different version from %s: %s instead of %s\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&(peer->name)),
+                    version, orte_version_string);
+        peer->state = MCA_OOB_TCP_FAILED;
+        mca_oob_tcp_peer_close(mod, peer);
+        return ORTE_ERR_UNREACH;
+    }
+
+    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s connect-ack version from %s matches ours",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&peer->name));
+
+    /* check security token */
+    if (OPAL_SUCCESS != (rc = opal_sec.authenticate((opal_identifier_t*)(&hdr->origin),
+                                                    (opal_sec_cred_t)(msg+sizeof(mca_oob_tcp_hdr_t)+strlen(orte_version_string)+1),
+                                                    OPAL_SEC_CRED_MAX_SIZE))) {
+        ORTE_ERROR_LOG(rc);
+    }
 
     /* set the peer into the component and OOB-level peer tables to indicate
      * that we know this peer and we will be handling him
