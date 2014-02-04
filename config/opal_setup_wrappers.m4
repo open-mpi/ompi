@@ -214,7 +214,7 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
 # runtime), and the RUNPATH args, if we have them.
 AC_DEFUN([RPATHIFY_LDFLAGS],[
     OPAL_VAR_SCOPE_PUSH([rpath_out rpath_dir rpath_tmp])
-    AS_IF([test "$enable_wrapper_rpath" = "yes" -a ! "$WRAPPER_RPATH_SUPPORT" = "disabled" -a ! "WRAPPER_RPATH_SUPPORT" = "unnecessary"], [
+    AS_IF([test "$enable_wrapper_rpath" = "yes" && test "$WRAPPER_RPATH_SUPPORT" != "disabled" && test "$WRAPPER_RPATH_SUPPORT" != "unnecessary"], [
            rpath_out=""
            for val in ${$1}; do
                case $val in
