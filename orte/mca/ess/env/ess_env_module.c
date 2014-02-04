@@ -277,7 +277,7 @@ static int rte_ft_event(int state)
     orte_grpcomm_collective_t coll;
 
     OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-    coll.id = orte_process_info.peer_init_barrier;
+    coll.id = orte_process_info.snapc_init_barrier;
 
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {

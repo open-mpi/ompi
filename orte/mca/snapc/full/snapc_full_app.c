@@ -155,7 +155,7 @@ int app_coord_init()
     }
 
     coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.peer_init_barrier;
+    coll->id = orte_process_info.snapc_init_barrier;
     if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
 	    ORTE_ERROR_LOG(ret);
         exit_status = ret;
@@ -231,7 +231,7 @@ int app_coord_finalize()
     }
 
     coll = OBJ_NEW(orte_grpcomm_collective_t);
-    coll->id = orte_process_info.peer_init_barrier;
+    coll->id = orte_process_info.snapc_init_barrier;
     if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
@@ -309,7 +309,7 @@ int app_coord_finalize()
                              "app) Shutdown Barrier: Waiting on barrier...!"));
     }
 
-    coll->id = orte_process_info.peer_fini_barrier;
+    coll->id = orte_process_info.snapc_fini_barrier;
     if( ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll)) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;

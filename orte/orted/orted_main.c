@@ -606,6 +606,22 @@ int orte_daemon(int argc, char *argv[])
         nm->name.vpid = ORTE_VPID_WILDCARD;
         opal_list_append(&coll->participants, &nm->super);
 
+#if OPAL_ENABLE_FT_CR == 1
+        jdata->snapc_init_barrier = orte_grpcomm_base_get_coll_id();
+        coll = orte_grpcomm_base_setup_collective(jdata->snapc_init_barrier);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+
+        jdata->snapc_fini_barrier = orte_grpcomm_base_get_coll_id();
+        coll = orte_grpcomm_base_setup_collective(jdata->snapc_fini_barrier);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+#endif
+
         /* need to setup a pidmap for it */
         if (ORTE_SUCCESS != (ret = orte_util_encode_pidmap(&orte_pidmap, false))) {
             ORTE_ERROR_LOG(ret);

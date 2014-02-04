@@ -462,6 +462,9 @@ typedef struct {
     char *ckpt_snapshot_ref;
     /* snapshot location */
     char *ckpt_snapshot_loc;
+    /* collective ids */
+    orte_grpcomm_coll_id_t snapc_init_barrier;
+    orte_grpcomm_coll_id_t snapc_fini_barrier;
 #endif
 } orte_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_t);

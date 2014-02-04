@@ -596,7 +596,21 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     nm->name.jobid = jdata->jobid;
     nm->name.vpid = ORTE_VPID_WILDCARD;
     opal_list_append(&coll->participants, &nm->super);
-    
+
+#if OPAL_ENABLE_FT_CR == 1
+    coll = orte_grpcomm_base_setup_collective(jdata->snapc_init_barrier);
+    nm = OBJ_NEW(orte_namelist_t);
+    nm->name.jobid = jdata->jobid;
+    nm->name.vpid = ORTE_VPID_WILDCARD;
+    opal_list_append(&coll->participants, &nm->super);
+
+    coll = orte_grpcomm_base_setup_collective(jdata->snapc_fini_barrier);
+    nm = OBJ_NEW(orte_namelist_t);
+    nm->name.jobid = jdata->jobid;
+    nm->name.vpid = ORTE_VPID_WILDCARD;
+    opal_list_append(&coll->participants, &nm->super);
+#endif
+
     /* progress any pending collectives */
     orte_grpcomm_base_progress_collectives();
     
