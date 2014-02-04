@@ -76,8 +76,8 @@ included in the vX.Y.Z section and be denoted as:
  * in particular may want to override at least the binding default
  * to allow threads to use multiple cores.
  **********************************************************************
+- Restore version number output in "ompi_info --all".
 - Various bug fixes for the mpi_f08 Fortran bindings.
-
 - Fix ROMIO compile error with Lustre 2.4.  Thanks to Adam Moody for
   reporting the issue. 
 - Various fixes for 32 bit platforms.
