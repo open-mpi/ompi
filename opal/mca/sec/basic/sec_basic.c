@@ -20,25 +20,26 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/mca/db/db.h"
 
 #include "opal/mca/sec/base/base.h"
 #include "sec_basic.h"
 
 static int init(void);
 static void finalize(void);
-static int get_token(const opal_identifier_t *proc,
-                     opal_sec_cred_t token,
-                     size_t size);
-static int authenticate(const opal_identifier_t *proc,
-                        opal_sec_cred_t token,
-                        size_t size);
+static int get_my_cred(opal_identifier_t *my_id,
+                       opal_sec_cred_t **cred);
+static int authenticate(opal_sec_cred_t *cred);
 
 opal_sec_base_module_t opal_sec_basic_module = {
     init,
     finalize,
-    get_token,
+    get_my_cred,
     authenticate
 };
+
+static opal_sec_cred_t my_cred;
+static bool initialized = false;
 
 static int init(void)
 {
@@ -47,50 +48,42 @@ static int init(void)
 
 static void finalize(void)
 {
-}
-
-static int get_token(const opal_identifier_t *proc,
-                     opal_sec_cred_t token,
-                     size_t size)
-{
-    uint32_t ui32;
-
-    opal_output_verbose(2, opal_sec_base_framework.framework_output,
-                        "creating sec token for %"PRIu64"", *proc);
-
-    ui32 = htonl(12345);
-    memcpy(token, &ui32, 4);
-
-    opal_output_verbose(2, opal_sec_base_framework.framework_output,
-                        "proc %"PRIu64" was assigned token %u",
-                        *proc, 12345);
-    return OPAL_SUCCESS;
-}
-
-static int authenticate(const opal_identifier_t *proc,
-                        opal_sec_cred_t token,
-                        size_t size)
-{
-    uint32_t ui32;
-    uint32_t chk;
-
-    opal_output_verbose(2, opal_sec_base_framework.framework_output,
-                        "authenticating %"PRIu64"", *proc);
-
-    /* for now, just check the identifier against the proc id */
-    memcpy(&ui32, token, 4);
-
-    chk = ntohl(ui32);
-
-    if (12345 != chk) {
-        opal_output_verbose(2, opal_sec_base_framework.framework_output,
-                            "proc %"PRIu64" was not authenticated %u vs %u",
-                            *proc, chk, 12345);
-        return OPAL_ERROR;
+    if (initialized) {
+        free(my_cred.credential);
     }
+}
 
-    opal_output_verbose(2, opal_sec_base_framework.framework_output,
-                        "proc %"PRIu64" was authenticated", *proc);
+static int get_my_cred(opal_identifier_t *my_id,
+                       opal_sec_cred_t **cred)
+{
+    opal_byte_object_t *cd;
+
+    if (!initialized) {
+        /* check first if a credential was stored for this job
+         * in the database
+         */
+        if (OPAL_SUCCESS == opal_db.fetch(my_id, OPAL_DB_CREDENTIAL,
+                                          (void**)&cd, OPAL_BYTE_OBJECT)) {
+            my_cred.credential = (char*)cd->bytes;
+            my_cred.size = cd->size;
+        } else {
+            my_cred.credential = strdup("12345");
+            my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
+        }
+    }
+    initialized = true;
+
+    *cred = &my_cred;
+
     return OPAL_SUCCESS;
+}
+
+static int authenticate(opal_sec_cred_t *cred)
+{
+
+    if (0 == strncmp(cred->credential, "12345", strlen("12345"))) {
+        return OPAL_SUCCESS;
+    }
+    return OPAL_ERR_AUTHENTICATION_FAILED;
 }
 

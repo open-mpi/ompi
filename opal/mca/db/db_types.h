@@ -24,8 +24,9 @@
 BEGIN_C_DECLS
 
 /* some OPAL-appropriate key definitions */
-#define OPAL_DB_LOCALITY "opal.locality"
-#define OPAL_DB_CPUSET   "opal.cpuset"
+#define OPAL_DB_LOCALITY    "opal.locality"
+#define OPAL_DB_CPUSET      "opal.cpuset"
+#define OPAL_DB_CREDENTIAL  "opal.cred"
 
 END_C_DECLS
 

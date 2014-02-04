@@ -99,7 +99,9 @@ ORTE_MODULE_DECLSPEC void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const 
 ORTE_MODULE_DECLSPEC bool mca_oob_tcp_peer_accept(mca_oob_tcp_module_t *mod, mca_oob_tcp_peer_t* peer);
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_module_t *mod,
                                                             mca_oob_tcp_peer_t* peer);
-ORTE_MODULE_DECLSPEC int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_module_t *mod, mca_oob_tcp_peer_t* peer);
+ORTE_MODULE_DECLSPEC int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_module_t *mod,
+                                                           mca_oob_tcp_peer_t* peer,
+                                                           int sd, mca_oob_tcp_hdr_t *dhdr);
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_peer_close(mca_oob_tcp_module_t *mod,
                                                  mca_oob_tcp_peer_t *peer);
 
