@@ -229,6 +229,9 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_CONNECTION_FAILED:
         retval = "Connection failed";
         break;
+    case OPAL_ERR_AUTHENTICATION_FAILED:
+        retval = "Authentication failed";
+        break;
     default:
         retval = NULL;
     }

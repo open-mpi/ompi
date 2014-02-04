@@ -28,12 +28,20 @@
  * built should check to see if it can connect to its
  * respective server - if it can, then it should return
  * success to indicate it is ready to be used.
+ *
+ * For scalability, it is important that each process only
+ * contact the security server once, and only when requested
+ * to do so. Thus, the plugin should not get credentials for
+ * the process until the first call to "get_my_credentials",
+ * and should then cache the results for future use.
  */
 
 BEGIN_C_DECLS
 
-#define OPAL_SEC_CRED_MAX_SIZE 512   // max size of the OPAL security credential
-typedef uint8_t* opal_sec_cred_t;
+typedef struct {
+    char *credential;
+    size_t size;
+} opal_sec_cred_t;
 
 /*
  * Initialize the module
@@ -46,31 +54,32 @@ typedef int (*opal_sec_base_module_init_fn_t)(void);
 typedef void (*opal_sec_base_module_finalize_fn_t)(void);
 
 /*
- * Get a security credential - given my process identifier, return
- * a "token" that I can use for authenticating myself to another process.
- * The value must be returned in the provided location, subject to
- * the specified size constraint, in a network-byte-ordered form suitable
+ * Get a security credential for this process - return pointer to
+ * a "credential" that I can use for authenticating myself to another process.
+ * The value must be returned in a network-byte-ordered form suitable
  * for sending across the network.
  *
- * Function returns OPAL_SUCCESS if a token was assigned, or an error
+ * It isn't expected that the identifier will be used to obtain a
+ * certificate as external security systems will have no idea what
+ * it means. However, some modules may use it, and there is no way
+ * for the opal layer to know a process identifier without being told,
+ * do provide it here
+ *
+ * Function returns OPAL_SUCCESS if a credential was assigned, or an error
  * code indicating why it failed
  */
-typedef int (*opal_sec_base_module_get_token_fn_t)(const opal_identifier_t *proc,
-                                                   opal_sec_cred_t token,
-                                                   size_t size);
+typedef int (*opal_sec_base_module_get_my_cred_fn_t)(opal_identifier_t *my_id,
+                                                     opal_sec_cred_t **cred);
 
 /*
- * Authenticate a security credential - given a process identifier and
- * the security credential it provided, determine if the credential is
- * valid. The credential is passed in a network-byte-ordered form as it
- * came across the network.
+ * Authenticate a security credential - given a security credential,
+ * determine if the credential is valid. The credential is passed in
+ * a network-byte-ordered form as it came across the network.
  *
  * Function returns OPAL_SUCCESS if the token is authenticated, or an
  * error code indicating why it failed
  */
-typedef int (*opal_sec_base_module_auth_fn_t)(const opal_identifier_t *proc,
-                                              opal_sec_cred_t token,
-                                              size_t size);
+typedef int (*opal_sec_base_module_auth_fn_t)(opal_sec_cred_t *cred);
 
 /*
  * the standard module data structure
@@ -78,7 +87,7 @@ typedef int (*opal_sec_base_module_auth_fn_t)(const opal_identifier_t *proc,
 struct opal_sec_base_module_1_0_0_t {
     opal_sec_base_module_init_fn_t          init;
     opal_sec_base_module_finalize_fn_t      finalize;
-    opal_sec_base_module_get_token_fn_t     get_token;
+    opal_sec_base_module_get_my_cred_fn_t   get_my_credential;
     opal_sec_base_module_auth_fn_t          authenticate;
 };
 typedef struct opal_sec_base_module_1_0_0_t opal_sec_base_module_1_0_0_t;

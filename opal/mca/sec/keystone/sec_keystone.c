@@ -22,17 +22,14 @@
 
 static int init(void);
 static void finalize(void);
-static int get_token(const opal_identifier_t *proc,
-                     opal_sec_cred_t *token,
-                     size_t size);
-static int authenticate(const opal_identifier_t *proc,
-                        opal_sec_cred_t *token,
-                        size_t size);
+static int get_my_cred(opal_identifier_t *my_id,
+                       opal_sec_cred_t **cred);
+static int authenticate(opal_sec_cred_t *cred);
 
 opal_sec_base_module_t opal_sec_keystone_module = {
     init,
     finalize,
-    get_token,
+    get_my_cred,
     authenticate
 };
 
@@ -45,16 +42,13 @@ static void finalize(void)
 {
 }
 
-static int get_token(const opal_identifier_t *proc,
-                     opal_sec_cred_t token,
-                     size_t size)
+static int get_my_cred(opal_identifier_t *my_id,
+                       opal_sec_cred_t **cred)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int authenticate(const opal_identifier_t *proc,
-                        opal_sec_cred_t token,
-                        size_t size)
+static int authenticate(opal_sec_cred_t *cred)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
