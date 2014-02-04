@@ -150,7 +150,7 @@ AC_DEFUN([OPAL_SETUP_RPATH],[
 # (because if script A sources script B, and B calls "exit", then both
 # B and A will exit).  Instead, we have to send the output to a file
 # and then source that.
-$OMPI_TOP_BUILDDIR/opal/libltdl/libtool --config > $rpath_outfile
+$OMPI_TOP_BUILDDIR/libtool --config > $rpath_outfile
 
 chmod +x $rpath_outfile
 . ./$rpath_outfile
@@ -214,9 +214,8 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
 # runtime), and the RUNPATH args, if we have them.
 AC_DEFUN([RPATHIFY_LDFLAGS],[
     OPAL_VAR_SCOPE_PUSH([rpath_out rpath_dir rpath_tmp])
-    AS_IF([test "$enable_wrapper_rpath" = "no" -o "$WRAPPER_RPATH_SUPPORT" = "disabled"],
-          [:],
-          [rpath_out=
+    AS_IF([test "$enable_wrapper_rpath" = "yes" -a ! "$WRAPPER_RPATH_SUPPORT" = "disabled" -a ! "WRAPPER_RPATH_SUPPORT" = "unnecessary"], [
+           rpath_out=""
            for val in ${$1}; do
                case $val in
                -L*)
@@ -229,7 +228,7 @@ AC_DEFUN([RPATHIFY_LDFLAGS],[
 
            # Now add in the RPATH args for @{libdir}, and the RUNPATH args
            rpath_tmp=`echo $rpath_args | sed -e s/LIBDIR/@{libdir}/`
-           $1="$rpath_out $rpath_tmp $runpath_args"
+           $1="${$1} $rpath_out $rpath_tmp $runpath_args"
           ])
     OPAL_VAR_SCOPE_POP
 ])

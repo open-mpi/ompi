@@ -31,7 +31,3 @@ fi
 
 with_tm=no
 with_slurm=no
-
-# rpath alps, pmi, uGNI, and xpmem libraries
-LDFLAGS="$LDFLAGS -Wl,-rpath=/usr/lib64/alps -Wl,-rpath=$with_pmi/lib64 -Wl,-rpath=$with_ugni/lib64 -Wl,-rpath=$with_xpmem/lib64 -Wl,-rpath=$with_udreg/lib64"
-with_wrapper_ldflags="-Wl,-rpath=/usr/lib64/alps -Wl,-rpath=$with_pmi/lib64 -Wl,-rpath=$with_ugni/lib64 -Wl,-rpath=$with_xpmem/lib64"
