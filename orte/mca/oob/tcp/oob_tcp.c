@@ -52,6 +52,7 @@
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/mca/sec/sec.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -598,23 +599,60 @@ static void recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
  * identifier.  Used in both the threaded and event listen modes.
  */
 static void recv_connect(mca_oob_tcp_module_t *mod,
-                         int sd, mca_oob_tcp_hdr_t* hdr)
+                         int sd, uint8_t *msg)
 {
     mca_oob_tcp_peer_t* peer;
-    int flags;
-    int cmpval;
+    int flags, cmpval;
     uint64_t *ui64;
+    mca_oob_tcp_hdr_t *hdr;
+    char *version;
+    int rc;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s:tcp:recv:connect called",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                        "%s:tcp:recv:connect called with msg size %lu",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (unsigned long)sizeof(msg));
 
     /* check for invalid name - if this is true, then we have an error
      */
-    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &hdr->origin, ORTE_NAME_INVALID);
-    if (cmpval == OPAL_EQUAL) {
+    hdr = (mca_oob_tcp_hdr_t*)msg;  // was already converted to host order
+    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &hdr->origin, ORTE_NAME_INVALID)) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        CLOSE_THE_SOCKET(sd);
         return;
+    }
+
+    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s connect-ack header from %s is okay",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&hdr->origin));
+
+    /* check that this is from a matching version */
+    version = (char*)(msg + sizeof(mca_oob_tcp_hdr_t));
+    if (0 != strcmp(version, orte_version_string)) {
+        opal_output(0, "%s recv_connect: "
+                    "received different version from %s: %s instead of %s\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&(hdr->origin)),
+                    version, orte_version_string);
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        CLOSE_THE_SOCKET(sd);
+        return;
+    }
+
+    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s connect-ack version from %s matches ours",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&hdr->origin));
+
+    /* check security token */
+    if (OPAL_SUCCESS != (rc = opal_sec.authenticate((opal_identifier_t*)(&hdr->origin),
+                                                    (opal_sec_cred_t)(msg+sizeof(mca_oob_tcp_hdr_t)+strlen(orte_version_string)+1),
+                                                    OPAL_SEC_CRED_MAX_SIZE))) {
+        opal_output(0, "%s SECURITY CONNECTION ERROR FROM %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&hdr->origin));
+        ORTE_ERROR_LOG(rc);
     }
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -635,6 +673,7 @@ static void recv_connect(mca_oob_tcp_module_t *mod,
         ui64 = (uint64_t*)(&peer->name);
         if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mod->peers, (*ui64), peer)) {
             OBJ_RELEASE(peer);
+            CLOSE_THE_SOCKET(sd);
             return;
         }
     } else {
@@ -721,21 +760,26 @@ static void recv_connect(mca_oob_tcp_module_t *mod,
 static void recv_handler(int sd, short flags, void *cbdata)
 {
     mca_oob_tcp_conn_op_t *op = (mca_oob_tcp_conn_op_t*)cbdata;
-    mca_oob_tcp_hdr_t hdr;
+    size_t cnt, rdsize;
+    uint8_t *msg;
+    mca_oob_tcp_hdr_t *hdr;
     int rc;
-    size_t cnt;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:tcp:recv:handler called",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    /* ensure all is zero'd */
-    memset(&hdr, 0, sizeof(hdr));
+    /* malloc a fixed size */
+    rdsize = OPAL_SEC_CRED_MAX_SIZE + sizeof(mca_oob_tcp_hdr_t) + strlen(orte_version_string) + 1;  // need to include the NULL
+    msg = (uint8_t*)malloc(rdsize);
 
-    /* recv the process identifier */
+    /* ensure all is zero'd */
+    memset(msg, 0, rdsize);
+
+    /* get the handshake */
     cnt = 0;
-    while (cnt < sizeof(hdr)) {
-        rc = recv(sd, (char *)&hdr, sizeof(hdr), 0);
+    while (cnt < rdsize) {
+        rc = recv(sd, (char*)(msg+cnt), rdsize-cnt, 0);
         if (0 == rc) {
             if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
                 opal_output(0, "%s mca_oob_tcp_recv_handler: peer closed connection",
@@ -756,19 +800,22 @@ static void recv_handler(int sd, short flags, void *cbdata)
         }
         cnt += rc;
     }
-    MCA_OOB_TCP_HDR_NTOH(&hdr);
+    /* check the header */
+    hdr = (mca_oob_tcp_hdr_t*)msg;
+    MCA_OOB_TCP_HDR_NTOH(hdr);
 
     /* dispatch based on message type */
-    switch (hdr.type) {
+    switch (hdr->type) {
     case MCA_OOB_TCP_PROBE:
-        recv_probe(sd, &hdr);
+        recv_probe(sd, hdr);
         break;
     case MCA_OOB_TCP_IDENT:
-        recv_connect(op->mod, sd, &hdr);
+        recv_connect(op->mod, sd, msg);
         break;
     default:
-        opal_output(0, "%s mca_oob_tcp_recv_handler: invalid message type: %d\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr.type);
+        opal_output(0, "%s recv_handler: invalid message type: %d from peer %s\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->type,
+                    ORTE_NAME_PRINT(&hdr->origin));
         CLOSE_THE_SOCKET(sd);
         break;
     }
