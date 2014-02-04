@@ -474,7 +474,7 @@ int btl_openib_register_mca_params(void)
                   "Output some verbose OpenIB BTL failover information "
                   "(0 = no output, nonzero = output)", 0, &btl_openib_verbose_failover, 0));
     mca_btl_openib_component.verbose_failover = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_btl_openib_component.verbose_failover, );
+    opal_output_set_verbosity(mca_btl_openib_component.verbose_failover, btl_openib_verbose_failover);
 
     CHECK(reg_bool("port_error_failover", NULL,
                    "If nonzero, asynchronous port errors will trigger failover",
