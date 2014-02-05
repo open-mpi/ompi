@@ -83,14 +83,28 @@ OPAL_DECLSPEC int opal_init_util(int* pargc, char*** pargv);
 OPAL_DECLSPEC int opal_finalize_util(void);
 
 /**
- * Initialize a very thin OPAL layer for test purposes
+ * Initialize a very thin OPAL layer solely for use
+ * by unit tests. The purpose of this function is to
+ * provide the absolute bare minimum support required
+ * to open, select, and close a framework. This is
+ * maintained separately from the other OPAL runtime
+ * APIs to avoid conflicts when new frameworks are
+ * added to the normal OPAL init sequence. It has no
+ * other purpose and should not be used outside of
+ * unit tests.
+ *
  * @retval OPAL_SUCCESS Upon success.
  * @retval OPAL_ERROR Upon failure.
  */
 OPAL_DECLSPEC int opal_init_test(void);
 
 /**
- * Finalize the OPAL layer, excluding the MCA system. 
+ * Finalize the very thin OPAL layer used solely
+ * by unit tests. The purpose of this function is to
+ * finalize the absolute bare minimum support opened
+ * by its companion opal_init_test API. It has no
+ * other purpose and should not be used outside of
+ * unit tests.
  *
  * @retval OPAL_SUCCESS Upon success.
  * @retval OPAL_ERROR Upon failure.
