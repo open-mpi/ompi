@@ -193,7 +193,6 @@ sm_segment_attach(mca_btl_sm_component_t *comp_ptr)
         opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
-        exit(1);
         goto out;
     }
     if ((ssize_t)sizeof(opal_shmem_ds_t) != (bread =
