@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,7 +25,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/atomic/atomic.h"
 
-#define OPAL_BITWISE_SIZEOF_LONG (OPAL_SIZEOF_LONG*8)
+#define OPAL_BITWISE_SIZEOF_LONG (SIZEOF_LONG * 8)
 
 struct oshmem_lock_counter {
     void *lock;
