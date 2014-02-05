@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +62,16 @@ typedef struct {
 #if OPAL_HAVE_HWLOC
     hwloc_cpuset_t working_cpuset;
 #endif
+    bool modex_ready;
+    opal_list_t modex_requests;
 } orte_grpcomm_base_t;
+
+typedef struct {
+    opal_list_item_t super;
+    orte_process_name_t peer;
+    opal_scope_t scope;
+} orte_grpcomm_modex_req_t;
+OBJ_CLASS_DECLARATION(orte_grpcomm_modex_req_t);
 
 typedef struct {
     opal_object_t super;
@@ -114,6 +123,7 @@ ORTE_DECLSPEC int orte_grpcomm_base_pack_xcast(orte_jobid_t job,
                                                opal_buffer_t *buffer,
                                                opal_buffer_t *message,
                                                orte_rml_tag_t tag);
+ORTE_DECLSPEC void orte_grpcomm_base_process_modex(int fd, short args, void *cbdata);
 
 END_C_DECLS
 #endif

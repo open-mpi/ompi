@@ -26,6 +26,7 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/state/state.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
@@ -140,6 +141,9 @@ void ompi_rte_wait_for_debugger(void)
 
 int ompi_rte_modex(ompi_rte_collective_t *coll)
 {
+    /* mark that this process reached modex */
+    orte_grpcomm_base.modex_ready = true;
+
     if ((orte_process_info.num_procs < ompi_hostname_cutoff) ||
          !ompi_rte_orte_direct_modex ||
          orte_standalone_operation) {
@@ -158,15 +162,27 @@ int ompi_rte_modex(ompi_rte_collective_t *coll)
      * info we need, and we will retrieve the MPI-level info
      * only as requested. This will provide a faster startup
      * time since we won't do a massive allgather operation,
-     * but will make first-message connections slower. However,
-     * we still have to do a barrier op here to ensure that all
-     * procs have had time to store their modex info prior to
-     * receiving a request to provide it!
+     * but will make first-message connections slower.
      */
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                         "%s using direct modex",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    /* process any pending requests */
+    ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_MODEX_READY);
+    /* release the barrier */
+    if (NULL != coll->cbfunc) {
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                             "%s using direct modex - executing barrier",
+                             "%s CALLING MODEX RELEASE",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    return orte_grpcomm.barrier(coll);
+        coll->cbfunc(NULL, coll->cbdata);
+    } else {
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                             "%s NO MODEX RELEASE CBFUNC",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    }
+    /* flag the collective as complete */
+    coll->active = false;
+    return OMPI_SUCCESS;
 }
 
 int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
@@ -224,6 +240,10 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
     int rc;
 
     if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                             "%s requesting direct modex from %s for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->proc_name), key));
         /* if we couldn't fetch the data via the db, then we will attempt
          * to retrieve it from the target proc
          */
@@ -254,6 +274,10 @@ int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
         /* if we couldn't fetch the data via the db, then we will attempt
          * to retrieve it from the target proc
          */
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                             "%s requesting direct modex from %s for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->proc_name), key));
         if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_PEER))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -283,6 +307,10 @@ int ompi_rte_db_fetch_multiple(const struct ompi_proc_t *proc,
         /* if we couldn't fetch the data via the db, then we will attempt
          * to retrieve it from the target proc
          */
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                             "%s requesting direct modex from %s for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->proc_name), key));
         if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_GLOBAL))) {
             ORTE_ERROR_LOG(rc);
             return rc;

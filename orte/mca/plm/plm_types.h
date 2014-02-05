@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_REGISTERED               5  /* proc registered sync */
 #define ORTE_PROC_STATE_IOF_COMPLETE             6  /* io forwarding pipes have closed */
 #define ORTE_PROC_STATE_WAITPID_FIRED            7  /* waitpid fired on process */
+#define ORTE_PROC_STATE_MODEX_READY              8  /* all modex info has been stored */
 
 /*
  * Define a "boundary" so we can easily and quickly determine
