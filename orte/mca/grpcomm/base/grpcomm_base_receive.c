@@ -315,6 +315,42 @@ static void app_recv(int status, orte_process_name_t* sender,
     }
 }
 
+void orte_grpcomm_base_process_modex(int fd, short args, void *cbdata)
+{
+
+    orte_grpcomm_modex_req_t *req;
+    opal_buffer_t *buf;
+    int rc;
+
+    OPAL_LIST_FOREACH(req, &orte_grpcomm_base.modex_requests, orte_grpcomm_modex_req_t) {
+        /* we always must send a response, even if nothing could be
+         * returned, to prevent the remote proc from hanging
+         */
+        buf = OBJ_NEW(opal_buffer_t);
+
+        /* pack our process name so the remote end can use the std
+         * unpacking routine
+         */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto respond;
+        }
+
+        /* collect the desired data */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, req->scope))) {
+            ORTE_ERROR_LOG(rc);
+        }
+
+    respond:
+        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(&req->peer, buf,
+                                                          ORTE_RML_TAG_DIRECT_MODEX_RESP,
+                                                          orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+        }
+    }
+}
+
 static void direct_modex(int status, orte_process_name_t* sender,
                          opal_buffer_t* buffer, orte_rml_tag_t tag,
                          void* cbdata)
@@ -322,6 +358,7 @@ static void direct_modex(int status, orte_process_name_t* sender,
     opal_buffer_t *buf;
     int rc, cnt;
     opal_scope_t scope;
+    orte_grpcomm_modex_req_t *req;
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s providing direct modex for %s",
@@ -338,6 +375,26 @@ static void direct_modex(int status, orte_process_name_t* sender,
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &scope, &cnt, OPAL_DATA_SCOPE_T))) {
         ORTE_ERROR_LOG(rc);
         goto respond;
+    }
+
+    /* if we haven't made it to our own modex, then we may
+     * not yet have all the required info
+     */
+    if (!orte_grpcomm_base.modex_ready) {
+        /* we are in an event, so it is safe to access
+         * the global list of requests - record this one.
+         * Note that we don't support multiple requests
+         * pending from the same proc as we can't know
+         * which thread to return the data to, so we
+         * require that the remote proc only allow
+         * one thread at a time to call modex_recv
+         */
+        req = OBJ_NEW(orte_grpcomm_modex_req_t);
+        req->peer = *sender;
+        req->scope = scope;
+        opal_list_append(&orte_grpcomm_base.modex_requests, &req->super);
+        OBJ_RELEASE(buf);
+        return;
     }
 
     /* pack our process name so the remote end can use the std

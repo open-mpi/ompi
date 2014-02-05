@@ -139,6 +139,11 @@ setup_mpool_base_resources(mca_btl_sm_component_t *comp_ptr,
     int fd = -1;
     ssize_t bread = 0;
 
+     /* Wait for the file to be created */
+    while (0 != access(comp_ptr->sm_rndv_file_name, R_OK)) {
+        opal_progress();
+    }
+
     if (-1 == (fd = open(comp_ptr->sm_mpool_rndv_file_name, O_RDONLY))) {
         int err = errno;
         opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
@@ -188,6 +193,7 @@ sm_segment_attach(mca_btl_sm_component_t *comp_ptr)
         opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
         rc = OMPI_ERR_IN_ERRNO;
+        exit(1);
         goto out;
     }
     if ((ssize_t)sizeof(opal_shmem_ds_t) != (bread =
