@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 #                         Use is subject to license terms.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,3 +26,14 @@ No nodes were found in the PBS_NODEFILE:
 
 This is probably a setup issue, could be due to a corrupted file, or
 - most probably - is caused by having failed to obtain an allocation.
+#
+[smp-error]
+The SMP mode flag was given, but the required PBS_PPN environmental
+variable was not found. Please check that your system actually supports
+the indicated mode and try again.
+#
+[smp-multi]
+The SMP mode flag was given, but a node was listed in the PBS_Nodefile
+more than once. This usually indicates that the system is not
+actually operating in SMP mode. Please check your system configuration
+and try again.

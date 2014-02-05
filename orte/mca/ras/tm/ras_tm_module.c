@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -124,7 +125,8 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
     orte_node_t *node;
     opal_list_item_t* item;
     FILE *fp;
-    char *hostname;
+    char *hostname, *cppn;
+    int ppn;
 
     /* Ignore anything that the user already specified -- we're
        getting nodes only from TM. */
@@ -135,6 +137,19 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
        here (we actually ignore the fact that they're duplicates --
        slightly inefficient, but no big deal); just mentioned for
        completeness... */
+
+    /* if we are in SMP mode, then read the environment to get the
+     * number of cpus for each node read in the file
+     */
+    if (mca_ras_tm_component.smp_mode) {
+        if (NULL == (cppn = getenv("PBS_PPN"))) {
+            orte_show_help("help-ras-tm.txt", "smp-error", true);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        ppn = strtol(cppn, NULL, 10);
+    } else {
+        ppn = 1;
+    }
 
     /* setup the full path to the PBS file */
     filename = opal_os_path(false, mca_ras_tm_component.nodefile_dir,
@@ -166,6 +181,11 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
              item = opal_list_get_next(item)) {
             node = (orte_node_t*) item;
             if (0 == strcmp(node->name, hostname)) {
+                if (mca_ras_tm_component.smp_mode) {
+                    /* this cannot happen in smp mode */
+                    orte_show_help("help-ras-tm.txt", "smp-multi", true);
+                    return ORTE_ERR_BAD_PARAM;
+                }
                 ++node->slots;
 
                 OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
@@ -191,7 +211,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
             node->launch_id = nodeid;
             node->slots_inuse = 0;
             node->slots_max = 0;
-            node->slots = 1;
+            node->slots = ppn;
             opal_list_append(nodelist, &node->super);
         } else {
 
