@@ -94,9 +94,6 @@ int ompi_mpi_finalize(void)
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
     ompi_rte_collective_t *coll;
-    ompi_proc_t** procs;
-    size_t nprocs;
-
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -152,18 +149,6 @@ int ompi_mpi_finalize(void)
     /* Redo ORTE calling opal_progress_event_users_increment() during
        MPI lifetime, to get better latency when not using TCP */
     opal_progress_event_users_increment();
-
-
-    if (NULL == (procs = ompi_proc_world(&nprocs))) {
-        return OMPI_ERROR;
-    }
-
-    if (OMPI_SUCCESS != (ret = MCA_PML_CALL(del_procs(procs, nprocs)))) {
-        free(procs);
-        return ret;
-    }
-    free(procs);
-
 
     /* check to see if we want timing information */
     if (ompi_enable_timing != 0 && 0 == OMPI_PROC_MY_NAME->vpid) {
