@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -98,6 +99,21 @@ static int ras_tm_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_ras_tm_component.nodefile_dir);
+
+    /* for big SMP machines (e.g., those from SGI), listing the nodes
+     * once/slot in the nodefile is extreme. In those cases, they may
+     * choose to list each node once, but then provide an envar that
+     * tells us how many cpus/node were allocated. Allow the user to
+     * inform us that we are in such an environment
+     */
+    mca_ras_tm_component.smp_mode = false;
+    (void) mca_base_component_var_register (c, "smp",
+                                            "The Torque system is configured in SMP mode "
+                                            "with the number of cpus/node given in the environment",
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &mca_ras_tm_component.smp_mode);
 
     return ORTE_SUCCESS;
 }
