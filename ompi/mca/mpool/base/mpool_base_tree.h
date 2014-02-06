@@ -53,9 +53,10 @@ typedef struct mca_mpool_base_tree_item_t mca_mpool_base_tree_item_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_tree_item_t);
 
 /*
- * initialize the rb tree
+ * initialize/finalize the rb tree
  */
 int mca_mpool_base_tree_init(void); 
+int mca_mpool_base_tree_fini(void);
 
 /* 
  * insert an item in the rb tree 
