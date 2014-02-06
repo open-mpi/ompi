@@ -130,6 +130,8 @@ static int _shmem_finalize(void)
         return ret;
     }
 
+    oshmem_shmem_barrier();
+
     /* free spml resource */
     if (OSHMEM_SUCCESS != (ret = mca_spml_base_finalize())) {
         return ret;

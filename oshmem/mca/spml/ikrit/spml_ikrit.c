@@ -343,16 +343,14 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
     size_t i;
     opal_list_item_t *item;
 
-    if (mca_spml_ikrit.mxm_ep) {
-        mxm_ep_destroy(mca_spml_ikrit.mxm_ep);
-        mca_spml_ikrit.mxm_ep = 0;
-    }
-
     while (NULL != (item = opal_list_remove_first(&mca_spml_ikrit.active_peers))) {
     };
     OBJ_DESTRUCT(&mca_spml_ikrit.active_peers);
 
     for (i = 0; i < nprocs; i++) {
+        if (mca_spml_ikrit.mxm_peers[i]->mxm_conn) {
+            mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_conn);
+        }
         destroy_ptl_idx(i);
         if (mca_spml_ikrit.mxm_peers[i]) {
             OBJ_RELEASE(mca_spml_ikrit.mxm_peers[i]);
