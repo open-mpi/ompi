@@ -402,9 +402,9 @@ int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
                           int32_t *num_vals, opal_data_type_t type)
 {
     int32_t i, n;
-    int64_t tmp[2];
     float *desttmp = (float*) dest;
     int ret;
+    char *convert;
 
    OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_unpack_float * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
@@ -414,11 +414,12 @@ int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
 
     /* unpack the data */
     for (i = 0; i < (*num_vals); ++i) {
-        n=2;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_int64(buffer, tmp, &n, OPAL_INT64))) {
+        n=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &convert, &n, OPAL_STRING))) {
             return ret;
         }
-        desttmp[i] = (float)tmp[0] + (float)tmp[1]/1000000.0;
+        desttmp[i] = strtof(convert, NULL);
+        free(convert);
     }
     return OPAL_SUCCESS;
 }
