@@ -80,7 +80,7 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
 
     if (count > 0) {
         /* initialize just enough of the convertor to avoid a SEGV in opal_convertor_cleanup */
-        convertor.stack_size = 0;
+        OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
         /* We will create a convertor specialized for the        */
         /* remote architecture and prepared with the datatype.   */
