@@ -522,6 +522,10 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     bool found;
     int ret;
     
+    if (NULL == base || NULL == range) {
+        return ORTE_ERROR;
+    }
+
     len = strlen(range);
     base_len = strlen(base);
     /* Silence compiler warnings; start and end are always assigned

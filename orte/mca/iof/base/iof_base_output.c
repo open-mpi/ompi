@@ -243,12 +243,12 @@ construct:
             }
         }
     }
-    if (!endtagged) {
+    if (!endtagged && k < ORTE_IOF_BASE_TAGGED_OUT_MAX) {
         /* need to add an endtag */
         for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX-1; j++) {
             output->data[k++] = endtag[j];
         }
-        output->data[k++] = '\n';
+        output->data[k] = '\n';
     }
     output->numbytes = k;
     
