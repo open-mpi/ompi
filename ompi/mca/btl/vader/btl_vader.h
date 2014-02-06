@@ -51,7 +51,6 @@
     #include <sn/xpmem.h>
 
     typedef int64_t xpmem_segid_t;
-    typedef int64_t xpmem_apid_t;
   #endif
 #else
 #include "opal/mca/shmem/base/base.h"
