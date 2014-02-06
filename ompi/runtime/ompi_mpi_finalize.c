@@ -92,6 +92,8 @@ int ompi_mpi_finalize(void)
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
     ompi_rte_collective_t *coll;
+    ompi_proc_t** procs;
+    size_t nprocs;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -114,11 +116,6 @@ int ompi_mpi_finalize(void)
 
     ompi_mpiext_fini();
 
-    /* As finalize is the last legal MPI call, we are allowed to force the release
-     * of the user buffer used for bsend, before going anywhere further.
-     */
-    (void)mca_pml_base_bsend_detach(NULL, NULL);
-
     /* Per MPI-2:4.8, we have to free MPI_COMM_SELF before doing
        anything else in MPI_FINALIZE (to include setting up such that
        MPI_FINALIZED will return true). */
@@ -133,6 +130,16 @@ int ompi_mpi_finalize(void)
     /* Proceed with MPI_FINALIZE */
 
     ompi_mpi_finalized = true;
+
+    /* As finalize is the last legal MPI call, we are allowed to force the release
+     * of the user buffer used for bsend, before going anywhere further.
+     */
+    (void)mca_pml_base_bsend_detach(NULL, NULL);
+
+    nprocs = 0;
+    procs = ompi_proc_all(&nprocs);
+    MCA_PML_CALL(del_procs(procs, nprocs));
+    free(procs);
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);

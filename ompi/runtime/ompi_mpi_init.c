@@ -637,8 +637,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* select buffered send allocator component to be used */
-    ret=mca_pml_base_bsend_init(OMPI_ENABLE_THREAD_MULTIPLE);
-    if( OMPI_SUCCESS != ret ) {
+    if( OMPI_SUCCESS !=
+	(ret = mca_pml_base_bsend_init(OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_pml_base_bsend_init() failed";
         goto error;
     }
