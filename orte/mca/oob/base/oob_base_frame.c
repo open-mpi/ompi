@@ -70,6 +70,7 @@ static int orte_oob_base_close(void)
 
     /* destruct our internal lists */
     OBJ_DESTRUCT(&orte_oob_base.actives);
+    OBJ_DESTRUCT(&orte_oob_base.peers);
 
     return mca_base_framework_components_close(&orte_oob_base_framework, NULL);
 }
