@@ -94,6 +94,8 @@ int ompi_mpi_finalize(void)
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
     ompi_rte_collective_t *coll;
+    ompi_proc_t** procs;
+    size_t nprocs;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -136,12 +138,11 @@ int ompi_mpi_finalize(void)
      */
     (void)mca_pml_base_bsend_detach(NULL, NULL);
 
-    {
-	size_t nprocs = 0;
-	ompi_proc_t** procs = ompi_proc_all(&nprocs);
-	MCA_PML_CALL(del_procs(procs, nprocs));
-	free(procs);
-    }
+    nprocs = 0;
+    procs = ompi_proc_all(&nprocs);
+    MCA_PML_CALL(del_procs(procs, nprocs));
+    free(procs);
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
 #endif
