@@ -94,6 +94,9 @@ struct mca_spml_ikrit_t {
     int n_relays; /* number of procs/node serving as relays */
 
     char *mxm_tls;
+#if MXM_API >= MXM_VERSION(2,0)
+    int unsync_conn_max;
+#endif
 };
 
 typedef struct mca_spml_ikrit_t mca_spml_ikrit_t;

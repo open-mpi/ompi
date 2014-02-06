@@ -125,6 +125,13 @@ static int mca_spml_ikrit_component_register(void)
                                            0,
 #endif
                                            "[integer] Minimal allowed job's NP to activate ikrit");
+#if MXM_API >= MXM_VERSION(2,0)
+    mca_spml_ikrit.unsync_conn_max = 
+            mca_spml_ikrit_param_register_int("unsync_conn_max",
+                                           8,
+                                           "[integer] Max number of connections that do not require notification of PUT operation remote completion. Increasing this number improves efficiency of p2p communication but increases overhead of shmem_fence/shmem_quiet/shmem_barrier");
+#endif
+
     if (oshmem_num_procs() < np) {
         SPML_VERBOSE(1,
                      "Not enough ranks (%d<%d), disqualifying spml/ikrit",
