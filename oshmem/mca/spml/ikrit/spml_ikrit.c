@@ -1055,6 +1055,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     }
 #else
     if (mca_spml_ikrit.free_list_max - mca_spml_ikrit.n_active_puts <= SPML_IKRIT_PUT_LOW_WATER ||
+            opal_list_get_size(&mca_spml_ikrit.active_peers) > mca_spml_ikrit.unsync_conn_max ||
             (mca_spml_ikrit.mxm_peers[dst]->n_active_puts + 1) % SPML_IKRIT_PACKETS_PER_SYNC == 0) {
         put_req->mxm_req.flags = 0;
         need_progress = 1;
