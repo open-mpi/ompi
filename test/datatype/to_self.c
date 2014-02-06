@@ -45,7 +45,7 @@ create_indexed_constant_gap_ddt( int number,  /* number of repetitions */
         bLength[i] = contig_size;
         displ[i] = displ[i-1] + sizeof(double) * (contig_size + gap_size);
     }
-    MPI_Type_struct( number, bLength, displ, types, &dt );
+    MPI_Type_create_struct( number, bLength, displ, types, &dt );
     MPI_DDT_DUMP( dt );
     free(types);
     free(bLength);
@@ -86,23 +86,23 @@ create_indexed_gap_ddt( void )
     MPI_Datatype types[2] = { MPI_INT, MPI_FLOAT };
     MPI_Aint displ[2];
 
-    MPI_Address( &(dt[0].is[0].i[0]), &(displ[0]) );
-    MPI_Address( &(dt[0].is[0].f), &(displ[1]) );
+    MPI_Get_address( &(dt[0].is[0].i[0]), &(displ[0]) );
+    MPI_Get_address( &(dt[0].is[0].f), &(displ[1]) );
     displ[1] -= displ[0];
     displ[0] -= displ[0];
-    MPI_Type_struct( 2, bLength, displ, types, &dt1 );
+    MPI_Type_create_struct( 2, bLength, displ, types, &dt1 );
     /*MPI_DDT_DUMP( dt1 );*/
     MPI_Type_contiguous( 3, dt1, &dt2 );
     /*MPI_DDT_DUMP( dt2 );*/
     bLength[0] = 1;
     bLength[1] = 1;
-    MPI_Address( &(dt[0].v1), &(displ[0]) );
-    MPI_Address( &(dt[0].is[0]), &(displ[1]) );
+    MPI_Get_address( &(dt[0].v1), &(displ[0]) );
+    MPI_Get_address( &(dt[0].is[0]), &(displ[1]) );
     displ[1] -= displ[0];
     displ[0] -= displ[0];
     types[0] = MPI_INT;
     types[1] = dt2;
-    MPI_Type_struct( 2, bLength, displ, types, &dt3 );
+    MPI_Type_create_struct( 2, bLength, displ, types, &dt3 );
     /*MPI_DDT_DUMP( dt3 );*/
     MPI_Type_free( &dt1 );
     MPI_Type_free( &dt2 );
@@ -136,7 +136,7 @@ create_indexed_gap_optimized_ddt( void )
     displ[1] = 8;
     displ[2] = 44 * 9 + 8;
    
-    MPI_Type_struct( 3, bLength, displ, types, &dt3 );
+    MPI_Type_create_struct( 3, bLength, displ, types, &dt3 );
    
     MPI_Type_free( &dt1 );
     MPI_Type_free( &dt2 );
@@ -158,7 +158,7 @@ static int isend_recv( int cycles,
                        MPI_Datatype sdt, int scount, void* sbuf,
                        MPI_Datatype rdt, int rcount, void* rbuf )
 {
-    int sres, rres, myself, tag = 0, i, slength, rlength;
+    int myself, tag = 0, i, slength, rlength;
     MPI_Status status;
     MPI_Request req;
     double tstart, tend;
@@ -173,13 +173,13 @@ static int isend_recv( int cycles,
     tstart = MPI_Wtime();
     for( i = 0; i < cycles; i++ ) {
 #ifndef FAST
-        sres = MPI_Isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &req );
-        rres = MPI_Recv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &status );
+        MPI_Isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &req );
+        MPI_Recv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &status );
         MPI_Wait( &req, &status );
         /*MPI_Request_free( &req );*/
 #else
-        sres = ftmpi_mpi_isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &req );
-        rres = ftmpi_mpi_recv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &status );
+        ftmpi_mpi_isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &req );
+        ftmpi_mpi_recv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &status );
         ftmpi_request_free( &req );
 #endif
     }
@@ -192,7 +192,7 @@ static int irecv_send( int cycles,
                        MPI_Datatype sdt, int scount, void* sbuf,
                        MPI_Datatype rdt, int rcount, void* rbuf )
 {
-    int sres, rres, myself, tag = 0, i, slength, rlength;
+    int myself, tag = 0, i, slength, rlength;
     MPI_Request req;
     MPI_Status status;
     double tstart, tend;
@@ -207,13 +207,13 @@ static int irecv_send( int cycles,
     tstart = MPI_Wtime();
     for( i = 0; i < cycles; i++ ) {
 #ifndef FAST
-        rres = MPI_Irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &req );
-        sres = MPI_Send( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD );
+        MPI_Irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &req );
+        MPI_Send( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD );
         MPI_Wait( &req, &status );
         /*MPI_Request_free( &req );*/
 #else
-        rres = ftmpi_mpi_irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &req );
-        sres = ftmpi_mpi_send( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD );
+        ftmpi_mpi_irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &req );
+        ftmpi_mpi_send( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD );
         ftmpi_request_free( &req );
 #endif
     }
@@ -226,7 +226,7 @@ static int isend_irecv_wait( int cycles,
                              MPI_Datatype sdt, int scount, void* sbuf,
                              MPI_Datatype rdt, int rcount, void* rbuf )
 {
-    int sres, rres, myself, tag = 0, i, slength, rlength;
+    int myself, tag = 0, i, slength, rlength;
     MPI_Request sreq, rreq;
     MPI_Status status;
     double tstart, tend;
@@ -241,15 +241,15 @@ static int isend_irecv_wait( int cycles,
     tstart = MPI_Wtime();
     for( i = 0; i < cycles; i++ ) {
 #ifndef FAST
-        sres = MPI_Isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
-        rres = MPI_Irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
+        MPI_Isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
+        MPI_Irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
         MPI_Wait( &sreq, &status );
         MPI_Wait( &rreq, &status );
         /*MPI_Request_free( &sreq );*/
         /*MPI_Request_free( &rreq );*/
 #else
-        sres = ftmpi_mpi_isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
-        rres = ftmpi_mpi_irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
+        ftmpi_mpi_isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
+        ftmpi_mpi_irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
         ftmpi_wait( &sreq, &status );
         ftmpi_request_free( &sreq );
         ftmpi_request_free( &rreq );
@@ -264,7 +264,7 @@ static int irecv_isend_wait( int cycles,
                              MPI_Datatype sdt, int scount, void* sbuf,
                              MPI_Datatype rdt, int rcount, void* rbuf )
 {
-    int sres, rres, myself, tag = 0, i, slength, rlength;
+    int myself, tag = 0, i, slength, rlength;
     MPI_Request sreq, rreq;
     MPI_Status status;
     double tstart, tend;
@@ -279,15 +279,15 @@ static int irecv_isend_wait( int cycles,
     tstart = MPI_Wtime();
     for( i = 0; i < cycles; i++ ) {
 #ifndef FAST
-        rres = MPI_Irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
-        sres = MPI_Isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
+        MPI_Irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
+        MPI_Isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
         MPI_Wait( &sreq, &status );
         MPI_Wait( &rreq, &status );
         /*MPI_Request_free( &sreq );*/
         /*MPI_Request_free( &rreq );*/
 #else
-        rres = ftmpi_mpi_irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
-        sres = ftmpi_mpi_isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
+        ftmpi_mpi_irecv( rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &rreq );
+        ftmpi_mpi_isend( sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &sreq );
         ftmpi_wait( &sreq, &status );
         ftmpi_request_free( &sreq );
         ftmpi_request_free( &rreq );
@@ -301,10 +301,10 @@ static int irecv_isend_wait( int cycles,
 static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
 {
     int i;
-    MPI_Aint extent;
+    MPI_Aint lb, extent;
     char *sbuf, *rbuf;
 
-    MPI_Type_extent( sddt, &extent );
+    MPI_Type_get_extent( sddt, &lb, &extent );
     sbuf = (char*)malloc( length );
     rbuf = (char*)malloc( length );
     printf( "# Isend recv\n" );
@@ -335,17 +335,16 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
 
 int main( int argc, char* argv[] )
 {
-    int rc;
     int length = 1024 * 1024;
     int rank, size;
     MPI_Datatype ddt;
     int run_tests = DO_CONTIG | DO_CONSTANT_GAP | DO_INDEXED_GAP | DO_OPTIMIZED_INDEXED_GAP;
     /*int run_tests = DO_CONSTANT_GAP;*/
 
-    rc = MPI_Init (&argc, &argv);
+    MPI_Init (&argc, &argv);
 
-    rc = MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-    rc = MPI_Comm_size (MPI_COMM_WORLD, &size);
+    MPI_Comm_rank (MPI_COMM_WORLD, &rank);
+    MPI_Comm_size (MPI_COMM_WORLD, &size);
 
     if( rank != 0 ) {
         MPI_Finalize();

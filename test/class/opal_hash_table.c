@@ -76,10 +76,16 @@ static void validate_table(opal_hash_table_t *table, char *keys[], int is_numeri
         if ( 1 == is_numeric_keys ) {
             ret = opal_hash_table_get_value_uint32(table, atoi(keys[j]),
                                                    (void**) &value.uvalue);
+            if (OPAL_SUCCESS != ret) {
+                test_failure("opal_hash_table_get_value_uint32 failed");
+            }
         } else {
             ret = opal_hash_table_get_value_ptr(table, keys[j], 
                                                 strlen(keys[j]), 
                                                 &value.vvalue);
+            if (OPAL_SUCCESS != ret) {
+                test_failure("opal_hash_table_get_value_ptr failed");
+            }
         }
         test_verify_str(keys[j+1], value.vvalue);
     }

@@ -46,7 +46,7 @@ static int test_upper( unsigned int length )
     ompi_datatype_t *pdt;
     opal_convertor_t * pConv;
     int rc = OMPI_SUCCESS;
-    unsigned int i, iov_count, split_chunk, total_length;
+    unsigned int i, iov_count, total_length;
     size_t max_data;
     struct iovec iov[5];
     TIMER_DATA_TYPE start, end;
@@ -65,8 +65,6 @@ static int test_upper( unsigned int length )
     }
 
     GET_TIME( start );
-    split_chunk = (length + 1) * sizeof(double);
-    /*    split_chunk = (total_length + 1) * sizeof(double); */
     for( i = total_length; i > 0; ) {
         iov_count = 5;
         max_data = 0;

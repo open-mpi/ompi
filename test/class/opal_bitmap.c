@@ -295,8 +295,10 @@ int find_and_set(opal_bitmap_t *bm, int bit)
 
 int clear_all(opal_bitmap_t *bm) 
 {
-    int i, err;
-    err = opal_bitmap_clear_all_bits(bm);
+    int i;
+    if (OPAL_SUCCESS != opal_bitmap_clear_all_bits(bm)) {
+        return ERR_CODE;
+    }
     for (i = 0; i < bm->array_size; ++i)
 	if (bm->bitmap[i] != 0) {
 	    fprintf(error_out, "ERROR: clear_all for bitmap arry entry %d\n\n",
@@ -309,8 +311,10 @@ int clear_all(opal_bitmap_t *bm)
 
 int set_all(opal_bitmap_t *bm)
 {
-   int i, err;
-   err = opal_bitmap_set_all_bits(bm);
+   int i;
+   if (OPAL_SUCCESS != opal_bitmap_set_all_bits(bm)) {
+       return ERR_CODE;
+   }
    for (i = 0; i < bm->array_size; ++i)
        if (bm->bitmap[i] != 0xff) {
 	   fprintf(error_out, "ERROR: set_all for bitmap arry entry %d\n\n", i);

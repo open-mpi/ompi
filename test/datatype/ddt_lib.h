@@ -44,7 +44,7 @@ extern void cache_trash( void );
 /**
  * Data-type functions.
  */
-ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length );
+ompi_datatype_t* create_inversed_vector( const ompi_datatype_t const* type, int length );
 
 extern int mpich_typeub( void );
 extern int mpich_typeub2( void );
@@ -84,11 +84,11 @@ extern ompi_datatype_t* test_create_twice_two_doubles( void );
   --C-----D*-[ C ][INT]        MPI_INT count 1 disp 0xa80 (2688) extent 4
 */
 extern ompi_datatype_t* test_create_blacs_type( void );
-extern ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type );
-extern ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type );
+extern ompi_datatype_t* test_create_blacs_type1( const ompi_datatype_t const* base_type );
+extern ompi_datatype_t* test_create_blacs_type2( const ompi_datatype_t const* base_type );
 extern ompi_datatype_t* test_struct( void );
 extern ompi_datatype_t* create_strange_dt( void );
-extern ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count );
-extern ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count,
+extern ompi_datatype_t* create_contiguous_type( const ompi_datatype_t const* data, int count );
+extern ompi_datatype_t* create_vector_type( const ompi_datatype_t const* data, int count,
                                             int length, int stride );
 

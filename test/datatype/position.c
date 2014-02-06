@@ -181,6 +181,8 @@ typedef struct {
     int         i;
 } ddt_ldi_t;
 
+#if 0
+/* For debugging */
 static void dump_ldi( ddt_ldi_t* buffer, int start_pos, int end_pos )
 {
     int i;
@@ -190,6 +192,7 @@ static void dump_ldi( ddt_ldi_t* buffer, int start_pos, int end_pos )
 
     }
 }
+#endif
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
 extern int opal_unpack_debug;

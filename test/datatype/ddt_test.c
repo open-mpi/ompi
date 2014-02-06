@@ -118,7 +118,7 @@ static int test_upper( unsigned int length )
  * is not an easy task. Define a function to centralize the complexity in a
  * single location.
  */
-size_t compute_buffer_length(ompi_datatype_t* pdt, int count)
+static size_t compute_buffer_length(ompi_datatype_t* pdt, int count)
 {
     MPI_Aint extent, lb, true_extent, true_lb;
     size_t length;
@@ -151,7 +151,7 @@ static int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
     pdst = malloc(length);
     psrc = malloc(length);
 
-    for( int i = 0; i < length; i++ )
+    for( size_t i = 0; i < length; i++ )
 	((char*)psrc)[i] = i % 128 + 32;
     memset(pdst, 0, length);
 
@@ -193,7 +193,7 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
     ptemp = malloc( chunk );
 
     /* initialize the buffers to prevent valgrind from complaining */
-    for( int i = 0; i < slength; i++ )
+    for( size_t i = 0; i < slength; i++ )
             ((char*)psrc)[i] = i % 128 + 32;
     memset(pdst, 0, rlength);
 

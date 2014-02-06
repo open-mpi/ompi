@@ -347,7 +347,7 @@ void test2(void)
         ((ompi_test_rb_value_t *) new_value)->key.bottom = mem[i];
         ((ompi_test_rb_value_t *) new_value)->key.top = 
                                             (void *) ((size_t) mem[i] + size - 1);
-        ((ompi_test_rb_value_t *) new_value)->registered_mpools[0] = (void *) i;
+        ((ompi_test_rb_value_t *) new_value)->registered_mpools[0] = (void *)(intptr_t) i;
         rc = ompi_rb_tree_insert(&tree, &((ompi_test_rb_value_t *)new_value)->key, 
                         new_value);
         if(OMPI_SUCCESS != rc) 
@@ -365,7 +365,7 @@ void test2(void)
         if(NULL == result) 
         {
             test_failure("lookup returned null!");
-        } else if(i != ((int) ((ompi_test_rb_value_t *) result)->registered_mpools[0]))
+        } else if(i != ((int)(intptr_t) ((ompi_test_rb_value_t *) result)->registered_mpools[0]))
         {
             test_failure("lookup returned wrong node!");
         }
@@ -373,7 +373,7 @@ void test2(void)
         if(NULL == result) 
         {
             test_failure("lookup returned null!");
-        } else if(i != ((int) ((ompi_test_rb_value_t *) result)->registered_mpools[0]))
+        } else if(i != ((int)(intptr_t) ((ompi_test_rb_value_t *) result)->registered_mpools[0]))
         {
             test_failure("lookup returned wrong node!");
         }
