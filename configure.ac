@@ -407,6 +407,8 @@ if test "$ac_cv_type_ptrdiff_t" = yes; then
 fi
 AC_CHECK_SIZEOF(wchar_t)
 
+AC_CHECK_SIZEOF(pid_t)
+
 
 #
 # Check for type alignments
@@ -537,15 +539,6 @@ fi
 
 OPAL_CHECK_OFFSETOF
 
-# Setup OMPI bindings (if we're building the OMPI project).  Note that
-# opal_wrapper.c has a hard-coded use of the OMPI_ENABLE_MPI_PROFILING
-# macro, so we need to define it (to 0) even if we're not building the
-# OMPI project.
-
-m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING],
-                         [AC_DEFINE([OMPI_ENABLE_MPI_PROFILING], [0],
-                                    [We are not building OMPI, so no profiling])])
-
 
 ##################################
 # C++ compiler characteristics
@@ -577,6 +570,21 @@ OPAL_CHECK_COMPILER_VERSION_ID
 ##################################
 # Only needed for OMPI
 m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
+
+
+##################################
+# MPI API profiling layer
+##################################
+
+# Setup OMPI bindings (if we're building the OMPI project).  Note that
+# opal_wrapper.c has a hard-coded use of the OMPI_ENABLE_MPI_PROFILING
+# macro, so we need to define it (to 0) even if we're not building the
+# OMPI project.
+
+m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING],
+                         [AC_DEFINE([OMPI_ENABLE_MPI_PROFILING], [0],
+                                    [We are not building OMPI, so no profiling])])
+
 
 ##################################
 # Assembler Configuration
@@ -693,9 +701,6 @@ AC_CACHE_SAVE
 ##################################
 
 ompi_show_title "Type tests"
-
-# Size of pid_t
-AC_CHECK_SIZEOF(pid_t)
 
 AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6,
                 struct sockaddr_storage],
