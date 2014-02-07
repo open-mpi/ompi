@@ -707,7 +707,7 @@ static int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
         goto CLEANUP;
     }
     /* remove from bml list */
-    modules = (mca_btl_base_module_t**)malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
+    modules = (mca_btl_base_module_t**)malloc(sizeof(mca_btl_base_module_t*) * (mca_bml_r2.num_btl_modules-1));
     for(i=0,m=0; i<mca_bml_r2.num_btl_modules; i++) {
         if(mca_bml_r2.btl_modules[i] != btl) {
             modules[m++] = mca_bml_r2.btl_modules[i];
