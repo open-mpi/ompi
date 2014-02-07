@@ -365,7 +365,6 @@ prepare_src_small(
     ompi_btl_usnic_send_frag_t *frag;
     ompi_btl_usnic_small_send_frag_t *sfrag;
     size_t payload_len;
-    int rc;
 
     payload_len = *size + reserve;
     assert(payload_len <= module->max_frag_payload); /* precondition */
@@ -399,7 +398,7 @@ prepare_src_small(
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
         /* put user data just after end of 1st seg (upper layer header) */
         assert(payload_len <= module->max_frag_payload);
-        rc = usnic_convertor_pack_simple(
+        usnic_convertor_pack_simple(
                 convertor,
                 (IOVBASE_TYPE*)(intptr_t)(frag->sf_base.uf_src_seg[0].seg_addr.lval + reserve),
                 *size,
@@ -439,13 +438,10 @@ pack_chunk_seg_from_frag(
     size_t copylen;
     size_t seg_space;
     size_t max_data;
-    mca_btl_base_descriptor_t *desc;
 
     assert(NULL != lfrag);
     /* never should be attempting to pack if we've already packed everything */
     assert(lfrag->lsf_pack_bytes_left > 0);
-
-    desc = &lfrag->lsf_base.sf_base.uf_base;
 
     seg = ompi_btl_usnic_chunk_segment_alloc(module);
     if (OPAL_UNLIKELY(NULL == seg)) {
@@ -1019,10 +1015,7 @@ usnic_handle_large_send(
     ompi_btl_usnic_large_send_frag_t *lfrag;
     ompi_btl_usnic_btl_chunk_header_t *chp;
     ompi_btl_usnic_send_segment_t *sseg;
-    mca_btl_base_descriptor_t *desc;
     size_t payload_len;
-
-    desc = &frag->sf_base.uf_base;
 
     assert(frag->sf_base.uf_type == OMPI_BTL_USNIC_FRAG_LARGE_SEND);
     lfrag = (ompi_btl_usnic_large_send_frag_t *)frag;
