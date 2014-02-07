@@ -165,6 +165,9 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
         sm_module->colls_no_user_data.ctl_buffs=NULL;
     }
 
+    /* return control */
+    opal_list_append (&cs->ctl_structures,  (opal_list_item_t *) sm_module->no_userdata_ctl);
+
     /* colls_with_user_data resrouces */
     /*
      *debug print */
@@ -186,6 +189,9 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
         free(sm_module->shared_memory_scratch_space);
         sm_module->shared_memory_scratch_space=NULL;
     }
+
+    /* return control */
+    opal_list_append (&cs->ctl_structures,  (opal_list_item_t *) sm_module->userdata_ctl);
 
 #if 1
     if(sm_module->scatter_kary_tree) {
