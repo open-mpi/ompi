@@ -535,15 +535,18 @@ end type test_mpi_handle],
                              OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1
                              AC_MSG_RESULT(["bad" compiler, no array subsections])
                             ])
-                      # Override for the moment: we're using wrappers
-                      # for everything right now.  We'll optimize this
-                      # later to avoid the use of wrappers for "good"
-                      # compilers where possible (e.g., for functions
-                      # without character/string parameters).
-                      AC_MSG_WARN([Temporary development override: forcing the use of F08 wrappers])
-                      OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1
                      ])
           ])
+
+    # Note: the current implementation *only* has wrappers;
+    # there is no optimized implementation for a "good"
+    # compiler.  I'm leaving the above logic in place for
+    # if we ever do the optimized/no-wrapper
+    # implementation, but for now, I'm just hard-wiring
+    # OMPI_FORTRAN_NEED_WRAPPER_ROUTINES to 1 when we're
+    # building the F08 wrappers.
+    OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=$OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
+
     AC_MSG_CHECKING([if building Fortran 'use mpi_f08' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [OMPI_FORTRAN_USEMPIF08_LIB=-lmpi_usempif08
