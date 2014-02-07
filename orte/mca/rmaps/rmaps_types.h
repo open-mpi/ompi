@@ -89,7 +89,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 #define ORTE_MAPPING_NO_OVERSUBSCRIBE  0x0200
 #define ORTE_MAPPING_SUBSCRIBE_GIVEN   0x0400
 #define ORTE_MAPPING_SPAN              0x0800
-#define ORTE_MAPPING_PPR               0x1000
 /* an error flag */
 #define ORTE_MAPPING_CONFLICTED        0x2000
 #define ORTE_MAPPING_GIVEN             0x4000
@@ -120,6 +119,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 #define ORTE_MAPPING_STAGED            21
 /* rank file and other user-defined mapping */
 #define ORTE_MAPPING_BYUSER            22
+/* pattern-based mapping */
+#define ORTE_MAPPING_PPR               23
 /* macro to separate out the mapping policy
  * from the directives
  */

@@ -218,10 +218,10 @@ with the version of hwloc being used by OMPI.
 Please correct the problem and try again.
 #
 [deprecated]
-The following command line option and corresponding MCA parameter have
+The following command line options and corresponding MCA parameter have
 been deprecated and replaced as follows:
 
-  Command line option:
+  Command line options:
     Deprecated:  %s
     Replacement: %s
 
@@ -259,3 +259,18 @@ have multiple cpus underneath it:
 Please specify a mapping level that is no lower than socket, or
 else let us define a default mapping that will allow multiple
 cpus-per-proc.
+#
+[unrecognized-modifier]
+The mapping request contains an unrecognized modifier:
+
+  Request: %s
+
+Please check your request and try again.
+#
+[invalid-pattern]
+The mapping request contains a pattern that doesn't match
+the required syntax of #:object
+
+  Pattern: %s
+
+Please check your request and try again.

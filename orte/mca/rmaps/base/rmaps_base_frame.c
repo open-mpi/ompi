@@ -52,7 +52,6 @@ orte_rmaps_base_t orte_rmaps_base;
 bool orte_rmaps_base_pernode = false;
 int orte_rmaps_base_n_pernode = 0;
 int orte_rmaps_base_n_persocket = 0;
-char *orte_rmaps_base_pattern = NULL;
 
 /*
  * Local variables
@@ -74,38 +73,42 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
     int var_id;
 
     orte_rmaps_base_pernode = false;
-    (void) mca_base_var_register("orte", "rmaps", "base", "pernode",
+    var_id = mca_base_var_register("orte", "rmaps", "base", "pernode",
                                  "Launch one ppn as directed",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &orte_rmaps_base_pernode);
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "ppr", "pernode", 0);
 
     orte_rmaps_base_n_pernode = 0;
-    (void) mca_base_var_register("orte", "rmaps", "base", "n_pernode",
+    var_id = mca_base_var_register("orte", "rmaps", "base", "n_pernode",
                                  "Launch n procs/node", MCA_BASE_VAR_TYPE_INT,
                                  NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_n_pernode);
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps","ppr", "n_pernode", 0);
 
     orte_rmaps_base_n_persocket = 0;
-    (void) mca_base_var_register("orte", "rmaps", "base", "n_persocket",
+    var_id = mca_base_var_register("orte", "rmaps", "base", "n_persocket",
                                  "Launch n procs/socket", MCA_BASE_VAR_TYPE_INT,
                                  NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_n_persocket);
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps","ppr", "n_persocket", 0);
 
-    orte_rmaps_base_pattern = NULL;
-    (void) mca_base_var_register("orte", "rmaps", "base", "pattern",
+    orte_rmaps_base.ppr = NULL;
+    var_id = mca_base_var_register("orte", "rmaps", "base", "pattern",
                                  "Comma-separated list of number of processes on a given resource type [default: none]",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base_pattern);
+                                 MCA_BASE_VAR_SCOPE_READONLY, &orte_rmaps_base.ppr);
+    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps","ppr", "pattern", 0);
 
     /* define default mapping policy */
     rmaps_base_mapping_policy = NULL;
     var_id = mca_base_var_register("orte", "rmaps", "base", "mapping_policy",
 #if OPAL_HAVE_HWLOC
-                                   "Mapping Policy [slot | hwthread | core (default:np<=2) | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node | seq | dist], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
+                                   "Mapping Policy [slot | hwthread | core (default:np<=2) | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node | seq | dist | ppr], with allowed modifiers :PE=y,SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #else
                                    "Mapping Policy [slot (default) | node], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
 #endif
@@ -247,7 +250,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     /* init the globals */
     OBJ_CONSTRUCT(&orte_rmaps_base.selected_modules, opal_list_t);
-    orte_rmaps_base.ppr = NULL;
     orte_rmaps_base.slot_list = NULL;
     orte_rmaps_base.mapping = 0;
     orte_rmaps_base.ranking = 0;
@@ -266,6 +268,20 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 #endif
 
+    /* check for a violation that has to be detected before we parse the mapping option */
+    if (NULL != orte_rmaps_base.ppr) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "--ppr, -ppr", "--map-by ppr:<pattern>",
+                       "rmaps_base_pattern, rmaps_ppr_pattern",
+                       "rmaps_base_mapping_policy=ppr:<pattern>");
+        /* if the mapping policy is NULL, then we can proceed */
+        if (NULL == rmaps_base_mapping_policy) {
+            asprintf(&rmaps_base_mapping_policy, "ppr:%s", orte_rmaps_base.ppr);
+        } else {
+            return ORTE_ERR_SILENT;
+        }
+    }
+
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&orte_rmaps_base.mapping,
                                                                  &orte_rmaps_base.device,
                                                                  rmaps_base_mapping_policy))) {
@@ -280,7 +296,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
    if (rmaps_base_bycore) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--bycore", "--map-by core",
+                       "--bycore, -bycore", "--map-by core",
                        "rmaps_base_bycore", "rmaps_base_mapping_policy=core");
         /* set mapping policy to bycore - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
@@ -306,7 +322,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     if (rmaps_base_byslot) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--byslot", "--map-by slot",
+                       "--byslot, -byslot", "--map-by slot",
                        "rmaps_base_byslot", "rmaps_base_mapping_policy=slot");
         /* set mapping policy to byslot - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
@@ -332,7 +348,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     if (rmaps_base_bynode) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--bynode", "--map-by node",
+                       "--bynode, -bynode", "--map-by node",
                        "rmaps_base_bynode", "rmaps_base_mapping_policy=node");
         /* set mapping policy to bynode - error if something else already set */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
@@ -356,6 +372,10 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (1 < orte_rmaps_base.cpus_per_rank) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "--cpus-per-proc, -cpus-per-proc, --cpus-per-rank, -cpus-per-rank",
+                       "--map-by <obj>:PE=N",
+                       "rmaps_base_cpus_per_proc", "rmaps_base_mapping_policy=<obj>:PE=N");
         /* check to see if we were told to map at too low a level */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) > ORTE_MAPPING_BYSOCKET) {
@@ -392,6 +412,66 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             }
         }
 #endif
+    }
+
+    if (orte_rmaps_base_pernode) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "--pernode, -pernode", "--map-by node:PPR=1",
+                       "rmaps_base_pernode, rmaps_ppr_pernode",
+                       "rmaps_base_mapping_policy=node:PPR=1");
+        /* there is no way to resolve this conflict, so if something else was
+         * given, we have no choice but to error out
+         */
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
+                           "bynode", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
+            return ORTE_ERR_SILENT;
+        }
+        /* ensure we set the mapping policy to ppr */
+        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        orte_rmaps_base.ppr = strdup("1:node");
+    }
+
+    if (0 < orte_rmaps_base_n_pernode) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "--npernode, -npernode", "--map-by node:PPR=N",
+                       "rmaps_base_n_pernode, rmaps_ppr_n_pernode",
+                       "rmaps_base_mapping_policy=node:PPR=N");
+        /* there is no way to resolve this conflict, so if something else was
+         * given, we have no choice but to error out
+         */
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
+                           "bynode", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
+            return ORTE_ERR_SILENT;
+        }
+        /* ensure we set the mapping policy to ppr */
+        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        asprintf(&orte_rmaps_base.ppr, "%d:node", orte_rmaps_base_n_pernode);
+    }
+
+    if (0 < orte_rmaps_base_n_persocket) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "--npersocket, -npersocket", "--map-by socket:PPR=N",
+                       "rmaps_base_n_persocket, rmaps_ppr_n_persocket",
+                       "rmaps_base_mapping_policy=socket:PPR=N");
+        /* there is no way to resolve this conflict, so if something else was
+         * given, we have no choice but to error out
+         */
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
+                           "bynode", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
+            return ORTE_ERR_SILENT;
+        }
+        /* ensure we set the mapping policy to ppr */
+        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        asprintf(&orte_rmaps_base.ppr, "%d:socket", orte_rmaps_base_n_persocket);
     }
 
     /* Should we schedule on the local node or not? */
@@ -461,36 +541,82 @@ OBJ_CLASS_INSTANCE(orte_rmaps_base_selected_module_t,
                    NULL, NULL);
 
 
-int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
-                                       char **device, char *spec)
+static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
 {
-    char **ck, **ck2;
-    orte_mapping_policy_t tmp;
+    char **ck2, *ptr;
     int i;
+    bool found = false;
+
+    ck2 = opal_argv_split(ck, ',');
+    for (i=0; NULL != ck2[i]; i++) {
+        if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
+            ORTE_SET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_SPAN);
+            found = true;
+        } else if (0 == strncasecmp(ck2[i], "pe", strlen("pe"))) {
+            /* break this at the = sign to get the number */
+            if (NULL == (ptr = strchr(ck2[i], '='))) {
+                /* missing the value */
+                orte_show_help("help-orte-rmaps-base.txt", "missing-value", true, "pe", ck2[i]);
+                return ORTE_ERR_SILENT;
+            }
+            ptr++;
+            if (NULL == ptr) {
+                /* still missing the value */
+                return ORTE_ERR_SILENT;
+            }
+            orte_rmaps_base.cpus_per_rank = strtol(ptr, NULL, 10);
+            found = true;
+        } else if (0 == strncasecmp(ck2[i], "oversubscribe", strlen(ck2[i]))) {
+            ORTE_UNSET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+            ORTE_SET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_SUBSCRIBE_GIVEN);
+            found = true;
+        } else if (0 == strncasecmp(ck2[i], "nooversubscribe", strlen(ck2[i]))) {
+            ORTE_SET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+            ORTE_SET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_SUBSCRIBE_GIVEN);
+            found = true;
+        } else {
+            /* unrecognized modifier */
+            opal_argv_free(ck2);
+            return ORTE_ERR_BAD_PARAM;
+        }
+    }
+    opal_argv_free(ck2);
+    if (found) {
+        return ORTE_SUCCESS;
+    }
+    return ORTE_ERR_TAKE_NEXT_OPTION;
+}
+
+int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
+                                       char **device, char *inspec)
+{
+    char *ck, **ck2, *ptr;
+    orte_mapping_policy_t tmp;
+    int i, rc;
     size_t len;
+    char *spec;
 
     /* set defaults */
     tmp = 0;
     *device = NULL;
 
-    if (NULL == spec) {
+    if (NULL == inspec) {
         ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
     } else {
-        ck = opal_argv_split(spec, ':');
-        if (2 < opal_argv_count(ck)) {
-            /* incorrect format */
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
-            opal_argv_free(ck);
-            return ORTE_ERR_SILENT;
-        }
-        if (2 == opal_argv_count(ck)) {
+        spec = strdup(inspec);  // protect the input string
+        /* see if a colon was included - if so, then we have a policy + modifier */
+        ck = strchr(spec, ':');
+        if (NULL != ck) {
+            /* split the string */
+            *ck = '\0';
+            ck++;
             /* if the policy is "dist", then we set the policy to that value
              * and save the second argument as the device
              */
 #if OPAL_HAVE_HWLOC
-            if (0 == strncasecmp(ck[0], "dist", strlen(ck[0]))) {
+            if (0 == strncasecmp(spec, "dist", strlen(spec))) {
                 ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
-                ck2 = opal_argv_split(ck[1], ',');
+                ck2 = opal_argv_split(ck, ',');
                 if (ck2[0] != NULL) {
                     *device = strdup(ck2[0]);
                     for (i=1; NULL != ck2[i]; i++) {
@@ -502,63 +628,78 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                 ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
                 opal_argv_free(ck2);
                 goto setpolicy;
+            } else if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
+                /* we have to allow additional modifiers here - e.g., specifying
+                 * #pe's/proc or oversubscribe - so check for modifiers
+                 */
+                if (NULL == (ptr = strrchr(ck, ':'))) {
+                    /* this is an error - there had to be at least one
+                     * colon to delimit the number from the object type
+                     */
+                    orte_show_help("help-orte-rmaps-base.txt", "invalid-pattern", true, inspec);
+                    return ORTE_ERR_SILENT;
+                }
+                ptr++; // move past the colon
+                /* check the remaining string for modifiers - may be none, so
+                 * don't emit an error message if the modifier isn't recognized
+                 */
+                if (ORTE_ERR_SILENT == (rc = check_modifiers(ptr, &tmp)) &&
+                    ORTE_ERR_BAD_PARAM != rc) {
+                    return ORTE_ERR_SILENT;
+                }
+                /* if we found something, then we need to adjust the string */
+                if (ORTE_SUCCESS == rc) {
+                    ptr--;
+                    *ptr = '\0';
+                }
+                /* now get the pattern */
+                orte_rmaps_base.ppr = strdup(ck);
+                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_PPR);
+                ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
+                goto setpolicy;
             }
 #endif
-            ck2 = opal_argv_split(ck[1], ',');
-            for (i=0; NULL != ck2[i]; i++) {
-                if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
-                    ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SPAN);
-                } else if (0 == strncasecmp(ck2[i], "oversubscribe", strlen(ck2[i]))) {
-                    if (ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(tmp)) {
-                        ORTE_UNSET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SUBSCRIBE_GIVEN);
-                    } else if (0 == strncasecmp(ck2[i], "nooversubscribe", strlen(ck2[i]))) {
-                        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                        ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SUBSCRIBE_GIVEN);
-                    } else {
-                        /* unrecognized modifier */
-                        orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, "mapping", ck2[i]);
-                        opal_argv_free(ck);
-                        opal_argv_free(ck2);
-                        return ORTE_ERR_SILENT;
-                    }
+            if (ORTE_SUCCESS != (rc = check_modifiers(ck, &tmp)) &&
+                ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+                if (ORTE_ERR_BAD_PARAM == rc) {
+                    orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, inspec);
                 }
-                opal_argv_free(ck2);
+                return rc;
             }
         }
-        len = strlen(ck[0]);
-        if (0 == strncasecmp(ck[0], "slot", len)) {
+        len = strlen(spec);
+        if (0 == strncasecmp(spec, "slot", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSLOT);
-        } else if (0 == strncasecmp(ck[0], "node", len)) {
+        } else if (0 == strncasecmp(spec, "node", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNODE);
 #if OPAL_HAVE_HWLOC
-        } else if (0 == strncasecmp(ck[0], "core", len)) {
+        } else if (0 == strncasecmp(spec, "core", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYCORE);
-        } else if (0 == strncasecmp(ck[0], "l1cache", len)) {
+        } else if (0 == strncasecmp(spec, "l1cache", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL1CACHE);
-        } else if (0 == strncasecmp(ck[0], "l2cache", len)) {
+        } else if (0 == strncasecmp(spec, "l2cache", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL2CACHE);
-        } else if (0 == strncasecmp(ck[0], "l3cache", len)) {
+        } else if (0 == strncasecmp(spec, "l3cache", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYL3CACHE);
-        } else if (0 == strncasecmp(ck[0], "socket", len)) {
+        } else if (0 == strncasecmp(spec, "socket", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
-        } else if (0 == strncasecmp(ck[0], "numa", len)) {
+        } else if (0 == strncasecmp(spec, "numa", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNUMA);
-        } else if (0 == strncasecmp(ck[0], "board", len)) {
+        } else if (0 == strncasecmp(spec, "board", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYBOARD);
-        } else if (0 == strncasecmp(ck[0], "hwthread", len)) {
+        } else if (0 == strncasecmp(spec, "hwthread", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYHWTHREAD);
             /* if we are mapping processes to individual hwthreads, then
              * we need to treat those hwthreads as separate cpus
              */
-            opal_hwloc_use_hwthreads_as_cpus = true;
+            opal_hwloc_use_hwthreads_as_cpus = true;            
 #endif
         } else {
-            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", rmaps_base_mapping_policy);
-            opal_argv_free(ck);
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", spec);
+            free(spec);
             return ORTE_ERR_SILENT;
         }
-        opal_argv_free(ck);
+        free(spec);
         ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
     }
 
