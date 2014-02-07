@@ -162,7 +162,7 @@ int bcol_basesmuma_smcm_allgather_connection(
 
     /* define local variables */
 
-    int rc, i, fd, n_files_mapped;
+    int rc, i, fd;
     ptrdiff_t mem_offset;
     ompi_proc_t *proc_temp, *my_id;
     bcol_basesmuma_smcm_proc_item_t *temp;
@@ -188,39 +188,6 @@ int bcol_basesmuma_smcm_allgather_connection(
     *back_files = backing_files;
 
     my_id = ompi_proc_local();
-
-    /* check to see if we have already mapped all the files, if we have
-     * just need to fill in backing_files array, and we are done
-     */
-    for (i = 0, n_files_mapped = 0; i < module->group_size; i++) {
-        /* get the proc info */
-        proc_temp = ompi_comm_peer_lookup(comm,module->group_list[i]);
-
-        if (i == sm_bcol_module->super.sbgp_partner_module->my_index) {
-            continue;
-        }
-
-        OPAL_LIST_FOREACH(item_ptr, peer_list, bcol_basesmuma_smcm_proc_item_t) {
-            /* if the vpid/jobid/filename combination already exists in the list,
-               then do not map this peer's file --- because you already have */
-            if (proc_temp->proc_name.vpid == item_ptr->peer.vpid &&
-                proc_temp->proc_name.jobid == item_ptr->peer.jobid
-                && (strstr(item_ptr->sm_file.file_name,base_fname)) ){
-
-                /* record file data */
-                backing_files[i] = item_ptr;
-                n_files_mapped++;
-                /* found it - no need to continue looking */
-                break;
-            }
-        }
-    }
-
-    /* check to see if we are done - our own files are not in this list*/
-    if (n_files_mapped == (module->group_size-1) ) {
-        return OMPI_SUCCESS;
-    }
-
 
     /* Phase One:
        gather a list of processes that will participate in the allgather - I'm
@@ -267,7 +234,25 @@ int bcol_basesmuma_smcm_allgather_connection(
          * the group will have the same vpid/jobid pair. ignore this previously found
          * mapping if map_all was requested (NTH: not sure why exactly since we re-map
          * and already mapped file) */
-        if (sm_bcol_module->super.sbgp_partner_module->my_index == i || (!map_all && backing_files[i])) {
+        if (sm_bcol_module->super.sbgp_partner_module->my_index == i) {
+            continue;
+        }
+
+        proc_temp = ompi_comm_peer_lookup(comm,module->group_list[i]);
+
+        OPAL_LIST_FOREACH(item_ptr, peer_list, bcol_basesmuma_smcm_proc_item_t) {
+            /* if the vpid/jobid/filename combination already exists in the list,
+               then do not map this peer's file --- because you already have */
+            if (proc_temp->proc_name.vpid == item_ptr->peer.vpid &&
+                proc_temp->proc_name.jobid == item_ptr->peer.jobid &&
+                0 == strcmp (item_ptr->sm_file.file_name, rem_file->file_name)) {
+                /* record file data */
+                backing_files[i] = item_ptr;
+                break;
+            }
+        }
+
+        if (!map_all && backing_files[i]) {
             continue;
         }
 
@@ -302,7 +287,6 @@ int bcol_basesmuma_smcm_allgather_connection(
         fd = open(temp->sm_file.file_name, O_RDWR, 0600);
         if (0 > fd) {
             opal_output (0, "SMCM Allgather failed to open sm backing file %s. errno = %d\n", temp->sm_file.file_name, errno);
-            assert (0);
             rc = OMPI_ERROR;
             goto Error;
         }
