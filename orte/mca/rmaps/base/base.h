@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -83,7 +84,6 @@ ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
 ORTE_DECLSPEC extern bool orte_rmaps_base_pernode;
 ORTE_DECLSPEC extern int orte_rmaps_base_n_pernode;
 ORTE_DECLSPEC extern int orte_rmaps_base_n_persocket;
-ORTE_DECLSPEC extern char *orte_rmaps_base_pattern;
 
 /**
  * Select an rmaps component / module

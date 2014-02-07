@@ -59,7 +59,6 @@ orte_rmaps_base_component_t mca_rmaps_lama_component = {
 static int orte_rmaps_lama_register(void)
 {
     mca_base_component_t *c = &mca_rmaps_lama_component.base_version;
-    int var_id;
 
     /* JMS Artifically low for now */
     module_priority = 0;
@@ -104,19 +103,6 @@ static int orte_rmaps_lama_register(void)
                                             OPAL_INFO_LVL_5,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &rmaps_lama_cmd_ordering);
-
-    /* NTH: Moved from rmaps_lama_params.c */
-    var_id = mca_base_var_find("orte", "rmaps", "base", "pernode");
-    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "pernode", 0);
-
-    var_id = mca_base_var_find("orte", "rmaps", "base", "n_pernode");
-    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "n_pernode", 0);
-
-    var_id = mca_base_var_find("orte", "rmaps", "base", "n_persocket");
-    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "n_persocket", 0);
-
-    var_id = mca_base_var_find("orte", "rmaps", "base", "pattern");
-    (void) mca_base_var_register_synonym(var_id, "orte", "rmaps", "lama", "pattern", 0);
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:lama: Priority %3d",

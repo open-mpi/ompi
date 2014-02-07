@@ -215,43 +215,10 @@ int rmaps_lama_process_alias_params(orte_job_t *jdata)
      */
     if( NULL == rmaps_lama_cmd_mppr ) {
         /*
-         * Take what the user specified as the -ppr
+         * The ppr is given in the map
          */
         if( NULL != jdata->map->ppr) {
             rmaps_lama_cmd_mppr = rmaps_lama_covert_ppr(jdata->map->ppr);
-        }
-        /*
-         * Otherwise look at the parameters registered for the ppn component
-         */
-        else {
-            /*
-             * -pernode => -mppr 1:n
-             */
-            if( NULL == rmaps_lama_cmd_mppr && orte_rmaps_base_pernode ) {
-                rmaps_lama_cmd_mppr = strdup("1:n");
-            }
-
-            /*
-             * -npernode X  => -mppr X:n
-             */
-            if( NULL == rmaps_lama_cmd_mppr && orte_rmaps_base_n_pernode > 0) {
-                asprintf(&rmaps_lama_cmd_mppr, "%d:n", orte_rmaps_base_n_pernode);
-            }
-
-            /*
-             * -npersocket X  => -mppr X:s
-             */
-            if( NULL == rmaps_lama_cmd_mppr && orte_rmaps_base_n_persocket > 0) {
-                asprintf(&rmaps_lama_cmd_mppr, "%d:s", orte_rmaps_base_n_persocket);
-            }
-
-            /*
-             * -ppr  => ~ -mppr
-             */
-            if( NULL == rmaps_lama_cmd_mppr && NULL != orte_rmaps_base_pattern ) {
-                jdata->map->ppr = strdup (orte_rmaps_base_pattern);
-                rmaps_lama_cmd_mppr = rmaps_lama_covert_ppr(jdata->map->ppr);
-            }
         }
     }
 
