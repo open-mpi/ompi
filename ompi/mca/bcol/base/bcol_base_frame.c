@@ -28,7 +28,6 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/include/ompi/constants.h"
 #include "ompi/mca/mpool/mpool.h"
-#include "ompi/mca/coll/ml/coll_ml.h" /*frag and full message descriptors defined here*/
 #include "opal/class/opal_list.h"
 /*
  * The following file was created by configure.  It contains extern
