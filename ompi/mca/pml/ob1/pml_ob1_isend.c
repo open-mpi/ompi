@@ -163,6 +163,20 @@ int mca_pml_ob1_send(void *buf,
     int16_t seqn;
     int rc;
 
+    if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_BUFFERED == sendmode)) {
+        /* large buffered sends *need* a real request so use isend instead */
+        ompi_request_t *brequest;
+
+        rc = mca_pml_ob1_isend (buf, count, datatype, dst, tag, sendmode, comm, &brequest);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            return rc;
+        }
+
+        /* free the request and return. don't care if it completes now */
+        ompi_request_free (&brequest);
+        return OMPI_SUCCESS;
+    }
+
     if (OPAL_UNLIKELY(NULL == endpoint)) {
         return OMPI_ERR_UNREACH;
     }
