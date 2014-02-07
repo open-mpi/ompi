@@ -19,6 +19,7 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/coll/ml/coll_ml_allocation.h"
 #include "ompi/patterns/net/netpatterns.h"
 
 BEGIN_C_DECLS
