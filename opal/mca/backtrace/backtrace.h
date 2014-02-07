@@ -34,11 +34,12 @@ BEGIN_C_DECLS
 
 
 /*
- * print back trace to FILE file
+ * Print back trace to FILE file with a prefix for each line.
+ * First strip lines are not printed.
  *
  * \note some attempts made to be signal safe.
  */
-OPAL_DECLSPEC void opal_backtrace_print(FILE *file);
+OPAL_DECLSPEC int opal_backtrace_print(FILE *file, char *prefix, int strip);
 
 /*
  * Return back trace in buffer.  buffer will be allocated by the
