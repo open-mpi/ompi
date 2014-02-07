@@ -99,14 +99,17 @@ typedef struct {
  * GLOBAL:   data to be shared with all processes
  * INTERNAL: data is to be internally stored in this app
  * ALL:      any of the above
+ *
+ * REFER:    indicates the value is stored by reference
  */
 typedef uint8_t opal_scope_t;
 #define OPAL_SCOPE_UNDEF    0x00
 #define OPAL_SCOPE_PEER     0x01
 #define OPAL_SCOPE_NON_PEER 0x02
 #define OPAL_SCOPE_GLOBAL   0x03
-#define OPAL_SCOPE_INTERNAL 0x80
-#define OPAL_SCOPE_ALL      0xff
+#define OPAL_SCOPE_INTERNAL 0x08
+#define OPAL_SCOPE_ALL      0x0f
+#define OPAL_SCOPE_REFER    0x10
 #define OPAL_DATA_SCOPE_T OPAL_UINT8
 
 /* Data value object */
