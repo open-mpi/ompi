@@ -159,9 +159,9 @@ static int coll_ml_progress()
 
             const_args  = &seq_coll_op->coll_schedule->component_functions[fn_idx].constant_group_data;
             /* RLG - note need to move to useing coll_ml_utility_data_t as
-             * collective argument, rather than  coll_ml_function_t
+             * collective argument, rather than  mca_bcol_base_function_t
              */
-            rc = progress_fn(&(seq_coll_op->variable_fn_params), (coll_ml_function_t *)const_args);
+            rc = progress_fn(&(seq_coll_op->variable_fn_params), (mca_bcol_base_function_t *)const_args);
             if (BCOL_FN_COMPLETE == rc) {
                 /* done with this routine */
                 seq_coll_op->sequential_routine.current_active_bcol_fn++;
@@ -205,7 +205,7 @@ static int coll_ml_progress()
         const_args = &task_status->ml_coll_operation->coll_schedule->
             component_functions[INDEX(task_status)].constant_group_data;
         rc = progress_fn(&(task_status->ml_coll_operation->variable_fn_params),
-                (coll_ml_function_t *)const_args);
+                (mca_bcol_base_function_t *)const_args);
         if (BCOL_FN_COMPLETE == rc) {
             ML_VERBOSE(3, ("GOT BCOL_COMPLETED!!!!"));
             rc = mca_coll_ml_task_completion_processing(&task_status, ACTIVE_L);
@@ -233,7 +233,7 @@ static int coll_ml_progress()
             const_args = &task_status->ml_coll_operation->coll_schedule->
                 component_functions[INDEX(task_status)].constant_group_data;
             rc = coll_fn(&(task_status->ml_coll_operation->variable_fn_params),
-                    (coll_ml_function_t *)const_args);
+                    (mca_bcol_base_function_t *)const_args);
             if (BCOL_FN_COMPLETE == rc) {
                 ML_VERBOSE(3, ("GOT BCOL_COMPLETED!"));
                 rc = mca_coll_ml_task_completion_processing(&task_status, PENDING_L);

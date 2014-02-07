@@ -46,7 +46,7 @@
  * @param module - basesmuma module.
  */
 int bcol_basesmuma_lmsg_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
 #if 0
 		/* local variables */
@@ -268,7 +268,7 @@ Release:
 
 
 int bcol_basesmuma_lmsg_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     mca_bcol_basesmuma_module_t* bcol_module=

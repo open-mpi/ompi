@@ -96,7 +96,7 @@
   } while (0)
 
 int bcol_basesmuma_bcast_k_nomial_knownroot(bcol_function_args_t *input_args,
-                                            coll_ml_function_t *c_input_args)
+                                            mca_bcol_base_function_t *c_input_args)
 {
   /* local variables */
   mca_bcol_basesmuma_module_t* bcol_module=
@@ -242,7 +242,7 @@ int bcol_basesmuma_bcast_k_nomial_knownroot(bcol_function_args_t *input_args,
  * @param module - basesmuma module.
  */
 int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
-                                          coll_ml_function_t *c_input_args)
+                                          mca_bcol_base_function_t *c_input_args)
 {
   /* local variables */
   mca_bcol_basesmuma_module_t* bcol_module=
@@ -387,7 +387,7 @@ int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
  * algorithms.
  */
 int bcol_basesmuma_binary_scatter_allgather_segment(bcol_function_args_t *input_args,
-                                                    coll_ml_function_t *c_input_args)
+                                                    mca_bcol_base_function_t *c_input_args)
 {
 
   /* local variables */

@@ -27,7 +27,7 @@
 static int mca_coll_ml_memsync_recycle_memory(mca_coll_ml_collective_operation_progress_t *coll_op)
 {
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t *)coll_op->coll_module;
-    ml_memory_block_desc_t *ml_memblock = ml_module->payload_block;
+    mca_bcol_base_memory_block_desc_t *ml_memblock = ml_module->payload_block;
     mca_coll_ml_collective_operation_progress_t *pending_op = NULL;
     int bank = coll_op->full_message.bank_index_to_recycle;
     int rc;

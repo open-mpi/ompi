@@ -30,8 +30,6 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/pml/pml.h"  /* need this for the max tag size */
 
-#include "ompi/mca/coll/ml/coll_ml.h"
-#include "ompi/mca/coll/ml/coll_ml_allocation.h"
 #include "bcol_ptpcoll.h"
 #include "bcol_ptpcoll_utils.h"
 #include "bcol_ptpcoll_bcast.h"
@@ -244,13 +242,14 @@ static void mca_bcol_ptpcoll_set_small_msg_thresholds(struct mca_bcol_base_modul
 /*
  * Cache information about ML memory
  */
-static int mca_bcol_ptpcoll_cache_ml_memory_info(struct mca_coll_ml_module_t *ml_module,
+static int mca_bcol_ptpcoll_cache_ml_memory_info(struct mca_bcol_base_memory_block_desc_t *payload_block,
+                                                 uint32_t data_offset,
                                                  struct mca_bcol_base_module_t *bcol,
                                                  void *reg_data)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *) bcol;
     mca_bcol_ptpcoll_local_mlmem_desc_t *ml_mem = &ptpcoll_module->ml_mem;
-    struct ml_memory_block_desc_t *desc = ml_module->payload_block;
+    struct mca_bcol_base_memory_block_desc_t *desc = payload_block;
     int group_size = ptpcoll_module->super.sbgp_partner_module->group_size;
 
     PTPCOLL_VERBOSE(10, ("mca_bcol_ptpcoll_init_buffer_memory was called"));
@@ -263,9 +262,6 @@ static int mca_bcol_ptpcoll_cache_ml_memory_info(struct mca_coll_ml_module_t *ml
     PTPCOLL_VERBOSE(10, ("ML buffer configuration num banks %d num_per_bank %d size %d base addr %p",
                          desc->num_banks, desc->num_buffers_per_bank, desc->size_buffer, desc->block->base_addr));
 
-    /* pointer to ml level descriptor */
-    ml_mem->ml_mem_desc = desc;
-
     /* Set first bank index for release */
     ml_mem->bank_index_for_release = 0;
 
@@ -274,15 +270,15 @@ static int mca_bcol_ptpcoll_cache_ml_memory_info(struct mca_coll_ml_module_t *ml
                                          ml_mem->num_banks,
                                          ml_mem->num_buffers_per_bank,
                                          ml_mem->size_buffer,
-                                         ml_module->data_offset,
+                                         data_offset,
                                          group_size,
                                          ptpcoll_module->pow_k)) {
         PTPCOLL_VERBOSE(10, ("Failed to allocate rdma memory descriptor\n"));
         return OMPI_ERROR;
     }
 
-    PTPCOLL_VERBOSE(10, ("ml_module = %p, ptpcoll_module = %p, ml_mem_desc = %p.\n",
-                         ml_module, ptpcoll_module, ml_mem->ml_mem_desc));
+    PTPCOLL_VERBOSE(10, ("ptpcoll_module = %p, ml_mem_desc = %p.\n",
+                         ptpcoll_module));
 
     return OMPI_SUCCESS;
 }

@@ -11,10 +11,8 @@
 #include "ompi_config.h"
 
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "bcol_ptpcoll_allreduce.h"
-#include "ompi/mca/coll/base/coll_tags.h" /* debug */
 /*
  * Recursive K-ing allgather
  */
@@ -31,7 +29,7 @@
  */
 
 int bcol_ptpcoll_k_nomial_allgather_init(bcol_function_args_t *input_args,
-                struct coll_ml_function_t *const_args)
+                struct mca_bcol_base_function_t *const_args)
 {
     /* local variables */
 
@@ -307,7 +305,7 @@ FINISHED:
 /* allgather progress function */
 
 int bcol_ptpcoll_k_nomial_allgather_progress(bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args)
+                        struct mca_bcol_base_function_t *const_args)
 {
 
 

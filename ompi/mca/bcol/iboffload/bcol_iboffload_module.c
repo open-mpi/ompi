@@ -614,7 +614,7 @@ static int mca_bcol_iboffload_init_buffer_memory(struct mca_coll_ml_module_t *ml
     mca_bcol_iboffload_module_t *iboffload_module = (mca_bcol_iboffload_module_t *) bcol;
     mca_bcol_iboffload_local_rdma_block_t *rdma_block = &iboffload_module->rdma_block;
 
-    struct ml_memory_block_desc_t *desc = ml_module->payload_block;
+    struct mca_bcol_base_memory_block_desc_t *desc = ml_module->payload_block;
     struct ibv_mr *mr = (struct ibv_mr *) desc->block->lmngr->reg_desc[bcol->context_index];
     int i;
 

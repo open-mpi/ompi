@@ -12,6 +12,7 @@
  */
 
 #include "ompi_config.h"
+#include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/bcol/basesmuma/bcol_basesmuma.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -53,7 +54,7 @@ int bcol_basesmuma_gather_init(mca_bcol_base_module_t *super)
 }
 
 int bcol_basesmuma_k_nomial_gather_init(bcol_function_args_t *input_args,
-                                        coll_ml_function_t *c_input_args)
+                                        mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int leading_dim, buff_idx, idx;
@@ -217,7 +218,7 @@ int bcol_basesmuma_k_nomial_gather_init(bcol_function_args_t *input_args,
 
 
 int bcol_basesmuma_k_nomial_gather_progress(bcol_function_args_t *input_args,
-                                            coll_ml_function_t *c_input_args)
+                                            mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int group_size;
@@ -457,7 +458,7 @@ int bcol_basesmuma_gather_init(mca_bcol_base_module_t *super)
 /* original, fully blocking, fully synchronous gather - should result in worst performance when used */
 #if 0
 int bcol_basesmuma_k_nomial_gather(bcol_function_args_t *input_args,
-                                   coll_ml_function_t *c_input_args)
+                                   mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int group_size;
@@ -753,7 +754,7 @@ FINISHED:
 #if 0
 /* blocking, asynchronous polling gather routine */
 int bcol_basesmuma_k_nomial_gather(bcol_function_args_t *input_args,
-                                   coll_ml_function_t *c_input_args)
+                                   mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int group_size;

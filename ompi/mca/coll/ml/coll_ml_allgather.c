@@ -133,7 +133,7 @@ static int mca_coll_ml_allgather_frag_progress(mca_coll_ml_collective_operation_
     size_t frag_len, dt_size;
 
     void *buf;
-    ml_payload_buffer_desc_t *src_buffer_desc;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc;
     mca_coll_ml_collective_operation_progress_t *new_op;
 
     mca_coll_ml_module_t *ml_module = OP_ML_MODULE(coll_op);
@@ -296,7 +296,7 @@ int mca_coll_ml_allgather_start (void *sbuf, int scount,
     int ret, n_fragments = 1, comm_size;
 
     mca_coll_ml_topology_t *topo_info;
-    ml_payload_buffer_desc_t *src_buffer_desc;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc;
 
     mca_coll_ml_component_t *cm = &mca_coll_ml_component;
 

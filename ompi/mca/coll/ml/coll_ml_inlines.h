@@ -45,7 +45,7 @@ static inline __opal_attribute_always_inline__
         int mca_coll_ml_buffer_recycling(mca_coll_ml_collective_operation_progress_t *ml_request)
 {
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t *)ml_request->coll_module;
-    ml_memory_block_desc_t *ml_memblock = ml_module->payload_block;
+    mca_bcol_base_memory_block_desc_t *ml_memblock = ml_module->payload_block;
     uint64_t bank_index = ml_request->fragment_data.buffer_desc->bank_index;
     int rc;
 
@@ -417,7 +417,7 @@ static inline __opal_attribute_always_inline__ int mca_coll_ml_generic_collectiv
             rc = func->bcol_function->coll_fn(&op_prog->variable_fn_params,
                     /* Pasha: Need to update the prototype of the func,
                        right now it is ugly hack for compilation */
-                    (struct coll_ml_function_t *)&func->constant_group_data);
+                    (struct mca_bcol_base_function_t *)&func->constant_group_data);
             switch(rc) {
                 case BCOL_FN_NOT_STARTED:
                     /* put it on pending list */
@@ -604,7 +604,7 @@ mca_coll_ml_launch_sequential_collective (mca_coll_ml_collective_operation_progr
 
         bcol_func = (sched->component_functions[ifunc].bcol_function);
         ret = bcol_func->coll_fn(&coll_op->variable_fn_params,
-                    (struct coll_ml_function_t *) &sched->component_functions[ifunc].constant_group_data);
+                    (struct mca_bcol_base_function_t *) &sched->component_functions[ifunc].constant_group_data);
 
         if (BCOL_FN_COMPLETE == ret) {
             if (ifunc == n_fn - 1) {

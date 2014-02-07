@@ -28,8 +28,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 
-#include "ompi/mca/coll/ml/coll_ml.h"
-
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
 
@@ -135,7 +133,7 @@ struct mca_bcol_iboffload_local_rdma_block_t {
     /* IB related information first */
     struct mca_bcol_iboffload_rdma_info_t ib_info;
     /* back pointer to original ML memory descriptor */
-    struct ml_memory_block_desc_t *ml_mem_desc;
+    struct mca_bcol_base_memory_block_desc_t *ml_mem_desc;
     /* Pasha: do we really need this one ?*/
     /* caching ml memory descriptor configurations localy */
     mca_bcol_iboffload_rdma_block_desc_t bdesc;
@@ -579,7 +577,7 @@ mca_bcol_iboffload_free_tasks_frags_resources(
  */
 
 int mca_bcol_iboffload_small_msg_bcast_intra(bcol_function_args_t *fn_arguments,
-                                                   struct coll_ml_function_t
+                                                   struct mca_bcol_base_function_t
                                                    *const_args);
 
 int mca_bcol_iboffload_barrier_intra_recursive_doubling_start(
@@ -613,7 +611,7 @@ int mca_bcol_iboffload_new_style_fanout_first_call(
                 struct mca_bcol_iboffload_collreq_t *coll_request);
 
 int mca_bcol_iboffload_nb_memory_service_barrier_intra(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int mca_bcol_iboffload_coll_support_all_types(bcol_coll coll_name);
 int mca_bcol_iboffload_coll_supported(int op, int dtype, bcol_elem_type elem_type);

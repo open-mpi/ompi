@@ -19,7 +19,7 @@ struct mca_coll_ml_module_t;
 int mca_select_bcol_function(mca_bcol_base_module_t *bcol_module,
                 int bcoll_type,
                 bcol_function_args_t *bcol_fn_arguments,
-                coll_ml_function_t *ml_fn_arguments );
+                mca_bcol_base_function_t *ml_fn_arguments );
 /* 
  *  Goes through the function table and filters the collectives functions
  *  based on comm-time attributes.

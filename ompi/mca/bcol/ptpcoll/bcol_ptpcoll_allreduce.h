@@ -34,7 +34,7 @@ int bcol_ptpcoll_allreduce_narraying(mca_bcol_ptpcoll_module_t *ptpcoll_module,
 
 
 int bcol_ptpcoll_allreduce_narraying_init(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int bcol_ptpcoll_allreduce_recursivek_scatter_reduce(mca_bcol_ptpcoll_module_t *ptpcoll_module,
 						const int buffer_index, void *sbuf,
@@ -52,7 +52,7 @@ int bcol_ptpcoll_allreduce_knomial_allgather(mca_bcol_ptpcoll_module_t *ptpcoll_
 				const int padded_start_byte);
 
 int bcol_ptpcoll_allreduce_recursivek_scatter_reduce_allgather_init(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 
 int compute_knomial_allgather_offsets(int group_index, int count, struct
@@ -74,7 +74,7 @@ int bcol_ptpcoll_allreduce_knomial_allgather_extra(mca_bcol_ptpcoll_module_t *pt
 						const int count, struct ompi_datatype_t *dtype);
 
 int bcol_ptpcoll_allreduce_recursivek_scatter_reduce_allgather_extra_init(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int bcol_ptpcoll_allreduce_init(mca_bcol_base_module_t *super);
 

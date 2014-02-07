@@ -91,7 +91,7 @@ static int mca_coll_ml_allreduce_frag_progress(mca_coll_ml_collective_operation_
 
     ptrdiff_t lb, extent;
 
-    ml_payload_buffer_desc_t *src_buffer_desc;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc;
     mca_coll_ml_collective_operation_progress_t *new_op;
 
     mca_coll_ml_module_t *ml_module = OP_ML_MODULE(coll_op);
@@ -253,7 +253,7 @@ int parallel_allreduce_start(void *sbuf, void *rbuf, int count,
     ptrdiff_t lb, extent;
     size_t pack_len, dt_size;
 
-    ml_payload_buffer_desc_t *src_buffer_desc;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc;
     mca_coll_ml_collective_operation_progress_t *coll_op;
 
     mca_coll_ml_component_t *cm = &mca_coll_ml_component;

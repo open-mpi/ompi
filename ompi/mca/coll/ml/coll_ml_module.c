@@ -219,7 +219,7 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
         /* gvm Leak FIX Remove fragment free list */
         OBJ_DESTRUCT(&(module->fragment_descriptors));
         OBJ_DESTRUCT(&(module->message_descriptors));
-        /* push ml_memory_block_desc_t back on list manager */
+        /* push mca_bcol_base_memory_block_desc_t back on list manager */
         mca_coll_ml_free_block(module->payload_block);
         /* release the cinvertor if it was allocated */
         if (NULL != module->reference_convertor) {
@@ -510,7 +510,8 @@ static int mca_coll_ml_register_bcols(mca_coll_ml_module_t *ml_module)
             for (j = 0; j < topo->component_pairs[i].num_bcol_modules; j++) {
                 bcol_module = topo->component_pairs[i].bcol_modules[j];
                 if (NULL != bcol_module->bcol_memory_init) {
-                    ret = bcol_module->bcol_memory_init(ml_module,
+                    ret = bcol_module->bcol_memory_init(ml_module->payload_block,
+                                                        ml_module->data_offset,
                                                         bcol_module,
                                                         (NULL != bcol_module->network_context) ?
                                                         bcol_module->network_context->context_data: NULL);
@@ -2378,8 +2379,8 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
         goto exit_ERROR;
     }
 
-    topo->route_vector = (mca_coll_ml_route_info_t *)
-        calloc(comm_size, sizeof(mca_coll_ml_route_info_t));
+    topo->route_vector = (mca_bcol_base_route_info_t *)
+        calloc(comm_size, sizeof(mca_bcol_base_route_info_t));
     if (NULL == topo->route_vector) {
         ML_VERBOSE(10, ("Cannot allocate memory.\n"));
         rc = OMPI_ERR_OUT_OF_RESOURCE;

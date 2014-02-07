@@ -1170,7 +1170,7 @@ out_of_resources:
 #if 0
 static int mca_bcol_iboffload_neighbor_allgather_userbuffer_intra(
                                             bcol_function_args_t *fn_arguments,
-                                            struct coll_ml_function_t *const_args)
+                                            struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_iboffload_module_t *iboffload_module =
         (mca_bcol_iboffload_module_t *)const_args->bcol_module;
@@ -1201,7 +1201,7 @@ static int mca_bcol_iboffload_neighbor_allgather_userbuffer_intra(
 
 #if 1
 static int mca_bcol_iboffload_k_nomial_allgather_userbuffer_intra(bcol_function_args_t *fn_arguments,
-                                                   struct coll_ml_function_t *const_args)
+                                                   struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_iboffload_module_t *iboffload_module =
         (mca_bcol_iboffload_module_t *)const_args->bcol_module;
@@ -1232,7 +1232,7 @@ static int mca_bcol_iboffload_k_nomial_allgather_userbuffer_intra(bcol_function_
 #endif
 
 static int mca_bcol_iboffload_k_nomial_allgather_mlbuffer_intra(bcol_function_args_t *fn_arguments,
-                                                   struct coll_ml_function_t *const_args)
+                                                   struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_iboffload_module_t *iboffload_module =
         (mca_bcol_iboffload_module_t *)const_args->bcol_module;
@@ -1266,7 +1266,7 @@ static int mca_bcol_iboffload_k_nomial_allgather_mlbuffer_intra(bcol_function_ar
  */
 static int mca_bcol_iboffload_collreq_mlbuffer_progress(
             bcol_function_args_t *input_args,
-            struct coll_ml_function_t *const_args)
+            struct mca_bcol_base_function_t *const_args)
 {
     int i;
     mca_bcol_iboffload_collreq_t *coll_request =
@@ -1294,7 +1294,7 @@ static int mca_bcol_iboffload_collreq_mlbuffer_progress(
 
 static int mca_bcol_iboffload_collreq_userbuffer_progress(
                         bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args)
+                        struct mca_bcol_base_function_t *const_args)
 {
     int i;
     mca_bcol_iboffload_collreq_t *coll_request =

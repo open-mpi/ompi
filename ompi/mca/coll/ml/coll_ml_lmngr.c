@@ -89,22 +89,6 @@ OBJ_CLASS_INSTANCE(mca_coll_ml_lmngr_t,
         construct_lmngr,
         destruct_lmngr);
 
-static void lmngr_block_constructor(mca_coll_ml_lmngr_block_t *item) 
-{
-    item->base_addr = NULL;
-}
-
-static void lnmgr_block_destructor(mca_coll_ml_lmngr_block_t *item) 
-{
-    /* I have nothing to do here */
-}
-
-OBJ_CLASS_INSTANCE(mca_coll_ml_lmngr_block_t,
-        opal_list_item_t,
-        lmngr_block_constructor,
-        lnmgr_block_destructor);
-
-
 int mca_coll_ml_lmngr_tune(mca_coll_ml_lmngr_t *lmngr, 
         size_t block_size, size_t list_size, size_t alignment)
 {
@@ -246,7 +230,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
     /* slice the memory to blocks */
     addr = (unsigned char *) lmngr->base_addr;
     for(num_blocks = 0; num_blocks < (int)lmngr->list_size; num_blocks++) {
-        mca_coll_ml_lmngr_block_t *item = OBJ_NEW(mca_coll_ml_lmngr_block_t);
+        mca_bcol_base_lmngr_block_t *item = OBJ_NEW(mca_bcol_base_lmngr_block_t);
         item->base_addr = (void *)addr;
         item->lmngr = lmngr;
         /* ML_VERBOSE(10, ("Appending block # %d %p", num_blocks, (void *)addr)); */
@@ -260,7 +244,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
     return OMPI_SUCCESS;
 }
 
-mca_coll_ml_lmngr_block_t* mca_coll_ml_lmngr_alloc (
+mca_bcol_base_lmngr_block_t* mca_coll_ml_lmngr_alloc (
         mca_coll_ml_lmngr_t *lmngr)
 {
     int rc;
@@ -282,10 +266,10 @@ mca_coll_ml_lmngr_block_t* mca_coll_ml_lmngr_alloc (
         return NULL;
     }
 
-    return (mca_coll_ml_lmngr_block_t *)opal_list_remove_first(list);
+    return (mca_bcol_base_lmngr_block_t *)opal_list_remove_first(list);
 }
 
-void mca_coll_ml_lmngr_free(mca_coll_ml_lmngr_block_t *block)
+void mca_coll_ml_lmngr_free(mca_bcol_base_lmngr_block_t *block)
 {
     opal_list_append(&block->lmngr->blocks_list, (opal_list_item_t *)block);
 }

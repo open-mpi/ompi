@@ -615,12 +615,12 @@ int compute_src_from_root(int group_root, int my_group_rank, int pow2, int
 }
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args);
+    mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_nb_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args);
+    mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_nb_knownroot_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args);
+    mca_bcol_base_function_t *c_input_args);
 
 #endif

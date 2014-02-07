@@ -75,8 +75,8 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
                 collective_alg->n_functions ));
 
     /* allocate space for the functions */
-    collective_alg->functions = (coll_ml_function_t *)
-        malloc(sizeof(coll_ml_function_t) * collective_alg->n_functions);
+    collective_alg->functions = (mca_bcol_base_function_t *)
+        malloc(sizeof(mca_bcol_base_function_t) * collective_alg->n_functions);
     if( NULL == collective_alg->functions) {
         ML_ERROR(("Can't allocate memory.\n"));
         ret = OMPI_ERR_OUT_OF_RESOURCE;

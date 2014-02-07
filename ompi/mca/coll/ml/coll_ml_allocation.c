@@ -21,18 +21,18 @@
 
 long memory_buffer_index;
 
-ml_memory_block_desc_t *mca_coll_ml_allocate_block(struct mca_coll_ml_component_t *ml_component,
-                                                   ml_memory_block_desc_t *ml_memblock)
+mca_bcol_base_memory_block_desc_t *mca_coll_ml_allocate_block(struct mca_coll_ml_component_t *ml_component,
+                                                   mca_bcol_base_memory_block_desc_t *ml_memblock)
 {
-    ml_memory_block_desc_t *ret = NULL;
-    ml_memory_block_desc_t *memory_block = NULL;
+    mca_bcol_base_memory_block_desc_t *ret = NULL;
+    mca_bcol_base_memory_block_desc_t *memory_block = NULL;
     mca_coll_ml_lmngr_t *memory_manager = NULL;
 
     if (ml_memblock) {
         ML_ERROR(("Memory already allocated - expecting NULL pointer"));
         return ret;
     }
-    memory_block = (ml_memory_block_desc_t*) calloc(1, sizeof(ml_memory_block_desc_t));
+    memory_block = (mca_bcol_base_memory_block_desc_t*) calloc(1, sizeof(mca_bcol_base_memory_block_desc_t));
 
     if (NULL == memory_block){
         ML_ERROR(("Couldn't allocate memory for ml_memblock"));
@@ -60,7 +60,7 @@ exit_ERROR:
     return ret;
 }
 
-void mca_coll_ml_free_block (ml_memory_block_desc_t *ml_memblock)
+void mca_coll_ml_free_block (mca_bcol_base_memory_block_desc_t *ml_memblock)
 {
     if (!ml_memblock)
         return;
@@ -76,7 +76,7 @@ void mca_coll_ml_free_block (ml_memory_block_desc_t *ml_memblock)
     free(ml_memblock);
 }
 
-int mca_coll_ml_initialize_block(ml_memory_block_desc_t *ml_memblock,
+int mca_coll_ml_initialize_block(mca_bcol_base_memory_block_desc_t *ml_memblock,
                                  uint32_t num_buffers,
                                  uint32_t num_banks,
                                  uint32_t buffer_size,
@@ -86,7 +86,7 @@ int mca_coll_ml_initialize_block(ml_memory_block_desc_t *ml_memblock,
     int ret = OMPI_SUCCESS;
     uint32_t bank_loop, buff_loop;
     uint64_t addr_offset = 0;
-    ml_payload_buffer_desc_t *pbuff_descs = NULL,*pbuff_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *pbuff_descs = NULL,*pbuff_desc = NULL;
 
     if (NULL == ml_memblock){
         ML_ERROR(("Memory block not initialized"));
@@ -100,7 +100,7 @@ int mca_coll_ml_initialize_block(ml_memory_block_desc_t *ml_memblock,
         goto exit_ERROR;
     }
 
-    pbuff_descs = (ml_payload_buffer_desc_t*) malloc(sizeof(ml_payload_buffer_desc_t)
+    pbuff_descs = (mca_bcol_base_payload_buffer_desc_t*) malloc(sizeof(mca_bcol_base_payload_buffer_desc_t)
             * num_banks * num_buffers);
 
     for(bank_loop = 0; bank_loop < num_banks; bank_loop++)
@@ -167,12 +167,12 @@ exit_ERROR:
     return ret;
 }
 
-ml_payload_buffer_desc_t *mca_coll_ml_alloc_buffer (mca_coll_ml_module_t *module)
+mca_bcol_base_payload_buffer_desc_t *mca_coll_ml_alloc_buffer (mca_coll_ml_module_t *module)
 {
     uint64_t bindex;
     uint32_t bank, buffer, num_buffers;
-    ml_memory_block_desc_t *ml_memblock = module->payload_block;
-    ml_payload_buffer_desc_t *pbuff_descs = NULL,
+    mca_bcol_base_memory_block_desc_t *ml_memblock = module->payload_block;
+    mca_bcol_base_payload_buffer_desc_t *pbuff_descs = NULL,
         *ml_membuffer = NULL;
 
     /* Return a buffer */

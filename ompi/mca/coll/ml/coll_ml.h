@@ -101,39 +101,6 @@ enum {
 };
 
 struct mca_bcol_base_module_t;
-/* function description */
-struct coll_ml_function_t {
-    int fn_idx;
-    /* module */
-    struct mca_bcol_base_module_t *bcol_module;
-
-    /*
-     *  The following two parameters are used for bcol modules
-     *  that want to do some optimizations based on the fact that
-     *  n functions from the same bcol module are called in a row.
-     *  For example, in the iboffload case, on the first call one
-     *  will want to initialize the MWR, and start to instantiate
-     *  it, but only post it at the end of the last call.
-     *  The index of this function in a sequence of consecutive
-     *  functions from the same bcol
-     */
-    int index_in_consecutive_same_bcol_calls;
-
-    /* number of times functions from this bcol are
-     * called in order
-     */
-    int n_of_this_type_in_a_row;
-
-    /*
-     * number of times functions from this module are called in the
-     * collective operation.
-     */
-    int n_of_this_type_in_collective;
-    int index_of_this_type_in_collective;
-};
-typedef struct coll_ml_function_t coll_ml_function_t;
-
-
 
 /* collective function arguments - gives
  * one function signature for calling all collective setup
@@ -205,7 +172,7 @@ struct coll_ml_collective_description_t {
     mpi_coll_algorithm_params_t alg_params;
 
     /* list of functions */
-    coll_ml_function_t *functions;
+    mca_bcol_base_function_t *functions;
 
     /* function names - for debugging */
     char **function_names;
@@ -599,12 +566,6 @@ typedef struct mca_coll_ml_component_t mca_coll_ml_component_t;
  */
 OMPI_MODULE_DECLSPEC extern mca_coll_ml_component_t mca_coll_ml_component;
 
-struct mca_coll_ml_route_info_t {
-    int level;
-    int rank;
-};
-typedef struct mca_coll_ml_route_info_t mca_coll_ml_route_info_t;
-
 struct mca_coll_ml_leader_offset_info_t {
     size_t offset;
     int level_one_index;
@@ -623,7 +584,7 @@ struct mca_coll_ml_topology_t {
     int n_levels;
     /* bcols bits that describe supported features/modes */
     uint64_t all_bcols_mode;
-    mca_coll_ml_route_info_t *route_vector;
+    mca_bcol_base_route_info_t *route_vector;
     coll_ml_collective_description_t *hierarchical_algorithms[BCOL_NUM_OF_FUNCTIONS];
     sub_group_params_t *array_of_all_subgroups;
     /* (sbgp, bcol) pairs */
@@ -691,7 +652,7 @@ struct mca_coll_ml_module_t {
     ompi_free_list_t fragment_descriptors;
 
     /** pointer to the payload memory block **/
-    struct ml_memory_block_desc_t *payload_block;
+    struct mca_bcol_base_memory_block_desc_t *payload_block;
 
     /** the maximum size of collective function description */
     int max_dag_size;

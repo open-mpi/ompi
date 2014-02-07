@@ -310,7 +310,7 @@ static struct mca_bcol_base_coll_fn_invoke_attributes_t *mca_construct_invoke_at
 int mca_select_bcol_function(mca_bcol_base_module_t *bcol_module,
                 int bcoll_type,
                 bcol_function_args_t *bcol_fn_arguments,
-                coll_ml_function_t *ml_fn_arguments )
+                mca_bcol_base_function_t *ml_fn_arguments )
 {
         
     struct mca_bcol_base_coll_fn_desc_t *fn_filtered = NULL;

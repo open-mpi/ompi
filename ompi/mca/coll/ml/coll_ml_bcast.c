@@ -177,7 +177,7 @@ static int mca_coll_ml_bcast_frag_converter_progress(mca_coll_ml_collective_oper
     int ret, frag_len;
     size_t max_data = 0;
 
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_coll_ml_collective_operation_progress_t *new_op = NULL;
     mca_coll_ml_task_setup_fn_t task_setup = NULL;
     mca_coll_ml_module_t *ml_module = OP_ML_MODULE(coll_op);
@@ -315,7 +315,7 @@ static int mca_coll_ml_bcast_frag_progress(mca_coll_ml_collective_operation_prog
     size_t dt_size;
     void *buf;
 
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_coll_ml_collective_operation_progress_t *new_op = NULL;
     mca_coll_ml_task_setup_fn_t task_setup = NULL;
 
@@ -448,7 +448,7 @@ static inline __opal_attribute_always_inline__
 
     mca_coll_ml_collective_operation_progress_t * coll_op = NULL;
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t *) module;
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_coll_ml_task_setup_fn_t task_setup;
     OPAL_PTRDIFF_TYPE lb, extent;
 
@@ -710,7 +710,7 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
     mca_coll_ml_collective_operation_progress_t * coll_op = NULL;
     mca_coll_ml_compound_functions_t *fixed_schedule;
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t *) module;
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_bcol_base_coll_fn_desc_t *func;
     OPAL_PTRDIFF_TYPE lb, extent;
 
@@ -813,7 +813,7 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
 
         func = fixed_schedule[fn_idx].bcol_function;
         ret = func->coll_fn(&coll_op->variable_fn_params,
-                (struct coll_ml_function_t *) &fixed_schedule[fn_idx].constant_group_data);
+                (struct mca_bcol_base_function_t *) &fixed_schedule[fn_idx].constant_group_data);
         /* set the coll_fn_started flag to true */
         if (BCOL_FN_COMPLETE == ret) {
             /* done with this routine, bump the active counter */

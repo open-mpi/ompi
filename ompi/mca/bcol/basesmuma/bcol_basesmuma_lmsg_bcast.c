@@ -43,7 +43,7 @@
 static int completed_scatter = 0;
 #if 0
 int bcol_basesmuma_lmsg_scatter_allgather_portals_bcast_old(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
 
     /* local variables */
@@ -589,7 +589,7 @@ Release:
  */
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
 
     /* local variables */
@@ -1113,7 +1113,7 @@ Release:
  */
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_nb_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
 	int i;
 	mca_bcol_basesmuma_portal_proc_info_t *portals_info;
@@ -1526,7 +1526,7 @@ Release:
 
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_nb_knownroot_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
 
 	int i;
