@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  * 
@@ -62,7 +62,7 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 /* Collective objects and operations */
 #define ompi_rte_collective_t orte_grpcomm_collective_t
 typedef orte_grpcomm_coll_id_t ompi_rte_collective_id_t;
-#define ompi_rte_modex(a) orte_grpcomm.modex(a)
+OMPI_DECLSPEC int ompi_rte_modex(ompi_rte_collective_t *coll);
 #define ompi_rte_barrier(a) orte_grpcomm.barrier(a)
 
 /* Process info struct and values */
@@ -121,6 +121,9 @@ typedef orte_rml_tag_t ompi_rml_tag_t;
 
 #define OMPI_RML_PERSISTENT      ORTE_RML_PERSISTENT
 #define OMPI_RML_NON_PERSISTENT  ORTE_RML_NON_PERSISTENT
+
+/* define a local variable shared between component and module */
+OMPI_MODULE_DECLSPEC extern bool ompi_rte_orte_direct_modex;
 
 END_C_DECLS
 

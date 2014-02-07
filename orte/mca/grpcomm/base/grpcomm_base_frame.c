@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,8 @@
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 
@@ -50,6 +53,8 @@ static int orte_grpcomm_base_close(void)
     if( NULL != orte_grpcomm.finalize ) {
         orte_grpcomm.finalize();
     }
+    OBJ_DESTRUCT(&orte_grpcomm_base.active_colls);
+    OBJ_DESTRUCT(&orte_grpcomm_base.modex_requests);
 
 #if OPAL_HAVE_HWLOC
   if (NULL != orte_grpcomm_base.working_cpuset) {
@@ -69,10 +74,17 @@ static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
     /* init globals */
     OBJ_CONSTRUCT(&orte_grpcomm_base.active_colls, opal_list_t);
     orte_grpcomm_base.coll_id = 0;
-    
+    OBJ_CONSTRUCT(&orte_grpcomm_base.modex_requests, opal_list_t);
+    orte_grpcomm_base.modex_ready = false;
+
 #if OPAL_HAVE_HWLOC
     orte_grpcomm_base.working_cpuset = NULL;
 #endif
+
+    /* register the modex processing event */
+    if (ORTE_PROC_IS_APP) {
+        orte_state.add_proc_state(ORTE_PROC_STATE_MODEX_READY, orte_grpcomm_base_process_modex, ORTE_MSG_PRI);
+    }
 
     return mca_base_framework_components_open(&orte_grpcomm_base_framework, flags);
 }
@@ -145,4 +157,8 @@ OBJ_CLASS_INSTANCE(orte_grpcomm_collective_t,
 
 OBJ_CLASS_INSTANCE(orte_grpcomm_caddy_t,
                    opal_object_t,
+                   NULL, NULL);
+
+OBJ_CLASS_INSTANCE(orte_grpcomm_modex_req_t,
+                   opal_list_item_t,
                    NULL, NULL);
