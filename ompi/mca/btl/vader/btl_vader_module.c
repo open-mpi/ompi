@@ -184,7 +184,8 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct ompi_
         (void) vader_get_registation (ep, modex->segment_base, mca_btl_vader_component.segment_size,
                                       MCA_MPOOL_FLAGS_PERSIST, (void **) &ep->segment_base);
 #else
-        opal_shmem_ds_copy (&modex->seg_ds, &ep->seg_ds);
+        msg_size -= offsetof (struct vader_modex_t, seg_ds);
+        memcpy (&ep->seg_ds, &modex->seg_ds, msg_size);
         ep->segment_base = opal_shmem_segment_attach (&ep->seg_ds);
         if (NULL == ep->segment_base) {
             return rc;
