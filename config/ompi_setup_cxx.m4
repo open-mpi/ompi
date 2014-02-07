@@ -145,7 +145,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
 # Back end of _OMPI_SETUP_CXX_COMPILER_BACKEND()
 AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
     # Do we want code coverage
-    if test "$WANT_COVERAGE" = "1"; then 
+    if test "$WANT_COVERAGE" = "1" -a "$WANT_MPI_CXX_SUPPORT" = "1"; then 
         if test "$ompi_cxx_vendor" = "gnu" ; then
             AC_MSG_WARN([$OMPI_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
             WANT_DEBUG=1
