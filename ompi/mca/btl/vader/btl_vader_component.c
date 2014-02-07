@@ -118,14 +118,14 @@ static int mca_btl_vader_component_register (void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_vader_component.log_attach_align);
 
-#if OMPI_BTL_VADER_HAVE_XPMEM
+#if OMPI_BTL_VADER_HAVE_XPMEM && 64 == MCA_BTL_VADER_BITNESS
     mca_btl_vader_component.segment_size = 1 << 24;
 #else
     mca_btl_vader_component.segment_size = 1 << 22;
 #endif
     (void) mca_base_component_var_register(&mca_btl_vader_component.super.btl_version,
                                            "segment_size", "Maximum size of all shared "
-#if OMPI_BTL_VADER_HAVE_XPMEM
+#if OMPI_BTL_VADER_HAVE_XPMEM && 64 == MCA_BTL_VADER_BITNESS
                                            "memory buffers (default: 16M)",
 #else
                                            "memory buffers (default: 4M)",
@@ -271,6 +271,10 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     /* ensure a sane segment size */
     if (mca_btl_vader_component.segment_size < (2 << 20)) {
         mca_btl_vader_component.segment_size = (2 << 20);
+    }
+
+    if (mca_btl_vader_component.segment_size > (1 << MCA_BTL_VADER_OFFSET_BITS)) {
+        mca_btl_vader_component.segment_size = 2 << MCA_BTL_VADER_OFFSET_BITS;
     }
 
 #if OMPI_BTL_VADER_HAVE_XPMEM

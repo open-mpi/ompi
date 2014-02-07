@@ -30,15 +30,27 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_frag.h"
 
-#if OPAL_HAVE_ATOMIC_MATH_64
-#define vader_item_cmpset(x, y, z) opal_atomic_cmpset_64((volatile int64_t *)(x), (int64_t)(y), (int64_t)(z))
-#define vader_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
+#if SIZEOF_VOID_P == 8
+  #define vader_item_cmpset(x, y, z) opal_atomic_cmpset_64((volatile int64_t *)(x), (int64_t)(y), (int64_t)(z))
+  #define vader_item_swap(x, y)      opal_atomic_swap_64((volatile int64_t *)(x), (int64_t)(y))
+
+  #define MCA_BTL_VADER_OFFSET_MASK 0xffffffffll
+  #define MCA_BTL_VADER_OFFSET_BITS 32
+  #define MCA_BTL_VADER_BITNESS     64
+
+  typedef int64_t fifo_value_t;
 #else
-#define vader_item_cmpset(x, y, z) opal_atomic_cmpset_32((volatile int32_t *)(x), (int32_t)(y), (int32_t)(z))
-#define vader_item_swap(x, y)      opal_atomic_swap_32((volatile int32_t *)(x), (int32_t)(y))
+  #define vader_item_cmpset(x, y, z) opal_atomic_cmpset_32((volatile int32_t *)(x), (int32_t)(y), (int32_t)(z))
+  #define vader_item_swap(x, y)      opal_atomic_swap_32((volatile int32_t *)(x), (int32_t)(y))
+
+  #define MCA_BTL_VADER_OFFSET_MASK 0x00ffffffl
+  #define MCA_BTL_VADER_OFFSET_BITS 24
+  #define MCA_BTL_VADER_BITNESS     32
+
+  typedef int32_t fifo_value_t;
 #endif
 
-#define VADER_FIFO_FREE  ((intptr_t)-2)
+#define VADER_FIFO_FREE  ((fifo_value_t)-2)
 
 /*
  * Shared Memory FIFOs
@@ -56,17 +68,33 @@
 
 /* lock free fifo */
 typedef struct vader_fifo_t {
-    volatile intptr_t fifo_head;
-    volatile intptr_t fifo_tail;
+    volatile fifo_value_t fifo_head;
+    volatile fifo_value_t fifo_tail;
 } vader_fifo_t;
 
 /* large enough to ensure the fifo is on its own cache line */
 #define MCA_BTL_VADER_FIFO_SIZE 128
 
+/* This only works for finding the relative address for a pointer within my_segment */
+static inline fifo_value_t virtual2relative (char *addr)
+{
+    return (fifo_value_t) ((intptr_t) (addr - mca_btl_vader_component.my_segment)) | ((fifo_value_t)MCA_BTL_VADER_LOCAL_RANK << MCA_BTL_VADER_OFFSET_BITS);
+}
+
+static inline fifo_value_t virtual2relativepeer (struct mca_btl_base_endpoint_t *endpoint, char *addr)
+{
+    return (fifo_value_t) ((intptr_t) (addr - endpoint->segment_base)) | ((fifo_value_t)endpoint->peer_smp_rank << MCA_BTL_VADER_OFFSET_BITS);
+}
+
+static inline void *relative2virtual (fifo_value_t offset)
+{
+    return (void *)(intptr_t)((offset & MCA_BTL_VADER_OFFSET_MASK) + mca_btl_vader_component.endpoints[offset >> MCA_BTL_VADER_OFFSET_BITS].segment_base);
+}
+
 static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
 {
     mca_btl_vader_hdr_t *hdr;
-    intptr_t value;
+    fifo_value_t value;
 
     opal_atomic_rmb ();
 
@@ -107,9 +135,9 @@ static inline int vader_fifo_init (vader_fifo_t *fifo)
     return OMPI_SUCCESS;
 }
 
-static inline void vader_fifo_write (vader_fifo_t *fifo, intptr_t value)
+static inline void vader_fifo_write (vader_fifo_t *fifo, fifo_value_t value)
 {
-    intptr_t prev;
+    fifo_value_t prev;
 
     opal_atomic_wmb ();
     prev = vader_item_swap (&fifo->fifo_tail, value);

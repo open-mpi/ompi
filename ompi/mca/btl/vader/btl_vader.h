@@ -158,23 +158,6 @@ OMPI_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
 /* local rank in the group */
 #define MCA_BTL_VADER_LOCAL_RANK ompi_process_info.my_local_rank
 
-
-/* This only works for finding the relative address for a pointer within my_segment */
-static inline intptr_t virtual2relative (char *addr)
-{
-    return (intptr_t) (addr - mca_btl_vader_component.my_segment) | ((int64_t)MCA_BTL_VADER_LOCAL_RANK << 32);
-}
-
-static inline intptr_t virtual2relativepeer (struct mca_btl_base_endpoint_t *endpoint, char *addr)
-{
-    return (intptr_t) (addr - endpoint->segment_base) | ((int64_t)endpoint->peer_smp_rank << 32);
-}
-
-static inline void *relative2virtual (intptr_t offset)
-{
-    return (void *)((offset & 0xffffffffull) + mca_btl_vader_component.endpoints[offset >> 32].segment_base);
-}
-
 /* memcpy is faster at larger sizes but is undefined if the
    pointers are aliased (TODO -- readd alias check) */
 static inline void vader_memmove (void *dst, void *src, size_t size)
