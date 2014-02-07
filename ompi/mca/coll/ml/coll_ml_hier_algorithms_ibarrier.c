@@ -66,8 +66,8 @@ int ml_coll_hier_nonblocking_barrier_setup(mca_coll_ml_module_t *ml_module,
     hierarchical_algorithms[BCOL_IBARRIER]->n_buffers=0;
 
     /* allocate space for the functions */
-    hierarchical_algorithms[BCOL_IBARRIER][0].functions=(coll_ml_function_t *)
-        malloc(sizeof(coll_ml_function_t)*
+    hierarchical_algorithms[BCOL_IBARRIER][0].functions=(mca_bcol_base_function_t *)
+        malloc(sizeof(mca_bcol_base_function_t)*
             hierarchical_algorithms[BCOL_IBARRIER][0].n_functions);
     if( NULL == hierarchical_algorithms[BCOL_IBARRIER][0].functions) {
         ret=OMPI_ERROR;

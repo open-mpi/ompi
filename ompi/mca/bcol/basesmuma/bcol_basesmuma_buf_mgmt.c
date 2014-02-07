@@ -21,7 +21,6 @@
 #include "ompi/constants.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/patterns/comm/coll_ops.h"
 
 #include "opal/dss/dss.h"
@@ -166,127 +165,6 @@ int bcol_basesmuma_free_buff( sm_buffer_mgmt * buff_block,
     return ret;
 }
 
-#if 0
-/* Basesmuma interface function used for buffer bank resource recycling and
-   bcol specific registration information
-*/
-int bcol_basesmuma_bank_init(struct mca_coll_ml_module_t *ml_module,
-                             mca_bcol_base_module_t *bcol_module,
-                             void *reg_data)
-{
-    /* assumption here is that the block has been registered with
-     * sm bcol hence has been mapped by each process, need to be
-     * sure that memory is mapped amongst sm peers
-     */
-
-    /* local variables */
-    int ret = OMPI_SUCCESS, i;
-    uint32_t j;
-    sm_buffer_mgmt *pload_mgmt;
-    mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
-    bcol_basesmuma_registration_data_t *sm_reg_data =
-        (bcol_basesmuma_registration_data_t *) reg_data;
-    mca_bcol_basesmuma_module_t *sm_bcol =
-        (mca_bcol_basesmuma_module_t *) bcol_module;
-    ml_memory_block_desc_t *ml_block =
-        ml_module->payload_block;
-    size_t malloc_size;
-    ompi_common_sm_file_t input_file;
-    uint64_t mem_offset;
-    int leading_dim,loop_limit,buf_id;
-    unsigned char *base_ptr;
-    mca_bcol_basesmuma_module_t *sm_bcol_module=
-        (mca_bcol_basesmuma_module_t *)bcol_module;
-
-    fprintf(stderr,"test opti test\n");
-
-    /* first, we get a pointer to the payload buffer management struct */
-    pload_mgmt = &(sm_bcol->colls_with_user_data);
-
-    /* allocate memory for pointers to mine and my peers' payload buffers
-     */
-    malloc_size = ml_block->num_banks*ml_block->num_buffers_per_bank*
-        pload_mgmt->size_of_group *sizeof(void *);
-    pload_mgmt->data_buffs = malloc(malloc_size);
-    if( !pload_mgmt->data_buffs) {
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit_ERROR;
-    }
-
-    /* setup the input file for the shared memory connection manager */
-    input_file.file_name = sm_reg_data->file_name;
-    input_file.size = sm_reg_data->size;
-    input_file.size_ctl_structure = 0;
-    input_file.data_seg_alignment = BASESMUMA_CACHE_LINE_SIZE;
-    input_file.mpool_size = sm_reg_data->size;
-
-    /* call the connection manager and map my shared memory peers' file
-     */
-    ret = ompi_common_smcm_allgather_connection(
-        sm_bcol,
-        sm_bcol->super.sbgp_partner_module,
-        &(cs->sm_connections_list),
-        &(sm_bcol->payload_backing_files_info),
-        sm_bcol->super.sbgp_partner_module->group_comm,
-        input_file,
-        false);
-    if( OMPI_SUCCESS != ret ) {
-        goto exit_ERROR;
-    }
-
-    /* now we exchange offset info - don't assume symmetric virtual memory
-     */
-    mem_offset = (uint64_t)(ml_block->block->base_addr) -
-        (uint64_t)(cs->sm_payload_structs->data_addr);
-
-    /* call into the exchange offsets function */
-    ret = base_bcol_basesmuma_exchange_offsets(sm_bcol_module,
-                                               (void **)pload_mgmt->data_buffs, mem_offset, 0,
-                                               pload_mgmt->size_of_group);
-    if( OMPI_SUCCESS != ret ) {
-        goto exit_ERROR;
-    }
-
-    /* convert memory offset to virtual address in current rank */
-    leading_dim = pload_mgmt->size_of_group;
-    loop_limit =  ml_block->num_banks*ml_block->num_buffers_per_bank;
-    for (i=0;i< sm_bcol_module->super.sbgp_partner_module->group_size;i++) {
-
-        /* get the base pointer */
-        int array_id=SM_ARRAY_INDEX(leading_dim,0,i);
-        if( i == sm_bcol_module->super.sbgp_partner_module->my_index) {
-            /* me */
-            base_ptr=cs->sm_payload_structs->map_addr;
-        } else {
-            base_ptr=sm_bcol_module->payload_backing_files_info[i]->
-                sm_mmap->map_addr;
-        }
-        pload_mgmt->data_buffs[array_id]=(void *)
-            (((uint64_t)pload_mgmt->data_buffs[array_id])+(uint64_t)base_ptr);
-        for( buf_id = 1 ; buf_id < loop_limit ; buf_id++ ) {
-            int array_id_m1=SM_ARRAY_INDEX(leading_dim,(buf_id-1),i);
-            array_id=SM_ARRAY_INDEX(leading_dim,buf_id,i);
-            pload_mgmt->data_buffs[array_id]=(void *) ((uint64_t)(pload_mgmt->data_buffs[array_id_m1])+
-                                                       (uint64_t)ml_block->size_buffer);
-        }
-    }
-
-    /* setup the data structures needed for releasing the payload
-     * buffers back to the ml level
-     */
-    for(j = 0; j < ml_block->num_banks; j++) {
-        sm_bcol->colls_with_user_data.
-            ctl_buffs_mgmt[j].nb_barrier_desc.ml_memory_block_descriptor=
-            ml_block;
-    }
-
-    return OMPI_SUCCESS;
-
-exit_ERROR:
-    return ret;
-}
-#endif
-
 /*
  * Allocate buffers for storing non-blocking collective descriptions, required
  * for making code re-entrant
@@ -337,9 +215,10 @@ static int init_nb_coll_buff_desc(mca_bcol_basesmuma_nb_coll_buff_desc_t **desc,
 /* New init function used for new control scheme where we put the control
  * struct at the top of the payload buffer
  */
-int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
-                                  mca_bcol_base_module_t *bcol_module,
-                                  void *reg_data)
+int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payload_block,
+        uint32_t data_offset,
+        mca_bcol_base_module_t *bcol_module,
+        void *reg_data)
 {
     /* assumption here is that the block has been registered with
      * sm bcol hence has been mapped by each process, need to be
@@ -354,8 +233,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
         (bcol_basesmuma_registration_data_t *) reg_data;
     mca_bcol_basesmuma_module_t *sm_bcol =
         (mca_bcol_basesmuma_module_t *) bcol_module;
-    ml_memory_block_desc_t *ml_block =
-        ml_module->payload_block;
+    mca_bcol_base_memory_block_desc_t *ml_block = payload_block;
     size_t malloc_size;
     bcol_basesmuma_smcm_file_t input_file;
     uint64_t mem_offset;
@@ -374,7 +252,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
 
     /* go ahead and get the header size that is cached on the payload block
      */
-    sm_bcol->total_header_size = ml_module->data_offset;
+    sm_bcol->total_header_size = data_offset;
 
     /* allocate memory for pointers to mine and my peers' payload buffers
      * difference here is that now we use our new data struct
@@ -449,7 +327,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
         /* second, calculate where to set the data pointer */
         pload_mgmt->data_buffs[array_id].payload=(void *)
             (uintptr_t)((uint64_t)(uintptr_t) pload_mgmt->data_buffs[array_id].ctl_struct +
-                        (uint64_t)(uintptr_t) ml_module->data_offset);
+                        (uint64_t)(uintptr_t) data_offset);
 
         for( buf_id = 1 ; buf_id < loop_limit ; buf_id++ ) {
             int array_id_m1=SM_ARRAY_INDEX(leading_dim,(buf_id-1),i);
@@ -464,7 +342,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
             /* second, set the payload pointer */
             pload_mgmt->data_buffs[array_id].payload =(void *)
                 (uintptr_t)((uint64_t)(uintptr_t) pload_mgmt->data_buffs[array_id].ctl_struct +
-                            (uint64_t)(uintptr_t) ml_module->data_offset);
+                            (uint64_t)(uintptr_t) data_offset);
         }
 
     }
@@ -513,7 +391,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
                                                ml_mem->num_banks,
                                                ml_mem->num_buffers_per_bank,
                                                ml_mem->size_buffer,
-                                               ml_module->data_offset,
+                                               data_offset,
                                                sm_bcol_module->super.sbgp_partner_module->group_size,
                                                sm_bcol_module->pow_k)) {
 
@@ -542,7 +420,7 @@ exit_ERROR:
  */
 mca_bcol_basesmuma_module_t *sm_bcol_module
 int bcol_basesmuma_free_payload_buff(
-    struct ml_memory_block_desc_t *block,
+    struct mca_bcol_base_memory_block_desc_t *block,
     sm_buffer_mgmt *ctl_mgmt,
     uint64_t buff_id)
 {

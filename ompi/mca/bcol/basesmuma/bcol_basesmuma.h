@@ -19,8 +19,6 @@
 #include "ompi_config.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/mpool/mpool.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
-#include "ompi/mca/coll/ml/coll_ml_allocation.h"
 #include "ompi/request/request.h"
 #include "ompi/proc/proc.h"
 #include "ompi/patterns/net/netpatterns.h"
@@ -406,7 +404,7 @@ struct sm_nbbar_desc_t {
     /* pool index */
     int pool_index;
 
-    /* pointer to the ml_memory_block_desc_t structure
+    /* pointer to the mca_bcol_base_memory_block_desc_t structure
      * that is actually managing this registration.
      * This is meaningful when these control structures
      * are used in conjunction with the user payload
@@ -717,7 +715,7 @@ typedef struct mca_bcol_basesmuma_nb_coll_buff_desc_t mca_bcol_basesmuma_nb_coll
 struct mca_bcol_basesmuma_local_mlmem_desc_t {
 
     uint32_t bank_index_for_release;
-    struct ml_memory_block_desc_t *ml_mem_desc;
+    struct mca_bcol_base_memory_block_desc_t *ml_mem_desc;
     uint32_t     num_banks;
     uint32_t     num_buffers_per_bank;
     uint32_t     size_buffer;
@@ -934,7 +932,7 @@ typedef struct bcol_basesmuma_registration_data_t {
     size_t size_ctl_structure;
     size_t data_seg_alignment;
     bcol_basesmuma_smcm_mmap_t *sm_mmap; /* shared memory map struct */
-    mca_coll_ml_release_buff_fn_t buff_release_cb; /* buffer release
+    mca_bcol_base_release_buff_fn_t buff_release_cb; /* buffer release
                                                       call back */
 } bcol_basesmuma_registration_data_t;
 
@@ -1014,7 +1012,7 @@ int bcol_basesmuma_rd_barrier_init(mca_bcol_base_module_t *module);
 
 /* shared memory recusive double barrier */
 int bcol_basesmuma_recursive_double_barrier(bcol_function_args_t *input_args,
-                                            coll_ml_function_t *c_input_args);
+                                            mca_bcol_base_function_t *c_input_args);
 /* shared memory fanin */
 int bcol_basesmuma_fanin_init(mca_bcol_base_module_t *super);
 
@@ -1028,36 +1026,36 @@ int bcol_basesmuma_barrier_init(mca_bcol_base_module_t *super);
 int bcol_basesmuma_bcast_init(mca_bcol_base_module_t *super);
 
 int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
-                         coll_ml_function_t *c_input_args);
+                         mca_bcol_base_function_t *c_input_args);
 
 /* Shared memory non-blocking broadcast */
 int bcol_basesmuma_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
-                                          coll_ml_function_t *c_input_args);
+                                          mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_bcast_k_nomial_knownroot(bcol_function_args_t *input_args,
-                                            coll_ml_function_t *c_input_args);
+                                            mca_bcol_base_function_t *c_input_args);
 
 /* Shared memory non-blocking broadcast - Large message anyroot */
 int bcol_basesmuma_binary_scatter_allgather_segment(bcol_function_args_t *input_args,
-                                                    coll_ml_function_t *c_input_args);
+                                                    mca_bcol_base_function_t *c_input_args);
 
 #if 0
 /*FIXME: having fun here*/
 int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
-                                      coll_ml_function_t   *c_input_args);
+                                      mca_bcol_base_function_t   *c_input_args);
 #endif
 
 int bcol_basesmuma_lmsg_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
-                                               coll_ml_function_t *c_input_args);
+                                               mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_bcast(bcol_function_args_t *input_args,
-                                                        coll_ml_function_t *c_input_args);
+                                                        mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_nb_bcast(bcol_function_args_t *input_args,
-                                                           coll_ml_function_t *c_input_args);
+                                                           mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_lmsg_scatter_allgather_portals_nb_knownroot_bcast(bcol_function_args_t *input_args,
-                                                                     coll_ml_function_t *c_input_args);
+                                                                     mca_bcol_base_function_t *c_input_args);
 
 /*
  *  shared memory scatter
@@ -1067,38 +1065,38 @@ int bcol_basesmuma_scatter_init(mca_bcol_base_module_t *super);
 /* shared memory nonblocking scatter - known root */
 int bcol_basesmuma_nb_scatter_k_array_knownroot(
                                                 bcol_function_args_t *input_args,
-                                                coll_ml_function_t *c_input_args);
+                                                mca_bcol_base_function_t *c_input_args);
 
 /* shared memory non-blocking k-nomial barrier init */
 int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
-                                         struct coll_ml_function_t *const_args);
+                                         struct mca_bcol_base_function_t *const_args);
 
 /* shared memory non-blocking k-nomial barrier progress */
 int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
-                                             struct coll_ml_function_t *const_args);
+                                             struct mca_bcol_base_function_t *const_args);
 
 /*shared memory non-blocking k-nomial allgather init */
 int bcol_basesmuma_k_nomial_allgather_init(bcol_function_args_t *input_args,
-                                           struct coll_ml_function_t *const_args);
+                                           struct mca_bcol_base_function_t *const_args);
 
 /* shared memory non-blocking k-nomial allgather progress */
 int bcol_basesmuma_k_nomial_allgather_progress(bcol_function_args_t *input_args,
-                                               struct coll_ml_function_t *const_args);
+                                               struct mca_bcol_base_function_t *const_args);
 
 /* shared memory allgather -- selection logic api */
 int bcol_basesmuma_allgather_init(mca_bcol_base_module_t *super);
 
 /* shared memory blocking k-nomial gather */
 int bcol_basesmuma_k_nomial_gather(bcol_function_args_t *input_args,
-                                   coll_ml_function_t *c_input_args);
+                                   mca_bcol_base_function_t *c_input_args);
 
 /* shared memory non blocking k-nomial gather */
 int bcol_basesmuma_k_nomial_gather_init(bcol_function_args_t *input_args,
-                                        coll_ml_function_t *c_input_args);
+                                        mca_bcol_base_function_t *c_input_args);
 
 /* shared memory non blocking k-nomial gather progress*/
 int bcol_basesmuma_k_nomial_gather_progress(bcol_function_args_t *input_args,
-                                            coll_ml_function_t *c_input_args);
+                                            mca_bcol_base_function_t *c_input_args);
 
 /* shared memory init */
 int bcol_basesmuma_gather_init(mca_bcol_base_module_t *super);
@@ -1110,9 +1108,9 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(
 /* Shared memory basesmuma reduce */
 int bcol_basesmuma_reduce_init(mca_bcol_base_module_t *super);
 int bcol_basesmuma_reduce_intra_fanin(bcol_function_args_t *input_args,
-                                      coll_ml_function_t *c_input_args);
+                                      mca_bcol_base_function_t *c_input_args);
 int bcol_basesmuma_reduce_intra_fanin_old(bcol_function_args_t *input_args,
-                                          coll_ml_function_t *c_input_args);
+                                          mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
                                                      int count, struct ompi_datatype_t *dtype,
@@ -1125,10 +1123,10 @@ int bcol_basesmuma_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
 int bcol_basesmuma_allreduce_init(mca_bcol_base_module_t *super);
 
 int bcol_basesmuma_allreduce_intra_fanin_fanout(bcol_function_args_t *input_args,
-                                                coll_ml_function_t *c_input_args);
+                                                mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_allreduce_intra_recursive_doubling(bcol_function_args_t *input_args,
-                                                      coll_ml_function_t *c_input_args);
+                                                      mca_bcol_base_function_t *c_input_args);
 
 /* initialize non-blocking barrier for recycling the memory buffers.
  *  This is not a general purpose nb_barrier, and relies on the
@@ -1168,19 +1166,13 @@ int bcol_basesmuma_get_buff_index( sm_buffer_mgmt * buff_block,
 int bcol_basesmuma_free_buff( sm_buffer_mgmt * buff_block,
                               uint64_t buff_id );
 
-/* This function does bcol_basesmuma specific memory registration and
-   issues call back for ml level bank recycling
-*/
-int bcol_basesmuma_bank_init(struct mca_coll_ml_module_t *ml_module,
-                             mca_bcol_base_module_t *bcol_module,
-                             void *reg_data);
-
 /* bank init which is used for shared memory optimization, fall back to
  * the bank init above if this causes problems
  */
-int bcol_basesmuma_bank_init_opti(struct mca_coll_ml_module_t *ml_module,
-                                  mca_bcol_base_module_t *bcol_module,
-                                  void *reg_data);
+int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payload_block,
+        uint32_t data_offset,
+        mca_bcol_base_module_t *bcol_module,
+        void *reg_data);
 
 /* used for shared memory offset exchange */
 int base_bcol_basesmuma_exchange_offsets(

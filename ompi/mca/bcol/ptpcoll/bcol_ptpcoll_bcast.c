@@ -11,7 +11,6 @@
 #include "ompi_config.h"
 
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "bcol_ptpcoll_bcast.h"
 #include "bcol_ptpcoll_utils.h"
@@ -83,7 +82,7 @@ do {                                                                            
 
 
 int bcol_ptpcoll_bcast_k_nomial_anyroot_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     int completed = 0;
     int rc;
@@ -112,7 +111,7 @@ int bcol_ptpcoll_bcast_k_nomial_anyroot_progress(bcol_function_args_t *input_arg
 
 /* K-nomial tree ( with any root ) algorithm */
 int bcol_ptpcoll_bcast_k_nomial_anyroot(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
     mca_bcol_ptpcoll_component_t *cm = &mca_bcol_ptpcoll_component;
@@ -293,7 +292,7 @@ ANY_ROOT_KNOMIAL_EXTRA:
 }
 
 static int bcol_ptpcoll_bcast_k_nomial_extra_known_and_anyroot(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -392,7 +391,7 @@ static int bcol_ptpcoll_bcast_k_nomial_extra_known_and_anyroot(bcol_function_arg
 }
 
 static int bcol_ptpcoll_bcast_k_nomial_extra_known_and_anyroot_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     int rc;
     int completed = 0; /* not completed */
@@ -467,7 +466,7 @@ static int bcol_ptpcoll_bcast_k_nomial_extra_known_and_anyroot_progress(bcol_fun
 
 
 int bcol_ptpcoll_bcast_k_nomial_known_root_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -596,7 +595,7 @@ int bcol_ptpcoll_bcast_k_nomial_known_root_progress(bcol_function_args_t *input_
 }
 
 int bcol_ptpcoll_bcast_k_nomial_known_root(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -767,7 +766,7 @@ KNOWN_ROOT_KNOMIAL_BCAST_EXTRA:
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_extra(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -866,7 +865,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_extra(bcol_function_args
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_extra_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     int rc;
     int completed = 0; /* not completed */
@@ -920,7 +919,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_extra_progress(bcol_func
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1014,7 +1013,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_progress(bcol_function_a
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1147,7 +1146,7 @@ GATHER:
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1254,7 +1253,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_progress(bcol_functio
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1435,7 +1434,7 @@ GATHER:
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_extra(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1522,7 +1521,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_extra(bcol_function_a
 }
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_extra_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     int rc;
     int completed = 0; /* not completed */
@@ -1544,7 +1543,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_extra_progress(bcol_f
 }
 
 static int bcol_ptpcoll_bcast_narray_knomial_scatter_gatther_known_root_progress(
-        bcol_function_args_t *input_args, struct coll_ml_function_t *const_args)
+        bcol_function_args_t *input_args, struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1676,7 +1675,7 @@ static int bcol_ptpcoll_bcast_narray_knomial_scatter_gatther_known_root_progress
 
 
 static int bcol_ptpcoll_bcast_narray_knomial_scatter_gatther_known_root(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1899,7 +1898,7 @@ EXIT:
 
 /* Pasha : need to move this code to some common function */
 static int bcol_ptpcoll_bcast_narray_knomial_scatter_gatther_known_root_extra(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -1984,7 +1983,7 @@ static int bcol_ptpcoll_bcast_narray_knomial_scatter_gatther_known_root_extra(bc
 }
 
 static int bcol_ptpcoll_bcast_known_root_extra_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     int rc;
     int completed = 0; /* not completed */
@@ -2008,7 +2007,7 @@ static int bcol_ptpcoll_bcast_known_root_extra_progress(bcol_function_args_t *in
 
 
 static int bcol_ptpcoll_bcast_narray_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -2093,7 +2092,7 @@ static int bcol_ptpcoll_bcast_narray_progress(bcol_function_args_t *input_args,
 }
 
 static int bcol_ptpcoll_bcast_narray(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 

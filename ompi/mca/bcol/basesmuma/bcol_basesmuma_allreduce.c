@@ -20,9 +20,10 @@
 
 #include "opal/include/opal_stdint.h"
 
+#include "ompi/mca/bcol/base/base.h"
 #include "bcol_basesmuma.h"
 
-static int bcol_basesmuma_allreduce_intra_fanin_fanout_progress (bcol_function_args_t *input_args, coll_ml_function_t *c_input_args);
+static int bcol_basesmuma_allreduce_intra_fanin_fanout_progress (bcol_function_args_t *input_args, mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_allreduce_init(mca_bcol_base_module_t *super)
 {
@@ -185,7 +186,7 @@ static int allreduce_fanout (mca_bcol_basesmuma_module_t *bcol_module, volatile 
 
 }
 
-static int bcol_basesmuma_allreduce_intra_fanin_fanout_progress (bcol_function_args_t *input_args, coll_ml_function_t *c_input_args)
+static int bcol_basesmuma_allreduce_intra_fanin_fanout_progress (bcol_function_args_t *input_args, mca_bcol_base_function_t *c_input_args)
 {
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) c_input_args->bcol_module;
     int buff_idx = buff_idx = input_args->src_desc->buffer_index;
@@ -256,7 +257,7 @@ static int bcol_basesmuma_allreduce_intra_fanin_fanout_progress (bcol_function_a
 /**
  * Shared memory blocking allreduce.
  */
-int bcol_basesmuma_allreduce_intra_fanin_fanout(bcol_function_args_t *input_args, coll_ml_function_t *c_input_args)
+int bcol_basesmuma_allreduce_intra_fanin_fanout(bcol_function_args_t *input_args, mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     mca_bcol_basesmuma_module_t *bcol_module = (mca_bcol_basesmuma_module_t *) c_input_args->bcol_module;
@@ -307,7 +308,7 @@ int bcol_basesmuma_allreduce_intra_fanin_fanout(bcol_function_args_t *input_args
 
 /* this thing uses the old bcol private control structures */
 int bcol_basesmuma_allreduce_intra_recursive_doubling(bcol_function_args_t *input_args,
-                                                      coll_ml_function_t *c_input_args)
+                                                      mca_bcol_base_function_t *c_input_args)
 {
 
     int my_rank,group_size,my_node_index;

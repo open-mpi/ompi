@@ -17,6 +17,9 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 
+#include "ompi/mca/bcol/bcol.h"
+#include "ompi/mca/bcol/base/base.h"
+
 #include "bcol_basesmuma.h"
 
 #define __TEST_BLOCKING__   1
@@ -117,7 +120,7 @@ int bcol_basesmuma_bcast_init(mca_bcol_base_module_t *super)
  * @param module - basesmuma module.
  */
 int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int group_size, process_shift, my_node_index;
@@ -254,7 +257,7 @@ int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
 /*zero-copy large massage communication methods*/
 #if 0
 int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
-                                  coll_ml_function_t   *c_input_args)
+                                  mca_bcol_base_function_t   *c_input_args)
 {
     /* local variables */
     int group_size, process_shift, my_node_index;

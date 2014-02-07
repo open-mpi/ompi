@@ -1261,7 +1261,7 @@ static int mca_bcol_iboffload_allreduce_init(
 }
 
 static int mca_bcol_iboffload_allreduce_intra(bcol_function_args_t *fn_arguments,
-                                              struct coll_ml_function_t *const_args)
+                                              struct mca_bcol_base_function_t *const_args)
 {
     /* local variables */
     int rc;
@@ -1304,7 +1304,7 @@ static int mca_bcol_iboffload_allreduce_intra(bcol_function_args_t *fn_arguments
 
 static int mca_bcol_iboffload_allreduce_progress(
                         bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args)
+                        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_iboffload_collreq_t *coll_request =
                  (mca_bcol_iboffload_collreq_t *)

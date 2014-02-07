@@ -28,7 +28,6 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/include/ompi/constants.h"
 #include "ompi/mca/mpool/mpool.h"
-#include "ompi/mca/coll/ml/coll_ml.h" /*frag and full message descriptors defined here*/
 #include "opal/class/opal_list.h"
 /*
  * The following file was created by configure.  It contains extern
@@ -341,3 +340,19 @@ OBJ_CLASS_INSTANCE(mca_bcol_base_coll_fn_desc_t,
                    opal_list_item_t,
                    NULL,
                    NULL);
+
+static void lmngr_block_constructor(mca_bcol_base_lmngr_block_t *item) 
+{
+    item->base_addr = NULL;
+}
+
+static void lnmgr_block_destructor(mca_bcol_base_lmngr_block_t *item) 
+{
+    /* I have nothing to do here */
+}
+OBJ_CLASS_INSTANCE(mca_bcol_base_lmngr_block_t,
+        opal_list_item_t,
+        lmngr_block_constructor,
+        lnmgr_block_destructor);
+
+

@@ -23,7 +23,6 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 
 #include "bcol_basesmuma.h"
 /*

@@ -11,8 +11,8 @@
 #include "ompi_config.h"
 
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/mca/bcol/bcol.h"
+#include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/bcol/basesmuma/bcol_basesmuma.h"
 
 /*
@@ -49,7 +49,7 @@ do{                                                             \
  *
  */
 int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
-                struct coll_ml_function_t *const_args)
+                struct mca_bcol_base_function_t *const_args)
 {
     /* local variables */
     int flag_offset = 0;
@@ -236,7 +236,7 @@ FINISHED:
 /* allgather progress function */
 
 int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args)
+                        struct mca_bcol_base_function_t *const_args)
 {
 
 

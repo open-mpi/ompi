@@ -20,34 +20,34 @@ BEGIN_C_DECLS
 int bcol_ptpcoll_bcast_init(mca_bcol_base_module_t *super);
 
 int bcol_ptpcoll_bcast_k_nomial_anyroot (bcol_function_args_t *input_args, 
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_bcast_k_nomial_anyroot_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int bcol_ptpcoll_bcast_k_nomial_known_root(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_bcast_k_nomial_known_root_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_extra(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_anyroot_extra_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_extra(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_known_root_extra_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 
 /* macros */

@@ -14,16 +14,15 @@
 #include "ompi_config.h"
 
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "bcol_ptpcoll_reduce.h"
 #include "bcol_ptpcoll_utils.h"
 
 static int bcol_ptpcoll_reduce_narray_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 static int bcol_ptpcoll_reduce_narray(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 
 #define NARRAY_RECV_NB(narray_node, process_shift, group_size,                            \
@@ -85,7 +84,7 @@ static inline int narray_reduce(void *data_buffer, void *recv_buffer,
     return OMPI_SUCCESS;
 }
 static int bcol_ptpcoll_reduce_narray_progress(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 
@@ -226,7 +225,7 @@ static int bcol_ptpcoll_reduce_narray_progress(bcol_function_args_t *input_args,
 }
 
 static int bcol_ptpcoll_reduce_narray(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
 

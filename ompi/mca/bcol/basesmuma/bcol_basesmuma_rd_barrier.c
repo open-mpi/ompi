@@ -24,7 +24,7 @@
 
 #if 0
 int bcol_basesmuma_recursive_double_barrier(bcol_function_args_t *input_args,
-                                            coll_ml_function_t *c_input_args)
+                                            mca_bcol_base_function_t *c_input_args)
 {
 
     /* local variables */

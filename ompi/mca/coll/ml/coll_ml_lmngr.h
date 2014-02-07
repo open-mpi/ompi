@@ -55,14 +55,6 @@ struct mca_coll_ml_lmngr_t {
 typedef struct mca_coll_ml_lmngr_t mca_coll_ml_lmngr_t;
 OBJ_CLASS_DECLARATION(mca_coll_ml_lmngr_t);
 
-struct mca_coll_ml_lmngr_block_t {
-    opal_list_item_t super;
-    mca_coll_ml_lmngr_t *lmngr;
-    void* base_addr;
-};
-typedef struct mca_coll_ml_lmngr_block_t mca_coll_ml_lmngr_block_t;
-OBJ_CLASS_DECLARATION(mca_coll_ml_lmngr_block_t);
-
 /* read user defined parametres for list manager */
 int mca_coll_ml_lmngr_reg(void);
 /* If programmer want to user other than default mca
@@ -76,10 +68,10 @@ int mca_coll_ml_lmngr_tune(mca_coll_ml_lmngr_t *lmngr,
 int mca_coll_ml_lmngr_append_nc(mca_coll_ml_lmngr_t *lmngr, bcol_base_network_context_t *nc);
 
 /* Allocate a block from memory list manager */
-mca_coll_ml_lmngr_block_t* mca_coll_ml_lmngr_alloc (
+mca_bcol_base_lmngr_block_t* mca_coll_ml_lmngr_alloc (
         mca_coll_ml_lmngr_t *lmngr);
 
 /* Return block to list memory manager */
-void mca_coll_ml_lmngr_free (mca_coll_ml_lmngr_block_t *block);
+void mca_coll_ml_lmngr_free (mca_bcol_base_lmngr_block_t *block);
 
 #endif

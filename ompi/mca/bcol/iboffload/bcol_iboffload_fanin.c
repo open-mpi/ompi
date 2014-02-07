@@ -233,7 +233,7 @@ static int mca_bcol_iboffload_fanin_init(
  ***********************************************************************/
 static int mca_bcol_iboffload_new_style_fanin_progress(
                         bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args)
+                        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_iboffload_collreq_t *coll_request =
                  (mca_bcol_iboffload_collreq_t *)
@@ -293,7 +293,7 @@ int mca_bcol_iboffload_new_style_fanin_first_call(
 
 static int mca_bcol_iboffload_new_style_fanin_intra(
                                 bcol_function_args_t *input_args,
-                                struct coll_ml_function_t *const_args)
+                                struct mca_bcol_base_function_t *const_args)
 {
     int rc = OMPI_SUCCESS;
 

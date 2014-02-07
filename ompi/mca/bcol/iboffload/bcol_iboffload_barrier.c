@@ -324,7 +324,7 @@ int mca_bcol_iboffload_nb_memory_service_barrier_start(
 }
 
 int mca_bcol_iboffload_nb_memory_service_barrier_intra(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
 
     /* local variables */
@@ -818,7 +818,7 @@ static int mca_bcol_iboffload_barrier_init(
 
 static int mca_bcol_iboffload_new_style_barrier_progress(
                         bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args)
+                        struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_iboffload_collreq_t *coll_request =
                  (mca_bcol_iboffload_collreq_t *)
@@ -840,7 +840,7 @@ static int mca_bcol_iboffload_new_style_barrier_progress(
 
 static int mca_bcol_iboffload_new_style_barrier_intra(
                                 bcol_function_args_t *input_args,
-                                struct coll_ml_function_t *const_args)
+                                struct mca_bcol_base_function_t *const_args)
 {
     /* local variables */
     int rc;

@@ -18,6 +18,7 @@
 
 #include "opal/sys/atomic.h"
 
+#include "ompi/mca/bcol/base/base.h"
 #include "bcol_basesmuma.h"
 
 /********************************************************************************/
@@ -25,7 +26,7 @@
 /********************************************************************************/
 
 static int bcol_basesmuma_fanin_new(bcol_function_args_t *input_args,
-                                    coll_ml_function_t *c_input_args)
+                                    mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int64_t sequence_number;
@@ -107,7 +108,7 @@ static int bcol_basesmuma_fanin_new(bcol_function_args_t *input_args,
 }
 
 static int bcol_basesmuma_fanin_new_progress(bcol_function_args_t *input_args,
-                                    coll_ml_function_t *c_input_args)
+                                    mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int64_t sequence_number;

@@ -25,7 +25,7 @@ struct mca_coll_ml_utility_data_t {
 
     /* RLG - temp fix  !!!! - really need to remove this, but right now
      do not want to change the signature of the collective primitives to
-     use coll_ml_utility_data_t rather than coll_ml_function_t */
+     use coll_ml_utility_data_t rather than mca_bcol_base_function_t */
     int dummy;
 
     /* module */
@@ -239,7 +239,7 @@ typedef enum mca_coll_ml_pending_type_t {
 } mca_coll_ml_pending_type_t;
 
 /* Forward declaration */
-struct ml_payload_buffer_desc_t;
+struct mca_bcol_base_payload_buffer_desc_t;
 /* Data structure used to track ML level collective operation
  * progress.
  */
@@ -348,7 +348,7 @@ struct mca_coll_ml_collective_operation_progress_t {
         struct full_message_t *message_descriptor;
 
         /* ML buffer descriptor attached to this buffer */
-        struct ml_payload_buffer_desc_t *buffer_desc;
+        struct mca_bcol_base_payload_buffer_desc_t *buffer_desc;
         /* handle for collective progress, e.g. alltoall */
         bcol_fragment_descriptor_t bcol_fragment_desc;
 

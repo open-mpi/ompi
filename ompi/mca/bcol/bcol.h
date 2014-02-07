@@ -34,8 +34,6 @@ extern "C" {
 #endif
 
 /* Forward declaration - please do not remove it */
-struct ml_memory_block_desc_t;
-struct mca_coll_ml_module_t;
 struct ml_buffers_t;
 
 struct mca_bcol_base_coll_fn_comm_attributes_t;
@@ -318,8 +316,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bcol_base_component_t);
 
 /* forward declaration */
 struct mca_coll_ml_descriptor_t;
-struct ml_payload_buffer_desc_t;
-struct mca_coll_ml_route_info_t;
+struct mca_bcol_base_payload_buffer_desc_t;
+struct mca_bcol_base_route_info_t;
 
 typedef struct {
     int order_num;           /* Seq num of collective fragment */
@@ -352,7 +350,7 @@ struct bcol_function_args_t {
      * parameters */
     /* Pasha: We don need this one for new flow - remove it */
     struct mca_coll_ml_descriptor_t *full_message_descriptor;
-    struct mca_coll_ml_route_info_t *root_route;
+    struct mca_bcol_base_route_info_t *root_route;
     /* function status */
     int function_status;
     /* root, for rooted operations */
@@ -361,8 +359,8 @@ struct bcol_function_args_t {
     void *sbuf;
     void *rbuf;
     void *userbuf;
-    struct ml_payload_buffer_desc_t *src_desc;
-    struct ml_payload_buffer_desc_t *dst_desc;
+    struct mca_bcol_base_payload_buffer_desc_t *src_desc;
+    struct mca_bcol_base_payload_buffer_desc_t *dst_desc;
    /* ml buffer size */
     uint32_t buffer_size;
     /* index of buffer in ml payload cache */
@@ -389,6 +387,82 @@ struct bcol_function_args_t {
 
 };
 
+struct mca_bcol_base_route_info_t {
+    int level;
+    int rank;
+};
+typedef struct mca_bcol_base_route_info_t mca_bcol_base_route_info_t;
+
+struct mca_bcol_base_lmngr_block_t {
+    opal_list_item_t super;
+    struct mca_coll_ml_lmngr_t *lmngr;
+    void* base_addr;
+};
+typedef struct mca_bcol_base_lmngr_block_t mca_bcol_base_lmngr_block_t;
+OBJ_CLASS_DECLARATION(mca_bcol_base_lmngr_block_t);
+
+struct mca_bcol_base_memory_block_desc_t {
+
+    /* memory block for payload buffers */
+    struct mca_bcol_base_lmngr_block_t *block;
+
+    /* Address offset in bytes -- Indicates free memory in the block */
+    uint64_t   block_addr_offset;
+
+    /* size of the memory block */
+    size_t     size_block;
+
+    /* number of memory banks */
+    uint32_t     num_banks;
+
+    /* number of buffers per bank */
+    uint32_t    num_buffers_per_bank;
+
+    /* size of a payload buffer */
+    uint32_t     size_buffer;
+
+    /* pointer to buffer descriptors initialized */
+    struct mca_bcol_base_payload_buffer_desc_t *buffer_descs;
+
+    /* index of the next free buffer in the block */
+    uint64_t next_free_buffer;
+
+    uint32_t *bank_release_counters;
+
+    /* Counter that defines what bank should be synchronized next
+     * since collectives could be completed out of order, we have to make
+     * sure that memory synchronization collectives started in order ! */
+    int memsync_counter; 
+
+    /* This arrays of flags used to signal that the bank is ready for recycling */
+    bool *ready_for_memsync;
+
+    /* This flags monitors if bank is open for usage. Usually we expect that user
+     * will do the check only on buffer-zero allocation */
+    bool *bank_is_busy;
+
+};
+
+/* convenience typedef */
+typedef struct mca_bcol_base_memory_block_desc_t mca_bcol_base_memory_block_desc_t;
+
+typedef void (*mca_bcol_base_release_buff_fn_t)(struct mca_bcol_base_memory_block_desc_t *ml_memblock, uint32_t buff_id);
+
+struct mca_bcol_base_payload_buffer_desc_t {
+    void         *base_data_addr;   /* buffer address */
+    void         *data_addr;         /* buffer address  + header offset */
+    uint64_t     generation_number;  /* my generation */
+    uint64_t     bank_index;         /* my bank */
+    uint64_t     buffer_index;       /* my buff index */
+};
+/* convenience typedef */
+typedef struct mca_bcol_base_payload_buffer_desc_t mca_bcol_base_payload_buffer_desc_t;
+
+
+
+
+
+
 typedef struct bcol_function_args_t bcol_function_args_t;
 
 
@@ -411,9 +485,9 @@ struct mca_bcol_base_module_t;
 
 /* collective function prototype - all functions have the same interface
  * so that we can call them via a function pointer */
-struct coll_ml_function_t;
+struct mca_bcol_base_function_t;
 typedef int (*mca_bcol_base_module_collective_fn_primitives_t)
-    (bcol_function_args_t *input_args, struct coll_ml_function_t *const_args);
+    (bcol_function_args_t *input_args, struct mca_bcol_base_function_t *const_args);
 
 typedef int (*mca_bcol_base_module_collective_init_fn_primitives_t)
     (struct mca_bcol_base_module_t *bcol_module);
@@ -533,11 +607,12 @@ typedef  int (*mca_bcol_module_mem_init)(struct ml_buffers_t *registered_buffers
  *
  */
 /*typedef int (*mca_bcol_base_init_memory_fn_t)
-    (struct ml_memory_block_desc_t *ml_block, void *reg_data);*/
+    (struct mca_bcol_base_memory_block_desc_t *ml_block, void *reg_data);*/
 
 typedef int (*mca_bcol_base_init_memory_fn_t)
-    (struct mca_coll_ml_module_t *ml_module,
-     struct mca_bcol_base_module_t *bcol_module,
+     (struct mca_bcol_base_memory_block_desc_t *payload_block,
+     uint32_t data_offset,
+     struct mca_bcol_base_module_t *bcol,
      void *reg_data);
 
 typedef int (*mca_common_allgather_init_fn_t)
@@ -655,6 +730,41 @@ struct mca_bcol_base_module_t {
 };
 typedef struct mca_bcol_base_module_t mca_bcol_base_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bcol_base_module_t);
+
+/* function description */
+struct mca_bcol_base_function_t {
+    int fn_idx;
+    /* module */
+    struct mca_bcol_base_module_t *bcol_module;
+
+    /*
+     *  The following two parameters are used for bcol modules
+     *  that want to do some optimizations based on the fact that
+     *  n functions from the same bcol module are called in a row.
+     *  For example, in the iboffload case, on the first call one
+     *  will want to initialize the MWR, and start to instantiate
+     *  it, but only post it at the end of the last call.
+     *  The index of this function in a sequence of consecutive
+     *  functions from the same bcol
+     */
+    int index_in_consecutive_same_bcol_calls;
+
+    /* number of times functions from this bcol are
+     * called in order
+     */
+    int n_of_this_type_in_a_row;
+
+    /*
+     * number of times functions from this module are called in the
+     * collective operation.
+     */
+    int n_of_this_type_in_collective;
+    int index_of_this_type_in_collective;
+};
+typedef struct mca_bcol_base_function_t mca_bcol_base_function_t;
+
+
+
 
 struct mca_bcol_base_descriptor_t {
     ompi_free_list_item_t super;

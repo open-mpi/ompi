@@ -21,6 +21,7 @@
 #include "bcol_basesmuma.h"
 #include "opal/sys/atomic.h"
 #include "ompi/patterns/net/netpatterns.h"
+#include "ompi/mca/bcol/base/base.h"
 
 /*
  * Initialize nonblocking barrier.  This is code specific for handling
@@ -369,7 +370,7 @@ Post_phase:
 }
 
 static int bcol_basesmuma_memsync(bcol_function_args_t *input_args,
-                coll_ml_function_t *c_input_args)
+                mca_bcol_base_function_t *c_input_args)
 {
     int rc;
     int memory_bank = input_args->root;
@@ -414,7 +415,7 @@ static int bcol_basesmuma_memsync(bcol_function_args_t *input_args,
 }
 
 static int bcol_basesmuma_memsync_progress(bcol_function_args_t *input_args,
-                coll_ml_function_t *c_input_args)
+                mca_bcol_base_function_t *c_input_args)
 {
     int memory_bank = input_args->root;
 

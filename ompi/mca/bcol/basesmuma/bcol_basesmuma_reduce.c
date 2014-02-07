@@ -29,7 +29,7 @@
  */
 
 static int bcol_basesmuma_reduce_intra_fanin_progress(bcol_function_args_t *input_args,
-                                                      coll_ml_function_t *c_input_args);
+                                                      mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_reduce_init(mca_bcol_base_module_t *super)
 {
@@ -112,7 +112,7 @@ static inline int reduce_children (mca_bcol_basesmuma_module_t *bcol_module, vol
 }
 
 static int bcol_basesmuma_reduce_intra_fanin_progress(bcol_function_args_t *input_args,
-                                                      coll_ml_function_t *c_input_args)
+                                                      mca_bcol_base_function_t *c_input_args)
 {
     mca_bcol_basesmuma_module_t* bcol_module =
         (mca_bcol_basesmuma_module_t *)c_input_args->bcol_module;
@@ -157,7 +157,7 @@ static int bcol_basesmuma_reduce_intra_fanin_progress(bcol_function_args_t *inpu
 }
 
 int bcol_basesmuma_reduce_intra_fanin(bcol_function_args_t *input_args,
-                                      coll_ml_function_t *c_input_args)
+                                      mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int rc=BCOL_FN_COMPLETE;
@@ -261,7 +261,7 @@ int bcol_basesmuma_reduce_intra_fanin(bcol_function_args_t *input_args,
  * complete?
  */
 int bcol_basesmuma_reduce_intra_fanin_old(bcol_function_args_t *input_args,
-                                          coll_ml_function_t *c_input_args)
+                                          mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int rc=OMPI_SUCCESS;

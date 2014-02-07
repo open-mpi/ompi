@@ -70,10 +70,10 @@ int bcol_basesmuma_lmsg_reduce_extra_non_root(mca_bcol_basesmuma_module_t *sm_mo
 						volatile mca_bcol_basesmuma_payload_t *data_buffs);
 
 int bcol_basesmuma_lmsg_reduce(bcol_function_args_t *input_args,
-        coll_ml_function_t *c_input_args);
+        mca_bcol_base_function_t *c_input_args);
 
 int bcol_basesmuma_lmsg_reduce_extra(bcol_function_args_t *input_args,
-        coll_ml_function_t *c_input_args);
+        mca_bcol_base_function_t *c_input_args);
 
 void basesmuma_reduce_recv(int my_group_index, int peer,
 						   void *recv_buffer,

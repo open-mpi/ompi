@@ -14,7 +14,6 @@
 #include "ompi_config.h"
 
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "bcol_ptpcoll_allreduce.h"
 
@@ -75,7 +74,7 @@ static inline void bcol_ptpcoll_allreduce_narray_reduce (void *data_buffer, stru
 }
 
 static int bcol_ptpcoll_allreduce_narraying_progress (bcol_function_args_t *input_args,
-                                                      struct coll_ml_function_t *const_args)
+                                                      struct mca_bcol_base_function_t *const_args)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *) const_args->bcol_module;
     void *data_buffer = (void *) ( (unsigned char *) input_args->sbuf +
@@ -228,7 +227,7 @@ static int bcol_ptpcoll_allreduce_narraying_progress (bcol_function_args_t *inpu
 }
 
 int bcol_ptpcoll_allreduce_narraying_init(bcol_function_args_t *input_args,
-                                          struct coll_ml_function_t *const_args){
+                                          struct mca_bcol_base_function_t *const_args){
 
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
     uint64_t sequence_number = input_args->sequence_num;
@@ -696,7 +695,7 @@ static inline int compute_padding_count(int count, int k_radix, int n_exchanges)
 
 
 int bcol_ptpcoll_allreduce_recursivek_scatter_reduce_allgather_init(bcol_function_args_t *input_args,
-                                                                    struct coll_ml_function_t *const_args){
+                                                                    struct mca_bcol_base_function_t *const_args){
 
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
     struct ompi_op_t *op = input_args->op;
@@ -895,7 +894,7 @@ int bcol_ptpcoll_allreduce_knomial_allgather_extra(mca_bcol_ptpcoll_module_t *pt
 }
 
 int bcol_ptpcoll_allreduce_recursivek_scatter_reduce_allgather_extra_init(bcol_function_args_t *input_args,
-                                                                          struct coll_ml_function_t *const_args){
+                                                                          struct mca_bcol_base_function_t *const_args){
 
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *)const_args->bcol_module;
     struct ompi_op_t *op = input_args->op;
