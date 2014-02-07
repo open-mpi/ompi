@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,8 +19,6 @@
  */
 
 #include "ompi_config.h"
-
-#include <math.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -112,7 +109,7 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
     }
 
     /* Compute the relevant prime numbers for factoring */
-    if (MPI_SUCCESS != (err = getprimes(sqrt(freeprocs), &nprimes, &primes))) {
+    if (MPI_SUCCESS != (err = getprimes(freeprocs, &nprimes, &primes))) {
        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
                                      FUNC_NAME);
     }
