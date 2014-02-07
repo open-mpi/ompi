@@ -119,7 +119,7 @@ static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
     __asm__ __volatile__ ("cmpxchg8.acq %0=[%1],%2,ar.ccv":
                   "=r"(ret) : "r"(addr), "r"(newval) : "memory");
 
-    return ((int32_t)ret == oldval);
+    return (ret == oldval);
 }
 
 
@@ -132,7 +132,7 @@ static inline int opal_atomic_cmpset_rel_64( volatile int64_t *addr,
     __asm__ __volatile__ ("cmpxchg8.rel %0=[%1],%2,ar.ccv":
                   "=r"(ret) : "r"(addr), "r"(newval) : "memory");
 
-    return ((int32_t)ret == oldval);
+    return (ret == oldval);
 }
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
