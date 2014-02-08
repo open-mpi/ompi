@@ -72,7 +72,9 @@
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/io/io.h"
@@ -557,6 +559,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "mca_mpool_base_open() failed";
         goto error;
     }
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_bml_base_framework, 0))) {
+        error = "mca_bml_base_open() failed";
+        goto error;
+    }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_pml_base_framework, 0))) {
         error = "mca_pml_base_open() failed";
         goto error;
@@ -590,6 +596,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_mpool_base_init() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != 
+        (ret = mca_bml_base_init(OMPI_ENABLE_PROGRESS_THREADS,
+                                 OMPI_ENABLE_THREAD_MULTIPLE))) {
+        error = "mca_bml_base_init() failed";
         goto error;
     }
 
