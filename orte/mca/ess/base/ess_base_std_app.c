@@ -382,9 +382,13 @@ void orte_ess_base_app_abort(int status, bool report)
     
     /* If we were asked to report this termination, do so - except
      * in cases of abnormal termination ordered by the RTE as
-     * this means we can't rely on being able to communicate
+     * this means we can't rely on being able to communicate. Also,
+     * since singletons don't start an HNP unless necessary, and
+     * direct-launched procs don't have daemons at all, only send
+     * the message if routing is enabled as this indicates we
+     * have someone to send to
      */
-    if (report && !orte_abnormal_term_ordered) {
+    if (report && !orte_abnormal_term_ordered && orte_routing_is_enabled) {
         buf = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD);
         orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
