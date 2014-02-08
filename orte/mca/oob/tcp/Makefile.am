@@ -48,7 +48,7 @@ component_noinst = libmca_oob_tcp.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_tcp_la_SOURCES = $(sources)
 mca_oob_tcp_la_LDFLAGS = -module -avoid-version

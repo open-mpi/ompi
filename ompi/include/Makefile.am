@@ -69,7 +69,7 @@ include ompi/Makefile.am
 EXTRA_DIST = $(headers) mpif-values.pl
 
 if WANT_INSTALL_HEADERS 
-ompidir = $(includedir)/openmpi
+ompidir = $(ompiincludedir)
 nobase_dist_ompi_HEADERS = $(headers)
 nobase_nodist_ompi_HEADERS = $(nodist_headers)
 endif

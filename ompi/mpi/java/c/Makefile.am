@@ -16,7 +16,7 @@ AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(OPAL_JDK_CPPFLAGS) -DOPAL_D
 
 headers = \
         mpiJava.h
-ompidir = $(includedir)/openmpi/ompi/mpi/java
+ompidir = $(ompiincludedir)/ompi/mpi/java
 ompi_HEADERS = \
         $(headers)
 

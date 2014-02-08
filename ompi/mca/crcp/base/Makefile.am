@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = base/help-ompi-crcp-base.txt
+dist_ompidata_DATA = base/help-ompi-crcp-base.txt
 
 headers += \
         base/base.h

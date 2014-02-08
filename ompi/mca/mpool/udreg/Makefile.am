@@ -24,7 +24,7 @@ AM_CPPFLAGS = $(mpool_udreg_CPPFLAGS)
 sources = mpool_udreg_module.c mpool_udreg_component.c
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = mpool_udreg.h
 endif
 
@@ -40,7 +40,7 @@ component_noinst = libmca_mpool_udreg.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_udreg_la_SOURCES = $(sources)
 mca_mpool_udreg_la_LDFLAGS = -module -avoid-version $(mpool_udreg_LDFLAGS)

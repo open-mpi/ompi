@@ -31,7 +31,7 @@ local_sources = \
 	rte_pmi_db.c \
 	rte_pmi_comm.c
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rte_pmi_la_SOURCES = $(local_sources)
 mca_rte_pmi_la_LDFLAGS = -module -avoid-version $(rte_pmi_LDFLAGS)

@@ -19,7 +19,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-ras-gridengine.txt
+dist_ompidata_DATA = help-ras-gridengine.txt
 
 sources = \
         ras_gridengine.h \
@@ -38,7 +38,7 @@ component_noinst = libmca_ras_gridengine.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_gridengine_la_SOURCES = $(sources)
 mca_ras_gridengine_la_LDFLAGS = -module -avoid-version

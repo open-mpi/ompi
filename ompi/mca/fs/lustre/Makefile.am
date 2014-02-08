@@ -45,7 +45,7 @@ fs_lustre_sources = \
 
 AM_CPPFLAGS = $(fs_lustre_CPPFLAGS)
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fs_lustre_la_SOURCES = $(fs_lustre_sources)
 mca_fs_lustre_la_LIBADD = $(fs_lustre_LIBS)

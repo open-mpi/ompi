@@ -33,7 +33,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_topo_basic_la_SOURCES = $(component_sources)
 mca_topo_basic_la_LDFLAGS = -module -avoid-version

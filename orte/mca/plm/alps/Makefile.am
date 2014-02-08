@@ -22,7 +22,7 @@ sources = \
         plm_alps_component.c \
         plm_alps_module.c
 
-dist_pkgdata_DATA = help-plm-alps.txt
+dist_ompidata_DATA = help-plm-alps.txt
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -36,7 +36,7 @@ component_noinst = libmca_plm_alps.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_plm_alps_la_SOURCES = $(sources)
 mca_plm_alps_la_LDFLAGS = -module -avoid-version

@@ -34,7 +34,7 @@ component_noinst = libmca_coll_hcoll.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES  = $(component_install)
 mca_coll_hcoll_la_SOURCES = $(coll_hcoll_sources)
 mca_coll_hcoll_la_LIBADD  = $(coll_hcoll_LIBS)

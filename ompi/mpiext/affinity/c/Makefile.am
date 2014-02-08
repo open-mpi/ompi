@@ -30,7 +30,7 @@ noinst_LTLIBRARIES = libmpiext_affinity_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
-ompidir = $(includedir)/openmpi/ompi/mpiext/affinity/c
+ompidir = $(ompiincludedir)/ompi/mpiext/affinity/c
 
 # This is the header file that is installed.
 ompi_HEADERS = mpiext_affinity_c.h

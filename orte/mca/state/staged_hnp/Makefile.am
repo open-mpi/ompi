@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-state-staged-hnp.txt
+dist_ompidata_DATA = help-state-staged-hnp.txt
 
 sources = \
         state_staged_hnp.h \
@@ -27,7 +27,7 @@ component_noinst = libmca_state_staged_hnp.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_state_staged_hnp_la_SOURCES = $(sources)
 mca_state_staged_hnp_la_LDFLAGS = -module -avoid-version

@@ -18,9 +18,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
-dist_pkgdata_DATA = help-mpi-btl-tcp.txt
+dist_ompidata_DATA = help-mpi-btl-tcp.txt
 
 sources = \
     btl_tcp.c \
@@ -53,7 +51,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_tcp_la_SOURCES = $(component_sources)
 mca_btl_tcp_la_LDFLAGS = -module -avoid-version

@@ -102,4 +102,4 @@ EXTRA_DIST = \
 	platform/mellanox/optimized \
 	platform/mellanox/optimized.conf
 
-dist_pkgdata_DATA = openmpi-valgrind.supp
+dist_ompidata_DATA = openmpi-valgrind.supp

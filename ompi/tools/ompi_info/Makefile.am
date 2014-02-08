@@ -59,9 +59,7 @@ endif
 ompi_info_SOURCES = \
         ompi_info.h \
         ompi_info.c \
-        param.c \
-        components.c \
-        version.c
+        param.c
 
 ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
 if OMPI_RTE_ORTE

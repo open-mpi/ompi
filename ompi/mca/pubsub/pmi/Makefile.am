@@ -26,7 +26,7 @@ local_sources = \
 	pubsub_pmi.h \
 	pubsub_pmi_component.c
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pubsub_pmi_la_SOURCES = $(local_sources)
 mca_pubsub_pmi_la_LDFLAGS = -module -avoid-version $(pubsub_pmi_LDFLAGS)

@@ -42,7 +42,7 @@ local_sources = \
 	pml_cm_sendreq.c \
 	pml_cm_start.c
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_cm_la_SOURCES = $(local_sources)
 mca_pml_cm_la_LIBADD = $(pml_cm_LIBS)

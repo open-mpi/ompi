@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-rmaps-lama.txt
+dist_ompidata_DATA = help-orte-rmaps-lama.txt
 
 sources = \
         rmaps_lama_module.c \
@@ -30,7 +30,7 @@ component_noinst = libmca_rmaps_lama.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmaps_lama_la_SOURCES = $(sources)
 mca_rmaps_lama_la_LDFLAGS = -module -avoid-version

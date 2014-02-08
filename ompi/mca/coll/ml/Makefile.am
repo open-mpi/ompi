@@ -10,7 +10,7 @@
 AM_LFLAGS = -Pcoll_ml_config_yy
 LEX_OUTPUT_ROOT = lex.coll_ml_config_yy
 
-dist_pkgdata_DATA = \
+dist_ompidata_DATA = \
         mca-coll-ml.config
 
 not_used_yet = 
@@ -64,7 +64,7 @@ endif
 # See ompi/mca/btl/ml/Makefile.am for an explanation of
 # libmca_common_ml.la.
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_ml_la_SOURCES = $(sources)
 mca_coll_ml_la_LDFLAGS = -module -avoid-version

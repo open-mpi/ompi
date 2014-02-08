@@ -21,8 +21,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = CMakeLists.txt
-
 SUBDIRS = profile
 
 #
@@ -425,6 +423,6 @@ endif
 #
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -226,45 +228,12 @@
 #    define __opal_attribute_weak_alias__(a)
 #endif
 
-/***********************************************************************
- *
- * Windows library interface declaration code
- *
- **********************************************************************/
-#if !defined(__WINDOWS__)
-#  if defined(_WIN32) || defined(WIN32) || defined(WIN64)
-#    define __WINDOWS__
-#  endif
-#endif  /* !defined(__WINDOWS__) */
-
-#if defined(__WINDOWS__)
-
-#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
-#    if defined(OPAL_EXPORTS)
-#      define OPAL_DECLSPEC        __declspec(dllexport)
-#      define OPAL_MODULE_DECLSPEC
-#    else
-#      if defined(OPAL_IMPORTS)
-#        define OPAL_DECLSPEC      __declspec(dllimport)
-#      else
-#        define OPAL_DECLSPEC
-#      endif  /*defined(OPAL_IMPORTS)*/
-#      if defined(OPAL_MODULE_EXPORTS)
-#        define OPAL_MODULE_DECLSPEC __declspec(dllexport)
-#      else
-#        define OPAL_MODULE_DECLSPEC __declspec(dllimport)
-#      endif  /* defined(OPAL_MODULE_EXPORTS) */
-#    endif  /* defined(OPAL_EXPORTS) */
-#  else          /* building static library */
-#    if defined(OPAL_IMPORTS)
-#      define OPAL_DECLSPEC        __declspec(dllimport)
-#    else
-#      define OPAL_DECLSPEC
-#    endif  /* defined(OPAL_IMPORTS) */
-#    define OPAL_MODULE_DECLSPEC
-#  endif  /* defined(_USRDLL) */
-#  include "opal/win32/win_compat.h"
+#if OPAL_HAVE_ATTRIBUTE_DESTRUCTOR
+#    define __opal_attribute_destructor__    __attribute__((__destructor__))
 #else
+#    define __opal_attribute_destructor__
+#endif
+
 #  if OPAL_C_HAVE_VISIBILITY
 #    define OPAL_DECLSPEC           __opal_attribute_visibility__("default")
 #    define OPAL_MODULE_DECLSPEC    __opal_attribute_visibility__("default")
@@ -272,7 +241,6 @@
 #    define OPAL_DECLSPEC
 #    define OPAL_MODULE_DECLSPEC
 #  endif
-#endif  /* defined(__WINDOWS__) */
 
 /*
  * Do we have <stdint.h>?

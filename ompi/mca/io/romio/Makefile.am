@@ -44,7 +44,7 @@ endif
 
 libs = romio/libromio_dist.la
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_io_romio_la_SOURCES = $(component_sources)
 mca_io_romio_la_LIBADD = $(libs)

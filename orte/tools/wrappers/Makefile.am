@@ -21,7 +21,8 @@
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES
 
-nodist_pkgdata_DATA = ortecc-wrapper-data.txt
+nodist_ompidata_DATA = \
+	ortecc-wrapper-data.txt
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = orte.pc

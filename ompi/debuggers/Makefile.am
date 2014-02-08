@@ -18,7 +18,7 @@
 #
 
 noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
-pkglib_LTLIBRARIES = libompi_dbg_msgq.la
+ompilib_LTLIBRARIES = libompi_dbg_msgq.la
 
 check_PROGRAMS = predefined_gap_test
 if OPAL_HAVE_DLOPEN
@@ -58,7 +58,7 @@ libdebuggers_la_SOURCES = \
         $(headers) \
         ompi_debuggers.c
 libdebuggers_la_CPPFLAGS = \
-        -DOMPI_MSGQ_DLL=\"$(pkglibdir)/$(OPAL_DYN_LIB_PREFIX)ompi_dbg_msgq.$(OPAL_DYN_LIB_SUFFIX)\" \
+        -DOMPI_MSGQ_DLL=\"$(ompilibdir)/$(OPAL_DYN_LIB_PREFIX)ompi_dbg_msgq.$(OPAL_DYN_LIB_SUFFIX)\" \
         -DOMPI_MSGQ_DLL_PREFIX=\"$(OPAL_DYN_LIB_PREFIX)ompi_dbg_msgq\" \
         -DOMPI_MPIHANDLES_DLL_PREFIX=\"$(OPAL_DYN_LIB_PREFIX)ompi_dbg_mpihandles\"
 
@@ -75,6 +75,6 @@ libompi_dbg_msgq_la_LDFLAGS = -module -avoid-version
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = $(headers)
 endif

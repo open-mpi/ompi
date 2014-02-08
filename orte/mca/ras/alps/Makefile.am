@@ -20,7 +20,7 @@
 
 AM_CPPFLAGS = $(ras_alps_CPPFLAGS)
 
-dist_pkgdata_DATA = help-ras-alps.txt \
+dist_ompidata_DATA = help-ras-alps.txt \
 		  ras-alps-command.sh
 
 install-data-hook:
@@ -48,7 +48,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_ras_alps_la_SOURCES = $(component_sources)
 mca_ras_alps_la_LDFLAGS = -module -avoid-version $(ras_alps_LDFLAGS)

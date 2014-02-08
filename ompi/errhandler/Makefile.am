@@ -20,7 +20,7 @@
 
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-dist_pkgdata_DATA += errhandler/help-mpi-errors.txt
+dist_ompidata_DATA += errhandler/help-mpi-errors.txt
 
 headers += \
         errhandler/errcode.h \

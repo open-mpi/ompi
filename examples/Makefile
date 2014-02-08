@@ -12,6 +12,7 @@
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
+# Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,6 +29,8 @@ CXX = mpic++
 CCC = mpic++
 FC = mpifort
 JAVAC = mpijavac
+SHMEMCC = shmemcc
+SHMEMFC = shmemfort
 
 # Using -g is not necessary, but it is helpful for example programs,
 # especially if users want to examine them with debuggers.  Note that
@@ -47,12 +50,16 @@ EXAMPLES = \
 	 hello_mpifh \
 	 hello_usempi \
 	 hello_usempif08 \
+	 hello_oshmem \
+	 hello_oshmemfh \
 	 Hello.class \
          ring_c \
 	 ring_cxx \
 	 ring_mpifh \
 	 ring_usempi \
 	 ring_usempif08 \
+	 ring_oshmem \
+	 ring_oshmemfh \
 	 Ring.class \
 	 connectivity_c
 
@@ -63,6 +70,9 @@ EXAMPLES = \
 all: hello_c ring_c connectivity_c
 	@ if which ompi_info 2>&1 >/dev/null; then \
 	    $(MAKE) mpi; \
+	fi
+	@ if which oshmem_info 2>&1 >/dev/null; then \
+	    $(MAKE) oshmem; \
 	fi
 
 # MPI examples
@@ -82,6 +92,18 @@ mpi:
 	fi
 	@ if ompi_info --parsable | grep bindings:java:yes >/dev/null; then \
 	    $(MAKE) Hello.class Ring.class; \
+	fi
+
+# OpenSHMEM examples
+
+oshmem:
+	@ if oshmem_info --parsable | grep oshmem:bindings:c:yes >/dev/null; then \
+	    $(MAKE) hello_oshmem; \
+	    $(MAKE) ring_oshmem; \
+	fi
+	@ if oshmem_info --parsable | grep oshmem:bindings:fort:yes >/dev/null; then \
+	    $(MAKE) hello_oshmemfh; \
+	    $(MAKE) ring_oshmemfh; \
 	fi
 
 # The usual "clean" target
@@ -110,3 +132,14 @@ Hello.class: Hello.java
 	$(JAVAC) Hello.java
 Ring.class: Ring.java
 	$(JAVAC) Ring.java
+
+hello_oshmem: hello_oshmem_c.c
+	$(SHMEMCC) $(CFLAGS) $? -o $@
+hello_oshmemfh: hello_oshmemfh.f90
+	$(SHMEMFC) $(FCFLAGS) $? -o $@
+
+ring_oshmem: ring_oshmem_c.c
+	$(SHMEMCC) $(CFLAGS) $? -o $@
+ring_oshmemfh: ring_oshmemfh.f90
+	$(SHMEMFC) $(FCFLAGS) $? -o $@
+

@@ -11,7 +11,7 @@
 CFLAGS = $(crs_dmtcp_CFLAGS)
 AM_CPPFLAGS = $(crs_dmtcp_CPPFLAGS)
 
-dist_pkgdata_DATA = help-opal-crs-dmtcp.txt
+dist_ompidata_DATA = help-opal-crs-dmtcp.txt
 
 sources = \
         crs_dmtcp.h \
@@ -30,7 +30,7 @@ component_noinst  = libmca_crs_dmtcp.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_dmtcp_la_SOURCES  = $(sources)
 mca_crs_dmtcp_la_LDFLAGS  = -module -avoid-version $(crs_dmtcp_LDFLAGS)

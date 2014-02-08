@@ -17,6 +17,8 @@
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -97,9 +99,6 @@ AM_SILENT_RULES([yes])
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
-# Set up project specific AM_CONDITIONALs
-AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [true], [false]))
-AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [true], [false]))
 
 ompi_show_subtitle "Checking versions"
 
@@ -113,6 +112,11 @@ m4_ifdef([project_orte],
          [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
                             [$srcdir/VERSION],
                             [orte/include/orte/version.h])])
+
+m4_ifdef([project_oshmem],
+         [OPAL_SAVE_VERSION([OSHMEM], [Open SHMEM],
+                            [$srcdir/VERSION],
+                            [oshmem/include/oshmem/version.h])])
 
 OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
@@ -141,6 +145,9 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmca_common_verbs_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
+m4_ifdef([project_oshmem],
+         [AC_SUBST(liboshmem_so_version)])
+AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libmca_opal_common_pmi_so_version)
 AC_SUBST(libopen_pal_so_version)
 
@@ -157,14 +164,6 @@ AC_MSG_CHECKING([for boostrap Libtool version])
 ltversion=`grep VERSION= $srcdir/config/ltmain.sh | head -n 1 | cut -d= -f2`
 AC_MSG_RESULT([$ltversion])
 
-#
-# Hardwire all progress threads to be off
-#
-OMPI_ENABLE_PROGRESS_THREADS=0
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
-                   [Hardcode the OMPI progress thread to be off])
-
-
 # List header files to generate
 
 AC_CONFIG_HEADERS([opal/include/opal_config.h])
@@ -172,6 +171,8 @@ m4_ifdef([project_orte],
          [AC_CONFIG_HEADERS([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/ompi_config.h ompi/include/mpi.h])])
+m4_ifdef([project_oshmem],
+         [AC_CONFIG_HEADER([oshmem/include/oshmem_config.h oshmem/include/shmem.h])])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -252,6 +253,12 @@ OPAL_CONFIGURE_OPTIONS
 OPAL_CHECK_CUDA
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
+m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
+
+# Set up project specific AM_CONDITIONALs
+AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [true], [false]))
+AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [true], [false]))
+AM_CONDITIONAL([PROJECT_OSHMEM], m4_ifdef([project_oshmem], [true], [false]))
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
@@ -593,6 +600,11 @@ m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN],
           AC_DEFINE([OMPI_FORTRAN_HANDLE_MAX], [128], [Bogus type for OPAL])
 ])
 
+AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
+    [test "$ompi_fortran_happy" == "1" -a \
+          "$OMPI_WANT_FORTRAN_BINDINGS" == "1" -a \
+          "$oshmem_fortran_enable" != "no"])
+
 # checkpoint results
 AC_CACHE_SAVE
 
@@ -930,6 +942,8 @@ fi
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the MPI_Offset])
 AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
+
+AC_DEFINE_UNQUOTED(OPAL_SIZEOF_LONG, $ac_cv_sizeof_long, "Size of 'long' type")
 
 if test $MPI_COUNT_SIZE -eq 8 ; then
     MPI_COUNT_MAX="0x7fffffffffffffffll"
@@ -1298,7 +1312,7 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     # rather than have successive assignments to these shell
     # variables, lest the $(foo) names try to get evaluated here.
     # Yuck!
-    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include])'" $CPPFLAGS"
+    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include]) m4_ifdef([project_oshmem], [-I$(top_srcdir)/oshmem/include])'" $CPPFLAGS"
     # C++ is only relevant if we're building OMPI
     m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
 else
@@ -1331,7 +1345,7 @@ m4_ifdef([project_ompi], [AC_SUBST(FFLAGS)
 #
 # Aggregate MCA parameters directory
 #
-AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(pkgdatadir)/amca-param-sets'])
+AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(ompidatadir)/amca-param-sets'])
 
 ############################################################################
 # final wrapper compiler config
@@ -1407,6 +1421,16 @@ case "`uname`" in
     ;;
 esac
 
+# ompidatadir, ompilibdir, and ompiinclude are essentially the same as
+# pkg*dir, but will always be */openmpi.  This is to make it a bit
+# easier to deal with the problem of opal, orte, and ompi built from
+# their own tarballs, with their own PACKAGE variables.
+ompidatadir='${datadir}/openmpi'
+ompilibdir='${libdir}/openmpi'
+ompiincludedir='${includedir}/openmpi'
+AC_SUBST(ompidatadir)
+AC_SUBST(ompilibdir)
+AC_SUBST(ompiincludedir)
 
 ompi_show_subtitle "Final output"
 
@@ -1438,5 +1462,6 @@ AC_CONFIG_FILES([contrib/dist/mofed/compile_debian_mlnx_example],
 OPAL_CONFIG_FILES
 m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
 m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
+m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
 
 AC_OUTPUT

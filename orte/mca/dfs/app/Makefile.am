@@ -24,7 +24,7 @@ component_noinst = libmca_dfs_app.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_dfs_app_la_SOURCES = $(sources)
 mca_dfs_app_la_LDFLAGS = -module -avoid-version

@@ -46,7 +46,7 @@ component_noinst = libmca_osc_rdma.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_rdma_la_SOURCES = $(pt2pt_sources)
 mca_osc_rdma_la_LDFLAGS = -module -avoid-version

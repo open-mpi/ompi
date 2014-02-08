@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-sensor-file.txt
+dist_ompidata_DATA = help-orte-sensor-file.txt
 
 sources = \
         sensor_file.c \
@@ -26,7 +26,7 @@ component_noinst = libmca_sensor_file.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sensor_file_la_SOURCES = $(sources)
 mca_sensor_file_la_LDFLAGS = -module -avoid-version

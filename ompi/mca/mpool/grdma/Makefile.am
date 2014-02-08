@@ -26,7 +26,7 @@ sources = \
 	mpool_grdma_component.c
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/$(subdir)
+ompidir = $(ompiincludedir)/$(subdir)
 ompi_HEADERS = mpool_grdma.h
 endif
 
@@ -42,7 +42,7 @@ component_noinst = libmca_mpool_grdma.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_grdma_la_SOURCES = $(sources)
 mca_mpool_grdma_la_LDFLAGS = -module -avoid-version

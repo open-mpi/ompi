@@ -9,9 +9,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST = base/.windows
-
-dist_pkgdata_DATA = base/help-opal-compress-base.txt
+dist_ompidata_DATA = base/help-opal-compress-base.txt
 
 headers += \
         base/base.h

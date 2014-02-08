@@ -21,7 +21,7 @@
 
 SUBDIRS = keyval
 
-dist_pkgdata_DATA = help-opal-util.txt
+dist_ompidata_DATA = help-opal-util.txt
 
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy
@@ -108,6 +108,6 @@ libopalutil_la_DEPENDENCIES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/$(subdir)
+opaldir = $(ompiincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif

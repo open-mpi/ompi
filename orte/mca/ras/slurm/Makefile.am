@@ -19,7 +19,7 @@
 
 AM_CPPFLAGS = $(ras_slurm_CPPFLAGS)
 
-dist_pkgdata_DATA = help-ras-slurm.txt
+dist_ompidata_DATA = help-ras-slurm.txt
 
 sources = \
         ras_slurm.h \
@@ -43,7 +43,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_ras_slurm_la_SOURCES = $(component_sources)
 mca_ras_slurm_la_LDFLAGS = -module -avoid-version $(ras_slurm_LDFLAGS)

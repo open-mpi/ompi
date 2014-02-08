@@ -9,7 +9,7 @@
 
 AM_CPPFLAGS = $(mtl_mxm_CPPFLAGS)
 
-dist_pkgdata_DATA = help-mtl-mxm.txt
+dist_ompidata_DATA = help-mtl-mxm.txt
 
 mtl_mxm_sources = \
 	       mtl_mxm.c \
@@ -37,7 +37,7 @@ component_noinst = libmca_mtl_mxm.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_mxm_la_SOURCES = $(mtl_mxm_sources)
 mca_mtl_mxm_la_LIBADD = $(mtl_mxm_LIBS)

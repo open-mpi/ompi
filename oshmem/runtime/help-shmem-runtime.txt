@@ -1,0 +1,64 @@
+# -*- text -*-
+#
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open SHMEM.
+#
+[shmem_init:startup:internal-failure]
+It looks like %s failed for some reason; your parallel process is
+likely to abort.  There are many reasons that a parallel process can
+fail during %s; some of which are due to configuration or environment
+problems.  This failure appears to be an internal failure; here's some
+additional information (which may only be relevant to an Open SHMEM
+developer):
+
+  %s
+  --> Returned "%s" (%d) instead of "Success" (0)
+#
+[shmem_finalize:invoked_multiple_times]
+The function SHMEM_FINALIZE was invoked multiple times in a single
+process on host %s, PID %d.  
+
+This indicates an erroneous SHMEM program; SHMEM_FINALIZE is only allowed
+to be invoked exactly once in a process.
+#
+[heterogeneous-support-unavailable]
+This installation of Open SHMEM was configured without support for
+heterogeneous architectures, but at least one node in the allocation
+was detected to have a different architecture. The detected node was:
+
+Node: %s
+
+In order to operate in a heterogeneous environment, please reconfigure
+Open SHMEM with --enable-heterogeneous.
+#
+[shmem_init:warn-fork]
+A SHMEM process has executed an operation involving a call to the
+"fork()" system call to create a child process.  Open SHMEM is currently
+operating in a condition that could result in memory corruption or
+other system errors; your SHMEM job may hang, crash, or produce silent
+data corruption.  The use of fork() (or system() or other calls that
+create child processes) is strongly discouraged.  
+
+The process that invoked fork was:
+
+  Local host:          %s (PID %d)
+  My PE:               %d
+
+If you are *absolutely sure* that your application will successfully
+and correctly survive a call to fork(), you may disable this warning
+by setting the mpi_warn_on_fork MCA parameter to 0.
+#
+[oshmem shmem abort:cannot guarantee all killed]
+A SHMEM process is aborting at a time when it cannot guarantee that all
+of its peer processes in the job will be killed properly.  You should
+double check that everything has shut down cleanly.
+
+Local host: %s
+PID:        %d

@@ -52,7 +52,6 @@
 #include "orte/runtime/orte_info_support.h"
 #endif
 
-#include "ompi/include/ompi/frameworks.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
 #include "ompi/runtime/ompi_info_support.h"
@@ -60,9 +59,6 @@
 /*
  * Public variables
  */
-
-const char *ompi_info_type_ompi = "ompi";
-const char *ompi_info_type_base = "base";
 
 
 int main(int argc, char *argv[])
@@ -116,16 +112,9 @@ int main(int argc, char *argv[])
     /* add in the orte frameworks */
     orte_info_register_types(&mca_types);
 #endif
-
-    /* add the top-level type */
-    opal_pointer_array_add(&mca_types, "ompi");
-    opal_pointer_array_add(&mca_types, "mpi");
-
-    /* push all the types found by autogen */
-    for (i=0; NULL != ompi_frameworks[i]; i++) {
-        opal_pointer_array_add(&mca_types, ompi_frameworks[i]->framework_name);
-    }
     
+    ompi_info_register_types(&mca_types);
+
     /* init the component map */
     OBJ_CONSTRUCT(&component_map, opal_pointer_array_t);
     opal_pointer_array_init(&component_map, 256, INT_MAX, 128);
@@ -172,6 +161,7 @@ int main(int argc, char *argv[])
     /* If no command line args are specified, show default set */
     
     if (!acted) {
+        opal_info_out("Package", "package", OPAL_PACKAGE_STRING);
         ompi_info_show_ompi_version(opal_info_ver_full);
         opal_info_show_path(opal_info_path_prefix, opal_install_dirs.prefix);
         opal_info_do_arch();

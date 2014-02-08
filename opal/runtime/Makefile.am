@@ -25,7 +25,7 @@ AM_CFLAGS = \
             -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\""
 
 # Source code files
-dist_pkgdata_DATA += runtime/help-opal-runtime.txt \
+dist_ompidata_DATA += runtime/help-opal-runtime.txt \
                      runtime/help-opal_info.txt
 
 headers += \

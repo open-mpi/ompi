@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-mpi-btl-sm.txt
+dist_ompidata_DATA = help-mpi-btl-sm.txt
 
 libmca_btl_sm_la_sources = \
     btl_sm.c \
@@ -43,7 +43,7 @@ endif
 # See ompi/mca/common/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
 mca_btl_sm_la_LDFLAGS = -module -avoid-version

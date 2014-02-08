@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-db-sqlite.txt
+dist_ompidata_DATA = help-db-sqlite.txt
 
 sources = \
         db_sqlite.h \
@@ -26,7 +26,7 @@ component_noinst = libmca_db_sqlite.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_db_sqlite_la_CPPFLAGS = $(db_sqlite_CPPFLAGS)
 mca_db_sqlite_la_SOURCES = $(sources)

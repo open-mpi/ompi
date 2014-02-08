@@ -21,7 +21,7 @@
 
 include $(top_srcdir)/Makefile.man-page-rules
 
-dist_pkgdata_DATA += util/hostfile/help-hostfile.txt \
+dist_ompidata_DATA += util/hostfile/help-hostfile.txt \
                      util/dash_host/help-dash-host.txt \
                      util/help-regex.txt
 

@@ -80,7 +80,7 @@ headers = \
         errhandler_inln.h \
         status_inln.h
 
-ompidir = $(includedir)/openmpi/ompi/mpi/cxx
+ompidir = $(ompiincludedir)/ompi/mpi/cxx
 ompi_HEADERS = \
         $(headers)
 endif

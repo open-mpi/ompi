@@ -264,7 +264,9 @@ included in the vX.Y.Z section and be denoted as:
 - Added new "mindist" process mapper, allowing placement of processes
   via PCI locality information reported by the BIOS.
 - MPI-2.2: Add support for MPI_Dist_graph functionality.
-
+- Enable generic, client-side support for PMI2 implementations. Can 
+  be leveraged by any resource manager that implements PMI2; e.g. SLURM, 
+  versions 2.6 and higher.   
 
 1.7.2
 -----

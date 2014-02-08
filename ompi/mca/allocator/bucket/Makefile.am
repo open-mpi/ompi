@@ -36,7 +36,7 @@ component_noinst = libmca_allocator_bucket.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_allocator_bucket_la_SOURCES = $(sources)
 mca_allocator_bucket_la_LDFLAGS = -module -avoid-version

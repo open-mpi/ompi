@@ -25,7 +25,7 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libmca_base.la
 
-dist_pkgdata_DATA = help-mca-base.txt help-mca-var.txt
+dist_ompidata_DATA = help-mca-base.txt help-mca-var.txt
 
 # Source code files
 
@@ -67,6 +67,6 @@ libmca_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/$(subdir)
+opaldir = $(ompiincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif

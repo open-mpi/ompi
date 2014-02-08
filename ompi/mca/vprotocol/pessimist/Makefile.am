@@ -45,7 +45,7 @@ component_noinst = libmca_vprotocol_pessimist.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_vprotocol_pessimist_la_SOURCES = $(local_sources)
 mca_vprotocol_pessimist_la_LDFLAGS = -module -avoid-version

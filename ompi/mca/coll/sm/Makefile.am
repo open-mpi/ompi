@@ -17,9 +17,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
-dist_pkgdata_DATA = help-mpi-coll-sm.txt
+dist_ompidata_DATA = help-mpi-coll-sm.txt
 
 not_used_yet = \
         coll_sm_allgather.c \
@@ -59,7 +57,7 @@ endif
 # See ompi/mca/btl/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_sm_la_SOURCES = $(sources)
 mca_coll_sm_la_LDFLAGS = -module -avoid-version

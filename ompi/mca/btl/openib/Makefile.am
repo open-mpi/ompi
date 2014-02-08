@@ -29,7 +29,7 @@ LEX_OUTPUT_ROOT = lex.btl_openib_ini_yy
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = btl-openib-benchmark
 
-dist_pkgdata_DATA = \
+dist_ompidata_DATA = \
         help-mpi-btl-openib.txt \
         connect/help-mpi-btl-openib-cpc-base.txt \
         mca-btl-openib-device-params.ini
@@ -78,7 +78,7 @@ sources += \
     connect/btl_openib_connect_rdmacm.c \
     connect/btl_openib_connect_rdmacm.h
 
-dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-rdmacm.txt
+dist_ompidata_DATA += connect/help-mpi-btl-openib-cpc-rdmacm.txt
 endif
 
 # If we have udcm support, build that CPC
@@ -87,7 +87,7 @@ sources += \
     connect/btl_openib_connect_udcm.c \
     connect/btl_openib_connect_udcm.h
 
-# dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-ud.txt
+# dist_ompidata_DATA += connect/help-mpi-btl-openib-cpc-ud.txt
 endif
 
 # If we have dynamic SL support, build those files
@@ -113,7 +113,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
 mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS)

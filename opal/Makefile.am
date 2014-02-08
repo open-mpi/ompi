@@ -63,13 +63,13 @@ libopen_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version)
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
-dist_pkgdata_DATA =
+dist_ompidata_DATA =
 libopen_pal_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-opaldir = $(includedir)/openmpi/$(subdir)
+opaldir = $(ompiincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 
 # This is somewhat of a hack -- libltdl is installed by libtoolize,

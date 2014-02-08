@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-ompi-crcp-bkmrk.txt
+dist_ompidata_DATA = help-ompi-crcp-bkmrk.txt
 
 sources = \
         crcp_bkmrk.h \
@@ -36,7 +36,7 @@ component_noinst = libmca_crcp_bkmrk.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crcp_bkmrk_la_SOURCES = $(sources)
 mca_crcp_bkmrk_la_LDFLAGS = -module -avoid-version

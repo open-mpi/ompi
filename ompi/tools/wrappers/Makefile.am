@@ -81,7 +81,7 @@ endif
 
 man_MANS = $(man_pages)
 
-nodist_pkgdata_DATA = \
+nodist_ompidata_DATA = \
         mpicc-wrapper-data.txt \
 	mpic++-wrapper-data.txt \
 	mpifort-wrapper-data.txt

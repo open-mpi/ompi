@@ -29,7 +29,7 @@ endif
 
 # Only install the valgrind suppressions file if we're building in standalone mode
 if HWLOC_BUILD_STANDALONE
-dist_pkgdata_DATA = contrib/hwloc-valgrind.supp
+dist_ompidata_DATA = contrib/hwloc-valgrind.supp
 endif
 
 #

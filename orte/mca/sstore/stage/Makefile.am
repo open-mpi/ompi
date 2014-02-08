@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-sstore-stage.txt
+dist_ompidata_DATA = help-orte-sstore-stage.txt
 
 sources = \
         sstore_stage.h \
@@ -30,7 +30,7 @@ component_noinst = libmca_sstore_stage.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sstore_stage_la_SOURCES = $(sources)
 mca_sstore_stage_la_LDFLAGS = -module -avoid-version

@@ -29,7 +29,7 @@ component_noinst = libmca_pml_v.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_v_la_SOURCES = $(local_sources)
 mca_pml_v_la_LDFLAGS = -module -avoid-version
