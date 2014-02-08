@@ -68,7 +68,6 @@ orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCAR
 
 orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
 
-static void* orte_progress_thread_engine(opal_object_t *obj);
 
 #if OPAL_CC_USE_PRAGMA_IDENT
 #pragma ident ORTE_IDENT_STRING
@@ -136,20 +135,11 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
-    if (ORTE_PROC_IS_APP) {
-        /* get a separate orte event base */
-        orte_event_base = opal_event_base_create();
-       /* construct the thread object */
-        OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
-        /* fork off a thread to progress it */
-        orte_progress_thread.t_run = orte_progress_thread_engine;
-        if (OPAL_SUCCESS != (ret = opal_thread_start(&orte_progress_thread))) {
-            error = "orte progress thread start";
-            goto error;
-        }
-    } else {
+    if (!ORTE_PROC_IS_APP) {
         /* ORTE tools "block" in their own loop over the event
-         * base, so no progress thread is required
+         * base, so no progress thread is required - apps will
+         * start their progress thread in ess_base_std_app.c
+         * at the appropriate point
          */
         orte_event_base = opal_event_base;
     }
@@ -171,13 +161,4 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     }
 
     return ret;
-}
-
-
-static void* orte_progress_thread_engine(opal_object_t *obj)
-{
-    while (orte_event_base_active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
-    }
-    return OPAL_THREAD_CANCELLED;
 }
