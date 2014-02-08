@@ -254,23 +254,22 @@ static int base_bcol_basesmuma_exchange_ctl_params(
 {
     int ret=OMPI_SUCCESS,i,loop_limit;
     int leading_dim, buf_id;
-    uint64_t mem_offset;
+    void *mem_offset;
     unsigned char *base_ptr;
     mca_bcol_basesmuma_ctl_struct_t *ctl_ptr;
 
     /* data block base offset in the mapped file */
-    mem_offset=(uint64_t)(uintptr_t)(data_blk->data)-
-        (uint64_t)(uintptr_t)cs->sm_ctl_structs->data_addr;
+    mem_offset = (void *)((uintptr_t)data_blk->data -
+                          (uintptr_t)cs->sm_ctl_structs->data_addr);
 
     /* number of buffers in data block */
     loop_limit=cs->basesmuma_num_mem_banks+ctl_mgmt->number_of_buffs;
     leading_dim=ctl_mgmt->size_of_group;
-    ret=comm_allgather_pml(&mem_offset,ctl_mgmt->ctl_buffs,1,
-            MPI_LONG_LONG_INT,
-            sm_bcol_module->super.sbgp_partner_module->my_index,
-            sm_bcol_module->super.sbgp_partner_module->group_size,
-            sm_bcol_module->super.sbgp_partner_module->group_list,
-            sm_bcol_module->super.sbgp_partner_module->group_comm);
+    ret=comm_allgather_pml(&mem_offset, ctl_mgmt->ctl_buffs, sizeof(void *),
+                           MPI_BYTE, sm_bcol_module->super.sbgp_partner_module->my_index,
+                           sm_bcol_module->super.sbgp_partner_module->group_size,
+                           sm_bcol_module->super.sbgp_partner_module->group_list,
+                           sm_bcol_module->super.sbgp_partner_module->group_comm);
     if( OMPI_SUCCESS != ret ) {
         goto exit_ERROR;
     }

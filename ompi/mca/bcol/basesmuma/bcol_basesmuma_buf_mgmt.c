@@ -236,14 +236,13 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
     mca_bcol_base_memory_block_desc_t *ml_block = payload_block;
     size_t malloc_size;
     bcol_basesmuma_smcm_file_t input_file;
-    uint64_t mem_offset;
     int leading_dim,loop_limit,buf_id;
     unsigned char *base_ptr;
     mca_bcol_basesmuma_module_t *sm_bcol_module=
         (mca_bcol_basesmuma_module_t *)bcol_module;
     int my_idx, array_id;
     mca_bcol_basesmuma_header_t *ctl_ptr;
-    void **results_array;
+    void **results_array, *mem_offset;
 
     mca_bcol_basesmuma_local_mlmem_desc_t *ml_mem = &sm_bcol_module->ml_mem;
 
@@ -266,7 +265,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
     }
 
     /* allocate some memory to hold the offsets */
-    results_array = (void **) malloc(pload_mgmt->size_of_group*sizeof(void *));
+    results_array = (unsigned long *) malloc(pload_mgmt->size_of_group * sizeof (unsigned long));
 
     /* setup the input file for the shared memory connection manager */
     input_file.file_name = sm_reg_data->file_name;
@@ -293,11 +292,11 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
     /* now we exchange offset info - don't assume symmetric virtual memory
      */
 
-    mem_offset = (uint64_t)(uintptr_t)(ml_block->block->base_addr) -
-        (uint64_t)(uintptr_t)(cs->sm_payload_structs->data_addr);
+    mem_offset = (void *) ((uintptr_t) ml_block->block->base_addr -
+                           (uintptr_t) cs->sm_payload_structs->data_addr);
 
     /* call into the exchange offsets function */
-    ret=comm_allgather_pml(&mem_offset,results_array,1,MPI_LONG_LONG_INT,
+    ret=comm_allgather_pml(&mem_offset, results_array, sizeof (void *), MPI_BYTE,
                            sm_bcol_module->super.sbgp_partner_module->my_index,
                            sm_bcol_module->super.sbgp_partner_module->group_size,
                            sm_bcol_module->super.sbgp_partner_module->group_list,
