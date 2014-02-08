@@ -1140,7 +1140,6 @@ MISCELLANEOUS SUPPORT LIBRARIES
   to include Open MPI and use their default hwloc installation instead
   of Open MPI's bundled hwloc.
 
->>>>>>> .merge-right.r30632
   hwloc is a support library that provides processor and memory
   affinity information for NUMA platforms.
 
