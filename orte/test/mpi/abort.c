@@ -27,10 +27,14 @@ int main(int argc, char* argv[])
 
     printf("Hello, World, I am %d of %d\n", rank, size);
 
-    if (1 == rank) {
-        MPI_Abort(MPI_COMM_WORLD, errcode);
+    if (1 == size) {
+            MPI_Abort(MPI_COMM_WORLD, errcode);
     } else {
-        errcode = 0;
+        if (1 == rank) {
+            MPI_Abort(MPI_COMM_WORLD, errcode);
+        } else {
+            errcode = 0;
+        }
     }
 
     MPI_Finalize();
