@@ -67,6 +67,9 @@
 
 #include "orte/mca/ess/base/base.h"
 
+static void* orte_progress_thread_engine(opal_object_t *obj);
+static bool progress_thread_running = false;
+
 int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
@@ -92,6 +95,9 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         }
     }
 
+    /* get a separate orte event base */
+    orte_event_base = opal_event_base_create();
+ 
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -194,6 +200,17 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
     
+    /* construct the thread object */
+    OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
+    /* fork off a thread to progress it */
+    orte_progress_thread.t_run = orte_progress_thread_engine;
+    progress_thread_running = true;
+    if (OPAL_SUCCESS != (ret = opal_thread_start(&orte_progress_thread))) {
+        error = "orte progress thread start";
+        progress_thread_running = false;
+        goto error;
+    }
+
     /* enable communication via the rml */
     if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
         ORTE_ERROR_LOG(ret);
@@ -219,18 +236,13 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         }
         
         /* Once the session directory location has been established, set
-         the opal_output env file location to be in the
-         proc-specific session directory. */
+           the opal_output env file location to be in the
+           proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
     }
     
-    /* setup the routed info - the selected routed component
-     * will know what to do. Some may put us in a blocking
-     * receive here so they can get ALL of the contact info
-     * from our peers. Others may just find the local daemon's
-     * contact info and immediately return.
-     */
+    /* setup the routed info  */
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
@@ -285,7 +297,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_dfs_base_open";
         goto error;
     }
-   if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
+    if (ORTE_SUCCESS != (ret = orte_dfs_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_dfs_base_select";
         goto error;
@@ -293,7 +305,13 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 
     return ORTE_SUCCESS;
     
-error:
+ error:
+    if (!progress_thread_running) {
+        /* can't send the help message, so ensure it
+         * comes out locally
+         */
+        orte_show_help_finalize();
+    }
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
@@ -319,8 +337,27 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&opal_db_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
+
+    if (progress_thread_running) {
+        /* we had to leave the progress thread running until
+         * we closed the routed framework as that closure
+         * sends a "sync" message to the local daemon. it
+         * is now safe to stop the progress thread
+         */
+        orte_event_base_active = false;
+        /* break the event loop */
+        opal_event_base_loopbreak(orte_event_base);
+        /* wait for thread to exit */
+        opal_thread_join(&orte_progress_thread, NULL);
+        OBJ_DESTRUCT(&orte_progress_thread);
+        progress_thread_running = false;
+    }
+
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
+
+    /* release the event base */
+    opal_event_base_free(orte_event_base);
 
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
         
@@ -412,4 +449,12 @@ void orte_ess_base_app_abort(int status, bool report)
     
     /* Now Exit */
     exit(status);
+}
+
+static void* orte_progress_thread_engine(opal_object_t *obj)
+{
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
+    return OPAL_THREAD_CANCELLED;
 }
