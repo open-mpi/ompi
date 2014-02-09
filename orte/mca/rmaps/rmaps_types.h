@@ -100,19 +100,25 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
     ((pol) & 0xff00)
 
 /* round-robin policies */
-#define ORTE_MAPPING_BYSLOT            1
-#define ORTE_MAPPING_BYNODE            2
-#define ORTE_MAPPING_BYBOARD           3
-#define ORTE_MAPPING_BYNUMA            4
-#define ORTE_MAPPING_BYSOCKET          5
-#define ORTE_MAPPING_BYL3CACHE         6
-#define ORTE_MAPPING_BYL2CACHE         7
-#define ORTE_MAPPING_BYL1CACHE         8
-#define ORTE_MAPPING_BYCORE            9
-#define ORTE_MAPPING_BYHWTHREAD        10
+/* start with hardware-based options
+ * so the values match the corresponding
+ * levels in opal/mca/hwloc/hwloc.h
+ */
+#define ORTE_MAPPING_BYNODE            1
+#define ORTE_MAPPING_BYBOARD           2
+#define ORTE_MAPPING_BYNUMA            3
+#define ORTE_MAPPING_BYSOCKET          4
+#define ORTE_MAPPING_BYL3CACHE         5
+#define ORTE_MAPPING_BYL2CACHE         6
+#define ORTE_MAPPING_BYL1CACHE         7
+#define ORTE_MAPPING_BYCORE            8
+#define ORTE_MAPPING_BYHWTHREAD        9
+/* now take the other round-robin options */
+#define ORTE_MAPPING_BYSLOT            10
 #define ORTE_MAPPING_BYDIST            11
 /* convenience - declare anything <= 15 to be round-robin*/
 #define ORTE_MAPPING_RR                0x000f
+
 /* sequential policy */
 #define ORTE_MAPPING_SEQ               20
 /* staged execution mapping */
