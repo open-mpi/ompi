@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -113,6 +113,11 @@ int orte_ess_base_orted_setup(char **hosts)
     char *param;
 
     plm_in_use = false;
+
+    /* clear the session directory just in case there are
+     * stale directories laying around
+     */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
     /* setup callback for SIGPIPE */
     setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);

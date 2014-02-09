@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,6 +47,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/session_dir.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -165,6 +166,11 @@ static int rte_init(void)
     
     /* flag that we are not routing since we have no HNP */
     orte_routing_is_enabled = false;
+
+    /* clear the session directory just in case there are
+     * stale directories laying around
+     */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {

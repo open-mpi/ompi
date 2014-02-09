@@ -303,6 +303,11 @@ static int rte_init(void)
     }
     /* Setup the communication infrastructure */
     
+    /* clear the session directory just in case there are
+     * stale directories laying around
+     */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+
     /*
      * OOB Layer
      */
