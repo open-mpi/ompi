@@ -14,7 +14,7 @@ Local modifications:
 - Moved aclocal.m4 -> acinclude.m4
 - Bunches of changes in acinclude.m4 to make it work with modern
   versions of the GNU auto tools -- see comments in file.
-- Bunches of changes in configure.in to make it work with modern
+- Bunches of changes in configure.ac to make it work with modern
   versions of the GNU auto tools -- see comments in file.
 - We define MPI_MAX_DATAREP_STRING, therefore
   protect the redefinition in include/mpio.h
