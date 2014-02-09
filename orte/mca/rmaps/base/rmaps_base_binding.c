@@ -657,6 +657,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 
     /* do the same for the mapping policy */
     switch (map) {
+    case ORTE_MAPPING_BYDIST:
     case ORTE_MAPPING_BYNUMA:
         hwm = HWLOC_OBJ_NODE;
         break;
