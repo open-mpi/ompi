@@ -848,26 +848,31 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
 {
     struct ibv_qp_attr attr;
     struct ibv_wc wc;
-    mca_btl_openib_async_cmd_t async_command;
 
     if (NULL == m->listen_qp) {
         return;
     }
 
-    /* Tell the openib async thread to ignore ERR state on the QP
-       we are about to manually set the ERR state on */
-    async_command.a_cmd = OPENIB_ASYNC_IGNORE_QP_ERR;
-    async_command.qp = m->listen_qp;
-    if (write(mca_btl_openib_component.async_pipe[1],
-              &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
-        BTL_ERROR(("Failed to write to pipe [%d]",errno));
-        return;
+#if OPAL_HAVE_THREADS
+    if (mca_btl_openib_component.use_async_event_thread &&
+        -1 != mca_btl_openib_component.async_pipe[1]) {
+        /* Tell the openib async thread to ignore ERR state on the QP
+           we are about to manually set the ERR state on */
+        mca_btl_openib_async_cmd_t async_command;
+        async_command.a_cmd = OPENIB_ASYNC_IGNORE_QP_ERR;
+        async_command.qp = m->listen_qp;
+        if (write(mca_btl_openib_component.async_pipe[1],
+                  &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
+            BTL_ERROR(("Failed to write to pipe [%d]",errno));
+            return;
+        }
+        /* wait for ok from thread */
+        if (OMPI_SUCCESS !=
+                        btl_openib_async_command_done(OPENIB_ASYNC_IGNORE_QP_ERR)) {
+            BTL_ERROR(("Command to openib async thread to ignore QP ERR state failed"));
+        }
     }
-    /* wait for ok from thread */
-    if (OMPI_SUCCESS !=
-        btl_openib_async_command_done(OPENIB_ASYNC_IGNORE_QP_ERR)) {
-        BTL_ERROR(("Command to openib async thread to ignore QP ERR state failed"));
-    }
+#endif
 
     do {
         /* Move listen QP into the ERR state to cancel all outstanding
