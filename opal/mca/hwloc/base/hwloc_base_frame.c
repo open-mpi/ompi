@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -241,6 +241,11 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
                  */
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
             }
+        }
+
+        /* if we are binding to hwthreads, then we must use hwthreads as cpus */
+        if (OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) == OPAL_BIND_TO_HWTHREAD) {
+            opal_hwloc_use_hwthreads_as_cpus = true;
         }
 
         /* to support tools such as ompi_info, add the components
