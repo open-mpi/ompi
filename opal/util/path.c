@@ -471,7 +471,8 @@ bool opal_path_nfs(char *fname)
 {
 #if !defined(__WINDOWS__)
     int i;
-    int fsrc, vfsrc;
+    int fsrc = -1;
+    int vfsrc = -1;
     int trials;
     char * file = strdup (fname);
 #if defined(USE_STATFS)
