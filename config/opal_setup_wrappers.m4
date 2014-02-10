@@ -317,16 +317,6 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_SUBST([ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX])
        AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX])
 
-       AC_MSG_CHECKING([for ORTE CXXFLAGS])
-       ORTE_WRAPPER_EXTRA_CXXFLAGS="$wrapper_extra_cxxflags $with_wrapper_cxxflags"
-       AC_SUBST([ORTE_WRAPPER_EXTRA_CXXFLAGS])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CXXFLAGS])
-
-       AC_MSG_CHECKING([for ORTE CXXFLAGS_PREFIX])
-       ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX="$with_wrapper_cxxflags_prefix"
-       AC_SUBST([ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
-
        AC_MSG_CHECKING([for ORTE LDFLAGS])
        ORTE_WRAPPER_EXTRA_LDFLAGS="$orte_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
        RPATHIFY_LDFLAGS([ORTE_WRAPPER_EXTRA_LDFLAGS])
@@ -370,10 +360,6 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
               [Additional CFLAGS to pass through the wrapper compilers])
           AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS_PREFIX, "$ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX",
               [Additional CFLAGS_PREFIX to pass through the wrapper compilers])
-          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$ORTE_WRAPPER_EXTRA_CXXFLAGS",
-              [Additional CXXFLAGS to pass through the wrapper compilers])
-          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS_PREFIX, "$ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX",
-              [Additional CXXFLAGS_PREFIX to pass through the wrapper compilers])
           AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$ORTE_WRAPPER_EXTRA_LDFLAGS",
               [Additional LDFLAGS to pass through the wrapper compilers])
           AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$ORTE_WRAPPER_EXTRA_LIBS",
