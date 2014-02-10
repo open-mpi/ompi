@@ -265,7 +265,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
     }
 
     /* allocate some memory to hold the offsets */
-    results_array = (unsigned long *) malloc(pload_mgmt->size_of_group * sizeof (unsigned long));
+    results_array = (void **) malloc(pload_mgmt->size_of_group * sizeof (void *));
 
     /* setup the input file for the shared memory connection manager */
     input_file.file_name = sm_reg_data->file_name;
