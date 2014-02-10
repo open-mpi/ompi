@@ -455,7 +455,8 @@ char* opal_find_absolute_path( char* app_name )
 bool opal_path_nfs(char *fname)
 {
     int i;
-    int fsrc, vfsrc;
+    int fsrc = -1;
+    int vfsrc = -1;
     int trials;
     char * file = strdup (fname);
 #if defined(USE_STATFS)
