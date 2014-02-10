@@ -273,8 +273,8 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
         mca_btl_vader_component.segment_size = (2 << 20);
     }
 
-    if (mca_btl_vader_component.segment_size > (1 << MCA_BTL_VADER_OFFSET_BITS)) {
-        mca_btl_vader_component.segment_size = 2 << MCA_BTL_VADER_OFFSET_BITS;
+    if (mca_btl_vader_component.segment_size > (1ul << MCA_BTL_VADER_OFFSET_BITS)) {
+        mca_btl_vader_component.segment_size = 2ul << MCA_BTL_VADER_OFFSET_BITS;
     }
 
 #if OMPI_BTL_VADER_HAVE_XPMEM
