@@ -65,6 +65,9 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
                          [],
                          [ #include <infiniband/verbs.h> 
 ])
+           AC_CHECK_DECLS([ibv_event_type_str], [], [],
+                          [#include <infiniband/verbs.h>
+])
           ]
     )
     AC_DEFINE_UNQUOTED([BTL_USNIC_HAVE_IBV_USNIC], 
