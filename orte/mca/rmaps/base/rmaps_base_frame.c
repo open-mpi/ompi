@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -268,7 +269,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 #endif
 
-    /* check for a violation that has to be detected before we parse the mapping option */
+    /* check for violations that has to be detected before we parse the mapping option */
     if (NULL != orte_rmaps_base.ppr) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
                        "--ppr, -ppr", "--map-by ppr:<pattern>",
@@ -280,6 +281,12 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         } else {
             return ORTE_ERR_SILENT;
         }
+    }
+    if (1 < orte_rmaps_base.cpus_per_rank) {
+        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
+                       "--cpus-per-proc, -cpus-per-proc, --cpus-per-rank, -cpus-per-rank",
+                       "--map-by <obj>:PE=N",
+                       "rmaps_base_cpus_per_proc", "rmaps_base_mapping_policy=<obj>:PE=N");
     }
 
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&orte_rmaps_base.mapping,
@@ -372,13 +379,10 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (1 < orte_rmaps_base.cpus_per_rank) {
-        orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--cpus-per-proc, -cpus-per-proc, --cpus-per-rank, -cpus-per-rank",
-                       "--map-by <obj>:PE=N",
-                       "rmaps_base_cpus_per_proc", "rmaps_base_mapping_policy=<obj>:PE=N");
         /* check to see if we were told to map at too low a level */
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
-            ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) > ORTE_MAPPING_BYSOCKET) {
+            ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) > ORTE_MAPPING_BYSOCKET &&
+            ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) < ORTE_MAPPING_BYSLOT) {
                 orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
                                orte_rmaps_base.cpus_per_rank,
                                orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
