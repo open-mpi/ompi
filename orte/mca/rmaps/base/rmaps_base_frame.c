@@ -301,7 +301,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         return rc;
     }
 
-   if (rmaps_base_bycore) {
+    if (rmaps_base_bycore) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
                        "--bycore, -bycore", "--map-by core",
                        "rmaps_base_bycore", "rmaps_base_mapping_policy=core");
@@ -383,30 +383,31 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         if ((ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) > ORTE_MAPPING_BYSOCKET &&
             ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) < ORTE_MAPPING_BYSLOT) {
-                orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
-                               orte_rmaps_base.cpus_per_rank,
-                               orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
-                return ORTE_ERR_SILENT;
+            orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
+                           orte_rmaps_base.cpus_per_rank,
+                           orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
+            return ORTE_ERR_SILENT;
         }
 #if OPAL_HAVE_HWLOC
         /* if we were asked for multiple cpus/proc, then we have to
          * bind to those cpus - any other binding policy is an
          * error
          */
-        if (OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+        if (!(OPAL_BIND_GIVEN & OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy))) {
             if (opal_hwloc_use_hwthreads_as_cpus) {
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
             } else {
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
             }
         } else {
-            if (opal_hwloc_use_hwthreads_as_cpus &&
-                (OPAL_BIND_TO_HWTHREAD != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy))) {
-                orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
-                               orte_rmaps_base.cpus_per_rank, "use-hwthreads-as-cpus",
-                               opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
-                               "bind-to hwthread");
-                return ORTE_ERR_SILENT;
+            if (opal_hwloc_use_hwthreads_as_cpus) {
+                if (OPAL_BIND_TO_HWTHREAD != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+                    orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
+                                   orte_rmaps_base.cpus_per_rank, "use-hwthreads-as-cpus",
+                                   opal_hwloc_base_print_binding(opal_hwloc_binding_policy),
+                                   "bind-to hwthread");
+                    return ORTE_ERR_SILENT;
+                }
             } else if (OPAL_BIND_TO_CORE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                 orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
                                orte_rmaps_base.cpus_per_rank, "cores as cpus",
