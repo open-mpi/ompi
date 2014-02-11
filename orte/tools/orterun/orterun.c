@@ -134,6 +134,9 @@ static void orte_debugger_detached(int fd, short event, void *arg);
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
 static void open_fifo (void);
+static int attach_fd = -1;
+static bool fifo_active=false;
+static opal_event_t *attach=NULL;
 
 ORTE_DECLSPEC void* MPIR_Breakpoint(void);
 
@@ -1054,6 +1057,14 @@ int orterun(int argc, char *argv[])
 
     /* ensure all local procs are dead */
     orte_odls.kill_local_procs(NULL);
+
+    /* if it was created, remove the debugger attach fifo */
+    if (fifo_active) {
+        opal_event_del(attach);
+        free(attach);
+        close(attach_fd);
+        unlink(MPIR_attach_fifo);
+    }
 
  DONE:
     /* cleanup and leave */
@@ -2539,11 +2550,6 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  */
  
 /* local globals and functions */
-static void attach_debugger(int fd, short event, void *arg);
-static void build_debugger_args(orte_app_context_t *debugger);
-static void open_fifo(void);
-static int attach_fd = -1;
-static bool fifo_active=false;
 #define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
@@ -2960,8 +2966,6 @@ static void orte_debugger_detached(int fd, short event, void *cbdata)
 
 static void open_fifo (void)
 {
-    opal_event_t *attach;
-
     if (attach_fd > 0) {
 	close(attach_fd);
     }

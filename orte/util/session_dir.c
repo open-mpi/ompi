@@ -673,10 +673,8 @@ orte_dir_check_file(const char *root, const char *path)
     /*
      * Keep:
      *  - files starting with "output-"
-     *  - files that indicate abort
      */
-    if( (0 == strncmp(path, "output-", strlen("output-"))) ||
-        (0 == strcmp(path,  "abort"))) {
+    if (0 == strncmp(path, "output-", strlen("output-"))) {
         return false;
     }
 
