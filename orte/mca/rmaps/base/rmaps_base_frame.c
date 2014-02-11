@@ -552,6 +552,10 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
     int i;
     bool found = false;
 
+    if (NULL == ck) {
+        return ORTE_SUCCESS;
+    }
+
     ck2 = opal_argv_split(ck, ',');
     for (i=0; NULL != ck2[i]; i++) {
         if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
