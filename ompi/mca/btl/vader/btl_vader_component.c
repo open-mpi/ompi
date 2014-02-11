@@ -279,8 +279,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
 
 #if OMPI_BTL_VADER_HAVE_XPMEM
     /* create an xpmem segment for the entire memory space */
-    component->my_seg_id = xpmem_make (0, 0xffffffffffffffffll, XPMEM_PERMIT_MODE,
-                                       (void *)0666);
+    component->my_seg_id = xpmem_make (0, VADER_MAX_ADDRESS, XPMEM_PERMIT_MODE, (void *)0666);
     if (-1 == component->my_seg_id) {
         BTL_VERBOSE(("Could not create xpmem segment"));
         free (btls);

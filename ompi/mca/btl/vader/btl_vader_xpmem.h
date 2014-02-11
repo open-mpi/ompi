@@ -18,6 +18,9 @@
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 
+/* largest address we can attach to using xpmem */
+#define VADER_MAX_ADDRESS ((uintptr_t)0x7ffffffff000ul)
+
 mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
  						      size_t size, int flags, void **local_ptr);
 
