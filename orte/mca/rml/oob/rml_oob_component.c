@@ -11,11 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
-<<<<<<< .mine
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
-=======
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
->>>>>>> .r28253
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
