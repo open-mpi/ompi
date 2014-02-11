@@ -41,8 +41,8 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
 
-    if (OPAL_LIKELY(frag->hdr->flags & MCA_BTL_VADER_FLAG_FBOX)) {
-        mca_btl_vader_fbox_send (frag->segments[0].seg_addr.pval, tag, frag->segments[0].seg_len);
+    if (OPAL_LIKELY(frag->fbox)) {
+        mca_btl_vader_fbox_send (frag->fbox, tag, frag->segments[0].seg_len);
         mca_btl_vader_frag_complete (frag);
 
         return 1;
@@ -54,7 +54,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     frag->hdr->tag = tag;
 
     /* post the relative address of the descriptor into the peer's fifo */
-    vader_fifo_write (frag->hdr, endpoint);
+    vader_fifo_write_ep (frag->hdr, endpoint);
 
     if ((frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) ||
         !(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
