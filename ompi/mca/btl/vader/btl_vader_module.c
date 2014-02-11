@@ -184,8 +184,13 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct ompi_
         (void) vader_get_registation (ep, modex->segment_base, mca_btl_vader_component.segment_size,
                                       MCA_MPOOL_FLAGS_PERSIST, (void **) &ep->segment_base);
 #else
-        msg_size -= offsetof (struct vader_modex_t, seg_ds);
-        memcpy (&ep->seg_ds, &modex->seg_ds, msg_size);
+        int offset = offsetof (opal_shmem_ds_t, seg_name);
+
+        memcpy (&ep->seg_ds, modex->buffer, offset);
+        memcpy (&ep->seg_ds.seg_base_addr, modex->buffer + offset, sizeof (ep->seg_ds.seg_base_addr));
+        offset += sizeof (ep->seg_ds.seg_base_addr);
+        strncpy (ep->seg_ds.seg_name, modex->buffer + offset, OPAL_PATH_MAX);
+
         ep->segment_base = opal_shmem_segment_attach (&ep->seg_ds);
         if (NULL == ep->segment_base) {
             return rc;
@@ -313,7 +318,7 @@ static int vader_del_procs(struct mca_btl_base_module_t *btl,
                            size_t nprocs, struct ompi_proc_t **procs,
                            struct mca_btl_base_endpoint_t **peers)
 {
-    for (int i = 0 ; i < nprocs ; ++i) {
+    for (size_t i = 0 ; i < nprocs ; ++i) {
         fini_vader_endpoint (peers[i]);
         peers[i] = NULL;
     }

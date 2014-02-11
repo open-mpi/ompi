@@ -93,7 +93,7 @@ struct vader_modex_t {
     xpmem_segid_t seg_id;
     void *segment_base;
 #else
-    opal_shmem_ds_t seg_ds;
+    char buffer[8192];
 #endif
 };
 

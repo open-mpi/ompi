@@ -230,8 +230,15 @@ static int mca_btl_base_vader_modex_send (void)
 
     modex_size = sizeof (modex);
 #else
-    modex_size = opal_shmem_sizeof_shmem_ds (&mca_btl_vader_component.seg_ds);
-    memmove (&modex.seg_ds, &mca_btl_vader_component.seg_ds, modex_size);
+    /* need to pack the modex data in 1.7 since seg_name is not at the end of the struct */
+    int offset = offsetof (opal_shmem_ds_t, seg_name);
+
+    modex_size = sizeof (opal_shmem_ds_t) - OPAL_PATH_MAX + strlen (mca_btl_vader_component.seg_ds.seg_name) + 1;
+    memmove (modex.buffer, &mca_btl_vader_component.seg_ds, offset);
+    memmove (modex.buffer + offset, &mca_btl_vader_component.seg_ds.seg_base_addr, sizeof (mca_btl_vader_component.seg_ds.seg_base_addr));
+
+    offset += sizeof (mca_btl_vader_component.seg_ds.seg_base_addr);
+    strncpy (modex.buffer + offset, mca_btl_vader_component.seg_ds.seg_name, sizeof (modex.buffer) - offset);
 #endif
 
     return ompi_modex_send(&mca_btl_vader_component.super.btl_version, &modex, modex_size);
