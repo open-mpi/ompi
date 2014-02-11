@@ -10,9 +10,10 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved. 
+# Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -216,6 +217,21 @@ with the version of hwloc being used by OMPI.
 
 Please correct the problem and try again.
 #
+[deprecated]
+The following command line options and corresponding MCA parameter have
+been deprecated and replaced as follows:
+
+  Command line options:
+    Deprecated:  %s
+    Replacement: %s
+
+  Equivalent MCA parameter:
+    Deprecated:  %s
+    Replacement: %s
+
+The deprecated forms *will* disappear in a future version of Open MPI.
+Please update to the new syntax.
+#
 [mismatch-binding]
 A request for multiple cpus-per-proc was given, but a conflicting binding
 policy was specified:
@@ -243,3 +259,18 @@ have multiple cpus underneath it:
 Please specify a mapping level that is no lower than socket, or
 else let us define a default mapping that will allow multiple
 cpus-per-proc.
+#
+[unrecognized-modifier]
+The mapping request contains an unrecognized modifier:
+
+  Request: %s
+
+Please check your request and try again.
+#
+[invalid-pattern]
+The mapping request contains a pattern that doesn't match
+the required syntax of #:object
+
+  Pattern: %s
+
+Please check your request and try again.

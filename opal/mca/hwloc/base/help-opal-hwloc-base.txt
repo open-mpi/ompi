@@ -1,6 +1,7 @@
 # -*- text -*-
 #
-# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -83,3 +84,18 @@ to be redefined:
   Prior policy:  %s
 
 Please check that only one policy is defined.
+#
+[deprecated]
+The following command line option and corresponding MCA parameter have
+been deprecated and replaced as follows:
+
+  Command line option:
+    Deprecated:  %s
+    Replacement: %s
+
+  Equivalent MCA parameter:
+    Deprecated:  %s
+    Replacement: %s
+
+The deprecated forms *will* disappear in a future version of Open MPI.
+Please update to the new syntax.

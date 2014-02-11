@@ -177,7 +177,9 @@ typedef uint16_t opal_binding_policy_t;
 #define OPAL_BIND_IF_SUPPORTED      0x1000
 #define OPAL_BIND_ALLOW_OVERLOAD    0x2000
 #define OPAL_BIND_GIVEN             0x4000
-/* binding policies */
+/* binding policies - any changes in these
+ * values must be reflected in orte/mca/rmaps/rmaps.h
+ */
 #define OPAL_BIND_TO_NONE           1
 #define OPAL_BIND_TO_BOARD          2
 #define OPAL_BIND_TO_NUMA           3

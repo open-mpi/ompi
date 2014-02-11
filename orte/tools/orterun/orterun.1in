@@ -170,16 +170,19 @@ error (without beginning execution of the application) otherwise.
 On each node, launch this many processes times the number of processor
 sockets on the node.
 The \fI-npersocket\fP option also turns on the \fI-bind-to-socket\fP option.
+(deprecated in favor of --map-by ppr:n:socket)
 .
 .
 .TP
 .B -npernode\fR,\fP --npernode <#pernode>
 On each node, launch this many processes.
+(deprecated in favor of --map-by ppr:n:node)
 .
 .
 .TP
 .B -pernode\fR,\fP --pernode
 On each node, launch one process -- equivalent to \fI-npernode\fP 1.
+(deprecated in favor of --map-by ppr:1:node)
 .
 .
 .
@@ -191,7 +194,14 @@ To map processes:
 .TP
 .B --map-by <foo>
 Map to the specified object, defaults to \fIsocket\fP. Supported options
-include slot, hwthread, core, socket, numa, board, and node.
+include slot, hwthread, core, L1cache, L2cache, L3cache, socket, numa,
+board, node, sequential, distance, and ppr. Any object can include
+modifiers by adding a \fR:\fP and any combination of PE=n (bind n
+processing elements to each proc), SPAN (load
+balance the processes across the allocation), OVERSUBSCRIBE (allow
+more processes on a node than processing elements), and NOOVERSUBSCRIBE.
+This includes PPR, where the pattern would be terminated by another colon
+to separate it from the modifiers.
 .
 .TP
 .B -bycore\fR,\fP --bycore
@@ -247,10 +257,12 @@ include slot, hwthread, core, socket, numa, board, and none.
 .TP
 .B -cpus-per-proc\fR,\fP --cpus-per-proc <#perproc>
 Bind each process to the specified number of cpus.
+(deprecated in favor of --map-by <obj>:PE=n)
 .
 .TP
 .B -cpus-per-rank\fR,\fP --cpus-per-rank <#perrank>
 Alias for \fI-cpus-per-proc\fP.
+(deprecated in favor of --map-by <obj>:PE=n)
 .
 .TP
 .B -bind-to-core\fR,\fP --bind-to-core
