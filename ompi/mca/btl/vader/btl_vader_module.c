@@ -212,7 +212,7 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct ompi_
 static int fini_vader_endpoint (struct mca_btl_base_endpoint_t *ep)
 {
 
-    if (ep->peer_smp_rank != MCA_BTL_VADER_LOCAL_RANK) {
+    if (NULL != ep->fbox_out) {
 #if OMPI_BTL_VADER_HAVE_XPMEM
         xpmem_release (ep->apid);
 #else
