@@ -595,9 +595,9 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
 int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                                        char **device, char *inspec)
 {
-    char *ck, **ck2, *ptr;
+    char *ck, *ptr;
     orte_mapping_policy_t tmp;
-    int i, rc;
+    int rc;
     size_t len;
     char *spec;
 
@@ -621,17 +621,26 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
 #if OPAL_HAVE_HWLOC
             if (0 == strncasecmp(spec, "dist", strlen(spec))) {
                 ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
-                ck2 = opal_argv_split(ck, ',');
-                if (ck2[0] != NULL) {
-                    *device = strdup(ck2[0]);
-                    for (i=1; NULL != ck2[i]; i++) {
-                        if (0 == strncasecmp(ck2[i], "span", strlen(ck2[i]))) {
-                            ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_SPAN);
-                        } 
+                /* the first argument after the colon *must* be the
+                 * device we are mapping near - however, other modifiers
+                 * could have been provided, so check for them, okay if
+                 * none found
+                 */
+                if (NULL != (ptr = strchr(ck, ','))) {
+                    *ptr = '\0';
+                    ptr++; // move past the comma
+                    /* check the remaining string for modifiers - may be none, so
+                     * don't emit an error message if the modifier isn't recognized
+                     */
+                    if (ORTE_ERR_SILENT == (rc = check_modifiers(ptr, &tmp)) &&
+                        ORTE_ERR_BAD_PARAM != rc) {
+                        free(spec);
+                        return ORTE_ERR_SILENT;
                     }
                 }
+                *device = strdup(ck);
                 ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
-                opal_argv_free(ck2);
+                free(spec);
                 goto setpolicy;
             } else if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
                 /* we have to allow additional modifiers here - e.g., specifying
@@ -642,6 +651,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                      * colon to delimit the number from the object type
                      */
                     orte_show_help("help-orte-rmaps-base.txt", "invalid-pattern", true, inspec);
+                    free(spec);
                     return ORTE_ERR_SILENT;
                 }
                 ptr++; // move past the colon
@@ -650,6 +660,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                  */
                 if (ORTE_ERR_SILENT == (rc = check_modifiers(ptr, &tmp)) &&
                     ORTE_ERR_BAD_PARAM != rc) {
+                    free(spec);
                     return ORTE_ERR_SILENT;
                 }
                 /* if we found something, then we need to adjust the string */
@@ -661,6 +672,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                 orte_rmaps_base.ppr = strdup(ck);
                 ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_PPR);
                 ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
+                free(spec);
                 goto setpolicy;
             }
 #endif
@@ -669,6 +681,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                 if (ORTE_ERR_BAD_PARAM == rc) {
                     orte_show_help("help-orte-rmaps-base.txt", "unrecognized-modifier", true, inspec);
                 }
+                free(spec);
                 return rc;
             }
         }
