@@ -28,7 +28,7 @@ greek=a1
 # If want_repo_rev=1, then the repo revision number will be included
 # in the overall Open MPI version number in some form.
 
-want_repo_rev=0
+want_repo_rev=1
 
 # If repo_rev=-1, then the repository version number will be obtained
 # dynamically at run time, either: 
@@ -48,11 +48,11 @@ want_repo_rev=0
 # from an SVN checkout, if repo_rev=-1, then its value is replaced
 # with the output of "svnversion".
 
-repo_rev=r29531M
+repo_rev=-1
 
 # The date when this release was created
 
-date="Oct 26, 2013"
+date="Unreleased developer copy"
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
