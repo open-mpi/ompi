@@ -165,7 +165,6 @@ int opal_crs_self_component_query(mca_base_module_t **module, int *priority)
 
 static int opal_crs_self_extract_callbacks(void)
 {
-    bool callback_matched = true;
     opal_crs_self_dlsym_dummy_fn_t loc_fn;
 
     /*
@@ -192,14 +191,11 @@ static int opal_crs_self_extract_callbacks(void)
     mca_crs_self_component.can_checkpoint = true;
 
     if(NULL == mca_crs_self_component.ucb_checkpoint_fn) {
-        callback_matched = false;
         mca_crs_self_component.can_checkpoint = false;
     }
     if(NULL == mca_crs_self_component.ucb_continue_fn) {
-        callback_matched = false;
     }
     if(NULL == mca_crs_self_component.ucb_restart_fn) {
-        callback_matched = false;
     }
 
     return OPAL_SUCCESS;
