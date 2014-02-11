@@ -43,7 +43,7 @@ sub construct {
     # "special" directories
     if ( -l $_ ) { return; }
     if ( -d $_ ) { 
-        if ((/\.svn/) || (/\.deps/) || (/\.libs/) || (/\.hg/) || (/\.git/) || ($_ eq "autom4te.cache") || ($_ eq "libltdl")) {
+        if ((/\.svn/) || (/\.deps/) || (/\.libs/) || (/\.hg/) || (/\.git/) || (/\.dSYM/) || ($_ eq "autom4te.cache") || ($_ eq "libltdl")) {
             $File::Find::prune = true;
         }            
         return;
@@ -54,11 +54,16 @@ sub construct {
     # to the processed directory, so we want to add the full pathname.
 
     # ignore some obvious files we don't care about
-    if (($_ =~ /\.dirstamp$/i) || ($_ =~ /\.lo$/i) || ($_ =~ /\.la$/i) || ($_ =~ /\.o$/i) || ($_ =~ /\.\d$/i)) {
+    if (($_ =~ /\.dirstamp$/i) || ($_ =~ /\.DS_Store$/i) || ($_ =~ /\.lo$/i) || ($_ =~ /\.la$/i) || ($_ =~ /\.o$/i) || ($_ =~ /\.\d$/i)) {
         $File::Find::prune = true;
         return;
     }
     if (($_ eq "Makefile") || ($_ eq "Makefile.in") || ($_ eq "config.log") || ($_ eq "config.status")) {
+        $File::Find::prune = true;
+        return;
+    }
+    # ignore executables
+    if (-x $File::Find::name) {
         $File::Find::prune = true;
         return;
     }
