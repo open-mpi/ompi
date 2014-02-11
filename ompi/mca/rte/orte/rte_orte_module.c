@@ -210,25 +210,29 @@ static int direct_modex(orte_process_name_t *peer, opal_scope_t scope)
         OBJ_RELEASE(buf);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(peer, buf,
-                                                      ORTE_RML_TAG_DIRECT_MODEX,
-                                                      orte_rml_send_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return rc;
-    }
+    /* setup to receive the answer */
     OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
     xfer.active = true;
     orte_rml.recv_buffer_nb(OMPI_NAME_WILDCARD,
                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
                             ORTE_RML_NON_PERSISTENT,
                             orte_rml_recv_callback, &xfer);
+    /* send the request */
+    if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(peer, buf,
+                                                      ORTE_RML_TAG_DIRECT_MODEX,
+                                                      orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        OBJ_DESTRUCT(&xfer);
+        return rc;
+    }
     OMPI_WAIT_FOR_COMPLETION(xfer.active);
     /* got it - this is a std modex package, so unpack it with the
      * grpcomm function and cache it locally so we can quickly get
      * more pieces if necessary
      */
     orte_grpcomm_base_store_modex(&xfer.data, NULL);
+    OBJ_DESTRUCT(&xfer);
 
     return ORTE_SUCCESS;
 }
