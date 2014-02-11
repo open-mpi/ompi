@@ -1,6 +1,7 @@
 !
 ! Copyright (c) 2013      Mellanox Technologies, Inc.
 !                         All rights reserved.
+! Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -15,6 +16,7 @@ program ring_oshmem
     integer*8, save   :: rbuf
     integer*8         :: message
     integer           :: proc, nproc, next
+    integer           :: my_pe, num_pes
 
     rbuf = -1
     message = 10

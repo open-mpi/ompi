@@ -2,6 +2,7 @@
 !
 !   Copyright (c) 2013      Mellanox Technologies, Inc.
 !                           All rights reserved.
+!   Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 !   $COPYRIGHT$
 !
 !   Additional copyrights may follow
@@ -47,9 +48,6 @@
       parameter ( SHMEM_CMP_LT = 4 )
       integer SHMEM_CMP_GE
       parameter ( SHMEM_CMP_GE = 5 )
-
-      integer my_pe
-      integer num_pes
 
       logical shmem_pe_accessible
       logical shmem_addr_accessible
