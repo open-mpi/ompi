@@ -61,6 +61,12 @@ get_nsec(void)
         (type *)( ((char *)(ptr)) - offsetof(type,member) ))
 #endif
 
+/* particularly old versions of verbs do not have this function, which will
+ * cause unnecessary build failures on other platforms */
+#if !HAVE_DECL_IBV_EVENT_TYPE_STR
+#define ibv_event_type_str(ev_type) "(ibv_event_type_str unavailable)"
+#endif
+
 /* MSGDEBUG2 prints 1 line at each BTL entry point */
 #define MSGDEBUG2 (MSGDEBUG1||0)
 /* MSGDEBUG1 prints more info about arguments and internal functions */
