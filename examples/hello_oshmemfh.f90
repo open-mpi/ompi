@@ -1,6 +1,7 @@
 !
 ! Copyright (c) 2013      Mellanox Technologies, Inc.
 !                         All rights reserved.
+! Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -12,6 +13,7 @@ program hello_oshmem
     include 'shmem.fh'
 
     integer proc, nproc
+    integer my_pe, num_pes
 
     call START_PES(0)
     proc = MY_PE()
