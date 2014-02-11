@@ -163,6 +163,7 @@ static int bind_upwards(orte_job_t *jdata,
                 }
                 /* get its index */
                 if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology, obj, OPAL_HWLOC_AVAILABLE))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                     return ORTE_ERR_SILENT;
                 }
                 /* track the number bound */
@@ -652,11 +653,16 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         hwb = HWLOC_OBJ_PU;
         break;
     default:
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
 
     /* do the same for the mapping policy */
     switch (map) {
+    case ORTE_MAPPING_BYNODE:
+    case ORTE_MAPPING_BYSLOT:
+        hwm = HWLOC_OBJ_MACHINE;
+        break;
     case ORTE_MAPPING_BYDIST:
     case ORTE_MAPPING_BYNUMA:
         hwm = HWLOC_OBJ_NODE;
@@ -683,6 +689,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         hwm = HWLOC_OBJ_PU;
         break;
     default:
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -827,6 +834,10 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
                                true, hwloc_obj_type_string(hwm), node->name);
                 return ORTE_ERR_SILENT;
             }
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "%s bind_depth: %d map_depth %d",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                bind_depth, map_depth);
             if (bind_depth > map_depth) {
                 if (ORTE_SUCCESS != (rc = bind_downwards(jdata, node, hwb, clvl))) {
                     ORTE_ERROR_LOG(rc);
