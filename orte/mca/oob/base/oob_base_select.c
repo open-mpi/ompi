@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,6 +29,8 @@
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/show_help.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/oob/oob.h"
@@ -116,7 +119,8 @@ int orte_oob_base_select(void)
         /* no support available means we really cannot run */
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                             "mca:oob:select: Init failed to return any available transports");
-        return ORTE_ERR_NOT_AVAILABLE;
+        orte_show_help("help-oob-base.txt", "no-interfaces-avail", true);
+        return ORTE_ERR_SILENT;
     }
 
     /* provide them an index so we can track their usability in a bitmap */

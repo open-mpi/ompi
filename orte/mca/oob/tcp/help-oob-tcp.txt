@@ -41,7 +41,7 @@ communications and will therefore abort. Please correct the network
 specification and retry.
 #
 [no-included-found]
-None of the networks specified to be included for out-of-band communications
+None of the TCP networks specified to be included for out-of-band communications
 could be found:
 
   Value given: %s
@@ -49,16 +49,12 @@ could be found:
 Please revise the specification and try again.
 #
 [excluded-all]
-The specified list of networks to be excluded for out-of-band communications
+The specified list of networks to be excluded for TCP out-of-band communications
 resulted in no networks being available:
 
   Value given: %s
 
 Please revise the specification and try again.
-#
-[no-interfaces-avail]
-No network interfaces were found for out-of-band communications. We require
-at least one available network for TCP-based messaging.
 #
 [invalid if_inexclude]
 WARNING: An invalid value was given for oob_tcp_if_%s.  This

@@ -21,6 +21,9 @@
 noinst_LTLIBRARIES = libmca_oob.la
 libmca_oob_la_SOURCES =
 
+# pkgdata setup
+dist_ompidata_DATA =
+
 # local files
 headers = oob.h
 libmca_oob_la_SOURCES += $(headers)
