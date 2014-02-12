@@ -584,7 +584,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
 int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 {
     hwloc_obj_type_t hwb, hwm;
-    unsigned clvl=0;
+    unsigned clvl=0, clvm=0;
     opal_binding_policy_t bind;
     orte_mapping_policy_t map;
     orte_node_t *node;
@@ -672,15 +672,15 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
         break;
     case ORTE_MAPPING_BYL3CACHE:
         hwm = HWLOC_OBJ_CACHE;
-        clvl = 3;
+        clvm = 3;
         break;
     case ORTE_MAPPING_BYL2CACHE:
         hwm = HWLOC_OBJ_CACHE;
-        clvl = 2;
+        clvm = 2;
         break;
     case ORTE_MAPPING_BYL1CACHE:
         hwm = HWLOC_OBJ_CACHE;
-        clvl = 1;
+        clvm = 1;
         break;
     case ORTE_MAPPING_BYCORE:
         hwm = HWLOC_OBJ_CORE;
@@ -820,14 +820,28 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
             }
         } else {
             /* determine the relative depth on this node */
-            bind_depth = hwloc_get_type_depth(node->topology, hwb);
+            if (HWLOC_OBJ_CACHE == hwb) {
+                /* must use a unique function because blasted hwloc
+                 * just doesn't deal with caches very well...sigh
+                 */
+                bind_depth = hwloc_get_cache_type_depth(node->topology, clvl, -1);
+            } else {
+                bind_depth = hwloc_get_type_depth(node->topology, hwb);
+            }
             if (0 > bind_depth) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
                                true, hwloc_obj_type_string(hwb), node->name);
                 return ORTE_ERR_SILENT;
             }
-            map_depth = hwloc_get_type_depth(node->topology, hwm);
+            if (HWLOC_OBJ_CACHE == hwm) {
+                /* must use a unique function because blasted hwloc
+                 * just doesn't deal with caches very well...sigh
+                 */
+                map_depth = hwloc_get_cache_type_depth(node->topology, clvm, -1);
+            } else {
+                map_depth = hwloc_get_type_depth(node->topology, hwm);
+            }
             if (0 > map_depth) {
                 /* didn't find such an object */
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-objects",
