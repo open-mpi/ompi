@@ -71,6 +71,11 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, 
                                            MPI_ERR_DIMS, FUNC_NAME);
         }
+
+        if (1 > nnodes) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
+                                           MPI_ERR_DIMS, FUNC_NAME);
+        }
     }
 
     /* Get # of free-to-be-assigned processes and # of free dimensions */
@@ -95,11 +100,7 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
                                      FUNC_NAME);
     }
 
-    if (freeprocs < 1) {
-       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_DIMS,
-                                     FUNC_NAME);
-    }
-    else if (freeprocs == 1) {
+    if (freeprocs == 1) {
         for (i = 0; i < ndims; ++i, ++dims) {
             if (*dims == 0) {
                *dims = 1;
