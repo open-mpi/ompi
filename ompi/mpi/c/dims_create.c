@@ -12,9 +12,9 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -44,8 +44,8 @@ static int getprimes(int num, int *pnprime, int **pprimes);
 /*
  * This is a utility function, no need to have anything in the lower
  * layer for this at all
- */ 
-int MPI_Dims_create(int nnodes, int ndims, int dims[]) 
+ */
+int MPI_Dims_create(int nnodes, int ndims, int dims[])
 {
     int i;
     int freeprocs;
@@ -66,7 +66,7 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
                                            MPI_ERR_ARG, FUNC_NAME);
         }
-        
+
         if (1 > ndims) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, 
                                            MPI_ERR_DIMS, FUNC_NAME);
@@ -113,7 +113,7 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
                                      FUNC_NAME);
     }
-    
+
     /* Factor the number of free processes */
     if (MPI_SUCCESS != (err = getfactors(freeprocs, nprimes, primes, &factors))) {
        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
@@ -309,4 +309,3 @@ getprimes(int num, int *pnprime, int **pprimes) {
    *pnprime = i;
    return MPI_SUCCESS;
 }
-
