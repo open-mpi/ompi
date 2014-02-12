@@ -794,7 +794,7 @@ static int component_set_addr(orte_process_name_t *peer,
 {
     char **addrs, *hptr;
     char *tcpuri=NULL, *host, *ports;
-    int i, j, k, n, rc;
+    int i, j, k, rc;
     mca_oob_tcp_module_t *mod;
     mca_oob_tcp_component_peer_t *pr;
     uint16_t af_family = AF_UNSPEC;
@@ -867,42 +867,25 @@ static int component_set_addr(orte_process_name_t *peer,
 
         /* cycle across the provided addrs */
         for (j=0; NULL != addrs[j]; j++) {
-            /* if they gave us "localhost", then just take our lowest kernel index interface */
+            /* if they gave us "localhost", then just take the first conn on our list */
             if (0 == strcasecmp(addrs[j], "localhost")) {
-                n = opal_ifbegin();
-                mod = NULL;
-                while (0 <= n) {
-                    k = opal_ifindextokindex(n);
-                    if (NULL != (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-                        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                            "%s USING MODULE AT KINDEX %d FOR LOCALHOST",
-                                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k);
-                        break;
-                    }
-                    n = opal_ifnext(n);
-                }
-                if (NULL == mod) {
-                    /* should never happen */
-                    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                        "%s NO MODULE FOR LOCALHOST",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                    continue;
-                }
+                host = mca_oob_tcp_component.ipv4conns[0];
             } else {
-                /* lookup the kernel index of this address */
-                if (0 >= (k = opal_ifaddrtokindex(addrs[j]))) {
-                    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                        "%s UNFOUND KERNEL INDEX %d FOR ADDRESS %s",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, addrs[j]);
-                    /* we don't have an interface on this subnet - ignore it */
-                    continue;
-                }
-                if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-                    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                        "%s NO MODULE AT KINDEX %d FOR ADDRESS %s",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, addrs[j]);
-                    continue;
-                }
+                host = addrs[j];
+            }
+            /* lookup the kernel index of this address */
+            if (0 >= (k = opal_ifaddrtokindex(host))) {
+                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s UNFOUND KERNEL INDEX %d FOR ADDRESS %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
+                /* we don't have an interface on this subnet - ignore it */
+                continue;
+            }
+            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
+                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s NO MODULE AT KINDEX %d FOR ADDRESS %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
+                continue;
             }
             /* record that this peer may be reachable via this module, but don't assign
              * the peer to this module until later when we actually connect
@@ -930,10 +913,10 @@ static int component_set_addr(orte_process_name_t *peer,
              */
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s PASSING ADDR %s TO INTERFACE %s AT KERNEL INDEX %d",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), addrs[j],
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host,
                                 mod->if_name, k);
             mod->api.set_peer((struct mca_oob_tcp_module_t*)mod,
-                              peer, af_family, addrs[j], ports);
+                              peer, af_family, host, ports);
             found = true;
         }
         if (NULL != addrs) {
