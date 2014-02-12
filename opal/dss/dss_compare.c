@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +19,11 @@
  */
 
 #include "opal_config.h"
+
 #include <stdlib.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h> /* for struct timeval */
+#endif
 
 #include "opal/dss/dss_internal.h"
 
@@ -218,6 +223,15 @@ int opal_dss_compare_timeval(struct timeval *value1, struct timeval *value2, opa
     /* seconds were equal - check usec's */
     if (value1->tv_usec > value2->tv_usec) return OPAL_VALUE1_GREATER;
     if (value2->tv_usec > value1->tv_usec) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+
+/* TIME */
+int opal_dss_compare_time(time_t *value1, time_t *value2, opal_data_type_t type)
+{
+    if (value1 > value2) return OPAL_VALUE1_GREATER;
+    if (value2 > value1) return OPAL_VALUE2_GREATER;
 
     return OPAL_EQUAL;
 }
