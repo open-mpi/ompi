@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +30,7 @@
 
 #include "opal_config.h"
 
-#ifdef OPAL_HAVE_SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h> /* for struct timeval */
 #endif
 
@@ -76,15 +77,16 @@ typedef uint64_t opal_identifier_t;
 #define    OPAL_FLOAT               (opal_data_type_t)   16
     /* system types */
 #define OPAL_TIMEVAL                (opal_data_type_t)   17
+#define OPAL_TIME                   (opal_data_type_t)   18
     /* OPAL types */
-#define    OPAL_BYTE_OBJECT         (opal_data_type_t)   18 /**< byte object structure */
-#define    OPAL_DATA_TYPE           (opal_data_type_t)   19 /**< data type */
-#define    OPAL_NULL                (opal_data_type_t)   20 /**< don't interpret data type */
-#define    OPAL_PSTAT               (opal_data_type_t)   21 /**< process statistics */
-#define    OPAL_NODE_STAT           (opal_data_type_t)   22 /**< node statistics */
-#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   23 /**< hwloc topology */
-#define    OPAL_VALUE               (opal_data_type_t)   24 /**< opal value structure */
-#define    OPAL_BUFFER              (opal_data_type_t)   25 /**< pack the remaining contents of a buffer as an object */
+#define    OPAL_BYTE_OBJECT         (opal_data_type_t)   19 /**< byte object structure */
+#define    OPAL_DATA_TYPE           (opal_data_type_t)   20 /**< data type */
+#define    OPAL_NULL                (opal_data_type_t)   21 /**< don't interpret data type */
+#define    OPAL_PSTAT               (opal_data_type_t)   22 /**< process statistics */
+#define    OPAL_NODE_STAT           (opal_data_type_t)   23 /**< node statistics */
+#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   24 /**< hwloc topology */
+#define    OPAL_VALUE               (opal_data_type_t)   25 /**< opal value structure */
+#define    OPAL_BUFFER              (opal_data_type_t)   26 /**< pack the remaining contents of a buffer as an object */
 
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 

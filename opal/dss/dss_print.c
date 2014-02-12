@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -365,6 +366,30 @@ int opal_dss_print_float(char **output, char *prefix,
     }
 
     asprintf(output, "%sData type: OPAL_FLOAT\tValue: %f", prefx, *src);
+
+    return OPAL_SUCCESS;
+}
+
+int opal_dss_print_time(char **output, char *prefix,
+                        time_t *src, opal_data_type_t type)
+{
+    char *prefx;
+    char *t;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_TIME\tValue: NULL pointer", prefx);
+        return OPAL_SUCCESS;
+    }
+
+    t = ctime(src);
+    t[strlen(t)-1] = '\0';  // remove trailing newline
+
+    asprintf(output, "%sData type: OPAL_TIME\tValue: %s", prefx, t);
 
     return OPAL_SUCCESS;
 }

@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,10 @@
 
 #include "opal_config.h"
 #include "opal/constants.h"
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h> /* for struct timeval */
+#endif
 
 #include "opal/class/opal_pointer_array.h"
 
@@ -310,6 +315,9 @@ int opal_dss_pack_float(opal_buffer_t *buffer, const void *src,
 int opal_dss_pack_timeval(opal_buffer_t *buffer, const void *src,
                           int32_t num_vals, opal_data_type_t type);
 
+int opal_dss_pack_time(opal_buffer_t *buffer, const void *src,
+                       int32_t num_vals, opal_data_type_t type);
+
 /*
  * Internal unpack functions
  */
@@ -363,6 +371,9 @@ int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
 
 int opal_dss_unpack_timeval(opal_buffer_t *buffer, void *dest,
                             int32_t *num_vals, opal_data_type_t type);
+
+int opal_dss_unpack_time(opal_buffer_t *buffer, void *dest,
+                         int32_t *num_vals, opal_data_type_t type);
 
 /*
  * Internal copy functions
@@ -436,6 +447,8 @@ int opal_dss_compare_float(float *value1, float *value2, opal_data_type_t type);
 
 int opal_dss_compare_timeval(struct timeval *value1, struct timeval *value2, opal_data_type_t type);
 
+int opal_dss_compare_time(time_t *value1, time_t *value2, opal_data_type_t type);
+
 /*
  * Internal print functions
  */
@@ -470,6 +483,7 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
 int opal_dss_print_buffer_contents(char **output, char *prefix, opal_buffer_t *src, opal_data_type_t type);
 int opal_dss_print_float(char **output, char *prefix, float *src, opal_data_type_t type);
 int opal_dss_print_timeval(char **output, char *prefix, struct timeval *src, opal_data_type_t type);
+int opal_dss_print_time(char **output, char *prefix, time_t *src, opal_data_type_t type);
 
 
 /*

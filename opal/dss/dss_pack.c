@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +25,8 @@
 #include "opal/util/output.h"
 #include "opal/dss/dss_internal.h"
 
-int opal_dss_pack(opal_buffer_t *buffer, const void *src, int32_t num_vals,
+int opal_dss_pack(opal_buffer_t *buffer,
+                  const void *src, int32_t num_vals,
                   opal_data_type_t type)
 {
     int rc;
@@ -48,8 +50,9 @@ int opal_dss_pack(opal_buffer_t *buffer, const void *src, int32_t num_vals,
     return opal_dss_pack_buffer(buffer, src, num_vals, type);
 }
 
-int opal_dss_pack_buffer(opal_buffer_t *buffer, const void *src, int32_t num_vals,
-                  opal_data_type_t type)
+int opal_dss_pack_buffer(opal_buffer_t *buffer,
+                         const void *src, int32_t num_vals,
+                         opal_data_type_t type)
 {
     int rc;
     opal_dss_type_info_t *info;
@@ -358,6 +361,28 @@ int opal_dss_pack_timeval(opal_buffer_t *buffer, const void *src,
         tmp[0] = (int64_t)ssrc[i].tv_sec;
         tmp[1] = (int64_t)ssrc[i].tv_usec;
         if (OPAL_SUCCESS != (ret = opal_dss_pack_int64(buffer, tmp, 2, OPAL_INT64))) {
+            return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/* TIME */
+int opal_dss_pack_time(opal_buffer_t *buffer, const void *src,
+                       int32_t num_vals, opal_data_type_t type)
+{
+    int ret = OPAL_SUCCESS;
+    int32_t i;
+    time_t *ssrc = (time_t *)src;
+    uint64_t ui64;
+
+    /* time_t is a system-dependent size, so cast it
+     * to uint64_t as a generic safe size
+     */
+    for (i = 0; i < num_vals; ++i) {
+        ui64 = (uint64_t)ssrc[i];
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_int(buffer, &ui64, 1, OPAL_UINT64))) {
             return ret;
         }
     }

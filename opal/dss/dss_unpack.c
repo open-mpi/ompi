@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -450,6 +451,34 @@ int opal_dss_unpack_timeval(opal_buffer_t *buffer, void *dest,
     return OPAL_SUCCESS;
 }
 
+int opal_dss_unpack_time(opal_buffer_t *buffer, void *dest,
+                         int32_t *num_vals, opal_data_type_t type)
+{
+    int32_t i, n;
+    time_t *desttmp = (time_t *) dest;
+    int ret;
+    uint64_t ui64;
+
+    /* time_t is a system-dependent size, so cast it
+     * to uint64_t as a generic safe size
+     */
+
+   OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_unpack_time * %d\n", (int)*num_vals ) );
+    /* check to see if there's enough data in buffer */
+   if (opal_dss_too_small(buffer, (*num_vals)*(sizeof(uint64_t)))) {
+        return OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
+    }
+
+    /* unpack the data */
+    for (i = 0; i < (*num_vals); ++i) {
+        n=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_int64(buffer, &ui64, &n, OPAL_UINT64))) {
+            return ret;
+        }
+        desttmp[i] = (time_t)ui64;
+    }
+    return OPAL_SUCCESS;
+}
 
 
 /* UNPACK FUNCTIONS FOR GENERIC OPAL TYPES */
