@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -2116,6 +2116,11 @@ static int get_ib_dev_distance(struct ibv_device *dev)
        because we have no way of measuring. */
     int distance = 0;
 
+    /* Override any distance logic so all devices are used */
+    if (0 != mca_btl_openib_component.ignore_locality) {
+        return distance;
+    }
+
 #if OPAL_HAVE_HWLOC
     int a, b, i;
     hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
@@ -2202,10 +2207,10 @@ static int get_ib_dev_distance(struct ibv_device *dev)
         if (NULL != my_obj) {
             /* Distance may be asymetrical, so calculate both of them
                and take the max */
-            a = hwloc_distances->latency[my_obj->logical_index *
+            a = hwloc_distances->latency[my_obj->logical_index +
                                          (ibv_obj->logical_index * 
                                           hwloc_distances->nbobjs)];
-            b = hwloc_distances->latency[ibv_obj->logical_index *
+            b = hwloc_distances->latency[ibv_obj->logical_index +
                                          (my_obj->logical_index * 
                                           hwloc_distances->nbobjs)];
             distance = (a > b) ? a : b;
@@ -2224,10 +2229,10 @@ static int get_ib_dev_distance(struct ibv_device *dev)
                                                             ibv_obj->cpuset, 
                                                             HWLOC_OBJ_NODE, ++i)) {
 
-            a = hwloc_distances->latency[node_obj->logical_index *
+            a = hwloc_distances->latency[node_obj->logical_index +
                                          (ibv_obj->logical_index * 
                                           hwloc_distances->nbobjs)];
-            b = hwloc_distances->latency[ibv_obj->logical_index *
+            b = hwloc_distances->latency[ibv_obj->logical_index +
                                          (node_obj->logical_index * 
                                           hwloc_distances->nbobjs)];
             a = (a > b) ? a : b;
@@ -2552,6 +2557,11 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_max_btls); i++) {
         if (0 != mca_btl_openib_component.ib_num_btls &&
             distance != dev_sorted[i].distance) {
+            if (mca_btl_openib_component.device_selection_verbose) {
+                opal_output(0, "[rank=%d] openib: skipping device %s; it is too far away", 
+                            ORTE_PROC_MY_NAME->vpid,
+                            ibv_get_device_name(dev_sorted[i].ib_dev));
+            }
             break;
         }
 
@@ -2590,6 +2600,12 @@ btl_openib_component_init(int *num_btl_modules,
         if (OMPI_SUCCESS != ret && OMPI_ERR_NOT_SUPPORTED != ret) {
             free(dev_sorted);
             goto no_btls;
+        } else {
+            if (mca_btl_openib_component.device_selection_verbose) {
+                opal_output(0, "[rank=%d] openib: using device %s", 
+                            ORTE_PROC_MY_NAME->vpid,
+                            ibv_get_device_name(dev_sorted[i].ib_dev));
+            }
         }
     }
     free(dev_sorted);
