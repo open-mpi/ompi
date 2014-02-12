@@ -39,6 +39,7 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/sec/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/dss/dss.h"
@@ -223,6 +224,9 @@ opal_err2str(int errnum, const char **errmsg)
         break;
     case OPAL_ERR_DATA_VALUE_NOT_FOUND:
         retval = "Data for specified key not found";
+        break;
+    case OPAL_ERR_AUTHENTICATION_FAILED:
+        retval = "Authentication failed";
         break;
     default:
         retval = NULL;
@@ -478,6 +482,16 @@ opal_init(int* pargc, char*** pargv)
         goto return_error;
     }
     
+    /* initialize the security framework */
+    if( OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_sec_base_framework, 0)) ) {
+        error = "opal_sec_base_open";
+        goto return_error;
+    }
+    if( OPAL_SUCCESS != (ret = opal_sec_base_select()) ) {
+        error = "opal_sec_base_select";
+        goto return_error;
+    }
+
     return OPAL_SUCCESS;
 
  return_error:

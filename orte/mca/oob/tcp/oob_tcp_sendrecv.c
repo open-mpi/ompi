@@ -414,7 +414,7 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
 
     switch (peer->state) {
     case MCA_OOB_TCP_CONNECT_ACK:
-        if (ORTE_SUCCESS == (rc = mca_oob_tcp_peer_recv_connect_ack(mod, peer))) {
+        if (ORTE_SUCCESS == (rc = mca_oob_tcp_peer_recv_connect_ack(mod, peer, peer->sd, NULL))) {
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s:tcp:recv:handler starting send/recv events",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

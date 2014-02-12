@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,14 +19,14 @@
 #include "opal_config.h"
 #include "opal/types.h"
 
+#include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
 
-typedef uint64_t opal_identifier_t;
-
 /* some OPAL-appropriate key definitions */
-#define OPAL_DB_LOCALITY "opal.locality"
-#define OPAL_DB_CPUSET   "opal.cpuset"
+#define OPAL_DB_LOCALITY    "opal.locality"
+#define OPAL_DB_CPUSET      "opal.cpuset"
+#define OPAL_DB_CREDENTIAL  "opal.cred"
 
 END_C_DECLS
 

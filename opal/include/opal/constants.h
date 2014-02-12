@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,7 +75,9 @@ enum {
     OPAL_ERR_NOT_BOUND                      = (OPAL_ERR_BASE - 45),
     OPAL_ERR_TAKE_NEXT_OPTION               = (OPAL_ERR_BASE - 46),
     OPAL_ERR_PROC_ENTRY_NOT_FOUND           = (OPAL_ERR_BASE - 47),
-    OPAL_ERR_DATA_VALUE_NOT_FOUND           = (OPAL_ERR_BASE - 48)
+    OPAL_ERR_DATA_VALUE_NOT_FOUND           = (OPAL_ERR_BASE - 48),
+    OPAL_ERR_CONNECTION_FAILED              = (OPAL_ERR_BASE - 49),
+    OPAL_ERR_AUTHENTICATION_FAILED          = (OPAL_ERR_BASE - 50)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

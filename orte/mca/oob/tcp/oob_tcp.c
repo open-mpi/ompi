@@ -52,6 +52,7 @@
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/mca/sec/sec.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -557,220 +558,64 @@ static void resend(struct mca_oob_tcp_msg_error_t *mp)
 }
 
 /*
- * Handle probe
- */
-static void recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
-{
-    unsigned char* ptr = (unsigned char*)hdr;
-    size_t cnt = 0;
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s:tcp:recv:probe called",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    hdr->type = MCA_OOB_TCP_PROBE;
-    hdr->dst = hdr->origin;
-    hdr->origin = *ORTE_PROC_MY_NAME;
-    MCA_OOB_TCP_HDR_HTON(hdr);
-
-    while (cnt < sizeof(mca_oob_tcp_hdr_t)) {
-        int retval = send(sd, (char *)ptr+cnt, sizeof(mca_oob_tcp_hdr_t)-cnt, 0);
-        if (retval < 0) {
-            if (opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-                opal_output(0, "%s-%s mca_oob_tcp_peer_recv_probe: send() failed: %s (%d)\n",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(hdr->dst)),
-                            strerror(opal_socket_errno),
-                            opal_socket_errno);
-                CLOSE_THE_SOCKET(sd);
-                return;
-            }
-            continue;
-        }
-        cnt += retval;
-    }
-    CLOSE_THE_SOCKET(sd);
-}
-
-/*
- * Complete the OOB-level handshake to establish a connection with
- * another peer.  Called when the remote peer replies with his process
- * identifier.  Used in both the threaded and event listen modes.
- */
-static void recv_connect(mca_oob_tcp_module_t *mod,
-                         int sd, mca_oob_tcp_hdr_t* hdr)
-{
-    mca_oob_tcp_peer_t* peer;
-    int flags;
-    int cmpval;
-    uint64_t *ui64;
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s:tcp:recv:connect called",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* check for invalid name - if this is true, then we have an error
-     */
-    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &hdr->origin, ORTE_NAME_INVALID);
-    if (cmpval == OPAL_EQUAL) {
-        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-        return;
-    }
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s mca_oob_tcp_recv_connect: processing connection from %s for socket %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&hdr->origin), sd);
-
-    /* lookup the corresponding process */
-    peer = mca_oob_tcp_peer_lookup(mod, &hdr->origin);
-    if (NULL == peer) {
-        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s mca_oob_tcp_recv_connect: connection from new peer",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        peer = OBJ_NEW(mca_oob_tcp_peer_t);
-        peer->mod = mod;
-        peer->name = hdr->origin;
-        peer->state = MCA_OOB_TCP_ACCEPTING;
-        ui64 = (uint64_t*)(&peer->name);
-        if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mod->peers, (*ui64), peer)) {
-            OBJ_RELEASE(peer);
-            return;
-        }
-    } else {
-        /* check for a race condition - if I was in the process of
-         * creating a connection to the peer, or have already established
-         * such a connection, then we need to reject this connection. We will
-         * let the higher ranked process retry - if I'm the lower ranked
-         * process, I'll simply defer until I receive the request
-         */
-        if (MCA_OOB_TCP_CONNECTED == peer->state ||
-            MCA_OOB_TCP_CONNECTING == peer->state ||
-            MCA_OOB_TCP_CONNECT_ACK == peer->state) {
-            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                "%s SIMUL CONNECTION WITH %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&hdr->origin));
-            if (peer->recv_ev_active) {
-                opal_event_del(&peer->recv_event);
-                peer->recv_ev_active = false;
-            }
-            if (peer->send_ev_active) {
-                opal_event_del(&peer->send_event);
-                peer->send_ev_active = false;
-            }
-            if (0 < peer->sd) {
-                CLOSE_THE_SOCKET(peer->sd);
-                peer->sd = -1;
-            }
-            CLOSE_THE_SOCKET(sd);
-            if (NULL != peer->active_addr) {
-                peer->active_addr->retries = 0;
-            }
-            cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &hdr->origin, ORTE_PROC_MY_NAME);
-            if (OPAL_VALUE1_GREATER == cmpval) {
-                /* force the other end to retry the connection */
-                peer->state = MCA_OOB_TCP_UNCONNECTED;
-                return;
-            } else {
-                /* retry the connection */
-                peer->state = MCA_OOB_TCP_CONNECTING;
-                ORTE_ACTIVATE_TCP_CONN_STATE(mod, peer, mca_oob_tcp_peer_try_connect);
-                return;
-            }
-        }
-    }
-    
-    /* set socket up to be non-blocking */
-    if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "%s mca_oob_tcp_recv_connect: fcntl(F_GETFL) failed: %s (%d)",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-    } else {
-        flags |= O_NONBLOCK;
-        if (fcntl(sd, F_SETFL, flags) < 0) {
-            opal_output(0, "%s mca_oob_tcp_recv_connect: fcntl(F_SETFL) failed: %s (%d)",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-        }
-    }
-
-    /* is the peer instance willing to accept this connection */
-    peer->sd = sd;
-    if (mca_oob_tcp_peer_accept(mod, peer) == false) {
-        if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
-            opal_output(0, "%s-%s mca_oob_tcp_recv_connect: "
-                        "rejected connection from %s connection state %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)),
-                        ORTE_NAME_PRINT(&(hdr->origin)),
-                        peer->state);
-        }
-        CLOSE_THE_SOCKET(sd);
-        ui64 = (uint64_t*)(&peer->name);
-        opal_hash_table_set_value_uint64(&mod->peers, (*ui64), NULL);
-        OBJ_RELEASE(peer);
-    }
-}
-
-/*
  * Event callback when there is data available on the registered
  * socket to recv.  This is called for the listen sockets to accept an
  * incoming connection, on new sockets trying to complete the software
  * connection process, and for probes.  Data on an established
  * connection is handled elsewhere. 
  */
-static void recv_handler(int sd, short flags, void *cbdata)
+static void recv_handler(int sd, short flg, void *cbdata)
 {
     mca_oob_tcp_conn_op_t *op = (mca_oob_tcp_conn_op_t*)cbdata;
+    int flags;
+    uint64_t *ui64;
     mca_oob_tcp_hdr_t hdr;
-    int rc;
-    size_t cnt;
+    mca_oob_tcp_peer_t *peer;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s:tcp:recv:handler called",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    /* ensure all is zero'd */
-    memset(&hdr, 0, sizeof(hdr));
+    /* get the handshake */
+    if (ORTE_SUCCESS != mca_oob_tcp_peer_recv_connect_ack(op->mod, NULL, sd, &hdr)) {
+        goto cleanup;
+    }
 
-    /* recv the process identifier */
-    cnt = 0;
-    while (cnt < sizeof(hdr)) {
-        rc = recv(sd, (char *)&hdr, sizeof(hdr), 0);
-        if (0 == rc) {
+    /* finish processing ident */
+    if (MCA_OOB_TCP_IDENT == hdr.type) {
+        if (NULL == (peer = mca_oob_tcp_peer_lookup(op->mod, &hdr.origin))) {
+            /* should never happen */
+            mca_oob_tcp_peer_close(op->mod, peer);
+            goto cleanup;
+        }
+        /* set socket up to be non-blocking */
+        if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
+            opal_output(0, "%s mca_oob_tcp_recv_connect: fcntl(F_GETFL) failed: %s (%d)",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
+        } else {
+            flags |= O_NONBLOCK;
+            if (fcntl(sd, F_SETFL, flags) < 0) {
+                opal_output(0, "%s mca_oob_tcp_recv_connect: fcntl(F_SETFL) failed: %s (%d)",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
+            }
+        }
+        
+        /* is the peer instance willing to accept this connection */
+        peer->sd = sd;
+        if (mca_oob_tcp_peer_accept(op->mod, peer) == false) {
             if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
-                opal_output(0, "%s mca_oob_tcp_recv_handler: peer closed connection",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                opal_output(0, "%s-%s mca_oob_tcp_recv_connect: "
+                            "rejected connection from %s connection state %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&(peer->name)),
+                            ORTE_NAME_PRINT(&(hdr.origin)),
+                            peer->state);
             }
             CLOSE_THE_SOCKET(sd);
-            goto cleanup;
-        } else if (rc < 0) {
-            if (opal_socket_errno != EINTR && 
-                opal_socket_errno != EAGAIN && 
-                opal_socket_errno != EWOULDBLOCK) {
-                opal_output(0, "%s mca_oob_tcp_recv_handler: recv() failed: %s (%d)\n",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-                CLOSE_THE_SOCKET(sd);
-                goto cleanup;
-            }
-            continue;
+            ui64 = (uint64_t*)(&peer->name);
+            opal_hash_table_set_value_uint64(&op->mod->peers, (*ui64), NULL);
+            OBJ_RELEASE(peer);
         }
-        cnt += rc;
-    }
-    MCA_OOB_TCP_HDR_NTOH(&hdr);
-
-    /* dispatch based on message type */
-    switch (hdr.type) {
-    case MCA_OOB_TCP_PROBE:
-        recv_probe(sd, &hdr);
-        break;
-    case MCA_OOB_TCP_IDENT:
-        recv_connect(op->mod, sd, &hdr);
-        break;
-    default:
-        opal_output(0, "%s mca_oob_tcp_recv_handler: invalid message type: %d\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr.type);
-        CLOSE_THE_SOCKET(sd);
-        break;
     }
 
  cleanup:

@@ -132,8 +132,8 @@ static int tcp_component_open(void)
     if (ORTE_PROC_IS_HNP) {
         OBJ_CONSTRUCT(&mca_oob_tcp_component.listen_thread, opal_thread_t);
         mca_oob_tcp_component.listen_thread_active = false;
-        mca_oob_tcp_component.listen_thread_tv.tv_sec = 1;
-        mca_oob_tcp_component.listen_thread_tv.tv_usec = 0;
+        mca_oob_tcp_component.listen_thread_tv.tv_sec = 0;
+        mca_oob_tcp_component.listen_thread_tv.tv_usec = 300000;
     }
     mca_oob_tcp_component.addr_count = 0;
     OBJ_CONSTRUCT(&mca_oob_tcp_component.modules, opal_pointer_array_t);
