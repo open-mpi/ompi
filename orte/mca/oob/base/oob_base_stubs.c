@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -24,10 +24,6 @@
 
 #include "orte/mca/oob/base/base.h"
 
-OBJ_CLASS_INSTANCE(orte_oob_send_t, 
-                   opal_object_t, 
-                   NULL, NULL); 
-
 static void process_uri(char *uri);
 
 void orte_oob_base_send_nb(int fd, short args, void *cbdata)
@@ -46,22 +42,22 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "%s oob:base:send to target %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->peer));
+                        ORTE_NAME_PRINT(&msg->dst));
 
     /* check if we have this peer in our hash table */
-    memcpy(&ui64, (char*)&msg->peer, sizeof(uint64_t));
+    memcpy(&ui64, (char*)&msg->dst, sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
                                                          ui64, (void**)&pr) ||
         NULL == pr) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                             "%s oob:base:send unknown peer %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&msg->peer));
+                            ORTE_NAME_PRINT(&msg->dst));
         /* for direct launched procs, the URI might be in the database,
          * so check there next - if it is, the peer object will be added
          * to our hash table
          */
-	if (OPAL_SUCCESS == opal_db.fetch_pointer((opal_identifier_t*)&msg->peer, ORTE_DB_RMLURI,
+	if (OPAL_SUCCESS == opal_db.fetch_pointer((opal_identifier_t*)&msg->dst, ORTE_DB_RMLURI,
                                                   (void **)&rmluri, OPAL_STRING)) {
             process_uri(rmluri);
             free(rmluri);
@@ -84,7 +80,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
             OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
                 component = (mca_oob_base_component_t*)cli->cli_component;
                 if (NULL != component->is_reachable) {
-                    if (component->is_reachable(&msg->peer)) {
+                    if (component->is_reachable(&msg->dst)) {
                         /* there is a way to reach this peer - record it
                          * so we don't waste this time again
                          */
@@ -122,7 +118,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                             "%s oob:base:send known transport for peer %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&msg->peer));
+                            ORTE_NAME_PRINT(&msg->dst));
         if (ORTE_SUCCESS == (rc = pr->component->send_nb(msg))) {
             OBJ_RELEASE(cd);
             return;
@@ -167,7 +163,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
                             "%s oob:base:send no path to target %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&msg->peer));
+                            ORTE_NAME_PRINT(&msg->dst));
         msg->status = ORTE_ERR_NO_PATH_TO_TARGET;
         ORTE_RML_SEND_COMPLETE(msg);
     }
@@ -224,20 +220,22 @@ void orte_oob_base_get_addr(char **uri)
          * do NOT free it!
          */
         turi = component->get_addr();
-        /* check overall length for limits */
-        if (0 < orte_oob_base.max_uri_length &&
-            orte_oob_base.max_uri_length < (int)(len + strlen(turi))) {
-            /* cannot accept the payload */
-            continue;
+        if (NULL != turi) {
+            /* check overall length for limits */
+            if (0 < orte_oob_base.max_uri_length &&
+                orte_oob_base.max_uri_length < (int)(len + strlen(turi))) {
+                /* cannot accept the payload */
+                continue;
+            }
+            /* add new value to final one */
+            asprintf(&tmp, "%s;%s", final, turi);
+            free(turi);
+            free(final);
+            final = tmp;
+            len = strlen(final);
+            /* flag that at least one contributed */
+            one_added = true;
         }
-        /* add new value to final one */
-        asprintf(&tmp, "%s;%s", final, turi);
-        free(turi);
-        free(final);
-        final = tmp;
-        len = strlen(final);
-        /* flag that at least one contributed */
-        one_added = true;
     }
 
     if (!one_added) {
@@ -360,6 +358,10 @@ static void process_uri(char *uri)
                 /* this component found reachable addresses
                  * in the uris
                  */
+                opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                                    "%s: peer %s is reachable via component %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&peer), component->oob_base.mca_component_name);
                 opal_bitmap_set_bit(&pr->addressable, component->idx);
             }
         }
