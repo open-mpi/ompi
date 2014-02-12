@@ -19,22 +19,25 @@ AC_DEFUN([MCA_opal_sec_keystone_CONFIG], [
 	                        [], with_keystone=no)
 
     # do not build if support not requested
+    AC_MSG_CHECKING([want keystone security])
     AS_IF([test "$with_keystone" != "no"],
-          [AS_IF([test ! -z "$with_keystone" -a "$with_keystone" != "yes"],
+          [AC_MSG_RESULT([yes])
+           AS_IF([test ! -z "$with_keystone" -a "$with_keystone" != "yes"],
                  [opal_check_keystone_dir="$with_keystone"])
            OMPI_CHECK_PACKAGE([sec_keystone],
-                              [libkeystone.h],
-                              [keystone],
-                              [keystoneFN],
+                              [curl/curl.h],
+                              [curl],
+                              [curl_easy_init],
                               [],
-                              [$opal_check_keystone_dir],
+                              [],
                               [],
                               [$1],
                               [AC_MSG_WARN([KEYSTONE SUPPORT REQUESTED])
-                               AC_MSG_WARN([BUT REQUIRED LIBRARY OR HEADER NOT FOUND])
+                               AC_MSG_WARN([BUT REQUIRED CURL LIBRARY OR HEADER NOT FOUND])
                                AC_MSG_ERROR([CANNOT CONTINUE])
                                $2])],
-          [$2])
+          [AC_MSG_RESULT([no])
+           $2])
 
     AC_SUBST(sec_keystone_CPPFLAGS)
     AC_SUBST(sec_keystone_LDFLAGS)
