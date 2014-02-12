@@ -251,6 +251,8 @@ static void proc_errors(int fd, short args, void *cbdata)
         OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:orted lifeline lost - exiting",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* set our exit status */
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
         /* kill our children */
         killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
         /* terminate - our routed children will see
