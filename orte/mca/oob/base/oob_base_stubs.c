@@ -326,6 +326,10 @@ static void process_uri(char *uri)
      */
     if (peer.jobid == ORTE_PROC_MY_NAME->jobid &&
         peer.vpid == ORTE_PROC_MY_NAME->vpid) {
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s:set_addr peer %s is me",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&peer));
         return;
     }
 
@@ -341,7 +345,7 @@ static void process_uri(char *uri)
         if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers, ui64, (void*)pr))) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(uris);
-        return;
+            return;
         }
     }
 
@@ -353,6 +357,10 @@ static void process_uri(char *uri)
     rc = ORTE_ERR_UNREACH;
     OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
         component = (mca_oob_base_component_t*)cli->cli_component;
+        opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                            "%s:set_addr checking if peer %s is reachable via component %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&peer), component->oob_base.mca_component_name);
         if (NULL != component->set_addr) {
             if (ORTE_SUCCESS == component->set_addr(&peer, uris)) {
                 /* this component found reachable addresses

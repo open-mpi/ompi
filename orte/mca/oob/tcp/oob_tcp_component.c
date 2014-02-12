@@ -561,6 +561,10 @@ static bool component_available(void)
          */
 
         if (add_this_nic) {
+            opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                "%s oob:tcp:init creating module for %s address on interface %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                (AF_INET == my_ss.ss_family) ? "V4" : "V6", name);
             /* we want to support this interface, so create a module for it */
             if (ORTE_SUCCESS != (rc = mca_oob_tcp_create(kindex, name))) {
                 ORTE_ERROR_LOG(rc);
@@ -570,13 +574,27 @@ static bool component_available(void)
 
         /* add this address to our connections */
         if (AF_INET == my_ss.ss_family) {
+            opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                "%s oob:tcp:init adding %s to our list of %s connections",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                opal_net_get_hostname((struct sockaddr*) &my_ss),
+                                (AF_INET == my_ss.ss_family) ? "V4" : "V6");
             opal_argv_append_nosize(&mca_oob_tcp_component.ipv4conns, opal_net_get_hostname((struct sockaddr*) &my_ss));
         } else if (AF_INET6 == my_ss.ss_family) {
 #if OPAL_ENABLE_IPV6
+            opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                "%s oob:tcp:init adding %s to our list of %s connections",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                opal_net_get_hostname((struct sockaddr*) &my_ss),
+                                (AF_INET == my_ss.ss_family) ? "V4" : "V6");
             opal_argv_append_nosize(&mca_oob_tcp_component.ipv6conns, opal_net_get_hostname((struct sockaddr*) &my_ss));
 #endif
+        } else {
+            opal_output_verbose(10, orte_oob_base_framework.framework_output,
+                                "%s oob:tcp:init ignoring %s from out list of connections",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                opal_net_get_hostname((struct sockaddr*) &my_ss));
         }
-
     }
 
     /* cleanup */
@@ -849,23 +867,33 @@ static int component_set_addr(orte_process_name_t *peer,
 
         /* cycle across the provided addrs */
         for (j=0; NULL != addrs[j]; j++) {
+            /* if they gave us "localhost", then just take the first conn on our list */
+            if (0 == strcasecmp(addrs[j], "localhost")) {
+                host = mca_oob_tcp_component.ipv4conns[0];
+            } else {
+                host = addrs[j];
+            }
             /* lookup the kernel index of this address */
-            if (0 >= (k = opal_ifaddrtokindex(addrs[j]))) {
+            if (0 >= (k = opal_ifaddrtokindex(host))) {
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                     "%s UNFOUND KERNEL INDEX %d FOR ADDRESS %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, addrs[j]);
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
                 /* we don't have an interface on this subnet - ignore it */
                 continue;
             }
             if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                     "%s NO MODULE AT KINDEX %d FOR ADDRESS %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, addrs[j]);
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
                 continue;
             }
             /* record that this peer may be reachable via this module, but don't assign
              * the peer to this module until later when we actually connect
              */
+            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                "%s PEER %s MAY BE REACHABLE USING MODULE AT KINDEX %d INTERFACE %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(peer), k, mod->if_name);
             if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
                                                                  ui64, (void**)&pr) || NULL == pr) {
                 pr = OBJ_NEW(mca_oob_tcp_component_peer_t);
@@ -885,10 +913,10 @@ static int component_set_addr(orte_process_name_t *peer,
              */
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s PASSING ADDR %s TO INTERFACE %s AT KERNEL INDEX %d",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), addrs[j],
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host,
                                 mod->if_name, k);
             mod->api.set_peer((struct mca_oob_tcp_module_t*)mod,
-                              peer, af_family, addrs[j], ports);
+                              peer, af_family, host, ports);
             found = true;
         }
         if (NULL != addrs) {
