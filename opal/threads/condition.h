@@ -55,6 +55,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
 
 static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 {
+    int rc = 0;
     c->c_waiting++;
 
     if (opal_using_threads()) {
@@ -81,7 +82,7 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 
     c->c_signaled--;
     c->c_waiting--;
-    return 0;
+    return rc;
 }
 
 static inline int opal_condition_timedwait(opal_condition_t *c,

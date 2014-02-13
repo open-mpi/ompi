@@ -67,35 +67,9 @@ OPAL_DECLSPEC char *opal_os_path(bool relative, ...) __opal_attribute_malloc__ _
 
 /**
  * Convert the path to be OS friendly. On UNIX this function will
- * be empty, when on Windows it will convert all '/' to '\\' and
- * eventually remove the '/cygdrive/' from the beginning of the
- * path (if the configure was runned under Cygwin).
+ * be empty.
  */
-#if defined(__WINDOWS__)
-static inline char* opal_make_filename_os_friendly( char* filename )
-{
-    char* p = filename;
-    size_t length;
-    
-    if( NULL == filename )
-        return NULL;
-    
-    length = strlen(filename);
-    if( strncmp( filename, "/cygdrive/", 10 ) == 0 ) {
-        memmove( filename + 1, filename + 10, length - 10 );
-        filename[0] = filename[1];
-        filename[1] = ':';
-        filename[length - 10 + 1] = '\0';
-    }
-    for( ; *p != '\0'; p++ ) {
-        if( *p == '/' )
-            *p = '\\';
-    }
-    return filename;
-}
-#else
 #define opal_make_filename_os_friendly(PATH)   (PATH)
-#endif  /* defined(__WINDOWS__) */
 
 END_C_DECLS
 

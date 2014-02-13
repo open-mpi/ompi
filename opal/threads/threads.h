@@ -48,9 +48,7 @@ struct opal_thread_t {
     opal_object_t super;
     opal_thread_fn_t t_run;
     void* t_arg;
-#ifdef __WINDOWS__
-    HANDLE t_handle;
-#elif OPAL_HAVE_POSIX_THREADS
+#ifdef OPAL_HAVE_POSIX_THREADS
     pthread_t t_handle;
 #endif
 };

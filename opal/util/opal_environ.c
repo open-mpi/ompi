@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -30,11 +30,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/constants.h"
 
-#ifdef __WINDOWS__ 
-#define OPAL_DEFAULT_TMPDIR "C:\\TEMP" 
-#else 
 #define OPAL_DEFAULT_TMPDIR "/tmp" 
-#endif
 
 /*
  * Merge two environ-like char arrays, ensuring that there are no
@@ -206,11 +202,9 @@ int opal_unsetenv(const char *name, char ***env)
     for (i = 0; (*env)[i] != NULL; ++i) {
         if (0 != strncmp((*env)[i], compare, len))
             continue;
-#if !defined(__WINDOWS__)
         if (environ != *env) {
             free((*env)[i]);
         }
-#endif
         for (; (*env)[i] != NULL; ++i)
             (*env)[i] = (*env)[i + 1];
         found = true;
@@ -237,11 +231,6 @@ const char* opal_tmp_directory( void )
 const char* opal_home_directory( void )
 {
     char* home = getenv("HOME");
-
-#if defined(__WINDOWS__)
-    if( NULL == home )
-        home = getenv("USERPROFILE");
-#endif  /* defined(__WINDOWS__) */
 
     return home;
 }

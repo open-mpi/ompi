@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -29,24 +29,6 @@
 #if OMPI_ENABLE_THREAD_MULTIPLE
 bool opal_uses_threads = false;
 #endif
-
-#ifdef __WINDOWS__
-
-static void opal_mutex_construct(opal_mutex_t *m)
-{
-    InterlockedExchange(&m->m_lock, 0);
-#if !OPAL_ENABLE_MULTI_THREADS && OPAL_ENABLE_DEBUG
-    m->m_lock_debug = 0;
-    m->m_lock_file = NULL;
-    m->m_lock_line = 0;
-#endif  /* !OPAL_ENABLE_MULTI_THREADS && OPAL_ENABLE_DEBUG */
-}
-
-static void opal_mutex_destruct(opal_mutex_t *m)
-{
-}
-
-#else
 
 static void opal_mutex_construct(opal_mutex_t *m)
 {
@@ -92,8 +74,6 @@ static void opal_mutex_destruct(opal_mutex_t *m)
     pthread_mutex_destroy(&m->m_lock_pthread);
 #endif
 }
-
-#endif /* __WINDOWS__ */
 
 OBJ_CLASS_INSTANCE(opal_mutex_t,
                    opal_object_t,

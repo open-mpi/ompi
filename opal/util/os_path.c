@@ -59,9 +59,7 @@ char *opal_os_path(bool relative, ...)
     	    strcpy(path, ".");
             strcat(path, path_sep);
     	} else {
-#ifndef __WINDOWS__
     	    strcpy(path, path_sep);
-#endif
     	}
     	return(path);
     }
@@ -88,13 +86,9 @@ char *opal_os_path(bool relative, ...)
     }
 
     va_start(ap, relative);
-    /* Windows does not require to have the initial separator. */
     if( NULL != (element = va_arg(ap, char*)) ) {
     	if (path_sep[0] != element[0]) {
-#ifdef __WINDOWS__
-            if( relative )
-#endif  /* __WINDOWS__ */
-                strcat(path, path_sep);
+            strcat(path, path_sep);
         }
         strcat(path, element);
     }

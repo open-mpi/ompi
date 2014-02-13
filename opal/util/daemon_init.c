@@ -35,12 +35,6 @@
 int opal_daemon_init(char *working_dir)
 {
 #if defined(HAVE_FORK)
-#ifndef __WINDOWS__
-    /* it seems that there is an entirely different way to write daemons in 
-       WINDOWS land. Firstly, they are called services and the way to 
-       go about it is to get a service handle annd then call CreateService()
-       So, I am guessing that this piece of code is called only by UNIX versions */
-
     pid_t pid;
     int fd;
 
@@ -85,10 +79,6 @@ int opal_daemon_init(char *working_dir)
     }
 
     return OPAL_SUCCESS;
-#else
-    printf ("This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);
-    abort();
-#endif
 
 #else /* HAVE_FORK */
     return OPAL_ERR_NOT_SUPPORTED;

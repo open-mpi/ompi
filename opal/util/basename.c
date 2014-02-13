@@ -43,23 +43,13 @@ static inline char* opal_find_last_path_separator( const char* filename, size_t 
 
     /* First skip the latest separators */
     for ( ; p >= filename; p-- ) {
-#if defined(__WINDOWS__)
-        if( (*p != '\\') && (*p != '/') )
-            break;
-#else
         if( *p != OPAL_PATH_SEP[0] )
             break;
-#endif  /* defined(__WINDOWS__) */
     }
 
     for ( ; p >= filename; p-- ) {
-#if defined(__WINDOWS__)
-        if( (*p == '\\') || (*p == '/') )
-            return p;
-#else
         if( *p == OPAL_PATH_SEP[0] )
             return p;
-#endif  /* defined(__WINDOWS__) */
     }
 
     return NULL;  /* nothing found inside the filename */
@@ -81,22 +71,6 @@ char *opal_basename(const char *filename)
     if (sep == filename[0] && '\0' == filename[1]) {
         return strdup(filename);
     }
-
-    /* On Windows, automatically exclude the drive designator */
-
-#ifdef __WINDOWS__
-    if( isalpha(filename[0]) && (':' == filename[1]) ) {
-        if( strlen(filename) == 2 ) {
-            return strdup(filename);
-        } else if( strlen(filename) == 3 && (sep == filename[2]) ) {
-            return strdup(filename);
-        }
-        filename += 2;
-        if( sep == filename[0] ) {
-            ++filename;
-        }
-    }
-#endif
 
     /* Remove trailing sep's (note that we already know that strlen > 0) */
     tmp = strdup(filename);
