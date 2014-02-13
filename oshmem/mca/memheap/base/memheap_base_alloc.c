@@ -2,6 +2,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/stat.h>
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
 #include <infiniband/verbs.h>
@@ -222,7 +224,7 @@ static int _shm_attach(map_segment_t *s, size_t size, int use_hp, int do_rmid)
 
     shm_context = use_hp;
 
-    flags = IPC_CREAT | IPC_EXCL | SHM_R | SHM_W;
+    flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR;;
 #if defined (SHM_HUGETLB)
     flags |= (use_hp ? SHM_HUGETLB : 0);
 #endif
