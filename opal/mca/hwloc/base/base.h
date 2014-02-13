@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -250,7 +250,7 @@ OPAL_DECLSPEC int opal_hwloc_print(char **output, char *prefix,
  * Make a prettyprint string for a hwloc_cpuset_t (e.g., "socket
  * 2[core 3]").
  */
-int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset);
+OPAL_DECLSPEC int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset);
 
 /**
  * Make a prettyprint string for a cset in a map format.  
@@ -260,7 +260,10 @@ int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset);
  *        . - signifies PU a process not bound to
  *        B - signifies PU a process is bound to
  */
-int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset);
+OPAL_DECLSPEC int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset);
+
+/* get the hwloc object that corresponds to the given LOGICAL processor id */
+OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,  int lid);
 
 #endif
 

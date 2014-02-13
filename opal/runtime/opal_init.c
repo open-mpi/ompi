@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 #include "opal_config.h"
 
 #include "opal/util/malloc.h"
+#include "opal/util/arch.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/memoryhooks/memory.h"
@@ -224,6 +225,9 @@ opal_err2str(int errnum, const char **errmsg)
         break;
     case OPAL_ERR_DATA_VALUE_NOT_FOUND:
         retval = "Data for specified key not found";
+        break;
+    case OPAL_ERR_CONNECTION_FAILED:
+        retval = "Connection failed";
         break;
     case OPAL_ERR_AUTHENTICATION_FAILED:
         retval = "Authentication failed";
