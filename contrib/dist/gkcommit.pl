@@ -9,6 +9,13 @@
 
 use strict;
 
+use locale ':not_characters';
+# Respect the locale (LANG, LC_CTYPE, etc.) specified in the environment in
+# which this script is run when performing file input and output.  Necessary to
+# ensure proper transcoding when grabbing log messages from SVN and then
+# writing them back out again.
+use open ':locale';
+
 use Getopt::Long;
 use XML::Parser;
 use Data::Dumper;
