@@ -63,6 +63,7 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_AGGREGATOR    0x0080
 #define ORTE_PROC_IOF_ENDPT     0x1000
 #define ORTE_PROC_SCHEDULER     0x2000
+#define ORTE_PROC_MASTER        0x4000
 
 #define ORTE_PROC_IS_SINGLETON      (ORTE_PROC_SINGLETON & orte_process_info.proc_type)
 #define ORTE_PROC_IS_DAEMON         (ORTE_PROC_DAEMON & orte_process_info.proc_type)
@@ -75,6 +76,7 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_IS_AGGREGATOR     (ORTE_PROC_AGGREGATOR & orte_process_info.proc_type)
 #define ORTE_PROC_IS_IOF_ENDPT      (ORTE_PROC_IOF_ENDPT & orte_process_info.proc_type)
 #define ORTE_PROC_IS_SCHEDULER      (ORTE_PROC_SCHEDULER & orte_process_info.proc_type)
+#define ORTE_PROC_IS_MASTER         (ORTE_PROC_MASTER & orte_process_info.proc_type)
 
 
 /**
@@ -93,6 +95,7 @@ struct orte_proc_info_t {
     orte_process_name_t my_hnp;         /**< Name of my hnp */
     char *my_hnp_uri;                   /**< Contact info for my hnp */
     orte_process_name_t my_parent;      /**< Name of my parent (or my HNP if no parent was specified) */
+    orte_process_name_t my_scheduler;   /**< name of the scheduler for this system */
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
     orte_app_idx_t app_num;             /**< our index into the app_context array */
     orte_vpid_t num_procs;              /**< number of processes in this job */

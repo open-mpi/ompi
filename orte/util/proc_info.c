@@ -53,6 +53,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_hnp =                       */   ORTE_NAME_INVALID,
     /*  .my_hnp_uri =                   */   NULL,
     /*  .my_parent =                    */   ORTE_NAME_INVALID,
+    /*  .my_scheduler =                 */   ORTE_NAME_INVALID,
     /*  .hnp_pid =                      */   0,
     /*  .app_num =                      */   0,
     /*  .num_procs =                    */   1,

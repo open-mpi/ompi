@@ -98,6 +98,9 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in
 /* define the name of my daemon */
 #define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
 
+/* define the name of my scheduler */
+#define ORTE_PROC_MY_SCHEDULER  (&orte_process_info.my_scheduler)
+
 ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
 /* error manager callback function */
