@@ -192,7 +192,7 @@ static int create_listen(void)
             opal_argv_append_nosize(&ports, "0");
             orte_static_ports = false;
         }
-    } else if (ORTE_PROC_IS_HNP) {
+    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_SCHEDULER) {
         if (NULL != mca_oob_tcp_component.tcp_static_ports) {
             /* if static ports were provided, take the
              * first entry in the list
@@ -357,9 +357,9 @@ static int create_listen(void)
         opal_argv_append_nosize(&mca_oob_tcp_component.ipv4ports, tconn);
         free(tconn);
         if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
+            port = ntohs(((struct sockaddr_in*) &inaddr)->sin_port);
             opal_output(0, "%s assigned IPv4 port %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ((struct sockaddr_in*) &inaddr)->sin_port);
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), port);
         }
 
         if (!ORTE_PROC_IS_HNP) {
