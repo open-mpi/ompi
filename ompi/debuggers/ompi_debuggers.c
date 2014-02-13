@@ -168,7 +168,7 @@ ompi_debugger_setup_dlls(void)
     int i;
     char **dirs, **tmp1 = NULL, **tmp2 = NULL;
 
-    ompi_debugger_dll_path = opal_install_dirs.pkglibdir;
+    ompi_debugger_dll_path = opal_install_dirs.ompilibdir;
     (void) mca_base_var_register("ompi", "ompi", "debugger", "dll_path",
                                  "List of directories where MPI_INIT should search for debugger plugins",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,

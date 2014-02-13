@@ -270,7 +270,7 @@ int btl_openib_register_mca_params(void)
                   OMPI_HAVE_IBV_FORK_INIT ? -1 : 0, &mca_btl_openib_component.want_fork_support, 0));
 
     asprintf(&str, "%s/mca-btl-openib-device-params.ini",
-             opal_install_dirs.pkgdatadir);
+             opal_install_dirs.ompidatadir);
     if (NULL == str) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

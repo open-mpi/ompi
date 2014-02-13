@@ -413,7 +413,7 @@ data_init(const char *appname)
 
     /* now load the data */
     asprintf(&datafile, "%s%s%s-wrapper-data.txt", 
-             opal_install_dirs.pkgdatadir, OPAL_PATH_SEP, appname);
+             opal_install_dirs.ompidatadir, OPAL_PATH_SEP, appname);
     if (NULL == datafile) return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
     ret = opal_util_keyval_parse(datafile, data_callback);
