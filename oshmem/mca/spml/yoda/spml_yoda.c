@@ -601,13 +601,6 @@ int mca_spml_yoda_add_procs(oshmem_proc_t** procs, size_t nprocs)
         return rc;
     }
 
-    rc = mca_bml.bml_add_procs(nprocs, (ompi_proc_t**) procs, &reachable);
-
-    if (OSHMEM_SUCCESS != rc) {
-        SPML_ERROR("SPML YODA: shmem error\n");
-        goto cleanup_and_return;
-    }
-
     rc = mca_bml.bml_register_error(mca_spml_yoda_error_handler);
     if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
@@ -636,7 +629,6 @@ int mca_spml_yoda_del_procs(oshmem_proc_t** procs, size_t nprocs)
 {
     size_t i;
 
-    mca_bml.bml_del_procs(nprocs, (ompi_proc_t**) procs);
     for (i = 0; i < nprocs; i++) {
         destroy_btl_idx(i);
     }
