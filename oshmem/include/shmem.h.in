@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,16 +15,12 @@
 
 #include <stddef.h>     /* include for ptrdiff_t */
 
-#if defined(WIN32) || defined(_WIN32)
-#    define OSHMEM_COMPLEX_TYPE(type)
+#if defined(c_plusplus) || defined(__cplusplus)
+#    include <complex>
+#    define OSHMEM_COMPLEX_TYPE(type)    std::complex<type>
 #else
-#    if defined(c_plusplus) || defined(__cplusplus)
-#        include <complex>
-#        define OSHMEM_COMPLEX_TYPE(type)    std::complex<type>
-#    else
-#        include <complex.h>
-#        define OSHMEM_COMPLEX_TYPE(type)    type complex 
-#    endif
+#    include <complex.h>
+#    define OSHMEM_COMPLEX_TYPE(type)    type complex 
 #endif
 
 
@@ -35,18 +32,10 @@
 
 
 #ifndef OSHMEM_DECLSPEC
-#  if defined(WIN32) || defined(_WIN32)
-#    if defined(OSHMEM_IMPORTS)
-#      define OSHMEM_DECLSPEC        __declspec(dllimport)
-#    else
-#      define OSHMEM_DECLSPEC
-#    endif  /* defined(OSHMEM_IMPORTS) */
+#  if defined(OPAL_C_HAVE_VISIBILITY) && (OPAL_C_HAVE_VISIBILITY == 1)
+#     define OSHMEM_DECLSPEC __attribute__((visibility("default")))
 #  else
-#    if defined(OPAL_C_HAVE_VISIBILITY) && (OPAL_C_HAVE_VISIBILITY == 1)
-#       define OSHMEM_DECLSPEC __attribute__((visibility("default")))
-#    else
-#       define OSHMEM_DECLSPEC
-#    endif
+#     define OSHMEM_DECLSPEC
 #  endif
 #endif
 
