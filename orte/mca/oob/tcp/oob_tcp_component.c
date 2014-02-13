@@ -799,7 +799,7 @@ static int component_set_addr(orte_process_name_t *peer,
     mca_oob_tcp_component_peer_t *pr;
     uint16_t af_family = AF_UNSPEC;
     uint64_t ui64;
-    bool found;
+    bool found, assigned;
 
     memcpy(&ui64, (char*)peer, sizeof(uint64_t));
     /* cycle across component parts and see if one belongs to us */
@@ -866,10 +866,27 @@ static int component_set_addr(orte_process_name_t *peer,
 
 
         /* cycle across the provided addrs */
+        assigned = false;
         for (j=0; NULL != addrs[j]; j++) {
             /* if they gave us "localhost", then just take the first conn on our list */
             if (0 == strcasecmp(addrs[j], "localhost")) {
+#if OPAL_ENABLE_IPV6
+            if (AF_INET6 == af_family) {
+                if (NULL == mca_oob_tcp_component.ipv6conns ||
+                    NULL == mca_oob_tcp_component.ipv6conns[0]) {
+                    continue;
+                }
+                host = mca_oob_tcp_component.ipv6conns[0];
+            } else {
+#endif
+                if (NULL == mca_oob_tcp_component.ipv4conns ||
+                    NULL == mca_oob_tcp_component.ipv4conns[0]) {
+                    continue;
+                }
                 host = mca_oob_tcp_component.ipv4conns[0];
+#if OPAL_ENABLE_IPV6
+            }
+#endif
             } else {
                 host = addrs[j];
             }
@@ -892,6 +909,77 @@ static int component_set_addr(orte_process_name_t *peer,
              */
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s PEER %s MAY BE REACHABLE USING MODULE AT KINDEX %d INTERFACE %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(peer), k, mod->if_name);
+            if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
+                                                                 ui64, (void**)&pr) || NULL == pr) {
+                pr = OBJ_NEW(mca_oob_tcp_component_peer_t);
+                if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers,
+                                                                           ui64, (void*)pr))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+            opal_bitmap_set_bit(&pr->reachable, k);
+            /* pass this proc, and its ports, to the
+             * module for handling - this module will be responsible
+             * for communicating with the proc via this network.
+             * Note that the modules are *not* necessarily running
+             * on our event base - thus, the modules will push this
+             * call into their own event base for processing.
+             */
+            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                "%s PASSING ADDR %s TO INTERFACE %s AT KERNEL INDEX %d",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host,
+                                mod->if_name, k);
+            mod->api.set_peer((struct mca_oob_tcp_module_t*)mod,
+                              peer, af_family, host, ports);
+            found = true;
+            assigned = true;
+        }
+        /* if we cycled thru all their addresses without finding a match in our
+         * interfaces, then it remains possible that they have a routed system
+         * that can still route messages to the destination. So give it a chance
+         * to succeed by assigning our first module to try, and let the normal
+         * failure progression ultimately determine if we can reach this peer
+         */
+        if (!assigned) {
+#if OPAL_ENABLE_IPV6
+            if (AF_INET6 == af_family) {
+                if (NULL == mca_oob_tcp_component.ipv6conns ||
+                    NULL == mca_oob_tcp_component.ipv6conns[0]) {
+                    continue;
+                }
+                host = mca_oob_tcp_component.ipv6conns[0];
+            } else {
+#endif
+                if (NULL == mca_oob_tcp_component.ipv4conns ||
+                    NULL == mca_oob_tcp_component.ipv4conns[0]) {
+                    continue;
+                }
+                host = mca_oob_tcp_component.ipv4conns[0];
+#if OPAL_ENABLE_IPV6
+            }
+#endif
+            /* lookup the kernel index of this address */
+            if (0 >= (k = opal_ifaddrtokindex(host))) {
+                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s UNFOUND KERNEL INDEX %d FOR ADDRESS %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
+                /* we don't have an interface on this subnet - ignore it */
+                continue;
+            }
+            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
+                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s NO MODULE AT KINDEX %d FOR ADDRESS %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
+                continue;
+            }
+            /* record that this peer may be reachable via this module, but don't assign
+             * the peer to this module until later when we actually connect
+             */
+            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                "%s PEER %s MAY BE REACHABLE BY ROUTING - ASSIGNING MODULE AT KINDEX %d INTERFACE %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(peer), k, mod->if_name);
             if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
