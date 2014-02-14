@@ -91,7 +91,8 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, rml, "ORTE Run-Time Messaging Layer",
 
 int orte_rml_base_select(void)
 {
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
+    mca_base_component_list_item_t *cli;
 
     int selected_priority = -1;
     orte_rml_component_t *selected_component = NULL;
@@ -104,14 +105,9 @@ int orte_rml_base_select(void)
         return ORTE_SUCCESS;
     }
     selected = true;
-    
-    for (item = opal_list_get_first(&orte_rml_base_framework.framework_components);
-         item != opal_list_get_end(&orte_rml_base_framework.framework_components) ;
-         item = opal_list_get_next(item)) {
-        mca_base_component_list_item_t *cli;
+
+    OPAL_LIST_FOREACH(cli, &orte_rml_base_framework.framework_components, mca_base_component_list_item_t ) {
         orte_rml_component_t* component;
- 
-        cli = (mca_base_component_list_item_t *) item;
         component = (orte_rml_component_t *) cli->cli_component;
 
         opal_output_verbose(10, orte_rml_base_framework.framework_output, 
@@ -159,31 +155,21 @@ int orte_rml_base_select(void)
     /* 
      * Unload all components that were not selected
      */
-    item = opal_list_get_first(&orte_rml_base_framework.framework_components);
-    while (item != opal_list_get_end(&orte_rml_base_framework.framework_components)) {
-        opal_list_item_t* next = opal_list_get_next(item);
-        orte_rml_component_t* component;
-        mca_base_component_list_item_t *cli;
-
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_rml_component_t *) cli->cli_component;
+    OPAL_LIST_FOREACH_SAFE(item, next, &orte_rml_base_framework.framework_components, opal_list_item_t) {
+        mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) item;
+        orte_rml_component_t* component = (orte_rml_component_t *) cli->cli_component;
 
         /* Keep it if it is the wrapper component */
-        if (NULL != wrapper_component &&
-            component == wrapper_component) {
-            item = next;
+        if ((component == wrapper_component) || (component == selected_component)) {
             continue;
         }
         /* Not the selected component */
-        if (component != selected_component) {
-            opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                                "orte_rml_base_select: module %s unloaded",
-                                component->rml_version.mca_component_name);
-
-            mca_base_component_repository_release((mca_base_component_t *) component);
-            OBJ_RELEASE(item);
-        }
-        item = next;
+        opal_output_verbose(10, orte_rml_base_framework.framework_output,
+                            "orte_rml_base_select: module %s unloaded",
+                            component->rml_version.mca_component_name);
+        opal_list_remove_item(&orte_rml_base_framework.framework_components, item);
+        mca_base_component_repository_release((mca_base_component_t *) component);
+        OBJ_RELEASE(item);
     }
 
     /* setup reference to selected module */
