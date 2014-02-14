@@ -737,6 +737,7 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
                                        orte_mapping_policy_t mapping,
                                        char *spec)
 {
+    orte_mapping_policy_t map;
     orte_ranking_policy_t tmp;
     char **ck;
     size_t len;
@@ -749,24 +750,44 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
          * ranking to match if one was given
          */
         if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
-            if (ORTE_MAPPING_BYCORE == ORTE_GET_MAPPING_POLICY(mapping)) {
-                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_CORE);
-            } else if (ORTE_MAPPING_BYNODE == ORTE_GET_MAPPING_POLICY(mapping)) {
+            map = ORTE_GET_MAPPING_POLICY(mapping);
+            switch (map) {
+            case ORTE_MAPPING_BYSLOT:
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SLOT);
+                break;
+            case ORTE_MAPPING_BYNODE:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NODE);
-            } else if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(mapping)) {
+                break;
+#if OPAL_HAVE_HWLOC
+            case ORTE_MAPPING_BYCORE:
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_CORE);
+                break;
+            case ORTE_MAPPING_BYL1CACHE:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L1CACHE);
-            } else if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(mapping)) {
+                break;
+            case ORTE_MAPPING_BYL2CACHE:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L2CACHE);
-            } else if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(mapping)) {
+                break;
+            case ORTE_MAPPING_BYL3CACHE:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L3CACHE);
-            } else if (ORTE_MAPPING_BYSOCKET == ORTE_GET_MAPPING_POLICY(mapping)) {
+                break;
+            case ORTE_MAPPING_BYSOCKET:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SOCKET);
-            } else if (ORTE_MAPPING_BYNUMA == ORTE_GET_MAPPING_POLICY(mapping)) {
+                break;
+            case ORTE_MAPPING_BYNUMA:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NUMA);
-            } else if (ORTE_MAPPING_BYBOARD == ORTE_GET_MAPPING_POLICY(mapping)) {
+                break;
+            case ORTE_MAPPING_BYBOARD:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_BOARD);
-            } else if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(mapping)) {
+                break;
+            case ORTE_MAPPING_BYHWTHREAD:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_HWTHREAD);
+                break;
+#endif
+            default:
+                /* anything not tied to a specific hw obj can rank by slot */
+                ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SLOT);
+                break;
             }
         } else {
             /* if no map-by was given, default to by-slot */
