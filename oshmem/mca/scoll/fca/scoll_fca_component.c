@@ -13,6 +13,20 @@
 #include <dlfcn.h>
 #include <libgen.h>
 
+#include "oshmem_config.h"
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include "opal/mca/installdirs/installdirs.h"
+
+
 #include "scoll_fca.h"
 
 #include "opal/runtime/opal_progress.h"
@@ -158,6 +172,42 @@ static void mca_scoll_fca_close_fca_lib(void)
     opal_progress_unregister(mca_scoll_fca_mpi_progress_cb);
     fca_cleanup(mca_scoll_fca_component.fca_context);
     mca_scoll_fca_component.fca_context = NULL;
+    free(mca_scoll_fca_component.fca_spec_file);
+}
+
+static char *mca_scoll_fca_check_file(char *file)
+{
+    struct stat s;
+    int rc;
+
+    if (NULL == file) {
+        return NULL;
+    }
+
+    rc = stat(file, &s);
+    if (0 != rc || !S_ISREG(s.st_mode)) {
+        return NULL;
+    }
+
+    /* It exists and is a file -- good enough */
+    return file;
+
+
+}
+
+static char *mca_scoll_fca_get_spec_file(void)
+{
+    char *file;
+    asprintf(&file, "%s/etc/fca_mpi_spec.ini", COLL_FCA_HOME);
+    if (NULL == mca_scoll_fca_check_file(file)) {
+        free(file);
+        asprintf(&file, "%s/../fca/etc/fca_mpi_spec.ini", opal_install_dirs.prefix);
+        if (NULL == mca_scoll_fca_check_file(file)) {
+            free(file);
+            return NULL;
+        }
+    }
+    return file;
 }
 
 static int fca_register(void)
@@ -195,7 +245,7 @@ static int fca_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_scoll_fca_component.fca_enable);
 
-    mca_scoll_fca_component.fca_spec_file = ""COLL_FCA_HOME"/etc/fca_mpi_spec.ini";
+    mca_scoll_fca_component.fca_spec_file = mca_scoll_fca_get_spec_file();
     (void) mca_base_component_var_register(c,
                                            "spec_file",
                                            "Path to the FCA configuration file fca_mpi_spec.ini",
