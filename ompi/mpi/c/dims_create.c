@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -214,7 +215,6 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
 static int
 getfactors(int num, int *nfactors, int **factors) {
     int size;
-    int n;
     int d;
     int i;
     int sqrtnum;
@@ -225,7 +225,6 @@ getfactors(int num, int *nfactors, int **factors) {
         return MPI_SUCCESS;
     }
     /* Allocate the array of prime factors which cannot exceed log_2(num) entries */
-    n = num;
     sqrtnum = ceil(sqrt(num));
     size = ceil(log(num) / log(2));
     *factors = (int *) malloc((unsigned) size * sizeof(int));
