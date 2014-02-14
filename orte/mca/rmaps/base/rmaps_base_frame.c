@@ -749,23 +749,23 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
          * ranking to match if one was given
          */
         if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(mapping)) {
-            if (ORTE_MAPPING_BYCORE & ORTE_GET_MAPPING_POLICY(mapping)) {
+            if (ORTE_MAPPING_BYCORE == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_CORE);
-            } else if (ORTE_MAPPING_BYNODE & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYNODE == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NODE);
-            } else if (ORTE_MAPPING_BYL1CACHE & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L1CACHE);
-            } else if (ORTE_MAPPING_BYL2CACHE & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L2CACHE);
-            } else if (ORTE_MAPPING_BYL3CACHE & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_L3CACHE);
-            } else if (ORTE_MAPPING_BYSOCKET & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYSOCKET == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SOCKET);
-            } else if (ORTE_MAPPING_BYNUMA & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYNUMA == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NUMA);
-            } else if (ORTE_MAPPING_BYBOARD & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYBOARD == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_BOARD);
-            } else if (ORTE_MAPPING_BYHWTHREAD & ORTE_GET_MAPPING_POLICY(mapping)) {
+            } else if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(mapping)) {
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_HWTHREAD);
             }
         } else {
