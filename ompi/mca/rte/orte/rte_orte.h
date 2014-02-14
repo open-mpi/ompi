@@ -23,6 +23,8 @@
 #include "ompi/info/info.h"
 struct ompi_proc_t;
 
+#include "opal/threads/threads.h"
+
 #include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -122,8 +124,21 @@ typedef orte_rml_tag_t ompi_rml_tag_t;
 #define OMPI_RML_PERSISTENT      ORTE_RML_PERSISTENT
 #define OMPI_RML_NON_PERSISTENT  ORTE_RML_NON_PERSISTENT
 
-/* define a local variable shared between component and module */
-OMPI_MODULE_DECLSPEC extern bool ompi_rte_orte_direct_modex;
+typedef struct {
+    ompi_rte_component_t super;
+    bool direct_modex;
+    opal_mutex_t lock;
+    opal_list_t modx_reqs;
+} ompi_rte_orte_component_t;
+
+typedef struct {
+    opal_list_item_t super;
+    opal_mutex_t lock;
+    opal_condition_t cond;
+    bool active;
+    orte_process_name_t peer;
+} ompi_orte_tracker_t;
+OBJ_CLASS_DECLARATION(ompi_orte_tracker_t);
 
 END_C_DECLS
 
