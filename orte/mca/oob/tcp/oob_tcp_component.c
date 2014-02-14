@@ -871,21 +871,21 @@ static int component_set_addr(orte_process_name_t *peer,
             /* if they gave us "localhost", then just take the first conn on our list */
             if (0 == strcasecmp(addrs[j], "localhost")) {
 #if OPAL_ENABLE_IPV6
-            if (AF_INET6 == af_family) {
-                if (NULL == mca_oob_tcp_component.ipv6conns ||
-                    NULL == mca_oob_tcp_component.ipv6conns[0]) {
-                    continue;
-                }
-                host = mca_oob_tcp_component.ipv6conns[0];
-            } else {
+                if (AF_INET6 == af_family) {
+                    if (NULL == mca_oob_tcp_component.ipv6conns ||
+                        NULL == mca_oob_tcp_component.ipv6conns[0]) {
+                        continue;
+                    }
+                    host = mca_oob_tcp_component.ipv6conns[0];
+                } else {
 #endif
-                if (NULL == mca_oob_tcp_component.ipv4conns ||
-                    NULL == mca_oob_tcp_component.ipv4conns[0]) {
-                    continue;
-                }
-                host = mca_oob_tcp_component.ipv4conns[0];
+                    if (NULL == mca_oob_tcp_component.ipv4conns ||
+                        NULL == mca_oob_tcp_component.ipv4conns[0]) {
+                        continue;
+                    }
+                    host = mca_oob_tcp_component.ipv4conns[0];
 #if OPAL_ENABLE_IPV6
-            }
+                }
 #endif
             } else {
                 host = addrs[j];
