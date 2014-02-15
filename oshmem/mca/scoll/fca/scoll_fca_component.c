@@ -84,7 +84,6 @@ mca_scoll_fca_component_t mca_scoll_fca_component = {
 };
 
 #define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
-#define FCA_API_VER(__major,__minor) (__major<<FCA_MAJOR_BIT | __minor<<FCA_MINOR_BIT)
 
 /**
  *  * Called from FCA blocking functions to progress MPI

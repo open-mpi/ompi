@@ -61,19 +61,6 @@ enum {
 #define OSHMEM_THREADLEVEL_SERIALIZED_BF 0x00000004
 #define OSHMEM_THREADLEVEL_MULTIPLE_BF   0x00000008
 
-#define OSHMEM_THREADLEVEL_SET_BITFLAG(threadlevelin,threadlevelout) { \
-    if ( SHMEM_THREAD_SINGLE == threadlevelin ) {                 \
-        threadlevelout |= OSHMEM_THREADLEVEL_SINGLE_BF;           \
-    } else if ( SHMEM_THREAD_FUNNELED == threadlevelin ) {        \
-        threadlevelout |= OSHMEM_THREADLEVEL_FUNNELED_BF;         \
-    } else if ( SHMEM_THREAD_SERIALIZED == threadlevelin ) {      \
-        threadlevelout |= OSHMEM_THREADLEVEL_SERIALIZED_BF;       \
-    } else if ( SHMEM_THREAD_MULTIPLE == threadlevelin ) {       \
-        threadlevelout |= OSHMEM_THREADLEVEL_MULTIPLE_BF;         \
-    }}
-
-#define OSHMEM_THREADLEVEL_IS_MULTIPLE(threadlevel) (threadlevel & OSHMEM_THREADLEVEL_MULTIPLE_BF)
-
 /** In ompi_mpi_init: the lists of Fortran 90 mathing datatypes.
  * We need these lists and hashtables in order to satisfy the new
  * requirements introduced in MPI 2-1 Sect. 10.2.5, 

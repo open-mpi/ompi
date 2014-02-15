@@ -66,9 +66,6 @@ typedef int (SHMEM_Grequest_query_function)(void *, SHMEM_Status *);
 typedef int (SHMEM_Grequest_free_function)(void *);
 typedef int (SHMEM_Grequest_cancel_function)(void *, int);
 
-#define SHMEM_STATUS_IGNORE ((SHMEM_Status *) 0)
-#define SHMEM_STATUSES_IGNORE ((SHMEM_Status *) 0)
-
 #define SHMEM_REQUEST_NULL OSHMEM_PREDEFINED_GLOBAL(SHMEM_Request, oshmem_request_null)
 
 /*

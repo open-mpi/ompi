@@ -31,8 +31,6 @@
 #if OSHMEM_FCA_VERSION == 12
 
 #define OSHMEM_FCA_ALLGATHER          0
-#define FCA_API_ABI_MAJOR           1
-#define FCA_API_ABI_MINOR           2
 #define FCA_MAJOR_BIT               24ul
 #define FCA_MINOR_BIT               16ul
 #define EUSESHMEM                     287
