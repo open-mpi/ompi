@@ -41,7 +41,6 @@
 #endif
 
 #define MXM_SHMEM_MQ_ID 0x7119
-#define MXM_SHMEM_TAG   0x7
 
 /* start request explicit ack once our buffer pool is less than watermark */
 #define SPML_IKRIT_PUT_LOW_WATER    16

@@ -70,8 +70,6 @@ enum {
     OSHMEM_ERR_DATA_OVERWRITE_ATTEMPT     = ORTE_ERR_DATA_OVERWRITE_ATTEMPT
 };
 
-#define OSHMEM_ERR_MAX                    (OSHMEM_ERR_BASE - 1)
-
 
 /* C datatypes */
 /*
