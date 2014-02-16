@@ -111,7 +111,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
         0,   // reserve space for an assigned index
-        100, // default priority of this transport
+        30, // default priority of this transport
         component_available,
         component_startup,
         component_shutdown,
