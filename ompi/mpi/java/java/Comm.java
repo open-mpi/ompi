@@ -1613,8 +1613,10 @@ public final void scatterv(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatterv(sendbuf, sendoff, sendcount, displs, sendtype,
-             recvbuf, recvoff, recvcount, recvtype, root);
+    scatterv(handle, sendbuf, sendoff, sendcount, displs,
+             sendtype.handle, sendtype.baseType,
+             recvbuf, recvoff, recvcount,
+             recvtype.handle, recvtype.baseType, root);
 }
 
 /**
@@ -1642,8 +1644,9 @@ public final void scatterv(Object sendbuf, int[] sendcount, int[] displs,
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    scatterv(sendbuf, sendoff, sendcount, displs, sendtype,
-             null, 0, 0, null, root);
+    scatterv(handle, sendbuf, sendoff, sendcount, displs,
+             sendtype.handle, sendtype.baseType,
+             null, 0, 0, 0, 0, root);
 }
 
 /**
@@ -1670,15 +1673,16 @@ public final void scatterv(Object recvbuf, int recvcount,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatterv(null, 0, null, null, null,
-             recvbuf, recvoff, recvcount, recvtype, root);
+    scatterv(handle, null, 0, null, null, 0, 0,
+             recvbuf, recvoff, recvcount,
+             recvtype.handle, recvtype.baseType, root);
 }
 
 private native void scatterv(
-        Object sendbuf, int sendoffset,
-        int[] sendcount, int[] displs, Datatype sendtype,
-        Object recvbuf, int recvoffset, int recvcount,
-        Datatype recvtype, int root)
+        long comm, Object sendBuf, int sendOffset,
+        int[] sendCount, int[] displs, long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int recvCount,
+        long recvType, int recvBaseType, int root)
         throws MPIException;
 
 /**
@@ -1792,8 +1796,10 @@ public final void allGather(Object sendbuf, int sendcount, Datatype sendtype,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGather(sendbuf, sendoff, sendcount, sendtype,
-              recvbuf, recvoff, recvcount, recvtype);
+    allGather(handle, sendbuf, sendoff, sendcount,
+              sendtype.handle, sendtype.baseType,
+              recvbuf, recvoff, recvcount,
+              recvtype.handle, recvtype.baseType);
 }
 
 /**
@@ -1817,13 +1823,15 @@ public final void allGather(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    allGather(null, 0, 0, null, buf, off, count, type);
+    allGather(handle, null, 0, 0, 0, 0,
+              buf, off, count, type.handle, type.baseType);
 }
 
 private native void allGather(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype)
-        throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int recvCount,
+        long recvType, int recvBaseType) throws MPIException;
 
 /**
  * Similar to {@code gather}, but all processes receive the result.
@@ -1905,8 +1913,10 @@ public final void allGatherv(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGatherv(sendbuf, sendoff, sendcount, sendtype,
-               recvbuf, recvoff, recvcount, displs, recvtype);
+    allGatherv(handle, sendbuf, sendoff, sendcount,
+               sendtype.handle, sendtype.baseType,
+               recvbuf, recvoff, recvcount, displs,
+               recvtype.handle, recvtype.baseType);
 }
 
 /**
@@ -1932,13 +1942,15 @@ public final void allGatherv(Object recvbuf, int[] recvcount,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGatherv(null, 0, 0, null, recvbuf, recvoff, recvcount, displs, recvtype);
+    allGatherv(handle, null, 0, 0, 0, 0, recvbuf, recvoff, recvcount,
+               displs, recvtype.handle, recvtype.baseType);
 }
 
 private native void allGatherv(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int[] recvcount, int[] displs,
-        Datatype recvtype) throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int[] recvCount, int[] displs,
+        long recvType, int recvBasetype) throws MPIException;
 
 /**
  * Similar to {@code gatherv}, but all processes receive the result.
@@ -2026,14 +2038,17 @@ public final void allToAll(Object sendbuf, int sendcount, Datatype sendtype,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allToAll(sendbuf, sendoff, sendcount, sendtype,
-             recvbuf, recvoff, recvcount, recvtype);
+    allToAll(handle, sendbuf, sendoff, sendcount,
+             sendtype.handle, sendtype.baseType,
+             recvbuf, recvoff, recvcount,
+             recvtype.handle, recvtype.baseType);
 }
 
 private native void allToAll(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype)
-        throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int recvCount,
+        long recvType, int recvBaseType) throws MPIException;
 
 /**
  * Extension of {@code allGather} to the case where each process sends
@@ -2100,15 +2115,17 @@ public final void allToAllv(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allToAllv(sendbuf, sendoff, sendcount, sdispls, sendtype,
-              recvbuf, recvoff, recvcount, rdispls, recvtype);
+    allToAllv(handle, sendbuf, sendoff, sendcount, sdispls,
+              sendtype.handle, sendtype.baseType,
+              recvbuf, recvoff, recvcount, rdispls,
+              recvtype.handle, recvtype.baseType);
 }
 
 private native void allToAllv(
-        Object sendbuf, int sendoffset,
-        int[] sendcount, int[] sdispls, Datatype sendtype,
-        Object recvbuf, int recvoffset,
-        int[] recvcount, int[] rdispls, Datatype recvtype)
+        long comm, Object sendBuf, int sendOffset,
+        int[] sendCount, int[] sdispls, long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset,
+        int[] recvCount, int[] rdispls, long recvType, int recvBaseType)
         throws MPIException;
 
 /**
@@ -2186,7 +2203,8 @@ public final void reduce(Object sendbuf, Object recvbuf, int count,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduce(sendbuf, sendoff, recvbuf, recvoff, count, type, op, root);
+    reduce(handle, sendbuf, sendoff, recvbuf, recvoff, count,
+           type.handle, type.baseType, op, root);
 }
 
 /**
@@ -2215,12 +2233,14 @@ public final void reduce(Object buf, int count, Datatype type, Op op, int root)
         buf = ((Buffer)buf).array();
     }
 
-    reduce(null, 0, buf, off, count, type, op, root);
+    reduce(handle, null, 0, buf, off, count,
+           type.handle, type.baseType, op, root);
 }
 
 private native void reduce(
-        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
-        int count, Datatype type, Op op, int root) throws MPIException;
+        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int count, long type, int baseType, Op op, int root)
+        throws MPIException;
 
 /**
  * Combine elements in input buffer of each process using the reduce
@@ -2311,7 +2331,8 @@ public final void allReduce(Object sendbuf, Object recvbuf,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allReduce(sendbuf, sendoff, recvbuf, recvoff, count, type, op);
+    allReduce(handle, sendbuf, sendoff, recvbuf, recvoff, count,
+              type.handle, type.baseType, op);
 }
 
 /**
@@ -2338,12 +2359,12 @@ public final void allReduce(Object buf, int count, Datatype type, Op op)
         buf = ((Buffer)buf).array();
     }
 
-    allReduce(null, 0, buf, off, count, type, op);
+    allReduce(handle, null, 0, buf, off, count, type.handle, type.baseType, op);
 }
 
 private native void allReduce(
-        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
-        int count, Datatype type, Op op) throws MPIException;
+        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int count, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Same as {@code reduce} except that the result appears in receive
@@ -2430,7 +2451,8 @@ public final void reduceScatter(Object sendbuf, Object recvbuf,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduceScatter(sendbuf, sendoff, recvbuf, recvoff, recvcounts, type, op);
+    reduceScatter(handle, sendbuf, sendoff, recvbuf, recvoff, recvcounts,
+                  type.handle, type.baseType, op);
 }
 
 /**
@@ -2458,12 +2480,13 @@ public final void reduceScatter(Object buf, int[] counts, Datatype type, Op op)
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatter(null, 0, buf, off, counts, type, op);
+    reduceScatter(handle, null, 0, buf, off, counts,
+                  type.handle, type.baseType, op);
 }
 
 private native void reduceScatter(
-        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
-        int[] recvcounts, Datatype type, Op op) throws MPIException;
+        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int[] recvcounts, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Combine elements in input buffer of each process using the reduce
@@ -2551,7 +2574,8 @@ public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduceScatterBlock(sendbuf, sendoff, recvbuf, recvoff, recvcount, type, op);
+    reduceScatterBlock(handle, sendbuf, sendoff, recvbuf, recvoff, recvcount,
+                       type.handle, type.baseType, op);
 }
 
 /**
@@ -2578,12 +2602,13 @@ public final void reduceScatterBlock(
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatterBlock(null, 0, buf, off, count, type, op);
+    reduceScatterBlock(handle, null, 0, buf, off, count,
+                       type.handle, type.baseType, op);
 }
 
 private native void reduceScatterBlock(
-        Object sendbuf, int sendoffset, Object recvbuf, int recvoffset,
-        int recvcount, Datatype type, Op op) throws MPIException;
+        long comm, Object sendBuf, int sOffset, Object recvBuf, int rOffset,
+        int rCount, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Combine values and scatter the results.
@@ -2637,44 +2662,45 @@ private native long iReduceScatterBlock(
 
 /**
  * Apply the operation given by {@code op} element-wise to the
- * elements of {@code inbuf} and {@code inoutbuf} with the result
- * stored element-wise in {@code inoutbuf}.
+ * elements of {@code inBuf} and {@code inOutBuf} with the result
+ * stored element-wise in {@code inOutBuf}.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE_LOCAL}.
- * @param inbuf    input buffer array
- * @param inoutbuf input buffer array, will contain combined output
+ * @param inBuf    input buffer array
+ * @param inOutBuf input buffer array, will contain combined output
  * @param count    number of elements
  * @param type     data type of each item
  * @param op       reduce operation
  * @throws MPIException
  */
-public final void reduceLocal(Object inbuf, Object inoutbuf, int count,
-                              Datatype type, Op op)
+public static void reduceLocal(
+        Object inBuf, Object inOutBuf, int count, Datatype type, Op op)
     throws MPIException
 {
     MPI.check();
     op.setDatatype(type);
 
-    int inoff    = 0,
-        inoutoff = 0;
+    int inOff    = 0,
+        inOutOff = 0;
 
-    if(isHeapBuffer(inbuf))
+    if(isHeapBuffer(inBuf))
     {
-        inoff = ((Buffer)inbuf).arrayOffset();
-        inbuf = ((Buffer)inbuf).array();
+        inOff = ((Buffer)inBuf).arrayOffset();
+        inBuf = ((Buffer)inBuf).array();
     }
 
-    if(isHeapBuffer(inoutbuf))
+    if(isHeapBuffer(inOutBuf))
     {
-        inoutoff = ((Buffer)inoutbuf).arrayOffset();
-        inoutbuf = ((Buffer)inoutbuf).array();
+        inOutOff = ((Buffer)inOutBuf).arrayOffset();
+        inOutBuf = ((Buffer)inOutBuf).array();
     }
 
-    reduceLocal(inbuf, inoff, inoutbuf, inoutoff, count, type, op);
+    reduceLocal(inBuf, inOff, inOutBuf, inOutOff, count,
+                type.handle, type.baseType, op);
 }
 
-private native void reduceLocal(
-        Object inbuf, int inoff, Object inoutbuf, int inoutoff,
-        int count, Datatype datatype, Op op) throws MPIException;
+private static native void reduceLocal(
+        Object inBuf, int inOff, Object inOutBuf, int inOutOff,
+        int count, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Sets the print name for the communicator.
