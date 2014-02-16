@@ -276,10 +276,18 @@ static int component_send(orte_rml_send_t *msg)
     return ORTE_SUCCESS;
 }
 
+/* although we do not use the uri to determine a peer's
+ * address (since we know the path via the session directory),
+ * we have to provide something to the uri. This is needed
+ * as other places in ORTE use a NULL uri to indicate lack
+ * of a daemon. We may eventually remove that dependency,
+ * but for now, just ensure that the uri is never NULL,
+ * even if we are the only active OOB transport.
+ */
 static char* component_get_addr(void)
 {
     char *tmp;
-    tmp = strdup(mca_oob_usock_component.address.sun_path);
+    tmp = strdup("usock");
     return tmp;
 }
 
