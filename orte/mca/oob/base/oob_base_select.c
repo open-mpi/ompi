@@ -93,7 +93,7 @@ int orte_oob_base_select(void)
         added = false;
         OPAL_LIST_FOREACH(cmp, &orte_oob_base.actives, mca_base_component_list_item_t) {
             c3 = (mca_oob_base_component_t *) cmp->cli_component;
-            if (c3->priority < component->priority) {
+            if (c3->priority > component->priority) {
                 continue;
             }
             opal_output_verbose(5, orte_oob_base_framework.framework_output,
