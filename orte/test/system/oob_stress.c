@@ -67,20 +67,22 @@ main(int argc, char *argv[]){
 
             /* wait for it to come around */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
+            blob.active = true;
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, MY_TAG,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &blob);
-            ORTE_WAIT_FOR_COMPLETION(blob.waiting);
+            ORTE_WAIT_FOR_COMPLETION(blob.active);
             OBJ_DESTRUCT(&blob);
 
             opal_output(0, "%s Ring %d completed", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
         } else {
             /* wait for msg */
             OBJ_CONSTRUCT(&blob, orte_rml_recv_cb_t);
+            blob.active = true;
             orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, MY_TAG,
                                     ORTE_RML_NON_PERSISTENT,
                                     orte_rml_recv_callback, &blob);
-            ORTE_WAIT_FOR_COMPLETION(blob.waiting);
+            ORTE_WAIT_FOR_COMPLETION(blob.active);
 
             opal_output(0, "%s received message %d from %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j, ORTE_NAME_PRINT(&blob.name));
 
