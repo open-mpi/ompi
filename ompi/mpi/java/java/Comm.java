@@ -23,7 +23,6 @@
 package mpi;
 
 import java.nio.*;
-import static mpi.MPI.isHeapBuffer;
 import static mpi.MPI.assertDirectBuffer;
 
 /**
@@ -240,18 +239,19 @@ public final void send(Object buf, int count, Datatype type, int dest, int tag)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    send(handle, buf, off, count, type.handle, type.baseType, dest, tag);
+    send(handle, buf, db, off, count, type.handle, type.baseType, dest, tag);
 }
 
 private native void send(
-        long comm, Object buf, int offset, int count,
+        long comm, Object buf, boolean db, int offset, int count,
         long type, int baseType, int dest, int tag) throws MPIException;
 
 /**
@@ -271,20 +271,24 @@ public final Status recv(Object buf, int count,
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
     Status stat = new Status();
-    recv(handle, buf, off, count, type.handle, type.baseType, source, tag, stat);
+
+    recv(handle, buf, db, off, count,
+         type.handle, type.baseType, source, tag, stat);
+
     return stat;
 }
 
 private native void recv(
-        long comm, Object buf, int offset, int count,
+        long comm, Object buf, boolean db, int offset, int count,
         long type, int basetype, int source, int tag, Status stat)
         throws MPIException;
 
@@ -317,14 +321,17 @@ public final Status sendRecv(
 
     int sendoff = 0,
         recvoff = 0;
+    
+    boolean sdb = false,
+            rdb = false;
 
-    if(isHeapBuffer(sendbuf))
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
@@ -332,18 +339,18 @@ public final Status sendRecv(
 
     Status stat = new Status();
     
-    sendRecv(handle, sendbuf, sendoff, sendcount,
+    sendRecv(handle, sendbuf, sdb, sendoff, sendcount,
              sendtype.handle, sendtype.baseType, dest, sendtag,
-             recvbuf, recvoff, recvcount,
+             recvbuf, rdb, recvoff, recvcount,
              recvtype.handle, recvtype.baseType, source, recvtag, stat);
 
     return stat;
 }
 
 private native void sendRecv(
-        long comm, Object sbuf, int soffset, int scount,
+        long comm, Object sbuf, boolean sdb, int soffset, int scount,
         long sType, int sBaseType, int dest, int stag,
-        Object rbuf, int roffset, int rcount,
+        Object rbuf, boolean rdb, int roffset, int rcount,
         long rType, int rBaseType, int source, int rtag,
         Status stat) throws MPIException;
 
@@ -370,8 +377,9 @@ public final Status sendRecvReplace(
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
@@ -379,13 +387,13 @@ public final Status sendRecvReplace(
 
     Status stat = new Status();
 
-    sendRecvReplace(handle, buf, off, count, type.handle, type.baseType,
+    sendRecvReplace(handle, buf, db, off, count, type.handle, type.baseType,
                     dest, sendtag, source, recvtag, stat);
     return stat;
 }
 
 private native void sendRecvReplace(
-        long comm, Object buf, int offset, int count,
+        long comm, Object buf, boolean db, int offset, int count,
         long type, int baseType, int dest, int stag,
         int source, int rtag, Status stat) throws MPIException;
 
@@ -407,18 +415,19 @@ public final void bSend(Object buf, int count, Datatype type, int dest, int tag)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    bSend(handle, buf, off, count, type.handle, type.baseType, dest, tag);
+    bSend(handle, buf, db, off, count, type.handle, type.baseType, dest, tag);
 }
 
 private native void bSend(
-        long comm, Object buf, int offset, int count,
+        long comm, Object buf, boolean db, int offset, int count,
         long type, int baseType, int dest, int tag) throws MPIException;
 
 /**
@@ -437,18 +446,19 @@ public final void sSend(Object buf, int count, Datatype type, int dest, int tag)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    sSend(handle, buf, off, count, type.handle, type.baseType, dest, tag);
+    sSend(handle, buf, db, off, count, type.handle, type.baseType, dest, tag);
 }
 
 private native void sSend(
-        long comm, Object buf, int offset, int count,
+        long comm, Object buf, boolean db, int offset, int count,
         long type, int baseType, int dest, int tag) throws MPIException;
 
 /**
@@ -467,18 +477,19 @@ public final void rSend(Object buf, int count, Datatype type, int dest, int tag)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    rSend(handle, buf, off, count, type.handle, type.baseType, dest, tag);
+    rSend(handle, buf, db, off, count, type.handle, type.baseType, dest, tag);
 }
 
 private native void rSend(
-        long comm, Object buf, int offset, int count,
+        long comm, Object buf, boolean db, int offset, int count,
         long type, int baseType, int dest, int tag) throws MPIException;
 
 // Nonblocking communication
@@ -775,19 +786,20 @@ public final int pack(Object inbuf, int incount, Datatype type,
 {
     MPI.check();
     int offset = 0;
+    boolean indb = false;
 
-    if(isHeapBuffer(inbuf))
+    if(inbuf instanceof Buffer && !(indb = ((Buffer)inbuf).isDirect()))
     {
         offset = ((Buffer)inbuf).arrayOffset();
         inbuf  = ((Buffer)inbuf).array();
     }
 
-    return pack(handle, inbuf, offset, incount,
+    return pack(handle, inbuf, indb, offset, incount,
                 type.handle, type.baseType, outbuf, position);
 }
 
 private native int pack(
-        long comm, Object inbuf, int offset, int incount,
+        long comm, Object inbuf, boolean indb, int offset, int incount,
         long type, int baseType, byte[] outbuf, int position)
         throws MPIException;
 
@@ -813,19 +825,20 @@ public final int unpack(byte[] inbuf, int position,
 {
     MPI.check();
     int offset = 0;
+    boolean outdb = false;
 
-    if(isHeapBuffer(outbuf))
+    if(outbuf instanceof Buffer && !(outdb = ((Buffer)outbuf).isDirect()))
     {
         offset = ((Buffer)outbuf).arrayOffset();
         outbuf = ((Buffer)outbuf).array();
     }
 
-    return unpack(handle, inbuf, position, outbuf,
+    return unpack(handle, inbuf, position, outbuf, outdb,
                   offset, outcount, type.handle, type.baseType);
 }
 
 private native int unpack(
-        long comm, byte[] inbuf, int position, Object outbuf,
+        long comm, byte[] inbuf, int position, Object outbuf, boolean outdb,
         int offset, int outcount, long type, int baseType) throws MPIException;
 
 /**
@@ -1095,18 +1108,19 @@ public final void bcast(Object buf, int count, Datatype type, int root)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    bcast(handle, buf, off, count, type.handle, type.baseType, root);
+    bcast(handle, buf, db, off, count, type.handle, type.baseType, root);
 }
 
 private native void bcast(
-        long comm, Object buf, int offset, int count,
+        long comm, Object buf, boolean db, int offset, int count,
         long type, int basetype, int root) throws MPIException;
 
 /**
@@ -1154,21 +1168,24 @@ public final void gather(
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    gather(handle, sendbuf, sendoff, sendcount,
+    gather(handle, sendbuf, sdb, sendoff, sendcount,
            sendtype.handle, sendtype.baseType,
-           recvbuf, recvoff, recvcount,
+           recvbuf, rdb, recvoff, recvcount,
            recvtype.handle, recvtype.baseType, root);
 }
 
@@ -1189,21 +1206,22 @@ public final void gather(Object buf, int count, Datatype type, int root)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    gather(handle, null, 0, 0, 0, 0,
-           buf, off, count, type.handle, type.baseType, root);
+    gather(handle, null, false, 0, 0, 0, 0,
+           buf, db, off, count, type.handle, type.baseType, root);
 }
 
 private native void gather(
-        long comm, Object sendBuf, int sendOff, int sendCount,
+        long comm, Object sendBuf, boolean sdb, int sendOff, int sendCount,
         long sendType, int sendBaseType,
-        Object recvBuf, int recvOff, int recvCount,
+        Object recvBuf, boolean rdb, int recvOff, int recvCount,
         long recvType, int recvBaseType, int root)
         throws MPIException;
 
@@ -1283,22 +1301,25 @@ public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
 
     int sendoff = 0,
         recvoff = 0;
+    
+    boolean sdb = false,
+            rdb = false;
 
-    if(isHeapBuffer(sendbuf))
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    gatherv(handle, sendbuf, sendoff, sendcount,
+    gatherv(handle, sendbuf, sdb, sendoff, sendcount,
             sendtype.handle, sendtype.baseType,
-            recvbuf, recvoff, recvcount, displs,
+            recvbuf, rdb, recvoff, recvcount, displs,
             recvtype.handle, recvtype.baseType, root);
 }
 
@@ -1321,14 +1342,15 @@ public final void gatherv(Object recvbuf, int[] recvcount, int[] displs,
 {
     MPI.check();
     int recvoff = 0;
+    boolean rdb = false;
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    gatherv(handle, null, 0, 0, 0, 0, recvbuf, recvoff, recvcount,
+    gatherv(handle, null, false, 0, 0, 0, 0, recvbuf, rdb, recvoff, recvcount,
             displs, recvtype.handle, recvtype.baseType, root);
 }
 
@@ -1350,23 +1372,25 @@ public final void gatherv(Object sendbuf, int sendcount,
 {
     MPI.check();
     int sendoff = 0;
+    boolean sdb = false;
 
-    if(isHeapBuffer(sendbuf))
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    gatherv(handle, sendbuf, sendoff, sendcount,
+    gatherv(handle, sendbuf, sdb, sendoff, sendcount,
             sendtype.handle, sendtype.baseType,
-            null, 0, null, null, 0, 0, root);
+            null, false, 0, null, null, 0, 0, root);
 }
 
 private native void gatherv(
-        long comm, Object sendBuf, int sendOffset, int sendCount,
-        long sendType, int sendBaseType,
-        Object recvBuf, int recvOffset, int[] recvCount, int[] displs,
-        long recvType, int recvBaseType, int root) throws MPIException;
+        long comm, Object sendBuf, boolean sdb, int sendOffset,
+        int sendCount, long sendType, int sendBaseType,
+        Object recvBuf, boolean rdb, int recvOffset,
+        int[] recvCount, int[] displs, long recvType, int recvBaseType,
+        int root) throws MPIException;
 
 /**
  * Extends functionality of {@code gather} by allowing varying
@@ -1473,21 +1497,24 @@ public final void scatter(
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatter(handle, sendbuf, sendoff, sendcount,
+    scatter(handle, sendbuf, sdb, sendoff, sendcount,
             sendtype.handle, sendtype.baseType,
-            recvbuf, recvoff, recvcount,
+            recvbuf, rdb, recvoff, recvcount,
             recvtype.handle, recvtype.baseType, root);
 }
 
@@ -1508,21 +1535,22 @@ public final void scatter(Object buf, int count, Datatype type, int root)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    scatter(handle, buf, off, count, type.handle, type.baseType,
-            null, 0, 0, 0, 0, root);
+    scatter(handle, buf, db, off, count, type.handle, type.baseType,
+            null, false, 0, 0, 0, 0, root);
 }
 
 private native void scatter(
-        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long comm, Object sendBuf, boolean sdb, int sendOffset, int sendCount,
         long sendType, int sendBaseType,
-        Object recvBuf, int recvOffset, int recvCount,
+        Object recvBuf, boolean rdb, int recvOffset, int recvCount,
         long recvType, int recvBaseType, int root) throws MPIException;
 
 /**
@@ -1601,21 +1629,24 @@ public final void scatterv(
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatterv(handle, sendbuf, sendoff, sendcount, displs,
+    scatterv(handle, sendbuf, sdb, sendoff, sendcount, displs,
              sendtype.handle, sendtype.baseType,
-             recvbuf, recvoff, recvcount,
+             recvbuf, rdb, recvoff, recvcount,
              recvtype.handle, recvtype.baseType, root);
 }
 
@@ -1637,16 +1668,17 @@ public final void scatterv(Object sendbuf, int[] sendcount, int[] displs,
 {
     MPI.check();
     int sendoff = 0;
+    boolean sdb = false;
 
-    if(isHeapBuffer(sendbuf))
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    scatterv(handle, sendbuf, sendoff, sendcount, displs,
+    scatterv(handle, sendbuf, sdb, sendoff, sendcount, displs,
              sendtype.handle, sendtype.baseType,
-             null, 0, 0, 0, 0, root);
+             null, false, 0, 0, 0, 0, root);
 }
 
 /**
@@ -1666,22 +1698,23 @@ public final void scatterv(Object recvbuf, int recvcount,
 {
     MPI.check();
     int recvoff = 0;
+    boolean rdb = false;
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatterv(handle, null, 0, null, null, 0, 0,
-             recvbuf, recvoff, recvcount,
+    scatterv(handle, null, false, 0, null, null, 0, 0,
+             recvbuf, rdb, recvoff, recvcount,
              recvtype.handle, recvtype.baseType, root);
 }
 
 private native void scatterv(
-        long comm, Object sendBuf, int sendOffset,
+        long comm, Object sendBuf, boolean sdb, int sendOffset,
         int[] sendCount, int[] displs, long sendType, int sendBaseType,
-        Object recvBuf, int recvOffset, int recvCount,
+        Object recvBuf, boolean rdb, int recvOffset, int recvCount,
         long recvType, int recvBaseType, int root)
         throws MPIException;
 
@@ -1784,21 +1817,24 @@ public final void allGather(Object sendbuf, int sendcount, Datatype sendtype,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGather(handle, sendbuf, sendoff, sendcount,
+    allGather(handle, sendbuf, sdb, sendoff, sendcount,
               sendtype.handle, sendtype.baseType,
-              recvbuf, recvoff, recvcount,
+              recvbuf, rdb, recvoff, recvcount,
               recvtype.handle, recvtype.baseType);
 }
 
@@ -1816,21 +1852,22 @@ public final void allGather(Object buf, int count, Datatype type)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    allGather(handle, null, 0, 0, 0, 0,
-              buf, off, count, type.handle, type.baseType);
+    allGather(handle, null, false, 0, 0, 0, 0,
+              buf, db, off, count, type.handle, type.baseType);
 }
 
 private native void allGather(
-        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long comm, Object sendBuf, boolean sdb, int sendOffset, int sendCount,
         long sendType, int sendBaseType,
-        Object recvBuf, int recvOffset, int recvCount,
+        Object recvBuf, boolean rdb, int recvOffset, int recvCount,
         long recvType, int recvBaseType) throws MPIException;
 
 /**
@@ -1901,21 +1938,24 @@ public final void allGatherv(
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGatherv(handle, sendbuf, sendoff, sendcount,
+    allGatherv(handle, sendbuf, sdb, sendoff, sendcount,
                sendtype.handle, sendtype.baseType,
-               recvbuf, recvoff, recvcount, displs,
+               recvbuf, rdb, recvoff, recvcount, displs,
                recvtype.handle, recvtype.baseType);
 }
 
@@ -1935,22 +1975,24 @@ public final void allGatherv(Object recvbuf, int[] recvcount,
 {
     MPI.check();
     int recvoff = 0;
+    boolean rdb = false;
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGatherv(handle, null, 0, 0, 0, 0, recvbuf, recvoff, recvcount,
+    allGatherv(handle, null, false, 0, 0, 0, 0,
+               recvbuf, rdb, recvoff, recvcount,
                displs, recvtype.handle, recvtype.baseType);
 }
 
 private native void allGatherv(
-        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long comm, Object sendBuf, boolean sdb, int sendOffset, int sendCount,
         long sendType, int sendBaseType,
-        Object recvBuf, int recvOffset, int[] recvCount, int[] displs,
-        long recvType, int recvBasetype) throws MPIException;
+        Object recvBuf, boolean rdb, int recvOffset, int[] recvCount,
+        int[] displs, long recvType, int recvBasetype) throws MPIException;
 
 /**
  * Similar to {@code gatherv}, but all processes receive the result.
@@ -2026,28 +2068,31 @@ public final void allToAll(Object sendbuf, int sendcount, Datatype sendtype,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allToAll(handle, sendbuf, sendoff, sendcount,
+    allToAll(handle, sendbuf, sdb, sendoff, sendcount,
              sendtype.handle, sendtype.baseType,
-             recvbuf, recvoff, recvcount,
+             recvbuf, rdb, recvoff, recvcount,
              recvtype.handle, recvtype.baseType);
 }
 
 private native void allToAll(
-        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long comm, Object sendBuf, boolean sdb, int sendOffset, int sendCount,
         long sendType, int sendBaseType,
-        Object recvBuf, int recvOffset, int recvCount,
+        Object recvBuf, boolean rdb, int recvOffset, int recvCount,
         long recvType, int recvBaseType) throws MPIException;
 
 /**
@@ -2103,28 +2148,31 @@ public final void allToAllv(
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allToAllv(handle, sendbuf, sendoff, sendcount, sdispls,
+    allToAllv(handle, sendbuf, sdb, sendoff, sendcount, sdispls,
               sendtype.handle, sendtype.baseType,
-              recvbuf, recvoff, recvcount, rdispls,
+              recvbuf, rdb, recvoff, recvcount, rdispls,
               recvtype.handle, recvtype.baseType);
 }
 
 private native void allToAllv(
-        long comm, Object sendBuf, int sendOffset,
+        long comm, Object sendBuf, boolean sdb, int sendOffset,
         int[] sendCount, int[] sdispls, long sendType, int sendBaseType,
-        Object recvBuf, int recvOffset,
+        Object recvBuf, boolean rdb, int recvOffset,
         int[] recvCount, int[] rdispls, long recvType, int recvBaseType)
         throws MPIException;
 
@@ -2191,20 +2239,23 @@ public final void reduce(Object sendbuf, Object recvbuf, int count,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduce(handle, sendbuf, sendoff, recvbuf, recvoff, count,
-           type.handle, type.baseType, op, root);
+    reduce(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
+           count, type.handle, type.baseType, op, root);
 }
 
 /**
@@ -2226,19 +2277,21 @@ public final void reduce(Object buf, int count, Datatype type, Op op, int root)
     MPI.check();
     op.setDatatype(type);
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    reduce(handle, null, 0, buf, off, count,
+    reduce(handle, null, false, 0, buf, db, off, count,
            type.handle, type.baseType, op, root);
 }
 
 private native void reduce(
-        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        long comm, Object sendbuf, boolean sdb, int sendoff,
+        Object recvbuf, boolean rdb, int recvoff,
         int count, long type, int baseType, Op op, int root)
         throws MPIException;
 
@@ -2319,20 +2372,23 @@ public final void allReduce(Object sendbuf, Object recvbuf,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allReduce(handle, sendbuf, sendoff, recvbuf, recvoff, count,
-              type.handle, type.baseType, op);
+    allReduce(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
+              count, type.handle, type.baseType, op);
 }
 
 /**
@@ -2352,18 +2408,21 @@ public final void allReduce(Object buf, int count, Datatype type, Op op)
     MPI.check();
     op.setDatatype(type);
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    allReduce(handle, null, 0, buf, off, count, type.handle, type.baseType, op);
+    allReduce(handle, null, false, 0, buf, db, off,
+              count, type.handle, type.baseType, op);
 }
 
 private native void allReduce(
-        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        long comm, Object sendbuf, boolean sdb, int sendoff,
+        Object recvbuf, boolean rdb, int recvoff,
         int count, long type, int baseType, Op op) throws MPIException;
 
 /**
@@ -2439,20 +2498,23 @@ public final void reduceScatter(Object sendbuf, Object recvbuf,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduceScatter(handle, sendbuf, sendoff, recvbuf, recvoff, recvcounts,
-                  type.handle, type.baseType, op);
+    reduceScatter(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
+                  recvcounts, type.handle, type.baseType, op);
 }
 
 /**
@@ -2473,19 +2535,21 @@ public final void reduceScatter(Object buf, int[] counts, Datatype type, Op op)
     MPI.check();
     op.setDatatype(type);
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatter(handle, null, 0, buf, off, counts,
-                  type.handle, type.baseType, op);
+    reduceScatter(handle, null, false, 0, buf, db, off,
+                  counts, type.handle, type.baseType, op);
 }
 
 private native void reduceScatter(
-        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        long comm, Object sendbuf, boolean sdb, int sendoff,
+        Object recvbuf, boolean rdb, int recvoff,
         int[] recvcounts, long type, int baseType, Op op) throws MPIException;
 
 /**
@@ -2562,20 +2626,23 @@ public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduceScatterBlock(handle, sendbuf, sendoff, recvbuf, recvoff, recvcount,
-                       type.handle, type.baseType, op);
+    reduceScatterBlock(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
+                       recvcount, type.handle, type.baseType, op);
 }
 
 /**
@@ -2595,19 +2662,21 @@ public final void reduceScatterBlock(
     MPI.check();
     op.setDatatype(type);
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatterBlock(handle, null, 0, buf, off, count,
-                       type.handle, type.baseType, op);
+    reduceScatterBlock(handle, null, false, 0, buf, db, off,
+                       count, type.handle, type.baseType, op);
 }
 
 private native void reduceScatterBlock(
-        long comm, Object sendBuf, int sOffset, Object recvBuf, int rOffset,
+        long comm, Object sendBuf, boolean sdb, int sOffset,
+        Object recvBuf, boolean rdb, int rOffset,
         int rCount, long type, int baseType, Op op) throws MPIException;
 
 /**
@@ -2682,24 +2751,28 @@ public static void reduceLocal(
     int inOff    = 0,
         inOutOff = 0;
 
-    if(isHeapBuffer(inBuf))
+    boolean idb  = false,
+            iodb = false;
+
+    if(inBuf instanceof Buffer && !(idb = ((Buffer)inBuf).isDirect()))
     {
         inOff = ((Buffer)inBuf).arrayOffset();
         inBuf = ((Buffer)inBuf).array();
     }
 
-    if(isHeapBuffer(inOutBuf))
+    if(inOutBuf instanceof Buffer && !(iodb = ((Buffer)inOutBuf).isDirect()))
     {
         inOutOff = ((Buffer)inOutBuf).arrayOffset();
         inOutBuf = ((Buffer)inOutBuf).array();
     }
 
-    reduceLocal(inBuf, inOff, inOutBuf, inOutOff, count,
+    reduceLocal(inBuf, idb, inOff, inOutBuf, iodb, inOutOff, count,
                 type.handle, type.baseType, op);
 }
 
 private static native void reduceLocal(
-        Object inBuf, int inOff, Object inOutBuf, int inOutOff,
+        Object inBuf, boolean idb, int inOff,
+        Object inOutBuf, boolean iodb, int inOutOff,
         int count, long type, int baseType, Op op) throws MPIException;
 
 /**

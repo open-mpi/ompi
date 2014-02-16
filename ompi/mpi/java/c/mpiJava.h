@@ -60,13 +60,14 @@ extern ompi_java_globals_t ompi_java;
 void ompi_java_init_native_Datatype(JNIEnv *env);
 
 void* ompi_java_getBufPtr(
-        void** bufBase, JNIEnv *env, jobject buf, int baseType, int offset);
+        void** bufBase, JNIEnv *env,
+        jobject buf, jboolean db, int baseType, int offset);
 
 void ompi_java_releaseBufPtr(
-        JNIEnv *env, jobject buf, void* bufBase, int baseType);
+        JNIEnv *env, jobject buf, jboolean db, void* bufBase, int baseType);
 
 void ompi_java_releaseReadBufPtr(
-        JNIEnv *env, jobject buf, void *bufBase, int baseType);
+        JNIEnv *env, jobject buf, jboolean db, void *bufBase, int baseType);
 
 void* ompi_java_getDirectBufferAddress(JNIEnv *env, jobject buf);
 

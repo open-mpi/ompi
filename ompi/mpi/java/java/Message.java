@@ -91,21 +91,22 @@ public Status mRecv(Object buf, int count, Datatype type)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
     Status status = new Status();
-    mRecv(buf, off, count, type, status);
+    mRecv(buf, db, off, count, type, status);
     return status;
 }
 
 private native void mRecv(
-        Object buf, int offset, int count, Datatype type, Status status)
-        throws MPIException;
+        Object buf, boolean db, int offset, int count,
+        Datatype type, Status status) throws MPIException;
 
 /**
  * Java binding of {@code MPI_IMRECV}.
