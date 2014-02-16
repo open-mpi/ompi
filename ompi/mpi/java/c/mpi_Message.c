@@ -50,8 +50,8 @@ JNIEXPORT jobject JNICALL Java_mpi_Message_imProbe(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Message_mRecv(
-        JNIEnv *env, jobject jthis, jobject buf, jint offset, jint count,
-        jobject jType, jobject stat)
+        JNIEnv *env, jobject jthis, jobject buf, jboolean db,
+        jint offset, jint count, jobject jType, jobject stat)
 {
     MPI_Message msg = (MPI_Message)((*env)->GetLongField(
                       env, jthis, ompi_java.MessageHandle));
@@ -61,7 +61,7 @@ JNIEXPORT void JNICALL Java_mpi_Message_mRecv(
 
     int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, bType, offset);
+    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, bType, offset);
 
     MPI_Status status;
     int rc = MPI_Mrecv(bufPtr, count, type, &msg, &status);
@@ -72,7 +72,7 @@ JNIEXPORT void JNICALL Java_mpi_Message_mRecv(
         ompi_java_status_set(&status, env, stat);
     }
 
-    ompi_java_releaseBufPtr(env, buf, bufBase, bType);
+    ompi_java_releaseBufPtr(env, buf, db, bufBase, bType);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Message_imRecv(
