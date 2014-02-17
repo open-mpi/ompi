@@ -77,6 +77,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
              * it can reach it
              */
             reachable = false;
+            pr = NULL;
             OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
                 component = (mca_oob_base_component_t*)cli->cli_component;
                 if (NULL != component->is_reachable) {
@@ -84,13 +85,15 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                         /* there is a way to reach this peer - record it
                          * so we don't waste this time again
                          */
-                        pr = OBJ_NEW(orte_oob_base_peer_t);
-                        if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers, ui64, (void*)pr))) {
-                            ORTE_ERROR_LOG(rc);
-                            msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
-                            ORTE_RML_SEND_COMPLETE(msg);
-                            OBJ_RELEASE(cd);
-                            return;
+                        if (NULL == pr) {
+                            pr = OBJ_NEW(orte_oob_base_peer_t);
+                            if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers, ui64, (void*)pr))) {
+                                ORTE_ERROR_LOG(rc);
+                                msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                                ORTE_RML_SEND_COMPLETE(msg);
+                                OBJ_RELEASE(cd);
+                                return;
+                            }
                         }
                         /* mark that this component can reach the peer */
                         opal_bitmap_set_bit(&pr->addressable, component->idx);

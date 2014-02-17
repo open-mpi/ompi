@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -357,9 +357,9 @@ static int create_listen(void)
         opal_argv_append_nosize(&mca_oob_tcp_component.ipv4ports, tconn);
         free(tconn);
         if (OOB_TCP_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
+            port = ntohs(((struct sockaddr_in*) &inaddr)->sin_port);
             opal_output(0, "%s assigned IPv4 port %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ((struct sockaddr_in*) &inaddr)->sin_port);
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), port);
         }
 
         if (!ORTE_PROC_IS_HNP) {
