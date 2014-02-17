@@ -631,7 +631,9 @@ static void ft_event(struct mca_oob_tcp_module_t *mod, int state)
 
 #else
 static void ft_event(struct mca_oob_tcp_module_t *mod, int state) {
+#if 0
     opal_list_item_t *item;
+#endif
 
     if(OPAL_CRS_CHECKPOINT == state) {
 #if 0
