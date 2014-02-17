@@ -32,7 +32,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#define ILLEGAL_ORDER -1
 #include "oshmem/runtime/runtime.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
