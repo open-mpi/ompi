@@ -1,7 +1,6 @@
 package mpi;
 
 import java.nio.*;
-import static mpi.MPI.isHeapBuffer;
 import static mpi.MPI.assertDirectBuffer;
 
 /**
@@ -56,10 +55,12 @@ public boolean isNoProc()
 public Status mProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    return mProbe(source, tag, comm.handle);
+    Status status = new Status();
+    handle = mProbe(source, tag, comm.handle, status);
+    return status;
 }
 
-private native Status mProbe(int source, int tag, long comm)
+private native long mProbe(int source, int tag, long comm, Status status)
         throws MPIException;
 
 /**
@@ -100,13 +101,14 @@ public Status mRecv(Object buf, int count, Datatype type)
     }
 
     Status status = new Status();
-    mRecv(buf, db, off, count, type, status);
+    handle = mRecv(handle, buf, db, off, count,
+                   type.handle, type.baseType, status);
     return status;
 }
 
-private native void mRecv(
-        Object buf, boolean db, int offset, int count,
-        Datatype type, Status status) throws MPIException;
+private native long mRecv(
+        long message, Object buf, boolean db, int offset, int count,
+        long type, int baseType, Status status) throws MPIException;
 
 /**
  * Java binding of {@code MPI_IMRECV}.
@@ -121,10 +123,10 @@ public Request imRecv(Buffer buf, int count, Datatype type)
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(imRecv(buf, count, type.handle));
+    return new Request(imRecv(handle, buf, count, type.handle));
 }
 
-private native long imRecv(Object buf, int count, long type)
+private native long imRecv(long message, Object buf, int count, long type)
         throws MPIException;
 
 } // Message
