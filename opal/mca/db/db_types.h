@@ -27,6 +27,9 @@ BEGIN_C_DECLS
 #define OPAL_DB_LOCALITY    "opal.locality"
 #define OPAL_DB_CPUSET      "opal.cpuset"
 #define OPAL_DB_CREDENTIAL  "opal.cred"
+#define OPAL_DB_JOB_SDIR    "opal.job.session.dir"
+#define OPAL_DB_MY_SDIR     "opal.my.session.dir"
+#define OPAL_DB_LOCALRANK   "opal.local.rank"
 
 END_C_DECLS
 

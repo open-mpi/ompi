@@ -12,7 +12,7 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -240,6 +240,24 @@ int orte_ess_base_app_setup(bool db_restrict_local)
            proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
+
+        /* store the session directory location in the database */
+        if (OPAL_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                 OPAL_SCOPE_INTERNAL,
+                                                 OPAL_DB_JOB_SDIR,
+                                                 orte_process_info.job_session_dir, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            error = "store job session dir";
+            goto error;
+        }
+        if (OPAL_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                 OPAL_SCOPE_INTERNAL,
+                                                 OPAL_DB_MY_SDIR,
+                                                 orte_process_info.proc_session_dir, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            error = "store job session dir";
+            goto error;
+        }
     }
     
     /* setup the routed info  */
