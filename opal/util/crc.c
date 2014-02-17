@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +42,7 @@
 #elif (OPAL_ALIGNMENT_LONG == 4)
 #define _WORD_MASK_ 0x3
 #else
-#define _WORD_MASK 0xFFFF
+#define _WORD_MASK_ 0xFFFF
 #endif
 
 
