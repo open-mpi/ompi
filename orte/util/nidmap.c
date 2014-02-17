@@ -1014,7 +1014,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             }
             /* store the values in the database - again, these are for our own internal use */
             if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
-                                                    ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
+                                                    OPAL_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
