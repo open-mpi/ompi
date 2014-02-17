@@ -562,7 +562,9 @@ static void ft_event(int state)
 
 #else
 static void ft_event(int state) {
+#if 0
     opal_list_item_t *item;
+#endif
 
     if(OPAL_CRS_CHECKPOINT == state) {
 #if 0
