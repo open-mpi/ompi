@@ -737,6 +737,11 @@ ORTE_DECLSPEC extern opal_byte_object_t orte_pidmap;
 /* user debugger */
 ORTE_DECLSPEC extern char *orte_base_user_debugger;
 
+/* binding directives for daemons to restrict them
+ * to certain cores
+ */
+ORTE_DECLSPEC extern char *orte_daemon_cores;
+
 END_C_DECLS
 
 #endif /* ORTE_RUNTIME_ORTE_GLOBALS_H */
