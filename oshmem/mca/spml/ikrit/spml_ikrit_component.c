@@ -113,11 +113,6 @@ static int mca_spml_ikrit_component_register(void)
                                          "[string] TL channels for MXM",
                                          &mca_spml_ikrit.mxm_tls);
 
-    mca_spml_ikrit.n_relays =
-            mca_spml_ikrit_param_register_int("use_relays",
-                                              -1,
-                                              "[integer] First N ranks on host will receive and forward put messages to other ranks running on it. Can be used to as work around Sandy Bridge far socket problem");
-
     np = mca_spml_ikrit_param_register_int("np",
 #if MXM_API <= MXM_VERSION(2,0)
                                            128,

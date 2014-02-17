@@ -179,8 +179,6 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
                               void* src_addr,
                               int dst);
 
-static void mxm_setup_relays(oshmem_proc_t **procs, size_t nprocs);
-
 mca_spml_ikrit_t mca_spml_ikrit = {
     {
         /* Init mca_spml_base_module_t */
@@ -324,8 +322,6 @@ static void mxm_peer_construct(mxm_peer_t *p)
     p->pe = -1;
     p->n_active_puts = 0;
     p->need_fence = 0;
-    p->pe_relay = -1;
-    p->n_slaves = 0;
 }
 
 static void mxm_peer_destruct(mxm_peer_t *p)
@@ -503,8 +499,6 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         procs[i]->transport_ids[1] = MXM_PTL_RDMA;
         procs[i]->num_transports = 2;
     }
-
-    mxm_setup_relays(procs, nprocs);
 
     SPML_VERBOSE(50, "*** ADDED PROCS ***");
     return OSHMEM_SUCCESS;
@@ -1085,32 +1079,6 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     put_req->mxm_req.op.mem.remote_mkey = to_mxm_mkey(r_mkey);
 #endif
 
-    if (mca_spml_ikrit.mxm_peers[dst]->pe_relay >= 0
-            && mca_memheap_base_detect_addr_type(dst_addr)
-                    == ADDR_USER) {
-        put_req->mxm_req.op.am.hid = 0;
-        put_req->mxm_req.op.am.imm_data = dst;
-        put_req->pe = mca_spml_ikrit.mxm_peers[dst]->pe_relay;
-        put_req->mxm_req.base.conn =
-                mca_spml_ikrit.mxm_peers[put_req->pe]->mxm_conn;
-        put_req->mxm_req.opcode = MXM_REQ_OP_AM;
-
-        /* set up iov */
-        put_req->mxm_req.base.data_type = MXM_REQ_DATA_IOV;
-        put_req->mxm_req.base.data.iov.count = 2;
-        put_req->mxm_req.base.data.iov.vector = put_req->iov;
-
-        put_req->iov[0].ptr = &put_req->am_pkt.va;
-        put_req->iov[0].length = sizeof(uint64_t);
-        put_req->am_pkt.va = (uint64_t) rva;
-
-        put_req->iov[1].ptr = src_addr;
-        put_req->iov[1].length = size;
-
-        put_req->iov[0].memh = NULL;
-        put_req->iov[1].memh = NULL;
-    }
-
     OPAL_THREAD_ADD32(&mca_spml_ikrit.n_active_puts, 1);
     if (mca_spml_ikrit.mxm_peers[dst]->need_fence == 0) {
         opal_list_append(&mca_spml_ikrit.active_peers,
@@ -1294,118 +1262,6 @@ int mca_spml_ikrit_put(void* dst_addr, size_t size, void* src_addr, int dst)
     return OSHMEM_SUCCESS;
 }
 
-static void mxm_relay_handler(mxm_conn_h conn,
-                              mxm_imm_t imm,
-                              void *data,
-                              size_t len,
-                              size_t offset,
-                              int is_lf)
-{
-    void *va, *rva;
-    char *pkt_data;
-    mca_spml_mkey_t *r_mkey;
-    int ptl_id;
-    mxm_peer_t *peer;
-
-    if (offset == 0) {
-        va = data;
-        pkt_data = (char *) data + sizeof(va);
-        len -= sizeof(va);
-        if (!is_lf) {
-            /* we expect more fragments: save destination virtual address */
-            peer = mxm_conn_ctx_get(conn);
-            peer->dst_va = (uintptr_t) va;
-        }
-    } else {
-        /* next fragment: use saved va and offset to compute va */
-        pkt_data = data;
-        peer = mxm_conn_ctx_get(conn);
-        va = (void *)(peer->dst_va + offset - sizeof(va));
-    }
-
-    ptl_id = get_ptl_id(imm);
-    if (ptl_id != MXM_PTL_SHM) {
-        SPML_ERROR("relay req to non local PE recvd dst=%d va=%llx len=%d - aborting",
-                   (int)imm, (unsigned long long)va, (int)len);
-        oshmem_shmem_abort(-1);
-        return;
-    }
-
-    /* Get rkey of remote PE (dst proc) which must be on memheap  */
-    r_mkey = mca_memheap.memheap_get_cached_mkey(imm, va, ptl_id, &rva);
-    if (!r_mkey) {
-        SPML_ERROR("relay to PE=%d: %p is not address of shared variable",
-                   imm, (void *)va);
-        oshmem_shmem_abort(-1);
-        return;
-    }
-
-    memcpy((void *) (unsigned long) rva, pkt_data, len);
-}
-
-static void mxm_setup_relays(oshmem_proc_t **procs, size_t nprocs)
-{
-    size_t i;
-    opal_hash_table_t h;
-    int pe_relay;
-    int ret;
-    int r_i, r;
-
-    if (mca_spml_ikrit.n_relays <= 0)
-        return;
-
-    OBJ_CONSTRUCT(&h, opal_hash_table_t);
-    opal_hash_table_init(&h, 128);
-
-    /* lowest rank on node will be used to relay to everyone on that node */
-    for (i = 0; i < nprocs; i++) {
-        if (OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags))
-            continue;
-
-        ret = opal_hash_table_get_value_ptr(&h,
-                                            procs[i]->proc_hostname,
-                                            strlen(procs[i]->proc_hostname),
-                                            (void **) &pe_relay);
-        if (ret != OPAL_SUCCESS) {
-            opal_hash_table_set_value_ptr(&h,
-                                          procs[i]->proc_hostname,
-                                          strlen(procs[i]->proc_hostname),
-                                          (void *) i);
-            mca_spml_ikrit.mxm_peers[i]->n_relays = 1;
-            mca_spml_ikrit.mxm_peers[i]->pe_relays[0] = i;
-            continue;
-        }
-
-        /* first allocate relays */
-        if (mca_spml_ikrit.mxm_peers[pe_relay]->n_relays
-                < mca_spml_ikrit.n_relays) {
-            mca_spml_ikrit.mxm_peers[pe_relay]->pe_relays[mca_spml_ikrit.mxm_peers[pe_relay]->n_relays] =
-                    i;
-            mca_spml_ikrit.mxm_peers[pe_relay]->n_relays++;
-            continue;
-        }
-
-        /* now assign slave to relay */
-        r_i = mca_spml_ikrit.mxm_peers[pe_relay]->n_relays - 1;
-        while (r_i >= 0) {
-            r = mca_spml_ikrit.mxm_peers[pe_relay]->pe_relays[r_i];
-            if (mca_spml_ikrit.mxm_peers[r]->n_slaves >= 1) {
-                r_i--;
-                continue;
-            }
-            mca_spml_ikrit.mxm_peers[r]->n_slaves++;
-            mca_spml_ikrit.mxm_peers[i]->pe_relay = r;
-            break;
-
-        }
-    }
-
-    OBJ_DESTRUCT(&h);
-    mxm_set_am_handler(mca_spml_ikrit.mxm_context,
-                       0,
-                       mxm_relay_handler,
-                       MXM_AM_FLAG_THREAD_SAFE);
-}
 
 int mca_spml_ikrit_fence(void)
 {
