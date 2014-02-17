@@ -58,12 +58,6 @@ struct mxm_peer {
     int                 pe;
     int32_t             n_active_puts;
     int                 need_fence;
-    /* if >= 0, data will be send to pe_relay which will forward it to destination pe */
-    int                 pe_relay;   
-    uint64_t            dst_va; /* virtual address on the final destination */
-    int                 n_slaves;      
-    int                 pe_relays[16];
-    int                 n_relays;
 };
 
 typedef struct mxm_peer mxm_peer_t;

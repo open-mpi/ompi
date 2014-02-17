@@ -259,7 +259,7 @@ int oshmem_shmem_preconnect_all(void)
     int rc = OSHMEM_SUCCESS;
 
     (void) mca_base_var_register("oshmem",
-                                 "runtime",
+                                 "oshmem",
                                  NULL,
                                  "preconnect_all",
                                  "Whether to force SHMEM processes to fully "
