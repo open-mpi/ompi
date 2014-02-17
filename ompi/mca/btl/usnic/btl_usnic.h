@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,11 +49,11 @@ BEGIN_C_DECLS
  * when progression gets called.  It could be incremented by different amounts
  * at other times as needed or as tuning dictates.
  */
-extern uint64_t usnic_ticks;
+extern uint64_t ompi_btl_usnic_ticks;
 static inline uint64_t
 get_nsec(void)
 {
-    return usnic_ticks;
+    return ompi_btl_usnic_ticks;
 }
 
 #ifndef container_of
