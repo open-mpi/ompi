@@ -50,11 +50,14 @@ program ring_oshmem
         if (proc == 0) then
             message = message - 1
             write(*, '("Process 0 decremented value:", i2)') message
-        else
-            message = rbuf
         end if
 
         call shmem_put8(rbuf, message, 1, next)
+
+        if (proc > 0) then
+            message = message - 1
+        end if
+
     end do
 
 !     All done
