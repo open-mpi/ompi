@@ -418,7 +418,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
 
         SPML_VERBOSE(5,
                      "rank %d btl %s address 0x%p len %llu shmid 0x%X|0x%X",
-                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type), 
+                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type),
                      mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
     }
     OBJ_DESTRUCT(&convertor);
@@ -916,6 +916,15 @@ int mca_spml_yoda_enable(bool enable)
                             NULL );
 
     mca_spml_yoda.enabled = true;
+
+    /* The following line resolves the issue with BTL tcp and SPML yoda. In this case the
+     * atomic_basic_lock(root_rank) function may behave as DoS attack on root_rank, since
+     * all the procceses will do shmem_int_get from root_rank. These calls would go through
+     * bml active messaging and will trigger replays in libevent on root rank. If the flag
+     * OPAL_ENVLOOP_ONCE is not set then libevent will continously progress constantly
+     * incoming events thus causing root_rank to stuck in libevent loop.
+     */
+    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK | OPAL_EVLOOP_ONCE);
 
 #if OSHMEM_WAIT_COMPLETION_DEBUG == 1
     condition_dbg_init();
