@@ -98,6 +98,11 @@ void ompi_java_releaseBooleanArray(
 void ompi_java_forgetBooleanArray(
         JNIEnv *env, jbooleanArray array, jboolean *jptr, int *cptr);
 
+void ompi_java_getPtrArray(
+        JNIEnv *env, jlongArray array, jlong **jptr, void ***cptr);
+void ompi_java_releasePtrArray(
+        JNIEnv *env, jlongArray array, jlong *jptr, void **cptr);
+
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc);
 
 void*      ompi_java_attrSet(JNIEnv *env, jbyteArray jval);
