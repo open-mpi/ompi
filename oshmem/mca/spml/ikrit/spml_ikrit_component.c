@@ -158,19 +158,11 @@ static int mca_spml_ikrit_component_open(void)
 
     cur_ver = mxm_get_version();
     if (cur_ver != MXM_API) {
-        char *str;
-        if (asprintf(&str,
-                     "SHMEM was compiled with MXM version %d.%d but "
-                     "version %ld.%ld detected.",
-                     MXM_VERNO_MAJOR,
-                     MXM_VERNO_MINOR,
-                     (cur_ver >> MXM_MAJOR_BIT) & 0xff,
-                     (cur_ver >> MXM_MINOR_BIT) & 0xff) > 0) {
-            orte_show_help("help-shmem-spml-ikrit.txt", "mxm init", true, str);
-
-            free(str);
-        }
-        return OSHMEM_ERROR;
+            SPML_WARNING(
+                    "OSHMEM was compiled with MXM version %d.%d but version %ld.%ld detected.",
+                    MXM_VERNO_MAJOR, MXM_VERNO_MINOR,
+                    (cur_ver >> MXM_MAJOR_BIT) & 0xff,
+                    (cur_ver >> MXM_MINOR_BIT) & 0xff);
     }
 
 #if MXM_API < MXM_VERSION(2,1)

@@ -92,6 +92,10 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_spml_base_framework;
     oshmem_output_verbose(0, oshmem_spml_base_framework.framework_output, \
         "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
+#define SPML_WARNING(...) \
+    oshmem_output_verbose(0, oshmem_spml_base_framework.framework_output, \
+        "WARNING %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+
 END_C_DECLS
 
 #endif /* MCA_SPML_BASE_H */
