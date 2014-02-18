@@ -30,6 +30,7 @@ BEGIN_C_DECLS
 #define OPAL_DB_JOB_SDIR    "opal.job.session.dir"
 #define OPAL_DB_MY_SDIR     "opal.my.session.dir"
 #define OPAL_DB_LOCALRANK   "opal.local.rank"
+#define OPAL_DB_LOCALLDR    "opal.local.ldr"
 
 END_C_DECLS
 
