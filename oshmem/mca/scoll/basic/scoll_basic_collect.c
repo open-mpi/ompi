@@ -187,13 +187,13 @@ static int _algorithm_f_central_counter(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] Broadcast from the root #%d",
                       group->my_pe, PE_root);
-        rc = group->g_scoll.scoll_broadcast(group,
-                                            PE_root,
-                                            target,
-                                            target,
-                                            group->proc_count * nlong,
-                                            (pSync + 1),
-                                            SCOLL_DEFAULT_ALG);
+        rc = BCAST_FUNC(group,
+                    PE_root,
+                    target,
+                    target,
+                    group->proc_count * nlong,
+                    (pSync + 1),
+                    SCOLL_DEFAULT_ALG);
     }
 
     SCOLL_VERBOSE(15, "[#%d] pSync[0] = %ld", group->my_pe, pSync[0]);
@@ -297,13 +297,13 @@ static int _algorithm_f_tournament(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] Broadcast from the root #%d",
                       group->my_pe, PE_root);
-        rc = group->g_scoll.scoll_broadcast(group,
-                                            PE_root,
-                                            target,
-                                            target,
-                                            group->proc_count * nlong,
-                                            (pSync + 1),
-                                            SCOLL_DEFAULT_ALG);
+        rc = BCAST_FUNC(group,
+                PE_root,
+                target,
+                target,
+                group->proc_count * nlong,
+                (pSync + 1),
+                SCOLL_DEFAULT_ALG);
     }
 
     SCOLL_VERBOSE(15, "[#%d] pSync[0] = %ld", group->my_pe, pSync[0]);
@@ -612,13 +612,14 @@ static int _algorithm_central_collector(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] Broadcast from the root #%d",
                       group->my_pe, PE_root);
-        rc = group->g_scoll.scoll_broadcast(group,
-                                            PE_root,
-                                            target,
-                                            target,
-                                            offset,
-                                            (pSync + 1),
-                                            SCOLL_DEFAULT_ALG);
+
+        rc = BCAST_FUNC(group,
+                PE_root,
+                target,
+                target,
+                offset,
+                (pSync + 1),
+                SCOLL_DEFAULT_ALG);
     }
 
     return rc;
