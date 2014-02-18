@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -79,7 +79,7 @@
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 /* simulated clock */
-uint64_t usnic_ticks = 0;
+uint64_t ompi_btl_usnic_ticks = 0;
 static opal_event_t usnic_clock_timer_event;
 static bool usnic_clock_timer_event_set = false;
 static struct timeval usnic_clock_timeout;
@@ -439,7 +439,7 @@ static void
 usnic_clock_callback(int fd, short flags, void *timeout)
 {
     /* 1ms == 1,000,000 ns */
-    usnic_ticks += 1000000;
+    ompi_btl_usnic_ticks += 1000000;
 
     /* run progress to make sure time change gets noticed */
     usnic_component_progress();
@@ -936,7 +936,7 @@ static int usnic_component_progress(void)
     static bool fastpath_ok=true;
 
     /* update our simulated clock */
-    usnic_ticks += 5000;
+    ompi_btl_usnic_ticks += 5000;
 
     count = 0;
     if (fastpath_ok) {
@@ -1056,7 +1056,7 @@ static int usnic_component_progress_2(void)
     int c;
 
     /* update our simulated clock */
-    usnic_ticks += 5000;
+    ompi_btl_usnic_ticks += 5000;
 
     /* Poll for completions */
     for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
