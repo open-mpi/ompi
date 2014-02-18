@@ -99,16 +99,12 @@ static int ompi_mtl_mxm_component_open(void)
     opal_output_set_verbosity(mca_mtl_mxm_output, ompi_mtl_mxm.verbose);
     cur_ver = mxm_get_version();
     if (cur_ver != MXM_API) {
-        char *str;
-        if (asprintf(&str, "OMPI was compiled with MXM version %d.%d but "
-                "version %ld.%ld detected.", MXM_VERNO_MAJOR,
-                MXM_VERNO_MINOR, (cur_ver >> MXM_MAJOR_BIT)& 0xff,
-                (cur_ver >> MXM_MINOR_BIT) & 0xff)>0) {
-                    opal_show_help("help-mtl-mxm.txt", "mxm init", true, str);
-
-                    free(str);
-                }
-        return OMPI_ERR_NOT_AVAILABLE;
+        MXM_VERBOSE(1,
+                "WARNING: OMPI was compiled with MXM version %d.%d but version %ld.%ld detected.", 
+                MXM_VERNO_MAJOR,
+                MXM_VERNO_MINOR, 
+                (cur_ver >> MXM_MAJOR_BIT) & 0xff,
+                (cur_ver >> MXM_MINOR_BIT) & 0xff);
     }
 
 #if MXM_API >= MXM_VERSION(2,0)
