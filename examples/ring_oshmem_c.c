@@ -28,28 +28,28 @@ int main (int argc, char * argv[])
 
     if(proc == 0)
     {
-    	printf("Process 0 puts message %d to %d (%d processes in ring)\n", message, next, nproc);
+        printf("Process 0 puts message %d to %d (%d processes in ring)\n", message, next, nproc);
         shmem_int_put(&rbuf, &message, 1, next);
     }
 
     /* Pass the message around the ring.  The exit mechanism works as
        follows: the message (a positive integer) is passed around the
-	   ring.  Each time it passes PE 0, it is decremented.  When each
-	   processes receives a message containing a 0 value, it passes the
-	   message on to the next process and then quits.  By passing the 0
-	   message first, every process gets the 0 message and can quit
-	   normally. */
+       ring.  Each time it passes PE 0, it is decremented.  When each
+       processes receives a message containing a 0 value, it passes the
+       message on to the next process and then quits.  By passing the 0
+       message first, every process gets the 0 message and can quit
+       normally. */
 
     while(message > 0) {
         shmem_int_wait_until(&rbuf, SHMEM_CMP_EQ, message);
         if(proc == 0) {
-        	--message;
-        	printf("Process 0 decremented value: %d\n", message);
-        }
-        else {
-        	message = rbuf;
+            --message;
+            printf("Process 0 decremented value: %d\n", message);
         }
         shmem_int_put(&rbuf, &message, 1, next);
+        if(proc != 0) {
+            --message;
+        }
     }
 
     /* All done */
