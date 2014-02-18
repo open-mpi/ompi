@@ -151,9 +151,9 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
     /* Wait for operation completion to set needed size */
     if (rc == OSHMEM_SUCCESS) {
         SCOLL_VERBOSE(14, "[#%d] Wait for operation completion", group->my_pe);
-        rc = group->g_scoll.scoll_barrier(group,
-                                          (pSync + 1),
-                                          SCOLL_DEFAULT_ALG);
+        rc = BARRIER_FUNC(group,
+                (pSync + 1),
+                SCOLL_DEFAULT_ALG);
     }
 
     return rc;

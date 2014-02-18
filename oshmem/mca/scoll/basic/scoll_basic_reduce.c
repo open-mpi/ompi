@@ -231,13 +231,13 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] Broadcast from the root #%d",
                       group->my_pe, PE_root);
-        rc = group->g_scoll.scoll_broadcast(group,
-                                            PE_root,
-                                            target,
-                                            target,
-                                            nlong,
-                                            (pSync + 1),
-                                            SCOLL_DEFAULT_ALG);
+        rc = BCAST_FUNC(group,
+                PE_root,
+                target,
+                target,
+                nlong,
+                (pSync + 1),
+                SCOLL_DEFAULT_ALG);
     }
 
     return rc;
@@ -349,13 +349,13 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] Broadcast from the root #%d",
                       group->my_pe, PE_root);
-        rc = group->g_scoll.scoll_broadcast(group,
-                                            PE_root,
-                                            target,
-                                            target,
-                                            nlong,
-                                            (pSync + 1),
-                                            SCOLL_DEFAULT_ALG);
+        rc = BCAST_FUNC(group,
+                PE_root,
+                target,
+                target,
+                nlong,
+                (pSync + 1),
+                SCOLL_DEFAULT_ALG);
     }
 
     free(target_cur);
@@ -628,13 +628,13 @@ static int _algorithm_linear(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] Broadcast from the root #%d",
                       group->my_pe, root_pe);
-        rc = group->g_scoll.scoll_broadcast(group,
-                                            root_pe,
-                                            target,
-                                            target,
-                                            nlong,
-                                            (pSync + 1),
-                                            SCOLL_DEFAULT_ALG);
+        rc = BCAST_FUNC(group,
+                root_pe,
+                target,
+                target,
+                nlong,
+                (pSync + 1),
+                SCOLL_DEFAULT_ALG);
     }
 
     /* All done */
@@ -796,13 +796,13 @@ static int _algorithm_log(struct oshmem_group_t *group,
         SCOLL_VERBOSE(14,
                       "[#%d] Broadcast from the root #%d",
                       rank, root_pe);
-        rc = group->g_scoll.scoll_broadcast(group,
-                                            root_pe,
-                                            target,
-                                            target,
-                                            nlong,
-                                            (pSync + 1),
-                                            SCOLL_DEFAULT_ALG);
+        rc = BCAST_FUNC(group,
+                root_pe,
+                target,
+                target,
+                nlong,
+                (pSync + 1),
+                SCOLL_DEFAULT_ALG);
     }
 
     /* All done */

@@ -19,6 +19,17 @@
 
 BEGIN_C_DECLS
 
+/* These functions (BARRIER_FUNC, BCAST_FUNC)  may be called from any basic algorithm.
+ * In case of shmem, the implementation of broadcast doesn't require
+ * each process to know message size ( just root should know).
+ * It differs from other implementations, so it may cause problems if
+ * BCAST_FUNC is a callback to another implementation (e.g, fca, hcoll).
+ * So we replace a callback (group->g_scoll.scoll_[func])
+ * with a corresponding basic function. */
+
+#define BARRIER_FUNC mca_scoll_basic_barrier
+#define BCAST_FUNC mca_scoll_basic_broadcast
+
 /* Globally exported variables */
 
 OSHMEM_MODULE_DECLSPEC extern mca_scoll_base_component_1_0_0_t
