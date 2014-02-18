@@ -30,7 +30,7 @@ program ring_oshmem
 
     next = mod((proc + 1), nproc)
 
-    if (proc == 0) then
+    if (proc .eq. 0) then
         write(*, '("Process 0 sending ", i2, " to", i2, " (", i2, " processes in ring)")') message, next, nproc
         call shmem_put8(rbuf, message, 1, next)
         write(*, '("Process 0 sent to ", i2)') next
@@ -44,20 +44,19 @@ program ring_oshmem
 !   message first, every process gets the 0 message and can quit
 !   normally.
 
-    do while(message > 0)
+    do while (message .gt. 0)
         call shmem_int8_wait_until(rbuf, SHMEM_CMP_EQ, message)
 
-        if (proc == 0) then
+        if (proc .eq. 0) then
             message = message - 1
             write(*, '("Process 0 decremented value:", i2)') message
         end if
 
         call shmem_put8(rbuf, message, 1, next)
 
-        if (proc > 0) then
+        if (proc .gt. 0) then
             message = message - 1
         end if
-
     end do
 
 !     All done
