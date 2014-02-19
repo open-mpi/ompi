@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -137,7 +137,10 @@
 /* Whether we have long double _Complex  or not */
 #undef HAVE_LONG_DOUBLE__COMPLEX
 
-/* Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's */
+/* Type of MPI_Aint */
+#undef OMPI_MPI_AINT_TYPE
+
+/* Type of MPI_Offset */
 #undef OMPI_MPI_OFFSET_TYPE
 
 /* MPI datatype corresponding to MPI_Offset */
@@ -317,7 +320,7 @@ extern "C" {
  * Typedefs
  */
 
-typedef OPAL_PTRDIFF_TYPE MPI_Aint;
+typedef OMPI_MPI_AINT_TYPE MPI_Aint;
 typedef OMPI_MPI_OFFSET_TYPE MPI_Offset;
 typedef OMPI_MPI_COUNT_TYPE MPI_Count;
 typedef struct ompi_communicator_t *MPI_Comm;
