@@ -511,13 +511,13 @@ void ompi_java_forgetBooleanArray(JNIEnv *env, jbooleanArray array,
 
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
 {
-    if((*env)->ExceptionCheck(env))
-    {
-        return JNI_TRUE;
-    }
-    else if(MPI_SUCCESS == rc)
+    if(MPI_SUCCESS == rc)
     {
         return JNI_FALSE;
+    }
+    else if((*env)->ExceptionCheck(env))
+    {
+        return JNI_TRUE;
     }
     else
     {

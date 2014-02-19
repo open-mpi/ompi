@@ -359,66 +359,49 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_createIntercomm(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_send(
-        JNIEnv *env, jobject jthis, jobject buf, jint offset,
-        jint count, jobject jType, jint dest, jint tag)
+        JNIEnv *env, jobject jthis, jlong jComm, jobject buf, jint offset,
+        jint count, jlong jType, jint baseType, jint dest, jint tag)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
 
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
+
     int rc = MPI_Send(bufPtr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, bufBase, baseType);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_recv(
-        JNIEnv *env, jobject jthis,
-        jobject buf, jint offset, jint count, jobject jType,
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject buf, jint offset, jint count, jlong jType, jint baseType,
         jint source, jint tag, jobject jStatus)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env,
-                   jType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
 
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
 
     MPI_Status status;
     int rc = MPI_Recv(bufPtr, count, type, source, tag, comm, &status);
+
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, bufBase, baseType);
     ompi_java_status_set(&status, env, jStatus);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
-        JNIEnv *env, jobject jthis,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sBuf, jint sOffset, jint sCount,
-        jobject sjType, jint dest, jint sTag,
+        jlong sjType, jint sBaseType, jint dest, jint sTag,
         jobject rBuf, jint rOffset, jint rCount,
-        jobject rjType, jint source, jint rTag, jobject jStatus)
+        jlong rjType, jint rBaseType, jint source, jint rTag, jobject jStatus)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype sType = (MPI_Datatype)((*env)->GetLongField(
-                         env, sjType, ompi_java.DatatypeHandle));
-    MPI_Datatype rType = (MPI_Datatype)((*env)->GetLongField(
-                         env, rjType, ompi_java.DatatypeHandle));
-
-    int sBaseType = (*env)->GetIntField(env,
-                    sjType, ompi_java.DatatypeBaseType);
-    int rBaseType = (*env)->GetIntField(env,
-                    rjType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm  = (MPI_Comm)jComm;
+    MPI_Datatype sType = (MPI_Datatype)sjType;
+    MPI_Datatype rType = (MPI_Datatype)rjType;
 
     void *sBufPtr, *sBufBase,
          *rBufPtr, *rBufBase;
@@ -438,18 +421,12 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
-        JNIEnv *env, jobject jthis,
-        jobject buf, jint offset, jint count, jobject jType,
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject buf, jint offset, jint count, jlong jType, jint baseType,
         jint dest, jint sTag, jint source, jint rTag, jobject jStatus)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env,
-                   jType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
 
     MPI_Status status;
     void *bufPtr, *bufBase;
@@ -464,17 +441,11 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_bSend(
-        JNIEnv *env, jobject jthis, jobject buf, jint offset,
-        jint count, jobject jType, jint dest, jint tag)
+        JNIEnv *env, jobject jthis, jlong jComm, jobject buf, jint offset,
+        jint count, jlong jType, jint baseType, jint dest, jint tag)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env,
-                   jType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
 
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
@@ -485,18 +456,11 @@ JNIEXPORT void JNICALL Java_mpi_Comm_bSend(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sSend(
-                       JNIEnv *env, jobject jthis,
-                       jobject buf, jint offset, jint count,
-                       jobject jType, jint dest, jint tag)
+        JNIEnv *env, jobject jthis, jlong jComm, jobject buf, jint offset,
+        jint count, jlong jType, jint baseType, jint dest, jint tag)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env,
-                   jType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
 
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
@@ -507,18 +471,11 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sSend(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_rSend(
-                       JNIEnv *env, jobject jthis,
-                       jobject buf, jint offset, jint count,
-                       jobject jType, jint dest, jint tag)
+        JNIEnv *env, jobject jthis, jlong jComm, jobject buf, jint offset,
+        jint count, jlong jType, jint baseType, jint dest, jint tag)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env,
-                   jType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
 
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
@@ -669,17 +626,12 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_recvInit(
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_pack(
-        JNIEnv *env, jobject jthis, jobject inBuf, jint offset,
-        jint inCount, jobject jType, jbyteArray outBuf, jint position)
+        JNIEnv *env, jobject jthis, jlong jComm, jobject inBuf, jint offset,
+        jint inCount, jlong jType, jint bType, jbyteArray outBuf, jint position)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType   = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType),
-        outSize = (*env)->GetArrayLength(env,outBuf);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
+    int outSize = (*env)->GetArrayLength(env, outBuf);
 
     void *oBufPtr, *iBufPtr, *iBufBase;
     oBufPtr = (*env)->GetPrimitiveArrayCritical(env, outBuf, NULL);
@@ -700,17 +652,13 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_pack(
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_unpack(
-        JNIEnv *env, jobject jthis, jbyteArray inBuf, jint position,
-        jobject outBuf, jint offset, jint outCount, jobject jType)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jbyteArray inBuf, jint position, jobject outBuf,
+        jint offset, jint outCount, jlong jType, jint bType)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType  = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType),
-        inSize = (*env)->GetArrayLength(env, inBuf);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
+    int inSize = (*env)->GetArrayLength(env, inBuf);
 
     void *iBufPtr, *oBufPtr, *oBufBase;
     iBufPtr = (*env)->GetPrimitiveArrayCritical(env, inBuf, NULL);
@@ -878,20 +826,16 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iBarrier(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_bcast(
-        JNIEnv *env, jobject jthis, jobject buf, jint offset,
-        jint count, jobject type, jint root)
+        JNIEnv *env, jobject jthis, jlong jComm, jobject buf,
+        jint offset, jint count, jlong jType, jint baseType, jint root)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype mpiType = (MPI_Datatype)((*env)->GetLongField(
-                           env, type, ompi_java.DatatypeHandle));
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
 
     void *bufPtr, *bufBase;
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypeBaseType);
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, baseType, offset);
 
-    int rc = MPI_Bcast(bufPtr, count, mpiType, root, comm);
+    int rc = MPI_Bcast(bufPtr, count, type, root, comm);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, bufBase, baseType);
 }
@@ -911,13 +855,13 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iBcast(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_gather(
-        JNIEnv *env, jobject jthis,
-        jobject sendBuf, jint sOffset, jint sCount, jobject sJType,
-        jobject recvBuf, jint rOffset, jint rCount, jobject rJType,
-        jint root)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jint sCount,
+        jlong sjType, jint sBType,
+        jobject recvBuf, jint rOffset, jint rCount,
+        jlong rjType, jint rBType, jint root)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
+    MPI_Comm comm  = (MPI_Comm)jComm;
     int id;
     int rc = MPI_Comm_rank(comm, &id);
     int rootOrInter = id == root || isInter(env, comm);
@@ -927,27 +871,21 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
 
     void *sPtr, *sBase, *rPtr = NULL, *rBase;
     MPI_Datatype sType;
-    int sBType, rBType;
 
-    if(sJType == NULL)
+    if(sjType == 0)
     {
         assert(sendBuf == NULL);
-        sType  = MPI_DATATYPE_NULL;
-        sBType = 0;
-        sPtr   = MPI_IN_PLACE;
-        sBase  = NULL;
+        sType = MPI_DATATYPE_NULL;
+        sPtr  = MPI_IN_PLACE;
+        sBase = NULL;
     }
     else
     {
-        sType = (MPI_Datatype)((*env)->GetLongField(
-                env, sJType, ompi_java.DatatypeHandle));
-
-        sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType);
-        sPtr   = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
+        sType = (MPI_Datatype)sjType;
+        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
     }
 
-    MPI_Datatype rType = (MPI_Datatype)((*env)->GetLongField(
-                         env, rJType, ompi_java.DatatypeHandle));
+    MPI_Datatype rType = (MPI_Datatype)rjType;
 
     if(rootOrInter || sPtr == MPI_IN_PLACE)
     {
@@ -961,8 +899,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
          * in all processes, notwithstanding what the spec says.)
          */
 
-        rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
-        rPtr   = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
+        rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
 
         if(!rootOrInter)
         {
@@ -1049,13 +986,12 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_gatherv(
-        JNIEnv *env, jobject jthis,
-        jobject sendBuf, jint sOffset, jint sCount, jobject sJType,
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jint sCount, jlong sjType, jint sBType,
         jobject recvBuf, jint rOffset, jintArray rCounts,
-        jintArray displs, jobject rJType, jint root)
+        jintArray displs, jlong rjType, jint rBType, jint root)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
+    MPI_Comm comm = (MPI_Comm)jComm;
     int id;
     int rc = MPI_Comm_rank(comm, &id);
     int rootOrInter = id == root || isInter(env, comm);
@@ -1065,40 +1001,31 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gatherv(
 
     void *sPtr, *sBase, *rPtr = NULL, *rBase;
     MPI_Datatype sType;
-    int sBType;
 
-    if(sJType == NULL)
+    if(sjType == 0)
     {
         assert(sendBuf == NULL);
-        sType  = MPI_DATATYPE_NULL;
-        sBType = 0;
-        sPtr   = MPI_IN_PLACE;
-        sBase  = NULL;
+        sType = MPI_DATATYPE_NULL;
+        sPtr  = MPI_IN_PLACE;
+        sBase = NULL;
     }
     else
     {
-        sType = (MPI_Datatype)((*env)->GetLongField(
-                env, sJType, ompi_java.DatatypeHandle));
-
-        sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType);
-        sPtr   = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
+        sType = (MPI_Datatype)sjType;
+        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
     }
 
     jint *jRCounts = NULL, *jDispls = NULL;
     int  *cRCounts = NULL, *cDispls = NULL;
     MPI_Datatype rType = sType;
-    int rBType;
 
     if(rootOrInter)
     {
         ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
         ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
 
-        rType = (MPI_Datatype)((*env)->GetLongField(
-                env, rJType, ompi_java.DatatypeHandle));
-
-        rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
-        rPtr   = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
+        rType = (MPI_Datatype)rjType;
+        rPtr  = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
     }
 
     rc = MPI_Gatherv(sPtr, sCount, sType, rPtr, cRCounts,
@@ -1176,12 +1103,13 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGatherv(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
-        JNIEnv *env, jobject jthis,
-        jobject sendBuf, jint sOffset, jint sCount, jobject sJType,
-        jobject recvBuf, jint rOffset, jint rCount, jobject rJType, jint root)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jint sCount,
+        jlong sjType, jint sBType,
+        jobject recvBuf, jint rOffset, jint rCount,
+        jlong rjType, jint rBType, jint root)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
+    MPI_Comm comm = (MPI_Comm)jComm;
     int id;
     int rc = MPI_Comm_rank(comm, &id);
     int rootOrInter = id == root || isInter(env, comm);
@@ -1191,31 +1119,24 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
 
     void *sPtr = NULL, *sBase, *rPtr, *rBase;
     MPI_Datatype sType, rType;
-    int sBType, rBType;
 
-    if(rJType == NULL)
+    if(rjType == 0)
     {
         assert(recvBuf == NULL);
-        rType  = MPI_DATATYPE_NULL;
-        rPtr   = MPI_IN_PLACE;
-        rBType = 0;
+        rType = MPI_DATATYPE_NULL;
+        rPtr  = MPI_IN_PLACE;
     }
     else
     {
-        rType = (MPI_Datatype)((*env)->GetLongField(
-                env, rJType, ompi_java.DatatypeHandle));
-
-        rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
-        rPtr   = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
+        rType = (MPI_Datatype)rjType;
+        rPtr  = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
     }
 
-    sType = (MPI_Datatype)((*env)->GetLongField(
-            env, sJType, ompi_java.DatatypeHandle));
+    sType = (MPI_Datatype)sjType;
 
     if(rootOrInter || rPtr == MPI_IN_PLACE)
     {
-        sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType);
-        sPtr   = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
+        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
 
         if(!rootOrInter)
         {
@@ -1292,14 +1213,13 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatter(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
-        JNIEnv *env, jobject jthis,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jint sOffset, jintArray sCounts,
-        jintArray displs, jobject sJType,
-        jobject recvBuf, jint rOffset, jint rCount, jobject rJType,
-        jint root)
+        jintArray displs, jlong sjType, jint sBType,
+        jobject recvBuf, jint rOffset, jint rCount,
+        jlong rjType, jint rBType, jint root)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
+    MPI_Comm comm = (MPI_Comm)jComm;
     int id;
     int rc = MPI_Comm_rank(comm, &id);
     int rootOrInter = id == root || isInter(env, comm);
@@ -1309,40 +1229,31 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
 
     void *sPtr = NULL, *sBase, *rPtr, *rBase;
     MPI_Datatype rType;
-    int rBType;
 
-    if(rJType == NULL)
+    if(rjType == 0)
     {
         assert(recvBuf == NULL);
-        rType  = MPI_DATATYPE_NULL;
-        rBType = 0;
-        rPtr   = MPI_IN_PLACE;
-        rBase  = NULL;
+        rType = MPI_DATATYPE_NULL;
+        rPtr  = MPI_IN_PLACE;
+        rBase = NULL;
     }
     else
     {
-        rType = (MPI_Datatype)((*env)->GetLongField(
-                env, rJType, ompi_java.DatatypeHandle));
-
-        rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
-        rPtr   = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
+        rType = (MPI_Datatype)rjType;
+        rPtr  = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
     }
 
     jint *jSCounts = NULL, *jDispls = NULL;
     int  *cSCounts = NULL, *cDispls = NULL;
     MPI_Datatype sType = rType;
-    int sBType;
 
     if(rootOrInter)
     {
         ompi_java_getIntArray(env, sCounts, &jSCounts, &cSCounts);
         ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
 
-        sType = (MPI_Datatype)((*env)->GetLongField(
-                env, sJType, ompi_java.DatatypeHandle));
-
-        sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType);
-        sPtr   = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
+        sType = (MPI_Datatype)sjType;
+        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
     }
 
     rc = MPI_Scatterv(sPtr, cSCounts, cDispls, sType,
@@ -1419,41 +1330,28 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatterv(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allGather(
-        JNIEnv *env, jobject jthis,
-        jobject sendBuf, jint sOffset, jint sCount, jobject sendtype,
-        jobject recvBuf, jint rOffset, jint rCount, jobject recvtype)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jint sCount, jlong sjType, jint sBType,
+        jobject recvBuf, jint rOffset, jint rCount, jlong rjType, jint rBType)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-    int sBType;
+    MPI_Comm comm = (MPI_Comm)jComm;
     MPI_Datatype sType;
     void *sPtr, *sBase, *rPtr, *rBase;
 
-    if(sendtype == NULL)
+    if(sjType == 0)
     {
         assert(sendBuf == NULL);
-        sType  = MPI_DATATYPE_NULL;
-        sBType = 0;
-        sPtr   = MPI_IN_PLACE;
-        sBase  = NULL;
+        sType = MPI_DATATYPE_NULL;
+        sPtr  = MPI_IN_PLACE;
+        sBase = NULL;
     }
     else
     {
-        sType = (MPI_Datatype)((*env)->GetLongField(
-                env, sendtype, ompi_java.DatatypeHandle));
-
-        sBType = (*env)->GetIntField(env,
-                 sendtype, ompi_java.DatatypeBaseType);
-
-        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
+        sType = (MPI_Datatype)sjType;
+        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
     }
 
-    MPI_Datatype rType = (MPI_Datatype)((*env)->GetLongField(
-                         env, recvtype, ompi_java.DatatypeHandle));
-
-    int rBType = (*env)->GetIntField(env,
-                 recvtype, ompi_java.DatatypeBaseType);
-
+    MPI_Datatype rType = (MPI_Datatype)rjType;
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
     int rc = MPI_Allgather(sPtr, sCount, sType, rPtr, rCount, rType, comm);
     ompi_java_exceptionCheck(env, rc);
@@ -1494,40 +1392,29 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGather(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allGatherv(
-        JNIEnv *env, jobject jthis,
-        jobject sendBuf, jint sOffset, jint sCount, jobject sJType,
-        jobject recvBuf, jint rOffset, jintArray rCounts,
-        jintArray displs, jobject rJType)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jint sCount, jlong sjType, jint sBType,
+        jobject recvBuf, jint rOffset, jintArray rCounts, jintArray displs,
+        jlong rjType, jint rBType)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
+    MPI_Comm comm = (MPI_Comm)jComm;
     void *sPtr, *sBase, *rPtr, *rBase;
     MPI_Datatype sType;
-    int sBType;
 
-    if(sJType == NULL)
+    if(sjType == 0)
     {
         assert(sendBuf == NULL);
-        sType  = MPI_DATATYPE_NULL;
-        sBType = 0;
-        sPtr   = MPI_IN_PLACE;
-        sBase  = NULL;
+        sType = MPI_DATATYPE_NULL;
+        sPtr  = MPI_IN_PLACE;
+        sBase = NULL;
     }
     else
     {
-        sType = (MPI_Datatype)((*env)->GetLongField(
-                env, sJType, ompi_java.DatatypeHandle));
-
-        sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType);
-        sPtr   = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
+        sType = (MPI_Datatype)sjType;
+        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sBType, sOffset);
     }
 
-    MPI_Datatype rType = (MPI_Datatype)((*env)->GetLongField(
-                         env, rJType, ompi_java.DatatypeHandle));
-
-    int rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
-
+    MPI_Datatype rType = (MPI_Datatype)rjType;
     jint *jRCounts, *jDispls;
     int  *cRCounts, *cDispls;
     ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
@@ -1585,20 +1472,13 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGatherv(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allToAll(
-        JNIEnv *env, jobject jthis,
-        jobject sendBuf, jint sOffset, jint sCount, jobject sJType,
-        jobject recvBuf, jint rOffset, jint rCount, jobject rJType)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jint sCount, jlong sjType, jint sBType,
+        jobject recvBuf, jint rOffset, jint rCount, jlong rjType, jint rBType)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype sType = (MPI_Datatype)((*env)->GetLongField(
-                         env, sJType, ompi_java.DatatypeHandle));
-    MPI_Datatype rType = (MPI_Datatype)((*env)->GetLongField(
-                         env, rJType, ompi_java.DatatypeHandle));
-
-    int sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType);
-    int rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm  = (MPI_Comm)jComm;
+    MPI_Datatype sType = (MPI_Datatype)sjType;
+    MPI_Datatype rType = (MPI_Datatype)rjType;
 
     void *sPtr, *sBase, *rPtr, *rBase;
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rBType, rOffset);
@@ -1630,22 +1510,15 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAll(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allToAllv(
-        JNIEnv *env, jobject jthis,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jint sOffset, jintArray sCount,
-        jintArray sDispls, jobject sJType,
+        jintArray sDispls, jlong sjType, jint sBType,
         jobject recvBuf, jint rOffset, jintArray rCount,
-        jintArray rDispls, jobject rJType)
+        jintArray rDispls, jlong rjType, jint rBType)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype sType = (MPI_Datatype)((*env)->GetLongField(
-                         env, sJType, ompi_java.DatatypeHandle));
-    MPI_Datatype rType = (MPI_Datatype)((*env)->GetLongField(
-                         env, rJType, ompi_java.DatatypeHandle));
-
-    int sBType = (*env)->GetIntField(env, sJType, ompi_java.DatatypeBaseType),
-        rBType = (*env)->GetIntField(env, rJType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm  = (MPI_Comm)jComm;
+    MPI_Datatype sType = (MPI_Datatype)sjType;
+    MPI_Datatype rType = (MPI_Datatype)rjType;
 
     jint *jSCount, *jRCount, *jSDispls, *jRDispls;
     int  *cSCount, *cRCount, *cSDispls, *cRDispls;
@@ -1701,12 +1574,11 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllv(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_reduce(
-        JNIEnv *env, jobject jthis, jobject sendBuf, jint sOffset,
-        jobject recvBuf, jint rOffset, jint count, jobject type,
-        jobject op, jint root)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jobject recvBuf, jint rOffset,
+        jint count, jlong jType, jint baseType, jobject op, jint root)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
+    MPI_Comm comm = (MPI_Comm)jComm;
     int id;
     int rc = MPI_Comm_rank(comm, &id);
     int rootOrInter = id == root || isInter(env, comm);
@@ -1714,10 +1586,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduce(
     if(ompi_java_exceptionCheck(env, rc))
         return;
 
-    MPI_Datatype mpiType = (MPI_Datatype)((*env)->GetLongField(
-                           env, type, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypeBaseType);
+    MPI_Datatype type = (MPI_Datatype)jType;
     void *sPtr, *sBase, *rPtr = NULL, *rBase;
 
     if(sendBuf == NULL)
@@ -1741,7 +1610,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduce(
     }
 
     MPI_Op mpiOp = ompi_java_op_getHandle(env, op, baseType);
-    rc = MPI_Reduce(sPtr, rPtr, count, mpiType, mpiOp, root, comm);
+    rc = MPI_Reduce(sPtr, rPtr, count, type, mpiOp, root, comm);
     ompi_java_exceptionCheck(env, rc);
 
     if(sendBuf != NULL)
@@ -1796,18 +1665,12 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduce(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allReduce(
-                       JNIEnv *env, jobject jthis,
-                       jobject sendBuf, jint sendOffset,
-                       jobject recvBuf, jint recvOffset,
-                       jint count, jobject type, jobject op)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sendOffset, jobject recvBuf, jint recvOffset,
+        jint count, jlong jType, jint baseType, jobject op)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype mpiType = (MPI_Datatype)((*env)->GetLongField(
-                           env, type, ompi_java.DatatypeHandle));
-
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
     void *sPtr, *sBase, *rPtr, *rBase;
 
     if(sendBuf == NULL)
@@ -1817,7 +1680,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allReduce(
 
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, baseType, recvOffset);
     MPI_Op mpiOp = ompi_java_op_getHandle(env, op, baseType);
-    int rc = MPI_Allreduce(sPtr, rPtr, count, mpiType, mpiOp, comm);
+    int rc = MPI_Allreduce(sPtr, rPtr, count, type, mpiOp, comm);
     ompi_java_exceptionCheck(env, rc);
 
     ompi_java_releaseBufPtr(env, recvBuf, rBase, baseType);
@@ -1850,17 +1713,12 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllReduce(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatter(
-        JNIEnv *env, jobject jthis, jobject sendBuf, jint sOffset,
-        jobject recvBuf, jint rOffset, jintArray rCounts,
-        jobject jType, jobject op)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jobject recvBuf, jint rOffset,
+        jintArray rCounts, jlong jType, jint bType, jobject op)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
     void *sPtr, *sBase, *rPtr, *rBase;
 
     if(sendBuf == NULL)
@@ -1914,16 +1772,12 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatter(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatterBlock(
-        JNIEnv *env, jobject jthis, jobject sendBuf, jint sOffset,
-        jobject recvBuf, jint rOffset, jint count, jobject jType, jobject op)
+        JNIEnv *env, jobject jthis, jlong jComm,
+        jobject sendBuf, jint sOffset, jobject recvBuf, jint rOffset,
+        jint count, jlong jType, jint bType, jobject op)
 {
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
+    MPI_Comm     comm = (MPI_Comm)jComm;
+    MPI_Datatype type = (MPI_Datatype)jType;
     void *sPtr, *sBase, *rPtr, *rBase;
 
     if(sendBuf == NULL)
@@ -1966,23 +1820,21 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatterBlock(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_reduceLocal(
-        JNIEnv *env, jobject jthis, jobject inbuf, jint inoff,
-        jobject inoutbuf, jint inoutoff, jint count, jobject type, jobject op)
+        JNIEnv *env, jclass clazz, jobject inBuf, jint inOff,
+        jobject inOutBuf, jint inOutOff, jint count,
+        jlong jType, jint bType, jobject op)
 {
-    MPI_Datatype mpi_type =
-        (MPI_Datatype)((*env)->GetLongField(env,type,ompi_java.DatatypeHandle));
+    MPI_Datatype type = (MPI_Datatype)jType;
+    void *inPtr, *inBase, *inOutPtr, *inOutBase;
+    inPtr = getBufCritical(&inBase, env, inBuf, bType, inOff);
+    inOutPtr = getBufCritical(&inOutBase, env, inOutBuf, bType, inOutOff);
 
-    int baseType = (*env)->GetIntField(env, type, ompi_java.DatatypeBaseType);
-    void *inptr, *inbase, *inoutptr, *inoutbase;
-    inptr = ompi_java_getBufPtr(&inbase, env, inbuf, baseType, inoff);
-    inoutptr = ompi_java_getBufPtr(&inoutbase, env, inoutbuf, baseType, inoutoff);
-
-    int rc = MPI_Reduce_local(inptr, inoutptr, count, mpi_type,
-                              ompi_java_op_getHandle(env, op, baseType));
+    int rc = MPI_Reduce_local(inPtr, inOutPtr, count, type,
+                              ompi_java_op_getHandle(env, op, bType));
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, inbuf, inbase, baseType);
-    ompi_java_releaseBufPtr(env, inoutbuf, inoutbase, baseType);
+    releaseBufCritical(env, inBuf, inBase);
+    releaseBufCritical(env, inOutBuf, inOutBase);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_setName(

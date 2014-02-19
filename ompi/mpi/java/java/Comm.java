@@ -247,12 +247,12 @@ public final void send(Object buf, int count, Datatype type, int dest, int tag)
         buf = ((Buffer)buf).array();
     }
 
-    send(buf, off, count, type, dest, tag);
+    send(handle, buf, off, count, type.handle, type.baseType, dest, tag);
 }
 
-private native void send(Object buf, int offset, int count,
-                         Datatype type, int dest, int tag)
-                         throws MPIException;
+private native void send(
+        long comm, Object buf, int offset, int count,
+        long type, int baseType, int dest, int tag) throws MPIException;
 
 /**
  * Blocking receive operation.
@@ -279,13 +279,14 @@ public final Status recv(Object buf, int count,
     }
 
     Status stat = new Status();
-    recv(buf, off, count, type, source, tag, stat);
+    recv(handle, buf, off, count, type.handle, type.baseType, source, tag, stat);
     return stat;
 }
 
 private native void recv(
-        Object buf, int offset, int count, Datatype type,
-        int source, int tag, Status stat) throws MPIException;
+        long comm, Object buf, int offset, int count,
+        long type, int basetype, int source, int tag, Status stat)
+        throws MPIException;
 
 // Send-Recv
 
@@ -331,17 +332,20 @@ public final Status sendRecv(
 
     Status stat = new Status();
     
-    sendRecv(sendbuf, sendoff, sendcount, sendtype, dest, sendtag,
-             recvbuf, recvoff, recvcount, recvtype, source, recvtag, stat);
+    sendRecv(handle, sendbuf, sendoff, sendcount,
+             sendtype.handle, sendtype.baseType, dest, sendtag,
+             recvbuf, recvoff, recvcount,
+             recvtype.handle, recvtype.baseType, source, recvtag, stat);
 
     return stat;
 }
 
-private native void sendRecv(Object sbuf, int soffset, int scount,
-                             Datatype stype, int dest, int stag,
-                             Object rbuf, int roffset, int rcount,
-                             Datatype rtype, int source, int rtag,
-                             Status stat) throws MPIException;
+private native void sendRecv(
+        long comm, Object sbuf, int soffset, int scount,
+        long sType, int sBaseType, int dest, int stag,
+        Object rbuf, int roffset, int rcount,
+        long rType, int rBaseType, int source, int rtag,
+        Status stat) throws MPIException;
 
 /**
  * Execute a blocking send and receive operation,
@@ -375,14 +379,15 @@ public final Status sendRecvReplace(
 
     Status stat = new Status();
 
-    sendRecvReplace(buf, off, count, type, dest,
-                    sendtag, source, recvtag, stat);
+    sendRecvReplace(handle, buf, off, count, type.handle, type.baseType,
+                    dest, sendtag, source, recvtag, stat);
     return stat;
 }
 
 private native void sendRecvReplace(
-        Object buf, int offset, int count, Datatype type, int dest,
-        int stag, int source, int rtag, Status stat) throws MPIException;
+        long comm, Object buf, int offset, int count,
+        long type, int baseType, int dest, int stag,
+        int source, int rtag, Status stat) throws MPIException;
 
 // Communication Modes
 
@@ -395,7 +400,7 @@ private native void sendRecvReplace(
  * @param dest  rank of destination
  * @param tag   message tag
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final void bSend(Object buf, int count, Datatype type, int dest, int tag)
     throws MPIException
@@ -409,12 +414,13 @@ public final void bSend(Object buf, int count, Datatype type, int dest, int tag)
         buf = ((Buffer)buf).array();
     }
 
-    bSend(buf, off, count, type, dest, tag);
+    bSend(handle, buf, off, count, type.handle, type.baseType, dest, tag);
 }
 
-private native void bSend(Object buf, int offset, int count,
-                          Datatype type, int dest, int tag)
-                          throws MPIException;
+private native void bSend(
+        long comm, Object buf, int offset, int count,
+        long type, int baseType, int dest, int tag) throws MPIException;
+
 /**
  * Send in synchronous mode.
  * <p>Java binding of the MPI operation {@code MPI_SSEND}.
@@ -424,7 +430,7 @@ private native void bSend(Object buf, int offset, int count,
  * @param dest  rank of destination
  * @param tag   message tag
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final void sSend(Object buf, int count, Datatype type, int dest, int tag)
     throws MPIException
@@ -438,12 +444,12 @@ public final void sSend(Object buf, int count, Datatype type, int dest, int tag)
         buf = ((Buffer)buf).array();
     }
 
-    sSend(buf, off, count, type, dest, tag);
+    sSend(handle, buf, off, count, type.handle, type.baseType, dest, tag);
 }
 
-private native void sSend(Object buf, int offset, int count,
-                          Datatype type, int dest, int tag)
-                          throws MPIException;
+private native void sSend(
+        long comm, Object buf, int offset, int count,
+        long type, int baseType, int dest, int tag) throws MPIException;
 
 /**
  * Send in ready mode.
@@ -454,7 +460,7 @@ private native void sSend(Object buf, int offset, int count,
  * @param dest  rank of destination
  * @param tag   message tag
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final void rSend(Object buf, int count, Datatype type, int dest, int tag)
     throws MPIException
@@ -468,12 +474,12 @@ public final void rSend(Object buf, int count, Datatype type, int dest, int tag)
         buf = ((Buffer)buf).array();
     }
 
-    rSend(buf, off, count, type, dest, tag);
+    rSend(handle, buf, off, count, type.handle, type.baseType, dest, tag);
 }
 
-private native void rSend(Object buf, int offset, int count,
-                          Datatype type, int dest, int tag)
-                          throws MPIException;
+private native void rSend(
+        long comm, Object buf, int offset, int count,
+        long type, int baseType, int dest, int tag) throws MPIException;
 
 // Nonblocking communication
 
@@ -487,7 +493,7 @@ private native void rSend(Object buf, int offset, int count,
  * @param tag   message tag
  * @return communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Request iSend(Buffer buf, int count,
                            Datatype type, int dest, int tag)
@@ -515,7 +521,7 @@ protected final native long iSend(
  * @param tag   message tag
  * @return communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Request ibSend(Buffer buf, int count,
                             Datatype type, int dest, int tag)
@@ -543,7 +549,7 @@ protected final native long ibSend(
  * @param tag   message tag
  * @return communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Request isSend(Buffer buf, int count,
                             Datatype type, int dest, int tag)
@@ -571,7 +577,7 @@ protected final native long isSend(
  * @param tag   message tag
  * @return communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Request irSend(Buffer buf, int count,
                             Datatype type, int dest, int tag)
@@ -630,7 +636,7 @@ protected final native long iRecv(
  * @param tag   message tag
  * @return persistent communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Prequest sendInit(Buffer buf, int count,
                                Datatype type, int dest, int tag)
@@ -655,7 +661,7 @@ private native long sendInit(
  * @param tag   message tag
  * @return persistent communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Prequest bSendInit(Buffer buf, int count,
                                 Datatype type, int dest, int tag)
@@ -680,7 +686,7 @@ private native long bSendInit(
  * @param tag   message tag
  * @return persistent communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Prequest sSendInit(Buffer buf, int count,
                                 Datatype type, int dest, int tag)
@@ -705,7 +711,7 @@ private native long sSendInit(
  * @param tag   message tag
  * @return persistent communication request
  * @throws MPIException
- * @see mpi.Comm#send(Object, int, int, Datatype, int, int)
+ * @see mpi.Comm#send(Object, int, Datatype, int, int)
  */
 public final Prequest rSendInit(Buffer buf, int count,
                                 Datatype type, int dest, int tag)
@@ -776,12 +782,14 @@ public final int pack(Object inbuf, int incount, Datatype type,
         inbuf  = ((Buffer)inbuf).array();
     }
 
-    return pack(inbuf, offset, incount, type, outbuf, position);
+    return pack(handle, inbuf, offset, incount,
+                type.handle, type.baseType, outbuf, position);
 }
 
-private native int pack(Object inbuf, int offset, int incount,
-                        Datatype type, byte[] outbuf, int position)
-                        throws MPIException;
+private native int pack(
+        long comm, Object inbuf, int offset, int incount,
+        long type, int baseType, byte[] outbuf, int position)
+        throws MPIException;
 
 /**
  * Unpacks message in receive buffer {@code outbuf} into space specified in
@@ -812,12 +820,13 @@ public final int unpack(byte[] inbuf, int position,
         outbuf = ((Buffer)outbuf).array();
     }
 
-    return unpack(inbuf, position, outbuf, offset, outcount, type);
+    return unpack(handle, inbuf, position, outbuf,
+                  offset, outcount, type.handle, type.baseType);
 }
 
-private native int unpack(byte[] inbuf, int position, Object outbuf,
-                          int offset, int outcount, Datatype type)
-                          throws MPIException;
+private native int unpack(
+        long comm, byte[] inbuf, int position, Object outbuf,
+        int offset, int outcount, long type, int baseType) throws MPIException;
 
 /**
  * Returns an upper bound on the increment of {@code position} effected
@@ -1093,12 +1102,12 @@ public final void bcast(Object buf, int count, Datatype type, int root)
         buf = ((Buffer)buf).array();
     }
 
-    bcast(buf, off, count, type, root);
+    bcast(handle, buf, off, count, type.handle, type.baseType, root);
 }
 
-private native void bcast(Object buf, int offset, int count,
-                          Datatype type, int root)
-                          throws MPIException;
+private native void bcast(
+        long comm, Object buf, int offset, int count,
+        long type, int basetype, int root) throws MPIException;
 
 /**
  * Broadcast a message from the process with rank {@code root}
@@ -1157,8 +1166,10 @@ public final void gather(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    gather(sendbuf, sendoff, sendcount, sendtype,
-           recvbuf, recvoff, recvcount, recvtype, root);
+    gather(handle, sendbuf, sendoff, sendcount,
+           sendtype.handle, sendtype.baseType,
+           recvbuf, recvoff, recvcount,
+           recvtype.handle, recvtype.baseType, root);
 }
 
 /**
@@ -1185,12 +1196,15 @@ public final void gather(Object buf, int count, Datatype type, int root)
         buf = ((Buffer)buf).array();
     }
 
-    gather(null, 0, 0, null, buf, off, count, type, root);
+    gather(handle, null, 0, 0, 0, 0,
+           buf, off, count, type.handle, type.baseType, root);
 }
 
 private native void gather(
-        Object sendbuf, int sendoff, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoff, int recvcount, Datatype recvtype, int root)
+        long comm, Object sendBuf, int sendOff, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOff, int recvCount,
+        long recvType, int recvBaseType, int root)
         throws MPIException;
 
 /**
@@ -1282,8 +1296,10 @@ public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    gatherv(sendbuf, sendoff, sendcount, sendtype,
-            recvbuf, recvoff, recvcount, displs, recvtype, root);
+    gatherv(handle, sendbuf, sendoff, sendcount,
+            sendtype.handle, sendtype.baseType,
+            recvbuf, recvoff, recvcount, displs,
+            recvtype.handle, recvtype.baseType, root);
 }
 
 /**
@@ -1312,8 +1328,8 @@ public final void gatherv(Object recvbuf, int[] recvcount, int[] displs,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    gatherv(null, 0, 0, null,
-            recvbuf, recvoff, recvcount, displs, recvtype, root);
+    gatherv(handle, null, 0, 0, 0, 0, recvbuf, recvoff, recvcount,
+            displs, recvtype.handle, recvtype.baseType, root);
 }
 
 /**
@@ -1341,14 +1357,16 @@ public final void gatherv(Object sendbuf, int sendcount,
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    gatherv(sendbuf, sendoff, sendcount, sendtype,
-            null, 0, null, null, null, root);
+    gatherv(handle, sendbuf, sendoff, sendcount,
+            sendtype.handle, sendtype.baseType,
+            null, 0, null, null, 0, 0, root);
 }
 
 private native void gatherv(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int[] recvcount, int[] displs,
-        Datatype recvtype, int root) throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int[] recvCount, int[] displs,
+        long recvType, int recvBaseType, int root) throws MPIException;
 
 /**
  * Extends functionality of {@code gather} by allowing varying
@@ -1467,8 +1485,10 @@ public final void scatter(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatter(sendbuf, sendoff, sendcount, sendtype,
-            recvbuf, recvoff, recvcount, recvtype, root);
+    scatter(handle, sendbuf, sendoff, sendcount,
+            sendtype.handle, sendtype.baseType,
+            recvbuf, recvoff, recvcount,
+            recvtype.handle, recvtype.baseType, root);
 }
 
 /**
@@ -1495,13 +1515,15 @@ public final void scatter(Object buf, int count, Datatype type, int root)
         buf = ((Buffer)buf).array();
     }
 
-    scatter(buf, off, count, type, null, 0, 0, null, root);
+    scatter(handle, buf, off, count, type.handle, type.baseType,
+            null, 0, 0, 0, 0, root);
 }
 
 private native void scatter(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype,
-        int root) throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int recvCount,
+        long recvType, int recvBaseType, int root) throws MPIException;
 
 /**
  * Inverse of the operation {@code gather}.
@@ -1591,8 +1613,10 @@ public final void scatterv(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatterv(sendbuf, sendoff, sendcount, displs, sendtype,
-             recvbuf, recvoff, recvcount, recvtype, root);
+    scatterv(handle, sendbuf, sendoff, sendcount, displs,
+             sendtype.handle, sendtype.baseType,
+             recvbuf, recvoff, recvcount,
+             recvtype.handle, recvtype.baseType, root);
 }
 
 /**
@@ -1620,8 +1644,9 @@ public final void scatterv(Object sendbuf, int[] sendcount, int[] displs,
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    scatterv(sendbuf, sendoff, sendcount, displs, sendtype,
-             null, 0, 0, null, root);
+    scatterv(handle, sendbuf, sendoff, sendcount, displs,
+             sendtype.handle, sendtype.baseType,
+             null, 0, 0, 0, 0, root);
 }
 
 /**
@@ -1648,15 +1673,16 @@ public final void scatterv(Object recvbuf, int recvcount,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    scatterv(null, 0, null, null, null,
-             recvbuf, recvoff, recvcount, recvtype, root);
+    scatterv(handle, null, 0, null, null, 0, 0,
+             recvbuf, recvoff, recvcount,
+             recvtype.handle, recvtype.baseType, root);
 }
 
 private native void scatterv(
-        Object sendbuf, int sendoffset,
-        int[] sendcount, int[] displs, Datatype sendtype,
-        Object recvbuf, int recvoffset, int recvcount,
-        Datatype recvtype, int root)
+        long comm, Object sendBuf, int sendOffset,
+        int[] sendCount, int[] displs, long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int recvCount,
+        long recvType, int recvBaseType, int root)
         throws MPIException;
 
 /**
@@ -1770,8 +1796,10 @@ public final void allGather(Object sendbuf, int sendcount, Datatype sendtype,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGather(sendbuf, sendoff, sendcount, sendtype,
-              recvbuf, recvoff, recvcount, recvtype);
+    allGather(handle, sendbuf, sendoff, sendcount,
+              sendtype.handle, sendtype.baseType,
+              recvbuf, recvoff, recvcount,
+              recvtype.handle, recvtype.baseType);
 }
 
 /**
@@ -1795,13 +1823,15 @@ public final void allGather(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    allGather(null, 0, 0, null, buf, off, count, type);
+    allGather(handle, null, 0, 0, 0, 0,
+              buf, off, count, type.handle, type.baseType);
 }
 
 private native void allGather(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype)
-        throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int recvCount,
+        long recvType, int recvBaseType) throws MPIException;
 
 /**
  * Similar to {@code gather}, but all processes receive the result.
@@ -1883,8 +1913,10 @@ public final void allGatherv(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGatherv(sendbuf, sendoff, sendcount, sendtype,
-               recvbuf, recvoff, recvcount, displs, recvtype);
+    allGatherv(handle, sendbuf, sendoff, sendcount,
+               sendtype.handle, sendtype.baseType,
+               recvbuf, recvoff, recvcount, displs,
+               recvtype.handle, recvtype.baseType);
 }
 
 /**
@@ -1910,13 +1942,15 @@ public final void allGatherv(Object recvbuf, int[] recvcount,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allGatherv(null, 0, 0, null, recvbuf, recvoff, recvcount, displs, recvtype);
+    allGatherv(handle, null, 0, 0, 0, 0, recvbuf, recvoff, recvcount,
+               displs, recvtype.handle, recvtype.baseType);
 }
 
 private native void allGatherv(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int[] recvcount, int[] displs,
-        Datatype recvtype) throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int[] recvCount, int[] displs,
+        long recvType, int recvBasetype) throws MPIException;
 
 /**
  * Similar to {@code gatherv}, but all processes receive the result.
@@ -2004,14 +2038,17 @@ public final void allToAll(Object sendbuf, int sendcount, Datatype sendtype,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allToAll(sendbuf, sendoff, sendcount, sendtype,
-             recvbuf, recvoff, recvcount, recvtype);
+    allToAll(handle, sendbuf, sendoff, sendcount,
+             sendtype.handle, sendtype.baseType,
+             recvbuf, recvoff, recvcount,
+             recvtype.handle, recvtype.baseType);
 }
 
 private native void allToAll(
-        Object sendbuf, int sendoffset, int sendcount, Datatype sendtype,
-        Object recvbuf, int recvoffset, int recvcount, Datatype recvtype)
-        throws MPIException;
+        long comm, Object sendBuf, int sendOffset, int sendCount,
+        long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset, int recvCount,
+        long recvType, int recvBaseType) throws MPIException;
 
 /**
  * Extension of {@code allGather} to the case where each process sends
@@ -2078,15 +2115,17 @@ public final void allToAllv(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allToAllv(sendbuf, sendoff, sendcount, sdispls, sendtype,
-              recvbuf, recvoff, recvcount, rdispls, recvtype);
+    allToAllv(handle, sendbuf, sendoff, sendcount, sdispls,
+              sendtype.handle, sendtype.baseType,
+              recvbuf, recvoff, recvcount, rdispls,
+              recvtype.handle, recvtype.baseType);
 }
 
 private native void allToAllv(
-        Object sendbuf, int sendoffset,
-        int[] sendcount, int[] sdispls, Datatype sendtype,
-        Object recvbuf, int recvoffset,
-        int[] recvcount, int[] rdispls, Datatype recvtype)
+        long comm, Object sendBuf, int sendOffset,
+        int[] sendCount, int[] sdispls, long sendType, int sendBaseType,
+        Object recvBuf, int recvOffset,
+        int[] recvCount, int[] rdispls, long recvType, int recvBaseType)
         throws MPIException;
 
 /**
@@ -2164,7 +2203,8 @@ public final void reduce(Object sendbuf, Object recvbuf, int count,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduce(sendbuf, sendoff, recvbuf, recvoff, count, type, op, root);
+    reduce(handle, sendbuf, sendoff, recvbuf, recvoff, count,
+           type.handle, type.baseType, op, root);
 }
 
 /**
@@ -2193,12 +2233,14 @@ public final void reduce(Object buf, int count, Datatype type, Op op, int root)
         buf = ((Buffer)buf).array();
     }
 
-    reduce(null, 0, buf, off, count, type, op, root);
+    reduce(handle, null, 0, buf, off, count,
+           type.handle, type.baseType, op, root);
 }
 
 private native void reduce(
-        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
-        int count, Datatype type, Op op, int root) throws MPIException;
+        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int count, long type, int baseType, Op op, int root)
+        throws MPIException;
 
 /**
  * Combine elements in input buffer of each process using the reduce
@@ -2289,7 +2331,8 @@ public final void allReduce(Object sendbuf, Object recvbuf,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    allReduce(sendbuf, sendoff, recvbuf, recvoff, count, type, op);
+    allReduce(handle, sendbuf, sendoff, recvbuf, recvoff, count,
+              type.handle, type.baseType, op);
 }
 
 /**
@@ -2316,12 +2359,12 @@ public final void allReduce(Object buf, int count, Datatype type, Op op)
         buf = ((Buffer)buf).array();
     }
 
-    allReduce(null, 0, buf, off, count, type, op);
+    allReduce(handle, null, 0, buf, off, count, type.handle, type.baseType, op);
 }
 
 private native void allReduce(
-        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
-        int count, Datatype type, Op op) throws MPIException;
+        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int count, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Same as {@code reduce} except that the result appears in receive
@@ -2408,7 +2451,8 @@ public final void reduceScatter(Object sendbuf, Object recvbuf,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduceScatter(sendbuf, sendoff, recvbuf, recvoff, recvcounts, type, op);
+    reduceScatter(handle, sendbuf, sendoff, recvbuf, recvoff, recvcounts,
+                  type.handle, type.baseType, op);
 }
 
 /**
@@ -2436,12 +2480,13 @@ public final void reduceScatter(Object buf, int[] counts, Datatype type, Op op)
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatter(null, 0, buf, off, counts, type, op);
+    reduceScatter(handle, null, 0, buf, off, counts,
+                  type.handle, type.baseType, op);
 }
 
 private native void reduceScatter(
-        Object sendbuf, int sendoff, Object recvbuf, int recvoff,
-        int[] recvcounts, Datatype type, Op op) throws MPIException;
+        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        int[] recvcounts, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Combine elements in input buffer of each process using the reduce
@@ -2529,7 +2574,8 @@ public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
         recvbuf = ((Buffer)recvbuf).array();
     }
 
-    reduceScatterBlock(sendbuf, sendoff, recvbuf, recvoff, recvcount, type, op);
+    reduceScatterBlock(handle, sendbuf, sendoff, recvbuf, recvoff, recvcount,
+                       type.handle, type.baseType, op);
 }
 
 /**
@@ -2556,12 +2602,13 @@ public final void reduceScatterBlock(
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatterBlock(null, 0, buf, off, count, type, op);
+    reduceScatterBlock(handle, null, 0, buf, off, count,
+                       type.handle, type.baseType, op);
 }
 
 private native void reduceScatterBlock(
-        Object sendbuf, int sendoffset, Object recvbuf, int recvoffset,
-        int recvcount, Datatype type, Op op) throws MPIException;
+        long comm, Object sendBuf, int sOffset, Object recvBuf, int rOffset,
+        int rCount, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Combine values and scatter the results.
@@ -2615,44 +2662,45 @@ private native long iReduceScatterBlock(
 
 /**
  * Apply the operation given by {@code op} element-wise to the
- * elements of {@code inbuf} and {@code inoutbuf} with the result
- * stored element-wise in {@code inoutbuf}.
+ * elements of {@code inBuf} and {@code inOutBuf} with the result
+ * stored element-wise in {@code inOutBuf}.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE_LOCAL}.
- * @param inbuf    input buffer array
- * @param inoutbuf input buffer array, will contain combined output
+ * @param inBuf    input buffer array
+ * @param inOutBuf input buffer array, will contain combined output
  * @param count    number of elements
  * @param type     data type of each item
  * @param op       reduce operation
  * @throws MPIException
  */
-public final void reduceLocal(Object inbuf, Object inoutbuf, int count,
-                              Datatype type, Op op)
+public static void reduceLocal(
+        Object inBuf, Object inOutBuf, int count, Datatype type, Op op)
     throws MPIException
 {
     MPI.check();
     op.setDatatype(type);
 
-    int inoff    = 0,
-        inoutoff = 0;
+    int inOff    = 0,
+        inOutOff = 0;
 
-    if(isHeapBuffer(inbuf))
+    if(isHeapBuffer(inBuf))
     {
-        inoff = ((Buffer)inbuf).arrayOffset();
-        inbuf = ((Buffer)inbuf).array();
+        inOff = ((Buffer)inBuf).arrayOffset();
+        inBuf = ((Buffer)inBuf).array();
     }
 
-    if(isHeapBuffer(inoutbuf))
+    if(isHeapBuffer(inOutBuf))
     {
-        inoutoff = ((Buffer)inoutbuf).arrayOffset();
-        inoutbuf = ((Buffer)inoutbuf).array();
+        inOutOff = ((Buffer)inOutBuf).arrayOffset();
+        inOutBuf = ((Buffer)inOutBuf).array();
     }
 
-    reduceLocal(inbuf, inoff, inoutbuf, inoutoff, count, type, op);
+    reduceLocal(inBuf, inOff, inOutBuf, inOutOff, count,
+                type.handle, type.baseType, op);
 }
 
-private native void reduceLocal(
-        Object inbuf, int inoff, Object inoutbuf, int inoutoff,
-        int count, Datatype datatype, Op op) throws MPIException;
+private static native void reduceLocal(
+        Object inBuf, int inOff, Object inOutBuf, int inOutOff,
+        int count, long type, int baseType, Op op) throws MPIException;
 
 /**
  * Sets the print name for the communicator.
