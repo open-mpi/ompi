@@ -470,4 +470,19 @@ AC_ARG_WITH([libltdl],
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [0],
     [Whether we want checkpoint/restart enabled debugging functionality or not])
 
+# some systems don't want/like getpwuid
+AC_MSG_CHECKING([if want getpwuid support])
+AC_ARG_ENABLE([getpwuid],
+    [AC_HELP_STRING([--disable-getpwuid],
+        [Disable getpwuid support (default: enabled)])])
+if test "$enable_getpwuid" = "no"; then
+    AC_MSG_RESULT([no])
+    opal_want_getpwuid=0
+else
+    AC_MSG_RESULT([yes])
+    opal_want_getpwuid=1
+fi
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_GETPWUID], [$opal_want_getpwuid],
+                   [Disable getpwuid support (default: enabled)])
+    
 ])dnl

@@ -62,6 +62,7 @@
 #include "opal/util/show_help.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
 
 #include "opal/runtime/opal.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -268,7 +269,6 @@ void kill_procs(void) {
     char *inputline;
     char *this_user;
     int uid;
-    struct passwd *pwdent;
     char *separator = " \t";  /* output can be delimited by space or tab */
     
     /*
@@ -303,18 +303,31 @@ void kill_procs(void) {
 
     /* get the name of the user */
     uid = getuid();
+#if OPAL_ENABLE_GETPWUID
+    {
+        struct passwd *pwdent;
+
 #ifdef HAVE_GETPWUID
-    pwdent = getpwuid(uid);
+        pwdent = getpwuid(uid);
+        if (NULL == pwdent) {
+            /* this indicates a problem with the passwd system,
+             * so pretty-print a message just for info
+             */
+            orte_show_help("help-orte-runtime.txt",
+                           "orte:session:dir:nopwname", true);
+        }
 #else
-    pwdent = NULL;
+        pwdent = NULL;
 #endif
-    if (NULL != pwdent) {
-        this_user = strdup(pwdent->pw_name);
-    } else {
-        if (0 > asprintf(&this_user, "%d", uid)) {
-            return;
+        if (NULL != pwdent) {
+            this_user = strdup(pwdent->pw_name);
+        } else {
+            asprintf(&this_user, "%d", uid);
         }
     }
+#else
+    asprintf(&this_user, "%d", uid);
+#endif
     
     /*
      * There is a race condition here.  The problem is that we are looking
