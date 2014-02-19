@@ -36,10 +36,25 @@
 
 BEGIN_C_DECLS
 
+#define LOG_FILE ("criu.log")
+
 /* Local Component structures */
 struct opal_crs_criu_component_t {
-    /** Base CRS component */
+    /* Base CRS component */
     opal_crs_base_component_t super;
+
+    /* criu log file */
+    char *log_file;
+    /* criu log level */
+    int log_level;
+    /* criu tcp established */
+    bool tcp_established;
+    /* criu shell job */
+    bool shell_job;
+    /* criu external unix sockets */
+    bool ext_unix_sk;
+    /* criu leave tasks in running state after checkpoint */
+    bool leave_running;
 };
 typedef struct opal_crs_criu_component_t opal_crs_criu_component_t;
 
