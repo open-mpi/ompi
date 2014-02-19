@@ -64,7 +64,19 @@ opal_crs_criu_component_t mca_crs_criu_component = {
         0,
         /* opal_output handler */
         -1
-    }
+    },
+    /* criu log file */
+    LOG_FILE,
+    /* criu log level */
+    0,
+    /* criu tcp established */
+    true,
+    /* criu shell job */
+    true,
+    /* criu external unix sockets */
+    true,
+    /* criu leave tasks in running state after checkpoint */
+    true
 };
 
 static int crs_criu_register(void)
@@ -90,11 +102,72 @@ static int crs_criu_register(void)
                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                           &mca_crs_criu_component.super.verbose);
 
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register(component, "log", "Name of CRIU logfile (default: criu.log)",
+                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_crs_criu_component.log_file);
+
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register(component, "log_level",
+                                          "Verbose level for the CRS criu component (default: 0)",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_crs_criu_component.log_level);
+
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register(component, "tcp_established",
+                                          "Checkpoint/restore established TCP connections (default: true)",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_crs_criu_component.tcp_established);
+
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register(component, "shell_job",
+                                          "Allow to dump and restore shell jobs (default: true)",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_crs_criu_component.shell_job);
+
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register(component, "ext_unix_sk",
+                                          "Allow external unix connections (default: true)",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_crs_criu_component.ext_unix_sk);
+
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = mca_base_component_var_register(component, "leave_running",
+                                          "Leave tasks in running state after checkpoint (default: true)",
+                                          MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                          &mca_crs_criu_component.leave_running);
+
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }
 
 static int crs_criu_open(void)
 {
+    int oh;
+
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
@@ -106,17 +179,27 @@ static int crs_criu_open(void)
         mca_crs_criu_component.super.output_handle = opal_crs_base_framework.framework_output;
     }
 
+    oh = mca_crs_criu_component.super.output_handle;
     /*
      * Debug output
      */
-    opal_output_verbose(10, mca_crs_criu_component.super.output_handle,
-                        "crs:criu: open()");
-    opal_output_verbose(20, mca_crs_criu_component.super.output_handle,
-                        "crs:criu: open: priority = %d",
+    opal_output_verbose(10, oh, "crs:criu: open()");
+    opal_output_verbose(20, oh, "crs:criu: open: priority = %d",
                         mca_crs_criu_component.super.priority);
-    opal_output_verbose(20, mca_crs_criu_component.super.output_handle,
-                        "crs:criu: open: verbosity = %d",
+    opal_output_verbose(20, oh, "crs:criu: open: verbosity = %d",
                         mca_crs_criu_component.super.verbose);
+    opal_output_verbose(20, oh, "crs:criu: open: log_file = %s",
+                        mca_crs_criu_component.log_file);
+    opal_output_verbose(20, oh, "crs:criu: open: log_level = %d",
+                        mca_crs_criu_component.log_level);
+    opal_output_verbose(20, oh, "crs:criu: open: tcp_established = %d",
+                        mca_crs_criu_component.tcp_established);
+    opal_output_verbose(20, oh, "crs:criu: open: shell_job = %d",
+                        mca_crs_criu_component.shell_job);
+    opal_output_verbose(20, oh, "crs:criu: open: ext_unix_sk = %d",
+                        mca_crs_criu_component.ext_unix_sk);
+    opal_output_verbose(20, oh, "crs:criu: open: leave_running = %d",
+                        mca_crs_criu_component.leave_running);
 
     return OPAL_SUCCESS;
 }
