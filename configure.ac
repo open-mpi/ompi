@@ -793,6 +793,33 @@ AC_INCLUDES_DEFAULT
 #endif
 ])
 
+#
+# Check for ptrdiff type.  Yes, there are platforms where
+# sizeof(void*) != sizeof(long) (64 bit Windows, apparently).
+#
+AC_MSG_CHECKING([for pointer diff type])
+if test $ac_cv_type_ptrdiff_t = yes ; then
+    opal_ptrdiff_t="ptrdiff_t"
+    opal_ptrdiff_size=$ac_cv_sizeof_ptrdiff_t
+elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
+    opal_ptrdiff_t="long"
+    opal_ptrdiff_size=$ac_cv_sizeof_long
+elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
+    opal_ptrdiff_t="long long"
+    opal_ptrdiff_size=$ac_cv_sizeof_long_long
+else
+    AC_MSG_ERROR([Could not find datatype to emulate ptrdiff_t.  Cannot continue])
+fi
+AC_DEFINE_UNQUOTED([OPAL_PTRDIFF_TYPE], [$opal_ptrdiff_t],
+    [type to use for ptrdiff_t])
+AC_MSG_RESULT([$opal_ptrdiff_t (size: $opal_ptrdiff_size)])
+
+#
+# Find corresponding types for MPI_Aint, MPI_Count, and MPI_Offset.
+# And if relevant, find the corresponding MPI_ADDRESS_KIND,
+# MPI_COUNT_KIND, and MPI_OFFSET_KIND.
+#
+m4_ifdef([project_ompi], [OMPI_FIND_MPI_AINT_COUNT_OFFSET])
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -878,95 +905,6 @@ AC_CACHE_SAVE
 ##################################
 
 ompi_show_title "System-specific tests"
-
-#
-# Test to determine types of MPI_Offset and MPI_Count. This is searched in the
-# following order int64_t, long long, long, int. If none of these are 8 bytes,
-# then we should search for int32_t, long long, long, int. MPI_Count needs to
-# be at least as large as MPI_Offset and MPI_Aint.
-#
-MPI_OFFSET_TYPE="not found"
-MPI_OFFSET_DATATYPE="not found"
-AC_MSG_CHECKING([checking for type of MPI_Offset])
-if test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 8; then
-    MPI_OFFSET_TYPE="long long"
-    MPI_OFFSET_DATATYPE=MPI_LONG_LONG
-    MPI_OFFSET_SIZE=8
-    MPI_COUNT_TYPE="long long"
-    MPI_COUNT_SIZE=8
-elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 8; then
-    MPI_OFFSET_TYPE="long"
-    MPI_OFFSET_DATATYPE=MPI_LONG
-    MPI_OFFSET_SIZE=8
-    MPI_COUNT_TYPE="long"
-    MPI_COUNT_SIZE=8
-elif test $ac_cv_sizeof_int = 8; then
-    MPI_OFFSET_TYPE="int"
-    MPI_OFFSET_DATATYPE=MPI_INT
-    MPI_OFFSET_SIZE=8
-    MPI_COUNT_TYPE="int"
-    MPI_COUNT_SIZE=8
-elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 4; then
-    MPI_OFFSET_TYPE="long long"
-    MPI_OFFSET_DATATYPE=MPI_LONG_LONG
-    MPI_OFFSET_SIZE=4
-    MPI_COUNT_TYPE="long long"
-    MPI_COUNT_SIZE=4
-elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 4; then
-    MPI_OFFSET_TYPE="long"
-    MPI_OFFSET_DATATYPE=MPI_LONG
-    MPI_OFFSET_SIZE=4
-    MPI_COUNT_TYPE="long"
-    MPI_COUNT_SIZE=8
-elif test $ac_cv_sizeof_int = 4; then
-    MPI_OFFSET_TYPE="int"
-    MPI_OFFSET_DATATYPE=MPI_INT
-    MPI_OFFSET_SIZE=4
-    MPI_COUNT_TYPE="int"
-    MPI_COUNT_SIZE=8
-fi
-AC_MSG_RESULT([$MPI_OFFSET_TYPE])
-if test "$MPI_OFFSET_TYPE" = "not found"; then
-    AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset and MPI_Count])
-    AC_MSG_ERROR([Cannot continue])
-fi
-AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
-AC_MSG_RESULT([$MPI_OFFSET_DATATYPE])
-# this should never happens
-if test "$MPI_OFFSET_DATATYPE" = "not found"; then
-    AC_MSG_WARN([*** Unable to find an MPI datatype corresponding to MPI_Offset])
-    AC_MSG_ERROR([Cannot continue])
-fi
-
-AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
-AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the MPI_Offset])
-AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
-
-if test $MPI_COUNT_SIZE -eq 8 ; then
-    MPI_COUNT_MAX="0x7fffffffffffffffll"
-elif test $MPI_COUNT_SIZE -eq 4 ; then
-    MPI_COUNT_MAX="0x7fffffffl"
-fi
-
-AC_DEFINE_UNQUOTED(OMPI_MPI_COUNT_SIZE, $MPI_COUNT_SIZE, [Size of the MPI_Count datatype])
-AC_DEFINE_UNQUOTED(OMPI_MPI_COUNT_TYPE, $MPI_COUNT_TYPE, [Type of the MPI_Count datatype])
-AC_DEFINE_UNQUOTED(MPI_COUNT_MAX, $MPI_COUNT_MAX, [Maximum value for an MPI_Count])
-
-#
-# Check for MPI_Aint type.  Yes, there are platforms where
-# sizeof(void*) != sizeof(long) (64 bit Windows, apparently).
-#
-if test $ac_cv_type_ptrdiff_t = yes ; then
-    opal_ptrdiff_t="ptrdiff_t"
-elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
-    opal_ptrdiff_t="long"
-elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
-    opal_ptrdiff_t="long long"
-else
-    AC_MSG_ERROR([Could not find datatype to emulate ptrdiff_t.  Cannot continue])
-fi
-AC_DEFINE_UNQUOTED([OPAL_PTRDIFF_TYPE], [$opal_ptrdiff_t],
-    [type to use for ptrdiff_t])
 
 # Do we have _SC_NPROCESSORS_ONLN? (only going to pass if we also have
 # <unistd.h> and sysconf(), which is ok) OS X 10.4 has <unistd.h> and

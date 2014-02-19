@@ -245,46 +245,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 9, [OMPI_FORTRAN_C_INT32_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 18, [OMPI_FORTRAN_C_INT64_T_KIND])
 
-    # Get the kind value for Fortran MPI_INTEGER_KIND (corresponding
-    # to whatever is the same size as a F77 INTEGER -- for the
-    # most-likely-will-never-occur case where F77 INTEGER is smaller
-    # than an F90 INTEGER; see MPI-2 4.12.6.5.  As with OMPI
-    # FORTRAN_CHECK, use the official BIND(C) KIND names (see comment
-    # in fortran_check.m4).
-    if test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 2; then
-        OMPI_MPI_INTEGER_KIND=$OMPI_FORTRAN_C_INT16_T_KIND
-    elif test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 4; then
-        OMPI_MPI_INTEGER_KIND=$OMPI_FORTRAN_C_INT32_T_KIND
-    elif test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 8; then
-        OMPI_MPI_INTEGER_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
-    elif test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 16; then
-        AC_MSG_ERROR([Cannot support Fortran MPI_INTEGER_KIND!])
-    fi
-    AC_SUBST(OMPI_MPI_INTEGER_KIND)
-
-    # Get the kind value for Fortran MPI_ADDRESS_KIND (corresponding
-    # to whatever is big enough to hold (void*)).
-    if test $ac_cv_sizeof_void_p = 2 ; then
-        OMPI_MPI_ADDRESS_KIND=$OMPI_FORTRAN_C_INT16_T_KIND
-    elif test $ac_cv_sizeof_void_p = 4 ; then
-        OMPI_MPI_ADDRESS_KIND=$OMPI_FORTRAN_C_INT32_T_KIND
-    elif test $ac_cv_sizeof_void_p = 8 ; then
-        OMPI_MPI_ADDRESS_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
-    elif test $ac_cv_sizeof_void_p = 16 ; then
-        AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
-    fi
-    AC_SUBST(OMPI_MPI_ADDRESS_KIND)
-    
-    # Get the kind value for Fortran MPI_OFFSET_KIND (corresponding to
-    # INTEGER*8).
-    OMPI_MPI_OFFSET_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
-    AC_SUBST(OMPI_MPI_OFFSET_KIND)
-
-    # Get the kind value for Fortran MPI_COUNT_KIND (corresponding to
-    # INTEGER*8)
-    OMPI_MPI_COUNT_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
-    AC_SUBST(OMPI_MPI_COUNT_KIND)
-
     #--------------------------------------------------------
     # This is all we need for the Fortran mpif.h MPI bindings
     #--------------------------------------------------------
