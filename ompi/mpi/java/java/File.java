@@ -1,3 +1,11 @@
+/*
+ * IMPLEMENTATION DETAILS
+ * 
+ * All methods with buffers that can be direct or non direct have
+ * a companion argument 'db' which is true if the buffer is direct.
+ * 
+ * Checking if a buffer is direct is faster in Java than C.
+ */
 package mpi;
 
 import java.nio.*;
