@@ -337,7 +337,7 @@ static int rte_init(void)
         /* store the name of the local leader */
         ldr.jobid = ORTE_PROC_MY_NAME->jobid;
         ldr.vpid = ranks[0];
-        if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)&ldr, OPAL_SCOPE_INTERNAL,
+        if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_SCOPE_INTERNAL,
                                                  OPAL_DB_LOCALLDR, (opal_identifier_t*)&ldr, OPAL_ID_T))) {
             error = "storing local leader";
             goto error;
