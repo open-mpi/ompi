@@ -107,19 +107,57 @@ static inline void calc_nfrags(mca_bml_base_btl_t* bml_btl,
     *nfrags = 1 + (size - 1) / (*frag_size);
 }
 
+static int mca_spml_yoda_fence_internal(int puts_wait)
+{
+    int n_puts_wait;
+
+    /* Waiting for certain number of puts : 'puts_wait'
+     * if 'puts_wait' == 0 waiting for all puts ('n_active_puts')
+     * if 'puts_wait' > 'n_active_puts' waiting for 'n_active_puts' */
+
+    n_puts_wait = puts_wait > 0 ? mca_spml_yoda.n_active_puts - puts_wait : 0;
+
+    if (n_puts_wait < 0) {
+        n_puts_wait = 0;
+    }
+
+    while (n_puts_wait < mca_spml_yoda.n_active_puts) {
+        oshmem_request_wait_any_completion();
+    }
+    return OSHMEM_SUCCESS;
+}
+
 static inline void mca_spml_yoda_bml_alloc( mca_bml_base_btl_t* bml_btl,
                                             mca_btl_base_descriptor_t** des,
                                             uint8_t order, size_t size, uint32_t flags,
                                             int use_send)
 {
+    bool is_done;
+    bool is_fence_complete;
+
+    is_done = false;
+    is_fence_complete = false;
+
     if (use_send) {
         size = (0 == size ? size : size + SPML_YODA_SEND_CONTEXT_SIZE);
     }
-    mca_bml_base_alloc(bml_btl,
+
+    do {
+        mca_bml_base_alloc(bml_btl,
                        des,
                        MCA_BTL_NO_ORDER,
                        size,
                        flags);
+
+        if (OPAL_UNLIKELY(!(*des) || !(*des)->des_src ) && !is_fence_complete) {
+            mca_spml_yoda_fence_internal(mca_spml_yoda.bml_alloc_threshold);
+
+            is_fence_complete = true;
+        } else {
+            is_done = true;
+        }
+
+    } while (!is_done);
 }
 
 static inline void spml_yoda_prepare_for_put(void* buffer, size_t size, void* p_src, void* p_dst, int use_send)
@@ -861,11 +899,7 @@ int mca_spml_yoda_put_nb(void* dst_addr,
 
 int mca_spml_yoda_fence(void)
 {
-
-    while (0 < mca_spml_yoda.n_active_puts) {
-        oshmem_request_wait_any_completion();
-    }
-    return OSHMEM_SUCCESS;
+    return mca_spml_yoda_fence_internal(0);
 }
 
 int mca_spml_yoda_wait_gets(void)

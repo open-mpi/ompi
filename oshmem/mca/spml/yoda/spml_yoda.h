@@ -66,6 +66,8 @@ struct mca_spml_yoda_t {
     int free_list_num; /* initial size of free list */
     int free_list_max; /* maximum size of free list */
     int free_list_inc; /* number of elements to grow free list */
+    int bml_alloc_threshold; /* number of puts to wait
+        in case of put/get temporary buffer allocation failture */
 
     /* lock queue access */
     opal_mutex_t lock;
