@@ -521,7 +521,7 @@ static int tcp_peer_send_blocking(mca_oob_tcp_module_t *mod,
     }
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s connect-ack sent to socket %d",
+                        "%s blocking send complete to socket %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), sd);
 
     return ORTE_SUCCESS;

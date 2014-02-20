@@ -51,6 +51,7 @@
 #include "opal_stdint.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/sec/sec.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/error.h"
@@ -73,9 +74,9 @@
 static void usock_peer_event_init(mca_oob_usock_peer_t* peer);
 static int  usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer);
 static int usock_peer_send_blocking(mca_oob_usock_peer_t* peer,
-                                   void* data, size_t size);
+                                    int sd, void* data, size_t size);
 static bool usock_peer_recv_blocking(mca_oob_usock_peer_t* peer,
-                                    void* data, size_t size);
+                                     int sd, void* data, size_t size);
 static void usock_peer_connected(mca_oob_usock_peer_t* peer);
 
 static int usock_peer_create_socket(mca_oob_usock_peer_t* peer)
@@ -276,7 +277,11 @@ void mca_oob_usock_peer_try_connect(int fd, short args, void *cbdata)
 
 static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
 {
+    char *msg;
     mca_oob_usock_hdr_t hdr;
+    int rc;
+    size_t sdsize;
+    opal_sec_cred_t *cred;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s SEND CONNECT ACK", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -284,11 +289,34 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
     /* send a handshake that includes our process identifier
      * to ensure we are talking to another OMPI process
     */
-    hdr.dst = *ORTE_PROC_MY_NAME;
+    hdr.origin = *ORTE_PROC_MY_NAME;
+    hdr.dst = peer->name;
     hdr.type = MCA_OOB_USOCK_IDENT;
     hdr.tag = 0;
-    hdr.nbytes = 0;
-    if (ORTE_SUCCESS != usock_peer_send_blocking(peer, &hdr, sizeof(hdr))) {
+
+    /* get our security credential*/
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential((opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* set the number of bytes to be read beyond the header */
+    hdr.nbytes = strlen(orte_version_string) + 1 + cred->size;
+
+    /* create a space for our message */
+    sdsize = (sizeof(hdr) + strlen(orte_version_string) + 1 + cred->size);
+    if (NULL == (msg = (char*)malloc(sdsize))) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    memset(msg, 0, sdsize);
+
+    /* load the message */
+    memcpy(msg, &hdr, sizeof(hdr));
+    memcpy(msg+sizeof(hdr), orte_version_string, strlen(orte_version_string));
+    memcpy(msg+sizeof(hdr)+strlen(orte_version_string)+1, cred->credential, cred->size);
+
+
+    if (ORTE_SUCCESS != usock_peer_send_blocking(peer, peer->sd, msg, sdsize)) {
         ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
         return ORTE_ERR_UNREACH;
     }
@@ -413,26 +441,25 @@ void mca_oob_usock_peer_complete_connect(mca_oob_usock_peer_t *peer)
  * information that identifies the peers endpoint.
  */
 static int usock_peer_send_blocking(mca_oob_usock_peer_t* peer,
-                                    void* data, size_t size)
+                                    int sd, void* data, size_t size)
 {
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
     int retval;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s sending connect-ack to %s",
+                        "%s send blocking of %"PRIsize_t" bytes to socket %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)));
+                        size, sd);
 
     while (cnt < size) {
-        retval = send(peer->sd, (char*)ptr+cnt, size-cnt, 0);
+        retval = send(sd, (char*)ptr+cnt, size-cnt, 0);
         if (retval < 0) {
             if (opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-                opal_output(0, "%s usock_peer_send_blocking: send() to %s failed: %s (%d)\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer->name)),
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
+                opal_output(0, "%s usock_peer_send_blocking: send() to socket %d failed: %s (%d)\n",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), sd,
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
                 peer->state = MCA_OOB_USOCK_FAILED;
                 mca_oob_usock_peer_close(peer);
                 return ORTE_ERR_UNREACH;
@@ -443,9 +470,8 @@ static int usock_peer_send_blocking(mca_oob_usock_peer_t* peer,
     }
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s connect-ack sent to %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)));
+                        "%s blocking send complete to socket %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), sd);
 
     return ORTE_SUCCESS;
 }
@@ -455,50 +481,210 @@ static int usock_peer_send_blocking(mca_oob_usock_peer_t* peer,
  *  connected socket and verify the expected response. If so, move the
  *  socket to a connected state.
  */
-int mca_oob_usock_peer_recv_connect_ack(mca_oob_usock_peer_t* peer)
+int mca_oob_usock_peer_recv_connect_ack(mca_oob_usock_peer_t* pr, int sd,
+                                        mca_oob_usock_hdr_t *dhdr)
 {
+    char *msg;
+    char *version;
+    int rc, cmpval;
+    opal_sec_cred_t creds;
+    mca_oob_usock_peer_t *peer;
     mca_oob_usock_hdr_t hdr;
+    uint64_t *ui64;
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s RECV CONNECT ACK FROM %s ON SOCKET %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&peer->name), peer->sd);
+                        (NULL == pr) ? "UNKNOWN" : ORTE_NAME_PRINT(&pr->name), sd);
 
+    peer = pr;
     /* ensure all is zero'd */
-    memset(&hdr, 0, sizeof(hdr));
+    memset(&hdr, 0, sizeof(mca_oob_usock_hdr_t));
 
-    if (usock_peer_recv_blocking(peer, &hdr, sizeof(hdr))) {
-        /* If the peer state is CONNECT_ACK, then we were waiting for
-         * the connection to be ack'd
-         */
-        if (peer->state != MCA_OOB_USOCK_CONNECT_ACK) {
-            /* handshake broke down - abort this connection */
-            opal_output(0, "%s RECV CONNECT BAD HANDSHAKE FROM %s ON SOCKET %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&peer->name), peer->sd);
-            mca_oob_usock_peer_close(peer);
-            return ORTE_ERR_UNREACH;
+    if (usock_peer_recv_blocking(peer, sd, &hdr, sizeof(mca_oob_usock_hdr_t))) {
+        if (NULL != peer) {
+            /* If the peer state is CONNECT_ACK, then we were waiting for
+             * the connection to be ack'd
+             */
+            if (peer->state != MCA_OOB_USOCK_CONNECT_ACK) {
+                /* handshake broke down - abort this connection */
+                opal_output(0, "%s RECV CONNECT BAD HANDSHAKE FROM %s ON SOCKET %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&peer->name), sd);
+                mca_oob_usock_peer_close(peer);
+                return ORTE_ERR_UNREACH;
+            }
         }
     } else {
         /* unable to complete the recv */
         opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                             "%s unable to complete recv of connect-ack from %s ON SOCKET %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name), peer->sd);
+                            (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&peer->name), sd);
         return ORTE_ERR_UNREACH;
+    }
+    /* if the requestor wanted the header returned, then do so now */
+    if (NULL != dhdr) {
+        *dhdr = hdr;
+    }
+
+    if (MCA_OOB_USOCK_PROBE == hdr.type) {
+        /* send a header back */
+        hdr.type = MCA_OOB_USOCK_PROBE;
+        hdr.dst = hdr.origin;
+        hdr.origin = *ORTE_PROC_MY_NAME;
+        usock_peer_send_blocking(peer, sd, &hdr, sizeof(mca_oob_usock_hdr_t));
+        CLOSE_THE_SOCKET(sd);
+        return ORTE_SUCCESS;
     }
 
     if (hdr.type != MCA_OOB_USOCK_IDENT) {
         opal_output(0, "usock_peer_recv_connect_ack: invalid header type: %d\n", hdr.type);
-        peer->state = MCA_OOB_USOCK_FAILED;
-        mca_oob_usock_peer_close(peer);
+        if (NULL != peer) {
+            peer->state = MCA_OOB_USOCK_FAILED;
+            mca_oob_usock_peer_close(peer);
+        } else {
+            CLOSE_THE_SOCKET(sd);
+        }
         return ORTE_ERR_UNREACH;
     }
 
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s connect-ack recvd from %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&peer->name));
+
+    /* if we don't already have it, get the peer */
+    if (NULL == peer) {
+        peer = mca_oob_usock_peer_lookup(&hdr.origin);
+        if (NULL == peer) {
+            opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                "%s mca_oob_usock_recv_connect: connection from new peer",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            peer = OBJ_NEW(mca_oob_usock_peer_t);
+            peer->name = hdr.origin;
+            peer->state = MCA_OOB_USOCK_ACCEPTING;
+            peer->sd = sd;
+            ui64 = (uint64_t*)(&peer->name);
+            if (OPAL_SUCCESS != opal_hash_table_set_value_uint64(&mca_oob_usock_module.peers, (*ui64), peer)) {
+                OBJ_RELEASE(peer);
+                CLOSE_THE_SOCKET(sd);
+                return ORTE_ERR_UNREACH;
+            }
+        } else {
+            /* check for a race condition - if I was in the process of
+             * creating a connection to the peer, or have already established
+             * such a connection, then we need to reject this connection. We will
+             * let the higher ranked process retry - if I'm the lower ranked
+             * process, I'll simply defer until I receive the request
+             */
+            if (MCA_OOB_USOCK_CONNECTED == peer->state ||
+                MCA_OOB_USOCK_CONNECTING == peer->state ||
+                MCA_OOB_USOCK_CONNECT_ACK == peer->state) {
+                opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s SIMUL CONNECTION WITH %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&hdr.origin));
+                if (peer->recv_ev_active) {
+                    opal_event_del(&peer->recv_event);
+                    peer->recv_ev_active = false;
+                }
+                if (peer->send_ev_active) {
+                    opal_event_del(&peer->send_event);
+                    peer->send_ev_active = false;
+                }
+                if (0 < peer->sd) {
+                    CLOSE_THE_SOCKET(peer->sd);
+                    peer->sd = -1;
+                }
+                CLOSE_THE_SOCKET(sd);
+                peer->retries = 0;
+                cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &hdr.origin, ORTE_PROC_MY_NAME);
+                if (OPAL_VALUE1_GREATER == cmpval) {
+                    /* force the other end to retry the connection */
+                    peer->state = MCA_OOB_USOCK_UNCONNECTED;
+                    return ORTE_ERR_UNREACH;
+                } else {
+                    /* retry the connection */
+                    peer->state = MCA_OOB_USOCK_CONNECTING;
+                    ORTE_ACTIVATE_USOCK_CONN_STATE(peer, mca_oob_usock_peer_try_connect);
+                    return ORTE_ERR_UNREACH;
+                }
+            }
+        }
+    } else {
+        /* compare the peers name to the expected value */
+        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->name, &hdr.origin)) {
+            opal_output(0, "%s usock_peer_recv_connect_ack: "
+                        "received unexpected process identifier %s from %s\n",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&(hdr.origin)),
+                        ORTE_NAME_PRINT(&(peer->name)));
+            peer->state = MCA_OOB_USOCK_FAILED;
+            mca_oob_usock_peer_close(peer);
+            return ORTE_ERR_UNREACH;
+        }
+    }
+
+    opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s connect-ack header from %s is okay",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name));
+
+    /* get the authentication and version payload */
+    if (NULL == (msg = (char*)malloc(hdr.nbytes))) {
+        peer->state = MCA_OOB_USOCK_FAILED;
+        mca_oob_usock_peer_close(peer);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (!usock_peer_recv_blocking(peer, sd, msg, hdr.nbytes)) {
+        /* unable to complete the recv */
+        opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                            "%s unable to complete recv of connect-ack from %s ON SOCKET %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&peer->name), peer->sd);
+        free(msg);
+        return ORTE_ERR_UNREACH;
+    }
+
+    /* check that this is from a matching version */
+    version = (char*)(msg);
+    if (0 != strcmp(version, orte_version_string)) {
+        opal_output(0, "%s usock_peer_recv_connect_ack: "
+                    "received different version from %s: %s instead of %s\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&(peer->name)),
+                    version, orte_version_string);
+        peer->state = MCA_OOB_USOCK_FAILED;
+        mca_oob_usock_peer_close(peer);
+        free(msg);
+        return ORTE_ERR_UNREACH;
+    }
+
+    opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s connect-ack version from %s matches ours",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&peer->name));
+
+    /* check security token */
+    creds.credential = (char*)(msg + strlen(version) + 1);
+    creds.size = hdr.nbytes - strlen(version) - 1;
+    if (OPAL_SUCCESS != (rc = opal_sec.authenticate(&creds))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    free(msg);
+
+    opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                        "%s connect-ack %s authenticated",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&peer->name));
+
+    /* if the requestor wanted the header returned, then they
+     * will complete their processing
+     */
+    if (NULL != dhdr) {
+        return ORTE_SUCCESS;
+    }
 
     /* set the peer into the component and OOB-level peer tables to indicate
      * that we know this peer and we will be handling him
@@ -591,7 +777,7 @@ void mca_oob_usock_peer_close(mca_oob_usock_peer_t *peer)
  * information that identifies the peers endpoint.
  */
 static bool usock_peer_recv_blocking(mca_oob_usock_peer_t* peer,
-                                     void* data, size_t size)
+                                     int sd, void* data, size_t size)
 {
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
@@ -599,10 +785,10 @@ static bool usock_peer_recv_blocking(mca_oob_usock_peer_t* peer,
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s waiting for connect ack from %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)));
+                        (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)));
 
     while (cnt < size) {
-        int retval = recv(peer->sd, (char *)ptr+cnt, size-cnt, 0);
+        int retval = recv(sd, (char *)ptr+cnt, size-cnt, 0);
 
         /* remote closed connection */
         if (retval == 0) {
@@ -610,8 +796,8 @@ static bool usock_peer_recv_blocking(mca_oob_usock_peer_t* peer,
                                 "%s-%s usock_peer_recv_blocking: "
                                 "peer closed connection: peer state %d",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&(peer->name)),
-                                peer->state);
+                                (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)),
+                                (NULL == peer) ? 0 : peer->state);
             mca_oob_usock_peer_close(peer);
             return false;
         }
@@ -640,18 +826,22 @@ static bool usock_peer_recv_blocking(mca_oob_usock_peer_t* peer,
                                         "%s connect ack received error %s from %s",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         strerror(opal_socket_errno),
-                                        ORTE_NAME_PRINT(&(peer->name)));
+                                        (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)));
                     return false;
                 } else {
                     opal_output(0, 
                                 "%s usock_peer_recv_blocking: "
                                 "recv() failed for %s: %s (%d)\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&(peer->name)),
+                                (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)),
                                 strerror(opal_socket_errno),
                                 opal_socket_errno);
-                    peer->state = MCA_OOB_USOCK_FAILED;
-                    mca_oob_usock_peer_close(peer);
+                    if (NULL != peer) {
+                        peer->state = MCA_OOB_USOCK_FAILED;
+                        mca_oob_usock_peer_close(peer);
+                    } else {
+                        CLOSE_THE_SOCKET(sd);
+                    }
                     return false;
                 }
             }
@@ -663,7 +853,7 @@ static bool usock_peer_recv_blocking(mca_oob_usock_peer_t* peer,
     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s connect ack received from %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)));
+                        (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)));
     return true;
 }
 

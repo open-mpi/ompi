@@ -393,7 +393,7 @@ void mca_oob_usock_recv_handler(int sd, short flags, void *cbdata)
 
     switch (peer->state) {
     case MCA_OOB_USOCK_CONNECT_ACK:
-        if (ORTE_SUCCESS == (rc = mca_oob_usock_peer_recv_connect_ack(peer))) {
+        if (ORTE_SUCCESS == (rc = mca_oob_usock_peer_recv_connect_ack(peer, peer->sd, NULL))) {
             opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s:usock:recv:handler starting send/recv events",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -499,7 +499,7 @@ void mca_oob_usock_recv_handler(int sd, short flags, void *cbdata)
                 opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                     "%s RECVD COMPLETE MESSAGE FROM %s OF %d BYTES FOR DEST %s TAG %d",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&peer->name),
+                                    ORTE_NAME_PRINT(&peer->recv_msg->hdr.origin),
                                     (int)peer->recv_msg->hdr.nbytes,
                                     ORTE_NAME_PRINT(&peer->recv_msg->hdr.dst),
                                     peer->recv_msg->hdr.tag);
@@ -510,18 +510,20 @@ void mca_oob_usock_recv_handler(int sd, short flags, void *cbdata)
                     opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                         "%s DELIVERING TO RML",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                    ORTE_RML_POST_MESSAGE(&peer->name, peer->recv_msg->hdr.tag,
+                    ORTE_RML_POST_MESSAGE(&peer->recv_msg->hdr.origin, peer->recv_msg->hdr.tag,
                                           peer->recv_msg->data,
                                           peer->recv_msg->hdr.nbytes);
                     OBJ_RELEASE(peer->recv_msg);
                 } else {
                     /* no - we don't route things, so we promote this
                      * back to the OOB and let another transport move
-                     * it along
+                     * it along. If we are a daemon and it is intended
+                     * for another of our local procs, it will just come
+                     * back to us and be handled then
                      */
                     snd = OBJ_NEW(orte_rml_send_t);
                     snd->dst = peer->recv_msg->hdr.dst;
-                    snd->origin = peer->name;
+                    snd->origin = peer->recv_msg->hdr.origin;
                     snd->tag = peer->recv_msg->hdr.tag;
                     snd->data = peer->recv_msg->data;
                     snd->count = peer->recv_msg->hdr.nbytes;
