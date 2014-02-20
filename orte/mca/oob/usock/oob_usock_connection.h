@@ -95,7 +95,8 @@ ORTE_MODULE_DECLSPEC void mca_oob_usock_peer_try_connect(int fd, short args, voi
 ORTE_MODULE_DECLSPEC void mca_oob_usock_peer_dump(mca_oob_usock_peer_t* peer, const char* msg);
 ORTE_MODULE_DECLSPEC bool mca_oob_usock_peer_accept(mca_oob_usock_peer_t* peer);
 ORTE_MODULE_DECLSPEC void mca_oob_usock_peer_complete_connect(mca_oob_usock_peer_t* peer);
-ORTE_MODULE_DECLSPEC int mca_oob_usock_peer_recv_connect_ack(mca_oob_usock_peer_t* peer);
+ORTE_MODULE_DECLSPEC int mca_oob_usock_peer_recv_connect_ack(mca_oob_usock_peer_t* peer,
+                                                             int sd, mca_oob_usock_hdr_t *hdr);
 ORTE_MODULE_DECLSPEC void mca_oob_usock_peer_close(mca_oob_usock_peer_t *peer);
 
 #endif /* _MCA_OOB_USOCK_CONNECTION_H_ */

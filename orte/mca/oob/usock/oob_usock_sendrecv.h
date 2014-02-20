@@ -119,6 +119,7 @@ OBJ_CLASS_DECLARATION(mca_oob_usock_recv_t);
                             ORTE_NAME_PRINT(&((m)->dst)));              \
         msg = OBJ_NEW(mca_oob_usock_send_t);                            \
         /* setup the header */                                          \
+        msg->hdr.origin = (m)->origin;                                  \
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_USOCK_USER;                             \
         msg->hdr.tag = (m)->tag;                                        \
@@ -159,6 +160,7 @@ OBJ_CLASS_DECLARATION(mca_oob_usock_recv_t);
                             ORTE_NAME_PRINT(&((m)->dst)));              \
         msg = OBJ_NEW(mca_oob_usock_send_t);                            \
         /* setup the header */                                          \
+        msg->hdr.origin = (m)->origin;                                  \
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_USOCK_USER;                             \
         msg->hdr.tag = (m)->tag;                                        \

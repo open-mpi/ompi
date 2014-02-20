@@ -40,8 +40,10 @@ typedef enum {
 
 /* header for usock msgs */
 typedef struct {
+    /* the original sender */
+    orte_process_name_t origin;
     /* the intended final recipient */
-    orte_process_name_t     dst;
+    orte_process_name_t dst;
     /* type of message */
     mca_oob_usock_msg_type_t type;
     /* the rml tag where this message is headed */
