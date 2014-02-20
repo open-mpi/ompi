@@ -1,3 +1,11 @@
+/*
+ * IMPLEMENTATION DETAILS
+ * 
+ * All methods with buffers that can be direct or non direct have
+ * a companion argument 'db' which is true if the buffer is direct.
+ * 
+ * Checking if a buffer is direct is faster in Java than C.
+ */
 package mpi;
 
 import java.nio.*;
@@ -91,21 +99,22 @@ public Status mRecv(Object buf, int count, Datatype type)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
     Status status = new Status();
-    mRecv(buf, off, count, type, status);
+    mRecv(buf, db, off, count, type, status);
     return status;
 }
 
 private native void mRecv(
-        Object buf, int offset, int count, Datatype type, Status status)
-        throws MPIException;
+        Object buf, boolean db, int offset, int count,
+        Datatype type, Status status) throws MPIException;
 
 /**
  * Java binding of {@code MPI_IMRECV}.

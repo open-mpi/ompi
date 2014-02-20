@@ -21,10 +21,19 @@
  *            at Syracuse University 1998
  */
 
+/*
+ * IMPLEMENTATION DETAILS
+ * 
+ * All methods with buffers that can be direct or non direct have
+ * a companion argument 'db' which is true if the buffer is direct.
+ * For example, if the buffer argument is recvBuf, the companion
+ * argument will be 'rdb', meaning if the receive buffer is direct.
+ * 
+ * Checking if a buffer is direct is faster in Java than C.
+ */
 package mpi;
 
 import java.nio.*;
-import static mpi.MPI.isHeapBuffer;
 import static mpi.MPI.assertDirectBuffer;
 
 /**
@@ -285,13 +294,16 @@ public final void scan(Object sendbuf, Object recvbuf,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
@@ -299,7 +311,7 @@ public final void scan(Object sendbuf, Object recvbuf,
 
     op.setDatatype(type);
 
-    scan(handle, sendbuf, sendoff, recvbuf, recvoff,
+    scan(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
          count, type.handle, type.baseType, op);
 }
 
@@ -318,8 +330,9 @@ public final void scan(Object recvbuf, int count, Datatype type, Op op)
 {
     MPI.check();
     int recvoff = 0;
+    boolean rdb = false;
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
@@ -327,12 +340,13 @@ public final void scan(Object recvbuf, int count, Datatype type, Op op)
 
     op.setDatatype(type);
 
-    scan(handle, null, 0, recvbuf, recvoff,
+    scan(handle, null, false, 0, recvbuf, rdb, recvoff,
          count, type.handle, type.baseType, op);
 }
 
 private native void scan(
-        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        long comm, Object sendbuf, boolean sdb, int sendoff,
+        Object recvbuf, boolean rdb, int recvoff,
         int count, long type, int baseType, Op op) throws MPIException;
 
 /**
@@ -403,13 +417,16 @@ public final void exScan(Object sendbuf, Object recvbuf,
     int sendoff = 0,
         recvoff = 0;
 
-    if(isHeapBuffer(sendbuf))
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
         sendoff = ((Buffer)sendbuf).arrayOffset();
         sendbuf = ((Buffer)sendbuf).array();
     }
 
-    if(isHeapBuffer(recvbuf))
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
         recvoff = ((Buffer)recvbuf).arrayOffset();
         recvbuf = ((Buffer)recvbuf).array();
@@ -417,7 +434,7 @@ public final void exScan(Object sendbuf, Object recvbuf,
 
     op.setDatatype(type);
 
-    exScan(handle, sendbuf, sendoff, recvbuf, recvoff,
+    exScan(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
            count, type.handle, type.baseType, op);
 }
 
@@ -436,19 +453,23 @@ public final void exScan(Object buf, int count, Datatype type, Op op)
 {
     MPI.check();
     int off = 0;
+    boolean db = false;
 
-    if(isHeapBuffer(buf))
+    if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
         off = ((Buffer)buf).arrayOffset();
         buf = ((Buffer)buf).array();
     }
 
     op.setDatatype(type);
-    exScan(handle, null, 0, buf, off, count, type.handle, type.baseType, op);
+
+    exScan(handle, null, false, 0, buf, db, off,
+           count, type.handle, type.baseType, op);
 }
 
 private native void exScan(
-        long comm, Object sendbuf, int sendoff, Object recvbuf, int recvoff,
+        long comm, Object sendbuf, boolean sdb, int sendoff,
+        Object recvbuf, boolean rdb, int recvoff,
         int count, long type, int baseType, Op op) throws MPIException;
 
 /**
