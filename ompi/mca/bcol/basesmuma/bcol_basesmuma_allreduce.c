@@ -330,7 +330,7 @@ int bcol_basesmuma_allreduce_intra_recursive_doubling(bcol_function_args_t *inpu
     struct ompi_op_t *op;
     int64_t sequence_number=input_args->sequence_num;
     struct ompi_datatype_t *dtype;
-    int first_instance;
+    int first_instance = 0;
     int leading_dim,idx;
     int buff_idx;
     mca_bcol_basesmuma_ctl_struct_t **ctl_structs;
