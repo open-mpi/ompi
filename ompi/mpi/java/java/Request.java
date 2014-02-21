@@ -79,16 +79,19 @@ private native long free(long req) throws MPIException;
 public final void cancel() throws MPIException
 {
     MPI.check();
-    cancel_jni();
+    cancel(handle);
 }
 
-private native void cancel_jni() throws MPIException;
+private native void cancel(long request) throws MPIException;
 
 /**
  * Test if request object is null.
  * @return true if the request object is null, false otherwise
  */
-public final native boolean isNull();
+public final boolean isNull()
+{
+    return handle == 0 || handle == MPI.REQUEST_NULL.handle;
+}
 
 /**
  * Blocks until the operation identified by the request is complete.
@@ -101,11 +104,11 @@ public final Status waitStatus() throws MPIException
 {
     MPI.check();
     Status stat = new Status();
-    waitStatus(stat);
+    handle = waitStatus(handle, stat);
     return stat;
 }
 
-private native void waitStatus(Status stat) throws MPIException;
+private native long waitStatus(long request, Status stat) throws MPIException;
 
 /**
  * Blocks until the operation identified by the request is complete.
@@ -116,10 +119,10 @@ private native void waitStatus(Status stat) throws MPIException;
 public final void waitFor() throws MPIException
 {
     MPI.check();
-    waitNoStatus();
+    handle = waitFor(handle);
 }
 
-private native void waitNoStatus() throws MPIException;
+private native long waitFor(long request) throws MPIException;
 
 /**
  * Returns a status object if the operation identified by the request
@@ -133,10 +136,10 @@ private native void waitNoStatus() throws MPIException;
 public final Status testStatus() throws MPIException
 {
     MPI.check();
-    return testStatus_jni();
+    return testStatus(handle);
 }
 
-private native Status testStatus_jni() throws MPIException;
+private native Status testStatus(long request) throws MPIException;
 
 /**
  * Returns true if the operation identified by the request
@@ -150,10 +153,10 @@ private native Status testStatus_jni() throws MPIException;
 public final boolean test() throws MPIException
 {
     MPI.check();
-    return testNoStatus();
+    return test(handle);
 }
 
-private native boolean testNoStatus() throws MPIException;
+private native boolean test(long handle) throws MPIException;
 
 /**
  * Blocks until one of the operations associated with the active
@@ -170,12 +173,14 @@ private native boolean testNoStatus() throws MPIException;
 public static Status waitAnyStatus(Request[] requests) throws MPIException
 {
     MPI.check();
+    long[] r = getHandles(requests);
     Status stat = new Status();
-    waitAnyStatus(requests, stat);
+    waitAnyStatus(r, stat);
+    setHandles(requests, r);
     return stat;
 }
 
-private static native void waitAnyStatus(Request[] requests, Status stat)
+private static native void waitAnyStatus(long[] requests, Status stat)
         throws MPIException;
 
 /**
@@ -192,11 +197,13 @@ private static native void waitAnyStatus(Request[] requests, Status stat)
 public static int waitAny(Request[] requests) throws MPIException
 {
     MPI.check();
-    return waitAnyNoStatus(requests);
+    long[] r = getHandles(requests);
+    int index = waitAny(r);
+    setHandles(requests, r);
+    return index;
 }
 
-private static native int waitAnyNoStatus(Request[] requests)
-        throws MPIException;
+private static native int waitAny(long[] requests) throws MPIException;
 
 /**
  * Tests for completion of either one or none of the operations
@@ -213,10 +220,13 @@ private static native int waitAnyNoStatus(Request[] requests)
 public static Status testAnyStatus(Request[] requests) throws MPIException
 {
     MPI.check();
-    return testAnyStatus_jni(requests);
+    long[] r = getHandles(requests);
+    Status stat = testAnyStatus(r);
+    setHandles(requests, r);
+    return stat;
 }
 
-private static native Status testAnyStatus_jni(Request[] requests)
+private static native Status testAnyStatus(long[] requests)
         throws MPIException;
 
 /**
@@ -232,11 +242,13 @@ private static native Status testAnyStatus_jni(Request[] requests)
 public static int testAny(Request[] requests) throws MPIException
 {
     MPI.check();
-    return testAnyNoStatus(requests);
+    long[] r = getHandles(requests);
+    int index = testAny(r);
+    setHandles(requests, r);
+    return index;
 }
 
-private static native int testAnyNoStatus(Request[] requests)
-        throws MPIException;
+private static native int testAny(long[] requests) throws MPIException;
 
 /**
  * Blocks until all of the operations associated with the active
@@ -252,12 +264,14 @@ private static native int testAnyNoStatus(Request[] requests)
 public static Status[] waitAllStatus(Request[] requests) throws MPIException
 {
     MPI.check();
+    long[] r = getHandles(requests);
     Status[] statuses = new Status[requests.length];
-    waitAllStatus(requests, statuses);
+    waitAllStatus(r, statuses);
+    setHandles(requests, r);
     return statuses;
 }
 
-private static native void waitAllStatus(Request[] requests, Status[] statuses)
+private static native void waitAllStatus(long[] requests, Status[] statuses)
         throws MPIException;
 
 /**
@@ -270,11 +284,12 @@ private static native void waitAllStatus(Request[] requests, Status[] statuses)
 public static void waitAll(Request[] requests) throws MPIException
 {
     MPI.check();
-    waitAllNoStatus(requests);
+    long[] r = getHandles(requests);
+    waitAll(r);
+    setHandles(requests, r);
 }
 
-private static native void waitAllNoStatus(Request[] requests)
-        throws MPIException;
+private static native void waitAll(long[] requests) throws MPIException;
 
 /**
  * Tests for completion of <em>all</em> of the operations associated
@@ -290,10 +305,13 @@ private static native void waitAllNoStatus(Request[] requests)
 public static Status[] testAllStatus(Request[] requests) throws MPIException
 {
     MPI.check();
-    return testAllStatus_jni(requests);
+    long[] r = getHandles(requests);
+    Status[] statuses = testAllStatus(r);
+    setHandles(requests, r);
+    return statuses;
 }
 
-private static native Status[] testAllStatus_jni(Request[] requests)
+private static native Status[] testAllStatus(long[] requests)
         throws MPIException;
 
 /**
@@ -308,11 +326,13 @@ private static native Status[] testAllStatus_jni(Request[] requests)
 public static boolean testAll(Request[] requests) throws MPIException
 {
     MPI.check();
-    return testAllNoStatus(requests);
+    long[] r = getHandles(requests);
+    boolean completed = testAll(r);
+    setHandles(requests, r);
+    return completed;
 }
 
-private static native boolean testAllNoStatus(Request[] requests)
-        throws MPIException;
+private static native boolean testAll(long[] requests) throws MPIException;
 
 /**
  * Blocks until at least one of the operations associated with the active
@@ -331,10 +351,13 @@ private static native boolean testAllNoStatus(Request[] requests)
 public static Status[] waitSomeStatus(Request[] requests) throws MPIException
 {
     MPI.check();
-    return waitSomeStatus_jni(requests);
+    long[] r = getHandles(requests);
+    Status[] statuses = waitSomeStatus(r);
+    setHandles(requests, r);
+    return statuses;
 }
 
-private static native Status[] waitSomeStatus_jni(Request[] requests)
+private static native Status[] waitSomeStatus(long[] requests)
         throws MPIException;
 
 /**
@@ -352,11 +375,13 @@ private static native Status[] waitSomeStatus_jni(Request[] requests)
 public static int[] waitSome(Request[] requests) throws MPIException
 {
     MPI.check();
-    return waitSomeNoStatus(requests);
+    long[] r = getHandles(requests);
+    int[] indexes = waitSome(r);
+    setHandles(requests, r);
+    return indexes;
 }
 
-private static native int[] waitSomeNoStatus(Request[] requests)
-        throws MPIException;
+private static native int[] waitSome(long[] requests) throws MPIException;
 
 /**
  * Behaves like {@code waitSome}, except that it returns immediately.
@@ -370,10 +395,13 @@ private static native int[] waitSomeNoStatus(Request[] requests)
 public static Status[] testSomeStatus(Request[] requests) throws MPIException
 {
     MPI.check();
-    return testSomeStatus_jni(requests);
+    long[] r = getHandles(requests);
+    Status[] statuses = testSomeStatus(r);
+    setHandles(requests, r);
+    return statuses;
 }
 
-private static native Status[] testSomeStatus_jni(Request[] requests)
+private static native Status[] testSomeStatus(long[] requests)
         throws MPIException;
 
 /**
@@ -388,10 +416,28 @@ private static native Status[] testSomeStatus_jni(Request[] requests)
 public static int[] testSome(Request[] requests) throws MPIException
 {
     MPI.check();
-    return testSomeNoStatus(requests);
+    long[] r = getHandles(requests);
+    int[] indexes = testSome(r);
+    setHandles(requests, r);
+    return indexes;
 }
 
-private static native int[] testSomeNoStatus(Request[] requests)
-        throws MPIException;
+private static native int[] testSome(long[] requests) throws MPIException;
+
+protected static long[] getHandles(Request[] r)
+{
+    long[] h = new long[r.length];
+    
+    for(int i = 0; i < r.length; i++)
+        h[i] = r[i].handle;
+
+    return h;
+}
+
+protected static void setHandles(Request[] r, long[] h)
+{
+    for(int i = 0; i < r.length; i++)
+        r[i].handle = h[i];
+}
 
 } // Request
