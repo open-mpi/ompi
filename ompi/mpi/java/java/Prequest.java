@@ -60,15 +60,9 @@ private native long start(long request) throws MPIException;
 public static void startAll(Prequest[] requests) throws MPIException
 {
     MPI.check();
-    long[] r = new long[requests.length];
-
-    for(int i = 0; i < r.length; i++)
-        r[i] = requests[i].handle;
-
+    long[] r = getHandles(requests);
     startAll(r);
-
-    for(int i = 0; i < r.length; i++)
-        requests[i].handle = r[i];
+    setHandles(requests, r);
 }
 
 private native static void startAll(long[] requests) throws MPIException;
