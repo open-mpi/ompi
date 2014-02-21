@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,6 +45,7 @@
 #include "orte/mca/state/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
+#include "orte/mca/sstore/base/base.h"
 #endif
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -175,9 +178,20 @@ int orte_ess_base_tool_setup(void)
         error = "orte_snapc_base_open";
         goto error;
     }
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sstore_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sstore_base_open";
+        goto error;
+    }
+
     if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, ORTE_PROC_IS_APP))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_sstore_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_sstore_base_select";
         goto error;
     }
     
@@ -201,6 +215,7 @@ int orte_ess_base_tool_finalize(void)
 
 #if OPAL_ENABLE_FT_CR == 1
     mca_base_framework_close(&orte_snapc_base_framework);
+    mca_base_framework_close(&orte_sstore_base_framework);
 #endif
 
     /* if I am a tool, then all I will have done is
