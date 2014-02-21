@@ -114,7 +114,7 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         frag->flags = MCA_BTL_UGNI_FRAG_IGNORE;
 
         rc = mca_btl_ugni_send_frag (endpoint, frag);
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             mca_btl_ugni_frag_return (frag);
             break;
         }
