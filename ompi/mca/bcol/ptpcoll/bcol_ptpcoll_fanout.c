@@ -10,7 +10,6 @@
 
 
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "ompi/mca/bcol/ptpcoll/bcol_ptpcoll.h"
 
 /*
@@ -18,7 +17,7 @@
  */
 
 int bcol_ptpcoll_fanout( bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args)
+        struct mca_bcol_base_function_t *const_args)
 {
     /* local variable */
     int ret = OMPI_SUCCESS;

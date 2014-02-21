@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2013 Los Alamos National Security, LLC. All rights
+#                    reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,12 +32,19 @@ sources = coll_ml.h \
         coll_ml_hier_algorithms.c \
         coll_ml_hier_algorithms_setup.c \
         coll_ml_hier_algorithms_bcast_setup.c \
+        coll_ml_hier_algorithms_allreduce_setup.c \
+        coll_ml_hier_algorithms_reduce_setup.c \
         coll_ml_hier_algorithms_common_setup.c \
         coll_ml_hier_algorithms_common_setup.h \
+        coll_ml_hier_algorithms_allgather_setup.c \
         coll_ml_hier_algorithm_memsync_setup.c \
         coll_ml_custom_utils.h \
         coll_ml_custom_utils.c \
+        coll_ml_hier_algorithms_ibarrier.c \
         coll_ml_progress.c \
+        coll_ml_reduce.c \
+        coll_ml_allreduce.c \
+        coll_ml_allgather.c \
         coll_ml_mca.h \
         coll_ml_mca.c \
         coll_ml_lmngr.h \

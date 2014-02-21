@@ -29,7 +29,7 @@ static void mca_coll_ml_barrier_task_setup(
 {
     task_status->rt_num_dependencies = func->num_dependencies;
     task_status->rt_num_dependent_tasks = func->num_dependent_tasks;
-    task_status->rt_dependent_task_indecies = func->dependent_task_indecies;
+    task_status->rt_dependent_task_indices = func->dependent_task_indices;
 }
 
 static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
@@ -37,7 +37,7 @@ static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
 {
     ompi_free_list_item_t *item;
     mca_coll_ml_collective_operation_progress_t *coll_op;
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     
     /* allocate an ml buffer for signaling purposes */
     src_buffer_desc = mca_coll_ml_alloc_buffer(ml_module);

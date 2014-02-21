@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,22 +30,64 @@
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/pml/pml.h"  /* need this for the max tag size */
 
-#include "ompi/mca/coll/ml/coll_ml.h"
-#include "ompi/mca/coll/ml/coll_ml_allocation.h"
 #include "bcol_ptpcoll.h"
 #include "bcol_ptpcoll_utils.h"
 #include "bcol_ptpcoll_bcast.h"
+#include "bcol_ptpcoll_allreduce.h"
+#include "bcol_ptpcoll_reduce.h"
 
 #define BCOL_PTP_CACHE_LINE_SIZE 128
 
 /*
  * Local functions
  */
+static int alloc_allreduce_offsets_array(mca_bcol_ptpcoll_module_t *ptpcoll_module)
+{
+    int rc = OMPI_SUCCESS, i = 0;
+    netpatterns_k_exchange_node_t *k_node = &ptpcoll_module->knomial_exchange_tree;
+    int n_exchanges = k_node->n_exchanges;
+
+    /* Precalculate the allreduce offsets */
+    if (0 < k_node->n_exchanges) {
+        ptpcoll_module->allgather_offsets = (int **)malloc(n_exchanges * sizeof(int*));
+
+        if (!ptpcoll_module->allgather_offsets) {
+            rc = OMPI_ERROR;
+            return rc;
+        }
+
+        for (i=0; i < n_exchanges ; i++) {
+            ptpcoll_module->allgather_offsets[i] = (int *)malloc (sizeof(int) * NOFFSETS);
+
+            if (!ptpcoll_module->allgather_offsets[i]){
+                rc = OMPI_ERROR;
+                return rc;
+            }
+        }
+    }
+    return rc;
+}
+
+static int free_allreduce_offsets_array(mca_bcol_ptpcoll_module_t *ptpcoll_module)
+{
+    int rc = OMPI_SUCCESS, i = 0;
+    netpatterns_k_exchange_node_t *k_node = &ptpcoll_module->knomial_exchange_tree;
+    int n_exchanges = k_node->n_exchanges;
+
+    if (ptpcoll_module->allgather_offsets) {
+        for (i=0; i < n_exchanges; i++) {
+            free (ptpcoll_module->allgather_offsets[i]);
+        }
+    }
+
+    free(ptpcoll_module->allgather_offsets);
+    return rc;
+}
 
 static void
 mca_bcol_ptpcoll_module_construct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
 {
-    int i;
+    uint64_t i;
     /* Pointer to component */
     ptpcoll_module->super.bcol_component = (mca_bcol_base_component_t *) &mca_bcol_ptpcoll_component;
     ptpcoll_module->super.list_n_connected = NULL;
@@ -56,7 +99,7 @@ mca_bcol_ptpcoll_module_construct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
     /* set the upper limit on the tag */
     i = 2;
     ptpcoll_module->tag_mask = 1;
-    while ( i <= mca_pml.pml_max_tag && i > 0) {
+    while ( i <= (uint64_t) mca_pml.pml_max_tag && i > 0) {
         i <<= 1;
     }
     ptpcoll_module->ml_mem.ml_buf_desc = NULL;
@@ -84,6 +127,9 @@ mca_bcol_ptpcoll_module_destruct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
         free(ml_mem->ml_buf_desc);
     }
 
+    if (NULL != ptpcoll_module->allgather_offsets) {
+        free_allreduce_offsets_array(ptpcoll_module);
+    }
 
     if (NULL != ptpcoll_module->narray_node) {
         for (i = 0; i < ptpcoll_module->group_size; i++) {
@@ -111,7 +157,7 @@ OBJ_CLASS_INSTANCE(mca_bcol_ptpcoll_module_t,
                    mca_bcol_ptpcoll_module_destruct);
 
 static int init_ml_buf_desc(mca_bcol_ptpcoll_ml_buffer_desc_t **desc, void *base_addr, uint32_t num_banks,
-        uint32_t num_buffers_per_bank, uint32_t size_buffer, uint32_t header_size, int group_size, int pow_k)
+                            uint32_t num_buffers_per_bank, uint32_t size_buffer, uint32_t header_size, int group_size, int pow_k)
 {
     uint32_t i, j, ci;
     mca_bcol_ptpcoll_ml_buffer_desc_t *tmp_desc = NULL;
@@ -124,7 +170,7 @@ static int init_ml_buf_desc(mca_bcol_ptpcoll_ml_buffer_desc_t **desc, void *base
 
 
     *desc = (mca_bcol_ptpcoll_ml_buffer_desc_t *)calloc(num_banks * num_buffers_per_bank,
-            sizeof(mca_bcol_ptpcoll_ml_buffer_desc_t));
+                                                        sizeof(mca_bcol_ptpcoll_ml_buffer_desc_t));
     if (NULL == *desc) {
         PTPCOLL_ERROR(("Failed to allocate memory"));
         return OMPI_ERROR;
@@ -151,6 +197,10 @@ static int init_ml_buf_desc(mca_bcol_ptpcoll_ml_buffer_desc_t **desc, void *base
             tmp_desc[ci].data_addr = (void *)
                 ((unsigned char*)base_addr + ci * size_buffer + header_size);
             PTPCOLL_VERBOSE(10, ("ml memory cache setup %d %d - %p", i, j, tmp_desc[ci].data_addr));
+
+            /* init reduce implementation flags */
+            tmp_desc[ci].reduce_init_called = false;
+            tmp_desc[ci].reduction_status = 0;
         }
     }
 
@@ -160,36 +210,46 @@ static int init_ml_buf_desc(mca_bcol_ptpcoll_ml_buffer_desc_t **desc, void *base
 static void mca_bcol_ptpcoll_set_small_msg_thresholds(struct mca_bcol_base_module_t *super)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module =
-                   (mca_bcol_ptpcoll_module_t *) super;
+        (mca_bcol_ptpcoll_module_t *) super;
+    mca_bcol_ptpcoll_component_t *cm = &mca_bcol_ptpcoll_component;
+
+    /* Subtract out the maximum header size when calculating the thresholds. This
+     * will account for the headers used by the basesmuma component. If we do not
+     * take these headers into account we may overrun our buffer. */
 
     /* Set the Allgather threshold equals to a ML buff size */
     super->small_message_thresholds[BCOL_ALLGATHER] =
-                       ptpcoll_module->ml_mem.size_buffer /
-                       ompi_comm_size(ptpcoll_module->super.sbgp_partner_module->group_comm);
+        (ptpcoll_module->ml_mem.size_buffer - BCOL_HEADER_MAX) /
+        ompi_comm_size(ptpcoll_module->super.sbgp_partner_module->group_comm);
 
     /* Set the Bcast threshold, all Bcast algths have the same threshold */
     super->small_message_thresholds[BCOL_BCAST] =
-                            ptpcoll_module->ml_mem.size_buffer;
+        (ptpcoll_module->ml_mem.size_buffer - BCOL_HEADER_MAX);
 
     /* Set the Alltoall threshold, the Ring algth sets some limitation */
     super->small_message_thresholds[BCOL_ALLTOALL] =
-                        ptpcoll_module->ml_mem.size_buffer / 2;
+        (ptpcoll_module->ml_mem.size_buffer - BCOL_HEADER_MAX) / 2;
 
     /* Set the Allreduce threshold, NARRAY algth sets some limitation */
     super->small_message_thresholds[BCOL_ALLREDUCE] =
-                 ptpcoll_module->ml_mem.size_buffer / ptpcoll_module->k_nomial_radix;
+        (ptpcoll_module->ml_mem.size_buffer - BCOL_HEADER_MAX) / ptpcoll_module->k_nomial_radix;
+
+    /* Set the Reduce threshold, NARRAY algth sets some limitation */
+    super->small_message_thresholds[BCOL_REDUCE] =
+        (ptpcoll_module->ml_mem.size_buffer - BCOL_HEADER_MAX) / cm->narray_radix;
 }
 
 /*
  * Cache information about ML memory
  */
-static int mca_bcol_ptpcoll_cache_ml_memory_info(struct mca_coll_ml_module_t *ml_module,
+static int mca_bcol_ptpcoll_cache_ml_memory_info(struct mca_bcol_base_memory_block_desc_t *payload_block,
+                                                 uint32_t data_offset,
                                                  struct mca_bcol_base_module_t *bcol,
                                                  void *reg_data)
 {
     mca_bcol_ptpcoll_module_t *ptpcoll_module = (mca_bcol_ptpcoll_module_t *) bcol;
     mca_bcol_ptpcoll_local_mlmem_desc_t *ml_mem = &ptpcoll_module->ml_mem;
-    struct ml_memory_block_desc_t *desc = ml_module->payload_block;
+    struct mca_bcol_base_memory_block_desc_t *desc = payload_block;
     int group_size = ptpcoll_module->super.sbgp_partner_module->group_size;
 
     PTPCOLL_VERBOSE(10, ("mca_bcol_ptpcoll_init_buffer_memory was called"));
@@ -200,28 +260,25 @@ static int mca_bcol_ptpcoll_cache_ml_memory_info(struct mca_coll_ml_module_t *ml
     ml_mem->size_buffer = desc->size_buffer;
 
     PTPCOLL_VERBOSE(10, ("ML buffer configuration num banks %d num_per_bank %d size %d base addr %p",
-                           desc->num_banks, desc->num_buffers_per_bank, desc->size_buffer, desc->block->base_addr));
-
-    /* pointer to ml level descriptor */
-    ml_mem->ml_mem_desc = desc;
+                         desc->num_banks, desc->num_buffers_per_bank, desc->size_buffer, desc->block->base_addr));
 
     /* Set first bank index for release */
     ml_mem->bank_index_for_release = 0;
 
     if (OMPI_SUCCESS != init_ml_buf_desc(&ml_mem->ml_buf_desc,
-                desc->block->base_addr,
-                ml_mem->num_banks,
-                ml_mem->num_buffers_per_bank,
-                ml_mem->size_buffer,
-                ml_module->data_offset,
-                group_size,
-                ptpcoll_module->pow_k)) {
+                                         desc->block->base_addr,
+                                         ml_mem->num_banks,
+                                         ml_mem->num_buffers_per_bank,
+                                         ml_mem->size_buffer,
+                                         data_offset,
+                                         group_size,
+                                         ptpcoll_module->pow_k)) {
         PTPCOLL_VERBOSE(10, ("Failed to allocate rdma memory descriptor\n"));
         return OMPI_ERROR;
     }
 
-    PTPCOLL_VERBOSE(10, ("ml_module = %p, ptpcoll_module = %p, ml_mem_desc = %p.\n",
-                           ml_module, ptpcoll_module, ml_mem->ml_mem_desc));
+    PTPCOLL_VERBOSE(10, ("ptpcoll_module = %p, ml_mem_desc = %p.\n",
+                         ptpcoll_module));
 
     return OMPI_SUCCESS;
 }
@@ -244,11 +301,12 @@ static void load_func(mca_bcol_ptpcoll_module_t *ptpcoll_module)
     ptpcoll_module->super.bcol_function_init_table[BCOL_BARRIER] = bcol_ptpcoll_barrier_init;
 
     ptpcoll_module->super.bcol_function_init_table[BCOL_BCAST] = bcol_ptpcoll_bcast_init;
-    ptpcoll_module->super.bcol_function_init_table[BCOL_ALLREDUCE] = NULL;
-    ptpcoll_module->super.bcol_function_init_table[BCOL_ALLGATHER] = NULL;
+    ptpcoll_module->super.bcol_function_init_table[BCOL_ALLREDUCE] = bcol_ptpcoll_allreduce_init;
+    ptpcoll_module->super.bcol_function_init_table[BCOL_ALLGATHER] = bcol_ptpcoll_allgather_init;
     ptpcoll_module->super.bcol_function_table[BCOL_BCAST] = bcol_ptpcoll_bcast_k_nomial_anyroot;
     ptpcoll_module->super.bcol_function_init_table[BCOL_ALLTOALL] = NULL;
     ptpcoll_module->super.bcol_function_init_table[BCOL_SYNC] = mca_bcol_ptpcoll_memsync_init;
+    ptpcoll_module->super.bcol_function_init_table[BCOL_REDUCE] = bcol_ptpcoll_reduce_init;
 
     /* ML memory cacher */
     ptpcoll_module->super.bcol_memory_init = mca_bcol_ptpcoll_cache_ml_memory_info;
@@ -262,16 +320,17 @@ static void load_func(mca_bcol_ptpcoll_module_t *ptpcoll_module)
 
 int mca_bcol_ptpcoll_setup_knomial_tree(mca_bcol_base_module_t *super)
 {
-   mca_bcol_ptpcoll_module_t *p2p_module = (mca_bcol_ptpcoll_module_t *) super;
-   int rc = 0; 
-   rc = netpatterns_setup_recursive_knomial_allgather_tree_node(
-                p2p_module->super.sbgp_partner_module->group_size,
-                p2p_module->super.sbgp_partner_module->my_index,
-                mca_bcol_ptpcoll_component.k_nomial_radix,
-                super->list_n_connected,
-                &p2p_module->knomial_allgather_tree);
+    mca_bcol_ptpcoll_module_t *p2p_module = (mca_bcol_ptpcoll_module_t *) super;
+    int rc = 0;
 
-  return rc;
+    rc = netpatterns_setup_recursive_knomial_allgather_tree_node(
+        p2p_module->super.sbgp_partner_module->group_size,
+        p2p_module->super.sbgp_partner_module->my_index,
+        mca_bcol_ptpcoll_component.k_nomial_radix,
+        super->list_n_connected,
+        &p2p_module->knomial_allgather_tree);
+
+    return rc;
 }
 
 /* The function used to calculate size */
@@ -301,9 +360,9 @@ static int load_narray_knomial_tree (mca_bcol_ptpcoll_module_t *ptpcoll_module)
     mca_bcol_ptpcoll_component_t *cm = &mca_bcol_ptpcoll_component;
 
     ptpcoll_module->full_narray_tree_size = calc_full_tree_size(
-            cm->narray_knomial_radix,
-            ptpcoll_module->group_size,
-            &ptpcoll_module->full_narray_tree_num_leafs);
+        cm->narray_knomial_radix,
+        ptpcoll_module->group_size,
+        &ptpcoll_module->full_narray_tree_num_leafs);
 
     ptpcoll_module->narray_knomial_proxy_extra_index = (int *)
         malloc(sizeof(int) * (cm->narray_knomial_radix));
@@ -313,21 +372,21 @@ static int load_narray_knomial_tree (mca_bcol_ptpcoll_module_t *ptpcoll_module)
     }
 
     ptpcoll_module->narray_knomial_node = calloc(
-            ptpcoll_module->full_narray_tree_size,
-            sizeof(netpatterns_narray_knomial_tree_node_t));
+        ptpcoll_module->full_narray_tree_size,
+        sizeof(netpatterns_narray_knomial_tree_node_t));
     if(NULL == ptpcoll_module->narray_knomial_node) {
         goto Error;
     }
 
     PTPCOLL_VERBOSE(10 ,("My type is proxy, full tree size = %d [%d]",
-                ptpcoll_module->full_narray_tree_size,
-                cm->narray_knomial_radix
-                ));
+                         ptpcoll_module->full_narray_tree_size,
+                         cm->narray_knomial_radix
+                        ));
 
     if (ptpcoll_module->super.sbgp_partner_module->my_index <
-            ptpcoll_module->full_narray_tree_size) {
+        ptpcoll_module->full_narray_tree_size) {
         if (ptpcoll_module->super.sbgp_partner_module->my_index <
-                ptpcoll_module->group_size - ptpcoll_module->full_narray_tree_size) {
+            ptpcoll_module->group_size - ptpcoll_module->full_narray_tree_size) {
             ptpcoll_module->narray_type = PTPCOLL_PROXY;
             for (i = 0; i < cm->narray_knomial_radix; i++) {
                 peer =
@@ -346,10 +405,10 @@ static int load_narray_knomial_tree (mca_bcol_ptpcoll_module_t *ptpcoll_module)
         /* Setting node info */
         for(i = 0; i < ptpcoll_module->full_narray_tree_size; i++) {
             rc = netpatterns_setup_narray_knomial_tree(
-                    cm->narray_knomial_radix,
-                    i,
-                    ptpcoll_module->full_narray_tree_size,
-                    &ptpcoll_module->narray_knomial_node[i]);
+                cm->narray_knomial_radix,
+                i,
+                ptpcoll_module->full_narray_tree_size,
+                &ptpcoll_module->narray_knomial_node[i]);
             if(OMPI_SUCCESS != rc) {
                 goto Error;
             }
@@ -381,17 +440,17 @@ static int load_narray_tree(mca_bcol_ptpcoll_module_t *ptpcoll_module)
     mca_bcol_ptpcoll_component_t *cm = &mca_bcol_ptpcoll_component;
 
     ptpcoll_module->narray_node = calloc(ptpcoll_module->group_size,
-            sizeof(netpatterns_tree_node_t));
+                                         sizeof(netpatterns_tree_node_t));
     if(NULL == ptpcoll_module->narray_node ) {
         goto Error;
     }
 
     for(i = 0; i < ptpcoll_module->group_size; i++) {
         rc = netpatterns_setup_narray_tree(
-                cm->narray_radix,
-                i,
-                ptpcoll_module->group_size,
-                &ptpcoll_module->narray_node[i]);
+            cm->narray_radix,
+            i,
+            ptpcoll_module->group_size,
+            &ptpcoll_module->narray_node[i]);
         if(OMPI_SUCCESS != rc) {
             goto Error;
         }
@@ -417,8 +476,8 @@ static int load_knomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module)
         cm->k_nomial_radix;
 
     ptpcoll_module->pow_k = pow_k_calc(ptpcoll_module->k_nomial_radix,
-            ptpcoll_module->group_size,
-            &ptpcoll_module->pow_knum);
+                                       ptpcoll_module->group_size,
+                                       &ptpcoll_module->pow_knum);
 
     ptpcoll_module->kn_proxy_extra_index = (int *)
         malloc(sizeof(int) * (ptpcoll_module->k_nomial_radix - 1));
@@ -430,37 +489,37 @@ static int load_knomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module)
     /* Setting peer type for K-nomial algorithm*/
     if (ptpcoll_module->super.sbgp_partner_module->my_index < ptpcoll_module->pow_knum ) {
         if (ptpcoll_module->super.sbgp_partner_module->my_index <
-                ptpcoll_module->group_size - ptpcoll_module->pow_knum) {
+            ptpcoll_module->group_size - ptpcoll_module->pow_knum) {
             for (i = 0;
-                    i < (ptpcoll_module->k_nomial_radix - 1) &&
-                    ptpcoll_module->super.sbgp_partner_module->my_index *
-                    (ptpcoll_module->k_nomial_radix - 1)  +
-                    i + ptpcoll_module->pow_knum < ptpcoll_module->group_size
-                    ; i++) {
+                 i < (ptpcoll_module->k_nomial_radix - 1) &&
+                     ptpcoll_module->super.sbgp_partner_module->my_index *
+                     (ptpcoll_module->k_nomial_radix - 1)  +
+                     i + ptpcoll_module->pow_knum < ptpcoll_module->group_size
+                     ; i++) {
                 ptpcoll_module->pow_ktype = PTPCOLL_KN_PROXY;
                 ptpcoll_module->kn_proxy_extra_index[i] =
                     ptpcoll_module->super.sbgp_partner_module->my_index *
                     (ptpcoll_module->k_nomial_radix - 1) +
                     i + ptpcoll_module->pow_knum;
                 PTPCOLL_VERBOSE(10 ,("My type is proxy, pow_knum = %d [%d] my extra %d",
-                            ptpcoll_module->pow_knum,
-                            ptpcoll_module->pow_k,
-                            ptpcoll_module->kn_proxy_extra_index[i]));
+                                     ptpcoll_module->pow_knum,
+                                     ptpcoll_module->pow_k,
+                                     ptpcoll_module->kn_proxy_extra_index[i]));
             }
             ptpcoll_module->kn_proxy_extra_num = i;
         } else {
             PTPCOLL_VERBOSE(10 ,("My type is in group, pow_knum = %d [%d]", ptpcoll_module->pow_knum,
-                        ptpcoll_module->pow_k));
+                                 ptpcoll_module->pow_k));
             ptpcoll_module->pow_ktype = PTPCOLL_KN_IN_GROUP;
         }
     } else {
         ptpcoll_module->pow_ktype = PTPCOLL_KN_EXTRA;
         ptpcoll_module->kn_proxy_extra_index[0] = (ptpcoll_module->super.sbgp_partner_module->my_index -
-                ptpcoll_module->pow_knum) / (ptpcoll_module->k_nomial_radix - 1);
+                                                   ptpcoll_module->pow_knum) / (ptpcoll_module->k_nomial_radix - 1);
         PTPCOLL_VERBOSE(10 ,("My type is extra , pow_knum = %d [%d] my proxy %d",
-                    ptpcoll_module->pow_knum,
-                    ptpcoll_module->pow_k,
-                    ptpcoll_module->kn_proxy_extra_index[0]));
+                             ptpcoll_module->pow_knum,
+                             ptpcoll_module->pow_k,
+                             ptpcoll_module->kn_proxy_extra_index[0]));
     }
 
     return OMPI_SUCCESS;
@@ -476,8 +535,8 @@ Error:
 static int load_binomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module)
 {
     ptpcoll_module->pow_2 = pow_k_calc(2,
-            ptpcoll_module->group_size,
-            &ptpcoll_module->pow_2num);
+                                       ptpcoll_module->group_size,
+                                       &ptpcoll_module->pow_2num);
 
     assert(ptpcoll_module->pow_2num == 1 << ptpcoll_module->pow_2);
     assert(ptpcoll_module->pow_2num  <= ptpcoll_module->group_size);
@@ -485,20 +544,20 @@ static int load_binomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module)
     /* Setting peer type for binary algorithm*/
     if (ptpcoll_module->super.sbgp_partner_module->my_index < ptpcoll_module->pow_2num ) {
         if (ptpcoll_module->super.sbgp_partner_module->my_index <
-                ptpcoll_module->group_size - ptpcoll_module->pow_2num) {
+            ptpcoll_module->group_size - ptpcoll_module->pow_2num) {
             PTPCOLL_VERBOSE(10 ,("My type is proxy, pow_2num = %d [%d]", ptpcoll_module->pow_2num,
-                        ptpcoll_module->pow_2));
+                                 ptpcoll_module->pow_2));
             ptpcoll_module->pow_2type = PTPCOLL_PROXY;
             ptpcoll_module->proxy_extra_index = ptpcoll_module->super.sbgp_partner_module->my_index +
                 ptpcoll_module->pow_2num;
         } else {
             PTPCOLL_VERBOSE(10 ,("My type is in group, pow_2num = %d [%d]", ptpcoll_module->pow_2num,
-                        ptpcoll_module->pow_2));
+                                 ptpcoll_module->pow_2));
             ptpcoll_module->pow_2type = PTPCOLL_IN_GROUP;
         }
     } else {
         PTPCOLL_VERBOSE(10 ,("My type is extra , pow_2num = %d [%d]", ptpcoll_module->pow_2num,
-                    ptpcoll_module->pow_2));
+                             ptpcoll_module->pow_2));
         ptpcoll_module->pow_2type = PTPCOLL_EXTRA;
         ptpcoll_module->proxy_extra_index = ptpcoll_module->super.sbgp_partner_module->my_index -
             ptpcoll_module->pow_2num;
@@ -510,10 +569,10 @@ static int load_recursive_knomial_info(mca_bcol_ptpcoll_module_t *ptpcoll_module
 {
     int rc = OMPI_SUCCESS;
     rc = netpatterns_setup_recursive_knomial_tree_node(
-                    ptpcoll_module->group_size,
-                    ptpcoll_module->super.sbgp_partner_module->my_index,
-                    mca_bcol_ptpcoll_component.k_nomial_radix,
-                    &ptpcoll_module->knomial_exchange_tree);
+        ptpcoll_module->group_size,
+        ptpcoll_module->super.sbgp_partner_module->my_index,
+        mca_bcol_ptpcoll_component.k_nomial_radix,
+        &ptpcoll_module->knomial_exchange_tree);
     return rc;
 }
 
@@ -523,14 +582,14 @@ static void bcol_ptpcoll_collreq_init(ompi_free_list_item_t *item, void* ctx)
     mca_bcol_ptpcoll_collreq_t *collreq = (mca_bcol_ptpcoll_collreq_t *) item;
 
     switch(mca_bcol_ptpcoll_component.barrier_alg) {
-        case 1:
-            collreq->requests = (ompi_request_t **)
-                                     calloc(2, sizeof(ompi_request_t *));
-            break;
-        case 2:
-            collreq->requests = (ompi_request_t **)
-                calloc(2 * ptpcoll_module->k_nomial_radix, sizeof(ompi_request_t *));
-            break;
+    case 1:
+        collreq->requests = (ompi_request_t **)
+            calloc(2, sizeof(ompi_request_t *));
+        break;
+    case 2:
+        collreq->requests = (ompi_request_t **)
+            calloc(2 * ptpcoll_module->k_nomial_radix, sizeof(ompi_request_t *));
+        break;
     }
 }
 
@@ -539,7 +598,7 @@ static void bcol_ptpcoll_collreq_init(ompi_free_list_item_t *item, void* ctx)
  * the backing shared-memory file is created.
  */
 mca_bcol_base_module_t **mca_bcol_ptpcoll_comm_query(mca_sbgp_base_module_t *sbgp,
-        int *num_modules)
+                                                     int *num_modules)
 {
     int rc;
     /* local variables */
@@ -612,33 +671,32 @@ mca_bcol_base_module_t **mca_bcol_ptpcoll_comm_query(mca_sbgp_base_module_t *sbg
     /* creating collfrag free list */
     OBJ_CONSTRUCT(&ptpcoll_module->collreqs_free, ompi_free_list_t);
     rc = ompi_free_list_init_ex_new(&ptpcoll_module->collreqs_free,
-                                  sizeof(mca_bcol_ptpcoll_collreq_t),
-                                  BCOL_PTP_CACHE_LINE_SIZE,
-                                  OBJ_CLASS(mca_bcol_ptpcoll_collreq_t),
-                                  0, BCOL_PTP_CACHE_LINE_SIZE,
-                                  256 /* free_list_num */,
-                                  -1  /* free_list_max, -1 = infinite */,
-                                  32  /* free_list_inc */,
-                                  NULL,
-                                  bcol_ptpcoll_collreq_init,
-                                  ptpcoll_module);
+                                    sizeof(mca_bcol_ptpcoll_collreq_t),
+                                    BCOL_PTP_CACHE_LINE_SIZE,
+                                    OBJ_CLASS(mca_bcol_ptpcoll_collreq_t),
+                                    0, BCOL_PTP_CACHE_LINE_SIZE,
+                                    256 /* free_list_num */,
+                                    -1  /* free_list_max, -1 = infinite */,
+                                    32  /* free_list_inc */,
+                                    NULL,
+                                    bcol_ptpcoll_collreq_init,
+                                    ptpcoll_module);
     if (OMPI_SUCCESS != rc) {
         goto CLEANUP;
     }
 
     load_func(ptpcoll_module);
-    /*
+
     rc = alloc_allreduce_offsets_array(ptpcoll_module);
     if (OMPI_SUCCESS != rc) {
         goto CLEANUP;
     }
-    */
 
     /* Allocating iovec for PTP alltoall */
     iovec_size = ptpcoll_module->group_size / 2 + ptpcoll_module->group_size % 2;
     ptpcoll_module->alltoall_iovec = (struct iovec *) malloc(sizeof(struct iovec)
-                                                            * iovec_size);
-    ptpcoll_module->log_group_size = lognum(ptpcoll_module->group_size); 
+                                                             * iovec_size);
+    ptpcoll_module->log_group_size = lognum(ptpcoll_module->group_size);
 
     rc = mca_bcol_base_bcol_fns_table_init(&(ptpcoll_module->super));
     if (OMPI_SUCCESS != rc) {

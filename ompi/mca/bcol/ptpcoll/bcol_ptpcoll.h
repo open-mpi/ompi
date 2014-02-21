@@ -27,8 +27,6 @@ BEGIN_C_DECLS
 #ifdef HAVE_SCHED_YIELD
 #  include <sched.h>
 #  define SPIN sched_yield()
-#elif defined(__WINDOWS__)
-#  define SPIN SwitchToThread()
 #else  /* no switch available */
 #  define SPIN
 #endif
@@ -232,6 +230,12 @@ struct mca_bcol_ptpcoll_ml_buffer_desc_t {
     int          iteration;         /* buffer iteration in knomial, binomail, etc. algorithms */
     int          tag;               /* tag number that is attached to this operation */
     int          status;       /* operation status */
+    /* Fixme: Probably we can get rid of these fields by redesigning
+     * the reduce implementation
+     */
+    int          reduction_status; /* used for reduction to cache internal
+                                      reduction status */
+    bool          reduce_init_called;
 };
 typedef struct mca_bcol_ptpcoll_ml_buffer_desc_t mca_bcol_ptpcoll_ml_buffer_desc_t;
 
@@ -243,8 +247,6 @@ typedef struct mca_bcol_ptpcoll_ml_buffer_desc_t mca_bcol_ptpcoll_ml_buffer_desc
 struct mca_bcol_ptpcoll_local_mlmem_desc_t {
     /* Bank index to release */
     uint32_t bank_index_for_release;
-    /* back pointer to original ML memory descriptor */
-    struct ml_memory_block_desc_t *ml_mem_desc;
     /* number of memory banks */
     uint32_t     num_banks;
     /* number of buffers per bank */
@@ -378,9 +380,9 @@ int mca_bcol_ptpcoll_setup_knomial_tree(mca_bcol_base_module_t *super);
 
 /* barrier routines */
 int bcol_ptpcoll_barrier_recurs_dbl(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_barrier_recurs_knomial(bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_barrier_init(mca_bcol_base_module_t *super);
 int mca_bcol_ptpcoll_memsync_init(mca_bcol_base_module_t *super);
 void * bcol_ptpcoll_allocate_memory(size_t length, size_t alignment, 
@@ -394,16 +396,16 @@ int bcol_ptpcoll_free_memory(void *ptr,
 int bcol_ptpcoll_fanin( bcol_function_args_t *input_args,
         struct mca_bcol_base_module_t *module);
 int bcol_ptpcoll_fanout( bcol_function_args_t *input_args,
-        struct coll_ml_function_t *const_args);
+        struct mca_bcol_base_function_t *const_args);
 
 
 /* allgather routine */
 int bcol_ptpcoll_k_nomial_allgather_init(bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args);
+                        struct mca_bcol_base_function_t *const_args);
 
 /* allgather progress */
 int bcol_ptpcoll_k_nomial_allgather_progress(bcol_function_args_t *input_args,
-                        struct coll_ml_function_t *const_args);
+                        struct mca_bcol_base_function_t *const_args);
 /* allgather register */
 int bcol_ptpcoll_allgather_init(mca_bcol_base_module_t *super);
 

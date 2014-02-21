@@ -257,6 +257,25 @@ int ompi_op_init(void)
         add_intrinsic(&ompi_mpi_op_replace.op, OMPI_OP_BASE_FORTRAN_REPLACE,
                       FLAGS, "MPI_REPLACE")) {
         return OMPI_ERROR;
+    }else{
+/* This code is placed back here to support
+ * HCOL allreduce at the moment. It is a part of bgate repository only. This conflict with OMPI v1.7
+ * is to be resolved some other way.
+ * */
+        ompi_mpi_op_null.op.op_type = OMPI_OP_NULL;
+        ompi_mpi_op_max.op.op_type = OMPI_OP_MAX;
+        ompi_mpi_op_min.op.op_type = OMPI_OP_MIN;
+        ompi_mpi_op_sum.op.op_type = OMPI_OP_SUM;
+        ompi_mpi_op_prod.op.op_type = OMPI_OP_PROD;
+        ompi_mpi_op_land.op.op_type = OMPI_OP_LAND;
+        ompi_mpi_op_band.op.op_type = OMPI_OP_BAND;
+        ompi_mpi_op_lor.op.op_type = OMPI_OP_LOR;
+        ompi_mpi_op_bor.op.op_type = OMPI_OP_BOR;
+        ompi_mpi_op_lxor.op.op_type = OMPI_OP_LXOR;
+        ompi_mpi_op_bxor.op.op_type = OMPI_OP_BXOR;
+        ompi_mpi_op_maxloc.op.op_type = OMPI_OP_MAXLOC;
+        ompi_mpi_op_minloc.op.op_type = OMPI_OP_MINLOC;
+        ompi_mpi_op_replace.op.op_type = OMPI_OP_REPLACE;
     }
 
     /* All done */

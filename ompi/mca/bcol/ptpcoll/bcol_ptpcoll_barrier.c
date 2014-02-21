@@ -14,7 +14,6 @@
 #include "ompi_config.h"
 
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/coll/ml/coll_ml.h"
 #include "bcol_ptpcoll.h"
 #include "bcol_ptpcoll_utils.h"
 
@@ -30,7 +29,7 @@
 /*****************************************************************************************/
 static int bcol_ptpcoll_barrier_recurs_knomial_new(
                 bcol_function_args_t *input_args,
-                struct coll_ml_function_t *const_args)
+                struct mca_bcol_base_function_t *const_args)
 {
     /* local variable */
     uint64_t sequence_number;
@@ -220,7 +219,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new(
 
 static int bcol_ptpcoll_barrier_recurs_knomial_new_progress(
                                 bcol_function_args_t *input_args,
-                                struct coll_ml_function_t *const_args)
+                                struct mca_bcol_base_function_t *const_args)
 {
     /* local variable */
     mca_bcol_ptpcoll_module_t *ptpcoll_module =
@@ -364,7 +363,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_new_progress(
 
 static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
                                 bcol_function_args_t *input_args,
-                                struct coll_ml_function_t *const_args)
+                                struct mca_bcol_base_function_t *const_args)
 {
     /* local variable */
     uint64_t sequence_number;
@@ -450,7 +449,7 @@ static int bcol_ptpcoll_barrier_recurs_knomial_extra_new(
 
 static int bcol_ptpcoll_barrier_recurs_dbl_new(
                                 bcol_function_args_t *input_args,
-                                struct coll_ml_function_t *const_args)
+                                struct mca_bcol_base_function_t *const_args)
 {
    /* local variable */
     uint64_t sequence_number;
@@ -625,7 +624,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_new(
 
 static int bcol_ptpcoll_barrier_recurs_dbl_new_progress(
                                 bcol_function_args_t *input_args,
-                                struct coll_ml_function_t *const_args)
+                                struct mca_bcol_base_function_t *const_args)
 {
    /* local variable */
     mca_bcol_ptpcoll_module_t *ptp_module =
@@ -758,7 +757,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_new_progress(
 
 static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
                                 bcol_function_args_t *input_args,
-                                struct coll_ml_function_t *const_args)
+                                struct mca_bcol_base_function_t *const_args)
 {
    /* local variable */
     uint64_t sequence_number;
@@ -837,7 +836,7 @@ static int bcol_ptpcoll_barrier_recurs_dbl_extra_new(
 /* We have the same progress func for both cases (R-D and K-Nominal) */
 static int bcol_ptpcoll_barrier_extra_node_progress(
                             bcol_function_args_t *input_args,
-                            struct coll_ml_function_t *const_args)
+                            struct mca_bcol_base_function_t *const_args)
 {
    /* local variable */
     ompi_request_t **requests;

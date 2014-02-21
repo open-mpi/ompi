@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +16,9 @@
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
+
+#include "ompi/mca/bcol/bcol.h"
+#include "ompi/mca/bcol/base/base.h"
 
 #include "bcol_basesmuma.h"
 
@@ -115,7 +120,7 @@ int bcol_basesmuma_bcast_init(mca_bcol_base_module_t *super)
  * @param module - basesmuma module.
  */
 int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
-    coll_ml_function_t *c_input_args)
+    mca_bcol_base_function_t *c_input_args)
 {
     /* local variables */
     int group_size, process_shift, my_node_index;
@@ -236,7 +241,7 @@ int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
         memcpy(data_addr, (void *)parent_data_pointer,pack_len);
 		
         /* Signal to children that they may read the data from my shared buffer */
-        opal_atomic_wmb();
+        opal_atomic_wmb ();
         my_ctl_pointer->flags[BCAST_FLAG][bcol_id] = ready_flag;
     }
 
@@ -252,7 +257,7 @@ int bcol_basesmuma_bcast(bcol_function_args_t *input_args,
 /*zero-copy large massage communication methods*/
 #if 0
 int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
-                                  coll_ml_function_t   *c_input_args)
+                                  mca_bcol_base_function_t   *c_input_args)
 {
     /* local variables */
     int group_size, process_shift, my_node_index;
@@ -372,7 +377,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
             ret = hdl->hdl_send(hdl, hdl->endpoint, hdl_desc);
             if (ret !=  OMPI_SUCCESS) {
                 BASESMUMA_VERBOSE(1, ("send eror on rank %d ........", my_rank));
-                goto ERROR;
+                goto exit_ERROR;
             }
         }
     }else if(LEAF_NODE == my_fanout_read_tree->my_node_type) {
@@ -401,7 +406,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
 #endif
 		if (OMPI_SUCCESS != ret) {
             BASESMUMA_VERBOSE(1, ("recvi eror on rank %d ........", my_rank));
-            goto ERROR;
+            goto exit_ERROR;
         }
 
         status = false;
@@ -430,15 +435,15 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
 
         ret = hdl->hdl_recv(hdl, hdl->endpoint, hdl_desc);
 		if (OMPI_SUCCESS != ret) {
-            goto ERROR;
+            goto exit_ERROR;
         }
 		if (OMPI_SUCCESS != ret) {
             BASESMUMA_VERBOSE(1, ("recvi eror on rank %d ........", my_rank));
-            goto ERROR;
+            goto exit_ERROR;
         }
 		
         /* Signal to children that they may read the data from my shared buffer */
-        opal_atomic_wmb();
+        opal_atomic_wmb ();
         hdl_desc->des_src = hdl_seg;
         hdl_desc->des_src_cnt = 1; 
         for (ridx = 0; ridx < my_fanout_read_tree->n_children; ridx++) {
@@ -449,7 +454,7 @@ int bcol_basesmuma_hdl_zerocopy_bcast(bcol_function_args_t *input_args,
             ret = hdl->hdl_send(hdl, hdl->endpoint, hdl_desc);
             if (ret !=  OMPI_SUCCESS) {
                 BASESMUMA_VERBOSE(1, ("send eror on rank %d ........", my_rank));
-                goto ERROR;
+                goto exit_ERROR;
             }
         }
         goto Release;
@@ -467,7 +472,7 @@ Release:
     my_ctl_pointer->starting_flag_value += 1;
 
     return BCOL_FN_COMPLETE;
-ERROR:
+exit_ERROR:
     return OMPI_ERROR;
 }
 #endif 

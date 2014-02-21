@@ -54,6 +54,13 @@ mca_base_var_enum_value_t fragmentation_enable_enum[] = {
     {-1, NULL}
 };
 
+mca_base_var_enum_value_t bcast_algorithms[] = {
+    {COLL_ML_STATIC_BCAST, "static"},
+    {COLL_ML_SEQ_BCAST, "sequential"},
+    {COLL_ML_UNKNOWN_BCAST, "unknown-root"},
+    {-1, NULL}
+};
+
 /*
  * utility routine for string parameter registration
  */
@@ -197,84 +204,75 @@ int mca_coll_ml_register_params(void)
 
     /* register openib component parameters */
 
-    CHECK(reg_int("priority", NULL,
-                  "ML component priority"
-                  "(from 0(low) to 90 (high))", 0, &mca_coll_ml_component.ml_priority, 0));
+    CHECK(reg_int("priority", NULL, "ML component priority"
+                  "(from 0(low) to 90 (high))", 27, &mca_coll_ml_component.ml_priority, 0));
 
-    CHECK(reg_int("verbose", NULL,
-                  "Output some verbose ML information "
+    CHECK(reg_int("verbose", NULL, "Output some verbose ML information "
                   "(0 = no output, nonzero = output)", 0, &mca_coll_ml_component.verbose, 0));
 
-    CHECK(reg_int("n_levels", NULL,
-                  "number of levels in the hierarchy ", 1, &mca_coll_ml_component.ml_n_levels, 0));
+    CHECK(reg_int("max_comm", NULL, "Maximum number of communicators that can use coll/ml", 24,
+                  (int *) &mca_coll_ml_component.max_comm, 0));
 
-    CHECK(reg_int("max_comm", NULL,
-                  "max of communicators available to run ML", 12, (int *) &mca_coll_ml_component.max_comm, 0));
+    CHECK(reg_int("min_comm_size", NULL, "Minimum size of communicator to use coll/ml", 0,
+                  &mca_coll_ml_component.min_comm_size, 0));
 
-    CHECK(reg_int("min_comm_size", NULL,
-                  " min size of comm to be available to run ML", 0, &mca_coll_ml_component.min_comm_size, 0));
+    CHECK(reg_int("n_payload_mem_banks", NULL, "Number of payload memory banks", 2,
+                  &mca_coll_ml_component.n_payload_mem_banks, 0));
 
-    CHECK(reg_int("n_payload_mem_banks", NULL,
-                "number of payload memory banks", 2, &mca_coll_ml_component.n_payload_mem_banks, 0));
-
-    CHECK(reg_int("n_payload_buffs_per_bank", NULL,
-                "number of payload buffers per bank", 16, &mca_coll_ml_component.n_payload_buffs_per_bank, 0));
+    CHECK(reg_int("n_payload_buffs_per_bank", NULL, "Number of payload buffers per bank", 16,
+                  &mca_coll_ml_component.n_payload_buffs_per_bank, 0));
 
     /* RLG: need to handle alignment and size */
-    CHECK(reg_ullint("payload_buffer_size", NULL,
-                  "size of payload buffer", 4*1024, &mca_coll_ml_component.payload_buffer_size, 0));
+    CHECK(reg_ullint("payload_buffer_size", NULL, "Size of payload buffers", 4*1024,
+                     &mca_coll_ml_component.payload_buffer_size, 0));
 
     /* get the pipeline depth, default is 2 */
-    CHECK(reg_int("pipeline_depth", NULL,
-                  "size of fragmentation pipeline", 2, &mca_coll_ml_component.pipeline_depth, 0));
+    CHECK(reg_int("pipeline_depth", NULL, "Size of fragmentation pipeline", 2,
+                  &mca_coll_ml_component.pipeline_depth, 0));
 
-    CHECK(reg_int("free_list_init_size", NULL,
-                  " Initial size for free lists in ML", 128, &mca_coll_ml_component.free_list_init_size, 0));
+    CHECK(reg_int("free_list_init_size", NULL, "Initial size of free lists in coll/ml", 128,
+                  &mca_coll_ml_component.free_list_init_size, 0));
 
-    CHECK(reg_int("free_list_grow_size", NULL,
-                  " Initial size for free lists in ML", 64, &mca_coll_ml_component.free_list_grow_size, 0));
+    CHECK(reg_int("free_list_grow_size", NULL, "Initial size of free lists in coll/ml", 64,
+                  &mca_coll_ml_component.free_list_grow_size, 0));
 
-    CHECK(reg_int("free_list_max_size", NULL,
-                  " Initial size for free lists in ML", -1, &mca_coll_ml_component.free_list_max_size, 0));
+    CHECK(reg_int("free_list_max_size", NULL, "Initial size of free lists in coll/ml", -1,
+                  &mca_coll_ml_component.free_list_max_size, 0));
 
-    CHECK(reg_int("use_knomial_allreduce", NULL,
-                "Use k-nomial Allreduce supports only p2p currently"
-                , 1, &mca_coll_ml_component.use_knomial_allreduce, 0));
+    mca_coll_ml_component.use_knomial_allreduce = 1;
 
-    CHECK(reg_bool("use_static_bcast", NULL,
-                "Use new bcast static algorithm", true, &mca_coll_ml_component.use_static_bcast));
+    tmp = mca_base_var_enum_create ("coll_ml_bcast_algorithm", bcast_algorithms, &new_enum);
+    if (OPAL_SUCCESS != tmp) {
+        return tmp;
+    }
 
-    CHECK(reg_bool("use_sequential_bcast", NULL,
-                  "Use new bcast static algorithm", false, &mca_coll_ml_component.use_sequential_bcast));
+    mca_coll_ml_component.bcast_algorithm = COLL_ML_STATIC_BCAST;
+    tmp = mca_base_component_var_register (&mca_coll_ml_component.super.collm_version, "bcast_algorithm",
+                                           "Algorithm to use for broadcast", MCA_BASE_VAR_TYPE_INT,
+                                           new_enum, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_ml_component.bcast_algorithm);
 
-    CHECK(reg_bool("disable_allgather", NULL,
-                  "Allgather disabling",
-                   false, &mca_coll_ml_component.disable_allgather));
+    CHECK(reg_bool("disable_allgather", NULL, "Disable Allgather", false,
+                   &mca_coll_ml_component.disable_allgather));
 
-    CHECK(reg_bool("disable_alltoall", NULL,
-                  "Alltoall disabling",
-                   false, &mca_coll_ml_component.disable_alltoall));
+    CHECK(reg_bool("disable_reduce", NULL, "Disable Reduce", false,
+                   &mca_coll_ml_component.disable_reduce));
 
     tmp = mca_base_var_enum_create ("coll_ml_enable_fragmentation_enum", fragmentation_enable_enum, &new_enum);
-    if (OPAL_SUCCESS != ret) {
-	return tmp;
+    if (OPAL_SUCCESS != tmp) {
+        return tmp;
     }
 
     /* default to auto-enable fragmentation */
     mca_coll_ml_component.enable_fragmentation = 2;
     tmp = mca_base_component_var_register (&mca_coll_ml_component.super.collm_version, "enable_fragmentation",
-					   "Disable/Enable fragmentation for large messages", MCA_BASE_VAR_TYPE_INT,
-					   new_enum, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-					   &mca_coll_ml_component.enable_fragmentation);
+                                           "Disable/Enable fragmentation for large messages", MCA_BASE_VAR_TYPE_INT,
+                                           new_enum, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_ml_component.enable_fragmentation);
     if (0 > tmp) {
         ret = tmp;
     }
     OBJ_RELEASE(new_enum);
-
-    CHECK(reg_int("use_brucks_smsg_alltoall", NULL,
-                "Use Bruck's Algo for Small Msg Alltoall"
-                "1 - Bruck's Algo with RDMA; 2 - Bruck's with Send Recv"
-                , 0, &mca_coll_ml_component.use_brucks_smsg_alltoall, 0));
 
     asprintf(&str, "%s/mca-coll-ml.config",
             opal_install_dirs.ompidatadir);

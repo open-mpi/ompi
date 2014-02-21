@@ -1,7 +1,9 @@
 /*
- * Copyright (c) 2009-2010 UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2009-2010 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2009-2012 UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2009-2012 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +21,7 @@
 #include "bcol_basesmuma.h"
 #include "opal/sys/atomic.h"
 #include "ompi/patterns/net/netpatterns.h"
+#include "ompi/mca/bcol/base/base.h"
 
 /*
  * Initialize nonblocking barrier.  This is code specific for handling
@@ -72,7 +75,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
     /* signal that I have arrived */
     my_ctl->flag = -1;
 
-    opal_atomic_wmb();
+    opal_atomic_wmb ();
 
 	/* don't need to set this flag anymore */
     my_ctl->sequence_number = bank_genaration;
@@ -367,7 +370,7 @@ Post_phase:
 }
 
 static int bcol_basesmuma_memsync(bcol_function_args_t *input_args,
-                coll_ml_function_t *c_input_args)
+                mca_bcol_base_function_t *c_input_args)
 {
     int rc;
     int memory_bank = input_args->root;
@@ -412,7 +415,7 @@ static int bcol_basesmuma_memsync(bcol_function_args_t *input_args,
 }
 
 static int bcol_basesmuma_memsync_progress(bcol_function_args_t *input_args,
-                coll_ml_function_t *c_input_args)
+                mca_bcol_base_function_t *c_input_args)
 {
     int memory_bank = input_args->root;
 

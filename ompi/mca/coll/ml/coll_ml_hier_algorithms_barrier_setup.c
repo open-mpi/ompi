@@ -17,7 +17,9 @@
 
 static int mca_coll_ml_build_barrier_schedule(
                                     mca_coll_ml_topology_t *topo_info,
-                                    mca_coll_ml_collective_operation_description_t **coll_desc)
+                                    mca_coll_ml_collective_operation_description_t
+                                    **coll_desc,
+                                    mca_coll_ml_module_t *ml_module)
 {
     int i_hier, rc, i_fn, n_fcns, i,
         n_hiers = topo_info->n_levels;
@@ -50,6 +52,10 @@ static int mca_coll_ml_build_barrier_schedule(
            but it calls for all fan-in/out steps */
         call_for_top_func = false;
         n_fcns = 2 * n_hiers;
+    }
+
+    if( ml_module->max_fn_calls < n_fcns ) {
+        ml_module->max_fn_calls = n_fcns;
     }
 
     /* Set dependencies equal to number of hierarchies */
@@ -119,8 +125,8 @@ static int mca_coll_ml_build_barrier_schedule(
         ML_VERBOSE(10, ("func indx %d set to %p", i_fn, comp_fn->bcol_function));
 
         if (comp_fn->num_dependent_tasks > 0) {
-            comp_fn->dependent_task_indecies = (int *) calloc(comp_fn->num_dependent_tasks, sizeof(int));
-            if (OPAL_UNLIKELY(NULL == comp_fn->dependent_task_indecies)) {
+            comp_fn->dependent_task_indices = (int *) calloc(comp_fn->num_dependent_tasks, sizeof(int));
+            if (OPAL_UNLIKELY(NULL == comp_fn->dependent_task_indices)) {
                 ML_ERROR(("Can't allocate memory.\n"));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto Barrier_Setup_Error;
@@ -128,10 +134,10 @@ static int mca_coll_ml_build_barrier_schedule(
 
             /* All indexes follow after this one */
             for (i = 0; i < comp_fn->num_dependent_tasks; ++i) {
-                comp_fn->dependent_task_indecies[i] = i_fn + i + 1;
+                comp_fn->dependent_task_indices[i] = i_fn + i + 1;
             }
         } else {
-                comp_fn->dependent_task_indecies = NULL;
+                comp_fn->dependent_task_indices = NULL;
         }
             
 
@@ -170,7 +176,7 @@ int ml_coll_hier_barrier_setup(mca_coll_ml_module_t *ml_module)
            &ml_module->topo_list[ml_module->collectives_topology_map[ML_BARRIER][ML_SMALL_MSG]];
 
     rc = mca_coll_ml_build_barrier_schedule(topo_info,
-                            &ml_module->coll_ml_barrier_function);
+                            &ml_module->coll_ml_barrier_function, ml_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         /* Make sure to reset the barrier pointer to NULL */
         topo_info->hierarchical_algorithms[BCOL_BARRIER] = NULL;

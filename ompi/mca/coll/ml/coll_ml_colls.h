@@ -25,7 +25,7 @@ struct mca_coll_ml_utility_data_t {
 
     /* RLG - temp fix  !!!! - really need to remove this, but right now
      do not want to change the signature of the collective primitives to
-     use coll_ml_utility_data_t rather than coll_ml_function_t */
+     use coll_ml_utility_data_t rather than mca_bcol_base_function_t */
     int dummy;
 
     /* module */
@@ -99,7 +99,7 @@ struct mca_coll_ml_compound_functions_t {
      * collective operation, with these indecies referencing elements
      * in this array.
      */
-    int *dependent_task_indecies;
+    int *dependent_task_indices;
 
 };
 
@@ -191,7 +191,7 @@ struct mca_coll_ml_task_status_t{
     /* ***************************************************************
      * Pasha:
      * I'm adding to the status: num_dependencies, num_dependent_tasks and
-     * dependent_task_indecies. The information originally resided on mca_coll_ml_compound_functions_t.
+     * dependent_task_indices. The information originally resided on mca_coll_ml_compound_functions_t.
      * For collective operation with static nature it is not problem.
      * But for Bcast operation, where run time parameters, like root, actually
      * define the dependency. rt prefix mean run-time.
@@ -213,7 +213,7 @@ struct mca_coll_ml_task_status_t{
      * collective operation, with these indecies referencing elements
      * in this array.
      */
-    int *rt_dependent_task_indecies;
+    int *rt_dependent_task_indices;
     /*
      *
      * ***************************************************************/
@@ -239,7 +239,7 @@ typedef enum mca_coll_ml_pending_type_t {
 } mca_coll_ml_pending_type_t;
 
 /* Forward declaration */
-struct ml_payload_buffer_desc_t;
+struct mca_bcol_base_payload_buffer_desc_t;
 /* Data structure used to track ML level collective operation
  * progress.
  */
@@ -288,8 +288,8 @@ struct mca_coll_ml_collective_operation_progress_t {
         int64_t send_count;
         int64_t recv_count;
         /* extent of the data types */
-        int32_t send_extent;
-        int32_t recv_extent;
+        size_t send_extent;
+        size_t recv_extent;
         /* send data type */
         struct ompi_datatype_t * send_data_type;
         /* needed for non-contigous buffers */
@@ -309,9 +309,11 @@ struct mca_coll_ml_collective_operation_progress_t {
         size_t recv_converter_bytes_packed;
         /* In case if ordering is needed: order num for next frag */
         int next_frag_num;
-        /* The variable is used by non-blocking memory synchronization code 
+        /* The variable is used by non-blocking memory synchronization code
          * for caching bank index */
         int bank_index_to_recycle;
+        /* need a handle for collective progress e.g. alltoall*/
+        bcol_fragment_descriptor_t frag_info;
     } full_message;
 
     /* collective operation being progressed */
@@ -346,7 +348,9 @@ struct mca_coll_ml_collective_operation_progress_t {
         struct full_message_t *message_descriptor;
 
         /* ML buffer descriptor attached to this buffer */
-        struct ml_payload_buffer_desc_t *buffer_desc;
+        struct mca_bcol_base_payload_buffer_desc_t *buffer_desc;
+        /* handle for collective progress, e.g. alltoall */
+        bcol_fragment_descriptor_t bcol_fragment_desc;
 
         /* Which collective algorithm */
         int current_coll_op;
@@ -359,6 +363,7 @@ struct mca_coll_ml_collective_operation_progress_t {
      * function is exited, and for nonblocking collective functions this
      * is until test or wait completes the collective.
      */
+    int global_root;
     bcol_function_args_t variable_fn_params;
 
     struct{
@@ -407,9 +412,8 @@ do {                                                                            
         /* back to the free list  (free list may release memory on distruct )*/ \
         struct ompi_communicator_t *comm = GET_COMM(op);                        \
         bool is_coll_sync = IS_COLL_SYNCMEM(op);                                \
-        assert(&(op)->full_message !=                                           \
-               (op)->fragment_data.message_descriptor);                         \
         ML_VERBOSE(10, ("Releasing %p", op));                                   \
+        OMPI_REQUEST_FINI(&(op)->full_message.super);                   \
         OMPI_FREE_LIST_RETURN_MT(&(((mca_coll_ml_module_t *)(op)->coll_module)->   \
                     coll_ml_collective_descriptors),                            \
                 (ompi_free_list_item_t *)op);                                   \
@@ -468,5 +472,66 @@ do {                                                                            
     }                                                                           \
 } while (0)
 
+enum {
+    MCA_COLL_ML_NET_STREAM_SEND,
+    MCA_COLL_ML_NET_STREAM_RECV
+};
+
+static inline  __opal_attribute_always_inline__
+    int mca_coll_ml_convertor_prepare(ompi_datatype_t *dtype, int count, void *buff,
+                                            opal_convertor_t *convertor, int stream)
+{
+    size_t bytes_packed;
+
+    if (MCA_COLL_ML_NET_STREAM_SEND == stream) {
+        opal_convertor_copy_and_prepare_for_send(
+                ompi_mpi_local_convertor,
+                &dtype->super, count, buff, 0,
+                convertor);
+    } else {
+        opal_convertor_copy_and_prepare_for_recv(
+                ompi_mpi_local_convertor,
+                &dtype->super, count, buff, 0,
+                convertor);
+    }
+
+    opal_convertor_get_packed_size(convertor, &bytes_packed);
+
+    return bytes_packed;
+}
+
+static inline  __opal_attribute_always_inline__
+    int mca_coll_ml_convertor_pack(void *data_addr, size_t buff_size,
+                                            opal_convertor_t *convertor)
+{
+    struct iovec iov;
+
+    size_t max_data = 0;
+    uint32_t iov_count = 1;
+
+    iov.iov_base = (IOVBASE_TYPE*) data_addr;
+    iov.iov_len  = buff_size;
+
+    opal_convertor_pack(convertor, &iov, &iov_count, &max_data);
+
+    return max_data;
+}
+
+static inline  __opal_attribute_always_inline__
+    int mca_coll_ml_convertor_unpack(void *data_addr, size_t buff_size,
+                                            opal_convertor_t *convertor)
+{
+    struct iovec iov;
+
+    size_t max_data = 0;
+    uint32_t iov_count = 1;
+
+    iov.iov_base = (void *) (uintptr_t) data_addr;
+    iov.iov_len  = buff_size;
+
+    opal_convertor_unpack(convertor, &iov, &iov_count, &max_data);
+
+    return max_data;
+}
 #endif /* MCA_COLL_ML_COLLS_H */
 

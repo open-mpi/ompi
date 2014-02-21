@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
@@ -18,17 +19,6 @@
 #include "ompi_config.h"
 
 BEGIN_C_DECLS
-
-static inline int mca_coll_ml_err(const char* fmt, ...)
-{
-    va_list list;
-    int ret;
-
-    va_start(list, fmt);
-    ret = vfprintf(stderr, fmt, list);
-    va_end(list);
-    return ret;
-}
 
 static inline __opal_attribute_always_inline__ int ml_fls(int num)
 {
@@ -55,7 +45,7 @@ static inline __opal_attribute_always_inline__
         int mca_coll_ml_buffer_recycling(mca_coll_ml_collective_operation_progress_t *ml_request)
 {
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t *)ml_request->coll_module;
-    ml_memory_block_desc_t *ml_memblock = ml_module->payload_block;
+    mca_bcol_base_memory_block_desc_t *ml_memblock = ml_module->payload_block;
     uint64_t bank_index = ml_request->fragment_data.buffer_desc->bank_index;
     int rc;
 
@@ -186,15 +176,23 @@ static inline  __opal_attribute_always_inline__ int coll_ml_fragment_completion_
          * the MPI level request object, wich is the first element
          * in the fragment descriptor.
          */
+         /* I contend that this is a bug. This is not the right way to check
+             * for the first fragment as it assumes that the first fragment would always
+             * for any collective have zero as the first offset or that other subsequent
+             * fragments would not. It is not safe to assume this. The correct check is
+             * the following one
+             */
+
         ML_VERBOSE(10, ("Master ? %p %d", coll_op,  coll_op->fragment_data.offset_into_user_buffer));
-        /* offset_into_user_buffer == 0 is not a valid definition for the first frag. 
-         * if (0 != coll_op->fragment_data.offset_into_user_buffer &&
-         *       !out_of_resource) {
-         * A well posed definition of the first frag is the following
+        /* This check is in fact a bug. Not the correct definiton of first
+         * fragment. First fragment is the only fragment that satisfies the
+         * following criteria
          */
-        if((&coll_op->full_message !=
-                    coll_op->fragment_data.message_descriptor) &&
-                !out_of_resource){
+        /*if (0 != coll_op->fragment_data.offset_into_user_buffer &&
+                !out_of_resource) {
+                */
+        if (((&coll_op->full_message != coll_op->fragment_data.message_descriptor) &&
+	     !out_of_resource) || IS_COLL_SYNCMEM(coll_op)) {
             /* non-zero offset ==> this is not fragment 0 */
             CHECK_AND_RECYCLE(coll_op);
         }
@@ -217,7 +215,7 @@ static inline __opal_attribute_always_inline__ int coll_ml_task_dependency_proce
     for (dep_task = 0; dep_task < n_dependent_tasks; dep_task++)
     {
         int task_index;
-        task_index = task->rt_dependent_task_indecies[dep_task];
+        task_index = task->rt_dependent_task_indices[dep_task];
         my_schedule_instance->dag_description.status_array[task_index].n_dep_satisfied++;
     }
 
@@ -414,12 +412,12 @@ static inline __opal_attribute_always_inline__ int mca_coll_ml_generic_collectiv
     for (fn_index = 0; fn_index < op_desc->n_fns; fn_index++) {
         func = &op_desc->component_functions[fn_index];
         task_status = &op_prog->dag_description.status_array[fn_index];
-        /* fire the collective imidiate if it has no dependencies */
+        /* fire the collective immediately if it has no dependencies */
         if (0 == task_status->rt_num_dependencies) {
             rc = func->bcol_function->coll_fn(&op_prog->variable_fn_params,
                     /* Pasha: Need to update the prototype of the func,
                        right now it is ugly hack for compilation */
-                    (struct coll_ml_function_t *)&func->constant_group_data);
+                    (struct mca_bcol_base_function_t *)&func->constant_group_data);
             switch(rc) {
                 case BCOL_FN_NOT_STARTED:
                     /* put it on pending list */
@@ -436,7 +434,7 @@ static inline __opal_attribute_always_inline__ int mca_coll_ml_generic_collectiv
                     OPAL_THREAD_UNLOCK(&(mca_coll_ml_component.active_tasks_mutex));
                     break;
                 case BCOL_FN_COMPLETE:
-                    /* the tast is done ! lets start relevant dependencies */
+                    /* the task is done ! lets start relevant dependencies */
                     ML_VERBOSE(9, ("Call to bcol collecitive return BCOL_FN_COMPLETE"));
                     /* the task does not belong to any list, yes. So passing NULL */
                     ret = mca_coll_ml_task_completion_processing(&task_status, NULL);
@@ -555,25 +553,83 @@ static inline __opal_attribute_always_inline__
                 void mca_coll_ml_convertor_get_send_frag_size(mca_coll_ml_module_t *ml_module,
                                      size_t *frag_size, struct full_message_t *message_descriptor)
 {
-    size_t ml_fragment_size = ml_module->ml_fragment_size;
+    size_t fragment_size = *frag_size;
     opal_convertor_t *dummy_convertor = &message_descriptor->dummy_convertor;
 
     /* The last frag needs special service */
-    if (ml_fragment_size >
-          message_descriptor->send_converter_bytes_packed) {
+    if (fragment_size >
+          (size_t) message_descriptor->send_converter_bytes_packed) {
         *frag_size = message_descriptor->send_converter_bytes_packed;
         message_descriptor->send_converter_bytes_packed = 0;
 
         return;
     }
-
-    *frag_size = ml_fragment_size;
-    message_descriptor->dummy_conv_position += ml_fragment_size;
+    if( (message_descriptor->dummy_conv_position + fragment_size) >
+            message_descriptor->n_bytes_total ) {
+        message_descriptor->dummy_conv_position = (message_descriptor->dummy_conv_position + fragment_size)
+            - message_descriptor->n_bytes_total;
+    } else {
+        message_descriptor->dummy_conv_position += fragment_size;
+    }
 
     opal_convertor_generic_simple_position(dummy_convertor, &message_descriptor->dummy_conv_position);
     *frag_size -= dummy_convertor->partial_length;
 
     message_descriptor->send_converter_bytes_packed -= (*frag_size);
+}
+
+static inline __opal_attribute_always_inline__ int
+mca_coll_ml_launch_sequential_collective (mca_coll_ml_collective_operation_progress_t *coll_op)
+{
+    mca_bcol_base_coll_fn_desc_t *bcol_func;
+    int ifunc, n_fn, ih, ret;
+    mca_coll_ml_collective_operation_description_t *sched =
+        coll_op->coll_schedule;
+
+    n_fn = sched->n_fns;
+    ih = coll_op->sequential_routine.current_active_bcol_fn;
+
+    /* if collectives are already pending just add this one to the list */
+    if (opal_list_get_size (&mca_coll_ml_component.sequential_collectives)) {
+        opal_list_append(&mca_coll_ml_component.sequential_collectives, (opal_list_item_t *) coll_op);
+
+        return OMPI_SUCCESS;
+    }
+
+    for (ifunc = ih; ifunc < n_fn; ifunc++, coll_op->sequential_routine.current_active_bcol_fn++) {
+        ret = coll_op->sequential_routine.seq_task_setup(coll_op);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+
+        bcol_func = (sched->component_functions[ifunc].bcol_function);
+        ret = bcol_func->coll_fn(&coll_op->variable_fn_params,
+                    (struct mca_bcol_base_function_t *) &sched->component_functions[ifunc].constant_group_data);
+
+        if (BCOL_FN_COMPLETE == ret) {
+            if (ifunc == n_fn - 1) {
+                ret = coll_ml_fragment_completion_processing(coll_op);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                    mca_coll_ml_abort_ml("Failed to run coll_ml_fragment_completion_processing");
+                }
+
+                return OMPI_SUCCESS;
+            }
+        } else {
+            if (BCOL_FN_STARTED == ret) {
+                coll_op->sequential_routine.current_bcol_status = SEQ_TASK_IN_PROG;
+            } else {
+                coll_op->sequential_routine.current_bcol_status = SEQ_TASK_PENDING;
+            }
+
+            ML_VERBOSE(10, ("Adding pending bcol to the progress list to access by ml_progress func-id %d", ifunc));
+            opal_list_append(&mca_coll_ml_component.sequential_collectives, (opal_list_item_t *) coll_op);
+
+            break;
+        }
+    }
+
+    return OMPI_SUCCESS;
 }
 
 END_C_DECLS

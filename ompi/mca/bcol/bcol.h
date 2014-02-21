@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +25,8 @@
 #include "ompi/include/ompi/constants.h"
 #include "ompi/patterns/net/netpatterns_knomial_tree.h"
 
+#include "opal/util/show_help.h"
+
 #include <limits.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -29,8 +34,6 @@ extern "C" {
 #endif
 
 /* Forward declaration - please do not remove it */
-struct ml_memory_block_desc_t;
-struct mca_coll_ml_module_t;
 struct ml_buffers_t;
 
 struct mca_bcol_base_coll_fn_comm_attributes_t;
@@ -41,6 +44,10 @@ struct mca_bcol_base_coll_fn_desc_t;
 #define MSG_RANGE_INITIAL (1024)*12
 #define MSG_RANGE_INC      10
 #define BCOL_THRESHOLD_UNLIMITED (INT_MAX)
+/* Maximum size of a bcol's header. This allows us to correctly calculate the message
+ * thresholds. If the header of any bcol exceeds this value then increase this one
+ * to match. */
+#define BCOL_HEADER_MAX 96
 
 #define BCOL_HEAD_ALIGN 32   /* will turn into an MCA parameter after debug */
 
@@ -113,30 +120,6 @@ enum {
     BCOL_FN_COMPLETE    = (OMPI_ERR_MAX - 3)
 };
 
-/* Originally this enum was placed in ompi/op/op.h file. It should be moved back
- * when we are ready to lobby for its inclusion. Since we are releasing only the
- * bcast and barrier initially and this struct supports the allreduce, we are not 
- * going to worry about it now. Note that in the same h-file, op.h, the struct "ompi_op_t"
- * also has a field that we introduced called "enum ompi_op_type op_type" that this needs to
- * be resolved also.
- */
-enum ompi_op_type {
-    OMPI_OP_NULL,
-    OMPI_OP_MAX,
-    OMPI_OP_MIN,
-    OMPI_OP_SUM,
-    OMPI_OP_PROD,
-    OMPI_OP_LAND,
-    OMPI_OP_BAND,
-    OMPI_OP_LOR,
-    OMPI_OP_BOR,
-    OMPI_OP_LXOR,
-    OMPI_OP_BXOR,
-    OMPI_OP_MAXLOC,
-    OMPI_OP_MINLOC,
-    OMPI_OP_REPLACE,
-    OMPI_OP_NUM_OF_TYPES
-};
 
 
 /**
@@ -156,7 +139,7 @@ enum ompi_op_type {
  *                                support MPI_THREAD_MULTIPLE
  *
  * @retval OMPI_SUCCESS Component successfully initialized
- * @retval OMPI_ERROR   An unspecified error occurred
+ * @retval ORTE_ERROR   An unspecified error occurred
  */
 typedef int (*mca_bcol_base_component_init_query_fn_t)
     (bool enable_progress_threads, bool enable_mpi_threads);
@@ -333,14 +316,32 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bcol_base_component_t);
 
 /* forward declaration */
 struct mca_coll_ml_descriptor_t;
-struct ml_payload_buffer_desc_t;
-struct mca_coll_ml_route_info_t;
+struct mca_bcol_base_payload_buffer_desc_t;
+struct mca_bcol_base_route_info_t;
 
 typedef struct {
     int order_num;           /* Seq num of collective fragment */
     int bcols_started;       /* How many bcols need ordering have been started */
     int n_fns_need_ordering; /* The number of functions are called for bcols need ordering */
 } mca_bcol_base_order_info_t;
+
+/* structure that encapsultes information propagated amongst multiple
+ * fragments whereby completing the entire ensemble of fragments is
+ * necessary in order to complete the entire collective
+ */
+struct bcol_fragment_descriptor_t {
+    /* start iterator */
+    int head;
+    /* end iterator */
+    int tail;
+    /* current iteration */
+    int start_iter;
+    /* number of full iterations this frag */
+    int num_iter;
+    /* end iter */
+    int end_iter;
+};
+typedef struct bcol_fragment_descriptor_t bcol_fragment_descriptor_t;
 
 struct bcol_function_args_t {
     /* full message sequence number */
@@ -349,7 +350,7 @@ struct bcol_function_args_t {
      * parameters */
     /* Pasha: We don need this one for new flow - remove it */
     struct mca_coll_ml_descriptor_t *full_message_descriptor;
-    struct mca_coll_ml_route_info_t *root_route;
+    struct mca_bcol_base_route_info_t *root_route;
     /* function status */
     int function_status;
     /* root, for rooted operations */
@@ -358,8 +359,8 @@ struct bcol_function_args_t {
     void *sbuf;
     void *rbuf;
     void *userbuf;
-    struct ml_payload_buffer_desc_t *src_desc;
-    struct ml_payload_buffer_desc_t *dst_desc;
+    struct mca_bcol_base_payload_buffer_desc_t *src_desc;
+    struct mca_bcol_base_payload_buffer_desc_t *dst_desc;
    /* ml buffer size */
     uint32_t buffer_size;
     /* index of buffer in ml payload cache */
@@ -371,17 +372,96 @@ struct bcol_function_args_t {
     int rbuf_offset;
     /* for bcol opaque data */
     void *bcol_opaque_data;
-    /* An output argument that will be used by BCOL funstion to tell ML that the result of the BCOL is in rbuf */
+    /* An output argument that will be used by BCOL function to tell ML that the result of the BCOL is in rbuf */
     bool result_in_rbuf;
-    bool root_flag; /* True if the rank is root of operation */
-    int status; /* Used for non-blocking collective completion */
-    uint32_t frag_size; /* fragment size for large messages */
-    int hier_factor; /* factor used when bcast is invoked as a service function back down
-                      *  the tree in allgather for example, the pacl_len is not the actual
-                      *  len of the data needing bcasting
-                       */
+    bool root_flag;      /* True if the rank is root of operation */
+    bool need_dt_support; /* will trigger alternate code path for some colls */
+    int status;          /* Used for non-blocking collective completion */
+    uint32_t frag_size;  /* fragment size for large messages */
+    int hier_factor;     /* factor used when bcast is invoked as a service function back down
+                          * the tree in allgather for example, the pacl_len is not the actual
+                          * len of the data needing bcasting
+                          */
     mca_bcol_base_order_info_t order_info;
+    bcol_fragment_descriptor_t frag_info;
+
 };
+
+struct mca_bcol_base_route_info_t {
+    int level;
+    int rank;
+};
+typedef struct mca_bcol_base_route_info_t mca_bcol_base_route_info_t;
+
+struct mca_bcol_base_lmngr_block_t {
+    opal_list_item_t super;
+    struct mca_coll_ml_lmngr_t *lmngr;
+    void* base_addr;
+};
+typedef struct mca_bcol_base_lmngr_block_t mca_bcol_base_lmngr_block_t;
+OBJ_CLASS_DECLARATION(mca_bcol_base_lmngr_block_t);
+
+struct mca_bcol_base_memory_block_desc_t {
+
+    /* memory block for payload buffers */
+    struct mca_bcol_base_lmngr_block_t *block;
+
+    /* Address offset in bytes -- Indicates free memory in the block */
+    uint64_t   block_addr_offset;
+
+    /* size of the memory block */
+    size_t     size_block;
+
+    /* number of memory banks */
+    uint32_t     num_banks;
+
+    /* number of buffers per bank */
+    uint32_t    num_buffers_per_bank;
+
+    /* size of a payload buffer */
+    uint32_t     size_buffer;
+
+    /* pointer to buffer descriptors initialized */
+    struct mca_bcol_base_payload_buffer_desc_t *buffer_descs;
+
+    /* index of the next free buffer in the block */
+    uint64_t next_free_buffer;
+
+    uint32_t *bank_release_counters;
+
+    /* Counter that defines what bank should be synchronized next
+     * since collectives could be completed out of order, we have to make
+     * sure that memory synchronization collectives started in order ! */
+    int memsync_counter; 
+
+    /* This arrays of flags used to signal that the bank is ready for recycling */
+    bool *ready_for_memsync;
+
+    /* This flags monitors if bank is open for usage. Usually we expect that user
+     * will do the check only on buffer-zero allocation */
+    bool *bank_is_busy;
+
+};
+
+/* convenience typedef */
+typedef struct mca_bcol_base_memory_block_desc_t mca_bcol_base_memory_block_desc_t;
+
+typedef void (*mca_bcol_base_release_buff_fn_t)(struct mca_bcol_base_memory_block_desc_t *ml_memblock, uint32_t buff_id);
+
+struct mca_bcol_base_payload_buffer_desc_t {
+    void         *base_data_addr;   /* buffer address */
+    void         *data_addr;         /* buffer address  + header offset */
+    uint64_t     generation_number;  /* my generation */
+    uint64_t     bank_index;         /* my bank */
+    uint64_t     buffer_index;       /* my buff index */
+};
+/* convenience typedef */
+typedef struct mca_bcol_base_payload_buffer_desc_t mca_bcol_base_payload_buffer_desc_t;
+
+
+
+
+
 
 typedef struct bcol_function_args_t bcol_function_args_t;
 
@@ -405,9 +485,9 @@ struct mca_bcol_base_module_t;
 
 /* collective function prototype - all functions have the same interface
  * so that we can call them via a function pointer */
-struct coll_ml_function_t;
+struct mca_bcol_base_function_t;
 typedef int (*mca_bcol_base_module_collective_fn_primitives_t)
-    (bcol_function_args_t *input_args, struct coll_ml_function_t *const_args);
+    (bcol_function_args_t *input_args, struct mca_bcol_base_function_t *const_args);
 
 typedef int (*mca_bcol_base_module_collective_init_fn_primitives_t)
     (struct mca_bcol_base_module_t *bcol_module);
@@ -527,11 +607,12 @@ typedef  int (*mca_bcol_module_mem_init)(struct ml_buffers_t *registered_buffers
  *
  */
 /*typedef int (*mca_bcol_base_init_memory_fn_t)
-    (struct ml_memory_block_desc_t *ml_block, void *reg_data);*/
+    (struct mca_bcol_base_memory_block_desc_t *ml_block, void *reg_data);*/
 
 typedef int (*mca_bcol_base_init_memory_fn_t)
-    (struct mca_coll_ml_module_t *ml_module,
-     struct mca_bcol_base_module_t *bcol_module,
+     (struct mca_bcol_base_memory_block_desc_t *payload_block,
+     uint32_t data_offset,
+     struct mca_bcol_base_module_t *bcol,
      void *reg_data);
 
 typedef int (*mca_common_allgather_init_fn_t)
@@ -650,11 +731,55 @@ struct mca_bcol_base_module_t {
 typedef struct mca_bcol_base_module_t mca_bcol_base_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bcol_base_module_t);
 
+/* function description */
+struct mca_bcol_base_function_t {
+    int fn_idx;
+    /* module */
+    struct mca_bcol_base_module_t *bcol_module;
+
+    /*
+     *  The following two parameters are used for bcol modules
+     *  that want to do some optimizations based on the fact that
+     *  n functions from the same bcol module are called in a row.
+     *  For example, in the iboffload case, on the first call one
+     *  will want to initialize the MWR, and start to instantiate
+     *  it, but only post it at the end of the last call.
+     *  The index of this function in a sequence of consecutive
+     *  functions from the same bcol
+     */
+    int index_in_consecutive_same_bcol_calls;
+
+    /* number of times functions from this bcol are
+     * called in order
+     */
+    int n_of_this_type_in_a_row;
+
+    /*
+     * number of times functions from this module are called in the
+     * collective operation.
+     */
+    int n_of_this_type_in_collective;
+    int index_of_this_type_in_collective;
+};
+typedef struct mca_bcol_base_function_t mca_bcol_base_function_t;
+
+
+
+
 struct mca_bcol_base_descriptor_t {
     ompi_free_list_item_t super;
 /* Vasily: will be described in the future */
 };
 typedef struct mca_bcol_base_descriptor_t mca_bcol_base_descriptor_t;
+
+static inline __opal_attribute_always_inline__ size_t
+             mca_bcol_base_get_buff_length(ompi_datatype_t *dtype, int count)
+{
+    ptrdiff_t lb, extent;
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+
+    return (size_t) (extent * count);
+}
 
 #define MCA_BCOL_CHECK_ORDER(module, bcol_function_args)                     \
     do {                                                                     \

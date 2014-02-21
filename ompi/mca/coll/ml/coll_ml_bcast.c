@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -174,7 +177,7 @@ static int mca_coll_ml_bcast_frag_converter_progress(mca_coll_ml_collective_oper
     int ret, frag_len;
     size_t max_data = 0;
 
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_coll_ml_collective_operation_progress_t *new_op = NULL;
     mca_coll_ml_task_setup_fn_t task_setup = NULL;
     mca_coll_ml_module_t *ml_module = OP_ML_MODULE(coll_op);
@@ -193,35 +196,33 @@ static int mca_coll_ml_bcast_frag_converter_progress(mca_coll_ml_collective_oper
 
         /* Get an ml buffer */
         src_buffer_desc = mca_coll_ml_alloc_buffer(ml_module);
-        if (NULL == src_buffer_desc) {
+        if (OPAL_UNLIKELY(NULL == src_buffer_desc)) {
             /* If there exist outstanding fragments, then break out
              * and let an active fragment deal with this later,
              * there are no buffers available.
              */
             if (0 < coll_op->fragment_data.message_descriptor->n_active) {
                 return OMPI_SUCCESS;
-            } else {
-                /* It is useless to call progress from here, since
-                 * ml progress can't be executed as result ml memsync
-                 * call will not be completed and no memory will be
-                 * recycled. So we put the element on the list, and we will
-                 * progress it later when memsync will recycle some memory*/
-                if (NULL == src_buffer_desc) {
-                    /* The fragment is already on list and
-                     * the we still have no ml resources
-                     * Return busy */
-                    if (coll_op->pending & REQ_OUT_OF_MEMORY) {
-                        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-                    }
-
-                    coll_op->pending |= REQ_OUT_OF_MEMORY;
-                    opal_list_append(&ml_module->waiting_for_memory_list,
-                                    (opal_list_item_t *)coll_op);
-
-                    return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-                }
             }
+
+            /* It is useless to call progress from here, since
+             * ml progress can't be executed as result ml memsync
+             * call will not be completed and no memory will be
+             * recycled. So we put the element on the list, and we will
+             * progress it later when memsync will recycle some memory*/
+
+            /* The fragment is already on list and
+             * the we still have no ml resources
+             * Return busy */
+            if (!(coll_op->pending & REQ_OUT_OF_MEMORY)) {
+              coll_op->pending |= REQ_OUT_OF_MEMORY;
+              opal_list_append(&ml_module->waiting_for_memory_list,
+                               (opal_list_item_t *)coll_op);
+            }
+
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
+
         /* Get a new collective descriptor and initialize it */
         new_op = mca_coll_ml_duplicate_op_prog_single_frag_dag
             (ml_module, coll_op);
@@ -237,6 +238,7 @@ static int mca_coll_ml_bcast_frag_converter_progress(mca_coll_ml_collective_oper
             iov.iov_len  = ml_module->ml_fragment_size;
             assert(0 != iov.iov_len);
 
+            max_data = ml_module->small_message_thresholds[BCOL_BCAST];
             opal_convertor_pack(&new_op->fragment_data.message_descriptor->send_convertor,
                                 &iov, &iov_count, &max_data);
 
@@ -256,7 +258,8 @@ static int mca_coll_ml_bcast_frag_converter_progress(mca_coll_ml_collective_oper
                 coll_ml_bcast_functions[new_op->fragment_data.current_coll_op]->
                 task_setup_fn[COLL_ML_GENERAL_TASK_FN];
 
-             mca_coll_ml_convertor_get_send_frag_size(
+            max_data = ml_module->small_message_thresholds[BCOL_BCAST];
+            mca_coll_ml_convertor_get_send_frag_size(
                                     ml_module, &max_data,
                                     new_op->fragment_data.message_descriptor);
         }
@@ -312,7 +315,7 @@ static int mca_coll_ml_bcast_frag_progress(mca_coll_ml_collective_operation_prog
     size_t dt_size;
     void *buf;
 
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_coll_ml_collective_operation_progress_t *new_op = NULL;
     mca_coll_ml_task_setup_fn_t task_setup = NULL;
 
@@ -339,28 +342,27 @@ static int mca_coll_ml_bcast_frag_progress(mca_coll_ml_collective_operation_prog
              */
             if (0 < coll_op->fragment_data.message_descriptor->n_active) {
                 return OMPI_SUCCESS;
-            } else {
-                /* It is useless to call progress from here, since
-                 * ml progress can't be executed as result ml memsync
-                 * call will not be completed and no memory will be
-                 * recycled. So we put the element on the list, and we will
-                 * progress it later when memsync will recycle some memory*/
+            }
 
-                /* The fragment is already on list and
-                 * the we still have no ml resources
-                 * Return busy */
-                if (coll_op->pending & REQ_OUT_OF_MEMORY) {
-                    ML_VERBOSE(10,("Out of resources %p", coll_op));
-                    return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-                }
+            /* It is useless to call progress from here, since
+             * ml progress can't be executed as result ml memsync
+             * call will not be completed and no memory will be
+             * recycled. So we put the element on the list, and we will
+             * progress it later when memsync will recycle some memory*/
 
+            /* The fragment is already on list and
+             * the we still have no ml resources
+             * Return busy */
+            if (!(coll_op->pending & REQ_OUT_OF_MEMORY)) {
+                ML_VERBOSE(10,("Out of resources %p adding to pending queue", coll_op));
                 coll_op->pending |= REQ_OUT_OF_MEMORY;
                 opal_list_append(&((OP_ML_MODULE(coll_op))->waiting_for_memory_list),
                                 (opal_list_item_t *) coll_op);
-
-                ML_VERBOSE(10,("Out of resources %p adding to pending queue", coll_op));
-                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            } else {
+                ML_VERBOSE(10,("Out of resources %p", coll_op));
             }
+
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
 
         /* Get a new collective descriptor and initialize it */
@@ -446,10 +448,14 @@ static inline __opal_attribute_always_inline__
 
     mca_coll_ml_collective_operation_progress_t * coll_op = NULL;
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t *) module;
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_coll_ml_task_setup_fn_t task_setup;
+    OPAL_PTRDIFF_TYPE lb, extent;
 
-    ML_VERBOSE(10, ("Starting bcast, mca_coll_ml_bcast_uknown_root"));
+    /* actual starting place of the user buffer (lb added) */
+    void *actual_buf;
+
+    ML_VERBOSE(10, ("Starting bcast, mca_coll_ml_bcast_uknown_root buf: %p", buf));
 
     ompi_datatype_type_size(dtype, &dt_size);
     pack_len = count * dt_size;
@@ -459,6 +465,10 @@ static inline __opal_attribute_always_inline__
     /* Get information about memory layout */
     contig = opal_datatype_is_contiguous_memory_layout((opal_datatype_t *)dtype, count);
 
+    ompi_datatype_get_extent (dtype, &lb, &extent);
+
+    actual_buf = (void *) ((uintptr_t) buf + lb);
+
     /* Allocate collective schedule and pack message */
     if (contig) {
         if (pack_len <= (size_t) ml_module->small_message_thresholds[BCOL_BCAST]) {
@@ -466,9 +476,8 @@ static inline __opal_attribute_always_inline__
             bcast_index = ml_module->bcast_fn_index_table[SMALL_BCAST];
 
             ML_VERBOSE(10, ("Contig + small message %d [0-sk, 1-lk, 3-su, 4-lu]\n", bcast_index));
-            ALLOCATE_AND_PACK_CONTIG_BCAST_FRAG(ml_module, coll_op,
-                    bcast_index, root,
-                    pack_len, pack_len, buf, src_buffer_desc);
+            ALLOCATE_AND_PACK_CONTIG_BCAST_FRAG(ml_module, coll_op, bcast_index, root, pack_len,
+                                                pack_len, actual_buf, src_buffer_desc);
 
             ML_SET_VARIABLE_PARAMS_BCAST(coll_op, ml_module, count, dtype,
                     src_buffer_desc, 0, 0, ml_module->payload_block->size_buffer,
@@ -490,9 +499,8 @@ static inline __opal_attribute_always_inline__
             n_fragments = (pack_len + dt_size*n_dts_per_frag - 1)/(dt_size*n_dts_per_frag);
             pipeline_depth = (n_fragments < pipeline_depth ? n_fragments : pipeline_depth);
 
-            ALLOCATE_AND_PACK_CONTIG_BCAST_FRAG(ml_module, coll_op,
-                    bcast_index, root,
-                    pack_len, frag_len, buf, src_buffer_desc);
+            ALLOCATE_AND_PACK_CONTIG_BCAST_FRAG(ml_module, coll_op, bcast_index, root, pack_len,
+                                                frag_len, actual_buf, src_buffer_desc);
             ML_SET_VARIABLE_PARAMS_BCAST(coll_op, ml_module, (frag_len/dt_size), dtype,
                     src_buffer_desc, 0, 0, frag_len, (src_buffer_desc->data_addr));
 
@@ -500,7 +508,6 @@ static inline __opal_attribute_always_inline__
             coll_op->full_message.pipeline_depth = pipeline_depth;
             /* Initialize fragment specific information */
             coll_op->fragment_data.current_coll_op = bcast_index;
-            coll_op->fragment_data.buffer_desc = src_buffer_desc;
             /* coll_op->fragment_data.message_descriptor->n_bytes_scheduled += frag_len; */
             coll_op->fragment_data.fragment_size = frag_len;
             coll_op->fragment_data.message_descriptor->n_active++;
@@ -515,10 +522,9 @@ static inline __opal_attribute_always_inline__
             ML_VERBOSE(10, ("Contig + zero copy %d [0-sk, 1-lk, 3-su, 4-lu]\n", bcast_index));
 
             coll_op = mca_coll_ml_alloc_op_prog_single_frag_dag(ml_module,
-                    ml_module->coll_ml_bcast_functions[bcast_index],
-                    buf, buf,
-                    pack_len,
-                    0 /* offset for first pack */);
+                                                                ml_module->coll_ml_bcast_functions[bcast_index],
+                                                                actual_buf, actual_buf, pack_len,
+                                                                0 /* offset for first pack */);
             /* For large messages (bcast) this points to userbuf */
             /* Pasha: temporary work around for basesmuma, userbuf should
                be removed  */
@@ -536,10 +542,9 @@ static inline __opal_attribute_always_inline__
         ML_VERBOSE(10, ("NON Contig + fragmentation %d [0-sk, 1-lk, 3-su, 4-lu]\n", bcast_index));
 
         coll_op = mca_coll_ml_alloc_op_prog_single_frag_dag(ml_module,
-                ml_module->coll_ml_bcast_functions[bcast_index],
-                buf, buf,
-                pack_len,
-                0 /* offset for first pack */);
+                                                            ml_module->coll_ml_bcast_functions[bcast_index],
+                                                            actual_buf, actual_buf, pack_len,
+                                                            0 /* offset for first pack */);
         if (OPAL_LIKELY(pack_len > 0)) {
             size_t max_data = 0;
 
@@ -560,10 +565,9 @@ static inline __opal_attribute_always_inline__
 
                 iov.iov_base = (IOVBASE_TYPE*) src_buffer_desc->data_addr;
                 iov.iov_len  = ml_module->ml_fragment_size;
-
+                max_data = ml_module->small_message_thresholds[BCOL_BCAST];
                 opal_convertor_pack(&coll_op->full_message.send_convertor,
                                     &iov, &iov_count, &max_data);
-
                 coll_op->process_fn = NULL;
                 coll_op->full_message.n_bytes_scheduled = max_data;
 
@@ -571,6 +575,7 @@ static inline __opal_attribute_always_inline__
                 coll_op->full_message.fragment_launcher = mca_coll_ml_bcast_frag_converter_progress;
                 coll_op->full_message.pipeline_depth = mca_coll_ml_component.pipeline_depth;
                 coll_op->full_message.root = true;
+
             } else {
                 opal_convertor_copy_and_prepare_for_send(
                         ompi_mpi_local_convertor,
@@ -597,6 +602,7 @@ static inline __opal_attribute_always_inline__
                 coll_op->full_message.fragment_launcher = mca_coll_ml_bcast_frag_converter_progress;
                 coll_op->full_message.pipeline_depth = mca_coll_ml_component.pipeline_depth;
 
+                max_data = ml_module->small_message_thresholds[BCOL_BCAST];
                 coll_op->full_message.dummy_conv_position = 0;
                 mca_coll_ml_convertor_get_send_frag_size(
                                              ml_module, &max_data,
@@ -605,7 +611,6 @@ static inline __opal_attribute_always_inline__
                 coll_op->full_message.n_bytes_scheduled = max_data;
             }
         }
-
         coll_op->fragment_data.current_coll_op = bcast_index;
         coll_op->fragment_data.message_descriptor->n_active++;
         coll_op->fragment_data.fragment_size = coll_op->full_message.n_bytes_scheduled;
@@ -675,9 +680,9 @@ int mca_coll_ml_parallel_bcast(void *buf, int count, struct ompi_datatype_t *dty
 }
 
 int mca_coll_ml_parallel_bcast_nb(void *buf, int count, struct ompi_datatype_t *dtype,
-        int root, struct ompi_communicator_t *comm,
-        ompi_request_t **req,
-        mca_coll_base_module_t *module)
+                                  int root, struct ompi_communicator_t *comm,
+                                  ompi_request_t **req,
+                                  mca_coll_base_module_t *module)
 {
     int ret;
 
@@ -693,8 +698,8 @@ int mca_coll_ml_parallel_bcast_nb(void *buf, int count, struct ompi_datatype_t *
 }
 
 int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype_t *dtype,
-                                         int root, struct ompi_communicator_t *comm,
-                                         mca_coll_base_module_t *module)
+                                      int root, struct ompi_communicator_t *comm,
+                                      mca_coll_base_module_t *module)
 {
 
     /* local variables */
@@ -705,8 +710,12 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
     mca_coll_ml_collective_operation_progress_t * coll_op = NULL;
     mca_coll_ml_compound_functions_t *fixed_schedule;
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t *) module;
-    ml_payload_buffer_desc_t *src_buffer_desc = NULL;
+    mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
     mca_bcol_base_coll_fn_desc_t *func;
+    OPAL_PTRDIFF_TYPE lb, extent;
+
+    /* actual starting place of the user buffer (lb added) */
+    void *actual_buf;
 
     ML_VERBOSE(10, ("Starting static bcast, small messages"));
 
@@ -715,6 +724,9 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
      * on this stage only contiguous data is supported */
     ompi_datatype_type_size(dtype, &dt_size);
     pack_len = count * dt_size;
+    ompi_datatype_get_extent (dtype, &lb, &extent);
+
+    actual_buf = (void *) ((uintptr_t) buf + lb);
 
     /* Setup data buffer */
     src_buffer_desc = mca_coll_ml_alloc_buffer(ml_module);
@@ -729,10 +741,9 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
         assert(pack_len <=  ml_module->payload_block->size_buffer);
 
         coll_op = mca_coll_ml_alloc_op_prog_single_frag_dag(ml_module,
-                ml_module->coll_ml_bcast_functions[ML_BCAST_SMALL_DATA_SEQUENTIAL],
-                buf, buf,
-                pack_len,
-                0 /* offset for first pack */);
+                                                            ml_module->coll_ml_bcast_functions[ML_BCAST_SMALL_DATA_SEQUENTIAL],
+                                                            actual_buf, actual_buf, pack_len,
+                                                            0 /* offset for first pack */);
         if (ompi_comm_rank(comm) == root) {
             /* single frag, pack the data */
             memcpy((void *)(uintptr_t)src_buffer_desc->data_addr,
@@ -748,15 +759,14 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
     } else {
         ML_VERBOSE(10, ("ML_BCAST_LARGE_DATA_KNOWN case."));
         coll_op = mca_coll_ml_alloc_op_prog_single_frag_dag(ml_module,
-                ml_module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_SEQUENTIAL],
-                buf, buf,
-                pack_len,
-                0 /* offset for first pack */);
+                                                            ml_module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_SEQUENTIAL],
+                                                            actual_buf, actual_buf, pack_len,
+                                                            0 /* offset for first pack */);
         /* For large messages (bcast) this points to userbuf */
         /* Pasha: temporary work around for basesmuma, userbuf should
            be removed  */
         coll_op->variable_fn_params.userbuf =
-        coll_op->variable_fn_params.sbuf = buf;
+        coll_op->variable_fn_params.sbuf = actual_buf;
 
         coll_op->process_fn = NULL;
     }
@@ -803,7 +813,7 @@ int mca_coll_ml_bcast_sequential_root(void *buf, int count, struct ompi_datatype
 
         func = fixed_schedule[fn_idx].bcol_function;
         ret = func->coll_fn(&coll_op->variable_fn_params,
-                (struct coll_ml_function_t *) &fixed_schedule[fn_idx].constant_group_data);
+                (struct mca_bcol_base_function_t *) &fixed_schedule[fn_idx].constant_group_data);
         /* set the coll_fn_started flag to true */
         if (BCOL_FN_COMPLETE == ret) {
             /* done with this routine, bump the active counter */

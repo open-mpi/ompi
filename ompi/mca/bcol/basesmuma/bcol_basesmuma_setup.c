@@ -1,7 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -31,14 +32,14 @@
 #include "bcol_basesmuma.h"
 
 int base_bcol_basesmuma_setup_ctl_struct(
-    mca_bcol_basesmuma_module_t *sm_bcol_module, 
+    mca_bcol_basesmuma_module_t *sm_bcol_module,
     mca_bcol_basesmuma_component_t *cs,
     sm_buffer_mgmt *ctl_mgmt);
 
 /* this is the new one, uses the pml allgather */
 int base_bcol_basesmuma_exchange_offsets(
-    mca_bcol_basesmuma_module_t *sm_bcol_module, 
-    void **result_array, uint64_t mem_offset, int loop_limit, 
+    mca_bcol_basesmuma_module_t *sm_bcol_module,
+    void **result_array, uint64_t mem_offset, int loop_limit,
     int leading_dim)
 {
     int ret=OMPI_SUCCESS,i;
@@ -53,7 +54,7 @@ int base_bcol_basesmuma_exchange_offsets(
     send_buff = (char *) malloc(count);
     recv_buff = (char *) malloc(count *
                            sm_bcol_module->super.sbgp_partner_module->group_size);
-    /*  exchange the base pointer for the controls structures - gather 
+    /*  exchange the base pointer for the controls structures - gather
      *  every one else's infromation.
      */
 
@@ -65,7 +66,7 @@ int base_bcol_basesmuma_exchange_offsets(
     /* get the offsets from all procs, so can setup the control data
      * structures.
      */
-    
+
     ret=comm_allgather_pml((void *) send_buff,(void *) recv_buff,count,
             MPI_BYTE,
             sm_bcol_module->super.sbgp_partner_module->my_index,
@@ -113,8 +114,8 @@ exit_ERROR:
 
 #if 0
 int base_bcol_basesmuma_exchange_offsets(
-    mca_bcol_basesmuma_module_t *sm_bcol_module, 
-    void **result_array, uint64_t mem_offset, int loop_limit, 
+    mca_bcol_basesmuma_module_t *sm_bcol_module,
+    void **result_array, uint64_t mem_offset, int loop_limit,
     int leading_dim)
 {
     int ret=OMPI_SUCCESS,i,dummy;
@@ -126,7 +127,7 @@ int base_bcol_basesmuma_exchange_offsets(
     opal_buffer_t *recv_buffer = OBJ_NEW(opal_buffer_t);
     uint64_t rem_mem_offset;
 
-    /*  exchange the base pointer for the controls structures - gather 
+    /*  exchange the base pointer for the controls structures - gather
      *  every one else's infromation.
      */
     /* get list of procs that will participate in the communication */
@@ -143,8 +144,7 @@ int base_bcol_basesmuma_exchange_offsets(
     }
     /* pack up the data into the allgather send buffer */
         if (NULL == send_buffer || NULL == recv_buffer) {
-            fprintf(stderr,"Cannot allocate memory for sbuffer or rbuffer \n");
-            fflush(stderr);
+            opal_output (0, "Cannot allocate memory for sbuffer or rbuffer\n");
             ret = OMPI_ERROR;
             goto exit_ERROR;
         }
@@ -156,24 +156,22 @@ int base_bcol_basesmuma_exchange_offsets(
     ret = opal_dss.pack(send_buffer,
         &(sm_bcol_module->super.sbgp_partner_module->my_index),1,OPAL_UINT32);
 
-    if (ORTE_SUCCESS != ret) {
-	fprintf(stderr,"Error packing my_index!!\n");
-	fflush(stderr);
+    if (OMPI_SUCCESS != ret) {
+        opal_output (0, "Error packing my_index!!\n");
         goto exit_ERROR;
     }
 
     /* pack the offset of the allocated region */
     ret = opal_dss.pack(send_buffer,&(mem_offset),1,OPAL_UINT64);
-    if (ORTE_SUCCESS != ret) {
+    if (OMPI_SUCCESS != ret) {
         goto exit_ERROR;
     }
 
     /* get the offsets from all procs, so can setup the control data
      * structures.
      */
-    if (ORTE_SUCCESS != (ret = ompi_rte_allgather_list(&peers, send_buffer, recv_buffer))) {
-        fprintf(stderr,"ompi_rte_allgather_list returned error %d\n", ret);
-        fflush(stderr);
+    if (OMPI_SUCCESS != (ret = ompi_rte_allgather_list(&peers, send_buffer, recv_buffer))) {
+        opal_output (0, "ompi_rte_allgather_list returned error %d\n", ret);
         goto exit_ERROR;
     }
 
@@ -181,8 +179,7 @@ int base_bcol_basesmuma_exchange_offsets(
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&dummy, &pcnt, OPAL_INT32);
         if (OMPI_SUCCESS != ret) {
-                fprintf(stderr,"unpack returned error %d for dummy \n",ret);
-                fflush(stderr);
+                opal_output (0, "unpack returned error %d for dummy\n",ret);
                 goto exit_ERROR;
         }
 
@@ -197,8 +194,7 @@ int base_bcol_basesmuma_exchange_offsets(
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&index_in_group, &pcnt, OPAL_UINT32);
         if (OMPI_SUCCESS != ret) {
-            fprintf(stderr,"unpack returned error %d for remote index_in_group \n",ret);
-            fflush(stderr);
+            opal_output (0, "unpack returned error %d for remote index_in_group\n",ret);
             goto exit_ERROR;
         }
 
@@ -206,8 +202,7 @@ int base_bcol_basesmuma_exchange_offsets(
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&rem_mem_offset, &pcnt, OPAL_UINT64);
         if (OMPI_SUCCESS != ret) {
-            fprintf(stderr,"unpack returned error %d for remote memory offset \n",ret);
-            fflush(stderr);
+            opal_output (0, "unpack returned error %d for remote memory offset\n",ret);
             goto exit_ERROR;
         }
 
@@ -253,35 +248,34 @@ exit_ERROR:
 
 
 static int base_bcol_basesmuma_exchange_ctl_params(
-    mca_bcol_basesmuma_module_t *sm_bcol_module, 
+    mca_bcol_basesmuma_module_t *sm_bcol_module,
     mca_bcol_basesmuma_component_t *cs,
     sm_buffer_mgmt *ctl_mgmt, list_data_t *data_blk)
 {
     int ret=OMPI_SUCCESS,i,loop_limit;
     int leading_dim, buf_id;
-    uint64_t mem_offset;
+    void *mem_offset;
     unsigned char *base_ptr;
     mca_bcol_basesmuma_ctl_struct_t *ctl_ptr;
 
     /* data block base offset in the mapped file */
-    mem_offset=(uint64_t)(uintptr_t)(data_blk->data)-
-        (uint64_t)(uintptr_t)cs->sm_ctl_structs->data_addr;
+    mem_offset = (void *)((uintptr_t)data_blk->data -
+                          (uintptr_t)cs->sm_ctl_structs->data_addr);
 
     /* number of buffers in data block */
     loop_limit=cs->basesmuma_num_mem_banks+ctl_mgmt->number_of_buffs;
     leading_dim=ctl_mgmt->size_of_group;
-    ret=comm_allgather_pml(&mem_offset,ctl_mgmt->ctl_buffs,1,
-            MPI_LONG_LONG_INT,
-            sm_bcol_module->super.sbgp_partner_module->my_index,
-            sm_bcol_module->super.sbgp_partner_module->group_size,
-            sm_bcol_module->super.sbgp_partner_module->group_list,
-            sm_bcol_module->super.sbgp_partner_module->group_comm);
+    ret=comm_allgather_pml(&mem_offset, ctl_mgmt->ctl_buffs, sizeof(void *),
+                           MPI_BYTE, sm_bcol_module->super.sbgp_partner_module->my_index,
+                           sm_bcol_module->super.sbgp_partner_module->group_size,
+                           sm_bcol_module->super.sbgp_partner_module->group_list,
+                           sm_bcol_module->super.sbgp_partner_module->group_comm);
     if( OMPI_SUCCESS != ret ) {
         goto exit_ERROR;
     }
 
 #if 0
-    ret=base_bcol_basesmuma_exchange_offsets( sm_bcol_module, 
+    ret=base_bcol_basesmuma_exchange_offsets( sm_bcol_module,
             (void **)ctl_mgmt->ctl_buffs, mem_offset, loop_limit, leading_dim);
     if( OMPI_SUCCESS != ret ) {
         goto exit_ERROR;
@@ -332,7 +326,7 @@ exit_ERROR:
 }
 
 int base_bcol_basesmuma_setup_ctl_struct(
-    mca_bcol_basesmuma_module_t *sm_bcol_module, 
+    mca_bcol_basesmuma_module_t *sm_bcol_module,
     mca_bcol_basesmuma_component_t *cs,
     sm_buffer_mgmt *ctl_mgmt)
 {
@@ -351,8 +345,8 @@ int base_bcol_basesmuma_setup_ctl_struct(
 
     /* initialize the control structure management struct -
      * for collectives without user data
-     *--------------------------------------------------------------- 
-     */ 
+     *---------------------------------------------------------------
+     */
 
     ctl_mgmt->number_of_buffs=n_ctl_structs;
     ctl_mgmt->num_mem_banks=
@@ -391,7 +385,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
         sm_bcol_module,
         sm_bcol_module->super.sbgp_partner_module,
         &(cs->sm_connections_list),
-	&(sm_bcol_module->ctl_backing_files_info),
+        &(sm_bcol_module->ctl_backing_files_info),
         sm_bcol_module->super.sbgp_partner_module->group_comm,
         input_file, cs->clt_base_fname,
         false);
@@ -404,35 +398,31 @@ int base_bcol_basesmuma_setup_ctl_struct(
         malloc(sizeof(void *)*
                 sm_bcol_module->super.sbgp_partner_module->group_size);
     if( !sm_bcol_module->shared_memory_scratch_space ) {
-        fprintf(stderr,"Cannot allocate memory for shared_memory_scratch_space. \n");
-        fflush(stderr);
+        opal_output (0, "Cannot allocate memory for shared_memory_scratch_space.\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
-    for(i=0 ; i < sm_bcol_module->super.sbgp_partner_module->group_size ; i++ )
-        {
-            if(i ==
-                     sm_bcol_module->super.sbgp_partner_module->my_index) {
-                /* local file data is not cached in thi slist */
-                continue;
-            }
-            sm_bcol_module->shared_memory_scratch_space[i]=(void *)(
-                (char *)(sm_bcol_module->ctl_backing_files_info[i]->sm_mmap)+
-                cs->scratch_offset_from_base_ctl_file);
-        }
+    for(i=0 ; i < sm_bcol_module->super.sbgp_partner_module->group_size ; i++ ) {
+	if(i == sm_bcol_module->super.sbgp_partner_module->my_index) {
+	    /* local file data is not cached in thi slist */
+	    continue;
+	}
+	sm_bcol_module->shared_memory_scratch_space[i]=(void *)(
+	    (char *)(sm_bcol_module->ctl_backing_files_info[i]->sm_mmap)+
+	    cs->scratch_offset_from_base_ctl_file);
+    }
     i=sm_bcol_module->super.sbgp_partner_module->my_index;
     sm_bcol_module->shared_memory_scratch_space[i]=(void *)(
         (char *)(cs->sm_ctl_structs->map_addr)+cs->scratch_offset_from_base_ctl_file);
 
     /*
-     * setup the no-data buffer managment data 
+     * setup the no-data buffer managment data
      */
     n_ctl=ctl_mgmt->num_mem_banks;
     ctl_mgmt->ctl_buffs_mgmt=(mem_bank_management_t *)
         malloc(sizeof(mem_bank_management_t)*n_ctl);
     if( !ctl_mgmt->ctl_buffs_mgmt ) {
-        fprintf(stderr,"Cannot allocate memory for ctl_buffs_mgmt. ret = %d \n",ret);
-        fflush(stderr);
+        opal_output (0, "Cannot allocate memory for ctl_buffs_mgmt. ret = %d\n",ret);
         ret = OMPI_ERROR;
         goto exit_ERROR;
     }
@@ -451,13 +441,13 @@ int base_bcol_basesmuma_setup_ctl_struct(
         mutex_ptr= &(ctl_mgmt->ctl_buffs_mgmt[i].mutex);
         OBJ_CONSTRUCT(mutex_ptr, opal_mutex_t);
         ctl_mgmt->ctl_buffs_mgmt[i].index_shared_mem_ctl_structs=i;
-        
+
         item=(opal_list_item_t *)&(ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc);
         OBJ_CONSTRUCT(item,opal_list_item_t);
         ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.sm_module=
             sm_bcol_module;
         ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.pool_index= i;
-	/* get the sm_buffer_mgmt pointer for the control structures */ 
+        /* get the sm_buffer_mgmt pointer for the control structures */
         ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.coll_buff=ctl_mgmt;
         ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.ml_memory_block_descriptor=
             NULL;
@@ -476,10 +466,10 @@ exit_ERROR:
 /*
  * this function initializes the internal scratch buffers and control
  * structures that will be used by the module. It also intitializes
- * the payload buffer management structures. 
+ * the payload buffer management structures.
  */
 int base_bcol_basesmuma_setup_library_buffers(
-    mca_bcol_basesmuma_module_t *sm_bcol_module, 
+    mca_bcol_basesmuma_module_t *sm_bcol_module,
     mca_bcol_basesmuma_component_t *cs)
 {
     int ret=OMPI_SUCCESS,i;
@@ -493,8 +483,7 @@ int base_bcol_basesmuma_setup_library_buffers(
     if(!cs->sm_ctl_structs) {
         ret = mca_bcol_basesmuma_allocate_sm_ctl_memory(cs);
         if(OMPI_SUCCESS != ret) {
-            fprintf(stderr,"In bcol_comm_query mca_bcol_basesmuma_allocate_sm_ctl_memory failed \n");
-            fflush(stderr);
+            opal_output (0, "In bcol_comm_query mca_bcol_basesmuma_allocate_sm_ctl_memory failed\n");
             return ret;
         }
         /*

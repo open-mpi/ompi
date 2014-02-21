@@ -52,10 +52,6 @@ typedef struct bcol_basesmuma_smcm_mmap_t {
     size_t map_size;
     /* Filename */
     char map_path[OPAL_PATH_MAX];
-#if defined(__WINDOWS__)
-    /* Handle to the object */
-    HANDLE hMappedObject;
-#endif  /* defined(__WINDOWS__) */
 } bcol_basesmuma_smcm_mmap_t;
 
 OBJ_CLASS_DECLARATION(bcol_basesmuma_smcm_mmap_t);
