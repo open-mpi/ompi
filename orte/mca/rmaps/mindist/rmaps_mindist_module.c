@@ -281,9 +281,12 @@ static int mindist_map(orte_job_t *jdata)
                         "mca:rmaps:mindist: assigned %d procs to node %s",
                         j, node->name);
             } else {
-                /* don't have info about pci locality */
-                orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:no-pci-locality-info",
-                        true, node->name);
+                if (hwloc_get_nbobjs_by_type(node->topology, HWLOC_OBJ_SOCKET) > 1) {
+                    /* don't have info about pci locality */
+                    orte_show_help("help-orte-rmaps-md.txt", "orte-rmaps-mindist:no-pci-locality-info",
+                            true, node->name);
+                }
+                /* else silently switch to byslot mapper since distance info is irrelevant for this machine configuration */
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = ORTE_ERR_TAKE_NEXT_OPTION;
                 goto error;
