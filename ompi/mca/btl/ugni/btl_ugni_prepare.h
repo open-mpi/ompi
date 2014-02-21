@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -17,6 +17,38 @@
 
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
+
+static inline struct mca_btl_base_descriptor_t *
+mca_btl_ugni_prepare_src_send_nodata (struct mca_btl_base_module_t *btl,
+                                      mca_btl_base_endpoint_t *endpoint,
+                                      uint8_t order, size_t reserve,
+                                      uint32_t flags)
+{
+    mca_btl_ugni_base_frag_t *frag = NULL;
+    int rc;
+
+    (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
+    if (OPAL_UNLIKELY(NULL == frag)) {
+        return NULL;
+    }
+
+    BTL_VERBOSE(("preparing src for send fragment. size = %u", (unsigned int) reserve));
+
+    frag->hdr_size = reserve + sizeof (frag->hdr.send);
+
+    frag->segments[0].base.seg_addr.pval = frag->hdr.send_ex.pml_header;
+    frag->segments[0].base.seg_len       = reserve;
+
+    frag->segments[1].base.seg_addr.pval = NULL;
+    frag->segments[1].base.seg_len       = 0;
+
+    frag->base.des_src     = &frag->segments->base;
+    frag->base.des_src_cnt = 1;
+    frag->base.order       = order;
+    frag->base.des_flags   = flags;
+
+    return &frag->base;
+}
 
 static inline struct mca_btl_base_descriptor_t *
 mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
@@ -115,15 +147,13 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
 
     frag->flags |= MCA_BTL_UGNI_FRAG_BUFFERED;
 
-    if (*size) {
-        iov.iov_len  = *size;
-        iov.iov_base = (IOVBASE_TYPE *) frag->base.super.ptr;
+    iov.iov_len  = *size;
+    iov.iov_base = (IOVBASE_TYPE *) frag->base.super.ptr;
 
-        rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
-        if (OPAL_UNLIKELY(rc < 0)) {
-            mca_btl_ugni_frag_return (frag);
-            return NULL;
-        }
+    rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
+    if (OPAL_UNLIKELY(rc < 0)) {
+        mca_btl_ugni_frag_return (frag);
+        return NULL;
     }
 
     frag->segments[0].base.seg_len       = reserve;
@@ -149,6 +179,10 @@ mca_btl_ugni_prepare_src_send (struct mca_btl_base_module_t *btl,
     bool use_eager_get = (*size + reserve) > mca_btl_ugni_component.smsg_max_data;
     bool send_in_place;
     void *data_ptr;
+
+    if (!(*size)) {
+        return mca_btl_ugni_prepare_src_send_nodata (btl, endpoint, order, reserve, flags);
+    }
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 

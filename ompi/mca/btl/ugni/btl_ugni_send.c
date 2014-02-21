@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -13,6 +13,7 @@
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
 #include "btl_ugni_smsg.h"
+#include "btl_ugni_prepare.h"
 
 int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
                        struct mca_btl_base_endpoint_t *endpoint,
@@ -27,7 +28,6 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
 
     /* tag and len are at the same location in eager and smsg frag hdrs */
     frag->hdr.send.lag = (tag << 24) | size;
-    frag->endpoint = endpoint;
 
     rc = mca_btl_ugni_check_endpoint_state (endpoint);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
@@ -80,6 +80,63 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     }
 
     return rc;
+}
+
+int
+mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
+                    struct mca_btl_base_endpoint_t *endpoint,
+                    struct opal_convertor_t *convertor,
+                    void *header, size_t header_size,
+                    size_t payload_size, uint8_t order,
+                    uint32_t flags, mca_btl_base_tag_t tag,
+                    mca_btl_base_descriptor_t **descriptor)
+{
+    size_t total_size = header_size + payload_size;
+    mca_btl_ugni_base_frag_t *frag = NULL;
+    size_t packed_size = payload_size;
+    int rc;
+
+    do {
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint))) {
+            break;
+        }
+
+        frag = mca_btl_ugni_prepare_src_send (btl, endpoint, convertor, order, header_size,
+                                              &packed_size, flags);
+        assert (packed_size == payload_size);
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            break;
+        }
+
+        frag->hdr.send.lag = (tag << 24) | total_size;
+        memcpy (frag->segments[0].base.seg_addr.pval, header, header_size);
+
+        frag->flags = MCA_BTL_UGNI_FRAG_IGNORE;
+
+        rc = mca_btl_ugni_send_frag (endpoint, frag);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            mca_btl_ugni_frag_return (frag);
+            break;
+        }
+
+        if (!(frag->flags & MCA_BTL_UGNI_FRAG_BUFFERED)) {
+            /* wait until the frag is received by the remote end */
+            while (!(frag->flags & MCA_BTL_UGNI_FRAG_SMSG_COMPLETE)) {
+                mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) btl);
+            }
+        }
+
+        frag->flags &= ~MCA_BTL_UGNI_FRAG_IGNORE;
+
+        if (frag->flags & MCA_BTL_UGNI_FRAG_SMSG_COMPLETE) {
+            mca_btl_ugni_frag_return (frag);
+        }
+
+        return OMPI_SUCCESS;
+    } while (0);
+
+    *descriptor = NULL;
+    return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
 int mca_btl_progress_send_wait_list (mca_btl_base_endpoint_t *endpoint)
