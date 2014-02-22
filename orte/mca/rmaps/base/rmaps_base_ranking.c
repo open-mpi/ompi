@@ -596,6 +596,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
             }
         }
         if (cnt < app->num_procs) {
+            ORTE_ERROR_LOG(ORTE_ERR_FATAL);
             return ORTE_ERR_FATAL;
         }
         return ORTE_SUCCESS;

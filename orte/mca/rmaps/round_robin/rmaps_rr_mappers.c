@@ -211,7 +211,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                          orte_std_cntr_t num_slots,
                          orte_vpid_t num_procs)
 {
-    int j, nprocs_mapped, lag, delta;
+    int j, nprocs_mapped, lag, delta, nnodes;
     orte_node_t *node;
     orte_proc_t *proc;
     opal_list_item_t *item;
@@ -239,118 +239,171 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         oversubscribed = true;
     }
 
-    /* divide the procs evenly across all nodes - this is the
-     * average we have to maintain as we go, but we adjust
-     * the number on each node to reflect its available slots.
-     * Obviously, if all nodes have the same number of slots,
-     * then the avg is what we get on each node - this is
-     * the most common situation.
-     */
-    navg = app->num_procs / opal_list_get_size(node_list);
-    if (0 == navg) {
-        /* if there are less procs than nodes, we have to
-         * place at least one/node
-         */
-        navg = 1;
-    }
-
-    /* compute how many extra procs to put on each node */
-    balance = (float)(app->num_procs - (navg * (float)opal_list_get_size(node_list))) / (float)opal_list_get_size(node_list);
-    extra_procs_to_assign = (int)balance;
-    if (0 < (balance - (float)extra_procs_to_assign)) {
-        /* compute how many nodes need an extra proc */
-        nxtra_nodes = app->num_procs - ((navg + extra_procs_to_assign) * opal_list_get_size(node_list));
-        /* add one so that we add an extra proc to the first nodes
-         * until all procs are mapped
-         */
-        extra_procs_to_assign++;
-        /* flag that we added one */
-        add_one = true;
-    }
-
-    opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
-                        "mca:rmaps:rr: mapping by node navg %d extra_procs %d extra_nodes %d",
-                        navg, extra_procs_to_assign, nxtra_nodes);
-
+    nnodes = opal_list_get_size(node_list);
     nprocs_mapped = 0;
-    lag = 0;
-    for (item = opal_list_get_first(node_list);
-         item != opal_list_get_end(node_list);
-         item = opal_list_get_next(item)) {
-        node = (orte_node_t*)item;
-#if OPAL_HAVE_HWLOC
-        /* get the root object as we are not assigning
-         * locale except at the node level
+
+    do {
+        /* divide the procs evenly across all nodes - this is the
+         * average we have to maintain as we go, but we adjust
+         * the number on each node to reflect its available slots.
+         * Obviously, if all nodes have the same number of slots,
+         * then the avg is what we get on each node - this is
+         * the most common situation.
          */
-        if (NULL != node->topology) {
-            obj = hwloc_get_root_obj(node->topology);
-        }
-#endif
-        /* add this node to the map, but only do so once */
-        if (!node->mapped) {
-            if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                ORTE_ERROR_LOG(idx);
-                return idx;
-            }
-            node->mapped = true;
-            OBJ_RETAIN(node);  /* maintain accounting on object */
-            ++(jdata->map->num_nodes);
-        }
-        /* compute the number of procs to go on this node */
-        if (add_one) {
-            if (0 == nxtra_nodes) {
-                --extra_procs_to_assign;
-                add_one = false;
-            } else {
-                --nxtra_nodes;
-            }
-        }
-        if (oversubscribed) {
-            /* everybody just takes their share */
-            num_procs_to_assign = navg + extra_procs_to_assign;
-        } else {
-            /* if we are not oversubscribed, then there are enough
-             * slots to handle all the procs. However, not every
-             * node will have the same number of slots, so we
-             * have to track how many procs to "shift" elsewhere
-             * to make up the difference
+        navg = app->num_procs / nnodes;
+        if (0 == navg) {
+            /* if there are less procs than nodes, we have to
+             * place at least one/node
              */
-            if (node->slots <= node->slots_inuse) {
-                /* if there are no extras to take, then we can
-                 * ignore this node
+            navg = 1;
+        }
+
+        /* compute how many extra procs to put on each node */
+        balance = (float)(app->num_procs - (navg * (float)opal_list_get_size(node_list))) / (float)nnodes;
+        extra_procs_to_assign = (int)balance;
+        if (0 < (balance - (float)extra_procs_to_assign)) {
+            /* compute how many nodes need an extra proc */
+            nxtra_nodes = app->num_procs - ((navg + extra_procs_to_assign) * nnodes);
+            /* add one so that we add an extra proc to the first nodes
+             * until all procs are mapped
+             */
+            extra_procs_to_assign++;
+            /* flag that we added one */
+            add_one = true;
+        }
+
+        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                            "mca:rmaps:rr: mapping by node navg %d extra_procs %d extra_nodes %d",
+                            navg, extra_procs_to_assign, nxtra_nodes);
+
+        lag = 0;
+        nnodes = 0;
+        for (item = opal_list_get_first(node_list);
+             item != opal_list_get_end(node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
+#if OPAL_HAVE_HWLOC
+            /* get the root object as we are not assigning
+             * locale except at the node level
+             */
+            if (NULL != node->topology) {
+                obj = hwloc_get_root_obj(node->topology);
+            }
+#endif
+            /* add this node to the map, but only do so once */
+            if (!node->mapped) {
+                if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                    ORTE_ERROR_LOG(idx);
+                    return idx;
+                }
+                node->mapped = true;
+                OBJ_RETAIN(node);  /* maintain accounting on object */
+                ++(jdata->map->num_nodes);
+            }
+            /* compute the number of procs to go on this node */
+            if (add_one) {
+                if (0 == nxtra_nodes) {
+                    --extra_procs_to_assign;
+                    add_one = false;
+                } else {
+                    --nxtra_nodes;
+                }
+            }
+            if (oversubscribed) {
+                /* everybody just takes their share */
+                num_procs_to_assign = navg + extra_procs_to_assign;
+            } else {
+                /* if we are not oversubscribed, then there are enough
+                 * slots to handle all the procs. However, not every
+                 * node will have the same number of slots, so we
+                 * have to track how many procs to "shift" elsewhere
+                 * to make up the difference
                  */
-                if (0 == extra_procs_to_assign) {
+                if (node->slots <= node->slots_inuse) {
+                    /* if there are no extras to take, then we can
+                     * ignore this node
+                     */
+                    if (0 == extra_procs_to_assign) {
+                        /* update how many we are lagging behind */
+                        lag += navg;
+                        continue;
+                    }
+                    /* everybody has to take at least the extras */
+                    num_procs_to_assign = extra_procs_to_assign;
                     /* update how many we are lagging behind */
                     lag += navg;
-                    continue;
-                }
-                /* everybody has to take at least the extras */
-                num_procs_to_assign = extra_procs_to_assign;
-                /* update how many we are lagging behind */
-                lag += navg;
-            } else {
-                /* if slots < avg (adjusted for cpus/proc), then take all */
-                if ((node->slots - node->slots_inuse) < (navg * orte_rmaps_base.cpus_per_rank)) {
-                    num_procs_to_assign = (node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank;
-                    /* update how many we are lagging behind */
-                    lag += navg - num_procs_to_assign;
                 } else {
-                    /* take the avg plus as much of the "lag" as we can */
-                    delta = 0;
-                    if (0 < lag) {
-                        delta = ((node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank) - navg;
-                        if (lag < delta) {
-                            delta = lag;
+                    /* if slots < avg (adjusted for cpus/proc), then take all */
+                    if ((node->slots - node->slots_inuse) < (navg * orte_rmaps_base.cpus_per_rank)) {
+                        num_procs_to_assign = (node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank;
+                        /* update how many we are lagging behind */
+                        lag += navg - num_procs_to_assign + extra_procs_to_assign;
+                        OPAL_OUTPUT_VERBOSE((20, orte_rmaps_base_framework.framework_output,
+                                             "%s NODE %s LAGGING %d AVG %d ASSIGN %d EXTRA %d",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name,
+                                             lag, navg, num_procs_to_assign, extra_procs_to_assign));
+                    } else {
+                        /* take the avg plus as much of the "lag" as we can */
+                        delta = 0;
+                        if (0 < lag) {
+                            delta = ((node->slots - node->slots_inuse)/orte_rmaps_base.cpus_per_rank) - navg;
+                            if (lag < delta) {
+                                delta = lag;
+                            }
+                            lag -= delta;
                         }
-                        lag -= delta;
+                        num_procs_to_assign = navg + delta + extra_procs_to_assign;
+                        OPAL_OUTPUT_VERBOSE((20, orte_rmaps_base_framework.framework_output,
+                                             "%s NODE %s DELTA %d LAGGING %d AVG %d ASSIGN %d EXTRA %d",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, delta,
+                                             lag, navg, num_procs_to_assign, extra_procs_to_assign));
                     }
-                    num_procs_to_assign = navg;
                 }
-                /* add in the extras */
-                num_procs_to_assign += extra_procs_to_assign;
+                nnodes++; // track how many nodes remain available
+            }
+            OPAL_OUTPUT_VERBOSE((20, orte_rmaps_base_framework.framework_output,
+                                 "%s NODE %s ASSIGNING %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name,
+                                 num_procs_to_assign));
+            for (j=0; j < num_procs_to_assign && nprocs_mapped < app->num_procs; j++) {
+                if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                nprocs_mapped++;
+#if OPAL_HAVE_HWLOC
+                proc->locale = obj;
+#endif
+            }
+            /* not all nodes are equal, so only set oversubscribed for
+             * this node if it is in that state
+             */
+            if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
+                /* flag the node as oversubscribed so that sched-yield gets
+                 * properly set
+                 */
+                node->oversubscribed = true;
+            }
+            if (nprocs_mapped == app->num_procs) {
+                /* we are done */
+                break;
             }
         }
-        for (j=0; j < num_procs_to_assign && nprocs_mapped < app->num_procs; j++) {
+    } while (nprocs_mapped < app->num_procs && 0 < nnodes);
+
+    /* now fillin as required until fully mapped */
+    while (nprocs_mapped < app->num_procs) {
+        for (item = opal_list_get_first(node_list);
+             item != opal_list_get_end(node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
+#if OPAL_HAVE_HWLOC
+            /* get the root object as we are not assigning
+             * locale except at the node level
+             */
+            if (NULL != node->topology) {
+                obj = hwloc_get_root_obj(node->topology);
+            }
+#endif
             if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
@@ -358,49 +411,19 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
 #if OPAL_HAVE_HWLOC
             proc->locale = obj;
 #endif
-        }
-        /* not all nodes are equal, so only set oversubscribed for
-         * this node if it is in that state
-         */
-        if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
-            /* flag the node as oversubscribed so that sched-yield gets
-             * properly set
+            /* not all nodes are equal, so only set oversubscribed for
+             * this node if it is in that state
              */
-            node->oversubscribed = true;
-        }
-        if (nprocs_mapped == app->num_procs) {
-            /* we are done */
-            break;
-        }
-    }
-
-    /* if we have some remaining lag, then put one/node until
-     * all are assigned
-     */
-    for (item = opal_list_get_first(node_list);
-         0 < lag && item != opal_list_get_end(node_list);
-         item = opal_list_get_next(item)) {
-        node = (orte_node_t*)item;
-        if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        nprocs_mapped++;
-        lag--;
-#if OPAL_HAVE_HWLOC
-        proc->locale = obj;
-#endif
-        /* not all nodes are equal, so only set oversubscribed for
-         * this node if it is in that state
-         */
-        if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
-            /* flag the node as oversubscribed so that sched-yield gets
-             * properly set
-             */
-            node->oversubscribed = true;
-        }
-        if (nprocs_mapped == app->num_procs) {
-            /* we are done */
-            break;
+            if (node->slots < ((int)node->num_procs * orte_rmaps_base.cpus_per_rank)) {
+                /* flag the node as oversubscribed so that sched-yield gets
+                 * properly set
+                 */
+                node->oversubscribed = true;
+            }
+            if (nprocs_mapped == app->num_procs) {
+                /* we are done */
+                break;
+            }
         }
     }
 
@@ -675,7 +698,7 @@ static int byobj_span(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    if (num_slots < (int)app->num_procs) {
+    if (num_slots < (int)app->num_procs * orte_rmaps_base.cpus_per_rank) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -778,15 +801,15 @@ static int byobj_span(orte_job_t *jdata,
                 lag += navg;
             } else {
                 /* if slots < avg, then take all */
-                if ((node->slots - node->slots_inuse) < navg) {
-                    num_procs_to_assign = (node->slots - node->slots_inuse) + extra_procs_to_assign;
+                if ((node->slots - node->slots_inuse) < navg * orte_rmaps_base.cpus_per_rank) {
+                    num_procs_to_assign = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank;
                     /* update how many we are lagging behind */
-                    lag += navg - (node->slots - node->slots_inuse);
+                    lag += navg - (node->slots - node->slots_inuse) + extra_procs_to_assign;
                 } else {
                     /* take the avg plus as much of the "lag" as we can */
                     delta = 0;
                     if (0 < lag) {
-                        delta = (node->slots - node->slots_inuse) - navg;
+                        delta = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank - navg;
                         if (lag < delta) {
                             delta = lag;
                         }
@@ -838,7 +861,7 @@ static int byobj_span(orte_job_t *jdata,
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
          */
-        if (node->slots < (int)node->num_procs) {
+        if (node->slots < (int)node->num_procs * orte_rmaps_base.cpus_per_rank) {
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
