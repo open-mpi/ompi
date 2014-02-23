@@ -230,7 +230,8 @@ static int btl_openib_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
     mca_btl_openib_component.memory_registration_verbose = -1;
 
-    srand48(getpid() * time(NULL));
+    /* JSL */ 
+    /*srand48(getpid() * time(NULL)); */
     return OMPI_SUCCESS;
 }
 

@@ -41,7 +41,7 @@
 
 #include "ompi/constants.h"
 
-#define OPAL_ENABLE_DEBUG_RELIABILITY 0
+#define OPAL_ENABLE_DEBUG_RELIABILITY 0 
 
 /*
  * BML types

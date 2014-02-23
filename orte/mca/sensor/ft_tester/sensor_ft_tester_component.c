@@ -52,6 +52,7 @@ orte_sensor_ft_tester_component_t mca_sensor_ft_tester_component = {
 
 static char *daemon_fail_prob = NULL;
 static char *fail_prob = NULL;
+rng_buff_t sensor_rng_buff;
 
 /**
   * component register/open/close/init function
@@ -117,6 +118,10 @@ static int orte_sensor_ft_tester_query(mca_base_module_t **module, int *priority
         0.0 < mca_sensor_ft_tester_component.daemon_fail_prob) {
         *priority = 1;  /* at the bottom */
         *module = (mca_base_module_t *)&orte_sensor_ft_tester_module;
+        /* seed the RNG --- Not sure if we should assume all procs use 
+         * the same seed? 
+         */
+        opal_srand(&sensor_rng_buff, (uint32_t) getpid());
         return ORTE_SUCCESS;
     }
     *priority = 0;

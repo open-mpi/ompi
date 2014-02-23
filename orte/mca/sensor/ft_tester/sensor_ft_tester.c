@@ -28,6 +28,7 @@
 #endif
 
 #include "opal_stdint.h"
+#include "opal/util/alfg.h"
 #include "opal/util/output.h"
 
 #include "orte/util/error_strings.h"
@@ -69,7 +70,8 @@ static void sample(void)
                              "%s sample:ft_tester considering killing me!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* roll the dice */
-        prob = (double)random() / (double)INT32_MAX;
+        //prob = (double)random() / (double)INT32_MAX;
+        prob = (double)opal_rand(&sensor_rng_buff) / (double)UINT32_MAX;
         if (prob < mca_sensor_ft_tester_component.daemon_fail_prob) {
             /* commit suicide */
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
@@ -97,7 +99,8 @@ static void sample(void)
                 continue;
             }
             /* roll the dice */
-            prob = (double)random() / (double)INT32_MAX;
+            //prob = (double)random() / (double)INT32_MAX;
+            prob = (double)opal_rand(&sensor_rng_buff) / (double)UINT32_MAX;
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base_framework.framework_output,
                                  "%s sample:ft_tester child: %s dice: %f prob %f",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

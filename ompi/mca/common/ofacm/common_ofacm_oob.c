@@ -26,6 +26,7 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
+#include "opal/util/alfg.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -63,6 +64,7 @@ typedef struct switch_to_switch_sl{
 
 static int oob_priority = 50;
 static bool rml_recv_posted = false;
+static rng_buff_t rand_buff;
 
 static void oob_component_register(void);
 static int oob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
@@ -200,6 +202,8 @@ static int oob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
     (*cpc)->cbm_finalize = NULL;
     (*cpc)->cbm_uses_cts = false;
 
+    /* seed RNG */
+    opal_srand(&rand_buff,(uint32_t) getpid());
     OFACM_VERBOSE(("openib BTL: oob CPC available for use on %s",
                         ibv_get_device_name(dev->ib_dev)));
     return OMPI_SUCCESS;
@@ -606,7 +610,8 @@ static int qp_create_one(ompi_common_ofacm_base_local_connection_context_t *cont
     }
 
     /* Setup meta data on the endpoint */
-    context->qps[qp].lcl_psn = lrand48() & 0xffffff;
+    //context->qps[qp].lcl_psn = lrand48() & 0xffffff;
+    context->qps[qp].lcl_psn = opal_rand(&rand_buff) & 0xffffff;
 
     return OMPI_SUCCESS;
 }

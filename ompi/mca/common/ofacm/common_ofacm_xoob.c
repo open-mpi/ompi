@@ -16,6 +16,7 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
+#include "opal/util/alfg.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -72,6 +73,7 @@ typedef enum {
 
 static int xoob_priority = 60;
 static bool rml_recv_posted = false;
+static rng_buff_t rand_buff;
 
 #define XOOB_SET_REMOTE_INFO(EP, INFO)                                    \
 do {                                                                      \
@@ -855,7 +857,8 @@ static int xoob_send_qp_create
     }
 
     /* Setup meta data on the context */
-    context->qps[0].lcl_psn = lrand48() & 0xffffff;
+    //context->qps[0].lcl_psn = lrand48() & 0xffffff;
+    context->qps[0].lcl_psn = opal_rand(&rand_buff) & 0xffffff;
 
     /* Now that all the qp's are created locally, post some receive
        buffers, setup credits, etc. */
@@ -1422,6 +1425,8 @@ static int xoob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
     bcpc->cbm_finalize = NULL;
     bcpc->cbm_uses_cts = false;
 
+    /* seed RNG */
+    opal_srand(&rand_buff,(uint32_t)(getpid()));
     /* Build our hash table for subnetid-lid */
     OBJ_CONSTRUCT(&xcpc->ib_addr_table, opal_hash_table_t);
 

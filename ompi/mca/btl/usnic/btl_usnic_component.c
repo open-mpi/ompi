@@ -48,6 +48,7 @@
 #include "opal_stdint.h"
 #include "opal/prefetch.h"
 #include "opal/mca/timer/base/base.h"
+//#include "opal/util/alfg.h"
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
 #include "opal/util/if.h"
@@ -77,6 +78,9 @@
 
 #define OMPI_BTL_USNIC_NUM_WC       500
 #define max(a,b) ((a) > (b) ? (a) : (b))
+
+/* RNG buffer definition */
+rng_buff_t rand_buff;
 
 /* simulated clock */
 uint64_t ompi_btl_usnic_ticks = 0;
@@ -517,10 +521,11 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     mca_btl_usnic_component.my_hashed_rte_name = 
         ompi_rte_hash_name(&(ompi_proc_local()->proc_name));
 
+    /* JSL - I don't see lrand48 used anywhere in usnic
     seed_prng();
+    */
 
-    srandom((unsigned int)getpid());
-
+    opal_srand(&rand_buff, ((uint32_t) getpid()));
     /* Find the ports that we want to use.  We do our own interface name
      * filtering below, so don't let the verbs code see our
      * if_include/if_exclude strings */
