@@ -380,7 +380,6 @@ void ompi_java_findClasses(JNIEnv *env)
     ompi_java.DistGraphNeighborsClass = ompi_java_findClass(
                                         env, "mpi/DistGraphNeighbors");
 
-    ompi_java.StatusClass     = ompi_java_findClass(env, "mpi/Status");
     ompi_java.ExceptionClass  = ompi_java_findClass(env, "mpi/MPIException");
 
     ompi_java.ExceptionInit = (*env)->GetMethodID(
@@ -411,7 +410,6 @@ void ompi_java_deleteClasses(JNIEnv *env)
     (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
     (*env)->DeleteGlobalRef(env, ompi_java.ExceptionClass);
     (*env)->DeleteGlobalRef(env, ompi_java.IntegerClass);
     (*env)->DeleteGlobalRef(env, ompi_java.LongClass);

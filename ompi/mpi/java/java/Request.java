@@ -44,6 +44,11 @@ package mpi;
  */
 public class Request implements Freeable
 {
+// Auxiliary status. It's used to avoid creating status objects in the C side.
+// In Java side it will be copied: new Status(status)
+// It is necessary because calling java methods from C is very slow.
+private final Status status = new Status();
+
 protected long handle;
 
 static
@@ -136,10 +141,11 @@ private native long waitFor(long request) throws MPIException;
 public final Status testStatus() throws MPIException
 {
     MPI.check();
-    return testStatus(handle);
+    return testStatus(handle, status) ? new Status(status) : null;
 }
 
-private native Status testStatus(long request) throws MPIException;
+private native boolean testStatus(long request, Status status)
+        throws MPIException;
 
 /**
  * Returns true if the operation identified by the request
@@ -221,12 +227,19 @@ public static Status testAnyStatus(Request[] requests) throws MPIException
 {
     MPI.check();
     long[] r = getHandles(requests);
-    Status stat = testAnyStatus(r);
+    Status stat = requests.length == 0 ? new Status() : requests[0].status;
+    boolean completed = testAnyStatus(r, stat);
     setHandles(requests, r);
-    return stat;
+
+    if(!completed)
+        return null;
+    else if(requests.length == 0)
+        return stat;
+    else
+        return new Status(stat);
 }
 
-private static native Status testAnyStatus(long[] requests)
+private static native boolean testAnyStatus(long[] requests, Status status)
         throws MPIException;
 
 /**
@@ -266,6 +279,10 @@ public static Status[] waitAllStatus(Request[] requests) throws MPIException
     MPI.check();
     long[] r = getHandles(requests);
     Status[] statuses = new Status[requests.length];
+    
+    for(int i = 0; i < statuses.length; i++)
+        statuses[i] = new Status();
+
     waitAllStatus(r, statuses);
     setHandles(requests, r);
     return statuses;
@@ -306,12 +323,12 @@ public static Status[] testAllStatus(Request[] requests) throws MPIException
 {
     MPI.check();
     long[] r = getHandles(requests);
-    Status[] statuses = testAllStatus(r);
+    int count = testAllStatus(r, requests);
     setHandles(requests, r);
-    return statuses;
+    return getStatuses(requests, count);
 }
 
-private static native Status[] testAllStatus(long[] requests)
+private static native int testAllStatus(long[] requests, Request[] objReqs)
         throws MPIException;
 
 /**
@@ -352,12 +369,12 @@ public static Status[] waitSomeStatus(Request[] requests) throws MPIException
 {
     MPI.check();
     long[] r = getHandles(requests);
-    Status[] statuses = waitSomeStatus(r);
+    int count = waitSomeStatus(r, requests);
     setHandles(requests, r);
-    return statuses;
+    return getStatuses(requests, count);
 }
 
-private static native Status[] waitSomeStatus(long[] requests)
+private static native int waitSomeStatus(long[] requests, Request[] objReqs)
         throws MPIException;
 
 /**
@@ -396,12 +413,12 @@ public static Status[] testSomeStatus(Request[] requests) throws MPIException
 {
     MPI.check();
     long[] r = getHandles(requests);
-    Status[] statuses = testSomeStatus(r);
+    int count = testSomeStatus(r, requests);
     setHandles(requests, r);
-    return statuses;
+    return getStatuses(requests, count);
 }
 
-private static native Status[] testSomeStatus(long[] requests)
+private static native int testSomeStatus(long[] requests, Request[] objReqs)
         throws MPIException;
 
 /**
@@ -438,6 +455,19 @@ protected static void setHandles(Request[] r, long[] h)
 {
     for(int i = 0; i < r.length; i++)
         r[i].handle = h[i];
+}
+
+private static Status[] getStatuses(Request[] r, int count)
+{
+    if(count < 0)
+        return null;
+
+    Status[] s = new Status[count];
+
+    for(int i = 0; i < count; i++)
+        s[i] = new Status(r[i].status);
+
+    return s;
 }
 
 } // Request

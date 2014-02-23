@@ -15,7 +15,6 @@
 
 typedef struct {
     jfieldID  CommHandle;
-    jfieldID  ErrHandle;
     jfieldID  GroupHandle;
     jclass    CartParmsClass;
     jmethodID CartParmsInit;
@@ -32,26 +31,20 @@ typedef struct {
     jfieldID  OpHandle;
     jfieldID  OpCommute;
     jmethodID OpCall;
-    jclass    StatusClass;
-    jmethodID StatusInit;
     jfieldID  StSource;
     jfieldID  StTag;
     jfieldID  StError;
     jfieldID  St_cancelled;
     jfieldID  St_ucount;
     jfieldID  StIndex;
-    jfieldID  StElements;
-    jfieldID  StUsingBuffer;
     jfieldID  ReqHandle;
+    jfieldID  ReqStatus;
     jclass    ExceptionClass;
     jmethodID ExceptionInit;
     jclass    IntegerClass;
     jmethodID IntegerValueOf;
     jclass    LongClass;
     jmethodID LongValueOf;
-    jclass    ByteBufferClass;
-    jmethodID ByteBufferArray;
-    jmethodID ByteBufferArrayOffset;
     int dtSizes[12];
 } ompi_java_globals_t;
 
@@ -112,8 +105,6 @@ int        ompi_java_attrDelete(void *attrVal);
 
 MPI_Op ompi_java_op_getHandle(JNIEnv *env, jobject jthis, int baseType);
 
-void ompi_java_status_get(MPI_Status *status, JNIEnv *env, jobject obj);
 void ompi_java_status_set(MPI_Status *status, JNIEnv *env, jobject obj);
-jobject ompi_java_status_new(MPI_Status *status, JNIEnv *env);
 
 #endif /* _MPIJAVA_H_ */

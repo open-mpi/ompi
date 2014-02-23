@@ -32,7 +32,6 @@ private int  source;
 private int  tag;
 private int  error;
 private int  index;
-private int  elements;
 private int  _cancelled;
 private long _ucount;
 
@@ -48,6 +47,19 @@ protected Status()
 {
 }
 
+/**
+ * Creates a copy of a status.
+ */
+protected Status(Status s)
+{
+    source     = s.source;
+    tag        = s.tag;
+    error      = s.error;
+    index      = s.index;
+    _cancelled = s._cancelled;
+    _ucount    = s._ucount;
+}
+
 private static native void init();
 
 /**
@@ -60,10 +72,12 @@ private static native void init();
 public int getCount(Datatype datatype) throws MPIException
 {
     MPI.check();
-    return getCount_jni(datatype);
+    return getCount(source, tag, error, _cancelled, _ucount, datatype.handle);
 }
 
-private native int getCount_jni(Datatype datatype) throws MPIException;
+private native int getCount(
+        int source, int tag, int error,
+        int cancelled, long ucount, long datatype) throws MPIException;
 
 /**
  * Tests if the communication was cancelled.
@@ -74,10 +88,12 @@ private native int getCount_jni(Datatype datatype) throws MPIException;
 public boolean isCancelled() throws MPIException
 {
     MPI.check();
-    return isCancelled_jni();
+    return isCancelled(source, tag, error, _cancelled, _ucount);
 }
 
-private native boolean isCancelled_jni() throws MPIException;
+private native boolean isCancelled(
+        int source, int tag, int error, int cancelled, long ucount)
+        throws MPIException;
 
 /**
  * Retrieves the number of basic elements from status.
@@ -89,10 +105,12 @@ private native boolean isCancelled_jni() throws MPIException;
 public int getElements(Datatype datatype) throws MPIException
 {
     MPI.check();
-    return getElements_jni(datatype);
+    return getElements(source, tag, error, _cancelled, _ucount, datatype.handle);
 }
 
-private native int getElements_jni(Datatype datatype) throws MPIException;
+private native int getElements(
+        int source, int tag, int error,
+        int cancelled, long ucount, long datatype) throws MPIException;
 
 /**
  * Returns the "source" of message.
