@@ -39,6 +39,7 @@
 #endif
 
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/util/alfg.h"
 #include "opal/util/opal_environ.h"
 
 #include "orte/constants.h"
@@ -56,9 +57,10 @@
  */
 
 static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) { 
-    srand((unsigned int)time(NULL));
-    unique_key[0] = rand();
-    unique_key[1] = rand();
+    rng_buff_t rng;
+    opal_srand(&rng,(unsigned int)time(NULL));
+    unique_key[0] = opal_rand(&rng);
+    unique_key[1] = opal_rand(&rng);
 }
 
 char* orte_pre_condition_transports_print(uint64_t *unique_key)

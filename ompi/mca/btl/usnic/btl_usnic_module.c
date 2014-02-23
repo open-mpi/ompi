@@ -28,6 +28,7 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/prefetch.h"
+//#include "opal/util/alfg.h"
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/include/opal_stdint.h"
@@ -55,6 +56,7 @@ static void
 ompi_btl_usnic_channel_finalize(
     ompi_btl_usnic_module_t *module,
     struct ompi_btl_usnic_channel_t *channel);
+
 
 /* Compute and set the proper value for sfrag->sf_size.  This must not be used
  * during usnic_alloc, since the PML might change the segment size after
@@ -1815,8 +1817,12 @@ get_initial_seq_no(void)
 {
     ompi_btl_usnic_seq_t isn;
     /* only utilize the bottom 62 bits to avoid hitting seq # overflow */
+    /* JSL 
     isn = (((uint64_t)random() & ((1LL<<30)-1)) << 32) |
         ((uint64_t)random() & ((1LL<<32)-1));
+    */
+    isn = (((uint64_t)opal_rand(&rand_buff) & ((1LL<<30)-1)) << 32) |
+        ((uint64_t)opal_rand(&rand_buff) & ((1LL<<32)-1));
     isn += 2;      /* guarantee > 1 */
 
     return isn;

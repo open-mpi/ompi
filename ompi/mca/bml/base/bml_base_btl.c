@@ -21,9 +21,12 @@
 #include <string.h>
 
 #include "ompi/mca/bml/bml.h"
+#include "ompi/mca/bml/base/bml_base_btl.h"
 #include "bml_base_btl.h"
 #include "opal/util/crc.h"
-
+#if OPAL_ENABLE_DEBUG_RELIABILITY
+#include "opal/util/alfg.h"
+#endif /* OPAL_ENABLE_DEBUG_RELIABILITY */
 static void mca_bml_base_btl_array_construct(mca_bml_base_btl_array_t* array)
 {
     array->bml_btls = NULL;
@@ -72,6 +75,7 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t* array, size_t size)
 extern int mca_bml_base_error_rate_floor;
 extern int mca_bml_base_error_rate_ceiling;
 extern int  mca_bml_base_error_count;
+extern rng_buff_t rand_buff;
 
 struct mca_bml_base_context_t {
     size_t index;
@@ -102,7 +106,8 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
 { 
     des->des_context = (void*)bml_btl; 
     if(mca_bml_base_error_count <= 0 && mca_bml_base_error_rate_ceiling > 0) {
-      mca_bml_base_error_count = (int) (((double) mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));
+      mca_bml_base_error_count = (int) (((double) mca_bml_base_error_rate_ceiling * 
+                  opal_rand(&rand_buff))/(UINT32_MAX+1.0));
         if(mca_bml_base_error_count < (double) mca_bml_base_error_rate_floor) { 
           mca_bml_base_error_count = (double) mca_bml_base_error_rate_floor;
         }
@@ -117,7 +122,8 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
                 malloc(sizeof(mca_bml_base_context_t));
             if(NULL != ctx) {
                 opal_output(0, "%s:%d: corrupting data\n", __FILE__, __LINE__);
-                ctx->index = (size_t) ((des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0));
+                ctx->index = (size_t) ((des->des_src[0].seg_len * 
+                            opal_rand(&rand_buff) * 1.0) / (UINT32_MAX + 1.0));
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;
                 ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
@@ -130,6 +136,8 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
     return bml_btl->btl_send( bml_btl->btl,
                               bml_btl->btl_endpoint, 
                               des, tag );
+
 }
+
 
 #endif

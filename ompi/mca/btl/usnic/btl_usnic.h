@@ -29,6 +29,7 @@
 #include <infiniband/verbs.h>
 
 #include "opal_stdint.h"
+#include "opal/util/alfg.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/event/event.h"
@@ -55,6 +56,9 @@ get_nsec(void)
 {
     return ompi_btl_usnic_ticks;
 }
+
+/* RNG buffer declaration */
+extern rng_buff_t rand_buff;
 
 #ifndef container_of
 #define container_of(ptr, type, member) ( \
@@ -96,19 +100,20 @@ get_nsec(void)
 #define WANT_FAIL_TO_RESEND_FRAG 0
 
 #if WANT_RECV_FRAG_DROPS > 0
-#define FAKE_RECV_FRAG_DROP (rand() < WANT_RECV_FRAG_DROPS)
+//#define FAKE_RECV_FRAG_DROP (rand() < WANT_RECV_FRAG_DROPS)
+#define FAKE_RECV_FRAG_DROP (opal_rand(&rand_buff) < WANT_RECV_FRAG_DROPS)
 #else
 #define FAKE_RECV_FRAG_DROP 0
 #endif
 
 #if WANT_FAIL_TO_SEND_ACK > 0
-#define FAKE_FAIL_TO_SEND_ACK (rand() < WANT_FAIL_TO_SEND_ACK)
+#define FAKE_FAIL_TO_SEND_ACK (opal_rand(&rand_buff) < WANT_FAIL_TO_SEND_ACK)
 #else
 #define FAKE_FAIL_TO_SEND_ACK 0
 #endif
 
 #if WANT_FAIL_TO_RESEND_FRAG > 0
-#define FAKE_FAIL_TO_RESEND_FRAG (rand() < WANT_FAIL_TO_RESEND_FRAG)
+#define FAKE_FAIL_TO_RESEND_FRAG (opal_rand(&rand_buff) < WANT_FAIL_TO_RESEND_FRAG)
 #else
 #define FAKE_FAIL_TO_RESEND_FRAG 0
 #endif
