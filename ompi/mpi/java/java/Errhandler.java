@@ -30,13 +30,6 @@ public final class Errhandler
 {
 protected long handle;
 
-static
-{
-    init();
-}
-
-private static native void init();
-
 protected static native long getFatal();
 protected static native long getReturn();
 
