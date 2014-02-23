@@ -28,8 +28,9 @@ JNIEXPORT jlong JNICALL Java_mpi_Message_mProbe(
     return (jlong)message;
 }
 
-JNIEXPORT jobject JNICALL Java_mpi_Message_imProbe(
-        JNIEnv *env, jobject jthis, jint source, jint tag, jlong jComm)
+JNIEXPORT jboolean JNICALL Java_mpi_Message_imProbe(
+        JNIEnv *env, jobject jthis, jint source,
+        jint tag, jlong jComm, jobject jStatus)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
     MPI_Message message;
@@ -38,10 +39,11 @@ JNIEXPORT jobject JNICALL Java_mpi_Message_imProbe(
     rc = MPI_Improbe(source, tag, comm, &flag, &message, &status);
 
     if(ompi_java_exceptionCheck(env, rc) || !flag)
-        return NULL;
+        return JNI_FALSE;
 
     (*env)->SetLongField(env, jthis, ompi_java.MessageHandle, (jlong)message);
-    return ompi_java_status_new(&status, env);
+    ompi_java_status_set(&status, env, jStatus);
+    return JNI_TRUE;
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Message_mRecv(

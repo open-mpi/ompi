@@ -41,6 +41,11 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public class Comm implements Freeable
 {
+// Auxiliary status. It's used to avoid creating status objects in the C side.
+// In Java side it will be copied: new Status(status)
+// It is necessary because calling java methods from C is very slow.
+private final Status status = new Status();
+
 protected final static int SELF  = 1;
 protected final static int WORLD = 2;
 protected long handle;
@@ -886,10 +891,10 @@ private native int packSize(long comm, int incount, long type)
 public final Status iProbe(int source, int tag) throws MPIException
 {
     MPI.check();
-    return iProbe(handle, source, tag);
+    return iProbe(handle, source, tag, status) ? new Status(status) : null;
 }
 
-private native Status iProbe(long comm, int source, int tag)
+private native boolean iProbe(long comm, int source, int tag, Status status)
         throws MPIException;
 
 /**

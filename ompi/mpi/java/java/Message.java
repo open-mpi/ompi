@@ -16,6 +16,11 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public final class Message
 {
+// Auxiliary status. It's used to avoid creating status objects in the C side.
+// In Java side it will be copied: new Status(status)
+// It is necessary because calling java methods from C is very slow.
+private final Status status = new Status();
+
 protected long handle;
 private static long NULL, NO_PROC;
 
@@ -63,9 +68,9 @@ public boolean isNoProc()
 public Status mProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    Status status = new Status();
-    handle = mProbe(source, tag, comm.handle, status);
-    return status;
+    Status stat = new Status();
+    handle = mProbe(source, tag, comm.handle, stat);
+    return stat;
 }
 
 private native long mProbe(int source, int tag, long comm, Status status)
@@ -82,10 +87,12 @@ private native long mProbe(int source, int tag, long comm, Status status)
 public Status imProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    return imProbe(source, tag, comm.handle);
+
+    return imProbe(source, tag, comm.handle, status)
+           ? new Status(status) : null;
 }
 
-private native Status imProbe(int source, int tag, long comm)
+private native boolean imProbe(int source, int tag, long comm, Status status)
         throws MPIException;
 
 /**
@@ -95,8 +102,7 @@ private native Status imProbe(int source, int tag, long comm)
  * @param type  datatype of each receive buffer element
  * @return status object
  */
-public Status mRecv(Object buf, int count, Datatype type)
-    throws MPIException
+public Status mRecv(Object buf, int count, Datatype type) throws MPIException
 {
     MPI.check();
     int off = 0;
@@ -108,10 +114,9 @@ public Status mRecv(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status status = new Status();
-    handle = mRecv(handle, buf, db, off, count,
-                   type.handle, type.baseType, status);
-    return status;
+    Status stat = new Status();
+    handle = mRecv(handle, buf,db,off,count, type.handle, type.baseType, stat);
+    return stat;
 }
 
 private native long mRecv(
