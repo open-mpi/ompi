@@ -73,7 +73,7 @@ typedef enum {
 
 static int xoob_priority = 60;
 static bool rml_recv_posted = false;
-static rng_buff_t rand_buff;
+static opal_rng_buff_t rand_buff;
 
 #define XOOB_SET_REMOTE_INFO(EP, INFO)                                    \
 do {                                                                      \
@@ -857,7 +857,6 @@ static int xoob_send_qp_create
     }
 
     /* Setup meta data on the context */
-    //context->qps[0].lcl_psn = lrand48() & 0xffffff;
     context->qps[0].lcl_psn = opal_rand(&rand_buff) & 0xffffff;
 
     /* Now that all the qp's are created locally, post some receive

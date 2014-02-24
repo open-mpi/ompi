@@ -28,7 +28,6 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/prefetch.h"
-//#include "opal/util/alfg.h"
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/include/opal_stdint.h"

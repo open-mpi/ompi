@@ -359,7 +359,7 @@ static int udcm_timeout;
 /* seed for rand_r. remove me when opal gets a random number generator */
 /* Uses the OPAL ALFG RNG */
 static uint32_t udcm_random_seed = 0;
-static rng_buff_t udcm_rand_buff;
+static opal_rng_buff_t udcm_rand_buff;
 
 static struct timeval udcm_timeout_tv;
 
@@ -1036,7 +1036,7 @@ static uint32_t max_inline_size(int qp, mca_btl_openib_device_t *device)
     return 0;
 }
 
-/* Using OPAL's Additive Lagged Fibbonacci RNG */
+/* Using OPAL's Additive Lagged Fibonacci RNG */
 static inline uint32_t udcm_random (void)
 {
     return opal_rand(&udcm_rand_buff);

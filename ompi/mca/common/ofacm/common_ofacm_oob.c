@@ -64,7 +64,7 @@ typedef struct switch_to_switch_sl{
 
 static int oob_priority = 50;
 static bool rml_recv_posted = false;
-static rng_buff_t rand_buff;
+static opal_rng_buff_t rand_buff;
 
 static void oob_component_register(void);
 static int oob_component_query(ompi_common_ofacm_base_dev_desc_t *dev,
@@ -610,7 +610,6 @@ static int qp_create_one(ompi_common_ofacm_base_local_connection_context_t *cont
     }
 
     /* Setup meta data on the endpoint */
-    //context->qps[qp].lcl_psn = lrand48() & 0xffffff;
     context->qps[qp].lcl_psn = opal_rand(&rand_buff) & 0xffffff;
 
     return OMPI_SUCCESS;

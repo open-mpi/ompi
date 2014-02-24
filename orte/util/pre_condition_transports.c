@@ -57,7 +57,7 @@
  */
 
 static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) { 
-    rng_buff_t rng;
+    opal_rng_buff_t rng;
     opal_srand(&rng,(unsigned int)time(NULL));
     unique_key[0] = opal_rand(&rng);
     unique_key[1] = opal_rand(&rng);

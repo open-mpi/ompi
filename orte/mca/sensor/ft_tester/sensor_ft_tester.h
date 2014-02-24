@@ -33,7 +33,7 @@ typedef struct orte_sensor_ft_tester_component_t orte_sensor_ft_tester_component
 ORTE_MODULE_DECLSPEC extern orte_sensor_ft_tester_component_t mca_sensor_ft_tester_component;
 extern orte_sensor_base_module_t orte_sensor_ft_tester_module;
 
-extern rng_buff_t sensor_rng_buff;
+extern opal_rng_buff_t orte_sensor_ft_rng_buff;
 
 END_C_DECLS
 
