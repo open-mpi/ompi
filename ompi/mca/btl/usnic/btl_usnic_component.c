@@ -1121,7 +1121,7 @@ static bool port_is_usnic(ompi_common_verbs_port_item_t *port)
     bool is_usnic = false;
     uint32_t *vpi;
 
-#if BTL_USNIC_HAVE_IBV_USNIC
+#if HAVE_DECL_IBV_TRANSPORT_USNIC && HAVE_DECL_IBV_NODE_USNIC
     /* If we have the IB_*_USNIC constants, then take any
        device which advertises them */
     if (IBV_TRANSPORT_USNIC == port->device->device->transport_type &&
