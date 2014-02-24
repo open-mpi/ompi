@@ -71,8 +71,11 @@ protected Request(long handle)
  */
 @Override public void free() throws MPIException
 {
-    MPI.check();
-    handle = free(handle);
+    if(!isNull())
+    {
+        MPI.check();
+        handle = free(handle);
+    }
 }
 
 private native long free(long req) throws MPIException;

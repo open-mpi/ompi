@@ -79,21 +79,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Request_free(
         JNIEnv *env, jobject jthis, jlong handle)
 {
     MPI_Request req = (MPI_Request)handle;
-
-    if(req != MPI_REQUEST_NULL)
-    {
-        if(req == NULL)
-        {
-            req = MPI_REQUEST_NULL;
-        }
-        else
-        {
-            /* Handle is NULL when we create a Prequest object. */
-            int rc = MPI_Request_free(&req);
-            ompi_java_exceptionCheck(env, rc);
-        }
-    }
-
+    int rc = MPI_Request_free(&req);
+    ompi_java_exceptionCheck(env, rc);
     return (jlong)req;
 }
 
