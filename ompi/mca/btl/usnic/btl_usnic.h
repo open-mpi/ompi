@@ -58,7 +58,7 @@ get_nsec(void)
 }
 
 /* RNG buffer declaration */
-extern rng_buff_t rand_buff;
+extern rng_buff_t ompi_btl_usnic_rand_buff;
 
 #ifndef container_of
 #define container_of(ptr, type, member) ( \
@@ -101,19 +101,19 @@ extern rng_buff_t rand_buff;
 
 #if WANT_RECV_FRAG_DROPS > 0
 //#define FAKE_RECV_FRAG_DROP (rand() < WANT_RECV_FRAG_DROPS)
-#define FAKE_RECV_FRAG_DROP (opal_rand(&rand_buff) < WANT_RECV_FRAG_DROPS)
+#define FAKE_RECV_FRAG_DROP (opal_rand(&ompi_btl_usnic_rand_buff) < WANT_RECV_FRAG_DROPS)
 #else
 #define FAKE_RECV_FRAG_DROP 0
 #endif
 
 #if WANT_FAIL_TO_SEND_ACK > 0
-#define FAKE_FAIL_TO_SEND_ACK (opal_rand(&rand_buff) < WANT_FAIL_TO_SEND_ACK)
+#define FAKE_FAIL_TO_SEND_ACK (opal_rand(&ompi_btl_usnic_rand_buff) < WANT_FAIL_TO_SEND_ACK)
 #else
 #define FAKE_FAIL_TO_SEND_ACK 0
 #endif
 
 #if WANT_FAIL_TO_RESEND_FRAG > 0
-#define FAKE_FAIL_TO_RESEND_FRAG (opal_rand(&rand_buff) < WANT_FAIL_TO_RESEND_FRAG)
+#define FAKE_FAIL_TO_RESEND_FRAG (opal_rand(&ompi_btl_usnic_rand_buff) < WANT_FAIL_TO_RESEND_FRAG)
 #else
 #define FAKE_FAIL_TO_RESEND_FRAG 0
 #endif
