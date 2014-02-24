@@ -48,7 +48,6 @@
 #include "opal_stdint.h"
 #include "opal/prefetch.h"
 #include "opal/mca/timer/base/base.h"
-//#include "opal/util/alfg.h"
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
 #include "opal/util/if.h"
@@ -80,7 +79,7 @@
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 /* RNG buffer definition */
-rng_buff_t ompi_btl_usnic_rand_buff;
+opal_rng_buff_t ompi_btl_usnic_rand_buff;
 
 /* simulated clock */
 uint64_t ompi_btl_usnic_ticks = 0;

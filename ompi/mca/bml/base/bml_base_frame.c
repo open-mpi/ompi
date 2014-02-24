@@ -24,7 +24,6 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/bml/base/bml_base_btl.h"
 #include "ompi/mca/bml/base/static-components.h"
 #include "ompi/mca/btl/base/base.h"
 #include "opal/mca/base/base.h"
@@ -45,7 +44,7 @@ int mca_bml_base_error_rate_floor;
 int mca_bml_base_error_rate_ceiling;
 int mca_bml_base_error_count;
 static bool mca_bml_base_srand;
-rng_buff_t rand_buff;
+opal_rng_buff_t mca_bml_base_rand_buff;
 #endif
 
 static int mca_bml_base_register(mca_base_register_flag_t flags)
@@ -100,13 +99,13 @@ static int mca_bml_base_open(mca_base_open_flag_t flags)
     /* seed random number generator */
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        opal_srand(&rand_buff,(uint32_t)(getpid() * tv.tv_usec));
+        opal_srand(&mca_bml_base_rand_buff,(uint32_t)(getpid() * tv.tv_usec));
 
     /* initialize count */
     if(mca_bml_base_error_rate_ceiling > 0 
        && mca_bml_base_error_rate_floor <= mca_bml_base_error_rate_ceiling) {
         mca_bml_base_error_count = (int) (((double) mca_bml_base_error_rate_ceiling * 
-                    opal_rand(&rand_buff))/(UINT32_MAX+1.0));
+                    opal_rand(&mca_bml_base_rand_buff))/(UINT32_MAX+1.0));
     }
 #endif
 

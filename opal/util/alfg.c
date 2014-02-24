@@ -56,9 +56,9 @@ static uint32_t galois(unsigned int *seed){
  * @brief   Routine to seed the ALFG register
  * 
  * @param[in]   uint32_t seed
- * @param[out]  rng_buff_t *buff: handle to ALFG buffer state
+ * @param[out]  opal_rng_buff_t *buff: handle to ALFG buffer state
  */
-int opal_srand(rng_buff_t *buff, uint32_t seed) {
+int opal_srand(opal_rng_buff_t *buff, uint32_t seed) {
 
     int i, j;
     uint32_t seed_cpy = seed;
@@ -88,11 +88,11 @@ int opal_srand(rng_buff_t *buff, uint32_t seed) {
 /** 
  * @brief       The additive lagged Fibonnaci PRNG
  *
- * @param[in]   rng_buff_t *buff: handle to ALFG buffer state
+ * @param[in]   opal_rng_buff_t *buff: handle to ALFG buffer state
  * @param[out]  32-bit unsigned random integer
  */ 
 
-uint32_t opal_rand(rng_buff_t *buff){
+uint32_t opal_rand(opal_rng_buff_t *buff){
 
     int *tap1 = &(buff->tap1);
     int *tap2 = &(buff->tap2);

@@ -271,8 +271,7 @@ get_uniq_file_name(const char *base_path, const char *hash_key)
     char *uniq_name_buf = NULL;
     unsigned long str_hash = 0;
     pid_t my_pid;
-    // JSL int rand_num;
-    rng_buff_t rand_buff;
+    opal_rng_buff_t rand_buff;
     uint32_t rand_num;
 
     /* invalid argument */
@@ -286,7 +285,6 @@ get_uniq_file_name(const char *base_path, const char *hash_key)
 
     my_pid = getpid();
     opal_srand(&rand_buff,((uint32_t)(time(NULL) + my_pid)));
-    // JSL srand((unsigned int)(time(NULL) + my_pid));
     rand_num = opal_rand(&rand_buff) % 1024;
     str_hash = sdbm_hash((unsigned char *)hash_key);
     /* build the name */
