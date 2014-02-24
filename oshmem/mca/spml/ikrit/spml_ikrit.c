@@ -76,6 +76,9 @@ static int spml_ikrit_get_ep_address(spml_ikrit_mxm_ep_conn_info_t *ep_info,
 #else
 static inline mxm_mem_key_t *to_mxm_mkey(mca_spml_mkey_t *mkey) {
 
+    if (0 == mkey->len) {
+        return &mxm_empty_mem_key;
+    }
     return (mxm_mem_key_t *)mkey->u.data;
 }
 #endif
@@ -559,6 +562,11 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
 #if MXM_API < MXM_VERSION(2,0)
             mkeys[i].len = 0;
 #else
+            if (mca_spml_ikrit.ud_only) {
+                mkeys[i].len = 0;
+                break;
+            }
+
             err = mxm_mem_map(mca_spml_ikrit.mxm_context, &addr, &size, 0, 0, 0);
             if (MXM_OK != err) {
                 SPML_ERROR("Failed to register memory: %s", mxm_error_string(err));
@@ -652,7 +660,6 @@ static inline int get_ptl_id(int dst)
 
 int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
 {
-#if MXM_API < MXM_VERSION(2,0)
     int ptl;
     ptl = get_ptl_id(pe);
     if (ptl < 0)
@@ -661,6 +668,7 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
     if (ptl != MXM_PTL_RDMA)
         return OSHMEM_ERROR;
 
+#if MXM_API < MXM_VERSION(2,0)
     if (seg > 1)
         return OSHMEM_ERROR;
 
@@ -669,7 +677,12 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
     /* we are actually registering memory in 2.0 and later.
      * So can not really skip mkey exchange
      */
-    return OSHMEM_ERROR;
+    if (mca_spml_ikrit.ud_only) {
+        mkeys[ptl].len = 0;
+        mkeys[ptl].u.data = &mxm_empty_mem_key;
+    } else {
+        return OSHMEM_SUCCESS;
+    }
 #endif
 }
 
