@@ -71,3 +71,9 @@ Unable while waiting in send
 
   Error:      %s
   
+[mxm tls]
+ERROR: MXM shared memory transport can not be used
+bacause it is not fully compliant with OSHMEM spec
+
+MXM transport setting: %s
+

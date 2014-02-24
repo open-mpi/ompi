@@ -87,6 +87,9 @@ struct mca_spml_ikrit_t {
     int n_relays; /* number of procs/node serving as relays */
 
     char *mxm_tls;
+    int   ud_only;  /* only ud transport is used. In this case 
+                       it is possible to speedup mkey exchange 
+                       and not to register memheap */
 #if MXM_API >= MXM_VERSION(2,0)
     int unsync_conn_max;
 #endif
