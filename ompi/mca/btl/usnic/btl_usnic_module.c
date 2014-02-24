@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1817,12 +1817,8 @@ get_initial_seq_no(void)
 {
     ompi_btl_usnic_seq_t isn;
     /* only utilize the bottom 62 bits to avoid hitting seq # overflow */
-    /* JSL 
-    isn = (((uint64_t)random() & ((1LL<<30)-1)) << 32) |
-        ((uint64_t)random() & ((1LL<<32)-1));
-    */
-    isn = (((uint64_t)opal_rand(&rand_buff) & ((1LL<<30)-1)) << 32) |
-        ((uint64_t)opal_rand(&rand_buff) & ((1LL<<32)-1));
+    isn = (((uint64_t)opal_rand(&ompi_btl_usnic_rand_buff) & ((1LL<<30)-1)) << 32) |
+        ((uint64_t)opal_rand(&ompi_btl_usnic_rand_buff) & ((1LL<<32)-1));
     isn += 2;      /* guarantee > 1 */
 
     return isn;

@@ -80,10 +80,11 @@
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 /* RNG buffer definition */
-rng_buff_t rand_buff;
+rng_buff_t ompi_btl_usnic_rand_buff;
 
 /* simulated clock */
 uint64_t ompi_btl_usnic_ticks = 0;
+
 static opal_event_t usnic_clock_timer_event;
 static bool usnic_clock_timer_event_set = false;
 static struct timeval usnic_clock_timeout;
@@ -98,7 +99,6 @@ static mca_btl_base_module_t **
 usnic_component_init(int* num_btl_modules, bool want_progress_threads,
                        bool want_mpi_threads);
 static int usnic_component_progress(void);
-static void seed_prng(void);
 static bool port_is_usnic(ompi_common_verbs_port_item_t *port);
 static int init_module_from_port(ompi_btl_usnic_module_t *module,
                                  ompi_common_verbs_port_item_t *port);
@@ -521,11 +521,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     mca_btl_usnic_component.my_hashed_rte_name = 
         ompi_rte_hash_name(&(ompi_proc_local()->proc_name));
 
-    /* JSL - I don't see lrand48 used anywhere in usnic
-    seed_prng();
-    */
+    opal_srand(&ompi_btl_usnic_rand_buff, ((uint32_t) getpid()));
 
-    opal_srand(&rand_buff, ((uint32_t) getpid()));
     /* Find the ports that we want to use.  We do our own interface name
      * filtering below, so don't let the verbs code see our
      * if_include/if_exclude strings */
@@ -1117,16 +1114,6 @@ static int usnic_component_progress_2(void)
     }
 
     return count;
-}
-
-static void seed_prng(void)
-{
-    unsigned short seedv[3];
-    seedv[0] = OMPI_PROC_MY_NAME->vpid;
-    seedv[1] = opal_timer_base_get_cycles();
-    usleep(1);
-    seedv[2] = opal_timer_base_get_cycles();
-    seed48(seedv);
 }
 
 static bool port_is_usnic(ompi_common_verbs_port_item_t *port)
