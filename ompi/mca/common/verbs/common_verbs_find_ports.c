@@ -163,16 +163,10 @@ static bool want_this_port(char **include_list, char **exclude_list,
 static const char *transport_name_to_str(enum ibv_transport_type transport_type)
 {
     switch(transport_type) {
-    case IBV_TRANSPORT_IB:        return "IB";
-    case IBV_TRANSPORT_IWARP:     return "IWARP";
-#if HAVE_DECL_IBV_TRANSPORT_USNIC
-    case IBV_TRANSPORT_USNIC:     return "usNIC";
-#endif
-#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
-    case IBV_TRANSPORT_USNIC_UDP: return "usNIC UDP";
-#endif
+    case IBV_TRANSPORT_IB:      return "IB";
+    case IBV_TRANSPORT_IWARP:   return "IWARP";
     case IBV_TRANSPORT_UNKNOWN: 
-    default:                      return "unknown";
+    default:                    return "unknown";
     }
 }
 
@@ -337,24 +331,6 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
                                 transport_name_to_str(device->transport_type));
             want = false;
         }
-#if HAVE_DECL_IBV_TRANSPORT_USNIC
-        if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC &&
-            IBV_TRANSPORT_USNIC != device->transport_type) {
-            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want usNIC)",
-                                ibv_get_device_name(device),
-                                transport_name_to_str(device->transport_type));
-            want = false;
-        }
-#endif
-#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
-        if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP &&
-            IBV_TRANSPORT_USNIC_UDP != device->transport_type) {
-            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want usNIC/UDP)",
-                                ibv_get_device_name(device),
-                                transport_name_to_str(device->transport_type));
-            want = false;
-        }
-#endif
 
         /* Check for RC or UD QP support */
         if (flags & OMPI_COMMON_VERBS_FLAGS_RC ||

@@ -1488,7 +1488,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
 
         case IBV_EVENT_QP_FATAL:
         case IBV_EVENT_PORT_ERR:
-#if HAVE_DECL_IBV_EVENT_GID_CHANGE
+#if BTL_USNIC_HAVE_IBV_EVENT_GID_CHANGE
         case IBV_EVENT_GID_CHANGE:
 #endif
         default:
