@@ -619,15 +619,17 @@ OSHMEM_DECLSPEC oshmem_group_t* oshmem_proc_group_create(int pe_start,
                                                          int pe_stride,
                                                          size_t pe_size)
 {
+    int cur_pe, count_pe;
+    int i;
     oshmem_group_t* group = NULL;
+    oshmem_proc_t** proc_array = NULL;
+    oshmem_proc_t* proc = NULL;
 
     group = OBJ_NEW(oshmem_group_t);
 
     if (group) {
-        int cur_pe = 0;
-        int count_pe = 0;
-        oshmem_proc_t** proc_array = NULL;
-        oshmem_proc_t* proc = NULL;
+        cur_pe = 0;
+        count_pe = 0;
 
         OPAL_THREAD_LOCK(&oshmem_proc_lock);
 
@@ -657,11 +659,11 @@ OSHMEM_DECLSPEC oshmem_group_t* oshmem_proc_group_create(int pe_start,
         }
         group->proc_array = proc_array;
         group->proc_count = (int) count_pe;
+        group->ompi_comm = NULL;
 
         /* Prepare peers list */
         OBJ_CONSTRUCT(&(group->peer_list), opal_list_t);
         {
-            int i = 0;
             orte_namelist_t *peer = NULL;
 
             for (i = 0; i < group->proc_count; i++) {
