@@ -15,77 +15,67 @@ JNIEXPORT void JNICALL Java_mpi_Message_init(JNIEnv *e, jclass c)
     ompi_java.MessageHandle = (*e)->GetFieldID(e, c, "handle", "J");
 }
 
-JNIEXPORT jobject JNICALL Java_mpi_Message_mProbe(
-        JNIEnv *env, jobject jthis, jint source, jint tag, jlong comm)
+JNIEXPORT jlong JNICALL Java_mpi_Message_mProbe(
+        JNIEnv *env, jobject jthis,
+        jint source, jint tag, jlong jComm, jobject jStatus)
 {
-    MPI_Message message = (MPI_Message)((*env)->GetLongField(
-                          env, jthis, ompi_java.MessageHandle));
-    int rc;
-    MPI_Status status;
-    rc = MPI_Mprobe(source, tag, (MPI_Comm)comm, &message, &status);
-
-    if(ompi_java_exceptionCheck(env, rc))
-        return NULL;
-
-    (*env)->SetLongField(env, jthis, ompi_java.MessageHandle, (jlong)message);
-    jobject stat = ompi_java_status_new(&status, env);
-    return stat;
+    MPI_Comm comm = (MPI_Comm)jComm;
+    MPI_Message message;
+    MPI_Status  status;
+    int rc = MPI_Mprobe(source, tag, comm, &message, &status);
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_status_set(&status, env, jStatus);
+    return (jlong)message;
 }
 
-JNIEXPORT jobject JNICALL Java_mpi_Message_imProbe(
-        JNIEnv *env, jobject jthis, jint source, jint tag, jlong comm)
+JNIEXPORT jboolean JNICALL Java_mpi_Message_imProbe(
+        JNIEnv *env, jobject jthis, jint source,
+        jint tag, jlong jComm, jobject jStatus)
 {
-    MPI_Message message = (MPI_Message)((*env)->GetLongField(
-                          env, jthis, ompi_java.MessageHandle));
+    MPI_Comm comm = (MPI_Comm)jComm;
+    MPI_Message message;
+    MPI_Status  status;
     int rc, flag;
-    MPI_Status status;
-    rc = MPI_Improbe(source, tag, (MPI_Comm)comm, &flag, &message, &status);
+    rc = MPI_Improbe(source, tag, comm, &flag, &message, &status);
 
     if(ompi_java_exceptionCheck(env, rc) || !flag)
-        return NULL;
+        return JNI_FALSE;
 
     (*env)->SetLongField(env, jthis, ompi_java.MessageHandle, (jlong)message);
-    jobject stat = ompi_java_status_new(&status, env);
-    return stat;
+    ompi_java_status_set(&status, env, jStatus);
+    return JNI_TRUE;
 }
 
-JNIEXPORT void JNICALL Java_mpi_Message_mRecv(
-        JNIEnv *env, jobject jthis, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+JNIEXPORT jlong JNICALL Java_mpi_Message_mRecv(
+        JNIEnv *env, jobject jthis, jlong jMessage, jobject buf, jboolean db,
+        jint offset, jint count, jlong jType, jint bType, jobject stat)
 {
-    MPI_Message msg = (MPI_Message)((*env)->GetLongField(
-                      env, jthis, ompi_java.MessageHandle));
+    MPI_Message  message = (MPI_Message)jMessage;
+    MPI_Datatype type    = (MPI_Datatype)jType;
 
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *bufPtr, *bufBase;
     bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, bType, offset);
 
     MPI_Status status;
-    int rc = MPI_Mrecv(bufPtr, count, type, &msg, &status);
+    int rc = MPI_Mrecv(bufPtr, count, type, &message, &status);
+    ompi_java_exceptionCheck(env, rc);
 
-    if(!ompi_java_exceptionCheck(env, rc))
-    {
-        (*env)->SetLongField(env, jthis, ompi_java.MessageHandle, (jlong)msg);
-        ompi_java_status_set(&status, env, stat);
-    }
-
+    ompi_java_status_set(&status, env, stat);
     ompi_java_releaseBufPtr(env, buf, db, bufBase, bType);
+    return (jlong)message;
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Message_imRecv(
-        JNIEnv *env, jobject jthis, jobject buf, jint count, jlong type)
+        JNIEnv *env, jobject jthis, jlong jMessage,
+        jobject buf, jint count, jlong jType)
 {
-    MPI_Message msg = (MPI_Message)((*env)->GetLongField(
-                      env, jthis, ompi_java.MessageHandle));
-
+    MPI_Message  message = (MPI_Message)jMessage;
+    MPI_Datatype type    = (MPI_Datatype)jType;
     void *ptr = ompi_java_getDirectBufferAddress(env, buf);
-    MPI_Request request;
 
-    int rc = MPI_Imrecv(ptr, count, (MPI_Datatype)type, &msg, &request);
+    MPI_Request request;
+    int rc = MPI_Imrecv(ptr, count, type, &message, &request);
     ompi_java_exceptionCheck(env, rc);
-    (*env)->SetLongField(env, jthis, ompi_java.MessageHandle, (jlong)msg);
+    (*env)->SetLongField(env, jthis, ompi_java.MessageHandle, (jlong)message);
     return (jlong)request;
 }

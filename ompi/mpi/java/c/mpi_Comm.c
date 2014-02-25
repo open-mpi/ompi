@@ -692,20 +692,20 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_packSize(
     return size;
 }
 
-JNIEXPORT jobject JNICALL Java_mpi_Comm_iProbe(
-        JNIEnv *env, jobject jthis, jlong comm, jint source, jint tag)
+JNIEXPORT jboolean JNICALL Java_mpi_Comm_iProbe(
+        JNIEnv *env, jobject jthis, jlong comm,
+        jint source, jint tag, jobject jStatus)
 {
     int flag;
     MPI_Status status;
     int rc = MPI_Iprobe(source, tag, (MPI_Comm)comm, &flag, &status);
     ompi_java_exceptionCheck(env, rc);
-
+    
     if(flag == 0)
-        return NULL;
+        return JNI_FALSE;
 
-    jobject stat = ompi_java_status_new(&status, env);
-    (*env)->SetIntField(env, stat, ompi_java.StElements, -1);
-    return stat;
+    ompi_java_status_set(&status, env, jStatus);
+    return JNI_TRUE;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_probe(
@@ -716,7 +716,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_probe(
     int rc = MPI_Probe(source, tag, (MPI_Comm)comm, &status);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_status_set(&status, env, stat);
-    (*env)->SetIntField(env, stat, ompi_java.StElements, -1);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_getTopology(

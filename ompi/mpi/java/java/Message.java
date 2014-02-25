@@ -9,7 +9,6 @@
 package mpi;
 
 import java.nio.*;
-import static mpi.MPI.isHeapBuffer;
 import static mpi.MPI.assertDirectBuffer;
 
 /**
@@ -17,6 +16,11 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public final class Message
 {
+// Auxiliary status. It's used to avoid creating status objects in the C side.
+// In Java side it will be copied: new Status(status)
+// It is necessary because calling java methods from C is very slow.
+private final Status status = new Status();
+
 protected long handle;
 private static long NULL, NO_PROC;
 
@@ -64,10 +68,12 @@ public boolean isNoProc()
 public Status mProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    return mProbe(source, tag, comm.handle);
+    Status stat = new Status();
+    handle = mProbe(source, tag, comm.handle, stat);
+    return stat;
 }
 
-private native Status mProbe(int source, int tag, long comm)
+private native long mProbe(int source, int tag, long comm, Status status)
         throws MPIException;
 
 /**
@@ -81,10 +87,12 @@ private native Status mProbe(int source, int tag, long comm)
 public Status imProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    return imProbe(source, tag, comm.handle);
+
+    return imProbe(source, tag, comm.handle, status)
+           ? new Status(status) : null;
 }
 
-private native Status imProbe(int source, int tag, long comm)
+private native boolean imProbe(int source, int tag, long comm, Status status)
         throws MPIException;
 
 /**
@@ -94,8 +102,7 @@ private native Status imProbe(int source, int tag, long comm)
  * @param type  datatype of each receive buffer element
  * @return status object
  */
-public Status mRecv(Object buf, int count, Datatype type)
-    throws MPIException
+public Status mRecv(Object buf, int count, Datatype type) throws MPIException
 {
     MPI.check();
     int off = 0;
@@ -107,14 +114,14 @@ public Status mRecv(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status status = new Status();
-    mRecv(buf, db, off, count, type, status);
-    return status;
+    Status stat = new Status();
+    handle = mRecv(handle, buf,db,off,count, type.handle, type.baseType, stat);
+    return stat;
 }
 
-private native void mRecv(
-        Object buf, boolean db, int offset, int count,
-        Datatype type, Status status) throws MPIException;
+private native long mRecv(
+        long message, Object buf, boolean db, int offset, int count,
+        long type, int baseType, Status status) throws MPIException;
 
 /**
  * Java binding of {@code MPI_IMRECV}.
@@ -129,10 +136,10 @@ public Request imRecv(Buffer buf, int count, Datatype type)
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(imRecv(buf, count, type.handle));
+    return new Request(imRecv(handle, buf, count, type.handle));
 }
 
-private native long imRecv(Object buf, int count, long type)
+private native long imRecv(long message, Object buf, int count, long type)
         throws MPIException;
 
 } // Message

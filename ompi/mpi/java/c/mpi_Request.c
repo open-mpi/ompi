@@ -33,9 +33,33 @@
 #include "mpi_Request.h"
 #include "mpiJava.h"
 
-JNIEXPORT void JNICALL Java_mpi_Request_init(JNIEnv *env, jclass clazz)
+JNIEXPORT void JNICALL Java_mpi_Request_init(JNIEnv *env, jclass c)
 {
-    ompi_java.ReqHandle = (*env)->GetFieldID(env, clazz, "handle", "J");
+    ompi_java.ReqHandle = (*env)->GetFieldID(env, c, "handle", "J");
+    ompi_java.ReqStatus = (*env)->GetFieldID(env, c, "status", "Lmpi/Status;");
+}
+
+static void setIndices(JNIEnv *env, jintArray indices, int *cIdx, int count)
+{
+    jint *jIdx;
+
+    if(sizeof(int) == sizeof(jint))
+    {
+        jIdx = cIdx;
+    }
+    else
+    {
+        jIdx = (jint*)calloc(count, sizeof(jint));
+        int i;
+
+        for(i = 0; i < count; i++)
+            jIdx[i] = cIdx[i];
+    }
+
+    (*env)->SetIntArrayRegion(env, indices, 0, count, jIdx);
+    
+    if(jIdx != cIdx)
+        free(jIdx);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Request_getNull(JNIEnv *env, jclass clazz)
@@ -43,11 +67,10 @@ JNIEXPORT jlong JNICALL Java_mpi_Request_getNull(JNIEnv *env, jclass clazz)
     return (jlong)MPI_REQUEST_NULL;
 }
 
-JNIEXPORT void JNICALL Java_mpi_Request_cancel_1jni(JNIEnv *env, jobject jthis)
+JNIEXPORT void JNICALL Java_mpi_Request_cancel(
+        JNIEnv *env, jobject jthis, jlong handle)
 {
-    MPI_Request req = (MPI_Request)(*env)->GetLongField(
-                      env, jthis, ompi_java.ReqHandle);
-
+    MPI_Request req = (MPI_Request)handle;
     int rc = MPI_Cancel(&req);
     ompi_java_exceptionCheck(env, rc);
 }
@@ -56,64 +79,35 @@ JNIEXPORT jlong JNICALL Java_mpi_Request_free(
         JNIEnv *env, jobject jthis, jlong handle)
 {
     MPI_Request req = (MPI_Request)handle;
-
-    if(req != MPI_REQUEST_NULL)
-    {
-        if(req == NULL)
-        {
-            req = MPI_REQUEST_NULL;
-        }
-        else
-        {
-            /* Handle is NULL when we create a Prequest object. */
-            int rc = MPI_Request_free(&req);
-            ompi_java_exceptionCheck(env, rc);
-        }
-    }
-
+    int rc = MPI_Request_free(&req);
+    ompi_java_exceptionCheck(env, rc);
     return (jlong)req;
 }
 
-JNIEXPORT jboolean JNICALL Java_mpi_Request_isNull(JNIEnv *env, jobject jthis)
+JNIEXPORT jlong JNICALL Java_mpi_Request_waitStatus(
+        JNIEnv *env, jobject jthis, jlong handle, jobject stat)
 {
-    MPI_Request req = (MPI_Request)(*env)->GetLongField(
-                      env, jthis, ompi_java.ReqHandle);
-
-    /* Handle is NULL when we create a Prequest object. */
-    return req == NULL || req == MPI_REQUEST_NULL ? JNI_TRUE : JNI_FALSE;
-}
-
-JNIEXPORT void JNICALL Java_mpi_Request_waitStatus(
-                       JNIEnv *env, jobject jthis, jobject stat)
-{
-    MPI_Request req = (MPI_Request)(*env)->GetLongField(
-                      env, jthis, ompi_java.ReqHandle);
-
+    MPI_Request req = (MPI_Request)handle;
     MPI_Status status;
     int rc = MPI_Wait(&req, &status);
     ompi_java_exceptionCheck(env, rc);
-
     ompi_java_status_set(&status, env, stat);
-    (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    return (jlong)req;
 }
 
-JNIEXPORT void JNICALL Java_mpi_Request_waitNoStatus(JNIEnv *env, jobject jthis)
+JNIEXPORT jlong JNICALL Java_mpi_Request_waitFor(
+        JNIEnv *env, jobject jthis, jlong handle)
 {
-    MPI_Request req = (MPI_Request)(*env)->GetLongField(
-                      env, jthis, ompi_java.ReqHandle);
-
-    MPI_Status status;
-    int rc = MPI_Wait(&req, &status);
+    MPI_Request req = (MPI_Request)handle;
+    int rc = MPI_Wait(&req, MPI_STATUS_IGNORE);
     ompi_java_exceptionCheck(env, rc);
-
-    (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    return (jlong)req;
 }
 
-JNIEXPORT jobject JNICALL Java_mpi_Request_testStatus_1jni(
-                          JNIEnv *env, jobject jthis)
+JNIEXPORT jboolean JNICALL Java_mpi_Request_testStatus(
+        JNIEnv *env, jobject jthis, jlong handle, jobject jStatus)
 {
-    MPI_Request req = (MPI_Request)(*env)->GetLongField(
-                      env, jthis, ompi_java.ReqHandle);
+    MPI_Request req = (MPI_Request)handle;
     int flag;
     MPI_Status status;
     int rc = MPI_Test(&req, &flag, &status);
@@ -121,555 +115,284 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_testStatus_1jni(
     (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
 
     if(!flag)
-        return NULL;
+        return JNI_FALSE;
 
-    return ompi_java_status_new(&status, env);
+    ompi_java_status_set(&status, env, jStatus);
+    return JNI_TRUE;
 }
 
-JNIEXPORT jboolean JNICALL Java_mpi_Request_testNoStatus(
-                           JNIEnv *env, jobject jthis)
+JNIEXPORT jboolean JNICALL Java_mpi_Request_test(
+        JNIEnv *env, jobject jthis, jlong handle)
 {
-    MPI_Request req = (MPI_Request)(*env)->GetLongField(
-                      env, jthis, ompi_java.ReqHandle);
+    MPI_Request req = (MPI_Request)handle;
     int flag;
-    MPI_Status status;
-    int rc = MPI_Test(&req, &flag, &status);
+    int rc = MPI_Test(&req, &flag, MPI_STATUS_IGNORE);
     ompi_java_exceptionCheck(env, rc);
     (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
     return flag ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Request_waitAnyStatus(
-        JNIEnv *env, jclass clazz, jobjectArray requests, jobject stat)
+        JNIEnv *env, jclass clazz, jlongArray requests, jobject stat)
 {
-    int i;
     int count = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(count, sizeof(MPI_Request));
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int index;
     MPI_Status status;
-    int rc = MPI_Waitany(count, reqs, &index, &status);
+    int rc = MPI_Waitany(count, cReq, &index, &status);
     ompi_java_exceptionCheck(env, rc);
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env,requests,i);
-        (*env)->SetLongField(env, req, ompi_java.ReqHandle, (jlong)reqs[i]);
-        (*env)->DeleteLocalRef(env, req);
-    }
-
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     ompi_java_status_set(&status, env, stat);
     (*env)->SetIntField(env, stat, ompi_java.StIndex, index);
-    free(reqs);
 }
 
-JNIEXPORT jint JNICALL Java_mpi_Request_waitAnyNoStatus(
-        JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT jint JNICALL Java_mpi_Request_waitAny(
+        JNIEnv *env, jclass clazz, jlongArray requests)
 {
-    int i;
-    int count = (*env)->GetArrayLength(env,requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(count, sizeof(MPI_Request));
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
+    int count = (*env)->GetArrayLength(env, requests);
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int index;
-    MPI_Status status;
-    int rc = MPI_Waitany(count, reqs, &index, &status);
+    MPI_Status status;  /* osvegis: MPI_STATUS_IGNORE doesn't work */
+    int rc = MPI_Waitany(count, cReq, &index, &status);
     ompi_java_exceptionCheck(env, rc);
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-        (*env)->SetLongField(env, req, ompi_java.ReqHandle, (jlong)reqs[i]);
-        (*env)->DeleteLocalRef(env, req);
-    }
-
-    free(reqs);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     return index;
 }
 
-JNIEXPORT jobject JNICALL Java_mpi_Request_testAnyStatus_1jni(
-        JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT jboolean JNICALL Java_mpi_Request_testAnyStatus(
+        JNIEnv *env, jclass clazz, jlongArray requests, jobject jStatus)
 {
-    int i;
     int count = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(count, sizeof(MPI_Request));
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int index, flag;
     MPI_Status status;
-    int rc = MPI_Testany(count, reqs, &index, &flag, &status);
+    int rc = MPI_Testany(count, cReq, &index, &flag, &status);
     ompi_java_exceptionCheck(env, rc);
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-        (*env)->SetLongField(env, req, ompi_java.ReqHandle, (jlong)reqs[i]);
-        (*env)->DeleteLocalRef(env, req);
-    }
-
-    free(reqs);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
 
     if(!flag)
-        return NULL;
+        return JNI_FALSE;
 
-    jobject st = ompi_java_status_new(&status, env);
-    (*env)->SetIntField(env, st, ompi_java.StIndex, index);
-    return st;
+    ompi_java_status_set(&status, env, jStatus);
+    (*env)->SetIntField(env, jStatus, ompi_java.StIndex, index);
+    return JNI_TRUE;
 }
 
-JNIEXPORT jint JNICALL Java_mpi_Request_testAnyNoStatus(
-                       JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT jint JNICALL Java_mpi_Request_testAny(
+        JNIEnv *env, jclass clazz, jlongArray requests)
 {
-    int i;
     int count = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(count, sizeof(MPI_Request));
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int index, flag;
-    MPI_Status status;
-    int rc = MPI_Testany(count, reqs, &index, &flag, &status);
+    MPI_Status status;  /* osvegis: MPI_STATUS_IGNORE doesn't work */
+    int rc = MPI_Testany(count, cReq, &index, &flag, &status);
     ompi_java_exceptionCheck(env, rc);
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-        (*env)->SetLongField(env, req, ompi_java.ReqHandle, (jlong)reqs[i]);
-        (*env)->DeleteLocalRef(env, req);
-    }
-
-    free(reqs);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     return index;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Request_waitAllStatus(
-        JNIEnv *env, jclass clazz, jobjectArray requests, jobjectArray statuses)
+        JNIEnv *env, jclass clazz, jlongArray requests, jobjectArray statuses)
 {
     int i;
     int count = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(2 * count, sizeof(MPI_Request));
-    MPI_Request *reqsIni = reqs + count;
-    MPI_Status  *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
-
-    for(i = 0; i < count; i++)
-    {
-        jobject r = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = reqsIni[i] = (MPI_Request)(*env)->GetLongField(
-                               env, r, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, r);
-    }
-
-    int rc = MPI_Waitall(count, reqs, stas);
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
+    MPI_Status *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
+    int rc = MPI_Waitall(count, cReq, stas);
     ompi_java_exceptionCheck(env, rc);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
 
     for(i = 0; i < count; i++)
     {
-        if(reqsIni[i] != MPI_REQUEST_NULL)
-        {
-            /* Copy final native request to array of request */
-            jobject r = (*env)->GetObjectArrayElement(env, requests, i);
-            (*env)->SetLongField(env, r, ompi_java.ReqHandle, (jlong)reqs[i]);
-
-            /* Copy final native status to Java array_of status */
-            jobject st = ompi_java_status_new(stas + i, env);
-            (*env)->SetObjectArrayElement(env, statuses, i, st);
-
-            /* Try not to create too many local references */
-            (*env)->DeleteLocalRef(env, r);
-            (*env)->DeleteLocalRef(env, st);
-        }
+        /* Copy final native status to Java array_of status */
+        jobject st = (*env)->GetObjectArrayElement(env, statuses, i);
+        ompi_java_status_set(stas + i, env, st);
+        (*env)->DeleteLocalRef(env, st);
     }
 
-    free(reqs);
     free(stas);
 }
 
-JNIEXPORT void JNICALL Java_mpi_Request_waitAllNoStatus(
-        JNIEnv *env, jclass jthis, jobjectArray requests)
+JNIEXPORT void JNICALL Java_mpi_Request_waitAll(
+        JNIEnv *env, jclass jthis, jlongArray requests)
 {
-    int i;
     int count = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(2 * count, sizeof(MPI_Request));
-    MPI_Request *reqsIni = reqs + count;
-    MPI_Status  *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
-
-    for(i = 0; i < count; i++)
-    {
-        jobject r = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = reqsIni[i] = (MPI_Request)(*env)->GetLongField(
-                               env, r, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, r);
-    }
-
-    int rc = MPI_Waitall(count, reqs, stas);
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
+    int rc = MPI_Waitall(count, cReq, MPI_STATUSES_IGNORE);
     ompi_java_exceptionCheck(env, rc);
-
-    for(i = 0; i < count; i++)
-    {
-        if(reqsIni[i] != MPI_REQUEST_NULL)
-        {
-            /* Copy final native request to array of request */
-            jobject r = (*env)->GetObjectArrayElement(env,requests,i);
-            (*env)->SetLongField(env, r, ompi_java.ReqHandle, (jlong)reqs[i]);
-            /* Try not to create too many local references */
-            (*env)->DeleteLocalRef(env, r);
-        }
-    }
-
-    free(reqs);
-    free(stas);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
 }
 
-JNIEXPORT jobjectArray JNICALL Java_mpi_Request_testAllStatus_1jni(
-        JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT int JNICALL Java_mpi_Request_testAllStatus(
+        JNIEnv *env, jclass clazz, jlongArray requests, jobjectArray objReqs)
 {
-    int i;
     int count = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(2 * count, sizeof(MPI_Request));
-    MPI_Request *reqsIni = reqs + count;
-    MPI_Status  *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
-
-    /* Copy initial native requests in Java array of request to reqs. */
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = reqsIni[i] = (MPI_Request)(*env)->GetLongField(
-                               env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
+    MPI_Status *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
     int flag;
-    int rc = MPI_Testall(count, reqs, &flag, stas);
+    int rc = MPI_Testall(count, cReq, &flag, stas);
     ompi_java_exceptionCheck(env, rc);
-    jobjectArray statuses = NULL;
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
 
     if(flag)
     {
-        statuses = (*env)->NewObjectArray(
-                   env, count, ompi_java.StatusClass, NULL);
-
+        int i;
         for(i = 0; i < count; i++)
         {
-            if(reqsIni[i] != MPI_REQUEST_NULL)
-            {
-                jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-                /* Copy final native request to array of request. */
-                (*env)->SetLongField(env, req,
-                        ompi_java.ReqHandle, (jlong)reqs[i]);
-
-                /* Copy final native status to Java statuses. */
-                jobject st = ompi_java_status_new(stas + i, env);
-                (*env)->SetObjectArrayElement(env, statuses, i, st);
-
-                /* Try not to create too many local references. */
-                (*env)->DeleteLocalRef(env, req);
-                (*env)->DeleteLocalRef(env, st);
-            }
+            /* Copy final native status to Java statuses. */
+            jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
+            jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
+            ompi_java_status_set(stas + i, env, st);
+            (*env)->DeleteLocalRef(env, st);
+            (*env)->DeleteLocalRef(env, rq);
         }
     }
 
-    free(reqs);
     free(stas);
-    return statuses;
+    return flag ? count : -1;
 }
 
-JNIEXPORT jboolean JNICALL Java_mpi_Request_testAllNoStatus(
-        JNIEnv *env, jclass jthis, jobjectArray requests)
+JNIEXPORT jboolean JNICALL Java_mpi_Request_testAll(
+        JNIEnv *env, jclass jthis, jlongArray requests)
 {
-    int i, flag;
     int count = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(2 * count, sizeof(MPI_Request));
-    MPI_Request *reqsIni = reqs + count;
-    MPI_Status  *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
-
-    for(i = 0; i < count; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = reqsIni[i] = (MPI_Request)(*env)->GetLongField(
-                               env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
-    int rc = MPI_Testall(count, reqs, &flag, stas);
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
+    int flag;
+    int rc = MPI_Testall(count, cReq, &flag, MPI_STATUSES_IGNORE);
     ompi_java_exceptionCheck(env, rc);
-
-    if(flag)
-    {
-        for(i = 0; i < count; i++)
-        {
-            if(reqsIni[i] != MPI_REQUEST_NULL)
-            {
-                /* Copy final native request to array of request */
-                jobject req  = (*env)->GetObjectArrayElement(env, requests, i);
-
-                (*env)->SetLongField(env, req,
-                        ompi_java.ReqHandle, (jlong)reqs[i]);
-
-                /* Try not to create too many local references */
-                (*env)->DeleteLocalRef(env, req);
-            }
-        }
-    }
-
-    free(reqs);
-    free(stas);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     return flag ? JNI_TRUE : JNI_FALSE;
 }
 
-JNIEXPORT jobjectArray JNICALL Java_mpi_Request_waitSomeStatus_1jni(
-        JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT jint JNICALL Java_mpi_Request_waitSomeStatus(
+        JNIEnv *env, jclass clazz, jlongArray requests, jobjectArray objReqs)
 {
-    int i;
     int incount = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(incount, sizeof(MPI_Request));
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     MPI_Status *stas = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
     int *indices = (int*)calloc(incount, sizeof(int));
 
-    /* Copy initial native requests in Java array of request to reqs. */
-
-    for(i = 0; i < incount; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
     int outcount;
-    int rc = MPI_Waitsome(incount, reqs, &outcount, indices, stas);
+    int rc = MPI_Waitsome(incount, cReq, &outcount, indices, stas);
     ompi_java_exceptionCheck(env, rc);
-    jobjectArray statuses = NULL;
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
 
     if(outcount != MPI_UNDEFINED)
     {
-        statuses = (*env)->NewObjectArray(
-                   env, outcount, ompi_java.StatusClass, NULL);
-
+        int i;
         for(i = 0; i < outcount; i++)
         {
-            int index = indices[i];
-            jobject req = (*env)->GetObjectArrayElement(env, requests, index);
-
-            /* Copy final native request to 'requests'. */
-            (*env)->SetLongField(env, req,
-                    ompi_java.ReqHandle, (jlong)reqs[index]);
-
-            /* Copy final native status to Java 'statuses'... */
-            jobject st = ompi_java_status_new(stas + i, env);
-            (*env)->SetIntField(env, st, ompi_java.StIndex, index);
-            (*env)->SetObjectArrayElement(env, statuses, i, st);
-
-            /* Try not to create too many local references... */
-            (*env)->DeleteLocalRef(env, req);
+            /* Copy final native status to Java statuses. */
+            jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
+            jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
+            ompi_java_status_set(stas + i, env, st);
+            (*env)->SetIntField(env, st, ompi_java.StIndex, indices[i]);
             (*env)->DeleteLocalRef(env, st);
+            (*env)->DeleteLocalRef(env, rq);
         }
     }
 
-    free(reqs);
     free(stas);
     free(indices);
-    return statuses;
+    return outcount;
 }
 
-JNIEXPORT jintArray JNICALL Java_mpi_Request_waitSomeNoStatus(
-        JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT jintArray JNICALL Java_mpi_Request_waitSome(
+        JNIEnv *env, jclass clazz, jlongArray requests)
 {
-    int i;
     int incount = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(incount, sizeof(MPI_Request));
-    MPI_Status *stas = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int *indices = (int*)calloc(incount, sizeof(int));
-
-    /* Copy initial native requests in Java array of request to reqs. */
-
-    for(i = 0; i < incount; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
     int outcount;
-    int rc = MPI_Waitsome(incount, reqs, &outcount, indices, stas);
+    int rc = MPI_Waitsome(incount, cReq, &outcount, indices, MPI_STATUSES_IGNORE);
     ompi_java_exceptionCheck(env, rc);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     jintArray jindices = NULL;
 
     if(outcount != MPI_UNDEFINED)
     {
-        for(i = 0; i < outcount; i++)
-        {
-            int index = indices[i];
-            jobject req  = (*env)->GetObjectArrayElement(env, requests, index);
-
-            /* Copy final native request to 'requests'. */
-            (*env)->SetLongField(env, req,
-                    ompi_java.ReqHandle, (jlong)reqs[index]);
-
-            /* Try not to create too many local references... */
-            (*env)->DeleteLocalRef(env, req);
-        }
-
         jindices = (*env)->NewIntArray(env, outcount);
-        (*env)->SetIntArrayRegion(env, jindices, 0, outcount, indices);
+        setIndices(env, jindices, indices, outcount);
     }
 
-    free(reqs);
-    free(stas);
     free(indices);
     return jindices;
 }
 
-JNIEXPORT jobjectArray JNICALL Java_mpi_Request_testSomeStatus_1jni(
-        JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT int JNICALL Java_mpi_Request_testSomeStatus(
+        JNIEnv *env, jclass clazz, jlongArray requests, jobjectArray objReqs)
 {
-    int i;
     int incount = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs = (MPI_Request*)calloc(incount, sizeof(MPI_Request));
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     MPI_Status *stas = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
     int *indices = (int*)calloc(incount, sizeof(int));
-
-    for(i = 0; i < incount; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
     int outcount;
-    int rc = MPI_Testsome(incount,reqs,&outcount,indices, stas);
+    int rc = MPI_Testsome(incount, cReq, &outcount, indices, stas);
     ompi_java_exceptionCheck(env, rc);
-    jobjectArray statuses = NULL;
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
 
     if(outcount != MPI_UNDEFINED)
     {
-        statuses = (*env)->NewObjectArray(
-                   env, outcount, ompi_java.StatusClass, NULL);
-
+        int i;
         for(i = 0; i < outcount; i++)
         {
-            int index = indices[i];
-            jobject req = (*env)->GetObjectArrayElement(env, requests, index);
-
-            /* Copy final native request to 'requests'. */
-            (*env)->SetLongField(env, req,
-                    ompi_java.ReqHandle, (jlong)reqs[index]);
-
-            /* Copy final native status to Java 'statuses'... */
-            jobject st = ompi_java_status_new(stas + i, env);
-            (*env)->SetIntField(env, st, ompi_java.StIndex, index);
-            (*env)->SetObjectArrayElement(env, statuses, i, st);
-
-            /* Try not to create too many local references... */
-            (*env)->DeleteLocalRef(env, req);
+            /* Copy final native status to Java statuses. */
+            jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
+            jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
+            ompi_java_status_set(stas + i, env, st);
+            (*env)->SetIntField(env, st, ompi_java.StIndex, indices[i]);
             (*env)->DeleteLocalRef(env, st);
+            (*env)->DeleteLocalRef(env, rq);
         }
     }
 
-    free(reqs);
     free(stas);
     free(indices);
-    return statuses;
+    return outcount;
 }
 
-JNIEXPORT jintArray JNICALL Java_mpi_Request_testSomeNoStatus(
-        JNIEnv *env, jclass clazz, jobjectArray requests)
+JNIEXPORT jintArray JNICALL Java_mpi_Request_testSome(
+        JNIEnv *env, jclass clazz, jlongArray requests)
 {
-    int i;
     int incount = (*env)->GetArrayLength(env, requests);
-    MPI_Request *reqs=(MPI_Request*)calloc(incount, sizeof(MPI_Request));
-    MPI_Status *stas = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
+    jlong* jReq;
+    MPI_Request *cReq;
+    ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int *indices = (int*)calloc(incount, sizeof(int));
-
-    for(i = 0; i < incount; i++)
-    {
-        jobject req = (*env)->GetObjectArrayElement(env, requests, i);
-
-        reqs[i] = (MPI_Request)(*env)->GetLongField(
-                  env, req, ompi_java.ReqHandle);
-
-        (*env)->DeleteLocalRef(env, req);
-    }
-
     int outcount;
-    int rc = MPI_Testsome(incount, reqs, &outcount, indices, stas);
+    int rc = MPI_Testsome(incount, cReq, &outcount, indices, MPI_STATUSES_IGNORE);
     ompi_java_exceptionCheck(env, rc);
+    ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     jintArray jindices = NULL;
 
     if(outcount != MPI_UNDEFINED)
     {
-        for(i = 0; i < outcount; i++)
-        {
-            int index = indices[i];
-            jobject req = (*env)->GetObjectArrayElement(env, requests, index);
-
-            /* Copy final native request to 'requests'. */
-            (*env)->SetLongField(env, req,
-                    ompi_java.ReqHandle, (jlong)reqs[index]);
-
-            /* Try not to create too many local references... */
-            (*env)->DeleteLocalRef(env, req);
-        }
-
         jindices = (*env)->NewIntArray(env, outcount);
-        (*env)->SetIntArrayRegion(env, jindices, 0, outcount, indices);
+        setIndices(env, jindices, indices, outcount);
     }
 
-    free(reqs);
-    free(stas);
     free(indices);
     return jindices;
 }

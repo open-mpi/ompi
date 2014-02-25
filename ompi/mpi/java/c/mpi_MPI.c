@@ -380,7 +380,6 @@ void ompi_java_findClasses(JNIEnv *env)
     ompi_java.DistGraphNeighborsClass = ompi_java_findClass(
                                         env, "mpi/DistGraphNeighbors");
 
-    ompi_java.StatusClass     = ompi_java_findClass(env, "mpi/Status");
     ompi_java.ExceptionClass  = ompi_java_findClass(env, "mpi/MPIException");
 
     ompi_java.ExceptionInit = (*env)->GetMethodID(
@@ -411,7 +410,6 @@ void ompi_java_deleteClasses(JNIEnv *env)
     (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
     (*env)->DeleteGlobalRef(env, ompi_java.ExceptionClass);
     (*env)->DeleteGlobalRef(env, ompi_java.IntegerClass);
     (*env)->DeleteGlobalRef(env, ompi_java.LongClass);
@@ -507,6 +505,41 @@ void ompi_java_forgetBooleanArray(JNIEnv *env, jbooleanArray array,
 {
     free(cptr);
     (*env)->ReleaseBooleanArrayElements(env, array, jptr, JNI_ABORT);
+}
+
+void ompi_java_getPtrArray(JNIEnv *env, jlongArray array,
+                           jlong **jptr, void ***cptr)
+{
+    jlong *jp = *jptr = (*env)->GetLongArrayElements(env, array, NULL);
+
+    if(sizeof(jlong) == sizeof(void*))
+    {
+        *cptr = (void**)jp;
+    }
+    else
+    {
+        int i, length = (*env)->GetArrayLength(env, array);
+        void **cp = *cptr = calloc(length, sizeof(void*));
+
+        for(i = 0; i < length; i++)
+            cp[i] = (void*)jp[i];
+    }
+}
+
+void ompi_java_releasePtrArray(JNIEnv *env, jlongArray array,
+                               jlong *jptr, void **cptr)
+{
+    if(jptr != (jlong*)cptr)
+    {
+        int i, length = (*env)->GetArrayLength(env, array);
+
+        for(i = 0; i < length; i++)
+            jptr[i] = (jlong)cptr[i];
+
+        free(cptr);
+    }
+
+    (*env)->ReleaseLongArrayElements(env, array, jptr, 0);
 }
 
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)

@@ -15,7 +15,6 @@
 
 typedef struct {
     jfieldID  CommHandle;
-    jfieldID  ErrHandle;
     jfieldID  GroupHandle;
     jclass    CartParmsClass;
     jmethodID CartParmsInit;
@@ -32,26 +31,20 @@ typedef struct {
     jfieldID  OpHandle;
     jfieldID  OpCommute;
     jmethodID OpCall;
-    jclass    StatusClass;
-    jmethodID StatusInit;
     jfieldID  StSource;
     jfieldID  StTag;
     jfieldID  StError;
     jfieldID  St_cancelled;
     jfieldID  St_ucount;
     jfieldID  StIndex;
-    jfieldID  StElements;
-    jfieldID  StUsingBuffer;
     jfieldID  ReqHandle;
+    jfieldID  ReqStatus;
     jclass    ExceptionClass;
     jmethodID ExceptionInit;
     jclass    IntegerClass;
     jmethodID IntegerValueOf;
     jclass    LongClass;
     jmethodID LongValueOf;
-    jclass    ByteBufferClass;
-    jmethodID ByteBufferArray;
-    jmethodID ByteBufferArrayOffset;
     int dtSizes[12];
 } ompi_java_globals_t;
 
@@ -98,6 +91,11 @@ void ompi_java_releaseBooleanArray(
 void ompi_java_forgetBooleanArray(
         JNIEnv *env, jbooleanArray array, jboolean *jptr, int *cptr);
 
+void ompi_java_getPtrArray(
+        JNIEnv *env, jlongArray array, jlong **jptr, void ***cptr);
+void ompi_java_releasePtrArray(
+        JNIEnv *env, jlongArray array, jlong *jptr, void **cptr);
+
 jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc);
 
 void*      ompi_java_attrSet(JNIEnv *env, jbyteArray jval);
@@ -107,8 +105,6 @@ int        ompi_java_attrDelete(void *attrVal);
 
 MPI_Op ompi_java_op_getHandle(JNIEnv *env, jobject jthis, int baseType);
 
-void ompi_java_status_get(MPI_Status *status, JNIEnv *env, jobject obj);
 void ompi_java_status_set(MPI_Status *status, JNIEnv *env, jobject obj);
-jobject ompi_java_status_new(MPI_Status *status, JNIEnv *env);
 
 #endif /* _MPIJAVA_H_ */

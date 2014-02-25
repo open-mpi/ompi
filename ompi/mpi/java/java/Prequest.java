@@ -28,16 +28,6 @@ package mpi;
  */
 public final class Prequest extends Request
 {
-protected final static int MODE_STANDARD    = 0;
-protected final static int MODE_BUFFERED    = 1;
-protected final static int MODE_SYNCHRONOUS = 2;
-protected final static int MODE_READY       = 3;
-
-private int mode, offset, count, src, dest, tag;
-private Object buf;
-private Datatype type;
-private Comm comm;
-
 /**
  * Constructor used by {@code sendInit}, etc.
  */
@@ -56,10 +46,10 @@ protected Prequest(long handle)
  */
 public void start() throws MPIException
 {
-    start_jni();
+    handle = start(handle);
 }
 
-private native void start_jni() throws MPIException;
+private native long start(long request) throws MPIException;
 
 /**
  * Activate a list of communication requests.
@@ -70,20 +60,11 @@ private native void start_jni() throws MPIException;
 public static void startAll(Prequest[] requests) throws MPIException
 {
     MPI.check();
-    startAll_jni(requests);
+    long[] r = getHandles(requests);
+    startAll(r);
+    setHandles(requests, r);
 }
 
-private native static void startAll_jni(Prequest[] requests)
-        throws MPIException;
-
-/**
- * Set the request object to be void.
- * Java binding of the MPI operation {@code MPI_REQUEST_FREE}.
- */
-@Override public void free() throws MPIException
-{
-    buf = null;
-    super.free();
-}
+private native static void startAll(long[] requests) throws MPIException;
 
 } // Prequest

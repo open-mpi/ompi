@@ -32,11 +32,6 @@
 #include "mpi_Errhandler.h"
 #include "mpiJava.h"
 
-JNIEXPORT void JNICALL Java_mpi_Errhandler_init(JNIEnv *env, jclass thisClass)
-{
-    ompi_java.ErrHandle = (*env)->GetFieldID(env, thisClass, "handle", "J");                      
-}
-
 JNIEXPORT jlong JNICALL Java_mpi_Errhandler_getFatal(JNIEnv *env, jclass clazz)
 {
     return (jlong)MPI_ERRORS_ARE_FATAL;
