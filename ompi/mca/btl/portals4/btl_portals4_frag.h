@@ -76,41 +76,39 @@ OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t);
  * Macros to allocate/return descriptors from module specific
  * free list(s).
  */
-#define OMPI_BTL_PORTALS4_FRAG_ALLOC_EAGER(btl_macro, frag)                                      \
-{                                                                                                \
-                                                                                                 \
-    ompi_free_list_item_t *item;                                                                 \
-    int ret;                                                                                     \ 
-    OMPI_FREE_LIST_GET(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, item, ret); \
-    frag = (mca_btl_portals4_frag_t*) item;                                                      \
-    if (NULL == frag) {                                                                          \
-        OMPI_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag);                                       \
-    }                                                                                            \
+#define OMPI_BTL_PORTALS4_FRAG_ALLOC_EAGER(btl_macro, frag)                                    \
+{                                                                                               \
+                                                                                                \
+    ompi_free_list_item_t *item;                                                                \
+    OMPI_FREE_LIST_GET_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, item); \
+    frag = (mca_btl_portals4_frag_t*) item;                                                     \
+    if (NULL == frag) {                                                  \
+        OMPI_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag);                                  \
+    }                                                                                           \
 }
 
 
 #define OMPI_BTL_PORTALS4_FRAG_RETURN_EAGER(btl_macro, frag)                            \
 {                                                                                       \
     assert(BTL_PORTALS4_FRAG_TYPE_EAGER == frag->type);                                 \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, \
+    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, \
         (ompi_free_list_item_t*)(frag));                                                \
 }
 
 
-#define OMPI_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag)                                        \
-{                                                                                                \
-                                                                                                 \
-    ompi_free_list_item_t *item_macro;                                                           \
-    int ret;                                                                                     \ 
-    OMPI_FREE_LIST_GET(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, item, ret);   \
-    frag = (mca_btl_portals4_frag_t*) item_macro;                                                \
+#define OMPI_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag)                                           \
+{                                                                                                   \
+                                                                                                    \
+    ompi_free_list_item_t *item_macro;                                                              \
+    OMPI_FREE_LIST_GET_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, item_macro); \
+    frag = (mca_btl_portals4_frag_t*) item_macro;                                                   \
 }
 
 
 #define OMPI_BTL_PORTALS4_FRAG_RETURN_MAX(btl_macro, frag)                            \
 {                                                                                     \
     assert(BTL_PORTALS4_FRAG_TYPE_MAX == frag->type);                                 \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, \
+    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, \
         (ompi_free_list_item_t*)(frag));                                              \
 }
 
@@ -118,8 +116,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t);
 #define OMPI_BTL_PORTALS4_FRAG_ALLOC_USER(btl_macro, frag)                                      \
 {                                                                                               \
     ompi_free_list_item_t *item;                                                                \
-    int ret;                                                                                    \ 
-    OMPI_FREE_LIST_GET(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, item, ret); \
+    OMPI_FREE_LIST_GET_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, item); \
     frag = (mca_btl_portals4_frag_t*) item;                                                     \
     frag->base.des_cbfunc = NULL;                                                               \
 }
@@ -128,7 +125,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t);
 #define OMPI_BTL_PORTALS4_FRAG_RETURN_USER(btl_macro, frag)                            \
 {                                                                                      \
     assert(BTL_PORTALS4_FRAG_TYPE_USER == frag->type);                                 \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, \
+    OMPI_FREE_LIST_RETURN_MT(&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, \
         (ompi_free_list_item_t*)(frag));                                               \
 }
 
