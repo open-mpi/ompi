@@ -135,7 +135,6 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
     struct ompi_datatype_t* dtype;
     struct ompi_op_t *h_op;
     int rc;
-    int dtsize;
     size_t count;
     MPI_COLL_VERBOSE(20,"RUNNING MPI REDUCE");
     void *sbuf, *rbuf;
