@@ -80,7 +80,7 @@ static int check_mxm_tls(char *var)
         }
         return OSHMEM_ERROR;
     }
-    if (NULL == strstr(str, "rc")) {
+    if (NULL == strstr(str, "rc") && NULL == strstr(str, "dc")) {
         mca_spml_ikrit.ud_only = 1;
     } else {
         mca_spml_ikrit.ud_only = 0;
