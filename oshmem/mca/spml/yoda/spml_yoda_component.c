@@ -81,7 +81,7 @@ static int mca_spml_yoda_component_register(void)
     mca_spml_yoda.bml_alloc_threshold =
             mca_spml_yoda_param_register_int("bml_alloc_threshold",
                                              3,
-                                             "number of puts to wait \ 
+                                             "number of puts to wait \
                                               in case of put/get temporary buffer \
                                               allocation failture");
     mca_spml_yoda.priority =
