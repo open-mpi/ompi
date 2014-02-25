@@ -59,6 +59,53 @@ mca_spml_base_component_2_0_0_t mca_spml_ikrit_component = {
     
 };
 
+#if MXM_API >= MXM_VERSION(2,1)
+static int check_mxm_tls(char *var)
+{
+    char *str;
+
+    str = getenv(var);
+    if (NULL == str) {
+        return OSHMEM_SUCCESS;
+    }
+
+    if (NULL != strstr(str, "shm")) {
+        if (0 < asprintf(&str,
+                    "%s=%s",
+                    var, getenv(var)
+                    )) {
+            orte_show_help("help-shmem-spml-ikrit.txt", "mxm tls", true,
+                    str);
+            free(str);
+        }
+        return OSHMEM_ERROR;
+    }
+    if (NULL == strstr(str, "rc") && NULL == strstr(str, "dc")) {
+        mca_spml_ikrit.ud_only = 1;
+    } else {
+        mca_spml_ikrit.ud_only = 0;
+    }
+    return OSHMEM_SUCCESS;
+}
+
+static int set_mxm_tls()
+{
+    char *tls;
+
+    tls = getenv("MXM_OSHMEM_TLS");
+    if (NULL != tls) {
+        return check_mxm_tls("MXM_OSHMEM_TLS");
+    }
+
+    tls = getenv("MXM_TLS");
+    if (NULL == tls) {
+        setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 1);
+        return OSHMEM_SUCCESS;
+    }
+    return check_mxm_tls("MXM_TLS");
+}
+#endif
+
 static inline int mca_spml_ikrit_param_register_int(const char* param_name,
                                                     int default_value,
                                                     const char *help_msg)
@@ -165,11 +212,14 @@ static int mca_spml_ikrit_component_open(void)
                     (cur_ver >> MXM_MINOR_BIT) & 0xff);
     }
 
+    mca_spml_ikrit.ud_only = 0;
 #if MXM_API < MXM_VERSION(2,1)
     if ((MXM_OK != mxm_config_read_context_opts(&mca_spml_ikrit.mxm_ctx_opts)) ||
         (MXM_OK != mxm_config_read_ep_opts(&mca_spml_ikrit.mxm_ep_opts)))
 #else
-    setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 0);
+    if (OSHMEM_SUCCESS != set_mxm_tls()) {
+        return OSHMEM_ERROR;
+    }
     if (MXM_OK != mxm_config_read_opts(&mca_spml_ikrit.mxm_ctx_opts,
                                        &mca_spml_ikrit.mxm_ep_opts,
                                        "OSHMEM", NULL, 0))
@@ -180,6 +230,7 @@ static int mca_spml_ikrit_component_open(void)
     }
 
 #if MXM_API < MXM_VERSION(2,0)
+    mca_spml_ikrit.ud_only = 1;
     mca_spml_ikrit.mxm_ctx_opts->ptl_bitmap = (MXM_BIT(MXM_PTL_SELF) | MXM_BIT(MXM_PTL_RDMA));
 #endif
 

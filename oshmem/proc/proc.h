@@ -23,6 +23,8 @@
 #include "orte/types.h"
 #include "orte/runtime/orte_globals.h"
 
+#include "ompi/communicator/communicator.h"
+
 BEGIN_C_DECLS
 
 /* ******************************************************************** */
@@ -87,6 +89,7 @@ struct oshmem_group_t {
 
     /* Collectives module interface and data */
     mca_scoll_base_group_scoll_t g_scoll;
+    ompi_communicator_t*         ompi_comm;
 };
 typedef struct oshmem_group_t oshmem_group_t;
 OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(oshmem_group_t);
