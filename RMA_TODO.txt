@@ -1,0 +1,5 @@
+- Support  non-contiguous operations in Portals4 implementation
+- Add memory barriers where needed in synchronization primitives of
+  Portals4 implementation
+
+- Re-implement rdma component

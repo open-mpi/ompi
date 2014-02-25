@@ -107,6 +107,9 @@ ompi_mpi_errcode_t ompi_t_err_cvar_set_never;
 ompi_mpi_errcode_t ompi_t_err_pvar_no_startstop;
 ompi_mpi_errcode_t ompi_t_err_pvar_no_write;
 ompi_mpi_errcode_t ompi_t_err_pvar_no_atomic;
+ompi_mpi_errcode_t ompi_err_rma_range;
+ompi_mpi_errcode_t ompi_err_rma_attach;
+ompi_mpi_errcode_t ompi_err_rma_flavor;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -202,6 +205,9 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_t_err_pvar_no_startstop, MPI_T_ERR_PVAR_NO_STARTSTOP, "MPI_T_ERR_PVAR_NO_STARTSTOP: variable cannot be started or stopped" );
     CONSTRUCT_ERRCODE( ompi_t_err_pvar_no_write, MPI_T_ERR_PVAR_NO_WRITE, "MPI_T_ERR_PVAR_NO_WRITE: variable cannot be written or reset" );
     CONSTRUCT_ERRCODE( ompi_t_err_pvar_no_atomic, MPI_T_ERR_PVAR_NO_ATOMIC, "MPI_T_ERR_PVAR_NO_ATOMIC: variable cannot be read and written atomically" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_range, MPI_ERR_RMA_RANGE, "MPI_ERR_RMA_RANGE: invalid RMA address range" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_attach, MPI_ERR_RMA_ATTACH, "MPI_ERR_RMA_ATTACH: Could not attach RMA segment" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_flavor, MPI_ERR_RMA_FLAVOR, "MPI_ERR_RMA_FLAVOR: Invalid type of window" );
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
@@ -292,6 +298,9 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_t_err_pvar_no_startstop);
     OBJ_DESTRUCT(&ompi_t_err_pvar_no_write);
     OBJ_DESTRUCT(&ompi_t_err_pvar_no_atomic);
+    OBJ_DESTRUCT(&ompi_err_rma_range);
+    OBJ_DESTRUCT(&ompi_err_rma_attach);
+    OBJ_DESTRUCT(&ompi_err_rma_flavor);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     return OMPI_SUCCESS;

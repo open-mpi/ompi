@@ -56,8 +56,6 @@ int MPI_Get(void *origin_addr, int origin_count,
         } else if (ompi_win_peer_invalid(win, target_rank) &&
                    (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if (!ompi_win_comm_allowed(win)) {
-            rc = MPI_ERR_RMA_SYNC;
         } else if ( target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else {

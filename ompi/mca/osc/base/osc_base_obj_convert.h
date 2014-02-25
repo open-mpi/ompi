@@ -117,4 +117,12 @@ OMPI_DECLSPEC int ompi_osc_base_process_op(void *outbuf,
                                            int count,
                                            ompi_op_t *op);
 
+OMPI_DECLSPEC int ompi_osc_base_sndrcv_op(void *origin,
+                                          int32_t origin_count,
+                                          struct ompi_datatype_t *origin_dt,
+                                          void *target,
+                                          int32_t target_count,
+                                          struct ompi_datatype_t *target_dt,
+                                          ompi_op_t *op);
+
 END_C_DECLS

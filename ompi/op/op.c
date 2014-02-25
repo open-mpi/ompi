@@ -89,6 +89,8 @@ ompi_predefined_op_t ompi_mpi_op_minloc;
 ompi_predefined_op_t *ompi_mpi_op_minloc_addr = &ompi_mpi_op_minloc;
 ompi_predefined_op_t ompi_mpi_op_replace;
 ompi_predefined_op_t *ompi_mpi_op_replace_addr = &ompi_mpi_op_replace;
+ompi_predefined_op_t ompi_mpi_op_no_op;
+ompi_predefined_op_t *ompi_mpi_op_no_op_addr = &ompi_mpi_op_no_op;
 
 /*
  * Map from ddt->id to position in op function pointer array
@@ -255,7 +257,10 @@ int ompi_op_init(void)
                       FLAGS, "MPI_MINLOC") ||
         OMPI_SUCCESS != 
         add_intrinsic(&ompi_mpi_op_replace.op, OMPI_OP_BASE_FORTRAN_REPLACE,
-                      FLAGS, "MPI_REPLACE")) {
+                      FLAGS, "MPI_REPLACE") ||
+        OMPI_SUCCESS != 
+        add_intrinsic(&ompi_mpi_op_no_op.op, OMPI_OP_BASE_FORTRAN_NO_OP,
+                      FLAGS, "MPI_NO_OP")) {
         return OMPI_ERROR;
     }else{
 /* This code is placed back here to support
@@ -289,6 +294,7 @@ int ompi_op_init(void)
 int ompi_op_finalize(void)
 {
     /* clean up the intrinsic ops */
+    OBJ_DESTRUCT(&ompi_mpi_op_no_op);
     OBJ_DESTRUCT(&ompi_mpi_op_replace);
     OBJ_DESTRUCT(&ompi_mpi_op_minloc);
     OBJ_DESTRUCT(&ompi_mpi_op_maxloc);
@@ -419,7 +425,8 @@ static int add_intrinsic(ompi_op_t *op, int fort_handle, int flags,
        pointers (except for NULL and REPLACE, which don't get
        components) */
     if (OMPI_OP_BASE_FORTRAN_NULL != op->o_f_to_c_index &&
-        OMPI_OP_BASE_FORTRAN_REPLACE != op->o_f_to_c_index) {
+        OMPI_OP_BASE_FORTRAN_REPLACE != op->o_f_to_c_index &&
+        OMPI_OP_BASE_FORTRAN_NO_OP != op->o_f_to_c_index) {
         return ompi_op_base_op_select(op);
     } else {
         return OMPI_SUCCESS;

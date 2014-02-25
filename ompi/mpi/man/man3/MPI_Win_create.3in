@@ -66,14 +66,33 @@ If the \fIbase\fP value used by MPI_Win_create was allocated by MPI_Alloc_mem, t
 .sp
 The displacement unit argument is provided to facilitate address arithmetic in RMA operations: the target displacement argument of an RMA operation is scaled by the factor \fIdisp_unit\fP specified by the target process, at window creation.
 .sp
-The following info key is supported:
+The following info keys are supported:
 .ft R
 .TP 1i
 no_locks 
-If MPI_Win_lock is called on a window created with this info key, the
-call will fail. If this info key is present, it is assumed that the
-local window is never locked, allowing several internal checks to be
-skipped, permitting a more efficient implementation.
+If set to \fItrue\fP, then the implementation may assume that the local
+window is never locked (by a call to MPI_Win_lock or
+MPI_Win_lock_all).  Setting this value if only active synchronization
+may allow the implementation to enable certain optimizations.
+.sp 
+.TP 1i
+accumulate_ordering
+By default, accumulate operations from one initiator to one target on
+the same window are strictly ordered.  If the info key
+accumulate_ordering is set to \fInone\fP, no ordering of accumulate
+operations guaranteed.  They key can also be a comma-separated list of
+required orderings consisting of \fIrar\fP, \fIwar\fP, \fIraw\fP, and \fIwaw\fP for
+read-after-read, write-after-read, read-after-write, and
+write-after-write, respectively.  Looser ordering constraints are
+likely to result in improved performance.
+.sp 
+.TP 1i
+accumulate_ops
+If set to \fIsame_op\fP, the implementation will assume that all concurrent
+accumulate calls to the same target address will use the same
+operation.  If set to \fIsame_op_no_op\fP, then the implementation will
+assume that all concurrent accumulate calls to the same target address
+will use the same operation or MPI_NO_OP.  The default is \fIsame_op_no_op\fP.
 .sp 
 
 .SH NOTES

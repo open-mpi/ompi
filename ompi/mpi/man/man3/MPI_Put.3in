@@ -1,11 +1,11 @@
 .\" -*- nroff -*-
-.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2013-2014 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Put 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Put\fP \- Copies data from the origin memory to the target. 
+\fBMPI_Put\fP, \fBMPI_Rput\fP \- Copies data from the origin memory to the target.
 
 .SH SYNTAX
 .ft R
@@ -15,6 +15,11 @@
 MPI_Put(const void *\fIorigin_addr\fP, int \fIorigin_count\fP, MPI_Datatype
 	\fIorigin_datatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP, 
 	int \fItarget_count\fP, MPI_Datatype \fItarget_datatype\fP, MPI_Win \fIwin\fP)
+
+MPI_Rput(const void *\fIorigin_addr\fP, int \fIorigin_count\fP, MPI_Datatype
+	 \fIorigin_datatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP,
+	 int \fItarget_count\fP, MPI_Datatype \fItarget_datatype\fP, MPI_Win \fIwin\fP,
+	 MPI_Request *\fIrequest\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
@@ -26,6 +31,13 @@ MPI_PUT(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
 	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT, 
 	TARGET_DATATYPE, WIN, IERROR\fP
+
+MPI_RPUT(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
+	 TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, WIN, REQUEST, IERROR\fP)
+	 <type> \fIORIGIN_ADDR\fP(*)
+	 INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
+	 INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT,
+	 TARGET_DATATYPE, WIN, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -67,12 +79,15 @@ Window object used for communication (handle).
 .SH OUTPUT PARAMETER
 .ft R
 .TP 1i
+request
+MPI_Rput: RMA request
+.TP 1i
 IERROR
 Fortran only: Error status (integer). 
 
 .SH DESCRIPTION
 .ft R
-MPI_Put transfers \fIorigin_count\fP successive entries of the type specified by \fIorigin_datatype\fP, starting at address \fIorigin_addr\fP on the origin node to the target node specified by the \fIwin\fP, \fItarget_rank\fP pair. The data are written in the target buffer at address \fItarget_addr\fP = \fIwindow_base\fP + \fItarget_disp\fP x \fIdisp_unit\fP, where \fIwindow_base\fP and \fIdisp_unit\fP are the base address and window displacement unit specified at window initialization, by the target process.
+\fBMPI_Put\fP transfers \fIorigin_count\fP successive entries of the type specified by \fIorigin_datatype\fP, starting at address \fIorigin_addr\fP on the origin node to the target node specified by the \fIwin\fP, \fItarget_rank\fP pair. The data are written in the target buffer at address \fItarget_addr\fP = \fIwindow_base\fP + \fItarget_disp\fP x \fIdisp_unit\fP, where \fIwindow_base\fP and \fIdisp_unit\fP are the base address and window displacement unit specified at window initialization, by the target process.
 .sp
 The target buffer is specified by the arguments \fItarget_count\fP and \fItarget_datatype\fP.
 .sp
@@ -81,6 +96,8 @@ The data transfer is the same as that which would occur if the origin process ex
 The communication must satisfy the same constraints as for a similar message-passing communication. The \fItarget_datatype\fP may not specify overlapping entries in the target buffer. The message sent must fit, without truncation, in the target buffer. Furthermore, the target buffer must fit in the target window. In addition, only processes within the same buffer can access the target window.
 .sp
 The \fItarget_datatype\fP argument is a handle to a datatype object defined at the origin process. However, this object is interpreted at the target process: The outcome is as if the target datatype object were defined at the target process, by the same sequence of calls used to define it at the origin process. The target data type must contain only relative displacements, not absolute addresses. The same holds for get and accumulate.
+.sp
+\fBMPI_Rput\bP is similar to \fBMPI_Put\fI, except that it allocates a communication request object and associates it with the request handle (the argument \fIrequest\fP). The completion of an MPI_Rput operation (i.e., after the corresponding test or wait) indicates that the sender is now free to update the locations in the \fIorigin_addr\fP buffer. It does not indicate that the data is available at the target window. If remote completion is required, \fBMPI_Win_flush\fP, \fBMPI_Win_flush_all\fP, \fBMPI_Win_unlock\fP, or \fBMPI_Win_unlock_all\fP can be used.
 
 .SH NOTES
 The \fItarget_datatype\fP argument is a handle to a datatype object that is defined at the origin process, even though it defines a data layout in the target process memory. This does not cause problems in a homogeneous or heterogeneous environment, as long as only portable data types are used (portable data types are defined in Section 2.4 of the MPI-2 Standard).
@@ -110,6 +127,11 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 .ft R
 .sp
 MPI_Get
+MPI_Rget
 .br
 MPI_Accumulate
+MPI_Win_flush
+MPI_Win_flush_all
+MPI_Win_unlock
+MPI_Win_unlock_all
 

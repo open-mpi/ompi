@@ -1,0 +1,96 @@
+.\" -*- nroff -*-
+.\" Copyright 2013-2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.TH MPI_Compare_and_swap 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Compare_and_swap\fP \- Perform RMA compare-and-swap
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Compare_and_swap(const void *\fIorigin_addr\fP, const void *\fIcompar_addr\fP,
+	void *\fresult_addr\fP, MPI_Datatype \fdatatype\fP, int \fItarget_rank\fP,
+	MPI_Aint \fItarget_disp\fP, MPI_Win \fIwin\fP)
+
+.fi
+.SH Fortran Syntax (see FORTRAN 77 NOTES)
+.nf
+INCLUDE 'mpif.h'
+MPI_COMPARE_AND_SWAP(\fIORIGIN_ADDR, COMPARE_ADDR, RESULT_ADDR, DATATYPE, TARGET_RANK,
+	TARGET_DISP, WIN, IERROR\fP)
+	<type> \fIORIGIN_ADDR\fP, \fICOMPARE_ADDR\fP, \fIRESULT_ADDR\fP(*)
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
+	INTEGER \fIDATATYPE, TARGET_RANK, WIN, IERROR \fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+origin_addr
+Initial address of buffer (choice).
+.ft R
+.TP
+compare_addr
+Initial address of compare buffer (choice).
+.ft R
+.TP
+result_addr
+Initial address of result buffer (choice).
+.ft R
+.TP
+datatype
+Data type of the entry in origin, result, and target buffers (handle).
+.ft R
+.TP 1i
+target_rank
+Rank of target (nonnegative integer).
+.ft R
+.TP 1i
+target_disp
+Displacement from start of window to beginning of target buffer (nonnegative integer).
+.ft R
+.TP 1i
+win
+Window object (handle).
+
+.SH OUTPUT PARAMETER
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+This function compares one element of type \fIdatatype\fP in the compare buffer \fIcompare_addr\fP with the buffer at offset \fItarget_disp\fP in the target window specified by \fItarget_rank\fP and \fIwin\fP and replaces the value at the target with the value in the origin buffer \fIorigin_addr\fP if the compare buffer and the target buffer are identical. The original value at the target is returned in the buffer \fIresult_addr\fP. The parameter \fIdatatype\fP must belong to one of the following categories of predefined datatypes: C integer, Fortran integer, Logical, Multi-language types, or Byte as specified in MPI-3 § 5.9.2 on page 176.
+.sp
+The origin and result buffers (\fIorigin_addr\fP and \fIresult_addr\fP) must be disjoint.
+
+.SH FORTRAN 77 NOTES
+.ft R
+The MPI standard prescribes portable Fortran syntax for
+the \fITARGET_DISP\fP argument only for Fortran 90.  FORTRAN 77
+users may use the non-portable syntax
+.sp
+.nf
+     INTEGER*MPI_ADDRESS_KIND \fITARGET_DISP\fP
+.fi
+.sp
+where MPI_ADDRESS_KIND is a constant defined in mpif.h
+and gives the length of the declared integer in bytes.
+
+.SH NOTES
+It is the user's responsibility to guarantee that, when
+using the accumulate functions, the target displacement argument is such
+that accesses to the window are properly aligned according to the data
+type arguments in the call to the \fBMPI_Compare_and_swap\fP function.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler
+may be changed with \fBMPI_Comm_set_errhandler\fP; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.

@@ -122,6 +122,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_split.c \
         pcomm_split_type.c \
         pcomm_test_inter.c \
+	pcompare_and_swap.c \
         pdims_create.c \
         perrhandler_c2f.c \
         perrhandler_create.c \
@@ -132,6 +133,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         perror_class.c \
         perror_string.c \
         pexscan.c \
+	pfetch_and_op.c \
         piexscan.c \
         pfinalize.c \
         pfinalized.c \
@@ -144,6 +146,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pget_count.c \
         pget_elements.c \
         pget_elements_x.c \
+	pget_accumulate.c \
         pget_library_version.c \
         pget_processor_name.c \
         pget_version.c \
@@ -225,6 +228,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pprobe.c \
         ppublish_name.c \
         pquery_thread.c \
+	praccumulate.c \
         precv_init.c \
         precv.c \
         preduce.c \
@@ -238,6 +242,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         prequest_f2c.c \
         prequest_free.c \
         prequest_get_status.c \
+	prget.c \
+	prget_accumulate.c \
+	prput.c \
         prsend_init.c \
         prsend.c \
         pscan.c \
@@ -318,29 +325,44 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         paccumulate.c \
         pget.c \
         pput.c \
+	pwin_allocate.c \
+	pwin_allocate_shared.c \
+	pwin_attach.c \
         pwin_c2f.c \
         pwin_call_errhandler.c \
         pwin_complete.c  \
         pwin_create_errhandler.c \
         pwin_create_keyval.c \
         pwin_create.c \
+	pwin_create_dynamic.c \
         pwin_delete_attr.c \
+	pwin_detach.c \
         pwin_f2c.c \
         pwin_fence.c \
+	pwin_flush.c \
+	pwin_flush_all.c \
+	pwin_flush_local.c \
+	pwin_flush_local_all.c \
         pwin_free_keyval.c \
         pwin_free.c \
         pwin_get_attr.c \
         pwin_get_errhandler.c \
         pwin_get_group.c \
+        pwin_get_info.c  \
         pwin_get_name.c  \
         pwin_lock.c \
+	pwin_lock_all.c \
         pwin_post.c \
         pwin_set_attr.c \
         pwin_set_errhandler.c \
+        pwin_set_info.c \
         pwin_set_name.c \
+	pwin_shared_query.c \
         pwin_start.c \
+	pwin_sync.c \
         pwin_test.c \
         pwin_unlock.c \
+	pwin_unlock_all.c \
         pwin_wait.c
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE

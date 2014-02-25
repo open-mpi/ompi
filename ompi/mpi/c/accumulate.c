@@ -52,7 +52,7 @@ int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origi
     MEMCHECKER(
         memchecker_datatype(origin_datatype);
         memchecker_datatype(target_datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, origin_addr, origin_count, origin_datatype);
+        memchecker_call(&opal_memchecker_base_isdefined, (void *) origin_addr, origin_count, origin_datatype);
     );
 
     if (MPI_PARAM_CHECK) {
@@ -67,12 +67,10 @@ int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origi
         } else if (ompi_win_peer_invalid(win, target_rank) &&
                    (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if (MPI_OP_NULL == op) {
+        } else if (MPI_OP_NULL == op || MPI_NO_OP == op) {
             rc = MPI_ERR_OP;
         } else if (!ompi_op_is_intrinsic(op)) {
             rc = MPI_ERR_OP;
-        } else if (!ompi_win_comm_allowed(win)) {
-            rc = MPI_ERR_RMA_SYNC;
         } else if ( target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else {
@@ -86,7 +84,7 @@ int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origi
                    for other reduction operators, we don't require such
                    behavior, as checking for it is expensive here and we don't
                    care in implementation.. */
-                if (op != &ompi_mpi_op_replace.op) {
+                if (op != &ompi_mpi_op_replace.op && op != &ompi_mpi_op_no_op.op) {
                     ompi_datatype_t *op_check_dt, *origin_check_dt;
                     char *msg;
 

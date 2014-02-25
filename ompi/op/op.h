@@ -322,6 +322,11 @@ OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_minloc_addr;
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_replace;
 OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_replace_addr;
 
+/**
+ * Global variable for MPI_NO_OP
+ */
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_no_op;
+
 
 /**
  * Table for Fortran <-> C op handle conversion

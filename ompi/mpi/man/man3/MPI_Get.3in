@@ -1,9 +1,11 @@
+.\" -*- nroff -*-
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2014 Los Alamos National Security, LLC. All rights reserved.
 .TH MPI_Get 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Get\fP \- Copies data from the target memory to the origin. 
+\fBMPI_Get\fP, \fBMPI_Rget\fP \- Copies data from the target memory to the origin.
 
 .SH SYNTAX
 .ft R
@@ -13,6 +15,11 @@
 MPI_Get(void *\fIorigin_addr\fP, int \fIorigin_count\fP, MPI_Datatype 
 	\fIorigin_datatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP, 
 	int \fItarget_count\fP, MPI_Datatype \fItarget_datatype\fP, MPI_Win \fIwin\fP)
+
+MPI_Rget(void *\fIorigin_addr\fP, int \fIorigin_count\fP, MPI_Datatype
+	 \fIorigin_datatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP,
+	 int \fItarget_count\fP, MPI_Datatype \fItarget_datatype\fP, MPI_Win \fIwin\fP,
+         MPI_Request *\fIrequest\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
@@ -24,6 +31,13 @@ MPI_GET(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
 	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, 
 	TARGET_COUNT, TARGET_DATATYPE, WIN, IERROR\fP
+
+MPI_RGET(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
+	 TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, WIN, REQUEST, IERROR\fP)
+	 <type> \fIORIGIN_ADDR\fP(*)
+	 INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
+	 INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
+	 TARGET_COUNT, TARGET_DATATYPE, WIN, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -64,14 +78,19 @@ window object used for communication (handle)
 
 .SH OUTPUT PARAMETER
 .ft R
+.TP li
+request
+MPI_Rget: RMA request
 .TP 1i
 IERROR
 Fortran only: Error status (integer). 
 
 .SH DESCRIPTION
 .ft R
-MPI_Get copies data from the target memory to the origin, similar to MPI_Put, except that the direction of data transfer is reversed. The \fIorigin_datatype\fP may not specify overlapping entries in the origin buffer. The target buffer must be contained within the target window, and the copied data must fit, without truncation, in the origin buffer. Only processes within the same node can access the target window.
+\fBMPI_Get\fP copies data from the target memory to the origin, similar to MPI_Put, except that the direction of data transfer is reversed. The \fIorigin_datatype\fP may not specify overlapping entries in the origin buffer. The target buffer must be contained within the target window, and the copied data must fit, without truncation, in the origin buffer. Only processes within the same node can access the target window.
 .sp
+
+\fBMPI_Rget\fP is similar to \fBMPI_Get\fP, except that it allocates a communication request object and associates it with the request handle (the argument \fIrequest\fP) that can be used to wait or test for completion. The completion of an MPI_Rget operation indicates that the data is available in the origin buffer. If \fIorigin_addr\fP points to memory attached to a window, then the data becomes available in the private copy of this window.
 
 .SH FORTRAN 77 NOTES
 .ft R

@@ -80,6 +80,61 @@ ompi_win_finalize(void)
     return OMPI_SUCCESS;
 }
 
+static ompi_win_t *
+alloc_window(struct ompi_communicator_t *comm)
+{
+    ompi_win_t *win;
+    ompi_group_t *group;
+
+    /* create the object */
+    win = OBJ_NEW(ompi_win_t);
+    if (NULL == win) return NULL;
+
+    /* setup data that is independent of osc component */
+    group = comm->c_local_group;
+    OBJ_RETAIN(group);
+    ompi_group_increment_proc_count(group);
+    win->w_group = group;
+
+    return win;
+}
+
+static int
+config_window(void *base, size_t size, int disp_unit,
+              int flavor, int model, ompi_win_t *win)
+{
+    int ret;
+
+    ret = ompi_attr_set_c(WIN_ATTR, win, &win->w_keyhash, 
+                          MPI_WIN_BASE, base, true);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win, 
+                                     &win->w_keyhash, 
+                                     MPI_WIN_SIZE, size, true);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win, 
+                                     &win->w_keyhash, 
+                                     MPI_WIN_DISP_UNIT, disp_unit,
+                                     true);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win,
+                                     &win->w_keyhash,
+                                     MPI_WIN_CREATE_FLAVOR, flavor, true);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win,
+                                     &win->w_keyhash,
+                                     MPI_WIN_MODEL, model, true);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    win->w_f_to_c_index = opal_pointer_array_add(&ompi_mpi_windows, win);
+    if (-1 == win->w_f_to_c_index) return OMPI_ERR_OUT_OF_RESOURCE;
+
+    return OMPI_SUCCESS;
+}
 
 int
 ompi_win_create(void *base, size_t size, 
@@ -88,58 +143,112 @@ ompi_win_create(void *base, size_t size,
                 ompi_win_t** newwin)
 {
     ompi_win_t *win;
-    ompi_group_t *group;
+    int model;
     int ret;
 
-    /* create the object */
-    win = OBJ_NEW(ompi_win_t);
-    if (NULL == win) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    win = alloc_window(comm);
+    if (NULL == win) return OMPI_ERR_OUT_OF_RESOURCE;
 
-    /* setup data that is independent of osc component */
-    group = comm->c_local_group;
-    OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
-    win->w_group = group;
-
-    win->w_baseptr = base;
-    win->w_size = size;
-    win->w_disp_unit = disp_unit;
-
-    /* Fill in required attributes */
-    ret = ompi_attr_set_c(WIN_ATTR, win, &win->w_keyhash, 
-                          MPI_WIN_BASE, win->w_baseptr, true);
-    if (OMPI_SUCCESS != ret) {
-        OBJ_RELEASE(win);
-        return ret;
-    }
-    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win, 
-                                     &win->w_keyhash, 
-                                     MPI_WIN_SIZE, win->w_size, true);
-    if (OMPI_SUCCESS != ret) {
-        OBJ_RELEASE(win);
-        return ret;
-    }
-    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win, 
-                                     &win->w_keyhash, 
-                                     MPI_WIN_DISP_UNIT, win->w_disp_unit,
-                                     true);
+    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, info, MPI_WIN_FLAVOR_CREATE, &model);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
     }
 
-    /* create backend onesided module for this window */
-    ret = ompi_osc_base_select(win, (ompi_info_t*) info, comm);
+    ret = config_window(base, size, disp_unit, MPI_WIN_FLAVOR_CREATE, model, win);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
     }
 
-    /* fill in Fortran index */
-    win->w_f_to_c_index = opal_pointer_array_add(&ompi_mpi_windows, win);
-    if (-1 == win->w_f_to_c_index) {
-        ompi_win_free(win);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    *newwin = win;
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_win_allocate(size_t size, int disp_unit, ompi_info_t *info,
+                  ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin)
+{
+    ompi_win_t *win;
+    int model;
+    int ret;
+    void *base;
+
+    win = alloc_window(comm);
+    if (NULL == win) return OMPI_ERR_OUT_OF_RESOURCE;
+
+    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, info, MPI_WIN_FLAVOR_ALLOCATE, &model);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(win);
+        return ret;
+    }
+
+    ret = config_window(base, size, disp_unit, MPI_WIN_FLAVOR_ALLOCATE, model, win);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(win);
+        return ret;
+    }
+
+    *((void**) baseptr) = base;
+    *newwin = win;
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_win_allocate_shared(size_t size, int disp_unit, ompi_info_t *info,
+                         ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin)
+{
+    ompi_win_t *win;
+    int model;
+    int ret;
+    void *base;
+
+    win = alloc_window(comm);
+    if (NULL == win) return OMPI_ERR_OUT_OF_RESOURCE;
+
+    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, info, MPI_WIN_FLAVOR_SHARED, &model);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(win);
+        return ret;
+    }
+
+    ret = config_window(base, size, disp_unit, MPI_WIN_FLAVOR_SHARED, model, win);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(win);
+        return ret;
+    }
+
+    *((void**) baseptr) = base;
+    *newwin = win;
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_win_create_dynamic(ompi_info_t *info, ompi_communicator_t *comm, ompi_win_t **newwin)
+{
+    ompi_win_t *win;
+    int model;
+    int ret;
+
+    win = alloc_window(comm);
+    if (NULL == win) return OMPI_ERR_OUT_OF_RESOURCE;
+
+    ret = ompi_osc_base_select(win, MPI_BOTTOM, 0, 1, comm, info, MPI_WIN_FLAVOR_DYNAMIC, &model);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(win);
+        return ret;
+    }
+
+    ret = config_window(MPI_BOTTOM, 0, 1, MPI_WIN_FLAVOR_DYNAMIC, model, win);
+    if (OMPI_SUCCESS != ret) {
+        OBJ_RELEASE(win);
+        return ret;
     }
 
     *newwin = win;
@@ -217,11 +326,7 @@ ompi_win_construct(ompi_win_t *win)
     win->error_handler = &ompi_mpi_errors_are_fatal.eh;
     win->errhandler_type = OMPI_ERRHANDLER_TYPE_WIN;
 
-    win->w_disp_unit = 0;
     win->w_flags = 0;
-    win->w_mode = 0;
-    win->w_baseptr = NULL;
-    win->w_size = 0;
     win->w_osc_module = NULL;
 }
 
