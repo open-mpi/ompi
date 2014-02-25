@@ -32,7 +32,6 @@ static void mca_scoll_mpi_module_construct(mca_scoll_mpi_module_t *mpi_module)
 
 static void mca_scoll_mpi_module_destruct(mca_scoll_mpi_module_t *mpi_module)
 {
-    mca_scoll_mpi_module_t *module;
 
     OBJ_RELEASE(mpi_module->previous_barrier_module);
     OBJ_RELEASE(mpi_module->previous_broadcast_module);
@@ -72,7 +71,6 @@ static int mca_scoll_mpi_save_coll_handlers(mca_scoll_base_module_t *module, osh
 static int mca_scoll_mpi_module_enable(mca_scoll_base_module_t *module,
                                         oshmem_group_t *osh_group)
 {
-    int ret;
 
     if (OSHMEM_SUCCESS != mca_scoll_mpi_save_coll_handlers(module, osh_group)){
         MPI_COLL_ERROR("scoll_mpi: mca_coll_mpi_save_coll_handlers failed");
