@@ -59,8 +59,6 @@ int MPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datat
         } else if (ompi_win_peer_invalid(win, target_rank) &&
                    (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if (!ompi_win_comm_allowed(win)) {
-            rc = MPI_ERR_RMA_SYNC;
         } else if (NULL == target_datatype || 
                    MPI_DATATYPE_NULL == target_datatype) {
             rc = MPI_ERR_TYPE;

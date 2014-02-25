@@ -42,14 +42,6 @@ BEGIN_C_DECLS
 #define OMPI_WIN_INVALID      0x00000002
 #define OMPI_WIN_NO_LOCKS     0x00000004
 
-/* mode */
-#define OMPI_WIN_ACCESS_EPOCH 0x00000001
-#define OMPI_WIN_EXPOSE_EPOCH 0x00000002
-#define OMPI_WIN_FENCE        0x00000010
-#define OMPI_WIN_POSTED       0x00000020
-#define OMPI_WIN_STARTED      0x00000040
-#define OMPI_WIN_LOCK_ACCESS  0x00000080
-
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_windows;
 
 struct ompi_win_t {
@@ -76,17 +68,6 @@ struct ompi_win_t {
        whether it's a comm, window, or file. */
     ompi_errhandler_t                    *error_handler;
     ompi_errhandler_type_t               errhandler_type;
-
-    /* displacement factor */
-    int w_disp_unit;
-
-    void *w_baseptr;
-    size_t w_size;
-
-    /** Current epoch / mode (access, expose, lock, etc.).  Checked by
-        the argument checking code in the MPI layer, set by the OSC
-        component.  Modified without locking w_lock. */
-    volatile uint16_t w_mode;
 
     /* one sided interface */
     ompi_osc_base_module_t *w_osc_module;
@@ -116,6 +97,11 @@ int ompi_win_finalize(void);
 int ompi_win_create(void *base, size_t size, int disp_unit, 
                     ompi_communicator_t *comm, ompi_info_t *info,
                     ompi_win_t **newwin);
+int ompi_win_allocate(size_t size, int disp_unit, ompi_info_t *info,
+                      ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin);
+int ompi_win_allocate_shared(size_t size, int disp_unit, ompi_info_t *info,
+                      ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin);
+int ompi_win_create_dynamic(ompi_info_t *info, ompi_communicator_t *comm, ompi_win_t **newwin);
 
 int ompi_win_free(ompi_win_t *win);
 
@@ -149,49 +135,6 @@ static inline int ompi_win_rank(ompi_win_t *win) {
 
 static inline bool ompi_win_allow_locks(ompi_win_t *win) {
     return (0 == (win->w_flags & OMPI_WIN_NO_LOCKS));
-}
-
-static inline int16_t ompi_win_get_mode(ompi_win_t *win) {
-    int16_t mode = win->w_mode;
-    opal_atomic_rmb();
-    return mode;
-}
-
-static inline void ompi_win_set_mode(ompi_win_t *win, int16_t mode) {
-    win->w_mode = mode;
-    opal_atomic_wmb();
-}
-
-static inline void ompi_win_append_mode(ompi_win_t *win, int16_t mode) {
-    win->w_mode |= mode;
-    opal_atomic_wmb();
-}
-
-static inline void ompi_win_remove_mode(ompi_win_t *win,
-                                        int16_t mode)
-{
-    win->w_mode &= ~mode;
-    opal_atomic_wmb();
-}
-
-/* already in an access epoch */
-static inline bool ompi_win_access_epoch(ompi_win_t *win) {
-    int16_t mode = ompi_win_get_mode(win);
-    return (0 != (OMPI_WIN_ACCESS_EPOCH & mode) ? true : false);
-}
-
-/* already in an exposure epoch */
-static inline bool ompi_win_exposure_epoch(ompi_win_t *win) {
-    int16_t mode = ompi_win_get_mode(win);
-    return (0 != (OMPI_WIN_EXPOSE_EPOCH & mode) ? true : false);
-}
-
-/* we're either already in an access epoch or can easily start one
-   (stupid fence rule). Either way, it's ok to be the origin of a
-   communication call. */
-static inline bool ompi_win_comm_allowed(ompi_win_t *win) {
-    int16_t mode = ompi_win_get_mode(win);
-    return (0 != (OMPI_WIN_ACCESS_EPOCH & mode || OMPI_WIN_FENCE & mode) ? true : false);
 }
 
 END_C_DECLS

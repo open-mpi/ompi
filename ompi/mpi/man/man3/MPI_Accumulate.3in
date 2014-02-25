@@ -1,11 +1,11 @@
 .\" -*- nroff -*-
-.\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2013-2014 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Accumulate 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Accumulate \fP \- Combines the contents of the origin buffer with that of a target buffer. 
+\fBMPI_Accumulate\fP, \fBMPI_Raccumulate\fP \- Combines the contents of the origin buffer with that of a target buffer.
 
 .SH SYNTAX
 .ft R
@@ -17,6 +17,12 @@ int MPI_Accumulate(const void *\fIorigin_addr\fP, int \fIorigin_count\fP,
 	MPI_Aint \fItarget_disp\fP, int \fItarget_count\fP, 
 	MPI_Datatype \fItarget_datatype\fP, MPI_Op \fIop\fP, MPI_Win \fIwin\fP)
 
+int MPI_Raccumulate(const void *\fIorigin_addr\fP, int \fIorigin_count\fP,
+	MPI_Datatype \fIorigin_datatype\fP, int \fItarget_rank\fP,
+	MPI_Aint \fItarget_disp\fP, int \fItarget_count\fP,
+	MPI_Datatype \fItarget_datatype\fP, MPI_Op \fIop\fP, MPI_Win \fIwin\fP,
+	MPI_Request *\fIrequest\fP)
+
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
@@ -27,6 +33,13 @@ MPI_ACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP 
 	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT, 
 	TARGET_DATATYPE, OP, WIN, IERROR \fP
+
+MPI_RACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
+	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, OP, WIN, REQUEST, IERROR\fP)
+	<type> \fIORIGIN_ADDR\fP(*)
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
+	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT,
+	TARGET_DATATYPE, OP, WIN, REQUEST, IERROR \fP
 
 .fi
 .SH C++ Syntax
@@ -79,19 +92,22 @@ Window object (handle).
 .SH OUTPUT PARAMETER
 .ft R
 .TP 1i
+MPI_Raccumulate: RMA request
+.TP 1i
 IERROR
 Fortran only: Error status (integer). 
 
 .SH DESCRIPTION
 .ft R
-MPI_Accumulate is a function used for one-sided MPI communication that adds the contents of the origin buffer (as defined by \fIorigin_addr\fP, \fIorigin_count\fP, and \fIorigin_datatype\fP) to the buffer specified by the arguments \fItarget_count\fP and \fItarget_datatype\fP, at offset \fItarget_disp\fP, in the target window specified by \fItarget_rank\fP and \fIwin\fP, using the operation \fIop\fP. The target window can only be accessed by processes within the same node. This is similar to MPI_Put, except that data is combined into the target area instead of overwriting it. 
+\fBMPI_Accumulate\fP is a function used for one-sided MPI communication that adds the contents of the origin buffer (as defined by \fIorigin_addr\fP, \fIorigin_count\fP, and \fIorigin_datatype\fP) to the buffer specified by the arguments \fItarget_count\fP and \fItarget_datatype\fP, at offset \fItarget_disp\fP, in the target window specified by \fItarget_rank\fP and \fIwin\fP, using the operation \fIop\fP. The target window can only be accessed by processes within the same node. This is similar to MPI_Put, except that data is combined into the target area instead of overwriting it.
 .sp
 Any of the predefined operations for MPI_Reduce can be used. User-defined functions cannot be used. For example, if \fIop\fP is MPI_SUM, each element of the origin buffer is added to the corresponding element in the target, replacing the former value in the target. 
 .sp
 Each datatype argument must be a predefined data type or a derived data type, where all basic components are of the same predefined data type. Both datatype arguments must be constructed from the same predefined data type. The operation \fIop\fP applies to elements of that predefined type. The \fItarget_datatype\fP argument must not specify overlapping entries, and the target buffer must fit in the target window. 
 .sp
 A new predefined operation, MPI_REPLACE, is defined. It corresponds to the associative function f(a, b) =b; that is, the current value in the target memory is replaced by the value supplied by the origin. 
-
+.sp
+\fBMPI_Raccumulate\fP is similar to \fBMPI_Accumulate\fP, except that it allocates a communication request object and associates it with the request handle (the argument \fIrequest\fP) that can be used to wait or test for completion. The completion of an \fBMPI_Raccumulate\fP operation indicates that the \fIorigin_addr\fP buffer is free to be updated. It does not indicate that the operation has completed at the target window.
 
 .SH FORTRAN 77 NOTES
 .ft R
@@ -107,12 +123,12 @@ where MPI_ADDRESS_KIND is a constant defined in mpif.h
 and gives the length of the declared integer in bytes.
 
 .SH NOTES
-MPI_Put is a special case of MPI_Accumulate, with the operation MPI_REPLACE. Note, however, that MPI_Put and MPI_Accumulate have different constraints on concurrent updates. 
+MPI_Put is a special case of \fBMPI_Accumulate\fP, with the operation MPI_REPLACE. Note, however, that MPI_Put and \fBMPI_Accumulate\fP have different constraints on concurrent updates.
 .sp
 It is the user's responsibility to guarantee that, when
 using the accumulate functions, the target displacement argument is such
 that accesses to the window are properly aligned according to the data
-type arguments in the call to the MPI_Accumulate function.
+type arguments in the call to the \fBMPI_Accumulate\fP function.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
@@ -125,5 +141,5 @@ may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ER
 .ft R
 .sp
 MPI_Put 
-.br
+MPI_Get_accumulate
 MPI_Reduce

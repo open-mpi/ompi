@@ -44,10 +44,6 @@ int MPI_Win_free(MPI_Win *win)
 
         if (ompi_win_invalid(*win)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
-        } else if (OMPI_WIN_ACCESS_EPOCH & ompi_win_get_mode(*win)) {
-            return OMPI_ERRHANDLER_INVOKE(*win, 
-                                          MPI_ERR_RMA_SYNC, 
-                                          FUNC_NAME);
         }
     }
 

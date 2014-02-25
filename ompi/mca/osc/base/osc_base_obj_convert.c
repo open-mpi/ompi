@@ -239,3 +239,65 @@ ompi_osc_base_process_op(void *outbuf,
 
     return OMPI_SUCCESS;
 }
+
+
+
+int
+ompi_osc_base_sndrcv_op(void *origin,
+                        int32_t origin_count,
+                        struct ompi_datatype_t *origin_dt,
+                        void *target,
+                        int32_t target_count,
+                        struct ompi_datatype_t *target_dt,
+                        ompi_op_t *op)
+{
+    if (ompi_datatype_is_predefined(origin_dt) && origin_dt == target_dt) {
+        ompi_op_reduce(op, origin, target, origin_count, origin_dt);
+    } else {
+        ompi_osc_base_convertor_t recv_convertor;
+        opal_convertor_t send_convertor;
+        struct iovec iov;
+        uint32_t iov_count = 1;
+        size_t max_data;
+        int completed, length;
+        struct opal_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
+
+        /* initialize send convertor */
+        OBJ_CONSTRUCT(&send_convertor, opal_convertor_t);
+        opal_convertor_copy_and_prepare_for_send(ompi_proc_local()->proc_convertor,
+                                                  &(origin_dt->super), origin_count, origin, 0,
+                                                  &send_convertor);
+
+        /* initialize recv convertor */
+        OBJ_CONSTRUCT(&recv_convertor, ompi_osc_base_convertor_t);
+        recv_convertor.op = op;
+        recv_convertor.datatype = ompi_datatype_get_single_predefined_type_from_args(target_dt);
+        opal_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
+                                                 &(target_dt->super), target_count,
+                                                 target, 0, &recv_convertor.convertor);
+
+        memcpy(&master, recv_convertor.convertor.master, sizeof(struct opal_convertor_master_t));
+        master.next = recv_convertor.convertor.master;
+        master.pFunctions = (conversion_fct_t*) &ompi_osc_base_copy_functions;
+        recv_convertor.convertor.master = &master;
+        recv_convertor.convertor.fAdvance = opal_unpack_general;
+
+        /* copy */
+        iov.iov_len = length = 64 * 1024;
+        iov.iov_base = (IOVBASE_TYPE*)malloc( length * sizeof(char) );
+
+        completed = 0;
+        while(0 == completed) {
+            iov.iov_len = length;
+            iov_count = 1;
+            max_data = length;
+            completed |= opal_convertor_pack( &send_convertor, &iov, &iov_count, &max_data );
+            completed |= opal_convertor_unpack( &recv_convertor.convertor, &iov, &iov_count, &max_data );
+        }
+        free( iov.iov_base );
+        OBJ_DESTRUCT( &send_convertor );
+        OBJ_DESTRUCT( &recv_convertor );
+    }
+
+    return OMPI_SUCCESS;
+}
