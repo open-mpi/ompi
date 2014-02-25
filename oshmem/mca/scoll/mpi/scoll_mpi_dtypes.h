@@ -40,21 +40,21 @@ static struct ompi_op_t* shmem_op_to_ompi_op(int op)
 {
     switch (op) {
     case OSHMEM_OP_AND:
-        return &ompi_mpi_op_band;
+        return &(ompi_mpi_op_band.op);
     case OSHMEM_OP_OR:
-        return &ompi_mpi_op_bor;
+        return &(ompi_mpi_op_bor.op);
     case OSHMEM_OP_XOR:
-        return &ompi_mpi_op_bxor;
+        return &(ompi_mpi_op_bxor.op);
     case OSHMEM_OP_MAX:
-        return &ompi_mpi_op_max;
+        return &(ompi_mpi_op_max.op);
     case OSHMEM_OP_MIN:
-        return &ompi_mpi_op_min;
+        return &(ompi_mpi_op_min.op);
     case OSHMEM_OP_SUM:
-        return &ompi_mpi_op_sum;
+        return &(ompi_mpi_op_sum.op);
     case OSHMEM_OP_PROD:
-        return &ompi_mpi_op_prod;
+        return &(ompi_mpi_op_prod.op);
     default:
-        return &ompi_mpi_op_null;
+        return &(ompi_mpi_op_null.op);
     }
 }
 
