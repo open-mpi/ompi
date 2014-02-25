@@ -33,7 +33,7 @@ AM_CPPFLAGS = $(LTDLINCL)
 # Source code files
 
 headers = \
-		alfg.h \  
+        alfg.h \
         arch.h \
         argv.h \
         basename.h \
@@ -70,7 +70,7 @@ headers = \
 
 libopalutil_la_SOURCES = \
         $(headers) \
-		alfg.c \
+        alfg.c \
         arch.c \
         argv.c \
         basename.c \
