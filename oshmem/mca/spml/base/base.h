@@ -66,7 +66,7 @@ OSHMEM_DECLSPEC int mca_spml_base_wait(void* addr,
 OSHMEM_DECLSPEC int mca_spml_base_wait_nb(void* handle);
 OSHMEM_DECLSPEC int mca_spml_base_oob_get_mkeys(int pe,
                                                 uint32_t seg,
-                                                mca_spml_mkey_t *mkeys);
+                                                sshmem_mkey_t *mkeys);
 
 /*
  * MCA framework

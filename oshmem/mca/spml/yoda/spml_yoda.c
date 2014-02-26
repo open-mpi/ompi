@@ -312,14 +312,14 @@ static void mca_yoda_get_response_callback(mca_btl_base_module_t* btl,
 /**
  * note: we have to reg memory directly with btl because no proc will have a full btl list in proc_bml
  */
-int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys)
+int mca_spml_yoda_deregister(sshmem_mkey_t *mkeys)
 {
     int i;
     struct yoda_btl *ybtl;
     mca_spml_yoda_context_t* yoda_context;
 
-	MCA_SPML_CALL(fence());
-	mca_spml_yoda_wait_gets();
+    MCA_SPML_CALL(fence());
+    mca_spml_yoda_wait_gets();
 
     if (!mkeys) {
         return OSHMEM_SUCCESS;
@@ -346,7 +346,7 @@ int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys)
     return OSHMEM_SUCCESS;
 }
 
-mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
+sshmem_mkey_t *mca_spml_yoda_register(void* addr,
                                         size_t size,
                                         uint64_t shmid,
                                         int *count)
@@ -355,7 +355,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
     mca_btl_base_descriptor_t* des = NULL;
     const opal_datatype_t *datatype = &opal_datatype_wchar;
     opal_convertor_t convertor;
-    mca_spml_mkey_t *mkeys;
+    sshmem_mkey_t *mkeys;
     struct yoda_btl *ybtl;
     oshmem_proc_t *proc_self;
     mca_spml_yoda_context_t* yoda_context;
@@ -366,7 +366,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
     SPML_VERBOSE(10, "address %p len %llu", addr, (unsigned long long)size);
     *count = 0;
     /* make sure everything is initialized to 0 */
-    mkeys = (mca_spml_mkey_t *) calloc(1,
+    mkeys = (sshmem_mkey_t *) calloc(1,
                                        mca_spml_yoda.n_btls * sizeof(*mkeys));
     if (!mkeys) {
         return NULL ;
@@ -400,7 +400,7 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
 
         /* If we have shared memory just save its id*/
         if (YODA_BTL_SM == ybtl->btl_type
-                && MEMHEAP_SHM_INVALID != (int) MEMHEAP_SHM_GET_ID(shmid)) {
+                && MAP_SEGMENT_SHM_INVALID != (int)shmid) {
             mkeys[i].u.key = shmid;
             mkeys[i].va_base = 0;
             continue;
@@ -455,9 +455,9 @@ mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
         }
 
         SPML_VERBOSE(5,
-                     "rank %d btl %s address 0x%p len %llu shmid 0x%X|0x%X",
+                     "rank %d btl %s va_base: 0x%p len: %d key %llx size %llu",
                      oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type),
-                     mkeys[i].va_base, (unsigned long long)size, MEMHEAP_SHM_GET_TYPE(shmid), MEMHEAP_SHM_GET_ID(shmid));
+                     mkeys[i].va_base, mkeys[i].len, (unsigned long long)mkeys[i].u.key, (unsigned long long)size);
     }
     OBJ_DESTRUCT(&convertor);
     *count = mca_spml_yoda.n_btls;
@@ -750,7 +750,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
     unsigned int frag_size = 0;
     char *p_src, *p_dst;
     void* rva;
-    mca_spml_mkey_t *r_mkey;
+    sshmem_mkey_t *r_mkey;
     int btl_id = 0;
     struct yoda_btl *ybtl;
     int put_via_send;
@@ -991,7 +991,7 @@ int mca_spml_yoda_enable(bool enable)
 int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
 {
     int rc = OSHMEM_SUCCESS;
-    mca_spml_mkey_t *r_mkey, *l_mkey;
+    sshmem_mkey_t *r_mkey, *l_mkey;
     void* rva;
     unsigned ncopied = 0;
     unsigned int frag_size = 0;

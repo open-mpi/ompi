@@ -43,14 +43,12 @@
 
 #include "oshmem/constants.h"
 #include "oshmem/runtime/runtime.h"
-#include "oshmem/mca/spml/spml.h"
-#include "oshmem/mca/spml/base/base.h"
-#include "oshmem/mca/scoll/scoll.h"
-#include "oshmem/mca/scoll/base/base.h"
-#include "oshmem/mca/atomic/atomic.h"
-#include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/runtime/params.h"
+#include "oshmem/mca/spml/base/base.h"
+#include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/sshmem/base/base.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
@@ -121,6 +119,10 @@ static int _shmem_finalize(void)
     }
 
     if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_memheap_base_framework) ) ) {
+        return ret;
+    }
+
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_sshmem_base_framework) ) ) {
         return ret;
     }
 

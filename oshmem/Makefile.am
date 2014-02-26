@@ -13,7 +13,7 @@
 if OSHMEM_PROFILING
 c_pshmem_lib = shmem/c/profile/liboshmem_c_pshmem.la
 else
-c_pshmem_lib = 
+c_pshmem_lib =
 endif
 
 # Do we have the Fortran bindings?

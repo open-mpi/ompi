@@ -11,8 +11,8 @@
 #define SHMEM_TYPES_H
 
 
-/* 
- * Predefine some internal types so we dont need all the include 
+/*
+ * Predefine some internal types so we dont need all the include
  * dependencies.
  */
 

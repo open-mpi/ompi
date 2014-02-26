@@ -74,7 +74,7 @@ static int spml_ikrit_get_ep_address(spml_ikrit_mxm_ep_conn_info_t *ep_info,
     return OSHMEM_SUCCESS;
 }
 #else
-static inline mxm_mem_key_t *to_mxm_mkey(mca_spml_mkey_t *mkey) {
+static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
 
     if (0 == mkey->len) {
         return &mxm_empty_mem_key;
@@ -519,20 +519,20 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 
 }
 
-mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
+sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
                                          size_t size,
                                          uint64_t shmid,
                                          int *count)
 {
     int i;
-    mca_spml_mkey_t *mkeys;
+    sshmem_mkey_t *mkeys;
 #if MXM_API >= MXM_VERSION(2,0)
     mxm_error_t err;
     mxm_mem_key_t *m_key;
 #endif
 
     *count = 0;
-    mkeys = (mca_spml_mkey_t *) calloc(1, MXM_PTL_LAST * sizeof(*mkeys));
+    mkeys = (sshmem_mkey_t *) calloc(1, MXM_PTL_LAST * sizeof(*mkeys));
     if (!mkeys) {
         return NULL ;
     }
@@ -540,7 +540,7 @@ mca_spml_mkey_t *mca_spml_ikrit_register(void* addr,
     for (i = 0; i < MXM_PTL_LAST; i++) {
         switch (i) {
         case MXM_PTL_SHM:
-            if ((int) MEMHEAP_SHM_GET_ID(shmid) != MEMHEAP_SHM_INVALID) {
+            if ((int)shmid != MAP_SEGMENT_SHM_INVALID) {
                 mkeys[i].u.key = shmid;
                 mkeys[i].va_base = 0;
             } else {
@@ -610,7 +610,7 @@ error_out:
     return NULL ;
 }
 
-int mca_spml_ikrit_deregister(mca_spml_mkey_t *mkeys)
+int mca_spml_ikrit_deregister(sshmem_mkey_t *mkeys)
 {
     int i;
 
@@ -658,7 +658,7 @@ static inline int get_ptl_id(int dst)
     return proc->transport_ids[0];
 }
 
-int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
+int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 {
     int ptl;
     ptl = get_ptl_id(pe);
@@ -695,7 +695,7 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     /* shmem spec states that get() operations are blocking. So it is enough
      to have single mxm request. Also we count on mxm doing copy */
     void *rva;
-    mca_spml_mkey_t *r_mkey;
+    sshmem_mkey_t *r_mkey;
     int ptl_id;
 
     ptl_id = get_ptl_id(src);
@@ -747,7 +747,7 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
 {
     int ptl_id;
     void *rva;
-    mca_spml_mkey_t *r_mkey;
+    sshmem_mkey_t *r_mkey;
 
     ptl_id = get_ptl_id(src);
     /**
@@ -984,7 +984,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
     void *rva;
     mca_spml_ikrit_put_request_t *put_req;
     int ptl_id;
-    mca_spml_mkey_t *r_mkey;
+    sshmem_mkey_t *r_mkey;
     static int count;
     int need_progress = 0;
 
@@ -1131,7 +1131,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
     mxm_send_req_t mxm_req;
     mxm_wait_t wait;
     int ptl_id;
-    mca_spml_mkey_t *r_mkey;
+    sshmem_mkey_t *r_mkey;
     static int count;
 
     ptl_id = get_ptl_id(dst);

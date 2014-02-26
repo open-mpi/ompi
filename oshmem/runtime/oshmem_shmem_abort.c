@@ -123,4 +123,3 @@ int oshmem_shmem_abort(int errcode)
 
     return OSHMEM_SUCCESS;
 }
-

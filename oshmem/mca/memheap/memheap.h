@@ -13,6 +13,8 @@
 #include "opal/mca/mca.h"
 #include "oshmem/constants.h"
 #include "oshmem/proc/proc.h"
+
+#include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/spml/spml.h"
 
 #define DEFAULT_SYMMETRIC_HEAP_SIZE      256
@@ -65,11 +67,11 @@ typedef uint64_t (*mca_memheap_base_module_find_offset_fn_t)(int pe,
  * @return mkey suitable to access pe via given transport id. rva is set to virtual address mapping of (va)
  * on remote pe. 
  */
-typedef mca_spml_mkey_t * (*mca_memheap_base_module_get_cached_mkey_fn_t)(int pe,
+typedef sshmem_mkey_t * (*mca_memheap_base_module_get_cached_mkey_fn_t)(int pe,
                                                                           void* va,
                                                                           int transport_id,
                                                                           void** rva);
-typedef mca_spml_mkey_t * (*mca_memheap_base_module_get_local_mkey_fn_t)(void* va,
+typedef sshmem_mkey_t * (*mca_memheap_base_module_get_local_mkey_fn_t)(void* va,
                                                                          int transport_id);
 
 /*
