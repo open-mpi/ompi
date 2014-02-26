@@ -81,6 +81,13 @@ usnic_convertor_pack_simple(
  */
 void ompi_btl_usnic_exit(void);
 
+/*
+ * If cidrmask==0, it is not included in the output string.  addr is
+ * expected to be in network byte order.
+ */
+void ompi_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
+                                       uint32_t addr, uint32_t cidrmask);
+
 void ompi_btl_usnic_sprintf_mac(char *out, const uint8_t mac[6]);
 
 void ompi_btl_usnic_sprintf_gid_mac(char *out, union ibv_gid *gid);

@@ -126,6 +126,28 @@ static int reg_int(const char* param_name,
 }
 
 
+/*
+ * utility routine for integer parameter registration
+ */
+static int reg_bool(const char* param_name,
+                    const char* help_string,
+                    bool default_value, bool *storage, int level)
+{
+    *storage = default_value;
+    mca_base_component_var_register(&mca_btl_usnic_component.super.btl_version,
+                                    param_name, help_string,
+                                    MCA_BASE_VAR_TYPE_BOOL,
+                                    NULL,
+                                    0,
+                                    0,
+                                    level,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    storage);
+
+    return OMPI_SUCCESS;
+}
+
+
 int ompi_btl_usnic_component_register(void)
 {
     int tmp, ret = 0;
@@ -248,6 +270,28 @@ int ompi_btl_usnic_component_register(void)
     /* Default to bandwidth auto-detection */
     ompi_btl_usnic_module_template.super.btl_bandwidth = 0;
     ompi_btl_usnic_module_template.super.btl_latency = 4;
+
+    /* Connectivity verification */
+    mca_btl_usnic_component.connectivity_enabled = true;
+    CHECK(reg_bool("connectivity_check",
+                   "Whether to enable the usNIC connectivity check upon first send (default = 1, enabled; 0 = disabled)",
+                   mca_btl_usnic_component.connectivity_enabled,
+                   &mca_btl_usnic_component.connectivity_enabled,
+                   OPAL_INFO_LVL_3));
+
+    mca_btl_usnic_component.connectivity_ack_timeout = 1000;
+    CHECK(reg_int("connectivity_ack_timeout",
+                  "Timeout, in milliseconds, while waiting for an ACK while verification connectivity between usNIC devices.  If 0, the connectivity check is disabled (must be >=0).",
+                  mca_btl_usnic_component.connectivity_ack_timeout,
+                  &mca_btl_usnic_component.connectivity_ack_timeout,
+                  REGINT_GE_ZERO, OPAL_INFO_LVL_3));
+
+    mca_btl_usnic_component.connectivity_num_retries = 10;
+    CHECK(reg_int("connectivity_error_num_retries",
+                  "Number of times to retry usNIC connectivity verification before aborting the MPI job (must be >0).",
+                  mca_btl_usnic_component.connectivity_num_retries,
+                  &mca_btl_usnic_component.connectivity_num_retries,
+                  REGINT_GE_ONE, OPAL_INFO_LVL_3));
 
     /* Register some synonyms to the ompi common verbs component */
     ompi_common_verbs_mca_register(&mca_btl_usnic_component.super.btl_version);

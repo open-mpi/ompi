@@ -70,6 +70,7 @@ typedef struct ompi_btl_usnic_addr_t {
     union ibv_gid gid;
     uint32_t ipv4_addr;
     uint32_t cidrmask;
+    uint32_t connectivity_udp_port;
     uint8_t mac[6];
     int mtu;
     uint32_t link_speed_mbps;
@@ -170,6 +171,8 @@ typedef struct mca_btl_base_endpoint_t {
 
     bool                            endpoint_rcvd_segs[WINDOW_SIZE];
     uint32_t                        endpoint_rfstart;
+
+    bool                            endpoint_connectivity_checked;
 } mca_btl_base_endpoint_t;
 
 typedef mca_btl_base_endpoint_t ompi_btl_usnic_endpoint_t;

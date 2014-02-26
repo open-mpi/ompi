@@ -53,6 +53,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_proc = NULL;
     endpoint->endpoint_proc_index = -1;
     endpoint->endpoint_exiting = false;
+    endpoint->endpoint_connectivity_checked = false;
 
     for (i=0; i<USNIC_NUM_CHANNELS; ++i) {
         endpoint->endpoint_remote_addr.qp_num[i] = 0;
