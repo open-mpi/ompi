@@ -1525,7 +1525,7 @@ static void dump_endpoint(ompi_btl_usnic_endpoint_t *endpoint)
         }
     }
 
-    opal_output(0, "      ack_needed=%s n_t=%"PRIu64" n_a=%"PRIu64" n_r=%"PRIu64" n_s=%"PRIu64" rfstart=%"PRIu32"\n",
+    opal_output(0, "      ack_needed=%s n_t=%"UDSEQ" n_a=%"UDSEQ" n_r=%"UDSEQ" n_s=%"UDSEQ" rfstart=%"PRIu32"\n",
                 (endpoint->endpoint_ack_needed?"true":"false"),
                 endpoint->endpoint_next_seq_to_send,
                 endpoint->endpoint_ack_seq_rcvd,
