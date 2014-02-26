@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -132,43 +132,23 @@ ompi_btl_usnic_endpoint_t *
 ompi_btl_usnic_proc_lookup_endpoint(ompi_btl_usnic_module_t *receiver,
                                     uint64_t sender_hashed_rte_name)
 {
-    size_t i;
-    uint32_t mynet, peernet;
     ompi_btl_usnic_proc_t *proc;
     ompi_btl_usnic_endpoint_t *endpoint;
-    
-    for (proc = (ompi_btl_usnic_proc_t*)
-             opal_list_get_first(&mca_btl_usnic_component.usnic_procs);
-         proc != (ompi_btl_usnic_proc_t*)
-             opal_list_get_end(&mca_btl_usnic_component.usnic_procs);
-         proc  = (ompi_btl_usnic_proc_t*)
-             opal_list_get_next(proc)) {
+    opal_list_item_t *item;
+
+    MSGDEBUG1_OUT("lookup_endpoint: recvmodule=%p sendhash=0x%" PRIx64,
+                  (void *)receiver, sender_hashed_rte_name);
+
+    for (item = opal_list_get_first(&receiver->all_endpoints);
+         item != opal_list_get_end(&receiver->all_endpoints);
+         item = opal_list_get_next(item)) {
+        endpoint = container_of(item, ompi_btl_usnic_endpoint_t,
+                                endpoint_endpoint_li);
+        proc = endpoint->endpoint_proc;
         if (ompi_rte_hash_name(&proc->proc_ompi->proc_name) ==
             sender_hashed_rte_name) {
-            break;
-        }
-    }
-
-    /* If we didn't find the sending proc (!), return NULL */
-    if (opal_list_get_end(&mca_btl_usnic_component.usnic_procs) == 
-        (opal_list_item_t*) proc) {
-        return NULL;
-    }
-
-    /* Look through all the endpoints on sender's proc and find one
-       that we can reach.  For the moment, do the same test as in
-       match_modex: check to see if we have compatible IPv4
-       networks. */
-    mynet = ompi_btl_usnic_get_ipv4_subnet(receiver->if_ipv4_addr,
-                                           receiver->if_cidrmask);
-
-    for (i = 0; i < proc->proc_endpoint_count; ++i) {
-        endpoint = proc->proc_endpoints[i];
-        peernet = ompi_btl_usnic_get_ipv4_subnet(endpoint->endpoint_remote_addr.ipv4_addr,
-                                                 endpoint->endpoint_remote_addr.cidrmask);
-
-        /* If we match, we're done */
-        if (mynet == peernet) {
+            MSGDEBUG1_OUT("lookup_endpoint: matched endpoint=%p",
+                          (void *)endpoint);
             return endpoint;
         }
     }
@@ -472,6 +452,9 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
 
     /* Now claim that modex slot */
     proc->proc_modex_claimed[modex_index] = true;
+    MSGDEBUG1_OUT("create_endpoint: module=%p claimed endpoint=%p on proc=%p (hash=0x%" PRIx64 ")\n",
+                  (void *)module, (void *)endpoint, (void *)proc,
+                  ompi_rte_hash_name(&proc->proc_ompi->proc_name));
 
     /* Save the endpoint on this proc's array of endpoints */
     proc->proc_endpoints[proc->proc_endpoint_count] = endpoint;
