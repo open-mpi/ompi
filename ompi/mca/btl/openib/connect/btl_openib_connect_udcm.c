@@ -3,8 +3,8 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All
- *                         rights reserved.
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -299,6 +299,7 @@ static void *udcm_cq_event_dispatch(int fd, int flags, void *context);
 static void *udcm_message_callback (void *context);
 
 static void udcm_set_message_timeout (udcm_message_sent_t *message);
+static void udcm_cancel_message_timeout (udcm_message_sent_t *message);
 
 static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl);
 
@@ -656,13 +657,14 @@ udcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
 #endif
 
 
+    opal_mutex_lock (&udep->udep_lock);
+
     if (MCA_BTL_IB_CLOSED != lcl_ep->endpoint_state) {
+        opal_mutex_unlock (&udep->udep_lock);
         BTL_VERBOSE(("already ongoing %p. state = %d",
                      (void *) lcl_ep, lcl_ep->endpoint_state));
         return OMPI_SUCCESS;
     }
-
-    opal_mutex_lock (&udep->udep_lock);
 
     do {
         opal_atomic_wmb ();
@@ -1525,11 +1527,13 @@ static int udcm_new_message (mca_btl_base_endpoint_t *lcl_ep,
 
     message->endpoint = lcl_ep;
 
+    udcm_set_message_timeout (message);
+
     opal_atomic_wmb ();
 
     *msgp = message;
 
-    BTL_VERBOSE(("created message with type %d", type));
+    BTL_VERBOSE(("created message %p with type %d", (void *) message, type));
 
     return OMPI_SUCCESS;
 }
@@ -1567,10 +1571,11 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
 
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, m->msg_length, 0))) {
         BTL_VERBOSE(("error posting REQ"));
+
+        udcm_cancel_message_timeout (msg);
+
         return rc;
     }
-
-    udcm_set_message_timeout (msg);
 
     return 0;
 }
@@ -1589,10 +1594,11 @@ static int udcm_send_complete (mca_btl_base_endpoint_t *lcl_ep,
     rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0);
     if (0 != rc) {
         BTL_VERBOSE(("error posting complete"));
+
+        udcm_cancel_message_timeout (msg);
+
         return rc;
     }
-
-    udcm_set_message_timeout (msg);
 
     return 0;
 }
@@ -1614,10 +1620,11 @@ static int udcm_send_reject (mca_btl_base_endpoint_t *lcl_ep,
     rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0);
     if (0 != rc) {
         BTL_VERBOSE(("error posting rejection"));
+
+        udcm_cancel_message_timeout (msg);
+
         return rc;
     }
-
-    udcm_set_message_timeout (msg);
 
     return 0;
 }
@@ -1638,6 +1645,7 @@ static int udcm_handle_ack (udcm_module_t *m, const uintptr_t ctx, const uint16_
                             const uint32_t rem_qp)
 {
     udcm_message_sent_t *msg, *next;
+    bool found = false;
 
     opal_mutex_lock (&m->cm_timeout_lock);
 
@@ -1651,12 +1659,17 @@ static int udcm_handle_ack (udcm_module_t *m, const uintptr_t ctx, const uint16_
         }
 
         BTL_VERBOSE(("found matching message"));
+        found = true;
 
         /* found it */
         opal_list_remove_item (&m->flying_messages, &msg->super);
         OBJ_RELEASE(msg);
 
         break;
+    }
+
+    if (!found) {
+        BTL_VERBOSE(("message %p not found in the list of flying messages", (void *) ctx));
     }
 
     opal_mutex_unlock (&m->cm_timeout_lock);
@@ -1809,7 +1822,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         msg_num = (int)(wc[i].wr_id & (~UDCM_WR_DIR_MASK));
 
         if (IBV_WC_SUCCESS != wc[i].status) {
-            BTL_VERBOSE(("recv work request for buffer %d failed, code = %d",
+            BTL_ERROR(("recv work request for buffer %d failed, code = %d",
                          msg_num, wc[i].status));
             count = -1;
             break;
@@ -2122,20 +2135,22 @@ static void udcm_send_timeout (evutil_socket_t fd, short event, void *arg)
 
         msg->tries++;
 
+        udcm_set_message_timeout (msg);
+
         if (0 != udcm_post_send (lcl_ep, msg->data, msg->length, 0)) {
             BTL_VERBOSE(("error reposting message"));
             ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
                                            lcl_ep);
             break;
         }
-
-        udcm_set_message_timeout (msg);
     } while (0);
 }
 
 static void udcm_set_message_timeout (udcm_message_sent_t *message)
 {
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(message->endpoint);
+
+    BTL_VERBOSE(("activating timeout for message %p", (void *) message));
 
     opal_mutex_lock (&m->cm_timeout_lock);
 
@@ -2144,6 +2159,23 @@ static void udcm_set_message_timeout (udcm_message_sent_t *message)
     /* start the event */
     opal_event_evtimer_add (&message->event, &udcm_timeout_tv);
     message->event_active = true;
+
+    opal_mutex_unlock (&m->cm_timeout_lock);
+}
+
+static void udcm_cancel_message_timeout (udcm_message_sent_t *message)
+{
+    udcm_module_t *m = UDCM_ENDPOINT_MODULE(message->endpoint);
+
+    BTL_VERBOSE(("cancelling timeout for message %p", (void *) message));
+
+    opal_mutex_lock (&m->cm_timeout_lock);
+
+    opal_list_remove_item (&m->flying_messages, &message->super);
+
+    /* start the event */
+    opal_event_evtimer_del (&message->event);
+    message->event_active = false;
 
     opal_mutex_unlock (&m->cm_timeout_lock);
 }
@@ -2560,10 +2592,11 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
 
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0))) {
         BTL_VERBOSE(("error posting XREQ"));
+
+        udcm_cancel_message_timeout (msg);
+
         return rc;
     }
-
-    udcm_set_message_timeout (msg);
 
     return 0;
 }
@@ -2597,10 +2630,11 @@ static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_bas
     rc = udcm_post_send (lcl_ep, msg->data, m->msg_length, 0);
     if (0 != rc) {
         BTL_VERBOSE(("error posting complete"));
+
+        udcm_cancel_message_timeout (msg);
+
         return rc;
     }
-
-    udcm_set_message_timeout (msg);
 
     return 0;
 }
