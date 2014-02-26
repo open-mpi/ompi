@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,8 +25,10 @@ lk_fetch_add32(ompi_osc_sm_module_t *module,
                size_t offset,
                uint32_t delta)
 {
+    /* opal_atomic_add_32 is an add then fetch so delta needs to be subtracted out to get the
+     * old value */
     return opal_atomic_add_32((int32_t*) ((char*) &module->node_states[target].lock + offset),
-                              delta);
+                              delta) - delta;
 }
 
 
@@ -149,8 +154,10 @@ ompi_osc_sm_unlock(int target,
         ret = OMPI_SUCCESS;
     } else if (module->outstanding_locks[target] == lock_exclusive) {
         ret = end_exclusive(module, target);
+        module->outstanding_locks[target] = lock_none;
     } else if (module->outstanding_locks[target] == lock_shared) {
         ret = end_shared(module, target);
+	module->outstanding_locks[target] = lock_none;
     } else {
         ret = MPI_ERR_RMA_SYNC;
     }

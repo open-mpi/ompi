@@ -291,8 +291,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
         for (i = 0, total = state_size ; i < ompi_comm_size(comm) ; ++i) {
             module->sizes[i] = rbuf[i];
-            module->bases[i] = ((char *) module->segment_base) + total;
-            total += rbuf[i];
+            if (module->sizes[i]) {
+                module->bases[i] = ((char *) module->segment_base) + total;
+                total += rbuf[i];
+            } else {
+                module->bases[i] = NULL;
+            }
         }
 
         free(rbuf);
