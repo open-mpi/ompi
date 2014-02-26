@@ -134,7 +134,7 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
             continue;
         }
 
-        /* Add to array of all procs */
+        /* Add to array of all procs (proc_match gave us a reference) */
         opal_pointer_array_add(&module->all_procs, usnic_proc);
 
         opal_output_verbose(5, USNIC_OUT,
@@ -200,6 +200,7 @@ static int usnic_del_procs(struct mca_btl_base_module_t *base_module,
             for (index = 0; index < module->all_procs.size; ++index) {
                 if (opal_pointer_array_get_item(&module->all_procs, index) ==
                         proc) {
+                    OBJ_RELEASE(proc);
                     opal_pointer_array_set_item(&module->all_procs, index,
                             NULL);
                     break;

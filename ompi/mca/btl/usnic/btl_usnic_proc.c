@@ -398,6 +398,9 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
  * If we don't find a match, it's not an error: just return "not
  * found".
  *
+ * This routine transfers ownership of an object reference to the caller, who
+ * is eventually responsible for transferring or releasing that reference.
+ *
  * There is a one-to-one correspondence between a ompi_proc_t and a
  * ompi_btl_usnic_proc_t instance.  We cache additional data on the
  * ompi_btl_usnic_proc_t: specifically, the list of
