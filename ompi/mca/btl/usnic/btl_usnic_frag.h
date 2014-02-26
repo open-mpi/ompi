@@ -365,9 +365,6 @@ ompi_btl_usnic_small_send_frag_alloc(ompi_btl_usnic_module_t *module)
     /* this belongs in constructor... */
     frag->ssf_base.sf_base.uf_freelist = &(module->small_send_frags);
 
-    /* always clear flag */
-    frag->ssf_segment.ss_send_desc.send_flags = IBV_SEND_SIGNALED;
-
     assert(frag);
     assert(OMPI_BTL_USNIC_FRAG_SMALL_SEND == frag->ssf_base.sf_base.uf_type);
 
@@ -474,6 +471,10 @@ ompi_btl_usnic_frag_return(
             NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
             opal_convertor_cleanup(&lfrag->lsf_base.sf_convertor);
         }
+    } else if (frag->uf_type == OMPI_BTL_USNIC_FRAG_SMALL_SEND) {
+        ompi_btl_usnic_small_send_frag_t *sfrag;
+        sfrag = (ompi_btl_usnic_small_send_frag_t *)frag;
+        sfrag->ssf_segment.ss_send_desc.send_flags &= ~IBV_SEND_INLINE;
     }
 
     OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
@@ -528,6 +529,7 @@ ompi_btl_usnic_chunk_segment_alloc(
 
     seg = (ompi_btl_usnic_send_segment_t*) item;
     seg->ss_channel = USNIC_DATA_CHANNEL;
+    seg->ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     assert(seg);
     assert(OMPI_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
@@ -562,6 +564,7 @@ ompi_btl_usnic_ack_segment_alloc(ompi_btl_usnic_module_t *module)
 
     ack = (ompi_btl_usnic_ack_segment_t*) item;
     ack->ss_channel = USNIC_PRIORITY_CHANNEL;
+    ack->ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     assert(ack);
     assert(OMPI_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);

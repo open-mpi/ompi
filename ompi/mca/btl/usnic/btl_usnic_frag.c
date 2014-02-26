@@ -203,6 +203,7 @@ small_send_frag_constructor(ompi_btl_usnic_small_send_frag_t *frag)
     fseg->ss_parent_frag = (struct ompi_btl_usnic_send_frag_t *)frag;
 
     frag->ssf_base.sf_base.uf_type = OMPI_BTL_USNIC_FRAG_SMALL_SEND;
+    frag->ssf_segment.ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     /* save data pointer for PML */
     frag->ssf_base.sf_base.uf_src_seg[0].seg_addr.pval =
