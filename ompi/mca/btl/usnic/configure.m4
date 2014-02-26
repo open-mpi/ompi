@@ -49,33 +49,12 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
           ]
     )
 
-    # Do we have the IBV_TRANSPORT_USNIC / IBV_NODE_USNIC defines?
-    # (note: if we have one, we have both)
-    btl_usnic_have_ibv_usnic=0
-    btl_usnic_have_ibv_event_gid_change=0
     AS_IF([test "$btl_usnic_happy" = "yes"],
-          [AC_CHECK_DECL([IBV_NODE_USNIC], 
-                         [btl_usnic_have_ibv_usnic=1],
-                         [],
-                         [ #include <infiniband/verbs.h> 
-])
-
-           AC_CHECK_DECL([IBV_EVENT_GID_CHANGE], 
-                         [btl_usnic_have_ibv_event_gid_change=1],
-                         [],
-                         [ #include <infiniband/verbs.h> 
-])
-           AC_CHECK_DECLS([ibv_event_type_str], [], [],
+          [AC_CHECK_DECLS([IBV_EVENT_GID_CHANGE, ibv_event_type_str], [], [],
                           [#include <infiniband/verbs.h>
 ])
           ]
     )
-    AC_DEFINE_UNQUOTED([BTL_USNIC_HAVE_IBV_USNIC], 
-                       [$btl_usnic_have_ibv_usnic],
-                       [Whether we have IBV_NODE_USNIC / IBV_TRANSPORT_USNIC or not])
-    AC_DEFINE_UNQUOTED([BTL_USNIC_HAVE_IBV_EVENT_GID_CHANGE], 
-                       [$btl_usnic_have_ibv_event_gid_change],
-                       [Whether we have IBV_EVENT_GID_CHANGE or not])
 
     AS_IF([test "$btl_usnic_happy" = "yes"],
           [btl_usnic_WRAPPER_EXTRA_LDFLAGS="$btl_usnic_LDFLAGS"

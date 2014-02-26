@@ -126,8 +126,9 @@ recv_seg_constructor(
 
     /* on receive, BTL header starts after protocol header */
     seg->rs_protocol_header = bseg->us_list.ptr;
-    bseg->us_btl_header =
-        (ompi_btl_usnic_btl_header_t *) (seg->rs_protocol_header + 1);
+    bseg->us_btl_header = (ompi_btl_usnic_btl_header_t *)(
+        ((char *)seg->rs_protocol_header) +
+        OMPI_BTL_USNIC_PROTO_HDR_SZ);
 
     /* initialize verbs work request */
     seg->rs_recv_desc.wr_id = (unsigned long) seg;

@@ -98,7 +98,6 @@ static mca_btl_base_module_t **
 usnic_component_init(int* num_btl_modules, bool want_progress_threads,
                        bool want_mpi_threads);
 static int usnic_component_progress(void);
-static bool port_is_usnic(ompi_common_verbs_port_item_t *port);
 static int init_module_from_port(ompi_btl_usnic_module_t *module,
                                  ompi_common_verbs_port_item_t *port);
 
@@ -526,11 +525,34 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
      * filtering below, so don't let the verbs code see our
      * if_include/if_exclude strings */
     port_list = ompi_common_verbs_find_ports(NULL, NULL,
-                                             OMPI_COMMON_VERBS_FLAGS_UD,
+                                             OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP,
                                              USNIC_OUT);
-    if (NULL == port_list || 0 == opal_list_get_size(port_list)) {
-        mca_btl_base_error_no_nics("usNIC", "device");
+    if (NULL == port_list) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto free_include_list;
+    } else if (opal_list_get_size(port_list) > 0) {
+        mca_btl_usnic_component.use_udp = true;
+        opal_output_verbose(5, USNIC_OUT, "btl:usnic: using UDP transport");
+    } else {
+        OBJ_RELEASE(port_list);
+
+        /* If we got no USNIC_UDP transport devices, try again with
+           USNIC */
+        port_list = ompi_common_verbs_find_ports(NULL, NULL,
+                                                 OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC,
+                                                 USNIC_OUT);
+
+        if (NULL == port_list) {
+            OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            goto free_include_list;
+        } else if (opal_list_get_size(port_list) > 0) {
+            mca_btl_usnic_component.use_udp = false;
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic: using L2-only transport");
+        } else {
+            mca_btl_base_error_no_nics("usNIC", "device");
+            goto free_include_list;
+        }
     }
 
     /* Setup an array of pointers to point to each module (which we'll
@@ -596,16 +618,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: found: device %s, port %d",
                             port->device->device_name, port->port_num);
-
-        /* This component only works with Cisco VIC/usNIC devices; it
-           is not a general verbs UD component.  Reject any ports
-           found on devices that are not Cisco VICs. */
-        if (!port_is_usnic(port)) {
-            opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic: this is not a usnic-capable device");
-            --mca_btl_usnic_component.num_modules;
-            continue; /* next port */
-        }
 
         /* Fill in a bunch of the module struct */
         module = &(mca_btl_usnic_component.usnic_all_modules[i]);
@@ -695,24 +707,24 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         /* Find the max payload this port can handle */
         module->max_frag_payload =
             module->if_mtu - /* start with the MTU */
-            sizeof(ompi_btl_usnic_protocol_header_t) -
+            OMPI_BTL_USNIC_PROTO_HDR_SZ -
             sizeof(ompi_btl_usnic_btl_header_t); /* subtract size of
                                                     the BTL header */
         /* same, but use chunk header */
         module->max_chunk_payload =
             module->if_mtu -
-            sizeof(ompi_btl_usnic_protocol_header_t) -
+            OMPI_BTL_USNIC_PROTO_HDR_SZ -
             sizeof(ompi_btl_usnic_btl_chunk_header_t);
 
         /* Priorirty queue MTU and max size */
         if (0 == module->tiny_mtu) {
             module->tiny_mtu = 768;
             module->max_tiny_payload = module->tiny_mtu -
-                sizeof(ompi_btl_usnic_protocol_header_t) -
+                OMPI_BTL_USNIC_PROTO_HDR_SZ -
                 sizeof(ompi_btl_usnic_btl_header_t);
         } else {
             module->tiny_mtu = module->max_tiny_payload +
-                sizeof(ompi_btl_usnic_protocol_header_t) +
+                OMPI_BTL_USNIC_PROTO_HDR_SZ +
                 sizeof(ompi_btl_usnic_btl_header_t);
         }
 
@@ -982,7 +994,7 @@ static int usnic_handle_completion(
            going.  The sender will eventually re-send it. */
         if (IBV_WC_RECV == cwc->opcode) {
             if (cwc->byte_len <
-                 (sizeof(ompi_btl_usnic_protocol_header_t)+
+                 (OMPI_BTL_USNIC_PROTO_HDR_SZ +
                   sizeof(ompi_btl_usnic_btl_header_t))) {
                 BTL_ERROR(("%s: RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d",
                    ibv_get_device_name(module->device),
@@ -1113,33 +1125,6 @@ static int usnic_component_progress_2(void)
     }
 
     return count;
-}
-
-static bool port_is_usnic(ompi_common_verbs_port_item_t *port)
-{
-    bool is_usnic = false;
-    uint32_t *vpi;
-
-#if BTL_USNIC_HAVE_IBV_USNIC
-    /* If we have the IB_*_USNIC constants, then take any
-       device which advertises them */
-    if (IBV_TRANSPORT_USNIC == port->device->device->transport_type &&
-        IBV_NODE_USNIC == port->device->device->node_type) {
-        is_usnic = true;
-    }
-#endif
-    /* Or take any specific device that we know is a Cisco
-       VIC.  Cisco's vendor ID is 0x1137. */
-    if (!is_usnic && 0x1137 == port->device->device_attr.vendor_id) {
-        for (vpi = mca_btl_usnic_component.vendor_part_ids; *vpi > 0; ++vpi) {
-            if (port->device->device_attr.vendor_part_id == *vpi) {
-                is_usnic = true;
-                break;
-            }
-        }
-    }
-
-    return is_usnic;
 }
 
 /* returns OMPI_SUCCESS if module initialization was successful, OMPI_ERROR
