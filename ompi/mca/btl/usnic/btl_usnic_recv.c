@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -93,7 +93,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         opal_output(0, "=== Unknown sender; dropped: from MAC %s to MAC %s, seq %" UDSEQ, 
                     src_mac, 
                     dest_mac, 
-                    bseg->us_btl_header->seq);
+                    bseg->us_btl_header->pkt_seq);
 #endif
         ++module->stats.num_unk_recvs;
         goto repost_no_endpoint;
@@ -113,12 +113,12 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
 
 #if MSGDEBUG1
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ ", len=%d\n",
-                    (void*) endpoint, hdr->seq, hdr->payload_len);
+                    (void*) endpoint, hdr->pkt_seq, hdr->payload_len);
 #if 0
 
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ " from %s to %s: GOOD! (rel seq %d, lowest seq %" UDSEQ ", highest seq: %" UDSEQ ", rwstart %d) seg %p, module %p\n",
                     (void*) endpoint,
-                    seg->rs_base.us_btl_header->seq, 
+                    seg->rs_base.us_btl_header->pkt_seq,
                     src_mac, dest_mac,
                     window_index,
                     endpoint->endpoint_next_contig_seq_to_recv,
@@ -182,7 +182,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         opal_output(0, "<-- Received CHUNK fid %d ep %p, seq %" UDSEQ " from %s to %s: GOOD! (rel seq %d, lowest seq %" UDSEQ ", highest seq: %" UDSEQ ", rwstart %d) seg %p, module %p\n",
                     seg->rs_base.us_btl_chunk_header->ch_frag_id,
                     (void*) endpoint,
-                    seg->rs_base.us_btl_chunk_header->ch_hdr.seq, 
+                    seg->rs_base.us_btl_chunk_header->ch_hdr.pkt_seq,
                     src_mac, dest_mac,
                     window_index,
                     endpoint->endpoint_next_contig_seq_to_recv,

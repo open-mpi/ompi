@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -116,11 +116,12 @@ ompi_btl_usnic_check_rx_seq(
 {
     uint32_t i;
     ompi_btl_usnic_seq_t seq;
+    int delta;
 
     /*
      * Handle piggy-backed ACK if present
      */
-    if (seg->rs_base.us_btl_header->ack_seq != 0) {
+    if (seg->rs_base.us_btl_header->ack_present) {
 #if MSGDEBUG1
         opal_output(0, "Handle piggy-packed ACK seq %"UDSEQ"\n", seg->rs_base.us_btl_header->ack_seq);
 #endif
@@ -151,12 +152,12 @@ ompi_btl_usnic_check_rx_seq(
            or
          seq >= next_contig_seg_to_recv + WINDOW_SIZE
     */
-    seq = seg->rs_base.us_btl_header->seq;
-    if (seq < endpoint->endpoint_next_contig_seq_to_recv ||
-        seq >= endpoint->endpoint_next_contig_seq_to_recv + WINDOW_SIZE) {
+    seq = seg->rs_base.us_btl_header->pkt_seq;
+    delta = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
+    if (delta < 0 || delta >= WINDOW_SIZE) {
 #if MSGDEBUG1
             opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ " outside of window (%" UDSEQ " - %" UDSEQ "), %p, module %p -- DROPPED\n",
-                        (void*)endpoint, seg->rs_base.us_btl_header->seq, 
+                        (void*)endpoint, seg->rs_base.us_btl_header->pkt_seq, 
                         endpoint->endpoint_next_contig_seq_to_recv,
                         (endpoint->endpoint_next_contig_seq_to_recv + 
                          WINDOW_SIZE - 1),
@@ -165,7 +166,7 @@ ompi_btl_usnic_check_rx_seq(
 #endif
 
         /* Stats */
-        if (seq < endpoint->endpoint_next_contig_seq_to_recv) {
+        if (delta < 0) {
             ++endpoint->endpoint_module->stats.num_oow_low_recvs;
         } else {
             ++endpoint->endpoint_module->stats.num_oow_high_recvs;
@@ -196,19 +197,19 @@ ompi_btl_usnic_check_rx_seq(
 
            rfstart = (rfstart + num_acks_sent) % WINDOW_SIZE
     */
-    i = seq - endpoint->endpoint_next_contig_seq_to_recv;
+    i = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
     i = WINDOW_SIZE_MOD(i + endpoint->endpoint_rfstart);
     if (endpoint->endpoint_rcvd_segs[i]) {
 #if MSGDEBUG1
         opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ ", seg %p: duplicate -- DROPPED\n",
-            (void*) endpoint, seg->rs_base.us_btl_header->seq, (void*) seg);
+            (void*) endpoint, seg->rs_base.us_btl_header->pkt_seq, (void*) seg);
 #endif
         /* highest_seq_rcvd is for debug stats only; it's not used
            in any window calculations */
-        assert(seq <= endpoint->endpoint_highest_seq_rcvd);
+        assert(SEQ_LE(seq, endpoint->endpoint_highest_seq_rcvd));
         /* next_contig_seq_to_recv-1 is the ack number we'll
            send */
-        assert (seq > endpoint->endpoint_next_contig_seq_to_recv - 1);
+        assert (SEQ_GT(seq, endpoint->endpoint_next_contig_seq_to_recv - 1));
 
         /* Stats */
         ++endpoint->endpoint_module->stats.num_dup_recvs;
@@ -216,7 +217,7 @@ ompi_btl_usnic_check_rx_seq(
     }
 
     /* Stats: is this the highest sequence number we've received? */
-    if (seq > endpoint->endpoint_highest_seq_rcvd) {
+    if (SEQ_GT(seq, endpoint->endpoint_highest_seq_rcvd)) {
         endpoint->endpoint_highest_seq_rcvd = seq;
     }
 
@@ -246,6 +247,7 @@ ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
     mca_btl_active_message_callback_t* reg;
     ompi_btl_usnic_seq_t seq;
     ompi_btl_usnic_endpoint_t *endpoint;
+    int delta;
     int i;
 
     bseg = &seg->rs_base;
@@ -264,9 +266,9 @@ ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
                 (void*)(seg->rs_recv_desc.sg_list[0].addr),
                 seg->rs_recv_desc.sg_list[0].length);
 
-        seq = seg->rs_base.us_btl_header->seq;
-        if (seq < endpoint->endpoint_next_contig_seq_to_recv ||
-            seq >= endpoint->endpoint_next_contig_seq_to_recv + WINDOW_SIZE)  {
+        seq = seg->rs_base.us_btl_header->pkt_seq;
+        delta = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
+        if (delta < 0 || delta >= WINDOW_SIZE) {
             goto drop;
         }
 

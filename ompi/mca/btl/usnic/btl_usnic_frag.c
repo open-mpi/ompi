@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,6 +109,7 @@ ack_seg_constructor(
     /* ACK value embedded in BTL header */
     bseg->us_btl_header->payload_type = OMPI_BTL_USNIC_PAYLOAD_TYPE_ACK;
     bseg->us_btl_header->payload_len = 0;
+    bseg->us_btl_header->ack_present = 1;
 
     bseg->us_sg_entry[0].length = sizeof(bseg->us_btl_header);
 }

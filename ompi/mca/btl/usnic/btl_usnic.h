@@ -190,8 +190,18 @@ typedef mca_btl_base_recv_reg_t ompi_btl_usnic_recv_reg_t;
  * Size for sequence numbers (just to ensure we use the same size
  * everywhere)
  */
-typedef uint64_t ompi_btl_usnic_seq_t;
-#define UDSEQ PRIu64
+typedef uint16_t ompi_btl_usnic_seq_t;
+#define UDSEQ PRIu16
+
+/* sequence number comparison macros that allow for rollover.
+ * Relies on the fact that sequence numbers should be relatively close
+ * together as compared to (1<<31)
+ */
+#define SEQ_DIFF(A,B) ((int16_t)((A)-(B)))
+#define SEQ_LT(A,B) (SEQ_DIFF(A,B) < 0)
+#define SEQ_LE(A,B) (SEQ_DIFF(A,B) <= 0)
+#define SEQ_GT(A,B) (SEQ_DIFF(A,B) > 0)
+#define SEQ_GE(A,B) (SEQ_DIFF(A,B) >= 0)
 
 /**
  * Register the usnic BTL MCA params

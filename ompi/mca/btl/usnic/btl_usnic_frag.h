@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,9 +121,8 @@ typedef struct {
     /* Hashed RTE process name of the sender */
     uint64_t sender;
 
-    /* Sliding window sequence number (echoed back in an ACK).  This
-       is 64 bits. */
-    ompi_btl_usnic_seq_t seq;
+    /* Sliding window sequence number (echoed back in an ACK). */
+    ompi_btl_usnic_seq_t pkt_seq;
     ompi_btl_usnic_seq_t ack_seq;       /* for piggy-backing ACKs */
 
     /* payload legnth (in bytes).  We unfortunately have to include
@@ -136,6 +135,9 @@ typedef struct {
 
     /* Type of BTL header (see enum, above) */
     uint8_t payload_type;
+
+    /* true if there is piggy-backed ACK */
+    uint8_t ack_present;
 
     /* tag for upper layer */
     mca_btl_base_tag_t tag;
