@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2007      The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -122,8 +122,10 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* release owning proc */
     proc = endpoint->endpoint_proc;
-    proc->proc_endpoints[endpoint->endpoint_proc_index] = NULL;
-    OBJ_RELEASE(proc);
+    if (NULL != proc) {
+        proc->proc_endpoints[endpoint->endpoint_proc_index] = NULL;
+        OBJ_RELEASE(proc);
+    }
 
     free(endpoint->endpoint_rx_frag_info);
 
