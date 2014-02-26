@@ -368,6 +368,10 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
                 bseg->us_btl_header->payload_type) &&
             seg->rs_base.us_btl_header->put_addr == NULL) {
 
+        MSGDEBUG1_OUT("<-- Received FRAG (fastpath) ep %p, seq %" UDSEQ ", len=%" PRIu16 "\n",
+                      (void*) endpoint, bseg->us_btl_header->pkt_seq,
+                      bseg->us_btl_header->payload_len);
+
         /* do the receive bookkeeping */
         rc = ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
         if (rc != 0) {
