@@ -101,6 +101,10 @@ AC_DEFUN([OMPI_CHECK_LIBNL3],[
 AC_DEFUN([MCA_ompi_btl_usnic_POST_CONFIG], [
     AM_CONDITIONAL([OMPI_BTL_USNIC_BUILD_UNIT_TESTS],
                    [test "$1" -eq 1 && test "X$enable_ompi_btl_usnic_unit_tests" = "Xyes"])
+    AM_CONDITIONAL([OMPI_BTL_USNIC_BUILD_LIBNL1_UTILS],
+                   [test "$1" -eq 1 && test "X$enable_ompi_btl_usnic_libnl1_utils" = "Xyes"])
+    AM_CONDITIONAL([OMPI_BTL_USNIC_BUILD_LIBNL3_UTILS],
+                   [test "$1" -eq 1 && test "X$enable_ompi_btl_usnic_libnl3_utils" = "Xyes"])
 ])
 
 # MCA_btl_usnic_CONFIG([action-if-can-compile], 
@@ -151,6 +155,38 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
 ])
           ]
     )
+
+    # Search for libnl so we can query routing information.  We need to
+    # distinguish between v1 and v3.
+    enable_ompi_btl_usnic_libnl1_utils=no
+    enable_ompi_btl_usnic_libnl3_utils=no
+    AS_IF([test "$btl_usnic_happy" = "yes"],
+          [OMPI_CHECK_LIBNL3([btl_usnic_libnl],
+                             [enable_ompi_btl_usnic_libnl3_utils=yes],
+                             [enable_ompi_btl_usnic_libnl3_utils=no])
+
+           # fall back to libnl1 if libnl3 could not be found
+           AS_IF([test "X$enable_ompi_btl_usnic_libnl3_utils" = "Xno"],
+                 [OMPI_CHECK_PACKAGE([btl_usnic_libnl],
+                                     [netlink/netlink.h],
+                                     [nl],
+                                     [nl_recvmsgs_default],
+                                     [],
+                                     [],
+                                     [],
+                                     [enable_ompi_btl_usnic_libnl1_utils=yes],
+                                     [enable_ompi_btl_usnic_libnl1_utils=no])])
+
+           AS_IF([test "X$enable_ompi_btl_usnic_libnl3_utils" = "Xno" &&
+                  test "X$enable_ompi_btl_usnic_libnl1_utils" = "Xno"],
+                 [AC_MSG_NOTICE([could not find a libnl or libnl-3, disabling the usnic BTL])
+                  btl_usnic_happy="no"])
+
+           btl_usnic_CPPFLAGS="$btl_usnic_CPPFLAGS $btl_usnic_libnl_CPPFLAGS"
+           btl_usnic_CFLAGS="$btl_usnic_CFLAGS $btl_usnic_libnl_CFLAGS"
+           btl_usnic_LDFLAGS="$btl_usnic_LDFLAGS $btl_usnic_libnl_LDFLAGS"
+           btl_usnic_LIBS="$btl_usnic_libnl_LIBS $btl_usnic_LIBS"
+           ])
 
     AS_IF([test "$btl_usnic_happy" = "yes"],
           [btl_usnic_WRAPPER_EXTRA_LDFLAGS="$btl_usnic_LDFLAGS"
