@@ -600,6 +600,36 @@ ompi_btl_usnic_ack_segment_return(
     OMPI_FREE_LIST_RETURN_MT(&(module->ack_segs), &(ack->ss_base.us_list));
 }
 
+/* returns the expected L2 packet size in bytes for the given FRAG recv
+ * segment, based on the payload_len */
+static inline uint32_t
+ompi_btl_usnic_frag_seg_proto_size(ompi_btl_usnic_recv_segment_t *rseg)
+{
+    ompi_btl_usnic_segment_t *bseg = &rseg->rs_base;
+
+    MSGDEBUG1_OUT("us_type=%d\n", bseg->us_type);
+    assert(OMPI_BTL_USNIC_PAYLOAD_TYPE_FRAG == bseg->us_btl_header->payload_type);
+
+    return (OMPI_BTL_USNIC_PROTO_HDR_SZ +
+            sizeof(*bseg->us_btl_header) +
+            bseg->us_btl_header->payload_len);
+}
+
+/* returns the expected L2 packet size in bytes for the given CHUNK recv
+ * segment, based on the payload_len */
+static inline uint32_t
+ompi_btl_usnic_chunk_seg_proto_size(ompi_btl_usnic_recv_segment_t *rseg)
+{
+    ompi_btl_usnic_segment_t *bseg = &rseg->rs_base;
+
+    assert(OMPI_BTL_USNIC_PAYLOAD_TYPE_CHUNK ==
+           bseg->us_btl_chunk_header->ch_hdr.payload_type);
+
+    return (OMPI_BTL_USNIC_PROTO_HDR_SZ +
+            sizeof(*bseg->us_btl_chunk_header) +
+            bseg->us_btl_chunk_header->ch_hdr.payload_len);
+}
+
 END_C_DECLS
 
 #endif

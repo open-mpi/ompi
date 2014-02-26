@@ -49,8 +49,9 @@
  * packet type in the BTL header
  */
 void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *seg,
-                           ompi_btl_usnic_channel_t *channel)
+                              ompi_btl_usnic_recv_segment_t *seg,
+                              ompi_btl_usnic_channel_t *channel,
+                              uint32_t l2_bytes_rcvd)
 {
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -132,6 +133,14 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
 #endif
 #endif
 
+        if (OPAL_UNLIKELY(ompi_btl_usnic_frag_seg_proto_size(seg) !=
+                          l2_bytes_rcvd)) {
+            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
+                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
+                       l2_bytes_rcvd, ompi_btl_usnic_frag_seg_proto_size(seg)));
+            abort();
+        }
+
         /* If this it not a PUT, Pass this segment up to the PML.
          * Be sure to get the payload length from the BTL header because
          * the L2 layer may artificially inflate (or otherwise change)
@@ -171,6 +180,14 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     if (OMPI_BTL_USNIC_PAYLOAD_TYPE_CHUNK == bseg->us_btl_header->payload_type) {
         int frag_index;
         ompi_btl_usnic_rx_frag_info_t *fip;
+
+        if (OPAL_UNLIKELY(ompi_btl_usnic_chunk_seg_proto_size(seg) !=
+                          l2_bytes_rcvd)) {
+            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
+                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
+                       l2_bytes_rcvd, ompi_btl_usnic_chunk_seg_proto_size(seg)));
+            abort();
+        }
 
         /* Is incoming sequence # ok? */
         if (OPAL_UNLIKELY(ompi_btl_usnic_check_rx_seq(endpoint, seg,
