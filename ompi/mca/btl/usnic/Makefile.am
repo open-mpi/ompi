@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
-# Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,6 +21,8 @@
 
 AM_CPPFLAGS = $(btl_usnic_CPPFLAGS) 
 AM_CFLAGS = $(btl_usnic_CFLAGS)
+
+EXTRA_DIST = README.txt README.test
 
 dist_ompidata_DATA = \
     help-mpi-btl-usnic.txt
@@ -48,7 +50,9 @@ sources = \
     btl_usnic_stats.h \
     btl_usnic_stats.c \
     btl_usnic_util.c \
-    btl_usnic_util.h
+    btl_usnic_util.h \
+    btl_usnic_test.c \
+    btl_usnic_test.h
 
 if OPAL_HAVE_HWLOC
 sources += btl_usnic_hwloc.c
@@ -81,3 +85,9 @@ noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)
 libmca_btl_usnic_la_LDFLAGS= -module -avoid-version $(btl_usnic_LDFLAGS) 
 libmca_btl_usnic_la_LIBADD = $(btl_usnic_LIBS)
+
+if OMPI_BTL_USNIC_BUILD_UNIT_TESTS
+ompi_btl_usnic_run_tests_SOURCES = test/ompi_btl_usnic_run_tests.c
+ompi_btl_usnic_run_tests_LDADD = -ldl
+bin_PROGRAMS = ompi_btl_usnic_run_tests
+endif OMPI_BTL_USNIC_BUILD_UNIT_TESTS

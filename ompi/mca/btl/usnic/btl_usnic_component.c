@@ -73,6 +73,7 @@
 #include "btl_usnic_send.h"
 #include "btl_usnic_recv.h"
 #include "btl_usnic_proc.h"
+#include "btl_usnic_test.h"
 
 #define OMPI_BTL_USNIC_NUM_WC       500
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -212,6 +213,11 @@ static int usnic_component_close(void)
         free(mca_btl_usnic_component.vendor_part_ids);
         mca_btl_usnic_component.vendor_part_ids = NULL;
     }
+
+#if OMPI_BTL_USNIC_UNIT_TESTS
+    /* clean up the unit test infrastructure */
+    ompi_btl_usnic_cleanup_tests();
+#endif
 
     return OMPI_SUCCESS;
 }
