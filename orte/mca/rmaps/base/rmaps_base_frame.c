@@ -393,13 +393,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
          * bind to those cpus - any other binding policy is an
          * error
          */
-        if (!(OPAL_BIND_GIVEN & OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy))) {
-            if (opal_hwloc_use_hwthreads_as_cpus) {
-                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
-            } else {
-                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
-            }
-        } else {
+        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
             if (opal_hwloc_use_hwthreads_as_cpus) {
                 if (OPAL_BIND_TO_HWTHREAD != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                     orte_show_help("help-orte-rmaps-base.txt", "mismatch-binding", true,
@@ -415,15 +409,21 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
                                "bind-to core");
                 return ORTE_ERR_SILENT;
             }
+        } else {
+            if (opal_hwloc_use_hwthreads_as_cpus) {
+                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_HWTHREAD);
+            } else {
+                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
+            }
         }
 #endif
     }
 
     if (orte_rmaps_base_pernode) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--pernode, -pernode", "--map-by node:PPR=1",
+                       "--pernode, -pernode", "--map-by ppr:1:node",
                        "rmaps_base_pernode, rmaps_ppr_pernode",
-                       "rmaps_base_mapping_policy=node:PPR=1");
+                       "rmaps_base_mapping_policy=ppr:1:node");
         /* there is no way to resolve this conflict, so if something else was
          * given, we have no choice but to error out
          */
@@ -441,9 +441,9 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     if (0 < orte_rmaps_base_n_pernode) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--npernode, -npernode", "--map-by node:PPR=N",
+                       "--npernode, -npernode", "--map-by ppr:N:node",
                        "rmaps_base_n_pernode, rmaps_ppr_n_pernode",
-                       "rmaps_base_mapping_policy=node:PPR=N");
+                       "rmaps_base_mapping_policy=ppr:N:node");
         /* there is no way to resolve this conflict, so if something else was
          * given, we have no choice but to error out
          */
@@ -461,9 +461,9 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
 
     if (0 < orte_rmaps_base_n_persocket) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
-                       "--npersocket, -npersocket", "--map-by socket:PPR=N",
+                       "--npersocket, -npersocket", "--map-by ppr:N:socket",
                        "rmaps_base_n_persocket, rmaps_ppr_n_persocket",
-                       "rmaps_base_mapping_policy=socket:PPR=N");
+                       "rmaps_base_mapping_policy=ppr:N:socket");
         /* there is no way to resolve this conflict, so if something else was
          * given, we have no choice but to error out
          */
