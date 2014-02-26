@@ -66,6 +66,33 @@ ompi_btl_usnic_dump_hex(uint8_t *addr, int len)
 }
 
 
+/*
+ * Trivial wrapper around snprintf'ing an IPv4 address, with or
+ * without a CIDR mask (we don't usually carry around addresses in
+ * struct sockaddr form, so this wrapper is marginally easier than
+ * using inet_ntop()).
+ */
+void ompi_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
+                                       uint32_t addr, uint32_t cidrmask)
+{
+    uint8_t *p = (uint8_t*) &addr;
+    if (cidrmask > 0) {
+        snprintf(out, maxlen, "%u.%u.%u.%u/%u",
+                 p[0],
+                 p[1],
+                 p[2],
+                 p[3],
+                 cidrmask);
+    } else {
+        snprintf(out, maxlen, "%u.%u.%u.%u",
+                 p[0],
+                 p[1],
+                 p[2],
+                 p[3]);
+    }
+}
+
+
 void ompi_btl_usnic_sprintf_mac(char *out, const uint8_t mac[6])
 {
     snprintf(out, 32, "%02x:%02x:%02x:%02x:%02x:%02x", 

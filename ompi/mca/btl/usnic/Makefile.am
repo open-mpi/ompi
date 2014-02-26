@@ -50,6 +50,9 @@ sources = \
     btl_usnic_ack.c \
     btl_usnic_ack.h \
     btl_usnic_component.c \
+    btl_usnic_connectivity.h \
+    btl_usnic_cclient.c \
+    btl_usnic_cagent.c \
     btl_usnic_endpoint.c \
     btl_usnic_endpoint.h \
     btl_usnic_frag.c \

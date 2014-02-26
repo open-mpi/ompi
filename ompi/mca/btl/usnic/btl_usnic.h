@@ -190,8 +190,14 @@ typedef struct ompi_btl_usnic_component_t {
     /** retrans characteristics */
     int retrans_timeout;
 
-    /** socket used for rtnetlink queries */
     struct usnic_rtnl_sk *unlsk;
+
+    /** convertor packing threshold */
+    /** connectivity verification: ACK timeout, number of retries
+        before issue an error/abort the job */
+    bool connectivity_enabled;
+    int connectivity_ack_timeout;
+    int connectivity_num_retries;
 } ompi_btl_usnic_component_t;
 
 OMPI_MODULE_DECLSPEC extern ompi_btl_usnic_component_t mca_btl_usnic_component;
