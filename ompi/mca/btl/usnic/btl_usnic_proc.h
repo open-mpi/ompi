@@ -56,6 +56,17 @@ typedef struct ompi_btl_usnic_proc_t {
     struct mca_btl_base_endpoint_t **proc_endpoints;
     /** Number of entries in the proc_endpoints array */
     size_t proc_endpoint_count;
+
+    /**
+     * Communication weights between local interfaces (modules) and remote
+     * interfaces (nascent endpoints).  proc_ep_weights[i][j] is the weight
+     * between usnic_active_modules[i] and the interface corresponding to
+     * proc->proc_modex[j].
+     */
+    int8_t **proc_ep_weights;
+
+    /** greatest weight value (not location) found in proc_ep_weights */
+    int8_t proc_ep_max_weight;
 } ompi_btl_usnic_proc_t;
 
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_proc_t);

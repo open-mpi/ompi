@@ -38,6 +38,12 @@
 #include "btl_usnic_module.h"
 #include "btl_usnic_util.h"
 
+/* larger weight values are more desirable (i.e., worth, not cost) */
+enum conn_weight {
+    WEIGHT_UNREACHABLE = -1,
+    WEIGHT_DIFF_NET = 0,
+    WEIGHT_SAME_NET = 1
+};
 
 static void proc_construct(ompi_btl_usnic_proc_t* proc)
 {
@@ -47,6 +53,7 @@ static void proc_construct(ompi_btl_usnic_proc_t* proc)
     proc->proc_modex_claimed = NULL;
     proc->proc_endpoints = NULL;
     proc->proc_endpoint_count = 0;
+    proc->proc_ep_weights = NULL;
 
     /* add to list of all proc instance */
     opal_list_append(&mca_btl_usnic_component.usnic_procs, &proc->super);
@@ -55,6 +62,8 @@ static void proc_construct(ompi_btl_usnic_proc_t* proc)
 
 static void proc_destruct(ompi_btl_usnic_proc_t* proc)
 {
+    uint32_t i;
+
     /* remove from list of all proc instances */
     opal_list_remove_item(&mca_btl_usnic_component.usnic_procs, &proc->super);
 
@@ -67,6 +76,15 @@ static void proc_destruct(ompi_btl_usnic_proc_t* proc)
     if (NULL != proc->proc_modex_claimed) {
         free(proc->proc_modex_claimed);
         proc->proc_modex_claimed = NULL;
+    }
+
+    if (NULL != proc->proc_ep_weights) {
+        for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+            free(proc->proc_ep_weights[i]);
+            proc->proc_ep_weights[i] = NULL;
+        }
+        free(proc->proc_ep_weights);
+        proc->proc_ep_weights = NULL;
     }
 
     /* Release all endpoints associated with this proc */
@@ -240,6 +258,40 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
     return proc;
 }
 
+/* Compare the addresses of the local interface corresponding to module and the
+ * remote interface corresponding to proc_modex_addr.  Returns a weight value. */
+static enum conn_weight compute_weight(
+    ompi_btl_usnic_module_t *module,
+    ompi_btl_usnic_addr_t *proc_modex_addr)
+{
+    char my_ip_string[INET_ADDRSTRLEN], peer_ip_string[INET_ADDRSTRLEN];
+    uint32_t mynet, peernet;
+
+    inet_ntop(AF_INET, &module->if_ipv4_addr,
+              my_ip_string, sizeof(my_ip_string));
+    inet_ntop(AF_INET, &proc_modex_addr->ipv4_addr,
+              peer_ip_string, sizeof(peer_ip_string));
+
+    /* Just compare the CIDR-masked IP address to see if they're on
+       the same network.  If so, we're good. */
+    mynet   = ompi_btl_usnic_get_ipv4_subnet(module->if_ipv4_addr,
+                                             module->if_cidrmask);
+    peernet = ompi_btl_usnic_get_ipv4_subnet(proc_modex_addr->ipv4_addr,
+                                             proc_modex_addr->cidrmask);
+
+    opal_output_verbose(5, USNIC_OUT,
+                        "btl:usnic:%s: checking my IP address/subnet (%s/%d) vs. peer (%s/%d): %s",
+                        __func__, my_ip_string, module->if_cidrmask,
+                        peer_ip_string, proc_modex_addr->cidrmask,
+                        (mynet == peernet ? "match" : "DO NOT match"));
+
+    if (mynet == peernet) {
+        return WEIGHT_SAME_NET;
+    } else {
+        return WEIGHT_DIFF_NET;
+    }
+}
+
 /*
  * For a specific module, see if this proc has matching address/modex
  * info.  If so, create an endpoint and return it.
@@ -247,55 +299,100 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
 static int match_modex(ompi_btl_usnic_module_t *module,
                        ompi_btl_usnic_proc_t *proc)
 {
-    size_t i;
+    size_t i, j;
+    int8_t **weights;
+    uint32_t num_modules;
+    int modex_index = -1;
 
-    /* Each module can claim an address in the proc's modex info that
-       no other local module is using.  See if we can find an unused
-       address that's on this module's subnet. */
-    for (i = 0; i < proc->proc_modex_count; ++i) {
-        if (!proc->proc_modex_claimed[i]) {
-            char my_ip_string[32], peer_ip_string[32];
-            uint32_t mynet, peernet;
+    num_modules = mca_btl_usnic_component.num_modules;
 
-            inet_ntop(AF_INET, &module->if_ipv4_addr,
-                      my_ip_string, sizeof(my_ip_string));
-            inet_ntop(AF_INET, &proc->proc_modex[i].ipv4_addr,
-                      peer_ip_string, sizeof(peer_ip_string));
-            opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic:match_modex: checking my IP address/subnet (%s/%d) vs. peer (%s/%d)",
-                                my_ip_string, module->if_cidrmask,
-                                peer_ip_string, proc->proc_modex[i].cidrmask);
+    opal_output_verbose(20, USNIC_OUT, "btl:usnic:%s: module=%p proc=%p with dimensions %d x %d",
+                        __func__, (void *)module, (void *)proc,
+                        num_modules, (int)proc->proc_modex_count);
 
-            /* JMS For the moment, do an abbreviated comparison.  Just
-               compare the CIDR-masked IP address to see if they're on
-               the same network.  If so, we're good.  Need to
-               eventually replace this with the same type of IP
-               address matching that is in the TCP BTL (probably want
-               to move that routine down to opal/util/if.c...?) */
-            mynet   = ompi_btl_usnic_get_ipv4_subnet(module->if_ipv4_addr,
-                                                     module->if_cidrmask);
-            peernet = ompi_btl_usnic_get_ipv4_subnet(proc->proc_modex[i].ipv4_addr,
-                                                     proc->proc_modex[i].cidrmask);
+    /* We compute an interface match-up weights table once for each
+     * (module,proc) pair and cache it in the proc.  Store per-proc instead of
+     * per-module, since MPI dynamic process routines can add procs but not new
+     * modules. */
+    if (NULL == proc->proc_ep_weights) {
+        proc->proc_ep_weights = malloc(num_modules *
+                                       sizeof(*proc->proc_ep_weights));
+        if (NULL == proc->proc_ep_weights) {
+            OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+            return -1;
+        }
+        proc->proc_ep_max_weight = WEIGHT_UNREACHABLE;
 
-            /* If we match, we're done */
-            if (mynet == peernet) {
-                opal_output_verbose(5, USNIC_OUT, "btl:usnic:match_modex: IP networks match -- yay!");
-                break;
+        weights = proc->proc_ep_weights;
+
+        for (i = 0; i < num_modules; ++i) {
+            weights[i] = malloc(proc->proc_modex_count * sizeof(*weights[i]));
+            if (NULL == weights[i]) {
+                OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+
+                /* free everything allocated so far */
+                for (j = 0; j < i; ++j) {
+                    free(proc->proc_ep_weights[j]);
+                }
+                free(proc->proc_ep_weights);
+                return -1;
             }
-            else {
-                opal_output_verbose(5, USNIC_OUT, "btl:usnic:match_modex: IP networks DO NOT match -- mynet=%#x peernet=%#x",
-                                    mynet, peernet);
+
+            /* compute all weights */
+            for (j = 0; j < proc->proc_modex_count; ++j) {
+                weights[i][j] = compute_weight(mca_btl_usnic_component.usnic_active_modules[i],
+                                               &proc->proc_modex[j]);
+                if (!mca_btl_usnic_component.use_udp &&
+                    WEIGHT_DIFF_NET == weights[i][j]) {
+                    /* UDP is required for routability */
+                    weights[i][j] = WEIGHT_UNREACHABLE;
+                }
+                if (weights[i][j] > proc->proc_ep_max_weight) {
+                    proc->proc_ep_max_weight = weights[i][j];
+                }
             }
         }
     }
 
-    /* Return -1 on failure */
-    if (i >= proc->proc_modex_count) {
+    if (WEIGHT_UNREACHABLE == proc->proc_ep_max_weight) {
+        opal_output_verbose(5, USNIC_OUT, "btl:usnic:%s: unable to find any valid interface pairs for proc %s",
+                            __func__, OMPI_NAME_PRINT(&proc->proc_ompi->proc_name));
         return -1;
     }
 
+    weights = proc->proc_ep_weights;
+
+    /* Each module can claim an address in the proc's modex info that no other
+     * local module is using.  Take the first maximal interface pairing where
+     * the remote interface is not yet claimed.  If unclaimed remote interfaces
+     * remain but their pairings are non-maximal, they will not be used.
+     *
+     * This code relies on the order of modules on a local side matching the
+     * order of the modex entries that we send around, otherwise both sides may
+     * not agree on a bidirectional connection.  It also assumes that add_procs
+     * will be invoked on the local modules in that same order, for the same
+     * reason.  If those assumptions do not hold, we will need to canonicalize
+     * this match ordering somehow, probably by (jobid,vpid) pair or by the
+     * interface MAC or IP address. */
+    for (i = 0; i < num_modules; ++i) {
+        if (mca_btl_usnic_component.usnic_active_modules[i] == module) {
+            for (j = 0; j < proc->proc_modex_count; ++j) {
+                if (!proc->proc_modex_claimed[j] &&
+                    weights[i][j] == proc->proc_ep_max_weight) {
+                    opal_output_verbose(5, USNIC_OUT,
+                                        "module[%d] (%p) claiming endpoint[%d] on proc %p",
+                                        (int)i, (void *)module, (int)j,
+                                        (void *)proc);
+                    modex_index = j;
+                    break;
+                }
+            }
+        }
+    }
+
     /* If MTU does not match, throw an error */
-    if (proc->proc_modex[i].mtu != module->if_mtu) {
+    if (modex_index >= 0 &&
+        proc->proc_modex[modex_index].mtu != module->if_mtu) {
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
                        true,
                        ompi_process_info.nodename,
@@ -306,10 +403,11 @@ static int match_modex(ompi_btl_usnic_module_t *module,
                        "unknown" : proc->proc_ompi->proc_hostname,
                        proc->proc_modex[i].mtu);
         return -1;
-    } 
+    }
 
-    return i;
+    return modex_index;
 }
+
 /*
  * Create an endpoint and claim the matched modex slot
  */
