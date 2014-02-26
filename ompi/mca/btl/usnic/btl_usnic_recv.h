@@ -13,13 +13,15 @@
 #include <infiniband/verbs.h>
 
 #include "btl_usnic.h"
+#include "btl_usnic_util.h"
 #include "btl_usnic_frag.h"
 #include "btl_usnic_proc.h"
 
 
 void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *rseg,
-                           ompi_btl_usnic_channel_t *channel);
+                              ompi_btl_usnic_recv_segment_t *rseg,
+                              ompi_btl_usnic_channel_t *channel,
+                              uint32_t l2_bytes_rcvd);
 
 /*
  * Given an incoming segment, lookup the endpoint that sent it
@@ -240,8 +242,9 @@ dup_needs_ack:
  */
 static inline void
 ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *seg,
-                           ompi_btl_usnic_channel_t *channel)
+                         ompi_btl_usnic_recv_segment_t *seg,
+                         ompi_btl_usnic_channel_t *channel,
+                         uint32_t l2_bytes_rcvd)
 {
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -293,7 +296,7 @@ drop:
         channel->chan_deferred_recv = seg;
 
     } else {
-        ompi_btl_usnic_recv_call(module, seg, channel);
+        ompi_btl_usnic_recv_call(module, seg, channel, l2_bytes_rcvd);
     }
 }
 
@@ -349,8 +352,9 @@ repost:
  */
 static inline void
 ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *seg,
-                           ompi_btl_usnic_channel_t *channel)
+                    ompi_btl_usnic_recv_segment_t *seg,
+                    ompi_btl_usnic_channel_t *channel,
+                    uint32_t l2_bytes_rcvd)
 {
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -372,6 +376,14 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
                       (void*) endpoint, bseg->us_btl_header->pkt_seq,
                       bseg->us_btl_header->payload_len);
 
+        if (OPAL_UNLIKELY(ompi_btl_usnic_frag_seg_proto_size(seg) !=
+                          l2_bytes_rcvd)) {
+            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
+                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
+                       l2_bytes_rcvd, ompi_btl_usnic_frag_seg_proto_size(seg)));
+            abort();
+        }
+
         /* do the receive bookkeeping */
         rc = ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
         if (rc != 0) {
@@ -390,7 +402,7 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
                     &seg->rs_desc, reg->cbdata);
 
     } else {
-        ompi_btl_usnic_recv_call(module, seg, channel);
+        ompi_btl_usnic_recv_call(module, seg, channel, l2_bytes_rcvd);
     }
 }
 

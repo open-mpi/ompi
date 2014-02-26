@@ -965,7 +965,8 @@ static int usnic_component_progress(void)
                 if (OPAL_LIKELY(wc.opcode == IBV_WC_RECV &&
                                 wc.status == IBV_WC_SUCCESS)) {
                     rseg = (ompi_btl_usnic_recv_segment_t*)(intptr_t)wc.wr_id;
-                    ompi_btl_usnic_recv_fast(module, rseg, channel);
+                    ompi_btl_usnic_recv_fast(module, rseg, channel,
+                                             wc.byte_len);
                     fastpath_ok = false;    /* prevent starvation */
                     return 1;
                 } else {
@@ -1048,7 +1049,7 @@ static int usnic_handle_completion(
     /**** Receive completions ****/
     case OMPI_BTL_USNIC_SEG_RECV:
         assert(IBV_WC_RECV == cwc->opcode);
-        ompi_btl_usnic_recv(module, rseg, channel);
+        ompi_btl_usnic_recv(module, rseg, channel, cwc->byte_len);
         break;
 
     default:
