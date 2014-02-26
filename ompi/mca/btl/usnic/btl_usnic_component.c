@@ -518,6 +518,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     /* initialization */
     mca_btl_usnic_component.my_hashed_rte_name = 
         ompi_rte_hash_name(&(ompi_proc_local()->proc_name));
+    MSGDEBUG1_OUT("%s: my_hashed_rte_name=0x%" PRIx64,
+                   __func__, mca_btl_usnic_component.my_hashed_rte_name);
 
     opal_srand(&ompi_btl_usnic_rand_buff, ((uint32_t) getpid()));
 
