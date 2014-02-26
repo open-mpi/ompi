@@ -27,6 +27,9 @@ EXTRA_DIST = README.txt README.test
 dist_ompidata_DATA = \
     help-mpi-btl-usnic.txt
 
+test_sources = \
+    test/btl_usnic_component_test.h
+
 sources = \
     btl_usnic_compat.h \
     btl_usnic_module.c \
@@ -52,7 +55,8 @@ sources = \
     btl_usnic_util.c \
     btl_usnic_util.h \
     btl_usnic_test.c \
-    btl_usnic_test.h
+    btl_usnic_test.h \
+    $(test_sources)
 
 if OPAL_HAVE_HWLOC
 sources += btl_usnic_hwloc.c

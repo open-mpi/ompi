@@ -1584,3 +1584,5 @@ void ompi_btl_usnic_component_debug(void)
         ompi_btl_usnic_print_stats(module, "  manual", /*reset=*/false);
     }
 }
+
+#include "test/btl_usnic_component_test.h"
