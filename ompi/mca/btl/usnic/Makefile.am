@@ -31,6 +31,17 @@ test_sources = \
     test/btl_usnic_component_test.h \
     test/btl_usnic_graph_test.h
 
+libnl_utils_sources = \
+    btl_usnic_libnl_utils.h
+
+if OMPI_BTL_USNIC_BUILD_LIBNL1_UTILS
+libnl_utils_sources += btl_usnic_libnl1_utils.c
+endif OMPI_BTL_USNIC_BUILD_LIBNL1_UTILS
+
+if OMPI_BTL_USNIC_BUILD_LIBNL3_UTILS
+libnl_utils_sources += btl_usnic_libnl3_utils.c
+endif OMPI_BTL_USNIC_BUILD_LIBNL3_UTILS
+
 sources = \
     btl_usnic_compat.h \
     btl_usnic_module.c \
@@ -59,7 +70,8 @@ sources = \
     btl_usnic_util.h \
     btl_usnic_test.c \
     btl_usnic_test.h \
-    $(test_sources)
+    $(test_sources) \
+    $(libnl_utils_sources)
 
 if OPAL_HAVE_HWLOC
 sources += btl_usnic_hwloc.c
