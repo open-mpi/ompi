@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -314,45 +314,51 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
             check_sanity(&if_sanity_list, ibv_get_device_name(device), j);
         }
 
-        /* Check the the device-specific flags to see if we want this
+        /* Check the device-specific flags to see if we want this
            device */
-        want = true;
+        want = false;
         if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB &&
-            IBV_TRANSPORT_IB != device->transport_type) {
-            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want IB)",
-                                ibv_get_device_name(device),
-                                transport_name_to_str(device->transport_type));
-            want = false;
+            IBV_TRANSPORT_IB == device->transport_type) {
+            opal_output_verbose(5, stream, "verbs interface %s has right type (IB)",
+                                ibv_get_device_name(device));
+            want = true;
         }
         if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IWARP &&
-            IBV_TRANSPORT_IWARP != device->transport_type) {
-            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want IWARP)",
-                                ibv_get_device_name(device),
-                                transport_name_to_str(device->transport_type));
-            want = false;
+            IBV_TRANSPORT_IWARP == device->transport_type) {
+            opal_output_verbose(5, stream, "verbs interface %s has right type (IWARP)",
+                                ibv_get_device_name(device));
+            want = true;
         }
 
         /* Check for RC or UD QP support */
-        if (flags & OMPI_COMMON_VERBS_FLAGS_RC ||
-            flags & OMPI_COMMON_VERBS_FLAGS_UD) {
+        if (flags & OMPI_COMMON_VERBS_FLAGS_RC) {
             rc = ompi_common_verbs_qp_test(device_context, flags);
-            if (OMPI_ERR_TYPE_MISMATCH == rc) {
-                want = false;
-                opal_output_verbose(5, stream, 
-                                    "verbs interface %s: made an RC QP! we don't want RC-capable devices",
+            if (OMPI_SUCCESS == rc) {
+                want = true;
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s supports RC QPs",
                                     ibv_get_device_name(device));
-            } else if (OMPI_SUCCESS != rc) {
-                want = false;
-                opal_output_verbose(5, stream, 
-                                    "verbs interface %s: failed to make %s QP",
-                                    ibv_get_device_name(device),
-                                    ((flags & (OMPI_COMMON_VERBS_FLAGS_RC |
-                                               OMPI_COMMON_VERBS_FLAGS_UD)) ==
-                                     (OMPI_COMMON_VERBS_FLAGS_RC |
-                                      OMPI_COMMON_VERBS_FLAGS_UD)) ? 
-                                    "both UD and RC" :
-                                    (flags & OMPI_COMMON_VERBS_FLAGS_RC) ? 
-                                    "RC" : "UD");
+            } else {
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s failed to make RC QP",
+                                    ibv_get_device_name(device));
+            }
+        }
+        if (flags & OMPI_COMMON_VERBS_FLAGS_UD) {
+            rc = ompi_common_verbs_qp_test(device_context, flags);
+            if (OMPI_SUCCESS == rc) {
+                want = true;
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s supports UD QPs",
+                                    ibv_get_device_name(device));
+            } else if (OMPI_ERR_TYPE_MISMATCH == rc) {
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s made an RC QP! we don't want RC-capable devices",
+                                    ibv_get_device_name(device));
+            } else {
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s failed to make UD QP",
+                                    ibv_get_device_name(device));
             }
         }
 
