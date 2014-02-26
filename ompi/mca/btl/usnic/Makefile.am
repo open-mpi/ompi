@@ -28,7 +28,8 @@ dist_ompidata_DATA = \
     help-mpi-btl-usnic.txt
 
 test_sources = \
-    test/btl_usnic_component_test.h
+    test/btl_usnic_component_test.h \
+    test/btl_usnic_graph_test.h
 
 sources = \
     btl_usnic_compat.h \
@@ -42,6 +43,8 @@ sources = \
     btl_usnic_endpoint.h \
     btl_usnic_frag.c \
     btl_usnic_frag.h \
+    btl_usnic_graph.h \
+    btl_usnic_graph.c \
     btl_usnic_hwloc.h \
     btl_usnic_mca.c \
     btl_usnic_proc.c \
