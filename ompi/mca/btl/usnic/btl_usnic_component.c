@@ -794,7 +794,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                             module->rd_num,
                             module->cq_num);
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: priority MTU %s:%d = %d",
+                            "btl:usnic: priority MTU %s:%d = %" PRIsize_t,
                             ibv_get_device_name(module->device),
                             module->port_num,
                             module->tiny_mtu);
