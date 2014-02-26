@@ -664,8 +664,14 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
     ah_attr.port_num = 1;
     ah_attr.grh.dgid = endpoint->endpoint_remote_addr.gid;
 
-    endpoint->endpoint_remote_ah = ibv_create_ah(module->pd, &ah_attr);
-    if (NULL == endpoint->endpoint_remote_ah) {
+    while (1) {
+        endpoint->endpoint_remote_ah = ibv_create_ah(module->pd, &ah_attr);
+        if (NULL != endpoint->endpoint_remote_ah) {
+            break;
+        }
+        if (EAGAIN == errno) {
+            continue;
+        }
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true,
                        ompi_process_info.nodename,
