@@ -55,7 +55,6 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/util/show_help.h"
 
-#include "ompi/mca/rte/rte.h"
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"

@@ -28,7 +28,6 @@
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"
 
-#include "ompi/mca/rte/rte.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/constants.h"
 

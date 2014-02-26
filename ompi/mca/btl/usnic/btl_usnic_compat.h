@@ -21,6 +21,11 @@
 /* for per-file #ifdefs, esp. #includes */
 #  define OMPI_BTL_USNIC_CISCO_V1_6 1
 
+/* for some of the ORTE_* constants that we name-shift to OMPI_* here */
+#  include "orte/mca/errmgr/errmgr.h"
+#  include "orte/runtime/orte_globals.h"
+#  include "orte/util/show_help.h"
+
 #define opal_event_set(event_base_,A,B,C,D,E) \
     opal_event_set(A,B,C,D,E)
 #  define opal_show_help orte_show_help
@@ -52,6 +57,10 @@
 
 #elif (OMPI_MAJOR_VERSION == 1 && OMPI_MINOR_VERSION >= 7) || \
       (OMPI_MAJOR_VERSION >= 2)
+
+/* the v1.7+ equivalent way to get OMPI_ERROR_LOG and friends */
+#  include "ompi/mca/rte/rte.h"
+
 /* v1.7, v1.8 (to be released), trunk (v1.9), or later */
 /* TODO validate that all of these things actually work with v1.7 */
 #  define USNIC_OUT ompi_btl_base_framework.framework_output
