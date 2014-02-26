@@ -129,6 +129,9 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
         rc = ompi_btl_usnic_create_endpoint(module, usnic_proc,
                 &usnic_endpoint);
         if (OMPI_SUCCESS != rc) {
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic:%s: unable to create endpoint for module=%p proc=%p\n",
+                                __func__, (void *)module, (void *)usnic_proc);
             OBJ_RELEASE(usnic_proc);
             continue;
         }

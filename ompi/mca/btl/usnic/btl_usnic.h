@@ -40,6 +40,7 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 
+#include "btl_usnic_libnl_utils.h"
 #include "btl_usnic_compat.h"
 
 BEGIN_C_DECLS
@@ -188,6 +189,9 @@ typedef struct ompi_btl_usnic_component_t {
 
     /** retrans characteristics */
     int retrans_timeout;
+
+    /** socket used for rtnetlink queries */
+    struct usnic_rtnl_sk *unlsk;
 } ompi_btl_usnic_component_t;
 
 OMPI_MODULE_DECLSPEC extern ompi_btl_usnic_component_t mca_btl_usnic_component;

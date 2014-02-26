@@ -209,10 +209,13 @@ static int usnic_component_close(void)
 
     free(mca_btl_usnic_component.usnic_all_modules);
     free(mca_btl_usnic_component.usnic_active_modules);
+
     if (NULL != mca_btl_usnic_component.vendor_part_ids) {
         free(mca_btl_usnic_component.vendor_part_ids);
         mca_btl_usnic_component.vendor_part_ids = NULL;
     }
+
+    ompi_btl_usnic_rtnl_sk_free(mca_btl_usnic_component.unlsk);
 
 #if OMPI_BTL_USNIC_UNIT_TESTS
     /* clean up the unit test infrastructure */
@@ -475,7 +478,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     usnic_if_filter_t *filter;
     bool keep_module;
     bool filter_incl = false;
-    int min_distance, num_local_procs;
+    int min_distance, num_local_procs, err;
 
     *num_btl_modules = 0;
 
@@ -527,6 +530,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                    __func__, mca_btl_usnic_component.my_hashed_rte_name);
 
     opal_srand(&ompi_btl_usnic_rand_buff, ((uint32_t) getpid()));
+
+    err = ompi_btl_usnic_rtnl_sk_alloc(&mca_btl_usnic_component.unlsk);
+    if (0 != err) {
+        /* API returns negative errno values */
+        opal_show_help("help-mpi-btl-usnic.txt", "rtnetlink init fail",
+                       true, ompi_process_info.nodename, strerror(-err));
+        return NULL;
+    }
 
     /* Find the ports that we want to use.  We do our own interface name
      * filtering below, so don't let the verbs code see our
@@ -1212,6 +1223,7 @@ static int init_module_from_port(ompi_btl_usnic_module_t *module,
             return OMPI_ERROR;
         }
     }
+    module->local_addr.link_speed_mbps = module->super.btl_bandwidth;
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: bandwidth for %s:%d = %u",
                         ibv_get_device_name(module->device),

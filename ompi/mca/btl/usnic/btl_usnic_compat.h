@@ -31,6 +31,9 @@
 #  define opal_show_help orte_show_help
 #  define mca_base_var_check_exclusive(S,A,B,C,D,E,F) \
     mca_base_param_check_exclusive_string(A,B,C,D,E,F)
+#  define ompi_rte_compare_name_fields(a, b, c) \
+    orte_util_compare_name_fields(a, b, c)
+#  define OMPI_RTE_CMP_ALL ORTE_NS_CMP_ALL
 #  define ompi_process_info orte_process_info
 #  define ompi_rte_hash_name orte_util_hash_name
 #  define OMPI_PROC_MY_NAME ORTE_PROC_MY_NAME

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,15 +58,23 @@ typedef struct ompi_btl_usnic_proc_t {
     size_t proc_endpoint_count;
 
     /**
-     * Communication weights between local interfaces (modules) and remote
-     * interfaces (nascent endpoints).  proc_ep_weights[i][j] is the weight
-     * between usnic_active_modules[i] and the interface corresponding to
-     * proc->proc_modex[j].
+     * A table giving the chosen pairing between modules and endpoint
+     * addresses.  It has size mca_btl_usnic_component.num_modules.
+     * j=proc_ep_match_table[i] means that
+     * mca_btl_usnic_component.usnic_active_modules[i] should be paired with
+     * proc_modex[j].  If there is no pairing for proc_modex[i] then
+     * proc_ep_match_table[i] will be set to -1
+     *
+     * If matchings have not yet been computed for this proc, the pointer will
+     * be NULL.
      */
-    int8_t **proc_ep_weights;
+    int *proc_ep_match_table;
 
-    /** greatest weight value (not location) found in proc_ep_weights */
-    int8_t proc_ep_max_weight;
+    /**
+     * true iff proc_ep_match_table != NULL and it contains at least one entry
+     * that is not equal to -1.
+     */
+    bool proc_match_exists;
 } ompi_btl_usnic_proc_t;
 
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_proc_t);
