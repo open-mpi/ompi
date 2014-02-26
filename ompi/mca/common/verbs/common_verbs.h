@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,12 +79,20 @@ enum {
     OMPI_COMMON_VERBS_FLAGS_UD = 0x4,
     OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB = 0x8,
     OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IWARP = 0x10,
+    OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC = 0x20,
+    OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP = 0x40,
     /* Note that these 2 link layer flags will only be useful if
        defined(HAVE_IBV_LINK_LAYER_ETHERNET). Otherwise, they will be
        ignored. */
-    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB = 0x20,
-    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET = 0x40,
+    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_IB = 0x80,
+    OMPI_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET = 0x100,
     OMPI_COMMON_VERBS_FLAGS_MAX
+};
+
+enum {
+    /* a constant used when probing the usNIC transport type (custom L2 vs.
+     * UDP/IP) */
+    OMPI_COMMON_VERBS_USNIC_PROBE_MAGIC = 42
 };
 
 /**

@@ -145,6 +145,9 @@ typedef struct ompi_btl_usnic_component_t {
     /** convertor packing threshold */
     int pack_lazy_threshold;
 
+    /** does the stack below us speak UDP or custom-L2? */
+    bool use_udp;
+
     /* vvvvvvvvvv non-fastpath fields go below vvvvvvvvvv */
 
     /** list of usnic proc structures */
