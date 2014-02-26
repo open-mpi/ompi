@@ -198,8 +198,8 @@ ompi_osc_sm_rget_accumulate(void *origin_addr,
     if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op) goto done;
 
     if (op == &ompi_mpi_op_replace.op) {
-        return ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
-                                    remote_address, target_count, target_dt);
+        ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+                                   remote_address, target_count, target_dt);
     } else {
         ret = ompi_osc_base_sndrcv_op(origin_addr, origin_count, origin_dt,
                                       remote_address, target_count, target_dt,
@@ -354,8 +354,8 @@ ompi_osc_sm_get_accumulate(void *origin_addr,
     if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op) goto done;
 
     if (op == &ompi_mpi_op_replace.op) {
-        return ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
-                                    remote_address, target_count, target_dt);
+        ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+                                   remote_address, target_count, target_dt);
     } else {
         ret = ompi_osc_base_sndrcv_op(origin_addr, origin_count, origin_dt,
                                       remote_address, target_count, target_dt,

@@ -113,7 +113,7 @@ static inline int ompi_osc_rdma_lock_self (ompi_osc_rdma_module_t *module, ompi_
             module->shared_count++;
         }
 
-        lock->lock_acks_received = 1;
+        lock->lock_acks_received++;
     } else {
         /* queue the lock */
         queue_lock (module, my_rank, lock->type, lock->serial_number);
@@ -415,7 +415,7 @@ int ompi_osc_rdma_unlock_all (struct ompi_win_t *win)
 
     /* reset all fragment counters */
     memset (module->epoch_outgoing_frag_count, 0, ompi_comm_size(module->comm) * sizeof (module->epoch_outgoing_frag_count[0]));
-    memset (module->passive_eager_send_active, 0, ompi_comm_size(module->comm) * module->passive_eager_send_active[0]);
+    memset (module->passive_eager_send_active, 0, ompi_comm_size(module->comm) * sizeof (module->passive_eager_send_active[0]));
 
     opal_list_remove_item (&module->outstanding_locks, &lock->super);
     OBJ_RELEASE(lock);
@@ -477,6 +477,12 @@ static int ompi_osc_rdma_flush_lock (ompi_osc_rdma_module_t *module, ompi_osc_rd
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 return ret;
             }
+
+            /* start all sendreqs to target */
+            ret = ompi_osc_rdma_frag_flush_target (module, i);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                return ret;
+            }
         }
     } else {
         flush_req.frag_count = module->epoch_outgoing_frag_count[target];
@@ -486,12 +492,12 @@ static int ompi_osc_rdma_flush_lock (ompi_osc_rdma_module_t *module, ompi_osc_rd
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             return ret;
         }
-    }
 
-    /* start all sendreqs to target */
-    ret = ompi_osc_rdma_frag_flush_all (module);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return ret;
+        /* start all sendreqs to target */
+        ret = ompi_osc_rdma_frag_flush_target (module, target);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
     }
 
     /* wait for all the requests and the flush ack (meaning remote completion) */
@@ -521,9 +527,7 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
                          "ompi_osc_rdma_flush starting..."));
 
     if (ompi_comm_rank (module->comm) == target) {
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "calling opal_progress. incoming complete = %d",
-                             module->frag_request->req_complete));
+        /* nothing to flush */
         opal_progress ();
         return OMPI_SUCCESS;
     }
@@ -665,7 +669,7 @@ static inline int activate_lock (ompi_osc_rdma_module_t *module, int requestor,
         }
     }
 
-    lock->lock_acks_received = 1;
+    lock->lock_acks_received++;
     opal_condition_broadcast (&module->cond);
 
     return OMPI_SUCCESS;

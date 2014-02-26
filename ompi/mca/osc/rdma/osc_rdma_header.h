@@ -103,7 +103,7 @@ typedef struct ompi_osc_rdma_header_complete_t ompi_osc_rdma_header_complete_t;
 struct ompi_osc_rdma_header_get_acc_t {
     ompi_osc_rdma_header_base_t base;
 
-    int16_t tag;
+    uint16_t tag;
     uint32_t count;
     uint64_t len;
     uint64_t displacement;
@@ -114,7 +114,7 @@ typedef struct ompi_osc_rdma_header_get_acc_t ompi_osc_rdma_header_get_acc_t;
 struct ompi_osc_rdma_header_cswap_t {
     ompi_osc_rdma_header_base_t base;
 
-    int16_t  tag;
+    uint16_t tag;
 
     uint32_t len;
     uint64_t displacement;
