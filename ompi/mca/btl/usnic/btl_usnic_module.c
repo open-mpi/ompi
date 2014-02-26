@@ -969,7 +969,7 @@ usnic_do_resends(
         endpoint = sseg->ss_parent_frag->sf_endpoint;
 
         /* clobber any stale piggy-backed ACK */
-        sseg->ss_base.us_btl_header->ack_seq = 0;
+        sseg->ss_base.us_btl_header->ack_present = 0;
 
         /* Only post this segment if not already posted */
         if (sseg->ss_send_posted == 0) {
@@ -1816,10 +1816,8 @@ static ompi_btl_usnic_seq_t
 get_initial_seq_no(void)
 {
     ompi_btl_usnic_seq_t isn;
-    /* only utilize the bottom 62 bits to avoid hitting seq # overflow */
-    isn = (((uint64_t)opal_rand(&ompi_btl_usnic_rand_buff) & ((1LL<<30)-1)) << 32) |
-        ((uint64_t)opal_rand(&ompi_btl_usnic_rand_buff) & ((1LL<<32)-1));
-    isn += 2;      /* guarantee > 1 */
+
+    isn = (ompi_btl_usnic_seq_t)opal_rand(&ompi_btl_usnic_rand_buff);
 
     return isn;
 }

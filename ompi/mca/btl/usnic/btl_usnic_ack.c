@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +71,7 @@ ompi_btl_usnic_handle_ack(
     module = endpoint->endpoint_module;
 
     /* ignore if this is an old ACK */
-    if (ack_seq < endpoint->endpoint_ack_seq_rcvd) {
+    if (SEQ_LT(ack_seq, endpoint->endpoint_ack_seq_rcvd)) {
 #if MSGDEBUG1
         opal_output(0, "Got OLD DUP ACK seq %"UDSEQ" < %"UDSEQ"\n",
                 ack_seq, endpoint->endpoint_ack_seq_rcvd);
@@ -89,7 +89,7 @@ ompi_btl_usnic_handle_ack(
 
     /* Does this ACK have a new sequence number that we haven't
        seen before? */
-    for (is = endpoint->endpoint_ack_seq_rcvd + 1; is <= ack_seq; ++is) {
+    for (is = endpoint->endpoint_ack_seq_rcvd + 1; SEQ_LE(is, ack_seq); ++is) {
         sseg = endpoint->endpoint_sent_segs[WINDOW_SIZE_MOD(is)];
 
 #if MSGDEBUG1
@@ -99,7 +99,7 @@ ompi_btl_usnic_handle_ack(
 #endif
 
         assert(sseg != NULL);
-        assert(sseg->ss_base.us_btl_header->seq == is);
+        assert(sseg->ss_base.us_btl_header->pkt_seq == is);
 #if MSGDEBUG1
         if (sseg->ss_hotel_room == -1) {
             opal_output(0, "=== ACKed frag in sent_frags array is not in hotel/enqueued, module %p, endpoint %p, seg %p, seq %" UDSEQ ", slot %lu",
@@ -264,7 +264,7 @@ ompi_btl_usnic_ack_timeout(
     {
         opal_output(0, "Send timeout!  seg %p, room %d, seq %" UDSEQ "\n",
                     (void*)seg, seg->ss_hotel_room,
-                    seg->ss_base.us_btl_header->seq);
+                    seg->ss_base.us_btl_header->pkt_seq);
     }
 #endif
 

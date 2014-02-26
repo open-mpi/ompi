@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,12 +157,13 @@ ompi_btl_usnic_endpoint_send_segment(
 
             next_seq_to_send > ack_seq_rcvd + WINDOW_SIZE
     */
-    assert(endpoint->endpoint_next_seq_to_send > 
-           endpoint->endpoint_ack_seq_rcvd);
+    assert(SEQ_GT(endpoint->endpoint_next_seq_to_send,
+                  endpoint->endpoint_ack_seq_rcvd));
     assert(WINDOW_OPEN(endpoint));
 
     /* Assign sequence number and increment */
-    sseg->ss_base.us_btl_header->seq = endpoint->endpoint_next_seq_to_send++;
+    sseg->ss_base.us_btl_header->pkt_seq =
+        endpoint->endpoint_next_seq_to_send++;
 
     /* Fill in remote address to indicate PUT or not */
     sseg->ss_base.us_btl_header->put_addr =
@@ -183,7 +184,7 @@ ompi_btl_usnic_endpoint_send_segment(
         opal_output(0, "--> Sending %s: seq: %" UDSEQ ", sender: 0x%016lx from device %s MAC %s, qp %u, seg %p, room %d, wc len %u, remote MAC %s, qp %u",
             (sseg->ss_parent_frag->sf_base.uf_type == OMPI_BTL_USNIC_FRAG_LARGE_SEND)?
                 "CHUNK" : "FRAG",
-            sseg->ss_base.us_btl_header->seq, 
+            sseg->ss_base.us_btl_header->pkt_seq,
             sseg->ss_base.us_btl_header->sender, 
             endpoint->endpoint_module->device->name,
             mac_str1, module->local_addr.qp_num[sseg->ss_channel],
@@ -200,7 +201,7 @@ ompi_btl_usnic_endpoint_send_segment(
        is the same length as the sender's window (i.e., WINDOW_SIZE).
        To find a unique slot in this array, use (seq % WINDOW_SIZE).
      */
-    sfi = WINDOW_SIZE_MOD(sseg->ss_base.us_btl_header->seq);
+    sfi = WINDOW_SIZE_MOD(sseg->ss_base.us_btl_header->pkt_seq);
     endpoint->endpoint_sent_segs[sfi] = sseg;
     sseg->ss_ack_pending = true;
 
