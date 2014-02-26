@@ -179,7 +179,7 @@ static int bind_upwards(orte_job_t *jdata,
                  */
                 if (ncpus < data->num_bound &&
                     !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
-                    (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
+                    OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
                                    opal_hwloc_base_print_binding(map->binding), node->name,
                                    data->num_bound, ncpus);
@@ -294,7 +294,7 @@ static int bind_downwards(orte_job_t *jdata,
              */
             if (ncpus < data->num_bound &&
                 !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)) {
-                if (OPAL_BIND_GIVEN & opal_hwloc_binding_policy) {
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
                                    opal_hwloc_base_print_binding(map->binding), node->name,
                                    data->num_bound, ncpus);
@@ -382,8 +382,8 @@ static int bind_in_place(orte_job_t *jdata,
              */
             if (!support->cpubind->set_thisproc_cpubind &&
                 !support->cpubind->set_thisthread_cpubind) {
-                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy) ||
-                    !(OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
+                if (!OPAL_BINDING_REQUIRED(map->binding) ||
+                    !OPAL_BINDING_POLICY_IS_SET(map->binding)) {
                     /* we are not required to bind, so ignore this */
                     continue;
                 }
@@ -400,7 +400,7 @@ static int bind_in_place(orte_job_t *jdata,
              */
             if (!support->membind->set_thisproc_membind &&
                 !support->membind->set_thisthread_membind &&
-                (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
+                OPAL_BINDING_POLICY_IS_SET(map->binding)) {
                 if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
                     membind_warned = true;
@@ -416,7 +416,7 @@ static int bind_in_place(orte_job_t *jdata,
          * computing a binding due to our default policy, and no cores are found
          * on this node, just silently skip it - we will not bind
          */
-        if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
+        if (!OPAL_BINDING_POLICY_IS_SET(map->binding) &&
             HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "Unable to bind-to core by default on node %s as no cores detected",
@@ -466,7 +466,7 @@ static int bind_in_place(orte_job_t *jdata,
              */
             if (ncpus < data->num_bound &&
                 !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
-                (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
+                OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
                                opal_hwloc_base_print_binding(map->binding), node->name,
                                data->num_bound, ncpus);
@@ -763,8 +763,8 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
              */
             if (!support->cpubind->set_thisproc_cpubind &&
                 !support->cpubind->set_thisthread_cpubind) {
-                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy) ||
-                    !(OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
+                if (!OPAL_BINDING_REQUIRED(jdata->map->binding) ||
+                    !OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
                     /* we are not required to bind, so ignore this */
                     continue;
                 }
@@ -782,7 +782,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
              */
             if (!support->membind->set_thisproc_membind &&
                 !support->membind->set_thisthread_membind &&
-                (OPAL_BIND_GIVEN & opal_hwloc_binding_policy)) {
+                OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
                 if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
                     orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
                     membind_warned = true;
@@ -799,7 +799,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
          * computing a binding due to our default policy, and no cores are found
          * on this node, just silently skip it - we will not bind
          */
-        if (!(OPAL_BIND_GIVEN & opal_hwloc_binding_policy) &&
+        if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding) &&
             HWLOC_TYPE_DEPTH_UNKNOWN == hwloc_get_type_depth(node->topology, HWLOC_OBJ_CORE)) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "Unable to bind-to core by default on node %s as no cores detected",
