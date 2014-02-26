@@ -1,9 +1,9 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -13,7 +13,7 @@ nodist_headers = \
 	oshmem_config.h
 
 # Install these in $(includedir)
-include_HEADERS = 
+include_HEADERS =
 
 # Install these in $(includedir)
 mppincludedir = $(includedir)/mpp

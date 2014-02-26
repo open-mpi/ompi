@@ -110,11 +110,11 @@ extern int mca_spml_yoda_send(void* buf,
                               size_t size,
                               int dst,
                               mca_spml_base_put_mode_t mode);
-extern mca_spml_mkey_t *mca_spml_yoda_register(void* addr,
+extern sshmem_mkey_t *mca_spml_yoda_register(void* addr,
                                                size_t size,
                                                uint64_t shmid,
                                                int *count);
-extern int mca_spml_yoda_deregister(mca_spml_mkey_t *mkeys);
+extern int mca_spml_yoda_deregister(sshmem_mkey_t *mkeys);
 extern int mca_spml_yoda_add_procs(oshmem_proc_t** procs,
                                    size_t nprocs);
 extern int mca_spml_yoda_del_procs(oshmem_proc_t** procs,

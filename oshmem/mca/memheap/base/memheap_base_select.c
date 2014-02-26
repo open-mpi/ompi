@@ -170,34 +170,41 @@ int mca_memheap_base_select()
     return OSHMEM_SUCCESS;
 }
 
-static size_t memheap_size(void)
+static size_t _memheap_size(void)
 {
     char *p;
-    unsigned long long factor;
+    long long factor = 1;
     int idx;
-    unsigned long long size;
+    long long size = 0;
 
     p = getenv(SHMEM_HEAP_SIZE);
     if (!p)
         return SIZE_IN_MEGA_BYTES(DEFAULT_SYMMETRIC_HEAP_SIZE);
 
-    idx = strlen(p) - 1;
-    if (p[idx] == 'k' || p[idx] == 'K') {
-        factor = 1024;
-    } else if (p[idx] == 'm' || p[idx] == 'M') {
-        factor = 1024 * 1024;
-    } else if (p[idx] == 'g' || p[idx] == 'G') {
-        factor = 1024 * 1024 * 1024;
-    } else if (p[idx] == 't' || p[idx] == 'T') {
-        factor = 1024UL * 1024UL * 1024UL * 1024UL;
-    } else
-        factor = 1;
+    if (1 == sscanf(p, "%lld%n", &size, &idx)) {
+        if (p[idx] != '\0') {
+            if (p[idx + 1] == '\0') {
+                if (p[idx] == 'k' || p[idx] == 'K') {
+                    factor = 1024;
+                } else if (p[idx] == 'm' || p[idx] == 'M') {
+                    factor = 1024 * 1024;
+                } else if (p[idx] == 'g' || p[idx] == 'G') {
+                    factor = 1024 * 1024 * 1024;
+                } else if (p[idx] == 't' || p[idx] == 'T') {
+                    factor = 1024UL * 1024UL * 1024UL * 1024UL;
+                } else {
+                    size = 0;
+                }
+            } else {
+                size = 0;
+            }
+        }
+    }
 
-    size = atoll(p);
-    if (size == 0) {
-        MEMHEAP_ERROR("Incorrect symmetric heap size %s. Using default heap size %d M\n",
+    if (size <= 0) {
+        MEMHEAP_ERROR("Set incorrect symmetric heap size %s.\n",
                       p, DEFAULT_SYMMETRIC_HEAP_SIZE);
-        return SIZE_IN_MEGA_BYTES(DEFAULT_SYMMETRIC_HEAP_SIZE);
+        return 0;
     }
     return (size_t) memheap_align(size * factor);
 }
@@ -208,7 +215,7 @@ static memheap_context_t* _memheap_create(void)
     static memheap_context_t context;
     size_t user_size;
 
-    user_size = memheap_size();
+    user_size = _memheap_size();
     if (user_size < MEMHEAP_BASE_MIN_SIZE) {
         MEMHEAP_ERROR("Requested memheap size is less than minimal meamheap size (%llu < %llu)",
                       (unsigned long long)user_size, MEMHEAP_BASE_MIN_SIZE);
@@ -239,10 +246,10 @@ static memheap_context_t* _memheap_create(void)
         context.user_size = user_size;
         context.private_size = MEMHEAP_BASE_PRIVATE_SIZE;
         context.user_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].start
+                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].seg_base_addr
                         + 0);
         context.private_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].start
+                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].seg_base_addr
                         + context.user_size);
     }
 

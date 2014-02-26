@@ -27,19 +27,11 @@
 
 #include "oshmem/mca/memheap/base/static-components.h"
 
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-int mca_memheap_base_alloc_type = 5;
-#else
-int mca_memheap_base_alloc_type = 1;
-#endif /* MPAGE_ENABLE */
 
-void* mca_memheap_base_start_address = (void*)0xFF000000;
 int mca_memheap_base_output = -1;
 int mca_memheap_base_key_exchange = 1;
-int mca_memheap_base_mr_interleave_factor = 2;
 char* mca_memheap_base_include = NULL;
 char* mca_memheap_base_exclude = NULL;
-char* mca_memheap_base_param_hca_name = NULL;
 opal_list_t mca_memheap_base_components_opened;
 struct mca_memheap_base_module_t* mca_memheap_base_module_initialized = NULL;
 int mca_memheap_base_already_opened = 0;
@@ -47,47 +39,6 @@ mca_memheap_map_t mca_memheap_base_map;
 
 static int mca_memheap_base_register(mca_base_register_flag_t flags)
 {
-
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "alloc_type",
-                                 "0|1|2|5 - disabled huge pages, enabled huge pages with fallback to mmap(), do not fallback to mmap(), enabled mpages(default)",
-                                 MCA_BASE_VAR_TYPE_INT,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_memheap_base_alloc_type);
-#else
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "alloc_type",
-                                 "0|1|2 - disabled huge pages, enabled huge pages(default) with fallback to mmap(), do not fallback to mmap()",
-                                 MCA_BASE_VAR_TYPE_INT,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_memheap_base_alloc_type);
-#endif /* MPAGE_ENABLE */
-
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "start_address",
-                                 "Specify base address for shared memory region",
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_memheap_base_start_address);
 
     (void) mca_base_var_register("oshmem",
                                  "memheap",
@@ -101,19 +52,6 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_key_exchange);
-
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "mr_interleave_factor",
-                                 "2 - default, try to give at least N Gbytes spaces between mapped memheaps of other pes that are local to me",
-                                 MCA_BASE_VAR_TYPE_INT,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_memheap_base_mr_interleave_factor);
 
     (void) mca_base_var_register("oshmem",
                                  "memheap",
@@ -148,19 +86,6 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_exclude);
-
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "hca_name",
-                                 "Specify excluded memheap implementations",
-                                 MCA_BASE_VAR_TYPE_STRING,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_memheap_base_param_hca_name);
 
     return OSHMEM_SUCCESS;
 }

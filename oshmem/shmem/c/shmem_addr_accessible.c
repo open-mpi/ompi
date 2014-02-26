@@ -18,7 +18,7 @@
 int shmem_addr_accessible(void *addr, int pe)
 {
     void* rva;
-    mca_spml_mkey_t *mkey;
+    sshmem_mkey_t *mkey;
 
     RUNTIME_CHECK_INIT();
 

@@ -137,7 +137,7 @@ int mca_spml_base_wait_nb(void* handle)
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_base_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
+int mca_spml_base_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 {
     return OSHMEM_ERROR;
 }

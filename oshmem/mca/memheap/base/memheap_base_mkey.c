@@ -18,20 +18,12 @@
 #include "oshmem/proc/proc.h"
 #include "oshmem/util/oshmem_util.h"
 #include "oshmem/runtime/runtime.h"
+#include "oshmem/mca/sshmem/sshmem.h"
+#include "oshmem/mca/sshmem/base/base.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"
 
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
-#include <sys/ipc.h>
-#include <sys/shm.h>
-
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-#include <infiniband/verbs.h>
-#endif /* MPAGE_ENABLE */
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG
@@ -47,7 +39,7 @@
 struct oob_comm {
     opal_mutex_t lck;
     opal_condition_t cond;
-    mca_spml_mkey_t *mkeys;
+    sshmem_mkey_t *mkeys;
     int mkeys_rcvd;
     MPI_Request recv_req;
     char buf[MEMHEAP_MKEY_MAXSIZE];
@@ -66,11 +58,11 @@ static int oshmem_mkey_recv_cb(void);
 /* pickup list of rkeys and remote va */
 static int memheap_oob_get_mkeys(int pe,
                                  uint32_t va_seg_num,
-                                 mca_spml_mkey_t *mkey);
+                                 sshmem_mkey_t *mkey);
 
 static inline void* __seg2base_va(int seg)
 {
-    return memheap_map->mem_segs[seg].start;
+    return memheap_map->mem_segs[seg].seg_base_addr;
 }
 
 static int _seg_cmp(const void *k, const void *v)
@@ -78,7 +70,7 @@ static int _seg_cmp(const void *k, const void *v)
     uintptr_t va = (uintptr_t) k;
     map_segment_t *s = (map_segment_t *) v;
 
-    if (va < (uintptr_t)s->start)
+    if (va < (uintptr_t)s->seg_base_addr)
         return -1;
     if (va >= (uintptr_t)s->end)
         return 1;
@@ -90,7 +82,7 @@ static inline map_segment_t *__find_va(const void* va)
 {
     map_segment_t *s;
 
-    if (OPAL_LIKELY((uintptr_t)va >= (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].start &&
+    if (OPAL_LIKELY((uintptr_t)va >= (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].seg_base_addr &&
                     (uintptr_t)va < (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].end)) {
         s = &memheap_map->mem_segs[HEAP_SEG_INDEX];
     } else {
@@ -105,9 +97,9 @@ static inline map_segment_t *__find_va(const void* va)
     if (s) {
         MEMHEAP_VERBOSE(5, "match seg#%02ld: 0x%llX - 0x%llX %llu bytes va=%p",
                 s - memheap_map->mem_segs,
-                (long long)s->start,
+                (long long)s->seg_base_addr,
                 (long long)s->end,
-                (long long)(s->end - s->start),
+                (long long)(s->end - s->seg_base_addr),
                 (void *)va);
     }
 #endif
@@ -123,7 +115,7 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
 {
     oshmem_proc_t *proc;
     int i, n, tr_id;
-    mca_spml_mkey_t *mkey;
+    sshmem_mkey_t *mkey;
 
     /* go over all transports to remote pe and pack mkeys */
     if (!all_trs) {
@@ -167,72 +159,21 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
     return OSHMEM_SUCCESS;
 }
 
-static void memheap_attach_segment(mca_spml_mkey_t *mkey, int tr_id)
+static void memheap_attach_segment(sshmem_mkey_t *mkey, int tr_id)
 {
     /* process special case when va was got using shmget(IPC_PRIVATE)
      * this case is notable for:
-     * - key is set as (type|shmid);
+     * - key is set as (type|seg_id);
      * - va_base is set as 0;
      */
     assert(mkey->va_base == 0);
 
-    if (MEMHEAP_SHM_INVALID == (int) MEMHEAP_SHM_GET_ID(mkey->u.key)) {
-        return;
-    }
-
     MEMHEAP_VERBOSE(5,
-            "shared memory usage tr_id: %d key %llx base_va %p shmid 0x%X|0x%X",
+            "shared memory usage tr_id: %d va_base: 0x%p len: %d key %llx",
             tr_id,
-            (unsigned long long)mkey->u.key,
-            mkey->va_base,
-            MEMHEAP_SHM_GET_TYPE(mkey->u.key),
-            MEMHEAP_SHM_GET_ID(mkey->u.key));
+            mkey->va_base, mkey->len, (unsigned long long)mkey->u.key);
 
-    if (MAP_SEGMENT_ALLOC_SHM == MEMHEAP_SHM_GET_TYPE(mkey->u.key)) {
-        mkey->va_base = shmat(MEMHEAP_SHM_GET_ID(mkey->u.key),
-                0,
-                0);
-    } else if (MAP_SEGMENT_ALLOC_IBV == MEMHEAP_SHM_GET_TYPE(mkey->u.key)) {
-#if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-        openib_device_t *device = NULL;
-        struct ibv_mr *ib_mr;
-        void *addr;
-        static int mr_count;
-
-        int access_flag = IBV_ACCESS_LOCAL_WRITE |
-            IBV_ACCESS_REMOTE_WRITE |
-            IBV_ACCESS_REMOTE_READ |
-            IBV_ACCESS_NO_RDMA;
-
-        device = (openib_device_t *)memheap_map->mem_segs[HEAP_SEG_INDEX].context;
-        assert(device);
-
-        /* workaround mtt problem - request aligned addresses */
-        ++mr_count;
-        addr = (void *)((uintptr_t)mca_memheap_base_start_address + mca_memheap_base_mr_interleave_factor*1024ULL*1024ULL*1024ULL*mr_count);
-        ib_mr = ibv_reg_shared_mr(MEMHEAP_SHM_GET_ID(mkey->u.key),
-                device->ib_pd, addr, access_flag);
-        if (NULL == ib_mr) {
-            mkey->va_base = (void*)-1;
-            MEMHEAP_ERROR("error to ibv_reg_shared_mr() errno says %d: %s",
-                    errno, strerror(errno));
-        } else {
-            if (ib_mr->addr != addr) {
-                MEMHEAP_WARN("Failed to map shared region to address %p got addr %p. Try to increase 'memheap_mr_interleave_factor' from %d", addr, ib_mr->addr, mca_memheap_base_mr_interleave_factor);
-            }
-
-            opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
-            mkey->va_base = ib_mr->addr;
-        }
-#endif /* MPAGE_ENABLE */
-    } else {
-        MEMHEAP_ERROR("tr_id: %d key %llx attach failed: incorrect shmid 0x%X|0x%X",
-                tr_id,
-                (unsigned long long)mkey->u.key,
-                MEMHEAP_SHM_GET_TYPE(mkey->u.key),
-                MEMHEAP_SHM_GET_ID(mkey->u.key));
-        oshmem_shmem_abort(-1);
-    }
+    mca_sshmem_segment_attach(&(memheap_map->mem_segs[HEAP_SEG_INDEX]), mkey);
 
     if ((void *) -1 == (void *) mkey->va_base) {
         MEMHEAP_ERROR("tr_id: %d key %llx attach failed: errno = %d",
@@ -512,7 +453,7 @@ static int send_buffer(int pe, opal_buffer_t *msg)
     return rc;
 }
 
-static int memheap_oob_get_mkeys(int pe, uint32_t seg, mca_spml_mkey_t *mkeys)
+static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 {
     opal_buffer_t *msg;
     uint8_t cmd;
@@ -632,8 +573,8 @@ void mca_memheap_modex_recv_all(void)
             if (NULL != s->mkeys_cache[i]) {
                 MEMHEAP_VERBOSE(10, "PE%d: segment%d already exists, mkey will be replaced", i, j);
             } else {
-                s->mkeys_cache[i] = (mca_spml_mkey_t *) calloc(memheap_map->num_transports,
-                        sizeof(mca_spml_mkey_t));
+                s->mkeys_cache[i] = (sshmem_mkey_t *) calloc(memheap_map->num_transports,
+                        sizeof(sshmem_mkey_t));
                 if (NULL == s->mkeys_cache[i]) {
                     MEMHEAP_ERROR("PE%d: segment%d: Failed to allocate mkeys cache entry", i, j);
                     oshmem_shmem_abort(-1);
@@ -649,22 +590,6 @@ void mca_memheap_modex_recv_all(void)
     free(send_buffer);
     free(rcv_buffer);
     OBJ_RELEASE(msg);
-
-
-    if (3 == mca_memheap_base_alloc_type || 4 == mca_memheap_base_alloc_type) {
-        /* unfortunately we must do barrier here to assure that everyone are attached to our segment
-         * good thing that this code path only invoked on older linuxes (-mca memheap_base_alloc_type 3|4)
-         * that does not support IPC_RMID op on attached segments.
-         */
-        shmem_barrier_all();
-        /* keys exchanged, segments attached, now we can safely cleanup */
-        if (memheap_map->mem_segs[HEAP_SEG_INDEX].type
-                == MAP_SEGMENT_ALLOC_SHM) {
-            shmctl(memheap_map->mem_segs[HEAP_SEG_INDEX].shmid,
-                   IPC_RMID,
-                   NULL );
-        }
-    }
 }
 
 static inline void* va2rva(void* va,
@@ -676,21 +601,21 @@ static inline void* va2rva(void* va,
         (uintptr_t)va - ((uintptr_t)local_base - (uintptr_t)remote_base));
 }
 
-mca_spml_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
+sshmem_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
                                                    void* va,
                                                    int btl_id,
                                                    void** rva)
 {
     map_segment_t *s;
     int rc;
-    mca_spml_mkey_t *mkey;
+    sshmem_mkey_t *mkey;
 
     MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p", pe, va);
     s = __find_va(va);
     if (NULL == s)
         return NULL ;
 
-    if (!s->is_active)
+    if (!MAP_SEGMENT_IS_VALID(s))
         return NULL ;
 
     if (pe == oshmem_my_proc_id()) {
@@ -702,13 +627,13 @@ mca_spml_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
 
     if (OPAL_LIKELY(s->mkeys_cache[pe])) {
         mkey = &s->mkeys_cache[pe][btl_id];
-        *rva = va2rva(va, s->start, mkey->va_base);
+        *rva = va2rva(va, s->seg_base_addr, mkey->va_base);
         MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (cached) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
         return mkey;
     }
 
-    s->mkeys_cache[pe] = (mca_spml_mkey_t *) calloc(memheap_map->num_transports,
-                                                    sizeof(mca_spml_mkey_t));
+    s->mkeys_cache[pe] = (sshmem_mkey_t *) calloc(memheap_map->num_transports,
+                                                    sizeof(sshmem_mkey_t));
     if (!s->mkeys_cache[pe])
         return NULL ;
 
@@ -719,19 +644,19 @@ mca_spml_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
         return NULL ;
 
     mkey = &s->mkeys_cache[pe][btl_id];
-    *rva = va2rva(va, s->start, mkey->va_base);
+    *rva = va2rva(va, s->seg_base_addr, mkey->va_base);
 
     MEMHEAP_VERBOSE_FASTPATH(5, "rkey: pe=%d va=%p -> (remote lookup) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
     return mkey;
 }
 
-mca_spml_mkey_t *mca_memheap_base_get_mkey(void* va, int tr_id)
+sshmem_mkey_t *mca_memheap_base_get_mkey(void* va, int tr_id)
 {
     map_segment_t *s;
 
     s = __find_va(va);
 
-    return ((s && s->is_active) ? &s->mkeys[tr_id] : NULL );
+    return ((s && MAP_SEGMENT_IS_VALID(s)) ? &s->mkeys[tr_id] : NULL );
 }
 
 uint64_t mca_memheap_base_find_offset(int pe,
@@ -743,7 +668,7 @@ uint64_t mca_memheap_base_find_offset(int pe,
 
     s = __find_va(va);
 
-    return ((s && s->is_active) ? ((uintptr_t)rva - (uintptr_t)(s->mkeys_cache[pe][tr_id].va_base)) : 0);
+    return ((s && MAP_SEGMENT_IS_VALID(s)) ? ((uintptr_t)rva - (uintptr_t)(s->mkeys_cache[pe][tr_id].va_base)) : 0);
 }
 
 int mca_memheap_base_is_symmetric_addr(const void* va)
@@ -761,11 +686,11 @@ int mca_memheap_base_detect_addr_type(void* va)
     if (s) {
         if (s->type == MAP_SEGMENT_STATIC) {
             addr_type = ADDR_STATIC;
-        } else if ((uintptr_t)va >= (uintptr_t) s->start
-                   && (uintptr_t)va < (uintptr_t) ((uintptr_t)s->start + mca_memheap.memheap_size)) {
+        } else if ((uintptr_t)va >= (uintptr_t) s->seg_base_addr
+                   && (uintptr_t)va < (uintptr_t) ((uintptr_t)s->seg_base_addr + mca_memheap.memheap_size)) {
             addr_type = ADDR_USER;
         } else {
-            assert( (uintptr_t)va >= (uintptr_t) ((uintptr_t)s->start + mca_memheap.memheap_size) && (uintptr_t)va < (uintptr_t)s->end);
+            assert( (uintptr_t)va >= (uintptr_t) ((uintptr_t)s->seg_base_addr + mca_memheap.memheap_size) && (uintptr_t)va < (uintptr_t)s->end);
             addr_type = ADDR_PRIVATE;
         }
     }
