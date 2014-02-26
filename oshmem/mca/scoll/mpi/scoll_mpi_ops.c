@@ -51,6 +51,12 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
     }
     dtype = &ompi_mpi_char.dt;
     root = oshmem_proc_group_find_id(group, PE_root);
+    /* Open SHMEM specification has the following constrains (page 85):
+     * "If using C/C++, nelems must be of type integer. If you are using Fortran, it must be a
+     *  default integer value". And also fortran signature says "INTEGER".
+     *  Since ompi coll components doesn't support size_t at the moment,
+     *  and considering this contradiction, we cast size_t to int here
+     *  in case if the value is less than INT_MAX and fallback to previous module otherwise. */
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
     if (INT_MAX < nlong) {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK BCAST");
@@ -100,6 +106,12 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
         rbuf = target;
         stype =  &ompi_mpi_char.dt;
         rtype =  &ompi_mpi_char.dt;
+        /* Open SHMEM specification has the following constrains (page 85):
+         * "If using C/C++, nelems must be of type integer. If you are using Fortran, it must be a
+         *  default integer value". And also fortran signature says "INTEGER".
+         *  Since ompi coll components doesn't support size_t at the moment,
+         *  and considering this contradiction, we cast size_t to int here
+         *  in case if the value is less than INT_MAX and fallback to previous module otherwise. */
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
         if (INT_MAX < nlong) {
             MPI_COLL_VERBOSE(20,"RUNNING FALLBACK COLLECT");
@@ -144,6 +156,12 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
     dtype = shmem_dtype_to_ompi_dtype(op);
     h_op = shmem_op_to_ompi_op(op->op);
     count = nlong/op->dt_size;
+    /* Open SHMEM specification has the following constrains (page 85):
+     * "If using C/C++, nelems must be of type integer. If you are using Fortran, it must be a
+     *  default integer value". And also fortran signature says "INTEGER".
+     *  Since ompi coll components doesn't support size_t at the moment,
+     *  and considering this contradiction, we cast size_t to int here
+     *  in case if the value is less than INT_MAX and fallback to previous module otherwise. */
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
     if (INT_MAX < count) {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK REDUCE");

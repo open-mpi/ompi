@@ -14,7 +14,7 @@
 
 int mca_scoll_mpi_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
-    return OSHMEM_ERROR;
+    return OSHMEM_SUCCESS;
 }
 
 static void mca_scoll_mpi_module_clear(mca_scoll_mpi_module_t *mpi_module)
