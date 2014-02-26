@@ -72,6 +72,7 @@ typedef struct ompi_btl_usnic_addr_t {
     uint32_t cidrmask;
     uint8_t mac[6];
     int mtu;
+    uint32_t link_speed_mbps;
 } ompi_btl_usnic_addr_t;
 
 struct ompi_btl_usnic_send_segment_t;
