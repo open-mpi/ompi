@@ -267,6 +267,10 @@ int ompi_btl_usnic_component_register(void)
                   USNIC_DFLT_PACK_LAZY_THRESHOLD, &pack_lazy_threshold, REGINT_NEG_ONE_OK, OPAL_INFO_LVL_5));
     mca_btl_usnic_component.pack_lazy_threshold = pack_lazy_threshold;
 
+    CHECK(reg_int("arp_timeout", "Timeout, in seconds, for the maximum delay between ARP replies when using the usNIC/UDP transport (ignored when using the usNIC/L2 transport, must be >=1)",
+                  10, &mca_btl_usnic_component.arp_timeout,
+                  REGINT_GE_ONE, OPAL_INFO_LVL_6));
+
     /* Default to bandwidth auto-detection */
     ompi_btl_usnic_module_template.super.btl_bandwidth = 0;
     ompi_btl_usnic_module_template.super.btl_latency = 4;

@@ -270,3 +270,19 @@ Note that this behavior usually indicates some kind of network
 misconfiguration.  You should verify that UDP traffic with payloads up
 to the "large message size" listed above can flow between these two
 servers.
+#
+[ibv_create_ah timeout]
+The usnic BTL failed to create addresses for remote peers within the
+specified timeout.  When using the usNIC/UDP transport, this usually
+means that ARP requests failed to resolve in time.  You may be able to
+solve the problem by increasing the usnic BTL's ARP timeout.  If that
+doesn't work, you should diagnose why ARP replies are apparently not
+being delivered in a timely manner.
+
+The usNIC interface listed below will be ignored.  Your MPI
+application will likely either run with degraded performance and/or
+abort.
+
+  Server:              %s
+  Device:              %s:%d (%s)
+  Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
