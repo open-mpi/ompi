@@ -283,6 +283,10 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM_ARGS],[
     AC_ARG_ENABLE([openib-rdmacm],
         [AC_HELP_STRING([--enable-openib-rdmacm],
                         [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])])
+    AC_ARG_ENABLE([openib-rdmacm-ibaddr],
+        [AC_HELP_STRING([--enable-openib-rdmacm-ibaddr],
+                        [Enable Open Fabrics RDMACM with IB addressing support in openib BTL (default: disabled)])],
+        [enable_openib_rdmacm=yes])
 ])dnl
 
 AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
