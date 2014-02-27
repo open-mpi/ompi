@@ -1,4 +1,4 @@
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -6,8 +6,6 @@
 # 
 # $HEADER$
 #
-
-AM_CPPFLAGS = $(oshmem_verbs_CPPFLAGS)
 
 dist_ompidata_DATA += base/help-shmem-mca.txt 
 
@@ -21,5 +19,3 @@ libmca_memheap_la_SOURCES += \
 	base/memheap_base_static.c \
 	base/memheap_base_register.c \
 	base/memheap_base_mkey.c
-
-libmca_memheap_la_LDFLAGS += -module -avoid-version 
