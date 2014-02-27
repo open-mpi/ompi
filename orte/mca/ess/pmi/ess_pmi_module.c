@@ -385,7 +385,7 @@ static int rte_init(void)
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_SCOPE_GLOBAL, OPAL_DB_LOCALRANK,
+                                             OPAL_SCOPE_GLOBAL, ORTE_DB_LOCALRANK,
                                              &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
         error = "db store local rank";
         goto error;
