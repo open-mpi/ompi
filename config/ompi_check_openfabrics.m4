@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
@@ -152,7 +152,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
 
     # If we have the openib stuff available, find out what we've got
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
-          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO], [], [],
+          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO, IBV_TRANSPORT_USNIC, IBV_TRANSPORT_USNIC_UDP, IBV_NODE_USNIC], [], [],
                           [#include <infiniband/verbs.h>])
            AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])
 

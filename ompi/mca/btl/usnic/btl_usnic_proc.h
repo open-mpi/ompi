@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +56,25 @@ typedef struct ompi_btl_usnic_proc_t {
     struct mca_btl_base_endpoint_t **proc_endpoints;
     /** Number of entries in the proc_endpoints array */
     size_t proc_endpoint_count;
+
+    /**
+     * A table giving the chosen pairing between modules and endpoint
+     * addresses.  It has size mca_btl_usnic_component.num_modules.
+     * j=proc_ep_match_table[i] means that
+     * mca_btl_usnic_component.usnic_active_modules[i] should be paired with
+     * proc_modex[j].  If there is no pairing for proc_modex[i] then
+     * proc_ep_match_table[i] will be set to -1
+     *
+     * If matchings have not yet been computed for this proc, the pointer will
+     * be NULL.
+     */
+    int *proc_ep_match_table;
+
+    /**
+     * true iff proc_ep_match_table != NULL and it contains at least one entry
+     * that is not equal to -1.
+     */
+    bool proc_match_exists;
 } ompi_btl_usnic_proc_t;
 
 OBJ_CLASS_DECLARATION(ompi_btl_usnic_proc_t);

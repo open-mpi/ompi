@@ -152,6 +152,10 @@ ompi_btl_usnic_finish_put_or_send(
         /* use standard channel */
         sseg->ss_channel = USNIC_DATA_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
+
+        if (frag->sf_base.uf_src_seg[0].seg_len < module->tiny_mtu) {
+            sseg->ss_send_desc.send_flags |= IBV_SEND_INLINE;
+        }
     } else {
         ompi_btl_usnic_large_send_frag_t *lfrag;
 

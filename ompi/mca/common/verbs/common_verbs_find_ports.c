@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -163,10 +163,16 @@ static bool want_this_port(char **include_list, char **exclude_list,
 static const char *transport_name_to_str(enum ibv_transport_type transport_type)
 {
     switch(transport_type) {
-    case IBV_TRANSPORT_IB:      return "IB";
-    case IBV_TRANSPORT_IWARP:   return "IWARP";
+    case IBV_TRANSPORT_IB:        return "IB";
+    case IBV_TRANSPORT_IWARP:     return "IWARP";
+#if HAVE_DECL_IBV_TRANSPORT_USNIC
+    case IBV_TRANSPORT_USNIC:     return "usNIC";
+#endif
+#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
+    case IBV_TRANSPORT_USNIC_UDP: return "usNIC UDP";
+#endif
     case IBV_TRANSPORT_UNKNOWN: 
-    default:                    return "unknown";
+    default:                      return "unknown";
     }
 }
 
@@ -181,6 +187,44 @@ static const char *link_layer_to_str(int link_type)
     }
 }
 #endif
+
+/* Helper routine to detect Cisco usNIC devices (these are non-IB, non-RoCE,
+ * non-iWARP devices).  See the usnic BTL for more information.
+ *
+ * Once usNIC is no longer new and the IBV_TRANSPORT_USNIC constant is widely
+ * available in the wild, all calls to it can be replaced with a simple check
+ * against said constant.
+ */
+static bool device_is_usnic(struct ibv_device *device)
+{
+    /* A usNIC-capable VIC will present as one of:
+     *   1. _IWARP -- any libibverbs and old kernel
+     *   2. _UNKNOWN -- old libibverbs and new kernel
+     *   3. _USNIC -- new libibverbs and new kernel
+     *
+     * Where an "old kernel" is one that does not have this commit:
+     * http://bit.ly/kernel-180771a3
+     */
+#if HAVE_DECL_IBV_TRANSPORT_USNIC
+    if (IBV_TRANSPORT_USNIC == device->transport_type) {
+        return true;
+    }
+#endif
+#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
+    if (IBV_TRANSPORT_USNIC_UDP == device->transport_type) {
+        return true;
+    }
+#endif
+    if ((IBV_TRANSPORT_IWARP == device->transport_type ||
+         IBV_TRANSPORT_UNKNOWN == device->transport_type) &&
+        0 == strncmp(device->name, "usnic_", strlen("usnic_"))) {
+        /* if we are willing to open the device, query its attributes, then
+         * close it again, we could also check for Cisco's vendor ID (0x1137) */
+        return true;
+    }
+
+    return false;
+}
 
 /***********************************************************************/
 
@@ -239,7 +283,8 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
     uint32_t i, j;
     opal_list_t *port_list = NULL;
     opal_list_item_t *item;
-    bool want;
+    bool want, dev_is_usnic;
+    enum ibv_transport_type saved_transport_type;
 
     /* Allocate a list to fill */
     port_list = OBJ_NEW(opal_list_t);
@@ -285,9 +330,46 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
         device = devices[i];
         check_sanity(&if_sanity_list, ibv_get_device_name(device), -1);
 
-        device_context = ibv_open_device(device);
         opal_output_verbose(5, stream, "examining verbs interface: %s",
                             ibv_get_device_name(device));
+
+        dev_is_usnic = false;
+        if ((flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC) ||
+            (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP)) {
+            dev_is_usnic = device_is_usnic(device);
+
+            if (dev_is_usnic) {
+                opal_output_verbose(5, stream, "verbs interface %s is usnic, claims transport_type %s",
+                                    ibv_get_device_name(device),
+                                    transport_name_to_str(device->transport_type));
+
+                /* There are two flavors of libusnic_verbs (and its supporting
+                 * kernel infrastructure):
+                 *   1. One that speaks an L2-only format that uses the RoCE
+                 *      ethertype with a different version value.
+                 *   2. A more modern one that speaks UDP/IP.
+                 *
+                 * Because 42-byte UDP headers are larger than the standard
+                 * 40-byte IB headers, applications (like OMPI) must inform the
+                 * library that they are prepared to see payloads starting at a
+                 * non-standard offset.  We do that by overriding the
+                 * transport_type to a magic value before calling
+                 * ibv_open_device.  Flavor #1 ignores this field, while flavor
+                 * #2 will set it back to IBV_TRANSPORT_USNIC (or some other
+                 * non-magic value, depending on whether the first is available
+                 * in libibverbs itself).
+                 *
+                 * Later we compare against this MAGIC value to see which
+                 * flavor this device actually is.  First save the current
+                 * value so we can restore it after evaluating this device for
+                 * its usNIC properties.
+                 */
+                saved_transport_type = device->transport_type;
+                device->transport_type = OMPI_COMMON_VERBS_USNIC_PROBE_MAGIC;
+            }
+        }
+
+        device_context = ibv_open_device(device);
         if (NULL == device_context) {
             opal_show_help("help-ompi-common-verbs.txt",
                            "ibv_open_device fail", true,
@@ -313,45 +395,75 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
             check_sanity(&if_sanity_list, ibv_get_device_name(device), j);
         }
 
-        /* Check the the device-specific flags to see if we want this
+        /* Check the device-specific flags to see if we want this
            device */
-        want = true;
+        want = false;
+
+        if (dev_is_usnic) {
+            if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC &&
+                OMPI_COMMON_VERBS_USNIC_PROBE_MAGIC ==
+                (int) device->transport_type) {
+                want = true;
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s has the right transport (usNIC/L2)",
+                                    ibv_get_device_name(device));
+            }
+            if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP &&
+                OMPI_COMMON_VERBS_USNIC_PROBE_MAGIC !=
+                (int) device->transport_type) {
+                want = true;
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s has the right transport (usNIC/UDP)",
+                                    ibv_get_device_name(device));
+            }
+
+            /* done checking for usNIC, restore the transport value for future
+             * calls to this routine */
+            device->transport_type = saved_transport_type;
+        }
+
         if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB &&
-            IBV_TRANSPORT_IB != device->transport_type) {
-            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want IB)",
-                                ibv_get_device_name(device),
-                                transport_name_to_str(device->transport_type));
-            want = false;
+            IBV_TRANSPORT_IB == device->transport_type) {
+            opal_output_verbose(5, stream, "verbs interface %s has right type (IB)",
+                                ibv_get_device_name(device));
+            want = true;
         }
         if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IWARP &&
-            IBV_TRANSPORT_IWARP != device->transport_type) {
-            opal_output_verbose(5, stream, "verbs interface %s has wrong type (has %s, want IWARP)",
-                                ibv_get_device_name(device),
-                                transport_name_to_str(device->transport_type));
-            want = false;
+            IBV_TRANSPORT_IWARP == device->transport_type) {
+            opal_output_verbose(5, stream, "verbs interface %s has right type (IWARP)",
+                                ibv_get_device_name(device));
+            want = true;
         }
 
         /* Check for RC or UD QP support */
-        if (flags & OMPI_COMMON_VERBS_FLAGS_RC ||
-            flags & OMPI_COMMON_VERBS_FLAGS_UD) {
+        if (flags & OMPI_COMMON_VERBS_FLAGS_RC) {
             rc = ompi_common_verbs_qp_test(device_context, flags);
-            if (OMPI_ERR_TYPE_MISMATCH == rc) {
-                want = false;
-                opal_output_verbose(5, stream, 
-                                    "verbs interface %s:%d: made an RC QP! we don't want RC-capable devices",
-                                    ibv_get_device_name(device), j);
-            } else if (OMPI_SUCCESS != rc) {
-                want = false;
-                opal_output_verbose(5, stream, 
-                                    "verbs interface %s:%d: failed to make %s QP",
-                                    ibv_get_device_name(device), j,
-                                    ((flags & (OMPI_COMMON_VERBS_FLAGS_RC |
-                                               OMPI_COMMON_VERBS_FLAGS_UD)) ==
-                                     (OMPI_COMMON_VERBS_FLAGS_RC |
-                                      OMPI_COMMON_VERBS_FLAGS_UD)) ? 
-                                    "both UD and RC" :
-                                    (flags & OMPI_COMMON_VERBS_FLAGS_RC) ? 
-                                    "RC" : "UD");
+            if (OMPI_SUCCESS == rc) {
+                want = true;
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s supports RC QPs",
+                                    ibv_get_device_name(device));
+            } else {
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s failed to make RC QP",
+                                    ibv_get_device_name(device));
+            }
+        }
+        if (flags & OMPI_COMMON_VERBS_FLAGS_UD) {
+            rc = ompi_common_verbs_qp_test(device_context, flags);
+            if (OMPI_SUCCESS == rc) {
+                want = true;
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s supports UD QPs",
+                                    ibv_get_device_name(device));
+            } else if (OMPI_ERR_TYPE_MISMATCH == rc) {
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s made an RC QP! we don't want RC-capable devices",
+                                    ibv_get_device_name(device));
+            } else {
+                opal_output_verbose(5, stream,
+                                    "verbs interface %s failed to make UD QP",
+                                    ibv_get_device_name(device));
             }
         }
 

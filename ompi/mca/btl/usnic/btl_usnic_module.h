@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,7 +129,7 @@ typedef struct ompi_btl_usnic_module_t {
      * segment is slightly less than what can be held in frag segment due
      * to fragment reassembly info.
      */
-    int tiny_mtu;
+    size_t tiny_mtu;
     size_t max_frag_payload;    /* most that fits in a frag segment */
     size_t max_chunk_payload;   /* most that can fit in chunk segment */
     size_t max_tiny_payload;    /* threshold for using inline send */

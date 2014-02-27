@@ -15,6 +15,10 @@
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
 
+#ifndef MIN
+#  define MIN(a,b)                ((a) < (b) ? (a) : (b))
+#endif
+
 /* avoid "defined but not used" warnings */
 static inline int __opal_attribute_always_inline__ usnic_fls(int x)
     __opal_attribute_unused__;

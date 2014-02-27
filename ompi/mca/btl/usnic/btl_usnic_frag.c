@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,6 +109,7 @@ ack_seg_constructor(
     /* ACK value embedded in BTL header */
     bseg->us_btl_header->payload_type = OMPI_BTL_USNIC_PAYLOAD_TYPE_ACK;
     bseg->us_btl_header->payload_len = 0;
+    bseg->us_btl_header->ack_present = 1;
 
     bseg->us_sg_entry[0].length = sizeof(bseg->us_btl_header);
 }
@@ -125,8 +126,9 @@ recv_seg_constructor(
 
     /* on receive, BTL header starts after protocol header */
     seg->rs_protocol_header = bseg->us_list.ptr;
-    bseg->us_btl_header =
-        (ompi_btl_usnic_btl_header_t *) (seg->rs_protocol_header + 1);
+    bseg->us_btl_header = (ompi_btl_usnic_btl_header_t *)(
+        ((char *)seg->rs_protocol_header) +
+        OMPI_BTL_USNIC_PROTO_HDR_SZ);
 
     /* initialize verbs work request */
     seg->rs_recv_desc.wr_id = (unsigned long) seg;
@@ -203,6 +205,7 @@ small_send_frag_constructor(ompi_btl_usnic_small_send_frag_t *frag)
     fseg->ss_parent_frag = (struct ompi_btl_usnic_send_frag_t *)frag;
 
     frag->ssf_base.sf_base.uf_type = OMPI_BTL_USNIC_FRAG_SMALL_SEND;
+    frag->ssf_segment.ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     /* save data pointer for PML */
     frag->ssf_base.sf_base.uf_src_seg[0].seg_addr.pval =

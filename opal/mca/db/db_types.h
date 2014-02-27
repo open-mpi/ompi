@@ -27,6 +27,7 @@ BEGIN_C_DECLS
 #define OPAL_DB_LOCALITY    "opal.locality"
 #define OPAL_DB_CPUSET      "opal.cpuset"
 #define OPAL_DB_CREDENTIAL  "opal.cred"
+#define OPAL_DB_LOCALLDR    "opal.local.ldr"
 
 END_C_DECLS
 

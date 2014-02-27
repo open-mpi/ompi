@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,13 +13,15 @@
 #include <infiniband/verbs.h>
 
 #include "btl_usnic.h"
+#include "btl_usnic_util.h"
 #include "btl_usnic_frag.h"
 #include "btl_usnic_proc.h"
 
 
 void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *rseg,
-                           ompi_btl_usnic_channel_t *channel);
+                              ompi_btl_usnic_recv_segment_t *rseg,
+                              ompi_btl_usnic_channel_t *channel,
+                              uint32_t l2_bytes_rcvd);
 
 /*
  * Given an incoming segment, lookup the endpoint that sent it
@@ -116,11 +118,12 @@ ompi_btl_usnic_check_rx_seq(
 {
     uint32_t i;
     ompi_btl_usnic_seq_t seq;
+    int delta;
 
     /*
      * Handle piggy-backed ACK if present
      */
-    if (seg->rs_base.us_btl_header->ack_seq != 0) {
+    if (seg->rs_base.us_btl_header->ack_present) {
 #if MSGDEBUG1
         opal_output(0, "Handle piggy-packed ACK seq %"UDSEQ"\n", seg->rs_base.us_btl_header->ack_seq);
 #endif
@@ -151,12 +154,12 @@ ompi_btl_usnic_check_rx_seq(
            or
          seq >= next_contig_seg_to_recv + WINDOW_SIZE
     */
-    seq = seg->rs_base.us_btl_header->seq;
-    if (seq < endpoint->endpoint_next_contig_seq_to_recv ||
-        seq >= endpoint->endpoint_next_contig_seq_to_recv + WINDOW_SIZE) {
+    seq = seg->rs_base.us_btl_header->pkt_seq;
+    delta = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
+    if (delta < 0 || delta >= WINDOW_SIZE) {
 #if MSGDEBUG1
             opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ " outside of window (%" UDSEQ " - %" UDSEQ "), %p, module %p -- DROPPED\n",
-                        (void*)endpoint, seg->rs_base.us_btl_header->seq, 
+                        (void*)endpoint, seg->rs_base.us_btl_header->pkt_seq, 
                         endpoint->endpoint_next_contig_seq_to_recv,
                         (endpoint->endpoint_next_contig_seq_to_recv + 
                          WINDOW_SIZE - 1),
@@ -165,7 +168,7 @@ ompi_btl_usnic_check_rx_seq(
 #endif
 
         /* Stats */
-        if (seq < endpoint->endpoint_next_contig_seq_to_recv) {
+        if (delta < 0) {
             ++endpoint->endpoint_module->stats.num_oow_low_recvs;
         } else {
             ++endpoint->endpoint_module->stats.num_oow_high_recvs;
@@ -196,19 +199,19 @@ ompi_btl_usnic_check_rx_seq(
 
            rfstart = (rfstart + num_acks_sent) % WINDOW_SIZE
     */
-    i = seq - endpoint->endpoint_next_contig_seq_to_recv;
+    i = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
     i = WINDOW_SIZE_MOD(i + endpoint->endpoint_rfstart);
     if (endpoint->endpoint_rcvd_segs[i]) {
 #if MSGDEBUG1
         opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ ", seg %p: duplicate -- DROPPED\n",
-            (void*) endpoint, seg->rs_base.us_btl_header->seq, (void*) seg);
+            (void*) endpoint, seg->rs_base.us_btl_header->pkt_seq, (void*) seg);
 #endif
         /* highest_seq_rcvd is for debug stats only; it's not used
            in any window calculations */
-        assert(seq <= endpoint->endpoint_highest_seq_rcvd);
+        assert(SEQ_LE(seq, endpoint->endpoint_highest_seq_rcvd));
         /* next_contig_seq_to_recv-1 is the ack number we'll
            send */
-        assert (seq > endpoint->endpoint_next_contig_seq_to_recv - 1);
+        assert (SEQ_GT(seq, endpoint->endpoint_next_contig_seq_to_recv - 1));
 
         /* Stats */
         ++endpoint->endpoint_module->stats.num_dup_recvs;
@@ -216,7 +219,7 @@ ompi_btl_usnic_check_rx_seq(
     }
 
     /* Stats: is this the highest sequence number we've received? */
-    if (seq > endpoint->endpoint_highest_seq_rcvd) {
+    if (SEQ_GT(seq, endpoint->endpoint_highest_seq_rcvd)) {
         endpoint->endpoint_highest_seq_rcvd = seq;
     }
 
@@ -239,13 +242,15 @@ dup_needs_ack:
  */
 static inline void
 ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *seg,
-                           ompi_btl_usnic_channel_t *channel)
+                         ompi_btl_usnic_recv_segment_t *seg,
+                         ompi_btl_usnic_channel_t *channel,
+                         uint32_t l2_bytes_rcvd)
 {
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
     ompi_btl_usnic_seq_t seq;
     ompi_btl_usnic_endpoint_t *endpoint;
+    int delta;
     int i;
 
     bseg = &seg->rs_base;
@@ -264,9 +269,9 @@ ompi_btl_usnic_recv_fast(ompi_btl_usnic_module_t *module,
                 (void*)(seg->rs_recv_desc.sg_list[0].addr),
                 seg->rs_recv_desc.sg_list[0].length);
 
-        seq = seg->rs_base.us_btl_header->seq;
-        if (seq < endpoint->endpoint_next_contig_seq_to_recv ||
-            seq >= endpoint->endpoint_next_contig_seq_to_recv + WINDOW_SIZE)  {
+        seq = seg->rs_base.us_btl_header->pkt_seq;
+        delta = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
+        if (delta < 0 || delta >= WINDOW_SIZE) {
             goto drop;
         }
 
@@ -291,7 +296,7 @@ drop:
         channel->chan_deferred_recv = seg;
 
     } else {
-        ompi_btl_usnic_recv_call(module, seg, channel);
+        ompi_btl_usnic_recv_call(module, seg, channel, l2_bytes_rcvd);
     }
 }
 
@@ -347,8 +352,9 @@ repost:
  */
 static inline void
 ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *seg,
-                           ompi_btl_usnic_channel_t *channel)
+                    ompi_btl_usnic_recv_segment_t *seg,
+                    ompi_btl_usnic_channel_t *channel,
+                    uint32_t l2_bytes_rcvd)
 {
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -365,6 +371,18 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
             (OMPI_BTL_USNIC_PAYLOAD_TYPE_FRAG ==
                 bseg->us_btl_header->payload_type) &&
             seg->rs_base.us_btl_header->put_addr == NULL) {
+
+        MSGDEBUG1_OUT("<-- Received FRAG (fastpath) ep %p, seq %" UDSEQ ", len=%" PRIu16 "\n",
+                      (void*) endpoint, bseg->us_btl_header->pkt_seq,
+                      bseg->us_btl_header->payload_len);
+
+        if (OPAL_UNLIKELY(ompi_btl_usnic_frag_seg_proto_size(seg) !=
+                          l2_bytes_rcvd)) {
+            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
+                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
+                       l2_bytes_rcvd, ompi_btl_usnic_frag_seg_proto_size(seg)));
+            abort();
+        }
 
         /* do the receive bookkeeping */
         rc = ompi_btl_usnic_recv_frag_bookkeeping(module, seg, channel);
@@ -384,7 +402,7 @@ ompi_btl_usnic_recv(ompi_btl_usnic_module_t *module,
                     &seg->rs_desc, reg->cbdata);
 
     } else {
-        ompi_btl_usnic_recv_call(module, seg, channel);
+        ompi_btl_usnic_recv_call(module, seg, channel, l2_bytes_rcvd);
     }
 }
 

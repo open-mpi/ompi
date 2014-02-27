@@ -979,6 +979,14 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 /* set mine */
                 orte_process_info.my_local_rank = local_rank;
                 orte_process_info.my_node_rank = node_rank;
+                /* if we are the local leader (i.e., local_rank=0), then record it */
+                if (0 == local_rank) {
+                    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
+                                                            OPAL_DB_LOCALLDR, (opal_identifier_t*)&proc, OPAL_ID_T))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                }
 #if OPAL_HAVE_HWLOC
                 if (NULL != cpu_bitmap) {
                     orte_process_info.cpuset = strdup(cpu_bitmap);
@@ -988,6 +996,14 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                        dmn.vpid == ORTE_PROC_MY_DAEMON->vpid) {
                 /* if we share a daemon, then add to my local peers */
                 orte_process_info.num_local_peers++;
+                /* if this is the local leader (i.e., local_rank=0), then record it */
+                if (0 == local_rank) {
+                    if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
+                                                            OPAL_DB_LOCALLDR, (opal_identifier_t*)&proc, OPAL_ID_T))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
+                }
             }
             /* apps don't need the rest of the data in the buffer for this proc,
              * but we have to unpack it anyway to stay in sync

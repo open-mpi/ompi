@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,14 +93,26 @@ typedef struct ompi_btl_usnic_reg_t {
     struct ibv_mr* mr;
 } ompi_btl_usnic_reg_t;
 
+
+/* UDP headers are always 42 bytes long */
+#define OMPI_BTL_USNIC_UDP_HDR_SZ (42)
+
 /* 
  * Header that is the beginning of every usnic packet buffer.
  */
-typedef struct {
-    /* Verbs UD global resource header (GRH), which appears on the
-       receiving side only. */
+typedef union {
+    /* Verbs UD global resource header (GRH), which appears on the receiving
+     * side only.  Valid iff mca_btl_usnic_component.use_udp is false. */
     struct ibv_grh grh;
-} ompi_btl_usnic_protocol_header_t;
+
+    /* Valid iff mca_btl_usnic_component.use_udp is true. */
+    char udp_bytes[OMPI_BTL_USNIC_UDP_HDR_SZ];
+} __attribute__((__packed__)) ompi_btl_usnic_protocol_header_t;
+
+#define OMPI_BTL_USNIC_PROTO_HDR_SZ    \
+    (mca_btl_usnic_component.use_udp ? \
+     OMPI_BTL_USNIC_UDP_HDR_SZ :       \
+     sizeof(struct ibv_grh))
 
 /**
  * usnic header type
@@ -121,9 +133,8 @@ typedef struct {
     /* Hashed RTE process name of the sender */
     uint64_t sender;
 
-    /* Sliding window sequence number (echoed back in an ACK).  This
-       is 64 bits. */
-    ompi_btl_usnic_seq_t seq;
+    /* Sliding window sequence number (echoed back in an ACK). */
+    ompi_btl_usnic_seq_t pkt_seq;
     ompi_btl_usnic_seq_t ack_seq;       /* for piggy-backing ACKs */
 
     /* payload legnth (in bytes).  We unfortunately have to include
@@ -136,6 +147,9 @@ typedef struct {
 
     /* Type of BTL header (see enum, above) */
     uint8_t payload_type;
+
+    /* true if there is piggy-backed ACK */
+    uint8_t ack_present;
 
     /* tag for upper layer */
     mca_btl_base_tag_t tag;
@@ -365,9 +379,6 @@ ompi_btl_usnic_small_send_frag_alloc(ompi_btl_usnic_module_t *module)
     /* this belongs in constructor... */
     frag->ssf_base.sf_base.uf_freelist = &(module->small_send_frags);
 
-    /* always clear flag */
-    frag->ssf_segment.ss_send_desc.send_flags = IBV_SEND_SIGNALED;
-
     assert(frag);
     assert(OMPI_BTL_USNIC_FRAG_SMALL_SEND == frag->ssf_base.sf_base.uf_type);
 
@@ -474,6 +485,10 @@ ompi_btl_usnic_frag_return(
             NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
             opal_convertor_cleanup(&lfrag->lsf_base.sf_convertor);
         }
+    } else if (frag->uf_type == OMPI_BTL_USNIC_FRAG_SMALL_SEND) {
+        ompi_btl_usnic_small_send_frag_t *sfrag;
+        sfrag = (ompi_btl_usnic_small_send_frag_t *)frag;
+        sfrag->ssf_segment.ss_send_desc.send_flags &= ~IBV_SEND_INLINE;
     }
 
     OMPI_FREE_LIST_RETURN_MT(frag->uf_freelist, &(frag->uf_base.super));
@@ -528,6 +543,7 @@ ompi_btl_usnic_chunk_segment_alloc(
 
     seg = (ompi_btl_usnic_send_segment_t*) item;
     seg->ss_channel = USNIC_DATA_CHANNEL;
+    seg->ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     assert(seg);
     assert(OMPI_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
@@ -562,6 +578,7 @@ ompi_btl_usnic_ack_segment_alloc(ompi_btl_usnic_module_t *module)
 
     ack = (ompi_btl_usnic_ack_segment_t*) item;
     ack->ss_channel = USNIC_PRIORITY_CHANNEL;
+    ack->ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     assert(ack);
     assert(OMPI_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
@@ -581,6 +598,36 @@ ompi_btl_usnic_ack_segment_return(
     assert(OMPI_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
 
     OMPI_FREE_LIST_RETURN_MT(&(module->ack_segs), &(ack->ss_base.us_list));
+}
+
+/* returns the expected L2 packet size in bytes for the given FRAG recv
+ * segment, based on the payload_len */
+static inline uint32_t
+ompi_btl_usnic_frag_seg_proto_size(ompi_btl_usnic_recv_segment_t *rseg)
+{
+    ompi_btl_usnic_segment_t *bseg = &rseg->rs_base;
+
+    MSGDEBUG1_OUT("us_type=%d\n", bseg->us_type);
+    assert(OMPI_BTL_USNIC_PAYLOAD_TYPE_FRAG == bseg->us_btl_header->payload_type);
+
+    return (OMPI_BTL_USNIC_PROTO_HDR_SZ +
+            sizeof(*bseg->us_btl_header) +
+            bseg->us_btl_header->payload_len);
+}
+
+/* returns the expected L2 packet size in bytes for the given CHUNK recv
+ * segment, based on the payload_len */
+static inline uint32_t
+ompi_btl_usnic_chunk_seg_proto_size(ompi_btl_usnic_recv_segment_t *rseg)
+{
+    ompi_btl_usnic_segment_t *bseg = &rseg->rs_base;
+
+    assert(OMPI_BTL_USNIC_PAYLOAD_TYPE_CHUNK ==
+           bseg->us_btl_chunk_header->ch_hdr.payload_type);
+
+    return (OMPI_BTL_USNIC_PROTO_HDR_SZ +
+            sizeof(*bseg->us_btl_chunk_header) +
+            bseg->us_btl_chunk_header->ch_hdr.payload_len);
 }
 
 END_C_DECLS

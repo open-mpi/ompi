@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,8 +44,8 @@ struct ompi_btl_usnic_send_segment_t;
  */
 #define WINDOW_SIZE 4096
 #define WINDOW_SIZE_MOD(a) (((a) & (WINDOW_SIZE - 1)))
-#define WINDOW_OPEN(E) ((E)->endpoint_next_seq_to_send < \
-        ((E)->endpoint_ack_seq_rcvd + WINDOW_SIZE))
+#define WINDOW_OPEN(E) (SEQ_LT((E)->endpoint_next_seq_to_send, \
+        ((E)->endpoint_ack_seq_rcvd + WINDOW_SIZE)))
 #define WINDOW_EMPTY(E) ((E)->endpoint_ack_seq_rcvd == \
         ((E)->endpoint_next_seq_to_send-1))
 
@@ -72,6 +72,7 @@ typedef struct ompi_btl_usnic_addr_t {
     uint32_t cidrmask;
     uint8_t mac[6];
     int mtu;
+    uint32_t link_speed_mbps;
 } ompi_btl_usnic_addr_t;
 
 struct ompi_btl_usnic_send_segment_t;

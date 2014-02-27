@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/prefetch.h"
@@ -33,7 +34,6 @@
 #include "opal/include/opal_stdint.h"
 #include "opal/util/show_help.h"
 
-#include "ompi/mca/rte/rte.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -74,6 +74,80 @@ static inline void compute_sf_size(ompi_btl_usnic_send_frag_t *sfrag)
     sfrag->sf_size = 0;
     sfrag->sf_size += frag->uf_src_seg[0].seg_len;
     sfrag->sf_size += frag->uf_src_seg[1].seg_len;
+}
+
+/* The call to ibv_create_ah() may initiate an ARP resolution, and may
+ * therefore take some time to complete.  Hence, it will return 1 of 3
+ * things:
+ *
+ * 1. a valid new ah
+ * 2. NULL and errno == EAGAIN (ARP not complete; try again later)
+ * 3. NULL and errno != EAGAIN (fatal error)
+ *
+ * Since ibv_create_ah() is therefore effectively non-blocking, we
+ * gang all the endpoint ah creations here in this loop so that we can
+ * get some parallelization of ARP resolution.
+ */
+static int create_ahs(size_t num_procs, size_t num_endpoints,
+                      struct mca_btl_base_endpoint_t** endpoints,
+                      ompi_btl_usnic_module_t *module)
+{
+    size_t i;
+    struct ibv_ah_attr ah_attr;
+    size_t num_ah_created, last_num_ah_created;
+    time_t ts_last_created;
+
+    /* memset the ah_attr to both silence valgrind warnings (since the
+       attr struct ends up getting written down an fd to the kernel)
+       and actually zero out all the fields that we don't care about /
+       want to be logically false. */
+    memset(&ah_attr, 0, sizeof(ah_attr));
+    ah_attr.is_global = 1;
+    ah_attr.port_num = 1;
+
+    ts_last_created = time(NULL);
+    last_num_ah_created = num_ah_created = 0;
+    while (num_ah_created < num_endpoints) {
+        for (i = 0; i < num_procs; i++) {
+            if (NULL != endpoints[i] &&
+                NULL == endpoints[i]->endpoint_remote_ah) {
+                ah_attr.grh.dgid = endpoints[i]->endpoint_remote_addr.gid;
+                endpoints[i]->endpoint_remote_ah =
+                    ibv_create_ah(module->pd, &ah_attr);
+                if (NULL != endpoints[i]->endpoint_remote_ah) {
+                    ts_last_created = time(NULL);
+                    ++num_ah_created;
+                } else if (EAGAIN != errno) {
+                    opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+                                   true,
+                                   ompi_process_info.nodename,
+                                   ibv_get_device_name(module->device),
+                                   module->port_num,
+                                   "ibv_create_ah()", __FILE__, __LINE__,
+                                   "Failed to create an address handle");
+                    /* JMS WTF to do here? */
+                    //OBJ_RELEASE(endpoints[i]);
+                    //return OMPI_ERR_OUT_OF_RESOURCE;
+                }
+            }
+        }
+
+        /* Has it been too long since our last AH creation (ARP
+           resolution)?  If so, we're probably never going to finish,
+           so just bail. */
+        /* JMS PROBBALY WANT TO MAKE THIS AN MCA PARAM -- YAY I HAZ
+           ALL THE MCA PARAMS!! */
+        if (num_ah_created < num_endpoints &&
+            ts_last_created + 20 > time(NULL)) {
+            opal_output(0, "no ARP. life sux for you.");
+            // JMS make this a real show_help
+            abort(); // For the moment, die quietly, in the snow
+        }
+    }
+
+    opal_output_verbose(5, USNIC_OUT,
+                        "btl:usnic: made %" PRIsize_t " address handles", num_endpoints);
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -129,11 +203,14 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
         rc = ompi_btl_usnic_create_endpoint(module, usnic_proc,
                 &usnic_endpoint);
         if (OMPI_SUCCESS != rc) {
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic:%s: unable to create endpoint for module=%p proc=%p\n",
+                                __func__, (void *)module, (void *)usnic_proc);
             OBJ_RELEASE(usnic_proc);
             continue;
         }
 
-        /* Add to array of all procs */
+        /* Add to array of all procs (proc_match gave us a reference) */
         opal_pointer_array_add(&module->all_procs, usnic_proc);
 
         opal_output_verbose(5, USNIC_OUT,
@@ -149,6 +226,9 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
     }
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: made %" PRIsize_t " endpoints", count);
+
+    /* Create address handles for all the newly-created endpoints */
+    create_ahs(nprocs, count, endpoints, module);
 
     return OMPI_SUCCESS;
 }
@@ -199,6 +279,7 @@ static int usnic_del_procs(struct mca_btl_base_module_t *base_module,
             for (index = 0; index < module->all_procs.size; ++index) {
                 if (opal_pointer_array_get_item(&module->all_procs, index) ==
                         proc) {
+                    OBJ_RELEASE(proc);
                     opal_pointer_array_set_item(&module->all_procs, index,
                             NULL);
                     break;
@@ -967,7 +1048,7 @@ usnic_do_resends(
         endpoint = sseg->ss_parent_frag->sf_endpoint;
 
         /* clobber any stale piggy-backed ACK */
-        sseg->ss_base.us_btl_header->ack_seq = 0;
+        sseg->ss_base.us_btl_header->ack_present = 0;
 
         /* Only post this segment if not already posted */
         if (sseg->ss_send_posted == 0) {
@@ -1486,7 +1567,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
 
         case IBV_EVENT_QP_FATAL:
         case IBV_EVENT_PORT_ERR:
-#if BTL_USNIC_HAVE_IBV_EVENT_GID_CHANGE
+#if HAVE_DECL_IBV_EVENT_GID_CHANGE
         case IBV_EVENT_GID_CHANGE:
 #endif
         default:

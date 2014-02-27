@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -49,8 +49,9 @@
  * packet type in the BTL header
  */
 void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
-                           ompi_btl_usnic_recv_segment_t *seg,
-                           ompi_btl_usnic_channel_t *channel)
+                              ompi_btl_usnic_recv_segment_t *seg,
+                              ompi_btl_usnic_channel_t *channel,
+                              uint32_t l2_bytes_rcvd)
 {
     ompi_btl_usnic_segment_t *bseg;
     mca_btl_active_message_callback_t* reg;
@@ -93,7 +94,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         opal_output(0, "=== Unknown sender; dropped: from MAC %s to MAC %s, seq %" UDSEQ, 
                     src_mac, 
                     dest_mac, 
-                    bseg->us_btl_header->seq);
+                    bseg->us_btl_header->pkt_seq);
 #endif
         ++module->stats.num_unk_recvs;
         goto repost_no_endpoint;
@@ -113,12 +114,12 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
 
 #if MSGDEBUG1
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ ", len=%d\n",
-                    (void*) endpoint, hdr->seq, hdr->payload_len);
+                    (void*) endpoint, hdr->pkt_seq, hdr->payload_len);
 #if 0
 
         opal_output(0, "<-- Received FRAG ep %p, seq %" UDSEQ " from %s to %s: GOOD! (rel seq %d, lowest seq %" UDSEQ ", highest seq: %" UDSEQ ", rwstart %d) seg %p, module %p\n",
                     (void*) endpoint,
-                    seg->rs_base.us_btl_header->seq, 
+                    seg->rs_base.us_btl_header->pkt_seq,
                     src_mac, dest_mac,
                     window_index,
                     endpoint->endpoint_next_contig_seq_to_recv,
@@ -131,6 +132,14 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         }
 #endif
 #endif
+
+        if (OPAL_UNLIKELY(ompi_btl_usnic_frag_seg_proto_size(seg) !=
+                          l2_bytes_rcvd)) {
+            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
+                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
+                       l2_bytes_rcvd, ompi_btl_usnic_frag_seg_proto_size(seg)));
+            abort();
+        }
 
         /* If this it not a PUT, Pass this segment up to the PML.
          * Be sure to get the payload length from the BTL header because
@@ -172,6 +181,14 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         int frag_index;
         ompi_btl_usnic_rx_frag_info_t *fip;
 
+        if (OPAL_UNLIKELY(ompi_btl_usnic_chunk_seg_proto_size(seg) !=
+                          l2_bytes_rcvd)) {
+            BTL_ERROR(("L2 packet size and segment payload len do not agree!"
+                       " l2_bytes_rcvd=%" PRIu32 " expected=%" PRIu32,
+                       l2_bytes_rcvd, ompi_btl_usnic_chunk_seg_proto_size(seg)));
+            abort();
+        }
+
         /* Is incoming sequence # ok? */
         if (OPAL_UNLIKELY(ompi_btl_usnic_check_rx_seq(endpoint, seg,
                         &window_index) != 0)) {
@@ -182,7 +199,7 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
         opal_output(0, "<-- Received CHUNK fid %d ep %p, seq %" UDSEQ " from %s to %s: GOOD! (rel seq %d, lowest seq %" UDSEQ ", highest seq: %" UDSEQ ", rwstart %d) seg %p, module %p\n",
                     seg->rs_base.us_btl_chunk_header->ch_frag_id,
                     (void*) endpoint,
-                    seg->rs_base.us_btl_chunk_header->ch_hdr.seq, 
+                    seg->rs_base.us_btl_chunk_header->ch_hdr.pkt_seq,
                     src_mac, dest_mac,
                     window_index,
                     endpoint->endpoint_next_contig_seq_to_recv,

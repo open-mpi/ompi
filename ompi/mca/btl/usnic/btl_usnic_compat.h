@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,11 +21,19 @@
 /* for per-file #ifdefs, esp. #includes */
 #  define OMPI_BTL_USNIC_CISCO_V1_6 1
 
+/* for some of the ORTE_* constants that we name-shift to OMPI_* here */
+#  include "orte/mca/errmgr/errmgr.h"
+#  include "orte/runtime/orte_globals.h"
+#  include "orte/util/show_help.h"
+
 #define opal_event_set(event_base_,A,B,C,D,E) \
     opal_event_set(A,B,C,D,E)
 #  define opal_show_help orte_show_help
 #  define mca_base_var_check_exclusive(S,A,B,C,D,E,F) \
     mca_base_param_check_exclusive_string(A,B,C,D,E,F)
+#  define ompi_rte_compare_name_fields(a, b, c) \
+    orte_util_compare_name_fields(a, b, c)
+#  define OMPI_RTE_CMP_ALL ORTE_NS_CMP_ALL
 #  define ompi_process_info orte_process_info
 #  define ompi_rte_hash_name orte_util_hash_name
 #  define OMPI_PROC_MY_NAME ORTE_PROC_MY_NAME
@@ -52,6 +60,10 @@
 
 #elif (OMPI_MAJOR_VERSION == 1 && OMPI_MINOR_VERSION >= 7) || \
       (OMPI_MAJOR_VERSION >= 2)
+
+/* the v1.7+ equivalent way to get OMPI_ERROR_LOG and friends */
+#  include "ompi/mca/rte/rte.h"
+
 /* v1.7, v1.8 (to be released), trunk (v1.9), or later */
 /* TODO validate that all of these things actually work with v1.7 */
 #  define USNIC_OUT ompi_btl_base_framework.framework_output

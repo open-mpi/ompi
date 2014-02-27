@@ -39,6 +39,7 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
 
+#include "btl_usnic_libnl_utils.h"
 #include "btl_usnic_compat.h"
 
 BEGIN_C_DECLS
@@ -121,15 +122,13 @@ typedef struct ompi_btl_usnic_component_t {
     /** base BTL component */
     mca_btl_base_component_2_0_0_t super;
 
+    /* in the v1.6 series, sizeof(super) is 256, leading to good alignment for
+     * subsequent fastpath fields */
+
     /** Maximum number of BTL modules */
     uint32_t max_modules;
     /** Number of available/initialized BTL modules */
     uint32_t num_modules;
-
-    char *if_include;
-    char *if_exclude;
-    char *vendor_part_ids_string;
-    uint32_t *vendor_part_ids;
 
     /* Cached hashed version of my RTE proc name (to stuff in
        protocol headers) */
@@ -140,11 +139,24 @@ typedef struct ompi_btl_usnic_component_t {
     /** array of pointers to active BTLs (num_modules elements) */
     struct ompi_btl_usnic_module_t** usnic_active_modules;
 
+    /** convertor packing threshold */
+    int pack_lazy_threshold;
+
+    /** does the stack below us speak UDP or custom-L2? */
+    bool use_udp;
+
+    /* vvvvvvvvvv non-fastpath fields go below vvvvvvvvvv */
+
     /** list of usnic proc structures */
     opal_list_t usnic_procs;
 
     /** name of memory pool */
     char* usnic_mpool_name;
+
+    char *if_include;
+    char *if_exclude;
+    char *vendor_part_ids_string;
+    uint32_t *vendor_part_ids;
 
     /** Want stats? */
     bool stats_enabled;
@@ -174,8 +186,8 @@ typedef struct ompi_btl_usnic_component_t {
     /** retrans characteristics */
     int retrans_timeout;
 
-    /** convertor packing threshold */
-    int pack_lazy_threshold;
+    /** socket used for rtnetlink queries */
+    struct usnic_rtnl_sk *unlsk;
 } ompi_btl_usnic_component_t;
 
 OMPI_MODULE_DECLSPEC extern ompi_btl_usnic_component_t mca_btl_usnic_component;
@@ -186,8 +198,18 @@ typedef mca_btl_base_recv_reg_t ompi_btl_usnic_recv_reg_t;
  * Size for sequence numbers (just to ensure we use the same size
  * everywhere)
  */
-typedef uint64_t ompi_btl_usnic_seq_t;
-#define UDSEQ PRIu64
+typedef uint16_t ompi_btl_usnic_seq_t;
+#define UDSEQ PRIu16
+
+/* sequence number comparison macros that allow for rollover.
+ * Relies on the fact that sequence numbers should be relatively close
+ * together as compared to (1<<31)
+ */
+#define SEQ_DIFF(A,B) ((int16_t)((A)-(B)))
+#define SEQ_LT(A,B) (SEQ_DIFF(A,B) < 0)
+#define SEQ_LE(A,B) (SEQ_DIFF(A,B) <= 0)
+#define SEQ_GT(A,B) (SEQ_DIFF(A,B) > 0)
+#define SEQ_GE(A,B) (SEQ_DIFF(A,B) >= 0)
 
 /**
  * Register the usnic BTL MCA params

@@ -55,7 +55,6 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/util/show_help.h"
 
-#include "ompi/mca/rte/rte.h"
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -74,6 +73,7 @@
 #include "btl_usnic_send.h"
 #include "btl_usnic_recv.h"
 #include "btl_usnic_proc.h"
+#include "btl_usnic_test.h"
 
 #define OMPI_BTL_USNIC_NUM_WC       500
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -95,7 +95,6 @@ usnic_component_init(int* num_btl_modules, bool want_progress_threads,
                        bool want_mpi_threads);
 static int usnic_component_progress(void);
 static void seed_prng(void);
-static bool port_is_usnic(ompi_common_verbs_port_item_t *port);
 static int init_module_from_port(ompi_btl_usnic_module_t *module,
                                  ompi_common_verbs_port_item_t *port);
 
@@ -207,10 +206,18 @@ static int usnic_component_close(void)
 
     free(mca_btl_usnic_component.usnic_all_modules);
     free(mca_btl_usnic_component.usnic_active_modules);
+
     if (NULL != mca_btl_usnic_component.vendor_part_ids) {
         free(mca_btl_usnic_component.vendor_part_ids);
         mca_btl_usnic_component.vendor_part_ids = NULL;
     }
+
+    ompi_btl_usnic_rtnl_sk_free(mca_btl_usnic_component.unlsk);
+
+#if OMPI_BTL_USNIC_UNIT_TESTS
+    /* clean up the unit test infrastructure */
+    ompi_btl_usnic_cleanup_tests();
+#endif
 
     return OMPI_SUCCESS;
 }
@@ -468,7 +475,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     usnic_if_filter_t *filter;
     bool keep_module;
     bool filter_incl = false;
-    int min_distance, num_local_procs;
+    int min_distance, num_local_procs, err;
 
     *num_btl_modules = 0;
 
@@ -516,20 +523,53 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     /* initialization */
     mca_btl_usnic_component.my_hashed_rte_name = 
         ompi_rte_hash_name(&(ompi_proc_local()->proc_name));
+    MSGDEBUG1_OUT("%s: my_hashed_rte_name=0x%" PRIx64,
+                   __func__, mca_btl_usnic_component.my_hashed_rte_name);
 
     seed_prng();
 
     srandom((unsigned int)getpid());
 
+    err = ompi_btl_usnic_rtnl_sk_alloc(&mca_btl_usnic_component.unlsk);
+    if (0 != err) {
+        /* API returns negative errno values */
+        opal_show_help("help-mpi-btl-usnic.txt", "rtnetlink init fail",
+                       true, ompi_process_info.nodename, strerror(-err));
+        return NULL;
+    }
+
     /* Find the ports that we want to use.  We do our own interface name
      * filtering below, so don't let the verbs code see our
      * if_include/if_exclude strings */
     port_list = ompi_common_verbs_find_ports(NULL, NULL,
-                                             OMPI_COMMON_VERBS_FLAGS_UD,
+                                             OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP,
                                              USNIC_OUT);
-    if (NULL == port_list || 0 == opal_list_get_size(port_list)) {
-        mca_btl_base_error_no_nics("usNIC", "device");
+    if (NULL == port_list) {
+        OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto free_include_list;
+    } else if (opal_list_get_size(port_list) > 0) {
+        mca_btl_usnic_component.use_udp = true;
+        opal_output_verbose(5, USNIC_OUT, "btl:usnic: using UDP transport");
+    } else {
+        OBJ_RELEASE(port_list);
+
+        /* If we got no USNIC_UDP transport devices, try again with
+           USNIC */
+        port_list = ompi_common_verbs_find_ports(NULL, NULL,
+                                                 OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC,
+                                                 USNIC_OUT);
+
+        if (NULL == port_list) {
+            OMPI_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            goto free_include_list;
+        } else if (opal_list_get_size(port_list) > 0) {
+            mca_btl_usnic_component.use_udp = false;
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic: using L2-only transport");
+        } else {
+            mca_btl_base_error_no_nics("usNIC", "device");
+            goto free_include_list;
+        }
     }
 
     /* Setup an array of pointers to point to each module (which we'll
@@ -595,16 +635,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: found: device %s, port %d",
                             port->device->device_name, port->port_num);
-
-        /* This component only works with Cisco VIC/usNIC devices; it
-           is not a general verbs UD component.  Reject any ports
-           found on devices that are not Cisco VICs. */
-        if (!port_is_usnic(port)) {
-            opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic: this is not a usnic-capable device");
-            --mca_btl_usnic_component.num_modules;
-            continue; /* next port */
-        }
 
         /* Fill in a bunch of the module struct */
         module = &(mca_btl_usnic_component.usnic_all_modules[i]);
@@ -694,24 +724,24 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         /* Find the max payload this port can handle */
         module->max_frag_payload =
             module->if_mtu - /* start with the MTU */
-            sizeof(ompi_btl_usnic_protocol_header_t) -
+            OMPI_BTL_USNIC_PROTO_HDR_SZ -
             sizeof(ompi_btl_usnic_btl_header_t); /* subtract size of
                                                     the BTL header */
         /* same, but use chunk header */
         module->max_chunk_payload =
             module->if_mtu -
-            sizeof(ompi_btl_usnic_protocol_header_t) -
+            OMPI_BTL_USNIC_PROTO_HDR_SZ -
             sizeof(ompi_btl_usnic_btl_chunk_header_t);
 
         /* Priorirty queue MTU and max size */
         if (0 == module->tiny_mtu) {
             module->tiny_mtu = 768;
             module->max_tiny_payload = module->tiny_mtu -
-                sizeof(ompi_btl_usnic_protocol_header_t) -
+                OMPI_BTL_USNIC_PROTO_HDR_SZ -
                 sizeof(ompi_btl_usnic_btl_header_t);
         } else {
             module->tiny_mtu = module->max_tiny_payload +
-                sizeof(ompi_btl_usnic_protocol_header_t) +
+                OMPI_BTL_USNIC_PROTO_HDR_SZ +
                 sizeof(ompi_btl_usnic_btl_header_t);
         }
 
@@ -793,7 +823,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                             module->rd_num,
                             module->cq_num);
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: priority MTU %s:%d = %d",
+                            "btl:usnic: priority MTU %s:%d = %" PRIsize_t,
                             ibv_get_device_name(module->device),
                             module->port_num,
                             module->tiny_mtu);
@@ -950,7 +980,8 @@ static int usnic_component_progress(void)
                 if (OPAL_LIKELY(wc.opcode == IBV_WC_RECV &&
                                 wc.status == IBV_WC_SUCCESS)) {
                     rseg = (ompi_btl_usnic_recv_segment_t*)(intptr_t)wc.wr_id;
-                    ompi_btl_usnic_recv_fast(module, rseg, channel);
+                    ompi_btl_usnic_recv_fast(module, rseg, channel,
+                                             wc.byte_len);
                     fastpath_ok = false;    /* prevent starvation */
                     return 1;
                 } else {
@@ -981,7 +1012,7 @@ static int usnic_handle_completion(
            going.  The sender will eventually re-send it. */
         if (IBV_WC_RECV == cwc->opcode) {
             if (cwc->byte_len <
-                 (sizeof(ompi_btl_usnic_protocol_header_t)+
+                 (OMPI_BTL_USNIC_PROTO_HDR_SZ +
                   sizeof(ompi_btl_usnic_btl_header_t))) {
                 BTL_ERROR(("%s: RX error polling CQ[%d] with status %d for wr_id %" PRIx64 " vend_err %d, byte_len %d",
                    ibv_get_device_name(module->device),
@@ -1033,7 +1064,7 @@ static int usnic_handle_completion(
     /**** Receive completions ****/
     case OMPI_BTL_USNIC_SEG_RECV:
         assert(IBV_WC_RECV == cwc->opcode);
-        ompi_btl_usnic_recv(module, rseg, channel);
+        ompi_btl_usnic_recv(module, rseg, channel, cwc->byte_len);
         break;
 
     default:
@@ -1124,33 +1155,6 @@ static void seed_prng(void)
     seed48(seedv);
 }
 
-static bool port_is_usnic(ompi_common_verbs_port_item_t *port)
-{
-    bool is_usnic = false;
-    uint32_t *vpi;
-
-#if BTL_USNIC_HAVE_IBV_USNIC
-    /* If we have the IB_*_USNIC constants, then take any
-       device which advertises them */
-    if (IBV_TRANSPORT_USNIC == port->device->device->transport_type &&
-        IBV_NODE_USNIC == port->device->device->node_type) {
-        is_usnic = true;
-    }
-#endif
-    /* Or take any specific device that we know is a Cisco
-       VIC.  Cisco's vendor ID is 0x1137. */
-    if (!is_usnic && 0x1137 == port->device->device_attr.vendor_id) {
-        for (vpi = mca_btl_usnic_component.vendor_part_ids; *vpi > 0; ++vpi) {
-            if (port->device->device_attr.vendor_part_id == *vpi) {
-                is_usnic = true;
-                break;
-            }
-        }
-    }
-
-    return is_usnic;
-}
-
 /* returns OMPI_SUCCESS if module initialization was successful, OMPI_ERROR
  * otherwise */
 static int init_module_from_port(ompi_btl_usnic_module_t *module,
@@ -1228,6 +1232,7 @@ static int init_module_from_port(ompi_btl_usnic_module_t *module,
             return OMPI_ERROR;
         }
     }
+    module->local_addr.link_speed_mbps = module->super.btl_bandwidth;
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: bandwidth for %s:%d = %u",
                         ibv_get_device_name(module->device),
@@ -1534,7 +1539,7 @@ static void dump_endpoint(ompi_btl_usnic_endpoint_t *endpoint)
         }
     }
 
-    opal_output(0, "      ack_needed=%s n_t=%"PRIu64" n_a=%"PRIu64" n_r=%"PRIu64" n_s=%"PRIu64" rfstart=%"PRIu32"\n",
+    opal_output(0, "      ack_needed=%s n_t=%"UDSEQ" n_a=%"UDSEQ" n_r=%"UDSEQ" n_s=%"UDSEQ" rfstart=%"PRIu32"\n",
                 (endpoint->endpoint_ack_needed?"true":"false"),
                 endpoint->endpoint_next_seq_to_send,
                 endpoint->endpoint_ack_seq_rcvd,
@@ -1600,3 +1605,5 @@ void ompi_btl_usnic_component_debug(void)
         ompi_btl_usnic_print_stats(module, "  manual", /*reset=*/false);
     }
 }
+
+#include "test/btl_usnic_component_test.h"

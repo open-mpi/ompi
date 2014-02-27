@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2014 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -192,3 +192,9 @@ list of decimal verbs vendor part IDs.  This usnic BTL will be ignored
 for this job.
 
   btl_usnic_vendor_part_ids value: %s
+#
+[rtnetlink init fail]
+The usnic BTL failed to initialize the rtnetlink query subsystem.
+
+  Server:         %s
+  Error message:  %s

@@ -95,6 +95,7 @@ static int rte_init(void)
     int *ranks=NULL;
     orte_jobid_t jobid;
     char *rmluri;
+    orte_process_name_t ldr;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -332,6 +333,14 @@ static int rte_init(void)
                 orte_process_info.my_node_rank = (orte_node_rank_t)j;
                 break;
             }
+        }
+        /* store the name of the local leader */
+        ldr.jobid = ORTE_PROC_MY_NAME->jobid;
+        ldr.vpid = ranks[0];
+        if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)&ldr, OPAL_SCOPE_INTERNAL,
+                                                 OPAL_DB_LOCALLDR, (opal_identifier_t*)&ldr, OPAL_ID_T))) {
+            error = "storing local leader";
+            goto error;
         }
         free(ranks);
 
