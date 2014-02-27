@@ -71,6 +71,42 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
           if test "x$btl_openib_have_rdmacm" = "x1" -a \
                   "$have_threads" != "none"; then
               cpcs="$cpcs rdmacm"
+              if test "$enable_openib_rdmacm_ibaddr" = "yes"; then
+                  LDFLAGS_save="$LDFLAGS"
+                  LIBS_save="$LIBS"
+                  LDFLAGS="$LDFLAGS $btl_openib_LDFLAGS"
+                  LIBS="$LIBS $btl_openib_LIBS"
+                  AC_LANG(C)
+                  AC_MSG_CHECKING([rsockets keepalive])
+                  AC_RUN_IFELSE(
+                    [AC_LANG_PROGRAM(
+                        [
+                          #include <stdio.h>
+                          #include <netinet/in.h>
+                          #include <netinet/tcp.h>
+                          #include <sys/types.h>
+                          #include <rdma/rsocket.h>
+                          #include <infiniband/ib.h>
+                        ],
+                        [
+                          int rsock;
+                          rsock = rsocket(AF_IB, SOCK_STREAM, 0);
+                          if (rsock < 0) {
+                              return -1;
+                          }
+                          rclose(rsock);
+                        ]
+                    )],
+                    [ AC_MSG_RESULT([yes])
+                      AC_DEFINE(BTL_OPENIB_RDMACM_IB_ADDR, 1, rdmacm with rsockets support)
+                    ],
+                    [ AC_MSG_RESULT([no])
+                      AC_MSG_WARN([rsockets does not support keepalives. librdmacm 1.0.18 or beyond is needed.])
+                    ]
+                  )
+                  LDFLAGS="$LDFLAGS_save"
+                  LIBS="$LIBS_save"
+              fi
           fi
           if test "x$btl_openib_have_udcm" = "x1" -a \
                   "$have_threads" != "none"; then
