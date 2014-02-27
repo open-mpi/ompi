@@ -496,7 +496,7 @@ static int do_child(orte_app_context_t* context,
                         msg = "failed to convert bitmap list to hwloc bitmap";
                     }
                     if (OPAL_BINDING_REQUIRED(jobdat->map->binding) &&
-                        (OPAL_BIND_GIVEN & jobdat->map->binding)) {
+                        OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
                         /* If binding is required and a binding directive was explicitly
                          * given (i.e., we are not binding due to a default policy),
                          * send an error up the pipe (which exits -- it doesn't return).
@@ -517,7 +517,7 @@ static int do_child(orte_app_context_t* context,
                 /* bind as specified */
                 rc = hwloc_set_cpubind(opal_hwloc_topology, cpuset, 0);
                 /* if we got an error and this wasn't a default binding policy, then report it */
-                if (rc < 0  && (OPAL_BIND_GIVEN & jobdat->map->binding)) {
+                if (rc < 0  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
                     if (errno == ENOSYS) {
                         msg = "hwloc indicates cpu binding not supported";
                     } else if (errno == EXDEV) {
@@ -570,7 +570,7 @@ static int do_child(orte_app_context_t* context,
                  * anything unless the user actually specified the binding policy
                  */
                 rc = opal_hwloc_base_set_process_membind_policy();
-                if (ORTE_SUCCESS != rc  && (OPAL_BIND_GIVEN & jobdat->map->binding)) {
+                if (ORTE_SUCCESS != rc  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
                     if (errno == ENOSYS) {
                         msg = "hwloc indicates memory binding not supported";
                     } else if (errno == EXDEV) {
