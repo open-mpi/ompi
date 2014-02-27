@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/prefetch.h"
@@ -74,6 +75,81 @@ static inline void compute_sf_size(ompi_btl_usnic_send_frag_t *sfrag)
     sfrag->sf_size = 0;
     sfrag->sf_size += frag->uf_src_seg[0].seg_len;
     sfrag->sf_size += frag->uf_src_seg[1].seg_len;
+}
+
+/* The call to ibv_create_ah() may initiate an ARP resolution, and may
+ * therefore take some time to complete.  Hence, it will return 1 of 3
+ * things:
+ *
+ * 1. a valid new ah
+ * 2. NULL and errno == EAGAIN (ARP not complete; try again later)
+ * 3. NULL and errno != EAGAIN (fatal error)
+ *
+ * Since ibv_create_ah() is therefore effectively non-blocking, we
+ * gang all the endpoint ah creations here in this loop so that we can
+ * get some parallelization of ARP resolution.
+ */
+static int create_ahs(size_t array_len, size_t num_endpoints,
+                      struct mca_btl_base_endpoint_t** endpoints,
+                      ompi_btl_usnic_module_t *module)
+{
+    size_t i;
+    struct ibv_ah_attr ah_attr;
+    size_t num_ah_created, last_num_ah_created;
+    time_t ts_last_created;
+
+    /* memset the ah_attr to both silence valgrind warnings (since the
+       attr struct ends up getting written down an fd to the kernel)
+       and actually zero out all the fields that we don't care about /
+       want to be logically false. */
+    memset(&ah_attr, 0, sizeof(ah_attr));
+    ah_attr.is_global = 1;
+    ah_attr.port_num = 1;
+
+    ts_last_created = time(NULL);
+    last_num_ah_created = num_ah_created = 0;
+    while (num_ah_created < num_endpoints) {
+        for (i = 0; i < array_len; i++) {
+            if (NULL != endpoints[i] &&
+                NULL == endpoints[i]->endpoint_remote_ah) {
+                ah_attr.grh.dgid = endpoints[i]->endpoint_remote_addr.gid;
+                endpoints[i]->endpoint_remote_ah =
+                    ibv_create_ah(module->pd, &ah_attr);
+                if (NULL != endpoints[i]->endpoint_remote_ah) {
+                    ts_last_created = time(NULL);
+                    ++num_ah_created;
+                } else if (EAGAIN != errno) {
+                    opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+                                   true,
+                                   ompi_process_info.nodename,
+                                   ibv_get_device_name(module->device),
+                                   module->port_num,
+                                   "ibv_create_ah()", __FILE__, __LINE__,
+                                   "Failed to create an address handle");
+                    return OMPI_ERR_OUT_OF_RESOURCE;
+                }
+            }
+        }
+
+        /* Has it been too long since our last AH creation (ARP
+           resolution)?  If so, we're probably never going to finish,
+           so just bail. */
+        if (num_ah_created < num_endpoints &&
+            time(NULL) > (ts_last_created + mca_btl_usnic_component.arp_timeout)) {
+            opal_show_help("help-mpi-btl-usnic.txt", "ibv_create_ah timeout",
+                           true,
+                           ompi_process_info.nodename,
+                           ibv_get_device_name(module->device),
+                           module->port_num,
+                           module->if_name,
+                           mca_btl_usnic_component.arp_timeout);
+            return OMPI_ERR_UNREACH;
+        }
+    }
+
+    opal_output_verbose(5, USNIC_OUT,
+                        "btl:usnic: made %" PRIsize_t " address handles", num_endpoints);
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -152,6 +228,22 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
     }
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: made %" PRIsize_t " endpoints", count);
+
+    /* Create address handles for all the newly-created endpoints */
+    rc = create_ahs(nprocs, count, endpoints, module);
+    if (OMPI_SUCCESS != rc) {
+        for (i = 0; i < nprocs; i++) {
+            if (NULL != endpoints[i]) {
+                OBJ_RELEASE(endpoints[i]);
+                endpoints[i] = NULL;
+            }
+            opal_bitmap_clear_bit(reachable, i);
+        }
+        /* Allow falling through to return OMPI_SUCCESS, even though
+           we couldn't reach everyone (and therefore we gave up).  Let
+           the PML know that this module basically isn't reachable,
+           but it's free to continue with other BTL modules. */
+    }
 
     return OMPI_SUCCESS;
 }

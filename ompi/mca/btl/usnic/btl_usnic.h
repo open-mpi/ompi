@@ -194,6 +194,9 @@ typedef struct ompi_btl_usnic_component_t {
     bool connectivity_enabled;
     int connectivity_ack_timeout;
     int connectivity_num_retries;
+
+    /* ibv_create_ah() (i.e., ARP) timeout */
+    int arp_timeout;
 } ompi_btl_usnic_component_t;
 
 OMPI_MODULE_DECLSPEC extern ompi_btl_usnic_component_t mca_btl_usnic_component;
