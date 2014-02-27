@@ -145,6 +145,8 @@ void ompi_rte_wait_for_debugger(void)
     }
 }    
 
+static bool direct_modex_enabled = false;
+
 int ompi_rte_modex(ompi_rte_collective_t *coll)
 {
     /* mark that this process reached modex */
@@ -173,6 +175,8 @@ int ompi_rte_modex(ompi_rte_collective_t *coll)
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s using direct modex",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    direct_modex_enabled = true;
+
     /* if direct modex was enabled, setup the receive for it */
     orte_rml.recv_buffer_nb(OMPI_NAME_WILDCARD,
                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
@@ -270,20 +274,24 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                          ORTE_NAME_PRINT(&proc->proc_name), key));
 
     if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                             "%s requesting direct modex from %s for %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->proc_name), key));
-        /* if we couldn't fetch the data via the db, then we will attempt
-         * to retrieve it from the target proc
-         */
-        if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_PEER))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* now retrieve the requested piece */
-        if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
-            ORTE_ERROR_LOG(rc);
+        if (direct_modex_enabled) {
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s requesting direct modex from %s for %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->proc_name), key));
+            /* if we couldn't fetch the data via the db, then we will attempt
+             * to retrieve it from the target proc
+             */
+            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_PEER))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* now retrieve the requested piece */
+            if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
             return rc;
         }
     }
@@ -306,20 +314,24 @@ int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
                          ORTE_NAME_PRINT(&proc->proc_name), key));
 
     if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
-        /* if we couldn't fetch the data via the db, then we will attempt
-         * to retrieve it from the target proc
-         */
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                             "%s requesting direct modex from %s for %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->proc_name), key));
-        if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_PEER))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* now retrieve the requested piece */
-        if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
-            ORTE_ERROR_LOG(rc);
+        if (direct_modex_enabled) {
+            /* if we couldn't fetch the data via the db, then we will attempt
+             * to retrieve it from the target proc
+             */
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s requesting direct modex from %s for %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->proc_name), key));
+            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_PEER))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* now retrieve the requested piece */
+            if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
             return rc;
         }
     }
@@ -344,21 +356,25 @@ int ompi_rte_db_fetch_multiple(const struct ompi_proc_t *proc,
     /* MPI processes are only concerned with shared info */
     if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)(&proc->proc_name),
                                                      OPAL_SCOPE_GLOBAL, key, kvs))) {
-        /* if we couldn't fetch the data via the db, then we will attempt
-         * to retrieve it from the target proc
-         */
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                             "%s requesting direct modex from %s for %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->proc_name), key));
-        if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_GLOBAL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* now retrieve the requested pieces */
-        if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)(&proc->proc_name),
-                                                         OPAL_SCOPE_GLOBAL, key, kvs))) {
-            ORTE_ERROR_LOG(rc);
+        if (direct_modex_enabled) {
+            /* if we couldn't fetch the data via the db, then we will attempt
+             * to retrieve it from the target proc
+             */
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                 "%s requesting direct modex from %s for %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->proc_name), key));
+            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_GLOBAL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* now retrieve the requested pieces */
+            if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)(&proc->proc_name),
+                                                             OPAL_SCOPE_GLOBAL, key, kvs))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
             return rc;
         }
     }
