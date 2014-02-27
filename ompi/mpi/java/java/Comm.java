@@ -531,10 +531,7 @@ public final Request iSend(Buffer buf, int count,
     return new Request(iSend(handle, buf, count, type.handle, dest, tag));
 }
 
-/**
- * Protected member used internally by <tt>Prequest.start</tt>
- */
-protected final native long iSend(
+private native long iSend(
         long comm, Buffer buf, int count, long type, int dest, int tag)
         throws MPIException;
 
@@ -559,10 +556,7 @@ public final Request ibSend(Buffer buf, int count,
     return new Request(ibSend(handle, buf, count, type.handle, dest, tag));
 }
 
-/**
- * Protected member used internally by <tt>Prequest.Start</tt>
- */
-protected final native long ibSend(
+private native long ibSend(
         long comm, Buffer buf, int count, long type, int dest, int tag)
         throws MPIException;
 
@@ -587,10 +581,7 @@ public final Request isSend(Buffer buf, int count,
     return new Request(isSend(handle, buf, count, type.handle, dest, tag));
 }
 
-/**
- * Protected member used internally by <tt>Prequest.Start</tt>
- */
-protected final native long isSend(
+private native long isSend(
         long comm, Buffer buf, int count, long type, int dest, int tag)
         throws MPIException;
 
@@ -615,10 +606,7 @@ public final Request irSend(Buffer buf, int count,
     return new Request(irSend(handle, buf, count, type.handle, dest, tag));
 }
 
-/**
- * Protected member used internally by <tt>Prequest.Start</tt>
- */
-protected final native long irSend(
+private native long irSend(
         long comm, Buffer buf, int count, long type, int dest, int tag)
         throws MPIException;
 
@@ -643,10 +631,7 @@ public final Request iRecv(Buffer buf, int count,
     return new Request(iRecv(handle, buf, count, type.handle, source, tag));
 }
 
-/**
- * Protected member used internally by <tt>Prequest.Start</tt>
- */
-protected final native long iRecv(
+private native long iRecv(
         long comm, Buffer buf, int count, long type, int source, int tag)
         throws MPIException;
 
