@@ -623,7 +623,6 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
 {
     int err;
     int modex_index;
-    struct ibv_ah_attr ah_attr;
     ompi_btl_usnic_endpoint_t *endpoint;
 
     /* look for matching modex info */
@@ -654,34 +653,10 @@ ompi_btl_usnic_create_endpoint(ompi_btl_usnic_module_t *module,
         endpoint->endpoint_next_contig_seq_to_recv - 1;
     endpoint->endpoint_rfstart = WINDOW_SIZE_MOD(endpoint->endpoint_next_contig_seq_to_recv);
 
-    /* Create the address handle on this endpoint from the modex info.
-       memset to both silence valgrind warnings (since the attr struct
-       ends up getting written down an fd to the kernel) and actually
-       zero out all the fields that we don't care about / want to be
-       logically false. */
-    memset(&ah_attr, 0, sizeof(ah_attr));
-    ah_attr.is_global = 1;
-    ah_attr.port_num = 1;
-    ah_attr.grh.dgid = endpoint->endpoint_remote_addr.gid;
-
-    while (1) {
-        endpoint->endpoint_remote_ah = ibv_create_ah(module->pd, &ah_attr);
-        if (NULL != endpoint->endpoint_remote_ah) {
-            break;
-        }
-        if (EAGAIN == errno) {
-            continue;
-        }
-        opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                       true,
-                       ompi_process_info.nodename,
-                       ibv_get_device_name(module->device),
-                       module->port_num,
-                       "ibv_create_ah()", __FILE__, __LINE__,
-                       "Failed to create an address handle");
-        OBJ_RELEASE(endpoint);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+    /* Defer creating the ibv_ah.  Since calling ibv_create_ah() may
+       trigger ARP resolution, it's better to batch all the endpoints'
+       calls to ibv_create_ah() together to get some parallelism. */
+    endpoint->endpoint_remote_ah = NULL;
 
     /* Now claim that modex slot */
     proc->proc_modex_claimed[modex_index] = true;
