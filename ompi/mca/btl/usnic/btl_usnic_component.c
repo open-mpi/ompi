@@ -64,6 +64,7 @@
 #include "ompi/mca/common/verbs/common_verbs.h"
 
 #include "btl_usnic.h"
+#include "btl_usnic_connectivity.h"
 #include "btl_usnic_frag.h"
 #include "btl_usnic_endpoint.h"
 #include "btl_usnic_module.h"
@@ -202,6 +203,12 @@ static int usnic_component_close(void)
     if (usnic_clock_timer_event_set) {
         opal_event_del(&usnic_clock_timer_event);
         usnic_clock_timer_event_set = false;
+    }
+
+    /* Finalize the connectivity client and agent */
+    if (mca_btl_usnic_component.connectivity_enabled) {
+        ompi_btl_usnic_connectivity_client_finalize();
+        ompi_btl_usnic_connectivity_agent_finalize();
     }
 
     free(mca_btl_usnic_component.usnic_all_modules);
@@ -513,6 +520,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        system maintains its own interncal copy) */
     free(mca_btl_usnic_component.vendor_part_ids_string);
     mca_btl_usnic_component.vendor_part_ids_string = NULL;
+
+    /* Setup the connectivity checking agent and client. */
+    if (mca_btl_usnic_component.connectivity_enabled) {
+        if (OMPI_SUCCESS != ompi_btl_usnic_connectivity_agent_init() ||
+            OMPI_SUCCESS != ompi_btl_usnic_connectivity_client_init()) {
+            return NULL;
+        }
+    }
 
     /************************************************************************
      * Below this line, we assume that usnic is loaded on all procs,

@@ -41,6 +41,7 @@
 #include "ompi/memchecker.h"
 
 #include "btl_usnic.h"
+#include "btl_usnic_connectivity.h"
 #include "btl_usnic_frag.h"
 #include "btl_usnic_proc.h"
 #include "btl_usnic_endpoint.h"
@@ -797,6 +798,20 @@ usnic_prepare_src(
 #if MSGDEBUG2
     size_t osize = *size;
 #endif
+
+    /* Do we need to check the connectivity? */
+    if (mca_btl_usnic_component.connectivity_enabled &&
+        OPAL_UNLIKELY(!endpoint->endpoint_connectivity_checked)) {
+        ompi_btl_usnic_connectivity_ping(module->local_addr.ipv4_addr,
+                                         module->local_addr.connectivity_udp_port,
+                                         endpoint->endpoint_remote_addr.ipv4_addr,
+                                         endpoint->endpoint_remote_addr.cidrmask,
+                                         endpoint->endpoint_remote_addr.connectivity_udp_port,
+                                         endpoint->endpoint_remote_addr.mac,
+                                         endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                                         endpoint->endpoint_remote_addr.mtu);
+        endpoint->endpoint_connectivity_checked = true;
+    }
 
     /*
      * if total payload len fits in one MTU use small send, else large
@@ -1929,6 +1944,19 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: not sorting devices by NUMA distance (topology support not included)");
 #endif
+
+    /* Setup a connectivity listener */
+    if (mca_btl_usnic_component.connectivity_enabled) {
+        rc = ompi_btl_usnic_connectivity_listen(module);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
+            ABORT("Failed to notify connectivity agent to listen");
+        }
+    } else {
+        /* If we're not doing a connectivity check, just set the port
+           to 0 */
+        module->local_addr.connectivity_udp_port = 0;
+    }
 
     /* Setup the pointer array for the procs that will be used by this
        module */

@@ -223,8 +223,8 @@ BEGIN_C_DECLS
 
 #define OMPI_RML_PCONNECT_TAG                       OMPI_RML_TAG_BASE+13
 
-/* open shmem oob communication */
-#define OMPI_RML_TAG_SHMEM                          OMPI_RML_TAG_BASE+14
+#define OMPI_RML_TAG_USNIC_CONNECTIVITY             OMPI_RML_TAG_BASE+14
+#define OMPI_RML_TAG_USNIC_CONNECTIVITY_REPLY       OMPI_RML_TAG_BASE+15
 
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
 
