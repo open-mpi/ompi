@@ -2126,6 +2126,9 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
         opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: rdmacm CPC unable to bind to address");
         rc = OMPI_ERR_UNREACH;
+#if BTL_OPENIB_RDMACM_IB_ADDR
+        rdma_freeaddrinfo(rdma_addr);
+#endif
         goto out5;
     }
 #if BTL_OPENIB_RDMACM_IB_ADDR
@@ -2176,9 +2179,6 @@ out5:
      * But don't do it here since it's part of out4:OBJ_RELEASE(context),
      * and we don't want to do it twice.
      */
-#if BTL_OPENIB_RDMACM_IB_ADDR
-    rdma_freeaddrinfo(rdma_addr);
-#endif
 out4:
     opal_list_remove_first(&(server->ids));
     OBJ_RELEASE(context);
