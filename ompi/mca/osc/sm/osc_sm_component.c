@@ -255,9 +255,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
 
         if (asprintf(&data_file, "%s"OPAL_PATH_SEP"shared_window_%d.%s",
-                     orte_process_info.job_session_dir,
+                     ompi_process_info.job_session_dir,
                      ompi_comm_get_cid(comm),
-                     orte_process_info.nodename) < 0) {
+                     ompi_process_info.nodename) < 0) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
