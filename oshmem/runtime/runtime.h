@@ -113,6 +113,12 @@ OSHMEM_DECLSPEC int oshmem_shmem_abort(int errcode);
 OSHMEM_DECLSPEC int oshmem_shmem_allgather(void *send_buf, void *rcv_buf, int elem_size);
 
 /**
+ * Allgatherv between all PEs
+ */
+OSHMEM_DECLSPEC int oshmem_shmem_allgatherv(void *send_buf, void* rcv_buf, int send_count,
+                            int *rcv_size, int* displs);
+
+/**
  * Barrier between all PEs
  */
 OSHMEM_DECLSPEC void oshmem_shmem_barrier(void);

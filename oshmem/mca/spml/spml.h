@@ -78,7 +78,12 @@ static inline char *mca_spml_base_mkey2str(sshmem_mkey_t *mkey)
 {
     static char buf[64];
 
-    snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%" PRIu64, mkey->va_base, mkey->len, mkey->u.key);
+    if (mkey->len == 0) {
+        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%" PRIu64, mkey->va_base, mkey->len, mkey->u.key);
+    } else {
+        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d data=0x%p", mkey->va_base, mkey->len, mkey->u.data);
+    }
+
     return buf;
 }
 
