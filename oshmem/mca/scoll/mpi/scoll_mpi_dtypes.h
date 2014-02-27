@@ -20,6 +20,16 @@ static struct ompi_datatype_t* shmem_dtype_to_ompi_dtype(oshmem_op_t *op)
         return &ompi_mpi_c_float_complex.dt;
     case OSHMEM_OP_TYPE_DCOMPLEX:
         return &ompi_mpi_c_double_complex.dt;
+    case OSHMEM_OP_TYPE_FINT4:
+        return &ompi_mpi_integer4.dt;
+    case OSHMEM_OP_TYPE_FINT8:
+        return &ompi_mpi_integer8.dt;
+    case OSHMEM_OP_TYPE_FREAL4:
+        return &ompi_mpi_real4.dt;
+    case OSHMEM_OP_TYPE_FREAL8:
+        return &ompi_mpi_real8.dt;
+    case OSHMEM_OP_TYPE_FREAL16:
+        return &ompi_mpi_real16.dt;
     default:
         switch (dtsize) {
             case 64:
