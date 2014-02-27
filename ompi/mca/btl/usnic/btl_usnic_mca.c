@@ -185,20 +185,6 @@ int ompi_btl_usnic_component_register(void)
                      NULL, &mca_btl_usnic_component.if_exclude,
                      REGSTR_EMPTY_OK, OPAL_INFO_LVL_1));
 
-    /* Cisco Sereno-based VICs are part ID 207 */
-    CHECK(reg_string("vendor_part_ids",
-                     "Comma-delimited list verbs vendor part IDs to search for/use",
-                     "207", 
-                     &mca_btl_usnic_component.vendor_part_ids_string,
-                     0, OPAL_INFO_LVL_5));
-    /* Initialize the array to NULL here so that it can be checked as
-       a sentinel value later.  The value will be analyzed in
-       component_init because it requires allocating memory.  This is
-       not a problem for MPI processes, but ompi_info only calls this
-       register function without calling component finalize (meaning:
-       the allocated memory would not be freed/leaked).  */
-    mca_btl_usnic_component.vendor_part_ids = NULL;
-
     CHECK(reg_int("stats",
                   "A non-negative integer specifying the frequency at which each USNIC BTL will output statistics (default: 0 seconds, meaning that statistics are disabled)",
                   0, &mca_btl_usnic_component.stats_frequency, 0,
