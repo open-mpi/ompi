@@ -285,3 +285,5 @@ number of slots:
 This creates an oversubscribed condition that may adversely
 impact performance when combined with the requested binding
 operation. We will continue, but will not bind the processes.
+This warning can be omitted by adding the "overload-allowed"
+qualifier to the binding policy.
