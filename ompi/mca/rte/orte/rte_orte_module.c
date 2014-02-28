@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * $COPYRIGHT$
  */
 #include "ompi_config.h"
 #include "ompi/constants.h"
@@ -83,7 +85,10 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
      * We must exit in orte_ess.abort; all implementations of orte_ess.abort
      * contain __opal_attribute_noreturn__
      */
-    /* No way to reach here */
+    /* No way to reach here, but put an exit() here a) just to cover
+       for bugs, and b) to let the compiler know we're honoring the
+       __opal_attribute_noreturn__. */
+    exit(-1);
 }
 
 /*
