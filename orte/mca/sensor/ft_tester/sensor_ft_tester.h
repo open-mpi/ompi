@@ -18,6 +18,7 @@
 #include "orte_config.h"
 
 #include "orte/mca/sensor/sensor.h"
+#include "opal/util/alfg.h"
 
 BEGIN_C_DECLS
 
@@ -32,6 +33,7 @@ typedef struct orte_sensor_ft_tester_component_t orte_sensor_ft_tester_component
 ORTE_MODULE_DECLSPEC extern orte_sensor_ft_tester_component_t mca_sensor_ft_tester_component;
 extern orte_sensor_base_module_t orte_sensor_ft_tester_module;
 
+extern opal_rng_buff_t orte_sensor_ft_rng_buff;
 
 END_C_DECLS
 

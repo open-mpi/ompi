@@ -32,7 +32,7 @@ BEGIN_C_DECLS
 
 /* forward declarations */
 struct mca_bml_base_btl_array_t;
-    
+
 OMPI_DECLSPEC int mca_bml_base_btl_array_reserve(struct mca_bml_base_btl_array_t* array, size_t size);
 
     

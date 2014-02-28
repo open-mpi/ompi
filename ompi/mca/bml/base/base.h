@@ -33,7 +33,6 @@
 
 BEGIN_C_DECLS
 
-
 struct mca_bml_base_selected_module_t {
     opal_list_item_t super;
     mca_bml_base_component_t *bml_component;
@@ -60,6 +59,7 @@ OMPI_DECLSPEC  int mca_bml_base_ft_event(int state);
 OMPI_DECLSPEC extern mca_bml_base_component_t mca_bml_component;
 OMPI_DECLSPEC extern mca_bml_base_module_t mca_bml; 
 OMPI_DECLSPEC extern mca_base_framework_t ompi_bml_base_framework;
+
 
 END_C_DECLS
 #endif /* MCA_BML_BASE_H */

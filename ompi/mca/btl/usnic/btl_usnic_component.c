@@ -79,8 +79,12 @@
 #define OMPI_BTL_USNIC_NUM_WC       500
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
+/* RNG buffer definition */
+opal_rng_buff_t ompi_btl_usnic_rand_buff;
+
 /* simulated clock */
 uint64_t ompi_btl_usnic_ticks = 0;
+
 static opal_event_t usnic_clock_timer_event;
 static bool usnic_clock_timer_event_set = false;
 static struct timeval usnic_clock_timeout;
@@ -95,7 +99,6 @@ static mca_btl_base_module_t **
 usnic_component_init(int* num_btl_modules, bool want_progress_threads,
                        bool want_mpi_threads);
 static int usnic_component_progress(void);
-static void seed_prng(void);
 static int init_module_from_port(ompi_btl_usnic_module_t *module,
                                  ompi_common_verbs_port_item_t *port);
 
@@ -471,9 +474,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     MSGDEBUG1_OUT("%s: my_hashed_rte_name=0x%" PRIx64,
                    __func__, mca_btl_usnic_component.my_hashed_rte_name);
 
-    seed_prng();
-
-    srandom((unsigned int)getpid());
+    opal_srand(&ompi_btl_usnic_rand_buff, ((uint32_t) getpid()));
 
     err = ompi_btl_usnic_rtnl_sk_alloc(&mca_btl_usnic_component.unlsk);
     if (0 != err) {
@@ -1088,16 +1089,6 @@ static int usnic_component_progress_2(void)
     }
 
     return count;
-}
-
-static void seed_prng(void)
-{
-    unsigned short seedv[3];
-    seedv[0] = OMPI_PROC_MY_NAME->vpid;
-    seedv[1] = opal_timer_base_get_cycles();
-    usleep(1);
-    seedv[2] = opal_timer_base_get_cycles();
-    seed48(seedv);
 }
 
 /* returns OMPI_SUCCESS if module initialization was successful, OMPI_ERROR

@@ -59,6 +59,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
+#include "opal/util/alfg.h"
 #include "opal_stdint.h"
 
 #include "btl_openib_endpoint.h"
@@ -357,7 +358,9 @@ static int udcm_max_retry;
 static int udcm_timeout;
 
 /* seed for rand_r. remove me when opal gets a random number generator */
-static unsigned udcm_random_seed = 0;
+/* Uses the OPAL ALFG RNG */
+static uint32_t udcm_random_seed = 0;
+static opal_rng_buff_t udcm_rand_buff;
 
 static struct timeval udcm_timeout_tv;
 
@@ -457,7 +460,7 @@ static int udcm_component_query(mca_btl_openib_module_t *btl,
 
         /* seed the random number generator */
         udcm_random_seed = time (NULL);
-
+        opal_srand(&udcm_rand_buff,udcm_random_seed);
         /* All done */
         *cpc = (ompi_btl_openib_connect_base_module_t *) m;
         BTL_VERBOSE(("available for use on %s:%d",
@@ -1035,11 +1038,10 @@ static uint32_t max_inline_size(int qp, mca_btl_openib_device_t *device)
     return 0;
 }
 
-/* rand_r is a weak random number generator but should be suitable for our
- * purposes */
+/* Using OPAL's Additive Lagged Fibonacci RNG */
 static inline uint32_t udcm_random (void)
 {
-    return (uint32_t) rand_r (&udcm_random_seed);
+    return opal_rand(&udcm_rand_buff);
 }
 
 /* mark: rc helper functions */
