@@ -59,16 +59,15 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
             map_segment_t *s = &map->mem_segs[map->n_segments];
 
             memset(s, 0, sizeof(*s));
-            s->is_active = 0;
-            s->shmid = MEMHEAP_SHM_INVALID;
-            s->start = memheap_context.mem_segs[i].start;
+            MAP_SEGMENT_RESET_FLAGS(s);
+            s->seg_id = MAP_SEGMENT_SHM_INVALID;
+            s->seg_base_addr = memheap_context.mem_segs[i].start;
             s->end = memheap_context.mem_segs[i].end;
-            s->size = ((uintptr_t)s->end - (uintptr_t)s->start);
+            s->seg_size = ((uintptr_t)s->end - (uintptr_t)s->seg_base_addr);
             s->type = MAP_SEGMENT_STATIC;
-            s->context = NULL;
             map->n_segments++;
 
-            total_mem += ((uintptr_t)s->end - (uintptr_t)s->start);
+            total_mem += ((uintptr_t)s->end - (uintptr_t)s->seg_base_addr);
         }
         MEMHEAP_VERBOSE(1,
                         "Memheap static memory: %llu byte(s), %d segments",

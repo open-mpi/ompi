@@ -26,5 +26,3 @@ liboshmem_la_SOURCES += \
 	runtime/oshmem_shmem_exchange.c \
 	runtime/oshmem_info_support.c
 
-
-

@@ -14,7 +14,7 @@
 int main(int argc, char* argv[])
 {
     int proc, nproc;
-    
+
     start_pes(0);
     nproc = _num_pes();
     proc = _my_pe();

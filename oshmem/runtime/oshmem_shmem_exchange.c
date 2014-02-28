@@ -24,6 +24,17 @@ int oshmem_shmem_allgather(void *send_buf, void *rcv_buf, int elem_size)
     return rc;
 }
 
+int oshmem_shmem_allgatherv(void *send_buf, void* rcv_buf, int send_count,
+                            int* rcv_size, int* displs)
+{
+    int rc;
+
+    rc = MPI_Allgatherv(send_buf, send_count, MPI_BYTE,
+                         rcv_buf, rcv_size, displs, MPI_BYTE, oshmem_comm_world);
+
+    return rc;
+}
+
 void oshmem_shmem_barrier(void)
 {
     MPI_Barrier(oshmem_comm_world);

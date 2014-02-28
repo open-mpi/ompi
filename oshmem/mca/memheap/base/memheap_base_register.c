@@ -30,11 +30,11 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
         MEMHEAP_VERBOSE(5,
                         "register seg#%02d: 0x%p - 0x%p %llu bytes type=0x%X id=0x%X",
                         i,
-                        s->start,
+                        s->seg_base_addr,
                         s->end,
-                        (long long)((uintptr_t)s->end - (uintptr_t)s->start),
+                        (long long)((uintptr_t)s->end - (uintptr_t)s->seg_base_addr),
                         s->type,
-                        s->shmid);
+                        s->seg_id);
         ret = _reg_segment(s, &memheap_map->num_transports);
     }
 
@@ -49,15 +49,15 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
     for (i = 0; i < memheap_map->n_segments; i++) {
         map_segment_t *s = &memheap_map->mem_segs[i];
 
-        if (!s->is_active)
+        if (!MAP_SEGMENT_IS_VALID(s))
             continue;
 
         MEMHEAP_VERBOSE(5,
                         "deregistering segment#%d: %p - %p %llu bytes",
                         i,
-                        s->start,
+                        s->seg_base_addr,
                         s->end,
-                        (long long)((uintptr_t)s->end - (uintptr_t)s->start));
+                        (long long)((uintptr_t)s->end - (uintptr_t)s->seg_base_addr));
         ret = _dereg_segment(s);
     }
 
@@ -92,7 +92,7 @@ static int _dereg_segment(map_segment_t *s)
         s->mkeys_cache = NULL;
     }
 
-    s->is_active = 0;
+    MAP_SEGMENT_INVALIDATE(s);
 
     return rc;
 }
@@ -106,17 +106,17 @@ static int _reg_segment(map_segment_t *s, int *num_btl)
     nprocs = oshmem_num_procs();
     my_pe = oshmem_my_proc_id();
 
-    s->mkeys_cache = (mca_spml_mkey_t **) calloc(nprocs,
-                                                 sizeof(mca_spml_mkey_t *));
+    s->mkeys_cache = (sshmem_mkey_t **) calloc(nprocs,
+                                                 sizeof(sshmem_mkey_t *));
     if (NULL == s->mkeys_cache) {
         MEMHEAP_ERROR("Failed to allocate memory for remote segments");
         rc = OSHMEM_ERROR;
     }
 
     if (!rc) {
-        s->mkeys = MCA_SPML_CALL(register((void *)(unsigned long)s->start,
-                        (uintptr_t)s->end - (uintptr_t)s->start,
-                        MEMHEAP_SHM_CODE(s->type, s->shmid),
+        s->mkeys = MCA_SPML_CALL(register((void *)(unsigned long)s->seg_base_addr,
+                        (uintptr_t)s->end - (uintptr_t)s->seg_base_addr,
+                        s->seg_id,
                         num_btl));
         if (NULL == s->mkeys) {
             free(s->mkeys_cache);
@@ -129,7 +129,7 @@ static int _reg_segment(map_segment_t *s, int *num_btl)
 
     if (OSHMEM_SUCCESS == rc) {
         s->mkeys_cache[my_pe] = s->mkeys;
-        s->is_active = 1;
+        MAP_SEGMENT_SET_VALID(s);
     }
 
     return rc;

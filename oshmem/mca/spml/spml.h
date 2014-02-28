@@ -21,6 +21,8 @@
 #include "oshmem/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
 
+#include "oshmem/mca/sshmem/sshmem.h"
+
 BEGIN_C_DECLS
 
 /*
@@ -71,29 +73,17 @@ typedef mca_spml_base_component_2_0_0_t mca_spml_base_component_t;
 /**
  * MCA management functions.
  */
-/**
- * memory key
- * We have two kinds of keys:
- * - shared memory type of keys. Memory segment must be attached before access
- *   such keys use va_base = 0 and key
- * - ib type of key. Key is passed with each put/get op.
- *   use va_base = <remote vaddr>, key is stored in mkey struct
- */
-typedef struct mca_spml_mkey {
-    void* va_base;
-    uint16_t len;
-    union {
-        void *data;
-        uint64_t key;
-    } u;
-    void *spml_context;       /* spml module can attach internal structures here */
-} mca_spml_mkey_t;
 
-static inline char *mca_spml_base_mkey2str(mca_spml_mkey_t *mkey)
+static inline char *mca_spml_base_mkey2str(sshmem_mkey_t *mkey)
 {
     static char buf[64];
 
-    snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%" PRIu64, mkey->va_base, mkey->len, mkey->u.key);
+    if (mkey->len == 0) {
+        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%" PRIu64, mkey->va_base, mkey->len, mkey->u.key);
+    } else {
+        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d data=0x%p", mkey->va_base, mkey->len, mkey->u.data);
+    }
+
     return buf;
 }
 
@@ -128,7 +118,7 @@ typedef int (*mca_spml_base_module_wait_fn_t)(void* addr,
  * @return       array of mkeys (one mkey per "btl") or NULL on failure 
  *
  */
-typedef mca_spml_mkey_t * (*mca_spml_base_module_register_fn_t)(void *addr,
+typedef sshmem_mkey_t * (*mca_spml_base_module_register_fn_t)(void *addr,
                                                                 size_t size,
                                                                 uint64_t shmid,
                                                                 int *count);
@@ -136,7 +126,7 @@ typedef mca_spml_mkey_t * (*mca_spml_base_module_register_fn_t)(void *addr,
 /**
  * deregister memory pinned by register()
  */
-typedef int (*mca_spml_base_module_deregister_fn_t)(mca_spml_mkey_t *mkeys);
+typedef int (*mca_spml_base_module_deregister_fn_t)(sshmem_mkey_t *mkeys);
 
 /**
  * try to fill up mkeys that can be used to reach remote pe. 
@@ -148,7 +138,7 @@ typedef int (*mca_spml_base_module_deregister_fn_t)(mca_spml_mkey_t *mkeys);
  */
 typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(int pe,
                                                        uint32_t seg,
-                                                       mca_spml_mkey_t *mkeys);
+                                                       sshmem_mkey_t *mkeys);
 
 /**
  * For each proc setup a datastructure that indicates the BTLs

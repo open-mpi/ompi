@@ -56,14 +56,11 @@
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/runtime/oshmem_shmem_preconnect.h"
-#include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/base.h"
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
-#include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/mca/atomic/base/base.h"
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/sshmem/base/base.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
@@ -407,13 +404,23 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_sshmem_base_framework, MCA_BASE_OPEN_DEFAULT))) {
+        error = "mca_sshmem_base_open() failed";
+        goto error;
+    }
+
+    if (OSHMEM_SUCCESS != (ret = mca_sshmem_base_select())) {
+        error = "mca_sshmem_base_select() failed";
+        goto error;
+    }
+
     if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_memheap_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_memheap_base_open() failed";
         goto error;
     }
 
     if (OSHMEM_SUCCESS != (ret = mca_memheap_base_select())) {
-        error = "mca_select_base_select() failed";
+        error = "mca_memheap_base_select() failed";
         goto error;
     }
 
