@@ -430,7 +430,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
     int i, nmapped, nprocs_mapped;
     orte_node_t *node;
     orte_proc_t *proc;
-    int nprocs;
+    int nprocs, start;
     int idx;
     hwloc_obj_t obj=NULL;
     unsigned int nobjs;
@@ -486,6 +486,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                                true, node->name);
                 return ORTE_ERR_SILENT;
             }
+            start = 0;
             /* get the number of objects of this type on this node */
             nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
             if (0 == nobjs) {
@@ -505,6 +506,10 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                      * one proc on it
                      */
                     nprocs = 1;
+                    /* offset our starting object position to avoid always
+                     * hitting the first one
+                     */
+                    start = node->num_procs % nobjs;
                 } else {
                     continue;
                 }
@@ -525,8 +530,10 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             do {
                 /* loop through the number of objects */
                 for (i=0; i < (int)nobjs && nmapped < nprocs && nprocs_mapped < (int)app->num_procs; i++) {
+                    opal_output_verbose(20, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps:rr: assigning proc to object %d", (i+start) % nobjs);
                     /* get the hwloc object */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, target, cache_level, i, OPAL_HWLOC_AVAILABLE))) {
+                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, target, cache_level, (i+start) % nobjs, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return ORTE_ERR_NOT_FOUND;
                     }
