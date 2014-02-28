@@ -1,0 +1,61 @@
+.\" -*- nroff -*-
+.\" Copyright 2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2007-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.TH MPI_Win_flush 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Win_flush\fP, \fBMPI_Win_flush_all\fP \- Complete all outstanding RMA operations at both the origin and the target
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Win_flush (int \fIrank\fP, MPI_Win \fIwin\fP)
+
+int MPI_Win_flush_all (MPI_Win \fIwin\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_WIN_FLUSH(\fIRANK, WIN, IERROR\fP)
+	INTEGER \fIRANK, WIN, IERROR\fP
+
+MPI_WIN_FLUSH_ALL(\fWIN, IERROR\fP)
+	INTEGER \fIWIN, IERROR\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+rank
+Rank of window (nonnegative integer).
+.TP 1i
+win
+Window object (handle).
+
+.SH OUTPUT PARAMETER
+.ft R
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+\fBMPI_Win_flush\fP completes all outstanding RMA operations initiated by the calling process to the target rank on the specified window. The operations are completed both at the origin and at the target. \fBMPI_Win_flush_all\fP completes all outstanding RMA operations to all targets.
+.sp
+Can only be called from within a passive target epoch.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with \fBMPI_Comm_set_errhandler\fP; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
+
+.SH SEE ALSO
+MPI_Win_flush_local
+MPI_Win_lock
+MPI_Win_lock_all
+.br

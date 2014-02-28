@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,8 +8,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +21,6 @@
 #include "ompi_config.h"
 
 #include "osc_rdma.h"
-#include "osc_rdma_sendreq.h"
 
 #include "opal/threads/mutex.h"
 #include "ompi/win/win.h"
@@ -30,108 +31,81 @@
 
 
 int
-ompi_osc_rdma_module_free(ompi_win_t *win)
+ompi_osc_rdma_attach(struct ompi_win_t *win, void *base, size_t len)
 {
-    int ret = OMPI_SUCCESS;
-    int i;
-    ompi_osc_rdma_module_t *module = GET_MODULE(win);
-
-    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                        "rdma component destroying window with id %d",
-                        ompi_comm_get_cid(module->m_comm));
-
-    /* finish with a barrier */
-    if (ompi_group_size(win->w_group) > 1) {
-        ret = module->m_comm->c_coll.coll_barrier(module->m_comm,
-                                                  module->m_comm->c_coll.coll_barrier_module);
-    }
-
-    /* remove from component information */
-    OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
-    opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.c_modules,
-                                              ompi_comm_get_cid(module->m_comm));
-    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
-
-    win->w_osc_module = NULL;
-
-    OBJ_DESTRUCT(&module->m_unlocks_pending);
-    OBJ_DESTRUCT(&module->m_locks_pending);
-    OBJ_DESTRUCT(&module->m_queued_sendreqs);
-    OBJ_DESTRUCT(&module->m_copy_pending_sendreqs);
-    OBJ_DESTRUCT(&module->m_pending_sendreqs);
-    OBJ_DESTRUCT(&module->m_acc_lock);
-    OBJ_DESTRUCT(&module->m_cond);
-    OBJ_DESTRUCT(&module->m_lock);
-
-    if (NULL != module->m_sc_remote_ranks) {
-        free(module->m_sc_remote_ranks);
-    }
-    if (NULL != module->m_sc_remote_active_ranks) {
-        free(module->m_sc_remote_active_ranks);
-    }
-    if (NULL != module->m_pending_buffers) {
-        free(module->m_pending_buffers);
-    }
-    if (NULL != module->m_fence_coll_counts) {
-        free(module->m_fence_coll_counts);
-    }
-    if (NULL != module->m_copy_num_pending_sendreqs) {
-        free(module->m_copy_num_pending_sendreqs);
-    }
-    if (NULL != module->m_num_pending_sendreqs) {
-        free(module->m_num_pending_sendreqs);
-    }
-    if (NULL != module->m_peer_info) {
-        for (i = 0 ; i < ompi_comm_size(module->m_comm) ; ++i) {
-            ompi_osc_rdma_peer_info_free(&module->m_peer_info[i]);
-        }
-        free(module->m_peer_info);
-    }
-    if (NULL != module->m_comm) ompi_comm_free(&module->m_comm);
-    if (NULL != module) free(module);
-
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 
 int
-ompi_osc_rdma_peer_info_free(ompi_osc_rdma_peer_info_t *peer_info)
+ompi_osc_rdma_detach(struct ompi_win_t *win, void *base)
 {
-    int i;
-
-    if (NULL != peer_info->peer_btls) {
-        free(peer_info->peer_btls);
-    }
-
-    if (NULL != peer_info->local_descriptors) {
-        for (i = 0 ; i < peer_info->local_num_btls ; ++i) {
-            if (NULL != peer_info->local_descriptors[i]) {
-                mca_bml_base_btl_t *bml_btl = peer_info->local_btls[i];
-                mca_btl_base_module_t* btl = bml_btl->btl;
-                
-                btl->btl_free(btl, peer_info->local_descriptors[i]);
-            }
-        }
-        free(peer_info->local_descriptors);
-    }
-
-    if (NULL != peer_info->local_registrations) {
-        for (i = 0 ; i < peer_info->local_num_btls ; ++i) {
-            if (NULL != peer_info->local_registrations[i]) {
-                mca_mpool_base_module_t *module = 
-                    peer_info->local_registrations[i]->mpool;
-                module->mpool_deregister(module,
-                                         peer_info->local_registrations[i]);
-            }
-        }
-        free(peer_info->local_registrations);
-    }
-
-    if (NULL != peer_info->local_btls) {
-        free(peer_info->local_btls);
-    }
-    
-    memset(peer_info, 0, sizeof(ompi_osc_rdma_peer_info_t));
-
     return OMPI_SUCCESS;
+}
+
+
+int
+ompi_osc_rdma_free(ompi_win_t *win)
+{
+    int ret = OMPI_SUCCESS;
+    ompi_osc_rdma_module_t *module = GET_MODULE(win);
+    opal_list_item_t *item;
+
+    assert (NULL != module);
+
+    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                        "rdma component destroying window with id %d",
+                        ompi_comm_get_cid(module->comm));
+
+    /* finish with a barrier */
+    if (ompi_group_size(win->w_group) > 1) {
+        ret = module->comm->c_coll.coll_barrier(module->comm,
+                                                  module->comm->c_coll.coll_barrier_module);
+    }
+
+    /* remove from component information */
+    OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
+    opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.modules,
+                                              ompi_comm_get_cid(module->comm));
+    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+
+    win->w_osc_module = NULL;
+
+    OBJ_DESTRUCT(&module->outstanding_locks);
+    OBJ_DESTRUCT(&module->locks_pending);
+    OBJ_DESTRUCT(&module->acc_lock);
+    OBJ_DESTRUCT(&module->cond);
+    OBJ_DESTRUCT(&module->lock);
+
+    /* it is erroneous to close a window with active operations on it so we should
+     * probably produce an error here instead of cleaning up */
+    while (NULL != (item = opal_list_remove_first (&module->pending_acc))) {
+	OBJ_RELEASE(item);
+    }
+
+    OBJ_DESTRUCT(&module->pending_acc);
+
+    osc_rdma_request_gc_clean (module);
+    assert (0 == opal_list_get_size (&module->request_gc));
+    OBJ_DESTRUCT(&module->request_gc);
+
+    if (NULL != module->peers) {
+        free(module->peers);
+    }
+    if (NULL != module->passive_eager_send_active) free(module->passive_eager_send_active);
+    if (NULL != module->passive_incoming_frag_count) free(module->passive_incoming_frag_count);
+    if (NULL != module->passive_incoming_frag_signal_count) free(module->passive_incoming_frag_signal_count);
+    if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
+    if (NULL != module->incomming_buffer) free (module->incomming_buffer);
+    if (NULL != module->comm) ompi_comm_free(&module->comm);
+    if (NULL != module->free_after) free(module->free_after);
+
+    if (NULL != module->frag_request) {
+	module->frag_request->req_complete_cb = NULL;
+	ompi_request_cancel (module->frag_request);
+    }
+
+    free (module);
+
+    return ret;
 }

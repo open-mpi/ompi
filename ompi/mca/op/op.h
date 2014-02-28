@@ -227,6 +227,8 @@ enum {
     OMPI_OP_BASE_FORTRAN_MINLOC,
     /** Corresponds to Fortran MPI_REPLACE */
     OMPI_OP_BASE_FORTRAN_REPLACE,
+    /** Corresponds to Fortran MPI_NO_OP */
+    OMPI_OP_BASE_FORTRAN_NO_OP,
 
     /** Maximum value */
     OMPI_OP_BASE_FORTRAN_OP_MAX

@@ -320,7 +320,10 @@ $constants->{MPI_T_ERR_CVAR_SET_NEVER} = 64;
 $constants->{MPI_T_ERR_PVAR_NO_STARTSTOP} = 65;
 $constants->{MPI_T_ERR_PVAR_NO_WRITE} = 66;
 $constants->{MPI_T_ERR_PVAR_NO_ATOMIC} = 67;
-$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_T_ERR_PVAR_NO_ATOMIC};
+$constants->{MPI_ERR_RMA_RANGE} = 68;
+$constants->{MPI_ERR_RMA_ATTACH} = 69;
+$constants->{MPI_ERR_RMA_FLAVOR} = 70;
+$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_ERR_RMA_FLAVOR};
 
 $constants->{MPI_ERR_SYSRESOURCE} = -2;
 

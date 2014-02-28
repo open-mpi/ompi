@@ -92,6 +92,9 @@ ompi_mpi_errcode_t ompi_err_spawn;
 ompi_mpi_errcode_t ompi_err_unsupported_datarep;
 ompi_mpi_errcode_t ompi_err_unsupported_operation;
 ompi_mpi_errcode_t ompi_err_win;
+ompi_mpi_errcode_t ompi_err_rma_range;
+ompi_mpi_errcode_t ompi_err_rma_attach;
+ompi_mpi_errcode_t ompi_err_rma_flavor;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -173,6 +176,9 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_unsupported_datarep, MPI_ERR_UNSUPPORTED_DATAREP, "MPI_ERR_UNSUPPORTED_DATAREP: data representation not supported" );
     CONSTRUCT_ERRCODE( ompi_err_unsupported_operation, MPI_ERR_UNSUPPORTED_OPERATION, "MPI_ERR_UNSUPPORTED_OPERATION: operation not supported" );
     CONSTRUCT_ERRCODE( ompi_err_win, MPI_ERR_WIN, "MPI_ERR_WIN: invalid window" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_range, MPI_ERR_RMA_RANGE, "MPI_ERR_RMA_RANGE: invalid RMA address range" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_attach, MPI_ERR_RMA_ATTACH, "MPI_ERR_RMA_ATTACH: Could not attach RMA segment" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_flavor, MPI_ERR_RMA_FLAVOR, "MPI_ERR_RMA_FLAVOR: Invalid type of window" );
 
     ompi_mpi_errcode_lastused = MPI_ERR_WIN;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_WIN;
@@ -247,6 +253,9 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_unsupported_datarep);
     OBJ_DESTRUCT(&ompi_err_unsupported_operation);
     OBJ_DESTRUCT(&ompi_err_win);
+    OBJ_DESTRUCT(&ompi_err_rma_range);
+    OBJ_DESTRUCT(&ompi_err_rma_attach);
+    OBJ_DESTRUCT(&ompi_err_rma_flavor);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     return OMPI_SUCCESS;

@@ -87,6 +87,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Comm_split.3 \
         mpi/man/man3/MPI_Comm_split_type.3 \
         mpi/man/man3/MPI_Comm_test_inter.3 \
+        mpi/man/man3/MPI_Compare_and_swap.3 \
         mpi/man/man3/MPI_Dims_create.3 \
         mpi/man/man3/MPI_Dist_graph_create.3 \
         mpi/man/man3/MPI_Dist_graph_create_adjacent.3 \
@@ -100,6 +101,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Error_string.3 \
         mpi/man/man3/MPI_Exscan.3 \
         mpi/man/man3/MPI_Iexscan.3 \
+        mpi/man/man3/MPI_Fetch_and_op.3 \
         mpi/man/man3/MPI_File_c2f.3 \
         mpi/man/man3/MPI_File_call_errhandler.3 \
         mpi/man/man3/MPI_File_close.3 \
@@ -165,6 +167,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Gatherv.3 \
         mpi/man/man3/MPI_Igatherv.3 \
         mpi/man/man3/MPI_Get.3 \
+        mpi/man/man3/MPI_Get_accumulate.3 \
         mpi/man/man3/MPI_Get_address.3 \
         mpi/man/man3/MPI_Get_count.3 \
         mpi/man/man3/MPI_Get_elements.3 \
@@ -249,6 +252,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Publish_name.3 \
         mpi/man/man3/MPI_Put.3 \
         mpi/man/man3/MPI_Query_thread.3 \
+        mpi/man/man3/MPI_Raccumulate.3 \
         mpi/man/man3/MPI_Recv.3 \
         mpi/man/man3/MPI_Recv_init.3 \
         mpi/man/man3/MPI_Reduce.3 \
@@ -263,6 +267,9 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Request_f2c.3 \
         mpi/man/man3/MPI_Request_free.3 \
         mpi/man/man3/MPI_Request_get_status.3 \
+        mpi/man/man3/MPI_Rget.3 \
+        mpi/man/man3/MPI_Rget_accumulate.3 \
+        mpi/man/man3/MPI_Rput.3 \
         mpi/man/man3/MPI_Rsend.3 \
         mpi/man/man3/MPI_Rsend_init.3 \
         mpi/man/man3/MPI_Scan.3 \
@@ -348,6 +355,10 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Win_delete_attr.3 \
         mpi/man/man3/MPI_Win_f2c.3 \
         mpi/man/man3/MPI_Win_fence.3 \
+        mpi/man/man3/MPI_Win_flush.3 \
+        mpi/man/man3/MPI_Win_flush_all.3 \
+        mpi/man/man3/MPI_Win_flush_local.3 \
+        mpi/man/man3/MPI_Win_flush_local_all.3 \
         mpi/man/man3/MPI_Win_free.3 \
         mpi/man/man3/MPI_Win_free_keyval.3 \
         mpi/man/man3/MPI_Win_get_attr.3 \
@@ -355,13 +366,16 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Win_get_group.3 \
         mpi/man/man3/MPI_Win_get_name.3 \
         mpi/man/man3/MPI_Win_lock.3 \
+        mpi/man/man3/MPI_Win_lock_all.3 \
         mpi/man/man3/MPI_Win_post.3 \
         mpi/man/man3/MPI_Win_set_attr.3 \
         mpi/man/man3/MPI_Win_set_errhandler.3 \
         mpi/man/man3/MPI_Win_set_name.3 \
         mpi/man/man3/MPI_Win_start.3 \
+        mpi/man/man3/MPI_Win_sync.3 \
         mpi/man/man3/MPI_Win_test.3 \
         mpi/man/man3/MPI_Win_unlock.3 \
+        mpi/man/man3/MPI_Win_unlock_all.3 \
         mpi/man/man3/MPI_Win_wait.3 \
         mpi/man/man3/MPI_Wtick.3 \
         mpi/man/man3/MPI_Wtime.3 \

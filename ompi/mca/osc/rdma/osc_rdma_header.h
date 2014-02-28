@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,14 +8,15 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,144 +29,169 @@
 
 #include "opal/types.h"
 
-/* Note -- 0x05 to 0x0C are of control_hdr type */
-#define OMPI_OSC_RDMA_HDR_PUT           0x01
-#define OMPI_OSC_RDMA_HDR_ACC           0x02
-#define OMPI_OSC_RDMA_HDR_GET           0x03
-#define OMPI_OSC_RDMA_HDR_REPLY         0x04
-#define OMPI_OSC_RDMA_HDR_POST          0x05
-#define OMPI_OSC_RDMA_HDR_COMPLETE      0x06
-#define OMPI_OSC_RDMA_HDR_LOCK_REQ      0x07
-#define OMPI_OSC_RDMA_HDR_UNLOCK_REQ    0x08
-#define OMPI_OSC_RDMA_HDR_UNLOCK_REPLY  0x09
-#define OMPI_OSC_RDMA_HDR_RDMA_COMPLETE 0x0A
-#define OMPI_OSC_RDMA_HDR_MULTI_END     0x0B
-#define OMPI_OSC_RDMA_HDR_RDMA_INFO     0x0C
-
-#define OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK 0x0F
-#define OMPI_OSC_RDMA_HDR_FLAG_NBO        0x10
-#define OMPI_OSC_RDMA_HDR_FLAG_MULTI      0x20
-
-struct ompi_osc_rdma_base_header_t {
-    uint8_t hdr_type;
-    /* eventually, this will include endian information */
-    uint8_t hdr_flags;
+enum ompi_osc_rdma_hdr_type_t {
+    OMPI_OSC_RDMA_HDR_TYPE_PUT          = 0x01,
+    OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG     = 0x02,
+    OMPI_OSC_RDMA_HDR_TYPE_ACC          = 0x03,
+    OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG     = 0x04,
+    OMPI_OSC_RDMA_HDR_TYPE_GET          = 0x05,
+    OMPI_OSC_RDMA_HDR_TYPE_CSWAP        = 0x06,
+    OMPI_OSC_RDMA_HDR_TYPE_CSWAP_LONG   = 0x07,
+    OMPI_OSC_RDMA_HDR_TYPE_GET_ACC      = 0x08,
+    OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG = 0x09,
+    OMPI_OSC_RDMA_HDR_TYPE_COMPLETE     = 0x10,
+    OMPI_OSC_RDMA_HDR_TYPE_POST         = 0x11,
+    OMPI_OSC_RDMA_HDR_TYPE_LOCK_REQ     = 0x12,
+    OMPI_OSC_RDMA_HDR_TYPE_LOCK_ACK     = 0x13,
+    OMPI_OSC_RDMA_HDR_TYPE_UNLOCK_REQ   = 0x14,
+    OMPI_OSC_RDMA_HDR_TYPE_UNLOCK_ACK   = 0x15,
+    OMPI_OSC_RDMA_HDR_TYPE_FLUSH_REQ    = 0x16,
+    OMPI_OSC_RDMA_HDR_TYPE_FLUSH_ACK    = 0x17,
+    OMPI_OSC_RDMA_HDR_TYPE_FRAG         = 0x20,
 };
-typedef struct ompi_osc_rdma_base_header_t ompi_osc_rdma_base_header_t;
+typedef enum ompi_osc_rdma_hdr_type_t ompi_osc_rdma_hdr_type_t;
 
-#define OMPI_OSC_RDMA_BASE_HDR_NTOH(h)
-#define OMPI_OSC_RDMA_BASE_HDR_HTON(h)
+#define OMPI_OSC_RDMA_HDR_FLAG_NBO            0x01
+#define OMPI_OSC_RDMA_HDR_FLAG_VALID          0x02
+#define OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET 0x04
 
-struct ompi_osc_rdma_send_header_t {
-    ompi_osc_rdma_base_header_t hdr_base;
-    uint16_t hdr_windx;
-
-    int32_t hdr_origin;
-    ompi_ptr_t hdr_origin_sendreq;
-    int32_t hdr_origin_tag;
-
-    uint64_t hdr_target_disp;
-    int32_t hdr_target_count;
-    int32_t hdr_target_op;
-
-    int32_t hdr_msg_length; /* 0 if payload is not included */
+struct ompi_osc_rdma_header_base_t {
+    /** fragment type. 8 bits */
+    uint8_t type;
+    /** fragment flags. 8 bits */
+    uint8_t flags;
 };
-typedef struct ompi_osc_rdma_send_header_t ompi_osc_rdma_send_header_t;
+typedef struct ompi_osc_rdma_header_base_t ompi_osc_rdma_header_base_t;
 
-#define OMPI_OSC_RDMA_SEND_HDR_HTON(hdr) \
-    do { \
-        OMPI_OSC_RDMA_BASE_HDR_HTON((hdr).hdr_base) \
-        (hdr).hdr_windx = htons((hdr).hdr_windx); \
-        (hdr).hdr_origin = htonl((hdr).hdr_origin); \
-        (hdr).hdr_origin_tag = htonl((hdr).hdr_origin_tag); \
-        (hdr).hdr_target_disp = hton64((hdr).hdr_target_disp); \
-        (hdr).hdr_target_count = htonl((hdr).hdr_target_count); \
-        (hdr).hdr_target_op = htonl((hdr).hdr_target_op); \
-        (hdr).hdr_msg_length = htonl((hdr).hdr_msg_length); \
-    } while (0)
+struct ompi_osc_rdma_header_put_t {
+    ompi_osc_rdma_header_base_t base;
 
-#define OMPI_OSC_RDMA_SEND_HDR_NTOH(hdr) \
-    do { \
-        OMPI_OSC_RDMA_BASE_HDR_NTOH((hdr).hdr_base) \
-        (hdr).hdr_windx = ntohs((hdr).hdr_windx); \
-        (hdr).hdr_origin = ntohl((hdr).hdr_origin); \
-        (hdr).hdr_origin_tag = ntohl((hdr).hdr_origin_tag); \
-        (hdr).hdr_target_disp = ntoh64((hdr).hdr_target_disp); \
-        (hdr).hdr_target_count = ntohl((hdr).hdr_target_count); \
-        (hdr).hdr_target_op = ntohl((hdr).hdr_target_op); \
-        (hdr).hdr_msg_length = ntohl((hdr).hdr_msg_length); \
-    } while (0)
-
-
-struct ompi_osc_rdma_reply_header_t {
-    ompi_osc_rdma_base_header_t hdr_base;
-
-    ompi_ptr_t hdr_origin_sendreq;
-
-    int32_t hdr_target_tag;
-    int32_t hdr_msg_length;
+    uint16_t tag;
+    uint32_t count;
+    uint64_t len;
+    uint64_t displacement;
 };
-typedef struct ompi_osc_rdma_reply_header_t ompi_osc_rdma_reply_header_t;
+typedef struct ompi_osc_rdma_header_put_t ompi_osc_rdma_header_put_t;
 
-#define OMPI_OSC_RDMA_REPLY_HDR_HTON(hdr) \
-    do { \
-        OMPI_OSC_RDMA_BASE_HDR_HTON((hdr).hdr_base) \
-        (hdr).hdr_target_tag = htonl((hdr).hdr_target_tag); \
-        (hdr).hdr_msg_length = htonl((hdr).hdr_msg_length); \
-    } while (0)
+struct ompi_osc_rdma_header_acc_t {
+    ompi_osc_rdma_header_base_t base;
 
-#define OMPI_OSC_RDMA_REPLY_HDR_NTOH(hdr) \
-    do { \
-        OMPI_OSC_RDMA_BASE_HDR_NTOH((hdr).hdr_base) \
-        (hdr).hdr_target_tag = ntohl((hdr).hdr_target_tag); \
-        (hdr).hdr_msg_length = ntohl((hdr).hdr_msg_length); \
-    } while (0)
-
-
-struct ompi_osc_rdma_control_header_t {
-    ompi_osc_rdma_base_header_t hdr_base;
-    int16_t hdr_windx;
-    int32_t hdr_value[2];
+    uint16_t tag;
+    uint32_t count;
+    uint64_t len;
+    uint64_t displacement;
+    uint32_t op;
 };
-typedef struct ompi_osc_rdma_control_header_t ompi_osc_rdma_control_header_t;
+typedef struct ompi_osc_rdma_header_acc_t ompi_osc_rdma_header_acc_t;
 
-#define OMPI_OSC_RDMA_CONTROL_HDR_HTON(hdr) \
-    do { \
-        OMPI_OSC_RDMA_BASE_HDR_HTON((hdr).hdr_base);    \
-        (hdr).hdr_windx = htons((hdr).hdr_windx);       \
-        (hdr).hdr_value[0] = htonl((hdr).hdr_value[0]); \
-        (hdr).hdr_value[1] = htonl((hdr).hdr_value[1]); \
-    } while (0)
+struct ompi_osc_rdma_header_get_t {
+    ompi_osc_rdma_header_base_t base;
 
-#define OMPI_OSC_RDMA_CONTROL_HDR_NTOH(hdr) \
-    do { \
-        OMPI_OSC_RDMA_BASE_HDR_NTOH((hdr).hdr_base);    \
-        (hdr).hdr_windx = ntohs((hdr).hdr_windx);       \
-        (hdr).hdr_value[0] = ntohl((hdr).hdr_value[0]); \
-        (hdr).hdr_value[1] = ntohl((hdr).hdr_value[1]); \
-    } while (0)
-
-
-struct ompi_osc_rdma_rdma_info_header_t {
-    ompi_osc_rdma_base_header_t hdr_base;
-    int16_t  hdr_windx;
-    int32_t  hdr_origin;
+    uint16_t tag;
+    uint32_t count;
+    uint64_t len;
+    uint64_t displacement;
 };
-typedef struct ompi_osc_rdma_rdma_info_header_t ompi_osc_rdma_rdma_info_header_t;
+typedef struct ompi_osc_rdma_header_get_t ompi_osc_rdma_header_get_t;
 
-#define OMPI_OSC_RDMA_RDMA_INFO_HDR_HTON(hdr)           \
-    do {                                                \
-        OMPI_OSC_RDMA_BASE_HDR_HTON((hdr).hdr_base);    \
-        (hdr).hdr_windx = htons((hdr).hdr_windx);       \
-        (hdr).hdr_origin = htonl((hdr).hdr_origin);     \
-    } while (0)
+struct ompi_osc_rdma_header_complete_t {
+    ompi_osc_rdma_header_base_t base;
+    int frag_count;
+};
+typedef struct ompi_osc_rdma_header_complete_t ompi_osc_rdma_header_complete_t;
 
-#define OMPI_OSC_RDMA_RDMA_INFO_HDR_NTOH(hdr)           \
-    do {                                                \
-        OMPI_OSC_RDMA_BASE_HDR_NTOH((hdr).hdr_base);    \
-        (hdr).hdr_windx = ntohs((hdr).hdr_windx);       \
-        (hdr).hdr_origin = ntohl((hdr).hdr_origin);     \
-    } while (0)
+struct ompi_osc_rdma_header_get_acc_t {
+    ompi_osc_rdma_header_base_t base;
 
+    uint16_t tag;
+    uint32_t count;
+    uint64_t len;
+    uint64_t displacement;
+    uint32_t op;
+};
+typedef struct ompi_osc_rdma_header_get_acc_t ompi_osc_rdma_header_get_acc_t;
+
+struct ompi_osc_rdma_header_cswap_t {
+    ompi_osc_rdma_header_base_t base;
+
+    uint16_t tag;
+
+    uint32_t len;
+    uint64_t displacement;
+};
+typedef struct ompi_osc_rdma_header_cswap_t ompi_osc_rdma_header_cswap_t;
+
+struct ompi_osc_rdma_header_post_t {
+    ompi_osc_rdma_header_base_t base;
+    uint16_t windx;
+};
+typedef struct ompi_osc_rdma_header_post_t ompi_osc_rdma_header_post_t;
+
+struct ompi_osc_rdma_header_lock_t {
+    ompi_osc_rdma_header_base_t base;
+    int32_t lock_type;
+    uint64_t serial_number;
+};
+typedef struct ompi_osc_rdma_header_lock_t ompi_osc_rdma_header_lock_t;
+
+struct ompi_osc_rdma_header_lock_ack_t {
+    ompi_osc_rdma_header_base_t base;
+    uint16_t windx;
+    uint32_t source;
+    uint64_t serial_number;
+};
+typedef struct ompi_osc_rdma_header_lock_ack_t ompi_osc_rdma_header_lock_ack_t;
+
+struct ompi_osc_rdma_header_unlock_t {
+    ompi_osc_rdma_header_base_t base;
+    int32_t lock_type;
+    uint32_t frag_count;
+};
+typedef struct ompi_osc_rdma_header_unlock_t ompi_osc_rdma_header_unlock_t;
+
+struct ompi_osc_rdma_header_unlock_ack_t {
+    ompi_osc_rdma_header_base_t base;
+};
+typedef struct ompi_osc_rdma_header_unlock_ack_t ompi_osc_rdma_header_unlock_ack_t;
+
+struct ompi_osc_rdma_header_flush_t {
+    ompi_osc_rdma_header_base_t base;
+    uint32_t frag_count;
+    uint64_t serial_number;
+};
+typedef struct ompi_osc_rdma_header_flush_t ompi_osc_rdma_header_flush_t;
+
+struct ompi_osc_rdma_header_flush_ack_t {
+    ompi_osc_rdma_header_base_t base;
+    uint64_t serial_number;
+};
+typedef struct ompi_osc_rdma_header_flush_ack_t ompi_osc_rdma_header_flush_ack_t;
+
+struct ompi_osc_rdma_frag_header_t {
+    ompi_osc_rdma_header_base_t base;
+    uint16_t windx; /* cid of communicator backing window (our window id) */
+    uint32_t source; /* rank in window of source process */
+    uint16_t num_ops; /* number of operations in this buffer */
+};
+typedef struct ompi_osc_rdma_frag_header_t ompi_osc_rdma_frag_header_t;
+
+union ompi_osc_rdma_header_t {
+    ompi_osc_rdma_header_base_t       base;
+    ompi_osc_rdma_header_put_t        put;
+    ompi_osc_rdma_header_acc_t        acc;
+    ompi_osc_rdma_header_get_t        get;
+    ompi_osc_rdma_header_complete_t   complete;
+    ompi_osc_rdma_header_get_acc_t    get_acc;
+    ompi_osc_rdma_header_cswap_t      cswap;
+    ompi_osc_rdma_header_post_t       post;
+    ompi_osc_rdma_header_lock_t       lock;
+    ompi_osc_rdma_header_lock_ack_t   lock_ack;
+    ompi_osc_rdma_header_unlock_t     unlock;
+    ompi_osc_rdma_header_unlock_ack_t unlock_ack;
+    ompi_osc_rdma_header_flush_t      flush;
+    ompi_osc_rdma_header_flush_ack_t  flush_ack;
+    ompi_osc_rdma_frag_header_t       frag;
+};
+typedef union ompi_osc_rdma_header_t ompi_osc_rdma_header_t;
 
 #endif /* OMPI_MCA_OSC_RDMA_HDR_H */

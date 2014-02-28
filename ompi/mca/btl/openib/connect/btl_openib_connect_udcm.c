@@ -152,6 +152,9 @@ typedef struct udcm_module {
 
     /* This module's modex message */
     modex_msg_t modex;
+
+    /** The channel is being monitored */
+    bool channel_monitored;
 } udcm_module_t;
 
 /*
@@ -402,7 +405,7 @@ static void udcm_component_register(void)
                                            0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &udcm_timeout);
 
-    udcm_max_retry = 10;
+    udcm_max_retry = 25;
     (void) mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                            "connect_udcm_max_retry", "Maximum number of times "
                                            "to retry sending a udcm connection message",
@@ -608,6 +611,7 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
     /* Monitor the fd associated with the completion channel */
     ompi_btl_openib_fd_monitor(m->cm_channel->fd, OPAL_EV_READ,
                                udcm_cq_event_dispatch, m);
+    m->channel_monitored = true;
 
     OBJ_CONSTRUCT(&m->cm_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&m->cm_send_lock, opal_mutex_t);
@@ -707,11 +711,13 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
 
     m->cm_exiting = true;
 
-    /* stop monitoring the channel's fd before destroying the listen qp */
-    ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, udcm_unmonitor, (void *)&barrier);
+    if (m->channel_monitored) {
+        /* stop monitoring the channel's fd before destroying the listen qp */
+        ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, udcm_unmonitor, (void *)&barrier);
 
-    while (0 == barrier) {
-        sched_yield();
+        while (0 == barrier) {
+            sched_yield();
+        }
     }
 
     opal_mutex_lock (&m->cm_lock);

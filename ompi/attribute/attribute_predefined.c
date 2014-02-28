@@ -127,6 +127,8 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_BASE)) ||
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_SIZE)) ||
         OMPI_SUCCESS != (ret = create_win(MPI_WIN_DISP_UNIT)) ||
+        OMPI_SUCCESS != (ret = create_win(MPI_WIN_CREATE_FLAVOR)) ||
+        OMPI_SUCCESS != (ret = create_win(MPI_WIN_MODEL)) ||
 #if 0
         /* JMS For when we implement IMPI */
         OMPI_SUCCESS != (ret = create_comm(IMPI_CLIENT_SIZE, true)) ||
@@ -193,6 +195,8 @@ int ompi_attr_free_predefined(void)
         OMPI_SUCCESS != (ret = free_win(MPI_WIN_BASE)) ||
         OMPI_SUCCESS != (ret = free_win(MPI_WIN_SIZE)) ||
         OMPI_SUCCESS != (ret = free_win(MPI_WIN_DISP_UNIT)) ||
+        OMPI_SUCCESS != (ret = free_win(MPI_WIN_CREATE_FLAVOR)) ||
+        OMPI_SUCCESS != (ret = free_win(MPI_WIN_MODEL)) ||
 #if 0
         /* JMS For when we implement IMPI */
         OMPI_SUCCESS != (ret = free_comm(IMPI_CLIENT_SIZE)) ||
