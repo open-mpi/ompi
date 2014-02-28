@@ -780,7 +780,7 @@ void mca_pml_ob1_error_handler(
         return;
     }
 #endif /* OPAL_CUDA_SUPPORT */
-    ompi_rte_abort(-1, NULL);
+    ompi_rte_abort(-1, btlinfo);
 }
 
 #if OPAL_ENABLE_FT_CR    == 0
