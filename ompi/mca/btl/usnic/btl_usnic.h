@@ -155,8 +155,6 @@ typedef struct ompi_btl_usnic_component_t {
 
     char *if_include;
     char *if_exclude;
-    char *vendor_part_ids_string;
-    uint32_t *vendor_part_ids;
 
     /** Want stats? */
     bool stats_enabled;

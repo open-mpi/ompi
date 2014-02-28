@@ -185,14 +185,6 @@ remote host.
   Remote host: %s
   Remote MTU:  %d
 #
-[bad value for btl_usnic_vendor_part_ids]
-A non-numeric value was specified for the btl_usnic_vendor_part_ids
-MCA parameter.  This parameter is supposed to be a comma-delimited
-list of decimal verbs vendor part IDs.  This usnic BTL will be ignored
-for this job.
-
-  btl_usnic_vendor_part_ids value: %s
-#
 [rtnetlink init fail]
 The usnic BTL failed to initialize the rtnetlink query subsystem.
 
