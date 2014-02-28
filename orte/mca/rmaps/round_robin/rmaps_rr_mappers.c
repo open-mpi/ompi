@@ -491,8 +491,14 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             if (0 == nobjs) {
                 continue;
             }
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: found %u %s objects on node %s",
+                                nobjs, hwloc_obj_type_string(target), node->name);
+
             /* compute the number of procs to go on this node */
             nprocs = (node->slots - node->slots_inuse) / orte_rmaps_base.cpus_per_rank;
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: calculated nprocs %d", nprocs);
             if (nprocs < 1) {
                 if (second_pass) {
                     /* already checked for oversubscription permission, so at least put
@@ -500,15 +506,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                      */
                     nprocs = 1;
                 } else {
-                    /* if the user hasn't permitted oversubscription, then don't use it
-                     * on the first pass
-                     */
-                    if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
-                        opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
-                                            "mca:rmaps:rr: mapping no-span would oversubscribe node %s - ignoring it",
-                                            node->name);
-                        continue;
-                    }
+                    continue;
                 }
             }
             /* add this node to the map, if reqd */
@@ -522,6 +520,8 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 ++(jdata->map->num_nodes);
             }
             nmapped = 0;
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: assigning nprocs %d", nprocs);
             do {
                 /* loop through the number of objects */
                 for (i=0; i < (int)nobjs && nmapped < nprocs && nprocs_mapped < (int)app->num_procs; i++) {
