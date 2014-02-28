@@ -62,6 +62,21 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
+        /* if we will and are allowed to oversubscribe, and binding was given, then
+         * we really should warn the user that we cannot bind
+         */
+        if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+            if ((OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(jdata->map->binding) ||
+                 OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) &&
+                !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
+                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
+                               true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+            }
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        } else {
+            /* don't default to bound */
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        }
     }
 
     /* first pass: map the number of procs to each node until we
@@ -229,6 +244,21 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             return ORTE_ERR_SILENT;
         }
         oversubscribed = true;
+        /* if we will and are allowed to oversubscribe, and binding was given, then
+         * we really should warn the user that we cannot bind
+         */
+        if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+            if ((OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(jdata->map->binding) ||
+                 OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) &&
+                !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
+                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
+                               true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+            }
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        } else {
+            /* don't default to bound */
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        }
     }
 
     nnodes = opal_list_get_size(node_list);
@@ -430,7 +460,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
     int i, nmapped, nprocs_mapped;
     orte_node_t *node;
     orte_proc_t *proc;
-    int nprocs;
+    int nprocs, start;
     int idx;
     hwloc_obj_t obj=NULL;
     unsigned int nobjs;
@@ -469,6 +499,21 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
+        /* if we will and are allowed to oversubscribe, and binding was given, then
+         * we really should warn the user that we cannot bind
+         */
+        if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+            if ((OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(jdata->map->binding) ||
+                 OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) &&
+                !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
+                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
+                               true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+            }
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        } else {
+            /* don't default to bound */
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        }
     }
 
     /* we know we have enough slots, or that oversubscrption is allowed, so
@@ -486,6 +531,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                                true, node->name);
                 return ORTE_ERR_SILENT;
             }
+            start = 0;
             /* get the number of objects of this type on this node */
             nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target, cache_level, OPAL_HWLOC_AVAILABLE);
             if (0 == nobjs) {
@@ -499,6 +545,10 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                      * one proc on it
                      */
                     nprocs = 1;
+                    /* offset our starting object position to avoid always
+                     * hitting the first one
+                     */
+                    start = node->num_procs % nobjs;
                 } else {
                     /* if the user hasn't permitted oversubscription, then don't use it
                      * on the first pass
@@ -525,8 +575,10 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             do {
                 /* loop through the number of objects */
                 for (i=0; i < (int)nobjs && nmapped < nprocs && nprocs_mapped < (int)app->num_procs; i++) {
+                    opal_output_verbose(20, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps:rr: assigning proc to object %d", (i+start) % nobjs);
                     /* get the hwloc object */
-                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, target, cache_level, i, OPAL_HWLOC_AVAILABLE))) {
+                    if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, target, cache_level, (i+start) % nobjs, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return ORTE_ERR_NOT_FOUND;
                     }
@@ -591,6 +643,21 @@ static int byobj_span(orte_job_t *jdata,
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
+        }
+        /* if we will and are allowed to oversubscribe, and binding was given, then
+         * we really should warn the user that we cannot bind
+         */
+        if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+            if ((OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(jdata->map->binding) ||
+                 OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(jdata->map->binding)) &&
+                !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
+                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
+                               true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+            }
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
+        } else {
+            /* don't default to bound */
+            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         }
     }
 
