@@ -34,7 +34,7 @@ JNIEXPORT jlong JNICALL Java_mpi_File_close(
     return (jlong)file;
 }
 
-JNIEXPORT void JNICALL Java_mpi_File_delete_1jni(
+JNIEXPORT void JNICALL Java_mpi_File_delete(
         JNIEnv *env, jclass clazz, jstring jfilename, jlong info)
 {
     const char* filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
@@ -117,12 +117,8 @@ JNIEXPORT void JNICALL Java_mpi_File_setView(
 JNIEXPORT void JNICALL Java_mpi_File_readAt(
         JNIEnv *env, jobject jthis, jlong fh, jlong fileOffset,
         jobject buf, jboolean db, jint offset, jint count,
-        jobject jType, jobject stat)
+        jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -132,18 +128,14 @@ JNIEXPORT void JNICALL Java_mpi_File_readAt(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_readAtAll(
         JNIEnv *env, jobject jthis, jlong fh, jlong fileOffset,
         jobject buf, jboolean db, jint offset, jint count,
-        jobject jType, jobject stat)
+        jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -153,18 +145,14 @@ JNIEXPORT void JNICALL Java_mpi_File_readAtAll(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeAt(
         JNIEnv *env, jobject jthis, jlong fh, jlong fileOffset,
         jobject buf, jboolean db, jint offset, jint count,
-        jobject jType, jobject stat)
+        jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -174,17 +162,14 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAt(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeAtAll(
         JNIEnv *env, jobject jthis, jlong fh, jlong fileOffset,
-        jobject buf, jboolean db, jint offset, jint count, jobject jType, jobject stat)
+        jobject buf, jboolean db, jint offset, jint count,
+        jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -194,7 +179,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAtAll(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_File_iReadAt(
@@ -227,12 +212,8 @@ JNIEXPORT jlong JNICALL Java_mpi_File_iWriteAt(
 
 JNIEXPORT void JNICALL Java_mpi_File_read(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -242,17 +223,13 @@ JNIEXPORT void JNICALL Java_mpi_File_read(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_readAll(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -262,17 +239,13 @@ JNIEXPORT void JNICALL Java_mpi_File_readAll(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_write(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -282,17 +255,13 @@ JNIEXPORT void JNICALL Java_mpi_File_write(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeAll(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -302,7 +271,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAll(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_File_iRead(
@@ -360,12 +329,8 @@ JNIEXPORT jlong JNICALL Java_mpi_File_getByteOffset(
 
 JNIEXPORT void JNICALL Java_mpi_File_readShared(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -375,17 +340,13 @@ JNIEXPORT void JNICALL Java_mpi_File_readShared(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeShared(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -395,7 +356,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeShared(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_File_iReadShared(
@@ -428,12 +389,8 @@ JNIEXPORT jlong JNICALL Java_mpi_File_iWriteShared(
 
 JNIEXPORT void JNICALL Java_mpi_File_readOrdered(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -443,17 +400,13 @@ JNIEXPORT void JNICALL Java_mpi_File_readOrdered(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeOrdered(
         JNIEnv *env, jobject jthis, jlong fh, jobject buf, jboolean db,
-        jint offset, jint count, jobject jType, jobject stat)
+        jint offset, jint count, jlong type, jint bType, jlongArray stat)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
-    int bType = (*env)->GetIntField(env, jType, ompi_java.DatatypeBaseType);
     void *ptr, *base;
     ptr = ompi_java_getBufPtr(&base, env, buf, db, bType, offset);
     MPI_Status status;
@@ -463,7 +416,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeOrdered(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, buf, db, base, bType);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_seekShared(
@@ -484,11 +437,8 @@ JNIEXPORT jlong JNICALL Java_mpi_File_getPositionShared(
 
 JNIEXPORT void JNICALL Java_mpi_File_readAtAllBegin(
         JNIEnv *env, jobject jthis, jlong fh, jlong offset,
-        jobject buf, jint count, jobject jType)
+        jobject buf, jint count, jlong type)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
 
     int rc = MPI_File_read_at_all_begin((MPI_File)fh, (MPI_Offset)offset,
@@ -497,22 +447,19 @@ JNIEXPORT void JNICALL Java_mpi_File_readAtAllBegin(
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_readAtAllEnd(
-        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jobject stat)
+        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jlongArray stat)
 {
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_read_at_all_end((MPI_File)fh, ptr, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeAtAllBegin(
         JNIEnv *env, jobject jthis, jlong fh, jlong fileOffset,
-        jobject buf, jint count, jobject jType)
+        jobject buf, jint count, jlong type)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
 
     int rc = MPI_File_write_at_all_begin((MPI_File)fh, (MPI_Offset)fileOffset,
@@ -521,22 +468,19 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAtAllBegin(
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeAtAllEnd(
-        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jobject stat)
+        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jlongArray stat)
 {
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_write_at_all_end((MPI_File)fh, ptr, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_readAllBegin(
         JNIEnv *env, jobject jthis, jlong fh,
-        jobject buf, jint count, jobject jType)
+        jobject buf, jint count, jlong type)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
 
     int rc = MPI_File_read_all_begin(
@@ -546,22 +490,19 @@ JNIEXPORT void JNICALL Java_mpi_File_readAllBegin(
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_readAllEnd(
-        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jobject stat)
+        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jlongArray stat)
 {
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_read_all_end((MPI_File)fh, ptr, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeAllBegin(
         JNIEnv *env, jobject jthis, jlong fh,
-        jobject buf, jint count, jobject jType)
+        jobject buf, jint count, jlong type)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
 
     int rc = MPI_File_write_all_begin(
@@ -571,22 +512,19 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAllBegin(
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeAllEnd(
-        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jobject stat)
+        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jlongArray stat)
 {
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_write_all_end((MPI_File)fh, ptr, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_readOrderedBegin(
         JNIEnv *env, jobject jthis, jlong fh,
-        jobject buf, jint count, jobject jType)
+        jobject buf, jint count, jlong type)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
 
     int rc = MPI_File_read_ordered_begin(
@@ -596,22 +534,19 @@ JNIEXPORT void JNICALL Java_mpi_File_readOrderedBegin(
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_readOrderedEnd(
-        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jobject stat)
+        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jlongArray stat)
 {
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_read_ordered_end((MPI_File)fh, ptr, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeOrderedBegin(
         JNIEnv *env, jobject jthis, jlong fh,
-        jobject buf, jint count, jobject jType)
+        jobject buf, jint count, jlong type)
 {
-    MPI_Datatype type = (MPI_Datatype)((*env)->GetLongField(
-                        env, jType, ompi_java.DatatypeHandle));
-
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
 
     int rc = MPI_File_write_ordered_begin(
@@ -621,13 +556,13 @@ JNIEXPORT void JNICALL Java_mpi_File_writeOrderedBegin(
 }
 
 JNIEXPORT void JNICALL Java_mpi_File_writeOrderedEnd(
-        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jobject stat)
+        JNIEnv *env, jobject jthis, jlong fh, jobject buf, jlongArray stat)
 {
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_write_ordered_end((MPI_File)fh, ptr, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_File_getTypeExtent(

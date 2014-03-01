@@ -17,20 +17,20 @@ JNIEXPORT void JNICALL Java_mpi_Message_init(JNIEnv *e, jclass c)
 
 JNIEXPORT jlong JNICALL Java_mpi_Message_mProbe(
         JNIEnv *env, jobject jthis,
-        jint source, jint tag, jlong jComm, jobject jStatus)
+        jint source, jint tag, jlong jComm, jlongArray jStatus)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
     MPI_Message message;
     MPI_Status  status;
     int rc = MPI_Mprobe(source, tag, comm, &message, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, jStatus);
+    ompi_java_status_set(env, jStatus, &status);
     return (jlong)message;
 }
 
 JNIEXPORT jboolean JNICALL Java_mpi_Message_imProbe(
         JNIEnv *env, jobject jthis, jint source,
-        jint tag, jlong jComm, jobject jStatus)
+        jint tag, jlong jComm, jlongArray jStatus)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
     MPI_Message message;
@@ -42,13 +42,13 @@ JNIEXPORT jboolean JNICALL Java_mpi_Message_imProbe(
         return JNI_FALSE;
 
     (*env)->SetLongField(env, jthis, ompi_java.MessageHandle, (jlong)message);
-    ompi_java_status_set(&status, env, jStatus);
+    ompi_java_status_set(env, jStatus, &status);
     return JNI_TRUE;
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Message_mRecv(
         JNIEnv *env, jobject jthis, jlong jMessage, jobject buf, jboolean db,
-        jint offset, jint count, jlong jType, jint bType, jobject stat)
+        jint offset, jint count, jlong jType, jint bType, jlongArray jStatus)
 {
     MPI_Message  message = (MPI_Message)jMessage;
     MPI_Datatype type    = (MPI_Datatype)jType;
@@ -60,7 +60,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Message_mRecv(
     int rc = MPI_Mrecv(bufPtr, count, type, &message, &status);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, jStatus, &status);
     ompi_java_releaseBufPtr(env, buf, db, bufBase, bType);
     return (jlong)message;
 }

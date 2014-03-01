@@ -18,6 +18,12 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public final class File
 {
+// Auxiliary status data.
+// It's used to avoid creating status objects in the C side.
+// It also avoids setting objects attributes in the C side.
+// Calling java methods and setting object attributes from C is very slow.
+private long[] status = Status.newData();
+
 private long handle;
 private FileView view = new FileView(0, MPI.BYTE, MPI.BYTE, "native");
 private Status beginStatus;
@@ -73,7 +79,7 @@ private native long close(long fh) throws MPIException;
 public static void delete(String filename) throws MPIException
 {
     MPI.check();
-    delete_jni(filename, Info.NULL);
+    delete(filename, Info.NULL);
 }
 
 /**
@@ -85,10 +91,10 @@ public static void delete(String filename) throws MPIException
 public static void delete(String filename, Info info) throws MPIException
 {
     MPI.check();
-    delete_jni(filename, info.handle);
+    delete(filename, info.handle);
 }
 
-private static native void delete_jni(String filename, long info)
+private static native void delete(String filename, long info)
         throws MPIException;
 
 /**
@@ -252,14 +258,15 @@ public Status readAt(long offset, Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    readAt(handle, offset, buf, db, off, count, type, stat);
-    return stat;
+    readAt(handle, offset, buf, db, off, count,
+           type.handle, type.baseType, status);
+
+    return newStatus();
 }
 
 private native void readAt(
         long fh, long fileOffset, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_READ_AT_ALL}.
@@ -283,14 +290,15 @@ public Status readAtAll(long offset, Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    readAtAll(handle, offset, buf, db, off, count, type, stat);
-    return stat;
+    readAtAll(handle, offset, buf, db, off, count,
+              type.handle, type.baseType, status);
+
+    return newStatus();
 }
 
 private native void readAtAll(
         long fh, long fileOffset, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_WRITE_AT}.
@@ -314,14 +322,15 @@ public Status writeAt(long offset, Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    writeAt(handle, offset, buf, db, off, count, type, stat);
-    return stat;
+    writeAt(handle, offset, buf, db, off, count,
+            type.handle, type.baseType, status);
+
+    return newStatus();
 }
 
 private native void writeAt(
         long fh, long fileOffset, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_WRITE_AT_ALL}.
@@ -345,14 +354,15 @@ public Status writeAtAll(long offset, Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    writeAtAll(handle, offset, buf, db, off, count, type, stat);
-    return stat;
+    writeAtAll(handle, offset, buf, db, off, count,
+               type.handle, type.baseType, status);
+
+    return newStatus();
 }
 
 private native void writeAtAll(
         long fh, long fileOffset, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_IREAD_AT}.
@@ -416,14 +426,13 @@ public Status read(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    read(handle, buf, db, off, count, type, stat);
-    return stat;
+    read(handle, buf, db, off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void read(
         long fh, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_READ_ALL}.
@@ -445,14 +454,13 @@ public Status readAll(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    readAll(handle, buf, db, off, count, type, stat);
-    return stat;
+    readAll(handle, buf, db, off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void readAll(
         long fh, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_WRITE}.
@@ -474,14 +482,13 @@ public Status write(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    write(handle, buf, db, off, count, type, stat);
-    return stat;
+    write(handle, buf, db, off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void write(
         long fh, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_WRITE_ALL}.
@@ -503,14 +510,13 @@ public Status writeAll(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    writeAll(handle, buf, db, off, count, type, stat);
-    return stat;
+    writeAll(handle, buf,db,off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void writeAll(
         long fh, Object buf, boolean db, int offset,
-        int count, Datatype type, Status stat) throws MPIException;
+        int count, long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_IREAD}.
@@ -610,14 +616,13 @@ public Status readShared(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    readShared(handle, buf, db, off, count, type, stat);
-    return stat;
+    readShared(handle, buf, db, off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void readShared(
         long fh, Object buf, boolean db, int offset, int count,
-        Datatype type, Status stat) throws MPIException;
+        long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_WRITE_SHARED}.
@@ -640,14 +645,13 @@ public Status writeShared(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    writeShared(handle, buf, db, off, count, type, stat);
-    return stat;
+    writeShared(handle, buf,db,off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void writeShared(
         long fh, Object buf, boolean db, int offset, int count,
-        Datatype type, Status stat) throws MPIException;
+        long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_IREAD_SHARED}.
@@ -708,14 +712,13 @@ public Status readOrdered(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    readOrdered(handle, buf, db, off, count, type, stat);
-    return stat;
+    readOrdered(handle, buf,db,off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void readOrdered(
         long fh, Object buf, boolean db, int offset, int count,
-        Datatype type, Status stat) throws MPIException;
+        long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_WRITE_ORDERED}.
@@ -738,14 +741,13 @@ public Status writeOrdered(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    Status stat = new Status();
-    writeOrdered(handle, buf, db, off, count, type, stat);
-    return stat;
+    writeOrdered(handle, buf,db,off, count, type.handle, type.baseType, status);
+    return newStatus();
 }
 
 private native void writeOrdered(
         long fh, Object buf, boolean db, int offset, int count,
-        Datatype type, Status stat) throws MPIException;
+        long type, int baseType, long[] stat) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_SEEK_SHARED}.
@@ -790,7 +792,7 @@ public void readAtAllBegin(long offset, Object buf, int count, Datatype type)
 
     if(isDirectBuffer(buf))
     {
-        readAtAllBegin(handle, offset, buf, count, type);
+        readAtAllBegin(handle, offset, buf, count, type.handle);
     }
     else
     {
@@ -802,14 +804,15 @@ public void readAtAllBegin(long offset, Object buf, int count, Datatype type)
             buf = ((Buffer)buf).array();
         }
 
-        Status stat = new Status();
-        readAtAll(handle, offset, buf, false, off, count, type, stat);
-        beginStatus = stat;
+        readAtAll(handle, offset, buf, false, off, count,
+                  type.handle, type.baseType, status);
+
+        beginStatus = newStatus();
     }
 }
 
 private native void readAtAllBegin(
-        long fh, long offset, Object buf, int count, Datatype type)
+        long fh, long offset, Object buf, int count, long type)
         throws MPIException;
 
 /**
@@ -824,9 +827,8 @@ public Status readAtAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        Status stat = new Status();
-        readAtAllEnd(handle, buf, stat);
-        return stat;
+        readAtAllEnd(handle, buf, status);
+        return newStatus();
     }
     else
     {
@@ -834,7 +836,7 @@ public Status readAtAllEnd(Object buf) throws MPIException
     }
 }
 
-private native void readAtAllEnd(long fh, Object buf, Status stat)
+private native void readAtAllEnd(long fh, Object buf, long[] stat)
         throws MPIException;
 
 /**
@@ -852,7 +854,7 @@ public void writeAtAllBegin(long offset, Object buf, int count, Datatype type)
 
     if(isDirectBuffer(buf))
     {
-        writeAtAllBegin(handle, offset, buf, count, type);
+        writeAtAllBegin(handle, offset, buf, count, type.handle);
     }
     else
     {
@@ -864,14 +866,15 @@ public void writeAtAllBegin(long offset, Object buf, int count, Datatype type)
             buf = ((Buffer)buf).array();
         }
 
-        Status stat = new Status();
-        writeAtAll(handle, offset, buf, false, off, count, type, stat);
-        beginStatus = stat;
+        writeAtAll(handle, offset, buf, false, off, count,
+                   type.handle, type.baseType, status);
+
+        beginStatus = newStatus();
     }
 }
 
 private native void writeAtAllBegin(
-        long fh, long fileOffset, Object buf, int count, Datatype type)
+        long fh, long fileOffset, Object buf, int count, long type)
         throws MPIException;
 
 /**
@@ -886,9 +889,8 @@ public Status writeAtAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        Status stat = new Status();
-        writeAtAllEnd(handle, buf, stat);
-        return stat;
+        writeAtAllEnd(handle, buf, status);
+        return newStatus();
     }
     else
     {
@@ -896,7 +898,7 @@ public Status writeAtAllEnd(Object buf) throws MPIException
     }
 }
 
-private native void writeAtAllEnd(long fh, Object buf, Status stat)
+private native void writeAtAllEnd(long fh, Object buf, long[] stat)
         throws MPIException;
 
 /**
@@ -913,7 +915,7 @@ public void readAllBegin(Object buf, int count, Datatype type)
 
     if(isDirectBuffer(buf))
     {
-        readAllBegin(handle, buf, count, type);
+        readAllBegin(handle, buf, count, type.handle);
     }
     else
     {
@@ -925,13 +927,14 @@ public void readAllBegin(Object buf, int count, Datatype type)
             buf = ((Buffer)buf).array();
         }
 
-        Status stat = new Status();
-        readAll(handle, buf, false, off, count, type, stat);
-        beginStatus = stat;
+        readAll(handle, buf, false, off, count,
+                type.handle, type.baseType, status);
+
+        beginStatus = newStatus();
     }
 }
 
-private native void readAllBegin(long fh, Object buf, int count, Datatype type)
+private native void readAllBegin(long fh, Object buf, int count, long type)
         throws MPIException;
 
 /**
@@ -946,9 +949,8 @@ public Status readAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        Status stat = new Status();
-        readAllEnd(handle, buf, stat);
-        return stat;
+        readAllEnd(handle, buf, status);
+        return newStatus();
     }
     else
     {
@@ -956,7 +958,7 @@ public Status readAllEnd(Object buf) throws MPIException
     }
 }
 
-private native void readAllEnd(long fh, Object buf, Status stat)
+private native void readAllEnd(long fh, Object buf, long[] stat)
         throws MPIException;
 
 /**
@@ -973,7 +975,7 @@ public void writeAllBegin(Object buf, int count, Datatype type)
 
     if(isDirectBuffer(buf))
     {
-        writeAllBegin(handle, buf, count, type);
+        writeAllBegin(handle, buf, count, type.handle);
     }
     else
     {
@@ -985,13 +987,14 @@ public void writeAllBegin(Object buf, int count, Datatype type)
             buf = ((Buffer)buf).array();
         }
 
-        Status stat = new Status();
-        writeAll(handle, buf, false, off, count, type, stat);
-        beginStatus = stat;
+        writeAll(handle, buf, false, off, count,
+                 type.handle, type.baseType, status);
+
+        beginStatus = newStatus();
     }
 }
 
-private native void writeAllBegin(long fh, Object buf, int count, Datatype type)
+private native void writeAllBegin(long fh, Object buf, int count, long type)
         throws MPIException;
 
 /**
@@ -1006,9 +1009,8 @@ public Status writeAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        Status stat = new Status();
-        writeAllEnd(handle, buf, stat);
-        return stat;
+        writeAllEnd(handle, buf, status);
+        return newStatus();
     }
     else
     {
@@ -1016,7 +1018,7 @@ public Status writeAllEnd(Object buf) throws MPIException
     }
 }
 
-private native void writeAllEnd(long fh, Object buf, Status stat)
+private native void writeAllEnd(long fh, Object buf, long[] stat)
         throws MPIException;
 
 /**
@@ -1033,7 +1035,7 @@ public void readOrderedBegin(Object buf, int count, Datatype type)
 
     if(isDirectBuffer(buf))
     {
-        readOrderedBegin(handle, buf, count, type);
+        readOrderedBegin(handle, buf, count, type.handle);
     }
     else
     {
@@ -1045,14 +1047,14 @@ public void readOrderedBegin(Object buf, int count, Datatype type)
             buf = ((Buffer)buf).array();
         }
 
-        Status stat = new Status();
-        readOrdered(handle, buf, false, off, count, type, stat);
-        beginStatus = stat;
+        readOrdered(handle, buf, false, off, count,
+                    type.handle, type.baseType, status);
+
+        beginStatus = newStatus();
     }
 }
 
-private native void readOrderedBegin(
-        long fh, Object buf, int count, Datatype type)
+private native void readOrderedBegin(long fh, Object buf, int count, long type)
         throws MPIException;
 
 /**
@@ -1067,9 +1069,8 @@ public Status readOrderedEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        Status stat = new Status();
-        readOrderedEnd(handle, buf, stat);
-        return stat;
+        readOrderedEnd(handle, buf, status);
+        return newStatus();
     }
     else
     {
@@ -1077,7 +1078,7 @@ public Status readOrderedEnd(Object buf) throws MPIException
     }
 }
 
-private native void readOrderedEnd(long fh, Object buf, Status stat)
+private native void readOrderedEnd(long fh, Object buf, long[] stat)
         throws MPIException;
 
 /**
@@ -1094,7 +1095,7 @@ public void writeOrderedBegin(Object buf, int count, Datatype type)
 
     if(isDirectBuffer(buf))
     {
-        writeOrderedBegin(handle, buf, count, type);
+        writeOrderedBegin(handle, buf, count, type.handle);
     }
     else
     {
@@ -1106,14 +1107,14 @@ public void writeOrderedBegin(Object buf, int count, Datatype type)
             buf = ((Buffer)buf).array();
         }
 
-        Status stat = new Status();
-        writeOrdered(handle, buf, false, off, count, type, stat);
-        beginStatus = stat;
+        writeOrdered(handle, buf, false, off, count,
+                     type.handle, type.baseType, status);
+
+        beginStatus = newStatus();
     }
 }
 
-private native void writeOrderedBegin(
-        long fh, Object buf, int count, Datatype type)
+private native void writeOrderedBegin(long fh, Object buf, int count, long type)
         throws MPIException;
 
 /**
@@ -1128,9 +1129,8 @@ public Status writeOrderedEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        Status stat = new Status();
-        writeOrderedEnd(handle, buf, stat);
-        return stat;
+        writeOrderedEnd(handle, buf, status);
+        return newStatus();
     }
     else
     {
@@ -1138,7 +1138,7 @@ public Status writeOrderedEnd(Object buf) throws MPIException
     }
 }
 
-private native void writeOrderedEnd(long fh, Object buf, Status stat)
+private native void writeOrderedEnd(long fh, Object buf, long[] stat)
         throws MPIException;
 
 private Status getBeginStatus()
@@ -1160,8 +1160,7 @@ public int getTypeExtent(Datatype type) throws MPIException
     return getTypeExtent(handle, type.handle) / type.baseSize;
 }
 
-private native int getTypeExtent(long fh, long type)
-        throws MPIException;
+private native int getTypeExtent(long fh, long type) throws MPIException;
 
 /**
  * Java binding of {@code MPI_FILE_SET_ATOMICITY}.
@@ -1188,5 +1187,12 @@ public void sync() throws MPIException
 }
 
 private native void sync(long handle) throws MPIException;
+
+private Status newStatus()
+{
+    Status s = new Status(status);
+    status = Status.newData();
+    return s;
+}
 
 } // File
