@@ -31,12 +31,6 @@ typedef struct {
     jfieldID  OpHandle;
     jfieldID  OpCommute;
     jmethodID OpCall;
-    jfieldID  StSource;
-    jfieldID  StTag;
-    jfieldID  StError;
-    jfieldID  St_cancelled;
-    jfieldID  St_ucount;
-    jfieldID  StIndex;
     jfieldID  ReqHandle;
     jfieldID  ReqStatus;
     jclass    ExceptionClass;
@@ -105,6 +99,9 @@ int        ompi_java_attrDelete(void *attrVal);
 
 MPI_Op ompi_java_op_getHandle(JNIEnv *env, jobject jthis, int baseType);
 
-void ompi_java_status_set(MPI_Status *status, JNIEnv *env, jobject obj);
+void ompi_java_status_set(
+        JNIEnv *env, jlongArray jData, MPI_Status *status);
+void ompi_java_status_setIndex(
+        JNIEnv *env, jlongArray jData, MPI_Status *status, int index);
 
 #endif /* _MPIJAVA_H_ */

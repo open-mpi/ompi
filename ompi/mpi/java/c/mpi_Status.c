@@ -33,16 +33,6 @@
 #include "mpi_Status.h"
 #include "mpiJava.h"
 
-JNIEXPORT void JNICALL Java_mpi_Status_init(JNIEnv *env, jclass c)
-{
-    ompi_java.StSource     = (*env)->GetFieldID(env, c, "source",     "I");
-    ompi_java.StTag        = (*env)->GetFieldID(env, c, "tag",        "I");
-    ompi_java.StError      = (*env)->GetFieldID(env, c, "error",      "I");
-    ompi_java.St_cancelled = (*env)->GetFieldID(env, c, "_cancelled", "I");
-    ompi_java.St_ucount    = (*env)->GetFieldID(env, c, "_ucount",    "J");
-    ompi_java.StIndex      = (*env)->GetFieldID(env, c, "index",      "I");
-}
-
 static void getStatus(MPI_Status *status, jint source, jint tag,
                       jint error, jint cancelled, jlong ucount)
 {
@@ -92,12 +82,30 @@ JNIEXPORT jint JNICALL Java_mpi_Status_getElements(
     return count;
 }
 
-void ompi_java_status_set(MPI_Status *status, JNIEnv *env, jobject obj)
+void ompi_java_status_set(JNIEnv *env, jlongArray jData, MPI_Status *status)
 {
     /* Copy the whole thing to Java */
-    (*env)->SetIntField(env, obj, ompi_java.StSource, status->MPI_SOURCE);
-    (*env)->SetIntField(env, obj, ompi_java.StTag,    status->MPI_TAG);
-    (*env)->SetIntField(env, obj, ompi_java.StError,  status->MPI_ERROR);
-    (*env)->SetIntField(env, obj, ompi_java.St_cancelled, status->_cancelled);
-    (*env)->SetLongField(env, obj, ompi_java.St_ucount,   status->_ucount);
+    int i = 0;
+    jlong *data = (*env)->GetPrimitiveArrayCritical(env, jData, NULL);
+    data[i++] = status->MPI_SOURCE;
+    data[i++] = status->MPI_TAG;
+    data[i++] = status->MPI_ERROR;
+    data[i++] = status->_cancelled;
+    data[i++] = status->_ucount;
+    (*env)->ReleasePrimitiveArrayCritical(env, jData, data, 0);
+}
+
+void ompi_java_status_setIndex(
+        JNIEnv *env, jlongArray jData, MPI_Status *status, int index)
+{
+    /* Copy the whole thing to Java */
+    int i = 0;
+    jlong *data = (*env)->GetPrimitiveArrayCritical(env, jData, NULL);
+    data[i++] = status->MPI_SOURCE;
+    data[i++] = status->MPI_TAG;
+    data[i++] = status->MPI_ERROR;
+    data[i++] = status->_cancelled;
+    data[i++] = status->_ucount;
+    data[i++] = index;
+    (*env)->ReleasePrimitiveArrayCritical(env, jData, data, 0);
 }

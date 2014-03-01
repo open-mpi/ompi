@@ -36,7 +36,7 @@
 JNIEXPORT void JNICALL Java_mpi_Request_init(JNIEnv *env, jclass c)
 {
     ompi_java.ReqHandle = (*env)->GetFieldID(env, c, "handle", "J");
-    ompi_java.ReqStatus = (*env)->GetFieldID(env, c, "status", "Lmpi/Status;");
+    ompi_java.ReqStatus = (*env)->GetFieldID(env, c, "status", "[J");
 }
 
 static void setIndices(JNIEnv *env, jintArray indices, int *cIdx, int count)
@@ -62,6 +62,37 @@ static void setIndices(JNIEnv *env, jintArray indices, int *cIdx, int count)
         free(jIdx);
 }
 
+static void setStatuses(JNIEnv *env, jobjectArray objReqs,
+                        MPI_Status *statuses, int count)
+{
+    int i;
+    for(i = 0; i < count; i++)
+    {
+        /* Copy final native status to Java statuses. */
+        jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
+        jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
+        ompi_java_status_set(env, st, statuses + i);
+        (*env)->DeleteLocalRef(env, st);
+        (*env)->DeleteLocalRef(env, rq);
+    }
+}
+
+static void setStatusesIndices(
+        JNIEnv *env, jobjectArray objReqs,
+        MPI_Status *statuses, int *indices, int count)
+{
+    int i;
+    for(i = 0; i < count; i++)
+    {
+        /* Copy final native status to Java statuses. */
+        jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
+        jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
+        ompi_java_status_setIndex(env, st, statuses + i, indices[i]);
+        (*env)->DeleteLocalRef(env, st);
+        (*env)->DeleteLocalRef(env, rq);
+    }
+}
+
 JNIEXPORT jlong JNICALL Java_mpi_Request_getNull(JNIEnv *env, jclass clazz)
 {
     return (jlong)MPI_REQUEST_NULL;
@@ -85,13 +116,13 @@ JNIEXPORT jlong JNICALL Java_mpi_Request_free(
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Request_waitStatus(
-        JNIEnv *env, jobject jthis, jlong handle, jobject stat)
+        JNIEnv *env, jobject jthis, jlong handle, jlongArray stat)
 {
     MPI_Request req = (MPI_Request)handle;
     MPI_Status status;
     int rc = MPI_Wait(&req, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, stat, &status);
     return (jlong)req;
 }
 
@@ -105,7 +136,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Request_waitFor(
 }
 
 JNIEXPORT jboolean JNICALL Java_mpi_Request_testStatus(
-        JNIEnv *env, jobject jthis, jlong handle, jobject jStatus)
+        JNIEnv *env, jobject jthis, jlong handle, jlongArray jStatus)
 {
     MPI_Request req = (MPI_Request)handle;
     int flag;
@@ -117,7 +148,7 @@ JNIEXPORT jboolean JNICALL Java_mpi_Request_testStatus(
     if(!flag)
         return JNI_FALSE;
 
-    ompi_java_status_set(&status, env, jStatus);
+    ompi_java_status_set(env, jStatus, &status);
     return JNI_TRUE;
 }
 
@@ -144,8 +175,7 @@ JNIEXPORT void JNICALL Java_mpi_Request_waitAnyStatus(
     int rc = MPI_Waitany(count, cReq, &index, &status);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-    ompi_java_status_set(&status, env, stat);
-    (*env)->SetIntField(env, stat, ompi_java.StIndex, index);
+    ompi_java_status_setIndex(env, stat, &status, index);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Request_waitAny(
@@ -179,8 +209,7 @@ JNIEXPORT jboolean JNICALL Java_mpi_Request_testAnyStatus(
     if(!flag)
         return JNI_FALSE;
 
-    ompi_java_status_set(&status, env, jStatus);
-    (*env)->SetIntField(env, jStatus, ompi_java.StIndex, index);
+    ompi_java_status_setIndex(env, jStatus, &status, index);
     return JNI_TRUE;
 }
 
@@ -200,27 +229,18 @@ JNIEXPORT jint JNICALL Java_mpi_Request_testAny(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Request_waitAllStatus(
-        JNIEnv *env, jclass clazz, jlongArray requests, jobjectArray statuses)
+        JNIEnv *env, jclass clazz, jlongArray requests, jobjectArray objReqs)
 {
-    int i;
     int count = (*env)->GetArrayLength(env, requests);
     jlong* jReq;
     MPI_Request *cReq;
     ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
-    MPI_Status *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
-    int rc = MPI_Waitall(count, cReq, stas);
+    MPI_Status *statuses = (MPI_Status*)calloc(count, sizeof(MPI_Status));
+    int rc = MPI_Waitall(count, cReq, statuses);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-
-    for(i = 0; i < count; i++)
-    {
-        /* Copy final native status to Java array_of status */
-        jobject st = (*env)->GetObjectArrayElement(env, statuses, i);
-        ompi_java_status_set(stas + i, env, st);
-        (*env)->DeleteLocalRef(env, st);
-    }
-
-    free(stas);
+    setStatuses(env, objReqs, statuses, count);
+    free(statuses);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Request_waitAll(
@@ -242,27 +262,16 @@ JNIEXPORT int JNICALL Java_mpi_Request_testAllStatus(
     jlong* jReq;
     MPI_Request *cReq;
     ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
-    MPI_Status *stas = (MPI_Status*)calloc(count, sizeof(MPI_Status));
+    MPI_Status *statuses = (MPI_Status*)calloc(count, sizeof(MPI_Status));
     int flag;
-    int rc = MPI_Testall(count, cReq, &flag, stas);
+    int rc = MPI_Testall(count, cReq, &flag, statuses);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
 
     if(flag)
-    {
-        int i;
-        for(i = 0; i < count; i++)
-        {
-            /* Copy final native status to Java statuses. */
-            jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
-            jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
-            ompi_java_status_set(stas + i, env, st);
-            (*env)->DeleteLocalRef(env, st);
-            (*env)->DeleteLocalRef(env, rq);
-        }
-    }
+        setStatuses(env, objReqs, statuses, count);
 
-    free(stas);
+    free(statuses);
     return flag ? count : -1;
 }
 
@@ -287,30 +296,14 @@ JNIEXPORT jint JNICALL Java_mpi_Request_waitSomeStatus(
     jlong* jReq;
     MPI_Request *cReq;
     ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
-    MPI_Status *stas = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
+    MPI_Status *statuses = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
     int *indices = (int*)calloc(incount, sizeof(int));
-
     int outcount;
-    int rc = MPI_Waitsome(incount, cReq, &outcount, indices, stas);
+    int rc = MPI_Waitsome(incount, cReq, &outcount, indices, statuses);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-
-    if(outcount != MPI_UNDEFINED)
-    {
-        int i;
-        for(i = 0; i < outcount; i++)
-        {
-            /* Copy final native status to Java statuses. */
-            jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
-            jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
-            ompi_java_status_set(stas + i, env, st);
-            (*env)->SetIntField(env, st, ompi_java.StIndex, indices[i]);
-            (*env)->DeleteLocalRef(env, st);
-            (*env)->DeleteLocalRef(env, rq);
-        }
-    }
-
-    free(stas);
+    setStatusesIndices(env, objReqs, statuses, indices, outcount);
+    free(statuses);
     free(indices);
     return outcount;
 }
@@ -346,29 +339,14 @@ JNIEXPORT int JNICALL Java_mpi_Request_testSomeStatus(
     jlong* jReq;
     MPI_Request *cReq;
     ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
-    MPI_Status *stas = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
+    MPI_Status *statuses = (MPI_Status*)calloc(incount, sizeof(MPI_Status));
     int *indices = (int*)calloc(incount, sizeof(int));
     int outcount;
-    int rc = MPI_Testsome(incount, cReq, &outcount, indices, stas);
+    int rc = MPI_Testsome(incount, cReq, &outcount, indices, statuses);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-
-    if(outcount != MPI_UNDEFINED)
-    {
-        int i;
-        for(i = 0; i < outcount; i++)
-        {
-            /* Copy final native status to Java statuses. */
-            jobject rq = (*env)->GetObjectArrayElement(env, objReqs, i);
-            jobject st = (*env)->GetObjectField(env, rq, ompi_java.ReqStatus);
-            ompi_java_status_set(stas + i, env, st);
-            (*env)->SetIntField(env, st, ompi_java.StIndex, indices[i]);
-            (*env)->DeleteLocalRef(env, st);
-            (*env)->DeleteLocalRef(env, rq);
-        }
-    }
-
-    free(stas);
+    setStatusesIndices(env, objReqs, statuses, indices, outcount);
+    free(statuses);
     free(indices);
     return outcount;
 }

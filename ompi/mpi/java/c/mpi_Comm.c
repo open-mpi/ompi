@@ -155,14 +155,14 @@ void* ompi_java_getBufPtr(void** bufBase, JNIEnv *env, jobject buf,
 void ompi_java_releaseBufPtr(JNIEnv *env, jobject buf, jboolean db,
                              void* bufBase, int baseType)
 {
-    if(buf != NULL && !db)
+    if(!db && buf)
         releaseArrayPtr(env, buf, bufBase, baseType, 0);
 }
 
 void ompi_java_releaseReadBufPtr(JNIEnv *env, jobject buf, jboolean db,
                                  void *bufBase, int baseType)
 {
-    if(buf != NULL && !db)
+    if(!db && buf)
         releaseArrayPtr(env, buf, bufBase, baseType, JNI_ABORT);
 }
 
@@ -233,7 +233,7 @@ static void* getBufCritical(
 static void releaseBufCritical(
         JNIEnv *env, jobject buf, jboolean db, void* bufBase)
 {
-    if(buf != NULL && !db)
+    if(!db && buf)
         (*env)->ReleasePrimitiveArrayCritical(env, buf, bufBase, 0);
 }
 
@@ -381,7 +381,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_recv(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset, jint count,
         jlong jType, jint baseType,
-        jint source, jint tag, jobject jStatus)
+        jint source, jint tag, jlongArray jStatus)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
@@ -394,7 +394,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_recv(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, bufBase, baseType);
-    ompi_java_status_set(&status, env, jStatus);
+    ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
@@ -402,7 +402,8 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
         jobject sBuf, jboolean sdb, jint sOffset, jint sCount,
         jlong sjType, jint sBaseType, jint dest, jint sTag,
         jobject rBuf, jboolean rdb, jint rOffset, jint rCount,
-        jlong rjType, jint rBaseType, jint source, jint rTag, jobject jStatus)
+        jlong rjType, jint rBaseType, jint source, jint rTag,
+        jlongArray jStatus)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
@@ -422,14 +423,14 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadBufPtr(env, sBuf, sdb, sBufBase, sBaseType);
     ompi_java_releaseBufPtr(env, rBuf, rdb, rBufBase, rBaseType);
-    ompi_java_status_set(&status, env, jStatus);
+    ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset,
         jint count, jlong jType, jint baseType,
-        jint dest, jint sTag, jint source, jint rTag, jobject jStatus)
+        jint dest, jint sTag, jint source, jint rTag, jlongArray jStatus)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
@@ -443,7 +444,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseBufPtr(env, buf, db, bufBase, baseType);
-    ompi_java_status_set(&status, env, jStatus);
+    ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_bSend(
@@ -694,7 +695,7 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_packSize(
 
 JNIEXPORT jboolean JNICALL Java_mpi_Comm_iProbe(
         JNIEnv *env, jobject jthis, jlong comm,
-        jint source, jint tag, jobject jStatus)
+        jint source, jint tag, jlongArray jStatus)
 {
     int flag;
     MPI_Status status;
@@ -704,18 +705,18 @@ JNIEXPORT jboolean JNICALL Java_mpi_Comm_iProbe(
     if(flag == 0)
         return JNI_FALSE;
 
-    ompi_java_status_set(&status, env, jStatus);
+    ompi_java_status_set(env, jStatus, &status);
     return JNI_TRUE;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_probe(
         JNIEnv *env, jobject jthis, jlong comm,
-        jint source, jint tag, jobject stat)
+        jint source, jint tag, jlongArray jStatus)
 {
     MPI_Status status;
     int rc = MPI_Probe(source, tag, (MPI_Comm)comm, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_status_set(&status, env, stat);
+    ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_getTopology(
