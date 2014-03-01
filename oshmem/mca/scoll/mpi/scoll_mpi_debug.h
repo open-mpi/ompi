@@ -18,17 +18,17 @@
 #define __MPI_FILE__ __FILE__
 #endif
 
-#define MPI_COLL_VERBOSE(level, format, ...) \
-    opal_output_verbose(level, mca_scoll_mpi_output, "%s:%d - %s() " format, \
-                        __MPI_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+#ifdef OPAL_ENABLE_DEBUG
+#define MPI_COLL_VERBOSE(level, ...) \
+    oshmem_output_verbose(level, mca_scoll_mpi_output, "%s:%d - %s() ", \
+                        __MPI_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+#else
+#define MPI_COLL_VERBOSE(level, ...)
+#endif
 
-#define MPI_COLL_ERROR(format, ... ) \
-    opal_output_verbose(0, mca_scoll_mpi_output, "Error: %s:%d - %s() " format, \
-                        __MPI_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
-
-
-#define MPI_MODULE_VERBOSE(mpi_module, level, format, ...) \
-        MPI_COLL_VERBOSE(level, "[%p:%d] " format, (void*)(mpi_module)->comm, (mpi_module)->rank, ## __VA_ARGS__)
+#define MPI_COLL_ERROR(...) \
+    oshmem_output_verbose(0, mca_scoll_mpi_output, "Error: %s:%d - %s() ", \
+                        __MPI_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 extern int mca_scoll_mpi_output;
 
