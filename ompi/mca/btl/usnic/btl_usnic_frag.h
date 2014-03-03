@@ -97,18 +97,6 @@ typedef struct ompi_btl_usnic_reg_t {
 /* UDP headers are always 42 bytes long */
 #define OMPI_BTL_USNIC_UDP_HDR_SZ (42)
 
-/* 
- * Header that is the beginning of every usnic packet buffer.
- */
-typedef union {
-    /* Verbs UD global resource header (GRH), which appears on the receiving
-     * side only.  Valid iff mca_btl_usnic_component.use_udp is false. */
-    struct ibv_grh grh;
-
-    /* Valid iff mca_btl_usnic_component.use_udp is true. */
-    char udp_bytes[OMPI_BTL_USNIC_UDP_HDR_SZ];
-} __attribute__((__packed__)) ompi_btl_usnic_protocol_header_t;
-
 #define OMPI_BTL_USNIC_PROTO_HDR_SZ    \
     (mca_btl_usnic_component.use_udp ? \
      OMPI_BTL_USNIC_UDP_HDR_SZ :       \
@@ -204,7 +192,7 @@ typedef struct ompi_btl_usnic_recv_segment_t {
     mca_btl_base_segment_t rs_segment;
 
     /* receive segments have protocol header prepended */
-    ompi_btl_usnic_protocol_header_t *rs_protocol_header;
+    uint8_t *rs_protocol_header;
 
     ompi_btl_usnic_endpoint_t *rs_endpoint;
 
