@@ -645,6 +645,10 @@ OMPI_INTL_POSIX_THREADS_SPECIAL_FLAGS
 # Try the normal linking methods (that's no fun)
 OMPI_INTL_POSIX_THREADS_LIBS
 
+#
+# check to see if we can create shared memory mutexes and conditions
+#
+AC_CHECK_FUNCS([pthread_mutexattr_setpshared pthread_condattr_setpshared])
 
 #
 # check to see if we can set error checking mutexes
