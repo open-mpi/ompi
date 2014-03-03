@@ -58,7 +58,7 @@
 #include "btl_openib_ip.h"
 #include "btl_openib_ini.h"
 
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
 #include <infiniband/ib.h>
 #endif
 
@@ -89,7 +89,7 @@ typedef struct {
     /* Dummy QP only used when we expect the connection to be
        rejected */
     struct ibv_cq *dummy_cq;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     union ibv_gid gid;
     uint64_t service_id;
 #else
@@ -123,7 +123,7 @@ OBJ_CLASS_INSTANCE(rdmacm_contents_t, opal_list_item_t,
 typedef struct {
     int device_max_qp_rd_atom;
     int device_max_qp_init_rd_atom;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     uint8_t  gid[16];
     uint64_t service_id;
 #else
@@ -161,7 +161,7 @@ OBJ_CLASS_INSTANCE(id_context_t, opal_list_item_t,
 
 typedef struct {
     uint32_t rem_index;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     uint64_t rem_port;
 #else
     uint16_t rem_port;
@@ -233,7 +233,7 @@ static void rdmacm_contents_constructor(rdmacm_contents_t *contents)
     contents->endpoint = NULL;
     contents->openib_btl = NULL;
     contents->dummy_cq = NULL;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     contents->service_id = 0;
 #else
     contents->ipaddr = 0;
@@ -355,7 +355,7 @@ static char *stringify(uint32_t addr)
  */
 static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *contents,
                                                        struct rdma_cm_id *id,
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
                                                        uint64_t rem_port)
 #else
                                                        uint16_t rem_port)
@@ -366,7 +366,7 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *conten
     opal_pointer_array_t *endpoints = contents->openib_btl->device->endpoints;
 
     struct sockaddr *peeraddr = rdma_get_peer_addr(id);
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     union ibv_gid *ep_gid, peer_gid;
     memcpy(peer_gid.raw, ((struct sockaddr_ib *) peeraddr)->sib_addr.sib_raw, sizeof peer_gid);
 #else
@@ -401,7 +401,7 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *conten
 #endif
 #endif
 
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
         ep_gid = (union ibv_gid *) message->gid;
         if (ep_gid->global.interface_id == peer_gid.global.interface_id &&
              ep_gid->global.subnet_prefix == peer_gid.global.subnet_prefix &&
@@ -546,7 +546,7 @@ out:
  * node), then the process with the lower TCP port wins.
  */
 static bool i_initiate(uint64_t local_port, uint64_t remote_port,
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
                        union ibv_gid *local_gid, union ibv_gid *remote_gid)
 {
 #else
@@ -558,7 +558,7 @@ static bool i_initiate(uint64_t local_port, uint64_t remote_port,
 #endif
 #endif
 
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     if (local_gid->global.subnet_prefix < remote_gid->global.subnet_prefix ||
         (local_gid->global.subnet_prefix == remote_gid->global.subnet_prefix &&
          local_gid->global.interface_id < remote_gid->global.interface_id) ||
@@ -590,7 +590,7 @@ static bool i_initiate(uint64_t local_port, uint64_t remote_port,
     return false;
 }
 
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
 static int get_rdma_addr(char *src, char *dst,
                          struct rdma_addrinfo **rdma_addr,
                          int server)
@@ -641,7 +641,7 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
 {
     int rc;
     id_context_t *context;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     char src_addr[32], dst_addr[32];
     struct rdma_addrinfo *rdma_addr;
 #else
@@ -738,7 +738,7 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
      */
     OBJ_RETAIN(context);
     opal_list_append(&(contents->ids), &(context->super));
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     if (NULL == inet_ntop(AF_INET6, contents->gid.raw,
                                src_addr, sizeof src_addr)) {
         BTL_ERROR(("local addr string creating fail"));
@@ -760,7 +760,7 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
     ((struct sockaddr_ib *) (rdma_addr->ai_dst_addr))->sib_sid = message->service_id;
 #endif
     rc = rdma_resolve_addr(context->id,
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
                            rdma_addr->ai_src_addr,
                            rdma_addr->ai_dst_addr,
 #else
@@ -770,12 +770,12 @@ static int rdmacm_client_connect_one(rdmacm_contents_t *contents,
                            rdmacm_resolve_timeout);
     if (0 != rc) {
         BTL_ERROR(("Failed to resolve the remote address with %d", rc));
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
         rdma_freeaddrinfo(rdma_addr);
 #endif
         goto out1;
     }
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     rdma_freeaddrinfo(rdma_addr);
 #endif
 
@@ -852,7 +852,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
      * is being connected from, in the case where there are multiple
      * listeners on the local system.
      */
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     memcpy(contents->gid.raw, local_message->gid, sizeof(contents->gid));
     contents->service_id = local_message->service_id;
 #else
@@ -864,7 +864,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
        be rejected? */
     endpoint->endpoint_initiator =
         i_initiate(
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
                    contents->service_id, message->service_id,
                    &contents->gid, (union ibv_gid *) message->gid);
 #else
@@ -969,7 +969,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     private_data_t msg;
     int rc = -1, qpnum;
     uint32_t rem_index;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     uint64_t rem_port;
 #else
     uint16_t rem_port;
@@ -1005,7 +1005,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     endpoint->endpoint_initiator =
         i_initiate(
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
                   contents->service_id, rem_port,
                   &contents->gid, (union ibv_gid *) message->gid);
 #else
@@ -1609,7 +1609,7 @@ static int finish_connect(id_context_t *context)
 
     msg.qpnum = context->qpnum;
     msg.rem_index = contents->endpoint->index;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     msg.rem_port = contents->service_id;
 #else
     msg.rem_port = contents->tcp_port;
@@ -1995,7 +1995,7 @@ static int create_message(rdmacm_contents_t *server,
     message->device_max_qp_init_rd_atom =
         openib_btl->device->ib_dev_attr.max_qp_init_rd_atom;
 
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     memcpy(message->gid, server->gid.raw, sizeof(server->gid));
     message->service_id = server->service_id;
 #else
@@ -2027,7 +2027,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     id_context_t *context;
     rdmacm_contents_t *server = NULL;
 
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     char rdmacm_addr_str[32];
     struct rdma_addrinfo *rdma_addr;
 #else
@@ -2117,7 +2117,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
      * port or one specified by a comand arg.
      */
     rc = rdma_bind_addr(context->id,
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
                         rdma_addr->ai_src_addr);
 #else
                        (struct sockaddr *)&sin);
@@ -2126,12 +2126,12 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
         opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: rdmacm CPC unable to bind to address");
         rc = OMPI_ERR_UNREACH;
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
         rdma_freeaddrinfo(rdma_addr);
 #endif
         goto out5;
     }
-#if BTL_OPENIB_RDMACM_IB_ADDR
+#if defined(BTL_OPENIB_RDMACM_IB_ADDR)
     server->service_id = ((struct sockaddr_ib *) (&context->id->route.addr.src_addr))->sib_sid;
     rdma_freeaddrinfo(rdma_addr);
 #else

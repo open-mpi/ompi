@@ -102,6 +102,9 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
                     ],
                     [ AC_MSG_RESULT([no])
                       AC_MSG_WARN([rsockets does not support keepalives. librdmacm 1.0.18 or beyond is needed.])
+                    ],
+                    [
+                      AC_MSG_WARN([cross compiling detected - disable IB addressing support in RDMACM openib BTL.])
                     ]
                   )
                   LDFLAGS="$LDFLAGS_save"
