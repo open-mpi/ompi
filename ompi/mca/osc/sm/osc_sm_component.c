@@ -333,7 +333,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     bzero(module->outstanding_locks, sizeof(enum ompi_osc_sm_locktype_t) * ompi_comm_size(module->comm));
 
     if (0 == ompi_comm_rank(module->comm)) {
-#if OPAL_HAVE_POSIX_THREADS
+#if HAVE_PTHREAD_CONDATTR_SETPSHARED && HAVE_PTHREAD_MUTEXATTR_SETPSHARED
         pthread_mutexattr_t mattr;
         pthread_condattr_t cattr;
         bool blocking_fence;
