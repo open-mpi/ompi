@@ -74,6 +74,7 @@
 #include "btl_usnic_send.h"
 #include "btl_usnic_recv.h"
 #include "btl_usnic_proc.h"
+#include "btl_usnic_ext.h"
 #include "btl_usnic_test.h"
 
 #define OMPI_BTL_USNIC_NUM_WC       500
@@ -518,6 +519,11 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
     }
 
+    /* Initialize the table of usnic extension function pointers */
+    item = opal_list_get_first(port_list);
+    port = (ompi_common_verbs_port_item_t*) item;
+    ompi_btl_usnic_ext_init(port->device->context);
+
     /* Setup an array of pointers to point to each module (which we'll
        return upstream) */
     mca_btl_usnic_component.num_modules = opal_list_get_size(port_list);
@@ -622,6 +628,37 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                                num_local_procs) != OMPI_SUCCESS) {
             --mca_btl_usnic_component.num_modules;
             continue;
+        }
+
+        /* Tell this device's context that we are aware that we need
+           to request the UD header length.  If it fails, just skip
+           this device. */
+        if (NULL != ompi_btl_usnic_ext.enable_udp) {
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic: enabling UDP support for %s",
+                                ibv_get_device_name(module->device));
+            if (0 !=
+                ompi_btl_usnic_ext.enable_udp(port->device->context)) {
+                --mca_btl_usnic_component.num_modules;
+                opal_output_verbose(5, USNIC_OUT,
+                                    "btl:usnic: UDP support unexpectedly failed for %s; ignoring this device", 
+                                    ibv_get_device_name(module->device));
+                continue;
+            }
+
+            int len =
+                ompi_btl_usnic_ext.get_ud_header_len(port->device->context,
+                                                     port->port_num);
+            /* Sanity check: the len we get back should be 42.  If
+               it's not, skip this device. */
+            if (OMPI_BTL_USNIC_UDP_HDR_SZ != len) {
+                opal_output_verbose(5, USNIC_OUT,
+                                    "btl:usnic: unexpected UD header length for %s reported by extension (%d); ignoring this device", 
+                                    ibv_get_device_name(module->device),
+                                    len);
+                --mca_btl_usnic_component.num_modules;
+                continue;
+            }
         }
 
         /* How many xQ entries do we want? */

@@ -55,6 +55,8 @@ sources = \
     btl_usnic_cagent.c \
     btl_usnic_endpoint.c \
     btl_usnic_endpoint.h \
+    btl_usnic_ext.h \
+    btl_usnic_ext.c \
     btl_usnic_frag.c \
     btl_usnic_frag.h \
     btl_usnic_graph.h \
