@@ -48,7 +48,7 @@ lk_fetch32(ompi_osc_sm_module_t *module,
            int target,
            size_t offset)
 {
-    __sync_synchronize();
+    opal_atomic_mb ();
     return (uint32_t) *((char*) &module->node_states[target].lock + offset);
 }
 
