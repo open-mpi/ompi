@@ -276,11 +276,11 @@ the required syntax of #:object
 Please check your request and try again.
 #
 [orte-rmaps-base:oversubscribed]
-The requested number of processors exceeds the allocated
+The requested number of processes exceeds the allocated
 number of slots:
 
   #slots:       %d
-  #processors:  %d
+  #processes:   %d
 
 This creates an oversubscribed condition that may adversely
 impact performance when combined with the requested binding
