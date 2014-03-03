@@ -712,9 +712,16 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_max_vm_size);
 
-    orte_set_slots = NULL;
+    if (opal_hwloc_use_hwthreads_as_cpus) {
+        orte_set_slots = strdup("hwthreads");
+    } else {
+        orte_set_slots = strdup("cores");
+    }
     (void) mca_base_var_register ("orte", "orte", NULL, "set_default_slots",
-                                  "Set the number of slots on nodes that lack such info to the number of specified objects [a number, \"cores\", \"numas\", \"sockets\", or \"hwthreads\"]",
+                                  "Set the number of slots on nodes that lack such info to the"
+                                  " number of specified objects [a number, \"cores\" (default),"
+                                  " \"numas\", \"sockets\", \"hwthreads\" (default if hwthreads_as_cpus is set),"
+                                  " or \"none\" to skip this option]",
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_set_slots);

@@ -478,11 +478,9 @@ static int do_child(orte_app_context_t* context,
                         /* bind this proc to all available processors */
                         hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
                     }
-                    /* Set an info MCA param that tells
-                       the launched processes that it was bound by us (e.g., so that
-                       MPI_INIT doesn't try to bind itself) */
-                    (void) mca_base_var_env_name ("orte_bound_at_launch", &param);
-                    opal_setenv(param, "1", true, &environ_copy);
+                    /* provide a nice string representation of what we bound to */
+                    (void) mca_base_var_env_name ("orte_base_applied_binding", &param);
+                    opal_setenv(param, child->cpu_bitmap, true, &environ_copy);
                     free(param);
                     goto PROCEED;
                 }
@@ -602,17 +600,6 @@ static int do_child(orte_app_context_t* context,
                         goto PROCEED;
                     }
                 }
-                /* Set an info MCA param that tells
-                   the launched processes that it was bound by us (e.g., so that
-                   MPI_INIT doesn't try to bind itself) */
-                (void) mca_base_var_env_name ("orte_bound_at_launch", &param);
-                opal_setenv(param, "1", true, &environ_copy);
-                free(param);
-                /* ...and provide a nice string representation of what we
-                   bound to */
-                (void) mca_base_var_env_name ("orte_base_applied_binding", &param);
-                opal_setenv(param, child->cpu_bitmap, true, &environ_copy);
-                free (param);
             }
         }
 #endif

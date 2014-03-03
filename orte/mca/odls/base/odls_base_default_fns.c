@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -778,6 +778,14 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         free(param2);
     }
     
+    /* Set an info MCA param that tells the launched processes that
+     * any binding policy was applied by us (e.g., so that
+     * MPI_INIT doesn't try to bind itself)
+     */
+    (void) mca_base_var_env_name ("orte_bound_at_launch", &param);
+    opal_setenv(param, "1", true, environ_copy);
+    free(param);
+
     /* push data into environment - don't push any single proc
      * info, though. We are setting the environment up on a
      * per-context basis, and will add the individual proc
