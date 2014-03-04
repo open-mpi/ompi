@@ -28,39 +28,24 @@ package mpi;
  */
 public final class Status
 {
-private int  source;
-private int  tag;
-private int  error;
-private int  index;
-private int  _cancelled;
-private long _ucount;
-
-static
-{
-    init();
-}
+protected final long[] data;
 
 /**
  * Status objects must be created only by the MPI methods.
  */
-protected Status()
+protected Status(long[] data)
 {
+    assert data.length == 6;
+    this.data = data;
 }
 
 /**
- * Creates a copy of a status.
+ * Creates the status data.
  */
-protected Status(Status s)
+protected static long[] newData()
 {
-    source     = s.source;
-    tag        = s.tag;
-    error      = s.error;
-    index      = s.index;
-    _cancelled = s._cancelled;
-    _ucount    = s._ucount;
+    return new long[6];
 }
-
-private static native void init();
 
 /**
  * Returns the number of received entries.
@@ -72,7 +57,13 @@ private static native void init();
 public int getCount(Datatype datatype) throws MPIException
 {
     MPI.check();
-    return getCount(source, tag, error, _cancelled, _ucount, datatype.handle);
+    int  i = 0;
+    int  source    = (int)data[i++];
+    int  tag       = (int)data[i++];
+    int  error     = (int)data[i++];
+    int  cancelled = (int)data[i++];
+    long ucount    = data[i++];
+    return getCount(source, tag, error, cancelled, ucount, datatype.handle);
 }
 
 private native int getCount(
@@ -88,7 +79,13 @@ private native int getCount(
 public boolean isCancelled() throws MPIException
 {
     MPI.check();
-    return isCancelled(source, tag, error, _cancelled, _ucount);
+    int  i = 0;
+    int  source    = (int)data[i++];
+    int  tag       = (int)data[i++];
+    int  error     = (int)data[i++];
+    int  cancelled = (int)data[i++];
+    long ucount    = data[i++];
+    return isCancelled(source, tag, error, cancelled, ucount);
 }
 
 private native boolean isCancelled(
@@ -105,7 +102,13 @@ private native boolean isCancelled(
 public int getElements(Datatype datatype) throws MPIException
 {
     MPI.check();
-    return getElements(source, tag, error, _cancelled, _ucount, datatype.handle);
+    int  i = 0;
+    int  source    = (int)data[i++];
+    int  tag       = (int)data[i++];
+    int  error     = (int)data[i++];
+    int  cancelled = (int)data[i++];
+    long ucount    = data[i++];
+    return getElements(source, tag, error, cancelled, ucount, datatype.handle);
 }
 
 private native int getElements(
@@ -119,7 +122,7 @@ private native int getElements(
  */
 public int getSource()
 {
-    return source;
+    return (int)data[0];
 }
 
 /**
@@ -129,7 +132,7 @@ public int getSource()
  */
 public int getTag()
 {
-    return tag;
+    return (int)data[1];
 }
 
 /**
@@ -138,7 +141,7 @@ public int getTag()
  */
 public int getError()
 {
-    return error;
+    return (int)data[2];
 }
 
 /**
@@ -147,7 +150,7 @@ public int getError()
  */
 public int getIndex()
 {
-    return index;
+    return (int)data[5];
 }
 
 } // Status
