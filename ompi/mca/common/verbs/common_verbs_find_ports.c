@@ -232,6 +232,20 @@ enum {
     USNIC_UNKNOWN
 };
 
+/* See comment in btl_usnic_ext.c about why we must check the return
+   from the usnic verbs extensions probe for a magic number (which
+   means we must also copy the usnic extension struct and magic number
+   value down here into common/verbs.  Bummer). */
+typedef union {
+    struct {
+        int lookup_version;
+        uint64_t magic;
+    } qpt;
+    struct ibv_port_attr attr;
+} port_query_u;
+
+#define USNIC_PORT_QUERY_MAGIC (0x43494e7375534355ULL)
+
 /*
  * usNIC devices will always return one of three
  * device->transport_type values:
@@ -269,10 +283,18 @@ static int usnic_transport(struct ibv_device *device,
        here. */
     if (IBV_TRANSPORT_IWARP == device->transport_type) {
         int rc;
-        struct ibv_port_attr attr;
-        rc = ibv_query_port(context, 42, &attr);
-        if (0 == rc) {
-            return USNIC_UDP;
+        port_query_u u;
+        rc = ibv_query_port(context, 42, &u.attr);
+        /* See comment in btl_usnic_ext.c about why we have to check
+           for rc==0 *and* the magic number. */
+        if (0 == rc && USNIC_PORT_QUERY_MAGIC == u.qpt.magic) {
+            /* We only support version 1 of the lookup function in
+               this particular version of Open MPI */
+            if (1 == u.qpt.lookup_version) {
+                return USNIC_UDP;
+            } else {
+                return USNIC_UNKNOWN;
+            }
         } else {
             return USNIC_L2;
         }
