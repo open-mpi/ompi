@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,7 +168,7 @@ static int smcuda_register(void)
 #if OPAL_CUDA_SUPPORT
     /* Lower priority when CUDA support is not requested */
     if (ompi_mpi_cuda_support) {
-        mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
+        mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH+1;
     } else {
         mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
     }
@@ -178,7 +178,7 @@ static int smcuda_register(void)
     mca_btl_smcuda_component.cuda_ipc_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_btl_smcuda_component.cuda_ipc_output, mca_btl_smcuda_component.cuda_ipc_verbose);
 #else /* OPAL_CUDA_SUPPORT */
-    mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
+    mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
 #endif /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_eager_limit = 4*1024;
     mca_btl_smcuda.super.btl_rndv_eager_limit = 4*1024;
