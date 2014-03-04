@@ -574,7 +574,7 @@ static void hnp_receiver(int status,
 static void process_ckpt_update_cmd(orte_process_name_t* sender,
                                     opal_buffer_t* buffer)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret;
     orte_std_cntr_t count = 1;
     int ckpt_status = ORTE_ERRMGR_MIGRATE_STATE_NONE;
 
@@ -584,7 +584,6 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      */
     count = 1;
     if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &ckpt_status, &count, OPAL_INT)) ) {
-        exit_status = ret;
         goto cleanup;
     }
     orte_migrate_ckpt_status = ckpt_status;
@@ -596,7 +595,6 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
         opal_show_help("help-orte-migrate.txt", "non-ckptable", 
                        true,
                        orte_migrate_globals.pid);
-        exit_status = ORTE_ERROR;
         goto cleanup;
     }
 
@@ -608,7 +606,6 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
         opal_show_help("help-orte-migrate.txt", "err-inprogress", 
                        true,
                        orte_migrate_globals.pid);
-        exit_status = ORTE_ERROR;
         goto cleanup;
     }
 
@@ -619,7 +616,6 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
         opal_show_help("help-orte-migrate.txt", "err-other", 
                        true,
                        orte_migrate_globals.pid);
-        exit_status = ORTE_ERROR;
         goto cleanup;
     }
 

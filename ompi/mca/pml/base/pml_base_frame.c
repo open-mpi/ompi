@@ -165,10 +165,6 @@ static int mca_pml_base_close(void)
  */
 static int mca_pml_base_open(mca_base_open_flag_t flags)
 {
-#if OPAL_ENABLE_FT_CR == 1
-    char* wrapper_pml = NULL;
-#endif
-
     /**
      * Construct the send and receive request queues. There are 2 reasons to do it
      * here. First, as they are globals it's better to construct them in one common

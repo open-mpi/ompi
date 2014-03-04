@@ -273,7 +273,7 @@ static int errmgr_base_tool_start_cmdline_listener(void)
 
 static int errmgr_base_tool_stop_cmdline_listener(void)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int exit_status = ORTE_SUCCESS;
     
     if (!errmgr_cmdline_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
