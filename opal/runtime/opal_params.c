@@ -15,6 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,6 +44,10 @@
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
+
+#if OPAL_ENABLE_FT_CR == 1
+bool opal_base_distill_checkpoint_ready = false;
+#endif
 
 int opal_register_params(void)
 {
@@ -119,6 +124,19 @@ int opal_register_params(void)
 				 &opal_debug_threads);
     if (0 > ret) {
 	return ret;
+    }
+#endif
+
+#if OPAL_ENABLE_FT_CR == 1
+    opal_base_distill_checkpoint_ready = false;
+    ret = mca_base_var_register("opal", "opal", "base", "distill_checkpoint_ready",
+                                "Distill only those components that are Checkpoint Ready",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+                                &opal_base_distill_checkpoint_ready);
+
+    if (0 > ret) {
+        return ret;
     }
 #endif
 
