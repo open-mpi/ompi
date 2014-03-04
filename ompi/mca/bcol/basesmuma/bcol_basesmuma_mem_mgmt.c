@@ -60,7 +60,7 @@ int mca_bcol_basesmuma_register_sm(void *context_data, void *base, size_t size,
                                                   sm_reg->data_seg_alignment,
                                                   sm_reg->file_name);
     if(NULL == sm_reg->sm_mmap) {
-        opal_output (0, "Bcol_basesmuma memory registration error \n");
+        opal_output (ompi_bcol_base_framework.framework_output, "Bcol_basesmuma memory registration error");
         return OMPI_ERROR;
     }
 
@@ -96,7 +96,7 @@ int mca_bcol_basesmuma_deregister_sm(void *context_data, void *reg)
     /* unmap the shared memory file */
     ret = munmap((void *) sm_reg->base_addr, sm_reg->size);
     if( 0 > ret) {
-        opal_output (0, "Failed to munmap the shared memory file %s\n",sm_reg->file_name);
+        opal_output (ompi_bcol_base_framework.framework_output, "Failed to munmap the shared memory file %s",sm_reg->file_name);
         return OMPI_ERROR;
     }
 
@@ -106,7 +106,7 @@ int mca_bcol_basesmuma_deregister_sm(void *context_data, void *reg)
     /* remove the file */
     ret = remove(sm_reg->file_name);
     if( 0 > ret) {
-        opal_output (0, "Failed to remove the shared memory file %s. reason = %s\n",
+        opal_output (ompi_bcol_base_framework.framework_output, "Failed to remove the shared memory file %s. reason = %s",
                      sm_reg->file_name, strerror (errno));
         return OMPI_ERROR;
     }

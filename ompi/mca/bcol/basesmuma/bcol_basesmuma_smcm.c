@@ -100,7 +100,7 @@ bcol_basesmuma_smcm_mmap_t* bcol_basesmuma_smcm_create_mmap(int fd, size_t size,
 
         /* is addr past end of file ? */
         if((unsigned char*)seg + size < addr) {
-            opal_output(0, "bcol_basesmuma_smcm_mmap_init: "
+            opal_output (ompi_bcol_base_framework.framework_output, "bcol_basesmuma_smcm_mmap_init: "
                         "memory region too small len %lu  addr %p\n",
                         (unsigned long)size, addr);
             return NULL;
@@ -174,7 +174,7 @@ int bcol_basesmuma_smcm_allgather_connection(
     signal(SIGABRT, SIG_DFL);
     /* sanity check */
     if (strlen(input.file_name) > SM_BACKING_FILE_NAME_MAX_LEN-1) {
-        opal_output (0, "backing file name too long:  %s len :: %d\n",
+        opal_output (ompi_bcol_base_framework.framework_output, "backing file name too long:  %s len :: %d\n",
                      input.file_name, (int) strlen(input.file_name));
         return OMPI_ERR_BAD_PARAM;
     }
@@ -219,7 +219,7 @@ int bcol_basesmuma_smcm_allgather_connection(
                             sm_bcol_module->super.sbgp_partner_module->group_list,
                             sm_bcol_module->super.sbgp_partner_module->group_comm);
     if( OMPI_SUCCESS != rc ) {
-        opal_output (0, "failed in comm_allgather_pml.  Error code: %d\n", rc);
+        opal_output (ompi_bcol_base_framework.framework_output, "failed in comm_allgather_pml.  Error code: %d\n", rc);
         goto Error;
     }
 
@@ -286,7 +286,7 @@ int bcol_basesmuma_smcm_allgather_connection(
            */
         fd = open(temp->sm_file.file_name, O_RDWR, 0600);
         if (0 > fd) {
-            opal_output (0, "SMCM Allgather failed to open sm backing file %s. errno = %d\n", temp->sm_file.file_name, errno);
+            opal_output (ompi_bcol_base_framework.framework_output, "SMCM Allgather failed to open sm backing file %s. errno = %d\n", temp->sm_file.file_name, errno);
             rc = OMPI_ERROR;
             goto Error;
         }
@@ -297,7 +297,7 @@ int bcol_basesmuma_smcm_allgather_connection(
                                                         temp->sm_file.size_ctl_structure,
                                                         getpagesize());
         if (NULL == temp->sm_mmap) {
-            opal_output (0, "mmapping failed to map remote peer's file\n");
+            opal_output (ompi_bcol_base_framework.framework_output, "mmapping failed to map remote peer's file\n");
             OBJ_RELEASE(temp);
             rc = OMPI_ERROR;
             goto Error;
@@ -364,10 +364,10 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
 
     fd = open(file_name, O_CREAT|O_RDWR,0600);
     if (fd < 0) {
-        opal_output(0, "basesmuma shared memory allocation open failed with errno: %d\n",
+        opal_output (ompi_bcol_base_framework.framework_output, "basesmuma shared memory allocation open failed with errno: %d\n",
                     errno);
     } else if (0 != ftruncate(fd,length)) {
-        opal_output(0, "basesmuma shared memory allocation ftruncate failed with errno: %d\n",
+        opal_output (ompi_bcol_base_framework.framework_output, "basesmuma shared memory allocation ftruncate failed with errno: %d\n",
                     errno);
     } else {
 
@@ -421,7 +421,7 @@ bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr,
 
         /* is addr past the end of the file? */
         if ((unsigned char *) seg+length < myaddr) {
-            opal_output(0, "mca_bcol_basesmuma_sm_alloc_mmap: memory region too small len %lu add %p\n",
+            opal_output (ompi_bcol_base_framework.framework_output, "mca_bcol_basesmuma_sm_alloc_mmap: memory region too small len %lu add %p\n",
                         (unsigned long) length, myaddr);
             return NULL;
         }
