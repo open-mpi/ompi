@@ -14,12 +14,17 @@
 
 #include <infiniband/verbs.h>
 
+#include "opal_stdint.h"
+
 typedef void *(*ompi_btl_usnic_dlsym_fn_t)(const char *name);
 
 typedef struct {
     int lookup_version;
+    uint64_t magic;
     ompi_btl_usnic_dlsym_fn_t lookup;
 } ompi_btl_usnic_query_port_table_t;
+
+#define USNIC_PORT_QUERY_MAGIC (0x43494e7375534355ULL)
 
 /*
  * Tells libusnic_verbs to enable UDP support.

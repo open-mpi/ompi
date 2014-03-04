@@ -30,11 +30,21 @@ void ompi_btl_usnic_ext_init(struct ibv_context *context)
     memset(&ompi_btl_usnic_ext, 0, sizeof(ompi_btl_usnic_ext));
 
     /* See if this context supports the usnic extensions.  Do the
-       magic query port on port number 42 (which is THE ANSWER) */
+       magic query port on port number 42 (which is THE ANSWER).  If
+       it works, we'll get rc==0 and the magic number in the struct
+       will be set.  Note, however, that due to a bug in early
+       versions of libusnic_verbs, we *may* get rc==0 even if it
+       doesn't work, which is why we also must check for the magic
+       value, too. */
     int rc;
-    rc = ibv_query_port(context, 42,
-                        (struct ibv_port_attr*) &ompi_btl_usnic_ext.qpt);
-    if (0 != rc) {
+    struct ibv_port_attr attr;
+    rc = ibv_query_port(context, 42, &attr);
+    assert(sizeof(ompi_btl_usnic_ext) <= sizeof(attr));
+    memcpy(&ompi_btl_usnic_ext, &attr, sizeof(ompi_btl_usnic_ext));
+    if (0 != rc || USNIC_PORT_QUERY_MAGIC != ompi_btl_usnic_ext.qpt.magic) {
+        /* If the probe fails, we must re-memset() the function
+           pointer block */
+        memset(&ompi_btl_usnic_ext, 0, sizeof(ompi_btl_usnic_ext));
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: verbs plugin does not support extensions");
         return;
@@ -50,6 +60,9 @@ void ompi_btl_usnic_ext_init(struct ibv_context *context)
                         "btl:usnic: verbs plugin has extension lookup ABI version %d",
                         ompi_btl_usnic_ext.qpt.lookup_version);
     if (1 != ompi_btl_usnic_ext.qpt.lookup_version) {
+        /* If the probe fails, we must re-memset() the function
+           pointer block, because it may/will return junk in the qpt */
+        memset(&ompi_btl_usnic_ext, 0, sizeof(ompi_btl_usnic_ext));
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: unrecognized lookup ABI version"
                             " (I only recognize version 1) "
