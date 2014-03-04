@@ -1296,6 +1296,9 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
         if (ORTE_SUCCESS != orte_routed.route_lost(&mop->hop)) {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
         } else {
+            orte_show_help("help-oob-tcp.txt", "unable-to-commiunicate",
+                           true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                           ORTE_NAME_PRINT(&mop->hop));
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
         }
     }
