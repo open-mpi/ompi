@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,6 +33,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/constants.h"
+#if OPAL_ENABLE_FT_CR == 1
+#include "opal/runtime/opal_params.h"
+#endif
 
 /*
  * Local functions
@@ -141,18 +145,9 @@ static int open_components(mca_base_framework_t *framework)
      * NTH: Logic moved to mca_base_components_filter.
      */
 #if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
-#ifdef ENABLE_FT_FIXED
-    /* FIXME_FT
-     *
-     * the variable mca_base_component_distill_checkpoint_ready
-     * was removed by commit 8181c8273c486bba59b3dead324939eac1a58b8c (r28237)
-     * "Introduce the MCA framework system. This formalizes the interface frameworks must provide."
-     *
-     * */
-    if (mca_base_component_distill_checkpoint_ready) {
+    if (opal_base_distill_checkpoint_ready) {
         open_only_flags |= MCA_BASE_METADATA_PARAM_CHECKPOINT;
     }
-#endif /* ENABLE_FT_FIXED */
 #endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
 
     /* If mca_base_framework_register_components was called with the MCA_BASE_COMPONENTS_ALL flag 

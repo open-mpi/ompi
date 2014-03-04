@@ -15,6 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +32,10 @@ extern char *opal_set_max_sys_limits;
 
 #if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;
+#endif
+
+#if OPAL_ENABLE_FT_CR == 1
+extern bool opal_base_distill_checkpoint_ready;
 #endif
 
 #endif
