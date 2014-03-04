@@ -182,8 +182,6 @@ static int sstore_stage_select (void)
 
 static int sstore_stage_open(void) 
 {
-    int mca_index, value;
-
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */

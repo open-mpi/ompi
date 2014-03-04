@@ -70,7 +70,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     bool found_pml;
 #if OPAL_ENABLE_FT_CR == 1
     mca_pml_base_component_t *wrapper_component = NULL;
-    mca_pml_base_module_t *wrapper_module = NULL;
     int wrapper_priority = -1;
 #endif
 
@@ -144,7 +143,6 @@ int mca_pml_base_select(bool enable_progress_threads,
                                  component->pmlm_version.mca_component_name, priority );
             wrapper_priority  = priority;
             wrapper_component = component;
-            wrapper_module    = module;
             continue;
         }
         /* Otherwise determine if this is the best component */

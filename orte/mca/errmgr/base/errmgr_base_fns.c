@@ -366,7 +366,7 @@ void orte_errmgr_base_migrate_state_notify(int state)
     }
 }
 
-int orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc)
+void orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc)
 {
     if (NULL != proc) {
         switch(state) {
@@ -442,7 +442,7 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
                                                         orte_proc_t *proc,
                                                         opal_list_t *local_snapshots)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int exit_status = ORTE_SUCCESS;
     opal_list_item_t *item = NULL;
     orte_std_cntr_t i_app;
     int argc = 0;
@@ -513,8 +513,8 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
     }
 
     if( NULL == cur_app_context ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
+        ORTE_ERROR_LOG(ORTE_ERROR);
+        exit_status = ORTE_ERROR;
         goto cleanup;
     }
 
