@@ -658,7 +658,7 @@ int orterun(int argc, char *argv[])
      *  depend upon opal_init_util() functionality.
      */
     /* Need to initialize OPAL so that install_dirs are filled in */
-    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
+    if (OPAL_SUCCESS != opal_init(&argc, &argv)) {
         exit(1);
     }
     
@@ -833,10 +833,10 @@ int orterun(int argc, char *argv[])
          */
         return rc;
     }
-    /* finalize the OPAL utils. As they are opened again from orte_init->opal_init
-     * we continue to have a reference count on them. So we have to finalize them twice...
+    /* finalize OPAL. As it was opened again from orte_init->opal_init
+     * we continue to have a reference count on it. So we have to finalize it twice...
      */
-    opal_finalize_util();
+    opal_finalize();
 
 
     /* get the daemon job object */

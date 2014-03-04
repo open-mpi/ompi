@@ -145,7 +145,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_PU, 0);
-            if (ORTE_ERR_NOT_SUPPORTED == rc) {
+            if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
@@ -156,7 +156,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYCORE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_CORE, 0);
-            if (ORTE_ERR_NOT_SUPPORTED == rc) {
+            if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
@@ -167,7 +167,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_CACHE, 1);
-            if (ORTE_ERR_NOT_SUPPORTED == rc) {
+            if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
@@ -178,7 +178,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_CACHE, 2);
-            if (ORTE_ERR_NOT_SUPPORTED == rc) {
+            if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
@@ -189,7 +189,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_CACHE, 3);
-            if (ORTE_ERR_NOT_SUPPORTED == rc) {
+            if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
@@ -200,7 +200,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYSOCKET == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_SOCKET, 0);
-            if (ORTE_ERR_NOT_SUPPORTED == rc) {
+            if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
@@ -211,7 +211,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYNUMA == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_NODE, 0);
-            if (ORTE_ERR_NOT_SUPPORTED == rc) {
+            if (ORTE_ERR_NOT_FOUND == rc) {
                 /* if the mapper couldn't map by this object because
                  * it isn't available, but the error allows us to try
                  * byslot, then do so

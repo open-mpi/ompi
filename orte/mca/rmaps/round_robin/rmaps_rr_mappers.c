@@ -71,8 +71,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
                                true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+                OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
             }
-            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         } else {
             /* don't default to bound */
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
@@ -253,8 +253,8 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
                                true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+                OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
             }
-            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         } else {
             /* don't default to bound */
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
@@ -508,8 +508,8 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
                                true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+                OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
             }
-            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         } else {
             /* don't default to bound */
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
@@ -653,8 +653,8 @@ static int byobj_span(orte_job_t *jdata,
                 !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding)){
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:oversubscribed",
                                true, num_slots, app->num_procs * orte_rmaps_base.cpus_per_rank);
+                OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
             }
-            OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         } else {
             /* don't default to bound */
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);

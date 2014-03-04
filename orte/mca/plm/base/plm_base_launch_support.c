@@ -113,7 +113,8 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
          * slots on each node as directed or using default
          */
         if (!orte_managed_allocation) {
-            if (NULL != orte_set_slots) {
+            if (NULL != orte_set_slots &&
+                0 != strncmp(orte_set_slots, "none", strlen(orte_set_slots))) {
                 for (i=0; i < orte_node_pool->size; i++) {
                     if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                         continue;
