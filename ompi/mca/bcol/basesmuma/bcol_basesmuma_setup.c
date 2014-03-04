@@ -144,7 +144,7 @@ int base_bcol_basesmuma_exchange_offsets(
     }
     /* pack up the data into the allgather send buffer */
         if (NULL == send_buffer || NULL == recv_buffer) {
-            opal_output (0, "Cannot allocate memory for sbuffer or rbuffer\n");
+            opal_output (ompi_bcol_base_framework.framework_output, "Cannot allocate memory for sbuffer or rbuffer\n");
             ret = OMPI_ERROR;
             goto exit_ERROR;
         }
@@ -157,7 +157,7 @@ int base_bcol_basesmuma_exchange_offsets(
         &(sm_bcol_module->super.sbgp_partner_module->my_index),1,OPAL_UINT32);
 
     if (OMPI_SUCCESS != ret) {
-        opal_output (0, "Error packing my_index!!\n");
+        opal_output (ompi_bcol_base_framework.framework_output, "Error packing my_index!!\n");
         goto exit_ERROR;
     }
 
@@ -171,7 +171,7 @@ int base_bcol_basesmuma_exchange_offsets(
      * structures.
      */
     if (OMPI_SUCCESS != (ret = ompi_rte_allgather_list(&peers, send_buffer, recv_buffer))) {
-        opal_output (0, "ompi_rte_allgather_list returned error %d\n", ret);
+        opal_output (ompi_bcol_base_framework.framework_output, "ompi_rte_allgather_list returned error %d\n", ret);
         goto exit_ERROR;
     }
 
@@ -179,7 +179,7 @@ int base_bcol_basesmuma_exchange_offsets(
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&dummy, &pcnt, OPAL_INT32);
         if (OMPI_SUCCESS != ret) {
-                opal_output (0, "unpack returned error %d for dummy\n",ret);
+                opal_output (ompi_bcol_base_framework.framework_output, "unpack returned error %d for dummy\n",ret);
                 goto exit_ERROR;
         }
 
@@ -194,7 +194,7 @@ int base_bcol_basesmuma_exchange_offsets(
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&index_in_group, &pcnt, OPAL_UINT32);
         if (OMPI_SUCCESS != ret) {
-            opal_output (0, "unpack returned error %d for remote index_in_group\n",ret);
+            opal_output (ompi_bcol_base_framework.framework_output, "unpack returned error %d for remote index_in_group\n",ret);
             goto exit_ERROR;
         }
 
@@ -202,7 +202,7 @@ int base_bcol_basesmuma_exchange_offsets(
         pcnt=1;
         ret = opal_dss.unpack(recv_buffer,&rem_mem_offset, &pcnt, OPAL_UINT64);
         if (OMPI_SUCCESS != ret) {
-            opal_output (0, "unpack returned error %d for remote memory offset\n",ret);
+            opal_output (ompi_bcol_base_framework.framework_output, "unpack returned error %d for remote memory offset\n",ret);
             goto exit_ERROR;
         }
 
@@ -398,7 +398,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
         malloc(sizeof(void *)*
                 sm_bcol_module->super.sbgp_partner_module->group_size);
     if( !sm_bcol_module->shared_memory_scratch_space ) {
-        opal_output (0, "Cannot allocate memory for shared_memory_scratch_space.\n");
+        opal_output (ompi_bcol_base_framework.framework_output, "Cannot allocate memory for shared_memory_scratch_space.\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -422,7 +422,7 @@ int base_bcol_basesmuma_setup_ctl_struct(
     ctl_mgmt->ctl_buffs_mgmt=(mem_bank_management_t *)
         malloc(sizeof(mem_bank_management_t)*n_ctl);
     if( !ctl_mgmt->ctl_buffs_mgmt ) {
-        opal_output (0, "Cannot allocate memory for ctl_buffs_mgmt. ret = %d\n",ret);
+        opal_output (ompi_bcol_base_framework.framework_output, "Cannot allocate memory for ctl_buffs_mgmt. ret = %d\n",ret);
         ret = OMPI_ERROR;
         goto exit_ERROR;
     }
@@ -483,7 +483,7 @@ int base_bcol_basesmuma_setup_library_buffers(
     if(!cs->sm_ctl_structs) {
         ret = mca_bcol_basesmuma_allocate_sm_ctl_memory(cs);
         if(OMPI_SUCCESS != ret) {
-            opal_output (0, "In bcol_comm_query mca_bcol_basesmuma_allocate_sm_ctl_memory failed\n");
+            opal_output (ompi_bcol_base_framework.framework_output, "In bcol_comm_query mca_bcol_basesmuma_allocate_sm_ctl_memory failed\n");
             return ret;
         }
         /*

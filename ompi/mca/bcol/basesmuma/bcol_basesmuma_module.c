@@ -385,7 +385,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                                                     sizeof(mca_bcol_base_module_t *));
 
     if( !sm_modules ) {
-        opal_output (0, "In base_bcol_masesmuma_setup_library_buffers failed to allocate memory for sm_modules\n");
+        opal_output (ompi_bcol_base_framework.framework_output, "In base_bcol_masesmuma_setup_library_buffers failed to allocate memory for sm_modules\n");
         return NULL;
     }
 
@@ -396,7 +396,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                                                        module->group_size,module->my_index,
                                                        &(sm_module->recursive_doubling_tree));
     if(OMPI_SUCCESS != ret) {
-        opal_output (0, "Error setting up recursive_doubling_tree \n");
+        opal_output (ompi_bcol_base_framework.framework_output, "Error setting up recursive_doubling_tree \n");
         return NULL;
     }
 
@@ -406,7 +406,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     ret=netpatterns_setup_narray_tree(cs->radix_fanin,
                                       my_rank,module->group_size,&(sm_module->fanin_node));
     if(OMPI_SUCCESS != ret) {
-        opal_output (0, "Error setting up fanin tree \n");
+        opal_output (ompi_bcol_base_framework.framework_output, "Error setting up fanin tree \n");
         return NULL;
     }
 
@@ -415,7 +415,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     ret=netpatterns_setup_narray_tree(cs->radix_fanout,
                                       my_rank,module->group_size,&(sm_module->fanout_node));
     if(OMPI_SUCCESS != ret) {
-        opal_output (0, "Error setting up fanout tree \n");
+        opal_output (ompi_bcol_base_framework.framework_output, "Error setting up fanout tree \n");
         return NULL;
     }
 
@@ -491,7 +491,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                                                       sm_module->super.sbgp_partner_module->group_size,
                                                       &(sm_module->scatter_kary_tree));
     if(OMPI_SUCCESS != ret) {
-        opal_output (0, "In base_bcol_masesmuma_setup_library_buffers and scatter k-ary tree setup failed \n");
+        opal_output (ompi_bcol_base_framework.framework_output, "In base_bcol_masesmuma_setup_library_buffers and scatter k-ary tree setup failed \n");
         return NULL;
     }
 
@@ -499,7 +499,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     ret=base_bcol_basesmuma_setup_library_buffers(sm_module, cs);
 
     if(OMPI_SUCCESS != ret) {
-        opal_output (0, "In base_bcol_masesmuma_setup_library_buffers and mpool was not successfully setup!\n");
+        opal_output (ompi_bcol_base_framework.framework_output, "In base_bcol_masesmuma_setup_library_buffers and mpool was not successfully setup!\n");
         return NULL;
     }
 
@@ -523,12 +523,12 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
                              cs->payload_base_fname,
                              (int)getpid());
         if( 0 > name_length ) {
-            opal_output (0, "Failed to assign the shared memory payload file a name\n");
+            opal_output (ompi_bcol_base_framework.framework_output, "Failed to assign the shared memory payload file a name\n");
             return NULL;
         }
         /* make sure name is not too long */
         if ( OPAL_PATH_MAX < (name_length-1) ) {
-            opal_output (0, "Shared memory file name is too long!\n");
+            opal_output (ompi_bcol_base_framework.framework_output, "Shared memory file name is too long!\n");
             return NULL;
         }
         /* set the name and alignment characteristics */
@@ -624,7 +624,7 @@ mca_bcol_basesmuma_comm_query(mca_sbgp_base_module_t *module, int *num_modules)
     /* blocking recursive double barrier test */
     /*
       {
-      opal_output (0, "BBB About to hit the barrier test\n");
+      opal_output (ompi_bcol_base_framework.framework_output, "BBB About to hit the barrier test\n");
       int rc;
       bcol_function_args_t bogus;
       rc = bcol_basesmuma_rd_barrier_init(&(sm_module->super));

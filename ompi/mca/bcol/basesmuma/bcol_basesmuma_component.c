@@ -25,6 +25,9 @@
 #include "ompi/mca/bcol/base/base.h"
 
 #include "bcol_basesmuma.h"
+
+#define ROUND_UP_POW2(x, y) (((x) + ((y) - 1)) & ~((y) - 1))
+
 /*
  * Public string showing the coll ompi_sm V2 component version number
  */
@@ -241,7 +244,7 @@ static int basesmuma_open(void)
      */
     ret=opal_progress_register(bcol_basesmuma_progress);
     if (MPI_SUCCESS != ret) {
-        opal_output(0, "failed to register the progress function\n");
+        opal_output(ompi_bcol_base_framework.framework_output, "failed to register the progress function");
     }
 
     return ret;
@@ -270,7 +273,7 @@ static int mca_bcol_basesmuma_deregister_ctl_sm(mca_bcol_basesmuma_component_t *
     /* unmap the shared memory file */
     ret=munmap((void *) sm_ctl_structs->map_addr, sm_ctl_structs->map_size);
     if( 0 > ret) {
-        opal_output (0, "Failed to munmap the shared memory file %s \n",
+        opal_output (ompi_bcol_base_framework.framework_output, "Failed to munmap the shared memory file %s",
                      sm_ctl_structs->map_path);
         return OMPI_ERROR;
     }
@@ -282,7 +285,7 @@ static int mca_bcol_basesmuma_deregister_ctl_sm(mca_bcol_basesmuma_component_t *
 #if 0
     ret = remove(sm_ctl_structs->map_path);
     if( 0 > ret) {
-        opal_output (0, "Failed to remove the shared memory file %s. reason = %s\n",
+        opal_output (ompi_bcol_base_framework.framework_output, "Failed to remove the shared memory file %s. reason = %s",
                      sm_ctl_structs->map_path, strerror (errno));
         return OMPI_ERROR;
     }
@@ -314,13 +317,13 @@ static int basesmuma_close(void)
     /* deregister the progress function */
     ret=opal_progress_unregister(bcol_basesmuma_progress);
     if (MPI_SUCCESS != ret) {
-        opal_output(0, "failed to unregister the progress function\n");
+        opal_output(ompi_bcol_base_framework.framework_output, "failed to unregister the progress function");
     }
 
     /* remove the control structure backing file */
     ret=mca_bcol_basesmuma_deregister_ctl_sm(&mca_bcol_basesmuma_component);
     if (MPI_SUCCESS != ret) {
-        opal_output(0, "failed to remove control structure backing file\n");
+        opal_output(ompi_bcol_base_framework.framework_output, "failed to remove control structure backing file");
     }
 
     /* remove the network contexts - only one network context defined for
@@ -367,6 +370,7 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
     int name_length, ret;
     size_t ctl_length;
     char *name, *ctl_mem;
+    size_t page_size = getpagesize ();
 
     /* set the file name */
     name_length=asprintf(&name,
@@ -396,12 +400,12 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
     ctl_length+=cs->my_scratch_shared_memory_size;
 
     /* round up to multiple of page size */
-    ctl_length=(ctl_length-1)/getpagesize()+1;
-    ctl_length*=getpagesize();
+    ctl_length = ROUND_UP_POW2(ctl_length, page_size);
 
     /* allocate memory that will be mmaped */
     ctl_mem=(char *)valloc(ctl_length);
     if( !ctl_mem) {
+        opal_output (ompi_bcol_base_framework.framework_output, "failed to allocate bcol/basesmuma control memory");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -409,7 +413,8 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
     cs->sm_ctl_structs=bcol_basesmuma_smcm_mem_reg(ctl_mem,
                                                    ctl_length,getpagesize(),name);
     if( !cs->sm_ctl_structs) {
-        opal_output (0, "In mca_bcol_basesmuma_allocate_sm_ctl_memory failed to allocathe backing file %s\n", name);
+        opal_output (ompi_bcol_base_framework.framework_output,
+                     "In mca_bcol_basesmuma_allocate_sm_ctl_memory failed to allocathe backing file %s\n", name);
         ret=OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
