@@ -478,7 +478,7 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
         size_t buflen;
 
         ompi_osc_base_get_primitive_type_info(datatype, &primitive_datatype, &primitive_count);
-        primitive_count *= header->hdr_target_count;
+        primitive_count *= count;
 
         /* figure out how big a buffer we need */
         ompi_datatype_type_size(primitive_datatype, &buflen);
