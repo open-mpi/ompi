@@ -398,7 +398,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     void *ep_address;
     size_t ep_address_len;
     mxm_error_t err;
-    size_t i;
+    size_t i, ep_index = 0;
     int rc;
     mca_mtl_mxm_endpoint_t *endpoint;
 
@@ -416,6 +416,9 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 
     /* Get the EP connection requests for all the processes from modex */
     for (i = 0; i < nprocs; ++i) {
+        if (NULL != procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL]) {
+           continue; /* already connected to this endpoint */
+        }
         rc = ompi_mtl_mxm_recv_ep_address(procs[i], &ep_address, &ep_address_len);
         if (rc != OMPI_SUCCESS) {
             goto bail;
@@ -429,9 +432,10 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         }
 
         memcpy(&ep_info[i], ep_address, ep_address_len);
-        conn_reqs[i].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
-        conn_reqs[i].ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
-        conn_reqs[i].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
+        conn_reqs[ep_index].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
+        conn_reqs[ep_index].ptl_addr[MXM_PTL_SHM]  = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
+        conn_reqs[ep_index].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
+        ep_index++;
 
 #else
         endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
@@ -449,10 +453,10 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 
 #if MXM_API < MXM_VERSION(2,0)
     /* Connect to remote peers */
-    err = mxm_ep_connect(ompi_mtl_mxm.ep, conn_reqs, nprocs, -1);
+    err = mxm_ep_connect(ompi_mtl_mxm.ep, conn_reqs, ep_index, -1);
     if (MXM_OK != err) {
         MXM_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
-        for (i = 0; i < nprocs; ++i) {
+        for (i = 0; i < ep_index; ++i) {
             if (MXM_OK != conn_reqs[i].error) {
                 MXM_ERROR("MXM EP connect to %s error: %s\n",
                           (NULL == procs[i]->proc_hostname) ?
@@ -465,7 +469,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     }
 
     /* Save returned connections */
-    for (i = 0; i < nprocs; ++i) {
+    for (i = 0; i < ep_index; ++i) {
         endpoint = OBJ_NEW(mca_mtl_mxm_endpoint_t);
         endpoint->mtl_mxm_module = &ompi_mtl_mxm;
         endpoint->mxm_conn = conn_reqs[i].conn;
