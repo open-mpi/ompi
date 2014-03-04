@@ -73,19 +73,6 @@ void ompi_btl_usnic_recv_call(ompi_btl_usnic_module_t *module,
     opal_memchecker_base_mem_defined((void*)(seg->rs_recv_desc.sg_list[0].addr),
                                      seg->rs_recv_desc.sg_list[0].length);
 
-#if MSGDEBUG1
-    memset(src_mac, 0, sizeof(src_mac));
-    memset(dest_mac, 0, sizeof(dest_mac));
-    ompi_btl_usnic_sprintf_gid_mac(src_mac,
-            &seg->rs_protocol_header->grh.sgid);
-    ompi_btl_usnic_sprintf_gid_mac(dest_mac, 
-            &seg->rs_protocol_header->grh.dgid);
-
-    opal_output(0, "Got message from MAC %s", src_mac);
-    opal_output(0, "Looking for sender: 0x%016lx",
-        bseg->us_btl_header->sender);
-#endif
-
     /* Find out who sent this segment */
     endpoint = seg->rs_endpoint;
     if (FAKE_RECV_FRAG_DROP || OPAL_UNLIKELY(NULL == endpoint)) {

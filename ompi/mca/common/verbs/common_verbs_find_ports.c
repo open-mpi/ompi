@@ -226,6 +226,79 @@ static bool device_is_usnic(struct ibv_device *device)
     return false;
 }
 
+enum {
+    USNIC_L2,
+    USNIC_UDP,
+    USNIC_UNKNOWN
+};
+
+/*
+ * usNIC devices will always return one of three
+ * device->transport_type values:
+ *
+ * 1. TRANSPORT_IWARP: for older kernels (e.g., on systems such as
+ * RHEL 6.x (x>=4) with the drivers downloaded from cisco.com) where
+ * the cisco.com drivers could not modify verbs.h to include
+ * TRANSPORT_USNIC*.  In this case, it is unknown whether the
+ * transport is usNIC/L2 or usNIC/UDP -- you have to do an additional
+ * probe to figure it out.
+ *
+ * 2. TRANSPORT_USNIC: should probably never be returned on a customer
+ * system.  In this case, the transport is guaranteed to be usNIC/L2.
+ *
+ * 3. TRANSPORT_USNIC_UDP: on systems with new kernels and new
+ * libibverbs.  In this case, the transport is guaranteed to be
+ * usNIC/UDP.
+*/
+static int usnic_transport(struct ibv_device *device,
+                           struct ibv_context *context)
+{
+    if (!device_is_usnic(device)) {
+        return USNIC_UNKNOWN;
+    }
+
+    /* If we got a transport type of IWARP, see if the magic query
+       exists.  If it does, the transport type is UDP.  If it does
+       not, the transport type is L2.
+
+       NB: it will be complicated if we ever need to extend this
+       scheme (e.g., if we support something other than UDP someday),
+       because the real way to know what the actual transport is will
+       be to call a usnic verbs extension, and that code is all
+       currently over in the usnic BTL, which we can't call from
+       here. */
+    if (IBV_TRANSPORT_IWARP == device->transport_type) {
+        int rc;
+        struct ibv_port_attr attr;
+        rc = ibv_query_port(context, 42, &attr);
+        if (0 == rc) {
+            return USNIC_UDP;
+        } else {
+            return USNIC_L2;
+        }
+    }
+
+#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
+    /* If we got the transport type of USNIC_UDP, then it's definitely
+       the UDP transport. */
+    if (IBV_TRANSPORT_USNIC_UDP == device->transport_type) {
+        return USNIC_UDP;
+    }
+#endif
+
+#if HAVE_DECL_IBV_TRANSPORT_USNIC
+    /* If we got the transport type of USNIC, then it's definitely
+       the L2 transport. */
+    if (IBV_TRANSPORT_USNIC == device->transport_type) {
+        return USNIC_L2;
+    }
+#endif
+
+    /* Should never get here -- usnic devices should *always* return
+       one of the 3 above values */
+    return USNIC_UNKNOWN;
+}
+
 /***********************************************************************/
 
 static void check_sanity(char ***if_sanity_list, const char *dev_name, int port)
@@ -284,7 +357,6 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
     opal_list_t *port_list = NULL;
     opal_list_item_t *item;
     bool want, dev_is_usnic;
-    enum ibv_transport_type saved_transport_type;
 
     /* Allocate a list to fill */
     port_list = OBJ_NEW(opal_list_t);
@@ -337,36 +409,6 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
         if ((flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC) ||
             (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP)) {
             dev_is_usnic = device_is_usnic(device);
-
-            if (dev_is_usnic) {
-                opal_output_verbose(5, stream, "verbs interface %s is usnic, claims transport_type %s",
-                                    ibv_get_device_name(device),
-                                    transport_name_to_str(device->transport_type));
-
-                /* There are two flavors of libusnic_verbs (and its supporting
-                 * kernel infrastructure):
-                 *   1. One that speaks an L2-only format that uses the RoCE
-                 *      ethertype with a different version value.
-                 *   2. A more modern one that speaks UDP/IP.
-                 *
-                 * Because 42-byte UDP headers are larger than the standard
-                 * 40-byte IB headers, applications (like OMPI) must inform the
-                 * library that they are prepared to see payloads starting at a
-                 * non-standard offset.  We do that by overriding the
-                 * transport_type to a magic value before calling
-                 * ibv_open_device.  Flavor #1 ignores this field, while flavor
-                 * #2 will set it back to IBV_TRANSPORT_USNIC (or some other
-                 * non-magic value, depending on whether the first is available
-                 * in libibverbs itself).
-                 *
-                 * Later we compare against this MAGIC value to see which
-                 * flavor this device actually is.  First save the current
-                 * value so we can restore it after evaluating this device for
-                 * its usNIC properties.
-                 */
-                saved_transport_type = device->transport_type;
-                device->transport_type = OMPI_COMMON_VERBS_USNIC_PROBE_MAGIC;
-            }
         }
 
         device_context = ibv_open_device(device);
@@ -399,29 +441,22 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
            device */
         want = false;
 
-        if (dev_is_usnic) {
-            if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC &&
-                OMPI_COMMON_VERBS_USNIC_PROBE_MAGIC ==
-                (int) device->transport_type) {
-                want = true;
-                opal_output_verbose(5, stream,
-                                    "verbs interface %s has the right transport (usNIC/L2)",
-                                    ibv_get_device_name(device));
-            }
-            if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP &&
-                OMPI_COMMON_VERBS_USNIC_PROBE_MAGIC !=
-                (int) device->transport_type) {
-                want = true;
-                opal_output_verbose(5, stream,
-                                    "verbs interface %s has the right transport (usNIC/UDP)",
-                                    ibv_get_device_name(device));
-            }
-
-            /* done checking for usNIC, restore the transport value for future
-             * calls to this routine */
-            device->transport_type = saved_transport_type;
+        if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC &&
+            dev_is_usnic &&
+            USNIC_L2 == usnic_transport(device, device_context)) {
+            want = true;
+            opal_output_verbose(5, stream,
+                                "verbs interface %s has the right transport (usNIC/L2)",
+                                ibv_get_device_name(device));
         }
-
+        if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP &&
+            dev_is_usnic &&
+            USNIC_UDP == usnic_transport(device, device_context)) {
+            want = true;
+            opal_output_verbose(5, stream,
+                                "verbs interface %s has the right transport (usNIC/UDP)",
+                                ibv_get_device_name(device));
+        }
         if (flags & OMPI_COMMON_VERBS_FLAGS_TRANSPORT_IB &&
             IBV_TRANSPORT_IB == device->transport_type) {
             opal_output_verbose(5, stream, "verbs interface %s has right type (IB)",
