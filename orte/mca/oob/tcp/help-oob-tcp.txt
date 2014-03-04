@@ -64,3 +64,13 @@ value will be ignored.
   Value:      %s
   Message:    %s
 #
+[unable-to-communicate]
+One or more TCP routes were given to a process, but no
+communication path could be found:
+
+  Source: %s
+  Peer:   %s
+
+This usually is caused by a lack of common network interfaces
+and no route found between them.
+  
