@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -451,21 +452,8 @@ static int plm_slurm_terminate_orteds(void)
      * exit. Instead, we simply trigger an exit for ourselves
      */
     if (primary_pid_set) {
-        if (orte_abnormal_term_ordered) {
-            /* cannot know if a daemon is able to
-             * tell us it died, so just ensure they
-             * all terminate
-             */
-            if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
-                ORTE_ERROR_LOG(rc);
-            }
-        } else {
-            /* we need them to "phone home"
-             * so we can know that they have exited
-             */
-            if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
-                ORTE_ERROR_LOG(rc);
-            }
+        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
+            ORTE_ERROR_LOG(rc);
         }
     } else {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,

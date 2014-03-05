@@ -200,6 +200,10 @@ static bool odls_default_child_died(orte_proc_t *child)
      * the default 1s actually means 'somwhere between 0 and 1s'. */
     end = time(NULL) + orte_odls_globals.timeout_before_sigkill + 1;
     do {
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
+                             "%s odls:default:WAITPID CHECKING PID %d WITH TIMEOUT %d SECONDS",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid),
+                             orte_odls_globals.timeout_before_sigkill + 1));
         ret = waitpid(child->pid, &child->exit_code, WNOHANG);
         if (child->pid == ret) {
             OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
@@ -222,7 +226,9 @@ static bool odls_default_child_died(orte_proc_t *child)
 	     * which will occasionally trip the timeout for cases that
 	     * are right on the edge.)
              */
-
+            OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
+                                 "%s odls:default:WAITPID INDICATES PID %d MAY HAVE ALREADY EXITED",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
 	    /* Do nothing, process still alive */
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good

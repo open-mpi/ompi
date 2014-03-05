@@ -453,19 +453,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         return;
         break;
             
-        /****    HALT VM COMMAND    ****/
-    case ORTE_DAEMON_HALT_VM_CMD:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_cmd: received halt vm",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-        /* kill the local procs */
-        orte_odls.kill_local_procs(NULL);
-        /* call our appropriate exit procedure */
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
-        return;
-        break;
-            
         /****    SPAWN JOB COMMAND    ****/
     case ORTE_DAEMON_SPAWN_JOB_CMD:
         if (orte_debug_daemons_flag) {
@@ -1095,8 +1082,6 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_MESSAGE_LOCAL_PROCS");
      case ORTE_DAEMON_EXIT_CMD:
         return strdup("ORTE_DAEMON_EXIT_CMD");
-    case ORTE_DAEMON_HALT_VM_CMD:
-        return strdup("ORTE_DAEMON_HALT_VM_CMD");
     case ORTE_DAEMON_SPAWN_JOB_CMD:
         return strdup("ORTE_DAEMON_SPAWN_JOB_CMD");
     case ORTE_DAEMON_CONTACT_QUERY_CMD:
