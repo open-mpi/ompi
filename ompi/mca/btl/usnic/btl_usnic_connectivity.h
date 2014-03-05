@@ -157,11 +157,16 @@ struct ompi_btl_usnic_module_t;
  *
  * Note that this macro will call ompi_btl_usnic_util_abort() if an error
  * occurs.
+ *
+ * Also note that we use a temp variable of the correct type because
+ * some of the values passed in to this macro are volatile, and the
+ * call to opal_dss.unpack() will discard that volatile qualifier.
  */
 #define UNPACK(buffer, type, opal_unpack_type, value)                   \
     do {                                                                \
         int ret_value, n = 1;                                           \
         type temp;                                                      \
+        value = (type) 0;                                               \
         ret_value = opal_dss.unpack((buffer), &temp, &n, opal_unpack_type); \
         if (OPAL_SUCCESS != ret_value) {                                \
             OMPI_ERROR_LOG(ret_value);                                  \
