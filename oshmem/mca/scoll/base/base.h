@@ -60,7 +60,7 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_scoll_base_framework;
 #endif
 
 #define SCOLL_ERROR(...) \
-    oshmem_output_verbose(0, oshmem_scoll_base_framework.framework_output, \
+    oshmem_output(oshmem_scoll_base_framework.framework_output, \
         "Error %s:%d - %s()",  __SCOLL_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 END_C_DECLS

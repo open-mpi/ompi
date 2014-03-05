@@ -48,7 +48,7 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_atomic_base_framework;
 #endif
 
 #define ATOMIC_ERROR(...) \
-    oshmem_output_verbose(0, oshmem_atomic_base_framework.framework_output, \
+    oshmem_output(oshmem_atomic_base_framework.framework_output, \
         "Error %s:%d - %s()", __ATOMIC_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 END_C_DECLS
