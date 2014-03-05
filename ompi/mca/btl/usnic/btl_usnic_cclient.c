@@ -62,6 +62,7 @@ static void client_rml_receive(int status, ompi_process_name_t* sender,
     UNPACK_UINT32(buffer, cddr->udp_port);
 
     /* Tell the main thread that the reply is done */
+    opal_atomic_mb();
     cddr->receive_done = true;
 }
 
@@ -150,6 +151,7 @@ int ompi_btl_usnic_connectivity_listen(ompi_btl_usnic_module_t *module)
     }
 
     /* Get the UDP port number that was received */
+    opal_atomic_mb();
     module->local_addr.connectivity_udp_port = data.udp_port;
 
     return OMPI_SUCCESS;
