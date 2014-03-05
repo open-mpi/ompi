@@ -126,7 +126,7 @@ static int isolated_terminate_orteds(void)
     int rc;
 
     /* send ourselves the halt command */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
     return rc;

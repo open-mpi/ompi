@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -380,22 +381,8 @@ static int plm_lsf_terminate_orteds(void)
 {
     int rc;
     
-    /* now tell them to die */
-    if (orte_abnormal_term_ordered) {
-        /* cannot know if a daemon is able to
-         * tell us it died, so just ensure they
-         * all terminate
-         */
-        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    } else {
-        /* we need them to "phone home", though,
-         * so we can know that they have exited
-         */
-        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
-            ORTE_ERROR_LOG(rc);
-        }
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
+        ORTE_ERROR_LOG(rc);
     }
 
     return rc;
