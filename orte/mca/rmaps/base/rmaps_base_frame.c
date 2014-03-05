@@ -599,7 +599,10 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
 int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                                        char **device, char *inspec)
 {
-    char *ck, *ptr;
+    char *ck;
+#if OPAL_HAVE_HWLOC
+    char *ptr;
+#endif
     orte_mapping_policy_t tmp;
     int rc;
     size_t len;

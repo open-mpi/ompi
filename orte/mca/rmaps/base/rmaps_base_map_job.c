@@ -204,7 +204,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
 #else
             /* in the absence of hwloc, default to map-by slot */
-            ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
+            ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
 #endif
         }
         /* check for oversubscribe directives */
