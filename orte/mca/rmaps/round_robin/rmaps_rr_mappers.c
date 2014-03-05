@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,6 +62,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
+#if OPAL_HAVE_HWLOC
         /* if we will and are allowed to oversubscribe, and binding was given, then
          * we really should warn the user that we cannot bind
          */
@@ -77,6 +78,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             /* don't default to bound */
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         }
+#endif
     }
 
     /* first pass: map the number of procs to each node until we
@@ -244,6 +246,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             return ORTE_ERR_SILENT;
         }
         oversubscribed = true;
+#if OPAL_HAVE_HWLOC
         /* if we will and are allowed to oversubscribe, and binding was given, then
          * we really should warn the user that we cannot bind
          */
@@ -259,6 +262,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             /* don't default to bound */
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         }
+#endif
     }
 
     nnodes = opal_list_get_size(node_list);

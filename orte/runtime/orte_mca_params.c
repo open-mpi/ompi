@@ -712,6 +712,7 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_max_vm_size);
 
+#if OPAL_HAVE_HWLOC
     if (opal_hwloc_use_hwthreads_as_cpus) {
         orte_set_slots = strdup("hwthreads");
     } else {
@@ -725,6 +726,9 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_set_slots);
+#else
+    orte_set_slots = NULL;
+#endif
 
     /* should we display the allocation after determining it? */
     orte_display_allocation = false;
