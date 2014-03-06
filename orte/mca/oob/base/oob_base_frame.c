@@ -87,6 +87,11 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     opal_hash_table_init(&orte_oob_base.peers, 128);
     OBJ_CONSTRUCT(&orte_oob_base.actives, opal_list_t);
 
+#if OPAL_ENABLE_FT_CR == 1
+    /* register the FT event callback */
+    orte_state.add_job_state(ORTE_JOB_STATE_FT_EVENT, orte_oob_ft_event, ORTE_ERROR_PRI);
+#endif
+
      /* Open up all available components */
     return mca_base_framework_components_open(&orte_oob_base_framework, flags);
 }
