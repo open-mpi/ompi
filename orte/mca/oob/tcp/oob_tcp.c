@@ -221,7 +221,7 @@ static int parse_uri(const uint16_t af_family,
         in = (struct sockaddr_in*) inaddr;
         in->sin_family = AF_INET;
         in->sin_addr.s_addr = inet_addr(host);
-        if (in->sin_addr.s_addr == INADDR_ANY) {
+        if (in->sin_addr.s_addr == INADDR_NONE) {
             return ORTE_ERR_BAD_PARAM;
         }
         ((struct sockaddr_in*) inaddr)->sin_port = htons(atoi(port));
