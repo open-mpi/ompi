@@ -239,8 +239,6 @@ segment_create(map_segment_t *ds_buf,
 static void *
 segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
 {
-    void *addr = NULL;
-
     assert(ds_buf);
     assert(mkey->va_base == 0);
 
