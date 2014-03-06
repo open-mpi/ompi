@@ -144,7 +144,7 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_memheap_base_framework;
 
 #define MEMHEAP_WARN(...) \
     oshmem_output_verbose(0, oshmem_memheap_base_framework.framework_output, \
-        "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 END_C_DECLS
 
