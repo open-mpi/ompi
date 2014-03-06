@@ -604,7 +604,7 @@ m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN],
 AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
     [test "$ompi_fortran_happy" == "1" -a \
           "$OMPI_WANT_FORTRAN_BINDINGS" == "1" -a \
-          "$oshmem_fortran_enable" != "no"])
+          "$enable_oshmem_fortran" != "no"])
 
 # checkpoint results
 AC_CACHE_SAVE
