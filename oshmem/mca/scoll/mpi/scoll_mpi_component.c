@@ -54,9 +54,9 @@ mca_scoll_mpi_component_t mca_scoll_mpi_component = {
         mca_scoll_mpi_init_query,
         mca_scoll_mpi_comm_query,
     },
-    90, /* priority */
+    60, /* priority */
     0,  /* verbose level */
-    1,   /* mpi_enable */
+    0,   /* mpi_enable */
     2   /*mpi_np */
 };
 
