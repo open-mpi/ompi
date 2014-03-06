@@ -696,22 +696,3 @@ int mca_memheap_buddy_finalize()
     return OSHMEM_SUCCESS;
 }
 
-/**
- * Return the base address of the symmetric heap.
- */
-
-static inline void* mca_memheap_buddy_get_symmetric_heap_base_addr(void)
-{
-    return memheap_buddy.heap.symmetric_heap;
-}
-
-/**
- * Return the last address in the symmetric heap.
- */
-static inline void* mca_memheap_buddy_get_symmetric_heap_last_addr(void)
-{
-    return (void*) ((unsigned char*) (memheap_buddy.heap.symmetric_heap)
-            + (1ULL << memheap_buddy.heap.max_order)
-            + (1ULL << memheap_buddy.private_heap.max_order));
-}
-
