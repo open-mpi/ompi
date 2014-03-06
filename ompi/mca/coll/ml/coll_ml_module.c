@@ -1639,8 +1639,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     hierarchy_pairs *pair = NULL;
 
     mca_sbgp_base_module_t *module = NULL;
-    ompi_proc_t **procs = NULL,
-        **copy_procs = NULL,
+    ompi_proc_t **copy_procs = NULL,
         *my_proc = NULL;
 
     const mca_sbgp_base_component_2_0_0_t *sbgp_component = NULL;
@@ -1695,7 +1694,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     /*
     ** obtain list of procs
     */
-    procs = ml_module->comm->c_local_group->grp_proc_pointers;
     /* create private copy for manipulation */
     copy_procs = (ompi_proc_t **) calloc(ompi_comm_size(ml_module->comm),
                                          sizeof(ompi_proc_t *));
@@ -1706,7 +1704,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     }
 
     for (i = 0; i < ompi_comm_size(ml_module->comm); i++) {
-        copy_procs[i] = procs[i];
+        copy_procs[i] = ompi_comm_peer_lookup (ml_module->comm, i);
         map_to_comm_ranks[i] = i;
     }
 
