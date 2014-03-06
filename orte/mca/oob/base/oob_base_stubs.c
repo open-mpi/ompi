@@ -379,12 +379,12 @@ static void process_uri(char *uri)
     opal_argv_free(uris);
 }
 
-#if 0
-
-int mca_oob_base_ft_event(int state)
+#if OPAL_ENABLE_FT_CR == 1
+void orte_oob_base_ft_event(int sd, short argc, void *cbdata)
 {
     int rc;
     mca_oob_module_t *mod;
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
 
     /* loop across all available modules in priority order
      * and call each one's ft_event handler
@@ -396,8 +396,7 @@ int mca_oob_base_ft_event(int state)
             }
         }
     }
-
-    return ORTE_SUCCESS;
+    OBJ_RELEASE(state);
 }
 
 #endif

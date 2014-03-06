@@ -173,6 +173,10 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_REPORT_PROGRESS         (ORTE_JOB_STATE_ERROR + 17)  /* report launch progress - not an error */
 #define ORTE_JOB_STATE_ALLOC_FAILED            (ORTE_JOB_STATE_ERROR + 18)  /* job failed to obtain an allocation */
 
+/* define an FT event */
+#define ORTE_JOB_STATE_FT_EVENT                (ORTE_JOB_STATE_ERROR + 19)
+
+
 /* Define a boundary so that external developers
  * have a starting point for defining their own
  * job states
