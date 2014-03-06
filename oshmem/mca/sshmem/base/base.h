@@ -137,7 +137,7 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_sshmem_base_framework;
 #endif
 
 #define SSHMEM_ERROR(...) \
-    oshmem_output_verbose(0, oshmem_sshmem_base_framework.framework_output, \
+    oshmem_output(oshmem_sshmem_base_framework.framework_output, \
         "Error %s:%d - %s()", __SSHMEM_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 #define SSHMEM_WARN(...) \
