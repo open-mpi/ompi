@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -49,22 +49,21 @@ static int alloc_allreduce_offsets_array(mca_bcol_ptpcoll_module_t *ptpcoll_modu
 
     /* Precalculate the allreduce offsets */
     if (0 < k_node->n_exchanges) {
-        ptpcoll_module->allgather_offsets = (int **)malloc(n_exchanges * sizeof(int*));
+        ptpcoll_module->allgather_offsets = (int **) calloc (n_exchanges, sizeof(int *));
 
         if (!ptpcoll_module->allgather_offsets) {
-            rc = OMPI_ERROR;
-            return rc;
+            return OMPI_ERROR;
         }
 
-        for (i=0; i < n_exchanges ; i++) {
-            ptpcoll_module->allgather_offsets[i] = (int *)malloc (sizeof(int) * NOFFSETS);
+        for (i = 0; i < n_exchanges ; i++) {
+            ptpcoll_module->allgather_offsets[i] = (int *) calloc (NOFFSETS, sizeof(int));
 
             if (!ptpcoll_module->allgather_offsets[i]){
-                rc = OMPI_ERROR;
-                return rc;
+                return OMPI_ERROR;
             }
         }
     }
+
     return rc;
 }
 
@@ -81,6 +80,7 @@ static int free_allreduce_offsets_array(mca_bcol_ptpcoll_module_t *ptpcoll_modul
     }
 
     free(ptpcoll_module->allgather_offsets);
+    ptpcoll_module->allgather_offsets = NULL;
     return rc;
 }
 
@@ -89,6 +89,8 @@ mca_bcol_ptpcoll_module_construct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
 {
     uint64_t i;
     /* Pointer to component */
+    ptpcoll_module->narray_node = NULL;
+    ptpcoll_module->allgather_offsets = NULL;
     ptpcoll_module->super.bcol_component = (mca_bcol_base_component_t *) &mca_bcol_ptpcoll_component;
     ptpcoll_module->super.list_n_connected = NULL;
     ptpcoll_module->super.hier_scather_offset = 0;
@@ -125,6 +127,7 @@ mca_bcol_ptpcoll_module_destruct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
         }
         /* release the buffer descriptor */
         free(ml_mem->ml_buf_desc);
+        ml_mem->ml_buf_desc = NULL;
     }
 
     if (NULL != ptpcoll_module->allgather_offsets) {
@@ -139,6 +142,7 @@ mca_bcol_ptpcoll_module_destruct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
         }
 
         free(ptpcoll_module->narray_node);
+        ptpcoll_module->narray_node = NULL;
     }
 
     OBJ_DESTRUCT(&ptpcoll_module->collreqs_free);
