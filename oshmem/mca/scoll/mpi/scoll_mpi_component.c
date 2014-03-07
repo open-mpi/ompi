@@ -54,7 +54,7 @@ mca_scoll_mpi_component_t mca_scoll_mpi_component = {
         mca_scoll_mpi_init_query,
         mca_scoll_mpi_comm_query,
     },
-    60, /* priority */
+    77, /* priority */
     0,  /* verbose level */
     0,   /* mpi_enable */
     2   /*mpi_np */
@@ -130,26 +130,26 @@ static int mpi_register(void)
 
     CHECK(reg_int("priority",NULL,
                   "Priority of the mpi coll component",
-                  90,
+                  mca_scoll_mpi_component.mpi_priority,
                   &mca_scoll_mpi_component.mpi_priority,
                   0));
 
     CHECK(reg_int("verbose", NULL,
                   "Verbose level of the mpi coll component",
-                  0,
+                  mca_scoll_mpi_component.mpi_verbose,
                   &mca_scoll_mpi_component.mpi_verbose,
                   0));
 
     CHECK(reg_int("enable",NULL,
                   "[1|0|] Enable/Disable MPI scoll component",
-                  1 /*enable by default*/,
+                  mca_scoll_mpi_component.mpi_enable,
                   &mca_scoll_mpi_component.mpi_enable,
                   0));
 
     CHECK(reg_int("np",NULL,
                   "Minimal number of processes in the communicator"
-                  " for the corresponding mpi context to be created (default: 32)",
-                  2 /*enable by default*/,
+                  " for the corresponding mpi context to be created",
+                  mca_scoll_mpi_component.mpi_np,
                   &mca_scoll_mpi_component.mpi_np,
                   0));
 

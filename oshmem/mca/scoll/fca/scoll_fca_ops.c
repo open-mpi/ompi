@@ -17,22 +17,24 @@ int mca_scoll_fca_barrier(struct oshmem_group_t *group, long *pSync, int alg)
 {
     mca_scoll_fca_module_t *fca_module =
             (mca_scoll_fca_module_t *) group->g_scoll.scoll_barrier_module;
-    int ret;
+    int rc;
 
     FCA_VERBOSE(5, "Using FCA Barrier");
-    ret = fca_do_barrier(fca_module->fca_comm);
-    if (ret < 0) {
-        if (ret == -EUSESHMEM) {
+    rc = fca_do_barrier(fca_module->fca_comm);
+    if (rc < 0) {
+        if (rc == -EUSESHMEM) {
             FCA_VERBOSE(5, "FCA Barrier failed, using original barrier");
             goto orig_barrier;
         }
-        FCA_ERROR("Barrier failed: %s", fca_strerror(ret));
+        FCA_ERROR("Barrier failed: %s", fca_strerror(rc));
         return OSHMEM_ERROR;
     }
     return OSHMEM_SUCCESS;
-    orig_barrier: return fca_module->previous_barrier(group,
-                                                      pSync,
-                                                      SCOLL_DEFAULT_ALG);
+    orig_barrier:
+    PREVIOUS_SCOLL_FN(fca_module, barrier, group,
+            pSync,
+            SCOLL_DEFAULT_ALG);
+    return rc;
 }
 
 int mca_scoll_fca_broadcast(struct oshmem_group_t *group,
@@ -46,7 +48,7 @@ int mca_scoll_fca_broadcast(struct oshmem_group_t *group,
     mca_scoll_fca_module_t *fca_module =
             (mca_scoll_fca_module_t *) group->g_scoll.scoll_broadcast_module;
     fca_bcast_spec_t spec;
-    int ret;
+    int rc;
 
     FCA_VERBOSE(5, "rank %i, DOING FCA BCAST\n", group->my_pe);
     spec.root = oshmem_proc_group_find_id(group, PE_root);
@@ -61,23 +63,25 @@ int mca_scoll_fca_broadcast(struct oshmem_group_t *group,
                     spec.size);
         goto orig_bcast;
     }
-    ret = fca_do_bcast(fca_module->fca_comm, &spec);
-    if (ret < 0) {
-        if (ret == -EUSESHMEM) {
+    rc = fca_do_bcast(fca_module->fca_comm, &spec);
+    if (rc < 0) {
+        if (rc == -EUSESHMEM) {
             FCA_VERBOSE(5, "FCA Broadcast failed, using original Broadcast");
             goto orig_bcast;
         }
-        FCA_ERROR("Bcast failed: %s", fca_strerror(ret));
+        FCA_ERROR("Bcast failed: %s", fca_strerror(rc));
         return OSHMEM_ERROR;
     }
     return OSHMEM_SUCCESS;
-    orig_bcast: return fca_module->previous_broadcast(group,
-                                                      PE_root,
-                                                      target,
-                                                      source,
-                                                      nlong,
-                                                      pSync,
-                                                      SCOLL_DEFAULT_ALG);
+    orig_bcast:
+    PREVIOUS_SCOLL_FN(fca_module, broadcast, group,
+            PE_root,
+            target,
+            source,
+            nlong,
+            pSync,
+            SCOLL_DEFAULT_ALG);
+    return rc;
 }
 
 int mca_scoll_fca_collect(struct oshmem_group_t *group,
@@ -88,6 +92,7 @@ int mca_scoll_fca_collect(struct oshmem_group_t *group,
                           bool nlong_type,
                           int alg)
 {
+    int rc, i;
     mca_scoll_fca_module_t *fca_module =
             (mca_scoll_fca_module_t *) group->g_scoll.scoll_collect_module;
 
@@ -97,24 +102,22 @@ int mca_scoll_fca_collect(struct oshmem_group_t *group,
 #if OSHMEM_FCA_ALLGATHER
     if (nlong_type == true) {
         fca_gather_spec_t spec = {0,};
-        int ret;
         spec.size = (int)nlong;
         spec.sbuf = (void *)source;
         spec.rbuf = target;
-        ret = fca_do_allgather(fca_module->fca_comm, &spec);
-        if (ret < 0) {
-            if (ret == -EUSESHMEM) {
+        rc = fca_do_allgather(fca_module->fca_comm, &spec);
+        if (rc < 0) {
+            if (rc == -EUSESHMEM) {
                 FCA_VERBOSE(5,"FCA Fcollect(allgather) failed, using original Fcollect");
                 goto orig_collect;
             }
-            FCA_ERROR("Fcollect(allgather) failed: %s", fca_strerror(ret));
+            FCA_ERROR("Fcollect(allgather) failed: %s", fca_strerror(rc));
             return OSHMEM_ERROR;
         }
         return OSHMEM_SUCCESS;
     }
     else
     {
-        int i, ret;
         size_t *sendcounts = (size_t *)malloc(group->proc_count*sizeof(size_t));
         mca_scoll_fca_collect(group,sendcounts,(void *)&nlong,sizeof(size_t),pSync,true,SCOLL_DEFAULT_ALG);
         fca_gatherv_spec_t spec;
@@ -130,13 +133,13 @@ int mca_scoll_fca_collect(struct oshmem_group_t *group,
         for (i=1; i<group->proc_count; i++) {
             spec.displs[i] = spec.displs[i-1]+spec.recvsizes[i-1];
         }
-        ret = fca_do_allgatherv(fca_module->fca_comm, &spec);
-        if (ret < 0) {
-            if (ret == -EUSESHMEM) {
+        rc = fca_do_allgatherv(fca_module->fca_comm, &spec);
+        if (rc < 0) {
+            if (rc == -EUSESHMEM) {
                 FCA_VERBOSE(5,"FCA Collect(allgatherv) failed, using original Collect");
                 goto orig_collect;
             }
-            FCA_ERROR("Collect(allgatherv) failed: %s", fca_strerror(ret));
+            FCA_ERROR("Collect(allgatherv) failed: %s", fca_strerror(rc));
             return OSHMEM_ERROR;
         }
         free(sendcounts);
@@ -144,13 +147,14 @@ int mca_scoll_fca_collect(struct oshmem_group_t *group,
     }
     orig_collect:
 #endif
-    return fca_module->previous_collect(group,
+    PREVIOUS_SCOLL_FN(fca_module, collect, group,
                                         target,
                                         source,
                                         nlong,
                                         pSync,
                                         nlong_type,
                                         SCOLL_DEFAULT_ALG);
+    return rc;
 }
 
 #define FCA_DTYPE_8_SIGNED  1
@@ -245,7 +249,7 @@ int mca_scoll_fca_reduce(struct oshmem_group_t *group,
             (mca_scoll_fca_module_t *) group->g_scoll.scoll_reduce_module;
     int fca_dtype;
     int fca_op;
-    int ret;
+    int rc;
     fca_reduce_spec_t spec;
 
     FCA_VERBOSE(5, "rank %i, DOING FCA_REDUCE\n", group->my_pe);
@@ -266,23 +270,25 @@ int mca_scoll_fca_reduce(struct oshmem_group_t *group,
     spec.dtype = (enum fca_reduce_dtype_t) fca_dtype;
     spec.op = (enum fca_reduce_op_t) fca_op;
     spec.length = (int) (nlong / op->dt_size);
-    ret = fca_do_all_reduce(fca_module->fca_comm, &spec);
-    if (ret < 0) {
-        if (ret == -EUSESHMEM) {
+    rc = fca_do_all_reduce(fca_module->fca_comm, &spec);
+    if (rc < 0) {
+        if (rc == -EUSESHMEM) {
             FCA_VERBOSE(5,
                         "FCA Reduce(allreduce) failed, using original Reduce");
             goto orig_reduce;
         }
-        FCA_ERROR("Reduce (allreduce) failed: %s", fca_strerror(ret));
+        FCA_ERROR("Reduce (allreduce) failed: %s", fca_strerror(rc));
         return OSHMEM_ERROR;
     }
     return OSHMEM_SUCCESS;
-    orig_reduce: return fca_module->previous_reduce(group,
-                                                    op,
-                                                    target,
-                                                    source,
-                                                    nlong,
-                                                    pSync,
-                                                    pWrk,
-                                                    SCOLL_DEFAULT_ALG);
+    orig_reduce:
+    PREVIOUS_SCOLL_FN(fca_module, reduce, group,
+            op,
+            target,
+            source,
+            nlong,
+            pSync,
+            pWrk,
+            SCOLL_DEFAULT_ALG);
+    return rc;
 }
