@@ -235,7 +235,7 @@ static int mca_coll_ml_bcast_frag_converter_progress(mca_coll_ml_collective_oper
 
             /* OBJ_RETAIN(new_op->variable_fn_params.dtype); */
             iov.iov_base = (IOVBASE_TYPE*) src_buffer_desc->data_addr;
-            iov.iov_len  = ml_module->ml_fragment_size;
+            iov.iov_len  = ml_module->small_message_thresholds[BCOL_BCAST];
             assert(0 != iov.iov_len);
 
             max_data = ml_module->small_message_thresholds[BCOL_BCAST];
@@ -564,7 +564,7 @@ static inline __opal_attribute_always_inline__
                     coll_op->full_message.send_converter_bytes_packed;
 
                 iov.iov_base = (IOVBASE_TYPE*) src_buffer_desc->data_addr;
-                iov.iov_len  = ml_module->ml_fragment_size;
+                iov.iov_len  =  ml_module->small_message_thresholds[BCOL_BCAST];
                 max_data = ml_module->small_message_thresholds[BCOL_BCAST];
                 opal_convertor_pack(&coll_op->full_message.send_convertor,
                                     &iov, &iov_count, &max_data);
@@ -626,7 +626,7 @@ static inline __opal_attribute_always_inline__
                 src_buffer_desc, 0, 0, ml_module->payload_block->size_buffer,(src_buffer_desc->data_addr));
 
         n_fragments = (coll_op->full_message.n_bytes_total +
-                                  ml_module->ml_fragment_size - 1) / ml_module->ml_fragment_size;
+                       ml_module->small_message_thresholds[BCOL_BCAST] - 1) / ml_module->small_message_thresholds[BCOL_BCAST];
     }
 
     coll_op->variable_fn_params.hier_factor = 1;
