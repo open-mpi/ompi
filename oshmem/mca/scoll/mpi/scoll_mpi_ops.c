@@ -24,7 +24,9 @@ int mca_scoll_mpi_barrier(struct oshmem_group_t *group, long *pSync, int alg)
     rc = mpi_module->comm->c_coll.coll_barrier(mpi_module->comm, mpi_module->comm->c_coll.coll_barrier_module);
     if (OMPI_SUCCESS != rc){
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK BARRIER");
-        rc = mpi_module->previous_barrier(group, pSync, SCOLL_DEFAULT_ALG);
+        PREVIOUS_SCOLL_FN(mpi_module, barrier, group,
+                pSync,
+                SCOLL_DEFAULT_ALG);
     }
     return rc;
 }
@@ -60,7 +62,7 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
     if (INT_MAX < nlong) {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK BCAST");
-        rc = mpi_module->previous_broadcast(group,
+        PREVIOUS_SCOLL_FN(mpi_module, broadcast, group,
                 PE_root,
                 target,
                 source,
@@ -75,7 +77,7 @@ int mca_scoll_mpi_broadcast(struct oshmem_group_t *group,
 #endif
     if (OMPI_SUCCESS != rc){
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK BCAST");
-        rc = mpi_module->previous_broadcast(group,
+        PREVIOUS_SCOLL_FN(mpi_module, broadcast, group,
                 PE_root,
                 target,
                 source,
@@ -115,7 +117,13 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
         if (INT_MAX < nlong) {
             MPI_COLL_VERBOSE(20,"RUNNING FALLBACK COLLECT");
-            rc = mpi_module->previous_collect(group, target, source, nlong, pSync, nlong_type, SCOLL_DEFAULT_ALG);
+            PREVIOUS_SCOLL_FN(mpi_module, collect, group,
+                    target, 
+                    source, 
+                    nlong, 
+                    pSync, 
+                    nlong_type, 
+                    SCOLL_DEFAULT_ALG);
             return rc;
         } 
         rc = mpi_module->comm->c_coll.coll_allgather(sbuf, (int)nlong, stype, rbuf, (int)nlong, rtype, mpi_module->comm, mpi_module->comm->c_coll.coll_allgather_module);
@@ -124,11 +132,23 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
 #endif
         if (OMPI_SUCCESS != rc){
             MPI_COLL_VERBOSE(20,"RUNNING FALLBACK FCOLLECT");
-            rc = mpi_module->previous_collect(group, target, source, nlong, pSync, nlong_type, SCOLL_DEFAULT_ALG);
+            PREVIOUS_SCOLL_FN(mpi_module, collect, group,
+                    target, 
+                    source, 
+                    nlong, 
+                    pSync, 
+                    nlong_type, 
+                    SCOLL_DEFAULT_ALG);
         }
     } else {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK COLLECT");
-        rc = mpi_module->previous_collect(group, target, source, nlong, pSync, nlong_type, SCOLL_DEFAULT_ALG);
+        PREVIOUS_SCOLL_FN(mpi_module, collect, group,
+            target, 
+            source, 
+            nlong, 
+            pSync, 
+            nlong_type, 
+            SCOLL_DEFAULT_ALG);
     }
     return rc;
 }
@@ -165,7 +185,7 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
 #ifdef INCOMPATIBLE_SHMEM_OMPI_COLL_APIS
     if (INT_MAX < count) {
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK REDUCE");
-        rc = mpi_module->previous_reduce(group,
+        PREVIOUS_SCOLL_FN(mpi_module, reduce, group,
                 op,
                 target,
                 source,
@@ -181,7 +201,7 @@ int mca_scoll_mpi_reduce(struct oshmem_group_t *group,
 #endif
     if (OMPI_SUCCESS != rc){
         MPI_COLL_VERBOSE(20,"RUNNING FALLBACK REDUCE");
-        rc = mpi_module->previous_reduce(group,
+        PREVIOUS_SCOLL_FN(mpi_module, reduce, group,
                 op,
                 target,
                 source,
