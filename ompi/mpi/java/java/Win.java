@@ -176,13 +176,13 @@ public void accumulate(Buffer origin, int orgCount, Datatype orgType,
 
     accumulate(handle, origin, orgCount, orgType.handle,
                targetRank, targetDisp, targetCount, targetType.handle,
-               op, getBaseType(orgType, targetType));
+               op, op.handle, getBaseType(orgType, targetType));
 }
 
 private native void accumulate(
         long win, Buffer origin, int orgCount, long orgType,
         int targetRank, int targetDisp, int targetCount, long targetType,
-        Op op, int baseType) throws MPIException;
+        Op jOp, long hOp, int baseType) throws MPIException;
 
 /**
  * Java binding of {@code MPI_WIN_FENCE}.

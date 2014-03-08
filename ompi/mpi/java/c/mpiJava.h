@@ -105,7 +105,8 @@ jbyteArray ompi_java_attrGet(JNIEnv *env, void *cval);
 int        ompi_java_attrCopy(void *attrValIn, void *attrValOut, int *flag);
 int        ompi_java_attrDelete(void *attrVal);
 
-MPI_Op ompi_java_op_getHandle(JNIEnv *env, jobject jthis, int baseType);
+MPI_Op ompi_java_op_getHandle(
+        JNIEnv *env, jobject jOp, jlong hOp, int baseType);
 
 void ompi_java_status_set(
         JNIEnv *env, jlongArray jData, MPI_Status *status);
