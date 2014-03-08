@@ -27,11 +27,6 @@
 #include "mpi_Win.h"
 #include "mpiJava.h"
 
-/*
- * Class:     mpi_Win
- * Method:    createWin
- * Signature: (Ljava/nio/Buffer;IIJJ)J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Win_createWin(
         JNIEnv *env, jobject jthis, jobject jBase,
         jint size, jint dispUnit, jlong info, jlong comm)
@@ -46,11 +41,6 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_createWin(
     return (jlong)win;
 }
 
-/*
- * Class:     mpi_Win
- * Method:    getGroup
- * Signature: (J)J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Win_getGroup(
         JNIEnv *env, jobject jthis, jlong win)
 {
@@ -60,11 +50,6 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_getGroup(
     return (jlong)group;
 }
 
-/*
- * Class:     mpi_Win
- * Method:    put
- * Signature: (JLjava/lang/Object;IJIIIJI)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_put(
         JNIEnv *env, jobject jthis, jlong win, jobject origin,
         jint orgCount, jlong orgType, jint targetRank, jint targetDisp,
@@ -79,11 +64,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_put(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    get
- * Signature: (JLjava/lang/Object;IJIIIJI)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_get(
         JNIEnv *env, jobject jthis, jlong win, jobject origin,
         jint orgCount, jlong orgType, jint targetRank, jint targetDisp,
@@ -98,33 +78,22 @@ JNIEXPORT void JNICALL Java_mpi_Win_get(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    accumulate
- * Signature: (JLjava/lang/Object;IJIIIJLmpi/Op;I)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_accumulate(
         JNIEnv *env, jobject jthis, jlong win,
         jobject origin, jint orgCount, jlong orgType,
         jint targetRank, jint targetDisp, jint targetCount, jlong targetType,
-        jobject op, jint baseType)
+        jobject jOp, jlong hOp, jint baseType)
 {
     void *orgPtr = (*env)->GetDirectBufferAddress(env, origin);
-
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, baseType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
 
     int rc = MPI_Accumulate(orgPtr, orgCount, (MPI_Datatype)orgType,
                             targetRank, (MPI_Aint)targetDisp, targetCount,
-                            (MPI_Datatype)targetType, mpiOp, (MPI_Win)win);
+                            (MPI_Datatype)targetType, op, (MPI_Win)win);
 
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    fence
- * Signature: (JI)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_fence(
         JNIEnv *env, jobject jthis, jlong win, jint assertion)
 {
@@ -132,11 +101,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_fence(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    start
- * Signature: (JJI)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_start(
         JNIEnv *env, jobject jthis, jlong win, jlong group, jint assertion)
 {
@@ -144,11 +108,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_start(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    complete
- * Signature: (J)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_complete(
         JNIEnv *env, jobject jthis, jlong win)
 {
@@ -156,11 +115,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_complete(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    post
- * Signature: (JJI)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_post(
         JNIEnv *env, jobject jthis, jlong win, jlong group, jint assertion)
 {
@@ -168,11 +122,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_post(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    waitFor
- * Signature: (J)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_waitFor(
         JNIEnv *env, jobject jthis, jlong win)
 {
@@ -180,11 +129,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_waitFor(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    test
- * Signature: (J)Z
- */
 JNIEXPORT jboolean JNICALL Java_mpi_Win_test(
         JNIEnv *env, jobject jthis, jlong win)
 {
@@ -194,11 +138,6 @@ JNIEXPORT jboolean JNICALL Java_mpi_Win_test(
     return flag ? JNI_TRUE : JNI_FALSE;
 }
 
-/*
- * Class:     mpi_Win
- * Method:    lock
- * Signature: (JIII)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_lock(
         JNIEnv *env, jobject jthis, jlong win,
         jint lockType, jint rank, jint assertion)
@@ -207,11 +146,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_lock(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    unlock
- * Signature: (JI)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_unlock(
         JNIEnv *env, jobject jthis, jlong win, jint rank)
 {
@@ -219,11 +153,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_unlock(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    setErrhandler
- * Signature: (JJ)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_setErrhandler(
         JNIEnv *env, jobject jthis, jlong win, jlong errhandler)
 {
@@ -233,11 +162,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_setErrhandler(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    callErrhandler
- * Signature: (JI)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_callErrhandler(
         JNIEnv *env, jobject jthis, jlong win, jint errorCode)
 {
@@ -257,11 +181,6 @@ static int winDeleteAttr(MPI_Win oldwin, int keyval,
     return ompi_java_attrDelete(attrVal);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    createKeyval_jni
- * Signature: ()I
- */
 JNIEXPORT jint JNICALL Java_mpi_Win_createKeyval_1jni(JNIEnv *env, jclass clazz)
 {
     int rc, keyval;
@@ -270,11 +189,6 @@ JNIEXPORT jint JNICALL Java_mpi_Win_createKeyval_1jni(JNIEnv *env, jclass clazz)
     return keyval;
 }
 
-/*
- * Class:     mpi_Win
- * Method:    freeKeyval_jni
- * Signature: (I)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_freeKeyval_1jni(
         JNIEnv *env, jclass clazz, jint keyval)
 {
@@ -282,11 +196,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_freeKeyval_1jni(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    setAttr_jni
- * Signature: (JI[B)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_setAttr(
         JNIEnv *env, jobject jthis, jlong win, jint keyval, jbyteArray jval)
 {
@@ -295,11 +204,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_setAttr(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    getAttr_predefined
- * Signature: (JI)Ljava/lang/Object;
- */
 JNIEXPORT jobject JNICALL Java_mpi_Win_getAttr(
         JNIEnv *env, jobject jthis, jlong win, jint keyval)
 {
@@ -323,12 +227,6 @@ JNIEXPORT jobject JNICALL Java_mpi_Win_getAttr(
     }
 }
 
-
-/*
- * Class:     mpi_Win
- * Method:    deleteAttr_jni
- * Signature: (I)V
- */
 JNIEXPORT void JNICALL Java_mpi_Win_deleteAttr(
         JNIEnv *env, jobject jthis, jlong win, jint keyval)
 {
@@ -336,11 +234,6 @@ JNIEXPORT void JNICALL Java_mpi_Win_deleteAttr(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Win
- * Method:    free
- * Signature: (J)J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Win_free(
         JNIEnv *env, jobject jthis, jlong handle)
 {

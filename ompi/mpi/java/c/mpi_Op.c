@@ -55,11 +55,6 @@
 #include "mpiJava.h"
 #include "ompi/op/op.h"
 
-/*
- * Class:     mpi_Op
- * Method:    init
- * Signature: ()V
- */
 JNIEXPORT void JNICALL Java_mpi_Op_init(JNIEnv *env, jclass clazz)
 {
     ompi_java.OpHandle  = (*env)->GetFieldID(env, clazz, "handle", "J");
@@ -69,11 +64,6 @@ JNIEXPORT void JNICALL Java_mpi_Op_init(JNIEnv *env, jclass clazz)
                        "(Ljava/lang/Object;Ljava/lang/Object;I)V");
 }
 
-/*
- * Class:     mpi_Op
- * Method:    getOp
- * Signature: (I)J
- */
 JNIEXPORT void JNICALL Java_mpi_Op_getOp(JNIEnv *env, jobject jthis, jint type)
 {
     static MPI_Op Ops[] = {
@@ -138,33 +128,28 @@ static void opIntercept(void *invec, void *inoutvec, int *count,
     (*env)->DeleteLocalRef(env, jio);
 }
 
-MPI_Op ompi_java_op_getHandle(JNIEnv *env, jobject jthis, int baseType)
+MPI_Op ompi_java_op_getHandle(JNIEnv *env, jobject jOp, jlong hOp, int baseType)
 {
-    MPI_Op op = (MPI_Op)((*env)->GetLongField(env, jthis, ompi_java.OpHandle));
+    MPI_Op op = (MPI_Op)hOp;
 
     if(op == NULL)
     {
         /* It is an uninitialized user Op. */
         int commute = (*env)->GetBooleanField(
-                      env, jthis, ompi_java.OpCommute);
+                      env, jOp, ompi_java.OpCommute);
 
         int rc = MPI_Op_create((MPI_User_function*)opIntercept, commute, &op);
 
         if(ompi_java_exceptionCheck(env, rc))
             return NULL;
 
-        (*env)->SetLongField(env, jthis, ompi_java.OpHandle, (jlong)op);
-        ompi_op_set_java_callback(op, env, jthis, baseType);
+        (*env)->SetLongField(env, jOp, ompi_java.OpHandle, (jlong)op);
+        ompi_op_set_java_callback(op, env, jOp, baseType);
     }
 
     return op;
 }
 
-/*
- * Class:     mpi_Op
- * Method:    Free
- * Signature: ()V
- */
 JNIEXPORT void JNICALL Java_mpi_Op_free(JNIEnv *env, jobject jthis)
 {
     MPI_Op op = (MPI_Op)((*env)->GetLongField(env, jthis, ompi_java.OpHandle));
@@ -177,11 +162,6 @@ JNIEXPORT void JNICALL Java_mpi_Op_free(JNIEnv *env, jobject jthis)
     }
 }
 
-/*
- * Class:     mpi_Op
- * Method:    isNull
- * Signature: ()Z
- */
 JNIEXPORT jboolean JNICALL Java_mpi_Op_isNull(JNIEnv *env, jobject jthis)
 {
     MPI_Op op = (MPI_Op)((*env)->GetLongField(env, jthis, ompi_java.OpHandle));
