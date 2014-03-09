@@ -494,10 +494,12 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     size_t i;
 
     for (i = 0; i < nprocs; ++i) {
-        mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*)
-            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
-        mxm_ep_disconnect(endpoint->mxm_conn);
-        OBJ_RELEASE(endpoint);
+        if (((opal_object_t*)procs[i])->obj_reference_count == 1) {
+            mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*)
+                            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+            mxm_ep_disconnect(endpoint->mxm_conn);
+            OBJ_RELEASE(endpoint);
+        }
     }
     return OMPI_SUCCESS;
 }
