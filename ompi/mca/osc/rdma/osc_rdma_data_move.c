@@ -169,18 +169,21 @@ int ompi_osc_rdma_control_send (ompi_osc_rdma_module_t *module, int target,
 
 static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
 {
-    mca_pml_base_send_request_t *pml_request = (mca_pml_base_send_request_t *) request;
-    ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
-    /* get the send address from the pml request */
-    void *data_copy = pml_request->req_addr;
+    void *ctx = request->req_complete_cb_data;
+    ompi_osc_rdma_module_t *module;
+    void *data_copy;
+
+    /* get module pointer and data */
+    module = *(ompi_osc_rdma_module_t **)ctx;
+    data_copy = (ompi_osc_rdma_module_t **)ctx + 1;
 
     /* mark this send as complete */
     mark_outgoing_completion (module);
 
     /* free the temporary buffer */
-    free (data_copy);
+    free (ctx);
 
-    /* put this request on the garbage colletion list */
+    /* put this request on the garbage collection list */
     OPAL_THREAD_LOCK(&module->lock);
     opal_list_append (&module->request_gc, (opal_list_item_t *) request);
     OPAL_THREAD_UNLOCK(&module->lock);
@@ -208,14 +211,14 @@ static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
 int ompi_osc_rdma_control_send_unbuffered(ompi_osc_rdma_module_t *module,
                                           int target, void *data, size_t len)
 {
-    unsigned char *data_copy;
+    void *ctx, *data_copy;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "osc rdma: sending unbuffered fragment to %d", target));
 
     /* allocate a temporary buffer for this send */
-    data_copy = malloc (len);
-    if (OPAL_UNLIKELY(NULL == data_copy)) {
+    ctx = malloc (sizeof(ompi_osc_rdma_module_t*) + len);
+    if (OPAL_UNLIKELY(NULL == ctx)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -223,10 +226,13 @@ int ompi_osc_rdma_control_send_unbuffered(ompi_osc_rdma_module_t *module,
      * so there it would be erroneous to increment the epoch counters. */
     ompi_osc_signal_outgoing (module, MPI_PROC_NULL, 1);
 
+    /* store module pointer and data in the buffer */
+    *(ompi_osc_rdma_module_t**)ctx = module;
+    data_copy = (ompi_osc_rdma_module_t**)ctx + 1;
     memcpy (data_copy, data, len);
 
     return ompi_osc_rdma_isend_w_cb (data_copy, len, MPI_BYTE, target, OSC_RDMA_FRAG_TAG,
-                                     module->comm, ompi_osc_rdma_control_send_unbuffered_cb, module);
+                                     module->comm, ompi_osc_rdma_control_send_unbuffered_cb, ctx);
 }
 
 /**
