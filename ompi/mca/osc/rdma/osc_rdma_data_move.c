@@ -171,11 +171,9 @@ static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
 {
     void *ctx = request->req_complete_cb_data;
     ompi_osc_rdma_module_t *module;
-    void *data_copy;
 
     /* get module pointer and data */
     module = *(ompi_osc_rdma_module_t **)ctx;
-    data_copy = (ompi_osc_rdma_module_t **)ctx + 1;
 
     /* mark this send as complete */
     mark_outgoing_completion (module);
