@@ -183,6 +183,13 @@ struct mca_scoll_base_group_scoll_t {
     mca_scoll_base_module_1_0_0_t *scoll_reduce_module;
 };
 typedef struct mca_scoll_base_group_scoll_t mca_scoll_base_group_scoll_t;
+
+#define PREVIOUS_SCOLL_FN(module, __api, group, ...) do { \
+    group->g_scoll.scoll_ ## __api ## _module = (mca_scoll_base_module_1_0_0_t*) module->previous_ ## __api ## _module; \
+    rc = module->previous_ ## __api (group, __VA_ARGS__); \
+    group->g_scoll.scoll_ ## __api ## _module = (mca_scoll_base_module_1_0_0_t*) module; \
+} while(0)
+
 END_C_DECLS
 
 #endif /* OSHMEM_MCA_SCOLL_H */
