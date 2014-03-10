@@ -2251,7 +2251,7 @@ public final void reduce(Object sendbuf, Object recvbuf, int count,
     }
 
     reduce(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
-           count, type.handle, type.baseType, op, root);
+           count, type.handle, type.baseType, op, op.handle, root);
 }
 
 /**
@@ -2282,13 +2282,13 @@ public final void reduce(Object buf, int count, Datatype type, Op op, int root)
     }
 
     reduce(handle, null, false, 0, buf, db, off, count,
-           type.handle, type.baseType, op, root);
+           type.handle, type.baseType, op, op.handle, root);
 }
 
 private native void reduce(
         long comm, Object sendbuf, boolean sdb, int sendoff,
-        Object recvbuf, boolean rdb, int recvoff,
-        int count, long type, int baseType, Op op, int root)
+        Object recvbuf, boolean rdb, int recvoff, int count,
+        long type, int baseType, Op jOp, long hOp, int root)
         throws MPIException;
 
 /**
@@ -2313,8 +2313,9 @@ public final Request iReduce(Buffer sendbuf, Buffer recvbuf,
     assertDirectBuffer(sendbuf, recvbuf);
     op.setDatatype(type);
 
-    return new Request(iReduce(handle, sendbuf, recvbuf, count,
-                               type.handle, type.baseType, op, root));
+    return new Request(iReduce(
+            handle, sendbuf, recvbuf, count,
+            type.handle, type.baseType, op, op.handle, root));
 }
 
 /**
@@ -2339,13 +2340,15 @@ public final Request iReduce(Buffer buf, int count,
     assertDirectBuffer(buf);
     op.setDatatype(type);
 
-    return new Request(iReduce(handle, null, buf, count,
-                               type.handle, type.baseType, op, root));
+    return new Request(iReduce(
+            handle, null, buf, count,
+            type.handle, type.baseType, op, op.handle, root));
 }
 
-private native long iReduce(long comm, Buffer sendbuf, Buffer recvbuf,
-                            int count, long type, int baseType, Op op, int root)
-                            throws MPIException;
+private native long iReduce(
+        long comm, Buffer sendbuf, Buffer recvbuf, int count,
+        long type, int baseType, Op jOp, long hOp, int root)
+        throws MPIException;
 
 /**
  * Same as {@code reduce} except that the result appears in receive
@@ -2384,7 +2387,7 @@ public final void allReduce(Object sendbuf, Object recvbuf,
     }
 
     allReduce(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
-              count, type.handle, type.baseType, op);
+              count, type.handle, type.baseType, op, op.handle);
 }
 
 /**
@@ -2412,14 +2415,14 @@ public final void allReduce(Object buf, int count, Datatype type, Op op)
         buf = ((Buffer)buf).array();
     }
 
-    allReduce(handle, null, false, 0, buf, db, off,
-              count, type.handle, type.baseType, op);
+    allReduce(handle, null, false, 0, buf, db, off, count,
+              type.handle, type.baseType, op, op.handle);
 }
 
 private native void allReduce(
         long comm, Object sendbuf, boolean sdb, int sendoff,
-        Object recvbuf, boolean rdb, int recvoff,
-        int count, long type, int baseType, Op op) throws MPIException;
+        Object recvbuf, boolean rdb, int recvoff, int count,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Same as {@code reduce} except that the result appears in receive
@@ -2442,7 +2445,7 @@ public final Request iAllReduce(Buffer sendbuf, Buffer recvbuf,
     op.setDatatype(type);
 
     return new Request(iAllReduce(handle, sendbuf, recvbuf, count,
-                                  type.handle, type.baseType, op));
+                                  type.handle, type.baseType, op, op.handle));
 }
 
 /**
@@ -2464,13 +2467,14 @@ public final Request iAllReduce(Buffer buf, int count, Datatype type, Op op)
     op.setDatatype(type);
     assertDirectBuffer(buf);
 
-    return new Request(iAllReduce(handle, null, buf, count,
-                                  type.handle, type.baseType, op));
+    return new Request(iAllReduce(
+            handle, null, buf, count,
+            type.handle, type.baseType, op, op.handle));
 }
 
 private native long iAllReduce(
         long comm, Buffer sendbuf, Buffer recvbuf, int count,
-        long type, int baseType, Op op) throws MPIException;
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Combine elements in input buffer of each process using the reduce
@@ -2510,7 +2514,7 @@ public final void reduceScatter(Object sendbuf, Object recvbuf,
     }
 
     reduceScatter(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
-                  recvcounts, type.handle, type.baseType, op);
+                  recvcounts, type.handle, type.baseType, op, op.handle);
 }
 
 /**
@@ -2539,14 +2543,14 @@ public final void reduceScatter(Object buf, int[] counts, Datatype type, Op op)
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatter(handle, null, false, 0, buf, db, off,
-                  counts, type.handle, type.baseType, op);
+    reduceScatter(handle, null, false, 0, buf, db, off, counts,
+                  type.handle, type.baseType, op, op.handle);
 }
 
 private native void reduceScatter(
         long comm, Object sendbuf, boolean sdb, int sendoff,
-        Object recvbuf, boolean rdb, int recvoff,
-        int[] recvcounts, long type, int baseType, Op op) throws MPIException;
+        Object recvbuf, boolean rdb, int recvoff, int[] recvcounts,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Combine elements in input buffer of each process using the reduce
@@ -2569,8 +2573,9 @@ public final Request iReduceScatter(Buffer sendbuf, Buffer recvbuf,
     op.setDatatype(type);
     assertDirectBuffer(sendbuf, recvbuf);
 
-    return new Request(iReduceScatter(handle, sendbuf, recvbuf, recvcounts,
-                                      type.handle, type.baseType, op));
+    return new Request(iReduceScatter(
+            handle, sendbuf, recvbuf, recvcounts,
+            type.handle, type.baseType, op, op.handle));
 }
 
 /**
@@ -2594,13 +2599,14 @@ public final Request iReduceScatter(
     op.setDatatype(type);
     assertDirectBuffer(buf);
 
-    return new Request(iReduceScatter(handle, null, buf, counts,
-                                      type.handle, type.baseType, op));
+    return new Request(iReduceScatter(
+            handle, null, buf, counts,
+            type.handle, type.baseType, op, op.handle));
 }
 
 private native long iReduceScatter(
         long handle, Buffer sendbuf, Object recvbuf, int[] recvcounts,
-        long type, int baseType, Op op) throws MPIException;
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Combine values and scatter the results.
@@ -2638,7 +2644,7 @@ public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
     }
 
     reduceScatterBlock(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
-                       recvcount, type.handle, type.baseType, op);
+                       recvcount, type.handle, type.baseType, op, op.handle);
 }
 
 /**
@@ -2666,14 +2672,14 @@ public final void reduceScatterBlock(
         buf = ((Buffer)buf).array();
     }
 
-    reduceScatterBlock(handle, null, false, 0, buf, db, off,
-                       count, type.handle, type.baseType, op);
+    reduceScatterBlock(handle, null, false, 0, buf, db, off, count,
+                       type.handle, type.baseType, op, op.handle);
 }
 
 private native void reduceScatterBlock(
         long comm, Object sendBuf, boolean sdb, int sOffset,
-        Object recvBuf, boolean rdb, int rOffset,
-        int rCount, long type, int baseType, Op op) throws MPIException;
+        Object recvBuf, boolean rdb, int rOffset, int rCount,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Combine values and scatter the results.
@@ -2694,8 +2700,9 @@ public final Request iReduceScatterBlock(
     op.setDatatype(type);
     assertDirectBuffer(sendbuf, recvbuf);
 
-    return new Request(iReduceScatterBlock(handle, sendbuf, recvbuf, recvcount,
-                                           type.handle, type.baseType, op));
+    return new Request(iReduceScatterBlock(
+            handle, sendbuf, recvbuf, recvcount,
+            type.handle, type.baseType, op, op.handle));
 }
 
 /**
@@ -2717,13 +2724,14 @@ public final Request iReduceScatterBlock(
     op.setDatatype(type);
     assertDirectBuffer(buf);
 
-    return new Request(iReduceScatterBlock(handle, null, buf, count,
-                                           type.handle, type.baseType, op));
+    return new Request(iReduceScatterBlock(
+            handle, null, buf, count, type.handle,
+            type.baseType, op, op.handle));
 }
 
 private native long iReduceScatterBlock(
         long handle, Buffer sendbuf, Buffer recvbuf, int recvcount,
-        long type, int baseType, Op op) throws MPIException;
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Apply the operation given by {@code op} element-wise to the
@@ -2762,14 +2770,27 @@ public static void reduceLocal(
         inOutBuf = ((Buffer)inOutBuf).array();
     }
 
-    reduceLocal(inBuf, idb, inOff, inOutBuf, iodb, inOutOff, count,
-                type.handle, type.baseType, op);
+    if(op.uf == null)
+    {
+        reduceLocal(inBuf, idb, inOff, inOutBuf, iodb, inOutOff,
+                    count, type.handle, type.baseType, op.handle);
+    }
+    else
+    {
+        reduceLocalUf(inBuf, idb, inOff, inOutBuf, iodb, inOutOff,
+                      count, type.handle, type.baseType, op, op.handle);
+    }
 }
 
 private static native void reduceLocal(
         Object inBuf, boolean idb, int inOff,
-        Object inOutBuf, boolean iodb, int inOutOff,
-        int count, long type, int baseType, Op op) throws MPIException;
+        Object inOutBuf, boolean iodb, int inOutOff, int count,
+        long type, int baseType, long op) throws MPIException;
+
+private static native void reduceLocalUf(
+        Object inBuf, boolean idb, int inOff,
+        Object inOutBuf, boolean iodb, int inOutOff, int count,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Sets the print name for the communicator.

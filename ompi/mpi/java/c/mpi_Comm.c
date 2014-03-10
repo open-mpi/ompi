@@ -1592,8 +1592,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllv(
 JNIEXPORT void JNICALL Java_mpi_Comm_reduce(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jboolean sdb, jint sOffset,
-        jobject recvBuf, jboolean rdb, jint rOffset,
-        jint count, jlong jType, jint baseType, jobject op, jint root)
+        jobject recvBuf, jboolean rdb, jint rOffset, jint count,
+        jlong jType, jint baseType, jobject jOp, jlong hOp, jint root)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
     int id;
@@ -1626,8 +1626,8 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduce(
         }
     }
 
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, baseType);
-    rc = MPI_Reduce(sPtr, rPtr, count, type, mpiOp, root, comm);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
+    rc = MPI_Reduce(sPtr, rPtr, count, type, op, root, comm);
     ompi_java_exceptionCheck(env, rc);
 
     if(sendBuf != NULL)
@@ -1640,7 +1640,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduce(
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduce(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject sendBuf, jobject recvBuf, int count,
-        jlong type, jint baseType, jobject op, jint root)
+        jlong type, jint baseType, jobject jOp, jlong hOp, jint root)
 {
     int id;
     int rc = MPI_Comm_rank((MPI_Comm)comm, &id);
@@ -1672,10 +1672,10 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduce(
         }
     }
 
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, baseType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
 
     rc = MPI_Ireduce(sPtr, rPtr, count, (MPI_Datatype)type,
-                     mpiOp, root, (MPI_Comm)comm, &request);
+                     op, root, (MPI_Comm)comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -1685,7 +1685,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allReduce(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jboolean sdb, jint sendOffset,
         jobject recvBuf, jboolean rdb, jint recvOffset,
-        jint count, jlong jType, jint baseType, jobject op)
+        jint count, jlong jType, jint baseType, jobject jOp, jlong hOp)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
@@ -1697,8 +1697,8 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allReduce(
         sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, baseType, sendOffset);
 
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, baseType, recvOffset);
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, baseType);
-    int rc = MPI_Allreduce(sPtr, rPtr, count, type, mpiOp, comm);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
+    int rc = MPI_Allreduce(sPtr, rPtr, count, type, op, comm);
     ompi_java_exceptionCheck(env, rc);
 
     ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, baseType);
@@ -1709,8 +1709,8 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allReduce(
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllReduce(
         JNIEnv *env, jobject jthis, jlong comm,
-        jobject sendBuf, jobject recvBuf,
-        jint count, jlong type, jint baseType, jobject op)
+        jobject sendBuf, jobject recvBuf, jint count,
+        jlong type, jint baseType, jobject jOp, jlong hOp)
 {
     MPI_Request request;
     void *sPtr, *rPtr;
@@ -1721,10 +1721,10 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllReduce(
         sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
 
     rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, baseType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
 
     int rc = MPI_Iallreduce(sPtr, rPtr, count, (MPI_Datatype)type,
-                            mpiOp, (MPI_Comm)comm, &request);
+                            op, (MPI_Comm)comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -1734,7 +1734,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatter(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jboolean sdb, jint sOffset,
         jobject recvBuf, jboolean rdb, jint rOffset,
-        jintArray rCounts, jlong jType, jint bType, jobject op)
+        jintArray rCounts, jlong jType, jint bType, jobject jOp, jlong hOp)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
@@ -1746,13 +1746,13 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatter(
         sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, bType, sOffset);
 
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, bType, rOffset);
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, bType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
 
     jint *jRCounts;
     int  *cRCounts;
     ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
 
-    int rc = MPI_Reduce_scatter(sPtr, rPtr, cRCounts, type, mpiOp, comm);
+    int rc = MPI_Reduce_scatter(sPtr, rPtr, cRCounts, type, op, comm);
     ompi_java_exceptionCheck(env, rc);
 
     ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, bType);
@@ -1765,7 +1765,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatter(
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatter(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject sendBuf, jobject recvBuf, jintArray rCounts,
-        jlong type, int bType, jobject op)
+        jlong type, int bType, jobject jOp, jlong hOp)
 {
     void *sPtr, *rPtr;
 
@@ -1775,7 +1775,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatter(
         sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
 
     rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, bType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
     MPI_Request request;
 
     jint *jRCounts;
@@ -1783,7 +1783,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatter(
     ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
 
     int rc = MPI_Ireduce_scatter(sPtr, rPtr, cRCounts, (MPI_Datatype)type,
-                                 mpiOp, (MPI_Comm)comm, &request);
+                                 op, (MPI_Comm)comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
     ompi_java_forgetIntArray(env, rCounts, jRCounts, cRCounts);
@@ -1794,7 +1794,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatterBlock(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jboolean sdb, jint sOffset,
         jobject recvBuf, jboolean rdb, jint rOffset,
-        jint count, jlong jType, jint bType, jobject op)
+        jint count, jlong jType, jint bType, jobject jOp, jlong hOp)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
@@ -1806,9 +1806,9 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatterBlock(
         sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, bType, sOffset);
 
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, bType, rOffset);
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, bType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
 
-    int rc = MPI_Reduce_scatter_block(sPtr, rPtr, count, type, mpiOp, comm);
+    int rc = MPI_Reduce_scatter_block(sPtr, rPtr, count, type, op, comm);
     ompi_java_exceptionCheck(env, rc);
 
     ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, bType);
@@ -1819,7 +1819,8 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatterBlock(
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatterBlock(
         JNIEnv *env, jobject jthis, jlong comm, jobject sendBuf,
-        jobject recvBuf, jint count, jlong type, jint bType, jobject op)
+        jobject recvBuf, jint count, jlong type, jint bType,
+        jobject jOp, jlong hOp)
 {
     void *sPtr, *rPtr;
 
@@ -1829,11 +1830,11 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatterBlock(
         sPtr = (*env)->GetDirectBufferAddress(env, sendBuf);
 
     rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
-    MPI_Op mpiOp = ompi_java_op_getHandle(env, op, bType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
     MPI_Request request;
 
     int rc = MPI_Ireduce_scatter_block(sPtr, rPtr, count, (MPI_Datatype)type,
-                                       mpiOp, (MPI_Comm)comm, &request);
+                                       op, (MPI_Comm)comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -1842,19 +1843,32 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatterBlock(
 JNIEXPORT void JNICALL Java_mpi_Comm_reduceLocal(
         JNIEnv *env, jclass clazz, jobject inBuf, jboolean idb, jint inOff,
         jobject inOutBuf, jboolean iodb, jint inOutOff, jint count,
-        jlong jType, jint bType, jobject op)
+        jlong jType, jint bType, jlong op)
 {
     MPI_Datatype type = (MPI_Datatype)jType;
     void *inPtr, *inBase, *inOutPtr, *inOutBase;
     inPtr = getBufCritical(&inBase, env, inBuf, idb, bType, inOff);
     inOutPtr = getBufCritical(&inOutBase, env, inOutBuf, iodb, bType, inOutOff);
-
-    int rc = MPI_Reduce_local(inPtr, inOutPtr, count, type,
-                              ompi_java_op_getHandle(env, op, bType));
-
+    int rc = MPI_Reduce_local(inPtr, inOutPtr, count, type, (MPI_Op)op);
     ompi_java_exceptionCheck(env, rc);
     releaseBufCritical(env, inBuf, idb, inBase);
     releaseBufCritical(env, inOutBuf, iodb, inOutBase);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Comm_reduceLocalUf(
+        JNIEnv *env, jclass clazz, jobject inBuf, jboolean idb, jint inOff,
+        jobject inOutBuf, jboolean iodb, jint inOutOff, jint count,
+        jlong jType, jint bType, jobject jOp, jlong hOp)
+{
+    MPI_Datatype type = (MPI_Datatype)jType;
+    void *inPtr, *inBase, *inOutPtr, *inOutBase;
+    inPtr = ompi_java_getBufPtr(&inBase, env, inBuf, idb, bType, inOff);
+    inOutPtr = ompi_java_getBufPtr(&inOutBase,env,inOutBuf,iodb,bType,inOutOff);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
+    int rc = MPI_Reduce_local(inPtr, inOutPtr, count, type, op);
+    ompi_java_exceptionCheck(env, rc);
+    ompi_java_releaseReadBufPtr(env, inBuf, idb, inBase, bType);
+    ompi_java_releaseBufPtr(env, inOutBuf, iodb, inOutBase, bType);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_setName(

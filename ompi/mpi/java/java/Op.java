@@ -30,24 +30,10 @@ import java.nio.*;
  */
 public final class Op implements Freeable
 {
-private final static int NULL   =  0;
-private final static int MAX    =  1;
-private final static int MIN    =  2;
-private final static int SUM    =  3;
-private final static int PROD   =  4;
-private final static int LAND   =  5;
-private final static int BAND   =  6;
-private final static int LOR    =  7;
-private final static int BOR    =  8;
-private final static int LXOR   =  9;
-private final static int BXOR   = 10;
-private final static int MINLOC = 11;
-private final static int MAXLOC = 12;
-
-private UserFunction uf = null;
+protected final UserFunction uf;
 private boolean commute;
 private Datatype datatype;
-private long handle;
+protected long handle;
 
 static
 {
@@ -59,6 +45,7 @@ private static native void init();
 protected Op(int type)
 {
     getOp(type);
+    uf = null;
     commute = true;
 }
 

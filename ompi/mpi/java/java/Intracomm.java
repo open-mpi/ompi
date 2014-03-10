@@ -312,7 +312,7 @@ public final void scan(Object sendbuf, Object recvbuf,
     op.setDatatype(type);
 
     scan(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
-         count, type.handle, type.baseType, op);
+         count, type.handle, type.baseType, op, op.handle);
 }
 
 /**
@@ -341,13 +341,13 @@ public final void scan(Object recvbuf, int count, Datatype type, Op op)
     op.setDatatype(type);
 
     scan(handle, null, false, 0, recvbuf, rdb, recvoff,
-         count, type.handle, type.baseType, op);
+         count, type.handle, type.baseType, op, op.handle);
 }
 
 private native void scan(
         long comm, Object sendbuf, boolean sdb, int sendoff,
-        Object recvbuf, boolean rdb, int recvoff,
-        int count, long type, int baseType, Op op) throws MPIException;
+        Object recvbuf, boolean rdb, int recvoff, int count,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Perform a prefix reduction on data distributed across the group.
@@ -369,7 +369,7 @@ public final Request iScan(Buffer sendbuf, Buffer recvbuf,
     assertDirectBuffer(sendbuf, recvbuf);
 
     return new Request(iScan(handle, sendbuf, recvbuf, count,
-                             type.handle, type.baseType, op));
+                             type.handle, type.baseType, op, op.handle));
 }
 
 /**
@@ -390,13 +390,14 @@ public final Request iScan(Buffer buf, int count, Datatype type, Op op)
     op.setDatatype(type);
     assertDirectBuffer(buf);
 
-    return new Request(iScan(handle, null, buf, count,
-                             type.handle, type.baseType, op));
+    return new Request(iScan(
+            handle, null, buf, count,
+            type.handle, type.baseType, op, op.handle));
 }
 
-private native long iScan(long comm, Buffer sendbuf, Buffer recvbuf,
-                          int count, long type, int baseType, Op op)
-                          throws MPIException;
+private native long iScan(
+        long comm, Buffer sendbuf, Buffer recvbuf, int count,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Perform a prefix reduction on data distributed across the group.
@@ -435,7 +436,7 @@ public final void exScan(Object sendbuf, Object recvbuf,
     op.setDatatype(type);
 
     exScan(handle, sendbuf, sdb, sendoff, recvbuf, rdb, recvoff,
-           count, type.handle, type.baseType, op);
+           count, type.handle, type.baseType, op, op.handle);
 }
 
 /**
@@ -463,14 +464,14 @@ public final void exScan(Object buf, int count, Datatype type, Op op)
 
     op.setDatatype(type);
 
-    exScan(handle, null, false, 0, buf, db, off,
-           count, type.handle, type.baseType, op);
+    exScan(handle, null, false, 0, buf, db, off, count,
+           type.handle, type.baseType, op, op.handle);
 }
 
 private native void exScan(
         long comm, Object sendbuf, boolean sdb, int sendoff,
-        Object recvbuf, boolean rdb, int recvoff,
-        int count, long type, int baseType, Op op) throws MPIException;
+        Object recvbuf, boolean rdb, int recvoff, int count,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Perform a prefix reduction on data distributed across the group.
@@ -492,7 +493,7 @@ public final Request iExScan(Buffer sendbuf, Buffer recvbuf,
     assertDirectBuffer(sendbuf, recvbuf);
 
     return new Request(iExScan(handle, sendbuf, recvbuf, count,
-                               type.handle, type.baseType, op));
+                               type.handle, type.baseType, op, op.handle));
 }
 
 /**
@@ -513,13 +514,14 @@ public final Request iExScan(Buffer buf, int count, Datatype type, Op op)
     op.setDatatype(type);
     assertDirectBuffer(buf);
 
-    return new Request(iExScan(handle, null, buf, count,
-                               type.handle, type.baseType, op));
+    return new Request(iExScan(
+            handle, null, buf, count,
+            type.handle, type.baseType, op, op.handle));
 }
 
-private native long iExScan(long comm, Buffer sendbuf, Buffer recvbuf,
-                            int count, long type, int baseType, Op op)
-                            throws MPIException;
+private native long iExScan(
+        long comm, Buffer sendbuf, Buffer recvbuf, int count,
+        long type, int baseType, Op jOp, long hOp) throws MPIException;
 
 /**
  * Java binding of {@code MPI_OPEN_PORT} using {@code MPI_INFO_NULL}.

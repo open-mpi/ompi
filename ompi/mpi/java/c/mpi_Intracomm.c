@@ -178,8 +178,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createDistGraphAdjacent(
 JNIEXPORT void JNICALL Java_mpi_Intracomm_scan(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject sendBuf, jboolean sdb, jint sendOff,
-        jobject recvBuf, jboolean rdb, jint recvOff,
-        jint count, jlong type, jint baseType, jobject op)
+        jobject recvBuf, jboolean rdb, jint recvOff, jint count,
+        jlong type, jint baseType, jobject jOp, jlong hOp)
 {
     void *sPtr, *sBase, *rPtr, *rBase;
 
@@ -191,7 +191,7 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_scan(
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, baseType, recvOff);
 
     int rc = MPI_Scan(sPtr, rPtr, count, (MPI_Datatype)type,
-                      ompi_java_op_getHandle(env, op, baseType),
+                      ompi_java_op_getHandle(env, jOp, hOp, baseType),
                       (MPI_Comm)comm);
 
     ompi_java_exceptionCheck(env, rc);
@@ -204,7 +204,7 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_scan(
 JNIEXPORT jlong JNICALL Java_mpi_Intracomm_iScan(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject sendBuf, jobject recvBuf, jint count,
-        jlong type, int baseType, jobject op)
+        jlong type, int baseType, jobject jOp, jlong hOp)
 {
     void *sPtr, *rPtr;
     MPI_Request request;
@@ -217,7 +217,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_iScan(
     rPtr = (*env)->GetDirectBufferAddress(env, recvBuf);
 
     int rc = MPI_Iscan(sPtr, rPtr, count, (MPI_Datatype)type,
-                       ompi_java_op_getHandle(env, op, baseType),
+                       ompi_java_op_getHandle(env, jOp, hOp, baseType),
                        (MPI_Comm)comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
@@ -227,8 +227,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_iScan(
 JNIEXPORT void JNICALL Java_mpi_Intracomm_exScan(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject sendBuf, jboolean sdb, jint sendOff,
-        jobject recvBuf, jboolean rdb, jint recvOff,
-        jint count, jlong type, int bType, jobject op)
+        jobject recvBuf, jboolean rdb, jint recvOff, jint count,
+        jlong type, int bType, jobject jOp, jlong hOp)
 {
     void *sPtr, *sBase, *rPtr, *rBase;
 
@@ -240,7 +240,7 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_exScan(
     rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, bType, recvOff);
 
     int rc = MPI_Exscan(sPtr, rPtr, count, (MPI_Datatype)type,
-                        ompi_java_op_getHandle(env, op, bType),
+                        ompi_java_op_getHandle(env, jOp, hOp, bType),
                         (MPI_Comm)comm);
 
     ompi_java_exceptionCheck(env, rc);
@@ -253,7 +253,7 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_exScan(
 JNIEXPORT jlong JNICALL Java_mpi_Intracomm_iExScan(
         JNIEnv *env, jobject jthis, jlong comm,
         jobject sendBuf, jobject recvBuf, jint count,
-        jlong type, int bType, jobject op)
+        jlong type, int bType, jobject jOp, jlong hOp)
 {
     void *sPtr, *rPtr;
 
@@ -266,7 +266,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_iExScan(
     MPI_Request request;
 
     int rc = MPI_Iexscan(sPtr, rPtr, count, (MPI_Datatype)type,
-                         ompi_java_op_getHandle(env, op, bType),
+                         ompi_java_op_getHandle(env, jOp, hOp, bType),
                          (MPI_Comm)comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
