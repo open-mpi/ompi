@@ -409,7 +409,7 @@ int orte_daemon(int argc, char *argv[])
             if (!hwloc_bitmap_iszero(ours)) {
                 (void)hwloc_set_cpubind(opal_hwloc_topology, ours, 0);
                 if (opal_hwloc_report_bindings) {
-                    opal_hwloc_base_cset2mapstr(tmp, sizeof(tmp), ours);
+                    opal_hwloc_base_cset2mapstr(tmp, sizeof(tmp), opal_hwloc_topology, ours);
                     opal_output(0, "Daemon %s is bound to cores %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
                 }

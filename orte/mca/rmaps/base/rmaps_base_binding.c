@@ -322,13 +322,14 @@ static int bind_downwards(orte_job_t *jdata,
         hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, totalcpuset);
         if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
             char tmp1[1024], tmp2[1024];
-            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), totalcpuset)) {
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1),
+                                                               node->topology, totalcpuset)) {
                 opal_output(orte_rmaps_base_framework.framework_output,
                             "%s PROC %s ON %s IS NOT BOUND",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&proc->name), node->name);
             } else {
-                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), totalcpuset);
+                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), node->topology, totalcpuset);
                 opal_output(orte_rmaps_base_framework.framework_output,
                             "%s BOUND PROC %s[%s] TO %s: %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
