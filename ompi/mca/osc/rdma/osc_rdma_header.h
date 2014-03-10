@@ -78,9 +78,9 @@ struct ompi_osc_rdma_header_acc_t {
 
     uint16_t tag;
     uint32_t count;
+    uint32_t op;
     uint64_t len;
     uint64_t displacement;
-    uint32_t op;
 };
 typedef struct ompi_osc_rdma_header_acc_t ompi_osc_rdma_header_acc_t;
 
@@ -105,9 +105,9 @@ struct ompi_osc_rdma_header_get_acc_t {
 
     uint16_t tag;
     uint32_t count;
+    uint32_t op;
     uint64_t len;
     uint64_t displacement;
-    uint32_t op;
 };
 typedef struct ompi_osc_rdma_header_get_acc_t ompi_osc_rdma_header_get_acc_t;
 
@@ -172,6 +172,7 @@ struct ompi_osc_rdma_frag_header_t {
     uint16_t windx; /* cid of communicator backing window (our window id) */
     uint32_t source; /* rank in window of source process */
     uint16_t num_ops; /* number of operations in this buffer */
+    uint16_t pad[3]; /* ensure the fragment header is a multiple of 8 bytes */
 };
 typedef struct ompi_osc_rdma_frag_header_t ompi_osc_rdma_frag_header_t;
 
