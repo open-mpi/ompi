@@ -1754,7 +1754,9 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
 /*
  * Make a prettyprint string for a hwloc_cpuset_t
  */
-int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset)
+int opal_hwloc_base_cset2str(char *str, int len,
+                             hwloc_topology_t topo,
+                             hwloc_cpuset_t cpuset)
 {
     bool first;
     int num_sockets, num_cores;
@@ -1773,9 +1775,9 @@ int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset)
     }
 
     /* if the cpuset includes all available cpus, then we are unbound */
-    root = hwloc_get_root_obj(opal_hwloc_topology);
+    root = hwloc_get_root_obj(topo);
     if (NULL == root->userdata) {
-        opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+        opal_hwloc_base_filter_cpus(topo);
     }
     sum = (opal_hwloc_topo_data_t*)root->userdata;
     if (NULL == sum->available) {
@@ -1820,7 +1822,9 @@ int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset)
  *        . - signifies PU a process not bound to
  *        B - signifies PU a process is bound to
  */
-int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
+int opal_hwloc_base_cset2mapstr(char *str, int len,
+                                hwloc_topology_t topo,
+                                hwloc_cpuset_t cpuset)
 {
     char tmp[BUFSIZ];
     int core_index, pu_index;
@@ -1837,9 +1841,9 @@ int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
     }
 
     /* if the cpuset includes all available cpus, then we are unbound */
-    root = hwloc_get_root_obj(opal_hwloc_topology);
+    root = hwloc_get_root_obj(topo);
     if (NULL == root->userdata) {
-        opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+        opal_hwloc_base_filter_cpus(topo);
     }
     sum = (opal_hwloc_topo_data_t*)root->userdata;
     if (NULL == sum->available) {
@@ -1850,19 +1854,18 @@ int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
     }
 
     /* Iterate over all existing sockets */
-    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology, 
-                                        HWLOC_OBJ_SOCKET, 0);
+    for (socket = hwloc_get_obj_by_type(topo, HWLOC_OBJ_SOCKET, 0);
          NULL != socket; 
          socket = socket->next_cousin) {
         strncat(str, "[", len - strlen(str));
 
         /* Iterate over all existing cores in this socket */
         core_index = 0;
-        for (core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+        for (core = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                         socket->cpuset, 
                                                         HWLOC_OBJ_CORE, core_index);
              NULL != core; 
-             core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+             core = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                         socket->cpuset, 
                                                         HWLOC_OBJ_CORE, ++core_index)) {
             if (core_index > 0) {
@@ -1871,11 +1874,11 @@ int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
 
             /* Iterate over all existing PUs in this core */
             pu_index = 0;
-            for (pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+            for (pu = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                           core->cpuset, 
                                                           HWLOC_OBJ_PU, pu_index);
                  NULL != pu; 
-                 pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+                 pu = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                           core->cpuset, 
                                                           HWLOC_OBJ_PU, ++pu_index)) {
 
