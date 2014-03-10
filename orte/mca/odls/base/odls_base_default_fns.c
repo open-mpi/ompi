@@ -2285,8 +2285,6 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              * has happened
              */
             child->waitpid_recvd = true;
-            /* ensure the process is flagged as "not alive" */
-            child->alive = false;
             child->pid = 0;
             
         CLEANUP:

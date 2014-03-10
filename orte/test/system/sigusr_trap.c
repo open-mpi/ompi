@@ -14,6 +14,9 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
+/* yeah, we know it isn't safe to call fprintf inside signal handlers,
+ * but this is good enough for this test
+ */
 void sigusr_handler(int signum)
 {
     switch (signum) {
@@ -35,7 +38,25 @@ void exit_handler(int signum)
 {
     int rc;
 
-    exit(0);
+    switch (signum) {
+        case SIGINT:
+            fprintf(stderr, "%s Trapped SIGINT\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            break;
+
+        case SIGHUP:
+            fprintf(stderr, "%s Trapped SIGHUP\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            break;
+
+        case SIGTERM:
+            fprintf(stderr, "%s Trapped SIGTERM\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            break;
+
+        default:
+            fprintf(stderr, "%s Undefined signal %d trapped\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum);
+            break;
+    }
+
+    exit(1);
 }
 
 
