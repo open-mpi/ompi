@@ -17,6 +17,7 @@
 
 #include "osc_rdma_header.h"
 #include "osc_rdma_request.h"
+#include "opal/align.h"
 
 /** Communication buffer for packing messages */
 struct ompi_osc_rdma_frag_t {
@@ -54,8 +55,10 @@ static inline int ompi_osc_rdma_frag_alloc(ompi_osc_rdma_module_t *module, int t
     ompi_osc_rdma_frag_t *curr = module->peers[target].active_frag;
     int ret;
 
-    /* ensure the next fragment will be allocated on an 8-byte boundary */
-    request_len = (request_len + 0x7) & ~0x7;
+    /* osc rdma headers can have 64-bit values. these will need to be aligned
+     * on an 8-byte boundary on some architectures so we up align the allocation
+     * size here. */
+    request_len = OPAL_ALIGN(request_len, 8, size_t);
 
     if (request_len > mca_osc_rdma_component.buffer_size) {
         return OMPI_ERR_OUT_OF_RESOURCE;

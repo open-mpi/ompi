@@ -1361,8 +1361,8 @@ static inline int process_frag (ompi_osc_rdma_module_t *module,
         }
 
         /* the next header will start on an 8-byte boundary. this is done to ensure
-         * that the packed datatype is properly aligned */
-        header = (ompi_osc_rdma_header_t *) (((uintptr_t) header + ret + 0x07) & ~0x07);
+         * that the next header and the packed datatype is properly aligned */
+        header = (ompi_osc_rdma_header_t *) OPAL_ALIGN(((uintptr_t) header + ret), 8, uintptr_t);
     }
 
     return OMPI_SUCCESS;
