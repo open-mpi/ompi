@@ -14,6 +14,9 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
+/* yeah, we know it isn't safe to call fprintf inside signal handlers,
+ * but this is good enough for this test
+ */
 void sigusr_handler(int signum)
 {
     switch (signum) {
