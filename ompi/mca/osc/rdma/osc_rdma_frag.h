@@ -54,6 +54,9 @@ static inline int ompi_osc_rdma_frag_alloc(ompi_osc_rdma_module_t *module, int t
     ompi_osc_rdma_frag_t *curr = module->peers[target].active_frag;
     int ret;
 
+    /* ensure the next fragment will be allocated on an 8-byte boundary */
+    request_len = (request_len + 0x7) & ~0x7;
+
     if (request_len > mca_osc_rdma_component.buffer_size) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -114,18 +117,19 @@ static inline int ompi_osc_rdma_frag_alloc(ompi_osc_rdma_module_t *module, int t
 /*
  * Note: module lock must be held for this operation
  */
-static inline int
-ompi_osc_rdma_frag_finish(ompi_osc_rdma_module_t *module,
-                            ompi_osc_rdma_frag_t* buffer)
+static inline int ompi_osc_rdma_frag_finish(ompi_osc_rdma_module_t *module,
+                                            ompi_osc_rdma_frag_t* buffer)
 {
-    int ret = OMPI_SUCCESS;
-
-    buffer->pending--;
-    if (0 == buffer->pending && 0 == buffer->remain_len) {
-        ret = ompi_osc_rdma_frag_start(module, buffer);
+    if (0 == --buffer->pending && 0 == buffer->remain_len) {
+        if (OPAL_LIKELY(buffer == module->peers[buffer->target].active_frag)) {
+            /* this is the active fragment. need to set the current fragment to null
+             * or it will be started multiple times */
+            module->peers[buffer->target].active_frag = NULL;
+        }
+        return ompi_osc_rdma_frag_start(module, buffer);
     }
 
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 #endif

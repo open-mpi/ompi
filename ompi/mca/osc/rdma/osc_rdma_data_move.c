@@ -1360,7 +1360,9 @@ static inline int process_frag (ompi_osc_rdma_module_t *module,
             abort(); /* FIX ME */
         }
 
-        header = (ompi_osc_rdma_header_t *) ((uintptr_t) header + ret);
+        /* the next header will start on an 8-byte boundary. this is done to ensure
+         * that the packed datatype is properly aligned */
+        header = (ompi_osc_rdma_header_t *) (((uintptr_t) header + ret + 0x07) & ~0x07);
     }
 
     return OMPI_SUCCESS;
