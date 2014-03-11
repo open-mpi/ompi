@@ -387,6 +387,11 @@ void orte_oob_base_ft_event(int sd, short argc, void *cbdata)
     mca_oob_base_component_t *component;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
 
+    opal_output_verbose(5, orte_oob_base_framework.framework_output,
+                        "%s oob:base:ft_event %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        state->job_state);
+
     /* loop across all available modules in priority order
      * and call each one's ft_event handler
      */
