@@ -58,7 +58,7 @@ static const char FUNC_NAME[] = "MPI_Info_set";
  *   key or value is greater than the allowed maxima, MPI_ERR_INFO_KEY
  *   and MPI_ERR_INFO_VALUE are raised
  */
-int MPI_Info_set(MPI_Info info, char *key, char *value) 
+int MPI_Info_set(MPI_Info info, const char *key, const char *value) 
 {
     int err;
     int key_length;
