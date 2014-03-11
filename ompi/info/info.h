@@ -160,7 +160,7 @@ int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
  * @retval MPI_SUCCESS upon success
  * @retval MPI_ERR_NO_MEM if out of memory
  */
-OMPI_DECLSPEC int ompi_info_set (ompi_info_t *info, char *key, char *value);
+OMPI_DECLSPEC int ompi_info_set (ompi_info_t *info, const char *key, const char *value);
 
 /**
  * ompi_info_free - Free an 'MPI_Info' object.
