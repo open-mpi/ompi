@@ -224,7 +224,7 @@ AC_DEFUN([OMPI_MCA],[
                [# BWB: Until projects have seperate configure scripts
                 # and can skip running if not desired, just avoid recursing
                 # into their sub directory if the project is disabled
-                if test "mca_project" = "ompi" || test "mca_project" = "opal" || test "mca_project" = "orte" -a "$with_orte" != "no" || test "mca_project" = "oshmem" -a "$enable_oshmem" != "no" ; then
+                if test "mca_project" = "ompi" || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem" ; then
                    MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
                 fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
