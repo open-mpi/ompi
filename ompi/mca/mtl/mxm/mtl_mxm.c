@@ -493,6 +493,11 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 {
     size_t i;
 
+    /* XXX: Directly accessing the obj_reference_count is an abstraction
+     * violation of the object system. We know this needs to be fixed, but
+     * are deferring the fix to a later time as it involves a design issue
+     * in the way we handle endpoints as objects
+     */
     for (i = 0; i < nprocs; ++i) {
         if (((opal_object_t*)procs[i])->obj_reference_count == 1) {
             mca_mtl_mxm_endpoint_t *endpoint = (mca_mtl_mxm_endpoint_t*)
