@@ -12,7 +12,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Inria.  All rights reserved.
  * Copyright (c) 2011      Universite Bordeaux 1
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -88,6 +88,7 @@
 #define ompi_comm_split_f pompi_comm_split_f
 #define ompi_comm_split_type_f pompi_comm_split_type_f
 #define ompi_comm_test_inter_f pompi_comm_test_inter_f
+#define ompi_compare_and_swap_f pompi_compare_and_swap_f
 #define ompi_dims_create_f pompi_dims_create_f
 #define ompi_dist_graph_create_f pompi_dist_graph_create_f
 #define ompi_dist_graph_create_adjacent_f pompi_dist_graph_create_adjacent_f
@@ -101,6 +102,7 @@
 #define ompi_error_string_f pompi_error_string_f
 #define ompi_exscan_f pompi_exscan_f
 #define ompi_f_sync_reg_f pompi_f_sync_reg_f
+#define ompi_fetch_and_op_f pompi_fetch_and_op_f
 #define ompi_file_call_errhandler_f pompi_file_call_errhandler_f
 #define ompi_file_create_errhandler_f pompi_file_create_errhandler_f
 #define ompi_file_set_errhandler_f pompi_file_set_errhandler_f
@@ -166,6 +168,7 @@
 #define ompi_get_elements_f pompi_get_elements_f
 #define ompi_get_elements_x_f pompi_get_elements_x_f
 #define ompi_get_f pompi_get_f
+#define ompi_get_accumulate_f pompi_get_accumulate_f
 #define ompi_get_library_version_f pompi_get_library_version_f
 #define ompi_get_processor_name_f pompi_get_processor_name_f
 #define ompi_get_version_f pompi_get_version_f
@@ -258,6 +261,7 @@
 #define ompi_publish_name_f pompi_publish_name_f
 #define ompi_put_f pompi_put_f
 #define ompi_query_thread_f pompi_query_thread_f
+#define ompi_raccumulate_f pompi_raccumulate_f
 #define ompi_recv_init_f pompi_recv_init_f
 #define ompi_recv_f pompi_recv_f
 #define ompi_reduce_f pompi_reduce_f
@@ -267,6 +271,9 @@
 #define ompi_register_datarep_f pompi_register_datarep_f
 #define ompi_request_free_f pompi_request_free_f
 #define ompi_request_get_status_f pompi_request_get_status_f
+#define ompi_rget_f pompi_rget_f
+#define ompi_rget_accumulate_f pompi_rget_accumulate_f
+#define ompi_rput_f pompi_rput_f
 #define ompi_rsend_f pompi_rsend_f
 #define ompi_rsend_init_f pompi_rsend_init_f
 #define ompi_scan_f pompi_scan_f
@@ -342,6 +349,10 @@
 #define ompi_win_create_keyval_f pompi_win_create_keyval_f
 #define ompi_win_delete_attr_f pompi_win_delete_attr_f
 #define ompi_win_fence_f pompi_win_fence_f
+#define ompi_win_flush_f pompi_win_flush_f
+#define ompi_win_flush_all_f pompi_win_flush_all_f
+#define ompi_win_flush_local_f pompi_win_flush_local_f
+#define ompi_win_flush_local_all_f pompi_win_flush_local_all_f
 #define ompi_win_free_f pompi_win_free_f
 #define ompi_win_free_keyval_f pompi_win_free_keyval_f
 #define ompi_win_get_attr_f pompi_win_get_attr_f

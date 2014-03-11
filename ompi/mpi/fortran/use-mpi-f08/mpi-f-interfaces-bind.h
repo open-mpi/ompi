@@ -2161,6 +2161,24 @@ subroutine ompi_accumulate_f(origin_addr,origin_count,origin_datatype, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_accumulate_f
 
+subroutine ompi_raccumulate_f(origin_addr,origin_count,origin_datatype, &
+                              target_rank,target_disp, &
+                              target_count,target_datatype,op,win, &
+                              request,ierror) &
+   BIND(C, name="ompi_raccumulate_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_raccumulate_f
+
 subroutine ompi_get_f(origin_addr,origin_count,origin_datatype,target_rank, &
                       target_disp,target_count,target_datatype,win,ierror) &
    BIND(C, name="ompi_get_f")
@@ -2174,6 +2192,63 @@ subroutine ompi_get_f(origin_addr,origin_count,origin_datatype,target_rank, &
    INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_get_f
+
+subroutine ompi_rget_f(origin_addr,origin_count,origin_datatype,target_rank, &
+                       target_disp,target_count,target_datatype,win,request, &
+                       ierror) &
+   BIND(C, name="ompi_rget_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_rget_f
+
+subroutine ompi_get_accumulate_f(origin_addr,origin_count,origin_datatype, &
+                                 result_addr,result_count,result_datatype, &
+                                 target_rank,target_disp, &
+                                 target_count,target_datatype,op,win, &
+                                 ierror) &
+   BIND(C, name="ompi_get_accumulate_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   INTEGER, INTENT(IN) :: result_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_get_accumulate_f
+
+subroutine ompi_rget_accumulate_f(origin_addr,origin_count,origin_datatype, &
+                                  result_addr,result_count,result_datatype, &
+                                  target_rank,target_disp, &
+                                  target_count,target_datatype,op,win, &
+                                  request,ierror) &
+   BIND(C, name="ompi_rget_accumulate_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   INTEGER, INTENT(IN) :: result_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_rget_accumulate_f
 
 subroutine ompi_put_f(origin_addr,origin_count,origin_datatype,target_rank, &
                       target_disp,target_count,target_datatype,win,ierror) &
@@ -2189,12 +2264,58 @@ subroutine ompi_put_f(origin_addr,origin_count,origin_datatype,target_rank, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_put_f
 
+subroutine ompi_rput_f(origin_addr,origin_count,origin_datatype,target_rank, &
+                       target_disp,target_count,target_datatype,win,request, &
+                       ierror) &
+   BIND(C, name="ompi_rput_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_rput_f
+
 subroutine ompi_win_complete_f(win,ierror) &
    BIND(C, name="ompi_win_complete_f")
    implicit none
    INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_complete_f
+
+subroutine ompi_compare_and_swap_f(origin_addr,compare_addr,result_addr, &
+                                   target_rank,target_disp,datatype, win, &
+                                   ierror) &
+   BIND(C, name="ompi_compare_and_swap_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr, compare_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: target_rank
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_compare_and_swap_f
+
+subroutine ompi_fetch_and_op_f(origin_addr,result_addr,datatype,target_rank, &
+                               target_disp,op,win,ierror) &
+   BIND(C, name="ompi_fetch_and_op_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: target_rank
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_fetch_and_op_f
 
 subroutine ompi_win_create_f(base,size,disp_unit,info,comm,win,ierror) &
    BIND(C, name="ompi_win_create_f")
@@ -2208,6 +2329,36 @@ subroutine ompi_win_create_f(base,size,disp_unit,info,comm,win,ierror) &
    INTEGER, INTENT(OUT) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_create_f
+
+subroutine ompi_win_flush_f(rank,win,ierror) &
+   BIND(C, name="ompi_win_flush_f")
+   implicit none
+   INTEGER, INTENT(IN) :: rank
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_flush_f
+
+subroutine ompi_win_flush_all_f(win,ierror) &
+   BIND(C, name="ompi_win_flush_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_flush_all_f
+
+subroutine ompi_win_flush_local_f(rank,win,ierror) &
+   BIND(C, name="ompi_win_flush_local_f")
+   implicit none
+   INTEGER, INTENT(IN) :: rank
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_flush_local_f
+
+subroutine ompi_win_flush_local_all_f(win,ierror) &
+   BIND(C, name="ompi_win_flush_local_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_win_flush_local_all_f
 
 subroutine ompi_win_fence_f(assert,win,ierror) &
    BIND(C, name="ompi_win_fence_f")
