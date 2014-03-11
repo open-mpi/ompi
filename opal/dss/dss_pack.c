@@ -382,7 +382,7 @@ int opal_dss_pack_time(opal_buffer_t *buffer, const void *src,
      */
     for (i = 0; i < num_vals; ++i) {
         ui64 = (uint64_t)ssrc[i];
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_int(buffer, &ui64, 1, OPAL_UINT64))) {
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_int64(buffer, &ui64, 1, OPAL_UINT64))) {
             return ret;
         }
     }
