@@ -26,12 +26,14 @@ nodist_ompidata_DATA = ortecc-wrapper-data.txt
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = orte.pc
 
+if PROJECT_ORTE
 install-exec-hook:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT)
+endif
 
 endif # OMPI_INSTALL_BINARIES
 

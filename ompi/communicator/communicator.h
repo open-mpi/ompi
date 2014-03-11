@@ -17,6 +17,7 @@
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@
 #include "mpi.h"
 #include "ompi/group/group.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/info/info.h"
 #include "ompi/proc/proc.h"
 
 BEGIN_C_DECLS

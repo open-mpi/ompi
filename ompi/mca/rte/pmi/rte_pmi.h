@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  * 
@@ -16,6 +17,8 @@
 
 #include "opal/dss/dss_types.h"
 #include "opal/class/opal_pointer_array.h"
+
+struct ompi_proc_t;
 
 BEGIN_C_DECLS
 
@@ -126,11 +129,11 @@ OMPI_DECLSPEC int ompi_rte_db_store(const ompi_process_name_t *proc,
                                     const char *key,
                                     const void *data,
                                     opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch(const ompi_process_name_t *proc,
+OMPI_DECLSPEC int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                                     const char *key,
                                     void **data,
                                     opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch_pointer(const ompi_process_name_t *proc,
+OMPI_DECLSPEC int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
                                             const char *key,
                                             void **data,
                                             opal_data_type_t type);
@@ -138,24 +141,19 @@ OMPI_DECLSPEC int ompi_rte_db_fetch_pointer(const ompi_process_name_t *proc,
 #define OMPI_DB_LOCALITY     "ompi.locality"
 
 /* Communications */
+
 typedef int ompi_rml_tag_t;
 
-OMPI_DECLSPEC int ompi_rte_send_buffer(const ompi_process_name_t *peer,
-                                       struct opal_buffer_t *buffer,
-                                       ompi_rml_tag_t tag,
-                                       int flags);
+OMPI_DECLSPEC void ompi_rte_send_cbfunc(int, ompi_process_name_t*,
+                                        opal_buffer_t*, ompi_rml_tag_t,
+                                        void*);
 OMPI_DECLSPEC int ompi_rte_send_buffer_nb(const ompi_process_name_t *peer,
                                           struct opal_buffer_t *buffer,
                                           ompi_rml_tag_t tag,
-                                          int flags,
                                           void (*cbfunc)(int, ompi_process_name_t*,
                                                          opal_buffer_t*, ompi_rml_tag_t,
                                                          void*),
                                           void *cbdata);
-OMPI_DECLSPEC int ompi_rte_recv_buffer(const ompi_process_name_t *peer,
-                                       struct opal_buffer_t *buf,
-                                       ompi_rml_tag_t tag,
-                                       int flags);
 OMPI_DECLSPEC int ompi_rte_recv_buffer_nb(const ompi_process_name_t *peer,
                                           ompi_rml_tag_t tag,
                                           int flags,
@@ -175,10 +173,14 @@ OMPI_DECLSPEC int ompi_rte_parse_uris(const char* contact_info,
 /* define a starting point to avoid conflicts */
 #define OMPI_RML_TAG_BASE    0
 
-#define OMPI_RML_PERSISTENT  0
+#define OMPI_RML_PERSISTENT  true
+#define OMPI_RML_NON_PERSISTENT false
 
 /* BWB: FIX ME: THis is not the right way to do this... */
 #define ORTE_ERR_NO_MATCH_YET OMPI_ERROR
+
+#define OMPI_RTE_NODE_ID "rte.nodeid"
+#define OMPI_RTE_MY_NODEID 0
 
 END_C_DECLS
 

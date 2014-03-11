@@ -18,36 +18,20 @@
 #include "rte_pmi.h"
 #include "rte_pmi_internal.h"
 
-
-int
-ompi_rte_send_buffer(const ompi_process_name_t *peer,
-                     struct opal_buffer_t *buffer,
-                     ompi_rml_tag_t tag,
-                     int flags)
+void ompi_rte_send_cbfunc(int status, ompi_process_name_t* sender,
+                          opal_buffer_t* buf, ompi_rml_tag_t tag,
+                          void* cbdata)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
 }
-
 
 int
 ompi_rte_send_buffer_nb(const ompi_process_name_t *peer,
                         struct opal_buffer_t *buffer,
                         ompi_rml_tag_t tag,
-                        int flags,
                         void (*cbfunc)(int, ompi_process_name_t*,
                                        opal_buffer_t*, ompi_rml_tag_t,
                                        void*),
                         void *cbdata)
-{
-    return OMPI_ERR_NOT_SUPPORTED;
-}
-
-
-int
-ompi_rte_recv_buffer(const ompi_process_name_t *peer,
-                     struct opal_buffer_t *buf,
-                     ompi_rml_tag_t tag,
-                     int flags)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }

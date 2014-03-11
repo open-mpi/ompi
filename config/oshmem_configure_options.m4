@@ -21,8 +21,10 @@ AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 # Disable Open SHMEM?
 #
 AC_ARG_ENABLE([oshmem],
-  [AC_HELP_STRING([--disable-oshmem],
-     [Disable building the OpenSHMEM interface])])
+              [AC_HELP_STRING([--enable-oshmem],
+                              [Enable building the OpenSHMEM interface (disabled by default)])],
+              [enable_oshmem=yes],
+              [enable_oshmem=no])
 
 #
 # Enable compatibility mode
@@ -31,7 +33,7 @@ AC_MSG_CHECKING([if want SGI/Quadrix compatibility mode])
 AC_ARG_ENABLE(oshmem-compat,
         AC_HELP_STRING([--enable-oshmem-compat],
             [enable compatibility mode (default: enabled)]))
-if test "$enable_oshmem_compat" != "no"; then
+if test "$enable_oshmem" != "no" -a "$enable_oshmem_compat" != "no"; then
     AC_MSG_RESULT([yes])
     OSHMEM_SPEC_COMPAT=1
 else
@@ -49,22 +51,26 @@ AC_DEFINE_UNQUOTED([OSHMEM_SPEC_COMPAT], [$OSHMEM_SPEC_COMPAT],
 AC_MSG_CHECKING([if want OSHMEM API parameter checking])
 AC_ARG_WITH(oshmem-param-check,
     AC_HELP_STRING([--oshmem-param-check(=VALUE)],
-                   [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: never).]))
-shmem_param_check=0
-if test "$with_oshmem_param_check" = "no" -o \
-    "$with_oshmem_param_check" = "never" -o \
-    -z "$with_oshmem_param_check"; then
-    shmem_param_check=0
-    AC_MSG_RESULT([never])
-elif test "$with_oshmem_param_check" = "yes" -o \
-    "$with_oshmem_param_check" = "always"; then
-    shmem_param_check=1
-    AC_MSG_RESULT([always])
+                   [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).]))
+if test "$enable_oshmem" != "no"; then
+    if test "$with_oshmem_param_check" = "no" -o \
+        "$with_oshmem_param_check" = "never"; then
+        shmem_param_check=0
+        AC_MSG_RESULT([never])
+    elif test "$with_oshmem_param_check" = "yes" -o \
+        "$with_oshmem_param_check" = "always" -o \
+        -z "$with_oshmem_param_check"; then
+        shmem_param_check=1
+        AC_MSG_RESULT([always])
+    else
+        AC_MSG_RESULT([unknown])
+        AC_MSG_WARN([*** Unrecognized --with-oshmem-param-check value])
+        AC_MSG_WARN([*** See "configure --help" output])
+        AC_MSG_WARN([*** Defaulting to "runtime"])
+    fi
 else
-    AC_MSG_RESULT([unknown])
-    AC_MSG_WARN([*** Unrecognized --with-oshmem-param-check value])
-    AC_MSG_WARN([*** See "configure --help" output])
-    AC_MSG_WARN([*** Defaulting to "runtime"])
+    shmem_param_check=0
+    AC_MSG_RESULT([no])
 fi
 AC_DEFINE_UNQUOTED(OSHMEM_PARAM_CHECK, $shmem_param_check,
     [Whether we want to check OSHMEM parameters always or never])
@@ -77,7 +83,7 @@ AC_MSG_CHECKING([if want pshmem_])
 AC_ARG_ENABLE(oshmem-profile,
     AC_HELP_STRING([--enable-oshmem-profile],
                    [enable OSHMEM profiling (default: enabled)]))
-if test "$enable_oshmem_profile" != "no"; then
+if test "$enable_oshmem" != "no" -a "$enable_oshmem_profile" != "no"; then
     AC_MSG_RESULT([yes])
     oshmem_profiling_support=1
 else
@@ -93,9 +99,9 @@ AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
 AC_ARG_ENABLE(oshmem-fortran,
 AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
-if test "$enable_oshmem_fortran" != "no"; then
+if test "$enable_oshmem" != "no" -a "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail
-   AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -a "$enable_oshmem" != "no" -a "$enable_oshmem_fortran" == "yes"],
+   AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -a "$enable_oshmem_fortran" == "yes"],
                [AC_MSG_RESULT([bad value OMPI_WANT_FORTRAN_BINDINGS: ($OMPI_WANT_FORTRAN_BINDINGS)])
                 AC_MSG_WARN([Your request to --enable-oshmem-fortran can only be satisfied if fortran support is enabled in OMPI.
 You see this message because OMPI fortran support has been explicitly disabled via --disable-mpi-fortran and OSHMEM fortran support was explicitly enabled with --enable-oshmem-fortran.
@@ -107,6 +113,7 @@ Configure will abort because you, a human, have asked for something that cannot 
         AC_MSG_RESULT([no])
     fi
 else
+    enable_oshmem_fortran=no
     AC_MSG_RESULT([no])
 fi
 

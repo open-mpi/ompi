@@ -1,7 +1,8 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -26,13 +27,23 @@ endif
 SUBDIRS = \
 	include \
 	shmem/c \
-	shmem/fortran \
+	shmem/fortran
+
+if PROJECT_OSHMEM
+SUBDIRS += \
 	$(EXT_oshmem_FRAMEWORKS_SUBDIRS) \
 	$(EXT_oshmem_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
 	$(MCA_oshmem_FRAMEWORKS_SUBDIRS) \
-	$(MCA_oshmem_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
-	. \
+	$(MCA_oshmem_FRAMEWORK_COMPONENT_STATIC_SUBDIRS)
+endif
+
+SUBDIRS += \
+	.
+
+if PROJECT_OSHMEM
+SUBDIRS += \
 	$(MCA_oshmem_FRAMEWORK_COMPONENT_DSO_SUBDIRS) 
+endif
 
 DIST_SUBDIRS = \
 	include \
@@ -44,7 +55,11 @@ DIST_SUBDIRS = \
 	$(MCA_oshmem_FRAMEWORK_COMPONENT_ALL_SUBDIRS) 
 
 #Build The main OSHMEM library
-lib_LTLIBRARIES = liboshmem.la
+lib_LTLIBRARIES =
+if PROJECT_OSHMEM
+lib_LTLIBRARIES += liboshmem.la
+endif
+
 liboshmem_la_SOURCES =
 liboshmem_la_LIBADD = \
 	shmem/c/liboshmem_c.la \
