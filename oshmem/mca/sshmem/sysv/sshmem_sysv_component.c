@@ -114,6 +114,7 @@ sysv_runtime_query(mca_base_module_t **module,
         mca_sshmem_sysv_component.use_hp = 0;
     }
     else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {
+        shmctl(shmid, IPC_RMID, NULL );
         mca_sshmem_sysv_component.use_hp = 0;
     }
 #endif
@@ -124,6 +125,7 @@ sysv_runtime_query(mca_base_module_t **module,
             goto out;
         }
         else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {
+            shmctl(shmid, IPC_RMID, NULL );
             goto out;
         }
     }
