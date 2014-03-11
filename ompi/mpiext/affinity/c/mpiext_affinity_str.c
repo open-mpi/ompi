@@ -107,6 +107,7 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
         ret = OPAL_ERR_NOT_BOUND;
     } else {
         ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
+                                       opal_hwloc_topology,
                                        orte_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
@@ -156,7 +157,8 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are bound, print it out */
     else {
-        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
+        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
+                                       opal_hwloc_topology,
                                        boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
             strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
@@ -298,6 +300,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
         ret = OPAL_ERR_NOT_BOUND;
     } else {
         ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
+                                          opal_hwloc_topology,
                                           orte_proc_applied_binding);
     }
     if (OPAL_ERR_NOT_BOUND == ret) {
@@ -347,7 +350,8 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are bound, print it out */
     else {
-        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
+        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
+                                          opal_hwloc_topology,
                                           boundset);
         if (OPAL_ERR_NOT_BOUND == ret) {
             strncpy(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);

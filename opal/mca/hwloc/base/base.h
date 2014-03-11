@@ -64,18 +64,18 @@ OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
 OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
 
 /* convenience macro for debugging */
-#define OPAL_HWLOC_SHOW_BINDING(n, v)                                   \
+#define OPAL_HWLOC_SHOW_BINDING(n, v, t)                                \
     do {                                                                \
         char tmp1[1024];                                                \
         hwloc_cpuset_t bind;                                            \
         bind = opal_hwloc_alloc();                                      \
-        if (hwloc_get_cpubind(opal_hwloc_topology, bind,                \
+        if (hwloc_get_cpubind(t, bind,                                  \
                               HWLOC_CPUBIND_PROCESS) < 0) {             \
             opal_output_verbose(n, v,                                   \
                                 "CANNOT DETERMINE BINDING AT %s:%d",    \
                                 __FILE__, __LINE__);                    \
         } else {                                                        \
-            opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), bind);      \
+            opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), t, bind);   \
             opal_output_verbose(n, v,                                   \
                                 "BINDINGS AT %s:%d: %s",                \
                                 __FILE__, __LINE__, tmp1);              \
@@ -250,7 +250,9 @@ OPAL_DECLSPEC int opal_hwloc_print(char **output, char *prefix,
  * Make a prettyprint string for a hwloc_cpuset_t (e.g., "socket
  * 2[core 3]").
  */
-OPAL_DECLSPEC int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset);
+OPAL_DECLSPEC int opal_hwloc_base_cset2str(char *str, int len,
+                                           hwloc_topology_t topo,
+                                           hwloc_cpuset_t cpuset);
 
 /**
  * Make a prettyprint string for a cset in a map format.  
@@ -260,7 +262,9 @@ OPAL_DECLSPEC int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cp
  *        . - signifies PU a process not bound to
  *        B - signifies PU a process is bound to
  */
-OPAL_DECLSPEC int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset);
+OPAL_DECLSPEC int opal_hwloc_base_cset2mapstr(char *str, int len,
+                                              hwloc_topology_t topo,
+                                              hwloc_cpuset_t cpuset);
 
 /* get the hwloc object that corresponds to the given LOGICAL processor id */
 OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,  int lid);

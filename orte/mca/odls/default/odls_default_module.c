@@ -556,10 +556,10 @@ static int do_child(orte_app_context_t* context,
                         opal_output(0, "MCW rank %d is not bound",
                                     child->name.vpid);
                     } else {
-                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), mycpus)) {
+                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
                             opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
                         } else {
-                            opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), mycpus);
+                            opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
                             opal_output(0, "MCW rank %d bound to %s: %s",
                                         child->name.vpid, tmp1, tmp2);
                         }
