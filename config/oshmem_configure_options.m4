@@ -49,15 +49,15 @@ AC_DEFINE_UNQUOTED([OSHMEM_SPEC_COMPAT], [$OSHMEM_SPEC_COMPAT],
 AC_MSG_CHECKING([if want OSHMEM API parameter checking])
 AC_ARG_WITH(oshmem-param-check,
     AC_HELP_STRING([--oshmem-param-check(=VALUE)],
-                   [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).]))
-shmem_param_check=1
+                   [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: never).]))
+shmem_param_check=0
 if test "$with_oshmem_param_check" = "no" -o \
-    "$with_oshmem_param_check" = "never"; then
+    "$with_oshmem_param_check" = "never" -o \
+    -z "$with_oshmem_param_check"; then
     shmem_param_check=0
     AC_MSG_RESULT([never])
 elif test "$with_oshmem_param_check" = "yes" -o \
-    "$with_oshmem_param_check" = "always" -o \
-    -z "$with_oshmem_param_check"; then
+    "$with_oshmem_param_check" = "always"; then
     shmem_param_check=1
     AC_MSG_RESULT([always])
 else
