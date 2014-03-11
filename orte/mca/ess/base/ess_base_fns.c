@@ -264,7 +264,7 @@ int orte_ess_base_proc_binding(void)
             free(orte_process_info.cpuset);
             orte_process_info.cpuset = NULL;
         }
-        if (opal_hwloc_report_bindings) {
+        if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             opal_output(0, "MCW rank %d is not bound",
                         ORTE_PROC_MY_NAME->vpid);
         }
@@ -276,7 +276,7 @@ int orte_ess_base_proc_binding(void)
         }
         hwloc_bitmap_list_asprintf(&orte_process_info.cpuset, mycpus);
         /* report the binding, if requested */
-        if (opal_hwloc_report_bindings) {
+        if (opal_hwloc_report_bindings || 4 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
             char tmp1[1024], tmp2[1024];
             if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
                 opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", ORTE_PROC_MY_NAME->vpid);
