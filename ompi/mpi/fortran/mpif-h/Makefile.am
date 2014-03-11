@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2012 Inria.  All rights reserved.
 # Copyright (c) 2011-2012 Universite Bordeaux 1
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 # 
@@ -332,8 +332,15 @@ libmpi_mpifh_la_SOURCES += \
         wtick_f.c \
         wtime_f.c \
         accumulate_f.c \
+        raccumulate_f.c \
         get_f.c \
+        rget_f.c \
+        get_accumulate_f.c \
+        rget_accumulate_f.c \
         put_f.c \
+        rput_f.c \
+        compare_and_swap_f.c \
+        fetch_and_op_f.c \
         win_call_errhandler_f.c \
         win_complete_f.c \
         win_create_errhandler_f.c \
@@ -355,7 +362,11 @@ libmpi_mpifh_la_SOURCES += \
         win_start_f.c \
         win_test_f.c \
         win_unlock_f.c \
-        win_wait_f.c
+        win_wait_f.c \
+        win_flush_f.c \
+        win_flush_all_f.c \
+        win_flush_local_f.c \
+        win_flush_local_all_f.c
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
 libmpi_mpifh_la_SOURCES += \

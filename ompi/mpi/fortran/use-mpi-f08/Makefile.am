@@ -88,6 +88,7 @@ mpi_api_files = \
         comm_spawn_multiple_f08.F90 \
         comm_split_f08.F90 \
         comm_test_inter_f08.F90 \
+        compare_and_swap_f08.F90 \
         dist_graph_create_adjacent_f08.F90 \
         dist_graph_create_f08.F90 \
         dist_graph_neighbors_count_f08.F90 \
@@ -98,11 +99,13 @@ mpi_api_files = \
         error_string_f08.F90 \
         exscan_f08.F90 \
         f_sync_reg_f08.F90 \
+        fetch_and_op_f08.F90 \
         finalized_f08.F90 \
         finalize_f08.F90 \
         free_mem_f08.F90 \
         gather_f08.F90 \
         gatherv_f08.F90 \
+        get_accumulate_f08.F90 \
         get_address_f08.F90 \
         get_count_f08.F90 \
         get_elements_f08.F90 \
@@ -205,6 +208,9 @@ mpi_api_files = \
         reduce_scatter_block_f08.F90 \
         request_free_f08.F90 \
         request_get_status_f08.F90 \
+        rget_f08.F90 \
+        rget_accumulate_f08.F90 \
+        rput_f08.F90 \
         rsend_f08.F90 \
         rsend_init_f08.F90 \
         scan_f08.F90 \
@@ -273,6 +279,10 @@ mpi_api_files = \
         win_create_keyval_f08.F90 \
         win_delete_attr_f08.F90 \
         win_fence_f08.F90 \
+        win_flush_f08.F90 \
+        win_flush_all_f08.F90 \
+        win_flush_local_f08.F90 \
+        win_flush_local_all_f08.F90 \
         win_free_f08.F90 \
         win_free_keyval_f08.F90 \
         win_get_attr_f08.F90 \
@@ -415,6 +425,7 @@ pmpi_api_files = \
         profile/pcomm_spawn_multiple_f08.F90 \
         profile/pcomm_split_f08.F90 \
         profile/pcomm_test_inter_f08.F90 \
+        profile/pcompare_and_swap_f08.F90 \
         profile/pdims_create_f08.F90 \
         profile/pdist_graph_create_adjacent_f08.F90 \
         profile/pdist_graph_create_f08.F90 \
@@ -425,11 +436,13 @@ pmpi_api_files = \
         profile/perror_string_f08.F90 \
         profile/pexscan_f08.F90 \
         profile/pf_sync_reg_f08.F90 \
+        profile/pfetch_and_op_f08.F90 \
         profile/pfinalized_f08.F90 \
         profile/pfinalize_f08.F90 \
         profile/pfree_mem_f08.F90 \
         profile/pgather_f08.F90 \
         profile/pgatherv_f08.F90 \
+        profile/pget_accumulate_f08.F90 \
         profile/pget_address_f08.F90 \
         profile/pget_count_f08.F90 \
         profile/pget_elements_f08.F90 \
@@ -531,6 +544,9 @@ pmpi_api_files = \
         profile/preduce_scatter_block_f08.F90 \
         profile/prequest_free_f08.F90 \
         profile/prequest_get_status_f08.F90 \
+        profile/prget_f08.F90 \
+        profile/prget_accumulate_f08.F90 \
+        profile/prput_f08.F90 \
         profile/prsend_f08.F90 \
         profile/prsend_init_f08.F90 \
         profile/pscan_f08.F90 \
@@ -600,6 +616,10 @@ pmpi_api_files = \
         profile/pwin_create_keyval_f08.F90 \
         profile/pwin_delete_attr_f08.F90 \
         profile/pwin_fence_f08.F90 \
+        profile/pwin_flush_f08.F90 \
+        profile/pwin_flush_all_f08.F90 \
+        profile/pwin_flush_local_f08.F90 \
+        profile/pwin_flush_local_all_f08.F90 \
         profile/pwin_free_f08.F90 \
         profile/pwin_free_keyval_f08.F90 \
         profile/pwin_get_attr_f08.F90 \

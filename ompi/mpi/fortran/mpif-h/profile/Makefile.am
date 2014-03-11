@@ -13,7 +13,7 @@
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2012 Inria.  All rights reserved.
 # Copyright (c) 2011-2012 Universite Bordeaux 1
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 # 
@@ -302,8 +302,15 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
 	pwtick_f.c \
 	pwtime_f.c \
         paccumulate_f.c \
+        praccumulate_f.c \
         pget_f.c \
+        prget_f.c \
+        pget_accumulate_f.c \
+        prget_accumulate_f.c \
         pput_f.c \
+        prput_f.c \
+        pcompare_and_swap_f.c \
+        pfetch_and_op_f.c \
         pwin_call_errhandler_f.c \
         pwin_complete_f.c \
         pwin_create_errhandler_f.c \
@@ -325,7 +332,12 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pwin_start_f.c \
         pwin_test_f.c \
         pwin_unlock_f.c \
-        pwin_wait_f.c
+        pwin_wait_f.c \
+        pwin_flush_f.c \
+        pwin_flush_all_f.c \
+        pwin_flush_local_f.c \
+        pwin_flush_local_all_f.c
+
 
 if OMPI_PROVIDE_MPI_FILE_INTERFACE
 nodist_libmpi_mpifh_pmpi_la_SOURCES += \
