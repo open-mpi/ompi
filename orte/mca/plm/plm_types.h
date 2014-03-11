@@ -174,7 +174,9 @@ typedef int32_t orte_job_state_t;
 #define ORTE_JOB_STATE_ALLOC_FAILED            (ORTE_JOB_STATE_ERROR + 18)  /* job failed to obtain an allocation */
 
 /* define an FT event */
-#define ORTE_JOB_STATE_FT_EVENT                (ORTE_JOB_STATE_ERROR + 19)
+#define ORTE_JOB_STATE_FT_CHECKPOINT           (ORTE_JOB_STATE_ERROR + 19)
+#define ORTE_JOB_STATE_FT_CONTINUE             (ORTE_JOB_STATE_ERROR + 20)
+#define ORTE_JOB_STATE_FT_RESTART              (ORTE_JOB_STATE_ERROR + 21)
 
 
 /* Define a boundary so that external developers

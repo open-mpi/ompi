@@ -383,17 +383,22 @@ static void process_uri(char *uri)
 void orte_oob_base_ft_event(int sd, short argc, void *cbdata)
 {
     int rc;
-    mca_oob_module_t *mod;
+    mca_base_component_list_item_t *cli;
+    mca_oob_base_component_t *component;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
 
     /* loop across all available modules in priority order
      * and call each one's ft_event handler
      */
-    OPAL_LIST_FOREACH(mod, &mca_oob_base_modules, mca_oob_module_t) {
-        if (NULL != mod->ft_event) {
-            if (ORTE_SUCCESS != (rc = mod->ft_event(state))) {
-                ORTE_ERROR_LOG(rc);
-            }
+    OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
+        component = (mca_oob_base_component_t*)cli->cli_component;
+        if (NULL == component->ft_event) {
+            /* doesn't support this ability */
+            continue;
+        }
+
+        if (ORTE_SUCCESS != (rc = component->ft_event(state->job_state))) {
+            ORTE_ERROR_LOG(rc);
         }
     }
     OBJ_RELEASE(state);
