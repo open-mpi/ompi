@@ -57,12 +57,16 @@ included in the vX.Y.Z section and be denoted as:
 1.7.5
 -----
 
+- Add OSHMEM support built on top of Open MPI's MPI layer
 - Support GCC/gfortran 4.9's "ignore TKR" syntax.  Thanks to Tobias
   Burnus for adding this support to gfortran.
 - Allow restricting ORTE daemons to specific cores using
   orte_daemon_cores MCA param
 - MPI-3: Added support for new RMA functions.
 - MPI-3 compliant.
+- Multiple fixes to mapping/binding options. Thanks to Tetsuya Mishima
+  for his assistance
+
 
 1.7.4
 -----
