@@ -238,8 +238,8 @@
 /*
  * MPI version
  */
-#define MPI_VERSION 2
-#define MPI_SUBVERSION 2
+#define MPI_VERSION 3
+#define MPI_SUBVERSION 0
 
 
 /*
