@@ -72,6 +72,10 @@ static inline int ompi_osc_rdma_put_self (void *source, int source_count, ompi_d
         ((unsigned long) target_disp * module->disp_unit);
     int ret;
 
+    if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
+        return MPI_ERR_RMA_SYNC;
+    }
+
     ret = ompi_datatype_sndrcv (source, source_count, source_datatype,
                                 target, target_count, target_datatype);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -93,6 +97,10 @@ static inline int ompi_osc_rdma_get_self (void *target, int target_count, ompi_d
         ((unsigned long) source_disp * module->disp_unit);
     int ret;
 
+    if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
+        return MPI_ERR_RMA_SYNC;
+    }
+
     ret = ompi_datatype_sndrcv (source, source_count, source_datatype,
                                 target, target_count, target_datatype);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -111,6 +119,10 @@ static inline int ompi_osc_rdma_cas_self (void *source, void *compare, void *res
 {
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) target_disp * module->disp_unit);
+
+    if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     ompi_osc_rdma_accumulate_lock (module);
 
@@ -132,6 +144,10 @@ static inline int ompi_osc_rdma_acc_self (void *source, int source_count, ompi_d
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) target_disp * module->disp_unit);
     int ret;
+
+    if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     ompi_osc_rdma_accumulate_lock (module);
 
@@ -164,6 +180,10 @@ static inline int ompi_osc_rdma_gacc_self (void *source, int source_count, ompi_
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) target_disp * module->disp_unit);
     int ret;
+
+    if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     ompi_osc_rdma_accumulate_lock (module);
 
