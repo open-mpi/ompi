@@ -120,7 +120,7 @@ ompi_osc_rdma_frag_flush_target(ompi_osc_rdma_module_t *module, int target)
 
         if (0 != frag->pending) {
             /* communication going on while synchronizing; this is a bug */
-            return MPI_ERR_RMA_SYNC;
+            return OMPI_ERR_RMA_SYNC;
         }
 
         module->peers[target].active_frag = NULL;
@@ -166,7 +166,7 @@ ompi_osc_rdma_frag_flush_all(ompi_osc_rdma_module_t *module)
 
             if (0 != frag->pending) {
                 /* communication going on while synchronizing; this is a bug */
-                return MPI_ERR_RMA_SYNC;
+                return OMPI_ERR_RMA_SYNC;
             }
 
             module->peers[i].active_frag = NULL;

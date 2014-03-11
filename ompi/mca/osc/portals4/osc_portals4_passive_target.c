@@ -153,7 +153,7 @@ start_exclusive(ompi_osc_portals4_module_t *module,
     while (true) {
         ret = lk_cas64(module, target, LOCK_EXCLUSIVE, 0, &result);
         if (OMPI_SUCCESS != ret) return ret;
-        if (LOCK_ILLEGAL == (LOCK_ILLEGAL & result)) return MPI_ERR_RMA_SYNC;
+        if (LOCK_ILLEGAL == (LOCK_ILLEGAL & result)) return OMPI_ERR_RMA_SYNC;
         if (0 == result) break;
     }
 
@@ -184,7 +184,7 @@ start_shared(ompi_osc_portals4_module_t *module,
         if (OMPI_SUCCESS != ret) return ret;
 
         if (result > (int64_t)LOCK_EXCLUSIVE) {
-            if (LOCK_ILLEGAL == (LOCK_ILLEGAL & result)) return MPI_ERR_RMA_SYNC;
+            if (LOCK_ILLEGAL == (LOCK_ILLEGAL & result)) return OMPI_ERR_RMA_SYNC;
             ret = lk_add64(module, target, -1, &result);
             if (OMPI_SUCCESS != ret) return ret;
         } else {
@@ -264,7 +264,7 @@ ompi_osc_portals4_unlock(int target,
     if (NULL != item) {
         opal_list_remove_item(&module->outstanding_locks, &lock->super);
     } else {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ret = ompi_osc_portals4_complete_all(module);
@@ -338,7 +338,7 @@ ompi_osc_portals4_unlock_all(struct ompi_win_t *win)
     if (NULL != item) {
         opal_list_remove_item(&module->outstanding_locks, &lock->super);
     } else {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ret = ompi_osc_portals4_complete_all(module);

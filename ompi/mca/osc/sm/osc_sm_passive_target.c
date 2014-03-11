@@ -119,7 +119,7 @@ ompi_osc_sm_lock(int lock_type,
     int ret;
 
     if (lock_none != module->outstanding_locks[target]) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     if (0 == (assert & MPI_MODE_NOCHECK)) {
@@ -159,7 +159,7 @@ ompi_osc_sm_unlock(int target,
         ret = end_shared(module, target);
 	module->outstanding_locks[target] = lock_none;
     } else {
-        ret = MPI_ERR_RMA_SYNC;
+        ret = OMPI_ERR_RMA_SYNC;
     }
 
     return ret;
