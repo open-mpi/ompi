@@ -411,6 +411,11 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
 
         yoda_context->registration = NULL;
         if (NULL != ybtl->btl->btl_prepare_src) {
+            int btl_id;
+            mca_bml_base_btl_t* bml_btl;
+
+            bml_btl = get_next_btl(oshmem_my_proc_id(), &btl_id);
+
             /* initialize convertor for source descriptor*/
             opal_convertor_copy_and_prepare_for_recv(proc_self->proc_convertor,
                                                      datatype,
@@ -437,7 +442,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
 
             /* register source memory */
             des = ybtl->btl->btl_prepare_src(ybtl->btl,
-                                             0,
+                                             bml_btl->btl_endpoint,
                                              yoda_context->registration,
                                              &convertor,
                                              MCA_BTL_NO_ORDER,
