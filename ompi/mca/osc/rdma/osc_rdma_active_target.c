@@ -147,7 +147,7 @@ ompi_osc_rdma_start(ompi_group_t *group,
                          "ompi_osc_rdma_start entering..."));
 
     if (module->sc_group) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     /* save the group */
@@ -158,7 +158,7 @@ ompi_osc_rdma_start(ompi_group_t *group,
 
     /* ensure we're not already in a start */
     if (NULL != module->sc_group) {
-        ret = MPI_ERR_RMA_SYNC;
+        ret = OMPI_ERR_RMA_SYNC;
         goto cleanup;
     }
     module->sc_group = group;    
@@ -211,7 +211,7 @@ ompi_osc_rdma_complete(ompi_win_t *win)
                          "ompi_osc_rdma_complete entering..."));
 
     if (NULL == module->sc_group) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ranks = get_comm_ranks(module, module->sc_group);
@@ -301,7 +301,7 @@ ompi_osc_rdma_post(ompi_group_t *group,
                          "ompi_osc_rdma_post entering..."));
 
     if (module->pw_group) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     /* save the group */
@@ -313,7 +313,7 @@ ompi_osc_rdma_post(ompi_group_t *group,
     /* ensure we're not already in a post */
     if (NULL != module->pw_group) {
         OPAL_THREAD_UNLOCK(&(module->lock));
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
     module->pw_group = group;
 
@@ -363,7 +363,7 @@ ompi_osc_rdma_wait(ompi_win_t *win)
                          "ompi_osc_rdma_wait entering..."));
 
     if (NULL == module->pw_group) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -399,7 +399,7 @@ ompi_osc_rdma_test(ompi_win_t *win,
 #endif
 
     if (NULL == module->pw_group) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     OPAL_THREAD_LOCK(&(module->lock));

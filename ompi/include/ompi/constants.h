@@ -64,10 +64,11 @@ enum {
     OMPI_ERR_BUFFER                 = OPAL_ERR_BUFFER,
     OMPI_ERR_SILENT                 = OPAL_ERR_SILENT,
 
-    OMPI_ERR_REQUEST                = OMPI_ERR_BASE - 1
+    OMPI_ERR_REQUEST                = OMPI_ERR_BASE - 1,
+    OMPI_ERR_RMA_SYNC               = OMPI_ERR_BASE - 2
 };
 
-#define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 2)
+#define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 100)
 
 #endif /* OMPI_CONSTANTS_H */
 

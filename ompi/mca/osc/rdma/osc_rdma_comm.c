@@ -73,7 +73,7 @@ static inline int ompi_osc_rdma_put_self (void *source, int source_count, ompi_d
     int ret;
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ret = ompi_datatype_sndrcv (source, source_count, source_datatype,
@@ -98,7 +98,7 @@ static inline int ompi_osc_rdma_get_self (void *target, int target_count, ompi_d
     int ret;
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ret = ompi_datatype_sndrcv (source, source_count, source_datatype,
@@ -121,7 +121,7 @@ static inline int ompi_osc_rdma_cas_self (void *source, void *compare, void *res
         ((unsigned long) target_disp * module->disp_unit);
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ompi_osc_rdma_accumulate_lock (module);
@@ -146,7 +146,7 @@ static inline int ompi_osc_rdma_acc_self (void *source, int source_count, ompi_d
     int ret;
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ompi_osc_rdma_accumulate_lock (module);
@@ -182,7 +182,7 @@ static inline int ompi_osc_rdma_gacc_self (void *source, int source_count, ompi_
     int ret;
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ompi_osc_rdma_accumulate_lock (module);
