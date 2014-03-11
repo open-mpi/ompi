@@ -13,7 +13,8 @@
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
- # $COPYRIGHT$
+# Copyright (c) 2014      Intel, Inc.  All rights reserved.
+# $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
@@ -23,6 +24,7 @@
 # This makefile.am does not stand on its own - it is included from
 # orte/Makefile.am
 
+if PROJECT_ORTE
 SUBDIRS += \
 	tools/orte-checkpoint \
 	tools/orte-clean \
@@ -35,6 +37,7 @@ SUBDIRS += \
         tools/orte-info \
         tools/orte-migrate \
         tools/orte-server
+endif
 
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \

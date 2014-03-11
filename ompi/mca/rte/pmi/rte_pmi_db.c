@@ -26,6 +26,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/rte/rte.h"
 #include "ompi/mca/rte/base/base.h"
+#include "ompi/proc/proc.h"
 
 #include "rte_pmi.h"
 #include "rte_pmi_internal.h"
@@ -527,7 +528,7 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
 
 
 int
-ompi_rte_db_fetch(const ompi_process_name_t *proc,
+ompi_rte_db_fetch(const struct ompi_proc_t *pptr,
                   const char *key,
                   void **data,
                   opal_data_type_t type)
@@ -542,7 +543,9 @@ ompi_rte_db_fetch(const ompi_process_name_t *proc,
     char tmp_val[1024];
     opal_hwloc_locality_t locality;
     size_t sval;
+    ompi_process_name_t *proc;
 
+    proc = &((ompi_proc_t*)pptr)->proc_name;
     opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                 "%s db:pmi:fetch: searching for key %s[%s] on proc %s",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
@@ -674,13 +677,15 @@ ompi_rte_db_fetch(const ompi_process_name_t *proc,
 
 
 int
-ompi_rte_db_fetch_pointer(const ompi_process_name_t *proc,
+ompi_rte_db_fetch_pointer(const struct ompi_proc_t *pptr,
                           const char *key,
                           void **data,
                           opal_data_type_t type)
 {
     local_data_t *pdat;
+    ompi_process_name_t *proc;
 
+    proc = &((ompi_proc_t*)pptr)->proc_name;
     opal_output_verbose(5, ompi_rte_base_framework.framework_output,
                         "%s db:pmi:fetch_pointer: searching for key %s on proc %s",
                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),

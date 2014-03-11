@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,12 +19,22 @@
 #
 
 SUBDIRS = \
-	include \
+	include
+
+if PROJECT_ORTE
+SUBDIRS += \
 	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
-	$(MCA_orte_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
+	$(MCA_orte_FRAMEWORK_COMPONENT_STATIC_SUBDIRS)
+endif
+
+SUBDIRS += \
 	etc \
-        . \
+        .
+
+if PROJECT_ORTE
+SUBDIRS += \
 	$(MCA_orte_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
+endif
 
 DIST_SUBDIRS = \
 	include \
@@ -32,8 +43,11 @@ DIST_SUBDIRS = \
 	$(MCA_orte_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 # Build the main ORTE library
+lib_LTLIBRARIES =
+if PROJECT_ORTE
+lib_LTLIBRARIES += libopen-rte.la
+endif
 
-lib_LTLIBRARIES = libopen-rte.la
 libopen_rte_la_SOURCES =
 libopen_rte_la_LIBADD = \
 	$(MCA_orte_FRAMEWORK_LIBS) \
