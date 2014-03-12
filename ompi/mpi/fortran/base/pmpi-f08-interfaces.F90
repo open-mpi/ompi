@@ -3001,11 +3001,11 @@ subroutine PMPI_Get_accumulate_f08(origin_addr,origin_count,origin_datatype,resu
                                   target_count,target_datatype,op,win,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,target_addr
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,target_addr
-   !$PRAGMA IGNORE_TKR origin_addr,target_addr
-   !DIR$ IGNORE_TKR origin_addr,target_addr
-   !IBM* IGNORE_TKR origin_addr,target_addr
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !$PRAGMA IGNORE_TKR origin_addr,result_addr
+   !DIR$ IGNORE_TKR origin_addr,result_addr
+   !IBM* IGNORE_TKR origin_addr,result_addr
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
@@ -3025,11 +3025,11 @@ subroutine PMPI_Rget_accumulate_f08(origin_addr,origin_count,origin_datatype,res
                                    target_count,target_datatype,op,win,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Request, MPI_Win, MPI_ADDRESS_KIND
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,target_addr
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,target_addr
-   !$PRAGMA IGNORE_TKR origin_addr,target_addr
-   !DIR$ IGNORE_TKR origin_addr,target_addr
-   !IBM* IGNORE_TKR origin_addr,target_addr
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !$PRAGMA IGNORE_TKR origin_addr,result_addr
+   !DIR$ IGNORE_TKR origin_addr,result_addr
+   !IBM* IGNORE_TKR origin_addr,result_addr
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
