@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,6 @@
 #include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_T_finalize";
 
 int MPI_T_finalize (void)
 {

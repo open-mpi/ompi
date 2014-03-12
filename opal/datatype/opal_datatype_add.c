@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,12 +37,10 @@
 #define LMAX(A,B)  ({ OPAL_PTRDIFF_TYPE _a = (A), _b = (B); (_a < _b ? _b : _a) })
 #define LMIN(A,B)  ({ OPAL_PTRDIFF_TYPE _a = (A), _b = (B); (_a < _b ? _a : _b); })
 #define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
-#define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
 #else
 static inline OPAL_PTRDIFF_TYPE LMAX( OPAL_PTRDIFF_TYPE a, OPAL_PTRDIFF_TYPE b ) { return ( a < b ? b : a ); }
 static inline OPAL_PTRDIFF_TYPE LMIN( OPAL_PTRDIFF_TYPE a, OPAL_PTRDIFF_TYPE b ) { return ( a < b ? a : b ); }
 static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
-static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 #endif  /* __GNU__ */
 
 #define OPAL_DATATYPE_COMPUTE_REQUIRED_ENTRIES( _pdtAdd, _count, _extent, _place_needed) \
