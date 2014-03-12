@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -200,6 +200,7 @@ mpi_api_files = \
         publish_name_f08.F90 \
         put_f08.F90 \
         query_thread_f08.F90 \
+        raccumulate_f08.F90 \
         recv_f08.F90 \
         recv_init_f08.F90 \
         reduce_f08.F90 \
@@ -536,6 +537,7 @@ pmpi_api_files = \
         profile/ppublish_name_f08.F90 \
         profile/pput_f08.F90 \
         profile/pquery_thread_f08.F90 \
+        profile/praccumulate_f08.F90 \
         profile/precv_f08.F90 \
         profile/precv_init_f08.F90 \
         profile/preduce_f08.F90 \
