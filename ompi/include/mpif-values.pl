@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -202,8 +202,8 @@ $io_handles->{MPI_FILE_NULL} = 0;
 
 my $constants;
 
-$constants->{MPI_VERSION} = 2;
-$constants->{MPI_SUBVERSION} = 1;
+$constants->{MPI_VERSION} = 3;
+$constants->{MPI_SUBVERSION} = 0;
 
 $constants->{MPI_ANY_SOURCE} = -1;
 $constants->{MPI_ANY_TAG} = -1;
