@@ -414,10 +414,15 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         }
     }
 
+    /* the statement below (from Brian) does not seem correct so disable active target on the
+     * window. if this end up being incorrect please revert this one change */
+    module->active_eager_send_active = false;
+#if 0
     /* initially, we're in that pseudo-fence state, so we allow eager
        sends (yay for Fence).  Other protocols will disable before
        they start their epochs, so this isn't a problem. */
     module->active_eager_send_active = true;
+#endif
 
     if (!no_locks) {
         module->passive_eager_send_active = malloc(sizeof(bool) * ompi_comm_size(comm));

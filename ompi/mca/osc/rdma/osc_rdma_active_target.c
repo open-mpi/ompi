@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -95,9 +96,9 @@ ompi_osc_rdma_fence(int assert, ompi_win_t *win)
 
     /* find out how much data everyone is going to send us.  */
     ret = module->comm->c_coll.coll_reduce_scatter_block (module->epoch_outgoing_frag_count,
-							  &incoming_reqs, 1, MPI_UINT32_T,
-							  MPI_SUM, module->comm,
-							  module->comm->c_coll.coll_reduce_scatter_block_module);
+                                                          &incoming_reqs, 1, MPI_UINT32_T,
+                                                          MPI_SUM, module->comm,
+                                                          module->comm->c_coll.coll_reduce_scatter_block_module);
     if (OMPI_SUCCESS != ret) goto cleanup;
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -143,7 +144,11 @@ ompi_osc_rdma_start(ompi_group_t *group,
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_start entering..."));
+                         "ompi_osc_rdma_start entering..."));
+
+    if (module->sc_group) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     /* save the group */
     OBJ_RETAIN(group);
@@ -164,7 +169,7 @@ ompi_osc_rdma_start(ompi_group_t *group,
     module->active_eager_send_active = false;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "num_post_msgs = %d", module->num_post_msgs));
+                         "num_post_msgs = %d", module->num_post_msgs));
 
     /* possible we've already received a couple in messages, so
        add however many we're going to wait for */
@@ -178,7 +183,7 @@ ompi_osc_rdma_start(ompi_group_t *group,
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_start complete"));
+                         "ompi_osc_rdma_start complete"));
 
     OPAL_THREAD_UNLOCK(&module->lock);
     return OMPI_SUCCESS;
@@ -203,7 +208,11 @@ ompi_osc_rdma_complete(ompi_win_t *win)
     ompi_group_t *group;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_complete entering..."));
+                         "ompi_osc_rdma_complete entering..."));
+
+    if (NULL == module->sc_group) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     ranks = get_comm_ranks(module, module->sc_group);
     if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -212,13 +221,13 @@ ompi_osc_rdma_complete(ompi_win_t *win)
 
     /* wait for all the post messages */
     while (0 != module->num_post_msgs) {
-	OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			     "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                             "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
         opal_condition_wait(&module->cond, &module->lock);
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_complete sending complete message"));
+                         "ompi_osc_rdma_complete sending complete message"));
 
     /* for each process in group, send a control message with number
        of updates coming, then start all the requests.  Note that the
@@ -264,7 +273,7 @@ ompi_osc_rdma_complete(ompi_win_t *win)
     OBJ_RELEASE(group);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_complete complete"));
+                         "ompi_osc_rdma_complete complete"));
     free (ranks);
 
     return OMPI_SUCCESS;
@@ -289,7 +298,11 @@ ompi_osc_rdma_post(ompi_group_t *group,
     ompi_osc_rdma_header_post_t post_req;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_post entering..."));
+                         "ompi_osc_rdma_post entering..."));
+
+    if (module->pw_group) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     /* save the group */
     OBJ_RETAIN(group);
@@ -312,11 +325,11 @@ ompi_osc_rdma_post(ompi_group_t *group,
     OPAL_THREAD_UNLOCK(&(module->lock));
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-			 "sending post messages"));
+                         "sending post messages"));
 
     ranks = get_comm_ranks(module, module->pw_group);
     if (NULL == ranks) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* send a hello counter to everyone in group */
@@ -330,8 +343,8 @@ ompi_osc_rdma_post(ompi_group_t *group,
         ret = ompi_osc_rdma_control_send_unbuffered(module, ranks[i], &post_req,
                                                     sizeof(ompi_osc_rdma_header_post_t));
         if (OMPI_SUCCESS != ret) {
-	    break;
-	}
+            break;
+        }
     }
 
     free (ranks);
@@ -347,15 +360,15 @@ ompi_osc_rdma_wait(ompi_win_t *win)
     ompi_group_t *group;
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_wait entering..."));
+                         "ompi_osc_rdma_wait entering..."));
+
+    if (NULL == module->pw_group) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     OPAL_THREAD_LOCK(&module->lock);
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_wait active_incoming_frag_count = %d, active_incoming_frag_signal_count = %d, num_complete_msgs = %d",
-			 (int) module->active_incoming_frag_count, (int) module->active_incoming_frag_count, module->num_complete_msgs));
-
     while (0 != module->num_complete_msgs ||
-           module->active_incoming_frag_count < module->active_incoming_frag_signal_count) {
+             module->active_incoming_frag_count < module->active_incoming_frag_signal_count) {
         opal_condition_wait(&module->cond, &module->lock);
     }
 
@@ -367,7 +380,7 @@ ompi_osc_rdma_wait(ompi_win_t *win)
     OBJ_RELEASE(group);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-			 "ompi_osc_rdma_wait complete"));
+                         "ompi_osc_rdma_wait complete"));
 
     return OMPI_SUCCESS;
 }
@@ -384,6 +397,10 @@ ompi_osc_rdma_test(ompi_win_t *win,
 #if !OMPI_ENABLE_PROGRESS_THREADS
     opal_progress();
 #endif
+
+    if (NULL == module->pw_group) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     OPAL_THREAD_LOCK(&(module->lock));
 
