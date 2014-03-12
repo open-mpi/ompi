@@ -4,7 +4,7 @@
 #                         reserved.
 # Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+# Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 # 
@@ -37,7 +37,8 @@ libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
                      pvar_handle_free.c pvar_read.c pvar_readreset.c \
                      pvar_reset.c pvar_session_create.c pvar_session_free.c \
                      pvar_start.c pvar_stop.c pvar_write.c \
-                     enum_get_info.c enum_get_item.c
+                     enum_get_info.c enum_get_item.c cvar_get_index.c \
+                     pvar_get_index.c category_get_index.c
 
 # Conditionally install the header files
 
