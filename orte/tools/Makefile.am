@@ -24,7 +24,6 @@
 # This makefile.am does not stand on its own - it is included from
 # orte/Makefile.am
 
-if PROJECT_ORTE
 SUBDIRS += \
 	tools/orte-checkpoint \
 	tools/orte-clean \
@@ -37,7 +36,6 @@ SUBDIRS += \
         tools/orte-info \
         tools/orte-migrate \
         tools/orte-server
-endif
 
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \
