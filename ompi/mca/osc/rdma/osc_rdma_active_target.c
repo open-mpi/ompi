@@ -80,6 +80,7 @@ ompi_osc_rdma_fence(int assert, ompi_win_t *win)
 
     /* short-circuit the noprecede case */
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
+        module->active_eager_send_active = true;
         ret = module->comm->c_coll.coll_barrier(module->comm,
                                                 module->comm->c_coll.coll_barrier_module);
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
