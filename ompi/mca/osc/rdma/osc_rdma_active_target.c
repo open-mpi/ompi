@@ -78,6 +78,16 @@ ompi_osc_rdma_fence(int assert, ompi_win_t *win)
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "osc rdma: fence start"));
 
+    /* can't enter an active target epoch when in a passive target epoch */
+    if (module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
+    /* active sends are now active (we will close the epoch if NOSUCCEED is specified) */
+    if (0 == (assert & MPI_MODE_NOSUCCEED)) {
+        module->active_eager_send_active = true;
+    }
+
     /* short-circuit the noprecede case */
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
         ret = module->comm->c_coll.coll_barrier(module->comm,
@@ -121,8 +131,10 @@ ompi_osc_rdma_fence(int assert, ompi_win_t *win)
 
     ret = OMPI_SUCCESS;
 
-    if (0 == (assert & MPI_MODE_NOSUCCEED)) {
-        module->active_eager_send_active = true;
+    if (assert & MPI_MODE_NOSUCCEED) {
+        /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly
+         * stated that MPI_MODE_NOSUCCEED ends the epoch but it is a safe assumption. */
+        module->active_eager_send_active = false;
     }
 
  cleanup:

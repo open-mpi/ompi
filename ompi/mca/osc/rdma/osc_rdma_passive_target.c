@@ -187,6 +187,12 @@ int ompi_osc_rdma_lock(int lock_type, int target, int assert, ompi_win_t *win)
     ompi_osc_rdma_outstanding_lock_t *lock;
     int ret = OMPI_SUCCESS;
 
+    /* Check if no_locks is set. TODO: we also need to track whether we are in an
+     * active target epoch. Fence can make this tricky to track. */
+    if (NULL == module->passive_eager_send_active) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     assert(module->epoch_outgoing_frag_count[target] == 0);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
@@ -309,6 +315,12 @@ int ompi_osc_rdma_lock_all(int assert, struct ompi_win_t *win)
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     int ret, my_rank = ompi_comm_rank (module->comm);
     ompi_osc_rdma_outstanding_lock_t *lock;
+
+    /* Check if no_locks is set. TODO: we also need to track whether we are in an active
+     * target epoch. Fence can make this tricky to track. */
+    if (NULL == module->passive_eager_send_active) {
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     /* delay all eager sends until we've heard back.. */
     OPAL_THREAD_LOCK(&module->lock);
@@ -523,6 +535,11 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
 
     assert (0 <= target);
 
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_flush starting..."));
 
@@ -560,6 +577,11 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
     ompi_osc_rdma_outstanding_lock_t *lock;
     int ret = OMPI_SUCCESS;
 
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     if (OPAL_UNLIKELY(0 == opal_list_get_size (&module->outstanding_locks))) {
         OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                              "ompi_osc_rdma_flush_all: no targets are locked in window %s",
@@ -594,6 +616,11 @@ int ompi_osc_rdma_flush_local (int target, struct ompi_win_t *win)
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     int ret;
 
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     OPAL_THREAD_LOCK(&module->lock);
 
     ret = ompi_osc_rdma_frag_flush_target(module, target);
@@ -615,6 +642,11 @@ int ompi_osc_rdma_flush_local_all (struct ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     int ret = OMPI_SUCCESS;
+
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     OPAL_THREAD_LOCK(&module->lock);
 
