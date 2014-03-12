@@ -112,6 +112,11 @@ static int init(void)
     /* setup state machine to trap job errors */
     orte_state.add_job_state(ORTE_JOB_STATE_ERROR, job_errors, ORTE_ERROR_PRI);
 
+    /* set the lost connection state to run at MSG priority so
+     * we can process any last messages from the proc
+     */
+    orte_state.add_proc_state(ORTE_PROC_STATE_COMM_FAILED, proc_errors, ORTE_MSG_PRI);
+
     /* setup state machine to trap proc errors */
     orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
 
@@ -290,7 +295,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:default:orted all routes gone - exiting",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            ORTE_FORCED_TERMINATE(0);
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
         } else {
             OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:default:orted not exiting, num_routes() == %d",

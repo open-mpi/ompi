@@ -152,7 +152,7 @@ static int init(void)
     }
     /* add the termination response */
     if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_DAEMONS_TERMINATED,
-                                                       orte_quit, ORTE_MSG_PRI))) {
+                                                       orte_quit, ORTE_SYS_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
     /* add a default error response */

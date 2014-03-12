@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,6 +85,11 @@
 static char *get_orted_comm_cmd_str(int command);
 
 static opal_pointer_array_t *procs_prev_ordered_to_terminate = NULL;
+
+static void suicide(int sd, short args, void *cbdata)
+{
+    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+}
 
 void orte_daemon_recv(int status, orte_process_name_t* sender,
                       opal_buffer_t *buffer, orte_rml_tag_t tag,
@@ -434,6 +440,8 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         }
         /* kill the local procs */
         orte_odls.kill_local_procs(NULL);
+        /* flag that orteds were ordered to terminate */
+        orte_orteds_term_ordered = true;
         /* if all my routes and local children are gone, then terminate ourselves */
         if (0 == orte_routed.num_routes()) {
             for (i=0; i < orte_local_children->size; i++) {
@@ -449,6 +457,11 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+        } else {
+            /* set a timer to suicide, just in case one of our
+             * dependent routes fails to terminate
+             */
+            ORTE_TIMER_EVENT(10, 0, suicide, ORTE_ERROR_PRI);
         }
         return;
         break;

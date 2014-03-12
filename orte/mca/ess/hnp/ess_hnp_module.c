@@ -921,7 +921,7 @@ static void clean_abort(int fd, short flags, void *arg)
        (which is a Bad Thing), so we can't call it directly.
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
-    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    orte_plm.terminate_orteds();;
 }
 
 static struct timeval current, last={0,0};

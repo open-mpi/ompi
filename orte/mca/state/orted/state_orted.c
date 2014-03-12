@@ -23,6 +23,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/routed/routed.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_quit.h"
 
@@ -108,7 +109,7 @@ static int init(void)
     }
     /* add a state for when we are ordered to terminate */
     if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_DAEMONS_TERMINATED,
-                                                       orte_quit, ORTE_ERROR_PRI))) {
+                                                       orte_quit, ORTE_SYS_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
     if (5 < opal_output_get_verbosity(orte_state_base_framework.framework_output)) {
@@ -326,8 +327,28 @@ static void track_procs(int fd, short argc, void *cbdata)
                                                       orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
                 }
+                /* if we are trying to terminate and our routes are
+                 * gone, then terminate ourselves IF no local procs
+                 * remain (might be some from another job)
+                 */
+                if (orte_orteds_term_ordered &&
+                    0 == orte_routed.num_routes()) {
+                    for (i=0; i < orte_local_children->size; i++) {
+                        if (NULL != (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
+                            pptr->alive) {
+                            /* at least one is still alive */
+                            goto moveon;
+                        }
+                    }
+                    /* call our appropriate exit procedure */
+                    OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
+                                         "%s orted:state: all routes and children gone - exiting",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+                }
             }
         }
+    moveon:
         /* Release the stdin IOF file descriptor for this child, if one
          * was defined. File descriptors for the other IOF channels - stdout,
          * stderr, and stddiag - were released when their associated pipes
@@ -376,6 +397,25 @@ static void track_procs(int fd, short argc, void *cbdata)
                                                       ORTE_RML_TAG_PLM,
                                                       orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
+                }
+                /* if we are trying to terminate and our routes are
+                 * gone, then terminate ourselves IF no local procs
+                 * remain (might be some from another job)
+                 */
+                if (orte_orteds_term_ordered &&
+                    0 == orte_routed.num_routes()) {
+                    for (i=0; i < orte_local_children->size; i++) {
+                        if (NULL != (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
+                            pptr->alive) {
+                            /* at least one is still alive */
+                            goto moveon;
+                        }
+                    }
+                    /* call our appropriate exit procedure */
+                    OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
+                                         "%s orted:state: all routes and children gone - exiting",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
                 }
             }
         }
