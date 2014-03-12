@@ -2220,7 +2220,7 @@ subroutine ompi_get_accumulate_f(origin_addr,origin_count,origin_datatype, &
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    INTEGER, INTENT(IN) :: origin_datatype
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    INTEGER, INTENT(IN) :: result_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
    INTEGER, INTENT(IN) :: target_datatype
@@ -2240,7 +2240,7 @@ subroutine ompi_rget_accumulate_f(origin_addr,origin_count,origin_datatype, &
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    INTEGER, INTENT(IN) :: origin_datatype
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    INTEGER, INTENT(IN) :: result_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
    INTEGER, INTENT(IN) :: target_datatype
@@ -2294,7 +2294,7 @@ subroutine ompi_compare_and_swap_f(origin_addr,compare_addr,result_addr, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr, compare_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -2308,7 +2308,7 @@ subroutine ompi_fetch_and_op_f(origin_addr,result_addr,datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
