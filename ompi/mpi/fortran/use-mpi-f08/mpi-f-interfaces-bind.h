@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
@@ -2288,7 +2288,7 @@ subroutine ompi_win_complete_f(win,ierror) &
 end subroutine ompi_win_complete_f
 
 subroutine ompi_compare_and_swap_f(origin_addr,compare_addr,result_addr, &
-                                   target_rank,target_disp,datatype, win, &
+                                   datatype,target_rank,target_disp, win, &
                                    ierror) &
    BIND(C, name="ompi_compare_and_swap_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
