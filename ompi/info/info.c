@@ -239,7 +239,7 @@ int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo)
 /*
  * Set a value on the info
  */
-int ompi_info_set (ompi_info_t *info, char *key, char *value) 
+int ompi_info_set (ompi_info_t *info, const char *key, const char *value) 
 {
     char *new_value;
     ompi_info_entry_t *new_info;
