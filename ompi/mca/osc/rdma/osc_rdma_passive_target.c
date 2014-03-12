@@ -253,7 +253,7 @@ int ompi_osc_rdma_unlock(int target, ompi_win_t *win)
                              "ompi_osc_rdma_unlock: target %d is not locked in window %s",
                              target, win->w_name));
         OPAL_THREAD_LOCK(&module->lock);
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     if (ompi_comm_rank (module->comm) != target) {
@@ -380,7 +380,7 @@ int ompi_osc_rdma_unlock_all (struct ompi_win_t *win)
                              "ompi_osc_rdma_unlock_all: not locked in window %s",
                              win->w_name));
         OPAL_THREAD_LOCK(&module->lock);
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     /* wait for lock acks */
@@ -543,7 +543,7 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
                              "ompi_osc_rdma_flush: target %d is not locked in window %s",
                              target, win->w_name));
         OPAL_THREAD_LOCK(&module->lock);
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     ret = ompi_osc_rdma_flush_lock (module, lock, target);
@@ -564,7 +564,7 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
         OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                              "ompi_osc_rdma_flush_all: no targets are locked in window %s",
                              win->w_name));
-        return MPI_ERR_RMA_SYNC;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     OPAL_THREAD_LOCK(&module->lock);

@@ -672,7 +672,7 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
     if (NULL != module->free_after) free(module->free_after);
 
     if (!opal_list_is_empty(&module->outstanding_locks)) {
-        ret = MPI_ERR_RMA_SYNC;
+        ret = OMPI_ERR_RMA_SYNC;
     }
     OBJ_DESTRUCT(&module->outstanding_locks);
 
