@@ -22,6 +22,9 @@
 #include "orte/mca/rml/rml.h"
 
 #include "orte/mca/oob/base/base.h"
+#if OPAL_ENABLE_FT_CR == 1
+#include "orte/mca/state/base/base.h"
+#endif
 
 static void process_uri(char *uri);
 
@@ -388,8 +391,9 @@ void orte_oob_base_ft_event(int sd, short argc, void *cbdata)
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:base:ft_event %d",
+                        "%s oob:base:ft_event %s(%d)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        orte_job_state_to_str(state->job_state),
                         state->job_state);
 
     /* loop across all available modules in priority order
