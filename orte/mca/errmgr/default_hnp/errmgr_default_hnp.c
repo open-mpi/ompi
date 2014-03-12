@@ -109,6 +109,11 @@ static int init(void)
     /* setup state machine to trap job errors */
     orte_state.add_job_state(ORTE_JOB_STATE_ERROR, job_errors, ORTE_ERROR_PRI);
 
+    /* set the lost connection state to run at MSG priority so
+     * we can process any last messages from the proc
+     */
+    orte_state.add_proc_state(ORTE_PROC_STATE_COMM_FAILED, proc_errors, ORTE_MSG_PRI);
+
     /* setup state machine to trap proc errors */
     orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
 
