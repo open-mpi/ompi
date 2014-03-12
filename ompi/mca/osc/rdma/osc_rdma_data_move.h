@@ -109,7 +109,7 @@ int ompi_osc_rdma_process_flush (ompi_osc_rdma_module_t *module, int source,
 /**
  * ompi_osc_rdma_process_unlock_ack:
  *
- * @short Process an incomming unlock acknowledgement.
+ * @short Process an incoming unlock acknowledgement.
  *
  * @param[in] module            - OSC RDMA module
  * @param[in] source            - Source rank
@@ -121,7 +121,7 @@ void ompi_osc_rdma_process_unlock_ack (ompi_osc_rdma_module_t *module, int sourc
 /**
  * ompi_osc_rdma_process_flush_ack:
  *
- * @short Process an incomming flush acknowledgement.
+ * @short Process an incoming flush acknowledgement.
  *
  * @param[in] module           - OSC RDMA module
  * @param[in] source           - Source rank

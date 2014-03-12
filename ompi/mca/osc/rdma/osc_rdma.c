@@ -85,9 +85,10 @@ ompi_osc_rdma_free(ompi_win_t *win)
 
     OBJ_DESTRUCT(&module->pending_acc);
 
-    osc_rdma_request_gc_clean (module);
+    osc_rdma_gc_clean (module);
     assert (0 == opal_list_get_size (&module->request_gc));
     OBJ_DESTRUCT(&module->request_gc);
+    OBJ_DESTRUCT(&module->buffer_gc);
 
     if (NULL != module->peers) {
         free(module->peers);
@@ -96,7 +97,7 @@ ompi_osc_rdma_free(ompi_win_t *win)
     if (NULL != module->passive_incoming_frag_count) free(module->passive_incoming_frag_count);
     if (NULL != module->passive_incoming_frag_signal_count) free(module->passive_incoming_frag_signal_count);
     if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
-    if (NULL != module->incomming_buffer) free (module->incomming_buffer);
+    if (NULL != module->incoming_buffer) free (module->incoming_buffer);
     if (NULL != module->comm) ompi_comm_free(&module->comm);
     if (NULL != module->free_after) free(module->free_after);
 

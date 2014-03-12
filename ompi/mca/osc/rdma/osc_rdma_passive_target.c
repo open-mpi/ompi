@@ -877,7 +877,7 @@ void ompi_osc_rdma_process_unlock_ack (ompi_osc_rdma_module_t *module, int sourc
  *
  * @param[in] module        - OSC RDMA module
  * @param[in] source        - Source rank
- * @param[in] unlock_header - Incomming unlock header
+ * @param[in] unlock_header - Incoming unlock header
  *
  * This functions is the target-side functio for handling an unlock
  * request. Once all pending operations from the target are complete
@@ -895,7 +895,7 @@ int ompi_osc_rdma_process_unlock (ompi_osc_rdma_module_t *module, int source,
                          module->passive_incoming_frag_count[source],
                          module->passive_incoming_frag_signal_count[source]));
 
-    /* we cannot block when processing an incomming request */
+    /* we cannot block when processing an incoming request */
     if (module->passive_incoming_frag_signal_count[source] !=
         module->passive_incoming_frag_count[source]) {
         return OMPI_ERR_WOULD_BLOCK;
@@ -938,7 +938,7 @@ int ompi_osc_rdma_process_flush (ompi_osc_rdma_module_t *module, int source,
                          module->passive_incoming_frag_count[source],
                          module->passive_incoming_frag_signal_count[source]));
 
-    /* we cannot block when processing an incomming request */
+    /* we cannot block when processing an incoming request */
     if (module->passive_incoming_frag_signal_count[source] !=
         module->passive_incoming_frag_count[source]) {
         return OMPI_ERR_WOULD_BLOCK;
