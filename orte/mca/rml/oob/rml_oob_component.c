@@ -37,6 +37,7 @@
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/state/state.h"
 #endif
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
@@ -170,25 +171,19 @@ orte_rml_oob_ft_event(int state) {
     int ret;
 
     if(OPAL_CRS_CHECKPOINT == state) {
-        ;
+        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CHECKPOINT);
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        ;
+        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CONTINUE);
     }
     else if(OPAL_CRS_RESTART == state) {
-        ;
+        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_RESTART);
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
     }
     else {
         ;
-    }
-
-    if( ORTE_SUCCESS != (ret = orte_rml_oob_ft_event(state)) ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
     }
 
 
