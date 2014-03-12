@@ -2949,7 +2949,7 @@ subroutine PMPI_Get_accumulate_f08(origin_addr,origin_count,origin_datatype,resu
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: result_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
    TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
@@ -2973,7 +2973,7 @@ subroutine PMPI_Rget_accumulate_f08(origin_addr,origin_count,origin_datatype,res
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: result_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
    TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
@@ -3035,7 +3035,7 @@ subroutine PMPI_Fetch_and_op_f08(origin_addr,result_addr,datatype,target_rank, &
    !DIR$ IGNORE_TKR origin_addr,result_addr
    !IBM* IGNORE_TKR origin_addr,result_addr
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3056,7 +3056,7 @@ subroutine PMPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,dataty
    !DIR$ IGNORE_TKR origin_addr,compare_addr,result_addr
    !IBM* IGNORE_TKR origin_addr,compare_addr,result_addr
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr,compare_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
