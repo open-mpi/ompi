@@ -1743,9 +1743,6 @@ subroutine pompi_free_mem_f(base,ierror) &
    BIND(C, name="pompi_free_mem_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
-   !$PRAGMA IGNORE_TKR base
-   !DIR$ IGNORE_TKR base
-   !IBM* IGNORE_TKR base
    INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) OMPI_ASYNCHRONOUS :: base
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_free_mem_f
@@ -2017,6 +2014,24 @@ subroutine pompi_accumulate_f(origin_addr,origin_count,origin_datatype, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_accumulate_f
 
+subroutine pompi_raccumulate_f(origin_addr,origin_count,origin_datatype, &
+                               target_rank,target_disp, &
+                               target_count,target_datatype,op,win, &
+                               request,ierror) &
+   BIND(C, name="pompi_raccumulate_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_raccumulate_f
+
 subroutine pompi_get_f(origin_addr,origin_count,origin_datatype,target_rank, &
                       target_disp,target_count,target_datatype,win,ierror) &
    BIND(C, name="pompi_get_f")
@@ -2030,6 +2045,63 @@ subroutine pompi_get_f(origin_addr,origin_count,origin_datatype,target_rank, &
    INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_get_f
+
+subroutine pompi_rget_f(origin_addr,origin_count,origin_datatype,target_rank, &
+                        target_disp,target_count,target_datatype,win,request, &
+                        ierror) &
+   BIND(C, name="pompi_rget_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_rget_f
+
+subroutine pompi_get_accumulate_f(origin_addr,origin_count,origin_datatype, &
+                                  result_addr,result_count,result_datatype, &
+                                  target_rank,target_disp, &
+                                  target_count,target_datatype,op,win, &
+                                  ierror) &
+   BIND(C, name="pompi_get_accumulate_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
+   INTEGER, INTENT(IN) :: result_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_get_accumulate_f
+
+subroutine pompi_rget_accumulate_f(origin_addr,origin_count,origin_datatype, &
+                                   result_addr,result_count,result_datatype, &
+                                   target_rank,target_disp, &
+                                   target_count,target_datatype,op,win, &
+                                   request,ierror) &
+   BIND(C, name="pompi_rget_accumulate_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
+   INTEGER, INTENT(IN) :: result_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_rget_accumulate_f
 
 subroutine pompi_put_f(origin_addr,origin_count,origin_datatype,target_rank, &
                       target_disp,target_count,target_datatype,win,ierror) &
@@ -2045,12 +2117,58 @@ subroutine pompi_put_f(origin_addr,origin_count,origin_datatype,target_rank, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_put_f
 
+subroutine pompi_rput_f(origin_addr,origin_count,origin_datatype,target_rank, &
+                       target_disp,target_count,target_datatype,win,request, &
+                       ierror) &
+   BIND(C, name="pompi_rput_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   INTEGER, INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: target_datatype
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_rput_f
+
 subroutine pompi_win_complete_f(win,ierror) &
    BIND(C, name="pompi_win_complete_f")
    implicit none
    INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_complete_f
+
+subroutine pompi_compare_and_swap_f(origin_addr,compare_addr,result_addr, &
+                                    datatype,target_rank,target_disp, win, &
+                                    ierror) &
+   BIND(C, name="pompi_compare_and_swap_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr, compare_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: target_rank
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_compare_and_swap_f
+
+subroutine pompi_fetch_and_op_f(origin_addr,result_addr,datatype,target_rank, &
+                                target_disp,op,win,ierror) &
+   BIND(C, name="pompi_fetch_and_op_f")
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: result_addr
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: target_rank
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_fetch_and_op_f
 
 subroutine pompi_win_create_f(base,size,disp_unit,info,comm,win,ierror) &
    BIND(C, name="pompi_win_create_f")
@@ -2064,6 +2182,36 @@ subroutine pompi_win_create_f(base,size,disp_unit,info,comm,win,ierror) &
    INTEGER, INTENT(OUT) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_create_f
+
+subroutine pompi_win_flush_f(rank,win,ierror) &
+   BIND(C, name="pompi_win_flush_f")
+   implicit none
+   INTEGER, INTENT(IN) :: rank
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_win_flush_f
+
+subroutine pompi_win_flush_all_f(win,ierror) &
+   BIND(C, name="pompi_win_flush_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_win_flush_all_f
+
+subroutine pompi_win_flush_local_f(rank,win,ierror) &
+   BIND(C, name="pompi_win_flush_local_f")
+   implicit none
+   INTEGER, INTENT(IN) :: rank
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_win_flush_local_f
+
+subroutine pompi_win_flush_local_all_f(win,ierror) &
+   BIND(C, name="pompi_win_flush_local_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: win
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_win_flush_local_all_f
 
 subroutine pompi_win_fence_f(assert,win,ierror) &
    BIND(C, name="pompi_win_fence_f")
