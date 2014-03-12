@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,7 +51,10 @@ int MPI_Win_fence(int assert, MPI_Win win)
         } else if (0 != (assert & ~(MPI_MODE_NOSTORE | MPI_MODE_NOPUT | 
                                     MPI_MODE_NOPRECEDE | MPI_MODE_NOSUCCEED))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
-        } 
+        } else if ((MPI_MODE_NOPRECEDE | MPI_MODE_NOSUCCEED) == (assert & (MPI_MODE_NOPRECEDE | MPI_MODE_NOSUCCEED))) {
+            /* it is erroneous to have both MPI_MODE_NOPRECEDE & MPI_MODE_NOSUCCEED */
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
+        }
     }
 
     OPAL_CR_ENTER_LIBRARY();
