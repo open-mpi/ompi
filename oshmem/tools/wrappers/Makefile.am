@@ -18,7 +18,6 @@ dist_ompidata_DATA =  \
 	shmemcc-wrapper-data.txt \
 	shmemfort-wrapper-data.txt
 
-if PROJECT_OSHMEM
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) mpirun shmemrun)
@@ -43,4 +42,3 @@ uninstall-local:
 	$(DESTDIR)$(pkgdatadir)/oshcc-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/shmemfort-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/oshfort-wrapper-data.txt
-endif

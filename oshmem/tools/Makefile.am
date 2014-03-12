@@ -11,11 +11,9 @@
 
 # This makefile.am does not stand on its own - it is included from oshmem/Makefile.am
 
-if PROJECT_OSHMEM
 SUBDIRS += \
 	tools/oshmem_info \
 	tools/wrappers
-endif
 
 DIST_SUBDIRS += \
 	tools/oshmem_info \
