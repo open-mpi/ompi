@@ -196,7 +196,7 @@ ompi_osc_rdma_frag_flush_all(ompi_osc_rdma_module_t *module)
     return OMPI_SUCCESS;
 }
 
-int osc_rdma_incomming_post (ompi_osc_rdma_module_t *module)
+int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module)
 {
     OPAL_THREAD_LOCK(&module->lock);
     module->num_post_msgs++;

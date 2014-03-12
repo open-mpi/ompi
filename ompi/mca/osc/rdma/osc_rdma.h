@@ -189,7 +189,7 @@ struct ompi_osc_rdma_module_t {
 
     uint64_t lock_serial_number;
 
-    unsigned char *incomming_buffer;
+    unsigned char *incoming_buffer;
     ompi_request_t *frag_request;
     opal_list_t request_gc;
 
@@ -324,7 +324,7 @@ int ompi_osc_rdma_rget_accumulate(void *origin_addr,
 int ompi_osc_rdma_fence(int assert, struct ompi_win_t *win);
 
 /* received a post message */
-int osc_rdma_incomming_post (ompi_osc_rdma_module_t *module);
+int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module);
 
 int ompi_osc_rdma_start(struct ompi_group_t *group,
                         int assert,
@@ -411,7 +411,7 @@ static inline void mark_incoming_completion (ompi_osc_rdma_module_t *module, int
 {
     if (MPI_PROC_NULL == source) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "mark_incoming_completion marking active incomming complete. count = %d",
+                             "mark_incoming_completion marking active incoming complete. count = %d",
                              (int) module->active_incoming_frag_count + 1));
         OPAL_THREAD_ADD32(&module->active_incoming_frag_count, 1);
         if (module->active_incoming_frag_count >= module->active_incoming_frag_signal_count) {
@@ -419,7 +419,7 @@ static inline void mark_incoming_completion (ompi_osc_rdma_module_t *module, int
         }
     } else {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "mark_incoming_completion marking passive incomming complete. source = %d, count = %d",
+                             "mark_incoming_completion marking passive incoming complete. source = %d, count = %d",
                              source, (int) module->passive_incoming_frag_count[source] + 1));
         OPAL_THREAD_ADD32(module->passive_incoming_frag_count + source, 1);
         if (module->passive_incoming_frag_count[source] >= module->passive_incoming_frag_signal_count[source]) {

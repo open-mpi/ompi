@@ -205,7 +205,7 @@ static int component_progress (void)
 	return 0;
     }
 
-    /* process one incomming request */
+    /* process one incoming request */
     OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
     OPAL_LIST_FOREACH_SAFE(pending, next, &mca_osc_rdma_component.pending_operations, ompi_osc_rdma_pending_t) {
 	int ret;
@@ -456,8 +456,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* sync memory - make sure all initialization completed */
     opal_atomic_mb();
 
-    module->incomming_buffer = malloc (mca_osc_rdma_component.buffer_size + sizeof (ompi_osc_rdma_frag_header_t));
-    if (OPAL_UNLIKELY(NULL == module->incomming_buffer)) {
+    module->incoming_buffer = malloc (mca_osc_rdma_component.buffer_size + sizeof (ompi_osc_rdma_frag_header_t));
+    if (OPAL_UNLIKELY(NULL == module->incoming_buffer)) {
 	goto cleanup;
     }
 
