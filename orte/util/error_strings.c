@@ -298,6 +298,12 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "REPORT PROGRESS";
     case ORTE_JOB_STATE_ALLOC_FAILED:
         return "ALLOCATION FAILED";
+    case ORTE_JOB_STATE_FT_CHECKPOINT:
+        return "FAULT TOLERANCE CHECKPOINT";
+    case ORTE_JOB_STATE_FT_CONTINUE:
+        return "FAULT TOLERANCE CONTINUE";
+    case ORTE_JOB_STATE_FT_RESTART:
+        return "FAULT TOLERANCE RESTART";
     case ORTE_JOB_STATE_ANY:
         return "ANY";
     default:
