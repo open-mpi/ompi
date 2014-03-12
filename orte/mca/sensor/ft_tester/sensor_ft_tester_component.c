@@ -51,7 +51,7 @@ orte_sensor_ft_tester_component_t mca_sensor_ft_tester_component = {
 
 static char *daemon_fail_prob = NULL;
 static char *fail_prob = NULL;
-opal_rng_buff_t orte_sensor_ft_sensor_rng_buff;
+opal_rng_buff_t orte_sensor_ft_rng_buff;
 
 /**
   * component register/open/close/init function
