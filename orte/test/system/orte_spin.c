@@ -17,14 +17,22 @@
 
 int main(int argc, char* argv[])
 {
+    int i;
+    float pi;
+
     if (ORTE_SUCCESS != orte_init(&argc, &argv, ORTE_PROC_NON_MPI)) {
         fprintf(stderr, "ORTE_INIT FAILED\n");
         exit(1);
     }
     opal_output(0, "%s RUNNING", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    while (orte_event_base_active) {
-        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    i = 0;
+    while (1) {
+        i++;
+        pi = i / 3.14159256;
+        if (i == 9995) {
+            i=0;
+        }
     }
 
     orte_finalize();

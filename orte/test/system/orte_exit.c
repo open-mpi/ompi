@@ -38,8 +38,12 @@ int main(int argc, char* argv[])
         i++;
         pi = i / 3.14159256;
         if (i == 9995) {
-            orte_finalize();
-            exit(ORTE_PROC_MY_NAME->vpid);
+            if (ORTE_PROC_MY_NAME->vpid == 1) {
+                orte_finalize();
+                exit(77);
+            } else {
+                i=0;
+            }
         }
     }
     
