@@ -97,7 +97,7 @@ ompi_osc_rdma_free(ompi_win_t *win)
     if (NULL != module->passive_incoming_frag_count) free(module->passive_incoming_frag_count);
     if (NULL != module->passive_incoming_frag_signal_count) free(module->passive_incoming_frag_signal_count);
     if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
-    if (NULL != module->incomming_buffer) free (module->incomming_buffer);
+    if (NULL != module->incoming_buffer) free (module->incoming_buffer);
     if (NULL != module->comm) ompi_comm_free(&module->comm);
     if (NULL != module->free_after) free(module->free_after);
 
