@@ -403,13 +403,37 @@ static inline int process_put_long(ompi_osc_rdma_module_t* module, int source,
 static int osc_rdma_incomming_req_omplete (ompi_request_t *request)
 {
     ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
-    /* we need to peer rank. get it from the pml request */
     int rank = MPI_PROC_NULL;
 
     if (request->req_status.MPI_TAG & 0x01) {
         rank = request->req_status.MPI_SOURCE;
     }
 
+    mark_incoming_completion (module, rank);
+
+    /* put this request on the garbage colletion list */
+    OPAL_THREAD_LOCK(&module->lock);
+    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
+    OPAL_THREAD_UNLOCK(&module->lock);
+
+    return OMPI_SUCCESS;
+}
+
+struct osc_rdma_get_post_send_cb_data_t {
+    ompi_osc_rdma_module_t *module;
+    int peer;
+};
+
+static int osc_rdma_get_post_send_cb (ompi_request_t *request)
+{
+    struct osc_rdma_get_post_send_cb_data_t *data =
+        (struct osc_rdma_get_post_send_cb_data_t *) request->req_complete_cb_data;
+    ompi_osc_rdma_module_t *module = data->module;
+    int rank = data->peer;
+
+    free (data);
+
+    /* mark this as a completed "incomming" request */
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
@@ -437,8 +461,20 @@ static int osc_rdma_incomming_req_omplete (ompi_request_t *request)
 static int osc_rdma_get_post_send (ompi_osc_rdma_module_t *module, void *source, int count,
                                    ompi_datatype_t *datatype, int peer, int tag)
 {
+    struct osc_rdma_get_post_send_cb_data_t *data;
+
+    data = malloc (sizeof (*data));
+    if (OPAL_UNLIKELY(NULL == data)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    data->module = module;
+    /* for incomming completion we need to know the peer (MPI_PROC_NULL if this is
+     * in an active target epoch) */
+    data->peer = (tag & 0x1) ? peer : MPI_PROC_NULL;
+
     return ompi_osc_rdma_isend_w_cb (source, count, datatype, peer, tag, module->comm,
-                                     osc_rdma_incomming_req_omplete, module);
+                                     osc_rdma_get_post_send_cb, (void *) data);
 }
 
 /**
