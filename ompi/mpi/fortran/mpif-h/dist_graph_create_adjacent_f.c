@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011      INRIA.  All rights reserved.
  * Copyright (c) 2011      Université Bordeaux 1
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,7 +59,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE_ADJACENT,
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_DIST_GRAPH_CREATE_ADJACENT";
 
 void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
                                        MPI_Fint *sources, MPI_Fint *sourceweights,

@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,32 +40,6 @@
         _elem->disp         = 0;                  \
         _elem->extent       = 0;                  \
     } while (0)
-
-static inline int SAVE_OPTIMIZED_ELEMENT( dt_elem_desc_t* pElemDesc,
-                                          ddt_elem_desc_t* opt_elem )
-{
-    if( 0 != opt_elem->count ) {
-        pElemDesc->elem = *opt_elem;
-        SET_EMPTY_ELEMENT( opt_elem );
-    }
-    return 0;
-}
-
-static inline int ADD_ELEMENT( dt_elem_desc_t* pElemDesc __opal_attribute_unused__,
-                               ddt_elem_desc_t* opt_elem,
-                               uint16_t type, uint32_t count,
-                               OPAL_PTRDIFF_TYPE disp, int32_t extent )
-{
-    if( 0 == opt_elem->count ) {
-        opt_elem->common.flags = OPAL_DATATYPE_FLAG_BASIC;
-        opt_elem->common.type  = type;
-        opt_elem->count        = count;
-        opt_elem->disp         = disp;
-        opt_elem->extent       = extent;
-        return 0;
-    }
-    return 1;
-}
 
 static int32_t
 opal_datatype_optimize_short( opal_datatype_t* pData,

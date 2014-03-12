@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,6 @@ extern opal_mutex_t mpit_big_lock;
 extern volatile uint32_t mpit_init_count;
 extern volatile int32_t initted;
 
-static const char FUNC_NAME[] = "MPI_T_init_thread";
 
 int MPI_T_init_thread (int required, int *provided)
 {

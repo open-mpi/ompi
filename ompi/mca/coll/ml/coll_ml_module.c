@@ -4,7 +4,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,15 +51,6 @@ static int coll_ml_parse_topology (sub_group_params_t *sub_group_meta_data, size
                                    int *list_of_ranks_in_all_subgroups, int level_one_size);
 
 /* #define NEW_LEADER_SELECTION */
-
-static inline double ret_us(void)
-{
-    struct timeval t;
-
-    gettimeofday(&t, NULL);
-
-    return t.tv_sec * 1e6 + t.tv_usec;
-}
 
 struct ranks_proxy_t {
     /* number of subgroups for which the rank is a proxy */
