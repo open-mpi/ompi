@@ -90,6 +90,7 @@ static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
 static bool component_is_reachable(orte_process_name_t *peer);
+static int component_ft_event(int state);
 /*
  * Struct of function pointers and all that to let us be initialized
  */
@@ -118,7 +119,8 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         component_send,
         component_get_addr,
         component_set_addr,
-        component_is_reachable
+        component_is_reachable,
+        component_ft_event
     },
 };
 
@@ -1078,6 +1080,25 @@ static bool component_is_reachable(orte_process_name_t *peer)
     return true;
 }
 
+static int component_ft_event(int state)
+{
+    mca_oob_tcp_module_t *mod;
+    int i;
+
+    opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                        "%s TCP FT EVENT", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
+        if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
+            continue;
+        }
+        if (NULL != mod->api.ft_event) {
+            mod->api.ft_event((struct mca_oob_tcp_module_t*)mod, state);
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
 
 /*
  *  Create a module instance and add to modules array.
