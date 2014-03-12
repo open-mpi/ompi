@@ -1673,7 +1673,7 @@ static char *bitmap2rangestr(int bitmap)
  * Make a map of socket/core/hwthread tuples
  */
 static int build_map(int *num_sockets_arg, int *num_cores_arg, 
-                     hwloc_cpuset_t cpuset, int ***map)
+                     hwloc_cpuset_t cpuset, int ***map, hwloc_topology_t topo)
 {
     static int num_sockets = -1, num_cores = -1;
     int socket_index, core_index, pu_index;
@@ -1683,7 +1683,7 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
     /* Find out how many sockets we have (cached so that we don't have
        to look this up every time) */
     if (num_sockets < 0) {
-        num_sockets = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_SOCKET);
+        num_sockets = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_SOCKET);
         /* some systems (like the iMac) only have one
          * socket and so don't report a socket
          */
@@ -1693,7 +1693,7 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
         /* Lazy: take the total number of cores that we have in the
            topology; that'll be more than the max number of cores
            under any given socket */
-        num_cores = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);
+        num_cores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
     }
     *num_sockets_arg = num_sockets;
     *num_cores_arg = num_cores;
@@ -1715,11 +1715,11 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg,
     /* Iterate the PUs in this cpuset; fill in the data[][] array with
        the socket/core/pu triples */
     for (pu_index = 0,
-             pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+             pu = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                       cpuset, HWLOC_OBJ_PU, 
                                                       pu_index);
          NULL != pu;
-         pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+         pu = hwloc_get_obj_inside_cpuset_by_type(topo,
                                                   cpuset, HWLOC_OBJ_PU, 
                                                   ++pu_index)) {
         /* Go upward and find the core this PU belongs to */
@@ -1787,7 +1787,7 @@ int opal_hwloc_base_cset2str(char *str, int len,
         return OPAL_ERR_NOT_BOUND;
     }
 
-    if (OPAL_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map))) {
+    if (OPAL_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map, topo))) {
         return ret;
     }
 
