@@ -466,7 +466,7 @@ int mca_coll_ml_reduce(void *sbuf, void *rbuf, int count,
     int ret = OMPI_SUCCESS;
     ompi_request_t *req;
 
-    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op) || !opal_datatype_is_contiguous_memory_layout(&dtype->super, count))) {
         /* coll/ml does not handle non-communative operations at this time. fallback
          * on another collective module */
         return ml_module->fallback.coll_reduce (sbuf, rbuf, count, dtype, op, root, comm,
@@ -501,7 +501,7 @@ int mca_coll_ml_reduce_nb(void *sbuf, void *rbuf, int count,
     int ret = OMPI_SUCCESS;
     mca_coll_ml_module_t *ml_module = (mca_coll_ml_module_t*)module;
 
-    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op) || !opal_datatype_is_contiguous_memory_layout(&dtype->super, count))) {
         /* coll/ml does not handle non-communative operations at this time. fallback
          * on another collective module */
         return ml_module->fallback.coll_ireduce (sbuf, rbuf, count, dtype, op, root, comm, req,
