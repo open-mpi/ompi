@@ -193,6 +193,8 @@ struct ompi_osc_rdma_module_t {
     ompi_request_t *frag_request;
     opal_list_t request_gc;
 
+    opal_list_t buffer_gc;
+
     /* enforce accumulate semantics */
     opal_atomic_lock_t accumulate_lock;
     opal_list_t        pending_acc;
@@ -554,20 +556,26 @@ static inline void osc_rdma_copy_for_send (void *target, size_t target_len, void
 /**
  * osc_rdma_request_gc_clean:
  *
- * @short Release finished PML requests.
+ * @short Release finished PML requests and accumulate buffers.
  *
  * @param[in] module - OSC RDMA module
  *
  * @long This function exists because it is not possible to free a PML request
- *       from a request completion callback. We instead put the request on the
- *       module's garbage collection list and release it at a later time.
+ *       or buffer from a request completion callback. We instead put requests
+ *       and buffers on the module's garbage collection lists and release then
+ *       at a later time.
  */
-static inline void osc_rdma_request_gc_clean (ompi_osc_rdma_module_t *module)
+static inline void osc_rdma_gc_clean (ompi_osc_rdma_module_t *module)
 {
     ompi_request_t *request;
+    opal_list_item_t *item;
 
     while (NULL != (request = (ompi_request_t *) opal_list_remove_first (&module->request_gc))) {
         ompi_request_free (&request);
+    }
+
+    while (NULL != (item = opal_list_remove_first (&module->buffer_gc))) {
+        OBJ_RELEASE(item);
     }
 }
 
