@@ -2872,6 +2872,29 @@ subroutine PMPI_Accumulate_f08(origin_addr,origin_count,origin_datatype,target_r
 end subroutine PMPI_Accumulate_f08
 end interface  PMPI_Accumulate
 
+interface  PMPI_Raccumulate
+subroutine PMPI_Raccumulate_f08(origin_addr,origin_count,origin_datatype,target_rank, &
+                               target_disp,target_count,target_datatype,op,win,request, &
+                               ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_Request, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !$PRAGMA IGNORE_TKR origin_addr
+   !DIR$ IGNORE_TKR origin_addr
+   !IBM* IGNORE_TKR origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Raccumulate_f08
+end interface  PMPI_Raccumulate
+
 interface  PMPI_Get
 subroutine PMPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank, &
                                target_disp,target_count,target_datatype,win,ierror)
@@ -2891,6 +2914,76 @@ subroutine PMPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank, &
 end subroutine PMPI_Get_f08
 end interface  PMPI_Get
 
+interface  PMPI_Rget
+subroutine PMPI_Rget_f08(origin_addr,origin_count,origin_datatype,target_rank, &
+                        target_disp,target_count,target_datatype,win,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Request, MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !$PRAGMA IGNORE_TKR origin_addr
+   !DIR$ IGNORE_TKR origin_addr
+   !IBM* IGNORE_TKR origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Rget_f08
+end interface  PMPI_Rget
+
+interface  PMPI_Get_accumulate
+subroutine PMPI_Get_accumulate_f08(origin_addr,origin_count,origin_datatype,result_addr, &
+                                  result_count,result_datatype,target_rank,target_disp, &
+                                  target_count,target_datatype,op,win,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !$PRAGMA IGNORE_TKR origin_addr,result_addr
+   !DIR$ IGNORE_TKR origin_addr,result_addr
+   !IBM* IGNORE_TKR origin_addr,result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
+   TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   TYPE(MPI_Datatype), INTENT(IN) :: result_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Get_accumulate_f08
+end interface  PMPI_Get_accumulate
+
+interface  PMPI_Rget_accumulate
+subroutine PMPI_Rget_accumulate_f08(origin_addr,origin_count,origin_datatype,result_addr, &
+                                   result_count,result_datatype,target_rank,target_disp, &
+                                   target_count,target_datatype,op,win,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Request, MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !$PRAGMA IGNORE_TKR origin_addr,result_addr
+   !DIR$ IGNORE_TKR origin_addr,result_addr
+   !IBM* IGNORE_TKR origin_addr,result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
+   TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   TYPE(MPI_Datatype), INTENT(IN) :: result_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Rget_accumulate_f08
+end interface  PMPI_Rget_accumulate
+
 interface  PMPI_Put
 subroutine PMPI_Put_f08(origin_addr,origin_count,origin_datatype,target_rank, &
                                target_disp,target_count,target_datatype,win,ierror)
@@ -2909,6 +3002,68 @@ subroutine PMPI_Put_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Put_f08
 end interface  PMPI_Put
+
+interface  PMPI_Rput
+subroutine PMPI_Rput_f08(origin_addr,origin_count,origin_datatype,target_rank, &
+                        target_disp,target_count,target_datatype,win,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_Request, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
+   !$PRAGMA IGNORE_TKR origin_addr
+   !DIR$ IGNORE_TKR origin_addr
+   !IBM* IGNORE_TKR origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
+   TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
+   TYPE(MPI_Win), INTENT(IN) :: win
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Rput_f08
+end interface  PMPI_Rput
+
+interface  PMPI_Fetch_and_op
+subroutine PMPI_Fetch_and_op_f08(origin_addr,result_addr,datatype,target_rank, &
+                                target_disp,op,win,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,result_addr
+   !$PRAGMA IGNORE_TKR origin_addr,result_addr
+   !DIR$ IGNORE_TKR origin_addr,result_addr
+   !IBM* IGNORE_TKR origin_addr,result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: target_rank
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Fetch_and_op_f08
+end interface  PMPI_Fetch_and_op
+
+interface  PMPI_Compare_and_swap
+subroutine PMPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,datatype, &
+                                    target_rank,target_disp,win,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,compare_addr,result_addr
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr,compare_addr,result_addr
+   !$PRAGMA IGNORE_TKR origin_addr,compare_addr,result_addr
+   !DIR$ IGNORE_TKR origin_addr,compare_addr,result_addr
+   !IBM* IGNORE_TKR origin_addr,compare_addr,result_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: origin_addr,compare_addr
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(OUT) :: result_addr
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: target_rank
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Compare_and_swap_f08
+end interface  PMPI_Compare_and_swap
 
 interface  PMPI_Win_complete
 subroutine PMPI_Win_complete_f08(win,ierror)
@@ -3026,6 +3181,44 @@ subroutine PMPI_Win_wait_f08(win,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Win_wait_f08
 end interface  PMPI_Win_wait
+
+interface  PMPI_Win_flush
+subroutine PMPI_Win_flush_f08(rank,win,ierror)
+   use :: mpi_f08_types, only : MPI_Win
+   implicit none
+   INTEGER, INTENT(IN) :: rank
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_flush_f08
+end interface  PMPI_Win_flush
+
+interface  PMPI_Win_flush_local
+subroutine PMPI_Win_flush_local_f08(rank,win,ierror)
+   use :: mpi_f08_types, only : MPI_Win
+   implicit none
+   INTEGER, INTENT(IN) :: rank
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_flush_local_f08
+end interface  PMPI_Win_flush_local
+
+interface  PMPI_Win_flush_all_local
+subroutine PMPI_Win_flush_all_local_f08(win,ierror)
+   use :: mpi_f08_types, only : MPI_Win
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_flush_all_local_f08
+end interface  PMPI_Win_flush_all_local
+
+interface  PMPI_Win_flush_all
+subroutine PMPI_Win_flush_all_f08(win,ierror)
+   use :: mpi_f08_types, only : MPI_Win
+   implicit none
+   TYPE(MPI_Win), INTENT(IN) :: win
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Win_flush_all_f08
+end interface  PMPI_Win_flush_all
 
 interface  PMPI_Grequest_complete
 subroutine PMPI_Grequest_complete_f08(request,ierror)

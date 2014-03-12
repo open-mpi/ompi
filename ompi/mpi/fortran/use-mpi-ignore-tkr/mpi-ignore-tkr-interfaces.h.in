@@ -7,7 +7,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+! Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 !                         reserved.
 ! $COPYRIGHT$
 !
@@ -1641,6 +1641,42 @@ end subroutine PMPI_Comm_test_inter
 end interface
 
 
+interface MPI_Compare_and_swap
+
+subroutine MPI_Compare_and_swap(origin_addr, compare_addr, result_addr, &
+                                datatype, target_rank, target_disp, win, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr, compare_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr, compare_addr
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Compare_and_swap
+
+end interface
+
+interface PMPI_Compare_and_swap
+
+subroutine PMPI_Compare_and_swap(origin_addr, compare_addr, result_addr, &
+                                 datatype, target_rank, target_disp, win, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr, compare_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr, compare_addr
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Compare_and_swap
+
+end interface
+
 interface MPI_Dims_create
 
 subroutine MPI_Dims_create(nnodes, ndims, dims, ierr)
@@ -1944,6 +1980,43 @@ end subroutine PMPI_Exscan
 
 end interface
 
+interface MPI_Fetch_and_op
+
+subroutine MPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,&
+                            target_disp, op, win, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Fetch_and_op
+
+end interface
+
+interface PMPI_Fetch_and_op
+
+subroutine PMPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,&
+                             target_disp, op, win, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Fetch_and_op
+
+end interface
 
 interface MPI_Finalize
 
@@ -2120,6 +2193,57 @@ end subroutine PMPI_Get
 
 end interface
 
+interface MPI_Get_accumulate
+
+subroutine MPI_Get_accumulate(origin_addr, origin_count, origin_datatype,&
+                              result_addr, result_count, result_datatype,&
+                              target_rank, target_disp, target_count, &
+                              target_datatype, op, win, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: result_count
+  integer, intent(in) :: result_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Get_accumulate
+
+end interface
+
+interface PMPI_Get_accumulate
+
+subroutine PMPI_Get_accumulate(origin_addr, origin_count, origin_datatype,&
+                               result_addr, result_count, result_datatype,&
+                               target_rank, target_disp, target_count, &
+                               target_datatype, op, win, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: result_count
+  integer, intent(in) :: result_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Get_accumulate
+
+end interface
 
 interface MPI_Get_address
 
@@ -4869,6 +4993,187 @@ end subroutine PMPI_Query_thread
 
 end interface
 
+interface MPI_Raccumulate
+
+subroutine MPI_Raccumulate(origin_addr, origin_count, origin_datatype,&
+                           target_rank, target_disp, target_count, &
+                           target_datatype, op, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Raccumulate
+
+end interface
+
+interface PMPI_Raccumulate
+
+subroutine PMPI_Raccumulate(origin_addr, origin_count, origin_datatype,&
+                            target_rank, target_disp, target_count, &
+                            target_datatype, op, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Raccumulate
+
+end interface
+
+interface MPI_Get
+
+subroutine MPI_Rget(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Rget
+
+end interface
+
+interface PMPI_Get
+
+subroutine PMPI_Rget(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Rget
+
+end interface
+
+interface MPI_Rget_accumulate
+
+subroutine MPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,&
+                               result_addr, result_count, result_datatype,&
+                               target_rank, target_disp, target_count, &
+                               target_datatype, op, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: result_count
+  integer, intent(in) :: result_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Rget_accumulate
+
+end interface
+
+interface PMPI_Rget_accumulate
+
+subroutine PMPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,&
+                                result_addr, result_count, result_datatype,&
+                                target_rank, target_disp, target_count, &
+                                target_datatype, op, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ result_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+  integer, intent(in) :: result_count
+  integer, intent(in) :: result_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Rget_accumulate
+
+end interface
+
+interface MPI_Rput
+
+subroutine MPI_Rput(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Rput
+
+end interface
+
+interface PMPI_Rput
+
+subroutine PMPI_Rput(origin_addr, origin_count, origin_datatype, &
+                    target_rank, target_disp, target_count, &
+                    target_datatype, win, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: origin_addr
+  integer, intent(in) :: origin_count
+  integer, intent(in) :: origin_datatype
+  integer, intent(in) :: target_rank
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp
+  integer, intent(in) :: target_count
+  integer, intent(in) :: target_datatype
+  integer, intent(in) :: win
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_Rput
+
+end interface
 
 interface MPI_Recv
 
@@ -7820,6 +8125,81 @@ end subroutine PMPI_Win_fence
 
 end interface
 
+interface MPI_Win_flush
+
+subroutine MPI_Win_flush(rank, win, ierror)
+  integer, intent(in) :: rank
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_flush
+
+end interface
+
+interface PMPI_Win_flush
+
+subroutine PMPI_Win_flush(rank, win, ierror)
+  integer, intent(in) :: rank
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_flush
+
+end interface
+
+interface MPI_Win_flush_all
+
+subroutine MPI_Win_flush_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_flush_all
+
+end interface
+
+interface PMPI_Win_flush_all
+
+subroutine PMPI_Win_flush_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_flush_all
+
+end interface
+
+interface MPI_Win_flush_local
+
+subroutine MPI_Win_flush_local(rank, win, ierror)
+  integer, intent(in) :: rank
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_flush_local
+
+end interface
+
+interface PMPI_Win_flush_local
+
+subroutine PMPI_Win_flush_local(rank, win, ierror)
+  integer, intent(in) :: rank
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_flush_local
+
+end interface
+
+interface MPI_Win_flush_local_all
+
+subroutine MPI_Win_flush_local_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_flush_local_all
+
+end interface
+
+interface PMPI_Win_flush_local_all
+
+subroutine PMPI_Win_flush_local_all(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine PMPI_Win_flush_local_all
+
+end interface
 
 interface MPI_Win_free
 

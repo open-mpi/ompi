@@ -5634,3 +5634,92 @@ start MPI_Dist_graph_neighbors small
 output_295 MPI_Dist_graph_neighbors
 end MPI_Dist_graph_neighbors
 
+#------------------------------------------------------------------------
+
+output_296() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(rank, win, ierror)
+  integer, intent(in) :: rank
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Win_flush small
+output_296 MPI_Win_flush
+end MPI_Win_flush
+
+#------------------------------------------------------------------------
+
+output_297() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Win_flush_all small
+output_297 MPI_Win_flush_all
+end MPI_Win_flush_all
+
+#------------------------------------------------------------------------
+
+output_298() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(rank, win, ierror)
+  integer, intent(in) :: rank
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Win_flush_local small
+output_298 MPI_Win_flush_local
+end MPI_Win_flush_local
+
+#------------------------------------------------------------------------
+
+output_299() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(win, ierror)
+  integer, intent(in) :: win
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Win_flush_local_all small
+output_299 MPI_Win_flush_local_all
+end MPI_Win_flush_local_all
