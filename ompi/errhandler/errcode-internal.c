@@ -194,11 +194,11 @@ int ompi_errcode_intern_init (void)
                                 &ompi_err_request);
 
     OBJ_CONSTRUCT(&ompi_err_rma_sync, ompi_errcode_intern_t);
-    ompi_err_request.code = OMPI_ERR_RMA_SYNC;
-    ompi_err_request.mpi_code = MPI_ERR_RMA_SYNC;
-    ompi_err_request.index = pos++;
-    strncpy(ompi_err_request.errstring, "OMPI_ERR_RMA_SYNC", OMPI_MAX_ERROR_STRING);
-    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_request.index,
+    ompi_err_rma_sync.code = OMPI_ERR_RMA_SYNC;
+    ompi_err_rma_sync.mpi_code = MPI_ERR_RMA_SYNC;
+    ompi_err_rma_sync.index = pos++;
+    strncpy(ompi_err_rma_sync.errstring, "OMPI_ERR_RMA_SYNC", OMPI_MAX_ERROR_STRING);
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_sync.index,
                                 &ompi_err_rma_sync);
 
     ompi_errcode_intern_lastused=pos;
