@@ -2553,6 +2553,7 @@ OMPI_DECLSPEC  int PMPI_T_cvar_get_info (int cvar_index, char *name, int *name_l
                                          int *verbosity, MPI_Datatype *datatype,
                                          MPI_T_enum *enumtype, char *desc,
                                          int *desc_len, int *bind, int *scope);
+OMPI_DECLSPEC  int PMPI_T_cvar_get_index (const char *name, int *cvar_index);
 OMPI_DECLSPEC  int PMPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
                                             MPI_T_cvar_handle *handle, int *count);
 OMPI_DECLSPEC  int PMPI_T_cvar_handle_free (MPI_T_cvar_handle *handle);
@@ -2562,6 +2563,7 @@ OMPI_DECLSPEC  int PMPI_T_category_get_num(int *num_cat);
 OMPI_DECLSPEC  int PMPI_T_category_get_info(int cat_index, char *name, int *name_len,
                                             char *desc, int *desc_len, int *num_cvars,
                                             int *num_pvars, int *num_categories);
+OMPI_DECLSPEC  int PMPI_T_category_get_index (const char *name, int *category_index);
 OMPI_DECLSPEC  int PMPI_T_category_get_cvars(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int PMPI_T_category_get_pvars(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int PMPI_T_category_get_categories(int cat_index, int len, int indices[]);
@@ -2572,6 +2574,7 @@ OMPI_DECLSPEC  int PMPI_T_pvar_get_info(int pvar_index, char *name, int *name_le
                                         int *verbosity, int *var_class, MPI_Datatype *datatype,
                                         MPI_T_enum *enumtype, char *desc, int *desc_len, int *bind,
                                         int *readonly, int *continuous, int *atomic);
+OMPI_DECLSPEC  int PMPI_T_pvar_get_index (const char *name, int *pvar_index);
 OMPI_DECLSPEC  int PMPI_T_pvar_session_create(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int PMPI_T_pvar_session_free(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
@@ -2600,6 +2603,7 @@ OMPI_DECLSPEC  int MPI_T_cvar_get_info (int cvar_index, char *name, int *name_le
                                         int *verbosity, MPI_Datatype *datatype,
                                         MPI_T_enum *enumtype, char *desc,
                                         int *desc_len, int *bind, int *scope);
+OMPI_DECLSPEC  int MPI_T_cvar_get_index (const char *name, int *cvar_index);
 OMPI_DECLSPEC  int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
                                             MPI_T_cvar_handle *handle, int *count);
 OMPI_DECLSPEC  int MPI_T_cvar_handle_free (MPI_T_cvar_handle *handle);
@@ -2609,6 +2613,7 @@ OMPI_DECLSPEC  int MPI_T_category_get_num(int *num_cat);
 OMPI_DECLSPEC  int MPI_T_category_get_info(int cat_index, char *name, int *name_len,
                                            char *desc, int *desc_len, int *num_cvars,
                                            int *num_pvars, int *num_categories);
+OMPI_DECLSPEC  int MPI_T_category_get_index (const char *name, int *category_index);
 OMPI_DECLSPEC  int MPI_T_category_get_cvars(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int MPI_T_category_get_pvars(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int MPI_T_category_get_categories(int cat_index, int len, int indices[]);
@@ -2619,6 +2624,7 @@ OMPI_DECLSPEC  int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len
                                        int *verbosity, int *var_class, MPI_Datatype *datatype,
                                        MPI_T_enum *enumtype, char *desc, int *desc_len, int *bind,
                                        int *readonly, int *continuous, int *atomic);
+OMPI_DECLSPEC  int MPI_T_pvar_get_index (const char *name, int *pvar_index);
 OMPI_DECLSPEC  int MPI_T_pvar_session_create(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int MPI_T_pvar_session_free(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
