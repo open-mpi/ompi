@@ -157,8 +157,31 @@ static void tcp_init(struct mca_oob_tcp_module_t *md)
 static void tcp_fini(struct mca_oob_tcp_module_t *md)
 {
     mca_oob_tcp_module_t *mod = (mca_oob_tcp_module_t*)md;
+    uint64_t ui64;
+    char *nptr;
+    mca_oob_tcp_peer_t *peer;
 
     /* cleanup all peers */
+    if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(&mod->peers, &ui64,
+                                                             (void**)&peer, (void**)&nptr)) {
+        opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                            "%s RELEASING PEER OBJ %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
+        if (NULL != peer) {
+            OBJ_RELEASE(peer);
+        }
+        while (OPAL_SUCCESS == opal_hash_table_get_next_key_uint64(&mod->peers, &ui64,
+                                                                   (void**)&peer, nptr, (void**)&nptr)) {
+            opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                                "%s RELEASING PEER OBJ %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                (NULL == peer) ? "NULL" : ORTE_NAME_PRINT(&peer->name));
+            if (NULL != peer) {
+                OBJ_RELEASE(peer);
+            }
+        }
+    }
     OBJ_DESTRUCT(&mod->peers);
 
     if (mod->ev_active) {
