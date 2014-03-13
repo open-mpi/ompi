@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,12 +40,19 @@ endif
 
 include $(top_srcdir)/Makefile.man-page-rules
 
+nodist_man_MANS =
+bin_PROGRAMS =
+
 man_pages = oshmem_info.1
+
 EXTRA_DIST = $(man_pages:.1=.1in)
 
-bin_PROGRAMS = oshmem_info
+if PROJECT_OSHMEM
+# Only build/install the binary and man pages if we're building oshmem
+bin_PROGRAMS += oshmem_info
+nodist_man_MANS += $(man_pages)
+endif
 
-nodist_man_MANS = $(man_pages)
 
 # Ensure that the man pages are rebuilt if the opal_config.h file
 # changes; a "good enough" way to know if configure was run again (and

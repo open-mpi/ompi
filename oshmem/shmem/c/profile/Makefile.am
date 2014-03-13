@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,8 +18,11 @@
 #
 AM_CPPFLAGS = -DOSHMEM_PROFILING=1
 
-
-noinst_LTLIBRARIES = liboshmem_c_pshmem.la
+noinst_LTLIBRARIES =
+if PROJECT_OSHMEM
+# Only build if we're building OSHMEM
+noinst_LTLIBRARIES += liboshmem_c_pshmem.la
+endif
 
 headers = defines.h
 
@@ -65,7 +69,6 @@ OSHMEM_API_SOURCES = \
 nodist_liboshmem_c_pshmem_la_SOURCES = \
 	$(OSHMEM_API_SOURCES)
 
-
 #
 # Sym link in the sources from the real MPI directory
 #
@@ -75,9 +78,11 @@ $(nodist_liboshmem_c_pshmem_la_SOURCES):
 		$(LN_S) $(top_srcdir)/oshmem/shmem/c/$$pname $@ ; \
 	fi
 
+if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
 oshmemdir = $(ompiincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
+endif
 endif
 
 # These files were created by targets above
