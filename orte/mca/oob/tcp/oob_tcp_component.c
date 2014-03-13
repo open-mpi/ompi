@@ -1606,6 +1606,10 @@ static void peer_cons(mca_oob_tcp_peer_t *peer)
 static void peer_des(mca_oob_tcp_peer_t *peer)
 {
     if (0 <= peer->sd) {
+        opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                            "%s CLOSING SOCKET %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            peer->sd);
         CLOSE_THE_SOCKET(peer->sd);
     }
     OPAL_LIST_DESTRUCT(&peer->addrs);

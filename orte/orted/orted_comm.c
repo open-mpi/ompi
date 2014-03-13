@@ -86,11 +86,6 @@ static char *get_orted_comm_cmd_str(int command);
 
 static opal_pointer_array_t *procs_prev_ordered_to_terminate = NULL;
 
-static void suicide(int sd, short args, void *cbdata)
-{
-    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
-}
-
 void orte_daemon_recv(int status, orte_process_name_t* sender,
                       opal_buffer_t *buffer, orte_rml_tag_t tag,
                       void* cbdata)
@@ -457,11 +452,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
-        } else {
-            /* set a timer to suicide, just in case one of our
-             * dependent routes fails to terminate
-             */
-            ORTE_TIMER_EVENT(10, 0, suicide, ORTE_ERROR_PRI);
         }
         return;
         break;
