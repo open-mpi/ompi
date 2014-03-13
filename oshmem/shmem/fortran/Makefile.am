@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved
-# Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -11,6 +11,7 @@
 
 AM_CPPFLAGS     = -DOSHMEM_PROFILING_DEFINES=0 -DOSHMEM_HAVE_WEAK_SYMBOLS=0
 
+# This is guaranteed to be false if we're not building OSHMEM at all
 if OSHMEM_BUILD_FORTRAN_BINDINGS
 oshmem_fortran_lib       = liboshmem_fortran.la
 else
@@ -115,8 +116,9 @@ liboshmem_fortran_la_SOURCES = \
                     shmem_quiet_f.c \
                     shmem_fence_f.c
 
+if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
 oshmemdir = $(ompiincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
 endif
-
+endif

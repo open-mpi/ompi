@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -57,14 +58,19 @@ OSHMEM_API_SOURCES = \
 
 AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
 
-noinst_LTLIBRARIES = liboshmem_c.la
+noinst_LTLIBRARIES =
+if PROJECT_OSHMEM
+# Only build if we're building OSHMEM
+noinst_LTLIBRARIES += liboshmem_c.la
+endif
 
 headers = 
 
 liboshmem_c_la_SOURCES = $(OSHMEM_API_SOURCES)
 
+if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
 oshmemdir = $(ompiincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
 endif
-
+endif

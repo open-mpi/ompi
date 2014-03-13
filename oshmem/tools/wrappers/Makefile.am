@@ -1,6 +1,6 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -8,16 +8,12 @@
 #
 # $HEADER$
 
-#this file is included in oshmem/Makefile.am
-
-
-.PHONY: all
-
-
 dist_ompidata_DATA =  \
 	shmemcc-wrapper-data.txt \
 	shmemfort-wrapper-data.txt
 
+if PROJECT_OSHMEM
+# Only install / uninstall if we're building oshmem
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f shmemrun$(EXEEXT); $(LN_S) mpirun shmemrun)
@@ -42,3 +38,5 @@ uninstall-local:
 	$(DESTDIR)$(pkgdatadir)/oshcc-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/shmemfort-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/oshfort-wrapper-data.txt
+
+endif # PROJECT_OSHMEM
