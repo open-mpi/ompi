@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,19 +94,16 @@ mmap_runtime_query(mca_base_module_t **module,
 static int
 mmap_register(void)
 {
-    int ret;
-
-
     /* ////////////////////////////////////////////////////////////////////// */
     /* (default) priority - set high to make mmap the default */
     mca_sshmem_mmap_component.priority = 20;
-    ret = mca_base_component_var_register (&mca_sshmem_mmap_component.super.base_version,
-                                           "priority", "Priority for sshmem mmap "
-                                           "component (default: 20)", MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
-                                           &mca_sshmem_mmap_component.priority);
+    mca_base_component_var_register (&mca_sshmem_mmap_component.super.base_version,
+                                     "priority", "Priority for sshmem mmap "
+                                     "component (default: 20)", MCA_BASE_VAR_TYPE_INT,
+                                     NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                     OPAL_INFO_LVL_3,
+                                     MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                     &mca_sshmem_mmap_component.priority);
 
     return OSHMEM_SUCCESS;
 }

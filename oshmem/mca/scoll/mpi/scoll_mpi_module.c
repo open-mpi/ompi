@@ -1,5 +1,6 @@
 /**
   Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+  Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -111,7 +112,13 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
         osh_group->ompi_comm = &(ompi_mpi_comm_world.comm);
     } else {
         err = ompi_comm_group(&(ompi_mpi_comm_world.comm), &parent_group);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
+            return NULL;
+        }
         ranks = (int*) malloc(osh_group->proc_count * sizeof(int));
+        if (OPAL_UNLIKELY(NULL == ranks)) {
+            return NULL;
+        }
         tag = 1;
 
         for (i = 0; i < osh_group->proc_count; i++) {
@@ -119,8 +126,21 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
         }
 
         err = ompi_group_incl(parent_group, osh_group->proc_count, ranks, &new_group);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
+            free(ranks);
+            return NULL;
+        }
         err = ompi_comm_create_group(&(ompi_mpi_comm_world.comm), new_group, tag, &newcomm);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
+            free(ranks);
+            return NULL;
+        }
         err = ompi_group_free(&new_group);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
+            free(ranks);
+            return NULL;
+        }
+
         free(ranks);
         osh_group->ompi_comm = newcomm;
     }
