@@ -85,7 +85,7 @@ static void
 mca_bcol_basesmuma_module_construct(mca_bcol_basesmuma_module_t *module)
 {
     /* initialize all values to 0 */
-    bzero ((uintptr_t) module + sizeof (module->super), sizeof (*module) - sizeof (module->super));
+    memset((void*)((uintptr_t) module + sizeof (module->super)), 0, sizeof (*module) - sizeof (module->super));
     module->super.bcol_component = (mca_bcol_base_component_t *) &mca_bcol_basesmuma_component;
     module->super.list_n_connected = NULL;
     module->super.hier_scather_offset = 0;
