@@ -301,6 +301,10 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
             /* increment the #daemons terminated so we will exit properly */
             jdata->num_terminated++;
+            /* remove it from the routing table to ensure num_routes
+             * returns the correct value
+             */
+            orte_routed.route_lost(&daemon->name);
             /* report that the daemon has failed so we can exit */
             ORTE_ACTIVATE_PROC_STATE(&daemon->name, ORTE_PROC_STATE_FAILED_TO_START);
         }
