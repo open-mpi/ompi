@@ -2448,12 +2448,14 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
 
 #if OPAL_ENABLE_DEBUG
 #define COLL_ML_ROUTE_BUFF_SIZE (1024*1024)
-    {
+    /* Only bother creating the string if we're actually going to
+       print it out (i.e., if the verbose level is >= 10) */
+    if (mca_coll_ml_component.verbose >= 10) {
         int ii, jj;
-        char buff[COLL_ML_ROUTE_BUFF_SIZE];
-        char *output = buff;
+        char *buff, *output;
 
-        memset(buff, 0, COLL_ML_ROUTE_BUFF_SIZE);
+        output = buff = calloc(1, COLL_ML_ROUTE_BUFF_SIZE);
+        assert(NULL != output);
 
         sprintf(output, "ranks:   ");
 
@@ -2507,6 +2509,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
         }
 
         ML_VERBOSE(10, ("\nThe table is:\n============\n%s\n", buff));
+        free(buff);
     }
 #endif
 
