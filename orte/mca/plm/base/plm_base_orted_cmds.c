@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,6 +77,11 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    if (orte_orteds_term_ordered) {
+        /* only do this once */
+        return ORTE_SUCCESS;
+    }
 
     /* flag that orteds are being terminated */
     orte_orteds_term_ordered = true;

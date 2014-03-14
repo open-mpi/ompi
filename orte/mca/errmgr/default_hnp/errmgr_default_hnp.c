@@ -9,6 +9,7 @@
  * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved. 
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -294,6 +295,10 @@ static void proc_errors(int fd, short args, void *cbdata)
                 if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                     proct->alive && proct->state < ORTE_PROC_STATE_UNTERMINATED) {
 		  /* at least one is still alive */
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
+                                         "%s Comm failure: at least one proc (%s) still alive",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&proct->name)));
 		  goto cleanup;
                 }
 	      }
@@ -302,7 +307,12 @@ static void proc_errors(int fd, short args, void *cbdata)
 				   "%s errmgr_hnp: all routes and children gone - ordering exit",
 				   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 	      ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
-	    }
+	    } else {
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
+                                     "%s Comm failure: %d routes remain alive",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     (int)orte_routed.num_routes()));
+            }
             goto cleanup;
         }
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
@@ -528,6 +538,13 @@ static void proc_errors(int fd, short args, void *cbdata)
                              "%s errmgr:hnp: unable to send message to proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
+        /* if this proc is one of my daemons, then we are truly
+         * hosed - so just exit out
+         */
+        if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            break;
+        }
         /* kill all jobs */
         default_hnp_abort(jdata);
         break;

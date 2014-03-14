@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -61,6 +63,10 @@ void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
                     nm->name.vpid = proc->name.vpid;
                     opal_list_append(&coll->targets, &nm->super);
                 }
+            }
+            /* if nobody is known alive, then we need to die */
+            if (0 == opal_list_get_size(&coll->targets)) {
+                ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
             }
         } else {
             /* the xcast always goes to our children */
