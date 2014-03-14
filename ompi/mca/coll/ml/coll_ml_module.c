@@ -4,7 +4,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,15 +52,6 @@ static int coll_ml_parse_topology (sub_group_params_t *sub_group_meta_data, size
 
 /* #define NEW_LEADER_SELECTION */
 
-static inline double ret_us(void)
-{
-    struct timeval t;
-
-    gettimeofday(&t, NULL);
-
-    return t.tv_sec * 1e6 + t.tv_usec;
-}
-
 struct ranks_proxy_t {
     /* number of subgroups for which the rank is a proxy */
     int number_subgroups;
@@ -97,6 +88,8 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
 {
     int index_topo, coll_i, st_i;
     mca_coll_ml_topology_t *topo;
+
+    memset ((void*)((intptr_t) module + sizeof (module->super)), 0, sizeof(*module) - sizeof(module->super));
 
     module->max_fn_calls = 0;
     module->initialized = false;
