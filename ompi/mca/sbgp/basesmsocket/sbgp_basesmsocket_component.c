@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -173,6 +173,7 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
     if( 0 !=  hwloc_get_cpubind(opal_hwloc_topology,good, 0)){
         /* report some error */
         BASESMSOCKET_VERBOSE(10, "The global variable opal_hwloc_topology appears not to have been initialized\n");
+        hwloc_bitmap_free(good);
         return OMPI_ERROR;
     }
 
@@ -239,6 +240,7 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
           /* end while */
      }
      *socket = my_logical_socket_id;
+     hwloc_bitmap_free(good);
 
      return ret;
 
