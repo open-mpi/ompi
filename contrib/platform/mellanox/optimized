@@ -8,10 +8,10 @@ with_mpi_param_check=no
 enable_heterogeneous=no
 enable_ft_thread=no
 enable_orterun_prefix_by_default=yes
-enable_oshmem_fortran=yes
 with_verbs=yes
 with_devel_headers=yes
-with_oshmem=yes
+enable_oshmem=yes
+enable_oshmem_fortran=yes
 
 mellanox_autodetect=${mellanox_autodetect:="no"}
 mellanox_debug=${mellanox_debug:="no"}
