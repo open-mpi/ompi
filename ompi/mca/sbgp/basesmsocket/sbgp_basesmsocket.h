@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,9 +19,11 @@
 #include "mpi.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/sbgp/sbgp.h"
+#include "ompi/mca/sbgp/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/request/request.h"
 #include "ompi/proc/proc.h"
+#include "opal/util/output.h"
 
 BEGIN_C_DECLS
 
@@ -31,33 +36,11 @@ BEGIN_C_DECLS
 #  define SPIN
 #endif
 
-
-static inline int mca_sbgp_basesmsocket_err(const char* fmt, ...)
-{
-    va_list list;
-    int ret;
-
-    va_start(list, fmt);
-    ret = vfprintf(stderr, fmt, list);
-    va_end(list);
-    return ret;
-}
-
-#if OPAL_ENABLE_DEBUG
-#define BASESMSOCKET_VERBOSE(level, args)                              \
-    do {                                                        \
-        if(10 >= level) {         \
-            mca_sbgp_basesmsocket_err("[%s]%s[%s:%d:%s] BASESMSOCKET ",       \
-                    ompi_process_info.nodename,                 \
-                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
-                    __FILE__, __LINE__, __func__);              \
-            mca_sbgp_basesmsocket_err args;                            \
-            mca_sbgp_basesmsocket_err("\n");                           \
-        }                                                       \
+#define BASESMSOCKET_VERBOSE(level, ...)                                \
+    do {								\
+        OPAL_OUTPUT_VERBOSE((ompi_sbgp_base_framework.framework_output, level, \
+                             __VA_ARGS__));                             \
     } while(0);
-#else
-#define BASESMSOCKET_VERBOSE(level, args)
-#endif
 
 /**
  * Structure to hold the basic shared memory coll component.  First it holds the
@@ -68,7 +51,6 @@ static inline int mca_sbgp_basesmsocket_err(const char* fmt, ...)
 struct mca_sbgp_basesmsocket_component_t {
     /** Base coll component */
     mca_sbgp_base_component_2_0_0_t super;
-
 };
 
 /**

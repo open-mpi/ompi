@@ -1771,7 +1771,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
     i_hier = 0;
     while ((opal_list_item_t *) sbgp_cli != opal_list_get_end(&mca_sbgp_base_components_in_use)){
-
         /*
         ** obtain the list of  ranks in the current level
         */
@@ -1944,12 +1943,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                                     &cum_number_ranks_in_all_subgroups,
                                     &num_total_subgroups, map_to_comm_ranks,i_hier);
 
-        /* The way initialization is currently written *all* ranks MUST appear
-         * in the first level (0) of the hierarchy. If any rank is not in the first
-         * level then the calculation of gather/scatter offsets will be wrong.
-         * NTH: DO NOT REMOVE this assert until this changes! */
-        assert (i_hier || cum_number_ranks_in_all_subgroups == n_procs_in);
-
         if( OMPI_SUCCESS != ret ) {
             ML_VERBOSE(10, (" Error: get_new_subgroup_data returned %d \n",ret));
             goto exit_ERROR;
@@ -2067,13 +2060,21 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             goto SelectionDone;
         }
 
-        n_procs_in = n_remain;
-
         /* take the next element */
         sbgp_cli = (sbgp_base_component_keyval_t *) opal_list_get_next((opal_list_item_t *) sbgp_cli);
         bcol_cli = (mca_base_component_list_item_t *) opal_list_get_next((opal_list_item_t *) bcol_cli);
 
-        i_hier++;
+        if (n_remain != n_procs_in) {
+            i_hier++;
+
+            /* The way initialization is currently written *all* ranks MUST appear
+             * in the first level (0) of the hierarchy. If any rank is not in the first
+             * level then the calculation of gather/scatter offsets will be wrong.
+             * NTH: DO NOT REMOVE this assert until this changes! */
+            assert (i_hier || cum_number_ranks_in_all_subgroups == n_procs_in);
+        }
+
+        n_procs_in = n_remain;
     }
 
  SelectionDone:
