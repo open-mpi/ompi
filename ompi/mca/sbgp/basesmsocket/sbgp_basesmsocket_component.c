@@ -172,7 +172,7 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
     /* get this process' CPU binding */
     if( 0 !=  hwloc_get_cpubind(opal_hwloc_topology,good, 0)){
         /* report some error */
-        BASESMSOCKET_VERBOSE(10, ("The global variable opal_hwloc_topology appears not to have been initialized\n"));
+        BASESMSOCKET_VERBOSE(10, "The global variable opal_hwloc_topology appears not to have been initialized\n");
         return OMPI_ERROR;
     }
 
@@ -292,7 +292,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
         my_socket_index=-1;
         /*debug print*/
         /* */
-        BASESMSOCKET_VERBOSE(10, ("[%d] FAILED to set basesmsocket group, processes are not bound!!!\n",my_rank));
+        BASESMSOCKET_VERBOSE(10, "[%d] FAILED to set basesmsocket group, processes are not bound!!!\n",my_rank);
         /*end debug*/
         goto NoLocalPeers;
     } else {
@@ -303,7 +303,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
          * by the hwloc API are unique. 
          */
         if( OMPI_SUCCESS != mca_sbgp_map_to_logical_socket_id(&my_socket_index)){
-            BASESMSOCKET_VERBOSE(10, ("[%d] FAILED to set basesmsocket group !!!\n",my_rank));
+            BASESMSOCKET_VERBOSE(10, "[%d] FAILED to set basesmsocket group !!!\n",my_rank);
 
             goto NoLocalPeers;
         }
@@ -394,7 +394,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
         ret=comm_allgather_pml(&my_socket_info, socket_info, 1,
                 MPI_INT, my_local_index, n_local_peers, local_ranks_in_comm,comm);
         if (OMPI_SUCCESS != ret ) {
-            BASESMSOCKET_VERBOSE(10, ("comm_allgather_pml returned error %d\n",ret));
+            BASESMSOCKET_VERBOSE(10, "comm_allgather_pml returned error %d\n",ret);
             return NULL;
         }
 
