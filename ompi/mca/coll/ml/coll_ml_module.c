@@ -2502,7 +2502,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
 
         ML_VERBOSE(10, ("\nThe table is:\n============\n%s\n", buff));
         free(buff);
-    } while(0);
+    }
 #endif
 
     for (level = 0; level < topo->n_levels; ++level) {
