@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -68,10 +68,10 @@ EXAMPLES = \
 # bindings.
 
 all: hello_c ring_c connectivity_c
-	@ if which ompi_info 2>&1 >/dev/null; then \
+	@ if which ompi_info >/dev/null 2>&1 ; then \
 	    $(MAKE) mpi; \
 	fi
-	@ if which oshmem_info 2>&1 >/dev/null; then \
+	@ if which oshmem_info >/dev/null 2>&1 ; then \
 	    $(MAKE) oshmem; \
 	fi
 
