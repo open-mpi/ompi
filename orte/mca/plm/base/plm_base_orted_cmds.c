@@ -78,11 +78,6 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    if (orte_orteds_term_ordered) {
-        /* only do this once */
-        return ORTE_SUCCESS;
-    }
-
     /* flag that orteds are being terminated */
     orte_orteds_term_ordered = true;
     
