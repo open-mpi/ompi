@@ -1972,7 +1972,8 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         if ((1 == n_procs_selected) && n_remain > 1) {
             OBJ_RELEASE(module);
             n_procs_selected = 0;
-
+            /* at least one process was sselected at this level. increment the hierarchy */
+            i_hier++;
         }
 
         if( 0 < n_procs_selected ) {
@@ -2058,6 +2059,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         bcol_cli = (mca_base_component_list_item_t *) opal_list_get_next((opal_list_item_t *) bcol_cli);
 
         if (n_remain != n_procs_in) {
+            /* do not increment the hierarchy if no processes were selected at this level */
             i_hier++;
 
             /* The way initialization is currently written *all* ranks MUST appear
