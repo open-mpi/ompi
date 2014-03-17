@@ -5,6 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -138,9 +139,6 @@ static int pmi_allgather(orte_grpcomm_collective_t *coll)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
-#if WANT_PMI2_SUPPORT
-int *pmi2_parse_pmap(char *pmap, int my_rank, int *node, int *nlrs);
-#endif
 
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
@@ -171,7 +169,7 @@ static int modex(orte_grpcomm_collective_t *coll)
             return ORTE_ERROR;
         }
 
-        local_ranks = pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &my_node, &local_rank_count);
+        local_ranks = orte_grpcomm_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &my_node, &local_rank_count);
         if (NULL == local_ranks) {
             opal_output(0, "%s could not get PMI_process_mapping",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

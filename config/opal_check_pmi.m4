@@ -144,4 +144,5 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                       [$opal_have_pmi2],
                       [Whether we have PMI2 support])
    AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$opal_enable_pmi" = 1])
+   AM_CONDITIONAL(WANT_PMI2_SUPPORT, [test "$opal_have_pmi2" = 1])
 ])
