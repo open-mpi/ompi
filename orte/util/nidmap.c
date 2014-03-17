@@ -894,7 +894,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     uint8_t flag;
     opal_buffer_t *bptr;
     bool barrier;
-    opal_hwloc_locality_t locality;
 
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -1041,58 +1040,13 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
 #if OPAL_HAVE_HWLOC
-                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
+            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
                                                     OPAL_DB_CPUSET, cpu_bitmap, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            /* if the proc is on my node, determine its locality */
-            if (dmn.vpid == ORTE_PROC_MY_DAEMON->vpid) {
-                /* if we don't know anything else, then
-                 * that is all we can say
-                 */
-                if (NULL == cpu_bitmap) {
-                    locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-                } else {
-		/* determine relative location on our node */
-		locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-								 orte_process_info.cpuset,
-								 cpu_bitmap);
-                }
-            } else {
-                /* this is on a different node, then mark as non-local */
-                locality = OPAL_PROC_NON_LOCAL;
-            }
-            OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
-                                 "%s nidmap: proc %s locality %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc), opal_hwloc_base_print_locality(locality)));
-            
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
-                                                    OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-
             if (NULL != cpu_bitmap) {
                 free(cpu_bitmap);
-            }
-#else
-            if (dmn.vpid == ORTE_PROC_MY_DAEMON->vpid) {
-                locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-            } else {
-                /* this is on a different node, then mark as non-local */
-                locality = OPAL_PROC_NON_LOCAL;
-            }
-            OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
-                                 "%s nidmap: proc %s locality %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc), opal_hwloc_base_print_locality(locality)));
-            
-            if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_INTERNAL,
-                                                    OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
             }
 #endif
             /* we don't need to store the rest of the values
