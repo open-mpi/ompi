@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -79,7 +79,9 @@ static int mca_base_var_enum_bool_vfs (mca_base_var_enum_t *self, const char *st
 static int mca_base_var_enum_bool_sfv (mca_base_var_enum_t *self, const int value,
                                        const char **string_value)
 {
-    *string_value = value ? "true" : "false";
+    if (string_value) {
+        *string_value = value ? "true" : "false";
+    }
 
     return OPAL_SUCCESS;
 }
