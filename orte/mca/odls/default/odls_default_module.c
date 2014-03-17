@@ -255,8 +255,21 @@ static bool odls_default_child_died(orte_proc_t *child)
 
 static int odls_default_kill_local(pid_t pid, int signum)
 {
+    pid_t pgrp;
+
     if (orte_forward_job_control) {
         pid = -pid;
+    }
+    pgrp = getpgid(pid);
+    if (-1 != pgrp) {
+        /* target the lead process of the process
+         * group so we ensure that the signal is
+         * seen by all members of that group. This
+         * ensures that the signal is seen by any
+         * child processes our child may have
+         * started
+         */
+        pid = pgrp;
     }
     if (0 != kill(pid, signum)) {
         if (ESRCH != errno) {
