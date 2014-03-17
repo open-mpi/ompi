@@ -132,7 +132,8 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
  * @return array that contains ranks local to my_rank or NULL
  * on failure. Array must be freed by the caller. 
  */ 
-int *pmi2_parse_pmap(char *pmap, int my_rank, int *node, int *nlrs)
+static int *pmi2_parse_pmap(char *pmap, int my_rank,
+                            int *node, int *nlrs)
 {
     char *p;
 
