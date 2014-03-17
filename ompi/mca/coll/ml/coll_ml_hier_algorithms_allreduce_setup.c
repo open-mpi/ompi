@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,7 +150,6 @@ static int mca_coll_ml_build_allreduce_schedule(
         goto Allreduce_Setup_Error;
     }
 
-
     for (i = 0; i < num_up_levels; i++) {
         comp_fn = &schedule->component_functions[i];
         comp_fn->h_level = i; /* hierarchy level */
@@ -160,6 +162,10 @@ static int mca_coll_ml_build_allreduce_schedule(
 
         comp_fn->bcol_function =
             bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_REDUCE][bcol_func_index][0][0];
+        if (NULL == comp_fn->bcol_function) {
+            /* if there isn't a bcol function for this then we can't continue */
+            goto Allreduce_Setup_Error;
+        }
 
         comp_fn->task_comp_fn = NULL;
 
@@ -176,6 +182,8 @@ static int mca_coll_ml_build_allreduce_schedule(
         comp_fn->h_level = nfn; /* hierarchy level */
         bcol_module = GET_BCOL(topo_info, nfn);
 
+        assert (NULL != bcol_module);
+
         /* strcpy (comp_fn->fn_name, "ALLREDUCE_SMALL_DATA"); */
 
         /* The allreduce should depend on the reduce */
@@ -183,6 +191,10 @@ static int mca_coll_ml_build_allreduce_schedule(
         comp_fn->num_dependencies        = 0;
         comp_fn->bcol_function =
             bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_ALLREDUCE][bcol_func_index][0][0];
+        if (NULL == comp_fn->bcol_function) {
+            /* if there isn't a bcol function for this then we can't continue */
+            goto Allreduce_Setup_Error;
+        }
 
         comp_fn->task_comp_fn = NULL;
 
@@ -200,6 +212,8 @@ static int mca_coll_ml_build_allreduce_schedule(
         comp_fn->h_level = i; /* hierarchy level */
         bcol_module = GET_BCOL(topo_info, i);
 
+        assert (NULL != bcol_module);
+
     /*    strcpy (comp_fn->fn_name, "ALLREDUCE_SMALL_DATA"); */
 
         comp_fn->num_dependent_tasks     = 0;
@@ -207,6 +221,10 @@ static int mca_coll_ml_build_allreduce_schedule(
 
         comp_fn->bcol_function =
             bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_BCAST][bcol_func_index][0][0];
+        if (NULL == comp_fn->bcol_function) {
+            /* if there isn't a bcol function for this then we can't continue */
+            goto Allreduce_Setup_Error;
+        }
 
         comp_fn->task_comp_fn = NULL;
 
