@@ -408,14 +408,11 @@ void orte_info_do_config(bool want_all)
         
         
         orte_info_out("Build CFLAGS", "option:build:cflags", OMPI_BUILD_CFLAGS);
-        orte_info_out("Build CXXFLAGS", "option:build:cxxflags", OMPI_BUILD_CXXFLAGS);
         orte_info_out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
         orte_info_out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);
         
         orte_info_out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags", 
                       WRAPPER_EXTRA_CFLAGS);
-        orte_info_out("Wrapper extra CXXFLAGS", "option:wrapper:extra_cxxflags", 
-                      WRAPPER_EXTRA_CXXFLAGS);
         orte_info_out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags", 
                       WRAPPER_EXTRA_LDFLAGS);
         orte_info_out("Wrapper extra LIBS", "option:wrapper:extra_libs",
