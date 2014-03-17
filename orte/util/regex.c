@@ -683,6 +683,84 @@ int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
     return ORTE_SUCCESS;
 }
 
+int orte_regex_extract_name_range(char *regexp, char ***names)
+{
+    char *tmp, *b, *b2, **rngs, *t, *pre, *post;
+    int i;
+    char c;
+
+    /* protect input */
+    tmp = strdup(regexp);
+    /* look for bracket */
+    if (NULL == (b = strchr(tmp, '['))) {
+        /* just one value */
+        opal_argv_append_nosize(names, regexp);
+        free(tmp);
+        return ORTE_SUCCESS;
+    }
+    if (b == tmp) {
+        /* bracket at very beginning */
+        pre = NULL;
+    } else {
+        *b = '\0';
+        pre = tmp;
+    }
+    /* step over the bracket */
+    b++;
+    /* look for closing bracket */
+    if (NULL == (b2 = strrchr(tmp, ']'))) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        free(tmp);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    *b2 = '\0';
+    b2++;
+    if ('\0' == *b2) {
+        /* bracket was at end */
+        post = NULL;
+    } else {
+        post = b2;
+    }
+
+    /* split on commas */
+    rngs = opal_argv_split(b, ',');
+    for (i=0; NULL != rngs[i]; i++) {
+        /* look for a range */
+        if (NULL == strchr(rngs[i], '-')) {
+            /* just one value */
+            if (NULL == pre && NULL == post) {
+                t = strdup(rngs[i]);
+            } else if (NULL == pre) {
+                asprintf(&t, "%s%s", rngs[i], post);
+            } else if (NULL == post) {
+                asprintf(&t, "%s%s", pre, rngs[i]);
+            } else {
+                asprintf(&t, "%s%s%s", pre, rngs[i], post);
+            }
+            opal_argv_append_nosize(names, t);
+            free(t);
+        } else {
+            /* has to be <char>-<char> */
+            for (c=rngs[i][0]; c <= rngs[i][2]; c++) {
+                if (NULL == pre && NULL == post) {
+                    asprintf(&t, "%c", c);
+                } else if (NULL == pre) {
+                    asprintf(&t, "%c%s", c, post);
+                } else if (NULL == post) {
+                    asprintf(&t, "%s%c", pre, c);
+                } else {
+                    asprintf(&t, "%s%c%s", pre, c, post);
+                }
+                opal_argv_append_nosize(names, t);
+                free(t);
+            }
+        }
+    }
+    opal_argv_free(rngs);
+    free(tmp);
+    return ORTE_SUCCESS;
+}
+
 static void range_construct(orte_regex_range_t *ptr)
 {
     ptr->start = 0;

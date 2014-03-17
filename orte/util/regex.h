@@ -59,5 +59,7 @@ ORTE_DECLSPEC int orte_regex_extract_node_names(char *regexp, char ***names);
 
 ORTE_DECLSPEC int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn);
 
+ORTE_DECLSPEC int orte_regex_extract_name_range(char *regexp, char ***names);
+
 END_C_DECLS
 #endif
