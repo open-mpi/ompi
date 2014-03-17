@@ -197,19 +197,18 @@ typedef int32_t orte_job_state_t;
 typedef int8_t orte_node_state_t;
 #define ORTE_NODE_STATE_T OPAL_INT8
 
-/** Node is in an unknown state (see orte_node_state_t) */
-#define ORTE_NODE_STATE_UNKNOWN        0
-/** Node is down (see orte_node_state_t) */
-#define ORTE_NODE_STATE_DOWN           1
-/** Node is up / available for use (see orte_node_state_t) */
-#define ORTE_NODE_STATE_UP             2
-/** Node is rebooting (only some systems will support this; see
-orte_node_state_t) */
-#define ORTE_NODE_STATE_REBOOT         3
-/** Node is up, but not available for use for the next mapping */
-#define ORTE_NODE_STATE_DO_NOT_USE     4
-/** Node is up, but not part of the node pool for jobs */
-#define ORTE_NODE_STATE_NOT_INCLUDED   5
+/* use an enum to define the values, though, so the debugger
+ * can report the name of the value
+ */
+enum orte_node_state_t {
+    ORTE_NODE_STATE_UNDEF,        // Node is undefined
+    ORTE_NODE_STATE_UNKNOWN,      // Node is defined but in an unknown state
+    ORTE_NODE_STATE_DOWN,         // Node is down
+    ORTE_NODE_STATE_UP,           // Node is up / available for use
+    ORTE_NODE_STATE_REBOOT,       // Node is rebooting
+    ORTE_NODE_STATE_DO_NOT_USE,   // Node is up, but not available for use for the next mapping
+    ORTE_NODE_STATE_NOT_INCLUDED  // Node is up, but not part of the node pool for jobs
+};
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own
