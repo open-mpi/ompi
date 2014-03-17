@@ -102,9 +102,7 @@ static int orte_sensor_base_close(void)
  */
 static int orte_sensor_base_open(mca_base_open_flag_t flags)
 {
-    /* initialize pointers */
-    orte_sensor_base.my_proc = NULL;
-    orte_sensor_base.my_node = NULL;
+    /* initialize globals */
     orte_sensor_base.active = false;
 
     /* construct the array of modules */

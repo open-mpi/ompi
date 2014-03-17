@@ -62,14 +62,42 @@ orte_sensor_base_module_t orte_sensor_resusage_module = {
 };
 
 static bool log_enabled = true;
+static orte_node_t *my_node;
+static orte_proc_t *my_proc;
 
 static int init(void)
 {
+    orte_job_t *jdata;
+
+    /* ensure my_proc and my_node are available on the global arrays */
+    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        my_proc = OBJ_NEW(orte_proc_t);
+        my_node = OBJ_NEW(orte_node_t);
+    } else {
+        if (NULL == (my_proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, ORTE_PROC_MY_NAME->vpid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        if (NULL == (my_node = my_proc->node)) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        /* protect the objects */
+        OBJ_RETAIN(my_proc);
+        OBJ_RETAIN(my_node);
+    }
+
     return ORTE_SUCCESS;
 }
 
 static void finalize(void)
 {
+    if (NULL != my_proc) {
+        OBJ_RELEASE(my_proc);
+    }
+    if (NULL != my_node) {
+        OBJ_RELEASE(my_node);
+    }
     return;
 }
 
@@ -112,10 +140,10 @@ static void sample(void)
     strncpy(stats->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
     stats->rank = ORTE_PROC_MY_NAME->vpid;
     /* locally save the stats */
-    if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&orte_sensor_base.my_proc->stats, stats))) {
+    if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&my_proc->stats, stats))) {
         OBJ_RELEASE(st);
     }
-    if (NULL != (nst = (opal_node_stats_t*)opal_ring_buffer_push(&orte_sensor_base.my_node->stats, nstats))) {
+    if (NULL != (nst = (opal_node_stats_t*)opal_ring_buffer_push(&my_node->stats, nstats))) {
         /* release the popped value */
         OBJ_RELEASE(nst);
     }
@@ -186,7 +214,7 @@ static void sample(void)
     OBJ_DESTRUCT(&buf);
 
     /* are there any issues with node-level usage? */
-    nst = (opal_node_stats_t*)opal_ring_buffer_poke(&orte_sensor_base.my_node->stats, -1);
+    nst = (opal_node_stats_t*)opal_ring_buffer_poke(&my_node->stats, -1);
     if (NULL != nst && 0.0 < mca_sensor_resusage_component.node_memory_limit) {
         OPAL_OUTPUT_VERBOSE((2, orte_sensor_base_framework.framework_output,
                              "%s CHECKING NODE MEM",

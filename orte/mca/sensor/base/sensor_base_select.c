@@ -48,7 +48,6 @@ int orte_sensor_base_select(void)
     opal_pointer_array_t tmp_array;
     bool none_found;
     orte_sensor_active_module_t *tmp_module = NULL, *tmp_module_sw = NULL;
-    orte_job_t *jdata;
     bool duplicate;
 
     if (selected) {
@@ -149,24 +148,6 @@ int orte_sensor_base_select(void)
     if (none_found) {
         /* okay for no modules to be found */
         return ORTE_SUCCESS;
-    }
-
-    /* ensure my_proc and my_node are available on the global arrays */
-    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-        orte_sensor_base.my_proc = OBJ_NEW(orte_proc_t);
-        orte_sensor_base.my_node = OBJ_NEW(orte_node_t);
-    } else {
-        if (NULL == (orte_sensor_base.my_proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, ORTE_PROC_MY_NAME->vpid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (NULL == (orte_sensor_base.my_node = orte_sensor_base.my_proc->node)) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        /* protect the objects */
-        OBJ_RETAIN(orte_sensor_base.my_proc);
-        OBJ_RETAIN(orte_sensor_base.my_node);
     }
 
     /*
