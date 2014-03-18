@@ -12,7 +12,7 @@
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -114,6 +114,12 @@ static int rte_init(void)
 #endif
 
     if (ORTE_PROC_IS_DAEMON) {  /* I am a daemon, launched by mpirun */
+        /* ensure that we always exit with a non-zero status
+         * so that Slurm and other such RMs will terminate the
+         * job if any daemon exits, whether normal termination or not
+         */
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+
         /* we had to be given a jobid */
         if (NULL == orte_ess_base_jobid) {
             error = "missing jobid";

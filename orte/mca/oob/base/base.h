@@ -103,16 +103,21 @@ typedef void (*mca_oob_send_callback_fn_t)(int status,
                                            int count, void *cbdata);
 
 ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata); 
-#define ORTE_OOB_SEND(m)                                        \
-    do {                                                        \
-        orte_oob_send_t *cd;                                    \
-        cd = OBJ_NEW(orte_oob_send_t);                          \
-        cd->msg = (m);                                          \
-        opal_event_set(orte_event_base, &cd->ev, -1,            \
-                       OPAL_EV_WRITE,                           \
-                       orte_oob_base_send_nb, cd);              \
-        opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);         \
-        opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);           \
+#define ORTE_OOB_SEND(m)                                                \
+    do {                                                                \
+        orte_oob_send_t *cd;                                            \
+        opal_output_verbose(1,                                          \
+                            orte_oob_base_framework.framework_output,   \
+                            "%s OOB_SEND: %s:%d",                       \
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
+                            __FILE__, __LINE__);                        \
+        cd = OBJ_NEW(orte_oob_send_t);                                  \
+        cd->msg = (m);                                                  \
+        opal_event_set(orte_event_base, &cd->ev, -1,                    \
+                       OPAL_EV_WRITE,                                   \
+                       orte_oob_base_send_nb, cd);                      \
+        opal_event_set_priority(&cd->ev, ORTE_MSG_PRI);                 \
+        opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);                   \
     }while(0);
 
 /* Our contact info is actually subject to change as transports
