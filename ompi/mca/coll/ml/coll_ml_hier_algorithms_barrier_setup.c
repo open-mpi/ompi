@@ -88,7 +88,6 @@ static int mca_coll_ml_build_barrier_schedule(
                 bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_FANIN][1][0][0];
 
             if (NULL == comp_fn->bcol_function) {
-		assert (0);
                 ML_VERBOSE(10, ("no function available for BCOL_FANIN, NON_BLOCKING, DATA_SRC_KNOWN"));
                 goto Barrier_Setup_Error;
             }
@@ -105,7 +104,6 @@ static int mca_coll_ml_build_barrier_schedule(
                 bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_BARRIER][1][0][0];
 
             if (NULL == comp_fn->bcol_function) {
-		assert (0);
                 ML_VERBOSE(10, ("no function available for BCOL_BARRIER, NON_BLOCKING, DATA_SRC_KNOWN"));
                 goto Barrier_Setup_Error;
             }
@@ -126,7 +124,6 @@ static int mca_coll_ml_build_barrier_schedule(
                 bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_FANOUT][1][0][0];
 
             if (NULL == comp_fn->bcol_function) {
-		assert (0);
                 ML_VERBOSE(10, ("no function available for BCOL_FANOUT, NON_BLOCKING, DATA_SRC_KNOWN"));
                 goto Barrier_Setup_Error;
             }
@@ -139,7 +136,7 @@ static int mca_coll_ml_build_barrier_schedule(
             /* Init component function */
             strcpy(comp_fn->fn_name, "FANOUT");
         }
-        assert(NULL != comp_fn->bcol_function);
+
         ML_VERBOSE(10, ("func indx %d set to %p", i_fn, comp_fn->bcol_function));
 
         if (comp_fn->num_dependent_tasks > 0) {
