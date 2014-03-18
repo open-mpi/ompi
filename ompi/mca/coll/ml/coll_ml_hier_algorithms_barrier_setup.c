@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,7 +87,11 @@ static int mca_coll_ml_build_barrier_schedule(
             comp_fn->bcol_function =
                 bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_FANIN][1][0][0];
 
-            assert(NULL != comp_fn->bcol_function);
+            if (NULL == comp_fn->bcol_function) {
+		assert (0);
+                ML_VERBOSE(10, ("no function available for BCOL_FANIN, NON_BLOCKING, DATA_SRC_KNOWN"));
+                goto Barrier_Setup_Error;
+            }
 
             /* Each function call with index K is depended of all K-1 previous indices -
                in simple words we will do sequential Fan-In calls */
@@ -97,6 +104,12 @@ static int mca_coll_ml_build_barrier_schedule(
             comp_fn->bcol_function =
                 bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_BARRIER][1][0][0];
 
+            if (NULL == comp_fn->bcol_function) {
+		assert (0);
+                ML_VERBOSE(10, ("no function available for BCOL_BARRIER, NON_BLOCKING, DATA_SRC_KNOWN"));
+                goto Barrier_Setup_Error;
+            }
+
             /* Each function call with index K is depended of all K-1 previous indices -
                in simple words we do sequential calls */
             comp_fn->num_dependencies = (1 == n_hiers)    ? 0 : 1; /* All Fan-Ins */
@@ -105,13 +118,18 @@ static int mca_coll_ml_build_barrier_schedule(
             /* Init component function */
             strcpy(comp_fn->fn_name, "BARRIER");
 
-            assert(NULL != comp_fn->bcol_function);
             ML_VERBOSE(10, ("func indx %d set to BARRIER %p", i_fn, comp_fn->bcol_function));
 
         /* The DOWN direction */
         } else {
             comp_fn->bcol_function =
                 bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_FANOUT][1][0][0];
+
+            if (NULL == comp_fn->bcol_function) {
+		assert (0);
+                ML_VERBOSE(10, ("no function available for BCOL_FANOUT, NON_BLOCKING, DATA_SRC_KNOWN"));
+                goto Barrier_Setup_Error;
+            }
 
             /* Each function call with index K is depended of all UP and TOP algths */
             comp_fn->num_dependencies = 1;
