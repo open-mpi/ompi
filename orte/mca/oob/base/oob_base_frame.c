@@ -96,10 +96,6 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, oob, "Out-of-Band Messaging Subsystem",
                            mca_oob_base_static_components, 0);
 
 
-OBJ_CLASS_INSTANCE(mca_oob_base_component_t,
-                   opal_list_item_t,
-                   NULL, NULL);
-
 OBJ_CLASS_INSTANCE(orte_oob_send_t,
                    opal_object_t,
                    NULL, NULL);
