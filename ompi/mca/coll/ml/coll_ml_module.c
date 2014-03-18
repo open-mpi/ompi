@@ -639,8 +639,7 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
     /* first thing I want to know is where does the first level end */
     level_one_knt = 0;
 
-    while( 0 == array_of_all_subgroup_ranks[level_one_knt].level_in_hierarchy &&
-           level_one_knt < num_total_subgroups){
+    while (level_one_knt < num_total_subgroups && 0 == array_of_all_subgroup_ranks[level_one_knt].level_in_hierarchy) {
         level_one_knt++;
     }
 
