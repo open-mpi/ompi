@@ -235,9 +235,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
                              "%s plm:alps: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
-        if (ORTE_JOB_STATE_DAEMONS_REPORTED == daemons->state) {
-            ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
-        }
+        ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
         OBJ_RELEASE(state);
         return;
     }
