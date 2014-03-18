@@ -180,6 +180,8 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
         ompi_btl_usnic_proc_t* usnic_proc;
         mca_btl_base_endpoint_t* usnic_endpoint;
 
+        endpoints[i] = NULL;
+
         /* Do not create loopback usnic connections */
         if (ompi_proc == my_proc) {
             continue;
@@ -235,6 +237,8 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
     if (OMPI_SUCCESS != rc) {
         for (i = 0; i < nprocs; i++) {
             if (NULL != endpoints[i]) {
+                opal_list_remove_item(&(module->all_endpoints),
+                                      &(endpoints[i]->endpoint_endpoint_li));
                 OBJ_RELEASE(endpoints[i]);
                 endpoints[i] = NULL;
             }
