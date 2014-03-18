@@ -531,7 +531,7 @@ MPI Collectives
   in modern systems. A ML collective operation is implemented by 
   combining multiple independently progressing collective primitives 
   implemented over different communication hierarchies, hence a ML 
-  collective operation is also reffered to as a hierarchical collective 
+  collective operation is also referred to as a hierarchical collective 
   operation. The number of collective primitives that are included in a 
   ML collective operation is a function of subgroups(hierarchies). 
   Typically, MPI processes in a single communication hierarchy such as 
