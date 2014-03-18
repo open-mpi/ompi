@@ -32,7 +32,7 @@ int bcol_basesmuma_allreduce_init(mca_bcol_base_module_t *super)
 
     comm_attribs.bcoll_type = BCOL_ALLREDUCE;
     comm_attribs.comm_size_min = 0;
-    comm_attribs.comm_size_max = 16;
+    comm_attribs.comm_size_max = 1048576;
     comm_attribs.data_src = DATA_SRC_KNOWN;
 
     /* selection logic at the ml level specifies a
