@@ -315,6 +315,12 @@ OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
  */
 OMPI_DECLSPEC int ompi_proc_refresh(void);
 
+
+/**
+ * Set the locality of a proc relative to me
+ */
+OMPI_DECLSPEC int ompi_proc_set_locality(ompi_proc_t *proc);
+
 END_C_DECLS
 
 #endif /* OMPI_PROC_PROC_H */

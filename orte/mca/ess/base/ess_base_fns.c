@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include <errno.h>
 
 #include "opal/util/output.h"
+#include "opal/mca/db/db.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -288,6 +290,15 @@ int orte_ess_base_proc_binding(void)
         }
     }
     hwloc_bitmap_free(mycpus);
+    /* store our cpuset for exchange with non-peers
+     * so that other procs in a comm_spawn can know it
+     */
+    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                             OPAL_SCOPE_NON_PEER,
+                                             OPAL_DB_CPUSET, orte_process_info.cpuset, OPAL_STRING))) {
+        ORTE_ERROR_LOG(ret);
+        goto error;
+    }
 
     return ORTE_SUCCESS;
 

@@ -548,6 +548,11 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:connect_accept new procs added",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+        /* set the locality of the new procs */
+        for (j=0; j < new_proc_len; j++) {
+            ompi_proc_set_locality(new_proc_list[j]);
+        }
     }
 
     OBJ_RELEASE(nrbuf);
