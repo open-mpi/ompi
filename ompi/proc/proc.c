@@ -127,7 +127,7 @@ int ompi_proc_init(void)
     return OMPI_SUCCESS;
 }
 
-static int ompi_proc_set_locality(ompi_proc_t *proc)
+int ompi_proc_set_locality(ompi_proc_t *proc)
 {
     opal_hwloc_locality_t *hwlocale, locality;
     ompi_vpid_t vpid, *vptr;
