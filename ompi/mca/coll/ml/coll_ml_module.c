@@ -578,7 +578,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
                 /* more than one local leader - don't know how to
                  * handle this, so bail
                  */
-                ML_VERBOSE(0, ("More than a single leader for a group."));
+                ML_VERBOSE(1, ("More than a single leader for a group."));
                 ret=OMPI_ERROR;
                 goto exit_ERROR;
             } else {
@@ -599,7 +599,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
         }
     }
     if( sum != n_procs_selected ) {
-        ML_VERBOSE(0, ("number of procs in the group unexpected.  Expected %d Got %d",n_procs_selected,sum));
+        ML_VERBOSE(1, ("number of procs in the group unexpected.  Expected %d Got %d",n_procs_selected,sum));
         ret=OMPI_ERROR;
         goto exit_ERROR;
     }
@@ -609,7 +609,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
         if(ll_p1!=all_selected[module->group_list[i]] &&
            ll_p1!=-all_selected[module->group_list[i]] ) {
             ret=OMPI_ERROR;
-            ML_VERBOSE(0, ("Mismatch in rank list - element #%d - %d ",i,all_selected[module->group_list[i]]));
+            ML_VERBOSE(1, ("Mismatch in rank list - element #%d - %d ",i,all_selected[module->group_list[i]]));
             goto exit_ERROR;
         }
     }
@@ -3006,14 +3006,14 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
      */
     ret = ml_discover_hierarchy(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("ml_discover_hierarchy exited with error."));
+        ML_VERBOSE(1, ("ml_discover_hierarchy exited with error."));
         goto CLEANUP;
     }
 
     /* gvm Disabled for debuggin */
     ret = mca_coll_ml_build_filtered_fn_table(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("mca_coll_ml_build_filtered_fn_table returned an error."));
+        ML_VERBOSE(1, ("mca_coll_ml_build_filtered_fn_table returned an error."));
         goto CLEANUP;
     }
 
@@ -3027,7 +3027,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     ML_VERBOSE(10, ("Call for setup schedule."));
     ret = ml_coll_schedule_setup(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("ml_coll_schedule_setup exit with error"));
+        ML_VERBOSE(1, ("ml_coll_schedule_setup exit with error"));
         goto CLEANUP;
     }
 
@@ -3035,7 +3035,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     ML_VERBOSE(10, ("Setup bcast table"));
     ret = setup_bcast_table(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("setup_bcast_table exit with error"));
+        ML_VERBOSE(1, ("setup_bcast_table exit with error"));
         goto CLEANUP;
     }
 
