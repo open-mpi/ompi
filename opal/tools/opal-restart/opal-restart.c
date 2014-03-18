@@ -15,6 +15,7 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -167,8 +168,10 @@ main(int argc, char *argv[])
     int ret, exit_status = OPAL_SUCCESS;
     int child_pid;
     int prev_pid = 0;
+    int idx;
     opal_crs_base_snapshot_t *snapshot = NULL;
     char * tmp_env_var = NULL;
+    bool select = false;
 
     /***************
      * Initialize
@@ -189,12 +192,20 @@ main(int argc, char *argv[])
     }
 
     /* Re-enable the selection of the CRS component, so we can choose the right one */
-    (void) mca_base_var_env_name("crs_base_do_not_select", &tmp_env_var);
-    opal_setenv(tmp_env_var,
-                "0", /* turn on the selection */
-                true, &environ);
-    free(tmp_env_var);
-    tmp_env_var = NULL;
+    idx = mca_base_var_find(NULL, "crs", "base", "do_not_select");
+
+    if (0 > idx) {
+        opal_output(opal_restart_globals.output,
+                    "MCA variable opal_crs_base_do_not_select not found\n");
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
+    ret = mca_base_var_set_value(idx, &select, 0, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
+    if (OPAL_SUCCESS != ret) {
+        exit_status = ret;
+        goto cleanup;
+    }
 
     /*
      * Make sure we are using the correct checkpointer
