@@ -1540,16 +1540,16 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     rc = ompi_proc_unpack(rbuf, rsize, &rprocs, true, NULL, NULL);
     OBJ_RELEASE(rbuf);
 
+    /* set the locality of the remote procs */
+    for (i=0; i < rsize; i++) {
+        ompi_proc_set_locality(rprocs[i]);
+    }
+
     /* And now add the information into the database */
     /* Store the remote processes into the opal_db */
     if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(rprocs, rsize)))) {
         OMPI_ERROR_LOG(rc);
         goto err_exit;
-    }
-
-    /* set the locality of the remote procs */
-    for (i=0; i < rsize; i++) {
-        ompi_proc_set_locality(rprocs[i]);
     }
 
  err_exit:
