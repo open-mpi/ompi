@@ -1654,7 +1654,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     sub_group_params_t *array_of_all_subgroup_ranks=NULL;
     /* this pointer should probably be an int32_t and not an int type */
     int32_t *list_of_ranks_in_all_subgroups=NULL;
-    int cum_number_ranks_in_all_subgroups=0,num_total_subgroups=0;
+    int num_ranks_in_all_subgroups=0,num_total_subgroups=0;
     int size_of_array_of_all_subgroup_ranks=0;
     int size_of_list_of_ranks_in_all_subgroups=0;
     int32_t in_allgather_value;
@@ -1761,6 +1761,9 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
     i_hier = 0;
     while ((opal_list_item_t *) sbgp_cli != opal_list_get_end(&mca_sbgp_base_components_in_use)){
+        /* number of processes selected with this sbgp on all ranks */
+        int global_n_procs_selected;
+
         /*
         ** obtain the list of  ranks in the current level
         */
@@ -1842,7 +1845,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         my_rank_in_subgroup=-1;
         ll_p1=-1;
         in_allgather_value = 0;
-        if( n_procs_selected) {
+        if (n_procs_selected) {
             /* I need to contribute to the vector */
             for (group_index = 0; group_index < n_procs_selected; group_index++) {
                 /* set my rank within the group */
@@ -1925,18 +1928,24 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
          * accumulate data on the new subgroups created
          */
         /*XXX*/
+        global_n_procs_selected = num_ranks_in_all_subgroups;
         ret = get_new_subgroup_data(all_selected, n_procs_in,
                                     &array_of_all_subgroup_ranks,
                                     &size_of_array_of_all_subgroup_ranks,
                                     &list_of_ranks_in_all_subgroups,
                                     &size_of_list_of_ranks_in_all_subgroups,
-                                    &cum_number_ranks_in_all_subgroups,
+                                    &num_ranks_in_all_subgroups,
                                     &num_total_subgroups, map_to_comm_ranks,i_hier);
 
         if( OMPI_SUCCESS != ret ) {
             ML_VERBOSE(10, (" Error: get_new_subgroup_data returned %d ",ret));
             goto exit_ERROR;
         }
+
+        /* the global number of processes selected at this level is the difference
+         * in the number of procs in all subgroups between this level and the
+         * last */
+        global_n_procs_selected = num_ranks_in_all_subgroups - global_n_procs_selected;
 
         /* am I done ? */
         i_am_done=0;
@@ -1969,8 +1978,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         if ((1 == n_procs_selected) && n_remain > 1) {
             OBJ_RELEASE(module);
             n_procs_selected = 0;
-            /* at least one process was sselected at this level. increment the hierarchy */
-            i_hier++;
         }
 
         if( 0 < n_procs_selected ) {
@@ -2055,15 +2062,16 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         sbgp_cli = (sbgp_base_component_keyval_t *) opal_list_get_next((opal_list_item_t *) sbgp_cli);
         bcol_cli = (mca_base_component_list_item_t *) opal_list_get_next((opal_list_item_t *) bcol_cli);
 
-        if (n_remain != n_procs_in) {
-            /* do not increment the hierarchy if no processes were selected at this level */
-            i_hier++;
-
+        /* if no processes were selected anywhere with this sbgp module don't bother
+         * incrementing the hierarchy index. this resolves issues where (for example)
+         * process binding is not enabled or supported. */
+        if (global_n_procs_selected) {
             /* The way initialization is currently written *all* ranks MUST appear
              * in the first level (0) of the hierarchy. If any rank is not in the first
              * level then the calculation of gather/scatter offsets will be wrong.
              * NTH: DO NOT REMOVE this assert until this changes! */
-            assert (i_hier || cum_number_ranks_in_all_subgroups == n_procs_in);
+            assert (i_hier || global_n_procs_selected == n_procs_in);
+            i_hier++;
         }
 
         n_procs_in = n_remain;
