@@ -56,8 +56,11 @@ included in the vX.Y.Z section and be denoted as:
 
 1.7.5
 -----
-
-- Add OSHMEM support built on top of Open MPI's MPI layer
+ **********************************************************************
+ *  Open MPI is now fully MPI-3 compliant
+ **********************************************************************
+- Add OSHMEM support built on top of Open MPI's MPI layer. Thanks
+  to Mellanox for contributing this new feature.
 - Support GCC/gfortran 4.9's "ignore TKR" syntax.  Thanks to Tobias
   Burnus for adding this support to gfortran.
 - Allow restricting ORTE daemons to specific cores using
@@ -66,6 +69,10 @@ included in the vX.Y.Z section and be denoted as:
 - MPI-3 compliant.
 - Multiple fixes to mapping/binding options. Thanks to Tetsuya Mishima
   for his assistance
+- Add a new collective component (coll/ml) that provides
+  substantially improved performance. Will eventually become the
+  default, but for now requires setting coll_ml_priority > 0 to
+  become active
 
 
 1.7.4
