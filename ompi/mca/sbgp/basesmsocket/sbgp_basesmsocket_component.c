@@ -1,7 +1,10 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -148,6 +151,8 @@ int mca_sbgp_basesmsocket_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
+#if 0
+/* NTH: this is no longer used but may be used if we can determine the binding policy*/
 static int mca_sbgp_map_to_logical_socket_id(int *socket)
 {
     int ret = OMPI_SUCCESS;
@@ -245,7 +250,7 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
      return ret;
 
 }
-
+#endif
 
 /* This routine is used to find the list of procs that run on the
 ** same host as the calling process.
@@ -264,577 +269,49 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
     int my_socket_index;
     int proc, cnt, local, n_local_peers, my_rank;
     ompi_proc_t* my_proc;
-    int *local_ranks_in_comm=NULL;
-    int *socket_info=NULL, my_socket_info;
     int  i_cnt, lp_cnt, my_local_index = -1, comm_size=ompi_comm_size(comm);
 
     /* initialize data */
-    output_data=NULL;
     my_rank=ompi_comm_rank(comm);
     my_proc=ompi_comm_peer_lookup(comm,my_rank);
 
-    /*create a new module*/
-    module=OBJ_NEW(mca_sbgp_basesmsocket_module_t);
-    if (!module ) {
+    for (proc = 0, n_local_peers = 0 ; proc < n_procs_in ; ++proc) {
+        if (OPAL_PROC_ON_LOCAL_SOCKET(procs[proc]->proc_flags)) {
+	    n_local_peers++;
+        }
+    }
+
+    /* we need to return a module even if there is only one local peer. this
+     * covers the case where there may be a basesmsocket module on one rank
+     * but not another */
+    if (0 == n_local_peers) {
+	return NULL;
+    }
+
+    /* create a new module */
+    module = OBJ_NEW(mca_sbgp_basesmsocket_module_t);
+    if (!module) {
         return NULL;
     }
-    module->super.group_size=0;
+
+    module->super.group_size = n_local_peers;
     module->super.group_comm = comm;
     module->super.group_list = NULL;
     module->super.group_net = OMPI_SBGP_SOCKET;
 
-    /* test to see if process is bound */
-    /* this needs to change. Process may have been bound by an
-     * some entity other than OPAL. Just because the binding
-     * policy  isn't set doesn't mean it's not bound
-     */
-    if( OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) ) {
-
-        /* pa affinity not set, so socket index will be set to -1 */
-        my_socket_index=-1;
-        /*debug print*/
-        /* */
-        BASESMSOCKET_VERBOSE(10, "[%d] FAILED to set basesmsocket group, processes are not bound!!!\n",my_rank);
-        /*end debug*/
-        goto NoLocalPeers;
-    } else {
-
-        my_socket_index=-1;
-        /* this should find my logical socket id which is the socket id we want 
-         * physical socket ids are not necessarily unique, logical ones, as defined
-         * by the hwloc API are unique. 
-         */
-        if( OMPI_SUCCESS != mca_sbgp_map_to_logical_socket_id(&my_socket_index)){
-            BASESMSOCKET_VERBOSE(10, "[%d] FAILED to set basesmsocket group !!!\n",my_rank);
-
-            goto NoLocalPeers;
-        }
+    /* allocate memory and fill in the group_list */
+    module->super.group_list = (int *) calloc (n_local_peers, sizeof(int));
+    if (NULL == module->super.group_list) {
+	OBJ_RELEASE(module);
+	return NULL;
     }
 
-    /* Debug prints */
-    /*
-       {
-       fprintf(stderr,"Number of processors per node: %d\n",num_processors);
-       fprintf(stderr,"I am rank %d and my socket index is %d\n and my core index is %d\n",my_rank,my_socket_index,core_index);
-       fprintf(stderr,"n_proc_in = %d\n",n_procs_in);
-       fprintf(stderr,"\n");
-       fflush(stderr);
-       }
-       end debug prints */
-
-
-    /*get my socket index*/
-    cnt=0;
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        local=OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
-        if( local ) {
-            cnt++;
-        }
-    }
-     /*debug print */
-    /*
-    fprintf(stderr,"Number of local processors %d\n",cnt);
-    end debug print*/
-
-    /* if no other local procs found skip to end */
-    if( 1 > cnt ) {
-      goto NoLocalPeers;
+    for (proc = 0, cnt = 0 ; proc < n_procs_in ; ++proc) {
+	if (OPAL_PROC_ON_LOCAL_SOCKET(procs[proc]->proc_flags)) {
+	    module->super.group_list[cnt++] = proc;
+	}
     }
 
-
-
-    /* allocate structure to hold the list of local ranks */
-    local_ranks_in_comm=(int *)malloc(sizeof(int)*cnt);
-    if(NULL == local_ranks_in_comm ){
-        goto Error;
-    }
-    /* figure out which ranks from the input communicator - comm - will
-     * particiapte in the local socket determination.
-     */
-
-    n_local_peers=0;
-    i_cnt=0;
-    for( proc = 0; proc < n_procs_in; proc++){
-        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
-        if ( local ) {
-
-            /* set the rank within the on-host ranks - this will be used for tha
-             * allgather
-             */
-            if( my_proc == procs[proc] ) {
-                my_local_index=n_local_peers;
-            }
-            /* find the rank of the current proc in comm.  We take advantage
-             * of the fact that ranks in a group have the same relative
-             * ordering as they do within the communicator.
-             */
-            for( lp_cnt=proc; lp_cnt < comm_size ; lp_cnt++ ) {
-                if(procs[proc] == ompi_comm_peer_lookup(comm,lp_cnt) ){
-                    local_ranks_in_comm[i_cnt]=lp_cnt;
-                    /* lp_cnt has alrady been checked */
-                    i_cnt++;
-                    /* found the corresponding rank in comm, so don't need
-                     * to search any more */
-                    break;
-                }
-                /*i_cnt++;*/
-                /*fprintf(stderr,"QQQ i_cnt %d \n",i_cnt);*/
-            }
-            n_local_peers++;
-        }
-        }
-        /*fprintf(stderr,"YYY n_local_peers %d\n",n_local_peers);*/
-        socket_info=(int *)malloc(sizeof(int)*n_local_peers);
-        /*fprintf(stderr,"XXX got socket info\n");*/
-        if(NULL == socket_info ){
-            goto Error;
-        }
-
-        my_socket_info=my_socket_index;
-
-        /* Allgather data over the communicator */
-        ret=comm_allgather_pml(&my_socket_info, socket_info, 1,
-                MPI_INT, my_local_index, n_local_peers, local_ranks_in_comm,comm);
-        if (OMPI_SUCCESS != ret ) {
-            BASESMSOCKET_VERBOSE(10, "comm_allgather_pml returned error %d\n",ret);
-            return NULL;
-        }
-
-
-        /*allocate memory to the group_list probably an overestimation
-          of the necessary resources */
-        module->super.group_list=(int *)malloc(sizeof(int)*cnt);
-        if(NULL == module->super.group_list){
-            goto Error;
-        }
-
-        /* figure out who is sharing the same socket */
-        cnt=0;
-        for (proc = 0; proc < n_local_peers; proc++) {
-            int rem_rank=local_ranks_in_comm[proc];
-            int rem_socket_index=socket_info[proc];
-
-            /*Populate the list*/
-            if (rem_socket_index == my_socket_index) {
-                module->super.group_list[cnt]=rem_rank;
-                cnt++;
-            }
-        }
-
-        module->super.group_size=cnt;
-
-#if 0
-    /*debug print*/
-    /*
-    {
-        int ii;
-        fprintf(stderr,"Ranks per socket: %d\n",cnt);
-        fprintf(stderr,"Socket %d owns ranks: ", my_socket_index);
-        for (ii=0; ii < cnt; ii++)
-            fprintf(stderr,"%d ",module->super.group_list[ii]);
-        fprintf(stderr,"\n");
-        fflush(stderr);
-    }
-    */
-#endif
-   /* end debug*/
-
-
-    /*Free resources*/
-    free(local_ranks_in_comm);
-    free(socket_info);
-
-    /*Return the module*/
+    /* Return the module */
     return (mca_sbgp_base_module_t *) module;
-
-
-NoLocalPeers:
-    /* nothing to store, so just free the module and return */
-    /*fprintf(stderr,"No local socket peers\n");*/
-    /*free(module);*/
-    if(socket_info) {
-        free(socket_info);
-        socket_info=NULL;
-    }
-    if(local_ranks_in_comm){
-        free(local_ranks_in_comm);
-    }
-    OBJ_RELEASE(module);
-    return NULL;
-
-Error:
-    /*clean up*/
-    if( NULL != module->super.group_list){
-        free(module->super.group_list);
-        module->super.group_list=NULL;
-    }
-    if(socket_info) {
-        free(socket_info);
-        socket_info=NULL;
-    }
-    if(local_ranks_in_comm){
-        free(local_ranks_in_comm);
-    }
-    OBJ_RELEASE(module);
-    return NULL;
-
-
 }
-
-
-
-#if 0
-static int mca_sbgp_map_to_socket_core(int processor_id, int *socket, int *core)
-{
-    int ret = OPAL_ERR_NOT_FOUND;
-    hwloc_obj_t obj;
-    hwloc_topology_t *t;
-    hwloc_bitmap_t good;
-
-    /* bozo check */
-    if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_INITIALIZED;
-    }
-    t = &opal_hwloc_topology;
-
-    good = hwloc_bitmap_alloc();
-    if (NULL == good) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* Iterate through every core and find one that contains the
-       processor_id.  Then find the corresponding socket. */
-    for (obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_CORE, NULL);
-            NULL != obj;
-            obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_CORE, obj)) {
-        hwloc_bitmap_and(good, obj->online_cpuset,
-                obj->allowed_cpuset);
-
-        /* Does this core contain the processor_id in question? */
-        if (hwloc_bitmap_isset(good, processor_id)) {
-            *core = obj->os_index;
-
-            /* Go upward from the core object until we find its parent
-               socket. */
-            while (HWLOC_OBJ_SOCKET != obj->type) {
-                if (NULL == obj->parent) {
-                    /* If we get to the root without finding a socket,
-                       er..  Hmm.  Error! */
-                    ret = OPAL_ERR_NOT_FOUND;
-                    goto out;
-                }
-                obj = obj->parent;
-            }
-            *socket = obj->os_index;
-            ret = OPAL_SUCCESS;
-            goto out;
-        }
-    }
-
-    /* If we didn't even find the right core, we didn't find it.  Fall
-       through. */
-    ret = OPAL_ERR_NOT_FOUND;
-
-out:
-    hwloc_bitmap_free(good);
-    return ret;
-}
-#endif
-
-#if 0
-static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_proc_t ** procs,
-    int n_procs_in,
-    struct ompi_communicator_t *comm,
-    char *key,
-    void *output_data
-    )
-{
-    /* local variables */
-    mca_sbgp_basesmsocket_module_t *module;
-    /*
-    opal_buffer_t* sbuffer = OBJ_NEW(opal_buffer_t);
-    opal_buffer_t* rbuffer = OBJ_NEW(opal_buffer_t);
-    */
-    opal_paffinity_base_cpu_set_t my_cpu_set;
-    bool bound;
-    int ret;
-    int num_processors;
-    int socket_tmp;
-    int my_socket_index;
-    int core_index=-1;
-    int proc, cnt, local, n_local_peers, my_index, my_rank;
-    ompi_proc_t* my_proc;
-    int *local_ranks_in_comm=NULL;
-    int *socket_info=NULL, my_socket_info;
-    int  i_cnt, lp_cnt, my_local_index, comm_size=ompi_comm_size(comm);
-
-    /* initialize data */
-    output_data=NULL;
-    my_rank=ompi_comm_rank(comm);
-    my_proc=ompi_comm_peer_lookup(comm,my_rank);
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-        if( procs[proc]==my_proc){
-            my_index=proc;
-        }
-    }
-
-    /*create a new module*/
-    module=OBJ_NEW(mca_sbgp_basesmsocket_module_t);
-    if (!module ) {
-        return NULL;
-    }
-    module->super.group_size=0;
-    module->super.group_comm = comm;
-    module->super.group_list = NULL;
-    module->super.group_net = OMPI_SBGP_SOCKET;
-
-/*
-    ** get my process affinity information
-    ** */
-
-    /* get the number of processors on this node */
-
-    ret=opal_paffinity_base_get_processor_info(&num_processors);
-
-    /* get process affinity mask */
-    OPAL_PAFFINITY_CPU_ZERO(my_cpu_set);
-    ret=opal_paffinity_base_get(&my_cpu_set);
-    OPAL_PAFFINITY_PROCESS_IS_BOUND(my_cpu_set,&bound);
-
-     /*debug process affinity*/
-    /*
-    {
-        ret=opal_paffinity_base_get_socket_info(&num_socket);
-        fprintf(stderr,"Number of sockets %d\n",num_socket);
-        fprintf(stderr,"Test if rank %d is bound %d\n", my_rank, bound);
-        fprintf(stderr,"return from opal_paffinity_base_get: %d\n\n",ret);
-        fprintf(stderr,"bitmask elements: ");
-        unsigned int long  jj;
-        for(jj=0; jj < OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS; jj++)
-                 fprintf(stderr," %d ",my_cpu_set.bitmask[jj]);
-        fprintf(stderr,"\n");
-        fflush(stderr);
-    }
-    end debug process affinity*/
-
-    if( !bound ) {
-
-        /* pa affinity not set, so socket index will be set to -1 */
-        my_socket_index=-1;
-        /*debug print*/
-        /* */
-        fprintf(stderr,"[%d]FAILED to set basesmsocket group !!!\n",my_rank);
-        fflush(stderr);
-        /*end debug*/
-        goto NoLocalPeers;
-    } else {
-
-        my_socket_index=-1;
-        /* loop over number of processors */
-        for ( proc=0 ; proc < num_processors ; proc++ ) {
-            if (OPAL_PAFFINITY_CPU_ISSET(proc,my_cpu_set)) {
-        ret=opal_paffinity_base_get_map_to_socket_core(proc,&socket_tmp,&core_index);
-        if( my_socket_index != socket_tmp ) {
-                        my_socket_index=socket_tmp;
-                        break;
-        }
-        }
-    } /* end of proc loop */
-    }
-
-    /* Debug prints */
-       /*
-    {
-     fprintf(stderr,"Number of processors per node: %d\n",num_processors);
-     fprintf(stderr,"I am rank %d and my socket index is %d\n and my core index is %d\n",my_rank,my_socket_index,core_index);
-     fprintf(stderr,"n_proc_in = %d\n",n_procs_in);
-     fprintf(stderr,"\n");
-     fflush(stderr);
-    }
-       end debug prints */
-
-
-    /*get my socket index*/
-    cnt=0;
-    for( proc=0 ; proc < n_procs_in ; proc++) {
-    local=OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
-    if( local ) {
-      cnt++;
-    }
-    }
-     /*debug print */
-    /*
-    fprintf(stderr,"Number of local processors %d\n",cnt);
-    end debug print*/
-
-    /* if no other local procs found skip to end */
-    if( 1 >= cnt ) {
-      goto NoLocalPeers;
-    }
-
-
-#if 0
-    int *local_ranks_in_comm;
-    int32_t *socket_info, *my_socket_info;
-    int  my_local_index;
-#endif
-    /* allocate structure to hold the list of local ranks */
-    local_ranks_in_comm=(int *)malloc(sizeof(int)*cnt);
-    if(NULL == local_ranks_in_comm ){
-    goto Error;
-    }
-    /* figure out which ranks from the input communicator - comm - will
-     * particiapte in the local socket determination.
-     */
-
-    n_local_peers=0;
-    i_cnt=0;
-    for( proc = 0; proc < n_procs_in; proc++){
-        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
-        if ( local ) {
-
-            /* set the rank within the on-host ranks - this will be used for tha
-             * allgather
-             */
-            if( my_proc == procs[proc] ) {
-                my_local_index=n_local_peers;
-            }
-            /* find the rank of the current proc in comm.  We take advantage
-             * of the fact that ranks in a group have the same relative
-             * ordering as they do within the communicator.
-             */
-#if 1
-            /*for( lp_cnt=i_cnt; lp_cnt < comm_size ; lp_cnt++ ) {*/
-            for( lp_cnt=proc; lp_cnt < comm_size ; lp_cnt++ ) {
-                if(procs[proc] == ompi_comm_peer_lookup(comm,lp_cnt) ){
-                    local_ranks_in_comm[i_cnt]=lp_cnt;
-                    /* lp_cnt has alrady been checked */
-                    i_cnt++;
-                    /* found the corresponding rank in comm, so don't need
-                     * to search any more */
-                    break;
-                }
-                /*i_cnt++;*/
-                /*fprintf(stderr,"QQQ i_cnt %d \n",i_cnt);*/
-            }
-#endif
-            n_local_peers++;
-        }
-    }
-    /*fprintf(stderr,"YYY n_local_peers %d\n",n_local_peers);*/
-    socket_info=(int *)malloc(sizeof(int)*n_local_peers);
-    /*fprintf(stderr,"XXX got socket info\n");*/
-    if(NULL == socket_info ){
-    goto Error;
-    }
-
-    my_socket_info=my_socket_index;
-
-    /* Allgather data over the communicator */
-    ret=comm_allgather_pml(&my_socket_info, socket_info, 1,
-            MPI_INT, my_local_index, n_local_peers, local_ranks_in_comm,comm);
-    if (OMPI_SUCCESS != ret ) {
-        fprintf(stderr," comm_allgather_pml returned error %d \n", ret);
-        fflush(stderr);
-        return NULL;
-    }
-
-
-    /*allocate memory to the group_list probably an overestimation
-      of the necessary resources */
-    module->super.group_list=(int *)malloc(sizeof(int)*cnt);
-    if(NULL == module->super.group_list){
-    goto Error;
-    }
-
-    /* figure out who is sharing the same socket */
-    cnt=0;
-    for (proc = 0; proc < n_local_peers; proc++) {
-               int rem_rank=local_ranks_in_comm[proc];
-               int rem_socket_index=socket_info[proc];
-
-        /*Populate the list*/
-        if (rem_socket_index == my_socket_index) {
-                module->super.group_list[cnt]=rem_rank;
-                cnt++;
-        }
-    }
-
-    module->super.group_size=cnt;
-
-    /*debug print*/
-    /*
-    {
-        int ii;
-        fprintf(stderr,"Ranks per socket: %d\n",cnt);
-        fprintf(stderr,"Socket %d owns ranks: ", my_socket_index);
-        for (ii=0; ii < cnt; ii++)
-            fprintf(stderr,"%d ",module->super.group_list[ii]);
-        fprintf(stderr,"\n");
-        fflush(stderr);
-    }
-
-    {
-        cpu_set_t set;
-        unsigned int len = sizeof(set);
-        int i;
-        unsigned long mask = 0;
-        CPU_ZERO(&set);
-        if (sched_getaffinity(0, len, &set) < 0) {
-            perror("sched_getaffinity");
-            return -1;
-        }
-        for (i = 0; i < CPU_SETSIZE; i++) {
-            int cpu = CPU_ISSET(i, &set);
-            if (cpu) {
-                mask |= 1<< i;
-            }
-        }
-        opal_output(0,"%d: my affinity mask is: %08lx\n", my_local_index,mask);
-    }
-
-
-    end debug*/
-
-
-    /*Free resources*/
-    free(local_ranks_in_comm);
-    free(socket_info);
-
-    /*Return the module*/
-    return (mca_sbgp_base_module_t *) module;
-
-
-NoLocalPeers:
-    /* nothing to store, so just free the module and return */
-    /*fprintf(stderr,"No local socket peers\n");*/
-    /*free(module);*/
-    if(socket_info) {
-        free(socket_info);
-        socket_info=NULL;
-    }
-    if(local_ranks_in_comm){
-        free(local_ranks_in_comm);
-    }
-    OBJ_RELEASE(module);
-    return NULL;
-
-Error:
-    /*clean up*/
-    if( NULL != module->super.group_list){
-        free(module->super.group_list);
-        module->super.group_list=NULL;
-    }
-    if(socket_info) {
-        free(socket_info);
-        socket_info=NULL;
-    }
-    if(local_ranks_in_comm){
-        free(local_ranks_in_comm);
-    }
-    OBJ_RELEASE(module);
-    return NULL;
-
-
-}
-#endif
