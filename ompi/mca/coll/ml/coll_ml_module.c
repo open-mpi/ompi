@@ -580,7 +580,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
                 /* more than one local leader - don't know how to
                  * handle this, so bail
                  */
-                ML_VERBOSE(0, ("More than a single leader for a group.\n"));
+                ML_VERBOSE(1, ("More than a single leader for a group."));
                 ret=OMPI_ERROR;
                 goto exit_ERROR;
             } else {
@@ -601,7 +601,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
         }
     }
     if( sum != n_procs_selected ) {
-        ML_VERBOSE(0, ("number of procs in the group unexpected.  Expected %d Got %d\n",n_procs_selected,sum));
+        ML_VERBOSE(1, ("number of procs in the group unexpected.  Expected %d Got %d",n_procs_selected,sum));
         ret=OMPI_ERROR;
         goto exit_ERROR;
     }
@@ -611,7 +611,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
         if(ll_p1!=all_selected[module->group_list[i]] &&
            ll_p1!=-all_selected[module->group_list[i]] ) {
             ret=OMPI_ERROR;
-            ML_VERBOSE(0, ("Mismatch in rank list - element #%d - %d \n",i,all_selected[module->group_list[i]]));
+            ML_VERBOSE(1, ("Mismatch in rank list - element #%d - %d ",i,all_selected[module->group_list[i]]));
             goto exit_ERROR;
         }
     }
@@ -641,8 +641,7 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
     /* first thing I want to know is where does the first level end */
     level_one_knt = 0;
 
-    while( 0 == array_of_all_subgroup_ranks[level_one_knt].level_in_hierarchy &&
-           level_one_knt < num_total_subgroups){
+    while (level_one_knt < num_total_subgroups && 0 == array_of_all_subgroup_ranks[level_one_knt].level_in_hierarchy) {
         level_one_knt++;
     }
 
@@ -1657,7 +1656,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     sub_group_params_t *array_of_all_subgroup_ranks=NULL;
     /* this pointer should probably be an int32_t and not an int type */
     int32_t *list_of_ranks_in_all_subgroups=NULL;
-    int cum_number_ranks_in_all_subgroups=0,num_total_subgroups=0;
+    int num_ranks_in_all_subgroups=0,num_total_subgroups=0;
     int size_of_array_of_all_subgroup_ranks=0;
     int size_of_list_of_ranks_in_all_subgroups=0;
     int32_t in_allgather_value;
@@ -1764,6 +1763,9 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
     i_hier = 0;
     while ((opal_list_item_t *) sbgp_cli != opal_list_get_end(&mca_sbgp_base_components_in_use)){
+        /* number of processes selected with this sbgp on all ranks */
+        int global_n_procs_selected;
+
         /*
         ** obtain the list of  ranks in the current level
         */
@@ -1845,7 +1847,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         my_rank_in_subgroup=-1;
         ll_p1=-1;
         in_allgather_value = 0;
-        if( n_procs_selected) {
+        if (n_procs_selected) {
             /* I need to contribute to the vector */
             for (group_index = 0; group_index < n_procs_selected; group_index++) {
                 /* set my rank within the group */
@@ -1928,18 +1930,24 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
          * accumulate data on the new subgroups created
          */
         /*XXX*/
+        global_n_procs_selected = num_ranks_in_all_subgroups;
         ret = get_new_subgroup_data(all_selected, n_procs_in,
                                     &array_of_all_subgroup_ranks,
                                     &size_of_array_of_all_subgroup_ranks,
                                     &list_of_ranks_in_all_subgroups,
                                     &size_of_list_of_ranks_in_all_subgroups,
-                                    &cum_number_ranks_in_all_subgroups,
+                                    &num_ranks_in_all_subgroups,
                                     &num_total_subgroups, map_to_comm_ranks,i_hier);
 
         if( OMPI_SUCCESS != ret ) {
             ML_VERBOSE(10, (" Error: get_new_subgroup_data returned %d \n",ret));
             goto exit_ERROR;
         }
+
+        /* the global number of processes selected at this level is the difference
+         * in the number of procs in all subgroups between this level and the
+         * last */
+        global_n_procs_selected = num_ranks_in_all_subgroups - global_n_procs_selected;
 
         /* am I done ? */
         i_am_done=0;
@@ -1972,8 +1980,6 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         if ((1 == n_procs_selected) && n_remain > 1) {
             OBJ_RELEASE(module);
             n_procs_selected = 0;
-            /* at least one process was sselected at this level. increment the hierarchy */
-            i_hier++;
         }
 
         if( 0 < n_procs_selected ) {
@@ -2058,15 +2064,16 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         sbgp_cli = (sbgp_base_component_keyval_t *) opal_list_get_next((opal_list_item_t *) sbgp_cli);
         bcol_cli = (mca_base_component_list_item_t *) opal_list_get_next((opal_list_item_t *) bcol_cli);
 
-        if (n_remain != n_procs_in) {
-            /* do not increment the hierarchy if no processes were selected at this level */
-            i_hier++;
-
+        /* if no processes were selected anywhere with this sbgp module don't bother
+         * incrementing the hierarchy index. this resolves issues where (for example)
+         * process binding is not enabled or supported. */
+        if (global_n_procs_selected) {
             /* The way initialization is currently written *all* ranks MUST appear
              * in the first level (0) of the hierarchy. If any rank is not in the first
              * level then the calculation of gather/scatter offsets will be wrong.
              * NTH: DO NOT REMOVE this assert until this changes! */
-            assert (i_hier || cum_number_ranks_in_all_subgroups == n_procs_in);
+            assert (i_hier || global_n_procs_selected == n_procs_in);
+            i_hier++;
         }
 
         n_procs_in = n_remain;
@@ -2990,14 +2997,14 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
      */
     ret = ml_discover_hierarchy(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("ml_discover_hierarchy exited with error.\n"));
+        ML_VERBOSE(1, ("ml_discover_hierarchy exited with error."));
         goto CLEANUP;
     }
 
     /* gvm Disabled for debuggin */
     ret = mca_coll_ml_build_filtered_fn_table(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("mca_coll_ml_build_filtered_fn_table returned an error.\n"));
+        ML_VERBOSE(1, ("mca_coll_ml_build_filtered_fn_table returned an error."));
         goto CLEANUP;
     }
 
@@ -3011,7 +3018,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     ML_VERBOSE(10, ("Call for setup schedule.\n"));
     ret = ml_coll_schedule_setup(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("ml_coll_schedule_setup exit with error"));
+        ML_VERBOSE(1, ("ml_coll_schedule_setup exit with error"));
         goto CLEANUP;
     }
 
@@ -3019,7 +3026,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     ML_VERBOSE(10, ("Setup bcast table\n"));
     ret = setup_bcast_table(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("setup_bcast_table exit with error"));
+        ML_VERBOSE(1, ("setup_bcast_table exit with error"));
         goto CLEANUP;
     }
 
