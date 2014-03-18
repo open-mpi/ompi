@@ -3080,7 +3080,6 @@ static void build_debugger_args(orte_app_context_t *debugger)
 
 void orte_timeout_wakeup(int sd, short args, void *cbdata)
 {
-    orte_job_t *jdata = (orte_job_t*)cbdata;
     char *tm;
 
     /* this function gets called when the job execution time
