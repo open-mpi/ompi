@@ -76,21 +76,21 @@ static int mca_coll_ml_build_static_reduce_schedule(
 
     schedule = *coll_desc;
     if (OPAL_UNLIKELY(NULL == schedule)) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
 
     scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -136,7 +136,7 @@ static int mca_coll_ml_build_static_reduce_schedule(
                                      calloc(n_fcns, sizeof(struct mca_coll_ml_compound_functions_t));
 
     if (OPAL_UNLIKELY(NULL == schedule->component_functions)) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -203,7 +203,7 @@ static int mca_coll_ml_build_static_reduce_schedule(
     schedule->comp_fn_arr = (struct mca_coll_ml_compound_functions_t **)
         calloc(n_hiers,sizeof(struct mca_coll_ml_compound_functions_t *));
     if (NULL == schedule->comp_fn_arr) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }

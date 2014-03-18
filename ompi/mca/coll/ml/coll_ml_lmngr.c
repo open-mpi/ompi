@@ -252,17 +252,17 @@ mca_bcol_base_lmngr_block_t* mca_coll_ml_lmngr_alloc (
 
     /* Check if the list manager was initialized */
     if(OPAL_UNLIKELY(NULL == lmngr->base_addr)) {
-        ML_VERBOSE(7 ,("Starting memory initialization\n"));
+        ML_VERBOSE(7 ,("Starting memory initialization"));
         rc = mca_coll_ml_lmngr_init(lmngr);
         if (OMPI_SUCCESS != rc) {
-            ML_ERROR(("Failed to init memory\n"));
+            ML_ERROR(("Failed to init memory"));
             return NULL;
         }
     }
 
     if(OPAL_UNLIKELY(opal_list_is_empty(list))) {
         /* Upper layer need to handle the NULL */
-        ML_ERROR(("List manager is empty.\n"));
+        ML_ERROR(("List manager is empty."));
         return NULL;
     }
 

@@ -143,21 +143,21 @@ static int mca_coll_ml_build_bcast_dynamic_schedule_no_attributes(
         malloc(sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
 
     scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
@@ -200,7 +200,7 @@ static int mca_coll_ml_build_bcast_dynamic_schedule_no_attributes(
     schedule->component_functions = (struct mca_coll_ml_compound_functions_t *)
             calloc(n_hiers, sizeof(struct mca_coll_ml_compound_functions_t));
     if (NULL == schedule->component_functions) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
@@ -313,21 +313,21 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
         malloc(sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
 
     scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
@@ -373,7 +373,7 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
     schedule->component_functions = (struct mca_coll_ml_compound_functions_t *)
             calloc(n_hiers, sizeof(struct mca_coll_ml_compound_functions_t));
     if (NULL == schedule->component_functions) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
@@ -381,7 +381,7 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
     schedule->comp_fn_arr = (struct mca_coll_ml_compound_functions_t **)
         calloc(n_hiers,sizeof(struct mca_coll_ml_compound_functions_t *));
     if (NULL == schedule->comp_fn_arr) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
@@ -567,21 +567,21 @@ static int mca_coll_ml_build_bcast_known_schedule_no_attributes(
         malloc(sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
 
     scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }
@@ -624,7 +624,7 @@ static int mca_coll_ml_build_bcast_known_schedule_no_attributes(
     schedule->component_functions = (struct mca_coll_ml_compound_functions_t *)
             calloc(n_hiers, sizeof(struct mca_coll_ml_compound_functions_t));
     if (NULL == schedule->component_functions) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Bcast_Setup_Error;
     }

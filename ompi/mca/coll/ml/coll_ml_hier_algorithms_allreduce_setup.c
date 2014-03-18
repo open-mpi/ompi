@@ -66,21 +66,21 @@ static int mca_coll_ml_build_allreduce_schedule(
         malloc(sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Allreduce_Setup_Error;
     }
 
     scratch_indx = (int *) malloc(sizeof(int) * (n_hiers * 2));
     if (NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Allreduce_Setup_Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (n_hiers * 2));
     if (NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Allreduce_Setup_Error;
     }
@@ -145,7 +145,7 @@ static int mca_coll_ml_build_allreduce_schedule(
             calloc(nbcol_functions, sizeof(struct mca_coll_ml_compound_functions_t));
 
     if (NULL == schedule->component_functions) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Allreduce_Setup_Error;
     }

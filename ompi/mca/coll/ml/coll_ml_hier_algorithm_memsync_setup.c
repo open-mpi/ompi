@@ -33,7 +33,7 @@ static int mca_coll_ml_build_memsync_schedule(
 
     schedule = *coll_desc;
     if (OPAL_UNLIKELY(NULL == schedule)) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto Barrier_Setup_Error;
     }
@@ -61,7 +61,7 @@ static int mca_coll_ml_build_memsync_schedule(
                                      calloc(n_fcns, sizeof(struct mca_coll_ml_compound_functions_t));
 
     if (OPAL_UNLIKELY(NULL == schedule->component_functions)) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto Barrier_Setup_Error;
     }
@@ -132,7 +132,7 @@ static int mca_coll_ml_build_memsync_schedule(
         if (comp_fn->num_dependent_tasks > 0) {
             comp_fn->dependent_task_indices = (int *) calloc(comp_fn->num_dependent_tasks, sizeof(int));
             if (OPAL_UNLIKELY(NULL == comp_fn->dependent_task_indices)) {
-                ML_ERROR(("Can't allocate memory.\n"));
+                ML_ERROR(("Can't allocate memory."));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto Barrier_Setup_Error;
             }
@@ -154,7 +154,7 @@ static int mca_coll_ml_build_memsync_schedule(
 
     rc = ml_coll_barrier_constant_group_data_setup(topo_info, schedule);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        ML_ERROR(("Failed to init const group data.\n"));
+        ML_ERROR(("Failed to init const group data."));
         goto Barrier_Setup_Error;
     }
 
