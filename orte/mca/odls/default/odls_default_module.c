@@ -257,6 +257,7 @@ static int odls_default_kill_local(pid_t pid, int signum)
 {
     pid_t pgrp;
 
+#if HAVE_SETPGID
     pgrp = getpgid(pid);
     if (-1 != pgrp) {
         /* target the lead process of the process
@@ -268,6 +269,7 @@ static int odls_default_kill_local(pid_t pid, int signum)
          */
         pid = pgrp;
     }
+#endif
     if (0 != kill(pid, signum)) {
         if (ESRCH != errno) {
             OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
@@ -899,6 +901,9 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     
     if (pid == 0) {
 	close(p[0]);
+#if HAVE_SETPGID
+        setpgid(0, 0);
+#endif
         do_child(context, child, environ_copy, jobdat, p[1], opts);
         /* Does not return */
     } 

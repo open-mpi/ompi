@@ -3091,7 +3091,7 @@ void orte_timeout_wakeup(int sd, short args, void *cbdata)
                    true, (NULL == tm) ? "NULL" : tm);
     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
     /* abort the job */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FORCED_EXIT);
+    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
     /* set the global abnormal exit flag  */
     orte_abnormal_term_ordered = true;
 }
