@@ -64,7 +64,7 @@ Trunk (not on release branches yet)
 1.7.5
 -----
  **********************************************************************
- *  Open MPI is now fully MPI-3 compliant
+ *  Open MPI is now fully MPI-3.0 compliant
  **********************************************************************
 - Add OSHMEM support built on top of Open MPI's MPI layer. Thanks
   to Mellanox for contributing this new feature.
