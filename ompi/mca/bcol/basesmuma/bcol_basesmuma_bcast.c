@@ -41,7 +41,7 @@ int bcol_basesmuma_bcast_init(mca_bcol_base_module_t *super)
 
 	comm_attribs.bcoll_type = BCOL_BCAST;
 	comm_attribs.comm_size_min = 0;
-	comm_attribs.comm_size_max = 64;
+	comm_attribs.comm_size_max = 1048576;
 	comm_attribs.data_src = DATA_SRC_KNOWN;
 	comm_attribs.waiting_semantics = NON_BLOCKING;
 		

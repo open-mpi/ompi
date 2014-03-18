@@ -38,8 +38,7 @@ int bcol_basesmuma_reduce_init(mca_bcol_base_module_t *super)
 
     comm_attribs.bcoll_type = BCOL_REDUCE;
     comm_attribs.comm_size_min = 0;
-    /* NTH: is there any reason for this restriction */
-    comm_attribs.comm_size_max = 64;
+    comm_attribs.comm_size_max = 1048576;
     comm_attribs.data_src = DATA_SRC_KNOWN;
     comm_attribs.waiting_semantics = NON_BLOCKING;
 
