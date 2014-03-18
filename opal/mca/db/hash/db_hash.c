@@ -407,6 +407,7 @@ static int fetch(const opal_identifier_t *uid,
         } else {
             *data = NULL;
         }
+        break;
     case OPAL_UINT64:
         if (OPAL_UINT64 != kv->type) {
             return OPAL_ERR_TYPE_MISMATCH;
