@@ -35,6 +35,12 @@ OSHMEM_DECLSPEC extern int oshmem_shmem_lock_recursive;
  */
 OSHMEM_DECLSPEC extern int oshmem_shmem_api_verbose;
 
+/**
+ * Whether to force SHMEM processes to fully
+ * wire-up the connections between SHMEM
+ */
+OSHMEM_DECLSPEC extern int oshmem_preconnect_all;
+
 END_C_DECLS
 
 #endif /* OSHMEM_RUNTIME_PARAMS_H */
