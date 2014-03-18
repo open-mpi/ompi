@@ -30,7 +30,6 @@ void start_pes(int npes)
 }
 
 #if !defined(OSHMEM_PROFILING) || (OSHMEM_PROFILING == 0)
-int shmem_api_logger_output = -1;
 
 void shmem_init(void)
 {
@@ -44,10 +43,6 @@ void shmem_init(void)
          */
         return;
     }
-
-    shmem_api_logger_output = opal_output_open(NULL);
-    opal_output_set_verbosity(shmem_api_logger_output,
-                              oshmem_shmem_api_verbose);
 
     err = oshmem_shmem_init(0, NULL, required, &provided);
     if (OSHMEM_SUCCESS != err) {

@@ -35,7 +35,7 @@ OSHMEM_DECLSPEC extern int shmem_api_logger_output;
 #endif
 
 #define SHMEM_API_ERROR(...) \
-    oshmem_output_verbose(0, shmem_api_logger_output, \
+    oshmem_output(shmem_api_logger_output, \
         "Error: %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 #endif /*SHMEM_API_LOGGER_H*/

@@ -99,6 +99,7 @@ bool oshmem_mpi_thread_multiple = false;
 int oshmem_mpi_thread_requested = SHMEM_THREAD_SINGLE;
 int oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
 long *preconnect_value = 0;
+int shmem_api_logger_output = -1;
 
 MPI_Comm oshmem_comm_world;
 
@@ -252,29 +253,10 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
 
 int oshmem_shmem_preconnect_all(void)
 {
-    int mca_value = 0;
     int rc = OSHMEM_SUCCESS;
 
-    (void) mca_base_var_register("oshmem",
-                                 "oshmem",
-                                 NULL,
-                                 "preconnect_all",
-                                 "Whether to force SHMEM processes to fully "
-                                 "wire-up the connections between SHMEM "
-                                 "processes during "
-                                 "initialization (vs. making connections lazily -- "
-                                 "upon the first SHMEM traffic between each "
-                                 "process peer pair)",
-                                 MCA_BASE_VAR_TYPE_INT,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_value);
-
     /* force qp creation and rkey exchange for memheap. Does not force exchange of static vars */
-    if (mca_value) {
+    if (oshmem_preconnect_all) {
         long val;
         int nproc = 0;
         int i;
@@ -325,6 +307,18 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
      * This place requires to be reviewed and more elegant way is expected
      */
     ompi_proc_local_proc = (ompi_proc_t*) oshmem_proc_local_proc;
+
+    /* Register the OSHMEM layer's MCA parameters */
+    if (OSHMEM_SUCCESS != (ret = oshmem_shmem_register_params())) {
+        error = "oshmem_info_register: oshmem_register_params failed";
+        goto error;
+    }
+    /* Setting verbosity for macros like SHMEM_API_VERBOSE, SHMEM_API_ERROR.
+     * We need to set it right after registering mca verbosity variables
+     */
+    shmem_api_logger_output = opal_output_open(NULL);
+    opal_output_set_verbosity(shmem_api_logger_output,
+                              oshmem_shmem_api_verbose);
 
     if (OSHMEM_SUCCESS != (ret = oshmem_group_cache_list_init())) {
         error = "oshmem_group_cache_list_init() failed";
