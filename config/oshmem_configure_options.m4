@@ -23,7 +23,7 @@ AC_ARG_ENABLE([oshmem],
               [AC_HELP_STRING([--enable-oshmem],
                               [Enable building the OpenSHMEM interface (disabled by default)])],
               [],
-              [enable_oshmem=no])
+              [enable_oshmem=yes])
 
 #
 # Enable compatibility mode
