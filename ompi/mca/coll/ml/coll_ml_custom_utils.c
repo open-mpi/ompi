@@ -116,7 +116,7 @@ int mca_coll_ml_check_if_bcol_is_requested(const char *component_name)
     mca_base_component_list_item_t *bcol_comp;
     bcol_comp = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
 
-    ML_VERBOSE(10, ("Loop over bcol components\n"));
+    ML_VERBOSE(10, ("Loop over bcol components"));
     for ( bcol_comp  = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
           bcol_comp != (mca_base_component_list_item_t *) opal_list_get_end(&mca_bcol_base_components_in_use);
           bcol_comp  = (mca_base_component_list_item_t *) opal_list_get_next(bcol_comp)) {

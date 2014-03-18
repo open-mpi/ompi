@@ -84,7 +84,7 @@ int get_dev_distance_proc(opal_carto_graph_t *graph,
 
     opal_paffinity_base_get_map_to_socket_core(process_id, &socket, &core);
     asprintf(&slot, "socket%d", socket);
-	ML_VERBOSE(10,("The socket addres is %d\n",socket));
+	ML_VERBOSE(10,("The socket addres is %d",socket));
 
     slot_node = opal_carto_base_find_node(graph, slot);
 
@@ -123,7 +123,7 @@ int coll_ml_select_leader(mca_coll_ml_module_t *ml_module,
 
 		dist = dist1 + dist2;
 
-		ML_VERBOSE(10,("The distance for proc %d dist1 %d, dist2 %d \n",i,dist1,dist2));
+		ML_VERBOSE(10,("The distance for proc %d dist1 %d, dist2 %d",i,dist1,dist2));
 		if ((dist < min_dist) || ((dist == min_dist) && (i < leader))) {
 			leader = i;
 			min_dist = dist;

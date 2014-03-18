@@ -43,7 +43,7 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
      collective_alg = (coll_ml_collective_description_t *)
          malloc(sizeof(coll_ml_collective_description_t));
      if (NULL == collective_alg) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
      }
@@ -78,7 +78,7 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
     collective_alg->functions = (mca_bcol_base_function_t *)
         malloc(sizeof(mca_bcol_base_function_t) * collective_alg->n_functions);
     if( NULL == collective_alg->functions) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -100,14 +100,14 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
      * the total number of bcols in the row we store in scratch_num */
     scratch_indx = (int *) malloc(sizeof(int) * (2 * num_hierarchies));
     if(NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (2 * num_hierarchies));
     if(NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -375,14 +375,14 @@ int ml_coll_barrier_constant_group_data_setup(
      * the total number of bcols in the row we store in scratch_num */
     scratch_indx = (int *) malloc(sizeof(int) * (2 * num_hierarchies));
     if(NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Const_Data_Setup_Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (2 * num_hierarchies));
     if(NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Const_Data_Setup_Error;
     }

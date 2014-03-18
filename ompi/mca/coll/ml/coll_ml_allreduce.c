@@ -216,7 +216,7 @@ static int mca_coll_ml_allreduce_frag_progress(mca_coll_ml_collective_operation_
 
         MCA_COLL_ML_SET_NEW_FRAG_ORDER_INFO(new_op);
 
-        ML_VERBOSE(10,("FFFF Contig + fragmentation [0-sk, 1-lk, 3-su, 4-lu] %d %d %d\n",
+        ML_VERBOSE(10,("FFFF Contig + fragmentation [0-sk, 1-lk, 3-su, 4-lu] %d %d %d",
                     new_op->variable_fn_params.buffer_size,
                     new_op->fragment_data.fragment_size,
                     new_op->fragment_data.message_descriptor->n_bytes_scheduled));

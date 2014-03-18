@@ -418,7 +418,7 @@ static int mca_coll_ml_bcast_frag_progress(mca_coll_ml_collective_operation_prog
         /* Set order info for new frag if there is a bcol needs ordering */
         MCA_COLL_ML_SET_NEW_FRAG_ORDER_INFO(new_op);
 
-        ML_VERBOSE(10, ("FFFF Contig + fragmentation [0-sk, 1-lk, 3-su, 4-lu] %d %d %d\n",
+        ML_VERBOSE(10, ("FFFF Contig + fragmentation [0-sk, 1-lk, 3-su, 4-lu] %d %d %d",
                          new_op->variable_fn_params.buffer_size ,
                          new_op->fragment_data.fragment_size,
                          new_op->fragment_data.message_descriptor->n_bytes_scheduled));
@@ -475,7 +475,7 @@ static inline __opal_attribute_always_inline__
             assert(pack_len <=  ml_module->payload_block->size_buffer);
             bcast_index = ml_module->bcast_fn_index_table[SMALL_BCAST];
 
-            ML_VERBOSE(10, ("Contig + small message %d [0-sk, 1-lk, 3-su, 4-lu]\n", bcast_index));
+            ML_VERBOSE(10, ("Contig + small message %d [0-sk, 1-lk, 3-su, 4-lu]", bcast_index));
             ALLOCATE_AND_PACK_CONTIG_BCAST_FRAG(ml_module, coll_op, bcast_index, root, pack_len,
                                                 pack_len, actual_buf, src_buffer_desc);
 
@@ -489,7 +489,7 @@ static inline __opal_attribute_always_inline__
             int frag_len, pipeline_depth = mca_coll_ml_component.pipeline_depth;
             bcast_index = ml_module->bcast_fn_index_table[LARGE_BCAST];
 
-            ML_VERBOSE(10, ("Contig + fragmentation %d [0-sk, 1-lk, 3-su, 4-lu]\n", bcast_index));
+            ML_VERBOSE(10, ("Contig + fragmentation %d [0-sk, 1-lk, 3-su, 4-lu]", bcast_index));
 
             /* Calculate the number of fragments required for this message */
             frag_len = (pack_len < (size_t) ml_module->small_message_thresholds[BCOL_BCAST] ?
@@ -514,12 +514,12 @@ static inline __opal_attribute_always_inline__
             /* should be removed */
             coll_op->variable_fn_params.buffer_size = frag_len;
 
-            ML_VERBOSE(10, ("Contig + fragmentation [0-sk, 1-lk, 3-su, 4-lu] %d %d\n",
+            ML_VERBOSE(10, ("Contig + fragmentation [0-sk, 1-lk, 3-su, 4-lu] %d %d",
                              coll_op->variable_fn_params.buffer_size,
                              coll_op->fragment_data.fragment_size));
         } else {
             bcast_index = ml_module->bcast_fn_index_table[LARGE_BCAST];
-            ML_VERBOSE(10, ("Contig + zero copy %d [0-sk, 1-lk, 3-su, 4-lu]\n", bcast_index));
+            ML_VERBOSE(10, ("Contig + zero copy %d [0-sk, 1-lk, 3-su, 4-lu]", bcast_index));
 
             coll_op = mca_coll_ml_alloc_op_prog_single_frag_dag(ml_module,
                                                                 ml_module->coll_ml_bcast_functions[bcast_index],
@@ -539,7 +539,7 @@ static inline __opal_attribute_always_inline__
     } else {
         /* Non contiguous data type */
         bcast_index = ml_module->bcast_fn_index_table[SMALL_BCAST];
-        ML_VERBOSE(10, ("NON Contig + fragmentation %d [0-sk, 1-lk, 3-su, 4-lu]\n", bcast_index));
+        ML_VERBOSE(10, ("NON Contig + fragmentation %d [0-sk, 1-lk, 3-su, 4-lu]", bcast_index));
 
         coll_op = mca_coll_ml_alloc_op_prog_single_frag_dag(ml_module,
                                                             ml_module->coll_ml_bcast_functions[bcast_index],

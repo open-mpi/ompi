@@ -32,14 +32,14 @@ do { \
             ml_module->component_pairs[n_hr - 1].bcol_index) { \
         /* The process that is member of highest level subgroup  \
            should call for top algorithms in addition to fan-in/out steps*/ \
-        ML_VERBOSE(9, ("Setting top %d %d\n", n_hr, ml_module->component_pairs[g_hr - 1].bcol_index)); \
+        ML_VERBOSE(9, ("Setting top %d %d", n_hr, ml_module->component_pairs[g_hr - 1].bcol_index)); \
         info.call_for_top_function = true; \
         /* hier level run only top algorithm, so we deduct 1 */ \
         info.num_up_levels = n_hr - 1; \
         /* Top algorithm is called only once, so we deduct 1 */ \
         info.nbcol_functions = 2 * n_hr - 1; \
     } else { \
-        ML_VERBOSE(9, ("not setting top %d %d\n", n_hr, ml_module->component_pairs[g_hr - 1].bcol_index)); \
+        ML_VERBOSE(9, ("not setting top %d %d", n_hr, ml_module->component_pairs[g_hr - 1].bcol_index)); \
         /* The process is not member of highest level subgroup, \
            as result it does not call for top algorithm, \
            but it calls for all fan-in/out steps */ \

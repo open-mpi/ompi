@@ -60,7 +60,7 @@ static inline __opal_attribute_always_inline__
         assert(ml_memblock->bank_is_busy);
         if (ml_memblock->memsync_counter == (int)bank_index) {
             while(ml_memblock->ready_for_memsync[ml_memblock->memsync_counter]) {
-                ML_VERBOSE(10, ("Calling for service barrier: ml_buffer_index - %d %d %d == %d.\n",
+                ML_VERBOSE(10, ("Calling for service barrier: ml_buffer_index - %d %d %d == %d.",
                             ml_request->fragment_data.buffer_desc->buffer_index,
                             ml_memblock->memsync_counter,
                             ml_memblock->bank_release_counters[ml_memblock->memsync_counter],
@@ -81,7 +81,7 @@ static inline __opal_attribute_always_inline__
                 ML_VERBOSE(10, ("After service barrier."));
             }
         } else {
-            ML_VERBOSE(10, ("Out of order %d\n", ml_memblock->memsync_counter));
+            ML_VERBOSE(10, ("Out of order %d", ml_memblock->memsync_counter));
         }
     }
 
