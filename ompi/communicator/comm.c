@@ -1547,6 +1547,11 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         goto err_exit;
     }
 
+    /* set the locality of the remote procs */
+    for (i=0; i < rsize; i++) {
+        ompi_proc_set_locality(rprocs[i]);
+    }
+
  err_exit:
     /* rprocs isn't freed unless we have an error,
        since it is used in the communicator */
