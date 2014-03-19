@@ -69,24 +69,25 @@ General notes
   necessary, we will reference them as the "MPI" and "OSHMEM" layers
   respectively. 
   
-  OpenSHMEM is a collaborative effort between academia, industry, 
-  and the U.S. Government to create a specification for a 
-  standardized API for parallel programming in the Partitioned 
-  Global Address Space (PGAS.) For more information about the OpenSHMEM
-  project, including access to the current OpenSHMEM specification, 
-  please visit:
+- OpenSHMEM is a collaborative effort between academia, industry, and
+  the U.S. Government to create a specification for a standardized API
+  for parallel programming in the Partitioned Global Address Space
+  (PGAS).  For more information about the OpenSHMEM project, including
+  access to the current OpenSHMEM specification, please visit:
 
      http://openshmem.org/
   
-  The OpenSHMEM implementation contained herein is provided by 
-  Mellanox Technologies Inc. made possible by the support and patient 
-  guidance of the Open MPI community. This implementation attempts 
-  to be portable, to allow it to be deployed in multiple environments, 
-  and to be a starting point for optimizations targeted to particular 
-  hardware platforms. However, until other network vendors and/or 
-  institutions contribute platform specific optimizations, this 
-  implementation will most likely provide optimal performance on Mellanox
-  hardware and software stacks.   
+  This OpenSHMEM implementation is provided on an experimental basis;
+  it has been lightly tested and will only work in Linux environments.
+  Although this implementation attempts to be portable to multiple
+  different environments and networks, it is still new and will likely
+  experience growing pains typical of any new software package.
+  End-user feedback is greatly appreciated.
+
+  This implementation will currently most likely provide optimal
+  performance on Mellanox hardware and software stacks.  Overall
+  performance is expected to improve as other network vendors and/or
+  institutions contribute platform specific optimizations.
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -295,10 +296,10 @@ Compiler Notes
 
   ********************************************************************
   ********************************************************************
-  *** There is now only a single Fortran MPI wrapper compiler and 
-  *** a single Fortran OSHMEM wrapper compiler:
-  *** mpifort, and oshfort.  mpif77 and mpif90 still exist, but they 
-  *** are symbolic links to mpifort.
+  *** There is now only a single Fortran MPI wrapper compiler and a
+  *** single Fortran OSHMEM wrapper compiler: mpifort and oshfort,
+  *** respectively.  mpif77 and mpif90 still exist, but they are
+  *** symbolic links to mpifort.
   ********************************************************************
   *** Similarly, Open MPI's configure script only recognizes the FC
   *** and FCFLAGS environment variables (to specify the Fortran
@@ -353,7 +354,6 @@ Compiler Notes
   - shmem.fh: All Fortran OpenSHMEM programs **should** include 'shmem.fh',
     and Fortran OSHMEM programs that use constants defined by OpenSHMEM
     **MUST** include 'shmem.fh'. 
-
 
   The following notes apply to the above-listed Fortran bindings:
 
@@ -719,16 +719,6 @@ Open MPI Extensions
 Building Open MPI
 -----------------
 
-Building Open MPI implies building both the MPI and OpenSHMEM libraries, as
-such, configure flags that are neither MPI or OSHMEM specific in their names
-should be regarded as applicable to both libraries. Some pairs of MPI and 
-OSHMEM specific switches may be mutually exclusive e.g. passing both 
-
-    --disable-mpi-fortran --enable-oshmem-fortran 
-
-will cause configure to abort since the OSHMEM Fortran bindings are dependent 
-upon the MPI bindings being built. 
-
 Open MPI uses a traditional configure script paired with "make" to
 build.  Typical installs can be of the pattern:
 
@@ -1083,7 +1073,6 @@ MISCELLANEOUS SUPPORT LIBRARIES
   to include Open MPI and use their default hwloc installation instead
   of Open MPI's bundled hwloc.
 
-=======
 --with-dmtcp=<directory>
   Specify the directory where the Distributed MultiThreaded
   Checkpointing (DMTCP) libraries and header files are located.  This
@@ -1269,10 +1258,7 @@ MPI FUNCTIONALITY
     none:       Synonym for "no".
     no:         Do not build any MPI Fortran support (same as
                 --disable-mpi-fortran).  This is mutually exclusive
-                with --enable-oshmem-fortran.
-
---disable-oshmem-fortran
-  Disable building the Fortran OSHMEM bindings.
+                with building the OSHMEM Fortran interface.
 
 --enable-mpi-java
   Enable building of an EXPERIMENTAL Java MPI interface (disabled by
@@ -1301,6 +1287,17 @@ MPI FUNCTIONALITY
   Enable the usage of sparse groups. This would save memory
   significantly especially if you are creating large
   communicators. (Disabled by default)
+
+OSHMEM FUNCTIONALITY
+
+--disable-oshmem
+  Disable building the OpenSHMEM implementation (by default, it is
+  enabled).
+
+--disable-oshmem-fortran
+  Disable building only the Fortran OSHMEM bindings.
+
+MISCELLANEOUS FUNCTIONALITY
 
 --without-memory-manager
   Disable building Open MPI's memory manager.  Open MPI's memory
