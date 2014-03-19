@@ -19,11 +19,31 @@ AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 #
 # Disable Open SHMEM?
 #
+AC_MSG_CHECKING([if want oshmem])
 AC_ARG_ENABLE([oshmem],
               [AC_HELP_STRING([--enable-oshmem],
                               [Enable building the OpenSHMEM interface (disabled by default)])],
-              [],
-              [enable_oshmem=no])
+              [oshmem_arg_given=yes],
+              [oshmem_arg_given=no])
+if test "$oshmem_arg_given" == "yes"; then
+    if test "$enable_oshmem" == "yes"; then
+        AC_MSG_RESULT([yes])
+        if test "$opal_found_linux" != "yes"; then
+            AC_MSG_WARN([OpenSHMEM support was requested, but currently])
+            AC_MSG_WARN([only supports Linux.])
+            AC_MSG_ERROR([Cannot continue])
+        fi
+    fi
+    AC_MSG_RESULT([no])
+else
+    if test "$opal_found_linux" == "yes"; then
+        enable_oshmem=yes
+        AC_MSG_RESULT([yes])
+    else
+        enable_oshmem=no
+        AC_MSG_RESULT([not supported on this platform])
+    fi
+fi
 
 #
 # Enable compatibility mode
