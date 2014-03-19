@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,6 +25,7 @@ values are in the range [1 .. 2^16-1]. This value will be ignored
 
   Local host: %s
   Value:      %d
+#
 [client connect fail]
 WARNING: Open MPI failed to TCP connect to a peer MPI process.  This
 should not happen.
@@ -35,4 +36,14 @@ Your Open MPI job may now fail.
   PID:        %d
   Message:    %s
   Error:      %s (%d)
+#
+[client handshake fail]
+WARNING: Open MPI failed to handshake with a connecting peer MPI
+process over TCP.  This should not happen.
+
+Your Open MPI job may now fail.
+
+  Local host: %s
+  PID:        %d
+  Message:    %s
 #
