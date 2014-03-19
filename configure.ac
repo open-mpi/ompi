@@ -250,6 +250,7 @@ AC_SUBST(top_ompi_builddir)
 ############################################################################
 
 OPAL_CONFIGURE_OPTIONS
+OPAL_CHECK_OS_FLAVORS
 OPAL_CHECK_CUDA
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
