@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
@@ -1605,6 +1605,15 @@ static void peer_cons(mca_oob_tcp_peer_t *peer)
 }
 static void peer_des(mca_oob_tcp_peer_t *peer)
 {
+    if (peer->send_ev_active) {
+        opal_event_del(&peer->send_event);
+    }
+    if (peer->recv_ev_active) {
+        opal_event_del(&peer->recv_event);
+    }
+    if (peer->timer_ev_active) {
+        opal_event_del(&peer->timer_event);
+    }
     if (0 <= peer->sd) {
         opal_output_verbose(2, orte_oob_base_framework.framework_output,
                             "%s CLOSING SOCKET %d",
