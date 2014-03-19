@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All right
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -127,17 +130,27 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         }
     }
 
-    /* Copy the proc structure from the previous communicator over to
-       the new one.  The topology module is then able to work on this
-       copy and rearrange it as it deems fit. */
-    topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
-    if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
-        memcpy(topo_procs, 
-               old_comm->c_local_group->grp_proc_pointers,
-               num_procs * sizeof(ompi_proc_t *));
-    } else {
-        for(i = 0 ; i < num_procs; i++) {
-            topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
+    /* Don't do any of the other initialization if we're not supposed
+       to be part of the new communicator (because nnodes has been
+       reset to 0, making things like index[nnodes-1] be junk).
+
+       JMS: This should really be refactored to use
+       comm_create_group(), because ompi_comm_allocate() still
+       complains about 0-byte mallocs in debug builds for 0-member
+       groups. */
+    if (num_procs > 0) {
+        /* Copy the proc structure from the previous communicator over to
+           the new one.  The topology module is then able to work on this
+           copy and rearrange it as it deems fit. */
+        topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+        if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
+            memcpy(topo_procs,
+                   old_comm->c_local_group->grp_proc_pointers,
+                   num_procs * sizeof(ompi_proc_t *));
+        } else {
+            for(i = 0 ; i < num_procs; i++) {
+                topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
+            }
         }
     }
 

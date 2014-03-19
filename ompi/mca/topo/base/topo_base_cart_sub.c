@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -120,28 +123,34 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
         cart->ndims = ndim;
         cart->dims = dorig;
         cart->periods = porig;
-        cart->coords = (int*)malloc(sizeof(int) * ndim);
-        if (NULL == cart->coords) {
-            free(cart->periods);
-            if(NULL != cart->dims) free(cart->dims);
-            free(cart);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        {  /* setup the cartesian topology */
-            int nprocs = temp_comm->c_local_group->grp_proc_count,
-                rank   = temp_comm->c_local_group->grp_my_rank;
 
-            for (i = 0; i < ndim; ++i) {
-                nprocs /= cart->dims[i];
-                cart->coords[i] = rank / nprocs;
-                rank %= nprocs;
+        /* NTH: protect against a 0-byte alloc in the ndims = 0 case */
+        if (ndim > 0) {
+            cart->coords = (int*)malloc(sizeof(int) * ndim);
+            if (NULL == cart->coords) {
+                free(cart->periods);
+                if(NULL != cart->dims) free(cart->dims);
+                free(cart);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            {  /* setup the cartesian topology */
+                int nprocs = temp_comm->c_local_group->grp_proc_count,
+                    rank   = temp_comm->c_local_group->grp_my_rank;
+
+                for (i = 0; i < ndim; ++i) {
+                    nprocs /= cart->dims[i];
+                    cart->coords[i] = rank / nprocs;
+                    rank %= nprocs;
+                }
             }
         }
+
         temp_comm->c_topo           = topo;
         temp_comm->c_topo->mtc.cart = cart;
         temp_comm->c_topo->reorder  = false;
         temp_comm->c_flags         |= OMPI_COMM_CART;
     }
+
     *new_comm = temp_comm;
 
     return MPI_SUCCESS;
