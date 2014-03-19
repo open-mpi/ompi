@@ -188,7 +188,7 @@ segment_create(map_segment_t *ds_buf,
                 MAP_ANONYMOUS |
 #endif
                 MAP_FIXED,
-                0,
+                -1,
                 0);
 
     if (MAP_FAILED == addr) {
@@ -243,7 +243,7 @@ segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
                 MAP_ANONYMOUS |
 #endif
                 MAP_FIXED,
-                0,
+                -1,
                 0);
 
     if (MAP_FAILED == addr) {
