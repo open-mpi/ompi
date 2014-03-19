@@ -82,11 +82,12 @@ General notes
   Although this implementation attempts to be portable to multiple
   different environments and networks, it is still new and will likely
   experience growing pains typical of any new software package.
-  End-user feedback is strongly encouraged.
+  End-user feedback is greatly appreciated.
 
-  As other network vendors and/or institutions contribute platform
-  specific optimizations, this implementation will most likely provide
-  optimal performance on Mellanox hardware and software stacks.
+  This implementation will currently most likely provide optimal
+  performance on Mellanox hardware and software stacks.  Overall
+  performance is expected to improve as other network vendors and/or
+  institutions contribute platform specific optimizations.
 
   See below for details on how to enable the OpenSHMEM implementation.
 
@@ -498,10 +499,6 @@ MPI Functionality and Features
 
 OSHMEM Functionality and Features
 ------------------------------
-
-- The OpenSHMEM implementation is not compiled/installed by default.
-  To enable building the OpenSHMEM implementation, use the
-  --enable-oshmem switch to configure.
 
 - All OpenSHMEM-1.0 functionality is supported.
 
@@ -1261,15 +1258,12 @@ MPI FUNCTIONALITY
 
 OSHMEM FUNCTIONALITY
 
---enable-oshmem
-  Enable building the OpenSHMEM implementation (currently only works
-  on Linux).
-
-  The OpenSHMEM implementation is not currently built by default; it
-  must be enabled with the --enable-oshmem switch.
+--disable-oshmem
+  Disable building the OpenSHMEM implementation (by default, it is
+  enabled).
 
 --disable-oshmem-fortran
-  Disable building the Fortran OSHMEM bindings.
+  Disable building only the Fortran OSHMEM bindings.
 
 MISCELLANEOUS FUNCTIONALITY
 
