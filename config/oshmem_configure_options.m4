@@ -25,8 +25,8 @@ AC_ARG_ENABLE([oshmem],
                               [Enable building the OpenSHMEM interface (disabled by default)])],
               [oshmem_arg_given=yes],
               [oshmem_arg_given=no])
-if test "$oshmem_arg_given" == "yes"; then
-    if test "$enable_oshmem" == "yes"; then
+if test "$oshmem_arg_given" = "yes"; then
+    if test "$enable_oshmem" = "yes"; then
         AC_MSG_RESULT([yes])
         if test "$opal_found_linux" != "yes"; then
             AC_MSG_WARN([OpenSHMEM support was requested, but currently])
@@ -36,7 +36,7 @@ if test "$oshmem_arg_given" == "yes"; then
     fi
     AC_MSG_RESULT([no])
 else
-    if test "$opal_found_linux" == "yes"; then
+    if test "$opal_found_linux" = "yes"; then
         enable_oshmem=yes
         AC_MSG_RESULT([yes])
     else
@@ -120,7 +120,7 @@ AC_HELP_STRING([--enable-oshmem-fortran],
                [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
 if test "$enable_oshmem" != "no" -a "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail
-   AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -a "$enable_oshmem_fortran" == "yes"],
+   AS_IF([test $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -a "$enable_oshmem_fortran" = "yes"],
                [AC_MSG_RESULT([bad value OMPI_WANT_FORTRAN_BINDINGS: ($OMPI_WANT_FORTRAN_BINDINGS)])
                 AC_MSG_WARN([Your request to --enable-oshmem-fortran can only be satisfied if fortran support is enabled in OMPI.
 You see this message because OMPI fortran support has been explicitly disabled via --disable-mpi-fortran and OSHMEM fortran support was explicitly enabled with --enable-oshmem-fortran.
