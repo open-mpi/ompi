@@ -130,11 +130,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         }
     }
 
-    /* Don't do any of the other initialization if we're not supposed
-       to be part of the new communicator (because nnodes has been
-       reset to 0, making things like index[nnodes-1] be junk).
-
-       JMS: This should really be refactored to use
+    /* JMS: This should really be refactored to use
        comm_create_group(), because ompi_comm_allocate() still
        complains about 0-byte mallocs in debug builds for 0-member
        groups. */
