@@ -42,13 +42,7 @@ AC_DEFUN([ACVT_IOWRAP],
 				fdatasync \
 				lockf])
 
-			AC_CHECK_FUNCS([__fprintf_chk],
-			[
-dnl				Check whether <stdio.h> declares __vfprintf_chk. This should be the case if
-dnl				_FORTIFY_SOURCE is defined (default when using the GNU compiler).
-dnl				Otherwise, we have to declare this function to avoid compiler warnings.
-				AC_CHECK_DECLS([__vfprintf_chk], [], [], [#include <stdio.h>])
-			])
+			AC_CHECK_DECLS([__fprintf_chk], [], [], [#include <stdio.h>])
 
 			CPPFLAGS=$sav_CPPFLAGS
 
