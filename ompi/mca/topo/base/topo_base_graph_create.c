@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,30 +74,40 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
     graph->index = NULL;
     graph->edges = NULL;
 
-    graph->index = (int*)malloc(sizeof(int) * nnodes);
-    if (NULL == graph->index) {
-        free(graph);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    memcpy(graph->index, index, nnodes * sizeof(int));
+    /* Don't do any of the other initialization if we're not supposed
+       to be part of the new communicator (because nnodes has been
+       reset to 0, making things like index[nnodes-1] be junk).
 
-    /* Graph communicator; copy the right data to the common information */
-    graph->edges = (int*)malloc(sizeof(int) * index[nnodes-1]);
-    if (NULL == graph->edges) {
-        free(graph->index);
-        free(graph);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    memcpy(graph->edges, edges, index[nnodes-1] * sizeof(int));
+       JMS: This should really be refactored to use
+       comm_create_group(), because ompi_comm_allocate() still
+       complains about 0-byte mallocs in debug builds for 0-member
+       groups. */
+    if (MPI_UNDEFINED != new_rank) {
+        graph->index = (int*)malloc(sizeof(int) * nnodes);
+        if (NULL == graph->index) {
+            free(graph);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy(graph->index, index, nnodes * sizeof(int));
 
-    topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
-    if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
-        memcpy(topo_procs, 
-               old_comm->c_local_group->grp_proc_pointers,
-               num_procs * sizeof(ompi_proc_t *));
-    } else {
-        for(i = 0 ; i < num_procs; i++) {
-            topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
+        /* Graph communicator; copy the right data to the common information */
+        graph->edges = (int*)malloc(sizeof(int) * index[nnodes-1]);
+        if (NULL == graph->edges) {
+            free(graph->index);
+            free(graph);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy(graph->edges, edges, index[nnodes-1] * sizeof(int));
+
+        topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+        if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
+            memcpy(topo_procs, 
+                   old_comm->c_local_group->grp_proc_pointers,
+                   num_procs * sizeof(ompi_proc_t *));
+        } else {
+            for(i = 0 ; i < num_procs; i++) {
+                topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
+            }
         }
     }
 
