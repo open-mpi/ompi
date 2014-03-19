@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -886,6 +886,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         }
         /* Did the callback return non-MPI_SUCCESS? */
         if (0 != err) {
+            ret = err;
             goto out;
         }
 
