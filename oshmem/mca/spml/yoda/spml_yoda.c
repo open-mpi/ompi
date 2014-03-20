@@ -411,6 +411,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
 
         yoda_context->registration = NULL;
         if (NULL != ybtl->btl->btl_prepare_src) {
+
             /* initialize convertor for source descriptor*/
             opal_convertor_copy_and_prepare_for_recv(proc_self->proc_convertor,
                                                      datatype,
@@ -437,7 +438,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
 
             /* register source memory */
             des = ybtl->btl->btl_prepare_src(ybtl->btl,
-                                             0,
+                                             ybtl->bml_btl->btl_endpoint,
                                              yoda_context->registration,
                                              &convertor,
                                              MCA_BTL_NO_ORDER,
@@ -479,7 +480,7 @@ static void mca_spml_yoda_error_handler(struct mca_btl_base_module_t* btl,
 /*  make global btl list&map */
 static int create_btl_list(void)
 {
-    int btl_id;
+    int btl_type;
     char *btl_name;
     int size;
     opal_list_item_t *item;
@@ -505,12 +506,15 @@ static int create_btl_list(void)
 
         btl_sm = (mca_btl_base_selected_module_t *) item;
         btl_name = btl_sm->btl_component->btl_version.mca_component_name;
-        btl_id = btl_name_to_id(btl_name);
+        btl_type = btl_name_to_id(btl_name);
 
-        SPML_VERBOSE(50, "found btl (%s) btl_id=%d", btl_name, btl_id);
+        SPML_VERBOSE(50, "found btl (%s) btl_type=%s", btl_name, btl_type2str(btl_type));
+
+        /* Note: we setup bml_btl in create_btl_idx() */
+        mca_spml_yoda.btl_type_map[mca_spml_yoda.n_btls].bml_btl = NULL;
         mca_spml_yoda.btl_type_map[mca_spml_yoda.n_btls].btl =
                 btl_sm->btl_module;
-        mca_spml_yoda.btl_type_map[mca_spml_yoda.n_btls].btl_type = btl_id;
+        mca_spml_yoda.btl_type_map[mca_spml_yoda.n_btls].btl_type = btl_type;
         mca_spml_yoda.n_btls++;
     }
 
@@ -596,6 +600,7 @@ static int create_btl_idx(int dst_pe)
             return OSHMEM_ERROR;
         }
         proc->transport_ids[i] = btl_id;
+        mca_spml_yoda.btl_type_map[btl_id].bml_btl = bml_btl;
         mca_spml_yoda.btl_type_map[btl_id].use_cnt++;
     }
     return OSHMEM_SUCCESS;
