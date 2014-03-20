@@ -55,6 +55,7 @@ enum {
 
 struct yoda_btl {
     mca_btl_base_module_t *btl;
+    mca_bml_base_btl_t *bml_btl;
     int btl_type;
     int use_cnt;
 };
