@@ -3,6 +3,7 @@
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -23,7 +24,7 @@ release=5
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=rc6
+greek=
 
 # If want_repo_rev=1, then the repo revision number will be included
 # in the overall Open MPI version number in some form.
@@ -52,7 +53,7 @@ repo_rev=-1
 
 # The date when this release was created
 
-date="Unreleased developer copy"
+date="March 20, 2014"
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
