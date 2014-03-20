@@ -8,13 +8,21 @@
 # 
 # $HEADER$
 #
-# This is the US/English help file for Open SHMEM MCA error messages.
 #
 
-[mmap:out-of-memory]
-'sshmem' 'mmap' was failed to allocate shared memory segment
-of requested size. Returned error corresponds to
-out of memory case.
+[mmap segment failed]
+The OpenSHMEM "mmap" plugin in the "sshmem" framework failed to
+allocate a shared memory segement via the mmap system call.  This
+usually means that there are not enough resources available to your
+memory subsystem on your server. 
 
-Try decreasing symmetric heap area size with
-'-x SHMEM_SYMMETRIC_HEAP_SIZE=<value>'.
+Your OpenSHMEM job will now abort.
+
+   Server:         %s
+   Requested mmap
+     segment size: %u
+   Specific error: %s (%d)
+
+You can try to decrease the symmetric heap area with:
+
+"-x SHMEM_SYMMETRIC_HEAP_SIZE=<value>".
