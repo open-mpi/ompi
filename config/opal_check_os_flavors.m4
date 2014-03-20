@@ -51,6 +51,7 @@ AC_DEFUN([OPAL_CHECK_OS_FLAVORS],
                        [Whether or not we have solaris])
 
     # check for sockaddr_in (a good sign we have TCP)
+    AC_CHECK_HEADERS([netdb.h netinet/in.h netinet/tcp.h])
     AC_CHECK_TYPES([struct sockaddr_in], 
                    [opal_found_sockaddr=yes],
                    [opal_found_sockaddr=no], 
