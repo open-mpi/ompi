@@ -6,6 +6,7 @@
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,7 +24,7 @@ AC_DEFUN([OMPI_CHECK_XPMEM], [
     AC_ARG_WITH([xpmem],
                 [AC_HELP_STRING([--with-xpmem(=DIR)],
                 [Build with XPMEM kernel module support, searching for headers in DIR])])
-    OMPI_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h include/sn/xpmem.h])
+    OMPI_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
 
     AC_ARG_WITH([xpmem-libdir],
                 [AC_HELP_STRING([--with-xpmem-libdir=DIR],
@@ -41,7 +42,7 @@ AC_DEFUN([OMPI_CHECK_XPMEM], [
 	    ompi_check_xpmem_libdir="$with_xpmem_libdir"
 	fi
 
-	OMPI_CHECK_PACKAGE([$1],[xpmem.h sn/xpmem.h],[xpmem],[xpmem_make],[],
+	OMPI_CHECK_PACKAGE([$1],[xpmem.h],[xpmem],[xpmem_make],[],
 	    [$ompi_check_xpmem_dir],[$ompi_check_xpmem_libdir], [ompi_check_xpmem_happy="yes"], [])
 
 	if test "$ompi_check_xpmem_happy" = "no" -a -n "$with_xpmem" -a "$with_xpmem" != "yes" ; then
