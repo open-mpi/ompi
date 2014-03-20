@@ -1,11 +1,14 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
+
+dist_ompidata_DATA = help-oshmem-sshmem-sysv.txt
 
 sources = \
         sshmem_sysv.h \

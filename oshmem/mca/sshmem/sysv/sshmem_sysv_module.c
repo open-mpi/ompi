@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +47,7 @@
 #include "opal/util/show_help.h"
 #include "orte/util/show_help.h"
 
+#include "oshmem/proc/proc.h"
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
 
@@ -197,11 +199,11 @@ segment_create(map_segment_t *ds_buf,
              "Failed to shmget() %llu bytes (errno=%d)",
              (unsigned long long)size, errno));
 
-        if (EINVAL == errno) {
-            orte_show_help("help-shmem-mca.txt",
-                           "sysv:create-segment-failture",
-                           true);
-        }
+        opal_show_help("help-oshmem-sshmem-sysv.txt",
+                       "create segment failure",
+                       true,
+                       orte_process_info.nodename, (unsigned) size,
+                       strerror(errno), errno);
         return OSHMEM_ERROR;
     }
 
