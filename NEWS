@@ -99,14 +99,19 @@ included in the vX.Y.Z section and be denoted as:
 - Removed ASYNCHRONOUS keyword from the "ignore TKR" mpi_f08 module.
 - Deprecated the following mpirun options: 
   --bynode, --bycore, --byslot: replaced with --map-by node|core|slot.
-  --npernode, --npersocket: replaced with —map-by ppr:N:node and
-       —map-by ppr:N:socket, respectively
+  --npernode, --npersocket: replaced with --map-by ppr:N:node and
+       --map-by ppr:N:socket, respectively
 - Pick NFS "infinitely stale" fix from ROMIO upstream.
-- Various PMI2 fixes.
+- Various PMI2 fixes and extension to support broader range of mappings.
 - Improve launch performance at large scale.
 - Add support for PBS/Torque environments that set environment
   variables to indicate the number of slots available on each nodes.
   Set the ras_tm_smp MCA parameter to "1" to enable this mode.
+- Add new, more scalable endpoint exchange (commonly called "modex")
+  method that only exchanges endpoint data on a per-peer basis
+  on first message. Not all transports have been updated to use
+  this feature. Set the rte_orte_direct_modex parameter to "1"
+  to enable this mode.
 
 
 1.7.4
