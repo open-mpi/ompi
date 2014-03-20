@@ -59,20 +59,54 @@ included in the vX.Y.Z section and be denoted as:
  **********************************************************************
  *  Open MPI is now fully MPI-3.0 compliant
  **********************************************************************
-- Add OSHMEM support built on top of Open MPI's MPI layer. Thanks
-  to Mellanox for contributing this new feature.
-- Support GCC/gfortran 4.9's "ignore TKR" syntax.  Thanks to Tobias
-  Burnus for adding this support to gfortran.
-- Allow restricting ORTE daemons to specific cores using
-  orte_daemon_cores MCA param
-- MPI-3: Added support for new RMA functions.
-- MPI-3 compliant.
+- Add Linux OpenSHMEM support built on top of Open MPI's MPI
+  layer. Thanks to Mellanox for contributing this new feature.
+- Allow restricting ORTE daemons to specific cores using the
+  orte_daemon_cores MCA param.
+- Ensure to properly set "locality" flags for processes launched via
+  MPI dynamic functions such as MPI_COMM_SPAWN.
+- Fix MPI_GRAPH_CREATE when nnodes is smaller than the size of the old
+  communicator.
+- usnic BTL now supports underlying UDP transport.
+- usnic BTL now checks for common connectivty errors at first send to
+  a remote server.
+- Minor scalability improvements in the usnic BTL.
+- ompi_info now lists whether the Java MPI bindings are available or not.
+- MPI-3: mpi.h and the Fortran interfaces now report MPI_VERSION==3
+  and MPI_SUBVERSION==0.
+- MPI-3: Added support for new RMA functions and functionality.
+- Fix MPI_Info "const buglet.  Thanks to Orion Poplawski for
+  identifying the issue.
 - Multiple fixes to mapping/binding options. Thanks to Tetsuya Mishima
-  for his assistance
-- Add a new collective component (coll/ml) that provides
-  substantially improved performance. Will eventually become the
-  default, but for now requires setting coll_ml_priority > 0 to
-  become active
+  for his assistance.
+- Multiple fixes for normal and abnormal process termination,
+  including singleton MPI_Abort and ensuring to kill entire process
+  groups when abnormally terminating a job.
+- Fix DESTDIR install for javadocs.  Thanks to Orion Poplawski for
+  pointing out the issue.
+- Various performance improvements for the MPI Java bindings.
+- OMPI now uses its own internal random number generator and will not
+  perturb srand() and friends.
+- Some cleanups for Cygwin builds.  Thanks to Marco Atzeri for the
+  patches.
+- Add a new collective component (coll/ml) that provides substantially
+  improved performance.  It is still experimental, and requires
+  setting coll_ml_priority > 0 to become active.
+- Add version check during startup to ensure you are using the same
+  version of Open MPI on all nodes in a job.
+- Significantly improved the performance of MPI_DIMS_CREATE for large
+  values.  Thanks to Andreas Schäfer for the contribution.
+- Removed ASYNCHRONOUS keyword from the "ignore TKR" mpi_f08 module.
+- Deprecated the following mpirun options: 
+  --bynode, --bycore, --byslot: replaced with --map-by node|core|slot.
+  --npernode, --npersocket: replaced with —map-by ppr:N:node and
+       —map-by ppr:N:socket, respectively
+- Pick NFS "infinitely stale" fix from ROMIO upstream.
+- Various PMI2 fixes.
+- Improve launch performance at large scale.
+- Add support for PBS/Torque environments that set environment
+  variables to indicate the number of slots available on each nodes.
+  Set the ras_tm_smp MCA parameter to "1" to enable this mode.
 
 
 1.7.4
