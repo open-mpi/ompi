@@ -21,3 +21,13 @@ output of the "ompi_info" command and ensure that components of this
 type are available on your system.  You may also wish to check the
 value of the "component_path" MCA parameter and ensure that it has at
 least one directory that contains valid MCA components.
+
+[sysv:create-segment-failture]
+'sshmem' 'sysv' was failed to allocate shared memory segment
+of requested size. Returned error corresponds to
+invalid agrument function call which most likely
+is size of shared segment to allocate.
+
+Try using other 'sshmem' components (e.g. 'mmap')
+with '-mca sshmem mmap' or decrease symmetric heap area size
+with '-x SHMEM_SYMMETRIC_HEAP_SIZE=<value>'.

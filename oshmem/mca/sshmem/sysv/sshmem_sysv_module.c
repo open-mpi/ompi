@@ -44,6 +44,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
@@ -192,10 +193,15 @@ segment_create(map_segment_t *ds_buf,
     shmid = shmget(IPC_PRIVATE, size, flags);
     if (shmid == MAP_SEGMENT_SHM_INVALID) {
         OPAL_OUTPUT_VERBOSE(
-           (5, oshmem_sshmem_base_framework.framework_output,
-           "Failed to shmget() %llu bytes (errno=%d)",
-                      (unsigned long long)size, errno)
-            );
+            (5, oshmem_sshmem_base_framework.framework_output,
+             "Failed to shmget() %llu bytes (errno=%d)",
+             (unsigned long long)size, errno));
+
+        if (EINVAL == errno) {
+            orte_show_help("help-shmem-mca.txt",
+                           "sysv:create-segment-failture",
+                           true);
+        }
         return OSHMEM_ERROR;
     }
 
