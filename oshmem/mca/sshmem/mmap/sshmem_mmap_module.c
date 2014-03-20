@@ -40,6 +40,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
@@ -197,6 +198,11 @@ segment_create(map_segment_t *ds_buf,
            "Failed to mmap() %llu bytes (errno=%d)",
                       (unsigned long long)size, errno)
             );
+        if (ENOMEM == errno) {
+            orte_show_help("help-oshmem-sshmem-mmap.txt",
+                           "mmap:out-of-memory",
+                           true);
+        }
         return OSHMEM_ERR_OUT_OF_RESOURCE;
     }
 
