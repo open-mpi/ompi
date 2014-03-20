@@ -7,6 +7,8 @@
 # $HEADER$
 #
 
+dist_ompidata_DATA = help-oshmem-sshmem-mmap.txt
+
 sources = \
         sshmem_mmap.h \
         sshmem_mmap_component.c \
