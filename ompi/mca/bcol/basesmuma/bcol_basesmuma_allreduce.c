@@ -54,6 +54,13 @@ int bcol_basesmuma_allreduce_init(mca_bcol_base_module_t *super)
     mca_bcol_base_set_attributes(super, &comm_attribs, &inv_attribs,
                                  bcol_basesmuma_allreduce_intra_fanin_fanout,
                                  bcol_basesmuma_allreduce_intra_fanin_fanout_progress);
+
+    inv_attribs.bcol_msg_min = 10000000;
+    inv_attribs.bcol_msg_max = 10485760; /* range 4 */
+    mca_bcol_base_set_attributes(super, &comm_attribs, &inv_attribs,
+                                 bcol_basesmuma_allreduce_intra_fanin_fanout,
+                                 bcol_basesmuma_allreduce_intra_fanin_fanout_progress);
+
     /* Differs only in comm size */
 
     comm_attribs.data_src = DATA_SRC_UNKNOWN;
