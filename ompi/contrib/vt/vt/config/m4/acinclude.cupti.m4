@@ -69,31 +69,43 @@ AC_DEFUN([ACVT_CUPTI],
 			cupti_error="yes"
 		])
 
-		AS_IF([test x"$cupti_error" = "xno"], [
-			have_cupti="yes"
-
+		AS_IF([test x"$cupti_error" = "xno"],
+		[
 			sav_CPPFLAGS=$CPPFLAGS
 			CPPFLAGS="$CPPFLAGS $CUPTIINCDIR $CUDATKINCDIR"
 
-			AC_CHECK_HEADER([cupti_events.h], [
-				AC_MSG_CHECKING([whether CUDA runtime version >= 4.0])
-				AC_TRY_COMPILE([#include "cuda_runtime_api.h"],
+			AC_MSG_CHECKING([whether CUPTI API version >= 2 & <= 4])
+			AC_TRY_COMPILE([#include "cupti_version.h"],
 	[
-	#ifndef CUDART_VERSION
-	#  error "CUDART_VERSION not defined"
-	#elif CUDART_VERSION < 4000
-	#  error "CUDART_VERSION < 4000"
+	#ifndef CUPTI_API_VERSION
+	#  error "CUPTI_API_VERSION not defined"
+	#elif CUPTI_API_VERSION < 2
+	#  error "CUPTI_API_VERSION < 2"
+	#elif CUPTI_API_VERSION > 4
+	#  error "CUPTI_API_VERSION > 4"
 	#endif
 	],
-				[
-					AC_MSG_RESULT([yes])
-					have_cupti_events="yes"
-				],[
-					AC_MSG_RESULT([no])
-					AC_MSG_NOTICE([error: CUDA runtime version could not be determined and/or is incompatible (< 4.0)
-	See \`config.log' for more details.])
-				])
-			],[
+			[
+				AC_MSG_RESULT([yes])
+				have_cupti="yes"
+			],
+			[
+				AC_MSG_RESULT([no])
+				AC_MSG_NOTICE([error: CUPTI API version could not be determined and/or is incompatible (< 2 o. > 4)
+See \`config.log' for more details.])
+				cupti_error="yes"
+			])
+
+			CPPFLAGS=$sav_CPPFLAGS
+		])
+
+		AS_IF([test x"$cupti_error" = "xno"],
+		[
+			sav_CPPFLAGS=$CPPFLAGS
+			CPPFLAGS="$CPPFLAGS $CUPTIINCDIR $CUDATKINCDIR"
+
+			AC_CHECK_HEADER([cupti_events.h], [have_cupti_events="yes"],
+			[
 				AC_MSG_NOTICE([error: no cupti_events.h found])
 			])
 			AC_CHECK_HEADER([cupti_callbacks.h], [have_cupti_callbacks="yes"],
@@ -104,6 +116,7 @@ AC_DEFUN([ACVT_CUPTI],
 			[
 				AC_MSG_NOTICE([error: no cupti_activity.h found])
 			])
+
 			CPPFLAGS=$sav_CPPFLAGS
 		])
 	])
