@@ -1404,7 +1404,7 @@ static int mca_coll_ml_read_allbcols_settings(mca_coll_ml_module_t *ml_module,
 
     OPAL_LIST_FOREACH(bcol_cli, &mca_bcol_base_components_in_use, mca_base_component_list_item_t) {
         /* check to see if this bcol is being used */
-        if(!bcols_in_use_all_ranks[bcol_index]) {
+        if (!bcols_in_use_all_ranks[bcol_index++]) {
             /* not in use */
             continue;
         }
