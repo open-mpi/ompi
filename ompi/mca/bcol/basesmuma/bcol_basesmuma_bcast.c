@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
@@ -51,10 +52,20 @@ int bcol_basesmuma_bcast_init(mca_bcol_base_module_t *super)
 	inv_attribs.op_types_bitmap = 0xffffffff;
 
     mca_bcol_base_set_attributes(super, &comm_attribs, &inv_attribs,
-                bcol_basesmuma_bcast_k_nomial_knownroot, 
-                bcol_basesmuma_bcast_k_nomial_knownroot);
+                                 bcol_basesmuma_bcast_k_nomial_knownroot,
+                                 bcol_basesmuma_bcast_k_nomial_knownroot);
+
+    inv_attribs.bcol_msg_min = 10000000;
+    inv_attribs.bcol_msg_max = 10485760; /* range 4 */
+
+    mca_bcol_base_set_attributes(super, &comm_attribs, &inv_attribs,
+                                 bcol_basesmuma_bcast_k_nomial_knownroot,
+                                 bcol_basesmuma_bcast_k_nomial_knownroot);
 
     comm_attribs.data_src = DATA_SRC_UNKNOWN;
+    inv_attribs.bcol_msg_min = 0;
+    inv_attribs.bcol_msg_max = 20000; /* range 1 */
+
     mca_bcol_base_set_attributes(super, &comm_attribs, &inv_attribs,
             bcol_basesmuma_bcast_k_nomial_anyroot, 
             bcol_basesmuma_bcast_k_nomial_anyroot); 
