@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -138,8 +138,13 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
         module->small_message_thresholds[coll_i] = BCOL_THRESHOLD_UNLIMITED;
     }
 
-    OBJ_CONSTRUCT(&(module->active_bcols_list), opal_list_t);
-    OBJ_CONSTRUCT(&(module->waiting_for_memory_list), opal_list_t);
+    OBJ_CONSTRUCT(&module->active_bcols_list, opal_list_t);
+    OBJ_CONSTRUCT(&module->waiting_for_memory_list, opal_list_t);
+    OBJ_CONSTRUCT(&module->fragment_descriptors, ompi_free_list_t);
+    OBJ_CONSTRUCT(&module->message_descriptors, ompi_free_list_t);
+    OBJ_CONSTRUCT(&module->coll_ml_collective_descriptors, ompi_free_list_t);
+
+    memset (&module->fallback, 0, sizeof (module->fallback));
 }
 
 #define ML_RELEASE_FALLBACK(_coll_ml, _coll)                            \
@@ -158,81 +163,79 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
 
     ML_VERBOSE(4, ("ML module destruct"));
 
-    if (module->initialized) {
-        for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
-            topo = &module->topo_list[index_topo];
-            if (COLL_ML_TOPO_DISABLED == topo->status) {
-                /* skip the topology */
-                continue;
-            }
+    for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
+        topo = &module->topo_list[index_topo];
+        if (COLL_ML_TOPO_DISABLED == topo->status) {
+            /* skip the topology */
+            continue;
+        }
 
-            if (NULL != topo->component_pairs) {
-                for(i = 0; i < topo->n_levels; ++i) {
-                    for(j = 0; j < topo->component_pairs[i].num_bcol_modules; ++j) {
-                        OBJ_RELEASE(topo->component_pairs[i].bcol_modules[j]);
-                    }
-                    /* free the array of bcol module */
-                    free(topo->component_pairs[i].bcol_modules);
-
-                    OBJ_RELEASE(topo->component_pairs[i].subgroup_module);
+        if (NULL != topo->component_pairs) {
+            for(i = 0; i < topo->n_levels; ++i) {
+                for(j = 0; j < topo->component_pairs[i].num_bcol_modules; ++j) {
+                    OBJ_RELEASE(topo->component_pairs[i].bcol_modules[j]);
                 }
+                /* free the array of bcol module */
+                free(topo->component_pairs[i].bcol_modules);
 
-                free(topo->component_pairs);
+                OBJ_RELEASE(topo->component_pairs[i].subgroup_module);
             }
 
-            /* gvm Leak FIX Free collective algorithms structure */
-            for (fnc = 0; fnc < BCOL_NUM_OF_FUNCTIONS; fnc++) {
-                if (NULL != topo->hierarchical_algorithms[fnc]){
-                    free(topo->hierarchical_algorithms[fnc]);
-                }
-            }
+            free(topo->component_pairs);
+        }
 
-            /* free up the route vector memory */
-            if (NULL != topo->route_vector) {
-                free(topo->route_vector);
-            }
-            /* free resrouce description */
-            if(NULL != topo->array_of_all_subgroups) {
-                for( k=0 ; k < topo->number_of_all_subgroups ; k++ ) {
-                    if(0 < topo->array_of_all_subgroups[k].n_ranks) {
-                        free(topo->array_of_all_subgroups[k].rank_data);
-                        topo->array_of_all_subgroups[k].rank_data = NULL;
-                    }
-                }
-                free(topo->array_of_all_subgroups);
-                topo->array_of_all_subgroups = NULL;
+        /* gvm Leak FIX Free collective algorithms structure */
+        for (fnc = 0; fnc < BCOL_NUM_OF_FUNCTIONS; fnc++) {
+            if (NULL != topo->hierarchical_algorithms[fnc]){
+                free(topo->hierarchical_algorithms[fnc]);
             }
         }
 
-        OBJ_DESTRUCT(&(module->active_bcols_list));
-        OBJ_DESTRUCT(&(module->waiting_for_memory_list));
-
-        /* gvm Leak FIX Remove fragment free list */
-        OBJ_DESTRUCT(&(module->fragment_descriptors));
-        OBJ_DESTRUCT(&(module->message_descriptors));
-        /* push mca_bcol_base_memory_block_desc_t back on list manager */
-        mca_coll_ml_free_block(module->payload_block);
-        /* release the cinvertor if it was allocated */
-        if (NULL != module->reference_convertor) {
-            OBJ_RELEASE(module->reference_convertor);
+        /* free up the route vector memory */
+        if (NULL != topo->route_vector) {
+            free(topo->route_vector);
         }
-
-        OBJ_DESTRUCT(&(module->coll_ml_collective_descriptors));
-
-        if (NULL != module->coll_ml_barrier_function) {
-            free(module->coll_ml_barrier_function);
+        /* free resrouce description */
+        if(NULL != topo->array_of_all_subgroups) {
+            for( k=0 ; k < topo->number_of_all_subgroups ; k++ ) {
+                if(0 < topo->array_of_all_subgroups[k].n_ranks) {
+                    free(topo->array_of_all_subgroups[k].rank_data);
+                    topo->array_of_all_subgroups[k].rank_data = NULL;
+                }
+            }
+            free(topo->array_of_all_subgroups);
+            topo->array_of_all_subgroups = NULL;
         }
-
-        /* release saved collectives */
-        ML_RELEASE_FALLBACK(module, allreduce);
-        ML_RELEASE_FALLBACK(module, allgather);
-        ML_RELEASE_FALLBACK(module, reduce);
-        ML_RELEASE_FALLBACK(module, ibcast);
-        ML_RELEASE_FALLBACK(module, iallreduce);
-        ML_RELEASE_FALLBACK(module, iallgather);
-        ML_RELEASE_FALLBACK(module, ireduce);
-        ML_RELEASE_FALLBACK(module, ibcast);
     }
+
+    OBJ_DESTRUCT(&(module->active_bcols_list));
+    OBJ_DESTRUCT(&(module->waiting_for_memory_list));
+
+    /* gvm Leak FIX Remove fragment free list */
+    OBJ_DESTRUCT(&(module->fragment_descriptors));
+    OBJ_DESTRUCT(&(module->message_descriptors));
+    /* push mca_bcol_base_memory_block_desc_t back on list manager */
+    mca_coll_ml_free_block(module->payload_block);
+    /* release the cinvertor if it was allocated */
+    if (NULL != module->reference_convertor) {
+        OBJ_RELEASE(module->reference_convertor);
+    }
+
+    OBJ_DESTRUCT(&(module->coll_ml_collective_descriptors));
+
+    if (NULL != module->coll_ml_barrier_function) {
+        free(module->coll_ml_barrier_function);
+    }
+
+    /* release saved collectives */
+    ML_RELEASE_FALLBACK(module, allreduce);
+    ML_RELEASE_FALLBACK(module, allgather);
+    ML_RELEASE_FALLBACK(module, reduce);
+    ML_RELEASE_FALLBACK(module, bcast);
+    ML_RELEASE_FALLBACK(module, iallreduce);
+    ML_RELEASE_FALLBACK(module, iallgather);
+    ML_RELEASE_FALLBACK(module, ireduce);
+    ML_RELEASE_FALLBACK(module, ibcast);
 }
 
 
@@ -2658,8 +2661,6 @@ static int init_lists(mca_coll_ml_module_t *ml_module)
     /* initialize full message descriptors - moving this to the
      *   module, as the fragment has resrouce requirements that
      *   are communicator dependent */
-    OBJ_CONSTRUCT(&(ml_module->message_descriptors), ompi_free_list_t);
-
     /* no data associated with the message descriptor */
 
     length = sizeof(mca_coll_ml_descriptor_t);
@@ -2679,8 +2680,6 @@ static int init_lists(mca_coll_ml_module_t *ml_module)
      * small message latency */
 
     /* create a free list of fragment descriptors */
-    OBJ_CONSTRUCT(&(ml_module->fragment_descriptors), ompi_free_list_t);
-
     /*length_payload=sizeof(something);*/
     length = sizeof(mca_coll_ml_fragment_t);
     ret = ompi_free_list_init_ex_new(&(ml_module->fragment_descriptors), length,
@@ -3132,7 +3131,7 @@ static void ml_save_fallback_colls (mca_coll_ml_module_t *coll_ml,
     ML_SAVE_FALLBACK(coll_ml, allreduce);
     ML_SAVE_FALLBACK(coll_ml, allgather);
     ML_SAVE_FALLBACK(coll_ml, reduce);
-    ML_SAVE_FALLBACK(coll_ml, ibcast);
+    ML_SAVE_FALLBACK(coll_ml, bcast);
     ML_SAVE_FALLBACK(coll_ml, iallreduce);
     ML_SAVE_FALLBACK(coll_ml, iallgather);
     ML_SAVE_FALLBACK(coll_ml, ireduce);

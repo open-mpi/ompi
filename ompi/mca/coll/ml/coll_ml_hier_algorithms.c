@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -151,7 +154,6 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
     /* NOTE: as part of initialization each routine needs to make sure that
      * the module element max_dag_size is set large enough - space for
      * tracking collective progress is allocated based on this value. */
-    OBJ_CONSTRUCT(&(ml_module->coll_ml_collective_descriptors), ompi_free_list_t);
 
     /* figure out what the size of the ml buffer is */
     ml_per_proc_buffer_size=ml_module->payload_block->size_buffer;
