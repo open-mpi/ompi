@@ -40,6 +40,7 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
+#include "opal/align.h"
 
 #include "coll_ml.h"
 #include "coll_ml_inlines.h"
@@ -449,7 +450,7 @@ static int calculate_buffer_header_size(mca_coll_ml_module_t *ml_module)
             }
         }
 
-        offset = ((offset + BCOL_HEAD_ALIGN - 1) / BCOL_HEAD_ALIGN) * BCOL_HEAD_ALIGN;
+        offset = OPAL_ALIGN(offset, BCOL_HEAD_ALIGN, uint32_t);
         /* select largest offset between multiple topologies */
         if (data_offset < (int) offset) {
             data_offset = (int) offset;
@@ -744,7 +745,6 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
 
         /* now cache this on the bcol module */
         pair->bcol_modules[0]->list_n_connected = list_n_connected;
-
 
         /*  I should do one more round here and figure out my offset at this level
          *  the calculation is simple: Am I a local leader in this level? If so, then I keep the offset
@@ -1322,6 +1322,7 @@ static int mca_coll_ml_read_allbcols_settings(mca_coll_ml_module_t *ml_module,
     int64_t frag_size;
     const mca_bcol_base_component_2_0_0_t *bcol_component = NULL;
     mca_base_component_list_item_t *bcol_cli = NULL;
+    int bcol_index;
 
     /* If this assert fails, it means that you changed initialization
      * order and the date offset , that is critical for this section of code,
@@ -1332,9 +1333,9 @@ static int mca_coll_ml_read_allbcols_settings(mca_coll_ml_module_t *ml_module,
 
     /* need to figure out which bcol's are participating
      * in the hierarchy across the communicator, so that we can set
-     * appropriate segmantation parameters.
+     * appropriate segmentation parameters.
      */
-    bcols_in_use = (int *) malloc(sizeof(int) * 2 * n_hierarchies);
+    bcols_in_use = (int *) calloc(2 * n_hierarchies, sizeof(int));
     if (OPAL_UNLIKELY(NULL == bcols_in_use)) {
         ML_VERBOSE(10, ("Cannot allocate memory for bcols_in_use."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1348,10 +1349,6 @@ static int mca_coll_ml_read_allbcols_settings(mca_coll_ml_module_t *ml_module,
     bcols_in_use_all_ranks = bcols_in_use+n_hierarchies;
 
     /* get list of bcols that I am using */
-    for(i = 0; i < n_hierarchies; i++) {
-        bcols_in_use[i] = 0;
-    }
-
     for (j = 0; j < COLL_ML_TOPO_MAX; j++) {
         mca_coll_ml_topology_t *topo_info = &ml_module->topo_list[j];
         if (COLL_ML_TOPO_DISABLED == topo_info->status) {
@@ -1391,116 +1388,63 @@ static int mca_coll_ml_read_allbcols_settings(mca_coll_ml_module_t *ml_module,
     /*
      * figure out fragmenation parameters
      */
-    /* can user buffers be used */
-    use_user_bufs = true;
-    bcol_cli = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
-
-    for (i = 0; i < n_hierarchies; i++) {
-        if(!bcols_in_use_all_ranks) {
-            /* this bcol is not being used - do nothing */
-            continue;
-        }
-        bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
-        /* check to see if user buffers can be used */
-        if(!bcol_component->can_use_user_buffers) {
-            /* need to use library buffers, so all will do this */
-            use_user_bufs = false;
-            break;
-        }
-
-        bcol_cli = (mca_base_component_list_item_t *) opal_list_get_next((opal_list_item_t *) bcol_cli);
-    }
 
     /* size of ml buffer */
     length_ml_payload = mca_coll_ml_component.payload_buffer_size - ml_module->data_offset;
 
-    if (use_user_bufs) {
-        /*
-         * using user buffers
-         */
-        ml_module->use_user_buffers = 1;
+    /* figure out if data will be segmented for pipelining -
+     * for non-contigous data will just use a fragment the size
+     * of the ml payload buffer */
 
-        /* figure out if data will be segmented for pipelining -
-         * for non-contigous data will just use a fragment the size
-         * of the ml payload buffer */
+    /* check to see if any bcols impose a limit */
+    limit_size_user_bufs = false;
+    use_user_bufs = true;
+    frag_size = length_ml_payload;
+    bcol_index = 0;
 
-        /* check to see if any bcols impose a limit */
-        limit_size_user_bufs = false;
-        bcol_cli = (mca_base_component_list_item_t *)opal_list_get_first(&mca_bcol_base_components_in_use);
-        for (i = 0; i < n_hierarchies; i++) {
-            bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
-            if(bcol_component->max_frag_size != FRAG_SIZE_NO_LIMIT ){
-                limit_size_user_bufs = true;
-                break;
-            }
-            bcol_cli = (mca_base_component_list_item_t *) opal_list_get_next((opal_list_item_t *) bcol_cli);
+    OPAL_LIST_FOREACH(bcol_cli, &mca_bcol_base_components_in_use, mca_base_component_list_item_t) {
+        /* check to see if this bcol is being used */
+        if(!bcols_in_use_all_ranks[bcol_index]) {
+            /* not in use */
+            continue;
         }
 
-        if (limit_size_user_bufs) {
-            /* figure out fragement size */
-            frag_size = 0;
-            bcol_cli = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
-            for (i = 0; i < n_hierarchies; i++) {
-                /* check to see if this bcol is being used */
-                if(!bcols_in_use_all_ranks[i]) {
-                    /* not in use */
-                    continue;
-                }
-                bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
-                if (FRAG_SIZE_NO_LIMIT == bcol_component->max_frag_size) {
-                    /* no limit - will not determine fragement size */
-                    continue;
-                }
-                if (0 != bcol_component->max_frag_size) {
-                    /* nothing set yet */
-                    frag_size = bcol_component->max_frag_size;
-                } else {
-                    if(frag_size < bcol_component->max_frag_size) {
-                        /* stricter constraint on fragment size */
-                        frag_size = bcol_component->max_frag_size;
-                    }
-                }
-                bcol_cli = (mca_base_component_list_item_t *)opal_list_get_next((opal_list_item_t *)bcol_cli);
-            }
-            ml_module->fragment_size = frag_size;
-        } else {
-            /* entire message may be processed in single chunk */
-            ml_module->fragment_size = FRAG_SIZE_NO_LIMIT;
-        }
-        /* for non-contigous data - just use the ML buffers */
-        ml_module->ml_fragment_size = length_ml_payload;
+        bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
 
-    } else {
-        /*
-         * using library buffers
-         */
-        ml_module->use_user_buffers = 0;
-
-        /* figure out buffer size */
-        ml_module->fragment_size = length_ml_payload;
-        /* see if this is too large */
-        bcol_cli = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
-        for (i = 0; i < n_hierarchies; i++) {
-            /* check to see if this bcol is being used */
-            if(!bcols_in_use_all_ranks[i]) {
-                /* not in use */
-                continue;
-            }
-            bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
-            bcol_cli = (mca_base_component_list_item_t *) opal_list_get_next((opal_list_item_t *) bcol_cli);
-            if (FRAG_SIZE_NO_LIMIT == bcol_component->max_frag_size) {
-                /* no limit - will not affect fragement size */
-                continue;
-            }
-            if (bcol_component->max_frag_size < (int)ml_module->fragment_size)
-                {
-                    /* frag size set too large */
-                    ml_module->fragment_size = bcol_component->max_frag_size;
-                }
+        /* check to see if user buffers can be used */
+        if (!bcol_component->can_use_user_buffers) {
+            /* need to use library buffers, so all will do this */
+            use_user_bufs = false;
         }
-        /* for non-contigous data - just use the ML buffers */
-        ml_module->ml_fragment_size = ml_module->fragment_size;
+
+        /* figure out fragement size */
+        if (bcol_component->max_frag_size != FRAG_SIZE_NO_LIMIT ){
+            /* user buffers need to be limited in size */
+            limit_size_user_bufs = true;
+
+            if (0 == frag_size) {
+                /* nothing set yet */
+                frag_size = bcol_component->max_frag_size;
+            } else if (frag_size < bcol_component->max_frag_size) {
+                /* stricter constraint on fragment size */
+                frag_size = bcol_component->max_frag_size;
+            }
+        }
     }
+
+    if (!use_user_bufs || limit_size_user_bufs) {
+        /* we need to limit the user buffer size or use library buffers */
+        ml_module->fragment_size = frag_size;
+    } else {
+        /* entire message may be processed in single chunk */
+        ml_module->fragment_size = FRAG_SIZE_NO_LIMIT;
+    }
+
+    /* for non-contigous data - just use the ML buffers */
+    ml_module->ml_fragment_size = length_ml_payload;
+
+    /* set whether we can use user buffers */
+    ml_module->use_user_buffers = use_user_bufs;
 
     ML_VERBOSE(10, ("Seting payload size to %d %d [%d %d]",
                     ml_module->ml_fragment_size, length_ml_payload,
@@ -1638,7 +1582,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     const mca_sbgp_base_component_2_0_0_t *sbgp_component = NULL;
 
 
-    int i_hier = 0, n_hier = 0, ll_p1,
+    int i_hier = 0, n_hier = 0, ll_p1, bcol_index = 0,
         n_procs_in = 0, group_index = 0, n_remain = 0,
         i, j, ret = OMPI_SUCCESS, my_rank_in_list = 0,
         n_procs_selected = 0, original_group_size = 0, i_am_done = 0,
@@ -1992,7 +1936,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             pair->bcol_component = (mca_bcol_base_component_t *)
                 ((mca_base_component_list_item_t *) bcol_cli)->cli_component;
 
-            pair->bcol_index = i_hier;
+            pair->bcol_index = bcol_index;
 
             /* create bcol modules */
             ML_VERBOSE(10, ("Create bcol modules."));
@@ -2026,7 +1970,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                     module->group_size;
 
                 /* set the bcol id */
-                pair->bcol_modules[i]->bcol_id = (int16_t) i_hier;
+                pair->bcol_modules[i]->bcol_id = (int16_t) bcol_index;
 
                 /* Set bcol mode bits */
                 topo->all_bcols_mode &= (( mca_bcol_base_module_t *) pair->bcol_modules[i])->supported_mode;
@@ -2041,10 +1985,10 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             n_hier++;
 
             if (-1 == my_lowest_group_index) {
-                my_lowest_group_index = i_hier;
+                my_lowest_group_index = bcol_index;
             }
 
-            my_highest_group_index = i_hier;
+            my_highest_group_index = bcol_index;
         }
 
         /* if n_remain is 1, and the communicator size is not 1, and module
@@ -2076,6 +2020,8 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             assert (i_hier || global_n_procs_selected == n_procs_in);
             i_hier++;
         }
+
+        ++bcol_index;
 
         n_procs_in = n_remain;
     }
