@@ -2949,12 +2949,6 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
         return NULL;
     }
 
-    if (!ompi_rte_proc_is_bound) {
-        /* do not enable coll/ml unless this process is bound (for now) */
-        *priority = -1;
-        return NULL;
-    }
-
     /**
      * If it is inter-communicator and size is less than 2 we have specialized modules
      * to handle the intra collective communications.
