@@ -35,6 +35,7 @@ my @globals = qw/.libs
 *.xcscheme
 *.plist
 .git*
+.mailmap
 .DS_Store
 stamp-h[1-9]
 configure
