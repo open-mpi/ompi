@@ -150,6 +150,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
                  */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
@@ -161,6 +162,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
                  */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
@@ -172,6 +174,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
                  */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
@@ -183,6 +186,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
                  */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
@@ -194,6 +198,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
                  */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
@@ -205,6 +210,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
                  */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
@@ -216,6 +222,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                  * it isn't available, but the error allows us to try
                  * byslot, then do so
                  */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
