@@ -108,6 +108,8 @@ int        ompi_java_attrDelete(void *attrVal);
 MPI_Op ompi_java_op_getHandle(
         JNIEnv *env, jobject jOp, jlong hOp, int baseType);
 
+jlongArray ompi_java_status_new(
+        JNIEnv *env, MPI_Status *status);
 void ompi_java_status_set(
         JNIEnv *env, jlongArray jData, MPI_Status *status);
 void ompi_java_status_setIndex(

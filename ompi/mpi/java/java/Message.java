@@ -34,12 +34,6 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public final class Message
 {
-// Auxiliary status data.
-// It's used to avoid creating status objects in the C side.
-// It also avoids setting objects attributes in the C side.
-// Calling java methods and setting object attributes from C is very slow.
-private long[] status = Status.newData();
-
 protected long handle;
 private static long NULL, NO_PROC;
 
@@ -87,8 +81,9 @@ public boolean isNoProc()
 public Status mProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    handle = mProbe(source, tag, comm.handle, status);
-    return newStatus();
+    Status status = new Status();
+    handle = mProbe(source, tag, comm.handle, status.data);
+    return status;
 }
 
 private native long mProbe(int source, int tag, long comm, long[] status)
@@ -105,10 +100,11 @@ private native long mProbe(int source, int tag, long comm, long[] status)
 public Status imProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    return imProbe(source, tag, comm.handle, status) ? newStatus() : null;
+    long[] status = imProbe(source, tag, comm.handle);
+    return status == null ? null : new Status(status);
 }
 
-private native boolean imProbe(int source, int tag, long comm, long[] status)
+private native long[] imProbe(int source, int tag, long comm)
         throws MPIException;
 
 /**
@@ -123,6 +119,7 @@ public Status mRecv(Object buf, int count, Datatype type) throws MPIException
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -131,9 +128,9 @@ public Status mRecv(Object buf, int count, Datatype type) throws MPIException
     }
 
     handle = mRecv(handle, buf, db, off, count,
-                   type.handle, type.baseType, status);
+                   type.handle, type.baseType, status.data);
 
-    return newStatus();
+    return status;
 }
 
 private native long mRecv(
@@ -158,12 +155,5 @@ public Request imRecv(Buffer buf, int count, Datatype type)
 
 private native long imRecv(long message, Object buf, int count, long type)
         throws MPIException;
-
-private Status newStatus()
-{
-    Status s = new Status(status);
-    status = Status.newData();
-    return s;
-}
 
 } // Message

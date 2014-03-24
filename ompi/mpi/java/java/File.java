@@ -36,12 +36,6 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public final class File
 {
-// Auxiliary status data.
-// It's used to avoid creating status objects in the C side.
-// It also avoids setting objects attributes in the C side.
-// Calling java methods and setting object attributes from C is very slow.
-private long[] status = Status.newData();
-
 private long handle;
 private FileView view = new FileView(0, MPI.BYTE, MPI.BYTE, "native");
 private Status beginStatus;
@@ -269,6 +263,7 @@ public Status readAt(long offset, Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -277,9 +272,9 @@ public Status readAt(long offset, Object buf, int count, Datatype type)
     }
 
     readAt(handle, offset, buf, db, off, count,
-           type.handle, type.baseType, status);
+           type.handle, type.baseType, status.data);
 
-    return newStatus();
+    return status;
 }
 
 private native void readAt(
@@ -301,6 +296,7 @@ public Status readAtAll(long offset, Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -309,9 +305,9 @@ public Status readAtAll(long offset, Object buf, int count, Datatype type)
     }
 
     readAtAll(handle, offset, buf, db, off, count,
-              type.handle, type.baseType, status);
+              type.handle, type.baseType, status.data);
 
-    return newStatus();
+    return status;
 }
 
 private native void readAtAll(
@@ -333,6 +329,7 @@ public Status writeAt(long offset, Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -341,9 +338,9 @@ public Status writeAt(long offset, Object buf, int count, Datatype type)
     }
 
     writeAt(handle, offset, buf, db, off, count,
-            type.handle, type.baseType, status);
+            type.handle, type.baseType, status.data);
 
-    return newStatus();
+    return status;
 }
 
 private native void writeAt(
@@ -365,6 +362,7 @@ public Status writeAtAll(long offset, Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -373,9 +371,9 @@ public Status writeAtAll(long offset, Object buf, int count, Datatype type)
     }
 
     writeAtAll(handle, offset, buf, db, off, count,
-               type.handle, type.baseType, status);
+               type.handle, type.baseType, status.data);
 
-    return newStatus();
+    return status;
 }
 
 private native void writeAtAll(
@@ -437,6 +435,7 @@ public Status read(Object buf, int count, Datatype type) throws MPIException
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -444,8 +443,8 @@ public Status read(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    read(handle, buf, db, off, count, type.handle, type.baseType, status);
-    return newStatus();
+    read(handle, buf, db, off, count, type.handle, type.baseType, status.data);
+    return status;
 }
 
 private native void read(
@@ -465,6 +464,7 @@ public Status readAll(Object buf, int count, Datatype type) throws MPIException
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -472,8 +472,8 @@ public Status readAll(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    readAll(handle, buf, db, off, count, type.handle, type.baseType, status);
-    return newStatus();
+    readAll(handle, buf,db,off, count, type.handle, type.baseType, status.data);
+    return status;
 }
 
 private native void readAll(
@@ -493,6 +493,7 @@ public Status write(Object buf, int count, Datatype type) throws MPIException
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -500,8 +501,8 @@ public Status write(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    write(handle, buf, db, off, count, type.handle, type.baseType, status);
-    return newStatus();
+    write(handle, buf, db, off, count, type.handle, type.baseType, status.data);
+    return status;
 }
 
 private native void write(
@@ -521,6 +522,7 @@ public Status writeAll(Object buf, int count, Datatype type) throws MPIException
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -528,8 +530,8 @@ public Status writeAll(Object buf, int count, Datatype type) throws MPIException
         buf = ((Buffer)buf).array();
     }
 
-    writeAll(handle, buf,db,off, count, type.handle, type.baseType, status);
-    return newStatus();
+    writeAll(handle, buf,db,off, count, type.handle,type.baseType, status.data);
+    return status;
 }
 
 private native void writeAll(
@@ -627,6 +629,7 @@ public Status readShared(Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -634,8 +637,10 @@ public Status readShared(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    readShared(handle, buf, db, off, count, type.handle, type.baseType, status);
-    return newStatus();
+    readShared(handle, buf, db, off, count,
+               type.handle, type.baseType, status.data);
+
+    return status;
 }
 
 private native void readShared(
@@ -656,6 +661,7 @@ public Status writeShared(Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -663,8 +669,10 @@ public Status writeShared(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    writeShared(handle, buf,db,off, count, type.handle, type.baseType, status);
-    return newStatus();
+    writeShared(handle, buf, db, off, count,
+                type.handle, type.baseType, status.data);
+
+    return status;
 }
 
 private native void writeShared(
@@ -723,6 +731,7 @@ public Status readOrdered(Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -730,8 +739,10 @@ public Status readOrdered(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    readOrdered(handle, buf,db,off, count, type.handle, type.baseType, status);
-    return newStatus();
+    readOrdered(handle, buf, db, off, count,
+                type.handle, type.baseType, status.data);
+
+    return status;
 }
 
 private native void readOrdered(
@@ -752,6 +763,7 @@ public Status writeOrdered(Object buf, int count, Datatype type)
     MPI.check();
     int off = 0;
     boolean db = false;
+    Status status = new Status();
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
@@ -759,8 +771,10 @@ public Status writeOrdered(Object buf, int count, Datatype type)
         buf = ((Buffer)buf).array();
     }
 
-    writeOrdered(handle, buf,db,off, count, type.handle, type.baseType, status);
-    return newStatus();
+    writeOrdered(handle, buf, db, off, count,
+                 type.handle, type.baseType, status.data);
+
+    return status;
 }
 
 private native void writeOrdered(
@@ -815,6 +829,7 @@ public void readAtAllBegin(long offset, Object buf, int count, Datatype type)
     else
     {
         int off = 0;
+        Status status = new Status();
 
         if(isHeapBuffer(buf))
         {
@@ -823,9 +838,9 @@ public void readAtAllBegin(long offset, Object buf, int count, Datatype type)
         }
 
         readAtAll(handle, offset, buf, false, off, count,
-                  type.handle, type.baseType, status);
+                  type.handle, type.baseType, status.data);
 
-        beginStatus = newStatus();
+        beginStatus = status;
     }
 }
 
@@ -845,8 +860,9 @@ public Status readAtAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        readAtAllEnd(handle, buf, status);
-        return newStatus();
+        Status status = new Status();
+        readAtAllEnd(handle, buf, status.data);
+        return status;
     }
     else
     {
@@ -877,6 +893,7 @@ public void writeAtAllBegin(long offset, Object buf, int count, Datatype type)
     else
     {
         int off = 0;
+        Status status = new Status();
 
         if(isHeapBuffer(buf))
         {
@@ -885,9 +902,9 @@ public void writeAtAllBegin(long offset, Object buf, int count, Datatype type)
         }
 
         writeAtAll(handle, offset, buf, false, off, count,
-                   type.handle, type.baseType, status);
+                   type.handle, type.baseType, status.data);
 
-        beginStatus = newStatus();
+        beginStatus = status;
     }
 }
 
@@ -907,8 +924,9 @@ public Status writeAtAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        writeAtAllEnd(handle, buf, status);
-        return newStatus();
+        Status status = new Status();
+        writeAtAllEnd(handle, buf, status.data);
+        return status;
     }
     else
     {
@@ -938,6 +956,7 @@ public void readAllBegin(Object buf, int count, Datatype type)
     else
     {
         int off = 0;
+        Status status = new Status();
 
         if(isHeapBuffer(buf))
         {
@@ -946,9 +965,9 @@ public void readAllBegin(Object buf, int count, Datatype type)
         }
 
         readAll(handle, buf, false, off, count,
-                type.handle, type.baseType, status);
+                type.handle, type.baseType, status.data);
 
-        beginStatus = newStatus();
+        beginStatus = status;
     }
 }
 
@@ -967,8 +986,9 @@ public Status readAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        readAllEnd(handle, buf, status);
-        return newStatus();
+        Status status = new Status();
+        readAllEnd(handle, buf, status.data);
+        return status;
     }
     else
     {
@@ -998,6 +1018,7 @@ public void writeAllBegin(Object buf, int count, Datatype type)
     else
     {
         int off = 0;
+        Status status = new Status();
 
         if(isHeapBuffer(buf))
         {
@@ -1006,9 +1027,9 @@ public void writeAllBegin(Object buf, int count, Datatype type)
         }
 
         writeAll(handle, buf, false, off, count,
-                 type.handle, type.baseType, status);
+                 type.handle, type.baseType, status.data);
 
-        beginStatus = newStatus();
+        beginStatus = status;
     }
 }
 
@@ -1027,8 +1048,9 @@ public Status writeAllEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        writeAllEnd(handle, buf, status);
-        return newStatus();
+        Status status = new Status();
+        writeAllEnd(handle, buf, status.data);
+        return status;
     }
     else
     {
@@ -1058,6 +1080,7 @@ public void readOrderedBegin(Object buf, int count, Datatype type)
     else
     {
         int off = 0;
+        Status status = new Status();
 
         if(isHeapBuffer(buf))
         {
@@ -1066,9 +1089,9 @@ public void readOrderedBegin(Object buf, int count, Datatype type)
         }
 
         readOrdered(handle, buf, false, off, count,
-                    type.handle, type.baseType, status);
+                    type.handle, type.baseType, status.data);
 
-        beginStatus = newStatus();
+        beginStatus = status;
     }
 }
 
@@ -1087,8 +1110,9 @@ public Status readOrderedEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        readOrderedEnd(handle, buf, status);
-        return newStatus();
+        Status status = new Status();
+        readOrderedEnd(handle, buf, status.data);
+        return status;
     }
     else
     {
@@ -1118,6 +1142,7 @@ public void writeOrderedBegin(Object buf, int count, Datatype type)
     else
     {
         int off = 0;
+        Status status = new Status();
 
         if(isHeapBuffer(buf))
         {
@@ -1126,9 +1151,9 @@ public void writeOrderedBegin(Object buf, int count, Datatype type)
         }
 
         writeOrdered(handle, buf, false, off, count,
-                     type.handle, type.baseType, status);
+                     type.handle, type.baseType, status.data);
 
-        beginStatus = newStatus();
+        beginStatus = status;
     }
 }
 
@@ -1147,8 +1172,9 @@ public Status writeOrderedEnd(Object buf) throws MPIException
 
     if(isDirectBuffer(buf))
     {
-        writeOrderedEnd(handle, buf, status);
-        return newStatus();
+        Status status = new Status();
+        writeOrderedEnd(handle, buf, status.data);
+        return status;
     }
     else
     {
@@ -1205,12 +1231,5 @@ public void sync() throws MPIException
 }
 
 private native void sync(long handle) throws MPIException;
-
-private Status newStatus()
-{
-    Status s = new Status(status);
-    status = Status.newData();
-    return s;
-}
 
 } // File
