@@ -54,6 +54,7 @@ typedef enum ompi_osc_rdma_hdr_type_t ompi_osc_rdma_hdr_type_t;
 #define OMPI_OSC_RDMA_HDR_FLAG_NBO            0x01
 #define OMPI_OSC_RDMA_HDR_FLAG_VALID          0x02
 #define OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET 0x04
+#define OMPI_OSC_RDMA_HDR_FLAG_LARGE_DATATYPE 0x08
 
 struct ompi_osc_rdma_header_base_t {
     /** fragment type. 8 bits */

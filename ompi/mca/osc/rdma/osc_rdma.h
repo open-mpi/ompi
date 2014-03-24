@@ -71,6 +71,12 @@ struct ompi_osc_rdma_component_t {
 
     /** Is the progress function enabled? */
     bool progress_enable;
+
+    /** List of requests that need to be freed */
+    opal_list_t request_gc;
+
+    /** List of buffers that need to be freed */
+    opal_list_t buffer_gc;
 };
 typedef struct ompi_osc_rdma_component_t ompi_osc_rdma_component_t;
 
@@ -191,9 +197,6 @@ struct ompi_osc_rdma_module_t {
 
     unsigned char *incoming_buffer;
     ompi_request_t *frag_request;
-    opal_list_t request_gc;
-
-    opal_list_t buffer_gc;
 
     /* enforce accumulate semantics */
     opal_atomic_lock_t accumulate_lock;
@@ -558,25 +561,41 @@ static inline void osc_rdma_copy_for_send (void *target, size_t target_len, void
  *
  * @short Release finished PML requests and accumulate buffers.
  *
- * @param[in] module - OSC RDMA module
- *
  * @long This function exists because it is not possible to free a PML request
  *       or buffer from a request completion callback. We instead put requests
  *       and buffers on the module's garbage collection lists and release then
  *       at a later time.
  */
-static inline void osc_rdma_gc_clean (ompi_osc_rdma_module_t *module)
+static inline void osc_rdma_gc_clean (void)
 {
     ompi_request_t *request;
     opal_list_item_t *item;
 
-    while (NULL != (request = (ompi_request_t *) opal_list_remove_first (&module->request_gc))) {
+    OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
+
+    while (NULL != (request = (ompi_request_t *) opal_list_remove_first (&mca_osc_rdma_component.request_gc))) {
         ompi_request_free (&request);
     }
 
-    while (NULL != (item = opal_list_remove_first (&module->buffer_gc))) {
+    while (NULL != (item = opal_list_remove_first (&mca_osc_rdma_component.buffer_gc))) {
         OBJ_RELEASE(item);
     }
+
+    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+}
+
+static inline void osc_rdma_gc_add_request (ompi_request_t *request)
+{
+    OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
+    opal_list_append (&mca_osc_rdma_component.request_gc, (opal_list_item_t *) request);
+    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+}
+
+static inline void osc_rdma_gc_add_buffer (opal_list_item_t *buffer)
+{
+    OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
+    opal_list_append (&mca_osc_rdma_component.buffer_gc, buffer);
+    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
 }
 
 #define OSC_RDMA_FRAG_TAG   0x10000
