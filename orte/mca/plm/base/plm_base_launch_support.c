@@ -1689,6 +1689,9 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                              "%s plm:base:setup_vm only HNP left",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         OBJ_DESTRUCT(&nodes);
+        /* mark that the daemons have reported so we can proceed */
+        daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+        daemons->updated = false;
         return ORTE_SUCCESS;
     }
 
