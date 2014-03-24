@@ -59,6 +59,11 @@
 #include "btl_openib_ini.h"
 
 #if BTL_OPENIB_RDMACM_IB_ADDR
+#include <stdio.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/types.h>
+#include <rdma/rsocket.h>
 #include <infiniband/ib.h>
 #endif
 
@@ -2269,6 +2274,21 @@ static int rdmacm_component_finalize(void)
     return OMPI_SUCCESS;
 }
 
+#if BTL_OPENIB_RDMACM_IB_ADDR
+static int rdmacm_check_ibaddr_support(void)
+{
+    int rsock;
+    rsock = rsocket(AF_IB, SOCK_STREAM, 0);
+    if (rsock < 0) {
+        return OMPI_ERROR;
+    }
+
+    rclose(rsock);
+
+    return OMPI_SUCCESS;
+}
+#endif
+
 static int rdmacm_component_init(void)
 {
     int rc;
@@ -2277,12 +2297,21 @@ static int rdmacm_component_init(void)
     OBJ_CONSTRUCT(&client_list, opal_list_t);
     OBJ_CONSTRUCT(&client_list_lock, opal_mutex_t);
 
+#if !BTL_OPENIB_RDMACM_IB_ADDR
     rc = mca_btl_openib_build_rdma_addr_list();
     if (OMPI_SUCCESS != rc) {
         opal_output_verbose(5, ompi_btl_base_framework.framework_output,
                             "openib BTL: rdmacm CPC unable to find any valid IP address");
         return OMPI_ERR_NOT_SUPPORTED;
     }
+#else
+    rc = rdmacm_check_ibaddr_support();
+    if (OMPI_SUCCESS != rc) {
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
+                            "There is no IB_AF addressing support by lib rdmacm");
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+#endif
 
     event_channel = rdma_create_event_channel();
     if (NULL == event_channel) {
