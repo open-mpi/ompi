@@ -63,12 +63,6 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public class Comm implements Freeable
 {
-// Auxiliary status data.
-// It's used to avoid creating status objects in the C side.
-// It also avoids setting objects attributes in the C side.
-// Calling java methods and setting object attributes from C is very slow.
-private long[] status = Status.newData();
-
 protected final static int SELF  = 1;
 protected final static int WORLD = 2;
 protected long handle;
@@ -318,10 +312,12 @@ public final Status recv(Object buf, int count,
         buf = ((Buffer)buf).array();
     }
 
-    recv(handle, buf, db, off, count,
-         type.handle, type.baseType, source, tag, status);
+    Status status = new Status();
 
-    return newStatus();
+    recv(handle, buf, db, off, count,
+         type.handle, type.baseType, source, tag, status.data);
+
+    return status;
 }
 
 private native void recv(
@@ -374,12 +370,14 @@ public final Status sendRecv(
         recvbuf = ((Buffer)recvbuf).array();
     }
 
+    Status status = new Status();
+
     sendRecv(handle, sendbuf, sdb, sendoff, sendcount,
              sendtype.handle, sendtype.baseType, dest, sendtag,
              recvbuf, rdb, recvoff, recvcount,
-             recvtype.handle, recvtype.baseType, source, recvtag, status);
+             recvtype.handle, recvtype.baseType, source, recvtag, status.data);
 
-    return newStatus();
+    return status;
 }
 
 private native void sendRecv(
@@ -420,10 +418,12 @@ public final Status sendRecvReplace(
         buf = ((Buffer)buf).array();
     }
 
-    sendRecvReplace(handle, buf, db, off, count, type.handle, type.baseType,
-                    dest, sendtag, source, recvtag, status);
+    Status status = new Status();
 
-    return newStatus();
+    sendRecvReplace(handle, buf, db, off, count, type.handle, type.baseType,
+                    dest, sendtag, source, recvtag, status.data);
+
+    return status;
 }
 
 private native void sendRecvReplace(
@@ -894,10 +894,11 @@ private native int packSize(long comm, int incount, long type)
 public final Status iProbe(int source, int tag) throws MPIException
 {
     MPI.check();
-    return iProbe(handle, source, tag, status) ? newStatus() : null;
+    long[] status = iProbe(handle, source, tag);
+    return status == null ? null : new Status(status);
 }
 
-private native boolean iProbe(long comm, int source, int tag, long[] status)
+private native long[] iProbe(long comm, int source, int tag)
         throws MPIException;
 
 /**
@@ -913,8 +914,9 @@ private native boolean iProbe(long comm, int source, int tag, long[] status)
 public final Status probe(int source, int tag) throws MPIException
 {
     MPI.check();
-    probe(handle, source, tag, status);
-    return newStatus();
+    Status status = new Status();
+    probe(handle, source, tag, status.data);
+    return status;
 }
 
 private native void probe(long comm, int source, int tag, long[] stat)
@@ -2839,12 +2841,5 @@ public final String getName() throws MPIException
 }
 
 private native String getName(long handle) throws MPIException;
-
-private Status newStatus()
-{
-    Status s = new Status(status);
-    status = Status.newData();
-    return s;
-}
 
 } // Comm

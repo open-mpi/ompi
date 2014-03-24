@@ -104,6 +104,13 @@ JNIEXPORT jint JNICALL Java_mpi_Status_getElements(
     return count;
 }
 
+jlongArray ompi_java_status_new(JNIEnv *env, MPI_Status *status)
+{
+    jlongArray jData = (*env)->NewLongArray(env, 6);
+    ompi_java_status_set(env, jData, status);
+    return jData;
+}
+
 void ompi_java_status_set(JNIEnv *env, jlongArray jData, MPI_Status *status)
 {
     /* Copy the whole thing to Java */
