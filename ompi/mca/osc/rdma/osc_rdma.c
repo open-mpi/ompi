@@ -85,10 +85,7 @@ ompi_osc_rdma_free(ompi_win_t *win)
 
     OBJ_DESTRUCT(&module->pending_acc);
 
-    osc_rdma_gc_clean (module);
-    assert (0 == opal_list_get_size (&module->request_gc));
-    OBJ_DESTRUCT(&module->request_gc);
-    OBJ_DESTRUCT(&module->buffer_gc);
+    osc_rdma_gc_clean ();
 
     if (NULL != module->peers) {
         free(module->peers);
