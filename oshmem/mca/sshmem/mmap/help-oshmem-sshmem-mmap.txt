@@ -1,0 +1,28 @@
+# -*- text -*- 
+#
+# Copyright (c) 2014      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+#
+
+[mmap segment failed]
+The OpenSHMEM "mmap" plugin in the "sshmem" framework failed to
+allocate a shared memory segement via the mmap system call.  This
+usually means that there are not enough resources available to your
+memory subsystem on your server. 
+
+Your OpenSHMEM job will now abort.
+
+   Server:         %s
+   Requested mmap
+     segment size: %u
+   Specific error: %s (%d)
+
+You can try to decrease the symmetric heap area with:
+
+"-x SHMEM_SYMMETRIC_HEAP_SIZE=<value>".
