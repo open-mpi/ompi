@@ -70,12 +70,11 @@ date="Unreleased developer copy"
 # 2. The version number of libmpi refers to the public MPI interfaces.
 # It does not refer to any internal interfaces.
 
-# 3. Similar to libmpi, libmpi_f77, libmpi_f90 (and possibly other
-# Fortran libraries someday -- shudder!), the version number refers
-# to the public MPI interfaces.  Note that there have been typo fixes
-# in the parameter types to libmpi_f77 functions over time; these
-# technically did not change the interface because Fortran 77 does not
-# link by parameter type.
+# 3. Similar to libmpi, the version numbers of the Fortran libraries
+# refer to the public MPI interfaces.  For example, that there have
+# been typo fixes in the parameter types to mpif.h Fortran library
+# functions over time; these technically did not change the interface
+# because Fortran 77 does not link by parameter type.
 
 # 4. Similar to libmpi, libmpi_cxx's version number refers to the
 # public MPI interfaces.  Note that this version number may or may not
