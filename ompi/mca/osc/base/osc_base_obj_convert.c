@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -97,83 +98,66 @@ static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count, \
 }
 
 /* set up copy functions for the basic C MPI data types */
-COPY_TYPE( char, char, 1 )
-COPY_TYPE( short, short, 1 )
-COPY_TYPE( int, int, 1 )
-COPY_TYPE( long, long, 1 )
-COPY_TYPE( long_long, long long, 1 )
-COPY_TYPE( float, float, 1 )
-COPY_TYPE( double, double, 1 )
-COPY_TYPE( long_double, long double, 1 )
-COPY_TYPE( complex_float, ompi_mpi_cxx_cplex, 1 )
-COPY_TYPE( complex_double, ompi_mpi_cxx_dblcplex, 1 )
-COPY_TYPE( complex_long_double, ompi_mpi_cxx_ldblcplex, 1 )
+COPY_TYPE( int1, int8_t, 1)
+COPY_TYPE( int2, int16_t, 1)
+COPY_TYPE( int4, int32_t, 1)
+COPY_TYPE( int8, int64_t, 1)
+COPY_TYPE( bool, bool, 1)
+COPY_TYPE( float, float, 1)
+COPY_TYPE( double, double, 1)
+#if HAVE_LONG_DOUBLE
+COPY_TYPE( long_double, long double, 1)
+#endif
+COPY_TYPE( float_complex, float _Complex, 1)
+COPY_TYPE( double_complex, double _Complex, 1)
+#if HAVE_LONG_DOUBLE__COMPLEX
+COPY_TYPE( long_double_complex, long double _Complex, 1)
+#endif
 
-/* table of predefined copy functions - one for each MPI type */
-/* XXX TODO Adapt to new layout */
-static conversion_fct_t ompi_osc_base_copy_functions[OMPI_DATATYPE_MAX_PREDEFINED] = {
-   (conversion_fct_t)NULL,                      /* DT_LOOP                */
-   (conversion_fct_t)NULL,                      /* DT_END_LOOP            */
-   (conversion_fct_t)NULL,                      /* DT_LB                  */
-   (conversion_fct_t)NULL,                      /* DT_UB                  */
-   (conversion_fct_t)copy_char,                 /* DT_CHAR                */
-   (conversion_fct_t)copy_char,                 /* DT_CHARACTER           */
-   (conversion_fct_t)copy_char,                 /* DT_UNSIGNED_CHAR       */
-   (conversion_fct_t)copy_char,                 /* DT_SIGNED_CHAR       */
-   (conversion_fct_t)copy_char,                 /* DT_BYTE                */
-   (conversion_fct_t)copy_short,                /* DT_SHORT               */
-   (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */
-   (conversion_fct_t)copy_int,                  /* DT_INT                 */
-   (conversion_fct_t)copy_int,                  /* DT_UNSIGNED            */
-   (conversion_fct_t)copy_long,                 /* DT_LONG                */
-   (conversion_fct_t)copy_long,                 /* DT_UNSIGNED_LONG       */
-   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG           */
-   (conversion_fct_t)copy_long_long,            /* DT_UNSIGNED_LONG_LONG  */
-   (conversion_fct_t)copy_float,                /* DT_FLOAT               */
-   (conversion_fct_t)copy_double,               /* DT_DOUBLE              */
-   (conversion_fct_t)copy_long_double,          /* DT_LONG_DOUBLE         */
-   (conversion_fct_t)NULL,                      /* DT_PACKED              */
-   (conversion_fct_t)NULL,                      /* DT_WCHAR               */
-#if SIZEOF_BOOL == SIZEOF_CHAR
-   (conversion_fct_t)copy_char,                 /* DT_CXX_BOOL            */
-#elif SIZEOF_BOOL == SIZEOF_SHORT
-   (conversion_fct_t)copy_short,                /* DT_CXX_BOOL            */
-#elif SIZEOF_BOOL == SIZEOF_INT
-   (conversion_fct_t)copy_int,                  /* DT_CXX_BOOL            */
-#elif SIZEOF_BOOL == SIZEOF_LONG
-   (conversion_fct_t)copy_long,                 /* DT_CXX_BOOL            */
-#else
-   (conversion_fct_t)NULL,                      /* DT_CXX_BOOL            */
+/* table of predefined copy functions - one for each opal basic type */
+static conversion_fct_t ompi_osc_base_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
+    [OPAL_DATATYPE_INT1]        = (conversion_fct_t) copy_int1,
+    [OPAL_DATATYPE_UINT1]       = (conversion_fct_t) copy_int1,
+    [OPAL_DATATYPE_INT2]        = (conversion_fct_t) copy_int2,
+    [OPAL_DATATYPE_UINT2]       = (conversion_fct_t) copy_int2,
+    [OPAL_DATATYPE_INT4]        = (conversion_fct_t) copy_int4,
+    [OPAL_DATATYPE_UINT4]       = (conversion_fct_t) copy_int4,
+    [OPAL_DATATYPE_INT8]        = (conversion_fct_t) copy_int8,
+    [OPAL_DATATYPE_UINT8]       = (conversion_fct_t) copy_int8,
+#if SIZEOF_FLOAT == 2
+    [OPAL_DATATYPE_FLOAT2]      = (conversion_fct_t) copy_float,
+#elif SIZEOF_DOUBLE == 2
+    [OPAL_DATATYPE_FLOAT2]      = (conversion_fct_t) copy_double,
+#elif SIZEOF_LONG_DOUBLE == 2
+    [OPAL_DATATYPE_FLOAT2]      = (conversion_fct_t) copy_long_double,
 #endif
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_CHAR
-   (conversion_fct_t)copy_char,                 /* DT_LOGIC               */
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_SHORT
-   (conversion_fct_t)copy_short,                /* DT_LOGIC               */
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_INT
-   (conversion_fct_t)copy_int,                  /* DT_LOGIC               */
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL == SIZEOF_LONG
-   (conversion_fct_t)copy_long,                 /* DT_LOGIC               */
-#else
-   (conversion_fct_t)NULL,                      /* DT_LOGIC               */
+#if SIZEOF_FLOAT == 4
+    [OPAL_DATATYPE_FLOAT4]      = (conversion_fct_t) copy_float,
+#elif SIZEOF_DOUBLE == 4
+    [OPAL_DATATYPE_FLOAT4]      = (conversion_fct_t) copy_double,
+#elif SIZEOF_LONG_DOUBLE == 4
+    [OPAL_DATATYPE_FLOAT4]      = (conversion_fct_t) copy_long_double,
 #endif
-   (conversion_fct_t)copy_int,                  /* DT_INTEGER             */
-   (conversion_fct_t)copy_float,                /* DT_REAL                */
-   (conversion_fct_t)copy_double,               /* DT_DBLPREC             */
-   (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */
-   (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */
-   (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */
-   (conversion_fct_t)NULL,                      /* DT_2INT                */
-   (conversion_fct_t)NULL,                      /* DT_2INTEGER            */
-   (conversion_fct_t)NULL,                      /* DT_2REAL               */
-   (conversion_fct_t)NULL,                      /* DT_2DBLPREC            */
-   (conversion_fct_t)NULL,                      /* DT_2COMPLEX            */
-   (conversion_fct_t)NULL,                      /* DT_2DOUBLE_COMPLEX     */
-   (conversion_fct_t)NULL,                      /* DT_FLOAT_INT           */
-   (conversion_fct_t)NULL,                      /* DT_DOUBLE_INT          */
-   (conversion_fct_t)NULL,                      /* DT_LONG_DOUBLE_INT     */
-   (conversion_fct_t)NULL,                      /* DT_LONG_INT            */
-   (conversion_fct_t)NULL,                      /* DT_SHORT_INT           */
-   (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */
+#if SIZEOF_FLOAT == 8
+    [OPAL_DATATYPE_FLOAT8]      = (conversion_fct_t) copy_float,
+#elif SIZEOF_DOUBLE == 8
+    [OPAL_DATATYPE_FLOAT8]      = (conversion_fct_t) copy_double,
+#elif SIZEOF_LONG_DOUBLE == 8
+    [OPAL_DATATYPE_FLOAT8]      = (conversion_fct_t) copy_long_double,
+#endif
+#if SIZEOF_FLOAT == 16
+    [OPAL_DATATYPE_FLOAT16]     = (conversion_fct_t) copy_float,
+#elif SIZEOF_DOUBLE == 16
+    [OPAL_DATATYPE_FLOAT16]     = (conversion_fct_t) copy_double,
+#elif SIZEOF_LONG_DOUBLE == 16
+    [OPAL_DATATYPE_FLOAT16]     = (conversion_fct_t) copy_long_double,
+#endif
+    [OPAL_DATATYPE_FLOAT_COMPLEX]   = (conversion_fct_t) copy_float_complex,
+    [OPAL_DATATYPE_DOUBLE_COMPLEX]  = (conversion_fct_t) copy_double_complex,
+#if HAVE_LONG_DOUBLE__COMPLEX
+    [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = (conversion_fct_t) copy_long_double_complex,
+#endif
+    [OPAL_DATATYPE_BOOL]            = (conversion_fct_t) copy_bool,
 };
 
 int
@@ -218,6 +202,8 @@ ompi_osc_base_process_op(void *outbuf,
         master.pFunctions = (conversion_fct_t*) &ompi_osc_base_copy_functions;
         convertor.convertor.master = &master;
         convertor.convertor.fAdvance = opal_unpack_general;
+        /* there are issues with using the optimized description here */
+        convertor.convertor.use_desc = &datatype->super.desc;
 
         iov.iov_len  = inbuflen;
         iov.iov_base = (IOVBASE_TYPE*) inbuf;
