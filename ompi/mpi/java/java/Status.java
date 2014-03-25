@@ -33,6 +33,14 @@ protected final long[] data;
 /**
  * Status objects must be created only by the MPI methods.
  */
+protected Status()
+{
+    data = new long[6];
+}
+
+/**
+ * Status objects must be created only by the MPI methods.
+ */
 protected Status(long[] data)
 {
     assert data.length == 6;
