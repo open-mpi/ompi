@@ -708,9 +708,18 @@ static int ompi_osc_rdma_acc_op_queue (ompi_osc_rdma_module_t *module, ompi_osc_
 {
     osc_rdma_pending_acc_t *pending_acc;
 
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "%d: queuing accumulate operation", ompi_comm_size (module->comm)));
+
     pending_acc = OBJ_NEW(osc_rdma_pending_acc_t);
     if (OPAL_UNLIKELY(NULL == pending_acc)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (!ompi_osc_rdma_no_locks) {
+        /* NTH: ensure we don't leave wait/process_flush/etc until this
+         * accumulate operation is complete. */
+        module->passive_incoming_frag_signal_count[source]++;
     }
 
     pending_acc->source = source;
@@ -1120,6 +1129,11 @@ int ompi_osc_rdma_progress_pending_acc (ompi_osc_rdma_module_t *module)
         ret = OMPI_ERROR;
         /* it is a coding error if this point is reached */
         assert (0);
+    }
+
+    if (!ompi_osc_rdma_no_locks) {
+        /* signal that an operation is complete */
+        mark_incoming_completion (module, pending_acc->source);
     }
 
     pending_acc->data = NULL;
