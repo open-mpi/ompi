@@ -653,6 +653,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
     }
 
     /* All done! */
+    ompi_ibv_free_device_list(devices);
     return port_list;
 
  err_free_port_list:
@@ -661,6 +662,7 @@ opal_list_t *ompi_common_verbs_find_ports(const char *if_include,
          item = opal_list_remove_first(port_list)) {
         OBJ_RELEASE(item);
     }
+    ompi_ibv_free_device_list(devices);
 
  err_free_argv:
     if (NULL != if_sanity_list) {
