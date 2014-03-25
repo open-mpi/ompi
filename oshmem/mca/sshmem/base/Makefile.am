@@ -7,6 +7,8 @@
 # $HEADER$
 #
 
+dist_ompidata_DATA = base/help-oshmem-sshmem.txt
+
 headers += \
         base/base.h
 

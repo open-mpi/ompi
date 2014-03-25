@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -11,18 +11,7 @@
 #
 # This is the US/English help file for Open SHMEM MCA error messages.
 #
-[create segment failure]
-The OpenSHMEM "sysv" plugin in the "sshmem" framework failed to
-allocate a shared memory segment via the shmat(2) system call.  This
-usually means that there are not enough resources available to the
-SYSV shared memory subsystem on your server.
-
-Your OpenSHMEM job will now abort.
-
-   Server:                %s
-   Requested shared 
-     memory segment size: %u
-   Specific error:        %s (%d)
+[sysv:create segment failure]
 
 You can try the following:
 
@@ -31,3 +20,5 @@ You can try the following:
    SHMEM_SYMMETRIC_HEAP_SIZE=<value>".
 3. Increase your system's allowable SYSV shared memory segment size
    (e.g., via the SHMMAX and/or SMMAX kernel parameters).
+4. Set "--mca sshmem_base_start_address 0" for
+   automatic selection by OS of virtual start address for sshmem.

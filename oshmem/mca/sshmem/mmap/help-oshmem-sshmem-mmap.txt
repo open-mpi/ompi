@@ -10,19 +10,16 @@
 #
 #
 
-[mmap segment failed]
-The OpenSHMEM "mmap" plugin in the "sshmem" framework failed to
-allocate a shared memory segement via the mmap system call.  This
-usually means that there are not enough resources available to your
-memory subsystem on your server. 
+[mmap:create segment failure]
 
-Your OpenSHMEM job will now abort.
+You can try the following:
 
-   Server:         %s
-   Requested mmap
-     segment size: %u
-   Specific error: %s (%d)
+1. Decrease the symmetric heap area with
+   "-x SHMEM_SYMMETRIC_HEAP_SIZE=<value>".
+2. Set "--mca sshmem_base_start_address 0" for
+   automatic selection by OS of virtual start address for sshmem.
 
-You can try to decrease the symmetric heap area with:
-
-"-x SHMEM_SYMMETRIC_HEAP_SIZE=<value>".
+This issue could also be related to CONFIG_STRICT_DEVMEM
+kernel option which if enabled prevents access to physical
+memory via "mmap". In this case you could try using other
+sshmem components instead.
