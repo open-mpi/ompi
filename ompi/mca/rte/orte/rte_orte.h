@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -74,7 +75,8 @@ typedef orte_local_rank_t ompi_local_rank_t;
 #define ompi_rte_proc_is_bound orte_proc_is_bound
 
 /* Error handling objects and operations */
-OMPI_DECLSPEC void ompi_rte_abort(int error_code, char *fmt, ...);
+OMPI_DECLSPEC void __opal_attribute_noreturn__ 
+  ompi_rte_abort(int error_code, char *fmt, ...);
 #define ompi_rte_abort_peers(a, b, c) orte_errmgr.abort_peers(a, b, c)
 #define OMPI_RTE_ERRHANDLER_FIRST ORTE_ERRMGR_CALLBACK_FIRST
 #define OMPI_RTE_ERRHANDLER_LAST ORTE_ERRMGR_CALLBACK_LAST
