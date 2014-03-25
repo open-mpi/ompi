@@ -183,6 +183,15 @@ ompi_osc_base_process_op(void *outbuf,
         struct opal_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
 
         primitive_datatype = ompi_datatype_get_single_predefined_type_from_args(datatype);
+        if (opal_datatype_is_contiguous_memory_layout (datatype, count) &&
+            1 == datatype->super.desc.used) {
+            /* NTH: the datatype is made up of a contiguous block of the primitive
+             * datatype. do not use the convertor in this case since opal_unpack_general
+             can not handle it */
+            count *= datatype->super.desc.desc[0].elem.count;
+            ompi_op_reduce(op, inbuf, outbuf, count, primitive_datatype);
+            return OMPI_SUCCESS;
+        }
 
         /* create convertor */
         OBJ_CONSTRUCT(&convertor, ompi_osc_base_convertor_t);
