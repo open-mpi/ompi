@@ -823,7 +823,7 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
         ((unsigned long) acc_header->displacement * module->disp_unit);
     struct ompi_op_t *op = ompi_osc_base_op_create(acc_header->op);
     ompi_datatype_t *primitive_datatype;
-    int primitive_count;
+    uint32_t primitive_count;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -952,7 +952,7 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
     struct osc_rdma_accumulate_data_t *acc_data;
     ompi_datatype_t *primitive_datatype;
     ompi_request_t *recv_request;
-    int primitive_count;
+    uint32_t primitive_count;
     ompi_proc_t *proc;
     size_t buflen;
     void *buffer;
