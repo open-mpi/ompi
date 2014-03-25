@@ -216,6 +216,7 @@ OBJ_CLASS_DECLARATION(ompi_osc_rdma_pending_t);
 
 #define GET_MODULE(win) ((ompi_osc_rdma_module_t*) win->w_osc_module)
 
+extern bool ompi_osc_rdma_no_locks;
 
 int ompi_osc_rdma_attach(struct ompi_win_t *win, void *base, size_t len);
 int ompi_osc_rdma_detach(struct ompi_win_t *win, void *base);
