@@ -24,7 +24,7 @@ script_dir=/u/mpiteam/scripts
 # The tarballs to make
 if [ $# -eq 0 ] ; then
     # We're no longer ever checking the 1.0 - 1.4 branches anymore
-    dirs="/trunk /branches/v1.7 /branches/v1.6"
+    dirs="/trunk /branches/v1.8 /branches/v1.6"
 else
     dirs=$@
 fi
