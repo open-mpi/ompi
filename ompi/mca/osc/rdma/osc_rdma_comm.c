@@ -419,7 +419,7 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
     size_t ddt_len, payload_len, frag_len;
     char *ptr;
     const void *packed_ddt;
-    int tag;
+    int tag = -1;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "acc: 0x%lx, %d, %s, %d, %d, %d, %s, %s, %s",
