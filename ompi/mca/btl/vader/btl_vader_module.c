@@ -499,7 +499,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                 return NULL;
             }
 
-            frag->segments[0].seg_len = total_size;
+            frag->segments[0].seg_len = *size + reserve;
         } else {
 #if !OMPI_BTL_VADER_HAVE_XPMEM
             if (OPAL_LIKELY(total_size <= mca_btl_vader.super.btl_eager_limit)) {
