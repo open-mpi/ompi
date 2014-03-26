@@ -352,6 +352,7 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
     vader_btl->btl_inited = false;
 
 #if !OMPI_BTL_VADER_HAVE_XPMEM
+    opal_shmem_unlink (&mca_btl_vader_component.seg_ds);
     opal_shmem_segment_detach (&mca_btl_vader_component.seg_ds);
 #endif
 
