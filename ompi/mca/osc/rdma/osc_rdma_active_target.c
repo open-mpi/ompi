@@ -152,13 +152,16 @@ ompi_osc_rdma_start(ompi_group_t *group,
                     int assert,
                     ompi_win_t *win)
 {
-    int ret = OMPI_SUCCESS;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_start entering..."));
 
-    if (module->sc_group) {
+    OPAL_THREAD_LOCK(&module->lock);
+
+    /* ensure we're not already in a start */
+    if (NULL != module->sc_group || module->passive_target_access_epoch) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -166,13 +169,6 @@ ompi_osc_rdma_start(ompi_group_t *group,
     OBJ_RETAIN(group);
     ompi_group_increment_proc_count(group);
 
-    OPAL_THREAD_LOCK(&module->lock);
-
-    /* ensure we're not already in a start */
-    if (NULL != module->sc_group) {
-        ret = OMPI_ERR_RMA_SYNC;
-        goto cleanup;
-    }
     module->sc_group = group;    
 
     /* disable eager sends until we've receved the proper number of
@@ -199,13 +195,6 @@ ompi_osc_rdma_start(ompi_group_t *group,
 
     OPAL_THREAD_UNLOCK(&module->lock);
     return OMPI_SUCCESS;
-
- cleanup:
-    OPAL_THREAD_UNLOCK(&module->lock);
-    ompi_group_decrement_proc_count(group);
-    OBJ_RELEASE(group);
-
-    return ret;
 }
 
 
