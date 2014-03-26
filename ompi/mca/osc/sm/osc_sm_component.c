@@ -249,14 +249,13 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         if (OMPI_SUCCESS != ret) return ret;
 
         total = 0;
-        for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
+        for (i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
             total += rbuf[i];
         }
 
-
         if (asprintf(&data_file, "%s"OPAL_PATH_SEP"shared_window_%d.%s",
                      ompi_process_info.job_session_dir,
-                     ompi_comm_get_cid(comm),
+                     ompi_comm_get_cid(module->comm),
                      ompi_process_info.nodename) < 0) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -289,7 +288,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         module->global_state = (ompi_osc_sm_global_state_t *) (module->segment_base);
         module->node_states = (ompi_osc_sm_node_state_t *) (module->global_state + 1);
 
-        for (i = 0, total = state_size ; i < ompi_comm_size(comm) ; ++i) {
+        for (i = 0, total = state_size ; i < ompi_comm_size(module->comm) ; ++i) {
             module->sizes[i] = rbuf[i];
             if (module->sizes[i]) {
                 module->bases[i] = ((char *) module->segment_base) + total;
@@ -304,11 +303,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     /* initialize my state shared */
     module->my_node_state = &module->node_states[ompi_comm_rank(module->comm)];
+    memset (module->my_node_state, 0, sizeof(*module->my_node_state));
+
     *base = module->bases[ompi_comm_rank(module->comm)];
 
-    module->my_node_state->post_count = 0;
-    module->my_node_state->complete_count = 0;
-    bzero(&module->my_node_state->lock, sizeof(ompi_osc_sm_lock_t));
     opal_atomic_init(&module->my_node_state->accumulate_lock, OPAL_ATOMIC_UNLOCKED);
 
     /* share everyone's displacement units. */
@@ -325,12 +323,11 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* initialize synchronization code */
     module->my_sense = 1;
 
-    module->outstanding_locks = malloc(sizeof(enum ompi_osc_sm_locktype_t) * ompi_comm_size(module->comm));
+    module->outstanding_locks = calloc(ompi_comm_size(module->comm), sizeof(enum ompi_osc_sm_locktype_t));
     if (NULL == module->outstanding_locks) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto error;
     }
-    bzero(module->outstanding_locks, sizeof(enum ompi_osc_sm_locktype_t) * ompi_comm_size(module->comm));
 
     if (0 == ompi_comm_rank(module->comm)) {
 #if HAVE_PTHREAD_CONDATTR_SETPSHARED && HAVE_PTHREAD_MUTEXATTR_SETPSHARED
@@ -457,19 +454,23 @@ ompi_osc_sm_free(struct ompi_win_t *win)
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
 
-    /* synchronize */
-    module->comm->c_coll.coll_barrier(module->comm,
-                                      module->comm->c_coll.coll_barrier_module);
-
     /* free memory */
-    if (NULL == module->segment_base) {
+    if (NULL != module->segment_base) {
+        /* synchronize */
+        module->comm->c_coll.coll_barrier(module->comm,
+                                          module->comm->c_coll.coll_barrier_module);
+
+        if (0 == ompi_comm_rank (module->comm)) {
+            opal_shmem_unlink (&module->seg_ds);
+        }
+
+	opal_shmem_segment_detach (&module->seg_ds);
+    } else {
         free(module->node_states);
         free(module->global_state);
         free(module->bases[0]);
         free(module->bases);
         free(module->sizes);
-    } else {
-	opal_shmem_segment_detach (&module->seg_ds);
     }
 
     /* cleanup */
