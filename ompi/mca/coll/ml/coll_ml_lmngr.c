@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -262,7 +265,7 @@ mca_bcol_base_lmngr_block_t* mca_coll_ml_lmngr_alloc (
 
     if(OPAL_UNLIKELY(opal_list_is_empty(list))) {
         /* Upper layer need to handle the NULL */
-        ML_ERROR(("List manager is empty."));
+        ML_VERBOSE(1, ("List manager is empty."));
         return NULL;
     }
 
