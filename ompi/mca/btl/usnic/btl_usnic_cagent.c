@@ -370,8 +370,13 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
        sent, do the simple thing: just don't send an ACK */
     agent_udp_message_t *msg = (agent_udp_message_t*) listener->buffer;
     if (msg->size != numbytes) {
+        char str[INET_ADDRSTRLEN];
+        struct sockaddr_in *src_addr_in = (struct sockaddr_in*) from;
+        inet_ntop(AF_INET, &src_addr_in->sin_addr, str, sizeof(str));
+
         opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad message; discarded");
+                            "usNIC connectivity got bad ping: %d bytes from %s, expected %d (discarded)",
+                            (int) numbytes, str, (int) msg->size);
         return;
     }
 
@@ -399,10 +404,17 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
 static void agent_thread_handle_ack(agent_udp_port_listener_t *listener,
                                     ssize_t numbytes, struct sockaddr *from)
 {
+    char str[INET_ADDRSTRLEN];
+    struct sockaddr_in *src_addr_in = (struct sockaddr_in*) from;
+    inet_ntop(AF_INET, &src_addr_in->sin_addr, str, sizeof(str));
+
     /* If we got a wonky ACK message that is the wrong length, just
        return */
     agent_udp_message_t *msg = (agent_udp_message_t*) listener->buffer;
     if (numbytes != sizeof(*msg)) {
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity got bad ACK: %d bytes from %s, expected %d (discarded)",
+                            (int) numbytes, str, (int) sizeof(*msg));
         return;
     }
 
@@ -423,6 +435,9 @@ static void agent_thread_handle_ack(agent_udp_port_listener_t *listener,
 
     /* If we didn't find the matching ping for this ACK, then just
        discard it */
+    opal_output_verbose(20, USNIC_OUT,
+                        "usNIC connectivity got unexpected ACK: %d bytes from %s (discarded)",
+                        (int) numbytes, str);
 }
 
 /*
@@ -437,6 +452,7 @@ static void agent_thread_receive_ping(int fd, short flags, void *context)
     /* Receive the message */
     ssize_t numbytes;
     struct sockaddr src_addr;
+    struct sockaddr_in *src_addr_in = (struct sockaddr_in*) &src_addr;
     socklen_t addrlen = sizeof(src_addr);
 
     while (1) {
@@ -454,6 +470,7 @@ static void agent_thread_receive_ping(int fd, short flags, void *context)
         }
     }
 
+    char str[INET_ADDRSTRLEN];
     agent_udp_message_t *msg;
     msg = (agent_udp_message_t *) listener->buffer;
     switch (msg->message_type) {
@@ -464,7 +481,11 @@ static void agent_thread_receive_ping(int fd, short flags, void *context)
         agent_thread_handle_ack(listener, numbytes, &src_addr);
         break;
     default:
-        ABORT("Unexpected connectivity ping message type");
+        /* Ignore unknown pings */
+        inet_ntop(AF_INET, &src_addr_in->sin_addr, str, sizeof(str));
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity agent received unknown message: %d bytes from %s",
+                            (int) numbytes, str);
         break;
     }
 }
