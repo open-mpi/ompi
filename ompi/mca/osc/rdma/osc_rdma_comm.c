@@ -56,9 +56,19 @@ static int ompi_osc_rdma_req_comm_complete (ompi_request_t *request)
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* put this request on the garbage colletion list */
-    OPAL_THREAD_LOCK(&module->lock);
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
-    OPAL_THREAD_UNLOCK(&module->lock);
+    osc_rdma_gc_add_request (request);
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_osc_rdma_dt_send_complete (ompi_request_t *request)
+{
+    ompi_datatype_t *datatype = (ompi_datatype_t *) request->req_complete_cb_data;
+
+    OBJ_RELEASE(datatype);
+
+    /* put this request on the garbage colletion list */
+    osc_rdma_gc_add_request (request);
 
     return OMPI_SUCCESS;
 }
@@ -234,9 +244,10 @@ static inline int ompi_osc_rdma_put_w_req (void *origin_addr, int origin_count,
     ompi_osc_rdma_frag_t *frag;
     ompi_osc_rdma_header_put_t *header;
     size_t ddt_len, payload_len, frag_len;
+    bool is_long_datatype = false;
     bool is_long_msg = false;
     const void *packed_ddt;
-    int tag, ret;
+    int tag = -1, ret;
     char *ptr;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -273,9 +284,16 @@ static inline int ompi_osc_rdma_put_w_req (void *origin_addr, int origin_count,
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         frag_len = sizeof(ompi_osc_rdma_header_put_t) + ddt_len;
         ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
-        if (OMPI_SUCCESS != ret) {
-            OPAL_THREAD_UNLOCK(&module->lock);
-            return OMPI_ERR_OUT_OF_RESOURCE;
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            /* allocate space for the header plus space to store ddt_len */
+            frag_len = sizeof(ompi_osc_rdma_header_put_t) + 8;
+            ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                OPAL_THREAD_UNLOCK(&module->lock);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            is_long_datatype = true;
         }
 
         is_long_msg = true;
@@ -285,7 +303,8 @@ static inline int ompi_osc_rdma_put_w_req (void *origin_addr, int origin_count,
     OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma: put long protocol: %d", (int) is_long_msg));
+                         "osc rdma: put long protocol: %d, large datatype: %d",
+                         (int) is_long_msg, (int) is_long_datatype));
 
     header = (ompi_osc_rdma_header_put_t *) ptr;
     header->base.flags = 0;
@@ -294,42 +313,63 @@ static inline int ompi_osc_rdma_put_w_req (void *origin_addr, int origin_count,
     header->displacement = target_disp;
     ptr += sizeof(ompi_osc_rdma_header_put_t);
 
-    ret = ompi_datatype_get_pack_description(target_dt, &packed_ddt);
-    memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
-    ptr += ddt_len;
-
-    if (!is_long_msg) {
-        header->base.type = OMPI_OSC_RDMA_HDR_TYPE_PUT;
-
-        osc_rdma_copy_for_send (ptr, payload_len, origin_addr, proc, origin_count,
-                                origin_dt);
-
-        /* the user's buffer is no longer needed so mark the request as
-         * complete. */
-        if (request) {
-            ompi_osc_rdma_request_complete (request, MPI_SUCCESS);
+    do {
+        ret = ompi_datatype_get_pack_description(target_dt, &packed_ddt);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
         }
-    } else {
-        header->base.type = OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG;
 
-        header->tag = tag;
+        if (is_long_datatype) {
+            /* the datatype does not fit in an eager message. send it seperately */
+            header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_LARGE_DATATYPE;
 
-        /* increase the outgoing signal count */
-        ompi_osc_signal_outgoing (module, target, 1);
+            OBJ_RETAIN(target_dt);
 
-        if (request) {
-            request->outstanding_requests = 1;
-            ret = ompi_osc_rdma_isend_w_cb (origin_addr, origin_count, origin_dt,
-                                            target, tag, module->comm, ompi_osc_rdma_req_comm_complete,
-                                            request);
+            ret = ompi_osc_rdma_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target,
+                                            tag, module->comm, ompi_osc_rdma_dt_send_complete,
+                                            target_dt);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                break;
+            }
+
+            *((uint64_t *) ptr) = ddt_len;
+            ptr += 8;
         } else {
-            ret = ompi_osc_rdma_component_isend (module,origin_addr, origin_count, origin_dt, target, tag,
-                                                 module->comm);
+            memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
+            ptr += ddt_len;
         }
-        if (OMPI_SUCCESS != ret) goto cleanup;
-    }
 
- cleanup:
+        if (!is_long_msg) {
+            header->base.type = OMPI_OSC_RDMA_HDR_TYPE_PUT;
+
+            osc_rdma_copy_for_send (ptr, payload_len, origin_addr, proc, origin_count,
+                                    origin_dt);
+
+            /* the user's buffer is no longer needed so mark the request as
+             * complete. */
+            if (request) {
+                ompi_osc_rdma_request_complete (request, MPI_SUCCESS);
+            }
+        } else {
+            header->base.type = OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG;
+
+            header->tag = tag;
+
+            /* increase the outgoing signal count */
+            ompi_osc_signal_outgoing (module, target, 1);
+
+            if (request) {
+                request->outstanding_requests = 1;
+                ret = ompi_osc_rdma_isend_w_cb (origin_addr, origin_count, origin_dt,
+                                                target, tag, module->comm, ompi_osc_rdma_req_comm_complete,
+                                                request);
+            } else {
+                ret = ompi_osc_rdma_component_isend (module,origin_addr, origin_count, origin_dt, target, tag,
+                                                     module->comm);
+            }
+        }
+    } while (0);
+
     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
         header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_VALID;
     }
@@ -372,13 +412,14 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
     int ret;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_proc_t *proc = ompi_comm_peer_lookup(module->comm, target);
+    bool is_long_datatype = false;
+    bool is_long_msg = false;
     ompi_osc_rdma_frag_t *frag;
     ompi_osc_rdma_header_acc_t *header;
     size_t ddt_len, payload_len, frag_len;
     char *ptr;
-    bool is_long_msg = false;
     const void *packed_ddt;
-    int tag;
+    int tag = -1;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "acc: 0x%lx, %d, %s, %d, %d, %d, %s, %s, %s",
@@ -416,11 +457,16 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
         frag_len = sizeof(ompi_osc_rdma_header_acc_t) + ddt_len;
         ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
         if (OMPI_SUCCESS != ret) {
-            OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                                 "acc: out of resource error while trying to allocate a fragment"));
-            OPAL_THREAD_UNLOCK(&module->lock);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+            /* allocate space for the header plus space to store ddt_len */
+            frag_len = sizeof(ompi_osc_rdma_header_put_t) + 8;
+            ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                OPAL_THREAD_UNLOCK(&module->lock);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            is_long_datatype = true;
+         }
 
         is_long_msg = true;
         tag = get_tag (module);
@@ -436,50 +482,71 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
     header->op = op->o_f_to_c_index;
     ptr += sizeof(ompi_osc_rdma_header_acc_t);
 
-    ret = ompi_datatype_get_pack_description(target_dt, &packed_ddt);
-    memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
-    ptr += ddt_len;
-
-    if (!is_long_msg) {
-        header->base.type = OMPI_OSC_RDMA_HDR_TYPE_ACC;
-
-        osc_rdma_copy_for_send (ptr, payload_len, origin_addr, proc,
-                                origin_count, origin_dt);
-
-        /* the user's buffer is no longer needed so mark the request as
-         * complete. */
-        if (request) {
-            ompi_osc_rdma_request_complete (request, MPI_SUCCESS);
+    do {
+        ret = ompi_datatype_get_pack_description(target_dt, &packed_ddt);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
         }
-    } else {
-        header->base.type = OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG;
 
-        header->tag = tag;
+        if (is_long_datatype) {
+            /* the datatype does not fit in an eager message. send it seperately */
+            header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_LARGE_DATATYPE;
 
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "acc: starting long accumulate with tag %d", tag));
+            OBJ_RETAIN(target_dt);
 
-        /* increment the outgoing send count */
-        ompi_osc_signal_outgoing (module, target, 1);
+            ret = ompi_osc_rdma_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target,
+                                            tag, module->comm, ompi_osc_rdma_dt_send_complete,
+                                            target_dt);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                break;
+            }
 
-        if (request) {
-            request->outstanding_requests = 1;
-            ret = ompi_osc_rdma_isend_w_cb (origin_addr, origin_count, origin_dt,
-                                            target, tag, module->comm, ompi_osc_rdma_req_comm_complete,
-                                            request);
+            *((uint64_t *) ptr) = ddt_len;
+            ptr += 8;
         } else {
-            ret = ompi_osc_rdma_component_isend (module, origin_addr, origin_count, origin_dt, target, tag,
-                                                 module->comm);
+            memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
+            ptr += ddt_len;
         }
 
-        if (OMPI_SUCCESS != ret) {
+        if (!is_long_msg) {
+            header->base.type = OMPI_OSC_RDMA_HDR_TYPE_ACC;
+
+            osc_rdma_copy_for_send (ptr, payload_len, origin_addr, proc,
+                                    origin_count, origin_dt);
+
+            /* the user's buffer is no longer needed so mark the request as
+             * complete. */
+            if (request) {
+                ompi_osc_rdma_request_complete (request, MPI_SUCCESS);
+            }
+        } else {
+            header->base.type = OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG;
+
+            header->tag = tag;
+
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                                 "acc: send failed with eror %d", ret));
-        }
-    }
+                                 "acc: starting long accumulate with tag %d", tag));
 
-    /* mark the fragment as valid */
-    if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
+            /* increment the outgoing send count */
+            ompi_osc_signal_outgoing (module, target, 1);
+
+            if (request) {
+                request->outstanding_requests = 1;
+                ret = ompi_osc_rdma_isend_w_cb (origin_addr, origin_count, origin_dt,
+                                                target, tag, module->comm, ompi_osc_rdma_req_comm_complete,
+                                                request);
+            } else {
+                ret = ompi_osc_rdma_component_isend (module, origin_addr, origin_count, origin_dt, target, tag,
+                                                     module->comm);
+            }
+        }
+    } while (0);
+
+    if (OMPI_SUCCESS != ret) {
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                             "acc: failed with eror %d", ret));
+    } else {
+        /* mark the fragment as valid */
         header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_VALID;
     }
 
@@ -662,6 +729,7 @@ static inline int ompi_osc_rdma_rget_internal (void *origin_addr, int origin_cou
 {
     int ret, tag;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
+    bool is_long_datatype = false;
     ompi_osc_rdma_frag_t *frag;
     ompi_osc_rdma_header_get_t *header;
     size_t ddt_len, frag_len;
@@ -713,8 +781,15 @@ static inline int ompi_osc_rdma_rget_internal (void *origin_addr, int origin_cou
     frag_len = sizeof(ompi_osc_rdma_header_get_t) + ddt_len;
     ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
     if (OMPI_SUCCESS != ret) {
-      OPAL_THREAD_UNLOCK(&module->lock);
-      return OMPI_ERR_OUT_OF_RESOURCE;
+        /* allocate space for the header plus space to store ddt_len */
+        frag_len = sizeof(ompi_osc_rdma_header_put_t) + 8;
+        ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            OPAL_THREAD_UNLOCK(&module->lock);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        is_long_datatype = true;
     }
 
     tag = get_tag (module);
@@ -733,19 +808,42 @@ static inline int ompi_osc_rdma_rget_internal (void *origin_addr, int origin_cou
     header->tag = tag;
     ptr += sizeof(ompi_osc_rdma_header_get_t);
 
-    ret = ompi_datatype_get_pack_description(target_dt, &packed_ddt);
-    memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
-    ptr += ddt_len;
+    do {
+        ret = ompi_datatype_get_pack_description(target_dt, &packed_ddt);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
+
+        if (is_long_datatype) {
+            /* the datatype does not fit in an eager message. send it seperately */
+            header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_LARGE_DATATYPE;
+
+            OBJ_RETAIN(target_dt);
+
+            ret = ompi_osc_rdma_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target,
+                                            tag, module->comm, ompi_osc_rdma_dt_send_complete,
+                                            target_dt);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                break;
+            }
+
+            *((uint64_t *) ptr) = ddt_len;
+            ptr += 8;
+        } else {
+            memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
+            ptr += ddt_len;
+        }
+
+        /* TODO -- store the request somewhere so we can cancel it on error */
+        rdma_request->outstanding_requests = 1;
+        ret = ompi_osc_rdma_irecv_w_cb (origin_addr, origin_count, origin_dt, target, tag,
+                                        module->comm, NULL, ompi_osc_rdma_req_comm_complete, rdma_request);
+    } while (0);
 
     if (OMPI_SUCCESS == ret) {
         header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_VALID;
         *request = &rdma_request->super;
     }
-
-    /* TODO -- store the request somewhere so we can cancel it on error */
-    rdma_request->outstanding_requests = 1;
-    ret = ompi_osc_rdma_irecv_w_cb (origin_addr, origin_count, origin_dt, target, tag,
-                                    module->comm, NULL, ompi_osc_rdma_req_comm_complete, rdma_request);
 
     OPAL_THREAD_LOCK(&module->lock);
     ret = ompi_osc_rdma_frag_finish(module, frag);
@@ -837,11 +935,12 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
     int ret;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_proc_t *proc = ompi_comm_peer_lookup(module->comm, target_rank);
+    bool is_long_datatype = false;
+    bool is_long_msg = false;
     ompi_osc_rdma_frag_t *frag;
     ompi_osc_rdma_header_get_acc_t *header;
     size_t ddt_len, payload_len, frag_len;
     char *ptr;
-    bool is_long_msg = false;
     const void *packed_ddt;
     int tag;
     ompi_osc_rdma_request_t *rdma_request;
@@ -901,9 +1000,17 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
         frag_len = sizeof(*header) + ddt_len;
         ret = ompi_osc_rdma_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
         if (OMPI_SUCCESS != ret) {
-            OPAL_THREAD_UNLOCK(&module->lock);
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            /* allocate space for the header plus space to store ddt_len */
+            frag_len = sizeof(ompi_osc_rdma_header_put_t) + 8;
+            ret = ompi_osc_rdma_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                OPAL_THREAD_UNLOCK(&module->lock);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            is_long_datatype = true;
         }
+
         is_long_msg = true;
     }
 
@@ -927,32 +1034,53 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
     header->tag = tag;
     ptr = (char *)(header + 1);
 
-    ret = ompi_datatype_get_pack_description(target_datatype, &packed_ddt);
-    memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
-    ptr += ddt_len;
-
-    ret = ompi_osc_rdma_irecv_w_cb (result_addr, result_count, result_datatype, target_rank, tag,
-                                    module->comm, NULL, ompi_osc_rdma_req_comm_complete, rdma_request);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        goto cleanup;
-    }
-
-    if (!is_long_msg) {
-        header->base.type = OMPI_OSC_RDMA_HDR_TYPE_GET_ACC;
-
-        if (&ompi_mpi_op_no_op.op != op) {
-            osc_rdma_copy_for_send (ptr, payload_len, origin_addr, proc, origin_count,
-                                    origin_datatype);
+    do {
+        ret = ompi_datatype_get_pack_description(target_datatype, &packed_ddt);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
         }
-    } else {
-        header->base.type = OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG;
 
-        ret = ompi_osc_rdma_isend_w_cb (origin_addr, origin_count, origin_datatype, target_rank,
-                                        tag, module->comm, ompi_osc_rdma_req_comm_complete, rdma_request);
-        if (OMPI_SUCCESS != ret) goto cleanup;
-    }
+        if (is_long_datatype) {
+            /* the datatype does not fit in an eager message. send it seperately */
+            header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_LARGE_DATATYPE;
 
- cleanup:
+            OBJ_RETAIN(target_datatype);
+
+            ret = ompi_osc_rdma_isend_w_cb ((void *) packed_ddt, ddt_len, MPI_BYTE, target_rank,
+                                            tag, module->comm, ompi_osc_rdma_dt_send_complete,
+                                            target_datatype);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                break;
+            }
+
+            *((uint64_t *) ptr) = ddt_len;
+            ptr += 8;
+        } else {
+            memcpy((unsigned char*) ptr, packed_ddt, ddt_len);
+            ptr += ddt_len;
+        }
+
+        ret = ompi_osc_rdma_irecv_w_cb (result_addr, result_count, result_datatype, target_rank, tag,
+                                        module->comm, NULL, ompi_osc_rdma_req_comm_complete, rdma_request);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
+
+        if (!is_long_msg) {
+            header->base.type = OMPI_OSC_RDMA_HDR_TYPE_GET_ACC;
+
+            if (&ompi_mpi_op_no_op.op != op) {
+                osc_rdma_copy_for_send (ptr, payload_len, origin_addr, proc, origin_count,
+                                        origin_datatype);
+            }
+        } else {
+            header->base.type = OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG;
+
+            ret = ompi_osc_rdma_isend_w_cb (origin_addr, origin_count, origin_datatype, target_rank,
+                                            tag, module->comm, ompi_osc_rdma_req_comm_complete, rdma_request);
+        }
+    } while (0);
+
     if (OMPI_SUCCESS == ret) {
         header->base.flags |= OMPI_OSC_RDMA_HDR_FLAG_VALID;
         *request = (ompi_request_t *) rdma_request;

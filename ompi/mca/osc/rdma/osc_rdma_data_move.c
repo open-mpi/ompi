@@ -46,7 +46,7 @@
 /**
  * struct osc_rdma_accumulate_data_t:
  *
- * @short Data associated with an in-progress accumulation operation.
+ * @brief Data associated with an in-progress accumulation operation.
  */
 struct osc_rdma_accumulate_data_t {
     opal_list_item_t super;
@@ -93,10 +93,10 @@ OBJ_CLASS_INSTANCE(osc_rdma_accumulate_data_t, opal_list_item_t, osc_rdma_accumu
 /**
  * osc_rdma_pending_acc_t:
  *
- * @short Keep track of accumulate and cswap operations that are
+ * @brief Keep track of accumulate and cswap operations that are
  * waiting on the accumulate lock.
  *
- * @long Since accumulate operations may take several steps to
+ *  Since accumulate operations may take several steps to
  * complete we need to lock the accumulate lock until the operation
  * is complete. While the lock is held it is possible that additional
  * accumulate operations will arrive. This structure keep track of
@@ -135,9 +135,48 @@ OBJ_CLASS_INSTANCE(osc_rdma_pending_acc_t, opal_list_item_t,
 /* end ompi_osc_rdma_pending_acc_t class */
 
 /**
+ * @brief Class for large datatype descriptions
+ *
+ * This class is used to keep track of buffers for large datatype desctiotions
+ * (datatypes that do not fit in an eager fragment). The structure is designed
+ * to take advantage of the small datatype description code path.
+ */
+struct ompi_osc_rdma_ddt_buffer_t {
+    /** allows this class to be stored in the buffer garbage collection
+     * list */
+    opal_list_item_t super;
+
+    /** OSC RDMA module */
+    ompi_osc_rdma_module_t *module;
+    /** source of this header */
+    int source;
+    /** header + datatype data */
+    ompi_osc_rdma_header_t *header;
+};
+typedef struct ompi_osc_rdma_ddt_buffer_t ompi_osc_rdma_ddt_buffer_t;
+
+static void ompi_osc_rdma_ddt_buffer_constructor (ompi_osc_rdma_ddt_buffer_t *ddt_buffer)
+{
+    ddt_buffer->header = NULL;
+}
+
+static void ompi_osc_rdma_ddt_buffer_destructor (ompi_osc_rdma_ddt_buffer_t *ddt_buffer)
+{
+    if (ddt_buffer->header) {
+        free (ddt_buffer->header);
+        ddt_buffer->header = NULL;
+    }
+}
+
+OBJ_CLASS_DECLARATION(ompi_osc_rdma_ddt_buffer_t);
+OBJ_CLASS_INSTANCE(ompi_osc_rdma_ddt_buffer_t, opal_list_item_t, ompi_osc_rdma_ddt_buffer_constructor,
+                   ompi_osc_rdma_ddt_buffer_destructor);
+/* end ompi_osc_rdma_ddt_buffer_t class */
+
+/**
  * datatype_buffer_length:
  *
- * @short Determine the buffer size needed to hold count elements of datatype.
+ * @brief Determine the buffer size needed to hold count elements of datatype.
  *
  * @param[in] datatype  - Element type
  * @param[in] count     - Element count
@@ -162,7 +201,7 @@ static inline int datatype_buffer_length (ompi_datatype_t *datatype, int count)
 /**
  * ompi_osc_rdma_control_send:
  *
- * @short send a control message as part of a fragment
+ * @brief send a control message as part of a fragment
  *
  * @param[in]  module  - OSC RDMA module
  * @param[in]  target  - Target peer's rank
@@ -171,7 +210,7 @@ static inline int datatype_buffer_length (ompi_datatype_t *datatype, int count)
  *
  * @returns error OMPI error code or OMPI_SUCCESS
  *
- * @long "send" a control messages.  Adds it to the active fragment, so the
+ *  "send" a control messages.  Adds it to the active fragment, so the
  * caller will still need to explicitly flush (either to everyone or
  * to a target) before this is sent.
  */
@@ -210,10 +249,8 @@ static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
     /* free the temporary buffer */
     free (ctx);
 
-    /* put this request on the garbage collection list */
-    OPAL_THREAD_LOCK(&module->lock);
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
-    OPAL_THREAD_UNLOCK(&module->lock);
+    /* put this request on the garbage colletion list */
+    osc_rdma_gc_add_request (request);
 
     return OMPI_SUCCESS;
 }
@@ -221,14 +258,14 @@ static int ompi_osc_rdma_control_send_unbuffered_cb (ompi_request_t *request)
 /**
  * ompi_osc_rdma_control_send_unbuffered:
  *
- * @short Send an unbuffered control message to a peer.
+ * @brief Send an unbuffered control message to a peer.
  *
  * @param[in] module - OSC RDMA module
  * @param[in] target - Target rank
  * @param[in] data   - Data to send
  * @param[in] len    - Length of data
  *
- * @long Directly send a control message.  This does not allocate a
+ *  Directly send a control message.  This does not allocate a
  * fragment, so should only be used when sending other messages would
  * be erroneous (such as complete messages, when there may be queued
  * transactions from an overlapping post that has already heard back
@@ -265,7 +302,7 @@ int ompi_osc_rdma_control_send_unbuffered(ompi_osc_rdma_module_t *module,
 /**
  * datatype_create:
  *
- * @short Utility function that creates a new datatype from a packed
+ * @brief Utility function that creates a new datatype from a packed
  *        description.
  *
  * @param[in]    module   - OSC RDMA module
@@ -317,7 +354,7 @@ static inline int datatype_create (ompi_osc_rdma_module_t *module, int peer, omp
  * @param[in] source     - Message source
  * @param[in] put_header - Message header + data
  *
- * @long Process a put message and copy the message data to the specified
+ *  Process a put message and copy the message data to the specified
  * memory region. Note, this function does not handle any bounds
  * checking at the moment.
  */
@@ -391,12 +428,12 @@ static inline int process_put_long(ompi_osc_rdma_module_t* module, int source,
 /**
  * osc_rdma_incoming_req_complete:
  *
- * @short Completion callback for a receive associate with an access
+ * @brief Completion callback for a receive associate with an access
  *        epoch.
  *
  * @param[in] request - PML request with an OSC RMDA module as the callback data.
  *
- * @long This function is called when a send or recieve associated with an
+ *  This function is called when a send or recieve associated with an
  *       access epoch completes. When fired this function will increment the
  *       passive or active incoming count.
  */
@@ -412,9 +449,7 @@ static int osc_rdma_incoming_req_complete (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    OPAL_THREAD_LOCK(&module->lock);
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
-    OPAL_THREAD_UNLOCK(&module->lock);
+    osc_rdma_gc_add_request (request);
 
     return OMPI_SUCCESS;
 }
@@ -437,15 +472,13 @@ static int osc_rdma_get_post_send_cb (ompi_request_t *request)
     mark_incoming_completion (module, rank);
 
     /* put this request on the garbage colletion list */
-    OPAL_THREAD_LOCK(&module->lock);
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
-    OPAL_THREAD_UNLOCK(&module->lock);
+    osc_rdma_gc_add_request (request);
 
     return OMPI_SUCCESS;
 }
 
 /**
- * @short Post a send to match the remote receive for a get operation.
+ * @brief Post a send to match the remote receive for a get operation.
  *
  * @param[in] module   - OSC RDMA module
  * @param[in] source   - Source buffer
@@ -454,7 +487,7 @@ static int osc_rdma_get_post_send_cb (ompi_request_t *request)
  * @param[in] peer     - Remote process that has the receive posted
  * @param[in] tag      - Tag for the send
  *
- * @long This function posts a send to match the receive posted as part
+ *  This function posts a send to match the receive posted as part
  *       of a get operation. When this send is complete the get is considered
  *       complete at the target (this process).
  */
@@ -480,7 +513,7 @@ static int osc_rdma_get_post_send (ompi_osc_rdma_module_t *module, void *source,
 /**
  * process_get:
  *
- * @short Process a get message from a remote peer
+ * @brief Process a get message from a remote peer
  *
  * @param[in] module     - OSC RDMA module
  * @param[in] target     - Peer process
@@ -516,7 +549,7 @@ static inline int process_get (ompi_osc_rdma_module_t* module, int target,
 /**
  * osc_rdma_accumulate_buffer:
  *
- * @short Accumulate data into the target buffer.
+ * @brief Accumulate data into the target buffer.
  *
  * @param[in] target     - Target buffer
  * @param[in] source     - Source buffer
@@ -575,7 +608,7 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
 }
 
 /**
- * @short Create an accumulate data object.
+ * @brief Create an accumulate data object.
  *
  * @param[in]  module        - RDMA OSC module
  * @param[in]  target        - Target for the accumulation
@@ -588,9 +621,9 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
  * @param[in]  request_count - Number of prerequisite requests
  * @param[out] acc_data_out  - New accumulation data
  *
- * @long This function is used to create a copy of the data needed to perform an accumulation.
- *       This data should be provided to ompi_osc_rdma_isend_w_cb or ompi_osc_rdma_irecv_w_cb
- *       as the ctx parameter with accumulate_cb as the cb parameter.
+ * This function is used to create a copy of the data needed to perform an accumulation.
+ * This data should be provided to ompi_osc_rdma_isend_w_cb or ompi_osc_rdma_irecv_w_cb
+ * as the ctx parameter with accumulate_cb as the cb parameter.
  */
 static int osc_rdma_accumulate_allocate (ompi_osc_rdma_module_t *module, int peer, void *target, void *source, size_t source_len,
                                          ompi_proc_t *proc, int count, ompi_datatype_t *datatype, ompi_op_t *op,
@@ -622,7 +655,7 @@ static int osc_rdma_accumulate_allocate (ompi_osc_rdma_module_t *module, int pee
 }
 
 /**
- * @short Execute the accumulate once the request counter reaches 0.
+ * @brief Execute the accumulate once the request counter reaches 0.
  *
  * @param[in] request      - request
  *
@@ -658,10 +691,12 @@ static int accumulate_cb (ompi_request_t *request)
         /* drop the accumulate lock */
         ompi_osc_rdma_accumulate_unlock (module);
 
-        opal_list_append (&module->buffer_gc, &acc_data->super);
+        osc_rdma_gc_add_buffer (&acc_data->super);
     }
 
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
+    /* put this request on the garbage colletion list */
+    osc_rdma_gc_add_request (request);
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     return ret;
@@ -731,7 +766,7 @@ static int replace_cb (ompi_request_t *request)
 /**
  * ompi_osc_rdma_acc_start:
  *
- * @short Start an accumulate with data operation.
+ * @brief Start an accumulate with data operation.
  *
  * @param[in] module     - OSC RDMA module
  * @param[in] source     - Source rank
@@ -768,7 +803,7 @@ static int ompi_osc_rdma_acc_start (ompi_osc_rdma_module_t *module, int source, 
 /**
  * ompi_osc_rdma_acc_start:
  *
- * @short Start a long accumulate operation.
+ * @brief Start a long accumulate operation.
  *
  * @param[in] module     - OSC RDMA module
  * @param[in] source     - Source rank
@@ -838,7 +873,7 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
 /**
  * ompi_osc_rdma_gacc_start:
  *
- * @short Start a accumulate with data + get operation.
+ * @brief Start a accumulate with data + get operation.
  *
  * @param[in] module         - OSC RDMA module
  * @param[in] source         - Source rank
@@ -889,7 +924,7 @@ static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source,
 /**
  * ompi_osc_rdma_gacc_long_start:
  *
- * @short Start a long accumulate + get operation.
+ * @brief Start a long accumulate + get operation.
  *
  * @param[in] module         - OSC RDMA module
  * @param[in] source         - Source rank
@@ -960,7 +995,7 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
 /**
  * ompi_osc_rdma_cswap_start:
  *
- * @short Start a compare and swap operation
+ * @brief Start a compare and swap operation
  *
  * @param[in] module       - OSC RDMA module
  * @param[in] source       - Source rank
@@ -1015,12 +1050,12 @@ static int ompi_osc_rdma_cswap_start (ompi_osc_rdma_module_t *module, int source
 /**
  * ompi_osc_rdma_progress_pending_acc:
  *
- * @short Progress one pending accumulation or compare and swap operation.
+ * @brief Progress one pending accumulation or compare and swap operation.
  *
  * @param[in] module   - OSC RDMA module
  *
- * @long If the accumulation lock can be aquired progress one pending
- *       accumulate or compare and swap operation.
+ * If the accumulation lock can be aquired progress one pending
+ * accumulate or compare and swap operation.
  */
 int ompi_osc_rdma_progress_pending_acc (ompi_osc_rdma_module_t *module)
 {
@@ -1342,6 +1377,117 @@ static inline int process_unlock (ompi_osc_rdma_module_t *module, int source,
     return sizeof (*unlock_header);
 }
 
+static int process_large_datatype_request_cb (ompi_request_t *request)
+{
+    ompi_osc_rdma_ddt_buffer_t *ddt_buffer = (ompi_osc_rdma_ddt_buffer_t *) request->req_complete_cb_data;
+    ompi_osc_rdma_module_t *module = ddt_buffer->module;
+    ompi_osc_rdma_header_t *header = ddt_buffer->header;
+    int source = ddt_buffer->source;
+
+    /* process the request */
+    switch (header->base.type) {
+    case OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG:
+        (void) process_put_long (module, source, &header->put);
+        break;
+    case OMPI_OSC_RDMA_HDR_TYPE_GET:
+        (void) process_get (module, source, &header->get);
+        break;
+    case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
+        (void) process_acc_long (module, source, &header->acc);
+        break;
+    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+        (void) process_get_acc_long (module, source, &header->get_acc);
+        break;
+    default:
+        /* developer error */
+        assert (0);
+        return OMPI_ERROR;
+    }
+
+    /* put this request on the garbage colletion list */
+    osc_rdma_gc_add_request (request);
+
+    /* free the datatype buffer */
+    osc_rdma_gc_add_buffer (&ddt_buffer->super);
+
+    return OMPI_SUCCESS;
+}
+
+/**
+ * @short process a request with a large datatype
+ *
+ * @param[in] module - OSC RDMA module
+ * @param[in] source - header source
+ * @param[in] header - header to process
+ *
+ * It is possible to construct datatypes whos description is too large
+ * to fit in an OSC RDMA fragment. In this case the remote side posts
+ * a send of the datatype description. This function posts the matching
+ * receive and processes the header on completion.
+ */
+static int process_large_datatype_request (ompi_osc_rdma_module_t *module, int source, ompi_osc_rdma_header_t *header)
+{
+    ompi_osc_rdma_ddt_buffer_t *ddt_buffer;
+    int header_len, tag, ret;
+    uint64_t ddt_len;
+
+    /* determine the header size and receive tag */
+    switch (header->base.type) {
+    case OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG:
+        header_len = sizeof (header->put);
+        tag = header->put.tag;
+        break;
+    case OMPI_OSC_RDMA_HDR_TYPE_GET:
+        header_len = sizeof (header->get);
+        tag = header->get.tag;
+        break;
+    case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
+        header_len = sizeof (header->acc);
+        tag = header->acc.tag;
+        break;
+    case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+        header_len = sizeof (header->get_acc);
+        tag = header->get_acc.tag;
+        break;
+    default:
+        /* developer error */
+        opal_output (0, "Unsupported header/flag combination");
+        return OMPI_ERROR;
+    }
+
+    ddt_len = *((uint64_t *)((uintptr_t) header + header_len));
+
+    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                         "process_large_datatype_request: processing fragment with type %d. ddt_len %lu",
+                         header->base.type, (unsigned long) ddt_len));
+
+    ddt_buffer = OBJ_NEW(ompi_osc_rdma_ddt_buffer_t);
+    if (OPAL_UNLIKELY(NULL == ddt_buffer)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ddt_buffer->module = module;
+    ddt_buffer->source = source;
+
+    ddt_buffer->header = malloc (ddt_len + header_len);
+    if (OPAL_UNLIKELY(NULL == ddt_buffer->header)) {
+        OBJ_RELEASE(ddt_buffer);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    memcpy (ddt_buffer->header, header, header_len);
+
+    ret = ompi_osc_rdma_irecv_w_cb ((void *)((uintptr_t) ddt_buffer->header + header_len),
+                                    ddt_len, MPI_BYTE, source, tag, module->comm, NULL,
+                                    process_large_datatype_request_cb, ddt_buffer);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        OBJ_RELEASE(ddt_buffer);
+        return ret;
+    }
+
+    return header_len + 8;
+}
+
 /*
  * Do all the data movement associated with a fragment
  */
@@ -1359,62 +1505,68 @@ static inline int process_frag (ompi_osc_rdma_module_t *module,
 
     for (int i = 0 ; i < frag->num_ops ; ++i) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "osc rdma: process_frag: type 0x%x. offset = %u", header->base.type,
-                             (unsigned) ((uintptr_t)header - (uintptr_t)frag)));
+                             "osc rdma: process_frag: type 0x%x. flag 0x%x. offset %u",
+                             header->base.type, (unsigned) ((uintptr_t)header - (uintptr_t)frag),
+                             header->base.flags));
 
-        switch (header->base.type) {
-        case OMPI_OSC_RDMA_HDR_TYPE_PUT:
-            ret = process_put(module, frag->source, &header->put);
-            break;
-        case OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG:
-            ret = process_put_long(module, frag->source, &header->put);
-            break;
+        if (OPAL_LIKELY(!(header->base.flags & OMPI_OSC_RDMA_HDR_FLAG_LARGE_DATATYPE))) {
+            switch (header->base.type) {
+            case OMPI_OSC_RDMA_HDR_TYPE_PUT:
+                ret = process_put(module, frag->source, &header->put);
+                break;
+            case OMPI_OSC_RDMA_HDR_TYPE_PUT_LONG:
+                ret = process_put_long(module, frag->source, &header->put);
+                break;
 
-        case OMPI_OSC_RDMA_HDR_TYPE_ACC:
-            ret = process_acc(module, frag->source, &header->acc);
-            break;
-        case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
-            ret = process_acc_long (module, frag->source, &header->acc);
-            break;
+            case OMPI_OSC_RDMA_HDR_TYPE_ACC:
+                ret = process_acc(module, frag->source, &header->acc);
+                break;
+            case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
+                ret = process_acc_long (module, frag->source, &header->acc);
+                break;
 
-        case OMPI_OSC_RDMA_HDR_TYPE_LOCK_REQ:
-            ret = ompi_osc_rdma_process_lock(module, frag->source, &header->lock);
-            if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
-                ret = sizeof (header->lock);
+            case OMPI_OSC_RDMA_HDR_TYPE_LOCK_REQ:
+                ret = ompi_osc_rdma_process_lock(module, frag->source, &header->lock);
+                if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
+                    ret = sizeof (header->lock);
+                }
+                break;
+            case OMPI_OSC_RDMA_HDR_TYPE_UNLOCK_REQ:
+                ret = process_unlock(module, frag->source, &header->unlock);
+                break;
+
+            case OMPI_OSC_RDMA_HDR_TYPE_GET:
+                ret = process_get (module, frag->source, &header->get);
+                break;
+
+            case OMPI_OSC_RDMA_HDR_TYPE_CSWAP:
+                ret = process_cswap (module, frag->source, &header->cswap);
+                break;
+
+            case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
+                ret = process_get_acc (module, frag->source, &header->get_acc);
+                break;
+
+            case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
+                ret = process_get_acc_long (module, frag->source, &header->get_acc);
+                break;
+
+            case OMPI_OSC_RDMA_HDR_TYPE_FLUSH_REQ:
+                ret = process_flush (module, frag->source, &header->flush);
+                break;
+
+            case OMPI_OSC_RDMA_HDR_TYPE_COMPLETE:
+                ret = process_complete (module, frag->source, &header->complete);
+                break;
+
+            default:
+                opal_output(0, "Unsupported fragment type 0x%x\n", header->base.type);
+                abort(); /* FIX ME */
             }
-            break;
-        case OMPI_OSC_RDMA_HDR_TYPE_UNLOCK_REQ:
-            ret = process_unlock(module, frag->source, &header->unlock);
-
-            break;
-        case OMPI_OSC_RDMA_HDR_TYPE_GET:
-            ret = process_get (module, frag->source, &header->get);
-            break;
-
-        case OMPI_OSC_RDMA_HDR_TYPE_CSWAP:
-            ret = process_cswap (module, frag->source, &header->cswap);
-            break;
-
-        case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
-            ret = process_get_acc (module, frag->source, &header->get_acc);
-            break;
-
-        case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
-            ret = process_get_acc_long (module, frag->source, &header->get_acc);
-            break;
-
-        case OMPI_OSC_RDMA_HDR_TYPE_FLUSH_REQ:
-            ret = process_flush (module, frag->source, &header->flush);
-            break;
-
-        case OMPI_OSC_RDMA_HDR_TYPE_COMPLETE:
-            ret = process_complete (module, frag->source, &header->complete);
-            break;
-
-        default:
-            opal_output(0, "Unsupported fragment type 0x%x\n", header->base.type);
-            abort(); /* FIX ME */
+        } else {
+            ret = process_large_datatype_request (module, frag->source, header);
         }
+
         if (ret <= 0) {
             opal_output(0, "Error processing fragment: %d", ret);
             abort(); /* FIX ME */
@@ -1427,7 +1579,6 @@ static inline int process_frag (ompi_osc_rdma_module_t *module,
 
     return OMPI_SUCCESS;
 }
-
 
 /* dispatch for callback on message completion */
 static int ompi_osc_rdma_callback (ompi_request_t *request)
@@ -1477,9 +1628,10 @@ static int ompi_osc_rdma_callback (ompi_request_t *request)
     mark_incoming_completion (module, (base_header->flags & OMPI_OSC_RDMA_HDR_FLAG_PASSIVE_TARGET) ?
                               source : MPI_PROC_NULL);
 
-    osc_rdma_gc_clean (module);
+    osc_rdma_gc_clean ();
 
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
+    /* put this request on the garbage colletion list */
+    osc_rdma_gc_add_request (request);
     ompi_osc_rdma_frag_start_receive (module);
 
     OPAL_THREAD_UNLOCK(&module->lock);
@@ -1520,9 +1672,7 @@ isend_completion_cb(ompi_request_t *request)
     mark_outgoing_completion(module);
 
     /* put this request on the garbage colletion list */
-    OPAL_THREAD_LOCK(&module->lock);
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
-    OPAL_THREAD_UNLOCK(&module->lock);
+    osc_rdma_gc_add_request (request);
 
     return OMPI_SUCCESS;
 }

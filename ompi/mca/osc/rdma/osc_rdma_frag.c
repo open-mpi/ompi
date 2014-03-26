@@ -47,8 +47,9 @@ static int frag_send_cb (ompi_request_t *request)
     mark_outgoing_completion(module);
     OPAL_FREE_LIST_RETURN(&mca_osc_rdma_component.frags, &frag->super);
 
+
     /* put this request on the garbage colletion list */
-    opal_list_append (&module->request_gc, (opal_list_item_t *) request);
+    osc_rdma_gc_add_request (request);
 
     return OMPI_SUCCESS;
 }

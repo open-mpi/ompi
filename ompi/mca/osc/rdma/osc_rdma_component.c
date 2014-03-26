@@ -243,6 +243,8 @@ component_init(bool enable_progress_threads,
 
     OBJ_CONSTRUCT(&mca_osc_rdma_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_osc_rdma_component.pending_operations, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_rdma_component.request_gc, opal_list_t);
+    OBJ_CONSTRUCT(&mca_osc_rdma_component.buffer_gc, opal_list_t);
 
     OBJ_CONSTRUCT(&mca_osc_rdma_component.modules,
                   opal_hash_table_t);
@@ -300,6 +302,8 @@ component_finalize(void)
     OBJ_DESTRUCT(&mca_osc_rdma_component.lock);
     OBJ_DESTRUCT(&mca_osc_rdma_component.requests);
     OBJ_DESTRUCT(&mca_osc_rdma_component.pending_operations);
+    OBJ_DESTRUCT(&mca_osc_rdma_component.request_gc);
+    OBJ_DESTRUCT(&mca_osc_rdma_component.buffer_gc);
 
     return OMPI_SUCCESS;
 }
@@ -351,8 +355,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     OBJ_CONSTRUCT(&module->queued_frags, opal_list_t);
     OBJ_CONSTRUCT(&module->locks_pending, opal_list_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_list_t);
-    OBJ_CONSTRUCT(&module->request_gc, opal_list_t);
-    OBJ_CONSTRUCT(&module->buffer_gc, opal_list_t);
     OBJ_CONSTRUCT(&module->pending_acc, opal_list_t);
 
     /* options */
