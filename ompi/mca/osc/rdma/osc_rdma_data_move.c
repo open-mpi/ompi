@@ -831,6 +831,8 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) acc_header->displacement * module->disp_unit);
     struct ompi_op_t *op = ompi_osc_base_op_create(acc_header->op);
+    ompi_datatype_t *primitive_datatype;
+    uint32_t primitive_count;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -846,6 +848,13 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
                                             replace_cb, module);
             break;
         }
+
+        ret = ompi_osc_base_get_primitive_type_info (datatype, &primitive_datatype, &primitive_count);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
+
+        primitive_count *= acc_header->count;
 
         buflen = datatype_buffer_length (datatype, acc_header->count);
 
@@ -863,8 +872,8 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
             break;
         }
 
-        ret = ompi_osc_rdma_irecv_w_cb (buffer, acc_header->count, datatype, source, acc_header->tag,
-                                        module->comm, NULL, accumulate_cb, acc_data);
+        ret = ompi_osc_rdma_irecv_w_cb (buffer, primitive_count, primitive_datatype, source,
+                                        acc_header->tag, module->comm, NULL, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
         }
@@ -950,7 +959,9 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
         ((unsigned long) get_acc_header->displacement * module->disp_unit);
     struct ompi_op_t *op = ompi_osc_base_op_create(get_acc_header->op);
     struct osc_rdma_accumulate_data_t *acc_data;
+    ompi_datatype_t *primitive_datatype;
     ompi_request_t *recv_request;
+    uint32_t primitive_count;
     ompi_proc_t *proc;
     size_t buflen;
     void *buffer;
@@ -969,6 +980,13 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
             break;
         }
 
+        ret = ompi_osc_base_get_primitive_type_info (datatype, &primitive_datatype, &primitive_count);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            break;
+        }
+
+        primitive_count *= get_acc_header->count;
+
         ret = osc_rdma_accumulate_allocate (module, source, target, buffer, buflen, proc, get_acc_header->count,
                                             datatype, op, 2, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -982,7 +1000,7 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
             break;
         }
 
-        ret = ompi_osc_rdma_isend_w_cb (target, get_acc_header->count, datatype, source, get_acc_header->tag,
+        ret = ompi_osc_rdma_isend_w_cb (target, primitive_count, primitive_datatype, source, get_acc_header->tag,
                                         module->comm, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS == ret)) {
             /* cancel the receive and free the accumulate data */
