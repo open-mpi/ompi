@@ -335,6 +335,7 @@ int ompi_osc_rdma_lock_all(int assert, struct ompi_win_t *win)
     lock->lock_acks_received = 0;
     lock->unlock_acks_received = 0;
     lock->serial_number = module->lock_serial_number++;
+    lock->type = MPI_LOCK_SHARED;
     opal_list_append(&module->outstanding_locks, &lock->super);
 
     /* if nocheck is not specified, send a lock request to everyone
@@ -458,7 +459,7 @@ static int ompi_osc_rdma_flush_lock (ompi_osc_rdma_module_t *module, ompi_osc_rd
     int my_rank = ompi_comm_rank (module->comm);
 
     if (-1 == lock->target) {
-        peer_count = ompi_comm_size(module->comm) - 1;
+        peer_count = ompi_comm_size(module->comm);
     } else {
         peer_count = 1;
     }
@@ -476,7 +477,8 @@ static int ompi_osc_rdma_flush_lock (ompi_osc_rdma_module_t *module, ompi_osc_rd
     flush_req.serial_number = lock->serial_number;
 
     if (-1 == target) {
-        flush_count = ompi_comm_size(module->comm);
+        /* NTH: no local flush */
+        flush_count = ompi_comm_size(module->comm) - 1;
         for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
             if (i == my_rank) {
                 continue;
