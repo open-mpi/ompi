@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
  * $COPYRIGHT$
@@ -57,7 +58,7 @@ static size_t callbacks_len = 0;
 static size_t callbacks_size = 0;
 
 /* do we want to call sched_yield() if nothing happened */
-static int call_yield = 1;
+bool opal_progress_yield_when_idle;
 
 #if OPAL_PROGRESS_USE_TIMERS
 static opal_timer_t event_progress_last_time = 0;
@@ -105,7 +106,7 @@ opal_progress_init(void)
     OPAL_OUTPUT((debug_output, "progress: initialized event flag to: %x",
                  opal_progress_event_flag));                 
     OPAL_OUTPUT((debug_output, "progress: initialized yield_when_idle to: %s",
-                 call_yield == 0 ? "false" : "true"));
+                 opal_progress_yield_when_idle ? "true" : "false"));
     OPAL_OUTPUT((debug_output, "progress: initialized num users to: %d",
                  num_event_users));
     OPAL_OUTPUT((debug_output, "progress: initialized poll rate to: %ld",
@@ -187,7 +188,7 @@ opal_progress(void)
     }
 
 #if defined(HAVE_SCHED_YIELD)
-    if (call_yield && events <= 0) {
+    if (opal_progress_yield_when_idle && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
          * the processor is oversubscribed - this will result in a best-case
@@ -249,11 +250,11 @@ opal_progress_event_users_decrement(void)
 bool
 opal_progress_set_yield_when_idle(bool yieldopt)
 {
-    bool tmp = (call_yield == 0) ? false : true;
-    call_yield = (yieldopt) ? 1 : 0;
+    bool tmp = opal_progress_yield_when_idle;
+    opal_progress_yield_when_idle = (yieldopt) ? 1 : 0;
 
     OPAL_OUTPUT((debug_output, "progress: progress_set_yield_when_idle to %s",
-                                    call_yield == 0 ? "false" : "true"));
+                                    opal_progress_yield_when_idle ? "true" : "false"));
 
     return tmp;
 }

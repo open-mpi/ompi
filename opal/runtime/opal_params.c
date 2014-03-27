@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,7 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
@@ -103,6 +104,15 @@ int opal_register_params(void)
 	    return ret;
 	}
     }
+
+#if defined(HAVE_SCHED_YIELD)
+    opal_progress_yield_when_idle = false;
+    ret = mca_base_var_register ("opal", "opal", "progress", "yield_when_idle",
+                                 "Yield the processor when waiting on progress",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &opal_progress_yield_when_idle);
+#endif
 
 #if OPAL_ENABLE_DEBUG
     opal_progress_debug = false;

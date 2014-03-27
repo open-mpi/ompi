@@ -1,4 +1,4 @@
-/*
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- *//*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  *
  * $COPYRIGHT$
@@ -174,6 +174,9 @@ OPAL_DECLSPEC int opal_progress_unregister(opal_progress_callback_t cb);
 
 
 OPAL_DECLSPEC extern int opal_progress_spin_count;
+
+/* do we want to call sched_yield() if nothing happened */
+OPAL_DECLSPEC extern bool opal_progress_yield_when_idle;
 
 /**
  * Progress until flag is true or poll iterations completed
