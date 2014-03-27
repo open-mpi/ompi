@@ -162,17 +162,23 @@ ompi_btl_usnic_proc_lookup_endpoint(ompi_btl_usnic_module_t *receiver,
 /*
  * Create an ompi_btl_usnic_proc_t and initialize it with modex info
  * and an empty array of endpoints.
+ *
+ * Returns OMPI_ERR_UNREACH if we can't reach the peer (i.e., we can't
+ * find their modex data).
  */
-static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
+static int create_proc(ompi_proc_t *ompi_proc, 
+                       ompi_btl_usnic_proc_t **usnic_proc)
 {
     ompi_btl_usnic_proc_t *proc = NULL;
     size_t size;
     int rc;
 
+    *usnic_proc = NULL;
+
     /* Create the proc if it doesn't already exist */
     proc = OBJ_NEW(ompi_btl_usnic_proc_t);
     if (NULL == proc) {
-        return NULL;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* Initialize number of peers */
@@ -184,15 +190,22 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
                          ompi_proc, (void*)&proc->proc_modex,
                          &size);
 
-    if (OMPI_SUCCESS != rc) {
-        opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
+    /* If this proc simply doesn't have this key, then they're not
+       running the usnic BTL -- just ignore them.  Otherwise, show an
+       error message. */
+    if (OPAL_ERR_DATA_VALUE_NOT_FOUND == rc) {
+        OBJ_RELEASE(proc);
+        return OMPI_ERR_UNREACH;
+    } else if (OMPI_SUCCESS != rc) {
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "internal error during init",
                        true,
                        ompi_process_info.nodename,
                        "<none>", 0,
                        "ompi_modex_recv() failed", __FILE__, __LINE__,
                        opal_strerror(rc));
         OBJ_RELEASE(proc);
-        return NULL;
+        return OMPI_ERROR;
     }
 
     if ((size % sizeof(ompi_btl_usnic_addr_t)) != 0) {
@@ -210,14 +223,14 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
                        msg);
 
         OBJ_RELEASE(proc);
-        return NULL;
+        return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
     proc->proc_modex_count = size / sizeof(ompi_btl_usnic_addr_t);
     if (0 == proc->proc_modex_count) {
         proc->proc_endpoints = NULL;
         OBJ_RELEASE(proc);
-        return NULL;
+        return OMPI_ERR_UNREACH;
     }
 
     proc->proc_modex_claimed = (bool*) 
@@ -225,7 +238,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
     if (NULL == proc->proc_modex_claimed) {
         OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
-        return NULL;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     proc->proc_endpoints = (mca_btl_base_endpoint_t**)
@@ -233,10 +246,11 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
     if (NULL == proc->proc_endpoints) {
         OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(proc);
-        return NULL;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    return proc;
+    *usnic_proc = proc;
+    return OMPI_SUCCESS;
 }
 
 /* Compare the addresses of the local interface corresponding to module and the
@@ -705,12 +719,9 @@ int ompi_btl_usnic_proc_match(ompi_proc_t *ompi_proc,
     *proc = ompi_btl_usnic_proc_lookup_ompi(ompi_proc);
     if (*proc != NULL) {
         OBJ_RETAIN(*proc);
+        return OMPI_SUCCESS;
     } else {
         /* If not, go make one */
-        *proc = create_proc(ompi_proc);
-        if (NULL == *proc) {
-            return OMPI_ERR_NOT_FOUND;
-        }
+        return create_proc(ompi_proc, proc);
     }
-    return OMPI_SUCCESS;
 }
