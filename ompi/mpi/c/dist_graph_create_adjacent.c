@@ -60,9 +60,9 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
         } else if (indegree < 0 || outdegree < 0 || NULL == comm_dist_graph) {
             return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, "MPI_Dist_create_graph_adjacent 1");
         } else if ((indegree > 0 &&
-                    (NULL == sources || NULL == sourceweights || MPI_WEIGHTS_EMPTY == sourceweights)) ||
+                    (NULL == sources || NULL == sourceweights)) ||
                    (outdegree > 0 &&
-                    (NULL == destinations || NULL == destweights || MPI_WEIGHTS_EMPTY == destweights))) {
+                    (NULL == destinations || NULL == destweights))) {
             return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, "MPI_Dist_create_graph adjacent 2");
         }
         comm_size = ompi_comm_size(comm_old);

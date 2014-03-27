@@ -63,5 +63,5 @@
       common/mpi_fortran_errcodes_ignore/MPI_ERRCODES_IGNORE
       common/mpi_fortran_status_ignore/MPI_STATUS_IGNORE
       common/mpi_fortran_statuses_ignore/MPI_STATUSES_IGNORE
-      common/mpi_fortran_statuses_ignore/MPI_UNWEIGHTED
-      common/mpi_fortran_statuses_ignore/MPI_WEIGHTS_EMPTY
+      common/mpi_fortran_unweighted/MPI_UNWEIGHTED
+      common/mpi_fortran_weights_empty/MPI_WEIGHTS_EMPTY

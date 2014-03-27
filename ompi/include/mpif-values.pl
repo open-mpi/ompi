@@ -212,6 +212,7 @@ $constants->{MPI_ROOT} = -4;
 $constants->{MPI_UNDEFINED} = -32766;
 $constants->{MPI_CART} = 1;
 $constants->{MPI_GRAPH} = 2;
+$constants->{MPI_DIST_GRAPH} = 3;
 $constants->{MPI_KEYVAL_INVALID} = -1;
 $constants->{MPI_SOURCE} = 1;
 $constants->{MPI_TAG} = 2;

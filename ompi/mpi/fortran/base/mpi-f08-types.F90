@@ -171,6 +171,8 @@ module mpi_f08_types
   integer, bind(C, name="mpi_fortran_argv_null")       :: MPI_ARGV_NULL
   integer, bind(C, name="mpi_fortran_argvs_null")      :: MPI_ARGVS_NULL
   integer, bind(C, name="mpi_fortran_errcodes_ignore") :: MPI_ERRCODES_IGNORE
+  integer, bind(C, name="mpi_fortran_unweighted")      :: MPI_UNWEIGHTED
+  integer, bind(C, name="mpi_fortran_weights_empty")   :: MPI_WEIGHTS_EMPTY
 
 !... Interfaces for operators with handles
 !-----------------------------------------
