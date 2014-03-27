@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,7 +82,7 @@ int MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
         OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);
+        OMPI_ERRHANDLER_RETURN (ret, comm, ret, FUNC_NAME);
     }
 
     OPAL_CR_EXIT_LIBRARY();

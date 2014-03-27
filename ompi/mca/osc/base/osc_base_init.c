@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,6 +8,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,7 +54,14 @@ ompi_osc_base_select(ompi_win_t *win,
             ((mca_base_component_list_item_t*) item)->cli_component;
 
         priority = component->osc_query(win, base, size, disp_unit, comm, info, flavor);
-        if (priority < 0) continue;
+        if (priority < 0) {
+            if (MPI_WIN_FLAVOR_SHARED == flavor && OMPI_ERR_RMA_SHARED == priority) {
+                /* NTH: quick fix to return OMPI_ERR_RMA_SHARED */
+                return OMPI_ERR_RMA_SHARED;
+            }
+            continue;
+        }
+
         if (priority > best_priority) {
             best_component = component;
             best_priority = priority;
