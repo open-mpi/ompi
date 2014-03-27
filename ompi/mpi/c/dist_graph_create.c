@@ -50,7 +50,7 @@ int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],
         } else if (n < 0 || NULL == newcomm) {
             return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, FUNC_NAME);
         } else if (n > 0 && (NULL == sources || NULL == degrees ||
-                              NULL == destinations || NULL == weights || MPI_WEIGHTS_EMPTY == weights)) {
+                              NULL == destinations || NULL == weights)) {
             return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, FUNC_NAME);
         }
         /* Ensure the arrays are full of valid-valued integers */
