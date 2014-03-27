@@ -601,7 +601,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return ORTE_ERR_NOT_FOUND;
                     }
-                    if (orte_rmaps_base.cpus_per_rank > (orte_vpid_t)opal_hwloc_base_get_npus(node->topology, obj)) {
+                    if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology, obj)) {
                         orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
                                        orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology, obj),
                                        orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
@@ -751,7 +751,7 @@ static int byobj_span(orte_job_t *jdata,
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return ORTE_ERR_NOT_FOUND;
             }
-            if (orte_rmaps_base.cpus_per_rank > (orte_vpid_t)opal_hwloc_base_get_npus(node->topology, obj)) {
+            if (orte_rmaps_base.cpus_per_rank > (int)opal_hwloc_base_get_npus(node->topology, obj)) {
                 orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low", true,
                                orte_rmaps_base.cpus_per_rank, opal_hwloc_base_get_npus(node->topology, obj),
                                orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
