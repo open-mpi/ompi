@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008-2012 Mellanox Technologies.  All rights reserved.
  *
@@ -38,7 +39,7 @@
 #include "opal/class/opal_object.h"
 #include "ompi/constants.h"
 
-#include <inttypes.h>
+#include "opal_stdint.h"
 
 #define MAX_LINE_LEN 80
 #define NUM_OF_TOKENS 7
