@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -5,6 +6,8 @@
  * Copyright (c) 2011      INRIA.  All rights reserved.
  * Copyright (c) 2011      Université Bordeaux 1
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -69,6 +72,8 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
 {
     MPI_Info c_info;
     MPI_Comm c_comm_old, c_comm_graph;
+    const int *c_destweights, *c_sourceweights;
+
     OMPI_ARRAY_NAME_DECL(sources);
     OMPI_ARRAY_NAME_DECL(sourceweights);
     OMPI_ARRAY_NAME_DECL(destinations);
@@ -78,20 +83,31 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
     c_info = MPI_Info_f2c(*info);
 
     OMPI_ARRAY_FINT_2_INT(sources, *indegree);
-    if( !OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ) {
+    if (OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights)) {
+        c_sourceweights = MPI_UNWEIGHTED;
+    } else if (OMPI_IS_FORTRAN_WEIGHTS_EMPTY(sourceweights)) {
+        c_sourceweights = MPI_WEIGHTS_EMPTY;
+    } else {
         OMPI_ARRAY_FINT_2_INT(sourceweights, *indegree);
+        c_sourceweights = OMPI_ARRAY_NAME_CONVERT(sourceweights);
     }
+
     OMPI_ARRAY_FINT_2_INT(destinations, *outdegree);
-    if( !OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ) {
-        OMPI_ARRAY_FINT_2_INT(destweights, *outdegree);
+    if (OMPI_IS_FORTRAN_UNWEIGHTED(destweights)) {
+        c_destweights = MPI_UNWEIGHTED;
+    } else if (OMPI_IS_FORTRAN_WEIGHTS_EMPTY(destweights)) {
+        c_destweights = MPI_WEIGHTS_EMPTY;
+    } else {
+        OMPI_ARRAY_FINT_2_INT(destweights, *indegree);
+        c_destweights = OMPI_ARRAY_NAME_CONVERT(destweights);
     }
 
     *ierr = OMPI_INT_2_FINT(MPI_Dist_graph_create_adjacent(c_comm_old, OMPI_FINT_2_INT(*indegree),
                                                            OMPI_ARRAY_NAME_CONVERT(sources),
-                                                           OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(sourceweights),
+                                                           c_sourceweights,
                                                            OMPI_FINT_2_INT(*outdegree),
                                                            OMPI_ARRAY_NAME_CONVERT(destinations),
-                                                           OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(destweights),
+                                                           c_destweights,
                                                            c_info, 
                                                            OMPI_LOGICAL_2_INT(*reorder),
                                                            &c_comm_graph));
@@ -100,11 +116,11 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sources);
-    if( !OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ) {
+    if( MPI_UNWEIGHTED != c_sourceweights && MPI_WEIGHTS_EMPTY != c_sourceweights ) {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sourceweights);
     }
     OMPI_ARRAY_FINT_2_INT_CLEANUP(destinations);
-    if( !OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ) {
+    if( MPI_UNWEIGHTED != c_destweights && MPI_WEIGHTS_EMPTY != c_destweights ) {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(destweights);
     }
 }
