@@ -1292,6 +1292,14 @@ subroutine ompi_comm_free_keyval_f(comm_keyval,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_free_keyval_f
 
+subroutine ompi_comm_get_info_f(comm,info_used,ierror) &
+   BIND(C, name="ompi_comm_get_info_f")
+   implicit none
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: info_used
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_comm_get_info_f
+
 subroutine ompi_comm_get_name_f(comm,comm_name,resultlen,ierror,comm_name_len) &
    BIND(C, name="ompi_comm_get_name_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
@@ -1353,6 +1361,14 @@ subroutine ompi_comm_set_attr_f(comm,comm_keyval,attribute_val,ierror) &
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: attribute_val
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_comm_set_attr_f
+
+subroutine ompi_comm_set_info_f(comm,info,ierror) &
+   BIND(C, name="ompi_comm_get_info_f")
+   implicit none
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(IN) :: info
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_comm_set_info_f
 
 subroutine ompi_comm_set_name_f(comm,comm_name,ierror,comm_name_len) &
    BIND(C, name="ompi_comm_set_name_f")

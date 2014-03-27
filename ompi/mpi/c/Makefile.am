@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -120,6 +120,7 @@ libmpi_c_mpi_la_SOURCES = \
         comm_free_keyval.c \
         comm_get_attr.c \
         comm_get_errhandler.c \
+        comm_get_info.c \
         comm_get_name.c \
         comm_get_parent.c \
         comm_group.c \
@@ -128,6 +129,7 @@ libmpi_c_mpi_la_SOURCES = \
         comm_remote_group.c \
         comm_remote_size.c \
         comm_set_attr.c \
+        comm_set_info.c \
         dist_graph_create.c \
         dist_graph_create_adjacent.c \
         dist_graph_neighbors.c \
