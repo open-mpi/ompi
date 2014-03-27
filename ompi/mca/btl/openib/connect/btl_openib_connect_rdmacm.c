@@ -165,14 +165,22 @@ OBJ_CLASS_INSTANCE(id_context_t, opal_list_item_t,
                    id_context_destructor);
 
 typedef struct {
-    uint32_t rem_index;
 #if BTL_OPENIB_RDMACM_IB_ADDR
+    /*
+     * According to infiniband spec a "Consumer Private Data" begings from 36th up
+     * to 91th byte (so the limit is 56 bytes) and first 36 bytes
+     * intended for lib RDMA CM header (sometimes not all of these bytes are used)
+     * so we must take into account that in case of AF_IB user private data pointer
+     * points to a header and not to a "Consumer Private Data".
+     */
+    uint8_t  librdmacm_header[36];
     uint64_t rem_port;
 #else
     uint16_t rem_port;
 #endif
+    uint32_t rem_index;
     uint8_t qpnum;
-} private_data_t;
+} __opal_attribute_packed__ private_data_t;
 
 #if !BTL_OPENIB_RDMACM_IB_ADDR
 /* Used to send a specific show_help message from the service_thread
@@ -1615,6 +1623,7 @@ static int finish_connect(id_context_t *context)
     msg.qpnum = context->qpnum;
     msg.rem_index = contents->endpoint->index;
 #if BTL_OPENIB_RDMACM_IB_ADDR
+    memset(msg.librdmacm_header, 0, sizeof(msg.librdmacm_header));
     msg.rem_port = contents->service_id;
 #else
     msg.rem_port = contents->tcp_port;
