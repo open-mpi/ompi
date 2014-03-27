@@ -323,7 +323,8 @@ $constants->{MPI_T_ERR_PVAR_NO_ATOMIC} = 67;
 $constants->{MPI_ERR_RMA_RANGE} = 68;
 $constants->{MPI_ERR_RMA_ATTACH} = 69;
 $constants->{MPI_ERR_RMA_FLAVOR} = 70;
-$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_ERR_RMA_FLAVOR};
+$constants->{MPI_ERR_RMA_SHARED} = 71;
+$constants->{MPI_ERR_LASTCODE} = $constants->{MPI_ERR_RMA_SHARED};
 
 $constants->{MPI_ERR_SYSRESOURCE} = -2;
 
