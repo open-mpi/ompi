@@ -3,6 +3,8 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,6 +78,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     n_data_segments=(count+n_dts_per_buffer -1 ) / n_dts_per_buffer ;
 
     /* get my reduction communication pattern */
+    memset(&my_exchange_node, 0, sizeof(netpatterns_pair_exchange_node_t));
     rc = netpatterns_setup_recursive_doubling_tree_node(n_peers,
             my_rank_in_group, &my_exchange_node);
     if(OMPI_SUCCESS != rc){
@@ -246,6 +249,8 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         /* update the count of elements processed */
         count_processed += count_this_stripe;
     }
+
+    netpatterns_cleanup_recursive_doubling_tree_node(&my_exchange_node);
 
     /* return */
     return OMPI_SUCCESS;

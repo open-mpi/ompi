@@ -5,6 +5,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -159,10 +161,12 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
 static void
 mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
 {
-    int i, j, k,fnc, index_topo;
+    int i, j, k,fnc, index_topo, alg;
     mca_coll_ml_topology_t *topo;
 
     ML_VERBOSE(4, ("ML module destruct"));
+
+    ml_coll_hier_reduce_cleanup(module);
 
     for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
         topo = &module->topo_list[index_topo];
@@ -207,9 +211,13 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
             free(topo->array_of_all_subgroups);
             topo->array_of_all_subgroups = NULL;
         }
+        if (NULL != topo->hier_layout_info) {
+            free(topo->hier_layout_info);
+            topo->hier_layout_info = NULL;
+        }
     }
 
-    OBJ_DESTRUCT(&(module->active_bcols_list));
+    OPAL_LIST_DESTRUCT(&(module->active_bcols_list));
     OBJ_DESTRUCT(&(module->waiting_for_memory_list));
 
     /* gvm Leak FIX Remove fragment free list */
@@ -225,8 +233,26 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
     OBJ_DESTRUCT(&(module->coll_ml_collective_descriptors));
 
     if (NULL != module->coll_ml_barrier_function) {
+        if (NULL != module->coll_ml_barrier_function->component_functions) {
+            free(module->coll_ml_barrier_function->component_functions);
+            module->coll_ml_barrier_function->component_functions = NULL;
+        }
         free(module->coll_ml_barrier_function);
+        module->coll_ml_barrier_function = NULL;
     }
+
+    if (module->coll_ml_memsync_function) {
+        if (module->coll_ml_memsync_function->component_functions) {
+            free(module->coll_ml_memsync_function->component_functions);
+            module->coll_ml_memsync_function->component_functions = NULL;
+        }
+        free(module->coll_ml_memsync_function);
+        module->coll_ml_memsync_function = NULL;
+    }
+
+    ml_coll_hier_allreduce_cleanup_new(module);
+    ml_coll_hier_allgather_cleanup(module);
+    ml_coll_hier_bcast_cleanup(module);
 
     /* release saved collectives */
     ML_RELEASE_FALLBACK(module, allreduce);
@@ -1554,6 +1580,8 @@ static int ml_discover_hierarchy(mca_coll_ml_module_t *ml_module)
                                  1, MPI_INT, ompi_comm_rank(ml_module->comm),
                                  MPI_MIN, ompi_comm_size(ml_module->comm), comm_ranks,
                                  ml_module->comm);
+
+	free(comm_ranks);
 
         if (OMPI_SUCCESS != ret) {
             ML_ERROR(("comm_allreduce - failed to collect max_comm data"));

@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -308,4 +310,37 @@ int ml_coll_hier_reduce_setup(mca_coll_ml_module_t *ml_module)
 
 
     return OMPI_SUCCESS;
+}
+
+void ml_coll_hier_reduce_cleanup(mca_coll_ml_module_t *ml_module)
+{
+    int alg, i, topo_index=0;
+    mca_coll_ml_topology_t *topo_info =
+           &ml_module->topo_list[ml_module->collectives_topology_map[ML_REDUCE][ML_SMALL_MSG]];
+
+    if ( ml_module->max_fn_calls < topo_info->n_levels ) {
+        ml_module->max_fn_calls = topo_info->n_levels;
+    }
+
+
+    alg = mca_coll_ml_component.coll_config[ML_REDUCE][ML_SMALL_MSG].algorithm_id;
+    topo_index = ml_module->collectives_topology_map[ML_REDUCE][alg];
+    if (ML_UNDEFINED == alg || ML_UNDEFINED == topo_index) {
+        ML_ERROR(("No topology index or algorithm was defined"));
+        topo_info->hierarchical_algorithms[ML_REDUCE] = NULL;
+        return;
+    }
+
+    for (i=0; i<ml_module->topo_list[topo_index].n_levels; i++) {
+        free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i]);
+        ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i] = NULL;
+    }
+
+    free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr);
+    ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr = NULL;
+
+    free(ml_module->coll_ml_reduce_functions[alg]->component_functions);
+    ml_module->coll_ml_reduce_functions[alg]->component_functions = NULL;
+    free(ml_module->coll_ml_reduce_functions[alg]);
+    ml_module->coll_ml_reduce_functions[alg] = NULL;
 }

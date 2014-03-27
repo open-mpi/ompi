@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -262,6 +264,7 @@ int ml_coll_hier_barrier_setup(struct mca_coll_ml_module_t *ml_module);
 /* allreduce */
 int ml_coll_hier_allreduce_setup(struct mca_coll_ml_module_t *ml_module);
 int ml_coll_hier_allreduce_setup_new(struct mca_coll_ml_module_t *ml_module);
+void ml_coll_hier_allreduce_cleanup_new(struct mca_coll_ml_module_t *ml_module);
 
 /* alltoall */
 int ml_coll_hier_alltoall_setup(struct mca_coll_ml_module_t *ml_module);
@@ -269,15 +272,18 @@ int ml_coll_hier_alltoall_setup_new(struct mca_coll_ml_module_t *ml_module);
 
 /* allgather */
 int ml_coll_hier_allgather_setup(struct mca_coll_ml_module_t *ml_module);
+void ml_coll_hier_allgather_cleanup(struct mca_coll_ml_module_t *ml_module);
 
 /* gather */
 int ml_coll_hier_gather_setup(struct mca_coll_ml_module_t *ml_module);
 
 /* broadcast */
 int ml_coll_hier_bcast_setup(struct mca_coll_ml_module_t *ml_module);
+void ml_coll_hier_bcast_cleanup(struct mca_coll_ml_module_t *ml_module);
 
 /* reduce */
 int ml_coll_hier_reduce_setup(struct mca_coll_ml_module_t *ml_module);
+void ml_coll_hier_reduce_cleanup(struct mca_coll_ml_module_t *ml_module);
 
 /* reduce */
 int ml_coll_hier_scatter_setup(struct mca_coll_ml_module_t *ml_module);

@@ -5,6 +5,8 @@
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -209,6 +211,27 @@ static int init_nb_coll_buff_desc(mca_bcol_basesmuma_nb_coll_buff_desc_t **desc,
     return OMPI_SUCCESS;
 }
 
+
+/*
+ * Free buffers for storing non-blocking collective descriptions.
+ *
+ */
+void cleanup_nb_coll_buff_desc(mca_bcol_basesmuma_nb_coll_buff_desc_t **desc,
+                                  uint32_t num_banks,
+                                  uint32_t num_buffers_per_bank)
+{
+    uint32_t ci;
+    if (NULL != *desc) {
+        for (ci=0; ci<num_banks*num_buffers_per_bank; ci++) {
+            if (NULL != ((*desc)[ci]).requests) {
+                free(((*desc)[ci]).requests);
+                ((*desc))[ci].requests = NULL;
+            }
+        }
+        free(*desc);
+        *desc = NULL;
+    }
+}
 
 
 #if 1

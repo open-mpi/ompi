@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -362,4 +364,67 @@ int ml_coll_hier_allreduce_setup_new(mca_coll_ml_module_t *ml_module)
     }
 
     return OMPI_SUCCESS;
+}
+
+void ml_coll_hier_allreduce_cleanup_new(mca_coll_ml_module_t *ml_module)
+{
+    /* Hierarchy Setup */
+    int ret;
+    int topo_index;
+    int alg;
+    mca_coll_ml_topology_t *topo_info = ml_module->topo_list;
+
+    alg = mca_coll_ml_component.coll_config[ML_ALLREDUCE][ML_SMALL_MSG].algorithm_id;
+    topo_index = ml_module->collectives_topology_map[ML_ALLREDUCE][alg];
+    if (ML_UNDEFINED == alg || ML_UNDEFINED == topo_index) {
+        ML_ERROR(("No topology index or algorithm was defined"));
+        topo_info->hierarchical_algorithms[ML_ALLREDUCE] = NULL;
+        return;
+    }
+
+    free(ml_module->coll_ml_allreduce_functions[alg]->component_functions);
+    ml_module->coll_ml_allreduce_functions[alg]->component_functions = NULL;
+    free(ml_module->coll_ml_allreduce_functions[alg]);
+    ml_module->coll_ml_allreduce_functions[alg] = NULL;
+
+    alg = mca_coll_ml_component.coll_config[ML_ALLREDUCE][ML_LARGE_MSG].algorithm_id;
+    topo_index = ml_module->collectives_topology_map[ML_ALLREDUCE][alg];
+    if (ML_UNDEFINED == alg || ML_UNDEFINED == topo_index) {
+        ML_ERROR(("No topology index or algorithm was defined"));
+        topo_info->hierarchical_algorithms[ML_ALLREDUCE] = NULL;
+        return;
+    }
+
+    free(ml_module->coll_ml_allreduce_functions[alg]->component_functions);
+    ml_module->coll_ml_allreduce_functions[alg]->component_functions = NULL;
+    free(ml_module->coll_ml_allreduce_functions[alg]);
+    ml_module->coll_ml_allreduce_functions[alg] = NULL;
+
+    if (true == mca_coll_ml_component.need_allreduce_support) {
+        topo_index = ml_module->collectives_topology_map[ML_ALLREDUCE][ML_SMALL_DATA_EXTRA_TOPO_ALLREDUCE];
+        if (ML_UNDEFINED == topo_index) {
+            ML_ERROR(("No topology index was defined"));
+            topo_info->hierarchical_algorithms[ML_ALLREDUCE] = NULL;
+            return;
+        }
+
+        alg = ML_SMALL_DATA_EXTRA_TOPO_ALLREDUCE;
+        free(ml_module->coll_ml_allreduce_functions[alg]->component_functions);
+        ml_module->coll_ml_allreduce_functions[alg]->component_functions = NULL;
+        free(ml_module->coll_ml_allreduce_functions[alg]);
+        ml_module->coll_ml_allreduce_functions[alg] = NULL;
+
+        topo_index = ml_module->collectives_topology_map[ML_ALLREDUCE][ML_LARGE_DATA_EXTRA_TOPO_ALLREDUCE];
+        if (ML_UNDEFINED == topo_index) {
+            ML_ERROR(("No topology index was defined"));
+            topo_info->hierarchical_algorithms[ML_ALLREDUCE] = NULL;
+            return;
+        }
+
+        alg = ML_LARGE_DATA_EXTRA_TOPO_ALLREDUCE;
+        free(ml_module->coll_ml_allreduce_functions[alg]->component_functions);
+        ml_module->coll_ml_allreduce_functions[alg]->component_functions = NULL;
+        free(ml_module->coll_ml_allreduce_functions[alg]);
+        ml_module->coll_ml_allreduce_functions[alg] = NULL;
+    }
 }
