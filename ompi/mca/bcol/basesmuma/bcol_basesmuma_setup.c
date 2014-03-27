@@ -5,6 +5,8 @@
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -552,6 +554,15 @@ int base_bcol_basesmuma_setup_library_buffers(
     if( !sm_bcol_module->userdata_ctl) {
         ret=OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
+    }
+
+    /* FIXME base_bcol_basesmuma_setup_ctl_struct will allocate
+     * sm_bcol_module->shared_memory_scratch_space which was previously
+     * allocated by the previous call to base_bcol_basesmuma_setup_ctl_struct
+     * so let's free it in order to avoid a memory leak */
+    if (sm_bcol_module->shared_memory_scratch_space) {
+        free(sm_bcol_module->shared_memory_scratch_space);
+        sm_bcol_module->shared_memory_scratch_space = NULL;
     }
 
     ret=base_bcol_basesmuma_setup_ctl_struct(

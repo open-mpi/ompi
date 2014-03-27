@@ -3,6 +3,8 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -111,7 +113,7 @@ typedef struct netpatterns_k_exchange_node_t
 OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
     netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC void netpatterns_free_recursive_doubling_tree_node(
+OMPI_DECLSPEC void netpatterns_cleanup_recursive_doubling_tree_node(
     netpatterns_pair_exchange_node_t *exchange_node);
 
 OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
@@ -121,10 +123,15 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
    int num_nodes, int node_rank, int tree_order,
    netpatterns_k_exchange_node_t *exchange_node);
 
+OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_tree_node(
+   netpatterns_k_exchange_node_t *exchange_node);
+
 OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         int num_nodes, int node_rank, int tree_order, int *hier_ranks,
         netpatterns_k_exchange_node_t *exchange_node);
 
+OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_allgather_tree_node(
+        netpatterns_k_exchange_node_t *exchange_node);
 
 /* Input: k_exchange_node structure 
       Output: index in rank_exchanges array that points 

@@ -1,3 +1,18 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 /* 
  * Code for selecting a collective function. The selection is based on 
  * comm-time attributes and invoke-time attributes. 
@@ -278,6 +293,8 @@ int mca_coll_ml_build_filtered_fn_table(mca_coll_ml_module_t *ml_module)
     if (build_algorithms_table(ml_module,my_comm_attrib)) {
         return OMPI_ERROR;
     }
+
+    free(my_comm_attrib);
 
     return OMPI_SUCCESS;
 

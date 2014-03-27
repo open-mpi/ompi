@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -211,9 +213,40 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
         sm_module->super.list_n_connected = NULL;
     }
 
+    cleanup_nb_coll_buff_desc(&sm_module->ml_mem.nb_coll_desc,
+                              sm_module->ml_mem.num_banks,
+                              sm_module->ml_mem.num_buffers_per_bank);
+
+    for (i = 0; i < BCOL_NUM_OF_FUNCTIONS; i++){
+        /* gvm FIX: Go through the list and destroy each item */
+        /* Destroy the function table object for each bcol type list */
+        OPAL_LIST_DESTRUCT((&sm_module->super.bcol_fns_table[i]));
+    }
+
+    if (NULL != sm_module->payload_backing_files_info) {
+        free(sm_module->payload_backing_files_info);
+        sm_module->payload_backing_files_info = NULL;
+    }
+
+    if (NULL != sm_module->ctl_backing_files_info) {
+        free(sm_module->ctl_backing_files_info);
+        sm_module->ctl_backing_files_info = NULL;
+    }
+
+    if (NULL != sm_module->ml_mem.bank_release_counter) {
+        free(sm_module->ml_mem.bank_release_counter);
+        sm_module->ml_mem.bank_release_counter = NULL;
+    }
+
+    if (NULL != sm_module->colls_with_user_data.data_buffs) {
+        free((void *)sm_module->colls_with_user_data.data_buffs);
+        sm_module->colls_with_user_data.data_buffs = NULL;
+    }
+
     /* free the k-nomial allgather tree here */
-
-
+    netpatterns_cleanup_recursive_knomial_allgather_tree_node(&sm_module->knomial_allgather_tree);
+    netpatterns_cleanup_recursive_doubling_tree_node(&sm_module->recursive_doubling_tree);
+    netpatterns_cleanup_recursive_knomial_tree_node(&sm_module->knomial_exchange_tree);
 
     /* done */
 }

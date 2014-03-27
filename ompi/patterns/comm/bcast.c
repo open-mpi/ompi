@@ -3,6 +3,8 @@
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,6 +89,10 @@ OMPI_DECLSPEC int comm_bcast_pml(void *buffer, int root, int count,
     if(msg_cnt) {
         /* wait on send and receive completion */
         ompi_request_wait_all(msg_cnt,requests,MPI_STATUSES_IGNORE);
+    }
+
+    if (node_data.children_ranks) {
+        free(node_data.children_ranks);
     }
 
     /* return */
