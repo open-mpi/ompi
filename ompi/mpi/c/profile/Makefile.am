@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # Copyright (c)      2012 Oak Ridge National Laboratory. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -102,6 +102,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_free_keyval.c \
         pcomm_get_attr.c \
         pcomm_get_errhandler.c \
+        pcomm_get_info.c \
         pcomm_get_name.c \
         pcomm_get_parent.c \
         pcomm_group.c \
@@ -110,6 +111,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_remote_group.c \
         pcomm_remote_size.c \
         pcomm_set_attr.c \
+        pcomm_set_info.c \
         pdist_graph_create.c \
         pdist_graph_create_adjacent.c \
         pdist_graph_neighbors.c \

@@ -73,6 +73,7 @@ mpi_api_files = \
         comm_free_keyval_f08.F90 \
         comm_get_attr_f08.F90 \
         comm_get_errhandler_f08.F90 \
+        comm_get_info_f08.F90 \
         comm_get_name_f08.F90 \
         comm_get_parent_f08.F90 \
         comm_group_f08.F90 \
@@ -82,6 +83,7 @@ mpi_api_files = \
         comm_remote_size_f08.F90 \
         comm_set_attr_f08.F90 \
         comm_set_errhandler_f08.F90 \
+        comm_set_info_f08.F90 \
         comm_set_name_f08.F90 \
         comm_size_f08.F90 \
         comm_spawn_f08.F90 \
@@ -411,6 +413,7 @@ pmpi_api_files = \
         profile/pcomm_free_keyval_f08.F90 \
         profile/pcomm_get_attr_f08.F90 \
         profile/pcomm_get_errhandler_f08.F90 \
+        profile/pcomm_get_info_f08.F90 \
         profile/pcomm_get_name_f08.F90 \
         profile/pcomm_get_parent_f08.F90 \
         profile/pcomm_group_f08.F90 \
@@ -420,6 +423,7 @@ pmpi_api_files = \
         profile/pcomm_remote_size_f08.F90 \
         profile/pcomm_set_attr_f08.F90 \
         profile/pcomm_set_errhandler_f08.F90 \
+        profile/pcomm_set_info_f08.F90 \
         profile/pcomm_set_name_f08.F90 \
         profile/pcomm_size_f08.F90 \
         profile/pcomm_spawn_f08.F90 \

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Inria.  All rights reserved.
  * Copyright (c) 2011-2012 Universite Bordeaux 1
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -129,6 +129,7 @@ PN2(void, MPI_Comm_idup, mpi_comm_idup, MPI_COMM_IDUP, (MPI_Fint *comm, MPI_Fint
 PN2(void, MPI_Comm_free_keyval, mpi_comm_free_keyval, MPI_COMM_FREE_KEYVAL, (MPI_Fint *comm_keyval, MPI_Fint *ierr));
 PN2(void, MPI_Comm_free, mpi_comm_free, MPI_COMM_FREE, (MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Comm_get_attr, mpi_comm_get_attr, MPI_COMM_GET_ATTR, (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
+PN2(void, MPI_Comm_get_info, mpi_comm_get_info, MPI_COMM_GET_INFO, (MPI_Fint *comm, MPI_Fint *info_user, MPI_Fint *ierr));
 PN2(void, MPI_Comm_get_errhandler, mpi_comm_get_errhandler, MPI_COMM_GET_ERRHANDLER, (MPI_Fint *comm, MPI_Fint *erhandler, MPI_Fint *ierr));
 PN2(void, MPI_Comm_get_name, mpi_comm_get_name, MPI_COMM_GET_NAME, (MPI_Fint *comm, char *comm_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Comm_get_parent, mpi_comm_get_parent, MPI_COMM_GET_PARENT, (MPI_Fint *parent, MPI_Fint *ierr));
@@ -138,6 +139,7 @@ PN2(void, MPI_Comm_rank, mpi_comm_rank, MPI_COMM_RANK, (MPI_Fint *comm, MPI_Fint
 PN2(void, MPI_Comm_remote_group, mpi_comm_remote_group, MPI_COMM_REMOTE_GROUP, (MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr));
 PN2(void, MPI_Comm_remote_size, mpi_comm_remote_size, MPI_COMM_REMOTE_SIZE, (MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr));
 PN2(void, MPI_Comm_set_attr, mpi_comm_set_attr, MPI_COMM_SET_ATTR, (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr));
+PN2(void, MPI_Comm_set_info, mpi_comm_set_info, MPI_COMM_SET_INFO, (MPI_Fint *comm, MPI_Fint *info, MPI_Fint *ierr));
 PN2(void, MPI_Comm_set_errhandler, mpi_comm_set_errhandler, MPI_COMM_SET_ERRHANDLER, (MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Comm_set_name, mpi_comm_set_name, MPI_COMM_SET_NAME, (MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Comm_size, mpi_comm_size, MPI_COMM_SIZE, (MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr));

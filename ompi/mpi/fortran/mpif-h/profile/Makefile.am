@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2012 Inria.  All rights reserved.
 # Copyright (c) 2011-2012 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
@@ -95,6 +95,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pcomm_free_keyval_f.c \
         pcomm_get_attr_f.c \
         pcomm_get_errhandler_f.c \
+        pcomm_get_info_f.c \
         pcomm_get_name_f.c \
         pcomm_get_parent_f.c \
         pcomm_group_f.c \
@@ -104,6 +105,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pcomm_remote_size_f.c \
         pcomm_set_attr_f.c \
         pcomm_set_errhandler_f.c \
+        pcomm_set_info_f.c \
         pcomm_set_name_f.c \
         pcomm_size_f.c \
         pcomm_spawn_f.c \

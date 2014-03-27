@@ -2228,6 +2228,30 @@ end MPI_Comm_free_keyval
 
 #------------------------------------------------------------------------
 
+output_41a() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, info_used, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(out) :: info_used
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Comm_get_info small
+output_41a MPI_Comm_get_info
+end MPI_Comm_get_info
+
+#------------------------------------------------------------------------
+
 output_41() {
     if test "$output" = "0"; then
         return 0
@@ -2390,6 +2414,30 @@ EOF
 start MPI_Comm_remote_size small
 output_47 MPI_Comm_remote_size
 end MPI_Comm_remote_size
+
+#------------------------------------------------------------------------
+
+output_48a() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, info, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: ierror
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Comm_set_info small
+output_48a MPI_Comm_set_info
+end MPI_Comm_set_info
 
 #------------------------------------------------------------------------
 
