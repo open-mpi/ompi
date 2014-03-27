@@ -394,11 +394,12 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 #if MXM_API < MXM_VERSION(2,0)
     ompi_mtl_mxm_ep_conn_info_t *ep_info;
     mxm_conn_req_t *conn_reqs;
+    size_t ep_index = 0;
 #endif
     void *ep_address;
     size_t ep_address_len;
     mxm_error_t err;
-    size_t i, ep_index = 0;
+    size_t i;
     int rc;
     mca_mtl_mxm_endpoint_t *endpoint;
 
