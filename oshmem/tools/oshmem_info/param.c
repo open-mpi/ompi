@@ -2,6 +2,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -611,7 +612,7 @@ void oshmem_info_do_config(bool want_all)
         
         opal_info_out("OSHMEM C bindings", "oshmem:bindings:c", "yes");
         opal_info_out("OSHMEM Fortran bindings", "oshmem:bindings:fort", oshmem_fortran);
-        opal_info_out("OSHMEM SGI/Quadrix mode", "oshmem:options:spec_compat", oshmem_compat);
+        opal_info_out("OSHMEM SGI/Quadrics mode", "oshmem:options:spec_compat", oshmem_compat);
         opal_info_out("OSHMEM API param check", "oshmem:options:param_check", oshmem_param_check);
         opal_info_out("OSHMEM profiling support", "oshmem:options:profiling", oshmem_profiling);
     }
