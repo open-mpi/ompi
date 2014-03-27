@@ -198,7 +198,11 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
            to reach this destination. */
         usnic_proc = NULL;
         rc = ompi_btl_usnic_proc_match(ompi_proc, module, &usnic_proc);
-        if (OMPI_SUCCESS != rc) {
+        if (OMPI_ERR_UNREACH == rc) {
+            /* If the peer doesn't have usnic modex info, then we just
+               skip it */
+            continue;
+        } else if (OMPI_SUCCESS != rc) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
