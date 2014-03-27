@@ -1,6 +1,7 @@
 .\" Man page contributed by Dirk Eddelbuettel <edd@debian.org>
 .\" and released under the BSD license
 .\" Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 .TH OMPI_INFO 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 ompi_info - Display information about the Open MPI installation
@@ -28,6 +29,14 @@ be useful for at least three common scenarios:
 .PP
 3. Seeing a list of installed Open MPI plugins and querying what 
 MCA parameters they support.
+.PP
+.B NOTE:
+.B ompi_info
+defaults to only showing a few MCA parameters by default (i.e., level
+1 parameters).  Use the
+.B --level
+option to enable showing more options (see the LEVELS section for more
+information).
 .
 .\" **************************
 .\"    Options Section
@@ -37,10 +46,13 @@ MCA parameters they support.
 accepts the following options:
 .TP 8
 .I \-a|\-\-all 
-Show all configuration options and MCA parameters
+Show all configuration options and MCA parameters.  Also changes the
+default MCA parameter level to 9, unless
+.I --level
+is also specified.
 .TP 8
 .I \-\-arch   
-Show architecture Open MPI was compiled on
+Show architecture on which Open MPI was compiled.
 .TP 8
 .I \-c|\-\-config
 Show configuration options
@@ -49,18 +61,18 @@ Show configuration options
 Pass global MCA parameters that are applicable to all contexts.
 .TP 8
 .I \-h|\-\-help
-Shows help / usage message
+Shows help / usage message.
 .TP 8
 .I \-\-hostname
-Show the hostname that Open MPI was configured and built on
+Show the hostname on which Open MPI was configured and built.
 .TP 8
 .I \-\-internal
-Show internal MCA parameters (not meant to be modified by users)
+Show internal MCA parameters (not meant to be modified by users).
 .TP 8
-.I \-\-level
+.I \-\-level <level>
 Show only variables with at most this level (1-9). The default is 1 unless
-\-\-all is specified without \-\-level in which case the default is 9. See
-the LEVEL section for more information.
+\-\-all is specified without \-\-level, in which case the default is 9. See
+the LEVELS section for more information.
 .TP 8
 .I \-mca|\-\-mca <param> <value>
 Pass context-specific MCA parameters; they are considered global if --gmca is
@@ -95,42 +107,107 @@ Show version of Open MPI.
 .\"    Levels Section
 .\" **************************
 .SH LEVELS
+Open MPI has many, many run-time tunable parameters (called "MCA
+parameters"), and usually only a handfull of them are useful to a
+given user.
+.
+.
+.PP
+As such, Open MPI has divided these parameters up into nine distinct
+levels, broken down into three categories, each with three
+sub-categories.  
+.
+.
+.PP
+Note that since each MCA parameter is accessible through the MPI_T
+control variable API (introduced in MPI-3.0), these levels exactly
+correspond to the nine MPI_T cvar levels.
+.
+.
+.PP
+The three categories are:
+.TP 4
+.B End user
+Generally, these are parameters that are required for correctness,
+meaning that a user may need to set these just to get their MPI
+application to run correctly. For example, BTL "if_include" and
+"if_exclude" parameters fit into this category.
+.
+.TP
+.B Application tuner
+Generally, these are parameters that can be used to tweak MPI
+application performance. This even includes parameters that control
+resource exhaustion levels (e.g., number of free list entries, size of
+buffers, etc.), and could be considered "correctness" parameters if
+they're set too low. But, really -- they're tuning parameters.
+.
+.TP
+.B Open MPI developer
+Parameters in this category either don't fit in the other two, or are
+specifically intended for debugging / development of Open MPI itself.
+.
+.
+.PP
+And within each category, there are three sub-categories:
+.TP 4
+.B Basic
+This sub-category is for parameters that everyone in this category
+will want to see -- even less-advanced end users, application tuners,
+and new OMPI developers.
+.
+.TP
+.B Detailed
+This sub-category is for parameters that are generally useful, but
+users probably won't need to change them often.
+.
+.TP
+.B All
+This sub-category is for all other parameters. Such parameters are
+likely fairly esoteric.
+.
+.
+.PP
+Combining the categories and sub-categories, here's how Open MPI
+defines all nine levels:
 .TP 4
 1
-Basic information of interest to users
-.
+Basic information of interest to end users.
 .TP
 2
-Detailed information of interest to users
-.
+Detailed information of interest to end users.
 .TP
 3
-All remaining information of interest to users
-.
+All remaining information of interest to end users.
 .TP
 4
-Basic information required for tuning
-.
+Basic information required for application tuners.
 .TP
 5
-Detailed information required for tuning
-.
+Detailed information required for application tuners.
 .TP
 6
-All remaining information required for tuning
-.
+All remaining information required for application tuners.
 .TP
 7
-Basic information for MPI implementors
-.
+Basic information for Open MPI implementors.
 .TP
 8
-Detailed information for MPI implementors
-.
+Detailed information for Open MPI implementors.
 .TP
 9
-All remaining information for MPI implementors
+All remaining information for Open MPI implementors.
 .
+.
+.PP
+By default,
+.B ompi_info
+only shows level 1 MCA parameters.  To see more MCA parameters, use
+the
+.B --level
+command line option.
+.
+.
+.PP
 .\" **************************
 .\"    Examples Section
 .\" **************************
@@ -148,14 +225,20 @@ components in a machine-parsable format.
 .
 .
 .TP
-ompi_info --param btl openib
-Show the MCA parameters of the "openib" BTL component in a
+ompi_info --param btl tcp
+Show the level 1 MCA parameters of the "tcp" BTL component in a
 human-readable / prettyprint format.
 .
 .
 .TP
-ompi_info --param btl openib --parsable
-Show the MCA parameters of the "openib" BTL component in a
+ompi_info --param btl tcp --level 6
+Show the level 1 through level 6 MCA parameters of the "tcp" BTL
+component in a human-readable / prettyprint format.
+.
+.
+.TP
+ompi_info --param btl tcp --parsable
+Show the level 1 MCA parameters of the "tcp" BTL component in a
 machine-parsable format.
 .
 .
@@ -165,21 +248,8 @@ Show the "bindir" that Open MPI was configured with.
 .
 .
 .TP
-ompi_info --version ompi full --parsable
-Show the full version numbers of Open MPI (including the ORTE and OPAL
-version numbers) in a machine-readable format.
-.
-.
-.TP
-ompi_info --version btl major
-Show the major version number of all BTL components in a prettyprint
-format.
-.
-.
-.TP
-ompi_info --version btl:tcp minor
-Show the minor version number of the TCP BTL component in a
-prettyprint format.
+ompi_info --version
+Show the version of Open MPI version numbers in a prettyprint format.
 .
 .
 .TP
@@ -187,8 +257,8 @@ ompi_info --all
 Show 
 .I all 
 information about the Open MPI installation, including all components
-that can be found, the MCA parameters that they support, versions of
-Open MPI and the components, etc.
+that can be found, all the MCA parameters that they support (i.e.,
+levels 1 through 9), versions of Open MPI and the components, etc.
 .
 .
 .\" **************************
