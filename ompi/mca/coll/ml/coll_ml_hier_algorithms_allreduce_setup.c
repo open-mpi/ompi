@@ -369,7 +369,6 @@ int ml_coll_hier_allreduce_setup_new(mca_coll_ml_module_t *ml_module)
 void ml_coll_hier_allreduce_cleanup_new(mca_coll_ml_module_t *ml_module)
 {
     /* Hierarchy Setup */
-    int ret;
     int topo_index;
     int alg;
     mca_coll_ml_topology_t *topo_info = ml_module->topo_list;
