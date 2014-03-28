@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/Makefile.man-page-rules
+include $(top_srcdir)/Makefile.ompi-rules
 
 mpi_api_man_pages = \
         mpi/man/man3/MPI.3 \

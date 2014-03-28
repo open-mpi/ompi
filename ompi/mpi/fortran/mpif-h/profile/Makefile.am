@@ -22,6 +22,7 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
 
 #
 # OMPI_PROFILING_DEFINES flag is enabled when we want our MPI_* symbols
@@ -405,7 +406,7 @@ endif
 # Sym link in the sources from the real MPI directory
 #
 $(nodist_libmpi_mpifh_pmpi_la_SOURCES):
-	if test ! -r $@ ; then \
+	$(OMPI_V_LN_S) if test ! -r $@ ; then \
 	    pname=`echo $@ | cut -b '2-'` ; \
 	    $(LN_S) $(top_srcdir)/ompi/mpi/fortran/mpif-h/$$pname $@ ; \
 	fi

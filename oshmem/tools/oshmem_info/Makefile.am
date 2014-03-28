@@ -38,7 +38,7 @@ else
     AM_CPPFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=0
 endif
 
-include $(top_srcdir)/Makefile.man-page-rules
+include $(top_srcdir)/Makefile.ompi-rules
 
 nodist_man_MANS =
 bin_PROGRAMS =

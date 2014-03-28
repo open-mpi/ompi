@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -17,6 +17,8 @@
 # 
 # $HEADER$
 #
+
+include $(top_srcdir)/Makefile.ompi-rules
 
 # Note - headers and nodist_headers will go in ${includedir}/openmpi,
 # not ${includedir}/
@@ -80,4 +82,4 @@ distclean-local:
 	rm -f mpi-ext.h mpif-ext.h mpi_portable_platform.h
 
 mpi_portable_platform.h: $(top_srcdir)/opal/include/opal/opal_portable_platform.h
-	$(LN_S) $(top_srcdir)/opal/include/opal/opal_portable_platform.h mpi_portable_platform.h
+	$(OMPI_V_LN_S) $(LN_S) $(top_srcdir)/opal/include/opal/opal_portable_platform.h mpi_portable_platform.h

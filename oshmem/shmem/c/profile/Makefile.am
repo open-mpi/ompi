@@ -9,6 +9,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 #
 # OSHMEM_PROFILING flag is enabled when we want our shmem_* symbols
 # to be replaced by pshmem_*. In other words, this flag decides 
@@ -73,7 +75,7 @@ nodist_liboshmem_c_pshmem_la_SOURCES = \
 # Sym link in the sources from the real MPI directory
 #
 $(nodist_liboshmem_c_pshmem_la_SOURCES):
-	if test ! -r $@ ; then \
+	$(OMPI_V_LN_S) if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '1-'` ; \
 		$(LN_S) $(top_srcdir)/oshmem/shmem/c/$$pname $@ ; \
 	fi

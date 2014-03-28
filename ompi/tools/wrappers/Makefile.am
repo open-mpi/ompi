@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
@@ -18,6 +18,8 @@
 # 
 # $HEADER$
 #
+
+include $(top_srcdir)/Makefile.ompi-rules
 
 generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpifort.1 mpif77.1 mpif90.1
 man_pages = $(generated_man_pages)
@@ -187,5 +189,5 @@ mpif77.1: mpif77.1in
 
 # Deprecated
 mpif90.1: mpif77.1
-	rm -f mpif90.1
-	ln -s mpif77.1 mpif90.1
+	@ rm -f mpif90.1
+	$(OMPI_V_LN_S) $(LN_S) mpif77.1 mpif90.1
