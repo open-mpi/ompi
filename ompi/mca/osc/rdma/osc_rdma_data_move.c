@@ -1323,12 +1323,14 @@ static inline int process_complete (ompi_osc_rdma_module_t *module, int source,
                                     ompi_osc_rdma_header_complete_t *complete_header)
 {
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc rdma:  process_complete got complete message from %d", source));
+                         "osc rdma:  process_complete got complete message from %d. expected fragment count %d",
+                         source, complete_header->frag_count));
 
     OPAL_THREAD_LOCK(&module->lock);
 
-    /* the current fragment is not part of the frag_count so we need to adjust for it */
-    module->active_incoming_frag_signal_count += complete_header->frag_count + 1;
+    /* the current fragment is not part of the frag_count but it doesn't need be be adjusted
+     * for here */
+    module->active_incoming_frag_signal_count += complete_header->frag_count;
     module->num_complete_msgs++;
 
     if (0 == module->num_complete_msgs) {
