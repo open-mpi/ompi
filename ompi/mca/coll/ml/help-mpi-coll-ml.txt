@@ -1,0 +1,50 @@
+# -*- text -*-
+#
+# Copyright (c) 2009-2014 Oak Ridge National Laboratory.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's Hierarchical Collective
+# Component (coll/ml).
+#
+[empty-sub-group]
+ML topology configuration explicitly requested for this subgroup: 
+
+    %s
+
+Such configuration results in a creation of empty groups. As a result, ML
+framework cannot configure requested collective operations. ML framework will be
+disabled. One configuration that might enable ML component is --mca bcol_base_string basesmuma,ptpcoll 
+--mca sbgp_base_subgroups_string basesmuma,p2p
+
+[allreduce-not-supported]
+This BCOL is configured in one of the hierarchy :
+
+    %s
+
+The BCOL does not support Allreduce for all
+operations and datatype combination. In addition, you did not suggest 
+alternate topology building configurations.
+
+[allreduce-alt-nosupport]
+The hierarchy is configured with alternate BCOL:
+
+    %s
+
+Both the original topology and alternate topology not support Allreduce for all
+operations and datatype combination. In addition, you did not suggest 
+alternate topology building configurations.
+
+[fragmentation-disabled]
+
+ML could not be used because the mca param coll_ml_enable_fragmentation
+was set to zero and there is a bcol that does not support 
+zero copy method.
+
+[static-bcast-disabled]
+
+ML could not be used because the mca param coll_ml_bcast_algorithm
+was not set to static and other broadcast implementation was available.
