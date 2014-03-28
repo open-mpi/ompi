@@ -382,6 +382,10 @@ void ml_coll_hier_allreduce_cleanup_new(mca_coll_ml_module_t *ml_module)
         return;
     }
 
+    if (NULL == ml_module->coll_ml_allreduce_functions[alg]) {
+        return;
+    }
+
     free(ml_module->coll_ml_allreduce_functions[alg]->component_functions);
     ml_module->coll_ml_allreduce_functions[alg]->component_functions = NULL;
     free(ml_module->coll_ml_allreduce_functions[alg]);

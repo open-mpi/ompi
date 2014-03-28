@@ -331,16 +331,29 @@ void ml_coll_hier_reduce_cleanup(mca_coll_ml_module_t *ml_module)
         return;
     }
 
-    for (i=0; i<ml_module->topo_list[topo_index].n_levels; i++) {
-        free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i]);
-        ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i] = NULL;
+    if (NULL == ml_module->coll_ml_reduce_functions[alg]) {
+        return;
     }
 
-    free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr);
-    ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr = NULL;
+    for (i=0; i<ml_module->topo_list[topo_index].n_levels; i++) {
+        if (ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i]) {
+            free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i]);
+            ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i] = NULL;
+        }
+    }
 
-    free(ml_module->coll_ml_reduce_functions[alg]->component_functions);
-    ml_module->coll_ml_reduce_functions[alg]->component_functions = NULL;
-    free(ml_module->coll_ml_reduce_functions[alg]);
-    ml_module->coll_ml_reduce_functions[alg] = NULL;
+    if (ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr) {
+        free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr);
+        ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr = NULL;
+    }
+
+    if (ml_module->coll_ml_reduce_functions[alg]->component_functions) {
+        free(ml_module->coll_ml_reduce_functions[alg]->component_functions);
+        ml_module->coll_ml_reduce_functions[alg]->component_functions = NULL;
+    }
+
+    if (ml_module->coll_ml_reduce_functions[alg]) {
+        free(ml_module->coll_ml_reduce_functions[alg]);
+        ml_module->coll_ml_reduce_functions[alg] = NULL;
+    }
 }

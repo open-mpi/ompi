@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -197,7 +197,7 @@ int ml_coll_hier_allgather_setup(mca_coll_ml_module_t *ml_module)
 void ml_coll_hier_allgather_cleanup(mca_coll_ml_module_t *ml_module)
 {
     /* Hierarchy Setup */
-    int ret, topo_index, alg;
+    int topo_index, alg;
     mca_coll_ml_topology_t *topo_info = ml_module->topo_list;
 
     alg = mca_coll_ml_component.coll_config[ML_ALLGATHER][ML_SMALL_MSG].algorithm_id;
@@ -208,10 +208,19 @@ void ml_coll_hier_allgather_cleanup(mca_coll_ml_module_t *ml_module)
         return;
     }
 
-    free(ml_module->coll_ml_allgather_functions[alg]->component_functions);
-    ml_module->coll_ml_allgather_functions[alg]->component_functions = NULL;
-    free(ml_module->coll_ml_allgather_functions[alg]);
-    ml_module->coll_ml_allgather_functions[alg] = NULL;
+    if (NULL == ml_module->coll_ml_allgather_functions[alg]) {
+        return;
+    }
+
+    if (ml_module->coll_ml_allgather_functions[alg]->component_functions) {
+        free(ml_module->coll_ml_allgather_functions[alg]->component_functions);
+        ml_module->coll_ml_allgather_functions[alg]->component_functions = NULL;
+    }
+
+    if (ml_module->coll_ml_allgather_functions[alg]) {
+        free(ml_module->coll_ml_allgather_functions[alg]);
+        ml_module->coll_ml_allgather_functions[alg] = NULL;
+    }
 
     alg = mca_coll_ml_component.coll_config[ML_ALLGATHER][ML_LARGE_MSG].algorithm_id;
     topo_index = ml_module->collectives_topology_map[ML_ALLGATHER][alg];
@@ -221,8 +230,13 @@ void ml_coll_hier_allgather_cleanup(mca_coll_ml_module_t *ml_module)
         return;
     }
 
-    free(ml_module->coll_ml_allgather_functions[alg]->component_functions);
-    ml_module->coll_ml_allgather_functions[alg]->component_functions = NULL;
-    free(ml_module->coll_ml_allgather_functions[alg]);
-    ml_module->coll_ml_allgather_functions[alg] = NULL;
+    if (ml_module->coll_ml_allgather_functions[alg]->component_functions) {
+        free(ml_module->coll_ml_allgather_functions[alg]->component_functions);
+        ml_module->coll_ml_allgather_functions[alg]->component_functions = NULL;
+    }
+
+    if (ml_module->coll_ml_allgather_functions[alg]) {
+        free(ml_module->coll_ml_allgather_functions[alg]);
+        ml_module->coll_ml_allgather_functions[alg] = NULL;
+    }
 }
