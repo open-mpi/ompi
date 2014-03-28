@@ -95,6 +95,7 @@ ompi_mpi_errcode_t ompi_err_win;
 ompi_mpi_errcode_t ompi_err_rma_range;
 ompi_mpi_errcode_t ompi_err_rma_attach;
 ompi_mpi_errcode_t ompi_err_rma_flavor;
+ompi_mpi_errcode_t ompi_err_rma_shared;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -179,6 +180,7 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_rma_range, MPI_ERR_RMA_RANGE, "MPI_ERR_RMA_RANGE: invalid RMA address range" );
     CONSTRUCT_ERRCODE( ompi_err_rma_attach, MPI_ERR_RMA_ATTACH, "MPI_ERR_RMA_ATTACH: Could not attach RMA segment" );
     CONSTRUCT_ERRCODE( ompi_err_rma_flavor, MPI_ERR_RMA_FLAVOR, "MPI_ERR_RMA_FLAVOR: Invalid type of window" );
+    CONSTRUCT_ERRCODE( ompi_err_rma_shared, MPI_ERR_RMA_SHARED, "MPI_ERR_RMA_SHARED: Memory cannot be shared" );
 
     ompi_mpi_errcode_lastused = MPI_ERR_WIN;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_WIN;
@@ -256,6 +258,7 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_rma_range);
     OBJ_DESTRUCT(&ompi_err_rma_attach);
     OBJ_DESTRUCT(&ompi_err_rma_flavor);
+    OBJ_DESTRUCT(&ompi_err_rma_shared);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     return OMPI_SUCCESS;

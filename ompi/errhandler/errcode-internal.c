@@ -46,6 +46,7 @@ static ompi_errcode_intern_t ompi_err_not_found;
 static ompi_errcode_intern_t ompi_err_request;
 static ompi_errcode_intern_t ompi_err_buffer;
 static ompi_errcode_intern_t ompi_err_rma_sync;
+static ompi_errcode_intern_t ompi_err_rma_shared;
 
 static void ompi_errcode_intern_construct(ompi_errcode_intern_t* errcode);
 static void ompi_errcode_intern_destruct(ompi_errcode_intern_t* errcode);
@@ -201,6 +202,14 @@ int ompi_errcode_intern_init (void)
     opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_sync.index,
                                 &ompi_err_rma_sync);
 
+    OBJ_CONSTRUCT(&ompi_err_rma_shared, ompi_errcode_intern_t);
+    ompi_err_rma_shared.code = OMPI_ERR_RMA_SHARED;
+    ompi_err_rma_shared.mpi_code = MPI_ERR_RMA_SHARED;
+    ompi_err_rma_shared.index = pos++;
+    strncpy(ompi_err_rma_shared.errstring, "OMPI_ERR_RMA_SHARED", OMPI_MAX_ERROR_STRING);
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_shared.index,
+                                &ompi_err_rma_shared);
+
     ompi_errcode_intern_lastused=pos;
     return OMPI_SUCCESS;
 }
@@ -225,6 +234,7 @@ int ompi_errcode_intern_finalize(void)
     OBJ_DESTRUCT(&ompi_err_buffer);
     OBJ_DESTRUCT(&ompi_err_request);
     OBJ_DESTRUCT(&ompi_err_rma_sync);
+    OBJ_DESTRUCT(&ompi_err_rma_shared);
 
     OBJ_DESTRUCT(&ompi_errcodes_intern);
     return OMPI_SUCCESS;

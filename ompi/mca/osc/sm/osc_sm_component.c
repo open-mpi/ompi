@@ -146,16 +146,16 @@ check_win_ok(ompi_communicator_t *comm, int flavor)
 
     if (! (MPI_WIN_FLAVOR_SHARED == flavor
            || MPI_WIN_FLAVOR_ALLOCATE == flavor) ) {
-        return -1;
+        return OMPI_ERR_NOT_SUPPORTED;
     }
 
     for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
         if (!OPAL_PROC_ON_LOCAL_NODE(ompi_comm_peer_lookup(comm, i)->proc_flags)) {
-            return -1;
+            return OMPI_ERR_RMA_SHARED;
         }
     }
 
-    return 0;
+    return OMPI_SUCCESS;
 }
 
 
@@ -164,7 +164,13 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct ompi_info_t *info,
                 int flavor)
 {
-    if (0 != check_win_ok(comm, flavor))  return -1;
+    int ret;
+    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
+        if (OMPI_ERR_NOT_SUPPORTED == ret) {
+            return -1;
+        }
+        return ret;
+    }
 
     return 100;
 }
@@ -178,7 +184,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     ompi_osc_sm_module_t *module = NULL;
     int ret = OMPI_ERROR;
 
-    if (0 != check_win_ok(comm, flavor))  return OMPI_ERR_NOT_SUPPORTED;
+    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
+        return ret;
+    }
 
     /* create module structure */
     module = (ompi_osc_sm_module_t*)
