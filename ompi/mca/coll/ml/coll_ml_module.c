@@ -92,19 +92,10 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
     int index_topo, coll_i, st_i;
     mca_coll_ml_topology_t *topo;
 
-    module->max_fn_calls = 0;
-    module->initialized = false;
-    module->comm = NULL;
-    module->collective_sequence_num = 0;
-    module->no_data_collective_sequence_num = 0;
-    module->payload_block = NULL;
-
-    module->reference_convertor = NULL;
+    memset ((char *) module + sizeof (module->super), 0, sizeof (*module) - sizeof (module->super));
 
     /* It's critical to reset data_offset to zero */
     module->data_offset = -1;
-
-    module->coll_ml_barrier_function = NULL;
 
     /* If the topology support zero level and no fragmentation was requested */
     for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
@@ -113,22 +104,8 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
         topo->global_highest_hier_group_index = -1;
         topo->number_of_all_subgroups = -1;
         topo->n_levels = -1;
-        topo->sort_list = NULL;
-        topo->hier_layout_info = NULL;
         topo->all_bcols_mode = ~(0); /* set to all bits */
-        topo->route_vector = NULL;
-        topo->array_of_all_subgroups = NULL;
-        topo->component_pairs = NULL;
-        topo->hier_layout_info = NULL;
         topo->status = COLL_ML_TOPO_DISABLED; /* all topologies are not used by default */
-
-        /* Init ordering info */
-        topo->topo_ordering_info.next_inorder = 0;
-        topo->topo_ordering_info.next_order_num = 0;
-        topo->topo_ordering_info.num_bcols_need_ordering = 0;
-
-        memset(topo->hierarchical_algorithms, 0,
-               BCOL_NUM_OF_FUNCTIONS * sizeof(coll_ml_collective_description_t *));
     }
 
     for (coll_i = 0; coll_i < ML_NUM_OF_FUNCTIONS; coll_i++) {
@@ -161,7 +138,7 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
 static void
 mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
 {
-    int i, j, k,fnc, index_topo, alg;
+    int i, j, k,fnc, index_topo;
     mca_coll_ml_topology_t *topo;
 
     ML_VERBOSE(4, ("ML module destruct"));
@@ -557,7 +534,7 @@ static int ml_module_memory_initialization(mca_coll_ml_module_t *ml_module)
     ml_module->payload_block = mca_coll_ml_allocate_block(cs,ml_module->payload_block);
 
     if (NULL == ml_module->payload_block) {
-        ML_ERROR(("mca_coll_ml_allocate_block exited with error."));
+        ML_VERBOSE(1, ("mca_coll_ml_allocate_block exited with error."));
         return OMPI_ERROR;
     }
 

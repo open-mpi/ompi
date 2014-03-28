@@ -44,7 +44,7 @@ mca_bcol_base_memory_block_desc_t *mca_coll_ml_allocate_block(struct mca_coll_ml
     memory_block->size_block = memory_manager->list_block_size;
 
     if (!memory_block->block){
-        ML_ERROR(("lmngr failed."));
+        ML_VERBOSE(1, ("lmngr failed."));
         ret = NULL;
         goto exit_ERROR;
     }
