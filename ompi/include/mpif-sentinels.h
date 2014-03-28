@@ -53,6 +53,8 @@
       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
 !     Ditto for MPI_STATUSES_IGNORE
       integer MPI_STATUSES_IGNORE(MPI_STATUS_SIZE, 1)
+      integer MPI_UNWEIGHTED
+      integer MPI_WEIGHTS_EMPTY
 
       common/mpi_fortran_bottom/MPI_BOTTOM
       common/mpi_fortran_in_place/MPI_IN_PLACE
@@ -61,3 +63,5 @@
       common/mpi_fortran_errcodes_ignore/MPI_ERRCODES_IGNORE
       common/mpi_fortran_status_ignore/MPI_STATUS_IGNORE
       common/mpi_fortran_statuses_ignore/MPI_STATUSES_IGNORE
+      common/mpi_fortran_unweighted/MPI_UNWEIGHTED
+      common/mpi_fortran_weights_empty/MPI_WEIGHTS_EMPTY

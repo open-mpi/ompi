@@ -290,6 +290,8 @@ INST(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
      mpi_fortran_in_place_, mpi_fortran_in_place__);
 INST(int, MPI_FORTRAN_UNWEIGHTED, mpi_fortran_unweighted,
      mpi_fortran_unweighted_, mpi_fortran_unweighted__);
+INST(int, MPI_FORTRAN_WEIGHTS_EMPTY, mpi_fortran_weights_empty,
+     mpi_fortran_weights_empty_, mpi_fortran_weights_empty__);
 INST(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
 INST(char *, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,

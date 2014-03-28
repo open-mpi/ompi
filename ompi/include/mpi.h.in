@@ -430,6 +430,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
  * More constants
  */
 #define MPI_UNWEIGHTED           ((void *) 2)          /* unweighted graph */
+#define MPI_WEIGHTS_EMPTY        ((void *) 3)          /* empty weights */
 #define MPI_BOTTOM               ((void *) 0)          /* base reference address */
 #define MPI_IN_PLACE             ((void *) 1)          /* in place buffer */
 #define MPI_BSEND_OVERHEAD       128                   /* size of bsend header + ptr */
