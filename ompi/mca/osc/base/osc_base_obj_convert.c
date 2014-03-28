@@ -82,12 +82,15 @@ static int copy_##TYPENAME( opal_convertor_t *pConvertor, uint32_t count, \
     ompi_osc_base_convertor_t *osc_convertor =                          \
         (ompi_osc_base_convertor_t*) pConvertor;                        \
                                                                         \
+    /* the count is the total count not the count in the buffer */      \
+    if (from_len < count * remote_TYPE_size) {                          \
+        count = from_len / remote_TYPE_size;                            \
+    }                                                                   \
     if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                  \
         (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                  \
         ompi_op_reduce(osc_convertor->op, from, to, count, osc_convertor->datatype); \
     } else {                                                            \
-        uint32_t i;                                                     \
-        for( i = 0; i < count; i++ ) {                                  \
+        for (uint32_t i = 0; i < count; i++ ) {                         \
             ompi_op_reduce(osc_convertor->op, from, to, 1, osc_convertor->datatype); \
             to += to_extent;                                            \
             from += from_extent;                                        \
@@ -258,6 +261,7 @@ ompi_osc_base_sndrcv_op(void *origin,
         size_t max_data;
         int completed, length;
         bool contiguous_target = false;
+        bool contiguous_origin = false;
         struct opal_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
 
         origin_primitive = ompi_datatype_get_single_predefined_type_from_args(origin_dt);
@@ -278,23 +282,35 @@ ompi_osc_base_sndrcv_op(void *origin,
         }
 
         if (ompi_datatype_is_contiguous_memory_layout (origin_dt, origin_count) &&
-            1 == origin_dt->super.desc.used && contiguous_target) {
+            1 == origin_dt->super.desc.used) {
             /* NTH: both datatypes are contiguous blocks of the same primitive datatype */
             origin_count *= origin_dt->super.desc.desc[0].elem.count;
+            contiguous_origin = true;
 
-            /* NTH: should we proper checks for this case */
-            assert (origin_count <= target_count);
+            if (contiguous_target) {
+                /* NTH: should we proper checks for this case */
+                assert (origin_count <= target_count);
 
-            ompi_op_reduce(op, origin, target, origin_count, origin_primitive);
-            return OMPI_SUCCESS;
+                ompi_op_reduce(op, origin, target, origin_count, origin_primitive);
+                return OMPI_SUCCESS;
+            }
         }
 
+        if (!contiguous_origin) {
+            /* initialize send convertor */
+            OBJ_CONSTRUCT(&send_convertor, opal_convertor_t);
+            opal_convertor_copy_and_prepare_for_send(ompi_proc_local()->proc_convertor,
+                                                     &(origin_dt->super), origin_count, origin, 0,
+                                                     &send_convertor);
 
-        /* initialize send convertor */
-        OBJ_CONSTRUCT(&send_convertor, opal_convertor_t);
-        opal_convertor_copy_and_prepare_for_send(ompi_proc_local()->proc_convertor,
-                                                  &(origin_dt->super), origin_count, origin, 0,
-                                                  &send_convertor);
+            /* copy */
+            iov.iov_len = length = 64 * 1024;
+            iov.iov_base = (IOVBASE_TYPE*)malloc (length);
+            if (OPAL_UNLIKELY(NULL == iov.iov_base)) {
+                OBJ_DESTRUCT(&send_convertor);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+        }
 
         /* initialize recv convertor */
         if (!contiguous_target) {
@@ -310,37 +326,41 @@ ompi_osc_base_sndrcv_op(void *origin,
             master.pFunctions = (conversion_fct_t*) &ompi_osc_base_copy_functions;
             recv_convertor.convertor.master = &master;
             recv_convertor.convertor.fAdvance = opal_unpack_general;
+            /* there are issues with using the optimized description here */
+            recv_convertor.convertor.use_desc = &target_dt->super.desc;
         }
 
-        /* copy */
-        iov.iov_len = length = 64 * 1024;
-        iov.iov_base = (IOVBASE_TYPE*)malloc( length * sizeof(char) );
+        if (!contiguous_origin) {
+            completed = 0;
+            while(0 == completed) {
+                iov.iov_len = max_data = length;
+                iov_count = 1;
+                completed |= opal_convertor_pack( &send_convertor, &iov, &iov_count, &max_data );
 
-        completed = 0;
-        while(0 == completed) {
-            iov.iov_len = length;
-            iov_count = 1;
-            max_data = length;
-            completed |= opal_convertor_pack( &send_convertor, &iov, &iov_count, &max_data );
+                if (contiguous_target) {
+                    int packed_count = (int) (max_data / target_primitive->super.size);
 
-            if (contiguous_target) {
-                int packed_count = (int) (max_data / target_primitive->super.size);
+                    ompi_op_reduce(op, iov.iov_base, target, packed_count, target_primitive);
+                    target = (void *)((uintptr_t) target + max_data);
 
-                ompi_op_reduce(op, iov.iov_base, target, packed_count, target_primitive);
-                target = (void *)((uintptr_t) target + max_data);
+                    target_count -= packed_count;
 
-                target_count -= packed_count;
+                    /* NTH: at this time it is erroneous for this function to be called if the
+                     * target is not large enough to fit the data */
+                    assert (target_count >= 0);
+                    completed |= (0 == target_count);
+                } else {
+                    completed |= opal_convertor_unpack( &recv_convertor.convertor, &iov, &iov_count, &max_data );
+                }
 
-                /* NTH: at this time it is erroneous for this function to be called if the
-                 * target is not large enough to fit the data */
-                assert (target_count >= 0);
-                completed |= (0 == target_count);
-            } else {
-                completed |= opal_convertor_unpack( &recv_convertor.convertor, &iov, &iov_count, &max_data );
             }
+            free( iov.iov_base );
+            OBJ_DESTRUCT( &send_convertor );
+        } else {
+            iov.iov_len = origin_primitive->super.size * origin_count;
+            iov.iov_base = origin;
+            opal_convertor_unpack( &recv_convertor.convertor, &iov, &iov_count, &max_data );
         }
-        free( iov.iov_base );
-        OBJ_DESTRUCT( &send_convertor );
 
         if (!contiguous_target) {
             OBJ_DESTRUCT( &recv_convertor );
