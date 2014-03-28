@@ -1698,6 +1698,16 @@ subroutine PMPI_Comm_get_attr_f08(comm,comm_keyval,attribute_val,flag,ierror)
 end subroutine PMPI_Comm_get_attr_f08
 end interface  PMPI_Comm_get_attr
 
+interface  PMPI_Comm_get_info
+subroutine PMPI_Comm_get_info_f08(comm,info_used,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Info
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Comm), INTENT(OUT) :: info_used
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Comm_get_info_f08
+end interface  PMPI_Comm_get_info
+
 interface  PMPI_Comm_get_name
 subroutine PMPI_Comm_get_name_f08(comm,comm_name,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_MAX_OBJECT_NAME
@@ -1759,6 +1769,16 @@ subroutine PMPI_Comm_set_attr_f08(comm,comm_keyval,attribute_val,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Comm_set_attr_f08
 end interface  PMPI_Comm_set_attr
+
+interface  PMPI_Comm_set_info
+subroutine PMPI_Comm_set_info_f08(comm,info,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Info
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Info), INTENT(IN) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Comm_set_info_f08
+end interface  PMPI_Comm_set_info
 
 interface  PMPI_Comm_set_name
 subroutine PMPI_Comm_set_name_f08(comm,comm_name,ierror)

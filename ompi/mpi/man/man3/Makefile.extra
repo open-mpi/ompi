@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
@@ -71,6 +71,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Comm_free_keyval.3 \
         mpi/man/man3/MPI_Comm_get_attr.3 \
         mpi/man/man3/MPI_Comm_get_errhandler.3 \
+        mpi/man/man3/MPI_Comm_get_info.3 \
         mpi/man/man3/MPI_Comm_get_name.3 \
         mpi/man/man3/MPI_Comm_get_parent.3 \
         mpi/man/man3/MPI_Comm_group.3 \
@@ -80,6 +81,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Comm_remote_size.3 \
         mpi/man/man3/MPI_Comm_set_attr.3 \
         mpi/man/man3/MPI_Comm_set_errhandler.3 \
+        mpi/man/man3/MPI_Comm_set_info.3 \
         mpi/man/man3/MPI_Comm_set_name.3 \
         mpi/man/man3/MPI_Comm_size.3 \
         mpi/man/man3/MPI_Comm_spawn.3 \

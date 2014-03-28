@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -88,6 +88,7 @@
 #define MPI_Comm_free PMPI_Comm_free
 #define MPI_Comm_get_attr PMPI_Comm_get_attr
 #define MPI_Comm_get_errhandler PMPI_Comm_get_errhandler
+#define MPI_Comm_get_info PMPI_Comm_get_info
 #define MPI_Comm_get_name PMPI_Comm_get_name
 #define MPI_Comm_get_parent PMPI_Comm_get_parent
 #define MPI_Comm_group PMPI_Comm_group
@@ -101,6 +102,7 @@
 #define MPI_Dist_graph_neighbors PMPI_Dist_graph_neighbors
 #define MPI_Dist_graph_neighbors_count PMPI_Dist_graph_neighbors_count
 #define MPI_Comm_set_errhandler PMPI_Comm_set_errhandler
+#define MPI_Comm_set_info PMPI_Comm_set_info
 #define MPI_Comm_set_name PMPI_Comm_set_name
 #define MPI_Comm_size PMPI_Comm_size
 #define MPI_Comm_spawn PMPI_Comm_spawn

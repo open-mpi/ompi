@@ -1,0 +1,66 @@
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
+.TH MPI_Comm_set_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Comm_set_info\fP \- Set communicator info hints
+.
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Comm_set_info(MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP)
+.
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_COMM_SET_INFO(\fICOMM, INFO, IERROR\fP)
+	INTEGER	\fICOMM, INFO, IERROR \fP
+.
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+comm
+Communicator on which to set info hints
+.TP 1i
+info
+Info object containing hints to be set on
+.I comm
+.
+.SH OUTPUT PARAMETERS
+.TP 1i
+IERROR
+Fortran only: Error status (integer). 
+.
+.SH DESCRIPTION
+.ft R
+MPI_COMM_SET_INFO sets new values for the hints of the communicator
+associated with 
+.IR comm .
+MPI_COMM_SET_INFO is a collective routine. The info object may be
+different on each process, but any info entries that an implementation
+requires to be the same on all processes must appear with the same
+value in each process's 
+.I info
+object.
+.
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value
+of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for
+I/O function errors. The error handler may be changed with
+MPI_Comm_set_errhandler; the predefined error handler
+MPI_ERRORS_RETURN may be used to cause error values to be
+returned. Note that MPI does not guarantee that an MPI program can
+continue past an error.
+.
+.SH SEE ALSO
+MPI_Comm_get_info,
+MPI_Info_create,
+MPI_Info_set,
+MPI_Info_free

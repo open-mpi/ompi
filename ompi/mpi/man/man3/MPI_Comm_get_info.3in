@@ -1,0 +1,64 @@
+.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines
+.TH MPI_Comm_get_info 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Comm_get_info\fP \- Retrieves active communicator info hints
+.
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Comm_get_info(MPI_Comm \fIcomm\fP, MPI_Info \fI*info_used\fP)
+.
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_COMM_GET_INFO(\fICOMM, INFO_USED, IERROR\fP)
+	INTEGER	\fICOMM, INFO_USED, IERROR \fP
+.
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+comm
+Communicator from which to receive active info hints
+.
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+info_used
+New info object returned with all active hints on this communicator.
+.TP 1i
+IERROR
+Fortran only: Error status (integer). 
+.
+.SH DESCRIPTION
+.ft R
+MPI_Comm_get_info returns a new info object containing the hints of
+the communicator associated with 
+.IR comm . 
+The current setting of all hints actually used by the system related
+to this communicator is returned in 
+.IR info_used . 
+If no such hints exist, a handle to a newly created info object is
+returned that contains no key/value pair. The user is responsible for
+freeing info_used via MPI_Info_free.
+.
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value
+of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for
+I/O function errors. The error handler may be changed with
+MPI_Comm_set_errhandler; the predefined error handler
+MPI_ERRORS_RETURN may be used to cause error values to be
+returned. Note that MPI does not guarantee that an MPI program can
+continue past an error.
+.
+.SH SEE ALSO
+MPI_Comm_get_info,
+MPI_Info_free
