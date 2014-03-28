@@ -1328,9 +1328,8 @@ static inline int process_complete (ompi_osc_rdma_module_t *module, int source,
 
     OPAL_THREAD_LOCK(&module->lock);
 
-    /* the current fragment is not part of the frag_count but it doesn't need be be adjusted
-     * for here */
-    module->active_incoming_frag_signal_count += complete_header->frag_count;
+    /* the current fragment is not part of the frag_count so we need to add it here */
+    module->active_incoming_frag_signal_count += complete_header->frag_count + 1;
     module->num_complete_msgs++;
 
     if (0 == module->num_complete_msgs) {
