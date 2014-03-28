@@ -184,6 +184,7 @@ ompi_osc_base_process_op(void *outbuf,
         uint32_t iov_count = 1;
         size_t max_data;
         struct opal_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
+        OPAL_PTRDIFF_TYPE lb, extent;
 
         primitive_datatype = ompi_datatype_get_single_predefined_type_from_args(datatype);
         if (ompi_datatype_is_contiguous_memory_layout (datatype, count) &&
@@ -192,6 +193,12 @@ ompi_osc_base_process_op(void *outbuf,
              * datatype. do not use the convertor in this case since opal_unpack_general
              can not handle it */
             count *= datatype->super.desc.desc[0].elem.count;
+
+            /* in case it is possible for the datatype to have a non-zero lb in this case.
+             * remove me if this is not possible */
+            ompi_datatype_get_extent (datatype, &lb, &extent);
+            outbuf = (void *)((uintptr_t) outbuf + lb);
+
             ompi_op_reduce(op, inbuf, outbuf, count, primitive_datatype);
             return OMPI_SUCCESS;
         }
@@ -263,6 +270,7 @@ ompi_osc_base_sndrcv_op(void *origin,
         bool contiguous_target = false;
         bool contiguous_origin = false;
         struct opal_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
+        OPAL_PTRDIFF_TYPE lb, extent;
 
         origin_primitive = ompi_datatype_get_single_predefined_type_from_args(origin_dt);
         target_primitive = ompi_datatype_get_single_predefined_type_from_args(target_dt);
@@ -279,6 +287,11 @@ ompi_osc_base_sndrcv_op(void *origin,
              can not handle it */
             target_count *= target_dt->super.desc.desc[0].elem.count;
             contiguous_target = true;
+
+            /* in case it is possible for the datatype to have a non-zero lb in this case.
+             * remove me if this is not possible */
+            ompi_datatype_get_extent (target_dt, &lb, &extent);
+            target = (void *)((uintptr_t) target + lb);
         }
 
         if (ompi_datatype_is_contiguous_memory_layout (origin_dt, origin_count) &&
@@ -286,6 +299,11 @@ ompi_osc_base_sndrcv_op(void *origin,
             /* NTH: both datatypes are contiguous blocks of the same primitive datatype */
             origin_count *= origin_dt->super.desc.desc[0].elem.count;
             contiguous_origin = true;
+
+            /* in case it is possible for the datatype to have a non-zero lb in this case.
+             * remove me if this is not possible */
+            ompi_datatype_get_extent (origin_dt, &lb, &extent);
+            origin = (void *)((uintptr_t) origin + lb);
 
             if (contiguous_target) {
                 /* NTH: should we proper checks for this case */
