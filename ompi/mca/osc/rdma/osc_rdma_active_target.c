@@ -242,7 +242,6 @@ ompi_osc_rdma_complete(ompi_win_t *win)
         complete_req.base.type = OMPI_OSC_RDMA_HDR_TYPE_COMPLETE;
         complete_req.base.flags = OMPI_OSC_RDMA_HDR_FLAG_VALID;
         complete_req.frag_count = module->epoch_outgoing_frag_count[ranks[i]];
-        module->epoch_outgoing_frag_count[ranks[i]] = 0;
 
         ret = ompi_osc_rdma_control_send(module, 
                                          ranks[i],
@@ -255,6 +254,11 @@ ompi_osc_rdma_complete(ompi_win_t *win)
     /* start all requests */
     ret = ompi_osc_rdma_frag_flush_all(module);
     if (OMPI_SUCCESS != ret) goto cleanup;
+
+    /* zero the fragment counts here to ensure they are zerod */
+    for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
+        module->epoch_outgoing_frag_count[ranks[i]] = 0;
+    }
 
     /* wait for outgoing requests to complete.  Don't wait for incoming, as
        we're only completing the access epoch, not the exposure epoch */
