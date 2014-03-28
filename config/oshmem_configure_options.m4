@@ -48,7 +48,7 @@ fi
 #
 # Enable compatibility mode
 #
-AC_MSG_CHECKING([if want SGI/Quadrix compatibility mode])
+AC_MSG_CHECKING([if want SGI/Quadrics compatibility mode])
 AC_ARG_ENABLE(oshmem-compat,
         AC_HELP_STRING([--enable-oshmem-compat],
             [enable compatibility mode (default: enabled)]))
