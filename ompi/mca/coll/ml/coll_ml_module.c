@@ -2046,21 +2046,17 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
     /* If I was not done, it means that we skipped all subgroups and no hierarchy was build */
     if (0 == i_am_done) {
+        
         if (NULL != include_sbgp_name || NULL != exclude_sbgp_name) {
             /* User explicitly asked for specific type of topology, which generates empty group */
-            /* JMS You really should use opal_show_help() here;
-               showing long error messages is *exactly* what
-               opal_show_help() is for. */
-            ML_ERROR(("ML topology configuration explicitly requested to %s subgroup %s. "
-                      "Such configuration results in a creation of empty groups. As a result, ML framework can't "
-                      "configure requested collective operations. ML framework will be disabled.",
-                      NULL != include_sbgp_name ? "include only" : "exclude",
-                      NULL != include_sbgp_name ? include_sbgp_name : exclude_sbgp_name
-                      ));
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "empty-sub-group", true,
+                        NULL != include_sbgp_name ? include_sbgp_name : exclude_sbgp_name);
             ret = OMPI_ERROR;
             goto exit_ERROR;
         }
-        ML_VERBOSE(10, ("Empty hierarchy..."));
+
+        ML_VERBOSE(10, ("Constructing empty hierarchy"));
         ret = OMPI_SUCCESS;
         goto exit_ERROR;
     }
@@ -2233,44 +2229,26 @@ int mca_coll_ml_allreduce_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             ML_VERBOSE(10, ("Topology build: sbgp %s will be excluded.",
                             sbgp_component->sbgp_version.mca_component_name));
 
+                  
             /* If there isn't additional component supports all types => print warning */
             if (1 == opal_list_get_size(&mca_bcol_base_components_in_use) ||
                 (opal_list_item_t *) bcol_cli_next ==
                 opal_list_get_end(&mca_bcol_base_components_in_use)) {
-                /* JMS You really should use opal_show_help() here;
-                   showing long error messages is *exactly* what
-                   opal_show_help() is for. */
-                ML_ERROR(("\n--------------------------------------------------------------------------------"
-                          "The BCOL component %s doesn't support "
-                          "all possible tuples (OPERATION X DATATYPE) for Allreduce "
-                          "and you didn't provide additional one for alternative topology building, "
-                          "as a result ML isn't be run correctly and its behavior is undefined. "
-                          "You should run this bcol with another one supports all possible tuples, "
-                          "\"--mca bcol_base_string %s,ptpcoll --mca sbgp_base_subgroups_string %s,p2p\" for example.",
-                          bcol_component->bcol_version.mca_component_name,
-                          bcol_component->bcol_version.mca_component_name,
-                          sbgp_component->sbgp_version.mca_component_name));
+                opal_show_help("help-mpi-coll-ml.txt",
+                       "allreduce-not-supported", true,
+                        bcol_component->bcol_version.mca_component_name);
+
             } else {
                 bcol_component_next = (mca_bcol_base_component_2_0_0_t *)
                     bcol_cli_next->cli_component;
 
                 if (NULL != bcol_component_next->coll_support_all_types &&
                     !bcol_component_next->coll_support_all_types(BCOL_ALLREDUCE)) {
-                    /* JMS You really should use opal_show_help() here;
-                       showing long error messages is *exactly* what
-                       opal_show_help() is for. */
-                    ML_ERROR(("\n--------------------------------------------------------------------------------"
-                              "The BCOL component %s doesn't support "
-                              "all possible tuples for Allreduce. "
-                              "While you did provid an additional %s bcol component for alternative topology building, "
-                              "this component also lacks support for all tuples. "
-                              "As a result, ML Allreduce's behavior is undefined. "
-                              "You must provide a component that supports all possible tuples, e.g. "
-                              "\"--mca bcol_base_string %s,ptpcoll --mca sbgp_base_subgroups_string %s,p2p",
-                              bcol_component->bcol_version.mca_component_name,
-                              bcol_component_next->bcol_version.mca_component_name,
-                              bcol_component->bcol_version.mca_component_name,
-                              sbgp_component->sbgp_version.mca_component_name));
+
+                    opal_show_help("help-mpi-coll-ml.txt",
+                       "allreduce-alt-nosupport", true,
+                        bcol_component->bcol_version.mca_component_name);
+
                 }
             }
 
@@ -2739,12 +2717,11 @@ static int setup_bcast_table(mca_coll_ml_module_t *module)
         if (1 == cm->enable_fragmentation || (2 == cm->enable_fragmentation && !has_zero_copy)) {
             module->bcast_fn_index_table[1] = ML_BCAST_SMALL_DATA_KNOWN;
         } else if (!has_zero_copy) {
-            /* JMS You really should use opal_show_help() here;
-               showing long error messages is *exactly* what
-               opal_show_help() is for. */
-            ML_ERROR(("ML couldn't be used: because the mca param coll_ml_enable_fragmentation "
-                      "was set to zero and there is a bcol doesn't support zero copy method."));
+
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "fragmentation-disabled", true);
             return OMPI_ERROR;
+
         } else {
             module->bcast_fn_index_table[1] = ML_BCAST_LARGE_DATA_KNOWN;
         }
@@ -2752,11 +2729,10 @@ static int setup_bcast_table(mca_coll_ml_module_t *module)
         module->bcast_fn_index_table[0] = ML_BCAST_SMALL_DATA_UNKNOWN;
 
         if (NULL == module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_UNKNOWN]) {
-            /* JMS You really should use opal_show_help() here;
-               showing long error messages is *exactly* what
-               opal_show_help() is for. */
-            ML_ERROR(("ML couldn't be used: because the mca param coll_ml_bcast_algorithm was not set "
-                      "to static and no function is available."));
+
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "static-bcast-disabled", true);
+
             return OMPI_ERROR;
         }
 
@@ -2766,11 +2742,10 @@ static int setup_bcast_table(mca_coll_ml_module_t *module)
         if (1 == cm->enable_fragmentation || (2 == cm->enable_fragmentation && !has_zero_copy)) {
             module->bcast_fn_index_table[1] = ML_BCAST_SMALL_DATA_UNKNOWN;
         } else if (!has_zero_copy) {
-            /* JMS You really should use opal_show_help() here;
-               showing long error messages is *exactly* what
-               opal_show_help() is for. */
-            ML_ERROR(("ML couldn't be used: because the mca param coll_ml_enable_fragmentation "
-                      "was set to zero and there is a bcol doesn't support zero copy method."));
+
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "fragmentation-disabled", true);
+
             return OMPI_ERROR;
         } else {
             /* If the topology support zero level and no fragmentation was requested */
