@@ -166,6 +166,7 @@ static int mca_coll_ml_build_allreduce_schedule(
             bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_REDUCE][bcol_func_index][0][0];
         if (NULL == comp_fn->bcol_function) {
             /* if there isn't a bcol function for this then we can't continue */
+            ret = OMPI_ERR_NOT_SUPPORTED;
             goto Allreduce_Setup_Error;
         }
 
@@ -195,6 +196,7 @@ static int mca_coll_ml_build_allreduce_schedule(
             bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_ALLREDUCE][bcol_func_index][0][0];
         if (NULL == comp_fn->bcol_function) {
             /* if there isn't a bcol function for this then we can't continue */
+            ret = OMPI_ERR_NOT_SUPPORTED;
             goto Allreduce_Setup_Error;
         }
 
@@ -225,6 +227,7 @@ static int mca_coll_ml_build_allreduce_schedule(
             bcol_module->filtered_fns_table[DATA_SRC_KNOWN][NON_BLOCKING][BCOL_BCAST][bcol_func_index][0][0];
         if (NULL == comp_fn->bcol_function) {
             /* if there isn't a bcol function for this then we can't continue */
+            ret = OMPI_ERR_NOT_SUPPORTED;
             goto Allreduce_Setup_Error;
         }
 
