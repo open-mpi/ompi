@@ -297,7 +297,7 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     {
         char *sm_file;
 
-        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%d", ompi_process_info.job_session_dir,
+        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%d", ompi_process_info.proc_session_dir,
                       ompi_process_info.nodename, MCA_BTL_VADER_LOCAL_RANK);
         if (0 > rc) {
             free (btls);
