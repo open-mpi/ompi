@@ -61,8 +61,24 @@ Trunk (not on release branches yet)
   via --enable-mpi-cxx.
 
 
+1.8
+---
+
+- Commit upstream ROMIO fix for mixed NFS+local filesystem environments.
+- Several fixes for MPI-3 one-sided support.  For example,
+  arbitrary-length datatypes are now supported.
+- Add config support for the Mellanox ConnectX 4 card.
+- Add missing MPI_COMM_GET|SET_INFO functions, and missing
+  MPI_WEIGHTS_EMPTY and MPI_ERR_RMA_SHARED constants.  Thanks to
+  Lisandro Dalcin for pointing out the issue.
+- Update some help messages in OSHMEM, the usnic BTL, the TCP BTL, and
+  ORTE, and update documentation about ompi_info's --level option.
+- Fix some compiler warnings.
+
+
 1.7.5
 -----
+
  **********************************************************************
  *  Open MPI is now fully MPI-3.0 compliant
  **********************************************************************
