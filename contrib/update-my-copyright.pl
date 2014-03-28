@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 
@@ -114,7 +114,7 @@ quiet_print "==> This year: $year\n";
 # Find the top-level OMPI source tree dir
 my $start = cwd();
 my $top = $start;
-while (! -f "$top/Makefile.man-page-rules") {
+while (! -f "$top/Makefile.ompi-rules") {
     chdir("..");
     $top = cwd();
     die "Can't find top-level Open MPI directory"

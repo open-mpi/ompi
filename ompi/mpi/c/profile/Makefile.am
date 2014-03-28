@@ -22,6 +22,8 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 #
 # OMPI_PROFILING_DEFINES flag s enabled when we want our MPI_* symbols
 # to be replaced by PMPI_*. In other words, this flag decides 
@@ -433,7 +435,7 @@ endif
 # Sym link in the sources from the real MPI directory
 #
 $(nodist_libmpi_c_pmpi_la_SOURCES):
-	if test ! -r $@ ; then \
+	$(OMPI_V_LN_S) if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '2-'` ; \
 		$(LN_S) $(top_srcdir)/ompi/mpi/c/$$pname $@ ; \
 	fi

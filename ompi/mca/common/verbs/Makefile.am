@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
-# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -67,9 +67,13 @@ endif
 # These two rules will sym link the "noinst" libtool library filename
 # to the installable libtool library filename in the case where we are
 # compiling this component statically (case 2), described above).
+V=0
+OMPI_V_LN_SCOMP = $(ompi__v_LN_SCOMP_$V)
+ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
+ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(comp_inst)`;
 
 all-local:
-	if test -z "$(lib_LTLIBRARIES)"; then \
+	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(comp_inst)"; \
 	  $(LN_S) "$(comp_noinst)" "$(comp_inst)"; \
 	fi

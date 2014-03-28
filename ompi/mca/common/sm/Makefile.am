@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2013 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -98,8 +98,14 @@ endif
 # to the installable libtool library filename in the case where we are
 # compiling this component statically (case 2), described above).
 
+# See Makefile.ompi-rules for an explanation of the "V" macros, below
+V=0
+OMPI_V_LN_SCOMP = $(ompi__v_LN_SCOMP_$V)
+ompi__v_LN_SCOMP_ = $(ompi__v_LN_SCOMP_$AM_DEFAULT_VERBOSITY)
+ompi__v_LN_SCOMP_0 = @echo "  LN_S    " `basename $(comp_inst)`;
+
 all-local:
-	if test -z "$(lib_LTLIBRARIES)"; then \
+	$(OMPI_V_LN_SCOMP) if test -z "$(lib_LTLIBRARIES)"; then \
 	  rm -f "$(comp_inst)"; \
 	  $(LN_S) "$(comp_noinst)" "$(comp_inst)"; \
 	fi

@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -23,7 +23,7 @@ DEFS="-DEXEEXT=\"$(EXEEXT)\""
 real_man_pages = generic_wrapper.1 opal_wrapper.1
 EXTRA_DIST = $(real_man_pages:.1=.1in)
 
-include $(top_srcdir)/Makefile.man-page-rules
+include $(top_srcdir)/Makefile.ompi-rules
 
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES

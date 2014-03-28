@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -21,6 +21,8 @@
 # 
 # $HEADER$
 #
+
+include $(top_srcdir)/Makefile.ompi-rules
 
 #
 # OMPI_PROFILING_DEFINES flag s enabled when we want our MPI_* symbols
@@ -80,7 +82,7 @@ nodist_libmpi_pmpit_la_SOURCES = \
 # Sym link in the sources from the real MPI directory
 #
 $(nodist_libmpi_pmpit_la_SOURCES):
-	if test ! -r $@ ; then \
+	$(OMPI_V_LN_S) if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '2-'` ; \
 		$(LN_S) $(top_srcdir)/ompi/mpi/tool/$$pname $@ ; \
 	fi

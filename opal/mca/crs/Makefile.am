@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/Makefile.man-page-rules
+include $(top_srcdir)/Makefile.ompi-rules
 
 # main library setup
 noinst_LTLIBRARIES = libmca_crs.la
