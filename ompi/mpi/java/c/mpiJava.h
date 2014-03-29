@@ -48,12 +48,9 @@ typedef struct {
     jmethodID IntegerValueOf;
     jclass    LongClass;
     jmethodID LongValueOf;
-    int dtSizes[12];
 } ompi_java_globals_t;
 
 extern ompi_java_globals_t ompi_java;
-
-void ompi_java_init_native_Datatype(JNIEnv *env);
 
 void* ompi_java_getBufPtr(
         void** bufBase, JNIEnv *env,

@@ -193,7 +193,6 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
         (*env)->DeleteLocalRef(env, jc);
     }
 
-    ompi_java_init_native_Datatype(env);
     ompi_java_findClasses(env);
     return value;
 }
@@ -223,7 +222,6 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     int rc = MPI_Init_thread(&len, &sargs, required, &provided);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_init_native_Datatype(env);
     ompi_java_findClasses(env);
     return provided;
 }
