@@ -52,29 +52,19 @@ public final class Status
 {
 protected final long[] data;
 
+static
+{
+    init();
+}
+
+private static native void init();
+
 /**
  * Status objects must be created only by the MPI methods.
  */
 protected Status()
 {
     data = new long[6];
-}
-
-/**
- * Status objects must be created only by the MPI methods.
- */
-protected Status(long[] data)
-{
-    assert data.length == 6;
-    this.data = data;
-}
-
-/**
- * Creates the status data.
- */
-protected static long[] newData()
-{
-    return new long[6];
 }
 
 /**
