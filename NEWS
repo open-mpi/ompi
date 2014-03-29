@@ -74,6 +74,9 @@ Trunk (not on release branches yet)
 - Update some help messages in OSHMEM, the usnic BTL, the TCP BTL, and
   ORTE, and update documentation about ompi_info's --level option.
 - Fix some compiler warnings.
+- Ensure that ORTE daemons are not bound to a single processor
+  if TaskAffinity is set on by default in Slurm. Thanks to Artem Polyakov
+  for identifying the problem and providing a patch
 
 
 1.7.5
