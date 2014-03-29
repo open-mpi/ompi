@@ -270,6 +270,14 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* alert us if any orteds die during startup */
     opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
 
+    /* ensure the orteds are not bound to a single processor,
+     * just in case the TaskAffinity option is set by default.
+     * This will *not* release the orteds from any cpu-set
+     * constraint, but will ensure it doesn't get
+     * bound to only one processor
+     */
+    opal_argv_append(&argc, &argv, "--cpu_bind=none");
+
     /* Append user defined arguments to srun */
     if ( NULL != mca_plm_slurm_component.custom_args ) {
         custom_strings = opal_argv_split(mca_plm_slurm_component.custom_args, ' ');
