@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * Additional copyrights may follow
  *
@@ -15,6 +16,8 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 #include "orte/types.h"
+
+#include "grpcomm_pmi.h"
 #endif
 
 /**
