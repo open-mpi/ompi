@@ -344,11 +344,6 @@ JNIEXPORT void JNICALL Java_mpi_Comm_setInfo(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_Comm
- * Method:    getInfo
- * Signature: (J)J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Comm_getInfo(
         JNIEnv *env, jobject jthis, jlong comm)
 {

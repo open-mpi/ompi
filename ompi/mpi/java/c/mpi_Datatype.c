@@ -74,24 +74,6 @@ MPI_Datatype Dts[] = { MPI_DATATYPE_NULL,  /* NULL */
                        MPI_C_DOUBLE_COMPLEX
 };
 
-void ompi_java_init_native_Datatype(JNIEnv *env)
-{
-    /* Initialization that can only be done after MPI_Init() has
-     * been called.  Called from `mpi_MPI.c'.
-     */
-
-    int i, rc;
-    ompi_java.dtSizes[0] = 0;
-
-    for(i = 1; i < 12; i++)
-    {
-        rc = MPI_Type_size(Dts[i], &(ompi_java.dtSizes[i]));
-
-        if(ompi_java_exceptionCheck(env, rc))
-            return;
-    }
-}
-
 JNIEXPORT void JNICALL Java_mpi_Datatype_init(JNIEnv *e, jclass clazz)
 {
     ompi_java.DatatypeHandle   = (*e)->GetFieldID(e, clazz, "handle",   "J");
