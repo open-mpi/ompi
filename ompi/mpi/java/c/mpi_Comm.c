@@ -337,6 +337,27 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_free(
     return (jlong)comm;
 }
 
+JNIEXPORT void JNICALL Java_mpi_Comm_setInfo(
+        JNIEnv *env, jobject jthis, jlong comm, jlong info)
+{
+    int rc = MPI_Comm_set_info((MPI_Comm)comm, (MPI_Info)info);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+/*
+ * Class:     mpi_Comm
+ * Method:    getInfo
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_mpi_Comm_getInfo(
+        JNIEnv *env, jobject jthis, jlong comm)
+{
+    MPI_Info info;
+    int rc = MPI_Comm_get_info((MPI_Comm)comm, &info);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)info;
+}
+
 JNIEXPORT jlong JNICALL Java_mpi_Comm_disconnect(
         JNIEnv *env, jobject jthis, jlong handle)
 {
@@ -344,14 +365,6 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_disconnect(
     int rc = MPI_Comm_disconnect(&comm);
     ompi_java_exceptionCheck(env, rc);
     return (jlong)comm;
-}
-
-JNIEXPORT jboolean JNICALL Java_mpi_Comm_isNull(JNIEnv *env, jobject jthis)
-{
-    MPI_Comm comm = (MPI_Comm)((*env)->GetLongField(
-                    env, jthis, ompi_java.CommHandle));
-
-    return comm == MPI_COMM_NULL ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_getGroup(

@@ -67,7 +67,7 @@ protected final static int SELF  = 1;
 protected final static int WORLD = 2;
 protected long handle;
 
-protected static long nullHandle;
+private static long nullHandle;
 
 static
 {
@@ -169,13 +169,48 @@ private static native int compare(long comm1, long comm2) throws MPIException;
  * Java binding of the MPI operation {@code MPI_COMM_FREE}.
  * @throws MPIException
  */
-@Override public void free() throws MPIException
+@Override final public void free() throws MPIException
 {
     MPI.check();
     handle = free(handle);
 }
 
 private native long free(long comm) throws MPIException;
+
+/**
+ * Test if communicator object is null (has been freed).
+ * @return true if the comm object is null, false otherwise
+ */
+public final boolean isNull()
+{
+    return handle == nullHandle;
+}
+
+/**
+ * Java binding of {@code MPI_COMM_SET_INFO}.
+ * @param info info object
+ * @throws MPIException 
+ */
+public final void setInfo(Info info) throws MPIException
+{
+    MPI.check();
+    setInfo(handle, info.handle);
+}
+
+private native void setInfo(long fh, long info) throws MPIException;
+
+/**
+ * Java binding of {@code MPI_COMM_GET_INFO}.
+ * @return new info object
+ * @throws MPIException 
+ */
+public final Info getInfo() throws MPIException
+{
+    MPI.check();
+    return new Info(getInfo(handle));
+}
+
+private native long getInfo(long fh) throws MPIException;
 
 /**
  * Java binding of the MPI operation {@code MPI_COMM_DISCONNECT}.
@@ -188,12 +223,6 @@ public final void disconnect() throws MPIException
 }
 
 private native long disconnect(long comm) throws MPIException;
-
-/**
- * Test if communicator object is void (has been freed).
- * @return true if the comm object is void, false otherwise
- */
-public final native boolean isNull();
 
 /**
  * Return group associated with a communicator.
