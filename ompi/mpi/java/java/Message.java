@@ -100,11 +100,10 @@ private native long mProbe(int source, int tag, long comm, long[] status)
 public Status imProbe(int source, int tag, Comm comm) throws MPIException
 {
     MPI.check();
-    long[] status = imProbe(source, tag, comm.handle);
-    return status == null ? null : new Status(status);
+    return imProbe(source, tag, comm.handle);
 }
 
-private native long[] imProbe(int source, int tag, long comm)
+private native Status imProbe(int source, int tag, long comm)
         throws MPIException;
 
 /**

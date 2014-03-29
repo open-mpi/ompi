@@ -46,7 +46,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Message_mProbe(
     return (jlong)message;
 }
 
-JNIEXPORT jlongArray JNICALL Java_mpi_Message_imProbe(
+JNIEXPORT jobject JNICALL Java_mpi_Message_imProbe(
         JNIEnv *env, jobject jthis, jint source, jint tag, jlong jComm)
 {
     MPI_Comm comm = (MPI_Comm)jComm;

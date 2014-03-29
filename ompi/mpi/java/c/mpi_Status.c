@@ -66,6 +66,11 @@ static void getStatus(MPI_Status *status, jint source, jint tag,
     status->_ucount    = ucount;
 }
 
+JNIEXPORT void JNICALL Java_mpi_Status_init(JNIEnv *env, jclass clazz)
+{
+    ompi_java.StatusData = (*env)->GetFieldID(env, clazz, "data", "[J");
+}
+
 JNIEXPORT jint JNICALL Java_mpi_Status_getCount(
         JNIEnv *env, jobject jthis, jint source, jint tag,
         jint error, jint cancelled, jlong ucount, jlong jType)
@@ -104,11 +109,22 @@ JNIEXPORT jint JNICALL Java_mpi_Status_getElements(
     return count;
 }
 
-jlongArray ompi_java_status_new(JNIEnv *env, MPI_Status *status)
+jobject ompi_java_status_new(JNIEnv *env, MPI_Status *status)
 {
     jlongArray jData = (*env)->NewLongArray(env, 6);
     ompi_java_status_set(env, jData, status);
-    return jData;
+    jobject jStatus = (*env)->AllocObject(env, ompi_java.StatusClass);
+    (*env)->SetObjectField(env, jStatus, ompi_java.StatusData, jData);
+    return jStatus;
+}
+
+jobject ompi_java_status_newIndex(JNIEnv *env, MPI_Status *status, int index)
+{
+    jlongArray jData = (*env)->NewLongArray(env, 6);
+    ompi_java_status_setIndex(env, jData, status, index);
+    jobject jStatus = (*env)->AllocObject(env, ompi_java.StatusClass);
+    (*env)->SetObjectField(env, jStatus, ompi_java.StatusData, jData);
+    return jStatus;
 }
 
 void ompi_java_status_set(JNIEnv *env, jlongArray jData, MPI_Status *status)

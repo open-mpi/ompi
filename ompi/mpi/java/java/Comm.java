@@ -894,11 +894,10 @@ private native int packSize(long comm, int incount, long type)
 public final Status iProbe(int source, int tag) throws MPIException
 {
     MPI.check();
-    long[] status = iProbe(handle, source, tag);
-    return status == null ? null : new Status(status);
+    return iProbe(handle, source, tag);
 }
 
-private native long[] iProbe(long comm, int source, int tag)
+private native Status iProbe(long comm, int source, int tag)
         throws MPIException;
 
 /**

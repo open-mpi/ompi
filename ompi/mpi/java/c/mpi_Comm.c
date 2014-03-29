@@ -715,14 +715,14 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_packSize(
     return size;
 }
 
-JNIEXPORT jlongArray JNICALL Java_mpi_Comm_iProbe(
+JNIEXPORT jobject JNICALL Java_mpi_Comm_iProbe(
         JNIEnv *env, jobject jthis, jlong comm, jint source, jint tag)
 {
     int flag;
     MPI_Status status;
     int rc = MPI_Iprobe(source, tag, (MPI_Comm)comm, &flag, &status);
     ompi_java_exceptionCheck(env, rc);
-    return !flag ? NULL : ompi_java_status_new(env, &status);
+    return flag ? ompi_java_status_new(env, &status) : NULL;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_probe(
