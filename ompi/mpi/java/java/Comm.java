@@ -289,7 +289,7 @@ private native long createIntercomm(
 /**
  * Blocking send operation.
  * <p>Java binding of the MPI operation {@code MPI_SEND}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -319,7 +319,7 @@ private native void send(
 /**
  * Blocking receive operation.
  * <p>Java binding of the MPI operation {@code MPI_RECV}.
- * @param buf    receive buffer array
+ * @param buf    receive buffer
  * @param count  number of items in receive buffer
  * @param type   datatype of each item in receive buffer
  * @param source rank of source
@@ -359,12 +359,12 @@ private native void recv(
 /**
  * Execute a blocking send and receive operation.
  * <p>Java binding of the MPI operation {@code MPI_SENDRECV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
  * @param dest      rank of destination
  * @param sendtag   send tag
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items in receive buffer
  * @param recvtype  datatype of each item in receive buffer
  * @param source    rank of source
@@ -420,7 +420,7 @@ private native void sendRecv(
  * Execute a blocking send and receive operation,
  * receiving message into send buffer.
  * <p>Java binding of the MPI operation {@code MPI_SENDRECV_REPLACE}.
- * @param buf     buffer array
+ * @param buf     buffer
  * @param count   number of items to send
  * @param type    datatype of each item in buffer
  * @param dest    rank of destination
@@ -465,7 +465,7 @@ private native void sendRecvReplace(
 /**
  * Send in buffered mode.
  * <p>Java binding of the MPI operation {@code MPI_BSEND}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -496,7 +496,7 @@ private native void bSend(
 /**
  * Send in synchronous mode.
  * <p>Java binding of the MPI operation {@code MPI_SSEND}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -527,7 +527,7 @@ private native void sSend(
 /**
  * Send in ready mode.
  * <p>Java binding of the MPI operation {@code MPI_RSEND}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -560,7 +560,7 @@ private native void rSend(
 /**
  * Start a standard mode, nonblocking send.
  * <p>Java binding of the MPI operation {@code MPI_ISEND}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -585,7 +585,7 @@ private native long iSend(
 /**
  * Start a buffered mode, nonblocking send.
  * <p>Java binding of the MPI operation <tt>MPI_IBSEND</tt>.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -610,7 +610,7 @@ private native long ibSend(
 /**
  * Start a synchronous mode, nonblocking send.
  * <p>Java binding of the MPI operation {@code MPI_ISSEND}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -635,7 +635,7 @@ private native long isSend(
 /**
  * Start a ready mode, nonblocking send.
  * <p>Java binding of the MPI operation {@code MPI_IRSEND}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -660,7 +660,7 @@ private native long irSend(
 /**
  * Start a nonblocking receive.
  * <p>Java binding of the MPI operation {@code MPI_IRECV}.
- * @param buf    receive buffer array
+ * @param buf    receive buffer
  * @param count  number of items in receive buffer
  * @param type   datatype of each item in receive buffer
  * @param source rank of source
@@ -688,7 +688,7 @@ private native long iRecv(
 /**
  * Creates a persistent communication request for a standard mode send.
  * <p>Java binding of the MPI operation {@code MPI_SEND_INIT}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -713,7 +713,7 @@ private native long sendInit(
 /**
  * Creates a persistent communication request for a buffered mode send.
  * <p>Java binding of the MPI operation {@code MPI_BSEND_INIT}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -738,7 +738,7 @@ private native long bSendInit(
 /**
  * Creates a persistent communication request for a synchronous mode send.
  * <p>Java binding of the MPI operation {@code MPI_SSEND_INIT}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -763,7 +763,7 @@ private native long sSendInit(
 /**
  * Creates a persistent communication request for a ready mode send.
  * <p>Java binding of the MPI operation {@code MPI_RSEND_INIT}.
- * @param buf   send buffer array
+ * @param buf   send buffer
  * @param count number of items to send
  * @param type  datatype of each item in send buffer
  * @param dest  rank of destination
@@ -788,7 +788,7 @@ private native long rSendInit(
 /**
  * Creates a persistent communication request for a receive operation.
  * <p>Java binding of the MPI operation {@code MPI_RECV_INIT}.
- * @param buf    receive buffer array
+ * @param buf    receive buffer
  * @param count  number of items in receive buffer
  * @param type   datatype of each item in receive buffer
  * @param source rank of source
@@ -820,7 +820,7 @@ private native long recvInit(
  * <p>
  * The return value is the output value of {@code position} - the
  * inital value incremented by the number of bytes written.
- * @param inbuf    input buffer array
+ * @param inbuf    input buffer
  * @param incount  number of items in input buffer
  * @param type     datatype of each item in input buffer
  * @param outbuf   output buffer
@@ -861,7 +861,7 @@ private native int pack(
  * inital value incremented by the number of bytes read.
  * @param inbuf    input buffer
  * @param position initial position in input buffer
- * @param outbuf   output buffer array
+ * @param outbuf   output buffer
  * @param outcount number of items in output buffer
  * @param type     datatype of each item in output buffer
  * @return final position in input buffer
@@ -1145,7 +1145,7 @@ private native long iBarrier(long comm) throws MPIException;
  * Broadcast a message from the process with rank {@code root}
  * to all processes of the group.
  * <p>Java binding of the MPI operation {@code MPI_BCAST}.
- * @param buf   buffer array
+ * @param buf   buffer
  * @param count number of items in buffer
  * @param type  datatype of each item in buffer
  * @param root  rank of broadcast root
@@ -1175,7 +1175,7 @@ private native void bcast(
  * Broadcast a message from the process with rank {@code root}
  * to all processes of the group.
  * <p>Java binding of the MPI operation {@code MPI_IBCAST}.
- * @param buf   buffer array
+ * @param buf   buffer
  * @param count number of items in buffer
  * @param type  datatype of each item in buffer
  * @param root  rank of broadcast root
@@ -1197,10 +1197,10 @@ private native long iBcast(
 /**
  * Each process sends the contents of its send buffer to the root process.
  * <p>Java binding of the MPI operation {@code MPI_GATHER}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of receiving process
@@ -1243,7 +1243,7 @@ public final void gather(
  * using {@code MPI_IN_PLACE} instead of the send buffer.
  * The buffer is used by the root process to receive data,
  * and it is used by the non-root processes to send data.
- * @param buf   buffer array
+ * @param buf   buffer
  * @param count number of items to send/receive
  * @param type  datatype of each item in buffer
  * @param root  rank of receiving process
@@ -1276,10 +1276,10 @@ private native void gather(
 /**
  * Each process sends the contents of its send buffer to the root process.
  * <p>Java binding of the MPI operation {@code MPI_IGATHER}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of receiving process
@@ -1304,7 +1304,7 @@ public final Request iGather(
  * using {@code MPI_IN_PLACE} instead of the send buffer.
  * The buffer is used by the root process to receive data,
  * and it is used by the non-root processes to send data.
- * @param buf   buffer array
+ * @param buf   buffer
  * @param count number of items to send/receive
  * @param type  datatype of each item in buffer
  * @param root  rank of receiving process
@@ -1330,10 +1330,10 @@ private native long iGather(
  * Extends functionality of {@code gather} by allowing varying
  * counts of data from each process.
  * <p>Java binding of the MPI operation {@code MPI_GATHERV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -1377,7 +1377,7 @@ public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
  * <p>Java binding of the MPI operation {@code MPI_GATHERV} using
  * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
  * This method must be used in the root process.
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -1408,7 +1408,7 @@ public final void gatherv(Object recvbuf, int[] recvcount, int[] displs,
  * <p>Java binding of the MPI operation {@code MPI_GATHERV} using
  * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
  * This method must be used in the non-root processes.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
  * @param root      rank of receiving process
@@ -1444,10 +1444,10 @@ private native void gatherv(
  * Extends functionality of {@code gather} by allowing varying
  * counts of data from each process.
  * <p>Java binding of the MPI operation {@code MPI_IGATHERV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -1474,7 +1474,7 @@ public final Request iGatherv(
  * <p>Java binding of the MPI operation {@code MPI_IGATHERV} using
  * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
  * This method must be used in the root process.
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -1499,7 +1499,7 @@ public final Request iGatherv(Buffer recvbuf, int[] recvcount, int[] displs,
  * <p>Java binding of the MPI operation {@code MPI_IGATHERV} using
  * {@code MPI_IN_PLACE} instead of the send buffer in the root process.
  * This method must be used in the non-root processes.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
  * @param root      rank of receiving process
@@ -1526,10 +1526,10 @@ private native long iGatherv(
 /**
  * Inverse of the operation {@code gather}.
  * <p>Java binding of the MPI operation {@code MPI_SCATTER}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of sending process
@@ -1572,7 +1572,7 @@ public final void scatter(
  * using {@code MPI_IN_PLACE} instead of the receive buffer.
  * The buffer is used by the root process to send data,
  * and it is used by the non-root processes to receive data.
- * @param buf   send/receive buffer array
+ * @param buf   send/receive buffer
  * @param count number of items to send/receive
  * @param type  datatype of each item in buffer
  * @param root  rank of sending process
@@ -1604,10 +1604,10 @@ private native void scatter(
 /**
  * Inverse of the operation {@code gather}.
  * <p>Java binding of the MPI operation {@code MPI_ISCATTER}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of sending process
@@ -1632,7 +1632,7 @@ public final Request iScatter(
  * using {@code MPI_IN_PLACE} instead of the receive buffer.
  * The buffer is used by the root process to send data,
  * and it is used by the non-root processes to receive data.
- * @param buf   send/receive buffer array
+ * @param buf   send/receive buffer
  * @param count number of items to send/receive
  * @param type  datatype of each item in buffer
  * @param root  rank of sending process
@@ -1657,11 +1657,11 @@ private native long iScatter(
 /**
  * Inverse of the operation {@code gatherv}.
  * <p>Java binding of the MPI operation {@code MPI_SCATTERV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each process
  * @param displs    displacements from which to take outgoing data
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of sending process
@@ -1703,7 +1703,7 @@ public final void scatterv(
  * <p>Java binding of the MPI operation {@code MPI_SCATTERV} using
  * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
  * This method must be used in the root process.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each process
  * @param displs    displacements from which to take outgoing data
  * @param sendtype  datatype of each item in send buffer
@@ -1734,7 +1734,7 @@ public final void scatterv(Object sendbuf, int[] sendcount, int[] displs,
  * <p>Java binding of the MPI operation {@code MPI_SCATTERV} using
  * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
  * This method must be used in the non-root processes.
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of sending process
@@ -1769,11 +1769,11 @@ private native void scatterv(
 /**
  * Inverse of the operation {@code gatherv}.
  * <p>Java binding of the MPI operation {@code MPI_ISCATTERV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each process
  * @param displs    displacements from which to take outgoing data
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of sending process
@@ -1798,7 +1798,7 @@ public final Request iScatterv(
  * <p>Java binding of the MPI operation {@code MPI_ISCATTERV} using
  * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
  * This method must be used in the root process.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each process
  * @param displs    displacements from which to take outgoing data
  * @param sendtype  datatype of each item in send buffer
@@ -1822,7 +1822,7 @@ public final Request iScatterv(Buffer sendbuf, int[] sendcount, int[] displs,
  * <p>Java binding of the MPI operation {@code MPI_ISCATTERV} using
  * {@code MPI_IN_PLACE} instead of the receive buffer in the root process.
  * This method must be used in the non-root processes.
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @param root      rank of sending process
@@ -1848,10 +1848,10 @@ private native long iScatterv(
 /**
  * Similar to {@code gather}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_ALLGATHER}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @throws MPIException
@@ -1890,7 +1890,7 @@ public final void allGather(Object sendbuf, int sendcount, Datatype sendtype,
  * Similar to {@code gather}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_ALLGATHER}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   receive buffer array
+ * @param buf   receive buffer
  * @param count number of items to receive
  * @param type  datatype of each item in receive buffer
  * @throws MPIException
@@ -1921,10 +1921,10 @@ private native void allGather(
 /**
  * Similar to {@code gather}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_IALLGATHER}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
  * @return communication request
@@ -1946,7 +1946,7 @@ public final Request iAllGather(
  * Similar to {@code gather}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_IALLGATHER}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   receive buffer array
+ * @param buf   receive buffer
  * @param count number of items to receive
  * @param type  datatype of each item in receive buffer
  * @return communication request
@@ -1967,10 +1967,10 @@ private native long iAllGather(
 /**
  * Similar to {@code gatherv}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_ALLGATHERV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -2011,7 +2011,7 @@ public final void allGatherv(
  * Similar to {@code gatherv}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_ALLGATHERV}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -2045,10 +2045,10 @@ private native void allGatherv(
 /**
  * Similar to {@code gatherv}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_IALLGATHERV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items to send
  * @param sendtype  datatype of each item in send buffer
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param displs    displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -2072,7 +2072,7 @@ public final Request iAllGatherv(
  * Similar to {@code gatherv}, but all processes receive the result.
  * <p>Java binding of the MPI operation {@code MPI_IALLGATHERV}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf    receive buffer array
+ * @param buf    receive buffer
  * @param count  number of elements received from each process
  * @param displs displacements at which to place incoming data
  * @param type   datatype of each item in receive buffer
@@ -2099,10 +2099,10 @@ private native long iAllGatherv(
  * Extension of {@code allGather} to the case where each process sends
  * distinct data to each of the receivers.
  * <p>Java binding of the MPI operation {@code MPI_ALLTOALL}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each process
  * @param sendtype  datatype send buffer items
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items received from any process
  * @param recvtype  datatype of receive buffer items
  * @throws MPIException
@@ -2147,10 +2147,10 @@ private native void allToAll(
  * Extension of {@code allGather} to the case where each process sends
  * distinct data to each of the receivers.
  * <p>Java binding of the MPI operation {@code MPI_IALLTOALL}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each process
  * @param sendtype  datatype send buffer items
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of items received from any process
  * @param recvtype  datatype of receive buffer items
  * @return communication request
@@ -2176,11 +2176,11 @@ private native long iAllToAll(
  * specified by {@code sdispls} and location to place data on receive
  * side is specified by {@code rdispls}.
  * <p>Java binding of the MPI operation {@code MPI_ALLTOALLV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each buffer
  * @param sdispls   displacements from which to take outgoing data
  * @param sendtype  datatype send buffer items
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param rdispls   displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -2229,11 +2229,11 @@ private native void allToAllv(
  * specified by {@code sdispls} and location to place data on receive
  * side is specified by {@code rdispls}.
  * <p>Java binding of the MPI operation {@code MPI_IALLTOALLV}.
- * @param sendbuf   send buffer array
+ * @param sendbuf   send buffer
  * @param sendcount number of items sent to each buffer
  * @param sdispls   displacements from which to take outgoing data
  * @param sendtype  datatype send buffer items
- * @param recvbuf   receive buffer array
+ * @param recvbuf   receive buffer
  * @param recvcount number of elements received from each process
  * @param rdispls   displacements at which to place incoming data
  * @param recvtype  datatype of each item in receive buffer
@@ -2259,6 +2259,319 @@ private native long iAllToAllv(long comm,
         throws MPIException;
 
 /**
+ * Java binding of {@code MPI_NEIGHBOR_ALLGATHER}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @throws MPIException 
+ */
+public final void neighborAllGather(
+        Object sendbuf, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    neighborAllGather(handle, sendbuf, sdb, sendoff, sendcount,
+                      sendtype.handle, sendtype.baseType,
+                      recvbuf, rdb, recvoff, recvcount,
+                      recvtype.handle, recvtype.baseType);
+}
+
+private native void neighborAllGather(
+        long comm, Object sendBuf, boolean sdb, int sendOffset,
+        int sendCount, long sendType, int sendBaseType,
+        Object recvBuf, boolean rdb, int recvOffset,
+        int recvCount, long recvType, int recvBaseType)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_INEIGHBOR_ALLGATHER}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iNeighborAllGather(
+        Buffer sendbuf, int sendcount, Datatype sendtype,
+        Buffer recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iNeighborAllGather(
+            handle, sendbuf, sendcount, sendtype.handle,
+            recvbuf, recvcount, recvtype.handle));
+}
+
+private native long iNeighborAllGather(
+        long comm, Buffer sendBuf, int sendCount, long sendType,
+        Buffer recvBuf, int recvCount, long recvType)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_NEIGHBOR_ALLGATHERV}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer
+ * @param recvcount number of elements that are received from each neighbor
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of receive buffer elements
+ * @throws MPIException
+ */
+public final void neighborAllGatherv(
+        Object sendbuf, int sendcount, Datatype sendtype,
+        Object recvbuf, int[] recvcount, int[] displs, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    neighborAllGatherv(handle, sendbuf, sdb, sendoff, sendcount,
+                       sendtype.handle, sendtype.baseType,
+                       recvbuf, rdb, recvoff, recvcount, displs,
+                       recvtype.handle, recvtype.baseType);
+}
+
+private native void neighborAllGatherv(
+        long comm, Object sendBuf, boolean sdb, int sendOff,
+        int sendCount, long sendType, int sendBaseType,
+        Object recvBuf, boolean rdb, int recvOff,
+        int[] recvCount, int[] displs, long recvType, int recvBaseType);
+
+/**
+ * Java binding of {@code MPI_INEIGHBOR_ALLGATHERV}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer
+ * @param recvcount number of elements that are received from each neighbor
+ * @param displs    displacements at which to place incoming data
+ * @param recvtype  datatype of receive buffer elements
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iNeighborAllGatherv(
+        Buffer sendbuf, int sendcount, Datatype sendtype,
+        Buffer recvbuf, int[] recvcount, int[] displs, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iNeighborAllGatherv(
+            handle, sendbuf, sendcount, sendtype.handle,
+            recvbuf, recvcount, displs, recvtype.handle));
+}
+
+private native long iNeighborAllGatherv(
+        long comm, Buffer sendBuf, int sendCount, long sendType,
+        Buffer recvBuf, int[] recvCount, int[] displs, long recvType)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_NEIGHBOR_ALLTOALL}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @throws MPIException
+ */
+public final void neighborAllToAll(
+        Object sendbuf, int sendcount, Datatype sendtype,
+        Object recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+
+    neighborAllToAll(handle, sendbuf, sdb, sendoff, sendcount,
+                     sendtype.handle, sendtype.baseType,
+                     recvbuf, rdb, recvoff, recvcount,
+                     recvtype.handle, recvtype.baseType);
+}
+
+private native void neighborAllToAll(
+        long comm, Object sendBuf, boolean sdb, int sendOff,
+        int sendCount, long sendType, int sendBaseType,
+        Object recvBuf, boolean rdb, int recvOff,
+        int recvCount, long recvType, int recvBaseType)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_INEIGHBOR_ALLTOALL}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items to send
+ * @param sendtype  datatype of each item in send buffer
+ * @param recvbuf   receive buffer
+ * @param recvcount number of items to receive
+ * @param recvtype  datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iNeighborAllToAll(
+        Buffer sendbuf, int sendcount, Datatype sendtype,
+        Buffer recvbuf, int recvcount, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iNeighborAllToAll(
+            handle, sendbuf, sendcount, sendtype.handle,
+            recvbuf, recvcount, recvtype.handle));
+}
+
+private native long iNeighborAllToAll(
+        long comm, Buffer sendBuf, int sendCount, long sendType,
+        Buffer recvBuf, int recvCount, long recvType);
+
+/**
+ * Java binding of {@code MPI_NEIGHBOR_ALLTOALLV}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items sent to each buffer
+ * @param sdispls   displacements from which to take outgoing data
+ * @param sendtype  datatype send buffer items
+ * @param recvbuf   receive buffer
+ * @param recvcount number of elements received from each process
+ * @param rdispls   displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @throws MPIException
+ */
+public final void neighborAllToAllv(
+        Object sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
+        Object recvbuf, int[] recvcount, int[] rdispls, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+
+    int sendoff = 0,
+        recvoff = 0;
+
+    boolean sdb = false,
+            rdb = false;
+
+    if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
+    {
+        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendbuf = ((Buffer)sendbuf).array();
+    }
+
+    if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
+    {
+        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvbuf = ((Buffer)recvbuf).array();
+    }
+    
+    neighborAllToAllv(handle,
+            sendbuf, sdb, sendoff, sendcount, sdispls,
+            sendtype.handle, sendtype.baseType,
+            recvbuf, rdb, recvoff, recvcount, rdispls,
+            recvtype.handle, recvtype.baseType);
+}
+
+private native void neighborAllToAllv(
+        long comm, Object sendBuf, boolean sdb, int sendOff,
+        int[] sendCount, int[] sdispls, long sendType, int sendBaseType,
+        Object recvBuf, boolean rdb, int recvOff,
+        int[] recvCount, int[] rdispls, long recvType, int recvBaseType)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_INEIGHBOR_ALLTOALLV}.
+ * @param sendbuf   send buffer
+ * @param sendcount number of items sent to each buffer
+ * @param sdispls   displacements from which to take outgoing data
+ * @param sendtype  datatype send buffer items
+ * @param recvbuf   receive buffer
+ * @param recvcount number of elements received from each process
+ * @param rdispls   displacements at which to place incoming data
+ * @param recvtype  datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException
+ */
+public final Request iNeighborAllToAllv(
+        Buffer sendbuf, int[] sendcount, int[] sdispls, Datatype sendtype,
+        Buffer recvbuf, int[] recvcount, int[] rdispls, Datatype recvtype)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendbuf, recvbuf);
+
+    return new Request(iNeighborAllToAllv(
+            handle, sendbuf, sendcount, sdispls, sendtype.handle,
+            recvbuf, recvcount, rdispls, recvtype.handle));
+}
+
+private native long iNeighborAllToAllv(
+        long comm, Buffer sendBuf, int[] sendCount, int[] sdispls, long sType,
+        Buffer recvBuf, int[] recvCount, int[] rdispls, long rType)
+        throws MPIException;
+
+/**
  * Combine elements in input buffer of each process using the reduce
  * operation, and return the combined value in the output buffer of the
  * root process.
@@ -2269,8 +2582,8 @@ private native long iAllToAllv(long comm,
  * {@code MPI.MIN}, {@code MPI.SUM}, {@code MPI.PROD}, {@code MPI.LAND},
  * {@code MPI.BAND}, {@code MPI.LOR}, {@code MPI.BOR}, {@code MPI.LXOR},
  * {@code MPI.BXOR}, {@code MPI.MINLOC} and {@code MPI.MAXLOC}.
- * @param sendbuf send buffer array
- * @param recvbuf receive buffer array
+ * @param sendbuf send buffer
+ * @param recvbuf receive buffer
  * @param count   number of items in send buffer
  * @param type    data type of each item in send buffer
  * @param op      reduce operation
@@ -2312,7 +2625,7 @@ public final void reduce(Object sendbuf, Object recvbuf, int count,
  * root process.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   send/receive buffer array
+ * @param buf   send/receive buffer
  * @param count number of items in buffer
  * @param type  data type of each item in buffer
  * @param op    reduce operation
@@ -2348,8 +2661,8 @@ private native void reduce(
  * operation, and return the combined value in the output buffer of the
  * root process.
  * <p>Java binding of the MPI operation {@code MPI_IREDUCE}.
- * @param sendbuf send buffer array
- * @param recvbuf receive buffer array
+ * @param sendbuf send buffer
+ * @param recvbuf receive buffer
  * @param count   number of items in send buffer
  * @param type    data type of each item in send buffer
  * @param op      reduce operation
@@ -2376,7 +2689,7 @@ public final Request iReduce(Buffer sendbuf, Buffer recvbuf,
  * root process.
  * <p>Java binding of the MPI operation {@code MPI_IREDUCE}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   send/receive buffer array
+ * @param buf   send/receive buffer
  * @param count number of items in buffer
  * @param type  data type of each item in buffer
  * @param op    reduce operation
@@ -2406,8 +2719,8 @@ private native long iReduce(
  * Same as {@code reduce} except that the result appears in receive
  * buffer of all process in the group.
  * <p>Java binding of the MPI operation {@code MPI_ALLREDUCE}.
- * @param sendbuf send buffer array
- * @param recvbuf receive buffer array
+ * @param sendbuf send buffer
+ * @param recvbuf receive buffer
  * @param count   number of items in send buffer
  * @param type    data type of each item in send buffer
  * @param op      reduce operation
@@ -2447,7 +2760,7 @@ public final void allReduce(Object sendbuf, Object recvbuf,
  * buffer of all process in the group.
  * <p>Java binding of the MPI operation {@code MPI_ALLREDUCE}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   receive buffer array
+ * @param buf   receive buffer
  * @param count number of items in send buffer
  * @param type  data type of each item in send buffer
  * @param op    reduce operation
@@ -2480,8 +2793,8 @@ private native void allReduce(
  * Same as {@code reduce} except that the result appears in receive
  * buffer of all process in the group.
  * <p>Java binding of the MPI operation {@code MPI_IALLREDUCE}.
- * @param sendbuf send buffer array
- * @param recvbuf receive buffer array
+ * @param sendbuf send buffer
+ * @param recvbuf receive buffer
  * @param count   number of items in send buffer
  * @param type    data type of each item in send buffer
  * @param op      reduce operation
@@ -2505,7 +2818,7 @@ public final Request iAllReduce(Buffer sendbuf, Buffer recvbuf,
  * buffer of all process in the group.
  * <p>Java binding of the MPI operation {@code MPI_IALLREDUCE}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   receive buffer array
+ * @param buf   receive buffer
  * @param count number of items in send buffer
  * @param type  data type of each item in send buffer
  * @param op    reduce operation
@@ -2533,8 +2846,8 @@ private native long iAllReduce(
  * operation, and scatter the combined values over the output buffers
  * of the processes.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER}.
- * @param sendbuf    send buffer array
- * @param recvbuf    receive buffer array
+ * @param sendbuf    send buffer
+ * @param recvbuf    receive buffer
  * @param recvcounts numbers of result elements distributed to each process
  * @param type       data type of each item in send buffer
  * @param op         reduce operation
@@ -2575,7 +2888,7 @@ public final void reduceScatter(Object sendbuf, Object recvbuf,
  * of the processes.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf    receive buffer array
+ * @param buf    receive buffer
  * @param counts numbers of result elements distributed to each process
  * @param type   data type of each item in send buffer
  * @param op     reduce operation
@@ -2609,8 +2922,8 @@ private native void reduceScatter(
  * operation, and scatter the combined values over the output buffers
  * of the processes.
  * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER}.
- * @param sendbuf    send buffer array
- * @param recvbuf    receive buffer array
+ * @param sendbuf    send buffer
+ * @param recvbuf    receive buffer
  * @param recvcounts numbers of result elements distributed to each process
  * @param type       data type of each item in send buffer
  * @param op         reduce operation
@@ -2636,7 +2949,7 @@ public final Request iReduceScatter(Buffer sendbuf, Buffer recvbuf,
  * of the processes.
  * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf    receive buffer array
+ * @param buf    receive buffer
  * @param counts numbers of result elements distributed to each process
  * @param type   data type of each item in send buffer
  * @param op     reduce operation
@@ -2663,8 +2976,8 @@ private native long iReduceScatter(
 /**
  * Combine values and scatter the results.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER_BLOCK}.
- * @param sendbuf   send buffer array
- * @param recvbuf   receive buffer array
+ * @param sendbuf   send buffer
+ * @param recvbuf   receive buffer
  * @param recvcount element count per block
  * @param type      data type of each item in send buffer
  * @param op        reduce operation
@@ -2703,7 +3016,7 @@ public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
  * Combine values and scatter the results.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE_SCATTER_BLOCK}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   receive buffer array
+ * @param buf   receive buffer
  * @param count element count per block
  * @param type  data type of each item in send buffer
  * @param op    reduce operation
@@ -2736,8 +3049,8 @@ private native void reduceScatterBlock(
 /**
  * Combine values and scatter the results.
  * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER_BLOCK}.
- * @param sendbuf   send buffer array
- * @param recvbuf   receive buffer array
+ * @param sendbuf   send buffer
+ * @param recvbuf   receive buffer
  * @param recvcount element count per block
  * @param type      data type of each item in send buffer
  * @param op        reduce operation
@@ -2761,7 +3074,7 @@ public final Request iReduceScatterBlock(
  * Combine values and scatter the results.
  * <p>Java binding of the MPI operation {@code MPI_IREDUCE_SCATTER_BLOCK}
  * using {@code MPI_IN_PLACE} instead of the send buffer.
- * @param buf   receive buffer array
+ * @param buf   receive buffer
  * @param count element count per block
  * @param type  data type of each item in send buffer
  * @param op    reduce operation
@@ -2790,8 +3103,8 @@ private native long iReduceScatterBlock(
  * elements of {@code inBuf} and {@code inOutBuf} with the result
  * stored element-wise in {@code inOutBuf}.
  * <p>Java binding of the MPI operation {@code MPI_REDUCE_LOCAL}.
- * @param inBuf    input buffer array
- * @param inOutBuf input buffer array, will contain combined output
+ * @param inBuf    input buffer
+ * @param inOutBuf input buffer, will contain combined output
  * @param count    number of elements
  * @param type     data type of each item
  * @param op       reduce operation
