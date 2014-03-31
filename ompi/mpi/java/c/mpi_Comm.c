@@ -292,13 +292,28 @@ JNIEXPORT void JNICALL Java_mpi_Comm_getComm(JNIEnv *env, jobject jthis,
     }
 }
 
-JNIEXPORT jlong JNICALL Java_mpi_Comm_dup(JNIEnv *env, jobject jthis)
+JNIEXPORT jlong JNICALL Java_mpi_Comm_dup(
+        JNIEnv *env, jobject jthis, jlong comm)
 {
-    MPI_Comm comm, newcomm;
-    comm = (MPI_Comm)(*env)->GetLongField(env, jthis, ompi_java.CommHandle);
-    int rc = MPI_Comm_dup(comm, &newcomm);
+    MPI_Comm newcomm;
+    int rc = MPI_Comm_dup((MPI_Comm)comm, &newcomm);
     ompi_java_exceptionCheck(env, rc);
     return (jlong)newcomm;
+}
+
+JNIEXPORT jlongArray JNICALL Java_mpi_Comm_iDup(
+        JNIEnv *env, jobject jthis, jlong comm)
+{
+    MPI_Comm newcomm;
+    MPI_Request request;
+    int rc = MPI_Comm_idup((MPI_Comm)comm, &newcomm, &request);
+    ompi_java_exceptionCheck(env, rc);
+    jlongArray jcr = (*env)->NewLongArray(env, 2);
+    jlong *cr = (jlong*)(*env)->GetPrimitiveArrayCritical(env, jcr, NULL);
+    cr[0] = (jlong)newcomm;
+    cr[1] = (jlong)request;
+    (*env)->ReleasePrimitiveArrayCritical(env, jcr, cr, 0);
+    return jcr;
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_getSize(

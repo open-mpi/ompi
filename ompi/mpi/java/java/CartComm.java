@@ -62,24 +62,54 @@ protected CartComm(long handle) throws MPIException
     super(handle);
 }
 
+protected CartComm(long[] commRequest)
+{
+    super(commRequest);
+}
+
 /**
- * Duplicate this communicator.
- * <p>Java binding of the MPI operation {@code MPI_COMM_DUP}.
- * <p>The new communicator is "congruent" to the old one,
- *    but has a different context.
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_DUP}.
+ * <p>It is recommended to use {@link #dup} instead of {@link #clone}
+ * because the last can't throw an {@link mpi.MPIException}.
  * @return copy of this communicator
  */
 @Override public CartComm clone()
 {
     try
     {
-        MPI.check();
-        return new CartComm(dup());
+        return dup();
     }
     catch(MPIException e)
     {
         throw new RuntimeException(e.getMessage());
     }
+}
+
+/**
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_DUP}.
+ * @return copy of this communicator
+ * @throws MPIException
+ */
+@Override public CartComm dup() throws MPIException
+{
+    MPI.check();
+    return new CartComm(dup(handle));
+}
+
+/**
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_IDUP}.
+ * <p>The new communicator can't be used before the operation completes.
+ * The request object must be obtained calling {@link #getRequest}.
+ * @return copy of this communicator
+ * @throws MPIException
+ */
+@Override public CartComm iDup() throws MPIException
+{
+    MPI.check();
+    return new CartComm(iDup(handle));
 }
 
 /**

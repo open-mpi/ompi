@@ -62,24 +62,54 @@ protected GraphComm(long handle) throws MPIException
     super(handle);
 }
 
+protected GraphComm(long[] commRequest)
+{
+    super(commRequest);
+}
+
 /**
- * Duplicate this communicator.
- * <p>Java binding of the MPI operation {@code MPI_COMM_DUP}.
- * <p>The new communicator is "congruent" to the old one,
- *    but has a different context.
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_DUP}.
+ * <p>It is recommended to use {@link #dup} instead of {@link #clone}
+ * because the last can't throw an {@link mpi.MPIException}.
  * @return copy of this communicator
  */
 @Override public GraphComm clone()
 {
     try
     {
-        MPI.check();
-        return new GraphComm(dup());
+        return dup();
     }
     catch(MPIException e)
     {
         throw new RuntimeException(e.getMessage());
     }
+}
+
+/**
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_DUP}.
+ * @return copy of this communicator
+ * @throws MPIException
+ */
+@Override public GraphComm dup() throws MPIException
+{
+    MPI.check();
+    return new GraphComm(dup(handle));
+}
+
+/**
+ * Duplicates this communicator.
+ * <p>The new communicator can't be used before the operation completes.
+ * The request object must be obtained calling {@link #getRequest}.
+ * <p>Java binding of {@code MPI_COMM_IDUP}.
+ * @return copy of this communicator
+ * @throws MPIException
+ */
+@Override public GraphComm iDup() throws MPIException
+{
+    MPI.check();
+    return new GraphComm(iDup(handle));
 }
 
 /**
