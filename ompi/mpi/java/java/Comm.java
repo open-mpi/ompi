@@ -66,6 +66,7 @@ public class Comm implements Freeable
 protected final static int SELF  = 1;
 protected final static int WORLD = 2;
 protected long handle;
+private Request request;
 
 private static long nullHandle;
 
@@ -85,6 +86,12 @@ protected Comm(long handle)
     this.handle = handle;
 }
 
+protected Comm(long[] commRequest)
+{
+    handle  = commRequest[0];
+    request = new Request(commRequest[1]);
+}
+
 protected final void setType(int type)
 {
     getComm(type);
@@ -93,18 +100,17 @@ protected final void setType(int type)
 private native void getComm(int type);
 
 /**
- * Duplicate this communicator.
- * <p>Java binding of the MPI operation {@code MPI_COMM_DUP}.
- * <p>The new communicator is "congruent" to the old one,
- *    but has a different context.
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_DUP}.
+ * <p>It is recommended to use {@link #dup} instead of {@link #clone}
+ * because the last can't throw an {@link mpi.MPIException}.
  * @return copy of this communicator
  */
 @Override public Comm clone()
 {
     try
     {
-        MPI.check();
-        return new Comm(dup());
+        return dup();
     }
     catch(MPIException e)
     {
@@ -112,7 +118,46 @@ private native void getComm(int type);
     }
 }
 
-protected final native long dup() throws MPIException;
+/**
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_DUP}.
+ * @return copy of this communicator
+ * @throws MPIException
+ */
+public Comm dup() throws MPIException
+{
+    MPI.check();
+    return new Comm(dup(handle));
+}
+
+protected final native long dup(long comm) throws MPIException;
+
+/**
+ * Duplicates this communicator.
+ * <p>Java binding of {@code MPI_COMM_IDUP}.
+ * <p>The new communicator can't be used before the operation completes.
+ * The request object must be obtained calling {@link #getRequest}.
+ * @return copy of this communicator
+ * @throws MPIException 
+ */
+public Comm iDup() throws MPIException
+{
+    MPI.check();
+    return new Comm(iDup(handle));
+}
+
+protected final native long[] iDup(long comm) throws MPIException;
+
+/**
+ * Returns the associated request to this communicator if it was
+ * created using {@link #iDup}.
+ * @return associated request if this communicator was created
+ *         using {@link #iDup}, or null otherwise.
+ */
+public final Request getRequest()
+{
+    return request;
+}
 
 /**
  * Size of group of this communicator.
