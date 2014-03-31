@@ -121,14 +121,15 @@ private native String getKey(long handle, int i) throws MPIException;
 
 /**
  * Java binding of the MPI operation {@code MPI_INFO_DUP}.
+ * <p>It is recommended to use {@link #dup} instead of {@link #clone}
+ * because the last can't throw an {@link mpi.MPIException}.
  * @return info object
  */
 @Override public Info clone()
 {
     try
     {
-        MPI.check();
-        return new Info(clone(handle));
+        return dup();
     }
     catch(MPIException e)
     {
@@ -136,7 +137,18 @@ private native String getKey(long handle, int i) throws MPIException;
     }
 }
 
-private native long clone(long handle) throws MPIException;
+/**
+ * Java binding of the MPI operation {@code MPI_INFO_DUP}.
+ * @return info object
+ * @throws MPIException
+ */
+public Info dup() throws MPIException
+{
+    MPI.check();
+    return new Info(dup(handle));
+}
+
+private native long dup(long handle) throws MPIException;
 
 /**
  * Java binding of the MPI operation {@code MPI_INFO_FREE}.

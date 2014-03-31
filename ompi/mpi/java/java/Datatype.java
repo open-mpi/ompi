@@ -261,19 +261,31 @@ public boolean isNull()
 
 /**
  * Java binding of {@code MPI_TYPE_DUP}.
+ * <p>It is recommended to use {@link #dup} instead of {@link #clone}
+ * because the last can't throw an {@link mpi.MPIException}.
  * @return new datatype
  */
 @Override public Datatype clone()
 {
     try
     {
-        MPI.check();
-        return new Datatype(this, dup(handle));
+        return dup();
     }
     catch(MPIException e)
     {
         throw new RuntimeException(e.getMessage());
     }
+}
+
+/**
+ * Java binding of {@code MPI_TYPE_DUP}.
+ * @return new datatype
+ * @throws MPIException 
+ */
+public Datatype dup() throws MPIException
+{
+    MPI.check();
+    return new Datatype(this, dup(handle));
 }
 
 private native long dup(long type) throws MPIException;
