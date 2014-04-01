@@ -130,6 +130,52 @@ void JNI_OnUnload(JavaVM *vm, void *reserved)
         dlclose(libmpi);
 }
 
+static jclass findClass(JNIEnv *env, const char *className)
+{
+    jclass c = (*env)->FindClass(env, className),
+           r = (*env)->NewGlobalRef(env, c);
+
+    (*env)->DeleteLocalRef(env, c);
+    return r;
+}
+
+static void findClasses(JNIEnv *env)
+{
+    ompi_java.CartParmsClass  = findClass(env, "mpi/CartParms");
+    ompi_java.ShiftParmsClass = findClass(env, "mpi/ShiftParms");
+    ompi_java.GraphParmsClass = findClass(env, "mpi/GraphParms");
+
+    ompi_java.DistGraphNeighborsClass = findClass(
+                                        env, "mpi/DistGraphNeighbors");
+
+    ompi_java.StatusClass    = findClass(env, "mpi/Status");
+    ompi_java.ExceptionClass = findClass(env, "mpi/MPIException");
+
+    ompi_java.ExceptionInit = (*env)->GetMethodID(
+                              env, ompi_java.ExceptionClass,
+                              "<init>", "(IILjava/lang/String;)V");
+
+    ompi_java.IntegerClass = findClass(env, "java/lang/Integer");
+    ompi_java.LongClass    = findClass(env, "java/lang/Long");
+
+    ompi_java.IntegerValueOf = (*env)->GetStaticMethodID(
+            env, ompi_java.IntegerClass, "valueOf", "(I)Ljava/lang/Integer;");
+    ompi_java.LongValueOf = (*env)->GetStaticMethodID(
+            env, ompi_java.LongClass, "valueOf", "(J)Ljava/lang/Long;");
+}
+
+static void deleteClasses(JNIEnv *env)
+{
+    (*env)->DeleteGlobalRef(env, ompi_java.CartParmsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.ExceptionClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.IntegerClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.LongClass);
+}
+
 JNIEXPORT jobject JNICALL Java_mpi_MPI_newInt2(JNIEnv *env, jclass clazz)
 {
     struct { int a; int b; } s;
@@ -207,7 +253,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
         (*env)->DeleteLocalRef(env, jc);
     }
 
-    ompi_java_findClasses(env);
+    findClasses(env);
     return value;
 }
 
@@ -231,7 +277,7 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     int rc = MPI_Init_thread(&len, &sargs, required, &provided);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_findClasses(env);
+    findClasses(env);
     return provided;
 }
 
@@ -256,19 +302,17 @@ JNIEXPORT void JNICALL Java_mpi_MPI_Finalize_1jni(JNIEnv *env, jclass obj)
 {
     int rc = MPI_Finalize();
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_deleteClasses(env);
+    deleteClasses(env);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_MPI_getProcessorName(
                        JNIEnv *env, jclass obj, jbyteArray buf)
 {
-    int len, rc;
-    jboolean isCopy;
-    jbyte* bufc = (jbyte*)((*env)->GetByteArrayElements(env,buf,&isCopy)) ;
-
-    rc = MPI_Get_processor_name((char*)bufc, &len);
+    int len;
+    jbyte* bufc = (jbyte*)((*env)->GetByteArrayElements(env, buf, NULL));
+    int rc = MPI_Get_processor_name((char*)bufc, &len);
     ompi_java_exceptionCheck(env, rc);
-    (*env)->ReleaseByteArrayElements(env,buf,bufc,0) ;
+    (*env)->ReleaseByteArrayElements(env, buf, bufc, 0);
     return len;
 }
 
@@ -284,40 +328,25 @@ JNIEXPORT jdouble JNICALL Java_mpi_MPI_wtick_1jni(JNIEnv *env, jclass jthis)
 
 JNIEXPORT jboolean JNICALL Java_mpi_MPI_isInitialized(JNIEnv *env, jclass jthis)
 {
-    int flag, rc;
-
-    rc = MPI_Initialized(&flag);
+    int flag;
+    int rc = MPI_Initialized(&flag);
     ompi_java_exceptionCheck(env, rc);
-
-    if (flag==0) {
-        return JNI_FALSE;
-    } else {
-        return JNI_TRUE;
-    }
+    return flag ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT jboolean JNICALL Java_mpi_MPI_isFinalized(JNIEnv *env, jclass jthis)
 {
-    int flag, rc;
-
-    rc = MPI_Finalized(&flag);
+    int flag;
+    int rc = MPI_Finalized(&flag);
     ompi_java_exceptionCheck(env, rc);
-
-    if (flag==0) {
-        return JNI_FALSE;
-    } else {
-        return JNI_TRUE;
-    }
+    return flag ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_mpi_MPI_attachBuffer_1jni(
                        JNIEnv *env, jclass jthis, jbyteArray buf)
 {
-    jboolean isCopy;
-
     int size=(*env)->GetArrayLength(env,buf);
-    jbyte* bufptr = (*env)->GetByteArrayElements(env,buf,&isCopy) ;
-
+    jbyte* bufptr = (*env)->GetByteArrayElements(env, buf, NULL);
     int rc = MPI_Buffer_attach(bufptr,size);
     ompi_java_exceptionCheck(env, rc);
 }
@@ -325,64 +354,153 @@ JNIEXPORT void JNICALL Java_mpi_MPI_attachBuffer_1jni(
 JNIEXPORT void JNICALL Java_mpi_MPI_detachBuffer_1jni(
                        JNIEnv *env, jclass jthis, jbyteArray buf)
 {
-    /*jboolean isCopy;*/
-
-    int size, rc;
-    /*char* bufptr ;*/
-    jbyte* bufptr ;
-
-    rc = MPI_Buffer_detach(&bufptr, &size);
+    int size;
+    jbyte* bufptr;
+    int rc = MPI_Buffer_detach(&bufptr, &size);
     ompi_java_exceptionCheck(env, rc);
 
-    if (buf != NULL) {
+    if(buf != NULL)
         (*env)->ReleaseByteArrayElements(env,buf,bufptr,0);
+}
+
+static void* getArrayPtr(void** bufBase, JNIEnv *env,
+                         jobject buf, int baseType, int offset)
+{
+    switch(baseType)
+    {
+        case 0:   /* NULL */
+            *bufBase = NULL;
+            return NULL;
+
+        case 1: {
+            jbyte* els = (*env)->GetByteArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 2: {
+            jchar* els = (*env)->GetCharArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 3: {
+            jshort* els = (*env)->GetShortArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 4: {
+            jboolean* els = (*env)->GetBooleanArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 5: {
+            jint* els = (*env)->GetIntArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 6: {
+            jlong* els = (*env)->GetLongArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 7: {
+            jfloat* els = (*env)->GetFloatArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 8: {
+            jdouble* els = (*env)->GetDoubleArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        case 9: {
+            jbyte* els = (*env)->GetByteArrayElements(env, buf, NULL);
+            *bufBase = els;
+            return els + offset;
+        }
+        default:
+            *bufBase = NULL;
+            return NULL;  /* 'UNDEFINED' */
     }
 }
 
-void ompi_java_findClasses(JNIEnv *env)
+static void releaseArrayPtr(JNIEnv *e, jobject buf, void *bufBase,
+                            int baseType, jint mode)
 {
-    ompi_java.CartParmsClass  = ompi_java_findClass(env, "mpi/CartParms");
-    ompi_java.ShiftParmsClass = ompi_java_findClass(env, "mpi/ShiftParms");
-    ompi_java.GraphParmsClass = ompi_java_findClass(env, "mpi/GraphParms");
-
-    ompi_java.DistGraphNeighborsClass = ompi_java_findClass(
-                                        env, "mpi/DistGraphNeighbors");
-
-    ompi_java.StatusClass    = ompi_java_findClass(env, "mpi/Status");
-    ompi_java.ExceptionClass = ompi_java_findClass(env, "mpi/MPIException");
-
-    ompi_java.ExceptionInit = (*env)->GetMethodID(
-                              env, ompi_java.ExceptionClass,
-                              "<init>", "(IILjava/lang/String;)V");
-
-    ompi_java.IntegerClass = ompi_java_findClass(env, "java/lang/Integer");
-    ompi_java.LongClass    = ompi_java_findClass(env, "java/lang/Long");
-
-    ompi_java.IntegerValueOf = (*env)->GetStaticMethodID(
-            env, ompi_java.IntegerClass, "valueOf", "(I)Ljava/lang/Integer;");
-    ompi_java.LongValueOf = (*env)->GetStaticMethodID(
-            env, ompi_java.LongClass, "valueOf", "(J)Ljava/lang/Long;");
+    switch(baseType)
+    {
+        case 0:
+            break;
+        case 1:
+            (*e)->ReleaseByteArrayElements(e, buf, (jbyte*)bufBase, mode);
+            break;
+        case 2:
+            (*e)->ReleaseCharArrayElements(e, buf, (jchar*)bufBase, mode);
+            break;
+        case 3:
+            (*e)->ReleaseShortArrayElements(e, buf, (jshort*)bufBase, mode);
+            break;
+        case 4:
+            (*e)->ReleaseBooleanArrayElements(e, buf, (jboolean*)bufBase, mode);
+            break;
+        case 5:
+            (*e)->ReleaseIntArrayElements(e, buf, (jint*)bufBase, mode);
+            break;
+        case 6:
+            (*e)->ReleaseLongArrayElements(e, buf, (jlong*)bufBase, mode);
+            break;
+        case 7:
+            (*e)->ReleaseFloatArrayElements(e, buf, (jfloat*)bufBase, mode);
+            break;
+        case 8:
+            (*e)->ReleaseDoubleArrayElements(e, buf, (jdouble*)bufBase, mode);
+            break;
+        case 9:
+            (*e)->ReleaseByteArrayElements(e, buf, (jbyte*)bufBase, mode);
+            break;
+        default:
+            break;
+    }
 }
 
-jclass ompi_java_findClass(JNIEnv *env, const char *className)
+void* ompi_java_getBufPtr(void** bufBase, JNIEnv *env, jobject buf,
+                          jboolean db, int baseType, int offset)
 {
-    jclass c = (*env)->FindClass(env, className),
-           r = (*env)->NewGlobalRef(env, c);
-
-    (*env)->DeleteLocalRef(env, c);
-    return r;
+    if(buf == NULL)
+    {
+        /* Allow NULL buffers to send/recv 0 items as control messages. */
+        *bufBase = NULL;
+        return NULL;
+    }
+    else if(db)
+    {
+        *bufBase = (*env)->GetDirectBufferAddress(env, buf);
+        assert(offset == 0);
+        return *bufBase;
+    }
+    else
+    {
+        return getArrayPtr(bufBase, env, buf, baseType, offset);
+    }
 }
 
-void ompi_java_deleteClasses(JNIEnv *env)
+void ompi_java_releaseBufPtr(JNIEnv *env, jobject buf, jboolean db,
+                             void* bufBase, int baseType)
 {
-    (*env)->DeleteGlobalRef(env, ompi_java.CartParmsClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.ExceptionClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.IntegerClass);
-    (*env)->DeleteGlobalRef(env, ompi_java.LongClass);
+    if(!db && buf)
+        releaseArrayPtr(env, buf, bufBase, baseType, 0);
+}
+
+void ompi_java_releaseReadBufPtr(JNIEnv *env, jobject buf, jboolean db,
+                                 void *bufBase, int baseType)
+{
+    if(!db && buf)
+        releaseArrayPtr(env, buf, bufBase, baseType, JNI_ABORT);
+}
+
+void* ompi_java_getDirectBufferAddress(JNIEnv *env, jobject buf)
+{
+    /* Allow NULL buffers to send/recv 0 items as control messages. */
+    return buf == NULL ? NULL : (*env)->GetDirectBufferAddress(env, buf);
 }
 
 jobject ompi_java_Integer_valueOf(JNIEnv *env, jint i)
