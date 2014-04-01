@@ -1628,6 +1628,8 @@ static int create_app(int argc, char* argv[],
         goto cleanup;
     }
     mca_base_cmd_line_process_args(&cmd_line, app_env, &global_mca_env);
+    mca_base_var_process_env_list(app_env);
+
 
     /* Is there an appfile in here? */
 
