@@ -70,10 +70,6 @@ void ompi_java_setStaticLongField(JNIEnv *env, jclass c,
 void ompi_java_setIntField(JNIEnv *env, jclass c, jobject obj,
                            char *field, jint value);
 
-void   ompi_java_findClasses(JNIEnv *env);
-jclass ompi_java_findClass(JNIEnv *env, const char *className);
-void   ompi_java_deleteClasses(JNIEnv *env);
-
 jobject ompi_java_Integer_valueOf(JNIEnv *env, jint i);
 jobject ompi_java_Long_valueOf(JNIEnv *env, jlong i);
 
