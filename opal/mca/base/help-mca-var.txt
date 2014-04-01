@@ -121,3 +121,8 @@ starting your job.
 
   Value:      %s
   Source:     %s
+#
+[incorrect-env-list-param]
+The format of mca_base_env_list parameter is incorrect. It should be 
+VAR1=VAL1 VAR2=VAL2 VAR3=VAL3 ...
+  Value:      %s
