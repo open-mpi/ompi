@@ -202,15 +202,6 @@ static
 {
     System.loadLibrary("mpi_java");
 
-    if(!loadGlobalLibraries())
-    {
-        System.out.println("JAVA BINDINGS FAILED TO LOAD REQUIRED LIBRARIES");
-        System.exit(1);
-    }
-
-    //restoreSignalHandlers();
-    // On SP2, JVM signal handlers overridden during loadLibrary().
-
     DATATYPE_NULL = new Datatype();
 
     BYTE    = new Datatype();
@@ -399,8 +390,6 @@ static
     ERR_LASTCODE     = c.ERR_LASTCODE;
     ERR_SYSRESOURCE  = c.ERR_SYSRESOURCE;
 }
-
-private static native boolean loadGlobalLibraries();
 
 private static native Int2      newInt2();
 private static native ShortInt  newShortInt();
