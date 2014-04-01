@@ -64,17 +64,19 @@
 #include <dlfcn.h>
 
 #include "opal/util/output.h"
+#include "opal/mca/base/mca_base_var.h"
 
 #include "mpi.h"
 #include "ompi/errhandler/errcode.h"
 #include "mpi_MPI.h"
 #include "mpiJava.h"
 
+int ompi_mpi_java_eager = 65536;
 ompi_java_globals_t ompi_java;
 
 static int len = 0;
-static char** sargs = 0;
-static void *mpilibhandle=NULL;
+static char **sargs = 0;
+static void *libmpi = NULL;
 
 /*
  * Class:    mpi_MPI
@@ -102,13 +104,30 @@ static void *mpilibhandle=NULL;
  * thus making all symbols available to subsequent dlopen calls
  * when opening OMPI components.
  */
-JNIEXPORT jboolean JNICALL Java_mpi_MPI_loadGlobalLibraries(JNIEnv *env, jclass obj)
+jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-    if (NULL == (mpilibhandle = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX,
-                                       RTLD_NOW | RTLD_GLOBAL))) {
-        return JNI_FALSE;
+    libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
+
+    if(libmpi == NULL)
+    {
+        fprintf(stderr, "Java bindings failed to load liboshmem.\n");
+        exit(1);
     }
-    return JNI_TRUE;
+
+    mca_base_var_register("ompi", "mpi", "java", "eager",
+                          "Java buffers eager size",
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                          OPAL_INFO_LVL_5,
+                          MCA_BASE_VAR_SCOPE_READONLY,
+                          &ompi_mpi_java_eager);
+
+    return JNI_VERSION_1_6;
+}
+
+void JNI_OnUnload(JavaVM *vm, void *reserved)
+{
+    if(libmpi != NULL)
+        dlclose(libmpi);
 }
 
 JNIEXPORT jobject JNICALL Java_mpi_MPI_newInt2(JNIEnv *env, jclass clazz)
@@ -156,11 +175,6 @@ JNIEXPORT jobject JNICALL Java_mpi_MPI_newDoubleInt(JNIEnv *env, jclass clazz)
     return (*env)->NewObject(env, c, m, iOff, sizeof(int));
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    Init_jni
- * Signature: ([Ljava/lang/String;)[Ljava/lang/String;
- */
 JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
         JNIEnv *env, jclass clazz, jobjectArray argv)
 {
@@ -197,11 +211,6 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
     return value;
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    InitThread_jni
- * Signature: ([Ljava/lang/String;I)I
- */
 JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
         JNIEnv *env, jclass clazz, jobjectArray argv, jint required)
 {
@@ -226,11 +235,6 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     return provided;
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    queryThread_jni
- * Signature: ()I
- */
 JNIEXPORT jint JNICALL Java_mpi_MPI_queryThread_1jni(JNIEnv *env, jclass clazz)
 {
     int provided;
@@ -239,11 +243,6 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_queryThread_1jni(JNIEnv *env, jclass clazz)
     return provided;
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    isThreadMain_jni
- * Signature: ()Z
- */
 JNIEXPORT jboolean JNICALL Java_mpi_MPI_isThreadMain_1jni(
                            JNIEnv *env, jclass clazz)
 {
@@ -253,27 +252,13 @@ JNIEXPORT jboolean JNICALL Java_mpi_MPI_isThreadMain_1jni(
     return flag ? JNI_TRUE : JNI_FALSE;
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    Finalize_jni
- * Signature: ()V
- */
 JNIEXPORT void JNICALL Java_mpi_MPI_Finalize_1jni(JNIEnv *env, jclass obj)
 {
-    if (NULL != mpilibhandle) {
-        dlclose(mpilibhandle);
-    }
-
     int rc = MPI_Finalize();
     ompi_java_exceptionCheck(env, rc);
     ompi_java_deleteClasses(env);
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    getProcessorName
- * Signature: ([B)I
- */
 JNIEXPORT jint JNICALL Java_mpi_MPI_getProcessorName(
                        JNIEnv *env, jclass obj, jbyteArray buf)
 {
@@ -287,31 +272,16 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_getProcessorName(
     return len;
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    wtime_jni
- * Signature: ()D
- */
 JNIEXPORT jdouble JNICALL Java_mpi_MPI_wtime_1jni(JNIEnv *env, jclass jthis)
 {
     return MPI_Wtime();
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    wtick_jni
- * Signature: ()D
- */
 JNIEXPORT jdouble JNICALL Java_mpi_MPI_wtick_1jni(JNIEnv *env, jclass jthis)
 {
     return MPI_Wtick();
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    isInitialized
- * Signature: ()Z
- */
 JNIEXPORT jboolean JNICALL Java_mpi_MPI_isInitialized(JNIEnv *env, jclass jthis)
 {
     int flag, rc;
@@ -326,11 +296,6 @@ JNIEXPORT jboolean JNICALL Java_mpi_MPI_isInitialized(JNIEnv *env, jclass jthis)
     }
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    isFinalized
- * Signature: ()Z
- */
 JNIEXPORT jboolean JNICALL Java_mpi_MPI_isFinalized(JNIEnv *env, jclass jthis)
 {
     int flag, rc;
@@ -345,11 +310,6 @@ JNIEXPORT jboolean JNICALL Java_mpi_MPI_isFinalized(JNIEnv *env, jclass jthis)
     }
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    attachBuffer_jni
- * Signature: ([B)V
- */
 JNIEXPORT void JNICALL Java_mpi_MPI_attachBuffer_1jni(
                        JNIEnv *env, jclass jthis, jbyteArray buf)
 {
@@ -362,11 +322,6 @@ JNIEXPORT void JNICALL Java_mpi_MPI_attachBuffer_1jni(
     ompi_java_exceptionCheck(env, rc);
 }
 
-/*
- * Class:     mpi_MPI
- * Method:    detachBuffer_jni
- * Signature: ([B)V
- */
 JNIEXPORT void JNICALL Java_mpi_MPI_detachBuffer_1jni(
                        JNIEnv *env, jclass jthis, jbyteArray buf)
 {
