@@ -161,8 +161,16 @@ static void job_errors(int fd, short args, void *cbdata)
                          orte_job_state_to_str(jobstate)));
 
     if (ORTE_JOB_STATE_NEVER_LAUNCHED == jobstate ||
-        ORTE_JOB_STATE_ALLOC_FAILED == jobstate) {
+        ORTE_JOB_STATE_ALLOC_FAILED == jobstate ||
+        ORTE_JOB_STATE_MAP_FAILED == jobstate ||
+        ORTE_JOB_STATE_CANNOT_LAUNCH == jobstate) {
         orte_never_launched = true;
+        /* disable routing as we may not have performed the daemon
+         * wireup - e.g., in a managed environment, all the daemons
+         * "phone home", but don't actually wireup into the routed
+         * network until they receive the launch message
+         */
+        orte_routing_is_enabled = false;
         jdata->num_terminated = jdata->num_procs;
         ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_TERMINATED);
         OBJ_RELEASE(caddy);

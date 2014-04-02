@@ -287,3 +287,9 @@ impact performance when combined with the requested binding
 operation. We will continue, but will not bind the processes.
 This warning can be omitted by adding the "overload-allowed"
 qualifier to the binding policy.
+#
+[cannot-launch]
+Although we were able to map your job, we are unable to launch
+it at this time due to required resources being busy. Please
+try again later.
+

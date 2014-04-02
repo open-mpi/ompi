@@ -12,6 +12,7 @@
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -298,6 +299,10 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "REPORT PROGRESS";
     case ORTE_JOB_STATE_ALLOC_FAILED:
         return "ALLOCATION FAILED";
+    case ORTE_JOB_STATE_MAP_FAILED:
+        return "MAP FAILED";
+    case ORTE_JOB_STATE_CANNOT_LAUNCH:
+        return "CANNOT LAUNCH";
     case ORTE_JOB_STATE_FT_CHECKPOINT:
         return "FAULT TOLERANCE CHECKPOINT";
     case ORTE_JOB_STATE_FT_CONTINUE:

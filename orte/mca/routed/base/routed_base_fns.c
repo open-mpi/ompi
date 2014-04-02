@@ -50,7 +50,7 @@ void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
      * then send it directly to everyone
      */
     if (ORTE_PROC_IS_HNP) {
-        if (orte_abnormal_term_ordered) {
+        if (orte_abnormal_term_ordered || !orte_routing_is_enabled) {
             daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
             for (i=1; i < daemons->procs->size; i++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, i))) {
