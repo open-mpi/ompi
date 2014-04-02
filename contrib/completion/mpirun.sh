@@ -194,6 +194,8 @@ _mpirun() {
     elif test "${cur:0:1}" = "-" ; then
         switches=$(_get_mpirun_switches)
         COMPREPLY=($(compgen -W "$switches" -- "$cur"))
+    else
+        COMPREPLY=($(compgen -f -- "$cur"))
     fi
 
     return 0
