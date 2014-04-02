@@ -172,11 +172,13 @@ typedef int32_t orte_job_state_t;
 
 #define ORTE_JOB_STATE_REPORT_PROGRESS         (ORTE_JOB_STATE_ERROR + 17)  /* report launch progress - not an error */
 #define ORTE_JOB_STATE_ALLOC_FAILED            (ORTE_JOB_STATE_ERROR + 18)  /* job failed to obtain an allocation */
+#define ORTE_JOB_STATE_MAP_FAILED              (ORTE_JOB_STATE_ERROR + 19)  /* job failed to map */
+#define ORTE_JOB_STATE_CANNOT_LAUNCH           (ORTE_JOB_STATE_ERROR + 20)  /* resources were busy and so the job cannot be launched */
 
 /* define an FT event */
-#define ORTE_JOB_STATE_FT_CHECKPOINT           (ORTE_JOB_STATE_ERROR + 19)
-#define ORTE_JOB_STATE_FT_CONTINUE             (ORTE_JOB_STATE_ERROR + 20)
-#define ORTE_JOB_STATE_FT_RESTART              (ORTE_JOB_STATE_ERROR + 21)
+#define ORTE_JOB_STATE_FT_CHECKPOINT           (ORTE_JOB_STATE_ERROR + 21)
+#define ORTE_JOB_STATE_FT_CONTINUE             (ORTE_JOB_STATE_ERROR + 22)
+#define ORTE_JOB_STATE_FT_RESTART              (ORTE_JOB_STATE_ERROR + 23)
 
 
 /* Define a boundary so that external developers

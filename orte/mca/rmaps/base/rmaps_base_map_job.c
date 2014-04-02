@@ -283,7 +283,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
          */
         if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
-            ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
             OBJ_RELEASE(caddy);
             return;
         }
@@ -292,6 +292,8 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         /* the map was done but nothing could be mapped
          * for launch as all the resources were busy
          */
+        orte_show_help("help-orte-rmaps-base.txt", "cannot-launch", true);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_CANNOT_LAUNCH);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -301,7 +303,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      */
     if (!did_map || 0 == jdata->num_procs) {
         orte_show_help("help-orte-rmaps-base.txt", "failed-map", true);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -309,7 +311,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     /* compute and save local ranks */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
         OBJ_RELEASE(caddy);
         return;
     }
@@ -318,7 +320,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     /* compute and save bindings */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
         ORTE_ERROR_LOG(rc);
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
         OBJ_RELEASE(caddy);
         return;
     }
