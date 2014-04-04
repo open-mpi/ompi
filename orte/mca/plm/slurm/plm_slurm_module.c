@@ -639,13 +639,16 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
          * tie stdout/stderr to dev null so we don't see messages from orted
          * EXCEPT if the user has requested that we leave sessions attached
          */
-        if (0 >= opal_output_get_verbosity(orte_plm_base_framework.framework_output) &&
+        if (0 > opal_output_get_verbosity(orte_plm_base_framework.framework_output) &&
             !orte_debug_daemons_flag && !orte_leave_session_attached) {
             if (fd >= 0) {
-                if (fd != 1) {
+                if (fd != 1 && fd != 2) {
                     dup2(fd,1);
-                } else if (fd != 2) {
                     dup2(fd,2);
+                } else if (fd == 1) {
+                   dup2(fd,2);
+                } else if (fd == 2) {
+                    dup2(fd,1);
                 } else {
                     close(fd);
                 }
