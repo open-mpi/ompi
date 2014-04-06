@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -125,6 +125,7 @@ int ompi_fortran_argv_f2c(char *array, int string_len, int advance,
 
 	if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
 	    opal_argv_free(*argv);
+            free(cstr);
 	    return err;
 	}
 
@@ -132,6 +133,7 @@ int ompi_fortran_argv_f2c(char *array, int string_len, int advance,
 	array += advance;
     }
 
+    free(cstr);
     return OMPI_SUCCESS;
 }
 
@@ -155,6 +157,7 @@ int ompi_fortran_multiple_argvs_f2c(int num_argv_arrays, char *array,
                                     string_len * num_argv_arrays,
                                     &argv_array[i]);
         if (OMPI_SUCCESS != ret) {
+            free(argv_array);
             return ret;
         }
         current_array += string_len;

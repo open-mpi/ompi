@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -662,7 +662,8 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     if (size > 1) {
         free_buffer = (char*)malloc(true_extent + (ptrdiff_t)(count - 1) * extent);
         if (NULL == free_buffer) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
         pml_buffer = free_buffer - lb;
     }
@@ -678,10 +679,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                 MPI_STATUS_IGNORE));
     }
     if (MPI_SUCCESS != err) {
-        if (NULL != free_buffer) {
-            free(free_buffer);
-        }
-        return err;
+        goto exit;
     }
 
     /* Loop receiving and calling reduction function (C or Fortran). */
@@ -694,10 +692,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                     MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
-                return err;
+                goto exit;
             }
 
             inbuf = pml_buffer;
@@ -710,6 +705,11 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     if (NULL != inplace_temp) {
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, 
                                                   inplace_temp);
+    }
+    err = MPI_SUCCESS;
+
+  exit:
+    if (NULL != inplace_temp) {
         free(inplace_temp);
     }
     if (NULL != free_buffer) {
@@ -717,7 +717,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     }
 
     /* All done */
-    return MPI_SUCCESS;
+    return err;
 }
 
 /* copied function (with appropriate renaming) ends here */

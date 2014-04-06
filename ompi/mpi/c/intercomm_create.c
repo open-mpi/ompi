@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -160,10 +160,10 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
             goto err_exit;
         }
     }
-    new_group_pointer=ompi_group_allocate(rsize);
+    new_group_pointer = ompi_group_allocate(rsize);
     if( NULL == new_group_pointer ) {
-        OPAL_CR_EXIT_LIBRARY();
-        return MPI_ERR_GROUP;
+        rc = MPI_ERR_GROUP;
+        goto err_exit;
     }
 
     /* put group elements in the list */

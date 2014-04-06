@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -406,7 +406,7 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
         /* Generate displacements for the scatterv part */
         disps = (int*) malloc(sizeof(int) * lsize);
         if (NULL == disps) {
- 	    return OMPI_ERR_OUT_OF_RESOURCE;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
         disps[0] = 0;
         for (i = 0; i < (lsize - 1); ++i) {
@@ -416,7 +416,8 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
         tmpbuf = (char *) malloc(totalcounts * extent);
         tmpbuf2 = (char *) malloc(totalcounts * extent);
         if (NULL == tmpbuf || NULL == tmpbuf2) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
