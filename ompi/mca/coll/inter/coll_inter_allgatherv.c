@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -51,7 +51,7 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
     MPI_Aint incr;
     MPI_Aint extent;
     MPI_Aint lb;
-    ompi_datatype_t *ndtype;
+    ompi_datatype_t *ndtype = NULL;
     ompi_request_t *req[2];
 
     rank = ompi_comm_rank(comm);
@@ -60,12 +60,10 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
 
     if (0 == rank) {
 	count = (int *)malloc(sizeof(int) * size_local);
-	if (NULL == count) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
 	displace = (int *)malloc(sizeof(int) * size_local);
-	if (NULL == displace) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
+	if ((NULL == count) || (NULL == displace)) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
 	}
     }
     /* Local gather to get the scount of each process */
@@ -74,7 +72,7 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
 						 0, comm->c_local_comm,
                                                  comm->c_local_comm->c_coll.coll_gather_module);
     if (OMPI_SUCCESS != err) {
-	return err;
+        goto exit;
     }
     if(0 == rank) {
 	displace[0] = 0;
@@ -84,16 +82,18 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
 	/* Perform the gatherv locally with the first process as root */
 	err = ompi_datatype_get_extent(sdtype, &lb, &extent);
 	if (OMPI_SUCCESS != err) {
-	    return OMPI_ERROR;
+            err = OMPI_ERROR;
+            goto exit;
 	}
 	incr = 0;
 	for (i = 0; i < size_local; i++) {
 	    incr = incr + extent*count[i];
 	}
 	if ( incr > 0 ) {
-	    ptmp = (char*)malloc(incr); 
+	    ptmp = (char*)malloc(incr);
 	    if (NULL == ptmp) {
-		return OMPI_ERR_OUT_OF_RESOURCE;
+                err = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
 	    }
 	}
     }
@@ -102,9 +102,9 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
 						  sdtype,0, comm->c_local_comm,
                                                   comm->c_local_comm->c_coll.coll_gatherv_module);
     if (OMPI_SUCCESS != err) {
-	return err;
+        goto exit;
     }
-    
+
     ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&ndtype);
     ompi_datatype_commit(&ndtype);
 
@@ -117,7 +117,7 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
                                  MCA_COLL_BASE_TAG_ALLGATHERV, comm,
                                  &(req[0])));
         if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
         }
 
         err = MCA_PML_CALL(isend(ptmp, total, sdtype, 0,
@@ -125,12 +125,12 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
                                  MCA_PML_BASE_SEND_STANDARD,
                                  comm, &(req[1])));
         if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
         }
 
         err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
         if (OMPI_SUCCESS != err) {
-            return err;
+            goto exit;
 	}
     }
     
@@ -138,19 +138,18 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
     err = comm->c_local_comm->c_coll.coll_bcast(rbuf, 1, ndtype, 
 						0, comm->c_local_comm,
                                                 comm->c_local_comm->c_coll.coll_bcast_module);
-    if (OMPI_SUCCESS != err) {
-            return err;
+  exit:
+    if( NULL != ndtype ) {
+        ompi_datatype_destroy(&ndtype);
     }
-
-    ompi_datatype_destroy(&ndtype);
     if (NULL != ptmp) {
-	free(ptmp);
+        free(ptmp);
     }
     if (NULL != displace) {
-	free(displace);
+        free(displace);
     }
     if (NULL != count) {
-	free(count);
+        free(count);
     }
 
     return err;
