@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -162,7 +162,7 @@ static int linux_register(void)
                                             "disable",
                                             "If this MCA parameter is set to 1 **VIA ENVIRONMENT VARIABLE ONLY*** (this MCA parameter *CANNOT* be set in a file or on the mpirun command line!), this component will be disabled and will not attempt to use either ummunotify or memory hook support",
                                             MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY,
-                                            OPAL_INFO_LVL_9,
+                                            OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &opal_memory_linux_disable);
 
