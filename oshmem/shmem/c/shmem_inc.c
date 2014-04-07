@@ -49,6 +49,13 @@
         return ;                                                    \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_int_inc = pshmem_int_inc
+#pragma weak shmem_long_inc = pshmem_long_inc
+#pragma weak shmem_longlong_inc = pshmem_longlong_inc
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_INC(_int, int)
 SHMEM_TYPE_INC(_long, long)
 SHMEM_TYPE_INC(_longlong, long long)

@@ -46,6 +46,16 @@
         return out_value;                                           \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_swap = pshmem_swap
+#pragma weak shmem_int_swap = pshmem_int_swap
+#pragma weak shmem_long_swap = pshmem_long_swap
+#pragma weak shmem_longlong_swap = pshmem_longlong_swap
+#pragma weak shmem_float_swap = pshmem_float_swap
+#pragma weak shmem_double_swap = pshmem_double_swap
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_SWAP(, long)
 SHMEM_TYPE_SWAP(_int, int)
 SHMEM_TYPE_SWAP(_long, long)

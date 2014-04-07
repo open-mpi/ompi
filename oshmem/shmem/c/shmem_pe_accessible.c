@@ -19,6 +19,11 @@
 
 #include "oshmem/runtime/runtime.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_pe_accessible = pshmem_pe_accessible
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 int shmem_pe_accessible(int pe)
 {
     RUNTIME_CHECK_INIT();

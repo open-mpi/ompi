@@ -15,6 +15,11 @@
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/mca/memheap/memheap.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_addr_accessible = pshmem_addr_accessible
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 int shmem_addr_accessible(void *addr, int pe)
 {
     void* rva;

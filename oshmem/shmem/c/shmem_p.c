@@ -44,6 +44,17 @@
         return ;                                                    \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_short_p = pshmem_short_p
+#pragma weak shmem_int_p = pshmem_int_p
+#pragma weak shmem_long_p = pshmem_long_p
+#pragma weak shmem_longlong_p = pshmem_longlong_p
+#pragma weak shmem_float_p = pshmem_float_p
+#pragma weak shmem_double_p = pshmem_double_p
+#pragma weak shmem_longdouble_p = pshmem_longdouble_p
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_P(_short, short)
 SHMEM_TYPE_P(_int, int)
 SHMEM_TYPE_P(_long, long)

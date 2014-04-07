@@ -20,6 +20,12 @@
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 
+
+#if OSHMEM_PROFILING
+#pragma weak shmem_barrier = pshmem_barrier
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
@@ -66,6 +72,10 @@ void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync)
     }
     RUNTIME_CHECK_RC(rc);
 }
+
+#if OSHMEM_PROFILING
+#pragma weak shmem_barrier_all = pshmem_barrier_all
+#endif
 
 void shmem_barrier_all(void)
 {

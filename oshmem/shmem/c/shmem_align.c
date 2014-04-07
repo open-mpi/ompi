@@ -17,6 +17,11 @@
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/mca/memheap/memheap.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmemalign = pshmemalign
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void* shmemalign(size_t align, size_t size)
 {
     int rc;

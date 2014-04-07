@@ -14,6 +14,11 @@
 
 #include "oshmem/mca/spml/spml.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_fence = pshmem_fence
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void shmem_fence(void)
 {
 

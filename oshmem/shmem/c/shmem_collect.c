@@ -101,6 +101,14 @@ static void _shmem_collect(void *target,
     }
 }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_collect32 = pshmem_collect32
+#pragma weak shmem_collect64 = pshmem_collect64
+#pragma weak shmem_fcollect32 = pshmem_fcollect32
+#pragma weak shmem_fcollect64 = pshmem_fcollect64
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_COLLECT(_collect32, sizeof(uint32_t), false)
 SHMEM_TYPE_COLLECT(_collect64, sizeof(uint64_t), false)
 SHMEM_TYPE_COLLECT(_fcollect32, sizeof(uint32_t), true)

@@ -43,6 +43,18 @@
         return ;                                                    \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_char_get = pshmem_char_get
+#pragma weak shmem_short_get = pshmem_short_get
+#pragma weak shmem_int_get = pshmem_int_get
+#pragma weak shmem_long_get = pshmem_long_get
+#pragma weak shmem_longlong_get = pshmem_longlong_get
+#pragma weak shmem_float_get = pshmem_float_get
+#pragma weak shmem_double_get = pshmem_double_get
+#pragma weak shmem_longdouble_get = pshmem_longdouble_get
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_GET(_char, char)
 SHMEM_TYPE_GET(_short, short)
 SHMEM_TYPE_GET(_int, int)
@@ -73,11 +85,16 @@ SHMEM_TYPE_GET(_longdouble, long double)
         return ;                                                    \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_getmem = pshmem_getmem
+#pragma weak shmem_get32 = pshmem_get32
+#pragma weak shmem_get64 = pshmem_get64
+#pragma weak shmem_get128 = pshmem_get128
+#endif
+
 SHMEM_TYPE_GETMEM(_getmem, 1)
 SHMEM_TYPE_GETMEM(_get32, 4)
 SHMEM_TYPE_GETMEM(_get64, 8)
 SHMEM_TYPE_GETMEM(_get128, 16)
 
-#if !defined(OSHMEM_PROFILING) || (OSHMEM_PROFILING == 0)
 SHMEM_TYPE_GETMEM(_get, sizeof(long))
-#endif /* OSHMEM_PROFILING */
