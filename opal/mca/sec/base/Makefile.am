@@ -1,13 +1,12 @@
 #
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
-dist_ompidata_DATA += base/help-sec-base.txt
 
 headers += \
 	base/base.h
