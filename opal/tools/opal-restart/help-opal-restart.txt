@@ -48,9 +48,6 @@ Error: Unable to obtain the proper restart command to restart from the
        Check the installation of the %s checkpoint/restart service
        on all of the machines in your system.
 #
-[comp_open_failure]
-Error: Unable to open the %s framework.
-#
 [comp_select_failure]
 Error: Unable to select the %s component needed to restart this
        application. (Returned %d)
@@ -61,19 +58,6 @@ Error: Unable to select the %s component needed to restart this
 [comp_select_mismatch]
 Error: For an unknown reason the selected and requested components do
        not match.
-
-Expected Component: %s
-Selected Component: %s
-#
-[restart_failure]
-Error: The restart command:
-          shell$ %s
-       returned an error code %d, and was unable to restart properly.
-#
-[failed-to-exec]
-Error: The restart command failed to properly exec the process per
-       the user's request. It is possible that the incorrect OPAL CRS
-       component was selected. Please confirm the following:
 
 Expected Component: %s
 Selected Component: %s
