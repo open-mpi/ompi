@@ -56,3 +56,11 @@ been deprecated and replaced as follows:
 
 The deprecated forms *will* disappear in a future version of Open MPI.
 Please update to the new syntax.
+#
+[obj-idx-failed]
+Open MPI failed to find a cache of a specified type.  This is a highly
+unusual error; it may indicate a system configuration error.  This
+additional information may be of help:
+
+  Message:     %s
+  Cache level: %d

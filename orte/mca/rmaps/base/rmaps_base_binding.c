@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
@@ -448,6 +448,7 @@ static int bind_in_place(orte_job_t *jdata,
             }
             /* get the index of this location */
             if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology, proc->locale, OPAL_HWLOC_AVAILABLE))) {
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                 return ORTE_ERR_SILENT;
             }
             /* track the number bound */
