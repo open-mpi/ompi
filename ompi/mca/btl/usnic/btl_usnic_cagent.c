@@ -720,10 +720,16 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
     if (ap->num_sends > mca_btl_usnic_component.connectivity_num_retries) {
         char *topic;
         if (ap->acked[0] && !ap->acked[1]) {
+            // For the show_help topic checker script
+            // SHOW_HELP:"help-mpi-btl-usnic.txt","connectivity error: small ok, large bad"
             topic = "connectivity error: small ok, large bad";
         } else if (!ap->acked[0] && ap->acked[1]) {
+            // For the show_help topic checker script
+            // SHOW_HELP:"help-mpi-btl-usnic.txt","connectivity error: small bad, large ok"
             topic = "connectivity error: small bad, large ok";
         } else {
+            // For the show_help topic checker script
+            // SHOW_HELP:"help-mpi-btl-usnic.txt","connectivity error: small bad, large bad"
             topic = "connectivity error: small bad, large bad";
         }
 
