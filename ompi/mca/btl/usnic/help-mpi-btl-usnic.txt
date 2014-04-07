@@ -105,18 +105,6 @@ server.
   Line:         %d
   Error:        %s
 #
-[ibv API failed after init]
-Open MPI failed a basic verbs operation on a Cisco usNIC device.  This
-is highly unusual and shouldn't happen.  It suggests that there may be
-something wrong with the usNIC or OpenFabrics configuration on this
-server.
-
-Your MPI job may behave erratically, hang, and/or abort.
-
-  Server:          %s
-  Failure:         %s (%s:%d)
-  Description:     %s
-#
 [verbs_port_bw failed]
 Open MPI failed to query the supported bandwidth of a port on a Cisco
 usNIC device.  This is unusual and shouldn't happen.  It suggests that
@@ -129,26 +117,6 @@ in either lower performance or your job aborting.
   Server:     %s
   Device:     %s
   Port:       %d
-#
-[eager_limit too high]
-The eager_limit in the usnic BTL is too high for a device that Open
-MPI tried to use.  The usnic BTL eager_limit value is the largest
-message payload that Open MPI will send in a single datagram.  
-
-You are seeing this message because the eager_limit was set to a value
-larger than the MPI message payload capacity of a single UD datagram.
-The max payload size is smaller than the size of individual datagrams
-because each datagram also contains MPI control metadata, meaning that
-the some bytes in the datagram must be reserved for overhead.
-
-Open MPI will skip this device/port in the usnic BTL, which may result
-in either lower performance or your job aborting.
-
-  Server:                %s
-  Device:                %s
-  Port:                  %d
-  Max payload allowed:   %d
-  Specified eager_limit: %d
 #
 [check_reg_mem_basics fail]
 The usNIC BTL failed to initialize while trying to register some
