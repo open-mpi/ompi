@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -39,6 +40,7 @@ static int ras_alps_open(void);
 static int orte_ras_alps_component_query(mca_base_module_t **module,
                                          int *priority);
 unsigned long int orte_ras_alps_res_id;
+char *ras_alps_apstat_cmd;
 
 orte_ras_base_component_t mca_ras_alps_component = {
     /* First, the mca_base_component_t struct containing meta information about
@@ -93,12 +95,13 @@ prep_job_id(const char *jid)
 static unsigned long int
 get_res_id(void)
 {
-    const char *apstat_cmd = "/usr/bin/apstat -r";
+    char *apstat_cmd;
     char *id = NULL;
     char read_buf[512];
     FILE *apstat_fp = NULL;
     /* zero is considered to be an invalid res id */
     unsigned long jid = 0;
+    int ret;
 
     if (NULL != (id = getenv("BATCH_PARTITION_ID"))) {
         return strtoul(id, NULL, 10);
@@ -109,7 +112,15 @@ get_res_id(void)
             /* out of resources */
             return 0;
         }
-        if (NULL == (apstat_fp = popen(apstat_cmd, "r"))) {
+
+        ret = asprintf (&apstat_cmd, "%s -r", ras_alps_apstat_cmd);
+        if (0 > ret) {
+            return 0;
+        }
+
+        apstat_fp = popen(apstat_cmd, "r");
+        free (apstat_cmd);
+        if (NULL == apstat_fp) {
             /* popen failure */
             free(prepped_jid);
             return 0;
@@ -153,6 +164,12 @@ ras_alps_register(void)
                                             "appinfo file", MCA_BASE_VAR_TYPE_INT,
                                             NULL, 0, 0, OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY, &ras_alps_read_attempts);
+
+    ras_alps_apstat_cmd = "/usr/bin/apstat";
+    (void) mca_base_component_var_register (&mca_ras_alps_component.base_version,
+                                            "apstat_cmd", "Location of the apstat command",
+                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_6,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &ras_alps_apstat_cmd);
 
     return ORTE_SUCCESS;
 }
