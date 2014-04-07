@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
 # $COPYRIGHT$
 # 
@@ -7,8 +7,6 @@
 # 
 # $HEADER$
 #
-
-dist_ompidata_DATA += base/help-db-base.txt
 
 headers += \
 	base/base.h
