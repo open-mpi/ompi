@@ -14,6 +14,11 @@
 
 #include "oshmem/mca/spml/spml.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_quiet = pshmem_quiet
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void shmem_quiet(void)
 {
 

@@ -106,6 +106,13 @@ static void _shmem_broadcast(void *target,
     }
 }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_broadcast = pshmem_broadcast
+#pragma weak shmem_broadcast32 = pshmem_broadcast32
+#pragma weak shmem_broadcast64 = pshmem_broadcast64
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_BROADCAST(_broadcast32, sizeof(uint32_t))
 SHMEM_TYPE_BROADCAST(_broadcast64, sizeof(uint64_t))
 SHMEM_TYPE_BROADCAST(_broadcast, sizeof(uint64_t))

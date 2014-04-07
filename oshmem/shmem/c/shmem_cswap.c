@@ -48,6 +48,13 @@
         return out_value;                                           \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_int_cswap = pshmem_int_cswap
+#pragma weak shmem_long_cswap = pshmem_long_cswap
+#pragma weak shmem_longlong_cswap = pshmem_longlong_cswap
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_CSWAP(_int, int)
 SHMEM_TYPE_CSWAP(_long, long)
 SHMEM_TYPE_CSWAP(_longlong, long long)

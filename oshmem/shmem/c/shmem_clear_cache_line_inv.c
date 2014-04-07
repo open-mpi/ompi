@@ -17,6 +17,11 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "opal/sys/architecture.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_clear_cache_line_inv = pshmem_clear_cache_line_inv
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void shmem_clear_cache_line_inv(void *target)
 {
 #if (OPAL_ASSEMBLY_ARCH == OMPI_IA64) || (OPAL_ASSEMBLY_ARCH == OMPI_IA32) || (OPAL_ASSEMBLY_ARCH == OMPI_AMD64)

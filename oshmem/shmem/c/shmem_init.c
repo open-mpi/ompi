@@ -23,13 +23,16 @@
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/shmem/shmem_api_logger.h"
 
+#if OSHMEM_PROFILING
+#pragma weak start_pes = pstart_pes
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void start_pes(int npes)
 {
     /* spec says that npes are ignored for now */
     shmem_init();
 }
-
-#if !defined(OSHMEM_PROFILING) || (OSHMEM_PROFILING == 0)
 
 void shmem_init(void)
 {
@@ -53,6 +56,4 @@ void shmem_init(void)
 
     OPAL_CR_INIT_LIBRARY();
 }
-
-#endif /* OSHMEM_PROFILING */
 

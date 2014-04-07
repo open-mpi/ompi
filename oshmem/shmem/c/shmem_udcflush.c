@@ -16,6 +16,11 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "opal/sys/architecture.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_udcflush = pshmem_udcflush
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void shmem_udcflush(void)
 {
 #if (OPAL_ASSEMBLY_ARCH == OMPI_IA64) || (OPAL_ASSEMBLY_ARCH == OMPI_IA32) || (OPAL_ASSEMBLY_ARCH == OMPI_AMD64)

@@ -17,6 +17,11 @@
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/mca/memheap/memheap.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmalloc = pshmalloc
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void* shmalloc(size_t size)
 {
     int rc;

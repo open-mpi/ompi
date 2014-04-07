@@ -18,6 +18,11 @@
 
 #include "oshmem/mca/memheap/memheap.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shfree = pshfree
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void shfree(void* ptr)
 {
     int rc;
