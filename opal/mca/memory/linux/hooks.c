@@ -32,7 +32,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/memory/memory.h"
-#include "opal/util/show_help.h"
 #include "opal/constants.h"
 
 #include "opal/mca/memory/linux/memory_linux.h"
