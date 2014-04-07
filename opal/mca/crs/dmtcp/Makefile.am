@@ -1,6 +1,7 @@
 #
 # Copyright (c)      2010 The Trustees of Indiana University.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -10,8 +11,6 @@
 
 CFLAGS = $(crs_dmtcp_CFLAGS)
 AM_CPPFLAGS = $(crs_dmtcp_CPPFLAGS)
-
-dist_ompidata_DATA = help-opal-crs-dmtcp.txt
 
 sources = \
         crs_dmtcp.h \

@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2004-2010 The Trustees of Indiana University.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -10,8 +11,6 @@
 
 AM_CPPFLAGS = \
     $(LTDLINCL)
-
-dist_ompidata_DATA = help-opal-compress-gzip.txt
 
 sources = \
         compress_gzip.h \
