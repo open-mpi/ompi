@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,7 +23,6 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 
