@@ -1,4 +1,4 @@
- -*- text -*-
+# -*- text -*-
 #
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,13 +19,6 @@
 #
 # This is the US/English general help file for Open PAL CRS framework.
 #
-[self:lt_dlopen]
-Error: We were unable to open the executable with libtool.
-       We needed to look for the inclusion of user defined callbacks.
-       
-       Make sure that the linker has exported all of the symbols. 
-       This is usally enabled with a flag such as '-export'.
-
 [self:no_callback]
 Error: We were unable to find one of the following callbacks:
          %s =  %s_%s
@@ -44,13 +38,12 @@ Error: We were unable to find one of the following callbacks:
          int my_prefix_restart(void)
        Otherwise it will search for functions with the default prefix of:
            '%s'
-
+#
 [self:ckpt_disabled]
 Error: The checkpointer is currently disabled.
        Unable to proceed with the checkpoint!
-
+#
 [self:no-restart-cmd]
 Error: The checkpointer was unable to determine how to restart your
        application. Specify the restart command in the checkpoint
        function.
-
