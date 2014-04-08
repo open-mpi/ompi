@@ -49,7 +49,7 @@ lk_fetch32(ompi_osc_sm_module_t *module,
            size_t offset)
 {
     opal_atomic_mb ();
-    return (uint32_t) *((char*) &module->node_states[target].lock + offset);
+    return *((uint32_t *)((char*) &module->node_states[target].lock + offset));
 }
 
 

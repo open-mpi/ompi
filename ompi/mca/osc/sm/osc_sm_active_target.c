@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,7 +85,7 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
-    int i, j, gsize, csize;
+    int gsize, csize;
 
     /* ensure all memory operations have completed */
     opal_atomic_mb();
@@ -93,8 +96,8 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
 
         gsize = ompi_group_size(module->start_group);
         csize = ompi_comm_size(module->comm);
-        for (i = 0 ; i < gsize ; ++i) {
-            for (j = 0 ; i < csize ; ++j) {
+        for (int i = 0 ; i < gsize ; ++i) {
+            for (int j = 0 ; j < csize ; ++j) {
                 if (ompi_group_peer_lookup(module->start_group, i) ==
                     ompi_comm_peer_lookup(module->comm, j)) {
                     opal_atomic_add_32(&module->node_states[j].complete_count, 1);
@@ -118,7 +121,7 @@ ompi_osc_sm_post(struct ompi_group_t *group,
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
-    int i, j, gsize, csize;
+    int gsize, csize;
 
     if (0 == (assert & MPI_MODE_NOCHECK)) {
         OBJ_RETAIN(group);
@@ -129,9 +132,9 @@ ompi_osc_sm_post(struct ompi_group_t *group,
 
         gsize = ompi_group_size(module->post_group);
         csize = ompi_comm_size(module->comm);
-        for (i = 0 ; i < gsize ; ++i) {
-            for (j = 0 ; i < csize ; ++j) {
-                if (ompi_group_peer_lookup(module->start_group, i) ==
+        for (int i = 0 ; i < gsize ; ++i) {
+            for (int j = 0 ; j < csize ; ++j) {
+                if (ompi_group_peer_lookup(module->post_group, i) ==
                     ompi_comm_peer_lookup(module->comm, j)) {
                     opal_atomic_add_32(&module->node_states[j].post_count, 1);
                 }
