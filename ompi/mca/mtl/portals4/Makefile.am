@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,6 +24,8 @@
 # (for static builds).
 
 AM_CPPFLAGS = $(mtl_portals4_CPPFLAGS)
+
+EXTRA_DIST = post_configure.sh
 
 if MCA_BUILD_ompi_mtl_portals4_DSO
 component_noinst =
@@ -37,6 +40,7 @@ local_sources = \
 	mtl_portals4.h \
 	mtl_portals4_cancel.c \
 	mtl_portals4_component.c \
+        mtl_portals4_enpoint.h \
 	mtl_portals4_message.c \
 	mtl_portals4_message.h \
 	mtl_portals4_probe.c \
