@@ -125,7 +125,7 @@ _find_mca_parameters() {
 }
 
 _mpirun() {
-    local state curcontext="$curcontext" expl cur parameter available_components already_specified values
+    local state curcontext="$curcontext" expl cur parameter available_components already_specified values ret=1
     typeset -A opt_args
 
     setopt localoptions extendedglob
@@ -213,7 +213,7 @@ _mpirun() {
 	'(-xml --xml -xml-file --xml-file)'{-xml,--xml}'[Provide all output in XML format]' \
 	'(-xml --xml -xml-file --xml-file)'{-xml-file,--xml-file}'[Provide all output in XML format to the specified file]:xml output file:' \
 	'(-xterm --xterm)'{-xterm,--xterm}'[Create a new xterm window and display output from the specified ranks there]:rank list:' \
-	'*::args:->command' && ret=0
+	'*::args:_normal' && ret=0
 
     case $state in
 	mca_variable_name)
@@ -235,12 +235,6 @@ _mpirun() {
 		_describe -t mca_variable_values 'mca variable value' mca_variable_values
 	    fi
 
-	    ;;
-	command)
-	    # no longer specifying mpirun options. use normal command
-	    # parsing now (subcommand completion)
-	    _normal
-	    return
 	    ;;
     esac
 
