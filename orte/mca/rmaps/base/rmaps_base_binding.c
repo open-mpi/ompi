@@ -663,6 +663,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
     switch (map) {
     case ORTE_MAPPING_BYNODE:
     case ORTE_MAPPING_BYSLOT:
+    case ORTE_MAPPING_SEQ:
         hwm = HWLOC_OBJ_MACHINE;
         break;
     case ORTE_MAPPING_BYDIST:
