@@ -2,17 +2,17 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -69,123 +69,123 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      * lines of code, it's tremendously complicated how we decided that
      * this was the Right Thing to do.  Sit back and enjoy.  And prepare
      * to have your mind warped. :-)
-     * 
+     *
      * Recall some definitions (I always get these backwards, so I'm
      * going to put them here):
-     * 
+     *
      * extent: the length from the lower bound to the upper bound -- may
      * be considerably larger than the buffer required to hold the data
      * (or smaller!  But it's easiest to think about when it's larger).
-     * 
+     *
      * true extent: the exact number of bytes required to hold the data
      * in the layout pattern in the datatype.
-     * 
+     *
      * For example, consider the following buffer (just talking about
      * LB, extent, and true extent -- extrapolate for UB; i.e., assume
      * the UB equals exactly where the data ends):
-     * 
+     *
      * A              B                                       C
      * --------------------------------------------------------
      * |              |                                       |
      * --------------------------------------------------------
-     * 
+     *
      * There are multiple cases:
-     * 
+     *
      * 1. A is what we give to MPI_Send (and friends), and A is where
      * the data starts, and C is where the data ends.  In this case:
-     * 
+     *
      * - extent: C-A
      * - true extent: C-A
      * - LB: 0
-     * 
+     *
      * A                                                      C
      * --------------------------------------------------------
      * |                                                      |
      * --------------------------------------------------------
      * <=======================extent=========================>
      * <======================true extent=====================>
-     * 
+     *
      * 2. A is what we give to MPI_Send (and friends), B is where the
      * data starts, and C is where the data ends.  In this case:
-     * 
+     *
      * - extent: C-A
      * - true extent: C-B
      * - LB: positive
-     * 
+     *
      * A              B                                       C
      * --------------------------------------------------------
      * |              |           User buffer                 |
      * --------------------------------------------------------
      * <=======================extent=========================>
      * <===============true extent=============>
-     * 
+     *
      * 3. B is what we give to MPI_Send (and friends), A is where the
      * data starts, and C is where the data ends.  In this case:
-     * 
+     *
      * - extent: C-A
      * - true extent: C-A
      * - LB: negative
-     * 
+     *
      * A              B                                       C
      * --------------------------------------------------------
      * |              |           User buffer                 |
      * --------------------------------------------------------
      * <=======================extent=========================>
      * <======================true extent=====================>
-     * 
+     *
      * 4. MPI_BOTTOM is what we give to MPI_Send (and friends), B is
      * where the data starts, and C is where the data ends.  In this
      * case:
-     * 
+     *
      * - extent: C-MPI_BOTTOM
      * - true extent: C-B
      * - LB: [potentially very large] positive
-     * 
+     *
      * MPI_BOTTOM     B                                       C
      * --------------------------------------------------------
      * |              |           User buffer                 |
      * --------------------------------------------------------
      * <=======================extent=========================>
      * <===============true extent=============>
-     * 
+     *
      * So in all cases, for a temporary buffer, all we need to malloc()
      * is a buffer of size true_extent.  We therefore need to know two
      * pointer values: what value to give to MPI_Send (and friends) and
      * what value to give to free(), because they might not be the same.
-     * 
+     *
      * Clearly, what we give to free() is exactly what was returned from
      * malloc().  That part is easy.  :-)
-     * 
+     *
      * What we give to MPI_Send (and friends) is a bit more complicated.
      * Let's take the 4 cases from above:
-     * 
+     *
      * 1. If A is what we give to MPI_Send and A is where the data
      * starts, then clearly we give to MPI_Send what we got back from
      * malloc().
-     * 
+     *
      * 2. If B is what we get back from malloc, but we give A to
      * MPI_Send, then the buffer range [A,B) represents "dead space"
      * -- no data will be put there.  So it's safe to give B-LB to
      * MPI_Send.  More specifically, the LB is positive, so B-LB is
      * actually A.
-     * 
+     *
      * 3. If A is what we get back from malloc, and B is what we give to
      * MPI_Send, then the LB is negative, so A-LB will actually equal
      * B.
-     * 
+     *
      * 4. Although this seems like the weirdest case, it's actually
      * quite similar to case #2 -- the pointer we give to MPI_Send is
      * smaller than the pointer we got back from malloc().
-     * 
+     *
      * Hence, in all cases, we give (return_from_malloc - LB) to MPI_Send.
-     * 
+     *
      * This works fine and dandy if we only have (count==1), which we
      * rarely do.  ;-) So we really need to allocate (true_extent +
      * ((count - 1) * extent)) to get enough space for the rest.  This may
      * be more than is necessary, but it's ok.
-     * 
+     *
      * Simple, no?  :-)
-     * 
+     *
      */
 
     ompi_datatype_get_extent(dtype, &lb, &extent);
@@ -203,6 +203,8 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     if (size > 1) {
         free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == free_buffer) {
+            if (NULL != inplace_temp)
+                free(inplace_temp);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         pml_buffer = free_buffer - lb;
@@ -269,7 +271,7 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  *
- * 
+ *
  *      Performing reduction on each dimension of the hypercube.
  *	An example for 8 procs (dimensions = 3):
  *
@@ -352,19 +354,19 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
 
     ompi_datatype_get_extent(dtype, &lb, &extent);
     ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    
+
     free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
     if (NULL == free_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     pml_buffer = free_buffer - lb;
     /* read the comment about commutative operations (few lines down
      * the page) */
     if (ompi_op_is_commute(op)) {
         rcv_buffer = pml_buffer;
     }
-    
+
     /* Allocate sendbuf in case the MPI_IN_PLACE option has been used. See lengthy
      * rationale above. */
 

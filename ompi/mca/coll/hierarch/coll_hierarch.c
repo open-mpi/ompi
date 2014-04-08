@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -423,8 +423,8 @@ int mca_coll_hierarch_get_llr ( mca_coll_hierarch_module_t *hierarch_module )
     ncount = mca_coll_hierarch_count_lleaders ( hierarch_module->hier_num_colorarr, 
 						hierarch_module->hier_colorarr);
     hierarch_module->hier_num_lleaders = ncount;
-    hierarch_module->hier_llr = (int *) malloc ( hierarch_module->hier_num_lleaders * sizeof(int));
-    hierarch_module->hier_max_offset = (int *) calloc ( 1, hierarch_module->hier_num_lleaders * sizeof(int));
+    hierarch_module->hier_llr = (int *) malloc ( (size_t)hierarch_module->hier_num_lleaders * sizeof(int));
+    hierarch_module->hier_max_offset = (int *) calloc ( 1, (size_t)hierarch_module->hier_num_lleaders * sizeof(int));
     if ( ( NULL == hierarch_module->hier_llr) || ( NULL == hierarch_module->hier_max_offset )) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
