@@ -716,8 +716,6 @@ typedef enum {
  */
 OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_type);
 
-OPAL_DECLSPEC int mca_base_var_process_env_list(char ***context_env);
-
 END_C_DECLS
 
 #endif /* OPAL_MCA_BASE_VAR_H */
