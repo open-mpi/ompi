@@ -100,17 +100,17 @@ static bool __group_cache_enabled = true;
 #pragma weak shmem_int_and_to_all       =  pshmem_int_and_to_all
 #pragma weak shmem_long_and_to_all      =  pshmem_long_and_to_all
 #pragma weak shmem_longlong_and_to_all  =  pshmem_longlong_and_to_all
-#pragma weak 
+
 #pragma weak shmem_short_or_to_all      =  pshmem_short_or_to_all
 #pragma weak shmem_int_or_to_all        =  pshmem_int_or_to_all
 #pragma weak shmem_long_or_to_all       =  pshmem_long_or_to_all
 #pragma weak shmem_longlong_or_to_all   =  pshmem_longlong_or_to_all
-#pragma weak 
+
 #pragma weak shmem_short_xor_to_all     =  pshmem_short_xor_to_all
 #pragma weak shmem_int_xor_to_all       =  pshmem_int_xor_to_all
 #pragma weak shmem_long_xor_to_all      =  pshmem_long_xor_to_all
 #pragma weak shmem_longlong_xor_to_all  =  pshmem_longlong_xor_to_all
-#pragma weak 
+
 #pragma weak shmem_short_max_to_all     =  pshmem_short_max_to_all
 #pragma weak shmem_int_max_to_all       =  pshmem_int_max_to_all
 #pragma weak shmem_long_max_to_all      =  pshmem_long_max_to_all
@@ -118,7 +118,7 @@ static bool __group_cache_enabled = true;
 #pragma weak shmem_float_max_to_all     =  pshmem_float_max_to_all
 #pragma weak shmem_double_max_to_all    =  pshmem_double_max_to_all
 #pragma weak shmem_longdouble_max_to_all=  pshmem_longdouble_max_to_all
-#pragma weak 
+
 #pragma weak shmem_short_min_to_all     =  pshmem_short_min_to_all
 #pragma weak shmem_int_min_to_all       =  pshmem_int_min_to_all
 #pragma weak shmem_long_min_to_all      =  pshmem_long_min_to_all
@@ -126,7 +126,7 @@ static bool __group_cache_enabled = true;
 #pragma weak shmem_float_min_to_all     =  pshmem_float_min_to_all
 #pragma weak shmem_double_min_to_all    =  pshmem_double_min_to_all
 #pragma weak shmem_longdouble_min_to_all=  pshmem_longdouble_min_to_all
-#pragma weak 
+
 #pragma weak shmem_short_sum_to_all     =  pshmem_short_sum_to_all
 #pragma weak shmem_int_sum_to_all       =  pshmem_int_sum_to_all
 #pragma weak shmem_long_sum_to_all      =  pshmem_long_sum_to_all
@@ -136,7 +136,7 @@ static bool __group_cache_enabled = true;
 #pragma weak shmem_longdouble_sum_to_all=  pshmem_longdouble_sum_to_all
 #pragma weak shmem_complexf_sum_to_all  =  pshmem_complexf_sum_to_all
 #pragma weak shmem_complexd_sum_to_all  =  pshmem_complexd_sum_to_all
-#pragma weak 
+
 #pragma weak shmem_short_prod_to_all    =  pshmem_short_prod_to_all
 #pragma weak shmem_int_prod_to_all      =  pshmem_int_prod_to_all
 #pragma weak shmem_long_prod_to_all     =  pshmem_long_prod_to_all
