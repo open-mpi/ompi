@@ -631,27 +631,16 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
         }
 
         fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
-        if(fd > 0) {
+        if (fd > 0) {
             dup2(fd, 0);
-        }
-
-        /* When not in debug mode and --debug-daemons was not passed,
-         * tie stdout/stderr to dev null so we don't see messages from orted
-         * EXCEPT if the user has requested that we leave sessions attached
-         */
-        if (0 > opal_output_get_verbosity(orte_plm_base_framework.framework_output) &&
-            !orte_debug_daemons_flag && !orte_leave_session_attached) {
-            if (fd >= 0) {
-                if (fd != 1 && fd != 2) {
-                    dup2(fd,1);
-                    dup2(fd,2);
-                } else if (fd == 1) {
-                   dup2(fd,2);
-                } else if (fd == 2) {
-                    dup2(fd,1);
-                } else {
-                    close(fd);
-                }
+            /* When not in debug mode and --debug-daemons was not passed,
+             * tie stdout/stderr to dev null so we don't see messages from orted
+             * EXCEPT if the user has requested that we leave sessions attached
+             */
+            if (0 > opal_output_get_verbosity(orte_plm_base_framework.framework_output) &&
+                !orte_debug_daemons_flag && !orte_leave_session_attached) {
+                dup2(fd,1);
+                dup2(fd,2);
             }
         }
 
@@ -668,8 +657,8 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
         exit(1);
     } else {  /* parent */
         /* just in case, make sure that the srun process is not in our
-        process group any more.  Stevens says always do this on both
-        sides of the fork... */
+           process group any more.  Stevens says always do this on both
+           sides of the fork... */
         setpgid(srun_pid, srun_pid);
         
         /* if this is the primary launch - i.e., not a comm_spawn of a
