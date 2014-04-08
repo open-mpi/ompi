@@ -1002,7 +1002,7 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
 
         ret = ompi_osc_rdma_isend_w_cb (target, primitive_count, primitive_datatype, source, get_acc_header->tag,
                                         module->comm, accumulate_cb, acc_data);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS == ret)) {
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             /* cancel the receive and free the accumulate data */
             ompi_request_cancel (recv_request);
             OBJ_RELEASE(acc_data);
