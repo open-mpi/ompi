@@ -15,7 +15,8 @@ portals4_sources = \
 	osc_portals4_component.c \
 	osc_portals4_active_target.c \
 	osc_portals4_passive_target.c \
-	osc_portals4_request.c
+	osc_portals4_request.c \
+        osc_portals4_request.h
 
 AM_CPPFLAGS = $(osc_portals4_CPPFLAGS)
 
