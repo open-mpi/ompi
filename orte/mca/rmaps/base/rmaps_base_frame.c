@@ -688,6 +688,8 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSLOT);
         } else if (0 == strncasecmp(spec, "node", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNODE);
+        } else if (0 == strncasecmp(spec, "seq", len)) {
+            ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_SEQ);
 #if OPAL_HAVE_HWLOC
         } else if (0 == strncasecmp(spec, "core", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYCORE);
