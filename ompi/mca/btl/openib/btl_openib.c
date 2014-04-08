@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -28,9 +28,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
+#include "opal_stdint.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
