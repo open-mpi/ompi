@@ -630,8 +630,8 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
             free(newenv);
         }
 
-        fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
-        if (fd > 0) {
+        fd = open("/dev/null", O_CREAT|O_RDWR|O_TRUNC, 0666);
+        if (fd >= 0) {
             dup2(fd, 0);
             /* When not in debug mode and --debug-daemons was not passed,
              * tie stdout/stderr to dev null so we don't see messages from orted
