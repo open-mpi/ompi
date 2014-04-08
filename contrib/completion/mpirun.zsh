@@ -2,7 +2,7 @@
 
 # Completion script for Open MPI's mpirun command v1.0.1
 #
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 #
 # If completion is not already set up, follow the instructions in section
@@ -213,9 +213,7 @@ _mpirun() {
 	'(-xml --xml -xml-file --xml-file)'{-xml,--xml}'[Provide all output in XML format]' \
 	'(-xml --xml -xml-file --xml-file)'{-xml-file,--xml-file}'[Provide all output in XML format to the specified file]:xml output file:' \
 	'(-xterm --xterm)'{-xterm,--xterm}'[Create a new xterm window and display output from the specified ranks there]:rank list:' \
-	'*::->files' && return 0
-
-    cur=${words[CURRENT]}
+	'*::args:->command' && ret=0
 
     case $state in
 	mca_variable_name)
@@ -224,6 +222,7 @@ _mpirun() {
 	    _describe -t mca_variable_names 'mca variable name' mca_variable_names
 	    ;;
         mca_variable_value)
+	    cur=${words[CURRENT]}
 	    parameter=${words[CURRENT - 1]}
 	    if test "${parameter#_}" = "${parameter}" ; then
 		_generate_mca_component_names $parameter
@@ -237,12 +236,15 @@ _mpirun() {
 	    fi
 
 	    ;;
-	*)
-	    _files "$@"
+	command)
+	    # no longer specifying mpirun options. use normal command
+	    # parsing now (subcommand completion)
+	    _normal
+	    return
 	    ;;
     esac
 
-    return 0
+    return ret
 }
 
 _mpirun "$@"
