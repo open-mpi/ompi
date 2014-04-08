@@ -50,6 +50,13 @@
         return out_value;                                           \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_int_finc = pshmem_int_finc
+#pragma weak shmem_long_finc = pshmem_long_finc
+#pragma weak shmem_longlong_finc = pshmem_longlong_finc
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_FINC(_int, int)
 SHMEM_TYPE_FINC(_long, long)
 SHMEM_TYPE_FINC(_longlong, long long)

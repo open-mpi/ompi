@@ -16,12 +16,10 @@
 #include "oshmem/include/shmem.h"
 #include "oshmem/runtime/runtime.h"
 
-#if !defined(OSHMEM_PROFILING) || (OSHMEM_PROFILING == 0)
 int shmem_finalize(void)
 {
     OPAL_CR_FINALIZE_LIBRARY();
 
     return oshmem_shmem_finalize();
 }
-#endif /* OSHMEM_PROFILING */
 

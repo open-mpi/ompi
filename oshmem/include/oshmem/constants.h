@@ -12,9 +12,6 @@
 #define OSHMEM_CONSTANTS_H
 
 #include "orte/constants.h"
-#if defined(OSHMEM_PROFILING) && (OSHMEM_PROFILING == 1)
-#include "oshmem/shmem/c/profile/defines.h"
-#endif
 #include "oshmem/include/shmem.h"
 
 

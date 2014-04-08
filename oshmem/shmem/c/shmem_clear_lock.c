@@ -19,6 +19,11 @@
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/shmem/shmem_lock.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_clear_lock = pshmem_clear_lock
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void shmem_clear_lock(long *lock)
 {
     _shmem_clear_lock(lock, sizeof(long));

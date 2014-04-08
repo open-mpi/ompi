@@ -28,43 +28,43 @@ headers = defines.h
 
 
 OSHMEM_API_SOURCES = \
-	shmem_init.c \
-	shmem_free.c \
-	shmem_alloc.c \
-	shmem_realloc.c \
-	shmem_align.c \
-	shmem_query.c \
-	shmem_p.c \
-	shmem_put.c \
-	shmem_g.c \
-	shmem_get.c \
-	shmem_broadcast.c \
-	shmem_collect.c \
-	shmem_ptr.c \
-	shmem_pe_accessible.c \
-	shmem_addr_accessible.c \
-	shmem_barrier.c \
-	shmem_fence.c \
-	shmem_quiet.c \
-	shmem_wait.c \
-	shmem_iget.c \
-	shmem_iput.c \
-	shmem_udcflush.c \
-	shmem_udcflush_line.c \
-	shmem_set_cache_inv.c \
-	shmem_set_cache_line_inv.c \
-	shmem_clear_cache_inv.c \
-	shmem_clear_cache_line_inv.c \
-	shmem_reduce.c \
-	shmem_swap.c \
-	shmem_cswap.c \
-	shmem_fadd.c \
-	shmem_finc.c \
-	shmem_add.c \
-	shmem_inc.c \
-	shmem_clear_lock.c \
-	shmem_set_lock.c \
-	shmem_test_lock.c
+	pshmem_init.c \
+	pshmem_free.c \
+	pshmem_alloc.c \
+	pshmem_realloc.c \
+	pshmem_align.c \
+	pshmem_query.c \
+	pshmem_p.c \
+	pshmem_put.c \
+	pshmem_g.c \
+	pshmem_get.c \
+	pshmem_broadcast.c \
+	pshmem_collect.c \
+	pshmem_ptr.c \
+	pshmem_pe_accessible.c \
+	pshmem_addr_accessible.c \
+	pshmem_barrier.c \
+	pshmem_fence.c \
+	pshmem_quiet.c \
+	pshmem_wait.c \
+	pshmem_iget.c \
+	pshmem_iput.c \
+	pshmem_udcflush.c \
+	pshmem_udcflush_line.c \
+	pshmem_set_cache_inv.c \
+	pshmem_set_cache_line_inv.c \
+	pshmem_clear_cache_inv.c \
+	pshmem_clear_cache_line_inv.c \
+	pshmem_reduce.c \
+	pshmem_swap.c \
+	pshmem_cswap.c \
+	pshmem_fadd.c \
+	pshmem_finc.c \
+	pshmem_add.c \
+	pshmem_inc.c \
+	pshmem_clear_lock.c \
+	pshmem_set_lock.c \
+	pshmem_test_lock.c
 
 nodist_liboshmem_c_pshmem_la_SOURCES = \
 	$(OSHMEM_API_SOURCES)
@@ -74,7 +74,7 @@ nodist_liboshmem_c_pshmem_la_SOURCES = \
 #
 $(nodist_liboshmem_c_pshmem_la_SOURCES):
 	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '1-'` ; \
+		pname=`echo $@ | cut -b '2-'` ; \
 		$(LN_S) $(top_srcdir)/oshmem/shmem/c/$$pname $@ ; \
 	fi
 

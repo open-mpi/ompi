@@ -49,6 +49,13 @@
         return out_value;                                           \
     }
 
+#if OSHMEM_PROFILING
+#pragma weak shmem_int_fadd = pshmem_int_fadd
+#pragma weak shmem_long_fadd = pshmem_long_fadd
+#pragma weak shmem_longlong_fadd = pshmem_longlong_fadd
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 SHMEM_TYPE_FADD(_int, int)
 SHMEM_TYPE_FADD(_long, long)
 SHMEM_TYPE_FADD(_longlong, long long)

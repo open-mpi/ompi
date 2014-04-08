@@ -19,6 +19,11 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/mca/memheap/memheap.h"
 
+#if OSHMEM_PROFILING
+#pragma weak shrealloc = pshrealloc
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 void* shrealloc(void *ptr, size_t size)
 {
     int rc;
