@@ -203,8 +203,9 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     if (size > 1) {
         free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == free_buffer) {
-            if (NULL != inplace_temp)
+            if (NULL != inplace_temp) {
                 free(inplace_temp);
+            }
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         pml_buffer = free_buffer - lb;
