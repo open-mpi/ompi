@@ -11,3 +11,11 @@ There are several files and scripts in this directory.
 
 - README for how to setup diff emails for new github repos (i.e., how
   to use the above script to send diff emails for each github repo).
+
+- Script that is run on lion.crest.iu.edu (aka www.open-mpi.org) to
+  update the bitbucket mercurial mirror.  It is run via cron every 15
+  minutes.
+
+--> Note that the github SVN mirroring of the main OMPI SVN repo (ompi)
+    is maintained by Mellanox.  Its script does not currently appear
+    here in the SVN repo.
