@@ -6,6 +6,6 @@ cd /l/osl/www/www.open-mpi.org
 # run "svn up" in this tree, too
 umask 2
 
-svn up
+git pull --rebase origin
 
 date >> /tmp/bogus-mpiteam
