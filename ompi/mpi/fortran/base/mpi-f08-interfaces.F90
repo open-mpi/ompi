@@ -4252,10 +4252,10 @@ end subroutine MPI_F_sync_reg_f08
 end interface  MPI_F_sync_reg
 
 interface  MPI_Get_library_version
-subroutine MPI_Get_library_version_f08(name,resultlen,ierror)
-   use :: mpi_f08_types, only : MPI_MAX_PROCESSOR_NAME
+subroutine MPI_Get_library_version_f08(version,resultlen,ierror)
+   use :: mpi_f08_types, only : MPI_MAX_LIBRARY_VERSION_STRING
    implicit none
-   character(len=MPI_MAX_PROCESSOR_NAME), intent(out) :: name
+   character(len=MPI_MAX_LIBRARY_VERSION_STRING), intent(out) :: version
    integer, intent(out) :: resultlen
    integer, optional, intent(out) :: ierror
 end subroutine MPI_Get_library_version_f08
