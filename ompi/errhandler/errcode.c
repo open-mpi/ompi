@@ -182,8 +182,10 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_rma_flavor, MPI_ERR_RMA_FLAVOR, "MPI_ERR_RMA_FLAVOR: Invalid type of window" );
     CONSTRUCT_ERRCODE( ompi_err_rma_shared, MPI_ERR_RMA_SHARED, "MPI_ERR_RMA_SHARED: Memory cannot be shared" );
 
-    ompi_mpi_errcode_lastused = MPI_ERR_WIN;
-    ompi_mpi_errcode_lastpredefined = MPI_ERR_WIN;
+    /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >= 
+       MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */ 
+    ompi_mpi_errcode_lastused = MPI_ERR_LASTCODE; 
+    ompi_mpi_errcode_lastpredefined = MPI_ERR_LASTCODE; 
     return OMPI_SUCCESS;
 }
 
