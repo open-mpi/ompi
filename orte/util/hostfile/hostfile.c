@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,17 +109,14 @@ static char *hostfile_parse_string(void)
     return strdup(orte_util_hostfile_value.sval);
 }
 
-static orte_node_t* hostfile_lookup(opal_list_t* nodes, const char* name, bool keep)
+static orte_node_t* hostfile_lookup(opal_list_t* nodes, const char* name)
 {
     opal_list_item_t* item;
     for(item =  opal_list_get_first(nodes);
         item != opal_list_get_end(nodes);
         item =  opal_list_get_next(item)) {
         orte_node_t* node = (orte_node_t*)item;
-        if(strcmp(node->name, name) == 0) {
-            if (!keep) {
-                opal_list_remove_item(nodes, item);
-            }
+        if (strcmp(node->name, name) == 0) {
             return node;
         }
     }
@@ -195,18 +192,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             
             /* Do we need to make a new node object?  First check to see
                if it's already in the exclude list */
-            if (NULL == (node = hostfile_lookup(exclude, node_name, keep_all))) {
+            if (NULL == (node = hostfile_lookup(exclude, node_name))) {
                 node = OBJ_NEW(orte_node_t);
                 node->name = node_name;
                 if (NULL != username) {
                     node->username = strdup(username);
                 }
+                opal_list_append(exclude, &node->super);
             }
-            /* Note that we need to add this back to the exclude list.
-               If it was found, we just removed it (in hostfile_lookup()),
-               so this puts it back. If it was not found, then we have to
-               add it to the exclude list anyway. */
-            opal_list_append(exclude, &node->super);
             return ORTE_SUCCESS;
         }
         
@@ -229,13 +222,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                              keep_all ? "TRUE" : "FALSE"));
 
         /* Do we need to make a new node object? */
-        if (NULL == (node = hostfile_lookup(updates, node_name, keep_all))) {
+        if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
             node->slots = 1;
             if (NULL != username) {
                 node->username = strdup(username);
             }
+            opal_list_append(updates, &node->super);
         } else {
             /* this node was already found once - add a slot and mark slots as "given" */
             node->slots++;
@@ -254,6 +248,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         if (NULL != username) {
             node->username = strdup(username);
         }
+        opal_list_append(updates, &node->super);
     } else if (ORTE_HOSTFILE_RANK == token) {
         /* we can ignore the rank, but we need to extract the node name. we
          * first need to shift over to the other side of the equal sign as
@@ -289,13 +284,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         }
         opal_argv_free (argv);
         /* Do we need to make a new node object? */
-        if (NULL == (node = hostfile_lookup(updates, node_name, keep_all))) {
+        if (NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
             node->slots = 1;
             if (NULL != username) {
                 node->username = strdup(username);
             }
+            opal_list_append(updates, &node->super);
         } else {
             /* add a slot */
             node->slots++;
@@ -312,7 +308,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                ORTE_HOSTFILE_NEWLINE != token) {
             token = orte_util_hostfile_lex();
         }
-        opal_list_append(updates, &node->super);
         return ORTE_SUCCESS;
     } else {
         hostfile_parse_error(token);
@@ -405,7 +400,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         node->slots = node->slots_max;
         node->slots_given = true;
     }
-    opal_list_append(updates, &node->super);
 
     return ORTE_SUCCESS;
 }

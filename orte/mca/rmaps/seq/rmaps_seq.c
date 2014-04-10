@@ -256,6 +256,10 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             }
             /* move to next node */
             nd = (orte_node_t*)opal_list_get_next((opal_list_item_t*)nd);
+            if (NULL == nd) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
         }
 
         /** track the total number of processes we mapped */
