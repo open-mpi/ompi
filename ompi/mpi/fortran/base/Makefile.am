@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,8 +20,8 @@
 noinst_LTLIBRARIES =
 
 EXTRA_DIST = \
-     attr_fn-f90-interfaces.h \
-     conversion_fn_null-f90-interface.h
+     attr-fn-int-callback-interfaces.h \
+     conversion-fn-null-int-interface.h
 
 #-----------------------------------------------------------------------------
 
