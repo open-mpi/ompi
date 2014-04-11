@@ -168,8 +168,6 @@
 #undef OMPI_PARAM_CHECK
 
 /* Enable warnings in wrong usage (e.g. deprecated) in user-level code */
-/* XXX This __disabled__ by default for Open MPI-1.5, but will be __enabled__ for Open MPI-1.7 by default */
-/* Users should be notified about this proposed change. */
 #ifndef OMPI_WANT_MPI_INTERFACE_WARNING
 #undef OMPI_WANT_MPI_INTERFACE_WARNING
 #endif
