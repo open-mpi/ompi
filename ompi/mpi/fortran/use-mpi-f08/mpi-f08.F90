@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
@@ -38,10 +38,10 @@ module mpi_f08
 
 ! The MPI attribute callback functions
 
-  include "ompi/mpi/fortran/base/attr_fn-f90-interfaces.h"
+  include "attr-fn-f08-callback-interfaces.h"
 
 ! The MPI_CONVERSION_FN_NULL function
 
-  include "ompi/mpi/fortran/base/conversion_fn_null-f90-interface.h"
+  include "conversion-fn-null-f08-interface.h"
 
 end module mpi_f08
