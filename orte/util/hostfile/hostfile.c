@@ -336,6 +336,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 orte_show_help("help-hostfile.txt", "slots",
                                true,
                                cur_hostfile_name, rc);
+                opal_list_remove_item(updates, &node->super);
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
@@ -346,6 +347,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 orte_show_help("help-hostfile.txt", "slots-given",
                                true,
                                cur_hostfile_name, node->name);
+                opal_list_remove_item(updates, &node->super);
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
@@ -364,6 +366,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 orte_show_help("help-hostfile.txt", "max_slots",
                                true,
                                cur_hostfile_name, ((size_t) rc));
+                opal_list_remove_item(updates, &node->super);
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
@@ -378,6 +381,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                                true,
                                cur_hostfile_name, node->slots, rc);
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                opal_list_remove_item(updates, &node->super);
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
@@ -385,11 +389,13 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
 
         default:
             hostfile_parse_error(token);
+            opal_list_remove_item(updates, &node->super);
             OBJ_RELEASE(node);
             return ORTE_ERROR;
         }
         if (number_of_slots > node->slots) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            opal_list_remove_item(updates, &node->super);
             OBJ_RELEASE(node);
             return ORTE_ERROR;
         }
