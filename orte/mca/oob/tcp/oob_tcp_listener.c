@@ -121,11 +121,11 @@ int orte_oob_tcp_start_listening(void)
     }
 #endif
 
-    /* if I am the HNP, create a separate event base for the
-     * listening thread so we can harvest connection requests
-     * as rapidly as possible
+    /* if I am the HNP, start a listening thread so we can
+     * harvest connection requests as rapidly as possible
      */
     if (ORTE_PROC_IS_HNP) {
+        mca_oob_tcp_component.stop_thread = open("/dev/null", O_RDWR);
         mca_oob_tcp_component.listen_thread_active = true;
         mca_oob_tcp_component.listen_thread.t_run = listen_thread;
         mca_oob_tcp_component.listen_thread.t_arg = NULL;
@@ -641,15 +641,22 @@ static void* listen_thread(opal_object_t *obj)
             FD_SET(listener->sd, &readfds);
             max = (listener->sd > max) ? listener->sd : max;
         }
+        /* add the stop_thread fd */
+        FD_SET(mca_oob_tcp_component.stop_thread, &readfds);
+        max = (mca_oob_tcp_component.stop_thread > max) ? mca_oob_tcp_component.stop_thread : max;
+
         /* set timeout interval */
         timeout.tv_sec = mca_oob_tcp_component.listen_thread_tv.tv_sec;
         timeout.tv_usec = mca_oob_tcp_component.listen_thread_tv.tv_usec;
 
-        /* Block in a select for a short (10ms) amount of time to
-         * avoid hammering the cpu.  If a connection
+        /* Block in a select to avoid hammering the cpu.  If a connection
          * comes in, we'll get woken up right away.
          */
         rc = select(max + 1, &readfds, NULL, NULL, &timeout);
+        if (!mca_oob_tcp_component.listen_thread_active) {
+            /* we've been asked to terminate */
+            return NULL;
+        }
         if (rc < 0) {
             if (EAGAIN != opal_socket_errno && EINTR != opal_socket_errno) {
                 perror("select");
