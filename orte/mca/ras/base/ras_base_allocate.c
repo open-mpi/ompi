@@ -254,7 +254,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         /* a default hostfile was provided - parse it */
         if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
                                                                orte_default_hostfile))) {
-            ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
             ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
@@ -270,7 +269,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         /* a rankfile was provided - parse it */
         if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
                                                                orte_rankfile))) {
-            ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
             ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
@@ -290,7 +288,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             /* hostfile was specified - parse it and add it to the list */
             if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
                                                                    app->hostfile))) {
-                ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 /* set an error event */
                 ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -310,7 +307,6 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
                                                                     app->dash_host))) {
-                ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
