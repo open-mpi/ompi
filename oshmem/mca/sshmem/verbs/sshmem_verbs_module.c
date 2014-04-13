@@ -193,7 +193,7 @@ segment_create(map_segment_t *ds_buf,
     /* Open device */
     if (NULL != mca_sshmem_verbs_component.hca_name) {
         for (i = 0; i < num_devs; i++) {
-            if (0 == strcmp(mca_sshmem_verbs_component.hca_name, ibv_get_device_name(device->ib_devs[0]))) {
+            if (0 == strcmp(mca_sshmem_verbs_component.hca_name, ibv_get_device_name(device->ib_devs[i]))) {
                 device->ib_dev = device->ib_devs[i];
                 break;
             }
@@ -245,10 +245,10 @@ segment_create(map_segment_t *ds_buf,
     if (!rc) {
         void *addr = NULL;
         struct ibv_mr *ib_mr = NULL;
-        int access_flag = IBV_ACCESS_LOCAL_WRITE |
+        uint64_t access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |
                           IBV_ACCESS_REMOTE_READ;
-        int exp_access_flag = 0;
+        uint64_t exp_access_flag = 0;
 
         OBJ_CONSTRUCT(&device->ib_mr_array, opal_value_array_t);
         opal_value_array_init(&device->ib_mr_array, sizeof(struct ibv_mr *));
@@ -259,7 +259,7 @@ segment_create(map_segment_t *ds_buf,
                           IBV_EXP_ACCESS_SHARED_MR_USER_WRITE;
 #endif /* MPAGE_ENABLE */
 
-        struct ibv_exp_reg_mr_in in = {device->ib_pd, addr, size, access_flag, exp_access_flag, 0};
+        struct ibv_exp_reg_mr_in in = {device->ib_pd, addr, size, access_flag|exp_access_flag, 0};
         ib_mr = ibv_exp_reg_mr(&in);
         if (NULL == ib_mr) {
             OPAL_OUTPUT_VERBOSE(
@@ -274,7 +274,7 @@ segment_create(map_segment_t *ds_buf,
         }
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-        if (!rc) {
+        if (!rc && mca_sshmem_verbs_component.has_shared_mr) {
             access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |
                           IBV_ACCESS_REMOTE_READ|
@@ -286,8 +286,10 @@ segment_create(map_segment_t *ds_buf,
             if (NULL == ib_mr) {
                 OPAL_OUTPUT_VERBOSE(
                     (5, oshmem_sshmem_base_framework.framework_output,
-                        "error to ibv_reg_shared_mr() %llu bytes errno says %d: %s",
-                        (unsigned long long)size, errno, strerror(errno))
+                        "error to ibv_reg_shared_mr() %llu bytes errno says %d: %s has_shared_mr: %d",
+                        (unsigned long long)size, errno, strerror(errno),
+                        mca_sshmem_verbs_component.has_shared_mr
+                        )
                     );
                 rc = OSHMEM_ERR_OUT_OF_RESOURCE;
             } else {
@@ -297,16 +299,21 @@ segment_create(map_segment_t *ds_buf,
 #endif /* MPAGE_ENABLE */
 
         if (!rc) {
-            assert(size == device->ib_mr_shared->length);
-
             OPAL_OUTPUT_VERBOSE(
                 (70, oshmem_sshmem_base_framework.framework_output,
-                "ibv device %s",
-                ibv_get_device_name(device->ib_dev))
+                "ibv device %s shared_mr: %d",
+                ibv_get_device_name(device->ib_dev),
+                mca_sshmem_verbs_component.has_shared_mr)
                 );
 
-            ds_buf->type = MAP_SEGMENT_ALLOC_IBV;
-            ds_buf->seg_id = device->ib_mr_shared->handle;
+            if (mca_sshmem_verbs_component.has_shared_mr) {
+                assert(size == device->ib_mr_shared->length);
+                ds_buf->type = MAP_SEGMENT_ALLOC_IBV;
+                ds_buf->seg_id = device->ib_mr_shared->handle;
+            } else {
+                ds_buf->type = MAP_SEGMENT_ALLOC_IBV_NOSHMR;
+                ds_buf->seg_id = MAP_SEGMENT_SHM_INVALID;
+            }
             ds_buf->seg_base_addr = ib_mr->addr;
             ds_buf->seg_size = size;
             ds_buf->end = (void*)((uintptr_t)ds_buf->seg_base_addr + ds_buf->seg_size);
@@ -350,7 +357,7 @@ segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
         mca_sshmem_verbs_component.mr_interleave_factor * 1024ULL * 1024ULL * 1024ULL * mr_count);
     {
         struct ibv_mr *ib_mr = NULL;
-        int access_flag = IBV_ACCESS_LOCAL_WRITE |
+        uint64_t access_flag = IBV_ACCESS_LOCAL_WRITE |
             IBV_ACCESS_REMOTE_WRITE |
             IBV_ACCESS_REMOTE_READ |
             IBV_EXP_ACCESS_NO_RDMA;
