@@ -148,21 +148,21 @@ verbs_runtime_query(mca_base_module_t **module,
         void *addr = NULL;
         size_t size = getpagesize();
         struct ibv_mr *ib_mr = NULL;
-        int access_flag = IBV_ACCESS_LOCAL_WRITE |
+        uint64_t access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |
-                          IBV_ACCESS_REMOTE_READ;
-        int exp_access_flag = 0;
+                          IBV_ACCESS_REMOTE_READ; 
+        uint64_t exp_access_flag = 0;
 
         OBJ_CONSTRUCT(&device->ib_mr_array, opal_value_array_t);
         opal_value_array_init(&device->ib_mr_array, sizeof(struct ibv_mr *));
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
-        exp_access_flag = IBV_EXP_ACCESS_ALLOCATE_MR |
+        exp_access_flag = IBV_EXP_ACCESS_ALLOCATE_MR  |
                           IBV_EXP_ACCESS_SHARED_MR_USER_READ |
-                          IBV_EXP_ACCESS_SHARED_MR_USER_WRITE;
+                          IBV_EXP_ACCESS_SHARED_MR_USER_WRITE; 
 #endif /* MPAGE_ENABLE */
 
-        struct ibv_exp_reg_mr_in in = {device->ib_pd, addr, size, access_flag, exp_access_flag, 0};
+        struct ibv_exp_reg_mr_in in = {device->ib_pd, addr, size, access_flag|exp_access_flag, 0};
         ib_mr = ibv_exp_reg_mr(&in);
         if (NULL == ib_mr) {
             rc = OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -182,9 +182,10 @@ verbs_runtime_query(mca_base_module_t **module,
             struct ibv_exp_reg_shared_mr_in in = {0, device->ib_mr_shared->handle, device->ib_pd, addr, access_flag};
             ib_mr = ibv_exp_reg_shared_mr(&in);
             if (NULL == ib_mr) {
-                rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+                mca_sshmem_verbs_component.has_shared_mr = 0;
             } else {
                 opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
+                mca_sshmem_verbs_component.has_shared_mr = 1;
             }
         }
 #endif /* MPAGE_ENABLE */
