@@ -378,7 +378,7 @@ static inline int ompi_osc_rdma_put_w_req (void *origin_addr, int origin_count,
 
     ret = ompi_osc_rdma_frag_finish(module, frag);
 
-    if (request) {
+    if (request || is_long_msg) {
         /* need to flush now in case the caller decides to wait on the request */
         ompi_osc_rdma_frag_flush_target (module, target);
     }
