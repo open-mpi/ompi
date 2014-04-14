@@ -661,7 +661,7 @@ static void component_shutdown(void)
     if (ORTE_PROC_IS_HNP && mca_oob_tcp_component.listen_thread_active) {
         mca_oob_tcp_component.listen_thread_active = false;
         /* tell the thread to exit */
-        write(mca_oob_tcp_component.stop_thread, &i, sizeof(int));
+        write(mca_oob_tcp_component.stop_thread[1], &i, sizeof(int));
         opal_thread_join(&mca_oob_tcp_component.listen_thread, NULL);
     }
 

@@ -125,7 +125,10 @@ int orte_oob_tcp_start_listening(void)
      * harvest connection requests as rapidly as possible
      */
     if (ORTE_PROC_IS_HNP) {
-        mca_oob_tcp_component.stop_thread = open("/dev/null", O_RDWR);
+        if (0 > pipe(mca_oob_tcp_component.stop_thread)) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
         mca_oob_tcp_component.listen_thread_active = true;
         mca_oob_tcp_component.listen_thread.t_run = listen_thread;
         mca_oob_tcp_component.listen_thread.t_arg = NULL;
@@ -642,8 +645,8 @@ static void* listen_thread(opal_object_t *obj)
             max = (listener->sd > max) ? listener->sd : max;
         }
         /* add the stop_thread fd */
-        FD_SET(mca_oob_tcp_component.stop_thread, &readfds);
-        max = (mca_oob_tcp_component.stop_thread > max) ? mca_oob_tcp_component.stop_thread : max;
+        FD_SET(mca_oob_tcp_component.stop_thread[0], &readfds);
+        max = (mca_oob_tcp_component.stop_thread[0] > max) ? mca_oob_tcp_component.stop_thread[0] : max;
 
         /* set timeout interval */
         timeout.tv_sec = mca_oob_tcp_component.listen_thread_tv.tv_sec;
@@ -655,6 +658,8 @@ static void* listen_thread(opal_object_t *obj)
         rc = select(max + 1, &readfds, NULL, NULL, &timeout);
         if (!mca_oob_tcp_component.listen_thread_active) {
             /* we've been asked to terminate */
+            close(mca_oob_tcp_component.stop_thread[0]);
+            close(mca_oob_tcp_component.stop_thread[1]);
             return NULL;
         }
         if (rc < 0) {
