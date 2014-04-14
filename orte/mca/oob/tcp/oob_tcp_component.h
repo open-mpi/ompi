@@ -78,7 +78,7 @@ typedef struct {
     opal_thread_t      listen_thread;          /**< handle to the listening thread */
     bool               listen_thread_active;
     struct timeval     listen_thread_tv;       /**< Timeout when using listen thread */
-    int                stop_thread;            /**< file descriptor used to exit the listen thread */
+    int                stop_thread[2];         /**< pipe used to exit the listen thread */
 
     /* peers available via this transport - the index is the process name,
      * and the pointer returned is the pointer to the last module that
