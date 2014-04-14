@@ -45,14 +45,13 @@ struct ibv_exp_reg_mr_in {
     struct ibv_pd *pd;
     void *addr;
     size_t length;
-    int access;
-    int exp_access;
+    uint64_t access;
     uint32_t comp_mask;
 };
 
 static inline struct ibv_mr *ibv_exp_reg_mr(struct ibv_exp_reg_mr_in *in)
 {
-    return ibv_reg_mr(in->pd, in->addr, in->length, in->access | in->exp_access);
+    return ibv_reg_mr(in->pd, in->addr, in->length, in->access);
 }
 
 
@@ -70,6 +69,7 @@ typedef struct mca_sshmem_verbs_component_t {
     int priority;
     char* hca_name;
     int mr_interleave_factor;
+    int has_shared_mr;
 } mca_sshmem_verbs_component_t;
 
 OSHMEM_MODULE_DECLSPEC extern mca_sshmem_verbs_component_t
