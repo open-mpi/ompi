@@ -122,7 +122,7 @@ public Status mRecv(Object buf, int count, Datatype type) throws MPIException
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 

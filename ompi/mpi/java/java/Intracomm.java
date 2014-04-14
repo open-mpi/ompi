@@ -351,13 +351,13 @@ public final void scan(Object sendbuf, Object recvbuf,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = type.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = type.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -386,7 +386,7 @@ public final void scan(Object recvbuf, int count, Datatype type, Op op)
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = type.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -475,13 +475,13 @@ public final void exScan(Object sendbuf, Object recvbuf,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = type.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = type.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -510,7 +510,7 @@ public final void exScan(Object buf, int count, Datatype type, Op op)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 

@@ -54,41 +54,8 @@
 #include "mpi_Comm.h"
 #include "mpiJava.h"  /* must come AFTER the related .h so JNI is included */
 
-static void* getArrayCritical(void** bufBase, JNIEnv *env,
-                              jobject buf, int baseType, int offset)
-{
-    *bufBase = (jbyte*)(*env)->GetPrimitiveArrayCritical(env, buf, NULL);
-
-    switch(baseType)
-    {
-        case 0:
-            return NULL;
-        case 1:
-            return ((jbyte*)*bufBase) + offset;
-        case 2:
-            return ((jchar*)*bufBase) + offset;
-        case 3:
-            return ((jshort*)*bufBase) + offset;
-        case 4:
-            return ((jboolean*)*bufBase) + offset;
-        case 5:
-            return ((jint*)*bufBase) + offset;
-        case 6:
-            return ((jlong*)*bufBase) + offset;
-        case 7:
-            return ((jfloat*)*bufBase) + offset;
-        case 8:
-            return ((jdouble*)*bufBase) + offset;
-        case 9:
-            return ((jbyte*)*bufBase) + offset;
-        default:
-            return NULL;
-    }
-}
-
-static void* getBufCritical(
-        void** bufBase, JNIEnv *env,
-        jobject buf, jboolean db, int baseType, int offset)
+static void* getBufCritical(void** bufBase, JNIEnv *env,
+                            jobject buf, jboolean db, int offset)
 {
     if(buf == NULL)
     {
@@ -104,7 +71,7 @@ static void* getBufCritical(
     }
     else
     {
-        return getArrayCritical(bufBase, env, buf, baseType, offset);
+        return ompi_java_getArrayCritical(bufBase, env, buf, offset);
     }
 }
 
@@ -121,6 +88,45 @@ static int isInter(JNIEnv *env, MPI_Comm comm)
     rc = MPI_Comm_test_inter(comm, &flag);
     ompi_java_exceptionCheck(env, rc);
     return flag;
+}
+
+static int getSize(JNIEnv *env, MPI_Comm comm, int inter)
+{
+    int rc, size;
+
+    if(inter)
+        rc = MPI_Comm_remote_size(comm, &size);
+    else
+        rc = MPI_Comm_size(comm, &size);
+
+    ompi_java_exceptionCheck(env, rc);
+    return size;
+}
+
+static int getGroupSize(JNIEnv *env, MPI_Comm comm)
+{
+    int rc, size;
+    rc = MPI_Comm_size(comm, &size);
+    ompi_java_exceptionCheck(env, rc);
+    return size;
+}
+
+static int getRank(JNIEnv *env, MPI_Comm comm)
+{
+    int rc, rank;
+    rc = MPI_Comm_rank(comm, &rank);
+    ompi_java_exceptionCheck(env, rc);
+    return rank;
+}
+
+static int getSum(int *counts, int size)
+{
+    int i, s = 0;
+
+    for(i = 0; i < size; i++)
+        s += counts[i];
+
+    return s;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_init(JNIEnv *env, jclass clazz)
@@ -184,10 +190,7 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_getSize(
 JNIEXPORT jint JNICALL Java_mpi_Comm_getRank(
         JNIEnv *env, jobject jthis, jlong comm)
 {
-    int rc, rank;
-    rc = MPI_Comm_rank((MPI_Comm)comm, &rank);
-    ompi_java_exceptionCheck(env, rc);
-    return rank;
+    return getRank(env, (MPI_Comm)comm);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_compare(
@@ -265,135 +268,139 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_createIntercomm(
 JNIEXPORT void JNICALL Java_mpi_Comm_send(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset, jint count,
-        jlong jType, jint baseType, jint dest, jint tag)
+        jlong jType, jint bType, jint dest, jint tag)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
-    void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, baseType, offset);
+    void *ptr;
+    ompi_java_buffer_t *item;
+    ompi_java_getReadPtr(&ptr, &item, env, buf, db, offset, count, type, bType);
 
-    int rc = MPI_Send(bufPtr, count, type, dest, tag, comm);
+    int rc = MPI_Send(ptr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, buf, db, bufBase, baseType);
+    ompi_java_releaseReadPtr(ptr, item, buf, db);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_recv(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset, jint count,
-        jlong jType, jint baseType,
-        jint source, jint tag, jlongArray jStatus)
+        jlong jType, jint bType, jint source, jint tag, jlongArray jStatus)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
-    void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, baseType, offset);
+    void *ptr;
+    ompi_java_buffer_t *item;
+    ompi_java_getWritePtr(&ptr, &item, env, buf, db, count, type);
 
     MPI_Status status;
-    int rc = MPI_Recv(bufPtr, count, type, source, tag, comm, &status);
-
+    int rc = MPI_Recv(ptr, count, type, source, tag, comm, &status);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseBufPtr(env, buf, db, bufBase, baseType);
+
+    ompi_java_releaseWritePtr(ptr,item,env,buf,db,offset,count,type,bType);
     ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sBuf, jboolean sdb, jint sOffset, jint sCount,
-        jlong sjType, jint sBaseType, jint dest, jint sTag,
-        jobject rBuf, jboolean rdb, jint rOffset, jint rCount,
-        jlong rjType, jint rBaseType, jint source, jint rTag,
+        jobject sBuf, jboolean sdb, jint sOff, jint sCount,
+        jlong sjType, jint sBType, jint dest, jint sTag,
+        jobject rBuf, jboolean rdb, jint rOff, jint rCount,
+        jlong rjType, jint rBType, jint source, jint rTag,
         jlongArray jStatus)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
 
-    void *sBufPtr, *sBufBase,
-         *rBufPtr, *rBufBase;
-
-    sBufPtr = ompi_java_getBufPtr(&sBufBase, env, sBuf, sdb, sBaseType, sOffset);
-    rBufPtr = ompi_java_getBufPtr(&rBufBase, env, rBuf, rdb, rBaseType, rOffset);
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
     MPI_Status status;
 
-    int rc = MPI_Sendrecv(sBufPtr, sCount, sType, dest, sTag,
-                          rBufPtr, rCount, rType, source, rTag,
-                          comm, &status);
+    ompi_java_getReadPtr(&sPtr,&sItem, env, sBuf,sdb,sOff,sCount,sType,sBType);
+    ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rCount, rType);
+
+    int rc = MPI_Sendrecv(sPtr, sCount, sType, dest, sTag,
+                          rPtr, rCount, rType, source, rTag, comm, &status);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, sBuf, sdb, sBufBase, sBaseType);
-    ompi_java_releaseBufPtr(env, rBuf, rdb, rBufBase, rBaseType);
+    ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
+    ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rCount,rType,rBType);
     ompi_java_status_set(env, jStatus, &status);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sendRecvReplace(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset,
-        jint count, jlong jType, jint baseType,
+        jint count, jlong jType, jint bType,
         jint dest, jint sTag, jint source, jint rTag, jlongArray jStatus)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
+    void *ptr;
+    ompi_java_buffer_t *item;
+    ompi_java_getReadPtr(&ptr, &item, env, buf, db, offset, count, type, bType);
     MPI_Status status;
-    void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, baseType, offset);
 
-    int rc = MPI_Sendrecv_replace(bufPtr, count, type, dest,
+    int rc = MPI_Sendrecv_replace(ptr, count, type, dest,
                                   sTag, source, rTag, comm, &status);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseBufPtr(env, buf, db, bufBase, baseType);
     ompi_java_status_set(env, jStatus, &status);
+    ompi_java_releaseWritePtr(ptr,item,env,buf,db,offset,count,type,bType);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_bSend(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset,
-        jint count, jlong jType, jint baseType, jint dest, jint tag)
+        jint count, jlong jType, jint bType, jint dest, jint tag)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
-    void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, baseType, offset);
+    void *ptr;
+    ompi_java_buffer_t *item;
+    ompi_java_getReadPtr(&ptr, &item, env, buf, db, offset, count, type, bType);
 
-    int rc = MPI_Bsend(bufPtr, count, type, dest, tag, comm);
+    int rc = MPI_Bsend(ptr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, buf, db, bufBase, baseType);
+    ompi_java_releaseReadPtr(ptr, item, buf, db);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_sSend(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset,
-        jint count, jlong jType, jint baseType, jint dest, jint tag)
+        jint count, jlong jType, jint bType, jint dest, jint tag)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
-    void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, baseType, offset);
+    void *ptr;
+    ompi_java_buffer_t *item;
+    ompi_java_getReadPtr(&ptr, &item, env, buf, db, offset, count, type, bType);
 
-    int rc = MPI_Ssend(bufPtr, count, type, dest, tag, comm);
+    int rc = MPI_Ssend(ptr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, buf, db, bufBase, baseType);
+    ompi_java_releaseReadPtr(ptr, item, buf, db);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_rSend(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject buf, jboolean db, jint offset,
-        jint count, jlong jType, jint baseType, jint dest, jint tag)
+        jint count, jlong jType, jint bType, jint dest, jint tag)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
-    void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, baseType, offset);
+    void *ptr;
+    ompi_java_buffer_t *item;
+    ompi_java_getReadPtr(&ptr, &item, env, buf, db, offset, count, type, bType);
 
-    int rc = MPI_Rsend(bufPtr, count, type, dest, tag, comm);
+    int rc = MPI_Rsend(ptr, count, type, dest, tag, comm);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, buf, db, bufBase, baseType);
+    ompi_java_releaseReadPtr(ptr, item, buf, db);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iSend(
@@ -539,7 +546,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_recvInit(
 JNIEXPORT jint JNICALL Java_mpi_Comm_pack(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject inBuf, jboolean indb, jint offset,
-        jint inCount, jlong jType, jint bType, jbyteArray outBuf, jint position)
+        jint inCount, jlong jType, jbyteArray outBuf, jint position)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
@@ -547,7 +554,7 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_pack(
 
     void *oBufPtr, *iBufPtr, *iBufBase;
     oBufPtr = (*env)->GetPrimitiveArrayCritical(env, outBuf, NULL);
-    iBufPtr = getBufCritical(&iBufBase, env, inBuf, indb, bType, offset);
+    iBufPtr = getBufCritical(&iBufBase, env, inBuf, indb, offset);
 
     if(inCount != 0 && outSize != position)
     {
@@ -566,7 +573,7 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_pack(
 JNIEXPORT jint JNICALL Java_mpi_Comm_unpack(
         JNIEnv *env, jobject jthis, jlong jComm,
         jbyteArray inBuf, jint position, jobject outBuf, jboolean outdb,
-        jint offset, jint outCount, jlong jType, jint bType)
+        jint offset, jint outCount, jlong jType)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
@@ -574,7 +581,7 @@ JNIEXPORT jint JNICALL Java_mpi_Comm_unpack(
 
     void *iBufPtr, *oBufPtr, *oBufBase;
     iBufPtr = (*env)->GetPrimitiveArrayCritical(env, inBuf, NULL);
-    oBufPtr = getBufCritical(&oBufBase, env, outBuf, outdb, bType, offset);
+    oBufPtr = getBufCritical(&oBufBase, env, outBuf, outdb, offset);
 
     int rc = MPI_Unpack(iBufPtr, inSize, &position,
                         oBufPtr, outCount, type, comm);
@@ -732,17 +739,18 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iBarrier(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_bcast(
         JNIEnv *env, jobject jthis, jlong jComm, jobject buf, jboolean db,
-        jint offset, jint count, jlong jType, jint baseType, jint root)
+        jint offset, jint count, jlong jType, jint bType, jint root)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
 
-    void *bufPtr, *bufBase;
-    bufPtr = ompi_java_getBufPtr(&bufBase, env, buf, db, baseType, offset);
+    void *ptr;
+    ompi_java_buffer_t *item;
+    ompi_java_getReadPtr(&ptr, &item, env, buf, db, offset, count, type, bType);
 
-    int rc = MPI_Bcast(bufPtr, count, type, root, comm);
+    int rc = MPI_Bcast(ptr, count, type, root, comm);
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseBufPtr(env, buf, db, bufBase, baseType);
+    ompi_java_releaseWritePtr(ptr,item,env,buf,db,offset,count,type,bType);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iBcast(
@@ -761,50 +769,50 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iBcast(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_gather(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset, jint sCount,
+        jobject sBuf, jboolean sdb, jint sOff, jint sCount,
         jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset, jint rCount,
+        jobject rBuf, jboolean rdb, jint rOff, jint rCount,
         jlong rjType, jint rBType, jint root)
 {
-    MPI_Comm comm  = (MPI_Comm)jComm;
-    int id;
-    int rc = MPI_Comm_rank(comm, &id);
-    int rootOrInter = id == root || isInter(env, comm);
+    MPI_Comm comm = (MPI_Comm)jComm;
+    int rank  = getRank(env, comm);
+    int inter = isInter(env, comm);
+    int rootOrInter = rank == root || inter;
 
-    if(ompi_java_exceptionCheck(env, rc))
-        return;
-
-    void *sPtr, *sBase, *rPtr = NULL, *rBase;
+    void *sPtr, *rPtr = NULL;
+    ompi_java_buffer_t *sItem, *rItem;
     MPI_Datatype sType;
 
     if(sjType == 0)
     {
-        assert(sendBuf == NULL);
+        assert(sBuf == NULL);
         sType = MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
-        sBase = NULL;
     }
     else
     {
         sType = (MPI_Datatype)sjType;
-        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
+
+        ompi_java_getReadPtr(&sPtr, &sItem, env, sBuf, sdb,
+                             sOff, sCount, sType, sBType);
     }
 
     MPI_Datatype rType = (MPI_Datatype)rjType;
+    int rCountTotal = rootOrInter ? rCount * getSize(env, comm, inter) : rCount;
 
     if(rootOrInter || sPtr == MPI_IN_PLACE)
     {
-        /*
-         * In principle need the "id == root" check here and elsewere for
-         * correctness, in case arguments that are not supposed to be
-         * significant except on root are legitimately passed in as `null',
-         * say.  Shouldn't produce null pointer exception.
-         *
-         * (However in this case MPICH complains if `mpi_rtype' is not defined
-         * in all processes, notwithstanding what the spec says.)
-         */
-
-        rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+        if(sPtr == MPI_IN_PLACE)
+        {
+            /* We use the receive buffer as the send buffer. */
+            ompi_java_getReadPtr(&rPtr, &rItem, env, rBuf, rdb,
+                                 rOff, rCountTotal, rType, rBType);
+        }
+        else
+        {
+            ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb,
+                                  rCountTotal, rType);
+        }
 
         if(!rootOrInter)
         {
@@ -812,34 +820,38 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
              * As we are using MPI_IN_PLACE version, we use the receive
              * buffer as the send buffer.
              */
-            assert(sendBuf == NULL);
+            assert(sBuf == NULL);
             sPtr   = rPtr;
             sCount = rCount;
             sType  = rType;
         }
     }
 
-    rc = MPI_Gather(sPtr, sCount, sType, rPtr, rCount, rType, root, comm);
+    int rc = MPI_Gather(sPtr, sCount, sType, rPtr, rCount, rType, root, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    if(rootOrInter || sendBuf == NULL)
-        ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    if(rootOrInter)
+    {
+        ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
+                                  rOff, rCountTotal, rType, rBType);
+    }
+    else if(sBuf == NULL)
+    {
+        ompi_java_releaseReadPtr(rPtr, rItem, rBuf, rdb);
+    }
 
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
-        JNIEnv *env, jobject jthis, jlong comm,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jint sCount, jlong sType,
         jobject recvBuf, jint rCount, jlong rType, jint root)
 {
-    int id;
-    int rc = MPI_Comm_rank((MPI_Comm)comm, &id);
-    int rootOrInter = id == root || isInter(env, (MPI_Comm)comm);
-
-    if(ompi_java_exceptionCheck(env, rc))
-        return (jlong)MPI_REQUEST_NULL;
+    MPI_Comm comm = (MPI_Comm)jComm;
+    int rank = getRank(env, comm);
+    int rootOrInter = rank == root || isInter(env, comm);
 
     MPI_Request request;
     void *sPtr, *rPtr = NULL;
@@ -882,9 +894,9 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
         }
     }
 
-    rc = MPI_Igather(sPtr, sCount, (MPI_Datatype)sType,
-                     rPtr, rCount, (MPI_Datatype)rType,
-                     root, (MPI_Comm)comm, &request);
+    int rc = MPI_Igather(sPtr, sCount, (MPI_Datatype)sType,
+                         rPtr, rCount, (MPI_Datatype)rType,
+                         root, comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -892,33 +904,33 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_gatherv(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
         jint sCount, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset, jintArray rCounts,
+        jobject rBuf, jboolean rdb, jint rOff, jintArray rCounts,
         jintArray displs, jlong rjType, jint rBType, jint root)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
-    int id;
-    int rc = MPI_Comm_rank(comm, &id);
-    int rootOrInter = id == root || isInter(env, comm);
+    int rank  = getRank(env, comm);
+    int inter = isInter(env, comm);
+    int rootOrInter = rank == root || inter;
+    int size = rootOrInter ? getSize(env, comm, inter) : 0;
 
-    if(ompi_java_exceptionCheck(env, rc))
-        return;
-
-    void *sPtr, *sBase, *rPtr = NULL, *rBase;
+    void *sPtr, *rPtr = NULL;
+    ompi_java_buffer_t *sItem, *rItem;
     MPI_Datatype sType;
 
     if(sjType == 0)
     {
-        assert(sendBuf == NULL);
+        assert(sBuf == NULL);
         sType = MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
-        sBase = NULL;
     }
     else
     {
         sType = (MPI_Datatype)sjType;
-        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
+
+        ompi_java_getReadPtr(&sPtr, &sItem, env, sBuf, sdb,
+                             sOff, sCount, sType, sBType);
     }
 
     jint *jRCounts = NULL, *jDispls = NULL;
@@ -929,39 +941,48 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gatherv(
     {
         ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
         ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
-
         rType = (MPI_Datatype)rjType;
-        rPtr  = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+
+        if(sPtr == MPI_IN_PLACE)
+        {
+            /* We use the receive buffer as the send buffer. */
+            ompi_java_getReadPtrv(&rPtr, &rItem, env, rBuf, rdb, rOff,
+                                  cRCounts, cDispls, size, root, rType, rBType);
+        }
+        else
+        {
+            ompi_java_getWritePtrv(&rPtr, &rItem, env, rBuf, rdb,
+                                   cRCounts, cDispls, size, rType);
+        }
     }
 
-    rc = MPI_Gatherv(sPtr, sCount, sType, rPtr, cRCounts,
-                     cDispls, rType, root, comm);
+    int rc = MPI_Gatherv(sPtr, sCount, sType, rPtr, cRCounts,
+                         cDispls, rType, root, comm);
 
     ompi_java_exceptionCheck(env, rc);
 
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 
     if(rootOrInter)
     {
-        ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+        ompi_java_releaseWritePtrv(rPtr, rItem, env, rBuf, rdb, rOff,
+                                   cRCounts, cDispls, size, rType, rBType);
+
         ompi_java_forgetIntArray(env, rCounts, jRCounts, cRCounts);
         ompi_java_forgetIntArray(env, displs, jDispls, cDispls);
     }
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iGatherv(
-        JNIEnv *env, jobject jthis, jlong comm,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jint sCount, jlong sType,
         jobject recvBuf, jintArray rCounts,
         jintArray displs, jlong rType, jint root)
 {
-    int id;
-    int rc = MPI_Comm_rank((MPI_Comm)comm, &id);
-    int rootOrInter = id == root || isInter(env, (MPI_Comm)comm);
-
-    if(ompi_java_exceptionCheck(env, rc))
-        return (jlong)MPI_REQUEST_NULL;
+    MPI_Comm comm = (MPI_Comm)jComm;
+    int rank = getRank(env, comm);
+    int rootOrInter = rank == root || isInter(env, comm);
 
     MPI_Request request;
     void *sPtr, *rPtr = NULL;
@@ -993,9 +1014,9 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGatherv(
         rType = sType;
     }
 
-    rc = MPI_Igatherv(sPtr, sCount, (MPI_Datatype)sType, rPtr,
-                      cRCounts, cDispls, (MPI_Datatype)rType,
-                      root, (MPI_Comm)comm, &request);
+    int rc = MPI_Igatherv(sPtr, sCount, (MPI_Datatype)sType, rPtr,
+                          cRCounts, cDispls, (MPI_Datatype)rType,
+                          root, comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
 
@@ -1010,74 +1031,80 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGatherv(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset, jint sCount,
+        jobject sBuf, jboolean sdb, jint sOff, jint sCount,
         jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset, jint rCount,
+        jobject rBuf, jboolean rdb, jint rOff, jint rCount,
         jlong rjType, jint rBType, jint root)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
-    int id;
-    int rc = MPI_Comm_rank(comm, &id);
-    int rootOrInter = id == root || isInter(env, comm);
+    int rank  = getRank(env, comm);
+    int inter = isInter(env, comm);
+    int rootOrInter = rank == root || inter;
 
-    if(ompi_java_exceptionCheck(env, rc))
-        return;
-
-    void *sPtr = NULL, *sBase, *rPtr, *rBase;
-    MPI_Datatype sType, rType;
+    void *sPtr = NULL, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+    MPI_Datatype rType;
 
     if(rjType == 0)
     {
-        assert(recvBuf == NULL);
+        assert(rBuf == NULL);
         rType = MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
     }
     else
     {
         rType = (MPI_Datatype)rjType;
-        rPtr  = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+        ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rCount, rType);
     }
 
-    sType = (MPI_Datatype)sjType;
+    MPI_Datatype sType = (MPI_Datatype)sjType;
+    int sCountTotal = rootOrInter ? sCount * getSize(env, comm, inter) : sCount;
 
     if(rootOrInter || rPtr == MPI_IN_PLACE)
     {
-        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
-
+        ompi_java_getReadPtr(&sPtr, &sItem, env, sBuf, sdb, sOff,
+                             sCountTotal, sType, sBType);
         if(!rootOrInter)
         {
             /* The send buffer is ignored for all non-root processes.
              * As we are using MPI_IN_PLACE version, we use the send
              * buffer as the receive buffer.
              */
-            assert(recvBuf == NULL);
+            assert(rBuf == NULL);
             rPtr   = sPtr;
             rCount = sCount;
             rType  = sType;
         }
     }
 
-    rc = MPI_Scatter(sPtr, sCount, sType, rPtr, rCount, rType, root, comm);
+    int rc = MPI_Scatter(sPtr, sCount, sType, rPtr, rCount, rType, root, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    if(rootOrInter || recvBuf == NULL)
-        ompi_java_releaseBufPtr(env, sendBuf, sdb, sBase, sBType);
+    if(rootOrInter)
+    {
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
+    }
+    else if(rBuf == NULL)
+    {
+        ompi_java_releaseWritePtr(sPtr, sItem, env, sBuf, sdb,
+                                  sOff, sCount, sType, sBType);
+    }
 
-    if(recvBuf != NULL)
-        ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    if(rBuf != NULL)
+    {
+        ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
+                                  rOff, rCount, rType, rBType);
+    }
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatter(
-        JNIEnv *env, jobject jthis, jlong comm,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jint sCount, jlong sType,
         jobject recvBuf, jint rCount, jlong rType, jint root)
 {
-    int id;
-    int rc = MPI_Comm_rank((MPI_Comm)comm, &id);
-    int rootOrInter = id == root || isInter(env, (MPI_Comm)comm);
-
-    if(ompi_java_exceptionCheck(env, rc))
-        return (jlong)MPI_REQUEST_NULL;
+    MPI_Comm comm = (MPI_Comm)jComm;
+    int rank = getRank(env, comm);
+    int rootOrInter = rank == root || isInter(env, comm);
 
     void *sPtr = NULL, *rPtr;
     MPI_Request request;
@@ -1110,9 +1137,9 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatter(
         }
     }
 
-    rc = MPI_Iscatter(sPtr, sCount, (MPI_Datatype)sType,
-                      rPtr, rCount, (MPI_Datatype)rType,
-                      root, (MPI_Comm)comm, &request);
+    int rc = MPI_Iscatter(sPtr, sCount, (MPI_Datatype)sType,
+                          rPtr, rCount, (MPI_Datatype)rType,
+                          root, comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -1120,33 +1147,31 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatter(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset, jintArray sCounts,
+        jobject sBuf, jboolean sdb, jint sOff, jintArray sCounts,
         jintArray displs, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset, jint rCount,
+        jobject rBuf, jboolean rdb, jint rOff, jint rCount,
         jlong rjType, jint rBType, jint root)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
-    int id;
-    int rc = MPI_Comm_rank(comm, &id);
-    int rootOrInter = id == root || isInter(env, comm);
+    int rank  = getRank(env, comm);
+    int inter = isInter(env, comm);
+    int rootOrInter = rank == root || inter;
+    int size = rootOrInter ? getSize(env, comm, inter) : 0;
 
-    if(ompi_java_exceptionCheck(env, rc))
-        return;
-
-    void *sPtr = NULL, *sBase, *rPtr, *rBase;
+    void *sPtr = NULL, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
     MPI_Datatype rType;
 
     if(rjType == 0)
     {
-        assert(recvBuf == NULL);
+        assert(rBuf == NULL);
         rType = MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
-        rBase = NULL;
     }
     else
     {
         rType = (MPI_Datatype)rjType;
-        rPtr  = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+        ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rCount, rType);
     }
 
     jint *jSCounts = NULL, *jDispls = NULL;
@@ -1157,38 +1182,39 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
     {
         ompi_java_getIntArray(env, sCounts, &jSCounts, &cSCounts);
         ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
-
         sType = (MPI_Datatype)sjType;
-        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
+
+        ompi_java_getReadPtrv(&sPtr, &sItem, env, sBuf, sdb, sOff,
+                              cSCounts, cDispls, size, -1, sType, sBType);
     }
 
-    rc = MPI_Scatterv(sPtr, cSCounts, cDispls, sType,
-                      rPtr, rCount, rType, root, comm);
+    int rc = MPI_Scatterv(sPtr, cSCounts, cDispls, sType,
+                          rPtr, rCount, rType, root, comm);
 
     ompi_java_exceptionCheck(env, rc);
 
-    if(recvBuf != NULL)
-        ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    if(rBuf != NULL)
+    {
+        ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
+                                  rOff, rCount, rType, rBType);
+    }
 
     if(rootOrInter)
     {
-        ompi_java_releaseBufPtr(env, sendBuf, sdb, sBase, sBType);
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
         ompi_java_forgetIntArray(env, sCounts, jSCounts, cSCounts);
         ompi_java_forgetIntArray(env, displs, jDispls, cDispls);
     }
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatterv(
-        JNIEnv *env, jobject jthis, jlong comm,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jintArray sCounts, jintArray displs, jlong sType,
         jobject recvBuf, jint rCount, jlong rType, jint root)
 {
-    int id;
-    int rc = MPI_Comm_rank((MPI_Comm)comm, &id);
-    int rootOrInter = id == root || isInter(env, (MPI_Comm)comm);
-
-    if(ompi_java_exceptionCheck(env, rc))
-        return (jlong)MPI_REQUEST_NULL;
+    MPI_Comm comm = (MPI_Comm)jComm;
+    int rank = getRank(env, comm);
+    int rootOrInter = rank == root || isInter(env, comm);
 
     MPI_Request request;
     void *sPtr = NULL, *rPtr;
@@ -1220,9 +1246,9 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatterv(
         sType = rType;
     }
 
-    rc = MPI_Iscatterv(sPtr, cSCounts, cDispls, (MPI_Datatype)sType,
-                       rPtr, rCount, (MPI_Datatype)rType, root, 
-                       (MPI_Comm)comm, &request);
+    int rc = MPI_Iscatterv(sPtr, cSCounts, cDispls, (MPI_Datatype)sType,
+                           rPtr, rCount, (MPI_Datatype)rType, root,
+                           comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
 
@@ -1237,37 +1263,49 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatterv(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allGather(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
         jint sCount, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset,
+        jobject rBuf, jboolean rdb, jint rOff,
         jint rCount, jlong rjType, jint rBType)
 {
-    MPI_Comm comm = (MPI_Comm)jComm;
-    MPI_Datatype sType;
-    void *sPtr, *sBase, *rPtr, *rBase;
+    MPI_Comm     comm  = (MPI_Comm)jComm;
+    MPI_Datatype sType,
+                 rType = (MPI_Datatype)rjType;
+
+    int inter  = isInter(env, comm),
+        size   = getSize(env, comm, inter),
+        rTotal = rCount * size;
+
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
 
     if(sjType == 0)
     {
-        assert(sendBuf == NULL);
+        assert(sBuf == NULL);
         sType = MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
-        sBase = NULL;
+        int rank = getRank(env, comm);
+
+        ompi_java_getReadPtrRank(&rPtr, &rItem, env, rBuf, rdb, rOff,
+                                 rCount, size, rank, rType, rBType);
     }
     else
     {
         sType = (MPI_Datatype)sjType;
-        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
+
+        ompi_java_getReadPtr(&sPtr, &sItem, env, sBuf, sdb,
+                             sOff, sCount, sType, sBType);
+
+        ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rTotal, rType);
     }
 
-    MPI_Datatype rType = (MPI_Datatype)rjType;
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
     int rc = MPI_Allgather(sPtr, sCount, sType, rPtr, rCount, rType, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
-
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
+    ompi_java_releaseWritePtr(rPtr, rItem, env, rBuf, rdb,
+                              rOff, rTotal, rType, rBType);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGather(
@@ -1301,44 +1339,55 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGather(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allGatherv(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
         jint sCount, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset,
+        jobject rBuf, jboolean rdb, jint rOff,
         jintArray rCounts, jintArray displs, jlong rjType, jint rBType)
 {
     MPI_Comm comm = (MPI_Comm)jComm;
-    void *sPtr, *sBase, *rPtr, *rBase;
-    MPI_Datatype sType;
+    int inter = isInter(env, comm),
+        size  = getSize(env, comm, inter);
 
-    if(sjType == 0)
-    {
-        assert(sendBuf == NULL);
-        sType = MPI_DATATYPE_NULL;
-        sPtr  = MPI_IN_PLACE;
-        sBase = NULL;
-    }
-    else
-    {
-        sType = (MPI_Datatype)sjType;
-        sPtr  = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
-    }
+    MPI_Datatype sType,
+                 rType = (MPI_Datatype)rjType;
 
-    MPI_Datatype rType = (MPI_Datatype)rjType;
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
     jint *jRCounts, *jDispls;
     int  *cRCounts, *cDispls;
     ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
     ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
 
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+    if(sjType == 0)
+    {
+        assert(sBuf == NULL);
+        sType = MPI_DATATYPE_NULL;
+        sPtr  = MPI_IN_PLACE;
+        int rank = getRank(env, comm);
+
+        ompi_java_getReadPtrv(&rPtr, &rItem, env, rBuf, rdb, rOff,
+                              cRCounts, cDispls, size, rank, rType, rBType);
+    }
+    else
+    {
+        sType = (MPI_Datatype)sjType;
+
+        ompi_java_getReadPtr(&sPtr, &sItem, env, sBuf, sdb,
+                             sOff, sCount, sType, sBType);
+
+        ompi_java_getWritePtrv(&rPtr, &rItem, env, rBuf, rdb,
+                               cRCounts, cDispls, size, rType);
+    }
 
     int rc = MPI_Allgatherv(sPtr, sCount, sType, rPtr,
                             cRCounts, cDispls, rType, comm);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
 
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
+    ompi_java_releaseWritePtrv(rPtr, rItem, env, rBuf, rdb, rOff,
+                               cRCounts, cDispls, size, rType, rBType);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 
     ompi_java_forgetIntArray(env, rCounts, jRCounts, cRCounts);
     ompi_java_forgetIntArray(env, displs, jDispls, cDispls);
@@ -1382,24 +1431,30 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGatherv(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allToAll(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
         jint sCount, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset,
+        jobject rBuf, jboolean rdb, jint rOff,
         jint rCount, jlong rjType, jint rBType)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
 
-    void *sPtr, *sBase, *rPtr, *rBase;
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
-    sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
+    int inter  = isInter(env, comm),
+        size   = getSize(env, comm, inter),
+        sTotal = sCount * size,
+        rTotal = rCount * size;
+
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_getReadPtr(&sPtr, &sItem, env,sBuf,sdb,sOff,sTotal,sType,sBType);
+    ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rTotal, rType);
 
     int rc = MPI_Alltoall(sPtr, sCount, sType, rPtr, rCount, rType, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
+    ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rTotal,rType,rBType);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAll(
@@ -1422,37 +1477,46 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAll(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allToAllv(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset, jintArray sCount,
-        jintArray sDispls, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset, jintArray rCount,
-        jintArray rDispls, jlong rjType, jint rBType)
+        jobject sBuf, jboolean sdb, jint sOff, jintArray sCount,
+        jintArray sDispl, jlong sjType, jint sBType,
+        jobject rBuf, jboolean rdb, jint rOff, jintArray rCount,
+        jintArray rDispl, jlong rjType, jint rBType)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
 
-    jint *jSCount, *jRCount, *jSDispls, *jRDispls;
-    int  *cSCount, *cRCount, *cSDispls, *cRDispls;
+    int inter = isInter(env, comm),
+        size  = getSize(env, comm, inter);
+
+    jint *jSCount, *jRCount, *jSDispl, *jRDispl;
+    int  *cSCount, *cRCount, *cSDispl, *cRDispl;
     ompi_java_getIntArray(env, sCount, &jSCount, &cSCount);
     ompi_java_getIntArray(env, rCount, &jRCount, &cRCount);
-    ompi_java_getIntArray(env, sDispls, &jSDispls, &cSDispls);
-    ompi_java_getIntArray(env, rDispls, &jRDispls, &cRDispls);
+    ompi_java_getIntArray(env, sDispl, &jSDispl, &cSDispl);
+    ompi_java_getIntArray(env, rDispl, &jRDispl, &cRDispl);
 
-    void *sPtr, *sBase, *rPtr, *rBase;
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
-    sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
 
-    int rc = MPI_Alltoallv(sPtr, cSCount, cSDispls, sType,
-                           rPtr, cRCount, cRDispls, rType, comm);
+    ompi_java_getReadPtrv(&sPtr, &sItem, env, sBuf, sdb, sOff,
+                          cSCount, cSDispl, size, -1, sType, sBType);
+    ompi_java_getWritePtrv(&rPtr, &rItem, env, rBuf, rdb,
+                           cRCount, cRDispl, size, rType);
+
+    int rc = MPI_Alltoallv(sPtr, cSCount, cSDispl, sType,
+                           rPtr, cRCount, cRDispl, rType, comm);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 
-    ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);
-    ompi_java_forgetIntArray(env, rCount,  jRCount,  cRCount);
-    ompi_java_forgetIntArray(env, sDispls, jSDispls, cSDispls);
-    ompi_java_forgetIntArray(env, rDispls, jRDispls, cRDispls);
+    ompi_java_releaseWritePtrv(rPtr, rItem, env, rBuf, rdb, rOff,
+                               cRCount, cRDispl, size, rType, rBType);
+
+    ompi_java_forgetIntArray(env, sCount, jSCount, cSCount);
+    ompi_java_forgetIntArray(env, rCount, jRCount, cRCount);
+    ompi_java_forgetIntArray(env, sDispl, jSDispl, cSDispl);
+    ompi_java_forgetIntArray(env, rDispl, jRDispl, cRDispl);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllv(
@@ -1486,25 +1550,30 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllv(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_neighborAllGather(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
         jint sCount, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset,
+        jobject rBuf, jboolean rdb, jint rOff,
         jint rCount, jlong rjType, jint rBType)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
 
-    void *sPtr, *sBase, *rPtr, *rBase;
-    sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+    int inter  = isInter(env, comm),
+        size   = getSize(env, comm, inter),
+        rTotal = rCount * size;
+
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_getReadPtr(&sPtr,&sItem,env,sBuf,sdb,sOff,sCount,sType,sBType);
+    ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rTotal, rType);
 
     int rc = MPI_Neighbor_allgather(
              sPtr, sCount, sType, rPtr, rCount, rType, comm);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
+    ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rTotal,rType,rBType);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iNeighborAllGather(
@@ -1530,30 +1599,39 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iNeighborAllGather(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_neighborAllGatherv(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
         jint sCount, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset,
+        jobject rBuf, jboolean rdb, jint rOff,
         jintArray rCount, jintArray displs, jlong rjType, jint rBType)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
 
+    int inter = isInter(env, comm),
+        size  = getSize(env, comm, inter);
+
     jint *jRCount, *jDispls;
     int  *cRCount, *cDispls;
     ompi_java_getIntArray(env, rCount, &jRCount, &cRCount);
     ompi_java_getIntArray(env, displs, &jDispls, &cDispls);
 
-    void *sPtr, *sBase, *rPtr, *rBase;
-    sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_getReadPtr(&sPtr,&sItem,env,sBuf,sdb,sOff,sCount,sType,sBType);
+
+    ompi_java_getWritePtrv(&rPtr, &rItem, env, rBuf, rdb,
+                           cRCount, cDispls, size, rType);
 
     int rc = MPI_Neighbor_allgatherv(
              sPtr, sCount, sType, rPtr, cRCount, cDispls, rType, comm);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
+
+    ompi_java_releaseWritePtrv(rPtr, rItem, env, rBuf, rdb, rOff,
+                               cRCount, cDispls, size, rType, rBType);
+
     ompi_java_forgetIntArray(env, rCount, jRCount, cRCount);
     ompi_java_forgetIntArray(env, displs, jDispls, cDispls);
 }
@@ -1588,25 +1666,31 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iNeighborAllGatherv(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_neighborAllToAll(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
         jint sCount, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset,
+        jobject rBuf, jboolean rdb, jint rOff,
         jint rCount, jlong rjType, jint rBType)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
 
-    void *sPtr, *sBase, *rPtr, *rBase;
-    sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+    int inter  = isInter(env, comm),
+        size   = getSize(env, comm, inter),
+        sTotal = sCount * size,
+        rTotal = rCount * size;
+
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+    ompi_java_getReadPtr(&sPtr, &sItem, env,sBuf,sdb,sOff,sTotal,sType,sBType);
+    ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rTotal, rType);
 
     int rc = MPI_Neighbor_alltoall(
              sPtr, sCount, sType, rPtr, rCount, rType, comm);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
+    ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
+    ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rTotal,rType,rBType);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iNeighborAllToAll(
@@ -1632,36 +1716,46 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iNeighborAllToAll(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_neighborAllToAllv(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
-        jintArray sCount, jintArray sDispls, jlong sjType, jint sBType,
-        jobject recvBuf, jboolean rdb, jint rOffset,
-        jintArray rCount, jintArray rDispls, jlong rjType, jint rBType)
+        jobject sBuf, jboolean sdb, jint sOff,
+        jintArray sCount, jintArray sDispl, jlong sjType, jint sBType,
+        jobject rBuf, jboolean rdb, jint rOff,
+        jintArray rCount, jintArray rDispl, jlong rjType, jint rBType)
 {
     MPI_Comm     comm  = (MPI_Comm)jComm;
     MPI_Datatype sType = (MPI_Datatype)sjType;
     MPI_Datatype rType = (MPI_Datatype)rjType;
 
-    jint *jSCount, *jRCount, *jSDispls, *jRDispls;
-    int  *cSCount, *cRCount, *cSDispls, *cRDispls;
-    ompi_java_getIntArray(env, sCount,  &jSCount,  &cSCount);
-    ompi_java_getIntArray(env, rCount,  &jRCount,  &cRCount);
-    ompi_java_getIntArray(env, sDispls, &jSDispls, &cSDispls);
-    ompi_java_getIntArray(env, rDispls, &jRDispls, &cRDispls);
+    int inter = isInter(env, comm),
+        size  = getSize(env, comm, inter);
 
-    void *sPtr, *sBase, *rPtr, *rBase;
-    sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, sBType, sOffset);
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, rBType, rOffset);
+    jint *jSCount, *jRCount, *jSDispl, *jRDispl;
+    int  *cSCount, *cRCount, *cSDispl, *cRDispl;
+    ompi_java_getIntArray(env, sCount, &jSCount, &cSCount);
+    ompi_java_getIntArray(env, rCount, &jRCount, &cRCount);
+    ompi_java_getIntArray(env, sDispl, &jSDispl, &cSDispl);
+    ompi_java_getIntArray(env, rDispl, &jRDispl, &cRDispl);
 
-    int rc = MPI_Neighbor_alltoallv(sPtr, cSCount, cSDispls, sType,
-                                    rPtr, cRCount, cRDispls, rType, comm);
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+
+    ompi_java_getReadPtrv(&sPtr, &sItem, env, sBuf, sdb, sOff,
+                          cSCount, cSDispl, size, -1, sType, sBType);
+    ompi_java_getWritePtrv(&rPtr, &rItem, env, rBuf, rdb,
+                           cRCount, cRDispl, size, rType);
+
+    int rc = MPI_Neighbor_alltoallv(sPtr, cSCount, cSDispl, sType,
+                                    rPtr, cRCount, cRDispl, rType, comm);
 
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, sBType);
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, rBType);
-    ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);
-    ompi_java_forgetIntArray(env, rCount,  jRCount,  cRCount);
-    ompi_java_forgetIntArray(env, sDispls, jSDispls, cSDispls);
-    ompi_java_forgetIntArray(env, rDispls, jRDispls, cRDispls);
+    ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
+
+    ompi_java_releaseWritePtrv(rPtr, rItem, env, rBuf, rdb, rOff,
+                               cRCount, cRDispl, size, rType, rBType);
+
+    ompi_java_forgetIntArray(env, sCount, jSCount, cSCount);
+    ompi_java_forgetIntArray(env, rCount, jRCount, cRCount);
+    ompi_java_forgetIntArray(env, sDispl, jSDispl, cSDispl);
+    ompi_java_forgetIntArray(env, rDispl, jRDispl, cRDispl);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iNeighborAllToAllv(
@@ -1699,63 +1793,56 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iNeighborAllToAllv(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_reduce(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
-        jobject recvBuf, jboolean rdb, jint rOffset, jint count,
-        jlong jType, jint baseType, jobject jOp, jlong hOp, jint root)
+        jobject sBuf, jboolean sdb, jint sOff,
+        jobject rBuf, jboolean rdb, jint rOff, jint count,
+        jlong jType, jint bType, jobject jOp, jlong hOp, jint root)
 {
-    MPI_Comm comm = (MPI_Comm)jComm;
-    int id;
-    int rc = MPI_Comm_rank(comm, &id);
-    int rootOrInter = id == root || isInter(env, comm);
-
-    if(ompi_java_exceptionCheck(env, rc))
-        return;
-
+    MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
-    void *sPtr, *sBase, *rPtr = NULL, *rBase;
 
-    if(sendBuf == NULL)
-        sPtr = MPI_IN_PLACE;
-    else
-        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, baseType, sOffset);
+    int rank = getRank(env, comm);
+    int rootOrInter = rank == root || isInter(env, comm);
 
-    if(rootOrInter || sendBuf == NULL)
+    void *sPtr, *rPtr = NULL;
+    ompi_java_buffer_t *sItem, *rItem;
+
+    if(sBuf == NULL)
     {
-        rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, baseType, rOffset);
+        ompi_java_getReadPtr(&rPtr,&rItem,env,rBuf,rdb,rOff,count,type,bType);
+        sPtr = rootOrInter ? MPI_IN_PLACE : rPtr;
+        /* The receive buffer is ignored for all non-root processes.
+         * On MPI_IN_PLACE version we use receive buffer as the send buffer.
+         */
+    }
+    else
+    {
+        ompi_java_getReadPtr(&sPtr,&sItem,env,sBuf,sdb,sOff,count,type,bType);
 
-        if(!rootOrInter)
-        {
-            /* The receive buffer is ignored for all non-root processes.
-             * As we are using MPI_IN_PLACE version, we use the receive
-             * buffer as the send buffer.
-             */
-            assert(sendBuf == NULL);
-            sPtr = rPtr;
-        }
+        if(rootOrInter)
+            ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, count, type);
     }
 
-    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
-    rc = MPI_Reduce(sPtr, rPtr, count, type, op, root, comm);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
+    int rc = MPI_Reduce(sPtr, rPtr, count, type, op, root, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, baseType);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 
-    if(rootOrInter || sendBuf == NULL)
-        ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, baseType);
+    if(rootOrInter)
+        ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,count,type,bType);
+    else if(sBuf == NULL)
+        ompi_java_releaseReadPtr(rPtr, rItem, rBuf, rdb);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduce(
-        JNIEnv *env, jobject jthis, jlong comm,
+        JNIEnv *env, jobject jthis, jlong jComm,
         jobject sendBuf, jobject recvBuf, int count,
         jlong type, jint baseType, jobject jOp, jlong hOp, jint root)
 {
-    int id;
-    int rc = MPI_Comm_rank((MPI_Comm)comm, &id);
-    int rootOrInter = id == root || isInter(env, (MPI_Comm)comm);
-
-    if(ompi_java_exceptionCheck(env, rc))
-        return (jlong)MPI_REQUEST_NULL;
+    MPI_Comm comm = (MPI_Comm)jComm;
+    int rank = getRank(env, comm);
+    int rootOrInter = rank == root || isInter(env, comm);
 
     void *sPtr, *rPtr = NULL;
     MPI_Request request;
@@ -1782,8 +1869,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduce(
 
     MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
 
-    rc = MPI_Ireduce(sPtr, rPtr, count, (MPI_Datatype)type,
-                     op, root, (MPI_Comm)comm, &request);
+    int rc = MPI_Ireduce(sPtr, rPtr, count, (MPI_Datatype)type,
+                         op, root, comm, &request);
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)request;
@@ -1791,28 +1878,35 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduce(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_allReduce(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sendOffset,
-        jobject recvBuf, jboolean rdb, jint recvOffset,
-        jint count, jlong jType, jint baseType, jobject jOp, jlong hOp)
+        jobject sBuf, jboolean sdb, jint sOff,
+        jobject rBuf, jboolean rdb, jint rOff,
+        jint count, jlong jType, jint bType, jobject jOp, jlong hOp)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
-    void *sPtr, *sBase, *rPtr, *rBase;
 
-    if(sendBuf == NULL)
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+
+    if(sBuf == NULL)
+    {
         sPtr = MPI_IN_PLACE;
+        ompi_java_getReadPtr(&rPtr,&rItem,env,rBuf,rdb,rOff,count,type,bType);
+    }
     else
-        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, baseType, sendOffset);
+    {
+        ompi_java_getReadPtr(&sPtr,&sItem,env,sBuf,sdb,sOff,count,type,bType);
+        ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, count, type);
+    }
 
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, baseType, recvOffset);
-    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
     int rc = MPI_Allreduce(sPtr, rPtr, count, type, op, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, baseType);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, baseType);
+    ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,count,type,bType);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllReduce(
@@ -1840,34 +1934,46 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllReduce(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatter(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
-        jobject recvBuf, jboolean rdb, jint rOffset,
+        jobject sBuf, jboolean sdb, jint sOff,
+        jobject rBuf, jboolean rdb, jint rOff,
         jintArray rCounts, jlong jType, jint bType, jobject jOp, jlong hOp)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
-    void *sPtr, *sBase, *rPtr, *rBase;
-
-    if(sendBuf == NULL)
-        sPtr = MPI_IN_PLACE;
-    else
-        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, bType, sOffset);
-
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, bType, rOffset);
-    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
 
     jint *jRCounts;
     int  *cRCounts;
     ompi_java_getIntArray(env, rCounts, &jRCounts, &cRCounts);
 
+    int size  = getGroupSize(env, comm),
+        count = getSum(cRCounts, size),
+        rbCnt; /* Receive buffer count */
+
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+
+    if(sBuf == NULL)
+    {
+        sPtr  = MPI_IN_PLACE;
+        rbCnt = count;
+        ompi_java_getReadPtr(&rPtr,&rItem,env,rBuf,rdb,rOff,count,type,bType);
+    }
+    else
+    {
+        ompi_java_getReadPtr(&sPtr,&sItem,env,sBuf,sdb,sOff,count,type,bType);
+        rbCnt = cRCounts[getRank(env, comm)];
+        ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rbCnt, type);
+    }
+
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
     int rc = MPI_Reduce_scatter(sPtr, rPtr, cRCounts, type, op, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, bType);
-    ompi_java_forgetIntArray(env, rCounts, jRCounts, cRCounts);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, bType);
+    ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rbCnt,type,bType);
+    ompi_java_forgetIntArray(env, rCounts, jRCounts, cRCounts);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatter(
@@ -1900,29 +2006,40 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatter(
 
 JNIEXPORT void JNICALL Java_mpi_Comm_reduceScatterBlock(
         JNIEnv *env, jobject jthis, jlong jComm,
-        jobject sendBuf, jboolean sdb, jint sOffset,
-        jobject recvBuf, jboolean rdb, jint rOffset,
-        jint count, jlong jType, jint bType, jobject jOp, jlong hOp)
+        jobject sBuf, jboolean sdb, jint sOff,
+        jobject rBuf, jboolean rdb, jint rOff,
+        jint rCount, jlong jType, jint bType, jobject jOp, jlong hOp)
 {
     MPI_Comm     comm = (MPI_Comm)jComm;
     MPI_Datatype type = (MPI_Datatype)jType;
-    void *sPtr, *sBase, *rPtr, *rBase;
 
-    if(sendBuf == NULL)
-        sPtr = MPI_IN_PLACE;
+    void *sPtr, *rPtr;
+    ompi_java_buffer_t *sItem, *rItem;
+
+    int count = rCount * getGroupSize(env, comm),
+        rbCnt; /* Receive buffer count */
+
+    if(sBuf == NULL)
+    {
+        sPtr  = MPI_IN_PLACE;
+        rbCnt = count;
+        ompi_java_getReadPtr(&rPtr,&rItem,env,rBuf,rdb,rOff,count,type,bType);
+    }
     else
-        sPtr = ompi_java_getBufPtr(&sBase, env, sendBuf, sdb, bType, sOffset);
+    {
+        ompi_java_getReadPtr(&sPtr,&sItem,env,sBuf,sdb,sOff,count,type,bType);
+        rbCnt = rCount;
+        ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, rbCnt, type);
+    }
 
-    rPtr = ompi_java_getBufPtr(&rBase, env, recvBuf, rdb, bType, rOffset);
     MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
-
-    int rc = MPI_Reduce_scatter_block(sPtr, rPtr, count, type, op, comm);
+    int rc = MPI_Reduce_scatter_block(sPtr, rPtr, rCount, type, op, comm);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_releaseBufPtr(env, recvBuf, rdb, rBase, bType);
+    if(sBuf != NULL)
+        ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
 
-    if(sendBuf != NULL)
-        ompi_java_releaseReadBufPtr(env, sendBuf, sdb, sBase, bType);
+    ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rbCnt,type,bType);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatterBlock(
@@ -1951,12 +2068,12 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduceScatterBlock(
 JNIEXPORT void JNICALL Java_mpi_Comm_reduceLocal(
         JNIEnv *env, jclass clazz, jobject inBuf, jboolean idb, jint inOff,
         jobject inOutBuf, jboolean iodb, jint inOutOff, jint count,
-        jlong jType, jint bType, jlong op)
+        jlong jType, jlong op)
 {
     MPI_Datatype type = (MPI_Datatype)jType;
     void *inPtr, *inBase, *inOutPtr, *inOutBase;
-    inPtr = getBufCritical(&inBase, env, inBuf, idb, bType, inOff);
-    inOutPtr = getBufCritical(&inOutBase, env, inOutBuf, iodb, bType, inOutOff);
+    inPtr = getBufCritical(&inBase, env, inBuf, idb, inOff);
+    inOutPtr = getBufCritical(&inOutBase, env, inOutBuf, iodb, inOutOff);
     int rc = MPI_Reduce_local(inPtr, inOutPtr, count, type, (MPI_Op)op);
     ompi_java_exceptionCheck(env, rc);
     releaseBufCritical(env, inBuf, idb, inBase);
@@ -1969,14 +2086,22 @@ JNIEXPORT void JNICALL Java_mpi_Comm_reduceLocalUf(
         jlong jType, jint bType, jobject jOp, jlong hOp)
 {
     MPI_Datatype type = (MPI_Datatype)jType;
-    void *inPtr, *inBase, *inOutPtr, *inOutBase;
-    inPtr = ompi_java_getBufPtr(&inBase, env, inBuf, idb, bType, inOff);
-    inOutPtr = ompi_java_getBufPtr(&inOutBase,env,inOutBuf,iodb,bType,inOutOff);
+    void *inPtr, *inOutPtr;
+    ompi_java_buffer_t *inItem, *inOutItem;
+
+    ompi_java_getReadPtr(&inPtr, &inItem, env, inBuf,
+                         idb, inOff, count, type, bType);
+    ompi_java_getReadPtr(&inOutPtr, &inOutItem, env, inOutBuf,
+                         iodb, inOutOff, count, type, bType);
+
     MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
     int rc = MPI_Reduce_local(inPtr, inOutPtr, count, type, op);
+
     ompi_java_exceptionCheck(env, rc);
-    ompi_java_releaseReadBufPtr(env, inBuf, idb, inBase, bType);
-    ompi_java_releaseBufPtr(env, inOutBuf, iodb, inOutBase, bType);
+    ompi_java_releaseReadPtr(inPtr, inItem, inBuf, idb);
+
+    ompi_java_releaseWritePtr(inOutPtr, inOutItem, env, inOutBuf,
+                              iodb, inOutOff, count, type, bType);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_setName(

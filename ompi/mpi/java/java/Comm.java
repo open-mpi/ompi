@@ -350,7 +350,7 @@ public final void send(Object buf, int count, Datatype type, int dest, int tag)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -382,7 +382,7 @@ public final Status recv(Object buf, int count,
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -434,13 +434,13 @@ public final Status sendRecv(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -488,7 +488,7 @@ public final Status sendRecvReplace(
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -527,7 +527,7 @@ public final void bSend(Object buf, int count, Datatype type, int dest, int tag)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -558,7 +558,7 @@ public final void sSend(Object buf, int count, Datatype type, int dest, int tag)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -589,7 +589,7 @@ public final void rSend(Object buf, int count, Datatype type, int dest, int tag)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -883,18 +883,17 @@ public final int pack(Object inbuf, int incount, Datatype type,
 
     if(inbuf instanceof Buffer && !(indb = ((Buffer)inbuf).isDirect()))
     {
-        offset = ((Buffer)inbuf).arrayOffset();
+        offset = type.getOffset(inbuf);
         inbuf  = ((Buffer)inbuf).array();
     }
 
     return pack(handle, inbuf, indb, offset, incount,
-                type.handle, type.baseType, outbuf, position);
+                type.handle, outbuf, position);
 }
 
 private native int pack(
         long comm, Object inbuf, boolean indb, int offset, int incount,
-        long type, int baseType, byte[] outbuf, int position)
-        throws MPIException;
+        long type, byte[] outbuf, int position) throws MPIException;
 
 /**
  * Unpacks message in receive buffer {@code outbuf} into space specified in
@@ -922,17 +921,17 @@ public final int unpack(byte[] inbuf, int position,
 
     if(outbuf instanceof Buffer && !(outdb = ((Buffer)outbuf).isDirect()))
     {
-        offset = ((Buffer)outbuf).arrayOffset();
+        offset = type.getOffset(outbuf);
         outbuf = ((Buffer)outbuf).array();
     }
 
     return unpack(handle, inbuf, position, outbuf, outdb,
-                  offset, outcount, type.handle, type.baseType);
+                  offset, outcount, type.handle);
 }
 
 private native int unpack(
         long comm, byte[] inbuf, int position, Object outbuf, boolean outdb,
-        int offset, int outcount, long type, int baseType) throws MPIException;
+        int offset, int outcount, long type) throws MPIException;
 
 /**
  * Returns an upper bound on the increment of {@code position} effected
@@ -1205,7 +1204,7 @@ public final void bcast(Object buf, int count, Datatype type, int root)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -1266,13 +1265,13 @@ public final void gather(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -1303,7 +1302,7 @@ public final void gather(Object buf, int count, Datatype type, int root)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -1400,13 +1399,13 @@ public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -1439,7 +1438,7 @@ public final void gatherv(Object recvbuf, int[] recvcount, int[] displs,
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -1469,7 +1468,7 @@ public final void gatherv(Object sendbuf, int sendcount,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
@@ -1595,13 +1594,13 @@ public final void scatter(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -1632,7 +1631,7 @@ public final void scatter(Object buf, int count, Datatype type, int root)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -1727,13 +1726,13 @@ public final void scatterv(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -1765,7 +1764,7 @@ public final void scatterv(Object sendbuf, int[] sendcount, int[] displs,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
@@ -1795,7 +1794,7 @@ public final void scatterv(Object recvbuf, int recvcount,
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -1915,13 +1914,13 @@ public final void allGather(Object sendbuf, int sendcount, Datatype sendtype,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -1949,7 +1948,7 @@ public final void allGather(Object buf, int count, Datatype type)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -2036,13 +2035,13 @@ public final void allGatherv(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2072,7 +2071,7 @@ public final void allGatherv(Object recvbuf, int[] recvcount,
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2166,13 +2165,13 @@ public final void allToAll(Object sendbuf, int sendcount, Datatype sendtype,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2246,13 +2245,13 @@ public final void allToAllv(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2328,13 +2327,13 @@ public final void neighborAllGather(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2406,13 +2405,13 @@ public final void neighborAllGatherv(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2483,13 +2482,13 @@ public final void neighborAllToAll(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2561,13 +2560,13 @@ public final void neighborAllToAllv(
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = sendtype.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
     
@@ -2650,13 +2649,13 @@ public final void reduce(Object sendbuf, Object recvbuf, int count,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = type.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = type.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2687,7 +2686,7 @@ public final void reduce(Object buf, int count, Datatype type, Op op, int root)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -2786,13 +2785,13 @@ public final void allReduce(Object sendbuf, Object recvbuf,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = type.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = type.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2821,7 +2820,7 @@ public final void allReduce(Object buf, int count, Datatype type, Op op)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -2913,13 +2912,13 @@ public final void reduceScatter(Object sendbuf, Object recvbuf,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = type.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = type.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -2949,7 +2948,7 @@ public final void reduceScatter(Object buf, int[] counts, Datatype type, Op op)
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -3043,13 +3042,13 @@ public final void reduceScatterBlock(Object sendbuf, Object recvbuf,
 
     if(sendbuf instanceof Buffer && !(sdb = ((Buffer)sendbuf).isDirect()))
     {
-        sendoff = ((Buffer)sendbuf).arrayOffset();
+        sendoff = type.getOffset(sendbuf);
         sendbuf = ((Buffer)sendbuf).array();
     }
 
     if(recvbuf instanceof Buffer && !(rdb = ((Buffer)recvbuf).isDirect()))
     {
-        recvoff = ((Buffer)recvbuf).arrayOffset();
+        recvoff = type.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
 
@@ -3078,7 +3077,7 @@ public final void reduceScatterBlock(
 
     if(buf instanceof Buffer && !(db = ((Buffer)buf).isDirect()))
     {
-        off = ((Buffer)buf).arrayOffset();
+        off = type.getOffset(buf);
         buf = ((Buffer)buf).array();
     }
 
@@ -3170,20 +3169,20 @@ public static void reduceLocal(
 
     if(inBuf instanceof Buffer && !(idb = ((Buffer)inBuf).isDirect()))
     {
-        inOff = ((Buffer)inBuf).arrayOffset();
+        inOff = type.getOffset(inBuf);
         inBuf = ((Buffer)inBuf).array();
     }
 
     if(inOutBuf instanceof Buffer && !(iodb = ((Buffer)inOutBuf).isDirect()))
     {
-        inOutOff = ((Buffer)inOutBuf).arrayOffset();
+        inOutOff = type.getOffset(inOutBuf);
         inOutBuf = ((Buffer)inOutBuf).array();
     }
 
     if(op.uf == null)
     {
         reduceLocal(inBuf, idb, inOff, inOutBuf, iodb, inOutOff,
-                    count, type.handle, type.baseType, op.handle);
+                    count, type.handle, op.handle);
     }
     else
     {
@@ -3195,7 +3194,7 @@ public static void reduceLocal(
 private static native void reduceLocal(
         Object inBuf, boolean idb, int inOff,
         Object inOutBuf, boolean iodb, int inOutOff, int count,
-        long type, int baseType, long op) throws MPIException;
+        long type, long op) throws MPIException;
 
 private static native void reduceLocalUf(
         Object inBuf, boolean idb, int inOff,
