@@ -31,6 +31,12 @@ include_HEADERS += shmem.fh
 nodist_include_HEADERS = \
         shmem.h
 
+if OSHMEM_PROFILING
+nodist_include_HEADERS += pshmem.h
+else
+headers += pshmem.h
+endif
+
 nobase_dist_noinst_HEADERS = $(headers)
 nobase_nodist_noinst_HEADERS = $(nodist_headers)
 

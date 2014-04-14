@@ -22,6 +22,7 @@
 
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_barrier = pshmem_barrier
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
