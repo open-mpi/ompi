@@ -18,6 +18,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmalloc = pshmalloc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
