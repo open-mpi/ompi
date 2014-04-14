@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,34 +38,19 @@
 #include "ompi/proc/proc.h"
 
 mca_btl_base_module_t mca_btl_self = {
-    &mca_btl_self_component.super,
-    0, /* btl_eager_limit */
-    0, /* btl_rndv_eager_limit */
-    0, /* btl_max_send_size */
-    0, /* btl_rdma_pipeline_send_length */
-    0, /* btl_rdma_pipeline_frag_size */
-    0, /* btl_min_rdma_pipeline_size */
-    0, /* btl_exclusivity */
-    0, /* btl_latency */
-    0, /* btl_bandwidth */
-    0, /* btl flags */
-    0, /* btl segment size */
-    mca_btl_self_add_procs,
-    mca_btl_self_del_procs,
-    NULL,
-    mca_btl_self_finalize,
-    mca_btl_self_alloc,
-    mca_btl_self_free,
-    mca_btl_self_prepare_src,
-    mca_btl_self_prepare_dst,
-    mca_btl_self_send,
-    NULL, /* send immediate */
-    mca_btl_self_rdma,  /* put */
-    mca_btl_self_rdma,  /* get */
-    mca_btl_base_dump,
-    NULL, /* mpool */
-    NULL, /* register error cb */
-    mca_btl_self_ft_event
+    .btl_component = &mca_btl_self_component.super,
+    .btl_add_procs = mca_btl_self_add_procs,
+    .btl_del_procs = mca_btl_self_del_procs,
+    .btl_finalize = mca_btl_self_finalize,
+    .btl_alloc = mca_btl_self_alloc,
+    .btl_free = mca_btl_self_free,
+    .btl_prepare_src = mca_btl_self_prepare_src,
+    .btl_prepare_dst = mca_btl_self_prepare_dst,
+    .btl_send = mca_btl_self_send,
+    .btl_put = mca_btl_self_rdma,
+    .btl_get = mca_btl_self_rdma,
+    .btl_dump = mca_btl_base_dump,
+    .btl_ft_event = mca_btl_self_ft_event,
 };
 
 

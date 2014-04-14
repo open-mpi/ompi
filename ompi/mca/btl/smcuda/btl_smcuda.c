@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -71,39 +72,22 @@
 #include "ompi/proc/proc.h"
 
 mca_btl_smcuda_t mca_btl_smcuda = {
-    {
-        &mca_btl_smcuda_component.super,
-        0, /* btl_eager_limit */
-        0, /* btl_rndv_eager_limit */
-        0, /* btl_max_send_size */
-        0, /* btl_rdma_pipeline_send_length */
-        0, /* btl_rdma_pipeline_frag_size */
-        0, /* btl_min_rdma_pipeline_size */
-        0, /* btl_exclusivity */
-        0, /* btl_latency */
-        0, /* btl_bandwidth */
-        0, /* btl flags */
-        0, /* btl segment size */
-        mca_btl_smcuda_add_procs,
-        mca_btl_smcuda_del_procs,
-        NULL,
-        mca_btl_smcuda_finalize,
-        mca_btl_smcuda_alloc,
-        mca_btl_smcuda_free,
-        mca_btl_smcuda_prepare_src,
+    .super = {
+        .btl_component = &mca_btl_smcuda_component.super,
+        .btl_add_procs = mca_btl_smcuda_add_procs,
+        .btl_del_procs = mca_btl_smcuda_del_procs,
+        .btl_finalize = mca_btl_smcuda_finalize,
+        .btl_alloc = mca_btl_smcuda_alloc,
+        .btl_free = mca_btl_smcuda_free,
+        .btl_prepare_src = mca_btl_smcuda_prepare_src,
 #if OPAL_CUDA_SUPPORT || OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
-        mca_btl_smcuda_prepare_dst,
-#else
-        NULL,
-#endif /* OPAL_CUDA_SUPPORT */
-        mca_btl_smcuda_send,
-        mca_btl_smcuda_sendi,
-        NULL,  /* put */
-        NULL,  /* get -- optionally filled during initialization */
-        mca_btl_smcuda_dump,
-        NULL, /* mpool */
-        mca_btl_smcuda_register_error_cb, /* register error */
-        mca_btl_smcuda_ft_event
+        .btl_prepare_dst = mca_btl_smcuda_prepare_dst,
+#endif /* OPAL_CUDA_SUPPORT || OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
+        .btl_send = mca_btl_smcuda_send,
+        .btl_sendi = mca_btl_smcuda_sendi,
+        .btl_dump = mca_btl_smcuda_dump,
+        .btl_register_error_cb = mca_btl_smcuda_register_error_cb,
+        .btl_ft_event = mca_btl_smcuda_ft_event
     }
 };
 

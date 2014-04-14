@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,34 +35,18 @@
 #include "ompi/proc/proc.h"
 
 mca_btl_sctp_module_t mca_btl_sctp_module = {
-    {
-        &mca_btl_sctp_component.super,
-        0, /* max size of first fragment */
-        0, /* min send fragment size */
-        0, /* max send fragment size */
-        0, /* btl_rdma_pipeline_send_length */
-        0, /* btl_rdma_pipeline_frag_size */
-        0, /* btl_min_rdma_pipeline_size */
-        0, /* exclusivity */
-        0, /* latency */
-        0, /* bandwidth */
-        0, /* flags */
-        0, /* segment size */
-        mca_btl_sctp_add_procs,
-        mca_btl_sctp_del_procs,
-        NULL, 
-        mca_btl_sctp_finalize,
-        mca_btl_sctp_alloc, 
-        mca_btl_sctp_free, 
-        mca_btl_sctp_prepare_src,
-        mca_btl_sctp_prepare_dst,
-        mca_btl_sctp_send,
-        NULL, /* send immediate */
-        mca_btl_sctp_put,
-        NULL, /* get */ 
-        mca_btl_base_dump,
-        NULL, /* mpool */
-        NULL /* register error */
+    .super = {
+        .btl_component = &mca_btl_sctp_component.super,
+        .btl_add_procs = mca_btl_sctp_add_procs,
+        .btl_del_procs = mca_btl_sctp_del_procs,
+        .btl_finalize = mca_btl_sctp_finalize,
+        .btl_alloc = mca_btl_sctp_alloc,
+        .btl_free = mca_btl_sctp_free,
+        .btl_prepare_src = mca_btl_sctp_prepare_src,
+        .btl_prepare_dst = mca_btl_sctp_prepare_dst,
+        .btl_send = mca_btl_sctp_send,
+        .btl_put = mca_btl_sctp_put,
+        .btl_dump = mca_btl_base_dump,
     }
 };
 

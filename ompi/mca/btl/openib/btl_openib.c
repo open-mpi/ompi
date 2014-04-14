@@ -89,36 +89,23 @@
 #endif
 
 mca_btl_openib_module_t mca_btl_openib_module = {
-    {
-        &mca_btl_openib_component.super,
-        0, /* max size of first fragment */
-        0, /* min send fragment size */
-        0, /* max send fragment size */
-        0, /* btl_rdma_pipeline_send_length */
-        0, /* btl_rdma_pipeline_frag_size */
-        0, /* btl_min_rdma_pipeline_size */
-        0, /* exclusivity */
-        0, /* latency */
-        0, /* bandwidth */
-        0, /* TODO this should be PUT btl flags */
-        0, /* segment size */
-        mca_btl_openib_add_procs,
-        mca_btl_openib_del_procs,
-        NULL,
-        mca_btl_openib_finalize,
+    .super = {
+        .btl_component = &mca_btl_openib_component.super,
+        .btl_add_procs = mca_btl_openib_add_procs,
+        .btl_del_procs = mca_btl_openib_del_procs,
+        .btl_finalize = mca_btl_openib_finalize,
         /* we need alloc free, pack */
-        mca_btl_openib_alloc,
-        mca_btl_openib_free,
-        mca_btl_openib_prepare_src,
-        mca_btl_openib_prepare_dst,
-        mca_btl_openib_send,
-        mca_btl_openib_sendi, /* send immediate */
-        mca_btl_openib_put,
-        mca_btl_openib_get,
-        mca_btl_base_dump,
-        NULL, /* mpool */
-        mca_btl_openib_register_error_cb, /* error call back registration */
-        mca_btl_openib_ft_event
+        .btl_alloc = mca_btl_openib_alloc,
+        .btl_free = mca_btl_openib_free,
+        .btl_prepare_src = mca_btl_openib_prepare_src,
+        .btl_prepare_dst = mca_btl_openib_prepare_dst,
+        .btl_send = mca_btl_openib_send,
+        .btl_sendi = mca_btl_openib_sendi, /* send immediate */
+        .btl_put = mca_btl_openib_put,
+        .btl_get = mca_btl_openib_get,
+        .btl_dump = mca_btl_base_dump,
+        .btl_register_error = mca_btl_openib_register_error_cb, /* error call back registration */
+        .btl_ft_event = mca_btl_openib_ft_event
     }
 };
 

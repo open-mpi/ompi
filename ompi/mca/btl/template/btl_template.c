@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,35 +34,19 @@
 
 
 mca_btl_template_module_t mca_btl_template_module = {
-    {
-        &mca_btl_template_component.super,
-        0, /* max size of first fragment */
-        0, /* min send fragment size */
-        0, /* max send fragment size */
-        0, /* rdma pipeline offset */
-        0, /* rdma pipeline frag size */
-        0, /* min rdma pipeline size */
-        0, /* exclusivity */
-        0, /* latency */
-        0, /* bandwidth */
-        0, /* flags */
-        0, /* segment size */
-        mca_btl_template_add_procs,
-        mca_btl_template_del_procs,
-        mca_btl_template_register,
-        mca_btl_template_finalize,
-        mca_btl_template_alloc, 
-        mca_btl_template_free, 
-        mca_btl_template_prepare_src,
-        mca_btl_template_prepare_dst,
-        mca_btl_template_send,
-        NULL, /* send immediate */
-        mca_btl_template_put,
-        NULL, /* get */ 
-        NULL, /*dump */
-        NULL, /* mpool */
-        NULL, /* register error cb */
-        mca_btl_template_ft_event
+    .super = {
+        .btl_component = &mca_btl_template_component.super,
+        .btl_add_procs = mca_btl_template_add_procs,
+        .btl_del_procs = mca_btl_template_del_procs,
+        .btl_register = mca_btl_template_register,
+        .btl_finalize = mca_btl_template_finalize,
+        .btl_alloc = mca_btl_template_alloc,
+        .btl_free = mca_btl_template_free,
+        .btl_prepare_src = mca_btl_template_prepare_src,
+        .btl_prepare_dst = mca_btl_template_prepare_dst,
+        .btl_send = mca_btl_template_send,
+        .btl_put = mca_btl_template_put,
+        .btl_ft_event = mca_btl_template_ft_event
     }
 };
 
