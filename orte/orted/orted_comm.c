@@ -456,6 +456,38 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         return;
         break;
             
+    case ORTE_DAEMON_HALT_VM_CMD:
+        if (orte_debug_daemons_flag) {
+            opal_output(0, "%s orted_cmd: received halt_vm cmd",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+        /* kill the local procs */
+        orte_odls.kill_local_procs(NULL);
+        /* flag that orteds were ordered to terminate */
+        orte_orteds_term_ordered = true;
+        if (ORTE_PROC_IS_HNP) {
+            /* if all my routes and local children are gone, then terminate ourselves */
+            if (0 == orte_routed.num_routes()) {
+                for (i=0; i < orte_local_children->size; i++) {
+                    if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
+                        proct->alive) {
+                        /* at least one is still alive */
+                        return;
+                    }
+                }
+                /* call our appropriate exit procedure */
+                if (orte_debug_daemons_flag) {
+                    opal_output(0, "%s orted_cmd: all routes and children gone - exiting",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                }
+                ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            }
+        } else {
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+        }
+        return;
+        break;
+
         /****    SPAWN JOB COMMAND    ****/
     case ORTE_DAEMON_SPAWN_JOB_CMD:
         if (orte_debug_daemons_flag) {

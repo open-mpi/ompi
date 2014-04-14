@@ -73,18 +73,31 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
 {
     int rc;
     opal_buffer_t *cmd;
-    
+    orte_daemon_cmd_flag_t cmmnd;
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* flag that orteds are being terminated */
     orte_orteds_term_ordered = true;
-    
+    cmmnd = command;
+
+    /* if we are terminating before launch, or abnormally
+     * terminating, then the daemons may not be wired up
+     * and therefore cannot depend on detecting their
+     * routed children to determine termination
+     */
+    if (orte_abnormal_term_ordered ||
+        orte_never_launched ||
+        !orte_routing_is_enabled) {
+        cmmnd = ORTE_DAEMON_HALT_VM_CMD;
+    }
+
     /* send it express delivery! */
     cmd = OBJ_NEW(opal_buffer_t);
     /* pack the command */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &cmmnd, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;
