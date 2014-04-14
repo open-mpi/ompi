@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -42,7 +42,6 @@ mca_btl_scif_module_t mca_btl_scif_module = {
         .btl_component      = &mca_btl_scif_component.super,
         .btl_add_procs      = mca_btl_scif_add_procs,
         .btl_del_procs      = mca_btl_scif_del_procs,
-        .btl_register       = NULL,
         .btl_finalize       = mca_btl_scif_module_finalize,
         .btl_alloc          = mca_btl_scif_alloc,
         .btl_free           = mca_btl_scif_free,
@@ -52,10 +51,6 @@ mca_btl_scif_module_t mca_btl_scif_module = {
         .btl_sendi          = mca_btl_scif_sendi,
         .btl_put            = mca_btl_scif_put,
         .btl_get            = mca_btl_scif_get,
-        .btl_dump           = NULL,
-        .btl_mpool          = NULL,
-        .btl_register_error = NULL,
-        .btl_ft_event       = NULL,
     }
 };
 

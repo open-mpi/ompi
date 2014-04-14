@@ -39,40 +39,22 @@
 #include "btl_portals4_recv.h"
 
 mca_btl_portals4_module_t mca_btl_portals4_module = {
-    {
-        &mca_btl_portals4_component.super,
+    .super = {
+        .btl_component = &mca_btl_portals4_component.super,
 
-        /* NOTE: All these default values are set in
+        /* NOTE: All the default values are set in
            component_open() */
 
-        0,   /* max size of first frag */
-        0,   /* min send size */
-        0,   /* max send size */
-        0,   /* btl_rdma_pipeline_send_length */
-        0,   /* btl_rdma_pipeline_frag_size */
-        0,   /* btl_min_rdma_pipeline_size */
-        0,   /* exclusivity - higher than sm, lower than self */
-        0,   /* latency */
-        0,   /* bandwidth */
-        0,   /* btl flags */
-        0,   /* btl segment size */
-
-        mca_btl_portals4_add_procs,
-        mca_btl_portals4_del_procs,
-        NULL,  /* btl_register */
-        mca_btl_portals4_finalize,
-        mca_btl_portals4_alloc,
-        mca_btl_portals4_free,
-        mca_btl_portals4_prepare_src,
-        mca_btl_portals4_prepare_dst,
-        mca_btl_portals4_send,
-        NULL, /* mca_btl_portals4_sendi, */
-        NULL, /* mca_btl_portals4_put, */
-        mca_btl_portals4_get,
-        mca_btl_base_dump,
-        NULL, /* mpool */
-        NULL, /* register error */
-        NULL
+        .btl_add_procs = mca_btl_portals4_add_procs,
+        .btl_del_procs = mca_btl_portals4_del_procs,
+        .btl_finalize = mca_btl_portals4_finalize,
+        .btl_alloc = mca_btl_portals4_alloc,
+        .btl_free = mca_btl_portals4_free,
+        .btl_prepare_src = mca_btl_portals4_prepare_src,
+        .btl_prepare_dst = mca_btl_portals4_prepare_dst,
+        .btl_send = mca_btl_portals4_send,
+        .btl_get = mca_btl_portals4_get,
+        .btl_dump = mca_btl_base_dump,
     },
 };
 

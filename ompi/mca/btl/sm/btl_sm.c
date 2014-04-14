@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
@@ -69,39 +70,22 @@
 #include "ompi/proc/proc.h"
 
 mca_btl_sm_t mca_btl_sm = {
-    {
-        &mca_btl_sm_component.super,
-        0, /* btl_eager_limit */
-        0, /* btl_rndv_eager_limit */
-        0, /* btl_max_send_size */
-        0, /* btl_rdma_pipeline_send_length */
-        0, /* btl_rdma_pipeline_frag_size */
-        0, /* btl_min_rdma_pipeline_size */
-        0, /* btl_exclusivity */
-        0, /* btl_latency */
-        0, /* btl_bandwidth */
-        0, /* btl flags */
-        0, /* btl segment size */
-        mca_btl_sm_add_procs,
-        mca_btl_sm_del_procs,
-        NULL,
-        mca_btl_sm_finalize,
-        mca_btl_sm_alloc,
-        mca_btl_sm_free,
-        mca_btl_sm_prepare_src,
+    .super = {
+        .btl_component = &mca_btl_sm_component.super,
+        .btl_add_procs = mca_btl_sm_add_procs,
+        .btl_del_procs = mca_btl_sm_del_procs,
+        .btl_finalize = mca_btl_sm_finalize,
+        .btl_alloc = mca_btl_sm_alloc,
+        .btl_free = mca_btl_sm_free,
+        .btl_prepare_src = mca_btl_sm_prepare_src,
 #if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
-        mca_btl_sm_prepare_dst,
-#else /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
-        NULL,
+        .btl_prepare_dst = mca_btl_sm_prepare_dst,
 #endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
-        mca_btl_sm_send,
-        mca_btl_sm_sendi,
-        NULL,  /* put */
-        NULL,  /* get -- optionally filled during initialization */
-        mca_btl_sm_dump,
-        NULL, /* mpool */
-        mca_btl_sm_register_error_cb, /* register error */
-        mca_btl_sm_ft_event
+        .btl_send = mca_btl_sm_send,
+        .btl_sendi = mca_btl_sm_sendi,
+        .btl_dump = mca_btl_sm_dump,
+        .btl_register_error = mca_btl_sm_register_error_cb, /* register error */
+        .btl_ft_event = mca_btl_sm_ft_event
     }
 };
 

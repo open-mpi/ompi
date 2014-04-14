@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2191,38 +2194,26 @@ static int usnic_ft_event(int state)
 
 
 ompi_btl_usnic_module_t ompi_btl_usnic_module_template = {
-    {
-        &mca_btl_usnic_component.super,
-        0, /* eager_limit */
-        0, /* min_send_size */
-        0, /* max_send_size */
-        0, /* rdma_pipeline_send_length */
-        0, /* rdma_pipeline_frag_size */
-        0, /* min_rdma_pipeline_size */
-        MCA_BTL_EXCLUSIVITY_DEFAULT,
-        0, /* latency */
-        0, /* bandwidth */
-        MCA_BTL_FLAGS_SEND | 
+    .super = {
+        .btl_component = &mca_btl_usnic_component.super,
+        .btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT,
+        .btl_flags = MCA_BTL_FLAGS_SEND |
             MCA_BTL_FLAGS_PUT |
             MCA_BTL_FLAGS_SEND_INPLACE,
 #ifndef OMPI_BTL_USNIC_CISCO_V1_6
-        sizeof(mca_btl_base_segment_t), /* seg size */
+        .btl_seg_size = sizeof(mca_btl_base_segment_t), /* seg size */
 #endif
-        usnic_add_procs,
-        usnic_del_procs,
-        NULL, /*ompi_btl_usnic_register*/
-        usnic_finalize,
-        usnic_alloc,
-        usnic_free,
-        usnic_prepare_src,
-        usnic_prepare_dst,
-        usnic_send,
-        NULL, /* ompi_btl_usnic_sendi */
-        usnic_put,
-        NULL, /*ompi_btl_usnic_get */
-        mca_btl_base_dump,
-        NULL, /* mpool -- to be filled in later */
-        usnic_register_pml_err_cb,
-        usnic_ft_event
+        .btl_add_procs = usnic_add_procs,
+        .btl_del_procs = usnic_del_procs,
+        .btl_finalize = usnic_finalize,
+        .btl_alloc = usnic_alloc,
+        .btl_free = usnic_free,
+        .btl_prepare_src = usnic_prepare_src,
+        .btl_prepare_dst = usnic_prepare_dst,
+        .btl_send = usnic_send,
+        .btl_put = usnic_put,
+        .btl_dump = mca_btl_base_dump,
+        .btl_register_error = usnic_register_pml_err_cb,
+        .btl_ft_event = usnic_ft_event
     }
 };
