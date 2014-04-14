@@ -20,6 +20,7 @@
 #define _MPIJAVA_H_
 
 #include "mpi.h"
+#include "opal/class/opal_free_list.h"
 
 typedef struct {
     jfieldID  CommHandle;
@@ -52,17 +53,69 @@ typedef struct {
 
 extern ompi_java_globals_t ompi_java;
 
-void* ompi_java_getBufPtr(
-        void** bufBase, JNIEnv *env,
-        jobject buf, jboolean db, int baseType, int offset);
+typedef struct ompi_java_buffer_t
+{
+    opal_free_list_item_t super;
+    void *buffer;
+} ompi_java_buffer_t;
 
-void ompi_java_releaseBufPtr(
-        JNIEnv *env, jobject buf, jboolean db, void* bufBase, int baseType);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_java_buffer_t);
 
-void ompi_java_releaseReadBufPtr(
-        JNIEnv *env, jobject buf, jboolean db, void *bufBase, int baseType);
+void* ompi_java_getArrayCritical(void** bufBase, JNIEnv *env,
+                                 jobject buf, int offset);
 
 void* ompi_java_getDirectBufferAddress(JNIEnv *env, jobject buf);
+
+/* Gets a buffer pointer for reading (copy from Java). */
+void ompi_java_getReadPtr(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
+        jboolean db, int offset, int count, MPI_Datatype type, int baseType);
+
+/* Gets a buffer pointer for reading.
+ * It only copies from java the rank data.
+ * 'size' is the number of processes. */
+void ompi_java_getReadPtrRank(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env,
+        jobject buf, jboolean db, int offset, int count, int size,
+        int rank, MPI_Datatype type, int baseType);
+
+/* Gets a buffer pointer for reading, but it
+ * 'size' is the number of processes.
+ * if rank == -1 it copies all data from Java.
+ * if rank != -1 it only copies from Java the rank data. */
+void ompi_java_getReadPtrv(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env,
+        jobject buf, jboolean db, int off, int *counts, int *displs,
+        int size, int rank, MPI_Datatype type, int baseType);
+
+/* Releases a buffer used for reading. */
+void ompi_java_releaseReadPtr(
+        void *ptr, ompi_java_buffer_t *item, jobject buf, jboolean db);
+
+/* Gets a buffer pointer for writing. */
+void ompi_java_getWritePtr(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env,
+        jobject buf, jboolean db, int count, MPI_Datatype type);
+
+/* Gets a buffer pointer for writing.
+ * 'size' is the number of processes. */
+void ompi_java_getWritePtrv(
+        void **ptr, ompi_java_buffer_t **item, JNIEnv *env, jobject buf,
+        jboolean db, int *counts, int *displs, int size, MPI_Datatype type);
+
+/* Releases a buffer used for writing.
+ * It copies data to Java. */
+void ompi_java_releaseWritePtr(
+        void *ptr, ompi_java_buffer_t *item, JNIEnv *env, jobject buf,
+        jboolean db, int offset, int count, MPI_Datatype type, int baseType);
+
+/* Releases a buffer used for writing.
+ * It copies data to Java.
+ * 'size' is the number of processes. */
+void ompi_java_releaseWritePtrv(
+        void *ptr, ompi_java_buffer_t *item, JNIEnv *env,
+        jobject buf, jboolean db, int off, int *counts, int *displs,
+        int size, MPI_Datatype type, int baseType);
 
 void ompi_java_setStaticLongField(JNIEnv *env, jclass c,
                                   char *field, jlong value);
