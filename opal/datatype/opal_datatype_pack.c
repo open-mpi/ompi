@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -333,9 +333,9 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-                DO_DEBUG( opal_output( 0, "pack new_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
+                DO_DEBUG( opal_output( 0, "pack new_loop count %d stack_pos %d pos_desc %d count_desc %d disp %ld space %lu\n",
                                        (int)pStack->count, pConvertor->stack_pos, pos_desc,
-                                       (long)pStack->disp, (unsigned long)iov_len_local ); );
+                                       count_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
             }
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
                 OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr;
@@ -370,9 +370,9 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
-    /* I complete an element, next step I should go to the next one */
+    /* Save the global position for the next round */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_INT8, count_desc,
-                conv_ptr - pStack->disp - pConvertor->pBaseBuf );
+                conv_ptr - pConvertor->pBaseBuf );
     DO_DEBUG( opal_output( 0, "pack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
     return 0;

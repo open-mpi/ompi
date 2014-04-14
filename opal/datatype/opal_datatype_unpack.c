@@ -401,9 +401,9 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
-    /* I complete an element, next step I should go to the next one */
+    /* Save the global position for the next round */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_UINT1, count_desc,
-                conv_ptr - pStack->disp - pConvertor->pBaseBuf );
+                conv_ptr - pConvertor->pBaseBuf );
     DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
     return 0;
@@ -565,9 +565,9 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
-    /* I complete an element, next step I should go to the next one */
+    /* Save the global position for the next round */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_UINT1, count_desc,
-                conv_ptr - pStack->disp - pConvertor->pBaseBuf );
+                conv_ptr - pConvertor->pBaseBuf );
     DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
     return 0;
