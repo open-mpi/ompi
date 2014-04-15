@@ -60,7 +60,6 @@
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
-#include "orte/mca/sensor/sensor.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"

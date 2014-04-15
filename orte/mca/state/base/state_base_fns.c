@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,6 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/sensor/sensor.h"
 #include "orte/util/session_dir.h"
 
 #include "orte/mca/state/base/base.h"
@@ -574,9 +574,6 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
             jdata->state = ORTE_JOB_STATE_TERMINATED;
         }
     }
-
-    /* turn off any sensor monitors on this job */
-    orte_sensor.stop(jdata->jobid);
 
     /* tell the IOF that the job is complete */
     if (NULL != orte_iof.complete) {
