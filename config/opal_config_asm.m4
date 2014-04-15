@@ -766,15 +766,15 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          [Enable use of OSX builtin atomics (default: disabled)])])
 
     if test "$enable_builtin_atomics" = "yes" ; then
-       OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_builtin="SYNC_BUILTIN"],
+       OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_builtin="BUILTIN_SYNC"],
          [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
          [Whether C compiler supports GCC style inline assembly])
     elif test "$enable_osx_builtin_atomics" = "yes" ; then
-	   AC_CHECK_HEADER([libkern/OSAtomic.h],[ompi_cv_asm_builtin="OSX_BUILTIN"],
+	   AC_CHECK_HEADER([libkern/OSAtomic.h],[ompi_cv_asm_builtin="BUILTIN_OSX"],
 	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
     else
-       ompi_cv_asm_builtin="NO_BUILTIN" 
+       ompi_cv_asm_builtin="BUILTIN_NO" 
     fi
 
         OMPI_CHECK_ASM_PROC
@@ -901,12 +901,12 @@ AC_MSG_ERROR([Can not continue.])
             ;;
 
         *)
-            OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_builtin="SYNC_BUILTIN"],
+            OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_builtin="BUILTIN_SYNC"],
               [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
         esac
 
-      if test "$ompi_cv_asm_builtin" = "SYNC_BUILTIN" ; then
+      if test "$ompi_cv_asm_builtin" = "BUILTIN_SYNC" ; then
         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
           [Whether C compiler supports GCC style inline assembly])
       else
@@ -957,7 +957,7 @@ AC_MSG_ERROR([Can not continue.])
         AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_FORMAT], ["$OPAL_ASSEMBLY_FORMAT"],
                            [Format of assembly file])
         AC_SUBST([OPAL_ASSEMBLY_FORMAT])
-      fi # if ompi_cv_asm_builtin = SYNC_BUILTIN
+      fi # if ompi_cv_asm_builtin = BUILTIN_SYNC
 
     result="OMPI_$ompi_cv_asm_arch"
     OPAL_ASSEMBLY_ARCH="$ompi_cv_asm_arch"
@@ -993,7 +993,7 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$ompi_cv_asm_arch" != "WINDOWS" -a "$ompi_cv_asm_builtin" != "SYNC_BUILTIN" -a "$ompi_cv_asm_builtin" != "OSX_BUILTIN" ; then
+if test "$ompi_cv_asm_arch" != "WINDOWS" -a "$ompi_cv_asm_builtin" != "BUILTIN_SYNC" -a "$ompi_cv_asm_builtin" != "BUILTIN_OSX" ; then
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already

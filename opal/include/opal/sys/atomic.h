@@ -139,9 +139,9 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  *********************************************************************/ 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */ 
-#elif OPAL_ASSEMBLY_BUILTIN == OMPI_SYNC_BUILTIN
+#elif OPAL_ASSEMBLY_BUILTIN == OMPI_BUILTIN_SYNC
 #include "opal/sys/sync_builtin/atomic.h"
-#elif OPAL_ASSEMBLY_BUILTIN == OMPI_OSX_BUILTIN
+#elif OPAL_ASSEMBLY_BUILTIN == OMPI_BUILTIN_OSX
 #include "opal/sys/osx/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_ALPHA
 #include "opal/sys/alpha/atomic.h"
