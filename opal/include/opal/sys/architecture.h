@@ -37,9 +37,9 @@
 #define OMPI_SPARCV9_64     0062
 #define OMPI_MIPS           0070
 #define OMPI_ARM            0100
-#define OMPI_SYNC_BUILTIN   0200
-#define OMPI_OSX_BUILTIN    0400
-#define OMPI_NO_BUILTIN     0800
+#define OMPI_BUILTIN_SYNC   0200
+#define OMPI_BUILTIN_OSX    0201
+#define OMPI_BUILTIN_NO     0202
 
 /* Formats */
 #define OMPI_DEFAULT        1000  /* standard for given architecture */
