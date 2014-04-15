@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,6 +78,7 @@ typedef struct {
     opal_thread_t      listen_thread;          /**< handle to the listening thread */
     bool               listen_thread_active;
     struct timeval     listen_thread_tv;       /**< Timeout when using listen thread */
+    int                stop_thread[2];         /**< pipe used to exit the listen thread */
 
     /* peers available via this transport - the index is the process name,
      * and the pointer returned is the pointer to the last module that

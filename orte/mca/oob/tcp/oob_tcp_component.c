@@ -132,8 +132,8 @@ static int tcp_component_open(void)
     if (ORTE_PROC_IS_HNP) {
         OBJ_CONSTRUCT(&mca_oob_tcp_component.listen_thread, opal_thread_t);
         mca_oob_tcp_component.listen_thread_active = false;
-        mca_oob_tcp_component.listen_thread_tv.tv_sec = 0;
-        mca_oob_tcp_component.listen_thread_tv.tv_usec = 300000;
+        mca_oob_tcp_component.listen_thread_tv.tv_sec = 3600;
+        mca_oob_tcp_component.listen_thread_tv.tv_usec = 0;
     }
     mca_oob_tcp_component.addr_count = 0;
     OBJ_CONSTRUCT(&mca_oob_tcp_component.modules, opal_pointer_array_t);
@@ -651,7 +651,9 @@ static void component_shutdown(void)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     if (ORTE_PROC_IS_HNP && mca_oob_tcp_component.listen_thread_active) {
-        mca_oob_tcp_component.listen_thread_active = 0;
+        mca_oob_tcp_component.listen_thread_active = false;
+        /* tell the thread to exit */
+        write(mca_oob_tcp_component.stop_thread[1], &i, sizeof(int));
         opal_thread_join(&mca_oob_tcp_component.listen_thread, NULL);
     }
 
