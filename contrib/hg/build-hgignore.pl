@@ -10,9 +10,32 @@
 
 use strict;
 
+use Getopt::Long;
+
+my $verbose_arg = 0;
+# Default to writing .hgignore
+my $output_arg = ".hgignore";
+my $help_arg = 0;
+
+&Getopt::Long::Configure("bundling");
+my $ok = Getopt::Long::GetOptions("verbose|v!" => \$verbose_arg,
+                                  "output|o=s" => \$output_arg,
+                                  "help|h!" => \$help_arg);
+
+if (!$ok || $help_arg) {
+    print "
+Usage: $0 [-v] [-o output] [-h]\n";
+    exit($ok);
+}
+
+print "Writing to: $output_arg\n"
+    if ($verbose_arg);
+
+#############################################################################
+
 # Sanity check
-die "Not in HG+SVN repository top dir"
-    if (! -d ".hg" && ! -d ".svn");
+die "Not in an SVN repository top dir"
+    if (! -d ".svn");
 
 # Put in some specials that we ignore everywhere
 my @hgignore;
@@ -63,18 +86,16 @@ diff.out
 *~
 *\\\#/;
 
-my $debug;
-$debug = 1
-    if ($ARGV[0]);
-
 print "Thinking...\n"
-    if (!$debug);
+    if (!$verbose_arg);
 
 # Start at the top level
 process(".");
 
 # See if there's an .hgignore_local file.  If so, add its contents to the end.
 if (-f ".hgignore_local") {
+    print "Reading .hgignore_local...\n"
+        if ($verbose_arg);
     open(IN, ".hgignore_local") || die "Can't open .hgignore_local";
     while (<IN>) {
         chomp;
@@ -84,16 +105,20 @@ if (-f ".hgignore_local") {
     close(IN);
 }
 
-# If there's an old .hgignore, delete it
-unlink(".hgignore")
-    if (-f ".hgignore");
+# If there's an old $output_arg file, delete it
+unlink($output_arg)
+    if (-f $output_arg);
 
 # Write the new one
-open(FILE, ">.hgignore");
+open(FILE, ">$output_arg");
 print FILE join("\n", @hgignore) . "\n";
 print FILE join("\n", @globals) . "\n"; 
 close(FILE);
-print "All done!\n";
+
+print "Wrote to $output_arg\n"
+    if ($verbose_arg);
+
+# Done!
 exit(0);
 
 #######################################################################
@@ -111,7 +136,7 @@ sub process {
     chomp($svn_ignore);
     if ($svn_ignore ne "") {
         print "Found svn:ignore in $dir\n"
-            if ($debug);
+            if ($verbose_arg);
         foreach my $line (split(/\n/, $svn_ignore)) {
             chomp($line);
             $line =~ s/^\.\///;
