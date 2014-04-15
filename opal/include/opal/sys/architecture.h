@@ -39,6 +39,7 @@
 #define OMPI_ARM            0100
 #define OMPI_SYNC_BUILTIN   0200
 #define OMPI_OSX_BUILTIN    0400
+#define OMPI_NO_BUILTIN     0800
 
 /* Formats */
 #define OMPI_DEFAULT        1000  /* standard for given architecture */
