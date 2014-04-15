@@ -170,7 +170,7 @@ AC_CONFIG_HEADERS([opal/include/opal_config.h])
 m4_ifdef([project_orte],
          [AC_CONFIG_HEADERS([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
-         [AC_CONFIG_HEADERS([ompi/include/ompi_config.h ompi/include/mpi.h])])
+         [AC_CONFIG_HEADERS([ompi/include/mpi.h])])
 m4_ifdef([project_oshmem],
          [AC_CONFIG_HEADER([oshmem/include/oshmem_config.h oshmem/include/shmem.h oshmem/include/pshmem.h])])
 
