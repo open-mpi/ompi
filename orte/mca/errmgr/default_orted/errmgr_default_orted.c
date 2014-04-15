@@ -8,6 +8,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,7 +42,6 @@
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/sensor/sensor.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/state/state.h"
 
@@ -96,9 +96,6 @@ static int pack_state_for_proc(opal_buffer_t *alert, orte_proc_t *child);
 static bool all_children_registered(orte_jobid_t job);
 static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf);
 static void failed_start(orte_job_t *jobdat);
-static void update_local_children(orte_job_t *jobdat,
-                                  orte_job_state_t jobstate,
-                                  orte_proc_state_t state);
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
 
 static void job_errors(int fd, short args, void *cbdata);
@@ -167,12 +164,6 @@ static void job_errors(int fd, short args, void *cbdata)
     switch (jobstate) {
     case ORTE_JOB_STATE_FAILED_TO_START:
         failed_start(jdata);
-        break;
-    case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
-        /* update all procs in job */
-        update_local_children(jdata, jobstate, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED);
-        /* order all local procs for this job to be killed */
-        killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
         break;
     case ORTE_JOB_STATE_COMM_FAILED:
         /* kill all local procs */
@@ -341,15 +332,6 @@ static void proc_errors(int fd, short args, void *cbdata)
                          orte_proc_state_to_str(state),
                          ORTE_NAME_PRINT(proc)));
  
-    if (ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED == state) {
-        child->state = state;
-        /* Decrement the number of local procs */
-        jdata->num_local_procs--;
-        /* kill this proc */
-        killprocs(proc->jobid, proc->vpid);
-        goto cleanup;
-    }
-
     if (ORTE_PROC_STATE_TERM_NON_ZERO == state) {
         if (!orte_abort_non_zero_exit) {
             /* leave the child in orte_local_children so we can
@@ -791,35 +773,11 @@ static void failed_start(orte_job_t *jobdat)
     return;
 }
 
-static void update_local_children(orte_job_t *jobdat, orte_job_state_t jobstate, orte_proc_state_t state)
-{
-    int i;
-    orte_proc_t *child;
-
-    /* update job state */
-    jobdat->state = jobstate;
-    /* update children */
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-        /* is this child part of the specified job? */
-        if (jobdat->jobid == child->name.jobid) {
-            child->state = state;
-        }
-    }
-}
-
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
 {
     opal_pointer_array_t cmd;
     orte_proc_t proc;
     int rc;
-
-    /* stop local sensors for this job */
-    if (ORTE_VPID_WILDCARD == vpid) {
-        orte_sensor.stop(job);
-    }
 
     if (ORTE_JOBID_WILDCARD == job 
         && ORTE_VPID_WILDCARD == vpid) {

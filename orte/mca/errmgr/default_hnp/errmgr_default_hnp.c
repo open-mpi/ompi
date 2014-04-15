@@ -40,7 +40,6 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
-#include "orte/mca/sensor/sensor.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/ess/ess.h"
@@ -474,24 +473,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         default_hnp_abort(jdata);
         break;
 
-    case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
-                             "%s errmgr:hnp: proc %s exceeded sensor boundary",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(proc)));
-        if (!jdata->abort) {
-            jdata->state = ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED;
-            /* point to the lowest rank to cause the problem */
-            jdata->aborted_proc = pptr;
-            /* retain the object so it doesn't get free'd */
-            OBJ_RETAIN(pptr);
-            jdata->abort = true;
-            ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
-        }
-        /* abnormal termination - abort */
-        default_hnp_abort(jdata);
-        break;
-
     case ORTE_PROC_STATE_TERM_NON_ZERO:
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:hnp: proc %s exited with non-zero status %d",
@@ -613,9 +594,6 @@ static void default_hnp_abort(orte_job_t *jdata)
                          "%s errmgr:default_hnp: abort called on job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
-    
-    /* the job aborted - turn off any sensors on this job */
-    orte_sensor.stop(jdata->jobid);
     
     /* set control params to indicate we are terminating */
     orte_job_term_ordered = true;

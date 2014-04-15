@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,8 +64,6 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/odls/base/base.h"
-#include "orte/mca/sensor/base/base.h"
-#include "orte/mca/sensor/sensor.h"
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
@@ -711,20 +709,6 @@ static int rte_init(void)
         goto error;
     }
     
-    /* setup the SENSOR framework */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sensor_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sensor_select";
-        goto error;
-    }
-    /* start the local sensors */
-    orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
-    
     /* setup the dfs framework */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -798,10 +782,6 @@ static int rte_finalize(void)
         }
         signals_set = false;
     }
-
-    /* stop the local sensors */
-    orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
-    (void) mca_base_framework_close(&orte_sensor_base_framework);
 
     /* close the dfs */
     (void) mca_base_framework_close(&orte_dfs_base_framework);

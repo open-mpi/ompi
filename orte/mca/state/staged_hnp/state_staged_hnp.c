@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +28,6 @@
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/sensor/sensor.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_quit.h"
