@@ -86,7 +86,7 @@ mca_btl_smcuda_t mca_btl_smcuda = {
         .btl_send = mca_btl_smcuda_send,
         .btl_sendi = mca_btl_smcuda_sendi,
         .btl_dump = mca_btl_smcuda_dump,
-        .btl_register_error_cb = mca_btl_smcuda_register_error_cb,
+        .btl_register_error = mca_btl_smcuda_register_error_cb,
         .btl_ft_event = mca_btl_smcuda_ft_event
     }
 };
