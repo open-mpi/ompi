@@ -38,35 +38,6 @@
 /* MPI_Fint is the same as ompi_fortran_INTEGER_t */
 #define MPI_Fint ompi_fortran_integer_t
 
-#if defined(__WINDOWS__)
-
-#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
-#    if defined(OMPI_EXPORTS)
-#      define OMPI_DECLSPEC        __declspec(dllexport)
-#      define OMPI_MODULE_DECLSPEC
-#    else
-#      if defined(OMPI_IMPORTS)
-#        define OMPI_DECLSPEC      __declspec(dllimport)
-#      else
-#        define OMPI_DECLSPEC
-#      endif  /*defined(OMPI_IMPORTS)*/
-#      if defined(OMPI_MODULE_EXPORTS)
-#        define OMPI_MODULE_DECLSPEC __declspec(dllexport)
-#      else
-#        define OMPI_MODULE_DECLSPEC __declspec(dllimport)
-#      endif  /* defined(OMPI_MODULE_EXPORTS) */
-#    endif  /* defined(OMPI_EXPORTS) */
-#  else          /* building static library */
-#    if defined(OMPI_IMPORTS)
-#      define OMPI_DECLSPEC        __declspec(dllimport)
-#    else
-#      define OMPI_DECLSPEC
-#    endif  /* defined(OMPI_IMPORTS) */
-#    define OMPI_MODULE_DECLSPEC
-#  endif  /* defined(_USRDLL) */
-
-#else
-
 #  if OPAL_C_HAVE_VISIBILITY
 #    ifndef OMPI_DECLSPEC
 #      define OMPI_DECLSPEC            __opal_attribute_visibility__("default")
@@ -82,7 +53,6 @@
 #      define OMPI_MODULE_DECLSPEC
 #    endif
 #  endif
-#endif  /* defined(__WINDOWS__) */
 
 /* Convenience */
 #if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS || OMPI_BUILD_FORTRAN_USEMPI_BINDINGS || OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS

@@ -20,8 +20,8 @@
 
 # Note - headers and nodist_headers will go in ${includedir}/openmpi,
 # not ${includedir}/
-headers = 
-nodist_headers = ompi_config.h
+headers = ompi_config.h
+nodist_headers =
 
 # Install these in $(includedir)
 include_HEADERS = 
