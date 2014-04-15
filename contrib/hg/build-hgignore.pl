@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
 #
 # Dumb script to run through all the svn:ignore's in the tree and build
 # build a .hgignore file for Mercurial.  Do a few trivial things to
@@ -140,7 +141,7 @@ sub process {
     # Now find subdirectories in this directory
     my @entries;
     opendir(DIR, $dir) || die "Cannot open directory \"$dir\" for reading: $!";
-    @entries = readdir(DIR);
+    @entries = sort(readdir(DIR));
     closedir DIR;
 
     foreach my $e (@entries) {
