@@ -52,7 +52,6 @@
 #pragma weak shmem_float_get = pshmem_float_get
 #pragma weak shmem_double_get = pshmem_double_get
 #pragma weak shmem_longdouble_get = pshmem_longdouble_get
-#include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 SHMEM_TYPE_GET(_char, char)
@@ -90,6 +89,7 @@ SHMEM_TYPE_GET(_longdouble, long double)
 #pragma weak shmem_get32 = pshmem_get32
 #pragma weak shmem_get64 = pshmem_get64
 #pragma weak shmem_get128 = pshmem_get128
+#include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 SHMEM_TYPE_GETMEM(_getmem, 1)
