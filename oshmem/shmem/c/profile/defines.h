@@ -49,6 +49,7 @@
 /* 
  * Elemental put routines 
  */
+#define shmem_char_p               pshmem_char_p
 #define shmem_short_p               pshmem_short_p
 #define shmem_int_p                 pshmem_int_p
 #define shmem_long_p                pshmem_long_p
@@ -90,6 +91,7 @@
 /* 
  * Elemental get routines 
  */
+#define shmem_char_g               pshmem_char_g
 #define shmem_short_g               pshmem_short_g
 #define shmem_int_g                 pshmem_int_g
 #define shmem_long_g                pshmem_long_g

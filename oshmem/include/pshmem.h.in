@@ -84,6 +84,7 @@ OSHMEM_DECLSPEC  void *pshmem_ptr(void *ptr, int pe);
 /*
  * Elemental put routines
  */
+OSHMEM_DECLSPEC  void pshmem_char_p(char* addr, char value, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_p(short* addr, short value, int pe);
 OSHMEM_DECLSPEC  void pshmem_int_p(int* addr, int value, int pe);
 OSHMEM_DECLSPEC  void pshmem_long_p(long* addr, long value, int pe);
@@ -125,6 +126,7 @@ OSHMEM_DECLSPEC void pshmem_iput128(void* target, const void* source, ptrdiff_t 
 /*
  * Elemental get routines
  */
+OSHMEM_DECLSPEC  char pshmem_char_g(char* addr, int pe);
 OSHMEM_DECLSPEC  short pshmem_short_g(short* addr, int pe);
 OSHMEM_DECLSPEC  int pshmem_int_g(int* addr, int pe);
 OSHMEM_DECLSPEC  long pshmem_long_g(long* addr, int pe);

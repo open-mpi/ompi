@@ -45,6 +45,7 @@
     }
 
 #if OSHMEM_PROFILING
+#pragma weak shmem_char_p = pshmem_char_p
 #pragma weak shmem_short_p = pshmem_short_p
 #pragma weak shmem_int_p = pshmem_int_p
 #pragma weak shmem_long_p = pshmem_long_p
@@ -55,6 +56,7 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+SHMEM_TYPE_P(_char, char)
 SHMEM_TYPE_P(_short, short)
 SHMEM_TYPE_P(_int, int)
 SHMEM_TYPE_P(_long, long)
