@@ -106,9 +106,7 @@ static int mca_coll_ml_build_allgather_schedule(mca_coll_ml_topology_t *topo_inf
     if (NULL != scratch_num) {
         free(scratch_num);
     }
-    if (NULL != schedule->component_functions) {
-        free(schedule->component_functions);
-    }
+
     return ret;
 }
 
