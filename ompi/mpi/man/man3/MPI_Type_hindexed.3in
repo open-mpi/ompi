@@ -1,6 +1,8 @@
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" -*- nroff -*-
+.\" Copyright 2010-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" $COPYRIGHT$
 .TH MPI_Type_hindexed 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
 \fBMPI_Type_hindexed\fP \- Creates an indexed datatype with offsets in bytes -- use of this routine is deprecated.
@@ -37,7 +39,9 @@ array_of_blocklengths
 Number of elements in each block (array of nonnegative integers).
 .TP 1i
 array_of_displacements 
-Byte displacement of each block (array of integer).
+Byte displacement of each block (C: array of 
+.IR MPI_Aint ,
+Fortran: array of integer).
 .TP 1i
 oldtype      
 Old datatype (handle).
