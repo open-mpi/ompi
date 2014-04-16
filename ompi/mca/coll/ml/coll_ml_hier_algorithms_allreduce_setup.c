@@ -65,15 +65,14 @@ static int mca_coll_ml_build_allreduce_schedule(
     }
 
     *coll_desc = (mca_coll_ml_collective_operation_description_t *)
-        malloc(sizeof(mca_coll_ml_collective_operation_description_t));
+        calloc(1, sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
         ML_ERROR(("Can't allocate memory."));
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto Allreduce_Setup_Error;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    scratch_indx = (int *) malloc(sizeof(int) * (n_hiers * 2));
+    scratch_indx = (int *) calloc(n_hiers * 2, sizeof (int));
     if (NULL == scratch_indx) {
         ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -93,7 +92,6 @@ static int mca_coll_ml_build_allreduce_schedule(
         if (IS_BCOL_TYPE_IDENTICAL(prev_bcol, GET_BCOL(topo_info, i))) {
             scratch_indx[cnt] = scratch_indx[cnt - 1] + 1;
         } else {
-            scratch_indx[cnt] = 0;
             prev_bcol = GET_BCOL(topo_info, i);
         }
     }
@@ -103,7 +101,6 @@ static int mca_coll_ml_build_allreduce_schedule(
         if (IS_BCOL_TYPE_IDENTICAL(prev_bcol, GET_BCOL(topo_info, n_hiers - 1))) {
             scratch_indx[cnt] = scratch_indx[cnt - 1] + 1;
         } else {
-            scratch_indx[cnt] = 0;
             prev_bcol = GET_BCOL(topo_info, n_hiers - 1);
         }
 
@@ -115,7 +112,6 @@ static int mca_coll_ml_build_allreduce_schedule(
         if (IS_BCOL_TYPE_IDENTICAL(prev_bcol, GET_BCOL(topo_info, i))) {
             scratch_indx[cnt] = scratch_indx[cnt - 1] + 1;
         } else {
-            scratch_indx[cnt] = 0;
             prev_bcol = GET_BCOL(topo_info, i);
         }
     }
@@ -282,6 +278,8 @@ Allreduce_Setup_Error:
     if (NULL != schedule->component_functions) {
         free(schedule->component_functions);
     }
+    *coll_desc = NULL;
+    free (schedule);
 
     return ret;
 }

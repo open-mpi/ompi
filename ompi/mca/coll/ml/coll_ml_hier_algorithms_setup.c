@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,7 +79,7 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
 
     /* allocate space for the functions */
     collective_alg->functions = (mca_bcol_base_function_t *)
-        malloc(sizeof(mca_bcol_base_function_t) * collective_alg->n_functions);
+        calloc(collective_alg->n_functions, sizeof(mca_bcol_base_function_t));
     if( NULL == collective_alg->functions) {
         ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -98,7 +101,7 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
     /* Figure out how many of the same bcols are called in a row.
      * The index of the bcol in row we store in scratch_indx and
      * the total number of bcols in the row we store in scratch_num */
-    scratch_indx = (int *) malloc(sizeof(int) * (2 * num_hierarchies));
+    scratch_indx = (int *) calloc (2 * num_hierarchies, sizeof (int));
     if(NULL == scratch_indx) {
         ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -373,7 +376,7 @@ int ml_coll_barrier_constant_group_data_setup(
     /* Figure out how many of the same bcols are called in a row.
      * The index of the bcol in row we store in scratch_indx and
      * the total number of bcols in the row we store in scratch_num */
-    scratch_indx = (int *) malloc(sizeof(int) * (2 * num_hierarchies));
+    scratch_indx = (int *) calloc (2 * num_hierarchies, sizeof (int));
     if(NULL == scratch_indx) {
         ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -497,6 +500,10 @@ int ml_coll_barrier_constant_group_data_setup(
                                  schedule->component_functions;
         mca_bcol_base_module_t *current_bcol =
                                  component_functions[i].constant_group_data.bcol_module;
+
+        /* silence clang warning about possible NULL dereference of component_functions.
+         * this case is a developer error if it occurs */
+        assert (NULL != component_functions && NULL != constant_group_data);
 
         cnt = 0;
         for (j = 0; j < n_functions; ++j) {

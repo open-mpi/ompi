@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -43,6 +43,7 @@ typedef struct coll_config_t {
 
 static int algorithm_name_to_id(char *name)
 {
+    assert (NULL != name);
     if (!strcasecmp(name,"ML_BCAST_SMALL_DATA_KNOWN"))
         return ML_BCAST_SMALL_DATA_KNOWN;
     if (!strcasecmp(name,"ML_BCAST_SMALL_DATA_UNKNOWN"))
@@ -110,6 +111,7 @@ static int algorithm_name_to_id(char *name)
 
 static int hierarchy_name_to_id(char *name)
 {
+    assert (NULL != name);
     if (!strcasecmp(name, "FULL_HR")) {
         return COLL_ML_HR_FULL;
     }
@@ -128,6 +130,7 @@ static int hierarchy_name_to_id(char *name)
 
 static int section_name_to_id(char *name)
 {
+    assert (NULL != name);
     if (!strcasecmp(name, "SMALL")) {
         return ML_SMALL_MSG;
     }
@@ -141,6 +144,7 @@ static int section_name_to_id(char *name)
 
 static int coll_name_to_id(char *name)
 {
+    assert (NULL != name);
     if (!strcasecmp(name, "ALLGATHER")) {
         return ML_ALLGATHER;
     }
@@ -339,6 +343,8 @@ static int parse_algorithm_key(section_config_t *section, char *value)
 
 static int parse_threshold_key(section_config_t *section, char *value)
 {
+    assert (NULL != value);
+
     if(!strcasecmp(value, "unlimited")) {
         section->config.threshold = -1;
     } else {
@@ -364,6 +370,8 @@ static int parse_hierarchy_key(section_config_t *section, char *value)
 
 static int parse_fragmentation_key(section_config_t *section, char *value)
 {
+    assert (NULL != value);
+
     if(!strcasecmp(value, "enable")) {
         section->config.fragmentation_enabled = 1;
     } else if (!strcasecmp(value, "disable")) {

@@ -251,6 +251,9 @@ int mca_coll_ml_register_params(void)
                                            "Algorithm to use for broadcast", MCA_BASE_VAR_TYPE_INT,
                                            new_enum, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_ml_component.bcast_algorithm);
+    if (0 > tmp) {
+        ret = tmp;
+    }
 
     CHECK(reg_bool("disable_allgather", NULL, "Disable Allgather", false,
                    &mca_coll_ml_component.disable_allgather));

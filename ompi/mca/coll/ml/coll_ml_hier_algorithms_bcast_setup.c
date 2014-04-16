@@ -145,15 +145,14 @@ static int mca_coll_ml_build_bcast_dynamic_schedule_no_attributes(
                            *bcol_module;
 
     *coll_desc = (mca_coll_ml_collective_operation_description_t *)
-        malloc(sizeof(mca_coll_ml_collective_operation_description_t));
+        calloc(1, sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
         ML_ERROR(("Can't allocate memory."));
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto Bcast_Setup_Error;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
+    scratch_indx = (int *) calloc(n_hiers, sizeof (int));
     if (NULL == scratch_indx) {
         ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -315,15 +314,14 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
                            *bcol_module;
 
     *coll_desc = (mca_coll_ml_collective_operation_description_t *)
-        malloc(sizeof(mca_coll_ml_collective_operation_description_t));
+        calloc(1, sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
         ML_ERROR(("Can't allocate memory."));
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto Bcast_Setup_Error;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
+    scratch_indx = (int *) calloc(n_hiers, sizeof (int));
     if (NULL == scratch_indx) {
         ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -520,6 +518,8 @@ Bcast_Setup_Error:
     if (NULL != schedule->comp_fn_arr) {
         free(schedule->comp_fn_arr);
     }
+    free (schedule);
+    *coll_desc = NULL;
 
     return ret;
 }
@@ -569,15 +569,14 @@ static int mca_coll_ml_build_bcast_known_schedule_no_attributes(
                            *bcol_module;
 
     *coll_desc = (mca_coll_ml_collective_operation_description_t *)
-        malloc(sizeof(mca_coll_ml_collective_operation_description_t));
+        calloc(1, sizeof(mca_coll_ml_collective_operation_description_t));
     schedule = *coll_desc;
     if (NULL == schedule) {
         ML_ERROR(("Can't allocate memory."));
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto Bcast_Setup_Error;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
+    scratch_indx = (int *) calloc(n_hiers, sizeof (int));
     if (NULL == scratch_indx) {
         ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -598,7 +597,6 @@ static int mca_coll_ml_build_bcast_known_schedule_no_attributes(
         if (IS_BCOL_TYPE_IDENTICAL(prev_bcol, GET_BCOL(topo_info, i_hier))) {
             scratch_indx[i_hier] = scratch_indx[i_hier - 1] + 1;
         } else {
-            scratch_indx[i_hier] = 0;
             prev_bcol = GET_BCOL(topo_info, i_hier);
         }
     }
@@ -725,6 +723,8 @@ Bcast_Setup_Error:
     if (NULL != schedule->component_functions) {
         free(schedule->component_functions);
     }
+    free (schedule);
+    *coll_desc = NULL;
 
     return ret;
 }
@@ -813,6 +813,8 @@ void ml_coll_hier_bcast_cleanup(mca_coll_ml_module_t *ml_module)
     int topo_index = 0;
     mca_coll_ml_topology_t *topo_info = ml_module->topo_list;
 
+    assert (NULL != ml_module);
+
     for (i = 0; i < ML_NUM_MSG; i++) {
 
         switch (i) {
@@ -832,30 +834,18 @@ void ml_coll_hier_bcast_cleanup(mca_coll_ml_module_t *ml_module)
             return;
         }
 
-        if (NULL == ml_module->coll_ml_bcast_functions[alg]) {
-            continue;
-        }
-
-        switch (alg) {
-            case ML_BCAST_SMALL_DATA_KNOWN:
-            case ML_BCAST_LARGE_DATA_KNOWN:
-            case ML_BCAST_SMALL_DATA_UNKNOWN:
-            case ML_BCAST_LARGE_DATA_UNKNOWN:
-            case ML_BCAST_SMALL_DATA_SEQUENTIAL:
-            case ML_BCAST_LARGE_DATA_SEQUENTIAL:
+        if (NULL != ml_module->coll_ml_bcast_functions[alg]) {
+            if (ML_BCAST_SMALL_DATA_KNOWN <= alg && ML_BCAST_LARGE_DATA_SEQUENTIAL >= alg) {
                 if (ml_module->coll_ml_bcast_functions[alg]->component_functions) {
                     free(ml_module->coll_ml_bcast_functions[alg]->component_functions);
                     ml_module->coll_ml_bcast_functions[alg]->component_functions = NULL;
                 }
 
-                if (ml_module->coll_ml_bcast_functions[alg]) {
-                    free(ml_module->coll_ml_bcast_functions[alg]);
-                    ml_module->coll_ml_bcast_functions[alg] = NULL;
-                }
-                break;
-            default:
+                free(ml_module->coll_ml_bcast_functions[alg]);
+                ml_module->coll_ml_bcast_functions[alg] = NULL;
+            } else {
                 topo_info->hierarchical_algorithms[ML_BCAST] = NULL;
-                return;
+            }
         }
     }
 }

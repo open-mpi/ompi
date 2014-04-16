@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +71,8 @@ int mca_coll_ml_check_if_bcol_is_used(const char *bcol_name, const mca_coll_ml_m
     if (OPAL_UNLIKELY(NULL == ranks_in_comm)) {
         ML_ERROR(("Memory allocation failed."));
         ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_NO_MEM, true);
+        /* not reached but causes a clang warning to not return here */
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for (i = 0; i < comm_size; ++i) {
@@ -114,12 +119,9 @@ int mca_coll_ml_check_if_bcol_is_used(const char *bcol_name, const mca_coll_ml_m
 int mca_coll_ml_check_if_bcol_is_requested(const char *component_name)
 {
     mca_base_component_list_item_t *bcol_comp;
-    bcol_comp = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
 
     ML_VERBOSE(10, ("Loop over bcol components"));
-    for ( bcol_comp  = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
-          bcol_comp != (mca_base_component_list_item_t *) opal_list_get_end(&mca_bcol_base_components_in_use);
-          bcol_comp  = (mca_base_component_list_item_t *) opal_list_get_next(bcol_comp)) {
+    OPAL_LIST_FOREACH(bcol_comp, &mca_bcol_base_components_in_use, mca_base_component_list_item_t) {
         if(0 == strcmp(component_name,
                     ((mca_bcol_base_component_2_0_0_t *)
                      bcol_comp->cli_component)->bcol_version.mca_component_name)) {

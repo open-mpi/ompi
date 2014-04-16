@@ -143,8 +143,6 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
 
     ML_VERBOSE(4, ("ML module destruct"));
 
-    ml_coll_hier_reduce_cleanup(module);
-
     for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
         topo = &module->topo_list[index_topo];
         if (COLL_ML_TOPO_DISABLED == topo->status) {
@@ -230,6 +228,7 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
     ml_coll_hier_allreduce_cleanup_new(module);
     ml_coll_hier_allgather_cleanup(module);
     ml_coll_hier_bcast_cleanup(module);
+    ml_coll_hier_reduce_cleanup(module);
 
     /* release saved collectives */
     ML_RELEASE_FALLBACK(module, allreduce);
@@ -629,7 +628,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
     return ret;
 }
 
-static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ranks_in_all_subgroups, int my_rank_in_list)
+static int ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ranks_in_all_subgroups, int my_rank_in_list)
 {
     int *list_n_connected;
     int group_size, rank, i, j, knt, offset, k, my_sbgp = 0;
@@ -642,6 +641,10 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
     hierarchy_pairs *pair = NULL;
     mca_coll_ml_leader_offset_info_t *loc_leader = (mca_coll_ml_leader_offset_info_t *)
         malloc(sizeof(mca_coll_ml_leader_offset_info_t)*(n_hier+1));
+
+    if (NULL == loc_leader) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* first thing I want to know is where does the first level end */
     level_one_knt = 0;
@@ -692,7 +695,11 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
         /* malloc some memory for the new list to cache
            on the bcol module
         */
-        list_n_connected = (int *) malloc(sizeof(int)*group_size);
+        list_n_connected = (int *) calloc(group_size, sizeof (int));
+        if (NULL == list_n_connected) {
+            free (loc_leader);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         /* next thing to do is to find out which subgroup I'm in
          * at this particular level
@@ -803,6 +810,8 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
 
     /* what other goodies do I want to cache on the ml-module? */
     topo->hier_layout_info = loc_leader;
+
+    return OMPI_SUCCESS;
 }
 
 static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
@@ -857,7 +866,6 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
     }
 
     if( my_rank == root ) {
-        sum=0;
         for(i=0 ; i < (*num_total_subgroups) ; i++ ) {
             scratch_space[4*i]=(*array_of_all_subgroup_ranks)[i].root_rank_in_comm;
             scratch_space[4*i+1]=(*array_of_all_subgroup_ranks)[i].n_ranks;
@@ -899,7 +907,7 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
     for(i=0 ; i < (*num_total_subgroups) ; i++ ) {
         sum+=(*array_of_all_subgroup_ranks)[i].n_ranks;
     }
-    if( in_num_total_subgroups != (*num_total_subgroups) ) {
+    if( in_num_total_subgroups != (*num_total_subgroups) && sum > 0 ) {
         (*list_of_ranks_in_all_subgroups)=(int *)
             realloc((*list_of_ranks_in_all_subgroups),sizeof(int)*sum);
         if (OPAL_UNLIKELY(NULL == (*list_of_ranks_in_all_subgroups))) {
@@ -1040,11 +1048,16 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
             PROVIDE_SUFFICIENT_MEMORY((*sub_group_meta_data), dummy1,
                                       (*size_of_sub_group_meta_data),
                                       sub_group_params_t, (*num_total_subgroups), 1, 5);
+            if (OPAL_UNLIKELY(NULL == (*sub_group_meta_data))) {
+                ML_VERBOSE(10, ("Cannot allocate memory for sub_group_meta_data."));
+                rc = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit_ERROR;
+            }
             /* do this for the temporary memory slots */
             PROVIDE_SUFFICIENT_MEMORY(temp, dummy2,
                                       knt1, int32_t *, knt2, 1, 5);
-            if (OPAL_UNLIKELY(NULL == (*sub_group_meta_data))) {
-                ML_VERBOSE(10, ("Cannot allocate memory for sub_group_meta_data."));
+            if (OPAL_UNLIKELY(NULL == temp)) {
+                ML_VERBOSE(10, ("Cannot allocate memory for temporary storage"));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit_ERROR;
             }
@@ -1053,7 +1066,7 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
 
             /* no need for this here - use a temporary ptr */
             temp[knt2]=
-                (int *)malloc(sizeof(int)*size_of_all_selected);
+                (int *)calloc(size_of_all_selected, sizeof(int));
             if (OPAL_UNLIKELY(NULL == temp[knt2] ) ){
                 ML_VERBOSE(10, ("Cannot allocate memory for sub_group_meta_data."));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1102,12 +1115,12 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
     }
 
     /* clean up temporary storage */
-    if(NULL != temp) {
+ exit_ERROR:
+    if (NULL != temp) {
         free(temp);
     }
 
     /* return */
- exit_ERROR:
     return rc;
 }
 
@@ -1716,6 +1729,9 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         /* number of processes selected with this sbgp on all ranks */
         int global_n_procs_selected;
 
+        /* silence clang warnings */
+        assert (NULL != bcol_cli && NULL != sbgp_cli);
+
         /*
         ** obtain the list of  ranks in the current level
         */
@@ -1985,6 +2001,8 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
              * set largest power of 2 for this group
              */
             module->n_levels_pow2 = ml_fls(module->group_size);
+            /* silence a clang warning */
+            assert (module->n_levels_pow2 > 0 && module->n_levels_pow2 < 32);
             module->pow_2 = 1 << module->n_levels_pow2;
 
             n_hier++;
@@ -2113,7 +2131,11 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     topo->number_of_all_subgroups = num_total_subgroups;
     topo->array_of_all_subgroups = array_of_all_subgroup_ranks;
 
-    ml_init_k_nomial_trees(topo, list_of_ranks_in_all_subgroups, ompi_comm_rank(ml_module->comm));
+    ret = ml_init_k_nomial_trees(topo, list_of_ranks_in_all_subgroups, ompi_comm_rank(ml_module->comm));
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        goto exit_ERROR;
+    }
+
     /* Set the route table if know-root type of algorithms is used */
     if (COLL_ML_STATIC_BCAST == mca_coll_ml_component.bcast_algorithm) {
         ret = mca_coll_ml_fill_in_route_tab(topo, ml_module->comm);
@@ -2203,15 +2225,12 @@ int mca_coll_ml_allreduce_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     sbgp_cli = (sbgp_base_component_keyval_t *)
         opal_list_get_first(&mca_sbgp_base_components_in_use);
 
-    for (bcol_cli = (mca_base_component_list_item_t *)
-             opal_list_get_first(&mca_bcol_base_components_in_use);
-         (opal_list_item_t *) bcol_cli !=
-             opal_list_get_end(&mca_bcol_base_components_in_use);
-         bcol_cli = (mca_base_component_list_item_t *)
-             opal_list_get_next((opal_list_item_t *) bcol_cli),
-             sbgp_cli = (sbgp_base_component_keyval_t *)
-             opal_list_get_next((opal_list_item_t *) sbgp_cli)) {
+    OPAL_LIST_FOREACH(bcol_cli, &mca_bcol_base_components_in_use, mca_base_component_list_item_t) {
         bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
+
+        /* silence false-positive clang warning */
+        assert (NULL != sbgp_cli);
+
         if (NULL != bcol_component->coll_support_all_types &&
             !bcol_component->coll_support_all_types(BCOL_ALLREDUCE)) {
             mca_base_component_list_item_t *bcol_cli_next;
@@ -2256,6 +2275,8 @@ int mca_coll_ml_allreduce_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                                                         &ml_module->topo_list[COLL_ML_HR_ALLREDUCE],
                                                         n_hierarchies, sbgp_component->sbgp_version.mca_component_name, NULL);
         }
+
+        sbgp_cli = (sbgp_base_component_keyval_t *) opal_list_get_next((opal_list_item_t *) sbgp_cli);
     }
 
     return OMPI_SUCCESS;

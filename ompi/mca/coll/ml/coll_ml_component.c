@@ -182,6 +182,10 @@ static int coll_ml_progress()
                     }
                 } else {
                     rc = seq_coll_op->sequential_routine.seq_task_setup(seq_coll_op);
+                    if (OMPI_SUCCESS != rc) {
+                        mca_coll_ml_abort_ml("Failed to run sequential task setup");
+                    }
+
                     seq_coll_op->sequential_routine.current_bcol_status = SEQ_TASK_PENDING;
                     continue;
                 }

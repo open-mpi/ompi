@@ -89,6 +89,7 @@ static int mca_coll_ml_build_barrier_schedule(
 
             if (NULL == comp_fn->bcol_function) {
                 ML_VERBOSE(10, ("no function available for BCOL_FANIN, NON_BLOCKING, DATA_SRC_KNOWN"));
+                rc = OMPI_ERR_NOT_AVAILABLE;
                 goto Barrier_Setup_Error;
             }
 
@@ -105,6 +106,7 @@ static int mca_coll_ml_build_barrier_schedule(
 
             if (NULL == comp_fn->bcol_function) {
                 ML_VERBOSE(10, ("no function available for BCOL_BARRIER, NON_BLOCKING, DATA_SRC_KNOWN"));
+                rc = OMPI_ERR_NOT_AVAILABLE;
                 goto Barrier_Setup_Error;
             }
 
@@ -125,6 +127,7 @@ static int mca_coll_ml_build_barrier_schedule(
 
             if (NULL == comp_fn->bcol_function) {
                 ML_VERBOSE(10, ("no function available for BCOL_FANOUT, NON_BLOCKING, DATA_SRC_KNOWN"));
+                rc = OMPI_ERR_NOT_AVAILABLE;
                 goto Barrier_Setup_Error;
             }
 

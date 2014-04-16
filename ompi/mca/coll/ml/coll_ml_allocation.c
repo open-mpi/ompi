@@ -88,6 +88,10 @@ int mca_coll_ml_initialize_block(mca_bcol_base_memory_block_desc_t *ml_memblock,
     uint64_t addr_offset = 0;
     mca_bcol_base_payload_buffer_desc_t *pbuff_descs = NULL,*pbuff_desc = NULL;
 
+    if (0 == num_banks || 0 == num_buffers || 0 == buffer_size) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     if (NULL == ml_memblock){
         ML_ERROR(("Memory block not initialized"));
         ret = OMPI_ERROR;
@@ -102,6 +106,9 @@ int mca_coll_ml_initialize_block(mca_bcol_base_memory_block_desc_t *ml_memblock,
 
     pbuff_descs = (mca_bcol_base_payload_buffer_desc_t*) malloc(sizeof(mca_bcol_base_payload_buffer_desc_t)
             * num_banks * num_buffers);
+    if (NULL == pbuff_descs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     for(bank_loop = 0; bank_loop < num_banks; bank_loop++)
         for(buff_loop = 0; buff_loop < num_buffers; buff_loop++){
