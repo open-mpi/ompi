@@ -192,3 +192,10 @@ not happen.  Please report this error to the Open MPI developers.
   cuEventSynchronize return value:      %d
 Check the cuda.h file for what the return value means.
 #
+[cuStreamSynchronize failed]
+The call to cuStreamSynchronize failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  Hostname:                             %s
+  cuStreamSynchronize return value:     %d
+Check the cuda.h file for what the return value means.
+#

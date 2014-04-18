@@ -96,6 +96,7 @@ struct cudaFunctionTable {
 #endif /* OPAL_CUDA_GDR_SUPPORT */
     int (*cuCtxSetCurrent)(CUcontext);
     int (*cuEventSynchronize)(CUevent);
+    int (*cuStreamSynchronize)(CUstream);
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
 cudaFunctionTable_t cuFunc;
@@ -113,7 +114,6 @@ static CUstream ipcStream;
 static CUstream dtohStream;
 static CUstream htodStream;
 static CUstream memcpyStream;
-static CUevent  memcpyEvent;
 
 /* Functions called by opal layer - plugged into opal function table */
 static int mca_common_cuda_is_gpu_buffer(const void*);
@@ -491,6 +491,7 @@ int mca_common_cuda_stage_one_init(void)
 #endif /* OPAL_CUDA_GDR_SUPPORT */
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxSetCurrent);
     OMPI_CUDA_DLSYM(libcuda_handle, cuEventSynchronize);
+    OMPI_CUDA_DLSYM(libcuda_handle, cuStreamSynchronize);
     return 0;
 }
 
@@ -730,13 +731,6 @@ static int mca_common_cuda_stage_three_init(void)
         res = cuFunc.cuStreamCreate(&memcpyStream, 0);
         if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
             opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
-                           true, ompi_process_info.nodename, res);
-            return OMPI_ERROR;
-        }
-        /* Create event for use in cuMemcpyAsync synchronous copies */
-        res = cuFunc.cuEventCreate(&memcpyEvent, 0);
-        if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) { 
-            opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                            true, ompi_process_info.nodename, res);
             return OMPI_ERROR;
         }
@@ -1652,15 +1646,9 @@ static int mca_common_cuda_cu_memcpy(void *dest, const void *src, size_t size)
                            true, dest, src, size, result);
             return OMPI_ERROR;
         }
-        result = cuFunc.cuEventRecord(memcpyEvent, memcpyStream);
+        result = cuFunc.cuStreamSynchronize(memcpyStream);
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-            opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
-                           true, ompi_process_info.nodename, result);
-            return 0;
-        }
-        result = cuFunc.cuEventSynchronize(memcpyEvent);
-        if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-            opal_show_help("help-mpi-common-cuda.txt", "cuEventSynchronize failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuStreamSynchronize failed",
                            true, ompi_process_info.nodename, result);
             return OMPI_ERROR;
         }
@@ -1707,15 +1695,9 @@ static int mca_common_cuda_memmove(void *dest, void *src, size_t size)
                            true, dest, tmp, size, result);
             return OMPI_ERROR;
         }
-        result = cuFunc.cuEventRecord(memcpyEvent, memcpyStream);
+        result = cuFunc.cuStreamSynchronize(memcpyStream);
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-            opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
-                           true, ompi_process_info.nodename, result);
-            return OMPI_ERROR;
-        }
-        result = cuFunc.cuEventSynchronize(memcpyEvent);
-        if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-            opal_show_help("help-mpi-common-cuda.txt", "cuEventSynchronize failed",
+            opal_show_help("help-mpi-common-cuda.txt", "cuStreamSynchronize failed",
                            true, ompi_process_info.nodename, result);
             return OMPI_ERROR;
         }
