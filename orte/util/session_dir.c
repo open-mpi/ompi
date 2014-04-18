@@ -483,6 +483,18 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
         return ORTE_SUCCESS;
     }
     
+    if (NULL == orte_process_info.tmpdir_base &&
+        NULL == orte_process_info.top_session_dir) {
+        /* this should never happen - it means we are calling
+         * cleanup *before* properly setting up the session
+         * dir system. This leaves open the possibility of
+         * accidentally removing directories we shouldn't
+         * touch
+         */
+        rc = ORTE_ERR_NOT_INITIALIZED;
+        goto CLEANUP;
+    }
+
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
                        orte_process_info.tmpdir_base,
@@ -561,6 +573,18 @@ orte_session_dir_finalize(orte_process_name_t *proc)
         return ORTE_SUCCESS;
     }
     
+    if (NULL == orte_process_info.tmpdir_base &&
+        NULL == orte_process_info.top_session_dir) {
+        /* this should never happen - it means we are calling
+         * cleanup *before* properly setting up the session
+         * dir system. This leaves open the possibility of
+         * accidentally removing directories we shouldn't
+         * touch
+         */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_INITIALIZED);
+        return ORTE_ERR_NOT_INITIALIZED;
+    }
+
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
                        orte_process_info.tmpdir_base,
