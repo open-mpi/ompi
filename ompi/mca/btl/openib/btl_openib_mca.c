@@ -537,12 +537,6 @@ int btl_openib_register_mca_params(void)
                   "(0 = no output, nonzero = output)", 0,
 		  &mca_btl_openib_component.memory_registration_verbose_level, 0));
 
-    /* Help see which devices are being used */
-    CHECK(reg_int("device_selection_verbose", NULL,
-                  "Output some verbose device selection information "
-                  "(0 = no output, nonzero = output)", 0,
-                  &mca_btl_openib_component.device_selection_verbose, REGINT_GE_ZERO));
-
     CHECK(reg_int("ignore_locality", NULL,
                   "Ignore any locality information and use all devices "
                   "(0 = use locality informaiton and use only close devices, nonzero = ignore locality information)", 0,

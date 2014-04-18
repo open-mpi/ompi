@@ -2556,11 +2556,10 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_max_btls); i++) {
         if (0 != mca_btl_openib_component.ib_num_btls &&
             distance != dev_sorted[i].distance) {
-            if (mca_btl_openib_component.device_selection_verbose) {
-                opal_output(0, "[rank=%d] openib: skipping device %s; it is too far away", 
-                            ORTE_PROC_MY_NAME->vpid,
-                            ibv_get_device_name(dev_sorted[i].ib_dev));
-            }
+            opal_output_verbose(1, ompi_btl_base_framework.framework_output, 
+                                "[rank=%d] openib: skipping device %s; it is too far away", 
+                                ORTE_PROC_MY_NAME->vpid,
+                                ibv_get_device_name(dev_sorted[i].ib_dev));
             break;
         }
 
@@ -2600,11 +2599,10 @@ btl_openib_component_init(int *num_btl_modules,
             free(dev_sorted);
             goto no_btls;
         } else {
-            if (mca_btl_openib_component.device_selection_verbose) {
-                opal_output(0, "[rank=%d] openib: using device %s", 
-                            ORTE_PROC_MY_NAME->vpid,
-                            ibv_get_device_name(dev_sorted[i].ib_dev));
-            }
+            opal_output_verbose(1, ompi_btl_base_framework.framework_output, 
+                                "[rank=%d] openib: using device %s", 
+                                ORTE_PROC_MY_NAME->vpid,
+                                ibv_get_device_name(dev_sorted[i].ib_dev));
         }
     }
     free(dev_sorted);
