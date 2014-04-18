@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +75,7 @@ static int parser_separated_columns(char **val_if_found, FILE *fp,
 static const orte_ras_alps_sysconfig_t sysconfigs[] = {
     {"/etc/sysconfig/alps", "ALPS_SHARED_DIR_PATH", parser_ini},
     {"/etc/alps.conf"     , "sharedDir"           , parser_separated_columns},
+    {"/etc/opt/cray/alps/alps.conf", "sharedDir"  , parser_separated_columns},
     /* must be last element */
     {NULL                 , NULL                  , NULL}
 };
