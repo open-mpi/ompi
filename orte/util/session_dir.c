@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -475,7 +476,7 @@ int
 orte_session_dir_cleanup(orte_jobid_t jobid)
 {
     int rc = ORTE_SUCCESS;
-    char *tmp;
+    char *tmp = NULL;
     char *job_session_dir=NULL;
 
     if (!orte_create_session_dirs) {
@@ -555,7 +556,7 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
     }
 
 CLEANUP:
-    free(tmp);
+    if (NULL != tmp) free(tmp);
     if (NULL != job_session_dir) free(job_session_dir);
     return rc;
 }
