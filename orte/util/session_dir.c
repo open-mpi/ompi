@@ -379,11 +379,11 @@ int orte_session_dir(bool create,
     /*
      * Get the session directory full name
      */
-    if( ORTE_SUCCESS != ( rc = orte_session_dir_get_name(&fulldirpath, 
+    if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(&fulldirpath, 
                                                          &local_prefix,
                                                          &frontend,
                                                          hostid, 
-                                                         batchid, proc) ) ) {
+                                                         batchid, proc))) {
         if (ORTE_ERR_FATAL == rc) {
             /* this indicates we should abort quietly */
             rc = ORTE_ERR_SILENT;
@@ -403,45 +403,17 @@ int orte_session_dir(bool create,
             goto cleanup;
         }
     }
-    /*
-     * if we are not creating, then just verify that the path is OK
-     */
-    else {
-        if( ORTE_SUCCESS != (rc = opal_os_dirpath_access(fulldirpath, 0) )) {
-            /* it is okay for the path not to be found - don't error
-             * log that case, but do error log others
-             */
-            if (ORTE_ERR_NOT_FOUND != rc) {
-                ORTE_ERROR_LOG(rc);
-            }
-            goto cleanup;
-        }
-    }
     
-    /*
-     * If we are creating the directory tree, then force overwrite of the
-     * global structure fields
-     */
-    if (create) {
-    	if (NULL != orte_process_info.tmpdir_base) {
-    	    free(orte_process_info.tmpdir_base);
-    	    orte_process_info.tmpdir_base = NULL;
-    	}
-    	if (NULL != orte_process_info.top_session_dir) {
-    	    free(orte_process_info.top_session_dir);
-    	    orte_process_info.top_session_dir = NULL;
-    	}
+    /* update global structure fields */
+    if (NULL != orte_process_info.tmpdir_base) {
+        free(orte_process_info.tmpdir_base);
     }
-    
-    /* 
-     * Update some of the global structures if they are empty
-     */
-    if (NULL == orte_process_info.tmpdir_base) {
-        orte_process_info.tmpdir_base = strdup(local_prefix);
+    orte_process_info.tmpdir_base = strdup(local_prefix);
+    if (NULL != orte_process_info.top_session_dir) {
+        free(orte_process_info.top_session_dir);
+        orte_process_info.top_session_dir = NULL;
     }
-    
-    if (NULL == orte_process_info.top_session_dir &&
-        NULL != frontend) {
+    if (NULL != frontend) {
         orte_process_info.top_session_dir = strdup(frontend);
     }
 
@@ -449,15 +421,10 @@ int orte_session_dir(bool create,
      * Set the process session directory
      */
     if (ORTE_VPID_INVALID != proc->vpid) {
-    	if (create) { /* overwrite if creating */
-    	    if (NULL != orte_process_info.proc_session_dir) {
-                free(orte_process_info.proc_session_dir);
-                orte_process_info.proc_session_dir = NULL;
-    	    }
+        if (NULL != orte_process_info.proc_session_dir) {
+            free(orte_process_info.proc_session_dir);
     	}
-    	if (NULL == orte_process_info.proc_session_dir) {
-    	    orte_process_info.proc_session_dir = strdup(fulldirpath);
-    	}
+        orte_process_info.proc_session_dir = strdup(fulldirpath);
         
         /* Strip off last part of directory structure */
         sav = opal_dirname(fulldirpath);
@@ -470,15 +437,10 @@ int orte_session_dir(bool create,
      * Set the job session directory
      */
     if (ORTE_JOBID_INVALID != proc->jobid) {
-    	if (create) { /* overwrite if creating */
-    	    if (NULL != orte_process_info.job_session_dir) {
-                free(orte_process_info.job_session_dir);
-                orte_process_info.job_session_dir = NULL;
-    	    }
-    	}
-    	if (NULL == orte_process_info.job_session_dir) {
-    	    orte_process_info.job_session_dir = strdup(fulldirpath);
-    	}
+        if (NULL != orte_process_info.job_session_dir) {
+            free(orte_process_info.job_session_dir);
+        }
+        orte_process_info.job_session_dir = strdup(fulldirpath);
     }
     
     if (orte_debug_flag) {
@@ -551,24 +513,32 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
 
     if (NULL != job_session_dir && opal_os_dirpath_is_empty(job_session_dir)) {
     	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: found job session dir empty - deleting");
+    	    opal_output(0, "sess_dir_cleanup: found job session dir empty - deleting");
     	}
     	rmdir(job_session_dir);
     } else {
     	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: job session dir not empty - leaving");
+            if (OPAL_ERR_NOT_FOUND == opal_os_dirpath_access(job_session_dir, 0)) {
+                opal_output(0, "sess_dir_cleanup: job session dir does not exist");
+            } else {
+                opal_output(0, "sess_dir_cleanup: job session dir not empty - leaving");
+            }
     	}
         goto CLEANUP;
     }
 
     if (opal_os_dirpath_is_empty(tmp)) {
     	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");
+    	    opal_output(0, "sess_dir_cleanup: found top session dir empty - deleting");
     	}
     	rmdir(tmp);
     } else {
     	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: top session dir not empty - leaving");
+            if (OPAL_ERR_NOT_FOUND == opal_os_dirpath_access(tmp, 0)) {
+                opal_output(0, "sess_dir_cleanup: top session dir does not exist");
+            } else {
+                opal_output(0, "sess_dir_cleanup: top session dir not empty - leaving");
+            }
     	}
     }
 
@@ -631,7 +601,11 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     	rmdir(proc_session_dir);
     } else {
     	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
+            if (OPAL_ERR_NOT_FOUND == opal_os_dirpath_access(proc_session_dir, 0)) {
+                opal_output(0, "sess_dir_finalize: proc session dir does not exist");
+            } else {
+                opal_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
+            }
     	}
         goto CLEANUP;
     }
@@ -643,7 +617,11 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     	rmdir(job_session_dir);
     } else {
     	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: job session dir not empty - leaving");
+            if (OPAL_ERR_NOT_FOUND == opal_os_dirpath_access(job_session_dir, 0)) {
+                opal_output(0, "sess_dir_finalize: job session dir does not exist");
+            } else {
+                opal_output(0, "sess_dir_finalize: job session dir not empty - leaving");
+            }
     	}
         goto CLEANUP;
     }
@@ -655,7 +633,11 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     	rmdir(tmp);
     } else {
     	if (orte_debug_flag) {
-    	    opal_output(0, "sess_dir_finalize: top session dir not empty - leaving");
+            if (OPAL_ERR_NOT_FOUND == opal_os_dirpath_access(tmp, 0)) {
+                opal_output(0, "sess_dir_finalize: top session dir does not exist");
+            } else {
+                opal_output(0, "sess_dir_finalize: top session dir not empty - leaving");
+            }
     	}
     }
 
