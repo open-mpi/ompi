@@ -124,7 +124,7 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
 }
 
 /*
- * if remote_group == OMPI_GROUP_NULL, then the new communicator
+ * if remote_group == &ompi_mpi_group_null, then the new communicator
  * is forced to be an inter communicator.
  */
 int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
@@ -169,7 +169,7 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
     
     /* Set remote group and duplicate the local comm, if applicable */
     if (0 < remote_size) {
-        if (NULL == remote_group || MPI_GROUP_NULL == remote_group) {
+        if (NULL == remote_group || &ompi_mpi_group_null.group == remote_group) {
             ret = ompi_group_incl(oldcomm->c_remote_group, remote_size, 
                                   remote_ranks, &newcomm->c_remote_group);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -181,7 +181,7 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
             ompi_group_increment_proc_count(newcomm->c_remote_group);
         }
     }
-    if (0 < remote_size || MPI_GROUP_NULL == remote_group) {
+    if (0 < remote_size || &ompi_mpi_group_null.group == remote_group) {
         newcomm->c_flags |= OMPI_COMM_INTER;
         if ( OMPI_COMM_IS_INTRA(oldcomm) ) {
             ompi_comm_idup(oldcomm, &newcomm->c_local_comm, req);
@@ -273,7 +273,9 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     int rc = OMPI_SUCCESS;
     
     /* silence clang warning. newcomm should never be NULL */
-    assert (NULL != newcomm);
+    if (OPAL_UNLIKELY(NULL == newcomm)) {
+        return OMPI_ERR_BAD_PARAM;
+    }
 
     lsize = group->grp_proc_count;
  
@@ -462,7 +464,10 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     }
 
     /* silence clang warning. my_size should never be 0 here */
-    assert (my_size > 0);
+    if (OPAL_UNLIKELY(0 == my_size)) {
+        rc = OMPI_ERR_BAD_PARAM;
+        goto exit;
+    }
 
     sorted = (int *) calloc (my_size * 2, sizeof (int));
     if ( NULL == sorted) {
@@ -498,7 +503,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     /* Step 2: determine all the information for the remote group */
     /* --------------------------------------------------------- */
     if ( inter ) {
-        remote_group = MPI_GROUP_NULL;
+        remote_group = &ompi_mpi_group_null.group;
         rsize    = comm->c_remote_group->grp_proc_count;
         rresults = (int *) malloc ( rsize * 2 * sizeof(int));
         if ( NULL == rresults ) {
@@ -527,7 +532,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
-        
+
             /* ok we can now fill this info */
             for( loc = 0, i = 0; i < rsize; i++ ) {
                 if ( rresults[(2*i)+0] == color) {
@@ -536,7 +541,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
                     loc++;
                 }
             }
-        
+
             /* the new array needs to be sorted so that it is in 'key' order */
             /* if two keys are equal then it is sorted in original rank order! */
             if (my_rsize > 1) {
@@ -697,7 +702,9 @@ ompi_comm_split_type(ompi_communicator_t *comm,
     ompi_comm_allgatherfct *allgatherfct=NULL;
 
     /* silence clang warning. newcomm should never be NULL */
-    assert (NULL != newcomm);
+    if (OPAL_UNLIKELY(NULL == newcomm)) {
+        return OMPI_ERR_BAD_PARAM;
+    }
 
     /* Step 1: determine all the information for the local group */
     /* --------------------------------------------------------- */
@@ -734,7 +741,10 @@ ompi_comm_split_type(ompi_communicator_t *comm,
     }
 
     /* silence a clang warning about a 0-byte malloc. my_size can not be 0 here */
-    assert (my_size > 0);
+    if (OPAL_UNLIKELY(0 == my_size)) {
+        rc = OMPI_ERR_BAD_PARAM;
+        goto exit;
+    }
 
     sorted = (int *) malloc ( sizeof( int ) * my_size * 2);
     if ( NULL == sorted) {
@@ -1335,7 +1345,9 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 
     /* silence clang warning about 0-byte malloc. neither of these values can
      * be 0 here */
-    assert (rsize > 0 && outcount > 0);
+    if (OPAL_UNLIKELY(0 == rsize || 0 == outcount)) {
+        return OMPI_ERR_BAD_PARAM;
+    }
 
     /* Step 1: the gather-step */
     if ( 0 == rank ) {
@@ -1701,7 +1713,9 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     rsize= ompi_comm_remote_size (intercomm);
 
     /* silence clang warnings. rsize can not be 0 here */
-    assert (rsize > 0);
+    if (OPAL_UNLIKELY(0 == rsize)) {
+        return OMPI_ERR_BAD_PARAM;
+    }
     
     rdisps  = (int *) calloc ( rsize, sizeof(int));
     if ( NULL == rdisps ){
