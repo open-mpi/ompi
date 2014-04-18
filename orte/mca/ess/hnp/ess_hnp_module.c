@@ -894,6 +894,8 @@ static void clean_abort(int fd, short flags, void *arg)
         opal_event_add(&term_handler, NULL);
         return;
     }
+    /* ensure we exit with a non-zero status */
+    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
 
     /* ensure that the forwarding of stdin stops */
     orte_job_term_ordered = true;
