@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,6 +63,7 @@ struct orterun_globals_t {
     bool disable_recovery;
     bool preload_binaries;
     bool index_argv;
+    bool run_as_root;
 };
 
 /**
