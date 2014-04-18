@@ -167,6 +167,16 @@ static int rte_init(void)
     /* flag that we are not routing since we have no HNP */
     orte_routing_is_enabled = false;
 
+    /* take a pass thru the session directory code to fillin the
+     * tmpdir names - don't create anything yet
+     */
+    if (ORTE_SUCCESS != (rc = orte_session_dir(false,
+                                               orte_process_info.tmpdir_base,
+                                               orte_process_info.nodename, NULL,
+                                               ORTE_PROC_MY_NAME))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     /* clear the session directory just in case there are
      * stale directories laying around
      */
