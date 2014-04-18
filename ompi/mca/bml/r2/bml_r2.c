@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -250,9 +251,22 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                     /* skip this btl if the exclusivity is less than the previous */
                     if(bml_btl->btl->btl_exclusivity > btl->btl_exclusivity) {
                         btl->btl_del_procs(btl, 1, &proc, &btl_endpoints[p]);
+                        opal_output_verbose(20, ompi_btl_base_framework.framework_output, 
+                                            "mca: bml: Not using %s btl to %s on node %s "
+                                            "because %s btl has higher exclusivity (%d > %d)",
+                                            btl->btl_component->btl_version.mca_component_name,
+                                            OMPI_NAME_PRINT(&proc->proc_name), proc->proc_hostname,
+                                            bml_btl->btl->btl_component->btl_version.mca_component_name,
+                                            bml_btl->btl->btl_exclusivity,
+                                            btl->btl_exclusivity);
                         continue;
                     }
                 }
+                opal_output_verbose(1, ompi_btl_base_framework.framework_output, 
+                                    "mca: bml: Using %s btl to %s on node %s",
+                                    btl->btl_component->btl_version.mca_component_name,
+                                    OMPI_NAME_PRINT(&proc->proc_name),
+                                    proc->proc_hostname);
 
                 /* cache the endpoint on the proc */
                 bml_btl = mca_bml_base_btl_array_insert(&bml_endpoint->btl_send);
