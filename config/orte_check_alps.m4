@@ -35,6 +35,10 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                     [AC_HELP_STRING([--with-alps-libdir=DIR],
                     [Location of alps libraries (alpslli, alpsutil) (default: /usr/lib/alps)])])
 
+	AC_ARG_WITH([wlm_detect],
+	            [AC_HELP_STRING([--with-wlm_detect(=DIR)],
+		    [Location of wlm_detect library needed by PMI on CLE 5 systems (default: /opt/cray/wlm_detect/default)])])
+
         # save the CPPFLAGS so we can check for alps/apInfo.h without adding $with_alps/include to the global path
         orte_check_alps_$1_save_CPPFLAGS="$CPPFLAGS"
 
@@ -46,6 +50,12 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
             using_cle5_install="no"
         else
             using_cle5_install="yes"
+	    if test -z "$with_wlm_detect" ; then
+		with_wlm_detect="/opt/cray/wlm_detect/default"
+	    fi
+
+	    # libpmi requires libugni for static linking on CLE 5. WTH!
+	    OMPI_CHECK_UGNI($1,[orte_check_alps_happy=yes],[orte_check_alps_happy=no])
         fi
 
         if test "$with_alps" = "no" -o -z "$with_alps" ; then
@@ -105,6 +115,12 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
 
     $1_CPPFLAGS="-I$orte_check_alps_dir/include"
     $1_LDFLAGS="-L$orte_check_alps_libdir"
+
+    # Add CLE 5 library dependencies
+    if test "using_cle5_install" = "yes" ; then
+	$1_LIBS="$$1_LIBS -lwlm_detect"
+	$1_LDFLAGS="$$1_LDFLAGS -L$with_wlm_detect"
+    fi
 
     AS_IF([test "$orte_check_alps_happy" = "yes"], 
           [$2], 
