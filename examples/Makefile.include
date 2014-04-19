@@ -48,5 +48,10 @@ EXTRA_DIST += \
         examples/ring_oshmem_c.c \
         examples/ring_oshmemfh.f90 \
         examples/connectivity_c.c \
-	examples/Hello.java \
-	examples/Ring.java
+        examples/oshmem_shmalloc.c \
+        examples/oshmem_circular_shift.c \
+        examples/oshmem_max_reduction.c \
+        examples/oshmem_strided_puts.c \
+        examples/oshmem_symmetric_data.c \
+        examples/Hello.java \
+        examples/Ring.java

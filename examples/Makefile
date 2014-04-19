@@ -61,7 +61,13 @@ EXAMPLES = \
 	 ring_oshmem \
 	 ring_oshmemfh \
 	 Ring.class \
-	 connectivity_c
+	 connectivity_c \
+	 oshmem_shmalloc \
+	 oshmem_circular_shift \
+	 oshmem_max_reduction \
+	 oshmem_strided_puts \
+	 oshmem_symmetric_data
+
 
 # Default target.  Always build the C MPI examples.  Only build the
 # others if we have the appropriate Open MPI / OpenSHMEM language
@@ -100,6 +106,11 @@ oshmem:
 	@ if oshmem_info --parsable | grep oshmem:bindings:c:yes >/dev/null; then \
 	    $(MAKE) hello_oshmem; \
 	    $(MAKE) ring_oshmem; \
+	    $(MAKE) oshmem_shmalloc; \
+	    $(MAKE) oshmem_circular_shift; \
+	    $(MAKE) oshmem_max_reduction; \
+	    $(MAKE) oshmem_strided_puts; \
+	    $(MAKE) oshmem_symmetric_data; \
 	fi
 	@ if oshmem_info --parsable | grep oshmem:bindings:fort:yes >/dev/null; then \
 	    $(MAKE) hello_oshmemfh; \
@@ -142,4 +153,19 @@ ring_oshmem: ring_oshmem_c.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
 ring_oshmemfh: ring_oshmemfh.f90
 	$(SHMEMFC) $(FCFLAGS) $? -o $@
+
+oshmem_shmalloc: oshmem_shmalloc.c
+	$(SHMEMFC) $(FCFLAGS) $? -o $@
+
+oshmem_circular_shift: oshmem_circular_shift.c
+	$(SHMEMCC) $(CFLAGS) $? -o $@
+
+oshmem_max_reduction: oshmem_max_reduction.c
+	$(SHMEMCC) $(CFLAGS) $? -o $@
+
+oshmem_strided_puts: oshmem_strided_puts.c
+	$(SHMEMCC) $(CFLAGS) $? -o $@
+
+oshmem_symmetric_data: oshmem_symmetric_data.c
+	$(SHMEMCC) $(CFLAGS) $? -o $@
 
