@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
@@ -10,7 +10,6 @@
 subroutine MPI_Comm_create_keyval_f08(comm_copy_attr_fn,comm_delete_attr_fn,&
                                       comm_keyval,extra_state,ierror)
    use, intrinsic :: iso_c_binding, only: c_funptr, c_funloc
-   use :: mpi_f08_interfaces_callbacks, only : MPI_User_function
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_copy_attr_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_delete_attr_function

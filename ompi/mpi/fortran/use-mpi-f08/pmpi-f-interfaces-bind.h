@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
@@ -1113,8 +1113,8 @@ subroutine pompi_comm_create_keyval_f(comm_copy_attr_fn,comm_delete_attr_fn, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: comm_copy_attr_fn
-   type(c_funptr) :: comm_delete_attr_fn
+   type(c_funptr), value :: comm_copy_attr_fn
+   type(c_funptr), value :: comm_delete_attr_fn
    INTEGER, INTENT(OUT) :: comm_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror
@@ -1354,8 +1354,8 @@ subroutine pompi_type_create_keyval_f(type_copy_attr_fn,type_delete_attr_fn, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: type_copy_attr_fn
-   type(c_funptr) :: type_delete_attr_fn
+   type(c_funptr), value :: type_copy_attr_fn
+   type(c_funptr), value :: type_delete_attr_fn
    INTEGER, INTENT(OUT) :: type_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror
@@ -1413,8 +1413,8 @@ subroutine pompi_win_create_keyval_f(win_copy_attr_fn,win_delete_attr_fn, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: win_copy_attr_fn
-   type(c_funptr) :: win_delete_attr_fn
+   type(c_funptr), value :: win_copy_attr_fn
+   type(c_funptr), value :: win_delete_attr_fn
    INTEGER, INTENT(OUT) :: win_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror
@@ -1645,7 +1645,7 @@ subroutine pompi_comm_create_errhandler_f(comm_errhandler_fn,errhandler,ierror) 
    BIND(C, name="pompi_comm_create_errhandler_f")
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: comm_errhandler_fn
+   type(c_funptr), value :: comm_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_comm_create_errhandler_f
@@ -1706,7 +1706,7 @@ subroutine pompi_file_create_errhandler_f(file_errhandler_fn,errhandler,ierror) 
    BIND(C, name="pompi_file_create_errhandler_f")
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: file_errhandler_fn
+   type(c_funptr), value :: file_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_create_errhandler_f
@@ -1779,7 +1779,7 @@ subroutine pompi_win_create_errhandler_f(win_errhandler_fn,errhandler,ierror) &
    BIND(C, name="pompi_win_create_errhandler_f")
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: win_errhandler_fn
+   type(c_funptr), value :: win_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_create_errhandler_f
@@ -2287,9 +2287,9 @@ subroutine pompi_grequest_start_f(query_fn,free_fn,cancel_fn, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: query_fn
-   type(c_funptr) :: free_fn
-   type(c_funptr) :: cancel_fn
+   type(c_funptr), value :: query_fn
+   type(c_funptr), value :: free_fn
+   type(c_funptr), value :: cancel_fn
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
@@ -2858,9 +2858,9 @@ subroutine pompi_register_datarep_f(datarep,read_conversion_fn, &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   type(c_funptr) :: read_conversion_fn
-   type(c_funptr) :: write_conversion_fn
-   type(c_funptr) :: dtype_file_extent_fn
+   type(c_funptr), value :: read_conversion_fn
+   type(c_funptr), value :: write_conversion_fn
+   type(c_funptr), value :: dtype_file_extent_fn
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: datarep
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror
