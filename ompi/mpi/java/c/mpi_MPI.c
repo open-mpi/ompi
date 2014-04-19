@@ -150,7 +150,7 @@ static void initFreeList(void)
     OBJ_CONSTRUCT(&ompi_java_buffers, opal_free_list_t);
 
     int r = opal_free_list_init(&ompi_java_buffers, sizeof(ompi_java_buffer_t),
-                                OBJ_CLASS(ompi_java_buffer_t), 4, -1, 4);
+                                OBJ_CLASS(ompi_java_buffer_t), 2, -1, 2);
     if(r != OPAL_SUCCESS)
     {
         fprintf(stderr, "Unable to initialize ompi_java_buffers.\n");
