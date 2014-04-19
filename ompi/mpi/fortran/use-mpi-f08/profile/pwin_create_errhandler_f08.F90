@@ -8,6 +8,7 @@
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine PMPI_Win_create_errhandler_f08(win_errhandler_fn,errhandler,ierror)
+   use, intrinsic :: iso_c_binding, only: c_funptr, c_funloc
    use :: mpi_f08_types, only : MPI_Errhandler
    use :: mpi_f08_interfaces_callbacks, only : MPI_Win_errhandler_function
    use :: mpi_f08, only : ompi_win_create_errhandler_f
@@ -16,8 +17,10 @@ subroutine PMPI_Win_create_errhandler_f08(win_errhandler_fn,errhandler,ierror)
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
+   type(c_funptr) :: fn
 
-   call ompi_win_create_errhandler_f(win_errhandler_fn,errhandler%MPI_VAL,c_ierror)
+   fn = c_funloc(win_errhandler_fn)
+   call ompi_win_create_errhandler_f(fn,errhandler%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
 end subroutine PMPI_Win_create_errhandler_f08

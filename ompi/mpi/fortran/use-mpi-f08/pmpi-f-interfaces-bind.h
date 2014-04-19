@@ -1111,11 +1111,10 @@ subroutine pompi_comm_create_keyval_f(comm_copy_attr_fn,comm_delete_attr_fn, &
                                      comm_keyval,extra_state,ierror) &
    BIND(C, name="pompi_comm_create_keyval_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_copy_attr_function
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_delete_attr_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
+   type(c_funptr) :: comm_copy_attr_fn
+   type(c_funptr) :: comm_delete_attr_fn
    INTEGER, INTENT(OUT) :: comm_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror
@@ -1353,11 +1352,10 @@ subroutine pompi_type_create_keyval_f(type_copy_attr_fn,type_delete_attr_fn, &
                                      type_keyval,extra_state,ierror) &
    BIND(C, name="pompi_type_create_keyval_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Type_copy_attr_function
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Type_delete_attr_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
+   type(c_funptr) :: type_copy_attr_fn
+   type(c_funptr) :: type_delete_attr_fn
    INTEGER, INTENT(OUT) :: type_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror
@@ -1413,11 +1411,10 @@ subroutine pompi_win_create_keyval_f(win_copy_attr_fn,win_delete_attr_fn, &
                                     win_keyval,extra_state,ierror) &
    BIND(C, name="pompi_win_create_keyval_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_copy_attr_function
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_delete_attr_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
+   type(c_funptr) :: win_copy_attr_fn
+   type(c_funptr) :: win_delete_attr_fn
    INTEGER, INTENT(OUT) :: win_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror
@@ -1646,9 +1643,9 @@ end subroutine pompi_comm_call_errhandler_f
 
 subroutine pompi_comm_create_errhandler_f(comm_errhandler_fn,errhandler,ierror) &
    BIND(C, name="pompi_comm_create_errhandler_f")
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_errhandler_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_Comm_errhandler_function) :: comm_errhandler_fn
+   type(c_funptr) :: comm_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_comm_create_errhandler_f
@@ -1707,9 +1704,9 @@ end subroutine pompi_file_call_errhandler_f
 
 subroutine pompi_file_create_errhandler_f(file_errhandler_fn,errhandler,ierror) &
    BIND(C, name="pompi_file_create_errhandler_f")
-   use :: mpi_f08_interfaces_callbacks, only : MPI_File_errhandler_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_File_errhandler_function) :: file_errhandler_fn
+   type(c_funptr) :: file_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_create_errhandler_f
@@ -1780,9 +1777,9 @@ end subroutine pompi_win_call_errhandler_f
 
 subroutine pompi_win_create_errhandler_f(win_errhandler_fn,errhandler,ierror) &
    BIND(C, name="pompi_win_create_errhandler_f")
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_errhandler_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_Win_errhandler_function) :: win_errhandler_fn
+   type(c_funptr) :: win_errhandler_fn
    INTEGER, INTENT(OUT) :: errhandler
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_create_errhandler_f
@@ -2288,13 +2285,11 @@ subroutine pompi_grequest_start_f(query_fn,free_fn,cancel_fn, &
                                  extra_state,request,ierror) &
    BIND(C, name="pompi_grequest_start_f")
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_query_function
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_free_function
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_cancel_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_Grequest_query_function) :: query_fn
-   OMPI_PROCEDURE(MPI_Grequest_free_function) :: free_fn
-   OMPI_PROCEDURE(MPI_Grequest_cancel_function) :: cancel_fn
+   type(c_funptr) :: query_fn
+   type(c_funptr) :: free_fn
+   type(c_funptr) :: cancel_fn
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
@@ -2861,12 +2856,11 @@ subroutine pompi_register_datarep_f(datarep,read_conversion_fn, &
    BIND(C, name="pompi_register_datarep_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_conversion_function
-   use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_extent_function
+   use, intrinsic :: iso_c_binding, only: c_funptr
    implicit none
-   OMPI_PROCEDURE(MPI_Datarep_conversion_function) :: read_conversion_fn
-   OMPI_PROCEDURE(MPI_Datarep_conversion_function) :: write_conversion_fn
-   OMPI_PROCEDURE(MPI_Datarep_extent_function) :: dtype_file_extent_fn
+   type(c_funptr) :: read_conversion_fn
+   type(c_funptr) :: write_conversion_fn
+   type(c_funptr) :: dtype_file_extent_fn
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: datarep
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, INTENT(OUT) :: ierror

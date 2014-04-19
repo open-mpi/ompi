@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 ! 
 ! Additional copyrights may follow
@@ -33,11 +33,11 @@ module mpi
 
 ! The MPI attribute callback functions
 
-  include "ompi/mpi/fortran/base/attr_fn-f90-interfaces.h"
+  include "ompi/mpi/fortran/base/attr-fn-int-callback-interfaces.h"
 
 ! Similarly, we need the MPI_CONVERSION_FN_NULL function
 
-  include "ompi/mpi/fortran/base/conversion_fn_null-f90-interface.h"
+  include "ompi/mpi/fortran/base/conversion-fn-null-int-interface.h"
 
 ! The ignore-TKR version of the MPI interfaces
 
