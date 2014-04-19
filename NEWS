@@ -53,6 +53,41 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.8.1
+-----
+
+- Fix critical bug when mpirun is run by root, files would be removed
+  from /.  Thanks to Jay Fenlason and Orion Poplawski for reporting
+  and helping track down the issue.
+- Properly pass function pointers from Fortran to C in the mpi_f08
+  module, thereby now supporting gfortran 4.9.  Thanks to Tobias
+  Burnus for assistance and testing with this issue.
+- Improve support for Cray CLE 5.
+- Fix mpirun regression: ensure exit status is non-zero if mpirun is
+  terminated due to signal.
+- Improved CUDA efficiency of asynchronous copies.
+- Fix to parameter type in MPI_Type_indexed.3.  Thanks to Bastian
+  Beischer for reporting the mistake.
+- Fix NUMA distance calculations in the openib BTL.
+- Decrease time required to shut down mpirun at the end of a job.
+- More RMA fixes.
+- More hostfile fixes from Tetsuya Mishima.
+- Fix darray issue where UB was not computed correctly.
+- Fix mpi_f08 parameter name for MPI_GET_LIBRARY_VERSION.  Thanks to
+  Junchao Zhang for pointing out the issue.
+- Ensure mpirun aborts properly when unable to map processes in
+  scheduled environments.
+- Ensure that MPI RMA error codes show up properly.  Thanks to
+  Lisandro Dalcin for reporting the issue.
+- Minor bug fixes and improvements to the bash and zsh mpirun
+  autocompletion scripts.
+- Fix sequential mpirun process mapper.  Thanks to Bill Chen for
+  reporting the issue.
+- Correct SLURM stdout/stderr redirection.
+- Added missing portals 4 files.
+- Performance improvements for blocking sends and receives.
+
+
 1.8
 ---
 
