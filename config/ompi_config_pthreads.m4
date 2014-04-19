@@ -38,10 +38,31 @@ AC_DEFUN([OMPI_INTL_PTHREAD_TRY_LINK], [
 # As long as this is not being run....
 # pthread_t may be anything from an int to a struct -- init with self-tid.
 #
-    AC_TRY_LINK([#include <pthread.h>],
-                 [pthread_t th=pthread_self(); pthread_join(th, 0);
-                 pthread_attr_init(0); pthread_cleanup_push(0, 0);
-                 pthread_create(0,0,0,0); pthread_cleanup_pop(0); ],
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[
+#include <pthread.h>
+
+int i = 3;
+pthread_t me, newthread;
+
+void cleanup_routine(void *foo);
+void *thread_main(void *foo);
+
+void cleanup_routine(void *foo) { i = 4; }
+void *thread_main(void *foo) { i = 2; return (void*) &i; }
+
+int main(int argc, char* argv[])
+{
+    pthread_attr_t attr;
+
+    me = pthread_self(); 
+    pthread_attr_init(&attr); 
+    pthread_cleanup_push(cleanup_routine, 0);
+    pthread_create(&newthread, &attr, thread_main, 0); 
+    pthread_join(newthread, 0);
+    pthread_cleanup_pop(0); 
+
+    return 0;
+}]])],
                  [$1], [$2])
 # END: OMPI_INTL_PTHREAD_TRY_LINK
 ])dnl
@@ -75,15 +96,26 @@ $ompi_conftest_h
 #ifdef __cplusplus
 extern "C" {
 #endif
+int i = 3;
+pthread_t me, newthread;
+
+void cleanup_routine(void *foo);
+void *thread_main(void *foo);
+void pthreadtest_f(void);
+
+void cleanup_routine(void *foo) { i = 4; }
+void *thread_main(void *foo) { i = 2; return (void*) &i; }
+
 void pthreadtest_f(void)
 {
-  pthread_t th;
-  pthread_create(&th, NULL, NULL, NULL);
-  pthread_join(th, 0);
-  pthread_attr_init(0);
-  pthread_cleanup_push(0, 0);
-  pthread_create(0,0,0,0);
-  pthread_cleanup_pop(0); 
+    pthread_attr_t attr;
+
+    me = pthread_self(); 
+    pthread_attr_init(&attr); 
+    pthread_cleanup_push(cleanup_routine, 0);
+    pthread_create(&newthread, &attr, thread_main, 0); 
+    pthread_join(&newthread, 0);
+    pthread_cleanup_pop(0); 
 }
 
 void pthreadtest(void)
