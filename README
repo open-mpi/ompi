@@ -58,7 +58,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (January 2014):
+base as of this writing (April 2014):
 
 General notes
 -------------
@@ -379,19 +379,9 @@ Compiler Notes
     MPI_COMM_RANK, etc.).
 
   - The mpi_f08 module is new and has been tested with the Intel
-    Fortran compiler.  Other modern Fortran compilers may also work
-    (but are, as yet, only lightly tested).  It is expected that this
-    support will mature over time.
-
-    There is a bug in Open MPI's mpi_f08 module that will (correctly)
-    cause a compile failure when Open MPI is built with a
-    strict-adherence Fortran compiler.  As of this writing (January
-    2014), such compilers include the (as-yet-unreleased) GNU Fortran
-    compiler v4.9 and the Pathscale EKOPath 5.0 compiler (although
-    Pathscale has committed to releasing version 5.1 that works around
-    Open MPI's bug -- kudos!).  A future version of Open MPI will fix
-    this bug.  See https://svn.open-mpi.org/trac/ompi/ticket/4157 for
-    more details.
+    Fortran compiler and gfortran >= v4.9.  Other modern Fortran
+    compilers may also work (but are, as yet, only lightly tested).
+    It is expected that this support will mature over time.
 
     Many older Fortran compilers do not provide enough modern Fortran
     features to support the mpi_f08 module.  For example, gfortran <
