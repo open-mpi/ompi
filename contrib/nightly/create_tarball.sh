@@ -301,7 +301,7 @@ do_command "./configure --enable-dist"
 # that this may need to change in the future...
 save=$LD_LIBRARY_PATH
 LD_LIBRARY_PATH=
-do_command "make distcheck"
+do_command "make -j 8 distcheck"
 LD_LIBRARY_PATH=$save
 save=
 
