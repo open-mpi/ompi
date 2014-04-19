@@ -44,6 +44,11 @@
 #pragma weak shmem_int_wait = pshmem_int_wait
 #pragma weak shmem_long_wait = pshmem_long_wait
 #pragma weak shmem_longlong_wait = pshmem_longlong_wait
+#pragma weak shmem_wait_until = pshmem_wait_until
+#pragma weak shmem_short_wait_until = pshmem_short_wait_until
+#pragma weak shmem_int_wait_until = pshmem_int_wait_until
+#pragma weak shmem_long_wait_until = pshmem_long_wait_until
+#pragma weak shmem_longlong_wait_until = pshmem_longlong_wait_until
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -69,14 +74,6 @@ SHMEM_TYPE_WAIT(_longlong, long long, SHMEM_LLONG)
                                                                     \
         return ;                                                    \
     }
-
-#if OSHMEM_PROFILING
-#pragma weak shmem_wait_until = pshmem_wait_until
-#pragma weak shmem_short_wait_until = pshmem_short_wait_until
-#pragma weak shmem_int_wait_until = pshmem_int_wait_until
-#pragma weak shmem_long_wait_until = pshmem_long_wait_until
-#pragma weak shmem_longlong_wait_until = pshmem_longlong_wait_until
-#endif
 
 SHMEM_TYPE_WAIT_UNTIL(, long, SHMEM_LONG)
 SHMEM_TYPE_WAIT_UNTIL(_short, short, SHMEM_SHORT)
