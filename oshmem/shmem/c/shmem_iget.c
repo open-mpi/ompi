@@ -56,6 +56,9 @@
 #pragma weak shmem_float_iget = pshmem_float_iget
 #pragma weak shmem_double_iget = pshmem_double_iget
 #pragma weak shmem_longdouble_iget = pshmem_longdouble_iget
+#pragma weak shmem_iget32 = pshmem_iget32
+#pragma weak shmem_iget64 = pshmem_iget64
+#pragma weak shmem_iget128 = pshmem_iget128
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -89,12 +92,6 @@ SHMEM_TYPE_IGET(_longdouble, long double)
                                                                     \
         return ;                                                    \
     }
-
-#if OSHMEM_PROFILING
-#pragma weak shmem_iget32 = pshmem_iget32
-#pragma weak shmem_iget64 = pshmem_iget64
-#pragma weak shmem_iget128 = pshmem_iget128
-#endif
 
 SHMEM_TYPE_IGETMEM(_iget32, 4)
 SHMEM_TYPE_IGETMEM(_iget64, 8)
