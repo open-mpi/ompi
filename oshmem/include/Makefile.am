@@ -8,9 +8,8 @@
 #
 
 
-headers =
-nodist_headers = \
-	oshmem_config.h
+headers = oshmem_config.h
+nodist_headers =
 
 # Install these in $(includedir)
 include_HEADERS =
