@@ -20,6 +20,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shrealloc = pshrealloc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
