@@ -113,7 +113,7 @@ static int ompi_mtl_mxm_component_open(void)
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
          opal_mem_hooks_support_level()))
     {
-        setenv("MXM_MEM_ON_DEMAND_MAP", "y", 0);
+        setenv("MXM_MPI_MEM_ON_DEMAND_MAP", "y", 0);
         MXM_VERBOSE(1, "Enabling on-demand memory mapping");
         ompi_mtl_mxm.using_mem_hooks = 1;
     } else {
