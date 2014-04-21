@@ -694,9 +694,7 @@ orte/tools/wrappers/orte.pc
 orte/util/hostfile/hostfile_lex.c
 orte/util/hostfile/orte_hosts.7
 oshmem/include/shmem.h
-oshmem/include/pshmem.h
 oshmem/include/stamp-*
-oshmem/include/oshmem_config.h
 oshmem/include/shmem_portable_platform.h
 oshmem/include/oshmem/frameworks.h
 oshmem/include/oshmem/version.h
