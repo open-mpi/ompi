@@ -446,7 +446,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
       case OP:
         NBC_DEBUG(5, "  OP   (offset %li) ", (long)ptr-(long)myschedule);
         NBC_GET_BYTES(ptr,opargs);
-        NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %lu)\n", opargs.buf1, opargs.buf2, opargs.count, (unsigned long)opargs.datatype);
+        NBC_DEBUG(5, "*buf1: %p, buf2: %p, buf3: %p, count: %i, type: %lu)\n", opargs.buf1, opargs.buf2, opargs.buf3, opargs.count, (unsigned long)opargs.datatype);
         /* get buffers */
         if(opargs.tmpbuf1) {
           buf1=(char*)handle->tmpbuf+(long)opargs.buf1;
