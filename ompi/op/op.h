@@ -111,10 +111,9 @@ typedef void (ompi_op_java_handler_fn_t)(void *, void *, int *,
 
 
 
-/* This enum as well as op_type field in ompi_op_t is placed back here to support
- * HCOL allreduce at the moment. It is a part of bgate repository only. This conflict with OMPI v1.7
- * is to be resolved some other way.
- * */
+/*
+ * Basic operation type for predefined types.
+ */
 enum ompi_op_type {
     OMPI_OP_NULL,
     OMPI_OP_MAX,
