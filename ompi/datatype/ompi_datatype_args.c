@@ -216,7 +216,6 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
     case MPI_COMBINER_HINDEXED_BLOCK:
         pArgs->i[0] = i[0][0];
         pArgs->i[1] = i[1][0];
-        memcpy( pArgs->i + 2, i[2], i[0][0] * sizeof(int) );
         break;
 
     default:
