@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -538,6 +538,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Used staged execution if inadequate resources are present (cannot support MPI jobs)" },
 
+    { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
+      &orterun_globals.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
+      "Allow execution as root (STRONGLY DISCOURAGED)" },
+
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -637,6 +641,24 @@ int orterun(int argc, char *argv[])
                     opal_strerror(rc));
         }
         return rc;
+    }
+
+    /* check if we are running as root - if we are, then only allow
+     * us to proceed if the allow-run-as-root flag was given. Otherwise,
+     * exit with a giant warning flag
+     */
+    if (0 == geteuid() && !orterun_globals.run_as_root) {
+        /* show_help is not yet available, so print an error manually */
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        fprintf(stderr, "%s has detected an attempt to run as root. This is *strongly*\n", orte_basename);
+        fprintf(stderr, "discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
+        fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
+        fprintf(stderr, "your system in an unusable state.\n\n");
+        fprintf(stderr, "You can override this protection by adding the --allow-run-as-root\n");
+        fprintf(stderr, "option to your cmd line. However, we reiterate our strong advice\n");
+        fprintf(stderr, "against doing so - please do so at your own risk.\n");
+        fprintf(stderr, "--------------------------------------------------------------------------\n");
+        exit(1);
     }
 
     /*
@@ -1092,6 +1114,7 @@ static int init_globals(void)
         orterun_globals.report_uri        = NULL;
         orterun_globals.disable_recovery = false;
         orterun_globals.index_argv = false;
+        orterun_globals.run_as_root = false;
     }
 
     /* Reset the other fields every time */
