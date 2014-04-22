@@ -53,6 +53,16 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.8.1
+-----
+
+- Fix for critical bug: mpirun removed files (but not directories)
+  from / when run as root.  Thanks to Jay Fenlason and Orion Poplawski
+  for bringing the issue to our attention and helping identify the
+  fix.  For future protection against these kinds of bugs, mpirun now
+  refuses to run as root by default.
+
+
 1.8
 ---
 
