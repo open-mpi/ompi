@@ -166,7 +166,7 @@ typedef struct {
 
     struct ibv_ah *ah;
 
-    bool           sent_req, recv_req, recv_resp;
+    bool           sent_req, recv_req, recv_resp, recv_comp;
 
     /* Has this endpoint's data been initialized */
     bool           udep_initialized, udep_created_qps;
@@ -315,6 +315,7 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
                               mca_btl_base_endpoint_t *rem_ep);
 
 static void udcm_send_timeout (evutil_socket_t fd, short event, void *arg);
+static int udcm_finish_connection (mca_btl_openib_endpoint_t *lcl_ep);
 
 /* XRC support */
 #if HAVE_XRC
@@ -1661,9 +1662,16 @@ static int udcm_handle_ack (udcm_module_t *m, const uintptr_t ctx, const uint16_
         BTL_VERBOSE(("found matching message"));
         found = true;
 
-        /* found it */
-        opal_list_remove_item (&m->flying_messages, &msg->super);
-        OBJ_RELEASE(msg);
+        /* mark that this event is not active anymore */
+        msg->event_active = false;
+
+        /* there is a possibility this event is being handled by another thread right now. it
+         * should be safe to activate the event even in this case. the callback will handle
+         * releasing the message. this is done to avoid a race between the message handling
+         * thread and the thread progressing libevent. if the message handler is ever put
+         * in the event base then it will be safe to just release the message here but that
+         * is not the case atm. */
+        opal_event_active (&msg->event, 0, 0);
 
         break;
     }
@@ -1731,6 +1739,10 @@ static int udcm_handle_connect(mca_btl_openib_endpoint_t *lcl_ep,
             break;
         }
 
+        if (udep->recv_comp) {
+            udcm_finish_connection (lcl_ep);
+        }
+
         opal_mutex_unlock (&udep->udep_lock);
 
         return OMPI_SUCCESS;
@@ -1784,6 +1796,20 @@ static int udcm_finish_connection (mca_btl_openib_endpoint_t *lcl_ep)
     opal_atomic_wmb();
 
     mca_btl_openib_endpoint_cpc_complete(lcl_ep);
+
+    return OMPI_SUCCESS;
+}
+
+static int udcm_handle_complete (mca_btl_openib_endpoint_t *lcl_ep)
+{
+    udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
+
+    udep->recv_comp = true;
+    if (udep->recv_req) {
+        udcm_finish_connection (lcl_ep);
+    } else {
+        OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
+    }
 
     return OMPI_SUCCESS;
 }
@@ -1874,6 +1900,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         if (OMPI_SUCCESS != udcm_endpoint_init_data (lcl_ep)) {
             BTL_ERROR(("could not initialize cpc data for endpoint"));
             udcm_module_post_one_recv (m, msg_num);
+            opal_mutex_unlock (&udep->udep_lock);
             continue;
         }
 
@@ -2032,7 +2059,7 @@ static void *udcm_message_callback (void *context)
             OPAL_THREAD_UNLOCK(&lcl_ep->endpoint_lock);
             break;
         case UDCM_MESSAGE_COMPLETE:
-            udcm_finish_connection (lcl_ep);
+            udcm_handle_complete (lcl_ep);
             break;
 #if HAVE_XRC
         case UDCM_MESSAGE_XRESPONSE2:
@@ -2096,16 +2123,16 @@ static void udcm_send_timeout (evutil_socket_t fd, short event, void *arg)
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
 
     opal_mutex_lock (&m->cm_timeout_lock);
+    opal_list_remove_item (&m->flying_messages, &msg->super);
+    opal_mutex_unlock (&m->cm_timeout_lock);
 
     if (m->cm_exiting || !msg->event_active) {
-        /* lost a race with the thread handling the acks or exiting */
-        opal_mutex_unlock (&m->cm_timeout_lock);
+        /* we are exiting or the event is no longer valid */
+        OBJ_RELEASE(msg);
         return;
     }
 
-    opal_list_remove_item (&m->flying_messages, &msg->super);
     msg->event_active = false;
-    opal_mutex_unlock (&m->cm_timeout_lock);
 
     do {
         BTL_VERBOSE(("send for message to 0x%04x:0x%08x timed out",
