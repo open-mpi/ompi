@@ -515,6 +515,8 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                                 "btl:usnic: using L2-only transport");
         } else {
             /* There's no usNICs, so bail... */
+            opal_output_verbose(5, USNIC_OUT,
+                                "btl:usnic: no usNICs found");
             goto free_include_list;
         }
     }
