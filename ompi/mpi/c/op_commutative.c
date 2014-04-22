@@ -56,8 +56,8 @@ int MPI_Op_commutative(MPI_Op op, int *commute)
     }
 
     /* We have a valid op, get the flag */
-    
-    *commute = (op->o_flags & OMPI_OP_FLAGS_COMMUTE) ? 1 : 0;
+
+    *commute = ompi_op_is_commute(op);
 
     /* All done */
 
