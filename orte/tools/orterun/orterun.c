@@ -2999,6 +2999,16 @@ static void open_fifo (void)
 		    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 	return;
     }
+
+    /* Set this fd to be close-on-exec so that children don't see it */
+    if (fcntl(attach_fd, F_SETFD, FD_CLOEXEC) == -1) {
+        opal_output(0, "%s unable to set debugger attach fifo to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(attach_fd);
+        attach_fd = -1;
+        return;
+    }
+
     opal_output_verbose(2, orte_debug_output,
 			"%s Monitoring debugger attach fifo %s",
 			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
