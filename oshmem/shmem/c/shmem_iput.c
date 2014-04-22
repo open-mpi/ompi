@@ -49,6 +49,7 @@
     }
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_short_iput = pshmem_short_iput
 #pragma weak shmem_int_iput = pshmem_int_iput
 #pragma weak shmem_long_iput = pshmem_long_iput

@@ -48,6 +48,7 @@
     }
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_int_add = pshmem_int_add
 #pragma weak shmem_long_add = pshmem_long_add
 #pragma weak shmem_longlong_add = pshmem_longlong_add

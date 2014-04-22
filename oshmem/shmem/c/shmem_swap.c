@@ -47,6 +47,7 @@
     }
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_swap = pshmem_swap
 #pragma weak shmem_int_swap = pshmem_int_swap
 #pragma weak shmem_long_swap = pshmem_long_swap
