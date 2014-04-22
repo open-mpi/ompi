@@ -63,6 +63,12 @@ static int ompi_mtl_mxm_component_register(void)
 {
     mca_base_component_t*c;
 
+#if MXM_API < MXM_VERSION(3,0)
+    unsigned long cur_ver;
+    long major, minor;
+    char* runtime_version;
+#endif
+
     c = &mca_mtl_mxm_component.super.mtl_version;
 
     ompi_mtl_mxm.verbose = 0;
@@ -85,6 +91,39 @@ static int ompi_mtl_mxm_component_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_mxm.mxm_np);
+
+    ompi_mtl_mxm.compiletime_version = MXM_VERNO_STRING;
+    (void) mca_base_component_var_register(c,
+            MCA_COMPILETIME_VER,
+            "Version of the libmxm library ompi compiled with",
+            MCA_BASE_VAR_TYPE_STRING,
+            NULL, 0, 0,
+            OPAL_INFO_LVL_3,
+            MCA_BASE_VAR_SCOPE_READONLY,
+            &ompi_mtl_mxm.compiletime_version);
+
+#if MXM_API >= MXM_VERSION(3,0)
+    ompi_mtl_mxm.runtime_version = mxm_get_version_string();
+#else
+    cur_ver = mxm_get_version();
+    major = (cur_ver >> MXM_MAJOR_BIT) & 0xff;
+    minor = (cur_ver >> MXM_MINOR_BIT) & 0xff;
+    asprintf(&runtime_version, "%ld.%ld", major, minor);
+    ompi_mtl_mxm.runtime_version = runtime_version;
+#endif
+
+    (void) mca_base_component_var_register(c,
+            MCA_RUNTIME_VER,
+            "Version of the libmxm library ompi run with",
+            MCA_BASE_VAR_TYPE_STRING,
+            NULL, 0, 0,
+            OPAL_INFO_LVL_3,
+            MCA_BASE_VAR_SCOPE_READONLY,
+            &ompi_mtl_mxm.runtime_version);
+
+#if MXM_API < MXM_VERSION(3,0)
+    free(runtime_version);
+#endif
 
     return OMPI_SUCCESS;
 }

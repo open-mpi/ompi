@@ -35,6 +35,8 @@ typedef struct mca_mtl_mxm_module_t {
 #if MXM_API >= MXM_VERSION(2,0)
     int                   using_mem_hooks;
 #endif
+    char*                 runtime_version;
+    char*                 compiletime_version;
 } mca_mtl_mxm_module_t;
 
 

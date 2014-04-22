@@ -58,7 +58,8 @@ mca_coll_hcoll_component_t mca_coll_hcoll_component = {
     },
     90, /* priority */
     0,  /* verbose level */
-    1   /* hcoll_enable */
+    1,   /* hcoll_enable */
+    NULL /*hcoll version */
 };
 
 
@@ -206,6 +207,24 @@ static int hcoll_register(void)
                   &mca_coll_hcoll_component.hcoll_datatype_fallback,
                   0));
 
+    mca_coll_hcoll_component.compiletime_version = HCOLL_VERNO_STRING;
+    mca_base_component_var_register(&mca_coll_hcoll_component.super.collm_version,
+            MCA_COMPILETIME_VER,
+            "Version of the libhcoll library ompi compiled with",
+            MCA_BASE_VAR_TYPE_STRING,
+            NULL, 0, 0,
+            OPAL_INFO_LVL_3,
+            MCA_BASE_VAR_SCOPE_READONLY,
+            &mca_coll_hcoll_component.compiletime_version);
+    mca_coll_hcoll_component.runtime_version = hcoll_get_version();
+    mca_base_component_var_register(&mca_coll_hcoll_component.super.collm_version,
+            MCA_RUNTIME_VER,
+            "Version of the libhcoll library ompi run with",
+            MCA_BASE_VAR_TYPE_STRING,
+            NULL, 0, 0,
+            OPAL_INFO_LVL_3,
+            MCA_BASE_VAR_SCOPE_READONLY,
+            &mca_coll_hcoll_component.runtime_version);
 
     return ret;
 }

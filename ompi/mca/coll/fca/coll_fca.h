@@ -174,6 +174,12 @@ struct mca_coll_fca_component_t {
     /** MCA parameter: Enable parallel hash calc */
     int fca_parallel_hash_calc;
 
+    /* r/o MCA parameter: compiletime libfca version */
+    char* compiletime_version;
+
+    /* r/o MCA parameter: runtime libfca version */
+    char* runtime_version;
+
     /** Some statistics counters */
     double fca_total_work_time;
     double fca_work_time_parallel;
