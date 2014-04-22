@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -259,7 +259,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
     const opal_datatype_t *pData = pConvertor->pDesc;
-    unsigned char *source_base, *destination;
+    unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
     uint32_t iov_count;
 
@@ -269,33 +269,32 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
     description = pConvertor->use_desc->desc;
 
     /* For the first step we have to add both displacement to the source. After in the
-     * main while loop we will set back the source_base to the correct value. This is
+     * main while loop we will set back the conv_ptr to the correct value. This is
      * due to the fact that the convertor can stop in the middle of a data with a count
      */
     pStack = pConvertor->pStack + pConvertor->stack_pos;
-    pos_desc     = pStack->index;
-    source_base  = pConvertor->pBaseBuf + pStack->disp;
-    count_desc   = (uint32_t)pStack->count;
+    pos_desc   = pStack->index;
+    conv_ptr   = pConvertor->pBaseBuf + pStack->disp;
+    count_desc = (uint32_t)pStack->count;
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]);
-    source_base += pStack->disp;
 
     DO_DEBUG( opal_output( 0, "pack start pos_desc %d count_desc %d disp %ld\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
-                           pos_desc, count_desc, (long)(source_base - pConvertor->pBaseBuf),
+                           pos_desc, count_desc, (long)(conv_ptr - pConvertor->pBaseBuf),
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        destination = (unsigned char *) iov[iov_count].iov_base;
+        iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
         while( 1 ) {
             while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
                 /* now here we have a basic datatype */
                 PACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                          source_base, destination, iov_len_local );
+                                          conv_ptr, iov_ptr, iov_len_local );
                 if( 0 == count_desc ) {  /* completed */
-                    source_base = pConvertor->pBaseBuf + pStack->disp;
+                    conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++;  /* advance to the next data */
                     UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                     continue;
@@ -308,7 +307,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                                        (int)pStack->count, pConvertor->stack_pos,
 				       pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
-                    if( pConvertor->stack_pos == 0 ) {
+                    if( 0 == pConvertor->stack_pos ) {
                         /* we lie about the size of the next element in order to
                          * make sure we exit the main loop.
                          */
@@ -327,28 +326,29 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                         pStack->disp += description[pStack->index].loop.extent;
                     }
                 }
-                source_base = pConvertor->pBaseBuf + pStack->disp;
+                conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-                DO_DEBUG( opal_output( 0, "pack new_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                       (int)pStack->count, pConvertor->stack_pos, pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
+                DO_DEBUG( opal_output( 0, "pack new_loop count %d stack_pos %d pos_desc %d count_desc %d disp %ld space %lu\n",
+                                       (int)pStack->count, pConvertor->stack_pos, pos_desc,
+                                       count_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
             }
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
-                OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)source_base;
+                OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr;
                 if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                     PACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
-                                          source_base, destination, iov_len_local );
+                                          conv_ptr, iov_ptr, iov_len_local );
                     if( 0 == count_desc ) {  /* completed */
                         pos_desc += pElem->loop.items + 1;
                         goto update_loop_description;
                     }
                     /* Save the stack with the correct last_count value. */
                 }
-                local_disp = (OPAL_PTRDIFF_TYPE)source_base - local_disp;
+                local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr - local_disp;
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                             pStack->disp + local_disp);
                 pos_desc++;
             update_loop_description:  /* update the current state */
-                source_base = pConvertor->pBaseBuf + pStack->disp;
+                conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
                 continue;
@@ -357,18 +357,17 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
     complete_loop:
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_packed += iov[iov_count].iov_len;
-        pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
     }
     *max_data = total_packed;
+    pConvertor->bConverted += total_packed;  /* update the already converted bytes */
     *out_size = iov_count;
-
     if( pConvertor->bConverted == pConvertor->local_size ) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
-    /* I complete an element, next step I should go to the next one */
+    /* Save the global position for the next round */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_INT8, count_desc,
-                source_base - pStack->disp - pConvertor->pBaseBuf );
+                conv_ptr - pConvertor->pBaseBuf );
     DO_DEBUG( opal_output( 0, "pack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
     return 0;
