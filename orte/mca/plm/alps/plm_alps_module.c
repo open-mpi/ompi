@@ -585,6 +585,10 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
             free(newenv);
         }
 
+	/* Quiet annoying Cray PMI warnings. There is an open ticket to eliminate
+	 * them but they still exist as of PMI 5.0.1 */
+	opal_setenv("PMI_USE_LOGFILE", "/dev/null", true, &env);
+
         fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
         if(fd > 0) {
             dup2(fd, 0);
