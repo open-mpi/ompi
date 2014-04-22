@@ -45,7 +45,7 @@ int MPI_Op_commutative(MPI_Op op, int *commute)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == op) {
+        if (NULL == op || MPI_OP_NULL == op) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP,
                                           FUNC_NAME);
         }
