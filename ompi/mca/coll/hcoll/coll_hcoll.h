@@ -67,6 +67,12 @@ struct mca_coll_hcoll_component_t {
     /** MCA parameter: ON/OFF user defined datatype through HCOLL */
     int   hcoll_datatype_fallback;
 
+    /** r/o MCA parameter: libhcoll runtime version */
+    char* runtime_version;
+
+    /** r/o MCA parameter: libhcoll compiletime version */
+    char* compiletime_version;
+
     /* FCA global stuff */
     mca_coll_hcoll_ops_t hcoll_ops;
     ompi_free_list_t requests;
