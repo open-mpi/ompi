@@ -53,12 +53,9 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-1.8.1
+1.8.2
 -----
 
-- Fix critical bug when mpirun is run by root, files would be removed
-  from /.  Thanks to Jay Fenlason and Orion Poplawski for reporting
-  and helping track down the issue.
 - Properly pass function pointers from Fortran to C in the mpi_f08
   module, thereby now supporting gfortran 4.9.  Thanks to Tobias
   Burnus for assistance and testing with this issue.
@@ -86,6 +83,15 @@ included in the vX.Y.Z section and be denoted as:
 - Correct SLURM stdout/stderr redirection.
 - Added missing portals 4 files.
 - Performance improvements for blocking sends and receives.
+
+
+1.8.1
+-----
+
+- Fix for critical bug: mpirun removed files (but not directories)
+  from / when run as root.  Thanks to Jay Fenlason and Orion Poplawski
+  for bringing the issue to our attention and helping identify the
+  fix.
 
 
 1.8
