@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,8 +45,7 @@ int MPI_Op_commutative(MPI_Op op, int *commute)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == op ||
-            ompi_op_is_intrinsic(op)) {
+        if (NULL == op || MPI_OP_NULL == op) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP,
                                           FUNC_NAME);
         }
@@ -57,8 +56,8 @@ int MPI_Op_commutative(MPI_Op op, int *commute)
     }
 
     /* We have a valid op, get the flag */
-    
-    *commute = (op->o_flags & OMPI_OP_FLAGS_COMMUTE) ? 1 : 0;
+
+    *commute = ompi_op_is_commute(op);
 
     /* All done */
 
