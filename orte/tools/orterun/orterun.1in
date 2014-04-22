@@ -1,6 +1,7 @@
 .\" -*- nroff -*-
-.\" Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+.\" $COPYRIGHT$
 .\"
 .\" Man page for ORTE's orterun command
 .\" 
@@ -476,6 +477,15 @@ Deprecated backwards compatibility flag. Synonym for \fI--debug\fP.
 .
 .P
 There are also other options:
+.
+.
+.TP
+.B --allow-run-as-root
+Allow
+.I mpirun
+to run when executed by the root user
+.RI ( mpirun
+defaults to aborting when launched as the root user).
 .
 .
 .TP
@@ -1270,6 +1280,21 @@ depends on the specific MCA module.
 To find the available component types under the MCA architecture, or to find the
 available parameters for a specific component, use the \fIompi_info\fP command.
 See the \fIompi_info(1)\fP man page for detailed information on the command.
+.
+.SS Running as root
+.
+The Open MPI team strongly advises against executing
+.I mpirun
+as the root user.  MPI applications should be run as regular
+(non-root) users.
+.
+.PP
+Reflecting this advice, mpirun will refuse to run as root by default.
+To override this default, you can add the
+.I --allow-run-as-root
+option to the
+.I mpirun
+command line.
 .
 .SS Exit status
 .
