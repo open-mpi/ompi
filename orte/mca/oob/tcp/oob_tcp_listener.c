@@ -129,6 +129,17 @@ int orte_oob_tcp_start_listening(void)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+
+        /* Make sure the pipe FDs are set to close-on-exec so that
+           they don't leak into children */
+        if (fcntl(mca_oob_tcp_component.stop_thread[0], F_SETFD, FD_CLOEXEC) == -1 ||
+            fcntl(mca_oob_tcp_component.stop_thread[1], F_SETFD, FD_CLOEXEC) == -1) {
+            close(mca_oob_tcp_component.stop_thread[0]);
+            close(mca_oob_tcp_component.stop_thread[1]);
+            ORTE_ERROR_LOG(ORTE_ERR_IN_ERRNO);
+            return ORTE_ERR_IN_ERRNO;
+        }
+
         mca_oob_tcp_component.listen_thread_active = true;
         mca_oob_tcp_component.listen_thread.t_run = listen_thread;
         mca_oob_tcp_component.listen_thread.t_arg = NULL;
