@@ -18,6 +18,12 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "stdio.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COMPLEX_IGET, shmem_complex_iget)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_COMPLEX_IGET,
         shmem_complex_iget_,

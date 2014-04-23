@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved
 # Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -9,9 +9,14 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS     = -DOSHMEM_PROFILING_DEFINES=0 -DOSHMEM_HAVE_WEAK_SYMBOLS=0
-
 # This is guaranteed to be false if we're not building OSHMEM at all
+#
+if OSHMEM_BUILD_FORTRAN_BINDINGS
+if OSHMEM_PROFILING
+    SUBDIRS = profile
+endif
+endif
+
 if OSHMEM_BUILD_FORTRAN_BINDINGS
 oshmem_fortran_lib       = liboshmem_fortran.la
 else
@@ -24,11 +29,13 @@ headers = prototypes_shmem.h \
           bindings.h \
           shmem_fortran_pointer.h
 
-liboshmem_fortran_la_SOURCES = \
+liboshmem_fortran_la_SOURCES = shmem_finalize_f.c
+
+if ! OSHMEM_PROFILING
+liboshmem_fortran_la_SOURCES += \
                     start_pes_f.c \
                     num_pes_f.c \
                     my_pe_f.c \
-                    shmem_finalize_f.c \
                     shmem_barrier_all_f.c \
                     shpalloc_f.c \
                     shpdeallc_f.c \
@@ -47,6 +54,7 @@ liboshmem_fortran_la_SOURCES = \
                     shmem_put8_f.c \
                     shmem_put32_f.c \
                     shmem_put64_f.c \
+                    shmem_put128_f.c \
                     shmem_putmem_f.c \
                     shmem_complex_iput_f.c \
                     shmem_double_iput_f.c \
@@ -115,6 +123,7 @@ liboshmem_fortran_la_SOURCES = \
                     shmem_int8_inc_f.c \
                     shmem_quiet_f.c \
                     shmem_fence_f.c
+endif
 
 if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
