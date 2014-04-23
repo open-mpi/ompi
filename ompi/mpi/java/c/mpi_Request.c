@@ -186,8 +186,7 @@ JNIEXPORT jint JNICALL Java_mpi_Request_waitAny(
     MPI_Request *cReq;
     ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int index;
-    MPI_Status status;  /* osvegis: MPI_STATUS_IGNORE doesn't work */
-    int rc = MPI_Waitany(count, cReq, &index, &status);
+    int rc = MPI_Waitany(count, cReq, &index, MPI_STATUS_IGNORE);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     return index;
@@ -221,8 +220,7 @@ JNIEXPORT jint JNICALL Java_mpi_Request_testAny(
     MPI_Request *cReq;
     ompi_java_getPtrArray(env, requests, &jReq, (void***)&cReq);
     int index, flag;
-    MPI_Status status;  /* osvegis: MPI_STATUS_IGNORE doesn't work */
-    int rc = MPI_Testany(count, cReq, &index, &flag, &status);
+    int rc = MPI_Testany(count, cReq, &index, &flag, MPI_STATUS_IGNORE);
     ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
     return index;

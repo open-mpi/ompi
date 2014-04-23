@@ -13,6 +13,8 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,7 +74,9 @@ int MPI_Testany(int count, MPI_Request requests[], int *indx, int *completed, MP
     if (OPAL_UNLIKELY(0 == count)) {
         *completed = true;
         *indx = MPI_UNDEFINED;
-        *status = ompi_status_empty;
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ompi_status_empty;
+        }
         return MPI_SUCCESS;
     }
 
