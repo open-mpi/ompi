@@ -18,6 +18,25 @@
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT2_MIN_TO_ALL, shmem_int2_min_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT4_MIN_TO_ALL, shmem_int4_min_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT8_MIN_TO_ALL, shmem_int8_min_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL4_MIN_TO_ALL, shmem_real4_min_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL8_MIN_TO_ALL, shmem_real8_min_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL16_MIN_TO_ALL, shmem_real16_min_to_all)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        SHMEM_INT2_MIN_TO_ALL,
+        shmem_int2_min_to_all_,
+        shmem_int2_min_to_all__,
+        shmem_int2_min_to_all_f,
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_INT4_MIN_TO_ALL,
         shmem_int4_min_to_all_,
@@ -49,6 +68,15 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_real8_min_to_all_f,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
+
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        SHMEM_REAL16_MIN_TO_ALL,
+        shmem_real16_min_to_all_,
+        shmem_real16_min_to_all__,
+        shmem_real16_min_to_all_f,
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
+
 
 #define SHMEM_MIN_TO_ALL(F_NAME, T_NAME, OSHMEM_GROUP_CACHE_ENABLED) void F_NAME(FORTRAN_POINTER_T target, \
     FORTRAN_POINTER_T source, \
@@ -111,6 +139,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
+SHMEM_MIN_TO_ALL(shmem_int2_min_to_all_f, oshmem_op_min_fint2, OSHMEM_GROUP_CACHE_ENABLED)
 SHMEM_MIN_TO_ALL(shmem_int4_min_to_all_f, oshmem_op_min_fint4, OSHMEM_GROUP_CACHE_ENABLED)
 SHMEM_MIN_TO_ALL(shmem_int8_min_to_all_f, oshmem_op_min_fint8, OSHMEM_GROUP_CACHE_ENABLED)
 SHMEM_MIN_TO_ALL(shmem_real4_min_to_all_f, oshmem_op_min_freal4, OSHMEM_GROUP_CACHE_ENABLED)

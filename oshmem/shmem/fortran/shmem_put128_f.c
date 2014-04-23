@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -20,26 +20,23 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/shmem/fortran/profile/pbindings.h"
-SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COMPLEX_PUT, shmem_complex_put)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_PUT128, shmem_put128)
 #include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
-        SHMEM_COMPLEX_PUT,
-        shmem_complex_put_,
-        shmem_complex_put__,
-        shmem_complex_put_f,
+        SHMEM_PUT128,
+        shmem_put128_,
+        shmem_put128__,
+        shmem_put128_f,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe), 
         (target,source,length,pe) )
 
-void shmem_complex_put_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
+void shmem_put128_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
 {
-    size_t complex_type_size = 0;
-    ompi_datatype_type_size(&ompi_mpi_cplex.dt, &complex_type_size);
-
     MCA_SPML_CALL(put(FPTR_2_VOID_PTR(target), 
-        OMPI_FINT_2_INT(*length) * complex_type_size, 
+        OMPI_FINT_2_INT(*length) * 16, 
         FPTR_2_VOID_PTR(source), 
         OMPI_FINT_2_INT(*pe)));
 }
-
+   
