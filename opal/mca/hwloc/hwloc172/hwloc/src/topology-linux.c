@@ -2,7 +2,7 @@
  * Copyright © 2009 CNRS
  * Copyright © 2009-2014 Inria.  All rights reserved.
  * Copyright © 2009-2013 Université Bordeaux 1
- * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright © 2010 IBM
  * See COPYING in top-level directory.
  */
@@ -4322,6 +4322,14 @@ hwloc_linux_component_instantiate(struct hwloc_disc_component *component,
   root = open(fsroot_path, O_RDONLY | O_DIRECTORY);
   if (root < 0)
     goto out_with_data;
+
+  /* Since this fd stays open after hwloc returns, mark it as
+     close-on-exec so that children don't inherit it */
+  if (fcntl(root, F_SETFD, FD_CLOEXEC) == -1) {
+      close(root);
+      root = -1;
+      goto out_with_data;
+  }
 
   if (strcmp(fsroot_path, "/"))
     backend->is_thissystem = 0;
