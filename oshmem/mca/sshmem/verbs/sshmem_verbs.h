@@ -53,9 +53,20 @@ static inline struct ibv_mr *ibv_exp_reg_mr(struct ibv_exp_reg_mr_in *in)
 {
     return ibv_reg_mr(in->pd, in->addr, in->length, in->access);
 }
-
-
 #   endif
+
+static inline void mca_sshmem_verbs_fill_shared_mr(struct ibv_exp_reg_shared_mr_in *mr, struct ibv_pd *pd, uint32_t handle, void *addr, uint64_t access)
+{
+    mr->pd = pd;
+    mr->addr = addr;
+    mr->mr_handle = handle;
+#if defined(MPAGE_HAVE_SMR_EXP_ACCESS)
+    mr->exp_access = access;
+#else
+    mr->access = access;
+#endif
+    mr->comp_mask = 0;
+}
 #endif /* MPAGE_ENABLE */
 
 

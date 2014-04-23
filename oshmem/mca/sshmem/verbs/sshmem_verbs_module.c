@@ -281,7 +281,8 @@ segment_create(map_segment_t *ds_buf,
                           IBV_EXP_ACCESS_NO_RDMA;
 
             addr = (void *)mca_sshmem_base_start_address;
-            struct ibv_exp_reg_shared_mr_in in = {0,device->ib_mr_shared->handle,device->ib_pd, addr, access_flag};
+            struct ibv_exp_reg_shared_mr_in in;
+            mca_sshmem_verbs_fill_shared_mr(&in, device->ib_pd, device->ib_mr_shared->handle, addr, access_flag);
             ib_mr = ibv_exp_reg_shared_mr(&in);
             if (NULL == ib_mr) {
                 OPAL_OUTPUT_VERBOSE(
@@ -361,9 +362,9 @@ segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
             IBV_ACCESS_REMOTE_WRITE |
             IBV_ACCESS_REMOTE_READ |
             IBV_EXP_ACCESS_NO_RDMA;
-        struct ibv_exp_reg_shared_mr_in in = {
-            0, mkey->u.key, device->ib_pd, addr, access_flag};
+        struct ibv_exp_reg_shared_mr_in in;
 
+        mca_sshmem_verbs_fill_shared_mr(&in, device->ib_pd, mkey->u.key, addr, access_flag);
         ib_mr = ibv_exp_reg_shared_mr(&in);
         if (NULL == ib_mr) {
             mkey->va_base = (void *)-1;
