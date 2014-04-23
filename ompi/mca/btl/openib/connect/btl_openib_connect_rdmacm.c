@@ -2067,6 +2067,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     (*cpc)->data.cbm_component = &ompi_btl_openib_connect_rdmacm;
     (*cpc)->data.cbm_priority = rdmacm_priority;
+    (*cpc)->data.cbm_modex_message     = NULL;
+    (*cpc)->data.cbm_modex_message_len = 0;
     (*cpc)->cbm_endpoint_init = rdmacm_init;
     (*cpc)->cbm_start_connect = rdmacm_module_start_connect;
     (*cpc)->cbm_endpoint_finalize = rdmacm_endpoint_finalize;
