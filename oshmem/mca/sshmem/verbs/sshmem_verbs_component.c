@@ -111,7 +111,7 @@ verbs_runtime_query(mca_base_module_t **module,
     /* Open device */
     if (NULL != mca_sshmem_verbs_component.hca_name) {
         for (i = 0; i < num_devs; i++) {
-            if (0 == strcmp(mca_sshmem_verbs_component.hca_name, ibv_get_device_name(device->ib_devs[0]))) {
+            if (0 == strcmp(mca_sshmem_verbs_component.hca_name, ibv_get_device_name(device->ib_devs[i]))) {
                 device->ib_dev = device->ib_devs[i];
                 break;
             }
