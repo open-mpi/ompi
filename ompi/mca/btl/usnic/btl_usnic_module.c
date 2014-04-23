@@ -96,7 +96,7 @@ static int create_ahs(size_t array_len, size_t num_endpoints,
 {
     size_t i;
     struct ibv_ah_attr ah_attr;
-    size_t num_ah_created, last_num_ah_created;
+    size_t num_ah_created;
     time_t ts_last_created;
 
     /* memset the ah_attr to both silence valgrind warnings (since the
@@ -108,7 +108,7 @@ static int create_ahs(size_t array_len, size_t num_endpoints,
     ah_attr.port_num = 1;
 
     ts_last_created = time(NULL);
-    last_num_ah_created = num_ah_created = 0;
+    num_ah_created = 0;
     while (num_ah_created < num_endpoints) {
         for (i = 0; i < array_len; i++) {
             if (NULL != endpoints[i] &&
