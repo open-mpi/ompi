@@ -173,14 +173,16 @@ verbs_runtime_query(mca_base_module_t **module,
 
 #if defined(MPAGE_ENABLE) && (MPAGE_ENABLE > 0)
         if (!rc) {
+            struct ibv_exp_reg_shared_mr_in in_smr;
+
             access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |
                           IBV_ACCESS_REMOTE_READ|
                           IBV_EXP_ACCESS_NO_RDMA;
 
             addr = (void *)mca_sshmem_base_start_address;
-            struct ibv_exp_reg_shared_mr_in in = {0, device->ib_mr_shared->handle, device->ib_pd, addr, access_flag};
-            ib_mr = ibv_exp_reg_shared_mr(&in);
+            mca_sshmem_verbs_fill_shared_mr(&in_smr, device->ib_pd, device->ib_mr_shared->handle,  addr, access_flag);
+            ib_mr = ibv_exp_reg_shared_mr(&in_smr);
             if (NULL == ib_mr) {
                 mca_sshmem_verbs_component.has_shared_mr = 0;
             } else {

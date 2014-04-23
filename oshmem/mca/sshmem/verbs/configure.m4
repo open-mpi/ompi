@@ -72,6 +72,15 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
 		        oshmem_verbs_sm_build_verbs=0
 		    fi
         ])
+    AS_IF([test "$oshmem_have_mpage" = "3"],
+            [
+              AC_CHECK_MEMBER([struct ibv_exp_reg_shared_mr_in.exp_access],
+                [AC_DEFINE_UNQUOTED(MPAGE_HAVE_SMR_EXP_ACCESS, 1,
+                    [exp_access field is part of ibv_exp_reg_shared_mr_in]
+                    )],
+                [],
+                [#include <infiniband/verbs_exp.h>])
+         ])
 
     AS_IF([test "$enable_verbs_sshmem" = "yes" -a "$oshmem_verbs_sm_build_verbs" = "0"],
           [AC_MSG_WARN([VERBS shared memory support requested but not found])
