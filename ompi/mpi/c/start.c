@@ -54,6 +54,14 @@ int MPI_Start(MPI_Request *request)
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
+    /**
+     * Per definition of the handling of persistent request in the
+     * MPI standard 3.1 page 78 line 19: we must have the following
+     * sequence CREATE (START COMPLETE)* FREE. The upper level is
+     * responsible for handling any concurency. The PML must handle
+     * this case, as it is the only one knowing if the request can 
+     * be reused or not (it is PML completed or not?).
+     */
 
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
@@ -63,11 +71,18 @@ int MPI_Start(MPI_Request *request)
 
         OPAL_CR_EXIT_LIBRARY();
         return ret;
-        break;
 
     case OMPI_REQUEST_NOOP:
-        return MPI_SUCCESS;
-        break;
+        /**
+         * We deal with a MPI_PROC_NULL request. If the request is
+         * already active, fall back to the error case in the default.
+         * Otherwise, mark it active so we can correctly handle it in
+         * the wait*.
+         */
+        if( OMPI_REQUEST_INACTIVE == (*request)->req_state ) {
+            (*request)->req_state = OMPI_REQUEST_ACTIVE;
+            return MPI_SUCCESS;
+        }
 
     default:
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
