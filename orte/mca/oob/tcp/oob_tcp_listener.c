@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -322,6 +322,17 @@ static int create_listen(void)
             return ORTE_ERROR;
         }
     
+        /* Set the socket to close-on-exec so that no children inherit
+           this FD */
+        if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_create_listen: unable to set the "
+                        "listening socket to CLOEXEC (%s:%d)\n",
+                        strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
+            return ORTE_ERROR;
+        }
+
         if (bind(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
             if( (EADDRINUSE == opal_socket_errno) || (EADDRNOTAVAIL == opal_socket_errno) ) {
                 continue;

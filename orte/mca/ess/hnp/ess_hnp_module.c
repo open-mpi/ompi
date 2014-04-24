@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
@@ -48,6 +48,7 @@
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/basename.h"
+#include "opal/util/fd.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 
@@ -166,6 +167,15 @@ static int rte_init(void)
     opal_event_set(orte_event_base, &term_handler, term_pipe[0], OPAL_EV_READ, clean_abort, NULL);
     opal_event_set_priority(&term_handler, ORTE_ERROR_PRI);
     opal_event_add(&term_handler, NULL);
+
+    /* Set both ends of this pipe to be close-on-exec so that no
+       children inherit it */
+    if (opal_fd_set_cloexec(term_pipe[0]) != OPAL_SUCCESS ||
+        opal_fd_set_cloexec(term_pipe[1]) != OPAL_SUCCESS) {
+        error = "unable to set the pipe to CLOEXEC";
+        goto error;
+    }
+
     /* point the signal trap to a function that will activate that event */
     signal(SIGTERM, abort_signal_callback);
     signal(SIGINT, abort_signal_callback);
