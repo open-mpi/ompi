@@ -12,6 +12,8 @@
  * Copyright (c) 2012      Oak Rigde National Laboratory. 
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,6 +79,18 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iscan);
     CLOSE(comm, iscatter);
     CLOSE(comm, iscatterv);
+
+    CLOSE(comm, neighbor_allgather);
+    CLOSE(comm, neighbor_allgatherv);
+    CLOSE(comm, neighbor_alltoall);
+    CLOSE(comm, neighbor_alltoallv);
+    CLOSE(comm, neighbor_alltoallw);
+ 
+    CLOSE(comm, ineighbor_allgather);
+    CLOSE(comm, ineighbor_allgatherv);
+    CLOSE(comm, ineighbor_alltoall);
+    CLOSE(comm, ineighbor_alltoallv);
+    CLOSE(comm, ineighbor_alltoallw);
 
     /* All done */
     return OMPI_SUCCESS;
