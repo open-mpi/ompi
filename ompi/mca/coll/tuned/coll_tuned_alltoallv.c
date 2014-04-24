@@ -14,8 +14,6 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,11 +86,10 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
     /* in-place alltoallv slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
         for (j = i+1 ; j < size ; ++j) {
-            int nreqs = 0;
             /* Initiate all send/recv to/from others. */
             preq = tuned_module->tuned_data->mcct_reqs;
 
-            if (i == rank && rcounts[j] && ext) {
+            if (i == rank && rcounts[j]) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[j],
                                                            tmp_buffer, (char *) rbuf + rdisps[j] * ext);
@@ -101,15 +98,13 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
                 /* Exchange data with the peer */
                 err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[j] * ext, rcounts[j], rdtype,
                                           j, MCA_COLL_BASE_TAG_ALLTOALLV, comm, preq++));
-                ++nreqs;
                 if (MPI_SUCCESS != err) { goto error_hndl; }
 
                 err = MCA_PML_CALL(isend ((void *) tmp_buffer,  rcounts[j], rdtype,
                                           j, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                           comm, preq++));
-                ++nreqs;
                 if (MPI_SUCCESS != err) { goto error_hndl; }
-            } else if (j == rank && rcounts[i] && ext) {
+            } else if (j == rank && rcounts[i]) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcounts[i],
                                                            tmp_buffer, (char *) rbuf + rdisps[i] * ext);
@@ -118,24 +113,22 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
                 /* Exchange data with the peer */
                 err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[i] * ext, rcounts[i], rdtype,
                                           i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, preq++));
-                ++nreqs;
                 if (MPI_SUCCESS != err) { goto error_hndl; }
 
                 err = MCA_PML_CALL(isend ((void *) tmp_buffer,  rcounts[i], rdtype,
                                           i, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                           comm, preq++));
-                ++nreqs;
                 if (MPI_SUCCESS != err) { goto error_hndl; }
             } else {
                 continue;
             }
 
             /* Wait for the requests to complete */
-            err = ompi_request_wait_all (nreqs, tuned_module->tuned_data->mcct_reqs, MPI_STATUSES_IGNORE);
+            err = ompi_request_wait_all (2, tuned_module->tuned_data->mcct_reqs, MPI_STATUS_IGNORE);
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
             /* Free the requests. */
-            mca_coll_tuned_free_reqs(tuned_module->tuned_data->mcct_reqs, nreqs);
+            mca_coll_tuned_free_reqs(tuned_module->tuned_data->mcct_reqs, 2);
         }
     }
 

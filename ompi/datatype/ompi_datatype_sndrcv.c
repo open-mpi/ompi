@@ -11,8 +11,6 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,8 +50,8 @@ int32_t ompi_datatype_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t*
     size_t max_data;
 
     /* First check if we really have something to do */
-    if (0 == rcount || 0 == rdtype->super.size) {
-        return ((0 == scount || 0 == sdtype->super.size) ? MPI_SUCCESS : MPI_ERR_TRUNCATE);
+    if (0 == rcount) {
+        return ((0 == scount) ? MPI_SUCCESS : MPI_ERR_TRUNCATE);
     }
 
     /* If same datatypes used, just copy. */
