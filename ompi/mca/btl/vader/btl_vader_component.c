@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -361,17 +361,17 @@ failed:
     return NULL;
 }
 
-static int mca_btl_vader_poll_fifo (void)
+static inline int mca_btl_vader_poll_fifo (void)
 {
     const mca_btl_active_message_callback_t *reg;
     struct mca_btl_base_endpoint_t *endpoint;
     mca_btl_vader_hdr_t *hdr;
 
     /* poll the fifo until it is empty or a limit has been hit (8 is arbitrary) */
-    for (int fifo_count = 0 ; fifo_count < 8 ; ++fifo_count) {
+    for (int fifo_count = 0 ; fifo_count < 16 ; ++fifo_count) {
         mca_btl_vader_frag_t frag = {.base = {.des_dst = frag.segments, .des_dst_cnt = 1}};
 
-        hdr = vader_fifo_read (mca_btl_vader_component.my_fifo);
+        hdr = vader_fifo_read (mca_btl_vader_component.my_fifo, &endpoint);
         if (NULL == hdr) {
             return fifo_count;
         }
@@ -384,8 +384,6 @@ static int mca_btl_vader_poll_fifo (void)
         reg = mca_btl_base_active_message_trigger + hdr->tag;
         frag.segments[0].seg_addr.pval = (void *) (hdr + 1);
         frag.segments[0].seg_len       = hdr->len;
-
-        endpoint = mca_btl_vader_component.endpoints + hdr->src_smp_rank;
 
         if (hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) {
             mca_mpool_base_registration_t *xpmem_reg;

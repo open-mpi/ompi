@@ -194,6 +194,8 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct ompi_
 
         ep->next_fbox_out = 0;
         ep->next_fbox_in  = 0;
+        ep->next_sequence = 0;
+        ep->expected_sequence = 0;
 
         ep->fbox_in  = (struct mca_btl_vader_fbox_t * restrict) (ep->segment_base + MCA_BTL_VADER_FIFO_SIZE +
                                                                  fbox_in_offset * MCA_BTL_VADER_FBOX_PEER_SIZE);
@@ -526,6 +528,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                 frag->base.des_src_cnt = 2;
             } else {
 #endif
+
                 /* inline send */
                 if (OPAL_LIKELY(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP & flags)) {
                     /* try to reserve a fast box for this transfer only if the

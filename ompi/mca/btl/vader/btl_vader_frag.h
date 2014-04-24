@@ -40,7 +40,7 @@ struct mca_btl_vader_hdr_t {
     struct mca_btl_vader_frag_t *frag;
     mca_btl_base_tag_t tag; /* tag associated with this fragment (used to lookup callback) */
     uint8_t flags;          /* vader send flags */
-    uint16_t src_smp_rank;  /* smp rank of owning process */
+    uint16_t seqn;
     int32_t len;            /* length of data following this header */
     struct iovec sc_iov;    /* io vector containing pointer to single-copy data */
 };
