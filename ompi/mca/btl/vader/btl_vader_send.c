@@ -42,7 +42,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
 
     if (OPAL_LIKELY(frag->fbox)) {
-        mca_btl_vader_fbox_send (frag->fbox, tag, frag->segments[0].seg_len);
+        mca_btl_vader_fbox_send (frag->fbox, tag, endpoint);
         mca_btl_vader_frag_complete (frag);
 
         return 1;

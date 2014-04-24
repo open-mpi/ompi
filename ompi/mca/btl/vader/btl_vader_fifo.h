@@ -91,20 +91,35 @@ static inline void *relative2virtual (fifo_value_t offset)
     return (void *)(intptr_t)((offset & MCA_BTL_VADER_OFFSET_MASK) + mca_btl_vader_component.endpoints[offset >> MCA_BTL_VADER_OFFSET_BITS].segment_base);
 }
 
-static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
+static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct mca_btl_base_endpoint_t **ep)
 {
     mca_btl_vader_hdr_t *hdr;
     fifo_value_t value;
+    static volatile int32_t lock = 0;
 
-    opal_atomic_rmb ();
-
-    value = vader_item_swap (&fifo->fifo_head, VADER_FIFO_FREE);
-    if (VADER_FIFO_FREE == value) {
-        /* fifo is empty or we lost the race with another thread */
+    if (opal_atomic_swap_32 (&lock, 1)) {
         return NULL;
     }
 
+    if (VADER_FIFO_FREE == fifo->fifo_head) {
+        lock = 0;
+        return NULL;
+    }
+
+    opal_atomic_rmb ();
+
+    value = fifo->fifo_head;
+
+    *ep = &mca_btl_vader_component.endpoints[value >> MCA_BTL_VADER_OFFSET_BITS];
     hdr = (mca_btl_vader_hdr_t *) relative2virtual (value);
+
+    if (OPAL_UNLIKELY(!(hdr->flags & MCA_BTL_VADER_FLAG_COMPLETE) && ((*ep)->expected_sequence != hdr->seqn))) {
+        lock = 0;
+        return NULL;
+    }
+
+    fifo->fifo_head = VADER_FIFO_FREE;
+    ++(*ep)->expected_sequence;
 
     assert (hdr->next != value);
 
@@ -123,7 +138,7 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo)
     }
 
     opal_atomic_wmb ();
-
+    lock = 0;
     return hdr; 
 }
 
@@ -159,6 +174,7 @@ static inline void vader_fifo_write (vader_fifo_t *fifo, fifo_value_t value)
 static inline void vader_fifo_write_ep (mca_btl_vader_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
     hdr->next = VADER_FIFO_FREE;
+    hdr->seqn = ep->next_sequence++;
     vader_fifo_write (ep->fifo, virtual2relative ((char *) hdr));
 }
 

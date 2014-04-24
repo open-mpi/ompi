@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +67,10 @@ struct mca_btl_base_endpoint_t {
 #if OMPI_BTL_VADER_HAVE_XPMEM
     struct mca_rcache_base_module_t *rcache;
 #endif
+
+    /* enforce ordering */
+    uint16_t next_sequence;
+    uint16_t expected_sequence;
 };
 
 #endif /* MCA_BTL_VADER_ENDPOINT_H */
