@@ -55,6 +55,7 @@
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
+#include "opal/util/fd.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
 
@@ -132,8 +133,8 @@ int orte_oob_tcp_start_listening(void)
 
         /* Make sure the pipe FDs are set to close-on-exec so that
            they don't leak into children */
-        if (fcntl(mca_oob_tcp_component.stop_thread[0], F_SETFD, FD_CLOEXEC) == -1 ||
-            fcntl(mca_oob_tcp_component.stop_thread[1], F_SETFD, FD_CLOEXEC) == -1) {
+        if (opal_fd_set_cloexec(mca_oob_tcp_component.stop_thread[0]) != OPAL_SUCCESS ||
+            opal_fd_set_cloexec(mca_oob_tcp_component.stop_thread[1]) != OPAL_SUCCESS) {
             close(mca_oob_tcp_component.stop_thread[0]);
             close(mca_oob_tcp_component.stop_thread[1]);
             ORTE_ERROR_LOG(ORTE_ERR_IN_ERRNO);
