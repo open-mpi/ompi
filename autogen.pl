@@ -4,7 +4,7 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2013      Intel, Inc.  All rights reserved.
+# Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -57,8 +57,8 @@ my $exclude_list;
 
 # Minimum versions
 my $ompi_automake_version = "1.12.2";
-my $ompi_autoconf_version = "2.65";
-my $ompi_libtool_version = "2.2.6b";
+my $ompi_autoconf_version = "2.69";
+my $ompi_libtool_version = "2.4.2";
 
 # Search paths
 my $ompi_autoconf_search = "autoconf";
