@@ -1017,6 +1017,7 @@ syntax: glob
 ./oshmem/shmem/c/profile/Makefile.in
 ./oshmem/shmem/fortran/Makefile.in
 ./oshmem/shmem/fortran/libshmem_fortran.la
+./oshmem/shmem/fortran/profile/Makefile.in
 ./oshmem/tools/oshmem_info/oshmem_info
 ./oshmem/tools/oshmem_info/oshmem_info.1
 ./oshmem/tools/oshmem_info/Makefile.in
