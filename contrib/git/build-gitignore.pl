@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Dumb script to run through all the svn:ignore's in the tree and
@@ -9,6 +10,7 @@
 use strict;
 
 use Getopt::Long;
+use File::Copy;
 
 my $verbose_arg = 0;
 # Default to writing .gitignore
@@ -67,8 +69,36 @@ foreach my $val (@globals) {
 print "Thinking...\n"
     if (!$verbose_arg);
 
-# Start at the top level
-process(".");
+# if we are not in an svn repo, then just concatenate
+# the .gitignore_global and any .gitignore_local files
+# to make the new .gitignore
+if (! -d "./.svn") {
+    print "Not in an svn repo - creating .gitignore from existing files\n"
+      if ($verbose_arg);
+    my @files = qw(.gitignore_global .gitignore_local);
+    my @git;
+
+    while (@files) {
+        local $_ = shift @files;
+        if (-f $_) {
+            open(IN, $_) || die "Can't open $_";
+            print "Reading $_...\n"
+                if ($verbose_arg);
+            while (<IN>) {
+                chomp;
+                push(@git, $_);
+            }
+            close(IN);
+        }
+    }
+    
+    foreach my $val (@git) {
+        print OUT "$val\n";
+    }
+} else {
+    # Start at the top level
+    process(".");
+}
 
 close(OUT);
 

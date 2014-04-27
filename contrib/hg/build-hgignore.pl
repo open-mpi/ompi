@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Dumb script to run through all the svn:ignore's in the tree and build
@@ -89,25 +90,47 @@ diff.out
 print "Thinking...\n"
     if (!$verbose_arg);
 
-# Start at the top level
-process(".");
+# if we are not in an svn repo, then just concatenate
+# the .hgignore_global and any .hgignore_local files
+# to make the new .hgignore
+if (! -d "./.svn") {
+    print "Not in an svn repo - creating .hgignore from existing files\n"
+      if ($verbose_arg);
+    my @files = qw(.hgignore_global .hgignore_local);
 
-# See if there's an .hgignore_local file.  If so, add its contents to the end.
-if (-f ".hgignore_local") {
-    print "Reading .hgignore_local...\n"
-        if ($verbose_arg);
-    open(IN, ".hgignore_local") || die "Can't open .hgignore_local";
-    while (<IN>) {
-        chomp;
-        push(@globals, $_);
+    while (@files) {
+        local $_ = shift @files;
+        if (-f $_) {
+            open(IN, $_) || die "Can't open $_";
+            print "Reading $_...\n"
+                if ($verbose_arg);
+            while (<IN>) {
+                chomp;
+                push(@globals, $_);
+            }
+            close(IN);
+        }
     }
+} else {
+    # Start at the top level
+    process(".");
 
-    close(IN);
+    # See if there's an .hgignore_local file.  If so, add its contents to the end.
+    if (-f ".hgignore_local") {
+        print "Reading .hgignore_local...\n"
+          if ($verbose_arg);
+        open(IN, ".hgignore_local") || die "Can't open .hgignore_local";
+        while (<IN>) {
+            chomp;
+            push(@globals, $_);
+        }
+        close(IN);
+    }
 }
 
 # If there's an old $output_arg file, delete it
 unlink($output_arg)
-    if (-f $output_arg);
+  if (-f $output_arg);
 
 # Write the new one
 open(FILE, ">$output_arg");
