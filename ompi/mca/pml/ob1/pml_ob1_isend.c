@@ -90,11 +90,14 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
         opal_convertor_get_packed_size (&convertor, &size);
     }
 
+    match.hdr_common.hdr_flags = 0;
     match.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
     match.hdr_ctx = comm->c_contextid;
     match.hdr_src = comm->c_my_rank;
     match.hdr_tag = tag;
     match.hdr_seq = seqn;
+
+    ob1_hdr_hton(&match, MCA_PML_OB1_HDR_TYPE_MATCH, dst_proc);
 
     /* try to send immediately */
     rc = mca_bml_base_sendi (bml_btl, &convertor, &match, OMPI_PML_OB1_MATCH_HDR_LEN,
