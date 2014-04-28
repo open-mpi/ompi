@@ -167,8 +167,6 @@ AC_MSG_RESULT([$ltversion])
 # List header files to generate
 
 AC_CONFIG_HEADERS([opal/include/opal_config.h])
-m4_ifdef([project_orte],
-         [AC_CONFIG_HEADERS([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/mpi.h])])
 m4_ifdef([project_oshmem],
@@ -1268,9 +1266,10 @@ m4_ifdef([project_ompi], [ompi_show_subtitle "Compiler flags"],
 # '-I$(top_srcdir)' doesn't show up in any of the configure output --
 # purely aesthetic.
 #
-# Because opal_config.h, orte_config.h, and ompi_config.h are all
-# created by AC_CONFIG_HEADERS, we don't need to -I the builddir for
-# <project>/include.  If we VPATH building, we do need to include the
+# Because opal_config.h and mpi.h are created by AC_CONFIG_HEADERS, we
+# don't need to -I the builddir for <opal,ompi>/include. However, we do
+# need to add it for orte as it doesn't have an AC_CONFIG_HEADERS that
+# will install it for us. If we VPATH building, we do need to include the
 # source directories, however.
 #
 if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
@@ -1282,7 +1281,7 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     # C++ is only relevant if we're building OMPI
     m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
 else
-    CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
+    CPPFLAGS='-I$(top_srcdir) m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include])'" $CPPFLAGS"
     # C++ is only relevant if we're building OMPI
     m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"])
 fi
