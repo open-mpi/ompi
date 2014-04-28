@@ -485,6 +485,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     return OMPI_SUCCESS;
 
  cleanup:
+    /* set the module so we properly cleanup */
+    win->w_osc_module = (ompi_osc_base_module_t*) module;
     ompi_osc_rdma_free (win);
 
     return ret;

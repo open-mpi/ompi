@@ -51,23 +51,27 @@ ompi_osc_rdma_free(ompi_win_t *win)
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     opal_list_item_t *item;
 
-    assert (NULL != module);
-
-    opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                        "rdma component destroying window with id %d",
-                        ompi_comm_get_cid(module->comm));
-
-    /* finish with a barrier */
-    if (ompi_group_size(win->w_group) > 1) {
-        ret = module->comm->c_coll.coll_barrier(module->comm,
-                                                  module->comm->c_coll.coll_barrier_module);
+    if (NULL == module) {
+        return OMPI_SUCCESS;
     }
 
-    /* remove from component information */
-    OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
-    opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.modules,
-                                              ompi_comm_get_cid(module->comm));
-    OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+    if (NULL != module->comm) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "rdma component destroying window with id %d",
+                            ompi_comm_get_cid(module->comm));
+
+        /* finish with a barrier */
+        if (ompi_group_size(win->w_group) > 1) {
+            ret = module->comm->c_coll.coll_barrier(module->comm,
+                                                    module->comm->c_coll.coll_barrier_module);
+        }
+
+        /* remove from component information */
+        OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
+        opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.modules,
+                                            ompi_comm_get_cid(module->comm));
+        OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
+    }
 
     win->w_osc_module = NULL;
 
@@ -80,7 +84,7 @@ ompi_osc_rdma_free(ompi_win_t *win)
     /* it is erroneous to close a window with active operations on it so we should
      * probably produce an error here instead of cleaning up */
     while (NULL != (item = opal_list_remove_first (&module->pending_acc))) {
-	OBJ_RELEASE(item);
+        OBJ_RELEASE(item);
     }
 
     OBJ_DESTRUCT(&module->pending_acc);
@@ -94,14 +98,16 @@ ompi_osc_rdma_free(ompi_win_t *win)
     if (NULL != module->passive_incoming_frag_count) free(module->passive_incoming_frag_count);
     if (NULL != module->passive_incoming_frag_signal_count) free(module->passive_incoming_frag_signal_count);
     if (NULL != module->epoch_outgoing_frag_count) free(module->epoch_outgoing_frag_count);
-    if (NULL != module->incoming_buffer) free (module->incoming_buffer);
-    if (NULL != module->comm) ompi_comm_free(&module->comm);
-    if (NULL != module->free_after) free(module->free_after);
-
     if (NULL != module->frag_request) {
-	module->frag_request->req_complete_cb = NULL;
-	ompi_request_cancel (module->frag_request);
+        module->frag_request->req_complete_cb = NULL;
+        ompi_request_cancel (module->frag_request);
+        ompi_request_free (&module->frag_request);
     }
+    if (NULL != module->comm) {
+        ompi_comm_free(&module->comm);
+    }
+    if (NULL != module->incoming_buffer) free (module->incoming_buffer);
+    if (NULL != module->free_after) free(module->free_after);
 
     free (module);
 
