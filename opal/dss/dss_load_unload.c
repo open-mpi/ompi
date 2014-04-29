@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,8 @@
  * DSS Buffer Operations
  */
 #include "opal_config.h"
+
+#include "opal/util/error.h"
 
 #include "opal/dss/dss_internal.h"
 
@@ -145,3 +148,157 @@ int opal_dss_copy_payload(opal_buffer_t *dest, opal_buffer_t *src)
     return OPAL_SUCCESS;
 }
 
+int opal_value_load(opal_value_t *kv,
+                    void *data, opal_data_type_t type)
+{
+    opal_byte_object_t *boptr;
+
+    switch (type) {
+    case OPAL_STRING:
+        kv->type = OPAL_STRING;
+        if (NULL != data) {
+            kv->data.string = strdup( (const char *) data);
+        } else {
+            kv->data.string = NULL;
+        }
+        break;
+    case OPAL_UINT64:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_UINT64;
+        kv->data.uint64 = *(uint64_t*)(data);
+        break;
+    case OPAL_UINT32:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = *(uint32_t*)data;
+        break;
+    case OPAL_UINT16:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_UINT16;
+        kv->data.uint16 = *(uint16_t*)(data);
+        break;
+    case OPAL_INT:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_INT;
+        kv->data.integer = *(int*)(data);
+        break;
+    case OPAL_UINT:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_UINT;
+        kv->data.uint = *(unsigned int*)(data);
+        break;
+    case OPAL_FLOAT:
+        if (NULL == data) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            return OPAL_ERR_BAD_PARAM;
+        }
+        kv->type = OPAL_FLOAT;
+        kv->data.fval = *(float*)(data);
+        break;
+    case OPAL_BYTE_OBJECT:
+        kv->type = OPAL_BYTE_OBJECT;
+        boptr = (opal_byte_object_t*)data;
+        if (NULL != boptr && NULL != boptr->bytes && 0 < boptr->size) {
+            kv->data.bo.bytes = (uint8_t *) malloc(boptr->size);
+            memcpy(kv->data.bo.bytes, boptr->bytes, boptr->size);
+            kv->data.bo.size = boptr->size;
+        } else {
+            kv->data.bo.bytes = NULL;
+            kv->data.bo.size = 0;
+        }
+        break;
+    default:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    return OPAL_SUCCESS;
+}
+
+int opal_value_unload(opal_value_t *kv,
+                      void **data, opal_data_type_t type)
+{
+    opal_byte_object_t *boptr;
+
+    switch (type) {
+    case OPAL_STRING:
+        if (OPAL_STRING != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        if (NULL != kv->data.string) {
+            *data = strdup(kv->data.string);
+        } else {
+            *data = NULL;
+        }
+        break;
+    case OPAL_UINT64:
+        if (OPAL_UINT64 != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint64, 8);
+        break;
+    case OPAL_UINT32:
+        if (OPAL_UINT32 != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint32, 4);
+        break;
+    case OPAL_UINT16:
+        if (OPAL_UINT16 != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint16, 2);
+        break;
+    case OPAL_INT:
+        if (OPAL_INT != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.integer, sizeof(int));
+        break;
+    case OPAL_UINT:
+        if (OPAL_UINT != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint, sizeof(unsigned int));
+        break;
+    case OPAL_FLOAT:
+        if (OPAL_FLOAT != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.fval, sizeof(float));
+        break;
+    case OPAL_BYTE_OBJECT:
+        if (OPAL_BYTE_OBJECT != kv->type) {
+            return OPAL_ERR_TYPE_MISMATCH;
+        }
+        boptr = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+        if (NULL != kv->data.bo.bytes && 0 < kv->data.bo.size) {
+            boptr->bytes = (uint8_t *) malloc(kv->data.bo.size);
+            memcpy(boptr->bytes, kv->data.bo.bytes, kv->data.bo.size);
+            boptr->size = kv->data.bo.size;
+        } else {
+            boptr->bytes = NULL;
+            boptr->size = 0;
+        }
+        *data = boptr;
+        break;
+    default:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    return OPAL_SUCCESS;
+}

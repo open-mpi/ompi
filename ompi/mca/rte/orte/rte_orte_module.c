@@ -2,7 +2,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -15,8 +15,10 @@
 #include "opal/dss/dss.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/threads/threads.h"
+#include "opal/class/opal_list.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -157,6 +159,11 @@ int ompi_rte_modex(ompi_rte_collective_t *coll)
     /* mark that this process reached modex */
     orte_grpcomm_base.modex_ready = true;
 
+    /* let the datastore commit any data we provided that needs
+     * to be shared with our peers, if required
+     */
+    opal_dstore.commit(opal_dstore_peer, (opal_identifier_t*)ORTE_PROC_MY_NAME);
+
     if ((orte_process_info.num_procs < ompi_hostname_cutoff) ||
          !mca_rte_orte_component.direct_modex ||
          orte_standalone_operation) {
@@ -209,11 +216,23 @@ int ompi_rte_modex(ompi_rte_collective_t *coll)
 int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
                       const void *data, opal_data_type_t type)
 {
+    opal_value_t kv;
+    int rc;
+
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(key);
+    if (OPAL_SUCCESS != (rc = opal_value_load(&kv, (void*)data, type))) {
+        OBJ_DESTRUCT(&kv);
+        return rc;
+    }
+
     /* MPI connection data is to be shared with ALL other processes */
-    return opal_db.store((opal_identifier_t*)nm, OPAL_SCOPE_GLOBAL, key, data, type);
+    rc = opal_dstore.store(opal_dstore_peer, (opal_identifier_t*)nm, &kv);
+    OBJ_DESTRUCT(&kv);
+    return rc;
 }
 
-static int direct_modex(orte_process_name_t *peer, opal_scope_t scope)
+static int direct_modex(orte_process_name_t *peer)
 {
     int rc;
     ompi_orte_tracker_t *req;
@@ -225,12 +244,6 @@ static int direct_modex(orte_process_name_t *peer, opal_scope_t scope)
                          ORTE_NAME_PRINT(peer)));
 
     buf = OBJ_NEW(opal_buffer_t);
-    /* pack the scope of the request */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &scope, 1, OPAL_DATA_SCOPE_T))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return rc;
-    }
 
     /* create a tracker for this request */
     req = OBJ_NEW(ompi_orte_tracker_t);
@@ -272,13 +285,22 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                       void **data, opal_data_type_t type)
 {
     int rc;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s fetch data from %s for %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&proc->proc_name), key));
 
-    if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
+    OBJ_CONSTRUCT(&myvals, opal_list_t);
+    /* the peer dstore contains our own data that will be shared
+     * with our peers - the nonpeer dstore contains data we received
+     * that would only be shared with nonpeer procs
+     */
+    if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+                                                (opal_identifier_t*)(&proc->proc_name),
+                                                key, &myvals))) {
         if (direct_modex_enabled) {
             OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                                  "%s requesting direct modex from %s for %s",
@@ -287,113 +309,61 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
             /* if we couldn't fetch the data via the db, then we will attempt
              * to retrieve it from the target proc
              */
-            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_PEER))) {
+            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)(&proc->proc_name)))) {
                 ORTE_ERROR_LOG(rc);
+                OPAL_LIST_DESTRUCT(&myvals);
                 return rc;
             }
             /* now retrieve the requested piece */
-            if (OPAL_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
+            if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+                                                        (opal_identifier_t*)(&proc->proc_name),
+                                                        key, &myvals))) {
                 ORTE_ERROR_LOG(rc);
+                OPAL_LIST_DESTRUCT(&myvals);
                 return rc;
             }
         } else {
-            return rc;
-        }
-    }
-    /* update the hostname upon first call to modex-recv for this proc */
-    if (NULL == proc->proc_hostname) {
-        opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, (void**)&proc->proc_hostname, OPAL_STRING);
-    }
-    return OMPI_SUCCESS;
-}
-
-int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
-                              const char *key,
-                              void **data, opal_data_type_t type)
-{
-    int rc;
-
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                         "%s fetch data pointer from %s for %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc->proc_name), key));
-
-    if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
-        if (direct_modex_enabled) {
-            /* if we couldn't fetch the data via the db, then we will attempt
-             * to retrieve it from the target proc
-             */
+            /* see if we can find it in the internal dstore */
             OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                                 "%s requesting direct modex from %s for %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->proc_name), key));
-            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_PEER))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+                                 "%s searching nonpeer dstore for %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), key));
+            if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                                                        (opal_identifier_t*)(&proc->proc_name),
+                                                        key, &myvals))) {
+                /* try one last place - the peer dstore in case it got stuck there for some reason */
+                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                                     "%s searching internal dstore for %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), key));
+                if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_peer,
+                                                            (opal_identifier_t*)(&proc->proc_name),
+                                                            key, &myvals))) {
+                    ORTE_ERROR_LOG(rc);
+                    OPAL_LIST_DESTRUCT(&myvals);
+                    return rc;
+                }
             }
-            /* now retrieve the requested piece */
-            if (OPAL_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), key, data, type))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        } else {
-            return rc;
         }
     }
+    /* only one value should have been returned */
+    kv = (opal_value_t*)opal_list_get_first(&myvals);
+    if (NULL == kv) {
+        return OMPI_ERROR;
+    }
+    opal_value_unload(kv, data, type);
+    OPAL_LIST_DESTRUCT(&myvals);
+
     /* update the hostname upon first call to modex-recv for this proc */
     if (NULL == proc->proc_hostname) {
-        opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, (void**)&proc->proc_hostname, OPAL_STRING);
-    }
-    return OMPI_SUCCESS;
-}
-
-int ompi_rte_db_fetch_multiple(const struct ompi_proc_t *proc,
-                               const char *key,
-                               opal_list_t *kvs)
-{
-    int rc;
-
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                         "%s fetch multiple from %s for %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc->proc_name), key));
-
-    /* MPI processes are only concerned with shared info */
-    if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)(&proc->proc_name),
-                                                     OPAL_SCOPE_GLOBAL, key, kvs))) {
-        if (direct_modex_enabled) {
-            /* if we couldn't fetch the data via the db, then we will attempt
-             * to retrieve it from the target proc
-             */
-            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                                 "%s requesting direct modex from %s for %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->proc_name), key));
-            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)&proc->proc_name, OPAL_SCOPE_GLOBAL))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+        OBJ_CONSTRUCT(&myvals, opal_list_t);
+        if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, (opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, &myvals)) {
+            kv = (opal_value_t*)opal_list_get_first(&myvals);
+            if (NULL != kv) {
+                opal_value_unload(kv, (void**)&proc->proc_hostname, OPAL_STRING);
             }
-            /* now retrieve the requested pieces */
-            if (OPAL_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)(&proc->proc_name),
-                                                             OPAL_SCOPE_GLOBAL, key, kvs))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        } else {
-            return rc;
         }
-    }
-    /* update the hostname upon first call to modex-recv for this proc */
-    if (NULL == proc->proc_hostname) {
-        opal_db.fetch_pointer((opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, (void**)&proc->proc_hostname, OPAL_STRING);
+        OPAL_LIST_DESTRUCT(&myvals);
     }
     return OMPI_SUCCESS;
-}
-
-int ompi_rte_db_remove(const orte_process_name_t *nm,
-                       const char *key)
-{
-    return opal_db.remove((opal_identifier_t*)nm, key);
 }
 
 

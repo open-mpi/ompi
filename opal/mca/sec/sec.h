@@ -63,12 +63,18 @@ typedef void (*opal_sec_base_module_finalize_fn_t)(void);
  * certificate as external security systems will have no idea what
  * it means. However, some modules may use it, and there is no way
  * for the opal layer to know a process identifier without being told,
- * do provide it here
+ * so provide it here
+ *
+ * Likewise, the security framework isn't going to house its own datastore
+ * handle, and some modules may want to check to see if a credential
+ * was stored in the data store, so provide a means for passing in the
+ * handle where such data might be stored
  *
  * Function returns OPAL_SUCCESS if a credential was assigned, or an error
  * code indicating why it failed
  */
-typedef int (*opal_sec_base_module_get_my_cred_fn_t)(opal_identifier_t *my_id,
+typedef int (*opal_sec_base_module_get_my_cred_fn_t)(int dstorehandle,
+                                                     opal_identifier_t *my_id,
                                                      opal_sec_cred_t **cred);
 
 /*

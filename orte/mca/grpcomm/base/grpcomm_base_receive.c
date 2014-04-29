@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 
 
 #include "opal/dss/dss.h"
+#include "opal/mca/dstore/dstore.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
@@ -337,7 +339,7 @@ void orte_grpcomm_base_process_modex(int fd, short args, void *cbdata)
         }
 
         /* collect the desired data */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, req->scope))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, opal_dstore_peer))) {
             ORTE_ERROR_LOG(rc);
         }
 
@@ -356,8 +358,7 @@ static void direct_modex(int status, orte_process_name_t* sender,
                          void* cbdata)
 {
     opal_buffer_t *buf;
-    int rc, cnt;
-    opal_scope_t scope;
+    int rc;
     orte_grpcomm_modex_req_t *req;
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
@@ -369,13 +370,6 @@ static void direct_modex(int status, orte_process_name_t* sender,
      * returned, to prevent the remote proc from hanging
      */
     buf = OBJ_NEW(opal_buffer_t);
-
-    /* get the desired scope */
-    cnt = 1;
-    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &scope, &cnt, OPAL_DATA_SCOPE_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto respond;
-    }
 
     /* if we haven't made it to our own modex, then we may
      * not yet have all the required info
@@ -391,7 +385,6 @@ static void direct_modex(int status, orte_process_name_t* sender,
          */
         req = OBJ_NEW(orte_grpcomm_modex_req_t);
         req->peer = *sender;
-        req->scope = scope;
         opal_list_append(&orte_grpcomm_base.modex_requests, &req->super);
         OBJ_RELEASE(buf);
         return;
@@ -406,7 +399,7 @@ static void direct_modex(int status, orte_process_name_t* sender,
     }
 
     /* collect the desired data */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, scope))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, opal_dstore_peer))) {
         ORTE_ERROR_LOG(rc);
     }
 

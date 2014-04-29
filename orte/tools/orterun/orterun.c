@@ -1710,6 +1710,12 @@ static int create_app(int argc, char* argv[],
         opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, &app->env);
     }
 
+    /* when launching this way, ensure the app doesn't
+     * pickup the pmi datastore component unless specifically
+     * directed otherwise
+     */
+    opal_setenv("OMPI_MCA_dstore", "^pmi", false, &app->env);
+
     /* Did the user request to export any environment variables on the cmd line? */
     if (opal_cmd_line_is_taken(&cmd_line, "x")) {
         j = opal_cmd_line_get_ninsts(&cmd_line, "x");

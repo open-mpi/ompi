@@ -14,7 +14,7 @@
 #include "orte/constants.h"
 
 #include "opal/util/output.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -39,7 +39,8 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     bool msg_sent;
     mca_oob_base_component_t *component;
     bool reachable;
-    char *rmluri;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "%s oob:base:send to target %s",
@@ -59,20 +60,33 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
          * so check there next - if it is, the peer object will be added
          * to our hash table
          */
-	if (OPAL_SUCCESS == opal_db.fetch_pointer((opal_identifier_t*)&msg->dst, ORTE_DB_RMLURI,
-                                                  (void **)&rmluri, OPAL_STRING)) {
-            process_uri(rmluri);
-            free(rmluri);
-            if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
-                                                                 ui64, (void**)&pr) ||
-                NULL == pr) {
-                /* that is just plain wrong */
+        OBJ_CONSTRUCT(&myvals, opal_list_t);
+	if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_peer,
+                                              (opal_identifier_t*)&msg->dst,
+                                              ORTE_DB_RMLURI, &myvals)) {
+            kv = (opal_value_t*)opal_list_get_first(&myvals);
+            if (NULL != kv) {
+                process_uri(kv->data.string);
+                if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
+                                                                     ui64, (void**)&pr) ||
+                    NULL == pr) {
+                    /* that is just plain wrong */
+                    ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
+                    msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                    ORTE_RML_SEND_COMPLETE(msg);
+                    OBJ_RELEASE(cd);
+                    OPAL_LIST_DESTRUCT(&myvals);
+                    return;
+                }
+            } else {
                 ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                 ORTE_RML_SEND_COMPLETE(msg);
                 OBJ_RELEASE(cd);
+                OPAL_LIST_DESTRUCT(&myvals);
                 return;
             }
+            OPAL_LIST_DESTRUCT(&myvals);
         } else {
             /* even though we don't know about this peer yet, we still might
              * be able to get to it via routing, so ask each component if

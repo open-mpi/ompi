@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,8 +34,17 @@
 
 BEGIN_C_DECLS
 
+/* A non-API function for something that happens in a number
+ * of places throughout the code base - loading a value into
+ * an opal_value_t structure
+ */
+OPAL_DECLSPEC int opal_value_load(opal_value_t *kv,
+                                  void *data, opal_data_type_t type);
+OPAL_DECLSPEC int opal_value_unload(opal_value_t *kv,
+                                    void **data, opal_data_type_t type);
+
 /**
- * Top-level itnerface function to pack one or more values into a
+ * Top-level interface function to pack one or more values into a
  * buffer.
  *
  * The pack function packs one or more values of a specified type into

@@ -72,7 +72,6 @@ static void opal_value_construct(opal_value_t* ptr)
 {
     ptr->key = NULL;
     ptr->type = OPAL_UNDEF;
-    ptr->scope = OPAL_SCOPE_UNDEF;
 }
 static void opal_value_destruct(opal_value_t* ptr)
 {

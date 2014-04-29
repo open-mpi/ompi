@@ -920,10 +920,6 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
             return ret;
         }
         m=1;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_data_type(buffer, &ptr[i]->scope, &m, OPAL_DATA_SCOPE_T))) {
-            return ret;
-        }
-        m=1;
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_data_type(buffer, &ptr[i]->type, &m, OPAL_DATA_TYPE))) {
             return ret;
         }

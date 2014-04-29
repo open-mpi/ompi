@@ -71,8 +71,6 @@ int orte_grpcomm_pmi_open(void)
 
 int orte_grpcomm_pmi_close(void)
 {
-    mca_common_pmi_finalize ();
-
     return ORTE_SUCCESS;
 }
 
@@ -82,7 +80,7 @@ int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
      * selection will have been turned "off" for us
      */
     if (ORTE_PROC_IS_APP &&
-        mca_common_pmi_init ()) {
+        mca_common_pmi_init()) {
         /* if PMI is available, make it available for use by MPI procs */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_grpcomm_pmi_module;

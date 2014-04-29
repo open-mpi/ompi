@@ -29,7 +29,7 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -483,6 +483,8 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     orte_proc_t *proct;
     char *hostname;
     int rc;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* look it up on our arrays */
@@ -497,21 +499,32 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
         return proct->node->name;
     }
 
-    /* if we are an app, get the pointer from the modex db */
-    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)proc,
-                                                    ORTE_DB_HOSTNAME,
-                                                    (void**)&hostname, OPAL_STRING))) {
+    /* if we are an app, get the data from the modex db */
+    OBJ_CONSTRUCT(&myvals, opal_list_t);
+    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                                                (opal_identifier_t*)proc,
+                                                ORTE_DB_HOSTNAME,
+                                                &myvals))) {
         ORTE_ERROR_LOG(rc);
+        OPAL_LIST_DESTRUCT(&myvals);
         return NULL;
     }
+    kv = (opal_value_t*)opal_list_get_first(&myvals);
+    hostname = kv->data.string;
+    /* protect the data */
+    kv->data.string = NULL;
+    OPAL_LIST_DESTRUCT(&myvals);
+    /* user is responsible for releasing the data */
     return hostname;
 }
 
 orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
 {
     orte_proc_t *proct;
-    orte_node_rank_t noderank, *nr;
+    orte_node_rank_t noderank;
     int rc;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* look it up on our arrays */
@@ -523,13 +536,18 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the value from the modex db */
-    nr = &noderank;
-    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)proc,
-                                                    ORTE_DB_NODERANK,
-                                                    (void**)&nr, ORTE_NODE_RANK))) {
+    OBJ_CONSTRUCT(&myvals, opal_list_t);
+    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                                                (opal_identifier_t*)proc,
+                                                ORTE_DB_NODERANK,
+                                                &myvals))) {
         ORTE_ERROR_LOG(rc);
+        OPAL_LIST_DESTRUCT(&myvals);
         return ORTE_NODE_RANK_INVALID;
     }
+    kv = (opal_value_t*)opal_list_get_first(&myvals);
+    noderank = kv->data.uint16;
+    OPAL_LIST_DESTRUCT(&myvals);
     return noderank;
 }
 

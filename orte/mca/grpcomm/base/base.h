@@ -69,7 +69,6 @@ typedef struct {
 typedef struct {
     opal_list_item_t super;
     orte_process_name_t peer;
-    opal_scope_t scope;
 } orte_grpcomm_modex_req_t;
 OBJ_CLASS_DECLARATION(orte_grpcomm_modex_req_t);
 
@@ -111,7 +110,7 @@ ORTE_DECLSPEC void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t
 /* modex support */
 ORTE_DECLSPEC   void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata);
 ORTE_DECLSPEC   void orte_grpcomm_base_modex(int fd, short args, void *cbdata);
-ORTE_DECLSPEC   int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, opal_scope_t scope);
+ORTE_DECLSPEC   int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, int handle);
 
 /* comm support */
 ORTE_DECLSPEC int orte_grpcomm_base_comm_start(void);

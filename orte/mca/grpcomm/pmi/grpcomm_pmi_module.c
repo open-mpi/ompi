@@ -26,7 +26,7 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/common/pmi/common_pmi.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -150,6 +150,8 @@ static int modex(orte_grpcomm_collective_t *coll)
     orte_vpid_t v;
     bool local;
     int rc, i;
+    opal_list_t myvals;
+    opal_value_t *kv, kvn;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: modex entered",
@@ -177,8 +179,8 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
 
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                "%s: pmapping: %s my_node=%d lr_count=%d\n",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmapping, my_node, local_rank_count));
+                             "%s: pmapping: %s my_node=%d lr_count=%d\n",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmapping, my_node, local_rank_count));
        
         free(pmapping);
     }
@@ -205,10 +207,9 @@ static int modex(orte_grpcomm_collective_t *coll)
 
     /* our RTE data was constructed and pushed in the ESS pmi component */
 
-    /* commit our modex info */
-    opal_db.commit((opal_identifier_t *)ORTE_PROC_MY_NAME);
-
-    /* cycle thru all my peers and collect their RTE info */
+    /* cycle thru all my local peers and collect their RTE info - we need
+     * that info to support some of the BTLs such as shared memory
+     */
     name.jobid = ORTE_PROC_MY_NAME->jobid;
     for (v=0; v < orte_process_info.num_procs; v++) {
         if (v == ORTE_PROC_MY_NAME->vpid) {
@@ -228,12 +229,16 @@ static int modex(orte_grpcomm_collective_t *coll)
          * this here will prevent the MPI layer from fetching data for all ranks
          */
         if (local) {
-	    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&name, OPAL_DB_CPUSET,
-                                                            (void **)&cpuset, OPAL_STRING))) {
+            OBJ_CONSTRUCT(&myvals, opal_list_t);
+	    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+                                                        (opal_identifier_t*)&name,
+                                                        OPAL_DSTORE_CPUSET, &myvals))) {
 		ORTE_ERROR_LOG(rc);
+                OPAL_LIST_DESTRUCT(&myvals);
 		return rc;
 	    }
-
+            kv = (opal_value_t*)opal_list_get_first(&myvals);
+            cpuset = kv->data.string;
 	    if (NULL == cpuset) {
 		/* if we share a node, but we don't know anything more, then
 		 * mark us as on the node as this is all we know
@@ -245,21 +250,28 @@ static int modex(orte_grpcomm_collective_t *coll)
 								 orte_process_info.cpuset,
 								 (char *) cpuset);
 	    }
+            OPAL_LIST_DESTRUCT(&myvals);
 	} else {
             /* this is on a different node, then mark as non-local */
             locality = OPAL_PROC_NON_LOCAL;
 	}
 
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                            "%s grpcomm:pmi proc %s locality %s",
+                             "%s grpcomm:pmi proc %s locality %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name), opal_hwloc_base_print_locality(locality)));
 
-        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&name, OPAL_SCOPE_INTERNAL,
-                                                OPAL_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_LOCALITY);
+        kvn.type = OPAL_UINT16;
+        kvn.data.uint16 = locality;
+        if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
+                                                    (opal_identifier_t*)&name, &kvn))) {
+            OBJ_DESTRUCT(&kvn);
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        OBJ_DESTRUCT(&kvn);
     }
 
     /* execute the callback */

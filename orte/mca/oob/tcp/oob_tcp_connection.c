@@ -51,6 +51,7 @@
 #include "opal_stdint.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/sec/sec.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
@@ -339,7 +340,8 @@ static int tcp_peer_send_connect_ack(mca_oob_tcp_module_t *mod,
     hdr.tag = 0;
 
     /* get our security credential*/
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential((opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal,
+                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &cred))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

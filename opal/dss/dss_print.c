@@ -538,7 +538,6 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
 int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_data_type_t type)
 {
     char *prefx;
-    char *scope;
 
     /* deal with NULL prefix */
     if (NULL == prefix) asprintf(&prefx, " ");
@@ -551,50 +550,34 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
         return OPAL_SUCCESS;
     }
     
-    if (OPAL_SCOPE_UNDEF == src->scope) {
-        scope = "UNDEF";
-    } else if (OPAL_SCOPE_PEER == src->scope) {
-        scope = "PEER";
-    } else if (OPAL_SCOPE_NON_PEER == src->scope) {
-        scope = "NON_PEER";
-    } else if (OPAL_SCOPE_GLOBAL == src->scope) {
-        scope = "GLOBAL";
-    } else if (OPAL_SCOPE_INTERNAL == src->scope) {
-        scope = "INTERNAL";
-    } else if (OPAL_SCOPE_ALL == src->scope) {
-        scope = "ALL";
-    } else {
-        scope = "INTERNAL";
-    }
-
     switch (src->type) {
     case OPAL_STRING:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tScope:%s\tValue: %s",
-                 prefx, src->key, scope, src->data.string);
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tValue: %s",
+                 prefx, src->key, src->data.string);
         break;
     case OPAL_INT16:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tScope:%s\tValue: %d",
-                 prefx, src->key, scope, (int)src->data.int16);
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tValue: %d",
+                 prefx, src->key, (int)src->data.int16);
         break;
     case OPAL_INT32:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT32\tKey: %s\tScope:%s\tValue: %d",
-                 prefx, src->key, scope, src->data.int32);
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT32\tKey: %s\tValue: %d",
+                 prefx, src->key, src->data.int32);
         break;
     case OPAL_PID:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tScope:%s\tValue: %lu",
-                 prefx, src->key, scope, (unsigned long)src->data.pid);
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tValue: %lu",
+                 prefx, src->key, (unsigned long)src->data.pid);
         break;
     case OPAL_FLOAT:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_FLOAT\tKey: %s\tScope:%s\tValue: %f",
-                 prefx, src->key, scope, src->data.fval);
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_FLOAT\tKey: %s\tValue: %f",
+                 prefx, src->key, src->data.fval);
         break;
     case OPAL_TIMEVAL:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_TIMEVAL\tKey: %s\tScope:%s\tValue: %ld.%06ld", prefx,
-                 src->key, scope, (long)src->data.tv.tv_sec, (long)src->data.tv.tv_usec);
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_TIMEVAL\tKey: %s\tValue: %ld.%06ld", prefx,
+                 src->key, (long)src->data.tv.tv_sec, (long)src->data.tv.tv_usec);
         break;
     default:
-        asprintf(output, "%sOPAL_VALUE: Data type: UNKNOWN\tKey: %s\tScope:%s\tValue: UNPRINTABLE",
-                 prefx, src->key, scope);
+        asprintf(output, "%sOPAL_VALUE: Data type: UNKNOWN\tKey: %s\tValue: UNPRINTABLE",
+                 prefx, src->key);
         break;
     }
     free(prefx);

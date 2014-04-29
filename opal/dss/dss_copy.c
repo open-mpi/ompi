@@ -261,7 +261,6 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
     if (NULL != src->key) {
         p->key = strdup(src->key);
     }
-    p->scope = src->scope;
     p->type = src->type;
 
     /* copy the right field */

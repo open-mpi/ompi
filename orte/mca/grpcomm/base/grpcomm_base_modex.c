@@ -35,7 +35,7 @@
 #include "opal/util/output.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/util/proc_info.h"
@@ -73,7 +73,6 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
     opal_list_item_t *item;
     bool found;
     orte_grpcomm_collective_t *cptr;
-    opal_scope_t scope;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:modex: performing modex",
@@ -108,7 +107,10 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
         }
 
         /* this is between our peers, so only collect info marked for them */
-        scope = OPAL_SCOPE_PEER;
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_peer))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         /* add a wildcard name to the participants so the daemon knows
          * the jobid that is involved in this collective
@@ -181,14 +183,19 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
          * Thus, we need to include the non-peer info as well as our peers
          * since we can't tell what the other participants may already have
          */
-        scope = OPAL_SCOPE_GLOBAL;
-
-    }
-
-    /* pack the requested entries */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, scope))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_peer))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        /* pack our name to keep things straight during unpack */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_nonpeer))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
@@ -252,19 +259,20 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&pname), kv->key));
             /* if this is me, dump the data - we already have it in the db */
-            if (ORTE_PROC_MY_NAME->jobid == pname.jobid &&
-                ORTE_PROC_MY_NAME->vpid == pname.vpid) {
-                OBJ_RELEASE(kv);
-            } else {
-                /* store it in the database */
-                if (ORTE_SUCCESS != (rc = opal_db.store_pointer((opal_identifier_t*)&pname, kv))) {
+            if (ORTE_PROC_MY_NAME->jobid != pname.jobid ||
+                ORTE_PROC_MY_NAME->vpid != pname.vpid) {
+                /* store it in the database - we store this as "nonpeer"
+                 * since the "peer" datastore is for storing our own data - i.e.,
+                 * it contains data we will share with our peers
+                 */
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                                                            (opal_identifier_t*)&pname, kv))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-                /* do not release the kv - the db holds that pointer */
             }
+            OBJ_RELEASE(kv);
         }
-
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s store:peer:modex: completed modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -294,7 +302,7 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
     modex->active = false;
 }
 
-int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, opal_scope_t scope)
+int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, int handle)
 {
     int rc;
     int32_t num_entries;
@@ -303,8 +311,9 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, opal_scope_t scope)
 
     /* fetch any global or local data */
     OBJ_CONSTRUCT(&data, opal_list_t);
-    if (ORTE_SUCCESS != (rc = opal_db.fetch_multiple((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                     scope, NULL, &data))) {
+    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(handle,
+                                                (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                NULL, &data))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -333,10 +342,7 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, opal_scope_t scope)
     }
 
  cleanup:
-    while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&data))) {
-        OBJ_RELEASE(kv);
-    }
-    OBJ_DESTRUCT(&data);
+    OPAL_LIST_DESTRUCT(&data);
 
     return rc;
 }

@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -191,10 +192,6 @@ OMPI_DECLSPEC int ompi_modex_recv(const mca_base_component_t *dest_component,
                                   const ompi_proc_t *source_proc,
                                   void **buffer, size_t *size);
 
-OMPI_DECLSPEC int ompi_modex_recv_pointer(const mca_base_component_t *component,
-                                          const ompi_proc_t *proc,
-                                          void **buffer, opal_data_type_t type);
-
 /**
  * Receive a buffer from a given peer
  *
@@ -226,10 +223,6 @@ OMPI_DECLSPEC int ompi_modex_recv_pointer(const mca_base_component_t *component,
 OMPI_DECLSPEC int ompi_modex_recv_string(const char* key,
                                          const ompi_proc_t *source_proc,
                                          void **buffer, size_t *size);
-
-OMPI_DECLSPEC int ompi_modex_recv_string_pointer(const char* key,
-                                                 const ompi_proc_t *source_proc,
-                                                 void **buffer, opal_data_type_t type);
 
 /**
  * Recv a value from a given peer

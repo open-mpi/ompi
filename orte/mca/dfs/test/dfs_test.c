@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,7 +27,7 @@
 #include "opal/util/output.h"
 #include "opal/util/uri.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -447,6 +448,8 @@ static void process_opens(int fd, short args, void *cbdata)
     orte_process_name_t daemon;
     bool found;
     orte_vpid_t v;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     opal_output(0, "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     /* get the scheme to determine if we can process locally or not */
@@ -478,10 +481,17 @@ static void process_opens(int fd, short args, void *cbdata)
     for (v=0; v < orte_process_info.num_daemons; v++) {
         daemon.vpid = v;
         /* fetch the hostname where this daemon is located */
-        if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&daemon, ORTE_DB_HOSTNAME, (void**)&hostname, OPAL_STRING))) {
+        OBJ_CONSTRUCT(&myvals, opal_list_t);
+        if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                                                    (opal_identifier_t*)&daemon,
+                                                    ORTE_DB_HOSTNAME, &myvals))) {
             ORTE_ERROR_LOG(rc);
+            OPAL_LIST_DESTRUCT(&myvals);
             goto complete;
         }
+        kv = (opal_value_t*)opal_list_get_first(&myvals);
+        hostname = strdup(kv->data.string);
+        OPAL_LIST_DESTRUCT(&myvals);
         opal_output(0, "%s GOT HOST %s HOSTNAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host, hostname);
         if (0 == strcmp(host, hostname)) {
             found = true;

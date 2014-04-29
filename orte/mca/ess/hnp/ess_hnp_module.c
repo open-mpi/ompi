@@ -37,7 +37,7 @@
 #include "opal/hash_string.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/db/base/base.h"
+#include "opal/mca/dstore/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -454,19 +454,38 @@ static int rte_init(void)
         goto error;
     }
     
-    /* database */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
+    /* datastore - ensure we don't pickup the pmi component, but
+     * don't override anything set by user
+     */
+    if (NULL == getenv("OMPI_MCA_dstore")) {
+        putenv("OMPI_MCA_dstore=^pmi");
+    }
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_db_base_open";
+        error = "opal_dstore_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db_base_select(true))) {
+    if (ORTE_SUCCESS != (ret = opal_dstore_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_db_base_select";
+        error = "opal_dstore_base_select";
         goto error;
     }
-    /* set our id */
-    opal_db.set_id((opal_identifier_t*)ORTE_PROC_MY_NAME);
+    /* create the handles */
+    if (0 > (opal_dstore_peer = opal_dstore.open("PEER"))) {
+        error = "opal dstore global";
+        ret = ORTE_ERR_FATAL;
+        goto error;
+    }
+    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
+        error = "opal dstore internal";
+        ret = ORTE_ERR_FATAL;
+        goto error;
+    }
+    if (0 > (opal_dstore_nonpeer = opal_dstore.open("NONPEER"))) {
+        error = "opal dstore nonpeer";
+        ret = ORTE_ERR_FATAL;
+        goto error;
+    }
 
     /*
      * Group communications
@@ -816,7 +835,7 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&orte_rmaps_base_framework);
     (void) mca_base_framework_close(&orte_ras_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
-    (void) mca_base_framework_close(&opal_db_base_framework);
+    (void) mca_base_framework_close(&opal_dstore_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);

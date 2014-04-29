@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -422,11 +422,16 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
-        if (OPAL_SUCCESS != (ret = opal_db.remove(NULL, NULL))) {
+        /* RHC: you can't pass NULL as the identifier - what you'll need to do is
+         * close all open dstore handles, and then open the ones you need
+         */
+#if 0
+        if (OPAL_SUCCESS != (ret = opal_dstore.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
+#endif
 
         /*
          * Restart the PLM - Does nothing at the moment, but included for completeness

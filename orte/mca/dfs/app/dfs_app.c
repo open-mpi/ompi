@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,7 +27,7 @@
 #include "opal/util/output.h"
 #include "opal/util/uri.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -502,7 +503,8 @@ static void process_opens(int fd, short args, void *cbdata)
     opal_buffer_t *buffer;
     char *scheme, *host, *filename;
     orte_process_name_t daemon;
-    orte_vpid_t *v;
+    opal_list_t myvals;
+    opal_value_t *kv;
 
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
@@ -552,11 +554,17 @@ static void process_opens(int fd, short args, void *cbdata)
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s looking for daemon on host %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host);
-    v = &daemon.vpid;
-    if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)ORTE_NAME_WILDCARD, host, (void**)&v, ORTE_VPID))) {
+    OBJ_CONSTRUCT(&myvals, opal_list_t);
+    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                                                (opal_identifier_t*)ORTE_NAME_WILDCARD,
+                                                host, &myvals))) {
         ORTE_ERROR_LOG(rc);
+        OPAL_LIST_DESTRUCT(&myvals);
         goto complete;
     }
+    kv = (opal_value_t*)opal_list_get_first(&myvals);
+    daemon.vpid = kv->data.uint32;
+    OPAL_LIST_DESTRUCT(&myvals);
 
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s file %s on host %s daemon %s",

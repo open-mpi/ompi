@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,7 +15,9 @@
 #include "common_ugni.h"
 
 #include "ompi/proc/proc.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
+#include "opal/class/opal_list.h"
+#include "opal/dss/dss.h"
 
 /* NTH: we need some options from the btl */
 #include "ompi/mca/btl/ugni/btl_ugni.h"
@@ -240,11 +243,25 @@ int ompi_common_ugni_init (void)
 
     /* get a unique id from the runtime */
 #if defined(OMPI_DB_GLOBAL_RANK)
-    ptr = &my_rank;
-    rc = opal_db.fetch ((opal_identifier_t *) &my_proc->proc_name, OMPI_DB_GLOBAL_RANK,
-                        (void **) &ptr, OPAL_UINT32);
-    if (OPAL_SUCCESS != rc) {
-        my_rank = my_proc->proc_name.vpid;
+    {
+        opal_list_t myvals;
+        opal_value_t *kv;
+
+        ptr = &my_rank;
+        OBJ_CONSTRUCT(&myvals, opal_list_t);
+        rc = opal_dstore.fetch (opal_dstore_internal,
+                                ORTE_NAME_PRINT(&my_proc->proc_name),
+                                OMPI_DB_GLOBAL_RANK,
+                                &myvals);
+        if (OPAL_SUCCESS == rc) {
+            kv = (opal_value_t*)opal_list_get_first(&myvals):
+            if (OPAL_SUCCESS != opal_value_unload(&kv, (void**)&ptr, OPAL_UINT32)) {
+                my_rank = my_proc->proc_name.vpid;
+            }
+        } else {
+            my_rank = my_proc->proc_name.vpid;
+        }
+        OPAL_LIST_DESTRUCT(&myvals);
     }
 #else
     my_rank = my_proc->proc_name.vpid;
