@@ -392,36 +392,19 @@ int orte_ess_base_app_finalize(void)
  *
  * However, this causes a problem for OpenRTE as the system truly
  * needs to know that this actually IS an abnormal termination.
- * To get around the problem, we create a file in the session
- * directory - we don't need to put anything in it, though, as its
- * very existence simply alerts us that this was an abnormal
- * termination.
- *
- * The session directory finalize system will clean this file up
- * for us automagically. However, it needs to stick around long
- * enough for our local daemon to find it! So, we do NOT call
- * session_dir_finalize here!!! Someone will clean up for us.
+ * To get around the problem, we drop a marker in the proc-level
+ * session dir. If session dir's were not allowed, then we just
+ * ignore this question.
  *
  * In some cases, however, we DON'T want to create that alert. For
  * example, if an orted detects that the HNP has died, then there
  * is truly nobody to alert! In these cases, we pass report=false
- * to prevent the abort file from being created. This allows the
- * session directory tree to cleanly be eliminated.
+ * to indicate that we don't want the marker dropped.
  */
-static void report_sync(int status, orte_process_name_t* sender,
-                        opal_buffer_t *buffer,
-                        orte_rml_tag_t tag, void *cbdata)
-{
-    bool *sync_waiting = (bool*)cbdata;
-    /* flag as complete */
-    *sync_waiting = false;
-}
-
 void orte_ess_base_app_abort(int status, bool report)
 {
-    orte_daemon_cmd_flag_t cmd=ORTE_DAEMON_ABORT_CALLED;
-    opal_buffer_t *buf;
-    bool sync_waiting = true;
+    int fd;
+    char *myfile;
 
     /* Exit - do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
@@ -435,30 +418,16 @@ void orte_ess_base_app_abort(int status, bool report)
     /* CRS cleanup since it may have a named pipe and thread active */
     orte_cr_finalize();
     
-    /* If we were asked to report this termination, do so - except
-     * in cases of abnormal termination ordered by the RTE as
-     * this means we can't rely on being able to communicate. Also,
-     * since singletons don't start an HNP unless necessary, and
+    /* If we were asked to report this termination, do so.
+     * Since singletons don't start an HNP unless necessary, and
      * direct-launched procs don't have daemons at all, only send
      * the message if routing is enabled as this indicates we
      * have someone to send to
      */
-    if (report && !orte_abnormal_term_ordered && orte_routing_is_enabled) {
-        buf = OBJ_NEW(opal_buffer_t);
-        opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD);
-        orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
-        OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                             "%s orte_ess_app_abort: sent abort msg to %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON)));
-        /* get the ack - need this to ensure that the sync communication
-         * gets serviced by the event library on the orted prior to the
-         * process exiting
-         */
-        sync_waiting = true;
-        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
-                                ORTE_RML_NON_PERSISTENT, report_sync, &sync_waiting);
-        ORTE_WAIT_FOR_COMPLETION(sync_waiting);
+    if (report && orte_routing_is_enabled && orte_create_session_dirs) {
+        myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);
+        fd = open(myfile, O_CREAT);
+        close(fd);
     }
     
     /* - Clean out the global structures 
