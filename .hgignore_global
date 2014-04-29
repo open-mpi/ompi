@@ -716,7 +716,6 @@ syntax: glob
 ./orte/etc/Makefile.in
 ./orte/include/Makefile.in
 ./orte/include/stamp-h*
-./orte/include/orte_config.h
 ./orte/include/orte/version.h
 ./orte/include/orte/frameworks.h
 ./orte/mca/dfs/Makefile.in
