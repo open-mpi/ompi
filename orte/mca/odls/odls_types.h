@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,8 +85,6 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* process msg command */
 #define ORTE_DAEMON_PROCESS_CMD             (orte_daemon_cmd_flag_t) 26
 
-/* process called "errmgr.abort" */
-#define ORTE_DAEMON_ABORT_CALLED            (orte_daemon_cmd_flag_t) 27
 /* process called "errmgr.abort_procs" */
 #define ORTE_DAEMON_ABORT_PROCS_CALLED      (orte_daemon_cmd_flag_t) 28
 
