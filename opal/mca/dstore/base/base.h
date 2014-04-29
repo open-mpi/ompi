@@ -11,8 +11,8 @@
 /** @file:
  */
 
-#ifndef MCA_DB_BASE_H
-#define MCA_DB_BASE_H
+#ifndef MCA_DSTORE_BASE_H
+#define MCA_DSTORE_BASE_H
 
 #include "opal_config.h"
 #include "opal/types.h"
