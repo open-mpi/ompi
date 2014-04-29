@@ -239,14 +239,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         }
         break;
            
-    case ORTE_DAEMON_ABORT_CALLED:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_cmd: received abort report",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-        orte_odls_base_default_report_abort(sender);
-        break;
-
     case ORTE_DAEMON_ABORT_PROCS_CALLED:
         if (orte_debug_daemons_flag) {
             opal_output(0, "%s orted_cmd: received abort_procs report",

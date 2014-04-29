@@ -1869,39 +1869,6 @@ CLEANUP:
     return rc;
 }
 
-void orte_odls_base_default_report_abort(orte_process_name_t *proc)
-{
-    orte_proc_t *child;
-    opal_buffer_t *buffer;
-    int rc, i;
-
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                             "%s GOT ABORT REPORT FOR %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(proc)));
-
-    /* find this child */
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-
-        if (proc->jobid == child->name.jobid &&
-            proc->vpid == child->name.vpid) { /* found it */
-            child->aborted = true;
-            /* send ack */
-            buffer = OBJ_NEW(opal_buffer_t);
-            if (0 > (rc = orte_rml.send_buffer_nb(proc, buffer,
-                                                  ORTE_RML_TAG_ABORT,
-                                                  orte_rml_send_callback, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-            }
-            break;
-        }
-    }
-}
-
 /*
  *  Wait for a callback indicating the child has completed.
  */
@@ -1912,6 +1879,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     int i;
     orte_job_t *jobdat;
     orte_proc_state_t state=ORTE_PROC_STATE_WAITPID_FIRED;
+    char *abortfile, *jobfam, *job, *vpidstr;
 
     /* find this child */
     for (i=0; i < orte_local_children->size; i++) {
@@ -1936,8 +1904,8 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     }
 
     opal_output_verbose(5, orte_odls_base_framework.framework_output,
-                         "%s odls:wait_local_proc child process %s pid %ld terminated",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        "%s odls:wait_local_proc child process %s pid %ld terminated",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&proc->name), (long)pid);
     
     /* if the child was previously flagged as dead, then just
@@ -1976,7 +1944,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     }
     
     /* determine the state of this process */
-    if(WIFEXITED(status)) {
+    if (WIFEXITED(status)) {
         /* set the exit status appropriately */
         proc->exit_code = WEXITSTATUS(status);
 
@@ -1985,19 +1953,56 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name), proc->exit_code));
 
-        if (proc->aborted) {
+        /* provide a default state */
+        state = ORTE_PROC_STATE_WAITPID_FIRED;
+
+        /* check for the abort marker */
+        if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(proc->name.jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            goto MOVEON;
+        }
+            
+        if (0 > asprintf(&job, "%d", ORTE_LOCAL_JOBID(proc->name.jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(jobfam);
+            goto MOVEON;
+        }
+            
+        if (ORTE_SUCCESS != orte_util_convert_vpid_to_string(&vpidstr, proc->name.vpid)) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(jobfam);
+            free(job);
+            goto MOVEON;
+        }
+            
+        abortfile = opal_os_path(false, orte_process_info.top_session_dir, jobfam, job, vpidstr, NULL );
+        if (NULL == abortfile ) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(jobfam);
+            free(job);
+            free(vpidstr);
+            goto MOVEON;
+        }
+        free(jobfam);
+        free(job);
+        free(vpidstr);
+
+        if (access(abortfile, F_OK)) {
+            unlink(abortfile);
+            proc->aborted = true;
             /* even though the process exited "normally", it happened
-             * via an orte_abort call, so we need to indicate this was
-             * an "abnormal" termination.
+             * via an orte_abort call
              */
             OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                                  "%s odls:waitpid_fired child %s died by call to abort",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
             state = ORTE_PROC_STATE_CALLED_ABORT;
+            free(abortfile);
             goto MOVEON;
         }
-        
+        free(abortfile);
+
         /* check to see if a sync was required and if it was received */
         if (proc->registered) {
             if (proc->deregistered || orte_allowed_exit_without_sync || 0 != proc->exit_code) {
