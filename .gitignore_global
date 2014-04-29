@@ -515,7 +515,6 @@ opal/util/keyval/keyval_lex.c
 opal/win32/*.obj
 orte/doxygen
 orte/include/stamp-h*
-orte/include/orte_config.h
 orte/include/orte/version.h
 orte/include/orte/frameworks.h
 orte/mca/dfs/vc70.pdb
