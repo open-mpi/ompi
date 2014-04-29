@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -188,14 +188,14 @@ int MPI_Type_create_darray(int size,
     /* set displacement and UB correctly.  Use struct instead of
        resized for same reason as subarray */
     {
-        ptrdiff_t displs[3];
+        ptrdiff_t displs[3], tmp_size;
         ompi_datatype_t *types[3];
-        int tmp_size, blength[3] = { 1, 1, 1};
+        int blength[3] = { 1, 1, 1};
 
         displs[1] = st_offsets[start_loop];
         tmp_size = 1;
         for (i = start_loop + step ; i != end_loop ; i += step) {
-            tmp_size *= gsize_array[i - step];
+            tmp_size *= (ptrdiff_t)gsize_array[i - step];
             displs[1] += tmp_size * st_offsets[i];
         }
 
