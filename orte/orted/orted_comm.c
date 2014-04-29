@@ -1127,8 +1127,6 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_SYNC_WANT_NIDMAP");
     case ORTE_DAEMON_TOP_CMD:
         return strdup("ORTE_DAEMON_TOP_CMD");
-    case ORTE_DAEMON_ABORT_CALLED:
-        return strdup("ORTE_DAEMON_ABORT_CALLED");
     case ORTE_DAEMON_ABORT_PROCS_CALLED:
         return strdup("ORTE_DAEMON_ABORT_PROCS_CALLED");
     default:
