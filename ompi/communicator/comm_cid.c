@@ -249,6 +249,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
         nextlocal_cid = mca_pml.pml_max_contextid;
+        flag = false;
         for (i=start; i < mca_pml.pml_max_contextid ; i++) {
             flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators,
                                                         i, comm);
@@ -267,7 +268,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
 
         if (mca_pml.pml_max_contextid == (unsigned int) nextcid) {
             /* at least one peer ran out of CIDs */
-            if (1 == flag) {
+            if (flag) {
                 opal_pointer_array_set_item(&ompi_mpi_communicators, nextlocal_cid, NULL);
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto release_and_return;
@@ -412,6 +413,7 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
     }
     OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
+    flag = false;
     context->nextlocal_cid = mca_pml.pml_max_contextid;
     for (i = context->start ; i < mca_pml.pml_max_contextid ; ++i) {
         flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators,
