@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,7 +14,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
@@ -248,8 +248,6 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         }
         OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
-        nextlocal_cid = mca_pml.pml_max_contextid;
-        flag = false;
         for (i=start; i < mca_pml.pml_max_contextid ; i++) {
             flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators,
                                                         i, comm);
@@ -262,18 +260,9 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         ret = (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
                            local_leader, remote_leader, send_first );
         if( OMPI_SUCCESS != ret ) {
-            return ret;
+            opal_pointer_array_set_item(&ompi_mpi_communicators, nextlocal_cid, NULL);
+            goto release_and_return;
         }
-
-        if (mca_pml.pml_max_contextid == (unsigned int) nextcid) {
-            /* at least one peer ran out of CIDs */
-            if (flag) {
-                opal_pointer_array_set_item(&ompi_mpi_communicators, nextlocal_cid, NULL);
-                ret = OMPI_ERR_OUT_OF_RESOURCE;
-                goto release_and_return;
-            }
-        }
-
         if (nextcid == nextlocal_cid) {
             response = 1; /* fine with me */
         }
@@ -294,7 +283,8 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         ret = (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
                            local_leader, remote_leader, send_first );
         if( OMPI_SUCCESS != ret ) {
-            return ret;
+            opal_pointer_array_set_item(&ompi_mpi_communicators, nextcid, NULL);
+            goto release_and_return;
         }
         if (1 == glresponse) {
             done = 1;             /* we are done */
@@ -314,9 +304,10 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     newcomm->c_contextid = nextcid;
     opal_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
 
+ release_and_return:
     ompi_comm_unregister_cid (comm->c_contextid);
 
-    return (MPI_SUCCESS);
+    return ret;
 }
 
 /* Non-blocking version of ompi_comm_nextcid */
@@ -410,8 +401,6 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
     }
     OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
-    flag = false;
-    context->nextlocal_cid = mca_pml.pml_max_contextid;
     for (i = context->start ; i < mca_pml.pml_max_contextid ; ++i) {
         flag = opal_pointer_array_test_and_set_item(&ompi_mpi_communicators,
                                                     i, context->comm);
@@ -431,15 +420,6 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
 
     if (OMPI_SUCCESS != ret) {
         return ret;
-    }
-
-    if ((unsigned int) context->nextlocal_cid == mca_pml.pml_max_contextid) {
-        /* at least one peer ran out of CIDs */
-        if (flag) {
-            opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
-        }
-
-        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* next we want to verify that the resulting commid is ok */
@@ -1459,7 +1439,7 @@ static int ompi_comm_allreduce_group (int *inbuf, int* outbuf,
     const int group_rank = ompi_group_rank (group);
     int tag = *((int *) local_leader);
     int *tmp1;
-    int i, rc;
+    int i, rc=OMPI_SUCCESS;
 
     /* basic recursive doubling allreduce on the group */
     peers_group[0] = group_rank ? ((group_rank - 1) >> 1) : MPI_PROC_NULL;
