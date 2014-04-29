@@ -14,9 +14,8 @@ script_dir=/u/mpiteam/scripts
 
 # Branches on which to build .gitignore and .hgignore
 if [ $# -eq 0 ] ; then
-    # We don't care about older than v1.6
-    #dirs="trunk branches/v1.8 branches/v1.6"
-    dirs="trunk"
+    # We don't care about older than v1.8
+    dirs="trunk branches/v1.8"
 else
     dirs=$@
 fi
@@ -32,7 +31,7 @@ export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
 
 doit() {
     cmd="$*"
-    out=`eval $*`
+    out=`eval $cmd`
     if test $? -ne 0; then
         echo command failed: $cmd
         echo directory: `pwd`
@@ -42,15 +41,16 @@ doit() {
 
 # Loop making ignore files
 for dir in $dirs; do
-    cd $ignore_top/$dir
+    cd $ignore_top/`basename $dir`
 
     doit svn up
+    doit svn revert .gitignore_global .hgignore_global
     doit svnversion .
     if test "`echo $out | egrep '[MSP:]'`"  != ""; then
         echo Not clean SVN checkout in `pwd` -- ignored
         exit 1
     fi
-    doit svn st
+    doit svn status
     if test -n "$out"; then
         echo Not clean SVN checkout in `pwd` -- ignored
         exit 1
@@ -59,5 +59,5 @@ for dir in $dirs; do
     doit ./contrib/git/build-gitignore.pl --output .gitignore_global
     doit ./contrib/hg/build-hgignore.pl --output .hgignore_global
 
-    doit svn commit -m .gitignore_global .hgignore_global -m '"Update git/hg ignore files"'
+    doit svn commit .gitignore_global .hgignore_global -m '"Update git/hg ignore files"'
 done
