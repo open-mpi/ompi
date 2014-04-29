@@ -302,7 +302,7 @@ int mca_common_cuda_stage_one_init(void)
     /* Use this flag to test cuMemcpyAsync vs cuMemcpy */
     mca_common_cuda_cumemcpy_async = 0;
     (void) mca_base_var_register("ompi", "mpi", "common_cuda", "cumemcpy_async",
-                                 "Set to 0 to force CUDA cuMemcpy instead of cuMemcpyAsync/cuEventRecord/cuEventSynchronize",
+                                 "Set to 0 to force CUDA cuMemcpy instead of cuMemcpyAsync/cuStreamSynchronize",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                  OPAL_INFO_LVL_5,
                                  MCA_BASE_VAR_SCOPE_READONLY,
@@ -579,7 +579,7 @@ static int mca_common_cuda_stage_three_init(void)
         cuda_event_ipc_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
         if (NULL == cuda_event_ipc_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
-                           true, errno, strerror(errno));
+                           true, ompi_process_info.nodename);
             return OMPI_ERROR;
         }
 
@@ -599,7 +599,7 @@ static int mca_common_cuda_stage_three_init(void)
             malloc(sizeof(struct mca_btl_base_descriptor_t *) * cuda_event_max);
         if (NULL == cuda_event_ipc_frag_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
-                           true, errno, strerror(errno));
+                           true, ompi_process_info.nodename);
             return OMPI_ERROR;
         }
     }
@@ -617,7 +617,7 @@ static int mca_common_cuda_stage_three_init(void)
         cuda_event_dtoh_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
         if (NULL == cuda_event_dtoh_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
-                           true, errno, strerror(errno));
+                           true, ompi_process_info.nodename);
             return OMPI_ERROR;
         }
 
@@ -637,7 +637,7 @@ static int mca_common_cuda_stage_three_init(void)
             malloc(sizeof(struct mca_btl_base_descriptor_t *) * cuda_event_max);
         if (NULL == cuda_event_dtoh_frag_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
-                           true, errno, strerror(errno));
+                           true, ompi_process_info.nodename);
             return OMPI_ERROR;
         }
 
@@ -652,7 +652,7 @@ static int mca_common_cuda_stage_three_init(void)
         cuda_event_htod_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
         if (NULL == cuda_event_htod_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
-                           true, errno, strerror(errno));
+                           true, ompi_process_info.nodename);
             return OMPI_ERROR;
         }
 
@@ -672,7 +672,7 @@ static int mca_common_cuda_stage_three_init(void)
             malloc(sizeof(struct mca_btl_base_descriptor_t *) * cuda_event_max);
         if (NULL == cuda_event_htod_frag_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
-                           true, errno, strerror(errno));
+                           true, ompi_process_info.nodename);
             return OMPI_ERROR;
         }
     }
@@ -1656,7 +1656,7 @@ static int mca_common_cuda_cu_memcpy(void *dest, const void *src, size_t size)
          result = cuFunc.cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
          if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
              opal_show_help("help-mpi-common-cuda.txt", "cuMemcpy failed",
-                            true, result);
+                            true, ompi_process_info.nodename, result);
              return OMPI_ERROR;
          }
     }
