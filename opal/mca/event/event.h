@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -32,14 +33,6 @@
 
 BEGIN_C_DECLS
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-typedef unsigned char u_char;
-typedef unsigned short u_short;
-#endif
-
 /* set the number of event priority levels */
 #define OPAL_EVENT_NUM_PRI   8
 
@@ -55,15 +48,6 @@ typedef unsigned short u_short;
 #define OPAL_EVENT_SIGNAL(ev)	opal_event_get_signal(ev)
 
 #define OPAL_TIMEOUT_DEFAULT	{1, 0}
-
-/* This is to prevent event library from picking up the win32_ops
-   since this will be picked up over select(). By using select, we can
-   pretty much use the OOB and PTL as is. Otherwise, there would have
-   to be a lot of magic to be done to get this to work */
-#if defined(__WINDOWS__)
-/*extern const eventop opal_win32ops;*/
-#endif  /* defined(__WINDOWS__) */
-
 
 /**
  * Structure for event components.

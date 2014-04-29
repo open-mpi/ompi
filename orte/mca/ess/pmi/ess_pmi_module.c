@@ -47,11 +47,11 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
 #include "opal/mca/common/pmi/common_pmi.h"
 
-#include "opal/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
@@ -96,6 +96,7 @@ static int rte_init(void)
     orte_jobid_t jobid;
     char *rmluri;
     orte_process_name_t ldr;
+    opal_value_t kv;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -132,6 +133,7 @@ static int rte_init(void)
             goto error;
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
+        opal_output(0, "GETTING RANK");
         /* get our rank from PMI */
         if (!mca_common_pmi_rank(&i)) {
             error = "could not get PMI rank";
@@ -343,11 +345,17 @@ static int rte_init(void)
         /* store the name of the local leader */
         ldr.jobid = ORTE_PROC_MY_NAME->jobid;
         ldr.vpid = ranks[0];
-        if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME, OPAL_SCOPE_INTERNAL,
-                                                 OPAL_DB_LOCALLDR, (opal_identifier_t*)&ldr, OPAL_ID_T))) {
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_DSTORE_LOCALLDR);
+        kv.type = OPAL_ID_T;
+        kv.data.uint64 = *(opal_identifier_t*)&ldr;
+        if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
             error = "storing local leader";
+            OBJ_DESTRUCT(&kv);
             goto error;
         }
+        OBJ_DESTRUCT(&kv);
         free(ranks);
 
         /* setup process binding */
@@ -368,40 +376,66 @@ static int rte_init(void)
     /* construct the PMI RTE string */
     rmluri = orte_rml.get_contact_info();
 
-    /* store our info as marked for distribution to both our peers and non-peers
-     * as there is no daemons available for routed communication
-     */
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_SCOPE_GLOBAL, ORTE_DB_RMLURI,
-                                             rmluri, OPAL_STRING))) {
+   OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(ORTE_DB_RMLURI);
+    kv.type = OPAL_STRING;
+    kv.data.string = strdup(rmluri);
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store uri";
+        OBJ_DESTRUCT(&kv);
         goto error;
     }
+    OBJ_DESTRUCT(&kv);
     free(rmluri);
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_SCOPE_GLOBAL, ORTE_DB_HOSTNAME,
-                                             orte_process_info.nodename, OPAL_STRING))) {
+
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(ORTE_DB_HOSTNAME);
+    kv.type = OPAL_STRING;
+    kv.data.string = strdup(orte_process_info.nodename);
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store hostname";
+        OBJ_DESTRUCT(&kv);
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_SCOPE_GLOBAL, OPAL_DB_CPUSET,
-                                             orte_process_info.cpuset, OPAL_STRING))) {
+    OBJ_DESTRUCT(&kv);
+
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_CPUSET);
+    kv.type = OPAL_STRING;
+    kv.data.string = strdup(orte_process_info.cpuset);
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store cpuset";
+        OBJ_DESTRUCT(&kv);
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_SCOPE_GLOBAL, OPAL_DB_LOCALRANK,
-                                             &orte_process_info.my_local_rank, ORTE_LOCAL_RANK))) {
+    OBJ_DESTRUCT(&kv);
+
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_LOCALRANK);
+    kv.type = OPAL_UINT16;
+    kv.data.uint16 = orte_process_info.my_local_rank;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store local rank";
+        OBJ_DESTRUCT(&kv);
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                             OPAL_SCOPE_GLOBAL, ORTE_DB_NODERANK,
-                                             &orte_process_info.my_node_rank, ORTE_NODE_RANK))) {
+    OBJ_DESTRUCT(&kv);
+
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(ORTE_DB_NODERANK);
+    kv.type = OPAL_UINT16;
+    kv.data.uint16 = orte_process_info.my_node_rank;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store node rank";
+        OBJ_DESTRUCT(&kv);
         goto error;
     }
+    OBJ_DESTRUCT(&kv);
 
     /* if we are an ORTE app - and not an MPI app - then
      * we need to exchange our connection info here.

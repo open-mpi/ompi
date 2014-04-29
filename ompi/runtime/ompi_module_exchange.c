@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,27 +87,6 @@ ompi_modex_recv(const mca_base_component_t *component,
     return rc;
 }
 
-/* return a pointer to the data, but don't create a new copy of it */
-int ompi_modex_recv_pointer(const mca_base_component_t *component,
-                            const ompi_proc_t *proc,
-                            void **buffer, opal_data_type_t type)
-{
-    int rc;
-    char *name = mca_base_component_to_string(component);
-
-    /* set defaults */
-    *buffer = NULL;
-
-    if (NULL == name) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    
-    /* the fetch_poointer API returns a pointer to the data */
-    rc = ompi_rte_db_fetch_pointer(proc, name, buffer, type);
-    free(name);
-
-    return rc;
-}
 
 int
 ompi_modex_send_string(const char* key,
@@ -149,22 +129,6 @@ ompi_modex_recv_string(const char* key,
      * wanted was the data inside it
      */
     free(boptr);
-    return rc;
-}
-
-/* return a pointer to the data, but don't create a new copy of it */
-int ompi_modex_recv_string_pointer(const char* key,
-                                   const ompi_proc_t *source_proc,
-                                   void **buffer, opal_data_type_t type)
-{
-    int rc;
-
-    /* set defaults */
-    *buffer = NULL;
-
-    /* the fetch_pointer API returns a pointer to the data */
-    rc = ompi_rte_db_fetch_pointer(source_proc, key, (void**)buffer, type);
-
     return rc;
 }
 

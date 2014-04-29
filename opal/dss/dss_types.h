@@ -96,33 +96,10 @@ typedef uint64_t opal_identifier_t;
 #define OPAL_VALUE2_GREATER  -1
 #define OPAL_EQUAL            0
 
-/* define a flag to indicate the scope of data being
- * stored in the database. The following options are supported:
- *
- * PEER:     data to be shared with our peers
- * NON_PEER: data to be shared only with non-peer
- *           processes (i.e., processes from other jobs)
- * GLOBAL:   data to be shared with all processes
- * INTERNAL: data is to be internally stored in this app
- * ALL:      any of the above
- *
- * REFER:    indicates the value is stored by reference
- */
-typedef uint8_t opal_scope_t;
-#define OPAL_SCOPE_UNDEF    0x00
-#define OPAL_SCOPE_PEER     0x01
-#define OPAL_SCOPE_NON_PEER 0x02
-#define OPAL_SCOPE_GLOBAL   0x03
-#define OPAL_SCOPE_INTERNAL 0x08
-#define OPAL_SCOPE_ALL      0x0f
-#define OPAL_SCOPE_REFER    0x10
-#define OPAL_DATA_SCOPE_T OPAL_UINT8
-
 /* Data value object */
 typedef struct {
     opal_list_item_t super;             /* required for this to be on lists */
     char *key;                          /* key string */
-    opal_scope_t scope;
     opal_data_type_t type;              /* the type of value stored */
     union {
         uint8_t byte;

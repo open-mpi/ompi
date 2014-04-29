@@ -2,8 +2,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- *
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -99,14 +98,6 @@ OMPI_DECLSPEC int ompi_rte_db_store(const ompi_process_name_t *nm, const char* k
 OMPI_DECLSPEC int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                                     const char *key,
                                     void **data, opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
-                                            const char *key,
-                                            void **data, opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch_multiple(const struct ompi_proc_t *proc,
-                                             const char *key,
-                                             opal_list_t *kvs);
-OMPI_DECLSPEC int ompi_rte_db_remove(const ompi_process_name_t *nm,
-                                     const char *key);
 #define OMPI_DB_HOSTNAME ORTE_DB_HOSTNAME
 #define OMPI_DB_LOCALITY ORTE_DB_LOCALITY
 #define OMPI_DB_GLOBAL_RANK ORTE_DB_GLOBAL_RANK

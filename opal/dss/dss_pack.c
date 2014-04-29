@@ -688,9 +688,6 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
         if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &ptr[i]->key, 1, OPAL_STRING))) {
             return ret;
         }
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_data_type(buffer, &ptr[i]->scope, 1, OPAL_DATA_SCOPE_T))) {
-            return ret;
-        }
         if (OPAL_SUCCESS != (ret = opal_dss_pack_data_type(buffer, &ptr[i]->type, 1, OPAL_DATA_TYPE))) {
             return ret;
         }

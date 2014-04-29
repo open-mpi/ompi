@@ -33,7 +33,7 @@
 #endif
 
 #include "opal/mca/event/event.h"
-#include "opal/mca/db/base/base.h"
+#include "opal/mca/dstore/base/base.h"
 #include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
@@ -74,6 +74,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
     char *error = NULL;
+    opal_value_t kv;
 
     /*
      * stdout/stderr buffering
@@ -163,19 +164,33 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
     
-    /* database */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
+    /* data store */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "opal_db_base_open";
+        error = "opal_dstore_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = opal_db_base_select(db_restrict_local))) {
+    if (ORTE_SUCCESS != (ret = opal_dstore_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_db_base_select";
+        error = "orte_dstore_base_select";
         goto error;
     }
-    /* set our id */
-    opal_db.set_id((opal_identifier_t*)ORTE_PROC_MY_NAME);
+    /* create the handles */
+    if (0 > (opal_dstore_peer = opal_dstore.open("PEER"))) {
+        error = "opal dstore global";
+        ret = ORTE_ERR_FATAL;
+        goto error;
+    }
+    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
+        error = "opal dstore internal";
+        ret = ORTE_ERR_FATAL;
+        goto error;
+    }
+    if (0 > (opal_dstore_nonpeer = opal_dstore.open("NONPEER"))) {
+        error = "opal dstore nonpeer";
+        ret = ORTE_ERR_FATAL;
+        goto error;
+    }
 
     /*
      * Group communications
@@ -242,24 +257,34 @@ int orte_ess_base_app_setup(bool db_restrict_local)
                                          "output-", NULL, NULL);
 
         /* store the session directory location in the database */
-        if (OPAL_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                 OPAL_SCOPE_INTERNAL,
-                                                 OPAL_DB_JOB_SDIR,
-                                                 orte_process_info.job_session_dir, OPAL_STRING))) {
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_DSTORE_JOB_SDIR);
+        kv.type = OPAL_STRING;
+        kv.data.string = strdup(orte_process_info.job_session_dir);
+        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                     &kv))) {
             ORTE_ERROR_LOG(ret);
-            error = "store job session dir";
+            OBJ_DESTRUCT(&kv);
+            error = "opal dstore store";
             goto error;
         }
-        if (OPAL_SUCCESS != (ret = opal_db.store((opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                 OPAL_SCOPE_INTERNAL,
-                                                 OPAL_DB_MY_SDIR,
-                                                 orte_process_info.proc_session_dir, OPAL_STRING))) {
+        OBJ_DESTRUCT(&kv);
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_DSTORE_MY_SDIR);
+        kv.type = OPAL_STRING;
+        kv.data.string = strdup(orte_process_info.proc_session_dir);
+        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                     &kv))) {
             ORTE_ERROR_LOG(ret);
-            error = "store job session dir";
+            OBJ_DESTRUCT(&kv);
+            error = "opal dstore store";
             goto error;
         }
+        OBJ_DESTRUCT(&kv);
     }
-    
+
     /* setup the routed info  */
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -352,7 +377,7 @@ int orte_ess_base_app_finalize(void)
 
     /* now can close the rml and its friendly group comm */
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
-    (void) mca_base_framework_close(&opal_db_base_framework);
+    (void) mca_base_framework_close(&opal_dstore_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
 

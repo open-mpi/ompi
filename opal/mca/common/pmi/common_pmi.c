@@ -5,7 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,6 +16,8 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 #include "opal/types.h"
+
+#include "opal/util/output.h"
 
 #include <string.h>
 #include <pmi.h>
@@ -37,6 +39,8 @@ bool mca_common_pmi_init (void) {
 #if WANT_PMI2_SUPPORT
     {
         int spawned, size, rank, appnum;
+
+        opal_output(0, "INIT PMI");
 
         /* if we can't startup PMI, we can't be used */
         if (PMI2_Initialized ()) {
