@@ -27,6 +27,7 @@ static void process_open(int fd, short args, void *cbdata)
     orte_db_request_t *req = (orte_db_request_t*)cbdata;
     orte_db_handle_t *hdl;
     orte_db_base_module_t *mod;
+    orte_db_base_active_component_t *active;
     orte_db_base_component_t *component;
     int i, index;
     char **cmps = NULL;
@@ -45,7 +46,8 @@ static void process_open(int fd, short args, void *cbdata)
     /* cycle thru the available components until one saids
      * it can create a handle for these properties
      */
-    OPAL_LIST_FOREACH(component, &orte_db_base.actives, orte_db_base_component_t) {
+    OPAL_LIST_FOREACH(active, &orte_db_base.actives, orte_db_base_active_component_t) {
+        component = active->component;
         found = true;
         if (NULL != cmps) {
             found = false;
