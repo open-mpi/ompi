@@ -52,7 +52,7 @@ int orte_ess_base_proc_binding(void)
     struct hwloc_topology_support *support;
     char *map;
     int ret;
-    char *error;
+    char *error=NULL;
     hwloc_cpuset_t mycpus;
     opal_value_t kv;
 
