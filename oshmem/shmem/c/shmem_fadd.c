@@ -54,9 +54,13 @@
 #pragma weak shmem_int_fadd = pshmem_int_fadd
 #pragma weak shmem_long_fadd = pshmem_long_fadd
 #pragma weak shmem_longlong_fadd = pshmem_longlong_fadd
+#pragma weak shmem_int32_fadd = pshmem_int32_fadd
+#pragma weak shmem_int64_fadd = pshmem_int64_fadd
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 SHMEM_TYPE_FADD(_int, int)
 SHMEM_TYPE_FADD(_long, long)
 SHMEM_TYPE_FADD(_longlong, long long)
+SHMEM_TYPE_FADD(_int32, int32_t)
+SHMEM_TYPE_FADD(_int64, int64_t)

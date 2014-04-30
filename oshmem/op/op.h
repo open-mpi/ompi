@@ -33,6 +33,9 @@ enum {
     OSHMEM_OP_TYPE_INT,         /** C integer: int */
     OSHMEM_OP_TYPE_LONG,        /** C integer: long */
     OSHMEM_OP_TYPE_LLONG,       /** C integer: long long */
+    OSHMEM_OP_TYPE_INT16_T,     /** C integer: int16_t */
+    OSHMEM_OP_TYPE_INT32_T,     /** C integer: int32_t */
+    OSHMEM_OP_TYPE_INT64_T,     /** C integer: int64_t */
     
     OSHMEM_OP_TYPE_FLOAT,       /** Floating point: float */
     OSHMEM_OP_TYPE_DOUBLE,      /** Floating point: double */
@@ -95,6 +98,9 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_longlong;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_fint8;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_int64;
 
 /* Bitwise OR */
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_short;
@@ -104,6 +110,9 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_longlong;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_fint8;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_int64;
 
 /* Bitwise XOR */
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_short;
@@ -113,6 +122,9 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_longlong;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_fint8;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_int64;
 
 /* MAX */
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_short;
@@ -128,6 +140,9 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_freal4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_freal8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_freal16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_int64;
 
 /* MIN */
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_short;
@@ -143,6 +158,9 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_freal4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_freal8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_freal16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_int64;
 
 /* SUM */
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_short;
@@ -160,6 +178,9 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_freal4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_freal8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_freal16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_int64;
 
 /* PROD */
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_short;
@@ -177,6 +198,9 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_freal4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_freal8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_freal16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_int16;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_int32;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_int64;
 
 /**
  * Initialize the op interface.

@@ -53,10 +53,14 @@
 #pragma weak shmem_int_cswap = pshmem_int_cswap
 #pragma weak shmem_long_cswap = pshmem_long_cswap
 #pragma weak shmem_longlong_cswap = pshmem_longlong_cswap
+#pragma weak shmem_int32_cswap = pshmem_int32_cswap
+#pragma weak shmem_int64_cswap = pshmem_int64_cswap
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 SHMEM_TYPE_CSWAP(_int, int)
 SHMEM_TYPE_CSWAP(_long, long)
 SHMEM_TYPE_CSWAP(_longlong, long long)
+SHMEM_TYPE_CSWAP(_int32, int32_t)
+SHMEM_TYPE_CSWAP(_int64, int64_t)
 

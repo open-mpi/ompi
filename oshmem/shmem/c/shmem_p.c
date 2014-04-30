@@ -54,6 +54,9 @@
 #pragma weak shmem_float_p = pshmem_float_p
 #pragma weak shmem_double_p = pshmem_double_p
 #pragma weak shmem_longdouble_p = pshmem_longdouble_p
+#pragma weak shmem_int16_p = pshmem_int16_p
+#pragma weak shmem_int32_p = pshmem_int32_p
+#pragma weak shmem_int64_p = pshmem_int64_p
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -65,3 +68,6 @@ SHMEM_TYPE_P(_longlong, long long)
 SHMEM_TYPE_P(_float, float)
 SHMEM_TYPE_P(_double, double)
 SHMEM_TYPE_P(_longdouble, long double)
+SHMEM_TYPE_P(_int16, int16_t)
+SHMEM_TYPE_P(_int32, int32_t)
+SHMEM_TYPE_P(_int64, int64_t)
