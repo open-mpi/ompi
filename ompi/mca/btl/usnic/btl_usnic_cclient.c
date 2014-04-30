@@ -18,7 +18,7 @@
 #include "opal_stdint.h"
 #include "opal/threads/mutex.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/db/db.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/util/output.h"
 
 #include "ompi/proc/proc.h"
@@ -81,14 +81,32 @@ int ompi_btl_usnic_connectivity_client_init(void)
 
     /* Get the name of the agent */
     int ret;
-    ompi_process_name_t *ptr;
-    ptr = &agent_name;
-    ret = ompi_rte_db_fetch(ompi_proc_local_proc, OPAL_DB_LOCALLDR, (void**) &ptr, OPAL_ID_T);
+    opal_list_t vals;
+    opal_value_t *kv;
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    ret = opal_dstore.fetch(opal_dstore_internal,
+                            (opal_identifier_t*) &ompi_proc_local_proc->proc_name,
+                            OPAL_DSTORE_LOCALLDR, &vals);
     if (OMPI_SUCCESS != ret) {
         OMPI_ERROR_LOG(ret);
-        BTL_ERROR(("usNIC connectivity client unable to db_fetch local leader"));
+        BTL_ERROR(("usNIC connectivity client unable to db_fetch local leader (1)"));
+        OPAL_LIST_DESTRUCT(&vals);
         return ret;
     }
+
+    kv = (opal_value_t*) opal_list_get_first(&vals);
+    if (NULL == kv) {
+        ret = OMPI_ERR_NOT_FOUND;
+        OMPI_ERROR_LOG(ret);
+        BTL_ERROR(("usNIC connectivity client unable to db_fetch local leader (2)"));
+        OPAL_LIST_DESTRUCT(&vals);
+        return ret;
+    }
+
+    /* Note that it is guaranteed that sizeof(ompi_process_name_t) ==
+       sizeof(uint64_t) */
+    memcpy(&agent_name, &kv->data.uint64, sizeof(agent_name));
+    OPAL_LIST_DESTRUCT(&vals);
 
     initialized = true;
     opal_output_verbose(20, USNIC_OUT,
