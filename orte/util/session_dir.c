@@ -677,11 +677,20 @@ CLEANUP:
 static bool 
 orte_dir_check_file(const char *root, const char *path)
 {
+    struct stat st;
+    char *fullpath;
+
     /*
      * Keep:
-     *  - files starting with "output-"
+     *  - non-zero files starting with "output-"
      */
     if (0 == strncmp(path, "output-", strlen("output-"))) {
+        fullpath = opal_os_path(false, &fullpath, root, path, NULL);
+        stat(fullpath, &st);
+        free(fullpath);
+        if (0 == st.st_size) {
+            return true;
+        }
         return false;
     }
 
@@ -691,14 +700,23 @@ orte_dir_check_file(const char *root, const char *path)
 static bool 
 orte_dir_check_file_output(const char *root, const char *path)
 {
+    struct stat st;
+    char *fullpath;
+
     /*
      * Keep:
-     *  - files starting with "output-"
+     *  - non-zero files starting with "output-"
      */
-    if( 0 == strncmp(path, "output-", strlen("output-"))) {
+    if (0 == strncmp(path, "output-", strlen("output-"))) {
+        fullpath = opal_os_path(false, &fullpath, root, path, NULL);
+        stat(fullpath, &st);
+        free(fullpath);
+        if (0 == st.st_size) {
+            return true;
+        }
         return false;
     }
-    
+
     return true;
 }
 
