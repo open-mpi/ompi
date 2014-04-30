@@ -83,9 +83,11 @@ static orte_db_base_module_t *component_create(opal_list_t *props)
 
     /* if the props include a filename, then use it */
     found = false;
-    OPAL_LIST_FOREACH(kv, props, opal_value_t) {
-        if (0 == strcmp(kv->key, "printfile")) {
-            file = kv->data.string;
+    if (NULL != props) {
+        OPAL_LIST_FOREACH(kv, props, opal_value_t) {
+            if (0 == strcmp(kv->key, "printfile")) {
+                file = kv->data.string;
+            }
         }
     }
     if (!found) {
@@ -94,6 +96,7 @@ static orte_db_base_module_t *component_create(opal_list_t *props)
             file = filename;
         } else {
             /* nothing for us to do */
+            opal_output(0, "PRINT RETURNING NULL");
             return NULL;
         }
     }
