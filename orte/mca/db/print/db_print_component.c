@@ -96,7 +96,6 @@ static orte_db_base_module_t *component_create(opal_list_t *props)
             file = filename;
         } else {
             /* nothing for us to do */
-            opal_output(0, "PRINT RETURNING NULL");
             return NULL;
         }
     }
