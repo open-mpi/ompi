@@ -609,12 +609,9 @@ syntax: glob
 ./opal/mca/crs/dmtcp/Makefile.in
 ./opal/mca/crs/none/Makefile.in
 ./opal/mca/crs/self/Makefile.in
-./opal/mca/db/Makefile.in
-./opal/mca/db/hash/Makefile.in
-./opal/mca/db/pmi/Makefile.in
-./opal/mca/db/postgres/Makefile.in
-./opal/mca/db/print/Makefile.in
-./opal/mca/db/sqlite/Makefile.in
+./opal/mca/dstore/Makefile.in
+./opal/mca/dstore/hash/Makefile.in
+./opal/mca/dstore/pmi/Makefile.in
 ./opal/mca/event/Makefile.in
 ./opal/mca/event/external/Makefile.in
 ./opal/mca/event/libevent2021/Makefile.in
@@ -718,6 +715,10 @@ syntax: glob
 ./orte/include/stamp-h*
 ./orte/include/orte/version.h
 ./orte/include/orte/frameworks.h
+./orte/mca/db/Makefile.in
+./orte/mca/db/postgres/Makefile.in
+./orte/mca/db/print/Makefile.in
+./orte/mca/db/sqlite/Makefile.in
 ./orte/mca/dfs/Makefile.in
 ./orte/mca/dfs/vc70.pdb
 ./orte/mca/dfs/app/Makefile.in
@@ -1017,6 +1018,7 @@ syntax: glob
 ./oshmem/shmem/fortran/Makefile.in
 ./oshmem/shmem/fortran/libshmem_fortran.la
 ./oshmem/shmem/fortran/profile/Makefile.in
+./oshmem/shmem/fortran/profile/pshmem_*_f.c
 ./oshmem/tools/oshmem_info/oshmem_info
 ./oshmem/tools/oshmem_info/oshmem_info.1
 ./oshmem/tools/oshmem_info/Makefile.in

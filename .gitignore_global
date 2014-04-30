@@ -702,6 +702,7 @@ oshmem/mca/sshmem/base/static-components.h
 oshmem/shmem/c/profile/p*.c
 oshmem/shmem/c/profile/*.c
 oshmem/shmem/fortran/libshmem_fortran.la
+oshmem/shmem/fortran/profile/pshmem_*_f.c
 oshmem/tools/oshmem_info/oshmem_info
 oshmem/tools/oshmem_info/oshmem_info.1
 oshmem/tools/wrappers/shmemcc-wrapper-data.txt
