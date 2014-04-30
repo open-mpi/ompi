@@ -383,6 +383,8 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
             return NULL;
         }
     }
+    /* no longer need this file descriptor. close it */
+    close (fd);
 
     /* takes us to the top of the control structure */
 
