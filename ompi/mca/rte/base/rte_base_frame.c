@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -12,6 +13,7 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
+#include "opal_stdint.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -36,7 +38,13 @@ static int ompi_rte_base_close(void)
 static int ompi_rte_base_open(mca_base_open_flag_t flags)
 {
     /* Open up all available components */
-    return mca_base_framework_components_open(&ompi_rte_base_framework, flags);
+    int ret = mca_base_framework_components_open(&ompi_rte_base_framework, flags);
+
+    /* Sanity check.  Many things will break if this is not true
+       (e.g., opal dstore needs this to be true). */
+    assert(sizeof(ompi_process_name_t) == sizeof(uint64_t));
+
+    return ret;
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, rte, "OMPI Run-Time Environment Interface", NULL,
