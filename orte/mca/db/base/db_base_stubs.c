@@ -110,7 +110,7 @@ static void process_close(int fd, short args, void *cbdata)
 {
     orte_db_request_t *req = (orte_db_request_t*)cbdata;
     orte_db_handle_t *hdl;
-    int rc;
+    int rc=ORTE_SUCCESS;
 
     /* get the handle object */
     if (NULL == (hdl = (orte_db_handle_t*)opal_pointer_array_get_item(&orte_db_base.handles, req->dbhandle))) {
@@ -123,7 +123,6 @@ static void process_close(int fd, short args, void *cbdata)
     }
     if (NULL != hdl->module->finalize) {
         hdl->module->finalize((struct orte_db_base_module_t*)hdl->module);
-        rc = ORTE_SUCCESS;
     }
 
  found:
@@ -162,7 +161,7 @@ static void process_store(int fd, short args, void *cbdata)
 {
     orte_db_request_t *req = (orte_db_request_t*)cbdata;
     orte_db_handle_t *hdl;
-    int rc;
+    int rc=ORTE_SUCCESS;
 
     /* get the handle object */
     if (NULL == (hdl = (orte_db_handle_t*)opal_pointer_array_get_item(&orte_db_base.handles, req->dbhandle))) {
@@ -213,7 +212,7 @@ static void process_commit(int fd, short args, void *cbdata)
 {
     orte_db_request_t *req = (orte_db_request_t*)cbdata;
     orte_db_handle_t *hdl;
-    int rc;
+    int rc=ORTE_SUCCESS;
 
     /* get the handle object */
     if (NULL == (hdl = (orte_db_handle_t*)opal_pointer_array_get_item(&orte_db_base.handles, req->dbhandle))) {
@@ -226,7 +225,6 @@ static void process_commit(int fd, short args, void *cbdata)
     }
     if (NULL != hdl->module->commit) {
         hdl->module->commit((struct orte_db_base_module_t*)hdl->module);
-        rc = ORTE_SUCCESS;
     }
 
  found:
