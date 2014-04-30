@@ -194,9 +194,15 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
 
             /* retrieve the binding for the other proc */
             OBJ_CONSTRUCT(&myvals, opal_list_t);
-            if (OMPI_SUCCESS != opal_dstore.fetch(opal_dstore_internal,
-                                                  (opal_identifier_t*)&proc->proc_name,
-                                                  OPAL_DSTORE_CPUSET, &myvals)) {
+            if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
+                                                         (opal_identifier_t*)&proc->proc_name,
+                                                         OPAL_DSTORE_CPUSET, &myvals))) {
+                /* check the nonpeer data in case of comm_spawn */
+                ret = opal_dstore.fetch(opal_dstore_nonpeer,
+                                        (opal_identifier_t*)&proc->proc_name,
+                                        OPAL_DSTORE_CPUSET, &myvals);
+            }
+            if (OMPI_SUCCESS != ret) {
                 /* we don't know their cpuset, so nothing more we can say */
                 locality = OPAL_PROC_ON_NODE;
             } else {

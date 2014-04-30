@@ -88,6 +88,9 @@ int opal_dstore_base_store(int dstorehandle,
         return OPAL_ERR_NOT_FOUND;
     }
 
+    opal_output_verbose(1, opal_dstore_base_framework.framework_output,
+                        "storing data in %s dstore", (NULL == hdl->name) ? "NULL" : hdl->name);
+
     return hdl->module->store((struct opal_dstore_base_module_t*)hdl->module, id, kv);
 }
 
@@ -102,6 +105,8 @@ void opal_dstore_base_commit(int dstorehandle,
     }
 
     if (NULL != hdl->module->commit) {
+        opal_output_verbose(1, opal_dstore_base_framework.framework_output,
+                            "committing data in %s dstore", (NULL == hdl->name) ? "NULL" : hdl->name);
         hdl->module->commit((struct opal_dstore_base_module_t*)hdl->module, id);
     }
 }
@@ -119,6 +124,9 @@ int opal_dstore_base_fetch(int dstorehandle,
         return OPAL_ERR_NOT_FOUND;
     }
 
+    opal_output_verbose(1, opal_dstore_base_framework.framework_output,
+                        "fetching data from %s dstore", (NULL == hdl->name) ? "NULL" : hdl->name);
+
     return hdl->module->fetch((struct opal_dstore_base_module_t*)hdl->module, id, key, kvs);
 }
 
@@ -132,6 +140,9 @@ int opal_dstore_base_remove_data(int dstorehandle,
         OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
         return OPAL_ERR_NOT_FOUND;
     }
+
+    opal_output_verbose(1, opal_dstore_base_framework.framework_output,
+                        "removing data from %s dstore", (NULL == hdl->name) ? "NULL" : hdl->name);
 
     return hdl->module->remove((struct opal_dstore_base_module_t*)hdl->module, id, key);
 }

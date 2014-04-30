@@ -179,6 +179,9 @@ static int fetch(struct opal_dstore_base_module_t *imod,
                 OPAL_ERROR_LOG(rc);
                 return rc;
             }
+            OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
+                                 "dstore:hash:fetch: adding data for key %s on proc %" PRIu64 "",
+                                 (NULL == kv->key) ? "NULL" : kv->key, id));
             /* add it to the output list */
             opal_list_append(kvs, &knew->super);
         }
