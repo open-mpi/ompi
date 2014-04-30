@@ -1975,7 +1975,9 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
             goto MOVEON;
         }
             
-        abortfile = opal_os_path(false, orte_process_info.top_session_dir, jobfam, job, vpidstr, NULL );
+        abortfile = opal_os_path(false, orte_process_info.tmpdir_base,
+                                 orte_process_info.top_session_dir,
+                                 jobfam, job, vpidstr, "aborted", NULL);
         if (NULL == abortfile ) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             free(jobfam);
@@ -1987,7 +1989,12 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
         free(job);
         free(vpidstr);
 
-        if (access(abortfile, F_OK)) {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                             "%s odls:waitpid_fired checking abort file %s for child %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abortfile,
+                             ORTE_NAME_PRINT(&proc->name)));
+
+        if (0 == access(abortfile, F_OK)) {
             unlink(abortfile);
             proc->aborted = true;
             /* even though the process exited "normally", it happened
