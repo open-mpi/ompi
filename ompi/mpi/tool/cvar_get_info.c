@@ -63,6 +63,10 @@ int MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosit
         if (NULL != bind) {
             *bind = var->mbv_bind;
         }
+
+        if (NULL != verbosity) {
+            *verbosity = var->mbv_info_lvl;
+        }
     } while (0);
 
     mpit_unlock ();
