@@ -206,7 +206,7 @@ typedef int8_t orte_node_state_t;
 #define ORTE_NODE_STATE_REBOOT        4  // Node is rebooting
 #define ORTE_NODE_STATE_DO_NOT_USE    5  // Node is up, but not available for use for the next mapping
 #define ORTE_NODE_STATE_NOT_INCLUDED  6  // Node is up, but not part of the node pool for jobs
-
+#define ORTE_NODE_STATE_ADDED         7  // Node was dynamically added to pool
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own

@@ -395,3 +395,27 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
         return "UNKNOWN STATE!";
     }
 }
+
+const char *orte_node_state_to_str(orte_node_state_t state)
+{
+    switch(state) {
+    case ORTE_NODE_STATE_UNDEF:
+        return "UNDEF";
+    case ORTE_NODE_STATE_UNKNOWN:
+        return "UNKNOWN";
+    case ORTE_NODE_STATE_DOWN:
+        return "DOWN";
+    case ORTE_NODE_STATE_UP:
+        return "UP";
+    case ORTE_NODE_STATE_REBOOT:
+        return "REBOOT";
+    case ORTE_NODE_STATE_DO_NOT_USE:
+        return "DO_NOT_USE";
+    case ORTE_NODE_STATE_NOT_INCLUDED:
+        return "NOT_INCLUDED";
+    case ORTE_NODE_STATE_ADDED:
+        return "ADDED";
+   default:
+        return "UNKNOWN STATE!";
+    }
+}

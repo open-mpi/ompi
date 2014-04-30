@@ -1342,6 +1342,52 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
+    map = daemons->map;
+
+    /* if this is a dynamic spawn, then we don't make any changes to
+     * the virtual machine unless specifically requested to do so
+     */
+    if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
+        OBJ_CONSTRUCT(&nodes, opal_list_t);
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            /* only add in nodes marked as "added" */
+            if (ORTE_NODE_STATE_ADDED != node->state) {
+                OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
+                                     "%s plm_base:setup_vm NODE %s WAS NOT ADDED",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
+                continue;
+            }
+            OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
+                                 "%s plm_base:setup_vm ADDING NODE %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
+            /* retain a copy for our use in case the item gets
+             * destructed along the way
+             */
+            OBJ_RETAIN(node);
+            opal_list_append(&nodes, &node->super);
+            /* reset the state so it can be used for mapping */
+            node->state = ORTE_NODE_STATE_UP;
+        }
+        map->num_new_daemons = 0;
+        /* if we didn't get anything, then there is nothing else to
+         * do as no other daemons are to be launched
+         */
+        if (0 == opal_list_get_size(&nodes)) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                 "%s plm:base:setup_vm no new daemons required",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            OBJ_DESTRUCT(&nodes);
+            /* mark that the daemons have reported so we can proceed */
+            daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+            daemons->updated = false;
+            return ORTE_SUCCESS;
+        }
+        /* if we got some new nodes to launch, we need to handle it */
+        goto process;
+    }
 
     /* if we are not working with a virtual machine, then we
      * look across all jobs and ensure that the "VM" contains
