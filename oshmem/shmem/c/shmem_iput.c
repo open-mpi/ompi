@@ -57,6 +57,7 @@
 #pragma weak shmem_float_iput = pshmem_float_iput
 #pragma weak shmem_double_iput = pshmem_double_iput
 #pragma weak shmem_longdouble_iput = pshmem_longdouble_iput
+#pragma weak shmem_iput16 = pshmem_iput16
 #pragma weak shmem_iput32 = pshmem_iput32
 #pragma weak shmem_iput64 = pshmem_iput64
 #pragma weak shmem_iput128 = pshmem_iput128
@@ -94,6 +95,7 @@ SHMEM_TYPE_IPUT(_longdouble, long double)
         return ;                                                    \
     }
 
+SHMEM_TYPE_IPUTMEM(_iput16, 2)
 SHMEM_TYPE_IPUTMEM(_iput32, 4)
 SHMEM_TYPE_IPUTMEM(_iput64, 8)
 SHMEM_TYPE_IPUTMEM(_iput128, 16)
