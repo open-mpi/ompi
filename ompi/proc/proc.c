@@ -794,7 +794,6 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 rc = opal_dstore.fetch(opal_dstore_peer,
                                        (opal_identifier_t*)&new_name,
                                        "OMPI_ARCH", &myvals);
-                                   (void**)&new_arch, OPAL_UINT32);
                 if( OPAL_SUCCESS == rc ) {
                     kv = (opal_value_t*)opal_list_get_first(&myvals);
                     new_arch = kv->data.uint32;
