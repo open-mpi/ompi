@@ -1140,18 +1140,18 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             }
             OBJ_DESTRUCT(&kv);
 #if OPAL_HAVE_HWLOC
-            OBJ_CONSTRUCT(&kv, opal_value_t);
-            kv.key = strdup(OPAL_DSTORE_CPUSET);
-            kv.type = OPAL_STRING;
-            kv.data.string = strdup(cpu_bitmap);
-            if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                        (opal_identifier_t*)&proc, &kv))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&kv);
-                goto cleanup;
-            }
-            OBJ_DESTRUCT(&kv);
             if (NULL != cpu_bitmap) {
+                OBJ_CONSTRUCT(&kv, opal_value_t);
+                kv.key = strdup(OPAL_DSTORE_CPUSET);
+                kv.type = OPAL_STRING;
+                kv.data.string = strdup(cpu_bitmap);
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
+                                                            (opal_identifier_t*)&proc, &kv))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&kv);
+                    goto cleanup;
+                }
+                OBJ_DESTRUCT(&kv);
                 free(cpu_bitmap);
             }
 #endif
