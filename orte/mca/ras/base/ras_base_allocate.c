@@ -44,6 +44,7 @@
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/comm/comm.h"
+#include "orte/util/error_strings.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_quit.h"
 
@@ -76,9 +77,10 @@ void orte_ras_base_display_alloc(void)
                      (NULL == alloc->name) ? "UNKNOWN" : alloc->name,
                      (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse);
         } else {
-            asprintf(&tmp2, "\t%s: slots=%d max_slots=%d slots_inuse=%d\n",
+            asprintf(&tmp2, "\t%s: slots=%d max_slots=%d slots_inuse=%d state=%s\n",
                      (NULL == alloc->name) ? "UNKNOWN" : alloc->name,
-                     (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse);
+                     (int)alloc->slots, (int)alloc->slots_max, (int)alloc->slots_inuse,
+                     orte_node_state_to_str(alloc->state));
         }
         if (NULL == tmp) {
             tmp = tmp2;
@@ -444,6 +446,7 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
     opal_list_t nodes;
     int i;
     orte_app_context_t *app;
+    orte_node_t *node;
 
     /* construct a list to hold the results */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
@@ -518,6 +521,10 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
     
     /* if something was found, we add that to our global pool */
     if (!opal_list_is_empty(&nodes)) {
+        /* mark all the nodes as "added" */
+        OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+            node->state = ORTE_NODE_STATE_ADDED;
+        }
         /* store the results in the global resource pool - this removes the
          * list items
          */
