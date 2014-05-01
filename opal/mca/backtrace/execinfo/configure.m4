@@ -33,7 +33,7 @@ AC_DEFUN([MCA_opal_backtrace_execinfo_CONFIG],[
 
     AC_CHECK_HEADERS([execinfo.h])
     # FreeBSD has backtrace in -lexecinfo, usually in libc
-    OMPI_CHECK_FUNC_LIB([backtrace], [execinfo],
+    OPAL_CHECK_FUNC_LIB([backtrace], [execinfo],
                         [backtrace_execinfo_happy="yes"],
                         [backtrace_execinfo_happy="no"])
 

@@ -28,7 +28,7 @@ AC_DEFUN([MCA_ompi_fbtl_posix_CONFIG],[
     fbtl_posix_happy=no
     AC_CHECK_HEADER([aio.h],
                     [dnl NetBSD has aio_* in -lrt, vs. the usual libc
-                     OMPI_CHECK_FUNC_LIB([aio_write], [rt],
+                     OPAL_CHECK_FUNC_LIB([aio_write], [rt],
                                          [fbtl_posix_happy="yes"])])
 
     AS_IF([test "$fbtl_posix_happy" = "yes"],
