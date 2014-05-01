@@ -424,7 +424,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_FAILED_TO_START);
     }
 }
 
@@ -471,7 +471,7 @@ static void poll_spawns(int fd, short args, void *cbdata)
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_FAILED_TO_START);
     }
 }
 

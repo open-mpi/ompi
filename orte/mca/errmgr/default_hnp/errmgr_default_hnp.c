@@ -208,8 +208,25 @@ static void job_errors(int fd, short args, void *cbdata)
                 }
             }
         }
+        /* if this is the daemon job, then we need to ensure we
+         * output an error message indicating we couldn't launch the
+         * daemons */
+        if (jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
+            orte_show_help("help-errmgr-base.txt", "failed-daemon-launch", true);
+        }
     }
 
+    /* if the daemon job aborted and we haven't heard from everyone yet,
+     * then this could well have been caused by a daemon not finding
+     * a way back to us. In this case, output a message indicating a daemon
+     * died without reporting. Otherwise, say nothing as we
+     * likely already output an error message */
+    if (ORTE_JOB_STATE_ABORTED == jobstate &&
+        jdata->jobid == ORTE_PROC_MY_NAME->jobid &&
+        jdata->num_procs != jdata->num_reported) {
+        orte_show_help("help-errmgr-base.txt", "failed-daemon", true);
+    }
+        
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_FORCED_EXIT);
     /* set the global abnormal exit flag  */
@@ -450,6 +467,11 @@ static void proc_errors(int fd, short args, void *cbdata)
             OBJ_RETAIN(pptr);
             jdata->abort = true;
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+        }
+        /* if this was a daemon, report it */
+        if (jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
+            /* output a message indicating we failed to launch a daemon */
+            orte_show_help("help-errmgr-base.txt", "failed-daemon-launch", true);
         }
         /* abnormal termination - abort */
         default_hnp_abort(jdata);
