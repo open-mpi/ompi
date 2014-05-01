@@ -1019,6 +1019,12 @@ syntax: glob
 ./oshmem/shmem/fortran/libshmem_fortran.la
 ./oshmem/shmem/fortran/profile/Makefile.in
 ./oshmem/shmem/fortran/profile/pshmem_*_f.c
+./oshmem/shmem/fortran/profile/pshpdeallc_f.c
+./oshmem/shmem/fortran/profile/pshpclmove_f.c
+./oshmem/shmem/fortran/profile/pmy_pe_f.c
+./oshmem/shmem/fortran/profile/pshpalloc_f.c
+./oshmem/shmem/fortran/profile/pnum_pes_f.c
+./oshmem/shmem/fortran/profile/pstart_pes_f.c
 ./oshmem/tools/oshmem_info/oshmem_info
 ./oshmem/tools/oshmem_info/oshmem_info.1
 ./oshmem/tools/oshmem_info/Makefile.in
