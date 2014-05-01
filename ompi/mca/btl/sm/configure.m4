@@ -23,7 +23,7 @@ AC_DEFUN([OMPI_CHECK_KNEM],[
         [AC_HELP_STRING([--with-knem(=DIR)],
              [Build knem Linux kernel module support, searching for headers in DIR])])
 
-    OMPI_CHECK_WITHDIR([knem], [$with_knem], [include/knem_io.h])
+    OPAL_CHECK_WITHDIR([knem], [$with_knem], [include/knem_io.h])
     ompi_check_knem_$1_save_CPPFLAGS="$CPPFLAGS"
 
     AS_IF([test "$with_knem" != "no"],

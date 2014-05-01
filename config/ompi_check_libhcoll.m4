@@ -20,7 +20,7 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
     AC_ARG_WITH([hcoll],
         [AC_HELP_STRING([--with-hcoll(=DIR)],
              [Build hcoll (Mellanox Hierarchical Collectives) support, searching for libraries in DIR])])
-    OMPI_CHECK_WITHDIR([hcoll], [$with_hcoll], [lib/libhcoll.so])
+    OPAL_CHECK_WITHDIR([hcoll], [$with_hcoll], [lib/libhcoll.so])
 
     AS_IF([test "$with_hcoll" != "no"],
           [AS_IF([test ! -z "$with_hcoll" -a "$with_hcoll" != "yes"],

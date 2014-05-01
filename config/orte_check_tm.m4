@@ -45,7 +45,7 @@ AC_DEFUN([ORTE_CHECK_TM],[
     AC_ARG_WITH([tm],
                 [AC_HELP_STRING([--with-tm(=DIR)],
                                 [Build TM (Torque, PBSPro, and compatible) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([tm], [$with_tm], [include/tm.h])
+    OPAL_CHECK_WITHDIR([tm], [$with_tm], [include/tm.h])
 
     orte_check_tm_found=no
     AS_IF([test "$with_tm" = "no"],

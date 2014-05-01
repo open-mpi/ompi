@@ -144,8 +144,8 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
               [found=1])
 
         if test "$found" = "1"; then
-            OMPI_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
-            OMPI_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])
+            OPAL_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
+            OPAL_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])
 
             # Look for various Java-related programs
             orte_java_happy=no

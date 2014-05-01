@@ -45,15 +45,15 @@ AC_DEFUN([OMPI_CHECK_UGNI], [
 		    [Build uGNI support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
 
 	dnl does the path exist?
-	OMPI_CHECK_WITHDIR([ugni], [$with_ugni], [.])
+	OPAL_CHECK_WITHDIR([ugni], [$with_ugni], [.])
 
 	AC_ARG_WITH([ugni-libdir], [AC_HELP_STRING([--with-ugni-libdir=DIR],
 		    [Search for uGNI libraries in DIR])])
-	OMPI_CHECK_WITHDIR([ugni-libdir], [$with_ugni_libdir], [libugni.*])
+	OPAL_CHECK_WITHDIR([ugni-libdir], [$with_ugni_libdir], [libugni.*])
 
 	AC_ARG_WITH([ugni-includedir],
 	    [AC_HELP_STRING([--with-ugni-includedir=DIR], [Search for uGNI headers in DIR])])
-	OMPI_CHECK_WITHDIR([ugni-includedir], [$with_ugni_includedir], [gni_pub.h])
+	OPAL_CHECK_WITHDIR([ugni-includedir], [$with_ugni_includedir], [gni_pub.h])
 
 	AS_IF([test "$with_ugni_includedir" != "" -a "$with_ugni_includedir" != "yes" -a "$with_ugni_includedir" != "no"],
 	    [ompi_check_ugni_CPPFLAGS="-I$with_ugni_includedir"])

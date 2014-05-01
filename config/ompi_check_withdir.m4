@@ -13,9 +13,9 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_CHECK_WITHDIR(with_option_name, dir_value, file_in_dir)
+# OPAL_CHECK_WITHDIR(with_option_name, dir_value, file_in_dir)
 # ----------------------------------------------------
-AC_DEFUN([OMPI_CHECK_WITHDIR],[
+AC_DEFUN([OPAL_CHECK_WITHDIR],[
     AC_MSG_CHECKING([--with-$1 value])
     AS_IF([test "$2" = "yes" -o "$2" = "no" -o "x$2" = "x"],
           [AC_MSG_RESULT([simple ok (unspecified)])],

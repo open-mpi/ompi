@@ -28,11 +28,11 @@ AC_DEFUN([OMPI_CHECK_PORTALS4],[
     AC_ARG_WITH([portals4],
         [AC_HELP_STRING([--with-portals4(=DIR)],
              [Build Portals4 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([portals4], [$with_portals4], [include/portals4.h])
+    OPAL_CHECK_WITHDIR([portals4], [$with_portals4], [include/portals4.h])
     AC_ARG_WITH([portals4-libdir],
         [AC_HELP_STRING([--with-portals4-libdir=DIR],
              [Search for Portals4 libraries in DIR])])
-    OMPI_CHECK_WITHDIR([portals4-libdir], [$with_portals4_libdir], [libportals.*])
+    OPAL_CHECK_WITHDIR([portals4-libdir], [$with_portals4_libdir], [libportals.*])
 
     ompi_check_portals4_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_portals4_$1_save_LDFLAGS="$LDFLAGS"

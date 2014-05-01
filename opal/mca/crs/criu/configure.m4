@@ -28,11 +28,11 @@ AC_DEFUN([MCA_opal_crs_criu_CONFIG],[
     AC_ARG_WITH([criu],
                 [AC_HELP_STRING([--with-criu(=DIR)],
                                 [Path to CRIU Installation])])
-    OMPI_CHECK_WITHDIR([criu], [$with_criu], [include/criu/criu.h])
+    OPAL_CHECK_WITHDIR([criu], [$with_criu], [include/criu/criu.h])
     AC_ARG_WITH([criu-libdir],
                 [AC_HELP_STRING([--with-criu-libdir=DIR],
                                 [Search for CRIU libraries in DIR])])
-    OMPI_CHECK_WITHDIR([criu-libdir], [$with_criu_libdir], [libcriu.*])
+    OPAL_CHECK_WITHDIR([criu-libdir], [$with_criu_libdir], [libcriu.*])
 
     # If we do not want FT or CRIU, don't compile this component
     AS_IF([test "$opal_want_ft_cr" = "1" && test "$with_criu" = "yes"],

@@ -42,17 +42,17 @@ AC_DEFUN([OMPI_CHECK_GNI], [
         [Build GNI (Cray Gemini) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
 
     dnl does the path exist?
-    OMPI_CHECK_WITHDIR([gni], [$with_gni], [.])
+    OPAL_CHECK_WITHDIR([gni], [$with_gni], [.])
 
     AC_ARG_WITH([gni-libdir], [
         AC_HELP_STRING([--with-gni-libdir=DIR], [
             Search for GNI (Cray Gemini) libraries in DIR])])
-    OMPI_CHECK_WITHDIR([gni-libdir], [$with_gni_libdir], [libugni.*])
+    OPAL_CHECK_WITHDIR([gni-libdir], [$with_gni_libdir], [libugni.*])
 
     AC_ARG_WITH([gni-includedir], [
         AC_HELP_STRING([--with-gni-includedir=DIR], [
             Search for GNI (Cray Gemini) headers in DIR])])
-    OMPI_CHECK_WITHDIR([gni-includedir], [$with_gni_includedir], [gni_pub.h])
+    OPAL_CHECK_WITHDIR([gni-includedir], [$with_gni_includedir], [gni_pub.h])
 
     AS_IF([test "$with_gni_includedir" != "" -a "$with_gni_includedir" != "yes" -a "$with_gni_includedir" != "no"],
           [$1_CPPFLAGS="$$1_CPPFLAGS -I$with_gni_includedir"])

@@ -25,7 +25,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
     AC_ARG_WITH([dmtcp],
                 [AC_HELP_STRING([--with-dmtcp(=DIR)],
                                 [Path to DMTCP Installation])])
-    OMPI_CHECK_WITHDIR([dmtcp], [$with_dmtcp], [include/mtcp.h])
+    OPAL_CHECK_WITHDIR([dmtcp], [$with_dmtcp], [include/mtcp.h])
 
     # Configure option to specify where to look for DMTCP libraries
     #   (Default: $with_dmtcp/lib)
@@ -33,7 +33,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
     AC_ARG_WITH([dmtcp-libdir],
                 [AC_HELP_STRING([--with-dmtcp-libdir=DIR],
                                 [Search for DMTCP libraries in DIR])])
-    OMPI_CHECK_WITHDIR([dmtcp-libdir], [$with_dmtcp_libdir], [libmtcp.so])
+    OPAL_CHECK_WITHDIR([dmtcp-libdir], [$with_dmtcp_libdir], [libmtcp.so])
 
     #
     # Check if Open MPI was compiled with Checkpoint/Restart support

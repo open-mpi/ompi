@@ -76,7 +76,7 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
               ;;
            *) 
               AC_MSG_RESULT([external copy ($libltdl_location)])
-              OMPI_CHECK_WITHDIR([libltdl], [$libltdl_location], 
+              OPAL_CHECK_WITHDIR([libltdl], [$libltdl_location], 
                                  [include/ltdl.h])
               # If we're using an extern libltdl, then reset the
               # LTDLINCL that was set earlier (ie., there's no need to
