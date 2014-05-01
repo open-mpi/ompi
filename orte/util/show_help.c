@@ -674,7 +674,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
             active = true;
             if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                                               ORTE_RML_TAG_SHOW_HELP,
-                                                              cbfunc, &active))) {
+                                                              cbfunc, (void*)&active))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
             } else {
