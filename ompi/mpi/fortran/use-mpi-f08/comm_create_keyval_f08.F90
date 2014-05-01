@@ -15,8 +15,8 @@ subroutine MPI_Comm_create_keyval_f08(comm_copy_attr_fn,comm_delete_attr_fn,&
    use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_delete_attr_function
    use :: mpi_f08, only : ompi_comm_create_keyval_f
    implicit none
-   OMPI_PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
+   PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
+   PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
    INTEGER, INTENT(OUT) :: comm_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
