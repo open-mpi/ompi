@@ -95,7 +95,7 @@ struct ompi_btl_usnic_module_t;
 #define PACK_BYTES(buffer, value, num_bytes)                            \
     do {                                                                \
         int ret;                                                        \
-        ret = opal_dss.pack((buffer), &(value), (num_bytes), OPAL_BYTE); \
+        ret = opal_dss.pack((buffer), (value), (num_bytes), OPAL_BYTE); \
         if (OPAL_SUCCESS != ret) {                                      \
             OMPI_ERROR_LOG(ret);                                        \
             ABORT("Could not pack");                                    \
