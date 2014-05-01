@@ -1487,15 +1487,6 @@ void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    /* eventually, we should allow other OOB components a chance to connect
-     * to the target process. However, for now, we need to ensure we don't
-     * have a silent failure - so emit a "couldn't connect" message
-     */
-    orte_show_help("help-oob-tcp.txt", "unable-to-communicate", true,
-                   orte_process_info.nodename,
-                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                   ORTE_NAME_PRINT(&pop->peer));
-
  cleanup:
     /* if this was a lifeline, then alert */
     if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
