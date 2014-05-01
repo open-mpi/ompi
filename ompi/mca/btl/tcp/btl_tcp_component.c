@@ -1129,7 +1129,7 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
             if (opal_socket_errno != EAGAIN && 
                 opal_socket_errno != EWOULDBLOCK) {
                 opal_show_help("help-mpi-btl-tcp.txt", "accept failed",
-                               true, "v4", ompi_process_info.nodename,
+                               true, ompi_process_info.nodename,
                                getpid(), 
                                opal_socket_errno,
                                strerror(opal_socket_errno));
