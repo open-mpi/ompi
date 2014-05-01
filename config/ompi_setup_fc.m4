@@ -74,7 +74,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
     # Don't just use the AC macro so that we can have a pretty
     # message.
     AS_IF([test $ompi_fc_happy -eq 1],
-          [OMPI_CHECK_COMPILER_WORKS([Fortran], [], [], [],
+          [OPAL_CHECK_COMPILER_WORKS([Fortran], [], [], [],
               [AC_MSG_ERROR([Could not run a simple Fortran program.  Aborting.])])])
     
     # OS X before 10.3 (deployment target) does not allow undefined common

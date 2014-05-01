@@ -13,7 +13,7 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_CHECK_COMPILER_WORKS(language, headers, body,
+# OPAL_CHECK_COMPILER_WORKS(language, headers, body,
 #            [action-if-found], [action-if-not-found])
 # ----------------------------------------------------
 # Try to compile and run a simple application in 'language'.  A
@@ -26,7 +26,7 @@ dnl
 # statements), and body is the program to compile.  It should include
 # a clean exit from the application (e.g., "return 0" in C/C++, empty in
 # fortran).
-AC_DEFUN([OMPI_CHECK_COMPILER_WORKS],
+AC_DEFUN([OPAL_CHECK_COMPILER_WORKS],
 [   AS_VAR_PUSHDEF([lang_var], [ompi_cv_$1_works])
 
     AC_CACHE_CHECK([if $1 compiler works], lang_var,

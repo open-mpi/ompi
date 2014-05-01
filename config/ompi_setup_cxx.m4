@@ -113,7 +113,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
           [ompi_cxx_compiler_works=no],
           [AS_IF([test "$ompi_cv_cxx_compiler_vendor" = "microsoft" ],
                  [ompi_cxx_compiler_works=yes],
-                 [OMPI_CHECK_COMPILER_WORKS([C++], [#include <string>
+                 [OPAL_CHECK_COMPILER_WORKS([C++], [#include <string>
 ], 
                                             [std::string foo = "Hello, world"],
                                             [ompi_cxx_compiler_works=yes],
