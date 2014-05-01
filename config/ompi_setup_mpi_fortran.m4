@@ -360,6 +360,18 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
+    # Per https://svn.open-mpi.org/trac/ompi/ticket/4590, if the
+    # Fortran compiler doesn't support PROCEDURE in the way we
+    # want/need, disable the mpi_f08 module.
+    OMPI_FORTRAN_HAVE_PROCEDURE=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
+           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [ # Does the compiler support "procedure"
+           OMPI_FORTRAN_CHECK_PROCEDURE(
+               [OMPI_FORTRAN_HAVE_PROCEDURE=1],
+               [OMPI_FORTRAN_HAVE_PROCEDURE=0
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
@@ -400,14 +412,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
            OMPI_FORTRAN_CHECK_ASYNCHRONOUS(
                [OMPI_FORTRAN_HAVE_ASYNCHRONOUS=1],
                [OMPI_FORTRAN_HAVE_ASYNCHRONOUS=0])])
-
-    OMPI_FORTRAN_HAVE_PROCEDURE=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [ # Does the compiler support "procedure"
-           OMPI_FORTRAN_CHECK_PROCEDURE(
-               [OMPI_FORTRAN_HAVE_PROCEDURE=1],
-               [OMPI_FORTRAN_HAVE_PROCEDURE=0])])
 
     OMPI_FORTRAN_F08_HANDLE_SIZE=4
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
