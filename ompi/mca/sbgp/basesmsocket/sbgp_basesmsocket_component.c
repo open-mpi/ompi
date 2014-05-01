@@ -265,13 +265,9 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
 {
     /* local variables */
     mca_sbgp_basesmsocket_module_t *module;
-    int proc, cnt, n_local_peers, my_rank;
-    ompi_proc_t* my_proc;
+    int proc, cnt, n_local_peers;
 
     /* initialize data */
-    my_rank=ompi_comm_rank(comm);
-    my_proc=ompi_comm_peer_lookup(comm,my_rank);
-
     for (proc = 0, n_local_peers = 0 ; proc < n_procs_in ; ++proc) {
         if (OPAL_PROC_ON_LOCAL_SOCKET(procs[proc]->proc_flags)) {
 	    n_local_peers++;
