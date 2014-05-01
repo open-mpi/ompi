@@ -1361,7 +1361,7 @@ subroutine MPI_Op_create_f08(user_fn,commute,op,ierror)
    use :: mpi_f08_types, only : MPI_Op
    use :: mpi_f08_interfaces_callbacks, only : MPI_User_function
    implicit none
-   OMPI_PROCEDURE(MPI_User_function) :: user_fn
+   PROCEDURE(MPI_User_function) :: user_fn
    LOGICAL, INTENT(IN) :: commute
    TYPE(MPI_Op), INTENT(OUT) :: op
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -1676,8 +1676,8 @@ subroutine MPI_Comm_create_keyval_f08(comm_copy_attr_fn,comm_delete_attr_fn,comm
    use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_copy_attr_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_delete_attr_function
    implicit none
-   OMPI_PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
+   PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
+   PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
    INTEGER, INTENT(OUT) :: comm_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2033,8 +2033,8 @@ subroutine MPI_Type_create_keyval_f08(type_copy_attr_fn,type_delete_attr_fn,type
    use :: mpi_f08_interfaces_callbacks, only : MPI_Type_copy_attr_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Type_delete_attr_function
    implicit none
-   OMPI_PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
+   PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
+   PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
    INTEGER, INTENT(OUT) :: type_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2110,8 +2110,8 @@ subroutine MPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,win_key
    use :: mpi_f08_interfaces_callbacks, only : MPI_Win_copy_attr_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Win_delete_attr_function
    implicit none
-   OMPI_PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
+   PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
+   PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
    INTEGER, INTENT(OUT) :: win_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2493,7 +2493,7 @@ subroutine MPI_Comm_create_errhandler_f08(comm_errhandler_fn,errhandler,ierror)
    use :: mpi_f08_types, only : MPI_Errhandler
    use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_errhandler_function
    implicit none
-   OMPI_PROCEDURE(MPI_Comm_errhandler_function) :: comm_errhandler_fn
+   PROCEDURE(MPI_Comm_errhandler_function) :: comm_errhandler_fn
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Comm_create_errhandler_f08
@@ -2565,7 +2565,7 @@ subroutine MPI_File_create_errhandler_f08(file_errhandler_fn,errhandler,ierror)
    use :: mpi_f08_types, only : MPI_Errhandler
    use :: mpi_f08_interfaces_callbacks, only : MPI_File_errhandler_function
    implicit none
-   OMPI_PROCEDURE(MPI_File_errhandler_function) :: file_errhandler_fn
+   PROCEDURE(MPI_File_errhandler_function) :: file_errhandler_fn
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_create_errhandler_f08
@@ -2675,7 +2675,7 @@ subroutine MPI_Win_create_errhandler_f08(win_errhandler_fn,errhandler,ierror)
    use :: mpi_f08_types, only : MPI_Errhandler
    use :: mpi_f08_interfaces_callbacks, only : MPI_Win_errhandler_function
    implicit none
-   OMPI_PROCEDURE(MPI_Win_errhandler_function) :: win_errhandler_fn
+   PROCEDURE(MPI_Win_errhandler_function) :: win_errhandler_fn
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_create_errhandler_f08
@@ -3318,9 +3318,9 @@ subroutine MPI_Grequest_start_f08(query_fn,free_fn,cancel_fn,extra_state,request
    use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_free_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_cancel_function
    implicit none
-   OMPI_PROCEDURE(MPI_Grequest_query_function) :: query_fn
-   OMPI_PROCEDURE(MPI_Grequest_free_function) :: free_fn
-   OMPI_PROCEDURE(MPI_Grequest_cancel_function) :: cancel_fn
+   PROCEDURE(MPI_Grequest_query_function) :: query_fn
+   PROCEDURE(MPI_Grequest_free_function) :: free_fn
+   PROCEDURE(MPI_Grequest_cancel_function) :: cancel_fn
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -4149,9 +4149,9 @@ subroutine MPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_
    use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_extent_function
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
-   OMPI_PROCEDURE(MPI_Datarep_conversion_function) :: read_conversion_fn
-   OMPI_PROCEDURE(MPI_Datarep_conversion_function) :: write_conversion_fn
-   OMPI_PROCEDURE(MPI_Datarep_extent_function) :: dtype_file_extent_fn
+   PROCEDURE(MPI_Datarep_conversion_function) :: read_conversion_fn
+   PROCEDURE(MPI_Datarep_conversion_function) :: write_conversion_fn
+   PROCEDURE(MPI_Datarep_extent_function) :: dtype_file_extent_fn
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Register_datarep_f08
