@@ -33,7 +33,7 @@ AC_DEFUN([MCA_orte_oob_ud_CONFIG],[
     orte_oob_ud_check_save_LDFLAGS=$LDFLAGS
     orte_oob_ud_check_save_LIBS=$LIBS
 
-    OMPI_CHECK_PACKAGE([orte_oob_ud],
+    OPAL_CHECK_PACKAGE([orte_oob_ud],
                        [infiniband/verbs.h],
                        [ibverbs],
                        [ibv_open_device],

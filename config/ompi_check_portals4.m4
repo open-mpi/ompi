@@ -44,7 +44,7 @@ AC_DEFUN([OMPI_CHECK_PORTALS4],[
            AS_IF([test ! -z "$with_portals4_libdir" -a "$with_portals4_libdir" != "yes"],
                  [ompi_check_portals4_libdir="$with_portals4_libdir"])
 
-           OMPI_CHECK_PACKAGE([$1],
+           OPAL_CHECK_PACKAGE([$1],
                               [portals4.h],
                               [portals],
                               [PtlLEAppend],

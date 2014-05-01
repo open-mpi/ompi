@@ -105,7 +105,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
            opal_event_external_LDFLAGS_save=$LDFLAGS
            opal_event_external_LIBS_save=$LIBS
 
-           OMPI_CHECK_PACKAGE([opal_event_external],
+           OPAL_CHECK_PACKAGE([opal_event_external],
                               [event.h],
                               [event],
                               [event_config_new],

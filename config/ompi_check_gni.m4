@@ -67,7 +67,7 @@ AC_DEFUN([OMPI_CHECK_GNI], [
         AS_IF([test ! -z "$with_gni_libdir" -a "$with_gni_libdir" != "yes"], [
             ompi_check_gni_libdir="$with_gni_libdir"])
 
-        OMPI_CHECK_PACKAGE([$1],
+        OPAL_CHECK_PACKAGE([$1],
             [ugni.h],
             [ugni],
             [GNI_CdmCreate],

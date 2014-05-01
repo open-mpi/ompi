@@ -44,7 +44,7 @@ AC_DEFUN([OMPI_CHECK_FCA],[
 			   OPAL_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
 			   OPAL_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
 
-			   OMPI_CHECK_PACKAGE([$1],
+			   OPAL_CHECK_PACKAGE([$1],
 				   [fca_api.h],
 				   [$ompi_check_fca_libs],
 				   [fca_get_version],

@@ -101,7 +101,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
                     ompi_check_openib_happy="no"])]) 
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"], 
-          [OMPI_CHECK_PACKAGE([$1],
+          [OPAL_CHECK_PACKAGE([$1],
                               [infiniband/verbs.h],
                               [ibverbs],
                               [ibv_open_device],
@@ -363,7 +363,7 @@ AC_DEFUN([OMPI_CHECK_MLNX_OPENFABRICS],[
      $1_have_mqe=0
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"], 
-           [OMPI_CHECK_PACKAGE([$1],
+           [OPAL_CHECK_PACKAGE([$1],
                                [infiniband/mverbs.h],
                                [mverbs],
                                [ibv_m_query_device],
@@ -374,7 +374,7 @@ AC_DEFUN([OMPI_CHECK_MLNX_OPENFABRICS],[
                                [])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"], 
-           [OMPI_CHECK_PACKAGE([$1],
+           [OPAL_CHECK_PACKAGE([$1],
                                [infiniband/mqe.h],
                                [mqe],
                                [mqe_context_create],

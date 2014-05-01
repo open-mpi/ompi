@@ -44,7 +44,7 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
 			   OPAL_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
 			   OPAL_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
 
-			   OMPI_CHECK_PACKAGE([$1],
+			   OPAL_CHECK_PACKAGE([$1],
 				   [hcoll_api.h],
 				   [$ompi_check_hcoll_libs],
 				   [hcoll_get_version],

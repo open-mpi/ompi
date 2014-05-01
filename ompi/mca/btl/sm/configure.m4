@@ -30,7 +30,7 @@ AC_DEFUN([OMPI_CHECK_KNEM],[
           [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "yes"],
                  [ompi_check_knem_dir="$with_knem"])
 
-           _OMPI_CHECK_PACKAGE_HEADER([$1],
+           _OPAL_CHECK_PACKAGE_HEADER([$1],
                               [knem_io.h],
                               [$ompi_check_knem_dir],
                               [ompi_check_knem_happy="yes"],

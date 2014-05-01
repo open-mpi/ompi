@@ -44,7 +44,7 @@ AC_DEFUN([OMPI_CHECK_PSM],[
            AS_IF([test ! -z "$with_psm_libdir" -a "$with_psm_libdir" != "yes"],
                  [ompi_check_psm_libdir="$with_psm_libdir"])
 
-           OMPI_CHECK_PACKAGE([$1],
+           OPAL_CHECK_PACKAGE([$1],
                               [psm.h],
                               [psm_infinipath],
                               [psm_finalize],

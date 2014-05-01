@@ -54,7 +54,7 @@ AC_DEFUN([OMPI_CHECK_LIBNL3],[
            AS_IF([test ! -z "$with_libnl3_libdir" -a "$with_libnl3_libdir" != "yes"],
                  [ompi_check_libnl3_libdir="$with_libnl3_libdir"])
 
-           # OMPI_CHECK_PACKAGE unfortunately can't handle this weird include
+           # OPAL_CHECK_PACKAGE unfortunately can't handle this weird include
            # dir layout
            AS_IF([test -n "$ompi_check_libnl3_dir"],
                  [ompi_check_libnl3_includedir="$ompi_check_libnl3_dir/include/libnl3"],
@@ -65,7 +65,7 @@ AC_DEFUN([OMPI_CHECK_LIBNL3],[
            AC_CHECK_HEADER([netlink/netlink.h],
                            [# nl_recvmsgs_report appears to be a symbol which
                             # is present in libnl-3 but not libnl (v1)
-                            _OMPI_CHECK_PACKAGE_LIB([$1],
+                            _OPAL_CHECK_PACKAGE_LIB([$1],
                                                     [nl-3],
                                                     [nl_recvmsgs_report],
                                                     [],
@@ -167,7 +167,7 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
 
            # fall back to libnl1 if libnl3 could not be found
            AS_IF([test "X$enable_ompi_btl_usnic_libnl3_utils" = "Xno"],
-                 [OMPI_CHECK_PACKAGE([btl_usnic_libnl],
+                 [OPAL_CHECK_PACKAGE([btl_usnic_libnl],
                                      [netlink/netlink.h],
                                      [nl],
                                      [nl_recvmsgs_default],

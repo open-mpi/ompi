@@ -46,7 +46,7 @@
 #   component, it's a fatal error.
 # - Assumes that if --with-<name> is NOT supplied and we can't build
 #   the component, it's NOT a fatal error.
-# - Run OMPI_CHECK_PACKAGE (check for the specific presence of header
+# - Run OPAL_CHECK_PACKAGE (check for the specific presence of header
 #   files and/or libraries) to determine if the package is available
 # - Set and AC_SUBST <framework>_<component>_CPPFLAGS
 # - Set and AC_SUBST <framework>_<component>_CFLAGS
@@ -75,7 +75,7 @@ AC_DEFUN([OPAL_SETUP_COMPONENT_PACKAGE],[
           [$1_$2_happy="yes"])
 
     AS_IF([test "$$1_$2_happy" = "yes"],
-          [OMPI_CHECK_PACKAGE([$1_$2],
+          [OPAL_CHECK_PACKAGE([$1_$2],
                               [$6],
                               [$7],
                               [$8],

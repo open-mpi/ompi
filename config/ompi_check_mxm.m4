@@ -38,7 +38,7 @@ AC_DEFUN([OMPI_CHECK_MXM],[
 
            ompi_check_mxm_extra_libs="-L$ompi_check_mxm_libdir"
 
-           OMPI_CHECK_PACKAGE([$1],
+           OPAL_CHECK_PACKAGE([$1],
                               [mxm/api/mxm_api.h],
                               [mxm],
                               [mxm_cleanup],

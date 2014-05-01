@@ -88,7 +88,7 @@ AC_DEFUN([OPAL_SETUP_LIBLTDL],[
             esac
 
             AS_IF([test "$libltdl_need_external" = "1"],
-                  [OMPI_CHECK_PACKAGE([libltdl],
+                  [OPAL_CHECK_PACKAGE([libltdl],
                                  [ltdl.h],
                                  [ltdl],
                                  [lt_dlopen],

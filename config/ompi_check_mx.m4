@@ -84,7 +84,7 @@ AC_DEFUN([OMPI_CHECK_MX],[
            AS_IF([test ! -z "$with_mx_libdir" -a "$with_mx_libdir" != "yes"],
                  [ompi_check_mx_libdir="$with_mx_libdir"])
 
-           OMPI_CHECK_PACKAGE([$1],
+           OPAL_CHECK_PACKAGE([$1],
                               [myriexpress.h],
                               [myriexpress],
                               [mx_finalize],
