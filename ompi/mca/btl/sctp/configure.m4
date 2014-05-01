@@ -101,7 +101,7 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
             AS_IF([test ! -z "$with_sctp_libdir" -a "$with_sctp_libdir" != "yes"],
                 [ompi_check_sctp_libdir="$with_sctp_libdir"])
             AC_CHECK_HEADERS([netinet/in.h])
-            OMPI_CHECK_PACKAGE([$1],
+            OPAL_CHECK_PACKAGE([$1],
                 [netinet/sctp.h],
                 [$ompi_sctp_api_libname],
                 [sctp_recvmsg],

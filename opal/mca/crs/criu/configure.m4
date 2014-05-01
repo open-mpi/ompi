@@ -60,7 +60,7 @@ AC_DEFUN([MCA_opal_crs_criu_CONFIG],[
            AC_MSG_RESULT([$check_crs_criu_dir_msg])
            AC_MSG_CHECKING([for CRIU library dir])
            AC_MSG_RESULT([$check_crs_criu_libdir_msg])
-           OMPI_CHECK_PACKAGE([crs_criu_check],
+           OPAL_CHECK_PACKAGE([crs_criu_check],
                               [criu/criu.h],
                               [criu],
                               [criu_init_opts],

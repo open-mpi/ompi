@@ -55,7 +55,7 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     fi
 
     # Add correct -I and -L flags
-    OMPI_CHECK_PACKAGE([$1], [lustre/liblustreapi.h], [lustreapi], [llapi_file_create], [],
+    OPAL_CHECK_PACKAGE([$1], [lustre/liblustreapi.h], [lustreapi], [llapi_file_create], [],
                        [$ompi_check_lustre_dir], [$ompi_check_lustre_libdir], [ompi_check_lustre_happy="yes"],
                        [ompi_check_lustre_happy="no"])
 

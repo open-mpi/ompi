@@ -73,7 +73,7 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
            AC_MSG_RESULT([$check_crs_blcr_dir_msg])
            AC_MSG_CHECKING([for BLCR library dir])
            AC_MSG_RESULT([$check_crs_blcr_libdir_msg])
-           OMPI_CHECK_PACKAGE([crs_blcr_check],
+           OPAL_CHECK_PACKAGE([crs_blcr_check],
                               [libcr.h],
                               [cr],
                               [cr_init],

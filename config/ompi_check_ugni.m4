@@ -72,7 +72,7 @@ AC_DEFUN([OMPI_CHECK_UGNI], [
 
 	    CPPFLAGS="$CPPFLAGS $ompi_check_ugni_CPPFLAGS"
 
-            OMPI_CHECK_PACKAGE([ompi_check_ugni], [ugni.h], [ugni], [GNI_CdmCreate],
+            OPAL_CHECK_PACKAGE([ompi_check_ugni], [ugni.h], [ugni], [GNI_CdmCreate],
 		[], [$ompi_check_ugni_dir], [$ompi_check_ugni_libdir], [ompi_check_ugni_happy="yes"], [])
 
 	    CPPFLAGS="$ompi_check_ugni_$1_save_CPPFLAGS"

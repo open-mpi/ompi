@@ -51,7 +51,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
            $3],
           [AC_MSG_RESULT([yes])
            AC_MSG_CHECKING([if PMI or PMI2 headers installed])
-           # cannot use OMPI_CHECK_PACKAGE as its backend header
+           # cannot use OPAL_CHECK_PACKAGE as its backend header
            # support appends "include" to the path, which won't
            # work with slurm :-(
            AS_IF([test ! -z "$with_pmi" -a "$with_pmi" != "yes"],

@@ -80,7 +80,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
            AC_MSG_RESULT([$opal_check_crs_dmtcp_dir_msg])
            AC_MSG_CHECKING([for DMTCP library dir])
            AC_MSG_RESULT([$opal_check_crs_dmtcp_libdir_msg])
-           OMPI_CHECK_PACKAGE([crs_dmtcp_check],
+           OPAL_CHECK_PACKAGE([crs_dmtcp_check],
                               [mtcp.h],
                               [mtcp],
                               [mtcp_init],
@@ -103,7 +103,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
 
     #
     # If '-lmtcp' or
-    # '-I' or '-L' was needed to link to MTCP, then OMPI_CHECK_PACKAGE
+    # '-I' or '-L' was needed to link to MTCP, then OPAL_CHECK_PACKAGE
     # sets the crs_mtcp_check_* variables, which we use below.
     #
 

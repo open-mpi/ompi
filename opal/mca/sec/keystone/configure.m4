@@ -24,7 +24,7 @@ AC_DEFUN([MCA_opal_sec_keystone_CONFIG], [
           [AC_MSG_RESULT([yes])
            AS_IF([test ! -z "$with_keystone" -a "$with_keystone" != "yes"],
                  [opal_check_keystone_dir="$with_keystone"])
-           OMPI_CHECK_PACKAGE([sec_keystone],
+           OPAL_CHECK_PACKAGE([sec_keystone],
                               [curl/curl.h],
                               [curl],
                               [curl_easy_init],

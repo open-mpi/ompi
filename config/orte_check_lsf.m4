@@ -70,7 +70,7 @@ AC_DEFUN([ORTE_CHECK_LSF],[
            AC_MSG_RESULT([$orte_check_lsf_dir_msg])
            AC_MSG_CHECKING([for LSF library dir])
            AC_MSG_RESULT([$orte_check_lsf_libdir_msg])
-           OMPI_CHECK_PACKAGE([$1],
+           OPAL_CHECK_PACKAGE([$1],
                               [lsf/lsbatch.h],
                               [bat],
                               [lsb_launch],

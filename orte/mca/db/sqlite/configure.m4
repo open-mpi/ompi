@@ -23,7 +23,7 @@ AC_DEFUN([MCA_orte_db_sqlite_CONFIG], [
     AS_IF([test "$with_sqlite3" != "no"],
           [AS_IF([test ! -z "$with_sqlite3" -a "$with_sqlite3" != "yes"],
                  [orte_check_sqlite3_dir="$with_sqlite3"])
-           OMPI_CHECK_PACKAGE([db_sqlite],
+           OPAL_CHECK_PACKAGE([db_sqlite],
                               [sqlite3.h],
                               [sqlite3],
                               [sqlite3_open],

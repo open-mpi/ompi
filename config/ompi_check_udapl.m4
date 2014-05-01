@@ -82,21 +82,21 @@ dnl out we need -ldapl to link (looks like udapl over GM).
     ompi_check_package_$1_orig_LIBS="$$1_LIBS"
 
     AS_IF([test "$ompi_check_udapl_happy" = "yes"],
-          [_OMPI_CHECK_PACKAGE_HEADER([$1], 
+          [_OPAL_CHECK_PACKAGE_HEADER([$1], 
                 [dat/udat.h],
                 [$ompi_check_udapl_dir],
                 [ompi_check_udapl_happy="yes"],
                 [ompi_check_udapl_happy="no"])])
 
     AS_IF([test "$ompi_check_udapl_happy" = "yes"],
-          [_OMPI_CHECK_PACKAGE_LIB([$1],
+          [_OPAL_CHECK_PACKAGE_LIB([$1],
                 [dat],
                 [dat_registry_list_providers],
                 [],
                 [$ompi_check_udapl_dir],
                 [$ompi_check_udapl_libdir],
                 [ompi_check_udapl_happy="yes"],
-                [_OMPI_CHECK_PACKAGE_LIB([$1],
+                [_OPAL_CHECK_PACKAGE_LIB([$1],
                       [dat],
                       [dat_registry_list_providers],
                       [-ldapl],

@@ -23,7 +23,7 @@ AC_DEFUN([MCA_ompi_btl_scif_CONFIG],[
 	    ompi_check_scif_dir=$with_scif
 	fi
 
-	OMPI_CHECK_PACKAGE([btl_scif], [scif.h], [scif], [scif_open], [],
+	OPAL_CHECK_PACKAGE([btl_scif], [scif.h], [scif], [scif_open], [],
 	                   [$ompi_check_scif_dir], [], [btl_scif_happy="yes"], [])
 
 	if test "$btl_scif_happy" != "yes" -a -n "$with_scif" ; then

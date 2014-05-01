@@ -37,7 +37,7 @@ AC_DEFUN([MCA_ompi_mpool_udreg_CONFIG],[
 	    ompi_check_udreg_dir=""
 	fi
 
-	OMPI_CHECK_PACKAGE([mpool_udreg], [udreg_pub.h], [udreg], [UDREG_CacheCreate],
+	OPAL_CHECK_PACKAGE([mpool_udreg], [udreg_pub.h], [udreg], [UDREG_CacheCreate],
 	                   [], [$ompi_check_udreg_dir], ["$ompi_check_udreg_dir/lib64"],
 			   [mpool_udreg_happy="yes"], [mpool_udreg_happy="no"])
     fi

@@ -21,7 +21,7 @@ AC_DEFUN([MCA_orte_db_postgres_CONFIG], [
           [orte_db_postgres_check_save_CPPFLAGS=$CPPFLAGS
            orte_db_postgres_check_save_LDFLAGS=$LDFLAGS
            orte_db_postgres_check_save_LIBS=$LIBS
-           OMPI_CHECK_PACKAGE([db_postgres],
+           OPAL_CHECK_PACKAGE([db_postgres],
                               [libpq-fe.h],
                               [pq],
                               [PQconnectdb],

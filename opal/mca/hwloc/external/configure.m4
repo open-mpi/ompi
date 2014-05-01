@@ -124,7 +124,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
            opal_hwloc_external_LDFLAGS_save=$LDFLAGS
            opal_hwloc_external_LIBS_save=$LIBS
 
-           OMPI_CHECK_PACKAGE([opal_hwloc_external],
+           OPAL_CHECK_PACKAGE([opal_hwloc_external],
                               [hwloc.h],
                               [hwloc],
                               [hwloc_topology_init],

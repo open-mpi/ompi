@@ -19,11 +19,11 @@
 # $HEADER$
 #
 
-# _OMPI_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix, 
+# _OPAL_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix, 
 #                            [action-if-found], [action-if-not-found],
 #                            includes)
 # --------------------------------------------------------------------
-AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
+AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
     # This is stolen from autoconf to peek under the covers to get the
     # cache variable for the library check.  one should not copy this
     # code into other places unless you want much pain and suffering
@@ -56,11 +56,11 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
 ])
 
 
-# _OMPI_CHECK_PACKAGE_LIB(prefix, library, function, extra-libraries,
+# _OPAL_CHECK_PACKAGE_LIB(prefix, library, function, extra-libraries,
 #                         dir-prefix, libdir,
 #                         [action-if-found], [action-if-not-found]])
 # --------------------------------------------------------------------
-AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
+AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
     # This is stolen from autoconf to peek under the covers to get the
     # cache variable for the library check.  one should not copy this
     # code into other places unless you want much pain and suffering
@@ -132,7 +132,7 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
 ])
     
 
-# OMPI_CHECK_PACKAGE(prefix, 
+# OPAL_CHECK_PACKAGE(prefix, 
 #                    header, 
 #                    library, 
 #                    function, 
@@ -146,7 +146,7 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
 # located in dir-prefix, possibly with libs in libdir-prefix.
 # Both dir-prefix and libdir-prefix can be empty.  Will set
 # prefix_{CPPFLAGS, LDFLAGS, LIBS} as needed
-AC_DEFUN([OMPI_CHECK_PACKAGE],[
+AC_DEFUN([OPAL_CHECK_PACKAGE],[
     ompi_check_package_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_package_$1_save_LDFLAGS="$LDFLAGS"
     ompi_check_package_$1_save_LIBS="$LIBS"
@@ -155,8 +155,8 @@ AC_DEFUN([OMPI_CHECK_PACKAGE],[
     ompi_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
     ompi_check_package_$1_orig_LIBS="$$1_LIBS"
 
-    _OMPI_CHECK_PACKAGE_HEADER([$1], [$2], [$6], 
-          [_OMPI_CHECK_PACKAGE_LIB([$1], [$3], [$4], [$5], [$6], [$7],
+    _OPAL_CHECK_PACKAGE_HEADER([$1], [$2], [$6], 
+          [_OPAL_CHECK_PACKAGE_LIB([$1], [$3], [$4], [$5], [$6], [$7],
                 [ompi_check_package_happy="yes"],
                 [ompi_check_package_happy="no"])],
           [ompi_check_package_happy="no"],

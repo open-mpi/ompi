@@ -41,7 +41,7 @@ AC_DEFUN([OMPI_CHECK_XPMEM], [
 	    ompi_check_xpmem_libdir="$with_xpmem_libdir"
 	fi
 
-	OMPI_CHECK_PACKAGE([$1],[xpmem.h sn/xpmem.h],[xpmem],[xpmem_make],[],
+	OPAL_CHECK_PACKAGE([$1],[xpmem.h sn/xpmem.h],[xpmem],[xpmem_make],[],
 	    [$ompi_check_xpmem_dir],[$ompi_check_xpmem_libdir], [ompi_check_xpmem_happy="yes"], [])
 
 	if test "$ompi_check_xpmem_happy" = "no" -a -n "$with_xpmem" -a "$with_xpmem" != "yes" ; then
