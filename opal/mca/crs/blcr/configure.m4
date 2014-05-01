@@ -127,7 +127,7 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
            #
            crs_blcr_have_working_cr_request=0
            AC_MSG_CHECKING(for BLCR working cr_request)
-           OMPI_CHECK_FUNC_LIB([cr_request_file],[cr],
+           OPAL_CHECK_FUNC_LIB([cr_request_file],[cr],
                [AC_TRY_COMPILE([#include <libcr.h>],
                        [#if CR_RELEASE_MAJOR <= 0 && CR_RELEASE_MINOR < 6
                         #error Version earlier than 0.6.0
@@ -149,7 +149,7 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
            #
            crs_blcr_have_cr_request_checkpoint=0
            AC_MSG_CHECKING(for BLCR cr_request_checkpoint)
-           OMPI_CHECK_FUNC_LIB([cr_request_checkpoint],[cr],
+           OPAL_CHECK_FUNC_LIB([cr_request_checkpoint],[cr],
                [crs_blcr_have_cr_request_checkpoint=1
                    ],
                [crs_blcr_have_cr_request_checkpoint=0

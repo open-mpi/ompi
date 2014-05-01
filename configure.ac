@@ -838,20 +838,20 @@ AC_CACHE_SAVE
 ompi_show_title "Library and Function tests"
 
 # Darwin doesn't need -lutil, as it's something other than this -lutil.
-OMPI_CHECK_FUNC_LIB([openpty], [util])
+OPAL_CHECK_FUNC_LIB([openpty], [util])
 
 AC_CHECK_LIB([nsl], [gethostbyname])
 
 AC_CHECK_LIB([socket], [socket])
 
 # Solaris has sched_yield in -lrt, usually in libc
-OMPI_CHECK_FUNC_LIB([sched_yield], [rt])
+OPAL_CHECK_FUNC_LIB([sched_yield], [rt])
 
 # IRIX has dirname in -lgen, usually in libc
-OMPI_CHECK_FUNC_LIB([dirname], [gen])
+OPAL_CHECK_FUNC_LIB([dirname], [gen])
 
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
-OMPI_CHECK_FUNC_LIB([ceil], [m])
+OPAL_CHECK_FUNC_LIB([ceil], [m])
 
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo dbopen dbm_open statfs statvfs setpgid])
 

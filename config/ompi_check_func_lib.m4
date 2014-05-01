@@ -18,14 +18,14 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_CHECK_FUNC_LIB(func, lib, [action-if-found], [action-if-not-found])
+# OPAL_CHECK_FUNC_LIB(func, lib, [action-if-found], [action-if-not-found])
 # ------------------------------
 # Try to find function func, first with the present LIBS, second with
 # lib added to LIBS.  If func is found with the libraries listed in
 # LIBS, no modification to LIBS is made.  If func is in lib (but not
 # in LIBS) then lib is added to LIBS.  If func is not in lib, then
 # LIBS is not modified.
-AC_DEFUN([OMPI_CHECK_FUNC_LIB],[
+AC_DEFUN([OPAL_CHECK_FUNC_LIB],[
     OPAL_VAR_SCOPE_PUSH([LIBS_save])
     AS_VAR_PUSHDEF([ompi_var], [ompi_cv_func_lib_$1_$2])dnl
     AC_CACHE_CHECK([if we need -l$2 for $1],
