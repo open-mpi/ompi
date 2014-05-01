@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
@@ -1126,9 +1126,14 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
         if(sd < 0) {
             if(opal_socket_errno == EINTR)
                 continue;
-            if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK)
-                BTL_ERROR(("accept() failed: %s (%d).", 
-                           strerror(opal_socket_errno), opal_socket_errno));
+            if (opal_socket_errno != EAGAIN && 
+                opal_socket_errno != EWOULDBLOCK) {
+                opal_show_help("help-mpi-btl-tcp.txt", "accept failed",
+                               true, "v4", ompi_process_info.nodename,
+                               getpid(), 
+                               opal_socket_errno,
+                               strerror(opal_socket_errno));
+            }
             return;
         }
         mca_btl_tcp_set_socket_options(sd);

@@ -47,3 +47,20 @@ Your Open MPI job may now fail.
   PID:        %d
   Message:    %s
 #
+[accept failed]
+WARNING: The accept(3) system call failed on a TCP socket.  While this
+should generally never happen on a well-configured HPC system, the
+most common causes when it does occur are:
+
+  * The process ran out of file descriptors
+  * The operating system ran out of file descriptors
+  * The operating system ran out of memory
+
+Your Open MPI job will likely hang until the failure resason is fixed
+(e.g., more file descriptors and/or memory becomes available), and may
+eventually timeout / abort.
+
+  Local host: %s
+  PID:        %d
+  Errno:      %d (%s)
+#
