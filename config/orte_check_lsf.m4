@@ -25,11 +25,11 @@ AC_DEFUN([ORTE_CHECK_LSF],[
     AC_ARG_WITH([lsf],
         [AC_HELP_STRING([--with-lsf(=DIR)],
              [Build LSF support])])
-    OMPI_CHECK_WITHDIR([lsf], [$with_lsf], [include/lsf/lsbatch.h])
+    OPAL_CHECK_WITHDIR([lsf], [$with_lsf], [include/lsf/lsbatch.h])
     AC_ARG_WITH([lsf-libdir],
        [AC_HELP_STRING([--with-lsf-libdir=DIR],
              [Search for LSF libraries in DIR])])
-    OMPI_CHECK_WITHDIR([lsf-libdir], [$with_lsf_libdir], [libbat.*])
+    OPAL_CHECK_WITHDIR([lsf-libdir], [$with_lsf_libdir], [libbat.*])
 
     # Defaults
     orte_check_lsf_dir_msg="compiler default"

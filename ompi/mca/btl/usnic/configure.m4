@@ -34,11 +34,11 @@ AC_DEFUN([OMPI_CHECK_LIBNL3],[
     AC_ARG_WITH([libnl3],
         [AC_HELP_STRING([--with-libnl3(=DIR)],
              [Build libnl3 support])])
-    OMPI_CHECK_WITHDIR([libnl3], [$with_libnl3], [include/libnl3/netlink/netlink.h])
+    OPAL_CHECK_WITHDIR([libnl3], [$with_libnl3], [include/libnl3/netlink/netlink.h])
     AC_ARG_WITH([libnl3-libdir],
         [AC_HELP_STRING([--with-libnl3-libdir=DIR],
              [Search for libnl3 libraries in DIR])])
-    OMPI_CHECK_WITHDIR([libnl3-libdir], [$with_libnl3_libdir], [libnl-3.*])
+    OPAL_CHECK_WITHDIR([libnl3-libdir], [$with_libnl3_libdir], [libnl-3.*])
 
     ompi_check_libnl3_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_libnl3_$1_save_LDFLAGS="$LDFLAGS"

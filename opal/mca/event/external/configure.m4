@@ -86,14 +86,14 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
     # If we want external support, try it
     AS_IF([test "$opal_event_external_want" = "yes"],
           [ # Error out if the specified dir does not exist
-           OMPI_CHECK_WITHDIR([libevent-libdir], [$with_libevent_libdir], 
+           OPAL_CHECK_WITHDIR([libevent-libdir], [$with_libevent_libdir], 
                               [libevent.*])
 
            AC_MSG_CHECKING([for external libevent in])
            AS_IF([test "$with_libevent" != "external" -a "$with_libevent" != "yes"],
                  [opal_event_dir=$with_libevent
                   AC_MSG_RESULT([$opal_event_dir])
-                  OMPI_CHECK_WITHDIR([libevent], [$with_libdir], 
+                  OPAL_CHECK_WITHDIR([libevent], [$with_libdir], 
                                      [include/event.h])
                  ],
                  [AC_MSG_RESULT([(default search paths)])])

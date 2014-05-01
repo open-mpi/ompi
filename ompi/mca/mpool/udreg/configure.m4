@@ -26,7 +26,7 @@ AC_DEFUN([MCA_ompi_mpool_udreg_CONFIG],[
 
     AC_ARG_WITH([udreg], [AC_HELP_STRING([--with-udreg(=DIR)],
 		[Build support for Cray udreg support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([udreg], [$with_udreg], [.])
+    OPAL_CHECK_WITHDIR([udreg], [$with_udreg], [.])
 
     mpool_udreg_happy="no"
 

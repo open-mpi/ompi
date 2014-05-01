@@ -29,7 +29,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
         AC_ARG_WITH([alps],
                     [AC_HELP_STRING([--with-alps(=DIR|yes|no)],
                     [Build with ALPS scheduler component, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries (default: no)])])
-        OMPI_CHECK_WITHDIR([alps], [$with_alps], [.])
+        OPAL_CHECK_WITHDIR([alps], [$with_alps], [.])
 
         AC_ARG_WITH([alps-libdir],
                     [AC_HELP_STRING([--with-alps-libdir=DIR],

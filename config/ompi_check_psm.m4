@@ -28,11 +28,11 @@ AC_DEFUN([OMPI_CHECK_PSM],[
     AC_ARG_WITH([psm],
         [AC_HELP_STRING([--with-psm(=DIR)],
              [Build PSM (Qlogic InfiniPath) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([psm], [$with_psm], [include/psm.h])
+    OPAL_CHECK_WITHDIR([psm], [$with_psm], [include/psm.h])
     AC_ARG_WITH([psm-libdir],
         [AC_HELP_STRING([--with-psm-libdir=DIR],
              [Search for PSM (QLogic InfiniPath PSM) libraries in DIR])])
-    OMPI_CHECK_WITHDIR([psm-libdir], [$with_psm_libdir], [libpsm_infinipath.*])
+    OPAL_CHECK_WITHDIR([psm-libdir], [$with_psm_libdir], [libpsm_infinipath.*])
 
     ompi_check_psm_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_psm_$1_save_LDFLAGS="$LDFLAGS"

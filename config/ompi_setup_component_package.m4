@@ -59,11 +59,11 @@ AC_DEFUN([OPAL_SETUP_COMPONENT_PACKAGE],[
     AC_ARG_WITH([$3],
         [AC_HELP_STRING([--with-$3(=DIR)],
                         [Build $3 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([$3], [$with_$3], [$4])
+    OPAL_CHECK_WITHDIR([$3], [$with_$3], [$4])
     AC_ARG_WITH([$3-libdir],
         [AC_HELP_STRING([--with-$3-libdir=DIR],
                         [Search for the $3 libraries in DIR])])
-    OMPI_CHECK_WITHDIR([$3-libdir], [$with_$3_libdir], [$5])
+    OPAL_CHECK_WITHDIR([$3-libdir], [$with_$3_libdir], [$5])
 
     AS_IF([test ! -z "$with_$3" -a "$with_$3" != "yes"],
           [$1_$2_dir="$with_$3"])

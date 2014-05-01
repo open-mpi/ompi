@@ -14,7 +14,7 @@ AC_DEFUN([MCA_ompi_btl_scif_CONFIG],[
 
     AC_ARG_WITH([scif], [AC_HELP_STRING([--with-scif(=DIR)]),
 		[Build with SCIF, searching for headers in DIR])])
-    OMPI_CHECK_WITHDIR([scif], [$with_scif], [include/scif.h])
+    OPAL_CHECK_WITHDIR([scif], [$with_scif], [include/scif.h])
 
     btl_scif_happy="no"
 

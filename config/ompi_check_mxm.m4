@@ -17,11 +17,11 @@ AC_DEFUN([OMPI_CHECK_MXM],[
     AC_ARG_WITH([mxm],
         [AC_HELP_STRING([--with-mxm(=DIR)],
              [Build Mellanox Messaging support])])
-    OMPI_CHECK_WITHDIR([mxm], [$with_mxm], [include/mxm/api/mxm_api.h])
+    OPAL_CHECK_WITHDIR([mxm], [$with_mxm], [include/mxm/api/mxm_api.h])
     AC_ARG_WITH([mxm-libdir],
         [AC_HELP_STRING([--with-mxm-libdir=DIR],
              [Search for Mellanox Messaging libraries in DIR])])
-    OMPI_CHECK_WITHDIR([mxm-libdir], [$with_mxm_libdir], [libmxm.*])
+    OPAL_CHECK_WITHDIR([mxm-libdir], [$with_mxm_libdir], [libmxm.*])
 
     ompi_check_mxm_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_mxm_$1_save_LDFLAGS="$LDFLAGS"

@@ -21,7 +21,7 @@ AC_DEFUN([OMPI_CHECK_FCA],[
     AC_ARG_WITH([fca],
         [AC_HELP_STRING([--with-fca(=DIR)],
              [Build fca (Mellanox Fabric Collective Accelerator) support, searching for libraries in DIR])])
-    OMPI_CHECK_WITHDIR([fca], [$with_fca], [lib/libfca.so])
+    OPAL_CHECK_WITHDIR([fca], [$with_fca], [lib/libfca.so])
 
     AS_IF([test "$with_fca" != "no"],
           [AS_IF([test ! -z "$with_fca" -a "$with_fca" != "yes"],

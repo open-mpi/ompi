@@ -27,11 +27,11 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
     AC_ARG_WITH([udapl],
         [AC_HELP_STRING([--with-udapl(=DIR)],
              [Build uDAPL support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([udapl], [$with_udapl], [include/dat/udat.h])
+    OPAL_CHECK_WITHDIR([udapl], [$with_udapl], [include/dat/udat.h])
     AC_ARG_WITH([udapl-libdir],
        [AC_HELP_STRING([--with-udapl-libdir=DIR],
              [Search for uDAPL libraries in DIR])])
-    OMPI_CHECK_WITHDIR([udapl-libdir], [$with_udapl_libdir], [libdat.*])
+    OPAL_CHECK_WITHDIR([udapl-libdir], [$with_udapl_libdir], [libdat.*])
 
     # Special case for OFED/Linux: the default /etc/dat.conf that
     # ships with OFED is broken in that it includes DAT providers that

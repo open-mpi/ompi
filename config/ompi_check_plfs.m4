@@ -42,7 +42,7 @@ AC_DEFUN([OMPI_CHECK_PLFS],[
     AC_ARG_WITH([plfs],
         [AC_HELP_STRING([--with-plfs(=DIR)],
              [Build Plfs support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([plfs], [$with_plfs], [include/plfs.h])
+    OPAL_CHECK_WITHDIR([plfs], [$with_plfs], [include/plfs.h])
 
     AC_ARG_WITH([plfs-libs], 
         [AC_HELP_STRING([--with-plfs-libs=LIBS],

@@ -41,7 +41,7 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
     AC_ARG_WITH([portals],
         [AC_HELP_STRING([--with-portals(=DIR)],
              [Build Portals support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([portals], [$with_portals], [include/portals3.h])
+    OPAL_CHECK_WITHDIR([portals], [$with_portals], [include/portals3.h])
     AC_ARG_WITH([portals-config],
             AC_HELP_STRING([--with-portals-config],
                            [configuration to use for Portals support.
