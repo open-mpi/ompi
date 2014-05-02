@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -43,15 +43,6 @@ extern mca_bml_base_component_t mca_bml_r2_component;
 
 /* Names of all the BTL components that this BML is aware of */
 static char *btl_names = NULL;
-
-static inline unsigned int bml_base_log2(unsigned long val) {
-    unsigned int count = 0;
-    while(val > 0) {
-        val = val >> 1;
-        count++;
-    }
-    return count > 0 ? count-1: 0;
-}
 
 static int btl_exclusivity_compare(const void* arg1, const void* arg2)
 {

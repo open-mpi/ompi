@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -157,7 +157,7 @@ FUNC_FUNC(max, fortran_real4, ompi_fortran_real4_t)
 #if OMPI_HAVE_FORTRAN_REAL8
 FUNC_FUNC(max, fortran_real8, ompi_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 FUNC_FUNC(max, fortran_real16, ompi_fortran_real16_t)
 #endif
 
@@ -217,7 +217,7 @@ FUNC_FUNC(min, fortran_real4, ompi_fortran_real4_t)
 #if OMPI_HAVE_FORTRAN_REAL8
 FUNC_FUNC(min, fortran_real8, ompi_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 FUNC_FUNC(min, fortran_real16, ompi_fortran_real16_t)
 #endif
 
@@ -274,7 +274,7 @@ OP_FUNC(sum, fortran_real4, ompi_fortran_real4_t, +=)
 #if OMPI_HAVE_FORTRAN_REAL8
 OP_FUNC(sum, fortran_real8, ompi_fortran_real8_t, +=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
 #endif
 /* Complex */
@@ -341,7 +341,7 @@ OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, *=)
 #if OMPI_HAVE_FORTRAN_REAL8
 OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, *=)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, *=)
 #endif
 /* Complex */
@@ -737,7 +737,7 @@ FUNC_FUNC_3BUF(max, fortran_real4, ompi_fortran_real4_t)
 #if OMPI_HAVE_FORTRAN_REAL8
 FUNC_FUNC_3BUF(max, fortran_real8, ompi_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 FUNC_FUNC_3BUF(max, fortran_real16, ompi_fortran_real16_t)
 #endif
 
@@ -797,7 +797,7 @@ FUNC_FUNC_3BUF(min, fortran_real4, ompi_fortran_real4_t)
 #if OMPI_HAVE_FORTRAN_REAL8
 FUNC_FUNC_3BUF(min, fortran_real8, ompi_fortran_real8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 FUNC_FUNC_3BUF(min, fortran_real16, ompi_fortran_real16_t)
 #endif
 
@@ -854,7 +854,7 @@ OP_FUNC_3BUF(sum, fortran_real4, ompi_fortran_real4_t, +)
 #if OMPI_HAVE_FORTRAN_REAL8
 OP_FUNC_3BUF(sum, fortran_real8, ompi_fortran_real8_t, +)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 OP_FUNC_3BUF(sum, fortran_real16, ompi_fortran_real16_t, +)
 #endif
 /* Complex */
@@ -921,7 +921,7 @@ OP_FUNC_3BUF(prod, fortran_real4, ompi_fortran_real4_t, *)
 #if OMPI_HAVE_FORTRAN_REAL8
 OP_FUNC_3BUF(prod, fortran_real8, ompi_fortran_real8_t, *)
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 OP_FUNC_3BUF(prod, fortran_real16, ompi_fortran_real16_t, *)
 #endif
 /* Complex */

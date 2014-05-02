@@ -160,22 +160,6 @@ static bool want_this_port(char **include_list, char **exclude_list,
 
 /***********************************************************************/
 
-static const char *transport_name_to_str(enum ibv_transport_type transport_type)
-{
-    switch(transport_type) {
-    case IBV_TRANSPORT_IB:        return "IB";
-    case IBV_TRANSPORT_IWARP:     return "IWARP";
-#if HAVE_DECL_IBV_TRANSPORT_USNIC
-    case IBV_TRANSPORT_USNIC:     return "usNIC";
-#endif
-#if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
-    case IBV_TRANSPORT_USNIC_UDP: return "usNIC UDP";
-#endif
-    case IBV_TRANSPORT_UNKNOWN: 
-    default:                      return "unknown";
-    }
-}
-
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
 static const char *link_layer_to_str(int link_type)
 {
