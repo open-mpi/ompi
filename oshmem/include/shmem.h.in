@@ -14,7 +14,7 @@
 
 
 #include <stddef.h>     /* include for ptrdiff_t */
-
+#include <stdint.h>     /* include for fixed width types */
 #if defined(c_plusplus) || defined(__cplusplus)
 #    include <complex>
 #    define OSHMEM_COMPLEX_TYPE(type)    std::complex<type>
