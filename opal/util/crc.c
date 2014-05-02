@@ -38,16 +38,16 @@
 
 
 #if (OPAL_ALIGNMENT_LONG == 8)
-#define _WORD_MASK_ 0x7
+#define OPAL_CRC_WORD_MASK_ 0x7
 #elif (OPAL_ALIGNMENT_LONG == 4)
-#define _WORD_MASK_ 0x3
+#define OPAL_CRC_WORD_MASK_ 0x3
 #else
-#define _WORD_MASK_ 0xFFFF
+#define OPAL_CRC_WORD_MASK_ 0xFFFF
 #endif
 
 
 #define WORDALIGNED(v) \
-    (((intptr_t)v & _WORD_MASK_) ? false : true)
+    (((intptr_t)v & OPAL_CRC_WORD_MASK_) ? false : true)
 
 
 #define INTALIGNED(v) \
