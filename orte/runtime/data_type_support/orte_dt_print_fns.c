@@ -488,8 +488,10 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
                 hwloc_bitmap_free(mycpus);
                 asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: %s", pfx2,
                          ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
-                         ORTE_VPID_PRINT(src->name.vpid), str);
-                free(str);
+                         ORTE_VPID_PRINT(src->name.vpid), (NULL == str) ? "N/A" : str);
+                if (NULL != str) {
+                    free(str);
+                }
             } else {
                 /* just print a very simple output for users */
                 asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: N/A", pfx2,
