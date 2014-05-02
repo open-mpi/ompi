@@ -11,8 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Oak Rigde National Laboratory. 
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,15 +37,6 @@
             comm->c_coll.coll_## func = NULL;                   \
             comm->c_coll.coll_## func ## _module = NULL;        \
         }                                                       \
-    } while (0)
-
-#define CLOSE_NEIGH(comm, func)                                        \
-           do {                                                        \
-        if (NULL != comm->c_coll.neigh->coll_ ## func ## _module) {    \
-            OBJ_RELEASE(comm->c_coll.neigh->coll_ ## func ## _module); \
-            comm->c_coll.neigh->coll_## func = NULL;                   \
-            comm->c_coll.neigh->coll_## func ## _module = NULL;        \
-        }                                                              \
     } while (0)
 
 int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
@@ -88,19 +77,6 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iscatter);
     CLOSE(comm, iscatterv);
 
-    CLOSE_NEIGH(comm, neighbor_allgather);
-    CLOSE_NEIGH(comm, neighbor_allgatherv);
-    CLOSE_NEIGH(comm, neighbor_alltoall);
-    CLOSE_NEIGH(comm, neighbor_alltoallv);
-    CLOSE_NEIGH(comm, neighbor_alltoallw);
-
-    CLOSE_NEIGH(comm, ineighbor_allgather);
-    CLOSE_NEIGH(comm, ineighbor_allgatherv);
-    CLOSE_NEIGH(comm, ineighbor_alltoall);
-    CLOSE_NEIGH(comm, ineighbor_alltoallv);
-    CLOSE_NEIGH(comm, ineighbor_alltoallw);
-
-    free(comm->c_coll.neigh);
 
     /* All done */
     return OMPI_SUCCESS;
