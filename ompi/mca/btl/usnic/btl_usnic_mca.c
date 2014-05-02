@@ -269,14 +269,14 @@ int ompi_btl_usnic_component_register(void)
                    &mca_btl_usnic_component.connectivity_enabled,
                    OPAL_INFO_LVL_3));
 
-    mca_btl_usnic_component.connectivity_ack_timeout = 1000;
+    mca_btl_usnic_component.connectivity_ack_timeout = 250;
     CHECK(reg_int("connectivity_ack_timeout",
                   "Timeout, in milliseconds, while waiting for an ACK while verification connectivity between usNIC devices.  If 0, the connectivity check is disabled (must be >=0).",
                   mca_btl_usnic_component.connectivity_ack_timeout,
                   &mca_btl_usnic_component.connectivity_ack_timeout,
                   REGINT_GE_ZERO, OPAL_INFO_LVL_3));
 
-    mca_btl_usnic_component.connectivity_num_retries = 10;
+    mca_btl_usnic_component.connectivity_num_retries = 40;
     CHECK(reg_int("connectivity_error_num_retries",
                   "Number of times to retry usNIC connectivity verification before aborting the MPI job (must be >0).",
                   mca_btl_usnic_component.connectivity_num_retries,
