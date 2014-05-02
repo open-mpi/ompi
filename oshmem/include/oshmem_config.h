@@ -1,3 +1,4 @@
+/* oshmem/include/oshmem_config.h.  Generated from oshmem_config.h.in by configure.  */
 /* -*- c -*-
  *
  * Copyright (c) 2013      Mellanox Technologies, Inc.
