@@ -430,6 +430,7 @@ void orte_ess_base_app_abort(int status, bool report)
 {
     int fd;
     char *myfile;
+    struct timespec tp = {0, 100000};           \
 
     /* Exit - do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
@@ -453,6 +454,10 @@ void orte_ess_base_app_abort(int status, bool report)
         myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);
         fd = open(myfile, O_CREAT);
         close(fd);
+        /* now introduce a short delay to allow any pending
+         * messages (e.g., from a call to "show_help") to
+         * have a chance to be sent */
+        nanosleep(&tp, NULL);                                           \
     }
     
     /* - Clean out the global structures 
