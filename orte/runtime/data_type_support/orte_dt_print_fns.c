@@ -471,11 +471,38 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     }
     
     if (!orte_devel_level_output) {
+#if OPAL_HAVE_HWLOC
+        {
+            hwloc_cpuset_t mycpus;
+            char tmp1[1024], tmp2[1024];
+            char *str=NULL;
+            if (NULL != src->cpu_bitmap) {
+                mycpus = hwloc_bitmap_alloc();
+                hwloc_bitmap_list_sscanf(mycpus, src->cpu_bitmap);
+                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), src->node->topology, mycpus)) {
+                    str = strdup("UNBOUND");
+                } else {
+                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), src->node->topology, mycpus);
+                    asprintf(&str, "%s:%s", tmp1, tmp2);
+                }
+                hwloc_bitmap_free(mycpus);
+                asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: %s", pfx2,
+                         ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
+                         ORTE_VPID_PRINT(src->name.vpid), str);
+                free(str);
+            } else {
+                /* just print a very simple output for users */
+                asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: N/A", pfx2,
+                         ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
+                         ORTE_VPID_PRINT(src->name.vpid));
+            }
+        }
+#else
         /* just print a very simple output for users */
         asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s", pfx2,
                  ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
                  ORTE_VPID_PRINT(src->name.vpid));
-        
+#endif
         /* set the return */
         *output = tmp;
         free(pfx2);
