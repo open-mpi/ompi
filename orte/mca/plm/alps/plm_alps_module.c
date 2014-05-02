@@ -503,14 +503,6 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
     
     if (0 != status) {
         if (failed_launch) {
-            /* we have a problem during launch */
-            opal_output(0, "ERROR: alps failed to start the required daemons.");
-            opal_output(0, "ERROR: This could be due to an inability to find the orted binary (--prefix)");
-            opal_output(0, "ERROR: on one or more remote nodes, compilation of the orted with dynamic libraries,");
-            opal_output(0, "ERROR: lack of authority to execute on one or more specified nodes,");
-            opal_output(0, "ERROR: or the inability to write startup files into /tmp (--tmpdir/orte_tmpdir_base).");
-            
-            /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
              */
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);            

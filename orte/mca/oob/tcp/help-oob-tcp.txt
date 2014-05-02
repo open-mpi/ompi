@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -63,14 +64,4 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
-#
-[unable-to-communicate]
-One or more TCP routes were given to a process, but no
-communication path could be found:
-
-  Source: %s
-  Peer:   %s
-
-This usually is caused by a lack of common network interfaces
-and no route found between them.
   

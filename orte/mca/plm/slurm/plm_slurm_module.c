@@ -537,6 +537,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:slurm: daemon failed during launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* notify the error manager */
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
     } else {
         /* if this is after launch, then we need to abort only if the status
