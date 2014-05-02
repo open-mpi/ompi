@@ -96,6 +96,7 @@ static bool __group_cache_enabled = true;
 }
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_short_and_to_all     =  pshmem_short_and_to_all
 #pragma weak shmem_int_and_to_all       =  pshmem_int_and_to_all
 #pragma weak shmem_long_and_to_all      =  pshmem_long_and_to_all
