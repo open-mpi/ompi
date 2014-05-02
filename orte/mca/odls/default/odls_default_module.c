@@ -419,7 +419,7 @@ static int do_child(orte_app_context_t* context,
     }
     
     /* Setup the pipe to be close-on-exec */
-    fcntl(write_fd, F_SETFD, FD_CLOEXEC);
+    opal_fd_set_cloexec(write_fd);
 
     if (NULL != child) {
         /* setup stdout/stderr so that any error messages that we

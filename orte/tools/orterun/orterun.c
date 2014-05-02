@@ -69,6 +69,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/show_help.h"
+#include "opal/util/fd.h"
 #include "opal/sys/atomic.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
@@ -2999,6 +3000,16 @@ static void open_fifo (void)
 		    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 	return;
     }
+
+    /* Set this fd to be close-on-exec so that children don't see it */
+    if (opal_fd_set_cloexec(attach_fd) != OPAL_SUCCESS) {
+        opal_output(0, "%s unable to set debugger attach fifo to CLOEXEC",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        close(attach_fd);
+        attach_fd = -1;
+        return;
+    }
+
     opal_output_verbose(2, orte_debug_output,
 			"%s Monitoring debugger attach fifo %s",
 			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

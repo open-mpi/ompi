@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
@@ -642,6 +642,11 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
                 !orte_debug_daemons_flag && !orte_leave_session_attached) {
                 dup2(fd,1);
                 dup2(fd,2);
+            }
+
+            /* Don't leave the extra fd to /dev/null open */
+            if (fd > 2) {
+                close(fd);
             }
         }
 

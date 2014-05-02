@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -55,6 +55,7 @@
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
+#include "opal/util/fd.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
 
@@ -129,6 +130,17 @@ int orte_oob_tcp_start_listening(void)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+
+        /* Make sure the pipe FDs are set to close-on-exec so that
+           they don't leak into children */
+        if (opal_fd_set_cloexec(mca_oob_tcp_component.stop_thread[0]) != OPAL_SUCCESS ||
+            opal_fd_set_cloexec(mca_oob_tcp_component.stop_thread[1]) != OPAL_SUCCESS) {
+            close(mca_oob_tcp_component.stop_thread[0]);
+            close(mca_oob_tcp_component.stop_thread[1]);
+            ORTE_ERROR_LOG(ORTE_ERR_IN_ERRNO);
+            return ORTE_ERR_IN_ERRNO;
+        }
+
         mca_oob_tcp_component.listen_thread_active = true;
         mca_oob_tcp_component.listen_thread.t_run = listen_thread;
         mca_oob_tcp_component.listen_thread.t_arg = NULL;
@@ -310,6 +322,17 @@ static int create_listen(void)
             return ORTE_ERROR;
         }
     
+        /* Set the socket to close-on-exec so that no children inherit
+           this FD */
+        if (opal_fd_set_cloexec(sd) != OPAL_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_create_listen: unable to set the "
+                        "listening socket to CLOEXEC (%s:%d)\n",
+                        strerror(opal_socket_errno), opal_socket_errno);
+            CLOSE_THE_SOCKET(sd);
+            opal_argv_free(ports);
+            return ORTE_ERROR;
+        }
+
         if (bind(sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
             if( (EADDRINUSE == opal_socket_errno) || (EADDRNOTAVAIL == opal_socket_errno) ) {
                 continue;

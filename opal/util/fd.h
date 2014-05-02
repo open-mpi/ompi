@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
@@ -48,6 +48,20 @@ OPAL_DECLSPEC int opal_fd_read(int fd, int len, void *buffer);
  * occurs.  EAGAIN and EINTR are transparently handled.
  */
 OPAL_DECLSPEC int opal_fd_write(int fd, int len, const void *buffer);
+
+/**
+ * Convenience function to set a file descriptor to be close-on-exec.
+ *
+ * @param fd File descriptor
+ *
+ * @returns OPAL_SUCCESS upon success (or if the system does not
+ * support close-on-exec behavior).
+ * @returns OPAL_ERR_IN_ERRNO otherwise.
+ *
+ * This is simply a convenience function because there's a few steps
+ * to setting a file descriptor to be close-on-exec.
+ */
+OPAL_DECLSPEC int opal_fd_set_cloexec(int fd);
 
 END_C_DECLS
 

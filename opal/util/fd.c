@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
@@ -15,6 +15,7 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
+#include <fcntl.h>
 
 #include "opal/util/fd.h"
 #include "opal/constants.h"
@@ -69,3 +70,22 @@ int opal_fd_write(int fd, int len, const void *buffer)
 }
 
 
+int opal_fd_set_cloexec(int fd)
+{
+#ifdef FD_CLOEXEC
+    int flags;
+
+    /* Stevens says that we should get the fd's flags before we set
+       them.  So say we all. */
+    flags = fcntl(fd, F_GETFD, 0);
+    if (-1 == flags) {
+        return OPAL_ERR_IN_ERRNO;
+    }
+
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC | flags) == -1) {
+        return OPAL_ERR_IN_ERRNO;
+    }
+#endif
+
+    return OPAL_SUCCESS;
+}
