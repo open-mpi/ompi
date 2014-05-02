@@ -71,9 +71,6 @@ int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)
         return ret;
     }
 
-    /* nonblocking Barrier */
-    /* ret = ml_coll_hier_nonblocking_barrier_setup(ml_module); */
-
     /* Broadcast */
     ret = ml_coll_hier_bcast_setup(ml_module);
     if( OMPI_SUCCESS != ret ) {
