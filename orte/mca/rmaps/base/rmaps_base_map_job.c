@@ -301,7 +301,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     /* if we get here without doing the map, or with zero procs in
      * the map, then that's an error
      */
-    if (!did_map || 0 == jdata->num_procs) {
+    if (!did_map || 0 == jdata->num_procs || 0 == jdata->map->num_nodes) {
         orte_show_help("help-orte-rmaps-base.txt", "failed-map", true);
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
         OBJ_RELEASE(caddy);
