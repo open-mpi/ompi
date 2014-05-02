@@ -83,6 +83,10 @@ int opal_dstore_base_store(int dstorehandle,
 {
     opal_dstore_handle_t *hdl;
 
+    if (dstorehandle < 0) {
+        return OPAL_ERR_NOT_INITIALIZED;
+    }
+
     if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
         OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
         return OPAL_ERR_NOT_FOUND;
@@ -98,6 +102,11 @@ void opal_dstore_base_commit(int dstorehandle,
                              const opal_identifier_t *id)
 {
     opal_dstore_handle_t *hdl;
+
+    if (dstorehandle < 0) {
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_INITIALIZED);
+        return;
+    }
 
     if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
         OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
@@ -119,6 +128,10 @@ int opal_dstore_base_fetch(int dstorehandle,
 {
     opal_dstore_handle_t *hdl;
 
+    if (dstorehandle < 0) {
+        return OPAL_ERR_NOT_INITIALIZED;
+    }
+
     if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
         OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
         return OPAL_ERR_NOT_FOUND;
@@ -135,6 +148,10 @@ int opal_dstore_base_remove_data(int dstorehandle,
                                  const char *key)
 {
     opal_dstore_handle_t *hdl;
+
+    if (dstorehandle < 0) {
+        return OPAL_ERR_NOT_INITIALIZED;
+    }
 
     if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
         OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
