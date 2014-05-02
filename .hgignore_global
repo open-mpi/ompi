@@ -715,10 +715,6 @@ syntax: glob
 ./orte/include/stamp-h*
 ./orte/include/orte/version.h
 ./orte/include/orte/frameworks.h
-./orte/mca/db/Makefile.in
-./orte/mca/db/postgres/Makefile.in
-./orte/mca/db/print/Makefile.in
-./orte/mca/db/sqlite/Makefile.in
 ./orte/mca/dfs/Makefile.in
 ./orte/mca/dfs/vc70.pdb
 ./orte/mca/dfs/app/Makefile.in
