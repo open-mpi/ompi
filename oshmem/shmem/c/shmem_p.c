@@ -45,8 +45,6 @@
     }
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_char_p = pshmem_char_p
 #pragma weak shmem_short_p = pshmem_short_p
 #pragma weak shmem_int_p = pshmem_int_p
 #pragma weak shmem_long_p = pshmem_long_p

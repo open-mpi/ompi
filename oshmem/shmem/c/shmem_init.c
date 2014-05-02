@@ -24,7 +24,6 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
 #pragma weak start_pes = pstart_pes
 #include "oshmem/shmem/c/profile/defines.h"
 #endif

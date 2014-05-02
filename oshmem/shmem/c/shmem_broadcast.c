@@ -107,7 +107,6 @@ static void _shmem_broadcast(void *target,
 }
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
 #pragma weak shmem_broadcast = pshmem_broadcast
 #pragma weak shmem_broadcast32 = pshmem_broadcast32
 #pragma weak shmem_broadcast64 = pshmem_broadcast64

@@ -39,7 +39,6 @@
     }
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
 #pragma weak shmem_wait = pshmem_wait
 #pragma weak shmem_short_wait = pshmem_short_wait
 #pragma weak shmem_int_wait = pshmem_int_wait

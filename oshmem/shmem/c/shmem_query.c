@@ -17,7 +17,6 @@
 #include "oshmem/proc/proc.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
 #pragma weak _num_pes = p_num_pes
 #pragma weak _my_pe = p_my_pe
 #include "oshmem/shmem/c/profile/defines.h"

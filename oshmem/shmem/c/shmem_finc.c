@@ -51,7 +51,6 @@
     }
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
 #pragma weak shmem_int_finc = pshmem_int_finc
 #pragma weak shmem_long_finc = pshmem_long_finc
 #pragma weak shmem_longlong_finc = pshmem_longlong_finc

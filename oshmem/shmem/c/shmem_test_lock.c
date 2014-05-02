@@ -21,7 +21,6 @@
 #include "oshmem/shmem/shmem_lock.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
 #pragma weak shmem_test_lock = pshmem_test_lock
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
