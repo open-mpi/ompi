@@ -602,15 +602,6 @@ int orte_show_help(const char *filename, const char *topic,
     return rc;
 }
 
-static void cbfunc(int status, orte_process_name_t* sender,
-                   opal_buffer_t* buffer, orte_rml_tag_t tag,
-                   void* cbdata)
-{
-    bool *active = (bool*)cbdata;
-    OBJ_RELEASE(buffer);
-    *active = false;
-}
-
 int orte_show_help_norender(const char *filename, const char *topic, 
                             bool want_error_header, const char *output)
 {
@@ -649,7 +640,6 @@ int orte_show_help_norender(const char *filename, const char *topic,
     else {
         opal_buffer_t *buf;
         static bool am_inside = false;
-        volatile bool active;
 
         /* JMS Note that we *may* have a recursion situation here where
            the RML could call show_help.  Need to think about this
@@ -671,23 +661,19 @@ int orte_show_help_norender(const char *filename, const char *topic,
             /* pack the resulting string */
             opal_dss.pack(buf, &output, 1, OPAL_STRING);
             /* send it to the HNP */
-            active = true;
             if (ORTE_SUCCESS != (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                                               ORTE_RML_TAG_SHOW_HELP,
-                                                              cbfunc, (void*)&active))) {
+                                                              orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buf);
             } else {
                 rc = ORTE_SUCCESS;
-                if (ORTE_PROC_IS_APP) {
-                    ORTE_WAIT_FOR_COMPLETION(active);
-                }
             }
             am_inside = false;
         }
     }
     
- CLEANUP:
+CLEANUP:
     return rc;
 }
 
