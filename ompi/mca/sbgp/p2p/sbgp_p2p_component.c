@@ -190,7 +190,7 @@ static mca_sbgp_base_module_t * mca_sbgp_p2p_select_procs(struct ompi_proc_t ** 
             int num_btls = mca_bml_base_btl_array_get_size(&(endpoint->btl_eager));
             /* loop over btls */
 
-            for (int i_btl = 0 ; num_btls ; ++i_btl) {
+            for (int i_btl = 0 ; i_btl < num_btls ; ++i_btl) {
                 /* I am checking for specific btl */
                 if (strcmp(endpoint->btl_eager.bml_btls[i_btl].btl->
                            btl_component->btl_version.mca_component_name, key)) {
