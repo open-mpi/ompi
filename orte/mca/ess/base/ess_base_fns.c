@@ -294,18 +294,20 @@ int orte_ess_base_proc_binding(void)
     /* store our cpuset for exchange with non-peers
      * so that other procs in a comm_spawn can know it
      */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_DSTORE_CPUSET);
-    kv.type = OPAL_STRING;
-    kv.data.string = strdup(orte_process_info.cpuset);
-    if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_nonpeer,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                 &kv))) {
-        ORTE_ERROR_LOG(ret);
+    if (NULL != orte_process_info.cpuset) {
+        OBJ_CONSTRUCT(&kv, opal_value_t);
+        kv.key = strdup(OPAL_DSTORE_CPUSET);
+        kv.type = OPAL_STRING;
+        kv.data.string = strdup(orte_process_info.cpuset);
+        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_nonpeer,
+                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
+                                                     &kv))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_DESTRUCT(&kv);
+            goto error;
+        }
         OBJ_DESTRUCT(&kv);
-        goto error;
     }
-    OBJ_DESTRUCT(&kv);
     return ORTE_SUCCESS;
 
  error:
