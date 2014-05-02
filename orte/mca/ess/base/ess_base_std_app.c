@@ -452,7 +452,7 @@ void orte_ess_base_app_abort(int status, bool report)
      */
     if (report && orte_routing_is_enabled && orte_create_session_dirs) {
         myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);
-        fd = open(myfile, O_CREAT);
+        fd = open(myfile, O_CREAT, S_IRUSR);
         close(fd);
         /* now introduce a short delay to allow any pending
          * messages (e.g., from a call to "show_help") to
