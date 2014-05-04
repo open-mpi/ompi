@@ -35,14 +35,21 @@
 #define MEMHEAP_RKEY_RESP_FAIL      0xA3
 
 #define MEMHEAP_MKEY_MAXSIZE   4096
+#define MEMHEAP_RECV_REQS_MAX  16 
+
+typedef struct oob_comm_request {
+    opal_list_item_t super;
+    MPI_Request recv_req;
+    char buf[MEMHEAP_MKEY_MAXSIZE];
+} oob_comm_request_t;
 
 struct oob_comm {
     opal_mutex_t lck;
     opal_condition_t cond;
     sshmem_mkey_t *mkeys;
     int mkeys_rcvd;
-    MPI_Request recv_req;
-    char buf[MEMHEAP_MKEY_MAXSIZE];
+    oob_comm_request_t req_pool[MEMHEAP_RECV_REQS_MAX];
+    opal_list_t req_list;
 };
 
 #define MEMHEAP_VERBOSE_FASTPATH(...)
@@ -354,16 +361,20 @@ static int oshmem_mkey_recv_cb(void)
     opal_buffer_t *msg;
     int32_t size;
     void *tmp_buf;
+    oob_comm_request_t *r;
 
     n = 0;
+    r = (oob_comm_request_t *)opal_list_get_first(&memheap_oob.req_list);
+    assert(r);
     while (1) {
-        my_MPI_Test(&memheap_oob.recv_req, &flag, &status);
+        my_MPI_Test(&r->recv_req, &flag, &status);
         if (OPAL_LIKELY(0 == flag)) {
             return n;
         }
         MPI_Get_count(&status, MPI_BYTE, &size);
         MEMHEAP_VERBOSE(5, "OOB request from PE: %d, size %d", status.MPI_SOURCE, size);
         n++;
+        opal_list_remove_first(&memheap_oob.req_list);
 
         /* to avoid deadlock we must start request
          * before processing it. Data are copied to
@@ -375,7 +386,7 @@ static int oshmem_mkey_recv_cb(void)
             ORTE_ERROR_LOG(0);
             return n;
         }
-        memcpy(tmp_buf, (void*)memheap_oob.buf, size);
+        memcpy(tmp_buf, (void*)&r->buf, size);
         msg = OBJ_NEW(opal_buffer_t);
         if (NULL == msg) {
             MEMHEAP_ERROR("not enough memory");
@@ -384,16 +395,19 @@ static int oshmem_mkey_recv_cb(void)
         }
         opal_dss.load(msg, (void*)tmp_buf, size);
 
-        rc = MPI_Start(&memheap_oob.recv_req);
+        rc = MPI_Start(&r->recv_req);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("Failed to post recv request %d", rc);
             ORTE_ERROR_LOG(rc);
             return n;
         }
+        opal_list_append(&memheap_oob.req_list, &r->super);
 
         do_recv(status.MPI_SOURCE, msg);
-
         OBJ_RELEASE(msg);
+
+        r = (oob_comm_request_t *)opal_list_get_first(&memheap_oob.req_list);
+        assert(r);
     }
     return 1;  
 }
@@ -401,25 +415,33 @@ static int oshmem_mkey_recv_cb(void)
 int memheap_oob_init(mca_memheap_map_t *map)
 {
     int rc = OSHMEM_SUCCESS;
+    int i;
+    oob_comm_request_t *r;
 
     memheap_map = map;
 
     OBJ_CONSTRUCT(&memheap_oob.lck, opal_mutex_t);
     OBJ_CONSTRUCT(&memheap_oob.cond, opal_condition_t);
+    OBJ_CONSTRUCT(&memheap_oob.req_list, opal_list_t);
 
-    rc = MPI_Recv_init(memheap_oob.buf, sizeof(memheap_oob.buf), MPI_BYTE,
-            MPI_ANY_SOURCE, 0, 
-            oshmem_comm_world,  
-            &memheap_oob.recv_req);
-    if (MPI_SUCCESS != rc) {
-        MEMHEAP_ERROR("Failed to created recv request %d", rc);
-        return rc;
-    }
 
-    rc = MPI_Start(&memheap_oob.recv_req);
-    if (MPI_SUCCESS != rc) {
-        MEMHEAP_ERROR("Failed to post recv request %d", rc);
-        return rc;
+    for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) { 
+        r = &memheap_oob.req_pool[i];
+        rc = MPI_Recv_init(r->buf, sizeof(r->buf), MPI_BYTE,
+                MPI_ANY_SOURCE, 0, 
+                oshmem_comm_world,  
+                &r->recv_req);
+        if (MPI_SUCCESS != rc) {
+            MEMHEAP_ERROR("Failed to created recv request %d", rc);
+            return rc;
+        }
+
+        rc = MPI_Start(&r->recv_req);
+        if (MPI_SUCCESS != rc) {
+            MEMHEAP_ERROR("Failed to post recv request %d", rc);
+            return rc;
+        }
+        opal_list_append(&memheap_oob.req_list, &r->super);
     }
 
     opal_progress_register(oshmem_mkey_recv_cb);
@@ -429,11 +451,18 @@ int memheap_oob_init(mca_memheap_map_t *map)
 
 void memheap_oob_destruct(void)
 {
+    int i;
+    oob_comm_request_t *r;
+
     opal_progress_unregister(oshmem_mkey_recv_cb);
 
-    MPI_Cancel(&memheap_oob.recv_req);
-    MPI_Request_free(&memheap_oob.recv_req);
+    for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) { 
+        r = &memheap_oob.req_pool[i];
+        MPI_Cancel(&r->recv_req);
+        MPI_Request_free(&r->recv_req);
+    }
 
+    OBJ_DESTRUCT(&memheap_oob.req_list);
     OBJ_DESTRUCT(&memheap_oob.lck);
     OBJ_DESTRUCT(&memheap_oob.cond);
 }
