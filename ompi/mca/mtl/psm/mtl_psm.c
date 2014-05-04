@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,27 +35,26 @@
 #include "mtl_psm_request.h"
 
 mca_mtl_psm_module_t ompi_mtl_psm = {
-    {
-        8191,         /* max cid - 2^13 - 1 */
-        (1UL << 30),  /* max tag value - must allow negatives */
-        0,            /* request reserve space */
-        0,            /* flags */
+    .super = {
+        /* NTH: PSM supports 16 bit context ids */
+        .mtl_max_contextid = (1UL << 16) - 1,
+        .mtl_max_tag = (1UL << 30),  /* must allow negatives */
         
-        ompi_mtl_psm_add_procs,
-        ompi_mtl_psm_del_procs,
-        ompi_mtl_psm_finalize,
+        .mtl_add_procs = ompi_mtl_psm_add_procs,
+        .mtl_del_procs = ompi_mtl_psm_del_procs,
+        .mtl_finalize = ompi_mtl_psm_finalize,
         
-        ompi_mtl_psm_send,
-        ompi_mtl_psm_isend,
+        .mtl_send = ompi_mtl_psm_send,
+        .mtl_isend = ompi_mtl_psm_isend,
         
-        ompi_mtl_psm_irecv,
-        ompi_mtl_psm_iprobe,
-        ompi_mtl_psm_imrecv,
-        ompi_mtl_psm_improbe,
+        .mtl_irecv = ompi_mtl_psm_irecv,
+        .mtl_iprobe = ompi_mtl_psm_iprobe,
+        .mtl_imrecv = ompi_mtl_psm_imrecv,
+        .mtl_improbe = ompi_mtl_psm_improbe,
 
-        ompi_mtl_psm_cancel,
-        ompi_mtl_psm_add_comm,
-        ompi_mtl_psm_del_comm
+        .mtl_cancel = ompi_mtl_psm_cancel,
+        .mtl_add_comm = ompi_mtl_psm_add_comm,
+        .mtl_del_comm = ompi_mtl_psm_del_comm
     }    
 };
 
