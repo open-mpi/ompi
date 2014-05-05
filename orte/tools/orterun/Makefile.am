@@ -32,7 +32,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 man_pages = orterun.1
 EXTRA_DIST = $(man_pages:.1=.1in)
 
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = orterun
 
@@ -45,7 +45,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_ompidata_DATA = help-orterun.txt
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 orterun_SOURCES = \
         main.c \

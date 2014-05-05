@@ -19,7 +19,7 @@
 #
 
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 nodist_ompidata_DATA = ortecc-wrapper-data.txt
 
@@ -33,6 +33,6 @@ install-exec-hook:
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT)
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS

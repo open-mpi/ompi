@@ -25,7 +25,7 @@ man_pages = orte-restart.1
 EXTRA_DIST = orte-restart.1in
 
 if WANT_FT_CR
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-restart
 
@@ -38,7 +38,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_ompidata_DATA = help-orte-restart.txt
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 orte_restart_SOURCES = orte-restart.c
 orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la

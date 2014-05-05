@@ -32,7 +32,7 @@ if WANT_FT
 man_pages += ompi-checkpoint.1 ompi-restart.1
 endif
 
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 nodist_man_MANS = $(man_pages)
 
 install-exec-hook:
@@ -61,7 +61,7 @@ if WANT_FT
 		$(DESTDIR)$(bindir)/ompi-migrate$(EXEEXT)
 endif
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 $(top_builddir)/orte/tools/orterun/orterun.1:
 	(cd $(top_builddir)/orte/tools/orterun && $(MAKE) $(AM_MAKEFLAGS) orterun.1)

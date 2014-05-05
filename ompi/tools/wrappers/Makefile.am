@@ -72,7 +72,7 @@ endif # CASE_SENSITIVE_FS
 
 else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ompi.pc ompi-c.pc ompi-cxx.pc ompi-fort.pc
@@ -144,7 +144,7 @@ uninstall-local: uninstall-local-always
 
 endif # CASE_SENSITIVE_FS
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 

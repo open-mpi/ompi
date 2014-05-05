@@ -329,7 +329,7 @@ fi
 AC_ARG_ENABLE([binaries],
     [AC_HELP_STRING([--enable-binaries],
         [Build and install binaries required for Open MPI, such as the wrapper compilers.   Useful for multi-lib installations.  (default: enabled)])])
-AM_CONDITIONAL([OMPI_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
+AM_CONDITIONAL([OPAL_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
 
 AC_ARG_ENABLE([script-wrapper-compilers],
   [AC_HELP_STRING([--enable-script-wrapper-compilers],

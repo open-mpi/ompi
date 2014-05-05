@@ -18,7 +18,7 @@
 #
 
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 dist_pkgdata_DATA = \
         mpicc-vt-wrapper-data.txt \
@@ -68,5 +68,5 @@ uninstall-local: uninstall-local-always
 
 endif # CASE_SENSITIVE_FS
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
