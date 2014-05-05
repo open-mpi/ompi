@@ -85,16 +85,17 @@ static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
     }\
 }
 
-/* When we add a datatype we should update it's definition depending on
- * the initial displacement for the whole data, so the displacement of
- * all elements inside a datatype depend only on the loop displacement
- * and it's own displacement.
+/* When we add a datatype we should update it's definition depending on the
+ * initial displacement for the whole data, so the displacement of all elements
+ * inside a datatype depend only on the loop displacement and it's own
+ * displacement.
  */
 
 /* we have 3 differents structures to update:
- * the first is the real representation of the datatype
- * the second is the internal representation using extents
- * the last is the representation used for send operations
+ * - the first is the real representation of the datatype
+ * - the second is the internal representation using extents
+ * - the last is the representation used for send operations
+ *
  * If the count is ZERO we dont have to add the pdtAdd datatype. But we have to
  * be sure that the pdtBase datatype is correctly initialized with all fields
  * set to ZERO if it's a empty datatype.
@@ -106,6 +107,14 @@ int32_t opal_datatype_add( opal_datatype_t* pdtBase, const opal_datatype_t* pdtA
     short localFlags = 0;  /* no specific options yet */
     dt_elem_desc_t *pLast, *pLoop = NULL;
     OPAL_PTRDIFF_TYPE lb, ub, true_lb, true_ub, epsilon, old_true_ub;
+
+    /**
+     *from MPI-3, page 84, lines 18-20: Most datatype constructors have
+     * replication count or block length arguments. Allowed values are
+     * non-negative integers. If the value is zero, no elements are generated in
+     * the type map and there is no effect on datatype bounds or extent.
+     */
+    if( 0 == count ) return OPAL_SUCCESS;
 
     /* the extent should always be positive. So a negative
      * value here have a special meaning ie. default extent as
