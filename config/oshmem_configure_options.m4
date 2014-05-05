@@ -11,7 +11,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OSHMEM_CONFIGURE_OPTIONS],[
-ompi_show_subtitle "OSHMEM Configuration options"
+opal_show_subtitle "OSHMEM Configuration options"
 
 AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LIBS)
 AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)

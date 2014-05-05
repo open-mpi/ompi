@@ -42,7 +42,7 @@ AC_DEFUN([OPAL_CONFIGURE_SETUP],[
 # of arugments here because of the m4 substitution.  So we have to set
 # special variable names before invoking the function.  :-\
 
-ompi_show_title() {
+opal_show_title() {
   cat <<EOF
 
 ============================================================================
@@ -53,7 +53,7 @@ EOF
 }
 
 
-ompi_show_subtitle() {
+opal_show_subtitle() {
   cat <<EOF
 
 *** ${1}

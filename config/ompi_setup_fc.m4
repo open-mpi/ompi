@@ -25,7 +25,7 @@ dnl
 
 # This is REQUIREd, below.
 AC_DEFUN_ONCE([_OMPI_SETUP_FC_BANNER],[
-    ompi_show_subtitle "Fortran compiler" 
+    opal_show_subtitle "Fortran compiler" 
 ])
 
 #############################################################################

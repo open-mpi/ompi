@@ -62,13 +62,13 @@ OMPI_LOAD_PLATFORM
 #
 
 OPAL_CONFIGURE_SETUP
-ompi_show_title "Configuring project_name_long"
+opal_show_title "Configuring project_name_long"
 
 #
 # Setup some things that must be done before AM-INIT-AUTOMAKE
 #
 
-ompi_show_subtitle "Startup tests"
+opal_show_subtitle "Startup tests"
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 AC_DEFINE_UNQUOTED(OPAL_ARCH, "$target", [OMPI architecture string])
@@ -100,7 +100,7 @@ AM_SILENT_RULES([yes])
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
-ompi_show_subtitle "Checking versions"
+opal_show_subtitle "Checking versions"
 
 # Get the version of OMPI that we are installing
 
@@ -187,7 +187,7 @@ PACKAGE_VERSION="$OPAL_VERSION"
 PACKAGE_STRING="${PACKAGE_NAME} ${PACKAGE_VERSION}"
 VERSION="${PACKAGE_VERSION}"
 
-ompi_show_subtitle "Initialization, setup"
+opal_show_subtitle "Initialization, setup"
 
 OMPI_TOP_BUILDDIR="`pwd`"
 AC_SUBST(OMPI_TOP_BUILDDIR)
@@ -321,7 +321,7 @@ esac
 ############################################################################
 # Check for compilers and preprocessors
 ############################################################################
-ompi_show_title "Compiler and preprocessor tests"
+opal_show_title "Compiler and preprocessor tests"
 
 ##################################
 # C compiler characteristics
@@ -565,7 +565,7 @@ m4_ifdef([project_ompi], [OPAL_SETUP_CXX
 # C and C++ check compiler attributes.
 ##################################
 
-ompi_show_subtitle "Compiler characteristics"
+opal_show_subtitle "Compiler characteristics"
 
 OPAL_CHECK_ATTRIBUTES
 OPAL_CHECK_COMPILER_VERSION_ID
@@ -596,7 +596,7 @@ m4_ifdef([project_ompi], [OMPI_SETUP_MPI_PROFILING],
 # Assembler Configuration
 ##################################
 
-ompi_show_subtitle "Assembler"
+opal_show_subtitle "Assembler"
 
 AM_PROG_AS
 OPAL_CONFIG_ASM
@@ -621,7 +621,7 @@ AC_CACHE_SAVE
 # Header files
 ##################################
 
-ompi_show_title "Header file tests"
+opal_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     dlfcn.h execinfo.h err.h fcntl.h grp.h inttypes.h libgen.h \
@@ -706,7 +706,7 @@ AC_CACHE_SAVE
 # Types
 ##################################
 
-ompi_show_title "Type tests"
+opal_show_title "Type tests"
 
 AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6,
                 struct sockaddr_storage],
@@ -835,7 +835,7 @@ AC_CACHE_SAVE
 # Libraries
 ##################################
 
-ompi_show_title "Library and Function tests"
+opal_show_title "Library and Function tests"
 
 # Darwin doesn't need -lutil, as it's something other than this -lutil.
 OPAL_CHECK_FUNC_LIB([openpty], [util])
@@ -910,7 +910,7 @@ AC_CACHE_SAVE
 # System-specific tests
 ##################################
 
-ompi_show_title "System-specific tests"
+opal_show_title "System-specific tests"
 
 # Do we have _SC_NPROCESSORS_ONLN? (only going to pass if we also have
 # <unistd.h> and sysconf(), which is ok) OS X 10.4 has <unistd.h> and
@@ -1136,7 +1136,7 @@ OPAL_SETUP_FT
 # MCA
 ##################################
 
-ompi_show_title "Modular Component Architecture (MCA) setup"
+opal_show_title "Modular Component Architecture (MCA) setup"
 
 AC_MSG_CHECKING([for subdir args])
 OMPI_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
@@ -1174,7 +1174,7 @@ AC_CACHE_SAVE
 # Check the visibility declspec at the end to avoid problem with
 # the previous tests that are not necessarily prepared for
 # the visibility feature.
-ompi_show_title "Symbol visibility feature"
+opal_show_title "Symbol visibility feature"
 
 OPAL_CHECK_VISIBILITY
 
@@ -1184,14 +1184,14 @@ OPAL_CHECK_VISIBILITY
 # Final top-level OMPI configuration
 ############################################################################
 
-ompi_show_title "Final top-level OMPI configuration"
+opal_show_title "Final top-level OMPI configuration"
 
 ############################################################################
 # Libtool: part two
 # (after C compiler setup = no compiler/linker tests after this)
 ############################################################################
 
-ompi_show_subtitle "Libtool configuration"
+opal_show_subtitle "Libtool configuration"
 
 # Use the undocumented solaris_use_stlport4 libtool variable to turn off any
 # Cstd/stlport4 linkage. This allows Open MPI to be C++ STL agnostic.
@@ -1257,8 +1257,8 @@ LT_OUTPUT
 # final compiler config
 ############################################################################
 
-m4_ifdef([project_ompi], [ompi_show_subtitle "Compiler flags"],
-         [m4_ifdef([project_orte], [ompi_show_subtitle "Compiler flags"])])
+m4_ifdef([project_ompi], [opal_show_subtitle "Compiler flags"],
+         [m4_ifdef([project_orte], [opal_show_subtitle "Compiler flags"])])
 
 #
 # This is needed for VPATH builds, so that it will -I the appropriate
@@ -1316,7 +1316,7 @@ AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(ompidatadir)/amca-param-sets'])
 # final wrapper compiler config
 ############################################################################
 
-ompi_show_subtitle "Wrapper compiler final setup"
+opal_show_subtitle "Wrapper compiler final setup"
 # The ORTE and OMPI wrapper scripts (i.e., not the C-compiled
 # executables) need perl.
 AC_PATH_PROG(PERL, perl, perl)
@@ -1399,7 +1399,7 @@ AC_SUBST(ompidatadir)
 AC_SUBST(ompilibdir)
 AC_SUBST(ompiincludedir)
 
-ompi_show_subtitle "Final output"
+opal_show_subtitle "Final output"
 
 AC_CONFIG_FILES([
     Makefile

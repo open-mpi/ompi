@@ -23,7 +23,7 @@
 #
 
 AC_DEFUN([OMPI_SETUP_MPI_EXT],[
-   ompi_show_title "Extended MPI interfaces setup" 
+   opal_show_title "Extended MPI interfaces setup" 
 
    OMPI_EXT
 ])

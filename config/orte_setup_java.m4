@@ -23,7 +23,7 @@ dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([ORTE_SETUP_JAVA_BANNER],[
-    ompi_show_subtitle "Java compiler" 
+    opal_show_subtitle "Java compiler" 
 ])
 
 # ORTE_SETUP_JAVA()

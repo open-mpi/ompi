@@ -26,7 +26,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
-ompi_show_subtitle "OMPI Configuration options"
+opal_show_subtitle "OMPI Configuration options"
 
 #
 # Disable MPI layer?

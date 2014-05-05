@@ -41,7 +41,7 @@ AC_DEFUN([OMPI_CONTRIB],[
                         [Comma-separated list of contributed package names that will not be built.  Possible values: ompi_mpicontrib_list.  Example: "--enable-contrib-no-build=foo,bar" will disable building both the "foo" and "bar" contributed software packages (default: none -- i.e., build all possible contrib packages)]))
 
     # Parse the list to see what we should not build
-    ompi_show_subtitle "Configuring contributed software packages"
+    opal_show_subtitle "Configuring contributed software packages"
     AC_MSG_CHECKING([which contributed software packages should be disabled])
     if test "$enable_contrib_no_build" = "yes"; then
         AC_MSG_RESULT([yes])

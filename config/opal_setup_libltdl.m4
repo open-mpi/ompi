@@ -24,7 +24,7 @@ dnl
 AC_DEFUN([OPAL_SETUP_LIBLTDL],[
     OPAL_VAR_SCOPE_PUSH([HAPPY])
 
-    ompi_show_subtitle "GNU libltdl setup"
+    opal_show_subtitle "GNU libltdl setup"
 
     # AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
     # passing precious variables down to the sub-configure).

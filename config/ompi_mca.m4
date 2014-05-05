@@ -253,7 +253,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     # can't use a variable rename here because these need to be evaled
     # at auto* time.
 
-    ompi_show_subtitle "Configuring MCA for $1"
+    opal_show_subtitle "Configuring MCA for $1"
 
     AC_MSG_CHECKING([for frameworks for $1])
     AC_MSG_RESULT([mca_$1_framework_list])
