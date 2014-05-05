@@ -43,6 +43,7 @@
 #include "opal/mca/pstat/base/base.h"
 #include "opal/util/os_path.h"
 
+#include "orte/mca/rtc/base/base.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
@@ -330,6 +331,18 @@ int orte_ess_base_orted_setup(char **hosts)
     if (ORTE_SUCCESS != (ret = orte_odls_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_odls_base_select";
+        goto error;
+    }
+    
+    /* Open/select the rtc */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rtc_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rtc_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rtc_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rtc_base_select";
         goto error;
     }
     
@@ -674,6 +687,7 @@ int orte_ess_base_orted_finalize(void)
 
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
+    (void) mca_base_framework_close(&orte_rtc_base_framework);
     (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_rml_base_framework);

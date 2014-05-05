@@ -123,34 +123,12 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/mca/plm/plm.h"
+#include "orte/mca/rtc/rtc.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/default/odls_default.h"
-
-/*
- * Struct written up the pipe from the child to the parent.
- */
-typedef struct {
-    /* True if the child has died; false if this is just a warning to
-       be printed. */
-    bool fatal;
-    /* Relevant only if fatal==true */
-    int exit_status;
-
-    /* Length of the strings that are written up the pipe after this
-       struct */
-    int file_str_len;
-    int topic_str_len;
-    int msg_str_len;
-} pipe_err_msg_t;
-
-/* 
- * Max length of strings from the pipe_err_msg_t
- */
-#define MAX_FILE_LEN 511
-#define MAX_TOPIC_LEN MAX_FILE_LEN
 
 /*
  * Module functions (function pointers used in a struct)
@@ -312,7 +290,7 @@ static void set_handler_default(int sig)
  * Internal function to write a rendered show_help message back up the
  * pipe to the waiting parent.
  */
-static int write_help_msg(int fd, pipe_err_msg_t *msg, const char *file,
+static int write_help_msg(int fd, orte_odls_pipe_err_msg_t *msg, const char *file,
                           const char *topic, va_list ap)
 {
     int ret;
@@ -325,12 +303,12 @@ static int write_help_msg(int fd, pipe_err_msg_t *msg, const char *file,
     str = opal_show_help_vstring(file, topic, true, ap);
 
     msg->file_str_len = (int) strlen(file);
-    if (msg->file_str_len > MAX_FILE_LEN) {
+    if (msg->file_str_len > ORTE_ODLS_MAX_FILE_LEN) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
     msg->topic_str_len = (int) strlen(topic);
-    if (msg->topic_str_len > MAX_TOPIC_LEN) {
+    if (msg->topic_str_len > ORTE_ODLS_MAX_TOPIC_LEN) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
@@ -359,35 +337,13 @@ static int write_help_msg(int fd, pipe_err_msg_t *msg, const char *file,
 }
 
 
-/* Called from the child to send a warning show_help message up the
-   pipe to the waiting parent. */
-#if OPAL_HAVE_HWLOC
-static int send_warn_show_help(int fd, const char *file, 
-                               const char *topic, ...)
-{
-    int ret;
-    va_list ap;
-    pipe_err_msg_t msg;
-
-    msg.fatal = false;
-    msg.exit_status = 0; /* ignored */
-
-    /* Send it */
-    va_start(ap, topic);
-    ret = write_help_msg(fd, &msg, file, topic, ap);
-    va_end(ap);
-
-    return ret;
-}
-#endif
-
 /* Called from the child to send an error message up the pipe to the
    waiting parent. */
 static void send_error_show_help(int fd, int exit_status,
                                  const char *file, const char *topic, ...)
 {
     va_list ap;
-    pipe_err_msg_t msg;
+    orte_odls_pipe_err_msg_t msg;
 
     msg.fatal = true;
     msg.exit_status = exit_status;
@@ -445,182 +401,8 @@ static int do_child(orte_app_context_t* context,
             /* Does not return */
         }
 
-#if OPAL_HAVE_HWLOC
-        {
-            hwloc_cpuset_t cpuset;
-            hwloc_obj_t root;
-            opal_hwloc_topo_data_t *sum;
-
-            /* Set process affinity, if given */
-            if (NULL == child->cpu_bitmap) {
-                /* if the daemon is bound, then we need to "free" this proc */
-                if (NULL != orte_daemon_cores) {
-                    root = hwloc_get_root_obj(opal_hwloc_topology);
-                    if (NULL == root->userdata) {
-                        send_warn_show_help(write_fd,
-                                            "help-orte-odls-default.txt", "incorrectly bound",
-                                            orte_process_info.nodename, context->app,
-                                            __FILE__, __LINE__);
-                    }
-                    sum = (opal_hwloc_topo_data_t*)root->userdata;
-                    /* bind this proc to all available processors */
-                    hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
-                }
-                if (opal_hwloc_report_bindings) {
-                    opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
-                    /* avoid reporting it twice */
-                    (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
-                    opal_unsetenv(param, &environ_copy);
-                    free(param);
-                }
-            } else {
-                if (0 == strlen(child->cpu_bitmap)) {
-                    /* this proc is not bound */
-                    if (opal_hwloc_report_bindings) {
-                        opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
-                        /* avoid reporting it twice */
-                        (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
-                        opal_unsetenv(param, &environ_copy);
-                        free(param);
-                    }
-                    /* if the daemon is bound, then we need to "free" this proc */
-                    if (NULL != orte_daemon_cores) {
-                        root = hwloc_get_root_obj(opal_hwloc_topology);
-                        if (NULL == root->userdata) {
-                            send_warn_show_help(write_fd,
-                                                "help-orte-odls-default.txt", "incorrectly bound",
-                                                orte_process_info.nodename, context->app,
-                                                __FILE__, __LINE__);
-                        }
-                        sum = (opal_hwloc_topo_data_t*)root->userdata;
-                        /* bind this proc to all available processors */
-                        hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
-                    }
-                    /* provide a nice string representation of what we bound to */
-                    (void) mca_base_var_env_name ("orte_base_applied_binding", &param);
-                    opal_setenv(param, child->cpu_bitmap, true, &environ_copy);
-                    free(param);
-                    goto PROCEED;
-                }
-                /* convert the list to a cpu bitmap */
-                cpuset = hwloc_bitmap_alloc();
-                if (0 != (rc = hwloc_bitmap_list_sscanf(cpuset, child->cpu_bitmap))) {
-                    /* See comment above about "This may be a small memory leak" */
-                    asprintf(&msg, "hwloc_bitmap_sscanf returned \"%s\" for the string \"%s\"",
-                             opal_strerror(rc), child->cpu_bitmap);
-                    if (NULL == msg) {
-                        msg = "failed to convert bitmap list to hwloc bitmap";
-                    }
-                    if (OPAL_BINDING_REQUIRED(jobdat->map->binding) &&
-                        OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
-                        /* If binding is required and a binding directive was explicitly
-                         * given (i.e., we are not binding due to a default policy),
-                         * send an error up the pipe (which exits -- it doesn't return).
-                         */
-                        send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
-                                             "binding generic error",
-                                             orte_process_info.nodename, 
-                                             context->app, msg, 
-                                             __FILE__, __LINE__);
-                    } else {
-                        send_warn_show_help(write_fd,
-                                            "help-orte-odls-default.txt", "not bound",
-                                            orte_process_info.nodename, context->app, msg,
-                                            __FILE__, __LINE__);
-                        goto PROCEED;
-                    }
-                }
-                /* bind as specified */
-                rc = hwloc_set_cpubind(opal_hwloc_topology, cpuset, 0);
-                /* if we got an error and this wasn't a default binding policy, then report it */
-                if (rc < 0  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
-                    char *tmp = NULL;
-                    if (errno == ENOSYS) {
-                        msg = "hwloc indicates cpu binding not supported";
-                    } else if (errno == EXDEV) {
-                        msg = "hwloc indicates cpu binding cannot be enforced";
-                    } else {
-                        asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
-                                 opal_strerror(rc), child->cpu_bitmap);
-                    }
-                    if (OPAL_BINDING_REQUIRED(jobdat->map->binding)) {
-                        /* If binding is required, send an error up the pipe (which exits
-                           -- it doesn't return). */
-                        send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
-                                             "binding generic error",
-                                             orte_process_info.nodename, context->app, msg, 
-                                             __FILE__, __LINE__);
-                    } else {
-                        send_warn_show_help(write_fd,
-                                            "help-orte-odls-default.txt", "not bound",
-                                            orte_process_info.nodename, context->app, msg,
-                                            __FILE__, __LINE__);
-                        if (NULL != tmp) {
-                            free(tmp);
-                            free(msg);
-                        }
-                        goto PROCEED;
-                    }
-                    if (NULL != tmp) {
-                        free(tmp);
-                        free(msg);
-                    }
-                }
-                if (0 == rc && opal_hwloc_report_bindings) {
-                    char tmp1[1024], tmp2[1024];
-                    hwloc_cpuset_t mycpus;
-                    /* get the cpus we are bound to */
-                    mycpus = hwloc_bitmap_alloc();
-                    if (hwloc_get_cpubind(opal_hwloc_topology, 
-                                          mycpus, 
-                                          HWLOC_CPUBIND_PROCESS) < 0) {
-                        opal_output(0, "MCW rank %d is not bound",
-                                    child->name.vpid);
-                    } else {
-                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), opal_hwloc_topology, mycpus)) {
-                            opal_output(0, "MCW rank %d is not bound (or bound to all available processors)", child->name.vpid);
-                        } else {
-                            opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), opal_hwloc_topology, mycpus);
-                            opal_output(0, "MCW rank %d bound to %s: %s",
-                                        child->name.vpid, tmp1, tmp2);
-                        }
-                    }
-                    hwloc_bitmap_free(mycpus);
-                    /* avoid reporting it twice */
-                    (void) mca_base_var_env_name ("hwloc_base_report_bindings", &param);
-                    opal_unsetenv(param, &environ_copy);
-                    free(param);
-                }
-                /* set memory affinity policy - if we get an error, don't report
-                 * anything unless the user actually specified the binding policy
-                 */
-                rc = opal_hwloc_base_set_process_membind_policy();
-                if (ORTE_SUCCESS != rc  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
-                    if (errno == ENOSYS) {
-                        msg = "hwloc indicates memory binding not supported";
-                    } else if (errno == EXDEV) {
-                        msg = "hwloc indicates memory binding cannot be enforced";
-                    } else {
-                        msg = "failed to bind memory";
-                    }
-                    if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
-                        /* If binding is required, send an error up the pipe (which exits
-                           -- it doesn't return). */
-                        send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
-                                             "memory binding error",
-                                             orte_process_info.nodename, context->app, msg, 
-                                             __FILE__, __LINE__);
-                    } else {
-                        send_warn_show_help(write_fd,
-                                            "help-orte-odls-default.txt", "memory not bound",
-                                            orte_process_info.nodename, context->app, msg,
-                                            __FILE__, __LINE__);
-                        goto PROCEED;
-                    }
-                }
-            }
-        }
-#endif
+        /* now set any child-level controls such as binding */
+        orte_rtc.set(jobdat, child, &environ_copy, write_fd);
 
     } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
         /* tie stdin/out/err/internal to /dev/null */
@@ -638,10 +420,6 @@ static int do_child(orte_app_context_t* context,
         }
         close(fdnull);
     }
-
-#if OPAL_HAVE_HWLOC
- PROCEED:
-#endif
 
     /* if the user requested it, set the system resource limits */
     if (OPAL_SUCCESS != (rc = opal_util_init_sys_limits(&msg))) {
@@ -718,8 +496,8 @@ static int do_parent(orte_app_context_t* context,
                      orte_iof_base_io_conf_t opts)
 {
     int rc;
-    pipe_err_msg_t msg;
-    char file[MAX_FILE_LEN + 1], topic[MAX_TOPIC_LEN + 1], *str = NULL;
+    orte_odls_pipe_err_msg_t msg;
+    char file[ORTE_ODLS_MAX_FILE_LEN + 1], topic[ORTE_ODLS_MAX_TOPIC_LEN + 1], *str = NULL;
 
     if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
         /* connect endpoints IOF */
