@@ -57,6 +57,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/rtc/base/base.h"
 #include "orte/mca/dfs/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
@@ -594,6 +595,18 @@ static int rte_init(void)
         goto error;
     }
     
+    /* Open/select the rtc */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rtc_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rtc_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rtc_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rtc_base_select";
+        goto error;
+    }
+    
     /* enable communication with the rml */
     if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
         ORTE_ERROR_LOG(ret);
@@ -831,6 +844,7 @@ static int rte_finalize(void)
     fflush(stdout);
     fflush(stderr);
     (void) mca_base_framework_close(&orte_iof_base_framework);
+    (void) mca_base_framework_close(&orte_rtc_base_framework);
     (void) mca_base_framework_close(&orte_odls_base_framework);
     (void) mca_base_framework_close(&orte_rmaps_base_framework);
     (void) mca_base_framework_close(&orte_ras_base_framework);

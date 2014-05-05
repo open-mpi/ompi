@@ -89,6 +89,30 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_ABORT_PROCS_CALLED      (orte_daemon_cmd_flag_t) 28
 
 
+/*
+ * Struct written up the pipe from the child to the parent.
+ */
+typedef struct {
+    /* True if the child has died; false if this is just a warning to
+       be printed. */
+    bool fatal;
+    /* Relevant only if fatal==true */
+    int exit_status;
+
+    /* Length of the strings that are written up the pipe after this
+       struct */
+    int file_str_len;
+    int topic_str_len;
+    int msg_str_len;
+} orte_odls_pipe_err_msg_t;
+
+/* 
+ * Max length of strings from the orte_odls_pipe_err_msg_t
+ */
+#define ORTE_ODLS_MAX_FILE_LEN 511
+#define ORTE_ODLS_MAX_TOPIC_LEN ORTE_ODLS_MAX_FILE_LEN
+
+
 END_C_DECLS
 
 #endif
