@@ -97,7 +97,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc172_CONFIG],[
         # hwloc checks for compiler visibility, and its needs to do
         # this without "picky" flags.
         opal_hwloc_hwloc172_save_cflags=$CFLAGS
-        CFLAGS=$OMPI_CFLAGS_BEFORE_PICKY
+        CFLAGS=$OPAL_CFLAGS_BEFORE_PICKY
         HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc172/hwloc], 
                   [AC_MSG_CHECKING([whether hwloc configure succeeded])
                    AC_MSG_RESULT([yes])
