@@ -128,7 +128,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
-    OMPI_CFLAGS_BEFORE_PICKY="$CFLAGS"
+    OPAL_CFLAGS_BEFORE_PICKY="$CFLAGS"
     if test "$WANT_PICKY_COMPILER" = 1 -a "$ompi_c_vendor" = "gnu" ; then
         add="-Wall -Wundef -Wno-long-long -Wsign-compare"
         add="$add -Wmissing-prototypes -Wstrict-prototypes"
@@ -314,8 +314,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
         fi
     fi
 
-    OPAL_ENSURE_CONTAINS_OPTFLAGS("$OMPI_CFLAGS_BEFORE_PICKY")
-    OMPI_CFLAGS_BEFORE_PICKY="$co_result"
+    OPAL_ENSURE_CONTAINS_OPTFLAGS("$OPAL_CFLAGS_BEFORE_PICKY")
+    OPAL_CFLAGS_BEFORE_PICKY="$co_result"
 
     AC_MSG_CHECKING([for C optimization flags])
     OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CFLAGS"])

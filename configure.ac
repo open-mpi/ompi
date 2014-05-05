@@ -502,7 +502,7 @@ if test "$GCC" = "yes"; then
     # the first check, and all is fine.  :-)
 
     CFLAGS_save=$CFLAGS
-    CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY -Werror -ansi"
+    CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY -Werror -ansi"
 fi
 AC_C_INLINE
 # Microsoft compilers support 2 versions of restrict. One for functions, and

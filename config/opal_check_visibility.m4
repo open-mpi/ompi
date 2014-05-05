@@ -44,13 +44,13 @@ AC_DEFUN([OPAL_CHECK_VISIBILITY],[
         sun)
             # Check using Sun Studio -xldscope=hidden flag
             opal_add=-xldscope=hidden
-            CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $opal_add -errwarn=%all"
+            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $opal_add -errwarn=%all"
             ;;
 
         *)
             # Check using -fvisibility=hidden
             opal_add=-fvisibility=hidden
-            CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $opal_add -Werror"
+            CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $opal_add -Werror"
             ;;
         esac
 
