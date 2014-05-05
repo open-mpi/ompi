@@ -19,7 +19,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_ENSURE_CONTAINS_OPTFLAGS],[
+AC_DEFUN([OPAL_ENSURE_CONTAINS_OPTFLAGS],[
 
 # Modularize this setup so that sub-configure.in scripts can use this
 # same setup code.

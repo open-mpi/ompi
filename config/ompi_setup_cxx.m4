@@ -271,7 +271,7 @@ EOF
     fi
 
     # config/ompi_ensure_contains_optflags.m4
-    OMPI_ENSURE_CONTAINS_OPTFLAGS(["$CXXFLAGS"])
+    OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CXXFLAGS"])
     AC_MSG_CHECKING([for C++ optimization flags])
     AC_MSG_RESULT([$co_result])
     CXXFLAGS="$co_result"
