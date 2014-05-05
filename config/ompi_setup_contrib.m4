@@ -23,7 +23,7 @@
 #
 
 AC_DEFUN([OMPI_SETUP_CONTRIB],[
-    ompi_show_title "Contributed software setup"
+    opal_show_title "Contributed software setup"
 
     OMPI_CONTRIB
 ])

@@ -23,7 +23,7 @@ dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS_BANNER],[
-    ompi_show_subtitle "Java MPI bindings" 
+    opal_show_subtitle "Java MPI bindings" 
 ])
 
 # OMPI_SETUP_JAVA_BINDINGS()

@@ -13,7 +13,7 @@
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OPAL_SETUP_FT_BANNER],[
-    ompi_show_subtitle "Fault tolerance" 
+    opal_show_subtitle "Fault tolerance" 
 ])
 
 AC_DEFUN([OPAL_SETUP_FT_OPTIONS],[

@@ -24,7 +24,7 @@ dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OPAL_SETUP_JAVA_BANNER],[
-    ompi_show_subtitle "Java compiler" 
+    opal_show_subtitle "Java compiler" 
 ])
 
 # OPAL_SETUP_JAVA()

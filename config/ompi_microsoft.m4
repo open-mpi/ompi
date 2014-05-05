@@ -28,7 +28,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
     # default list of header files.
     if test "x$ompi_cv_c_compiler_vendor" = "xmicrosoft" ; then
 
-        ompi_show_subtitle "Microsoft specific detection"
+        opal_show_subtitle "Microsoft specific detection"
 
         #
         # These 2 libraries are a minimum ...
@@ -106,7 +106,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
                        $ompi_windows_have_support_for_64_bits_atomic,
                        [Whether we support 64 bits atomic operations on Windows])
 
-        ompi_show_title "Windows Type tests"
+        opal_show_title "Windows Type tests"
 
         AC_DEFINE([pid_t], [intptr_t], [Windows pid_t type is a pointer])
         AC_DEFINE_UNQUOTED([SIZEOF_PID_T], $ac_cv_sizeof_int,

@@ -325,7 +325,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
 
 AC_DEFUN([_OMPI_START_SETUP_CC],[
-    ompi_show_subtitle "C compiler and preprocessor" 
+    opal_show_subtitle "C compiler and preprocessor" 
 
 	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
     # compiler.

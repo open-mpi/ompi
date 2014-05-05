@@ -23,7 +23,7 @@ dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OMPI_SETUP_CXX_BANNER],[
-    ompi_show_subtitle "C++ compiler and preprocessor" 
+    opal_show_subtitle "C++ compiler and preprocessor" 
 ])
 
 # This macro is necessary because PROG_CXX* is REQUIREd by multiple

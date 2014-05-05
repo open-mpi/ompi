@@ -26,7 +26,7 @@ dnl
 
 
 AC_DEFUN([ORTE_CONFIGURE_OPTIONS],[
-ompi_show_subtitle "ORTE Configuration options"
+opal_show_subtitle "ORTE Configuration options"
 
 #
 # Do we want orterun's --prefix behavior to be enabled by default?

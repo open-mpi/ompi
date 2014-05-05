@@ -27,7 +27,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_CONFIGURE_OPTIONS],[
-ompi_show_subtitle "OPAL Configuration options"
+opal_show_subtitle "OPAL Configuration options"
 
 
 #
