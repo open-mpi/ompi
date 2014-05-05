@@ -41,7 +41,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 man_pages = orte-info.1
 EXTRA_DIST = $(man_pages:.1=.1in)
 
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-info
 

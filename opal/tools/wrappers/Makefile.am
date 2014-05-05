@@ -26,7 +26,7 @@ EXTRA_DIST = $(real_man_pages:.1=.1in)
 include $(top_srcdir)/Makefile.ompi-rules
 
 if !OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = opal_wrapper
 
@@ -56,7 +56,7 @@ uninstall-local:
 
 endif # WANT_INSTALL_HEADERS
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 opal_wrapper_SOURCES = opal_wrapper.c

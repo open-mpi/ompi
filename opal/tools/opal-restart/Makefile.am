@@ -25,7 +25,7 @@ man_pages = opal-restart.1
 EXTRA_DIST = $(man_pages:.1=.1in)
 
 if WANT_FT_CR
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = opal-restart
 
@@ -38,7 +38,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_ompidata_DATA = help-opal-restart.txt
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 opal_restart_SOURCES = opal-restart.c
 opal_restart_LDADD = $(top_builddir)/opal/libopen-pal.la

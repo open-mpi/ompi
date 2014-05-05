@@ -23,7 +23,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 man_pages = orted.1
 EXTRA_DIST = $(man_pages:.1=.1in)
 
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = orted
 
@@ -34,7 +34,7 @@ nodist_man_MANS = $(man_pages)
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 orted_SOURCES = orted.c
 # the following empty orted_LDFLAGS is used 

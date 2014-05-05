@@ -25,7 +25,7 @@ man_pages = orte-checkpoint.1
 EXTRA_DIST = orte-checkpoint.1in
 
 if WANT_FT_CR
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-checkpoint
 
@@ -38,7 +38,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_ompidata_DATA = help-orte-checkpoint.txt
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 orte_checkpoint_SOURCES = orte-checkpoint.c
 orte_checkpoint_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la

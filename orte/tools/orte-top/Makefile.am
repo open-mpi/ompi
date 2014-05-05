@@ -23,7 +23,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 man_pages = orte-top.1
 EXTRA_DIST = orte-top.1in
 
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-top
 
@@ -36,7 +36,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_ompidata_DATA = help-orte-top.txt
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 orte_top_SOURCES = orte-top.c
 orte_top_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la

@@ -18,7 +18,7 @@ man_pages = orte-migrate.1
 EXTRA_DIST = orte-migrate.1in
 
 if WANT_FT_CR
-if OMPI_INSTALL_BINARIES
+if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-migrate
 
@@ -31,7 +31,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_ompidata_DATA = help-orte-migrate.txt
 
-endif # OMPI_INSTALL_BINARIES
+endif # OPAL_INSTALL_BINARIES
 
 orte_migrate_SOURCES = orte-migrate.c
 orte_migrate_LDADD = $(top_builddir)/orte/libopen-rte.la $(top_builddir)/opal/libopen-pal.la
