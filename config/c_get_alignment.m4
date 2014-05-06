@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -18,7 +19,7 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_C_GET_ALIGN(type, config_var)
+# OPAL_C_GET_ALIGN(type, config_var)
 # ----------------------------------
 # Determine datatype alignment. 
 # First arg is type, 2nd arg is config var to define.
