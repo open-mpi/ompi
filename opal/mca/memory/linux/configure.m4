@@ -78,7 +78,7 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
     AS_IF([test "$memory_linux_ptmalloc2_happy" = yes],
           [case $host in
            ia64-*)
-                AS_IF([test "$ompi_c_vendor" = "intel"],
+                AS_IF([test "$opal_c_vendor" = "intel"],
                       [# check for v9.0 <= 20051201
                        icc_major_ver="`$CC --version | head -n 1 | awk '{ print [$]3 }'`"
                        icc_minor_ver="`$CC --version | head -n 1 | awk '{ print [$]4 }'`"

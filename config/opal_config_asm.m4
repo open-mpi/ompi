@@ -40,7 +40,7 @@ dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_TEXT],[
     AC_MSG_CHECKING([directive for setting text section])
     opal_cv_asm_text=""
-    if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
+    if test "$opal_cv_c_compiler_vendor" = "microsoft" ; then
         # text section will be brought in with the rest of
         # header for MS - leave blank for now
         opal_cv_asm_text=""
@@ -75,7 +75,7 @@ dnl #################################################################
 AC_DEFUN([OMPI_CHECK_ASM_GLOBAL],[
     AC_MSG_CHECKING([directive for exporting symbols])
     opal_cv_asm_global=""
-    if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
+    if test "$opal_cv_c_compiler_vendor" = "microsoft" ; then
         opal_cv_asm_global="PUBLIC"
     else
         case $host in
@@ -591,7 +591,7 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_GCC],[
 
     AC_MSG_CHECKING([if $CC supports GCC inline assembly])
 
-    if test "$ompi_cv_c_compiler_vendor" = "portland group" ; then
+    if test "$opal_cv_c_compiler_vendor" = "portland group" ; then
         # PGI seems to have some issues with our inline assembly.
         # Disable for now.
         asm_result="no (Portland Group)"

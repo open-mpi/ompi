@@ -33,12 +33,12 @@ AC_DEFUN([ORTE_SETUP_DEBUGGER_FLAGS],[
     CFLAGS_WITHOUT_OPTFLAGS="$s_result"
     # Tweak the compiler flags passed to orterun for Sun Studio SPARC
     # https://svn.open-mpi.org/trac/ompi/ticket/1448
-    if test "x$ompi_cv_c_compiler_vendor" = "xsun" -a -n "`echo $host | $GREP sparc`"; then
+    if test "x$opal_cv_c_compiler_vendor" = "xsun" -a -n "`echo $host | $GREP sparc`"; then
         DEBUGGER_CFLAGS="-g -xO0"
     else
         # Tweak the compiler flags passed for intel
         # to stop its aggressive inlining of functions
-        if test "x$ompi_cv_c_compiler_vendor" = "xintel"; then
+        if test "x$opal_cv_c_compiler_vendor" = "xintel"; then
             DEBUGGER_CFLAGS="-g -O0"
         else
             DEBUGGER_CFLAGS="-g"

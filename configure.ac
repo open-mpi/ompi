@@ -332,7 +332,7 @@ OPAL_SETUP_CC
 # If we build on a windows environment with the windows compiler and linker
 # then we need some translation functions from the opal/win32 directory.
 AM_CONDITIONAL(OMPI_NEED_WINDOWS_REPLACEMENTS,
-               test "$ompi_cv_c_compiler_vendor" = "microsoft" )
+               test "$opal_cv_c_compiler_vendor" = "microsoft" )
 
 # Do all Interix detections if necessary
 OMPI_INTERIX
@@ -510,7 +510,7 @@ AC_C_INLINE
 # syntax, and the autoconf restrict detection is unable to detect them
 # correctly. It detect the restrict keyword as __restrict which break the
 # rules for function syntax which is declspec(restrict).
-if test "x$ompi_cv_c_compiler_vendor" != "xmicrosoft"; then
+if test "x$opal_cv_c_compiler_vendor" != "xmicrosoft"; then
     AC_C_RESTRICT
 fi
 OMPI_C_WEAK_SYMBOLS
@@ -1195,7 +1195,7 @@ opal_show_subtitle "Libtool configuration"
 
 # Use the undocumented solaris_use_stlport4 libtool variable to turn off any
 # Cstd/stlport4 linkage. This allows Open MPI to be C++ STL agnostic.
-if test "x$ompi_cv_c_compiler_vendor" = "xsun"; then
+if test "x$opal_cv_c_compiler_vendor" = "xsun"; then
     solaris_use_stlport4="yes"
 fi
 

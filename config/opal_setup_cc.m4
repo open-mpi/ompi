@@ -48,7 +48,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     fi
 
 
-    OMPI_C_COMPILER_VENDOR([ompi_c_vendor])
+    OMPI_C_COMPILER_VENDOR([opal_c_vendor])
 
     # Check for standard headers, needed here because needed before
     # the types checks.
@@ -62,7 +62,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # Don't use AC_GNU_SOURCE because it requires that no compiler
     # tests are done before setting it, and we need to at least do
     # enough tests to figure out if we're using XL or not.
-    AS_IF([test "$ompi_cv_c_compiler_vendor" != "ibm"],
+    AS_IF([test "$opal_cv_c_compiler_vendor" != "ibm"],
           [AH_VERBATIM([_GNU_SOURCE],
                        [/* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
@@ -72,7 +72,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # Do we want code coverage
     if test "$WANT_COVERAGE" = "1"; then
-        if test "$ompi_c_vendor" = "gnu" ; then
+        if test "$opal_c_vendor" = "gnu" ; then
             # For compilers > gcc-4.x, use --coverage for
             # compiling and linking to circumvent trouble with
             # libgcov.
@@ -116,7 +116,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
-        if test "$ompi_c_vendor" = "gnu"; then
+        if test "$opal_c_vendor" = "gnu"; then
             CFLAGS="$CFLAGS -g"  # keep the -g3 for when it will become a standard option.
         else
             CFLAGS="$CFLAGS -g"
@@ -129,7 +129,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
     OPAL_CFLAGS_BEFORE_PICKY="$CFLAGS"
-    if test "$WANT_PICKY_COMPILER" = 1 -a "$ompi_c_vendor" = "gnu" ; then
+    if test "$WANT_PICKY_COMPILER" = 1 -a "$opal_c_vendor" = "gnu" ; then
         add="-Wall -Wundef -Wno-long-long -Wsign-compare"
         add="$add -Wmissing-prototypes -Wstrict-prototypes"
         add="$add -Wcomment -pedantic"
@@ -219,7 +219,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # Try to enable restrict keyword
     RESTRICT_CFLAGS=
-    case "$ompi_c_vendor" in
+    case "$opal_c_vendor" in
         intel)
             RESTRICT_CFLAGS="-restrict"
         ;;
