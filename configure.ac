@@ -55,7 +55,7 @@ AC_CONFIG_MACRO_DIR(config)
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
-OMPI_LOAD_PLATFORM
+OPAL_LOAD_PLATFORM
 
 #
 # Start it up
@@ -1024,7 +1024,7 @@ fi
 #
 # Look for ps command and arguments for orte-clean
 #
-m4_ifdef([project_orte], [OMPI_PS_FLAVOR_CHECK])
+m4_ifdef([project_orte], [OPAL_PS_FLAVOR_CHECK])
 
 #
 # File system case sensitivity

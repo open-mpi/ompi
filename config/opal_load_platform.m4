@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,9 +18,9 @@
 # $HEADER$
 #
 
-# OMPI_LOAD_PLATFORM()
+# OPAL_LOAD_PLATFORM()
 # --------------------
-AC_DEFUN([OMPI_LOAD_PLATFORM], [
+AC_DEFUN([OPAL_LOAD_PLATFORM], [
     AC_ARG_WITH([platform],
         [AC_HELP_STRING([--with-platform=FILE],
                         [Load options for build from FILE.  Options on the
@@ -64,8 +65,8 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
         . ./"$platform_file"
 
         # see if they left us a name
-        if test "$OMPI_PLATFORM_LOADED" != "" ; then
-           platform_loaded="$OMPI_PLATFORM_LOADED"
+        if test "$OPAL_PLATFORM_LOADED" != "" ; then
+           platform_loaded="$OPAL_PLATFORM_LOADED"
         else
            platform_loaded="$with_platform"
         fi
