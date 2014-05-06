@@ -339,7 +339,7 @@ OMPI_INTERIX
 
 # Does the compiler support "ident"-like constructs?
 
-OMPI_CHECK_IDENT([CC], [CFLAGS], [c], [C])
+OPAL_CHECK_IDENT([CC], [CFLAGS], [c], [C])
 
 #
 # Check for some types
@@ -520,7 +520,7 @@ fi
 OPAL_VAR_SCOPE_POP
 
 if test "x$CC" = "xicc"; then
-    OMPI_CHECK_ICC_VARARGS
+    OPAL_CHECK_ICC_VARARGS
 fi
 
 # If we want the profiling layer:
