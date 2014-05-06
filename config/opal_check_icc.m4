@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -17,7 +18,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_CHECK_ICC_VARARGS],[
+AC_DEFUN([OPAL_CHECK_ICC_VARARGS],[
 dnl
 dnl On EM64T, icc-8.1 before version 8.1.027 segfaulted, since 
 dnl va_start was miscompiled...
@@ -45,9 +46,9 @@ int main ()
   return 0;
 }
 
-],[ompi_ac_icc_varargs=`test -f conftestval`],[ompi_ac_icc_varargs=1],[ompi_ac_icc_varargs=1])
+],[opal_ac_icc_varargs=`test -f conftestval`],[opal_ac_icc_varargs=1],[opal_ac_icc_varargs=1])
 
-if test "$ompi_ac_icc_varargs" = "1"; then
+if test "$opal_ac_icc_varargs" = "1"; then
     AC_MSG_WARN([*** Problem running configure test!])
     AC_MSG_WARN([*** Your icc-8.1 compiler seems to miscompile va_start!])
     AC_MSG_WARN([*** Please upgrade compiler to at least version 8.1.027])
