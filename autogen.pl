@@ -1076,7 +1076,7 @@ $dnl_line\n\n";
 # Verify that we're in the OMPI root directorty by checking for a token file.
 
 my_die "Not at the root directory of an OMPI source tree"
-    if (! -f "config/ompi_try_assemble.m4");
+    if (! -f "config/opal_try_assemble.m4");
 
 # Now that we've verified that we're in the top-level OMPI directory,
 # set the sentinel file to remove if we abort.

@@ -321,7 +321,7 @@ AC_DEFUN([MCA_ORDER_COMPONENT_LIST], [
                     [m4_ifdef([MCA_]$1[_]$2[_]mca_component[_PRIORITY], [], 
                          [m4_fatal([MCA_$1_$2_]mca_component[_PRIORITY not found, but required.])])])])
     m4_define([component_list], 
-              [esyscmd([config/ompi_mca_priority_sort.pl] m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
+              [esyscmd([config/opal_mca_priority_sort.pl] m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
                         [m4_ifval(mca_component, [mca_component ]OMPI_EVAL_ARG([MCA_]$1[_]$2[_]mca_component[_PRIORITY ]))]))])
 ])
 
