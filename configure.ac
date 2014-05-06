@@ -1139,7 +1139,7 @@ OPAL_SETUP_FT
 opal_show_title "Modular Component Architecture (MCA) setup"
 
 AC_MSG_CHECKING([for subdir args])
-OMPI_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
+OPAL_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
 AC_MSG_RESULT([$ompi_subdir_args])
 
 OMPI_MCA

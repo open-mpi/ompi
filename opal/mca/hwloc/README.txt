@@ -16,5 +16,5 @@ Notes for hwloc component maintainers:
    one. 
 
 2. If someone wants to fix #1 someday, we might be able to do what we
-   do for libevent: OMPI_CONFIG_SUBDIR (instead of slurping in hwloc's
+   do for libevent: OPAL_CONFIG_SUBDIR (instead of slurping in hwloc's
    .m4 files).
