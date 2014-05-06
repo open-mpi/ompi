@@ -12,6 +12,7 @@
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
 #                         reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +25,7 @@ EXTRA_DIST = \
 	opal_get_version.m4sh \
 	libltdl-preopen-error.diff \
 	ltmain_pgi_tp.diff \
-        ompi_mca_priority_sort.pl
+        opal_mca_priority_sort.pl
 
 maintainer-clean-local:
 	rm -f opal_get_version.sh
