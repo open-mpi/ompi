@@ -55,7 +55,7 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
 	    fi
 
 	    # libpmi requires libugni for static linking on CLE 5. WTH!
-	    OMPI_CHECK_UGNI($1,[orte_check_alps_happy=yes],[orte_check_alps_happy=no])
+	    OPAL_CHECK_UGNI($1,[orte_check_alps_happy=yes],[orte_check_alps_happy=no])
         fi
 
         if test "$with_alps" = "no" -o -z "$with_alps" ; then

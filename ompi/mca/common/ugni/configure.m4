@@ -21,7 +21,7 @@
 # $HEADER$
 #
 
-# OMPI_CHECK_UGNI(prefix, [action-if-found], [action-if-not-found])
+# OPAL_CHECK_UGNI(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 # check if GNI support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
@@ -39,7 +39,7 @@
 AC_DEFUN([MCA_ompi_common_ugni_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/common/ugni/Makefile])
 
-    OMPI_CHECK_UGNI([common_ugni],
+    OPAL_CHECK_UGNI([common_ugni],
         [common_ugni_happy="yes"],
         [common_ugni_happy="no"])
 
