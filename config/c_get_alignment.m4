@@ -42,13 +42,13 @@ AC_DEFUN([OPAL_C_GET_ALIGNMENT],[
                                [ # cross compile - do a non-executable test.  Trick 
                                  # taken from the Autoconf 2.59c.  Switch to using
                                  # AC_CHECK_ALIGNOF when we can require Autoconf 2.60.
-                                 _AC_COMPUTE_INT([(long int) offsetof (ompi__type_alignof_, y)],
+                                 _AC_COMPUTE_INT([(long int) offsetof (opal__type_alignof_, y)],
                                                  [AS_TR_SH([opal_cv_c_align_$1])],
                                                  [AC_INCLUDES_DEFAULT
 #ifndef offsetof
 # define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
 #endif
-typedef struct { char x; $1 y; } ompi__type_alignof_;
+typedef struct { char x; $1 y; } opal__type_alignof_;
 ],
                                                  [AC_MSG_WARN([*** Problem running configure test!])
                                                   AC_MSG_WARN([*** See config.log for details.])
