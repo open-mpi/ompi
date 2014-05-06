@@ -805,6 +805,9 @@ syntax: glob
 ./orte/mca/routed/debruijn/Makefile.in
 ./orte/mca/routed/direct/Makefile.in
 ./orte/mca/routed/radix/Makefile.in
+./orte/mca/rtc/Makefile.in
+./orte/mca/rtc/base/*.obj
+./orte/mca/rtc/hwloc/Makefile.in
 ./orte/mca/snapc/Makefile.in
 ./orte/mca/snapc/orte_snapc.7
 ./orte/mca/snapc/base/Makefile.in
