@@ -12,6 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -19,7 +20,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_STRIP_OPTFLAGS],[
+AC_DEFUN([OPAL_STRIP_OPTFLAGS],[
 
 # Process a set of flags and remove all debugging and optimization
 # flags
