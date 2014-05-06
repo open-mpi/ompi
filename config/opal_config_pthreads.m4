@@ -16,14 +16,14 @@ dnl Additional copyrights may follow
 dnl 
 dnl $HEADER$
 dnl
-dnl OMPI_CONFIG_POSIX_THREADS()
+dnl OPAL_CONFIG_POSIX_THREADS()
 dnl
 dnl Configure posix threads, setting the following variables (but
 dnl  not calling AC_SUBST on them).
 
 # ********************************************************************
 #
-# Internal macros - do not call from outside OMPI_CONFIG_POSIX_THREADS
+# Internal macros - do not call from outside OPAL_CONFIG_POSIX_THREADS
 #
 # ********************************************************************
 
@@ -645,7 +645,7 @@ AC_PROVIDE_IFELSE([AC_PROG_FC],
 # External macro (aka, the real thing)
 #
 #********************************************************************
-AC_DEFUN([OMPI_CONFIG_POSIX_THREADS],[
+AC_DEFUN([OPAL_CONFIG_POSIX_THREADS],[
     AC_REQUIRE([AC_PROG_GREP])
 
 ompi_pthread_c_success=0

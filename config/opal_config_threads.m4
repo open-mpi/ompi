@@ -11,6 +11,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -37,7 +38,7 @@ AH_TEMPLATE([OPAL_HAVE_POSIX_THREADS],
 #
 # Check for thread types - add your type here...
 #
-OMPI_CONFIG_POSIX_THREADS(HAVE_POSIX_THREADS=1, HAVE_POSIX_THREADS=0)
+OPAL_CONFIG_POSIX_THREADS(HAVE_POSIX_THREADS=1, HAVE_POSIX_THREADS=0)
 AC_MSG_CHECKING([for working POSIX threads package])
 if test "$HAVE_POSIX_THREADS" = "1" ; then
   AC_MSG_RESULT([yes])

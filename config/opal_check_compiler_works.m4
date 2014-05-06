@@ -6,6 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -27,7 +28,7 @@ dnl
 # a clean exit from the application (e.g., "return 0" in C/C++, empty in
 # fortran).
 AC_DEFUN([OPAL_CHECK_COMPILER_WORKS],
-[   AS_VAR_PUSHDEF([lang_var], [ompi_cv_$1_works])
+[   AS_VAR_PUSHDEF([lang_var], [opal_cv_$1_works])
 
     AC_CACHE_CHECK([if $1 compiler works], lang_var,
         [AC_LANG_PUSH($1)

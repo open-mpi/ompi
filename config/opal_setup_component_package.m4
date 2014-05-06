@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +19,7 @@
 # $HEADER$
 #
 
-# OMPI_SETUP_COMPONENT_PACKAGE(1: framework_name, 
+# OPAL_SETUP_COMPONENT_PACKAGE(1: framework_name, 
 #                              2: component_name,
 #                              3: option_name,
 #                              4: withdir_dir_check_file,
