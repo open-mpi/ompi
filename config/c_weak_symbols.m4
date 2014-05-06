@@ -45,13 +45,13 @@ OPAL_LOG_COMMAND(
     [$CC $CFLAGS  -c conftest_weak.c],
     OPAL_LOG_COMMAND(
         [$CC $CFLAGS  conftest.c conftest_weak.o -o conftest $LDFLAGS $LIBS],
-        [ompi_c_weak_symbols_happy=1],
-	[ompi_c_weak_symbols_happy=0]),
-    [ompi_c_weak_symbols_happy=0])
+        [opal_c_weak_symbols_happy=1],
+	[opal_c_weak_symbols_happy=0]),
+    [opal_c_weak_symbols_happy=0])
 
-    AS_IF([test "$ompi_c_weak_symbols_happy" = "1"], [$1], [$2])
+    AS_IF([test "$opal_c_weak_symbols_happy" = "1"], [$1], [$2])
 
-    unset ompi_c_weak_symbols_happy
+    unset opal_c_weak_symbols_happy
     rm -f conftest_weak.h conftest_weak.c conftest.c conftest
 ])
 
