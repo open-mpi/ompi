@@ -84,7 +84,7 @@ AC_DEFUN([MCA_ompi_io_romio_CONFIG],[
                    io_romio_flags="$io_romio_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --disable-aio"
 
                    opal_show_subtitle "Configuring ROMIO distribution"
-                   OMPI_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 
+                   OPAL_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 
                                       [$io_romio_flags],
                                       [io_romio_happy=1], [io_romio_happy=0])
 

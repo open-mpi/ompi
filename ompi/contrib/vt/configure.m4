@@ -135,7 +135,7 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
         contrib_vt_args="$contrib_vt_args $with_contrib_vt_flags"
 
         # Run VampirTrace's configure and see if it succeeded
-        OMPI_CONFIG_SUBDIR([ompi/contrib/vt/vt],
+        OPAL_CONFIG_SUBDIR([ompi/contrib/vt/vt],
                            [$contrib_vt_args], 
                            [], [contrib_vt_happy=0])
     fi

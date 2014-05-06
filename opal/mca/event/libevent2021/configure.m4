@@ -164,7 +164,7 @@ AC_DEFUN([MCA_opal_event_libevent2021_DO_THE_CONFIG], [
 
     AC_MSG_RESULT([$event_args])
 
-    OMPI_CONFIG_SUBDIR([$libevent_basedir/libevent], 
+    OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent], 
         [$event_args $ompi_subdir_args],
         [libevent_happy="yes"], [libevent_happy="no"])
     if test "$libevent_happy" = "no"; then

@@ -10,7 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -18,7 +19,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_CONFIG_SUBDIR],[
+AC_DEFUN([OPAL_CONFIG_SUBDIR],[
 #
 # Invoke configure in a specific subdirectory.
 #
@@ -37,7 +38,7 @@ subdir_failure="$4"
 #
 
 if test "$subdir_dir" != ":" -a -d $srcdir/$subdir_dir; then
-    AC_MSG_NOTICE([OMPI configuring in $subdir_dir])
+    AC_MSG_NOTICE([OPAL configuring in $subdir_dir])
 
     #
     # Gotta check where srcdir is for VPATH builds.  If srcdir is not

@@ -635,7 +635,7 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
             MCA_COMPONENT_COMPILE_MODE($1, $2, $component, compile_mode)
 
             if test "$should_build" = "1" ; then
-                OMPI_CONFIG_SUBDIR([$1/mca/$2/$component],
+                OPAL_CONFIG_SUBDIR([$1/mca/$2/$component],
                                    [$ompi_subdir_args],
                                    [should_build=1], [should_build=0])
             fi

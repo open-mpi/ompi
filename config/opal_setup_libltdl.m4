@@ -163,7 +163,7 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
     CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
 
     # VPATH support will be included by default in CONFIG_SUBDIR
-    OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], 
+    OPAL_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], 
                        [HAPPY=1], [HAPPY=0])
     if test "$HAPPY" = "1"; then
         LIBLTDL_SUBDIR=libltdl
