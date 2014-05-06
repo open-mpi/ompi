@@ -166,7 +166,7 @@ end program]])],
 
     # Make sure we can link with C code.
     AS_IF([test $ompi_fc_happy -eq 1],
-          [OMPI_LANG_LINK_WITH_C([Fortran], [],
+          [OPAL_LANG_LINK_WITH_C([Fortran], [],
               [cat <<EOF
 **********************************************************************
 It appears that your Fortran compiler is unable to link against

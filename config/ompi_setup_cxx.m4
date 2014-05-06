@@ -136,7 +136,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
                   AC_MSG_ERROR([Cannot continue])])])
 
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
-          [OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])])
+          [OPAL_CXX_COMPILER_VENDOR([ompi_cxx_vendor])])
     OPAL_VAR_SCOPE_POP
 ])
 
@@ -234,7 +234,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
 
     # Make sure we can link with the C compiler
     if[ test "$ompi_cv_cxx_compiler_vendor" != "microsoft" ]; then
-      OMPI_LANG_LINK_WITH_C([C++], [],
+      OPAL_LANG_LINK_WITH_C([C++], [],
         [cat <<EOF >&2
 **********************************************************************
 * It appears that your C++ compiler is unable to link against object

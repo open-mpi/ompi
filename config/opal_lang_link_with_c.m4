@@ -10,12 +10,12 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_LANG_LINK_WITH_C(language)
+# OPAL_LANG_LINK_WITH_C(language)
 # -------------------------------
 # Try to link a small test program against a C object file to make
 # sure the compiler for the given language is compatible with the C
 # compiler.
-AC_DEFUN([OMPI_LANG_LINK_WITH_C], [
+AC_DEFUN([OPAL_LANG_LINK_WITH_C], [
   AS_VAR_PUSHDEF([lang_var], [ompi_cv_c_link_$1])
 
   AC_CACHE_CHECK([if C and $1 are link compatible],

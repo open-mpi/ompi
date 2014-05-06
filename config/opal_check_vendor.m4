@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -19,40 +20,40 @@ dnl $HEADER$
 dnl
 
 
-# OMPI_C_COMPILER_VENDOR(VENDOR_VARIABLE)
+# OPAL_C_COMPILER_VENDOR(VENDOR_VARIABLE)
 # ---------------------------------------
 # Set shell variable VENDOR_VARIABLE to the name of the compiler
 # vendor for the current C compiler.
 #
-# See comment for _OMPI_CHECK_COMPILER_VENDOR for a complete
+# See comment for _OPAL_CHECK_COMPILER_VENDOR for a complete
 # list of currently detected compilers.
-AC_DEFUN([OMPI_C_COMPILER_VENDOR], [
+AC_DEFUN([OPAL_C_COMPILER_VENDOR], [
     AC_REQUIRE([AC_PROG_CC])
 
     AC_CACHE_CHECK([for the C compiler vendor],
         [opal_cv_c_compiler_vendor],
         [AC_LANG_PUSH(C)
-         _OMPI_CHECK_COMPILER_VENDOR([opal_cv_c_compiler_vendor])
+         _OPAL_CHECK_COMPILER_VENDOR([opal_cv_c_compiler_vendor])
          AC_LANG_POP(C)])
 
     $1="$opal_cv_c_compiler_vendor"
 ])
 
 
-# OMPI_CXX_COMPILER_VENDOR(VENDOR_VARIABLE)
+# OPAL_CXX_COMPILER_VENDOR(VENDOR_VARIABLE)
 # ---------------------------------------
 # Set shell variable VENDOR_VARIABLE to the name of the compiler
 # vendor for the current C++ compiler.
 #
-# See comment for _OMPI_CHECK_COMPILER_VENDOR for a complete
+# See comment for _OPAL_CHECK_COMPILER_VENDOR for a complete
 # list of currently detected compilers.
-AC_DEFUN([OMPI_CXX_COMPILER_VENDOR], [
+AC_DEFUN([OPAL_CXX_COMPILER_VENDOR], [
     AC_REQUIRE([AC_PROG_CXX])
 
     AC_CACHE_CHECK([for the C++ compiler vendor],
-        [ompi_cv_cxx_compiler_vendor],
+        [opal_cv_cxx_compiler_vendor],
         [AC_LANG_PUSH(C++)
-         _OMPI_CHECK_COMPILER_VENDOR([ompi_cv_cxx_compiler_vendor])
+         _OPAL_CHECK_COMPILER_VENDOR([opal_cv_cxx_compiler_vendor])
          AC_LANG_POP(C++)])
 
     $1="$opal_cv_c_compiler_vendor"
@@ -62,12 +63,12 @@ AC_DEFUN([OMPI_CXX_COMPILER_VENDOR], [
 m4_ifndef([AC_LANG_DEFINES_PROVIDED],
 	  [m4_define([AC_LANG_DEFINES_PROVIDED])])
 
-# OMPI_IFDEF_IFELSE(symbol, [action-if-defined], 
+# OPAL_IFDEF_IFELSE(symbol, [action-if-defined], 
 #                   [action-if-not-defined])
 # ----------------------------------------------
 # Run compiler to determine if preprocessor symbol "symbol" is
 # defined by the compiler.
-AC_DEFUN([OMPI_IFDEF_IFELSE], [
+AC_DEFUN([OPAL_IFDEF_IFELSE], [
     AC_COMPILE_IFELSE([AC_LANG_DEFINES_PROVIDED
 #ifndef $1
 #error "symbol $1 not defined"
@@ -75,12 +76,12 @@ choke me
 #endif], [$2], [$3])])
 
 
-# OMPI_IF_IFELSE(symbol, [action-if-defined], 
+# OPAL_IF_IFELSE(symbol, [action-if-defined], 
 #                [action-if-not-defined])
 # ----------------------------------------------
 # Run compiler to determine if preprocessor symbol "symbol" is
 # defined by the compiler.
-AC_DEFUN([OMPI_IF_IFELSE], [
+AC_DEFUN([OPAL_IF_IFELSE], [
     AC_COMPILE_IFELSE([AC_LANG_DEFINES_PROVIDED
 #if !( $1 )
 #error "condition $1 not met"
@@ -88,7 +89,7 @@ choke me
 #endif], [$2], [$3])])
 
 
-# _OMPI_CHECK_COMPILER_VENDOR(VENDOR_VARIABLE)
+# _OPAL_CHECK_COMPILER_VENDOR(VENDOR_VARIABLE)
 # --------------------------------------------
 # Set shell variable VENDOR_VARIABLE to the name of the compiler
 # vendor for the compiler for the current language.  Language must be
@@ -96,22 +97,22 @@ choke me
 #
 # thanks to http://predef.sourceforge.net/precomp.html for the list
 # of defines to check.
-AC_DEFUN([_OMPI_CHECK_COMPILER_VENDOR], [
-    ompi_check_compiler_vendor_result="unknown"
+AC_DEFUN([_OPAL_CHECK_COMPILER_VENDOR], [
+    opal_check_compiler_vendor_result="unknown"
 
     # GNU is probably the most common, so check that one as soon as
     # possible.  Intel pretends to be GNU, so need to check Intel
     # before checking for GNU.
 
     # Intel
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)], 
-               [ompi_check_compiler_vendor_result="intel"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)], 
+               [opal_check_compiler_vendor_result="intel"])])
 
     # GNU
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__GNUC__], 
-               [ompi_check_compiler_vendor_result="gnu"
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__GNUC__], 
+               [opal_check_compiler_vendor_result="gnu"
 
                # We do not support gccfss as a compiler so die if 
                # someone tries to use said compiler.  gccfss (gcc 
@@ -132,140 +133,140 @@ AC_DEFUN([_OMPI_CHECK_COMPILER_VENDOR], [
                fi])])
 
     # Borland Turbo C
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__TURBOC__], 
-               [ompi_check_compiler_vendor_result="borland"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__TURBOC__], 
+               [opal_check_compiler_vendor_result="borland"])])
 
     # Borland C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__BORLANDC__], 
-               [ompi_check_compiler_vendor_result="borland"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__BORLANDC__], 
+               [opal_check_compiler_vendor_result="borland"])])
 
     # Comeau C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__COMO__], 
-               [ompi_check_compiler_vendor_result="comeau"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__COMO__], 
+               [opal_check_compiler_vendor_result="comeau"])])
 
     # Compaq C/C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(__DECC) || defined(VAXC) || defined(__VAXC)],
-               [ompi_check_compiler_vendor_result="compaq"],
-               [OMPI_IF_IFELSE([defined(__osf__) && defined(__LANGUAGE_C__)],
-                    [ompi_check_compiler_vendor_result="compaq"],
-                    [OMPI_IFDEF_IFELSE([__DECCXX],
-                         [ompi_check_compiler_vendor_result="compaq"])])])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__DECC) || defined(VAXC) || defined(__VAXC)],
+               [opal_check_compiler_vendor_result="compaq"],
+               [OPAL_IF_IFELSE([defined(__osf__) && defined(__LANGUAGE_C__)],
+                    [opal_check_compiler_vendor_result="compaq"],
+                    [OPAL_IFDEF_IFELSE([__DECCXX],
+                         [opal_check_compiler_vendor_result="compaq"])])])])
 
     # Cray C/C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([_CRAYC], 
-               [ompi_check_compiler_vendor_result="cray"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([_CRAYC], 
+               [opal_check_compiler_vendor_result="cray"])])
 
     # Diab C/C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__DCC__], 
-               [ompi_check_compiler_vendor_result="diab"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__DCC__], 
+               [opal_check_compiler_vendor_result="diab"])])
 
     # Digital Mars
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(__DMC__) || defined(__SC__) || defined(__ZTC__)],
-               [ompi_check_compiler_vendor_result="digital mars"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__DMC__) || defined(__SC__) || defined(__ZTC__)],
+               [opal_check_compiler_vendor_result="digital mars"])])
 
     # HP ANSI C / aC++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(__HP_cc) || defined(__HP_aCC)],
-               [ompi_check_compiler_vendor_result="hp"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__HP_cc) || defined(__HP_aCC)],
+               [opal_check_compiler_vendor_result="hp"])])
 
     # IBM XL C/C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)],
-               [ompi_check_compiler_vendor_result="ibm"],
-               [OMPI_IF_IFELSE([defined(_AIX) && !defined(__GNUC__)],
-                    [ompi_check_compiler_vendor_result="ibm"])])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)],
+               [opal_check_compiler_vendor_result="ibm"],
+               [OPAL_IF_IFELSE([defined(_AIX) && !defined(__GNUC__)],
+                    [opal_check_compiler_vendor_result="ibm"])])])
 
     # KAI C++ (rest in peace)
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__KCC],
-               [ompi_check_compiler_vendor_result="kai"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__KCC],
+               [opal_check_compiler_vendor_result="kai"])])
 
     # LCC
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__LCC__],
-               [ompi_check_compiler_vendor_result="lcc"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__LCC__],
+               [opal_check_compiler_vendor_result="lcc"])])
 
     # MetaWare High C/C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__HIGHC__],
-               [ompi_check_compiler_vendor_result="metaware high"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__HIGHC__],
+               [opal_check_compiler_vendor_result="metaware high"])])
 
     # Metrowerks Codewarrior
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__MWERKS__],
-               [ompi_check_compiler_vendor_result="metrowerks"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__MWERKS__],
+               [opal_check_compiler_vendor_result="metrowerks"])])
 
     # MIPSpro (SGI)
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(sgi) || defined(__sgi)], 
-               [ompi_check_compiler_vendor_result="sgi"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(sgi) || defined(__sgi)], 
+               [opal_check_compiler_vendor_result="sgi"])])
 
     # MPW C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(__MRC__) || defined(MPW_C) || defined(MPW_CPLUS)], 
-               [ompi_check_compiler_vendor_result="mpw"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__MRC__) || defined(MPW_C) || defined(MPW_CPLUS)], 
+               [opal_check_compiler_vendor_result="mpw"])])
 
     # Microsoft
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
           [# Always use C compiler when checking for Microsoft, as 
            # Visual C++ doesn't recognize .cc as a C++ file.
            AC_LANG_PUSH(C)
-           OMPI_IF_IFELSE([defined(_MSC_VER) || defined(__MSC_VER)], 
-               [ompi_check_compiler_vendor_result="microsoft"])
+           OPAL_IF_IFELSE([defined(_MSC_VER) || defined(__MSC_VER)], 
+               [opal_check_compiler_vendor_result="microsoft"])
            AC_LANG_POP(C)])
 
     # Norcroft C
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__CC_NORCROFT],
-               [ompi_check_compiler_vendor_result="norcroft"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__CC_NORCROFT],
+               [opal_check_compiler_vendor_result="norcroft"])])
 
     # Pelles C
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__POCC__],
-               [ompi_check_compiler_vendor_result="pelles"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__POCC__],
+               [opal_check_compiler_vendor_result="pelles"])])
 
     # Portland Group
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__PGI], 
-               [ompi_check_compiler_vendor_result="portland group"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__PGI], 
+               [opal_check_compiler_vendor_result="portland group"])])
 
     # SAS/C
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(SASC) || defined(__SASC) || defined(__SASC__)],
-               [ompi_check_compiler_vendor_result="sas"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(SASC) || defined(__SASC) || defined(__SASC__)],
+               [opal_check_compiler_vendor_result="sas"])])
 
     # Sun Workshop C/C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IF_IFELSE([defined(__SUNPRO_C) || defined(__SUNPRO_CC)],
-               [ompi_check_compiler_vendor_result="sun"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IF_IFELSE([defined(__SUNPRO_C) || defined(__SUNPRO_CC)],
+               [opal_check_compiler_vendor_result="sun"])])
 
     # TenDRA C/C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__TenDRA__],
-               [ompi_check_compiler_vendor_result="tendra"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__TenDRA__],
+               [opal_check_compiler_vendor_result="tendra"])])
 
     # Tiny C
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__TINYC__],
-               [ompi_check_compiler_vendor_result="tiny"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__TINYC__],
+               [opal_check_compiler_vendor_result="tiny"])])
 
     # USL C
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__USLC__],
-               [ompi_check_compiler_vendor_result="usl"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__USLC__],
+               [opal_check_compiler_vendor_result="usl"])])
 
     # Watcom C++
-    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([__WATCOMC__],
-               [ompi_check_compiler_vendor_result="watcom"])])
+    AS_IF([test "$opal_check_compiler_vendor_result" = "unknown"],
+          [OPAL_IFDEF_IFELSE([__WATCOMC__],
+               [opal_check_compiler_vendor_result="watcom"])])
 
-    $1="$ompi_check_compiler_vendor_result"
-    unset ompi_check_compiler_vendor_result
+    $1="$opal_check_compiler_vendor_result"
+    unset opal_check_compiler_vendor_result
 ])
