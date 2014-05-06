@@ -933,10 +933,8 @@ syntax: glob
 ./oshmem/Makefile.in
 ./oshmem/include/Makefile.in
 ./oshmem/include/shmem.h
-./oshmem/include/stamp-h5
-./oshmem/include/stamp-h6
-./oshmem/include/stamp-h7
-./oshmem/include/oshmem_config.h
+./oshmem/include/stamp-*
+./oshmem/include/shmem_portable_platform.h
 ./oshmem/include/oshmem/frameworks.h
 ./oshmem/include/oshmem/version.h
 ./oshmem/include/oshmem/oshmem_config.h
