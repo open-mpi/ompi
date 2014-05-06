@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !               All Rights reserved.
 ! $COPYRIGHT$
@@ -16,9 +16,9 @@ subroutine PMPI_Grequest_start_f08(query_fn,free_fn,cancel_fn,&
    use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_cancel_function
    use :: mpi_f08, only : ompi_grequest_start_f
    implicit none
-   OMPI_PROCEDURE(MPI_Grequest_query_function) :: query_fn
-   OMPI_PROCEDURE(MPI_Grequest_free_function) :: free_fn
-   OMPI_PROCEDURE(MPI_Grequest_cancel_function) :: cancel_fn
+   PROCEDURE(MPI_Grequest_query_function) :: query_fn
+   PROCEDURE(MPI_Grequest_free_function) :: free_fn
+   PROCEDURE(MPI_Grequest_cancel_function) :: cancel_fn
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror

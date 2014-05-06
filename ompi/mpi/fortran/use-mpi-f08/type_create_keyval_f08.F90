@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
@@ -15,8 +15,8 @@ subroutine MPI_Type_create_keyval_f08(type_copy_attr_fn,type_delete_attr_fn,&
    use :: mpi_f08_interfaces_callbacks, only : MPI_Type_delete_attr_function
    use :: mpi_f08, only : ompi_type_create_keyval_f
    implicit none
-   OMPI_PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
+   PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
+   PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
    INTEGER, INTENT(OUT) :: type_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror

@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
@@ -15,8 +15,8 @@ subroutine MPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,&
    use :: mpi_f08_interfaces_callbacks, only : MPI_Win_delete_attr_function
    use :: mpi_f08, only : ompi_win_create_keyval_f
    implicit none
-   OMPI_PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
-   OMPI_PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
+   PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
+   PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
    INTEGER, INTENT(OUT) :: win_keyval
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror

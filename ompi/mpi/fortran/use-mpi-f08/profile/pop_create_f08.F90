@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
@@ -14,7 +14,7 @@ subroutine PMPI_Op_create_f08(user_fn,commute,op,ierror)
    ! call a PMPI_* subroutine below.
    use :: mpi, only : PMPI_Op_create
    implicit none
-   OMPI_PROCEDURE(MPI_User_function) :: user_fn
+   PROCEDURE(MPI_User_function) :: user_fn
    LOGICAL, INTENT(IN) :: commute
    TYPE(MPI_Op), INTENT(OUT) :: op
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
