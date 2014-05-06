@@ -76,7 +76,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
             # Look for a corresponding C type (will abort by itself if the
             # type isn't found and we need it)
             ofc_c_type=
-            m4_ifval([$3], [OMPI_FIND_TYPE([$1], [$3], [$2], [$ofc_type_size], [ofc_c_type])
+            m4_ifval([$3], [OPAL_FIND_TYPE([$1], [$3], [$2], [$ofc_type_size], [ofc_c_type])
             if test -z "$ofc_c_type" ; then
                 ofc_have_type=0
             fi])

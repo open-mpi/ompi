@@ -18,10 +18,10 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_FIND_TYPE(type, [list of c types], abort if not found,
+# OPAL_FIND_TYPE(type, [list of c types], abort if not found,
 #                target size, variable to set)
 # -----------------------------------------------------------
-AC_DEFUN([OMPI_FIND_TYPE],[
+AC_DEFUN([OPAL_FIND_TYPE],[
     AS_VAR_PUSHDEF([type_var], [ompi_cv_find_type_$1])
 
     oft_abort_on_fail="$3"
