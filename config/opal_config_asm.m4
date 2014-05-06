@@ -115,7 +115,7 @@ AC_DEFUN([_OMPI_CHECK_ASM_LSYM],[
     for sym in L .L $ L$ ; do
         asm_result=0
         echo "configure: trying $sym" >&AC_FD_CC
-        OMPI_TRY_ASSEMBLE([foobar$opal_cv_asm_label_suffix
+        OPAL_TRY_ASSEMBLE([foobar$opal_cv_asm_label_suffix
 ${sym}mytestlabel$opal_cv_asm_label_suffix],
             [# ok, we succeeded at assembling.  see if we can nm, 
              # throwing the results in a file
@@ -170,7 +170,7 @@ AC_DEFUN([OMPI_CHECK_ASM_PROC],[
     AC_CACHE_CHECK([if .proc/endp is needed],
                    [ompi_cv_asm_need_proc],
                    [ompi_cv_asm_need_proc="no"
-                    OMPI_TRY_ASSEMBLE([
+                    OPAL_TRY_ASSEMBLE([
      .proc mysym
 mysym:
      .endp mysym],
@@ -232,7 +232,7 @@ main()
     return 0;
 }
 EOF
-        OMPI_TRY_ASSEMBLE([
+        OPAL_TRY_ASSEMBLE([
 $opal_cv_asm_text
 $ompi_cv_asm_proc ${sym}gsym_test_func
 $opal_cv_asm_global ${sym}gsym_test_func
@@ -313,7 +313,7 @@ AC_DEFUN([OMPI_CHECK_ASM_ALIGN_LOG],[
 
     AC_CACHE_CHECK([if .align directive takes logarithmic value],
                    [ompi_cv_asm_align_log],
-                   [ OMPI_TRY_ASSEMBLE([        $opal_cv_asm_text
+                   [ OPAL_TRY_ASSEMBLE([        $opal_cv_asm_text
         .align 4
         $opal_cv_asm_global foo
         .byte 1
@@ -381,7 +381,7 @@ AC_DEFUN([_OMPI_CHECK_ASM_TYPE],[
         for type  in @ \# % ; do
             asm_result=0
             echo "configure: trying $type" >&AC_FD_CC
-            OMPI_TRY_ASSEMBLE([     .type mysym, ${type}function
+            OPAL_TRY_ASSEMBLE([     .type mysym, ${type}function
 mysym:],
                  [opal_cv_asm_type="${type}"
                     asm_result=1])
@@ -409,7 +409,7 @@ AC_DEFUN([OMPI_CHECK_ASM_SIZE],[
     AC_CACHE_CHECK([if .size is needed],
                    [ompi_cv_asm_need_size],
                    [ompi_cv_asm_need_size="no"
-                    OMPI_TRY_ASSEMBLE([     .size mysym, 1],
+                    OPAL_TRY_ASSEMBLE([     .size mysym, 1],
                           [ompi_cv_asm_need_size="yes"])
                     rm -f conftest.out])
 
@@ -470,10 +470,10 @@ dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_POWERPC_REG],[
     AC_MSG_CHECKING([if PowerPC registers have r prefix])
-    OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
+    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
         addi 1,1,0],
         [opal_cv_asm_powerpc_r_reg=0],
-        [OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
+        [OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
         addi r1,r1,0],
             [opal_cv_asm_powerpc_r_reg=1],
             [AC_MSG_ERROR([Can not determine how to use PPC registers])])])
@@ -513,7 +513,7 @@ AC_DEFUN([OMPI_CHECK_POWERPC_64BIT],[
                 else
                    ldarx_asm="        ldarx 1,1,1";
                 fi
-                OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
+                OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
         $ldarx_asm],
                     [ppc64_result=1],
                     [ppc64_result=0])
@@ -543,7 +543,7 @@ dnl #################################################################
 AC_DEFUN([OMPI_CHECK_SPARCV8PLUS],[
     AC_MSG_CHECKING([if have Sparc v8+/v9 support])
     sparc_result=0
-    OMPI_TRY_ASSEMBLE([$opal_cv_asm_text
+    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
 	casa [%o0] 0x80, %o1, %o2],
                 [sparc_result=1],
                 [sparc_result=0])

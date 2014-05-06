@@ -9,6 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -16,7 +17,7 @@ dnl
 dnl $HEADER$
 dnl
 
-dnl OMPI_TRY_ASSEMBLE(asm-code, [action-if-success], [action-if-fail])
+dnl OPAL_TRY_ASSEMBLE(asm-code, [action-if-success], [action-if-fail])
 dnl
 dnl Attempt to assemble asm-code.  If success, run action-if-success.
 dnl Otherwise, run action-if-fail.  Neither action-if-success nor
@@ -26,16 +27,16 @@ dnl No preprocessing is guaranteed to be done on asm-code.  Some
 dnl compilers do not run the preprocessor on assembly files.  
 dnl
 dnl On failure, asm-test.s will be included in config.out
-AC_DEFUN([OMPI_TRY_ASSEMBLE],
+AC_DEFUN([OPAL_TRY_ASSEMBLE],
 [cat >conftest.s <<EOF
 [$1]
 EOF
 if test "$CC" = "$CCAS" ; then
-    ompi_assemble="$CCAS $CCASFLAGS -c conftest.s >conftest.out 2>&1"
+    opal_assemble="$CCAS $CCASFLAGS -c conftest.s >conftest.out 2>&1"
 else
-    ompi_assemble="$CCAS $CCASFLAGS -o conftest.o conftest.s >conftest.out 2>&1"
+    opal_assemble="$CCAS $CCASFLAGS -o conftest.o conftest.s >conftest.out 2>&1"
 fi
-if AC_TRY_EVAL(ompi_assemble); then
+if AC_TRY_EVAL(opal_assemble); then
   # save the warnings
   cat conftest.out >&AC_FD_CC
   ifelse([$2],,:,[$2])
@@ -47,5 +48,5 @@ else
   ifelse([$3],,:,[$3])
 fi
 rm -rf conftest*
-unset ompi_assemble
+unset opal_assemble
 ])dnl
