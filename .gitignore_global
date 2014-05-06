@@ -546,6 +546,7 @@ orte/mca/oob/usock/.lam*
 orte/mca/rmaps/rank_file/rmaps_rank_file_lex.c
 orte/mca/rmaps/rank_file/rankfile_lex.c
 orte/mca/routed/orcm
+orte/mca/rtc/base/*.obj
 orte/mca/snapc/orte_snapc.7
 orte/mca/sstore/orte_sstore.7
 orte/test/mpi/abort
