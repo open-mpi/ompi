@@ -46,7 +46,7 @@ AC_DEFUN([OPAL_SETUP_CXX],[
 
     _OPAL_SETUP_CXX_COMPILER
 
-    OMPI_CXX_COMPILER_VENDOR([opal_cxx_vendor])
+    OPAL_CXX_COMPILER_VENDOR([opal_cxx_vendor])
 
     _OPAL_SETUP_CXX_COMPILER_BACKEND
 ])
@@ -117,20 +117,20 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
                  dnl unrecognized or ignored options
                  AC_TRY_COMPILE([], [long double test;], 
                      [
-                      ompi_cv_cxx_wno_long_double="yes"
+                      opal_cv_cxx_wno_long_double="yes"
                       if test -s conftest.err ; then
                           dnl Yes, it should be "ignor", in order to catch ignoring and ignore
                           for i in unknown invalid ignor unrecognized ; do
                               $GREP -iq $i conftest.err
                               if test "$?" = "0" ; then
-                                  ompi_cv_cxx_wno_long_double="no"
+                                  opal_cv_cxx_wno_long_double="no"
                                   break;
                               fi
                           done
                       fi
                      ],
-                     [ompi_cv_cxx_wno_long_double="no"])],
-                [ompi_cv_cxx_wno_long_double="no"])
+                     [opal_cv_cxx_wno_long_double="no"])],
+                [opal_cv_cxx_wno_long_double="no"])
             ])
 
         CXXFLAGS="$CXXFLAGS_orig"
@@ -172,7 +172,7 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
 
     # Make sure we can link with the C compiler
     if[ test "$opal_cv_cxx_compiler_vendor" != "microsoft" ]; then
-      OMPI_LANG_LINK_WITH_C([C++], [],
+      OPAL_LANG_LINK_WITH_C([C++], [],
         [cat <<EOF >&2
 **********************************************************************
 * It appears that your C++ compiler is unable to link against object

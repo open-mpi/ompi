@@ -30,8 +30,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # careful about ordering here, and AC_REQUIRE these things so that
     # they get stamped out in the right order.
 
-    AC_REQUIRE([_OMPI_START_SETUP_CC])
-    AC_REQUIRE([_OMPI_PROG_CC])
+    AC_REQUIRE([_OPAL_START_SETUP_CC])
+    AC_REQUIRE([_OPAL_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
     # AC_PROG_CC_C99 changes CC (instead of CFLAGS) so save CC (without c99
@@ -48,7 +48,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     fi
 
 
-    OMPI_C_COMPILER_VENDOR([opal_c_vendor])
+    OPAL_C_COMPILER_VENDOR([opal_c_vendor])
 
     # Check for standard headers, needed here because needed before
     # the types checks.
@@ -81,31 +81,31 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
             CFLAGS="$CFLAGS_orig --coverage"
             LDFLAGS="$LDFLAGS_orig --coverage"
-            OMPI_COVERAGE_FLAGS=
+            OPAL_COVERAGE_FLAGS=
 
             AC_CACHE_CHECK([if $CC supports --coverage],
-                      [ompi_cv_cc_coverage],
+                      [opal_cv_cc_coverage],
                       [AC_TRY_COMPILE([], [],
-                                      [ompi_cv_cc_coverage="yes"],
-                                      [ompi_cv_cc_coverage="no"])])
+                                      [opal_cv_cc_coverage="yes"],
+                                      [opal_cv_cc_coverage="no"])])
 
-            if test "$ompi_cv_cc_coverage" = "yes" ; then
-                OMPI_COVERAGE_FLAGS="--coverage"
+            if test "$opal_cv_cc_coverage" = "yes" ; then
+                OPAL_COVERAGE_FLAGS="--coverage"
                 CLEANFILES="*.gcno ${CLEANFILES}"
                 CONFIG_CLEAN_FILES="*.gcda *.gcov ${CONFIG_CLEAN_FILES}"
             else
-                OMPI_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
+                OPAL_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
                 CLEANFILES="*.bb *.bbg ${CLEANFILES}"
                 CONFIG_CLEAN_FILES="*.da *.*.gcov ${CONFIG_CLEAN_FILES}"
             fi
-            CFLAGS="$CFLAGS_orig $OMPI_COVERAGE_FLAGS"
-            LDFLAGS="$LDFLAGS_orig $OMPI_COVERAGE_FLAGS"
-            OPAL_WRAPPER_FLAGS_ADD([CFLAGS], [$OMPI_COVERAGE_FLAGS])
-            OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$OMPI_COVERAGE_FLAGS])
+            CFLAGS="$CFLAGS_orig $OPAL_COVERAGE_FLAGS"
+            LDFLAGS="$LDFLAGS_orig $OPAL_COVERAGE_FLAGS"
+            OPAL_WRAPPER_FLAGS_ADD([CFLAGS], [$OPAL_COVERAGE_FLAGS])
+            OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$OPAL_COVERAGE_FLAGS])
 
             OPAL_FLAGS_UNIQ(CFLAGS)
             OPAL_FLAGS_UNIQ(LDFLAGS)
-            AC_MSG_WARN([$OMPI_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
+            AC_MSG_WARN([$OPAL_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
 
             WANT_DEBUG=1
         else
@@ -145,7 +145,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         CFLAGS="$CFLAGS $add -Wno-long-double -Wstrict-prototypes"
 
         AC_CACHE_CHECK([if $CC supports -Wno-long-double],
-            [ompi_cv_cc_wno_long_double],
+            [opal_cv_cc_wno_long_double],
             [AC_TRY_COMPILE([], [], 
                 [
                  dnl So -Wno-long-double did not produce any errors...
@@ -153,24 +153,24 @@ AC_DEFUN([OPAL_SETUP_CC],[
                  dnl unrecognized or ignored options
                  AC_TRY_COMPILE([], [long double test;], 
                      [
-                      ompi_cv_cc_wno_long_double="yes"
+                      opal_cv_cc_wno_long_double="yes"
                       if test -s conftest.err ; then
                           dnl Yes, it should be "ignor", in order to catch ignoring and ignore
                           for i in unknown invalid ignor unrecognized ; do
                               $GREP -iq $i conftest.err
                               if test "$?" = "0" ; then
-                                  ompi_cv_cc_wno_long_double="no"
+                                  opal_cv_cc_wno_long_double="no"
                                   break;
                               fi
                           done
                       fi
                      ],
-                     [ompi_cv_cc_wno_long_double="no"])],
-                [ompi_cv_cc_wno_long_double="no"])
+                     [opal_cv_cc_wno_long_double="no"])],
+                [opal_cv_cc_wno_long_double="no"])
             ])
 
         CFLAGS="$CFLAGS_orig"
-        if test "$ompi_cv_cc_wno_long_double" = "yes" ; then
+        if test "$opal_cv_cc_wno_long_double" = "yes" ; then
             add="$add -Wno-long-double"
         fi
 
@@ -190,11 +190,11 @@ AC_DEFUN([OPAL_SETUP_CC],[
         CFLAGS="$CFLAGS_orig -finline-functions"
         add=
         AC_CACHE_CHECK([if $CC supports -finline-functions],
-                   [ompi_cv_cc_finline_functions],
+                   [opal_cv_cc_finline_functions],
                    [AC_TRY_COMPILE([], [],
-                                   [ompi_cv_cc_finline_functions="yes"],
-                                   [ompi_cv_cc_finline_functions="no"])])
-        if test "$ompi_cv_cc_finline_functions" = "yes" ; then
+                                   [opal_cv_cc_finline_functions="yes"],
+                                   [opal_cv_cc_finline_functions="no"])])
+        if test "$opal_cv_cc_finline_functions" = "yes" ; then
             add=" -finline-functions"
         fi
         CFLAGS="$CFLAGS_orig$add"
@@ -203,11 +203,11 @@ AC_DEFUN([OPAL_SETUP_CC],[
         CFLAGS="$CFLAGS_orig -fno-strict-aliasing"
         add=
         AC_CACHE_CHECK([if $CC supports -fno-strict-aliasing],
-                   [ompi_cv_cc_fno_strict_aliasing],
+                   [opal_cv_cc_fno_strict_aliasing],
                    [AC_TRY_COMPILE([], [],
-                                   [ompi_cv_cc_fno_strict_aliasing="yes"],
-                                   [ompi_cv_cc_fno_strict_aliasing="no"])])
-        if test "$ompi_cv_cc_fno_strict_aliasing" = "yes" ; then
+                                   [opal_cv_cc_fno_strict_aliasing="yes"],
+                                   [opal_cv_cc_fno_strict_aliasing="no"])])
+        if test "$opal_cv_cc_fno_strict_aliasing" = "yes" ; then
             add=" -fno-strict-aliasing"
         fi
         CFLAGS="$CFLAGS_orig$add"
@@ -232,11 +232,11 @@ AC_DEFUN([OPAL_SETUP_CC],[
         CFLAGS="$CFLAGS_orig $RESTRICT_CFLAGS"
         add=
         AC_CACHE_CHECK([if $CC supports $RESTRICT_CFLAGS],
-                   [ompi_cv_cc_restrict_cflags],
+                   [opal_cv_cc_restrict_cflags],
                    [AC_TRY_COMPILE([], [], 
-                                   [ompi_cv_cc_restrict_cflags="yes"],
-                                   [ompi_cv_cc_restrict_cflags="no"])])
-        if test "$ompi_cv_cc_restrict_cflags" = "yes" ; then
+                                   [opal_cv_cc_restrict_cflags="yes"],
+                                   [opal_cv_cc_restrict_cflags="no"])])
+        if test "$opal_cv_cc_restrict_cflags" = "yes" ; then
             add=" $RESTRICT_CFLAGS"
         fi
 
@@ -250,13 +250,13 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # see if the C compiler supports __builtin_expect
     AC_CACHE_CHECK([if $CC supports __builtin_expect],
-        [ompi_cv_cc_supports___builtin_expect],
+        [opal_cv_cc_supports___builtin_expect],
         [AC_TRY_LINK([],
           [void *ptr = (void*) 0;
            if (__builtin_expect (ptr != (void*) 0, 1)) return 0;],
-          [ompi_cv_cc_supports___builtin_expect="yes"],
-          [ompi_cv_cc_supports___builtin_expect="no"])])
-    if test "$ompi_cv_cc_supports___builtin_expect" = "yes" ; then
+          [opal_cv_cc_supports___builtin_expect="yes"],
+          [opal_cv_cc_supports___builtin_expect="no"])])
+    if test "$opal_cv_cc_supports___builtin_expect" = "yes" ; then
         have_cc_builtin_expect=1
     else
         have_cc_builtin_expect=0
@@ -266,13 +266,13 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # see if the C compiler supports __builtin_prefetch
     AC_CACHE_CHECK([if $CC supports __builtin_prefetch],
-        [ompi_cv_cc_supports___builtin_prefetch],
+        [opal_cv_cc_supports___builtin_prefetch],
         [AC_TRY_LINK([],
           [int ptr;
            __builtin_prefetch(&ptr,0,0);],
-          [ompi_cv_cc_supports___builtin_prefetch="yes"],
-          [ompi_cv_cc_supports___builtin_prefetch="no"])])
-    if test "$ompi_cv_cc_supports___builtin_prefetch" = "yes" ; then
+          [opal_cv_cc_supports___builtin_prefetch="yes"],
+          [opal_cv_cc_supports___builtin_prefetch="no"])])
+    if test "$opal_cv_cc_supports___builtin_prefetch" = "yes" ; then
         have_cc_builtin_prefetch=1
     else
         have_cc_builtin_prefetch=0
@@ -282,13 +282,13 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     # see if the C compiler supports __builtin_clz
     AC_CACHE_CHECK([if $CC supports __builtin_clz],
-        [ompi_cv_cc_supports___builtin_clz],
+        [opal_cv_cc_supports___builtin_clz],
         [AC_TRY_LINK([],
             [int value = 0xffff; /* we know we have 16 bits set */
              if ((8*sizeof(int)-16) != __builtin_clz(value)) return 0;],
-            [ompi_cv_cc_supports___builtin_clz="yes"],
-            [ompi_cv_cc_supports___builtin_clz="no"])])
-    if test "$ompi_cv_cc_supports___builtin_clz" = "yes" ; then
+            [opal_cv_cc_supports___builtin_clz="yes"],
+            [opal_cv_cc_supports___builtin_clz="no"])])
+    if test "$opal_cv_cc_supports___builtin_clz" = "yes" ; then
         have_cc_builtin_clz=1
     else
         have_cc_builtin_clz=0
@@ -324,7 +324,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
 ])
 
 
-AC_DEFUN([_OMPI_START_SETUP_CC],[
+AC_DEFUN([_OPAL_START_SETUP_CC],[
     opal_show_subtitle "C compiler and preprocessor" 
 
 	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
@@ -333,19 +333,19 @@ AC_DEFUN([_OMPI_START_SETUP_CC],[
 ])
 
 
-AC_DEFUN([_OMPI_PROG_CC],[
+AC_DEFUN([_OPAL_PROG_CC],[
     #
     # Check for the compiler
     #
-    OPAL_VAR_SCOPE_PUSH([ompi_cflags_save dummy ompi_cc_arvgv0])
-    ompi_cflags_save="$CFLAGS"
+    OPAL_VAR_SCOPE_PUSH([opal_cflags_save dummy opal_cc_arvgv0])
+    opal_cflags_save="$CFLAGS"
     AC_PROG_CC
     BASECC="`basename $CC`"
-    CFLAGS="$ompi_cflags_save"
+    CFLAGS="$opal_cflags_save"
     AC_DEFINE_UNQUOTED(OPAL_CC, "$CC", [OMPI underlying C compiler])
     set dummy $CC
-    ompi_cc_argv0=[$]2
-    OPAL_WHICH([$ompi_cc_argv0], [OPAL_CC_ABSOLUTE])
+    opal_cc_argv0=[$]2
+    OPAL_WHICH([$opal_cc_argv0], [OPAL_CC_ABSOLUTE])
     AC_SUBST(OPAL_CC_ABSOLUTE)
     OPAL_VAR_SCOPE_POP
 ])
