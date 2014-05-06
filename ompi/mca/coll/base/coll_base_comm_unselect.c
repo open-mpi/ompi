@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,8 +10,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Rigde National Laboratory. 
+ * Copyright (c) 2012      Oak Ridge National Laboratory. 
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,6 +40,15 @@
             comm->c_coll.coll_## func = NULL;                   \
             comm->c_coll.coll_## func ## _module = NULL;        \
         }                                                       \
+    } while (0)
+
+#define CLOSE_NEIGH(comm, func)                                         \
+    do {                                                                \
+        if (NULL != comm->c_coll.neigh->coll_ ## func ## _module) {     \
+            OBJ_RELEASE(comm->c_coll.neigh->coll_ ## func ## _module);  \
+            comm->c_coll.neigh->coll_## func = NULL;                    \
+            comm->c_coll.neigh->coll_## func ## _module = NULL;         \
+        }                                                               \
     } while (0)
 
 int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
@@ -77,6 +89,21 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iscatter);
     CLOSE(comm, iscatterv);
 
+    /* clean up neighborhood collectives */
+    if (comm->c_coll.neigh) {
+        CLOSE_NEIGH(comm, neighbor_allgather);
+        CLOSE_NEIGH(comm, neighbor_allgatherv);
+        CLOSE_NEIGH(comm, neighbor_alltoall);
+        CLOSE_NEIGH(comm, neighbor_alltoallv);
+        CLOSE_NEIGH(comm, neighbor_alltoallw);
+
+        CLOSE_NEIGH(comm, ineighbor_allgather);
+        CLOSE_NEIGH(comm, ineighbor_allgatherv);
+        CLOSE_NEIGH(comm, ineighbor_alltoall);
+        CLOSE_NEIGH(comm, ineighbor_alltoallv);
+        CLOSE_NEIGH(comm, ineighbor_alltoallw);
+        free (comm->c_coll.neigh);
+    }
 
     /* All done */
     return OMPI_SUCCESS;
