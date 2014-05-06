@@ -217,6 +217,6 @@ EOF
     # bool type size and alignment
     AC_LANG_PUSH(C++)
     AC_CHECK_SIZEOF(bool)
-    OMPI_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_CXX_BOOL)
+    OPAL_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_CXX_BOOL)
     AC_LANG_POP(C++)
 ])
