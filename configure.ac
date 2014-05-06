@@ -513,7 +513,7 @@ AC_C_INLINE
 if test "x$opal_cv_c_compiler_vendor" != "xmicrosoft"; then
     AC_C_RESTRICT
 fi
-OMPI_C_WEAK_SYMBOLS
+OPAL_C_WEAK_SYMBOLS
 if test "$GCC" = "yes"; then
     CFLAGS=$CFLAGS_save
 fi
