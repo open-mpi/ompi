@@ -103,7 +103,7 @@ AC_ARG_ENABLE(oshmem-profile,
     AC_HELP_STRING([--enable-oshmem-profile],
                    [enable OSHMEM profiling (default: enabled)]))
 if test "$enable_oshmem" != "no" -a "$enable_oshmem_profile" != "no"; then
-    _OMPI_C_WEAK_SYMBOLS([
+    _OPAL_C_WEAK_SYMBOLS([
         AC_MSG_RESULT([yes])
         oshmem_profiling_support=1
         ], [
