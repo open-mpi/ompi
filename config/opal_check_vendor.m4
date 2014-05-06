@@ -30,12 +30,12 @@ AC_DEFUN([OMPI_C_COMPILER_VENDOR], [
     AC_REQUIRE([AC_PROG_CC])
 
     AC_CACHE_CHECK([for the C compiler vendor],
-        [ompi_cv_c_compiler_vendor],
+        [opal_cv_c_compiler_vendor],
         [AC_LANG_PUSH(C)
-         _OMPI_CHECK_COMPILER_VENDOR([ompi_cv_c_compiler_vendor])
+         _OMPI_CHECK_COMPILER_VENDOR([opal_cv_c_compiler_vendor])
          AC_LANG_POP(C)])
 
-    $1="$ompi_cv_c_compiler_vendor"
+    $1="$opal_cv_c_compiler_vendor"
 ])
 
 
@@ -55,7 +55,7 @@ AC_DEFUN([OMPI_CXX_COMPILER_VENDOR], [
          _OMPI_CHECK_COMPILER_VENDOR([ompi_cv_cxx_compiler_vendor])
          AC_LANG_POP(C++)])
 
-    $1="$ompi_cv_c_compiler_vendor"
+    $1="$opal_cv_c_compiler_vendor"
 ])
 
 # workaround to avoid syntax error with Autoconf < 2.68:

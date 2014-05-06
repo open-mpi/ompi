@@ -26,7 +26,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
     # able to include windows.h. Most of the types that follow are defined
     # in this file. If we check for it here it will get included in the
     # default list of header files.
-    if test "x$ompi_cv_c_compiler_vendor" = "xmicrosoft" ; then
+    if test "x$opal_cv_c_compiler_vendor" = "xmicrosoft" ; then
 
         opal_show_subtitle "Microsoft specific detection"
 

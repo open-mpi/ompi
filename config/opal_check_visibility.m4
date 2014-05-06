@@ -40,7 +40,7 @@ AC_DEFUN([OPAL_CHECK_VISIBILITY],[
         CFLAGS_orig=$CFLAGS
 
         opal_add=
-        case "$ompi_c_vendor" in
+        case "$opal_c_vendor" in
         sun)
             # Check using Sun Studio -xldscope=hidden flag
             opal_add=-xldscope=hidden
