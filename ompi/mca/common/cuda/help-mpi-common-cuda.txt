@@ -185,13 +185,6 @@ continue, but report this error to the Open MPI developers.
   Address:                              %p
 Check the cuda.h file for what the return value means.
 #
-[cuEventSynchronize failed]
-The call to cuEventSynchronize failed. This is highly unusual and should
-not happen.  Please report this error to the Open MPI developers.
-  Hostname:                             %s
-  cuEventSynchronize return value:      %d
-Check the cuda.h file for what the return value means.
-#
 [cuStreamSynchronize failed]
 The call to cuStreamSynchronize failed. This is highly unusual and should
 not happen.  Please report this error to the Open MPI developers.
@@ -199,3 +192,14 @@ not happen.  Please report this error to the Open MPI developers.
   cuStreamSynchronize return value:     %d
 Check the cuda.h file for what the return value means.
 #
+[cuMemcpy failed]
+The call to cuMemcpy failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  Hostname:                  %s
+  cuMemcpy return value:     %d
+Check the cuda.h file for what the return value means.
+#
+[No memory]
+A call to allocate memory within the CUDA support failed.  This is
+an unrecoverable error and will cause the program to abort.
+  Hostname:  %s
