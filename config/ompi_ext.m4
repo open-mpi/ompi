@@ -355,7 +355,7 @@ EOF
 #
 ######################################################################
 AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
-    ompi_show_subsubsubtitle "MPI Extension $1"
+    opal_show_subsubsubtitle "MPI Extension $1"
 
     EXT_COMPONENT_BUILD_CHECK($1, [should_build=1], [should_build=0])
 
