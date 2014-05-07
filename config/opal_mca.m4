@@ -350,7 +350,7 @@ AC_DEFUN([MCA_CHECK_IGNORED_PRIORITY], [
 #
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
-    ompi_show_subsubtitle "Configuring MCA framework $2"
+    opal_show_subsubtitle "Configuring MCA framework $2"
 
     m4_ifdef([mca_$1_$2_no_config_component_list], [], 
              [m4_fatal([Could not find mca_$1_$2_no_config_component_list - please rerun autogen.pl])])

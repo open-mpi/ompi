@@ -14,7 +14,7 @@ dnl we only want one :)
 m4_define(MCA_opal_memchecker_CONFIGURE_MODE, STOP_AT_FIRST)
 
 AC_DEFUN([MCA_opal_memchecker_CONFIG],[
-    ompi_show_subsubtitle "Pre-configuring the framework memchecker"
+    opal_show_subsubtitle "Pre-configuring the framework memchecker"
 
     AC_MSG_CHECKING([if --enable-memchecker was specified])
     AC_ARG_ENABLE(memchecker,
