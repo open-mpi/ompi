@@ -1186,7 +1186,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 if (orte_coprocessors_detected) {
                     /* lookup the hostid for this daemon */
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
-                    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
                                                                 (opal_identifier_t*)&dmn,
                                                                 ORTE_DB_HOSTID, &myvals))) {
                         ORTE_ERROR_LOG(rc);
