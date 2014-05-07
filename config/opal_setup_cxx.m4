@@ -152,11 +152,13 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
         CXXFLAGS_orig="$CXXFLAGS"
         CXXFLAGS="$CXXFLAGS -finline-functions"
         add=
+        AC_LANG_PUSH(C++)
         AC_CACHE_CHECK([if $CXX supports -finline-functions],
                    [opal_cv_cxx_finline_functions],
                    [AC_TRY_COMPILE([], [],
                                    [opal_cv_cxx_finline_functions="yes"],
                                    [opal_cv_cxx_finline_functions="no"])])
+        AC_LANG_POP(C++)
         if test "$opal_cv_cxx_finline_functions" = "yes" ; then
             add=" -finline-functions"
         fi
