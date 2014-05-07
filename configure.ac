@@ -934,7 +934,7 @@ AC_DEFINE_UNQUOTED([OPAL_HAVE__SC_NPROCESSORS_ONLN], [$result],
 
 AC_C_BIGENDIAN
 
-OMPI_CHECK_BROKEN_QSORT
+OPAL_CHECK_BROKEN_QSORT
 
 AC_CACHE_CHECK([if word-sized integers must be word-size aligned],
     [ompi_cv_c_word_size_align],
