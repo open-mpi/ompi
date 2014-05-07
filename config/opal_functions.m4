@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl 
@@ -62,7 +63,7 @@ EOF
 }
 
 
-ompi_show_subsubtitle() {
+opal_show_subsubtitle() {
   cat <<EOF
 
 +++ ${1}
@@ -70,7 +71,7 @@ EOF
   OPAL_LOG_MSG([+++ ${1}], 1)
 }
 
-ompi_show_subsubsubtitle() {
+opal_show_subsubsubtitle() {
   cat <<EOF
 
 --- ${1}
@@ -87,7 +88,7 @@ OPAL_CONFIGURE_HOST="`hostname | head -n 1`"
 OPAL_CONFIGURE_DATE="`date`"
 
 #
-# Save these details so that they can be used in ompi_info later
+# Save these details so that they can be used in opal_info later
 #
 AC_SUBST(OPAL_CONFIGURE_USER)
 AC_SUBST(OPAL_CONFIGURE_HOST)
@@ -114,19 +115,19 @@ CLEANFILES="*~ .\#*"
 AC_SUBST(CLEANFILES)
 
 #
-# See if we can find an old installation of OMPI to overwrite
+# See if we can find an old installation of OPAL to overwrite
 #
 
-# Stupid autoconf 2.54 has a bug in AC_PREFIX_PROGRAM -- if ompi_clean
+# Stupid autoconf 2.54 has a bug in AC_PREFIX_PROGRAM -- if opal_clean
 # is not found in the path and the user did not specify --prefix,
 # we'll get a $prefix of "."
 
-ompi_prefix_save="$prefix"
-AC_PREFIX_PROGRAM(ompi_clean)
+opal_prefix_save="$prefix"
+AC_PREFIX_PROGRAM(opal_clean)
 if test "$prefix" = "."; then
-    prefix="$ompi_prefix_save"
+    prefix="$opal_prefix_save"
 fi
-unset ompi_prefix_save
+unset opal_prefix_save
 
 #
 # Basic sanity checking; we can't install to a relative path
@@ -229,13 +230,13 @@ AC_DEFUN([OPAL_LOG_COMMAND],[
 # 3 is actions to do if fail
 echo "configure:__oline__: $1" >&5
 $1 1>&5 2>&1
-ompi_status=$?
-OPAL_LOG_MSG([\$? = $ompi_status], 1)
-if test "$ompi_status" = "0"; then
-    unset ompi_status
+opal_status=$?
+OPAL_LOG_MSG([\$? = $opal_status], 1)
+if test "$opal_status" = "0"; then
+    unset opal_status
     $2
 else
-    unset ompi_status
+    unset opal_status
     $3
 fi])dnl
 
@@ -245,73 +246,73 @@ dnl #######################################################################
 
 AC_DEFUN([OPAL_UNIQ],[
 # 1 is the variable name to be uniq-ized
-ompi_name=$1
+opal_name=$1
 
 # Go through each item in the variable and only keep the unique ones
 
-ompi_count=0
+opal_count=0
 for val in ${$1}; do
-    ompi_done=0
-    ompi_i=1
-    ompi_found=0
+    opal_done=0
+    opal_i=1
+    opal_found=0
 
     # Loop over every token we've seen so far
 
-    ompi_done="`expr $ompi_i \> $ompi_count`"
-    while test "$ompi_found" = "0" -a "$ompi_done" = "0"; do
+    opal_done="`expr $opal_i \> $opal_count`"
+    while test "$opal_found" = "0" -a "$opal_done" = "0"; do
 
 	# Have we seen this token already?  Prefix the comparison with
 	# "x" so that "-Lfoo" values won't be cause an error.
 
-	ompi_eval="expr x$val = x\$ompi_array_$ompi_i"
-	ompi_found=`eval $ompi_eval`
+	opal_eval="expr x$val = x\$opal_array_$opal_i"
+	opal_found=`eval $opal_eval`
 
 	# Check the ending condition
 
-	ompi_done="`expr $ompi_i \>= $ompi_count`"
+	opal_done="`expr $opal_i \>= $opal_count`"
 
 	# Increment the counter
 
-	ompi_i="`expr $ompi_i + 1`"
+	opal_i="`expr $opal_i + 1`"
     done
 
     # If we didn't find the token, add it to the "array"
 
-    if test "$ompi_found" = "0"; then
-	ompi_eval="ompi_array_$ompi_i=$val"
-	eval $ompi_eval
-	ompi_count="`expr $ompi_count + 1`"
+    if test "$opal_found" = "0"; then
+	opal_eval="opal_array_$opal_i=$val"
+	eval $opal_eval
+	opal_count="`expr $opal_count + 1`"
     else
-	ompi_i="`expr $ompi_i - 1`"
+	opal_i="`expr $opal_i - 1`"
     fi
 done
 
 # Take all the items in the "array" and assemble them back into a
 # single variable
 
-ompi_i=1
-ompi_done="`expr $ompi_i \> $ompi_count`"
-ompi_newval=
-while test "$ompi_done" = "0"; do
-    ompi_eval="ompi_newval=\"$ompi_newval \$ompi_array_$ompi_i\""
-    eval $ompi_eval
+opal_i=1
+opal_done="`expr $opal_i \> $opal_count`"
+opal_newval=
+while test "$opal_done" = "0"; do
+    opal_eval="opal_newval=\"$opal_newval \$opal_array_$opal_i\""
+    eval $opal_eval
 
-    ompi_eval="unset ompi_array_$ompi_i"
-    eval $ompi_eval
+    opal_eval="unset opal_array_$opal_i"
+    eval $opal_eval
 
-    ompi_done="`expr $ompi_i \>= $ompi_count`"
-    ompi_i="`expr $ompi_i + 1`"
+    opal_done="`expr $opal_i \>= $opal_count`"
+    opal_i="`expr $opal_i + 1`"
 done
 
 # Done; do the assignment
 
-ompi_newval="`echo $ompi_newval`"
-ompi_eval="$ompi_name=\"$ompi_newval\""
-eval $ompi_eval
+opal_newval="`echo $opal_newval`"
+opal_eval="$opal_name=\"$opal_newval\""
+eval $opal_eval
 
 # Clean up
 
-unset ompi_name ompi_i ompi_done ompi_newval ompi_eval ompi_count])dnl
+unset opal_name opal_i opal_done opal_newval opal_eval opal_count])dnl
 
 dnl #######################################################################
 dnl #######################################################################
@@ -325,14 +326,14 @@ dnl #######################################################################
 # This could probably be made more efficient :(.
 AC_DEFUN([OPAL_APPEND_UNIQ], [
 for arg in $2; do
-    ompi_found=0;
+    opal_found=0;
     for val in ${$1}; do
         if test "x$val" = "x$arg" ; then
-            ompi_found=1
+            opal_found=1
             break
         fi
     done
-    if test "$ompi_found" = "0" ; then
+    if test "$opal_found" = "0" ; then
         if test -z "$$1"; then
             $1="$arg"
         else
@@ -340,7 +341,7 @@ for arg in $2; do
         fi
     fi
 done
-unset ompi_found
+unset opal_found
 ])
 
 dnl #######################################################################
@@ -350,34 +351,34 @@ dnl #######################################################################
 # Remove all duplicate -I, -L, and -l flags from the variable named $1
 AC_DEFUN([OPAL_FLAGS_UNIQ],[
     # 1 is the variable name to be uniq-ized
-    ompi_name=$1
+    opal_name=$1
 
     # Go through each item in the variable and only keep the unique ones
 
-    ompi_count=0
+    opal_count=0
     for val in ${$1}; do
-        ompi_done=0
-        ompi_i=1
-        ompi_found=0
+        opal_done=0
+        opal_i=1
+        opal_found=0
 
         # Loop over every token we've seen so far
 
-        ompi_done="`expr $ompi_i \> $ompi_count`"
-        while test "$ompi_found" = "0" -a "$ompi_done" = "0"; do
+        opal_done="`expr $opal_i \> $opal_count`"
+        while test "$opal_found" = "0" -a "$opal_done" = "0"; do
 
             # Have we seen this token already?  Prefix the comparison
             # with "x" so that "-Lfoo" values won't be cause an error.
 
-	    ompi_eval="expr x$val = x\$ompi_array_$ompi_i"
-	    ompi_found=`eval $ompi_eval`
+	    opal_eval="expr x$val = x\$opal_array_$opal_i"
+	    opal_found=`eval $opal_eval`
 
             # Check the ending condition
 
-	    ompi_done="`expr $ompi_i \>= $ompi_count`"
+	    opal_done="`expr $opal_i \>= $opal_count`"
 
             # Increment the counter
 
-	    ompi_i="`expr $ompi_i + 1`"
+	    opal_i="`expr $opal_i + 1`"
         done
 
         # Check for special cases where we do want to allow repeated
@@ -386,48 +387,48 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
 
         case $val in
         -Xclang)
-                ompi_found=0
-                ompi_i=`expr $ompi_count + 1`
+                opal_found=0
+                opal_i=`expr $opal_count + 1`
                 ;;
         esac
 
         # If we didn't find the token, add it to the "array"
 
-        if test "$ompi_found" = "0"; then
-	    ompi_eval="ompi_array_$ompi_i=$val"
-	    eval $ompi_eval
-	    ompi_count="`expr $ompi_count + 1`"
+        if test "$opal_found" = "0"; then
+	    opal_eval="opal_array_$opal_i=$val"
+	    eval $opal_eval
+	    opal_count="`expr $opal_count + 1`"
         else
-	    ompi_i="`expr $ompi_i - 1`"
+	    opal_i="`expr $opal_i - 1`"
         fi
     done
 
     # Take all the items in the "array" and assemble them back into a
     # single variable
 
-    ompi_i=1
-    ompi_done="`expr $ompi_i \> $ompi_count`"
-    ompi_newval=
-    while test "$ompi_done" = "0"; do
-        ompi_eval="ompi_newval=\"$ompi_newval \$ompi_array_$ompi_i\""
-        eval $ompi_eval
+    opal_i=1
+    opal_done="`expr $opal_i \> $opal_count`"
+    opal_newval=
+    while test "$opal_done" = "0"; do
+        opal_eval="opal_newval=\"$opal_newval \$opal_array_$opal_i\""
+        eval $opal_eval
 
-        ompi_eval="unset ompi_array_$ompi_i"
-        eval $ompi_eval
+        opal_eval="unset opal_array_$opal_i"
+        eval $opal_eval
 
-        ompi_done="`expr $ompi_i \>= $ompi_count`"
-        ompi_i="`expr $ompi_i + 1`"
+        opal_done="`expr $opal_i \>= $opal_count`"
+        opal_i="`expr $opal_i + 1`"
     done
 
     # Done; do the assignment
 
-    ompi_newval="`echo $ompi_newval`"
-    ompi_eval="$ompi_name=\"$ompi_newval\""
-    eval $ompi_eval
+    opal_newval="`echo $opal_newval`"
+    opal_eval="$opal_name=\"$opal_newval\""
+    eval $opal_eval
 
     # Clean up
 
-    unset ompi_name ompi_i ompi_done ompi_newval ompi_eval ompi_count
+    unset opal_name opal_i opal_done opal_newval opal_eval opal_count
 ])dnl
 
 dnl #######################################################################
@@ -473,15 +474,15 @@ AC_DEFUN([OPAL_WHICH],[
 # 1 is the variable name to do "which" on
 # 2 is the variable name to assign the return value to
 
-OPAL_VAR_SCOPE_PUSH([ompi_prog ompi_file ompi_dir ompi_sentinel])
+OPAL_VAR_SCOPE_PUSH([opal_prog opal_file opal_dir opal_sentinel])
 
-ompi_prog=$1
+opal_prog=$1
 
 IFS_SAVE=$IFS
 IFS="$PATH_SEPARATOR"
-for ompi_dir in $PATH; do
-    if test -x "$ompi_dir/$ompi_prog"; then
-        $2="$ompi_dir/$ompi_prog"
+for opal_dir in $PATH; do
+    if test -x "$opal_dir/$opal_prog"; then
+        $2="$opal_dir/$opal_prog"
         break
     fi
 done
@@ -494,27 +495,27 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-# Declare some variables; use OMPI_VAR_SCOPE_END to ensure that they
+# Declare some variables; use OPAL_VAR_SCOPE_END to ensure that they
 # are cleaned up / undefined.
 AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
 
     # Is the private index set?  If not, set it.
-    if test "x$ompi_scope_index" = "x"; then
-        ompi_scope_index=1
+    if test "x$opal_scope_index" = "x"; then
+        opal_scope_index=1
     fi
 
     # First, check to see if any of these variables are already set.
     # This is a simple sanity check to ensure we're not already
     # overwriting pre-existing variables (that have a non-empty
     # value).  It's not a perfect check, but at least it's something.
-    for ompi_var in $1; do
-        ompi_str="ompi_str=\"\$$ompi_var\""
-        eval $ompi_str
+    for opal_var in $1; do
+        opal_str="opal_str=\"\$$opal_var\""
+        eval $opal_str
 
-        if test "x$ompi_str" != "x"; then
+        if test "x$opal_str" != "x"; then
             AC_MSG_WARN([Found configure shell variable clash!])
-            AC_MSG_WARN([[OPAL_VAR_SCOPE_PUSH] called on "$ompi_var",])
-            AC_MSG_WARN([but it is already defined with value "$ompi_str"])
+            AC_MSG_WARN([[OPAL_VAR_SCOPE_PUSH] called on "$opal_var",])
+            AC_MSG_WARN([but it is already defined with value "$opal_str"])
             AC_MSG_WARN([This usually indicates an error in configure.])
             AC_MSG_ERROR([Cannot continue])
         fi
@@ -522,32 +523,32 @@ AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
 
     # Ok, we passed the simple sanity check.  Save all these names so
     # that we can unset them at the end of the scope.
-    ompi_str="ompi_scope_$ompi_scope_index=\"$1\""
-    eval $ompi_str
-    unset ompi_str
+    opal_str="opal_scope_$opal_scope_index=\"$1\""
+    eval $opal_str
+    unset opal_str
 
-    env | grep ompi_scope
-    ompi_scope_index=`expr $ompi_scope_index + 1`
+    env | grep opal_scope
+    opal_scope_index=`expr $opal_scope_index + 1`
 ])dnl
 
 # Unset a bunch of variables that were previously set
 AC_DEFUN([OPAL_VAR_SCOPE_POP],[
     # Unwind the index
-    ompi_scope_index=`expr $ompi_scope_index - 1`
-    ompi_scope_test=`expr $ompi_scope_index \> 0`
-    if test "$ompi_scope_test" = "0"; then
-        AC_MSG_WARN([[OPAL_VAR_SCOPE_POP] popped too many OMPI configure scopes.])
+    opal_scope_index=`expr $opal_scope_index - 1`
+    opal_scope_test=`expr $opal_scope_index \> 0`
+    if test "$opal_scope_test" = "0"; then
+        AC_MSG_WARN([[OPAL_VAR_SCOPE_POP] popped too many OPAL configure scopes.])
         AC_MSG_WARN([This usually indicates an error in configure.])
         AC_MSG_ERROR([Cannot continue])
     fi
 
     # Get the variable names from that index
-    ompi_str="ompi_str=\"\$ompi_scope_$ompi_scope_index\""
-    eval $ompi_str
+    opal_str="opal_str=\"\$opal_scope_$opal_scope_index\""
+    eval $opal_str
 
     # Iterate over all the variables and unset them all
-    for ompi_var in $ompi_str; do
-        unset $ompi_var
+    for opal_var in $opal_str; do
+        unset $opal_var
     done
 ])dnl
 
@@ -602,17 +603,17 @@ AC_DEFUN([OPAL_COMPUTE_MAX_VALUE], [
     # expr implementations (OpenBSD) have an expr with a max value of
     # 2^31 - 1, and we sometimes want to compute the max value of a
     # type as big or bigger than that...
-    ompi_num_bits=`expr $1 \* 8 - 1`
+    opal_num_bits=`expr $1 \* 8 - 1`
     newval=1
     value=1
     overflow=0
 
-    while test $ompi_num_bits -ne 0 ; do
+    while test $opal_num_bits -ne 0 ; do
         newval=`expr $value \* 2`
         if test 0 -eq `expr $newval \< 0` ; then
             # if the new value is not negative, next iteration...
             value=$newval
-            ompi_num_bits=`expr $ompi_num_bits - 1`
+            opal_num_bits=`expr $opal_num_bits - 1`
             # if this was the last iteration, subtract 1 (as signed
             # max positive is 2^num_bits - 1).  Do this here instead
             # of outside of the while loop because we might have
@@ -620,7 +621,7 @@ AC_DEFUN([OPAL_COMPUTE_MAX_VALUE], [
             # max value of the same datatype expr uses as it's
             # internal representation (ie, if we hit the else
             # below...)
-            if test 0 -eq $ompi_num_bits ; then
+            if test 0 -eq $opal_num_bits ; then
                 value=`expr $value - 1`
             fi
         else
@@ -631,16 +632,16 @@ AC_DEFUN([OPAL_COMPUTE_MAX_VALUE], [
             if test 0 -eq `expr $newval \< 0` ; then
                 value=$newval
                 # Still positive, this is as high as we can go.  If
-                # ompi_num_bits is 1, we didn't actually overflow.
+                # opal_num_bits is 1, we didn't actually overflow.
                 # Otherwise, we overflowed.
-                if test 1 -ne $ompi_num_bits ; then
+                if test 1 -ne $opal_num_bits ; then
                     overflow=1
                 fi
             else
                 # stil negative.  Time to give up.
                 overflow=1
             fi
-            ompi_num_bits=0
+            opal_num_bits=0
         fi
     done
 
