@@ -17,8 +17,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SYS_ARCH_ATOMIC_H
-#define OMPI_SYS_ARCH_ATOMIC_H 1
+#ifndef OPAL_SYS_ARCH_ATOMIC_H
+#define OPAL_SYS_ARCH_ATOMIC_H 1
 
 /*
  * On powerpc ...
@@ -57,7 +57,7 @@
 #define OPAL_HAVE_ATOMIC_SUB_32 1
 
 
-#if (OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64) || OPAL_ASM_SUPPORT_64BIT
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64) || OPAL_ASM_SUPPORT_64BIT
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
 #endif
 
@@ -67,7 +67,7 @@
  * Memory Barriers
  *
  *********************************************************************/
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline
 void opal_atomic_mb(void)
@@ -89,7 +89,7 @@ void opal_atomic_wmb(void)
     WMB();
 }
 
-#elif OPAL_XLC_INLINE_ASSEMBLY /* end OMPI_GCC_INLINE_ASSEMBLY */
+#elif OPAL_XLC_INLINE_ASSEMBLY /* end OPAL_GCC_INLINE_ASSEMBLY */
 
 /* Yeah, I don't know who thought this was a reasonable syntax for
  * inline assembly.  Do these because they are used so often and they
@@ -116,7 +116,7 @@ void opal_atomic_wmb(void)
  * Atomic math operations
  *
  *********************************************************************/
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 #ifdef __xlC__
 /* work-around bizzare xlc bug in which it sign-extends
@@ -169,12 +169,12 @@ static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
     return opal_atomic_cmpset_32(addr, oldval, newval);
 }
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 
-#if (OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64)
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
 
-#if  OMPI_GCC_INLINE_ASSEMBLY
+#if  OPAL_GCC_INLINE_ASSEMBLY
 static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
 {
@@ -218,16 +218,16 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
     return opal_atomic_cmpset_64(addr, oldval, newval);
 }
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#elif (OPAL_ASSEMBLY_ARCH == OMPI_POWERPC32) && OPAL_ASM_SUPPORT_64BIT
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32) && OPAL_ASM_SUPPORT_64BIT
 
 #ifndef ll_low /* GLIBC provides these somewhere, so protect */
 #define ll_low(x)       *(((unsigned int*)&(x))+0)
 #define ll_high(x)      *(((unsigned int*)&(x))+1)
 #endif
 
-#if  OMPI_GCC_INLINE_ASSEMBLY
+#if  OPAL_GCC_INLINE_ASSEMBLY
 
 static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
@@ -289,12 +289,12 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
     return opal_atomic_cmpset_64(addr, oldval, newval);
 }
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #endif /* OPAL_ASM_SUPPORT_64BIT */
 
 
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline int32_t opal_atomic_add_32(volatile int32_t* v, int inc)
 {
@@ -330,6 +330,6 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int dec)
 }
 
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
+#endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

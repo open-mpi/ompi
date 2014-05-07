@@ -20,8 +20,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SYS_ARCH_ATOMIC_H
-#define OMPI_SYS_ARCH_ATOMIC_H 1
+#ifndef OPAL_SYS_ARCH_ATOMIC_H
+#define OPAL_SYS_ARCH_ATOMIC_H 1
 
 #include <libkern/OSAtomic.h>
 
@@ -190,4 +190,4 @@ static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
     OSSpinLockUnlock (&lock->u.lock);
 }
 
-#endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
+#endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

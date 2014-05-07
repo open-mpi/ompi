@@ -88,7 +88,7 @@ AC_DEFUN([OPAL_CHECK_ASM_GLOBAL],[
     AC_DEFINE_UNQUOTED([OPAL_ASM_GLOBAL], ["$opal_cv_asm_global"],
                        [Assembly directive for exporting symbols])
     OPAL_ASM_GLOBAL="$opal_cv_asm_global"
-    AC_SUBST(OMPI_AS_GLOBAL)
+    AC_SUBST(OPAL_AS_GLOBAL)
 ])dnl
 
 
@@ -239,12 +239,12 @@ $opal_cv_asm_global ${sym}gsym_test_func
 ${sym}gsym_test_func${opal_cv_asm_label_suffix}
 $opal_cv_asm_endproc ${sym}gsym_test_func
             ],
-            [ompi_compile="$CC $CFLAGS -I. conftest_c.c -c > conftest.cmpl 2>&1"
-             if AC_TRY_EVAL(ompi_compile) ; then
+            [opal_compile="$CC $CFLAGS -I. conftest_c.c -c > conftest.cmpl 2>&1"
+             if AC_TRY_EVAL(opal_compile) ; then
                 # save the warnings
                  cat conftest.cmpl >&AC_FD_CC
-                 ompi_link="$CC $CFLAGS conftest_c.$OBJEXT conftest.$OBJEXT -o conftest  $LDFLAGS $LIBS > conftest.link 2>&1"
-                 if AC_TRY_EVAL(ompi_link) ; then
+                 opal_link="$CC $CFLAGS conftest_c.$OBJEXT conftest.$OBJEXT -o conftest  $LDFLAGS $LIBS > conftest.link 2>&1"
+                 if AC_TRY_EVAL(opal_link) ; then
                      # save the warnings
                      cat conftest.link >&AC_FD_CC
                      asm_result=1
@@ -295,7 +295,7 @@ AC_DEFUN([OPAL_CHECK_ASM_LABEL_SUFFIX],[
     AC_DEFINE_UNQUOTED([OPAL_ASM_LABEL_SUFFIX], ["$opal_cv_asm_label_suffix"],
                        [Assembly suffix for labels])
     OPAL_ASM_LABEL_SUFFIX="$opal_cv_asm_label_suffix"
-    AC_SUBST(OMPI_AS_LABEL_SUFFIX)
+    AC_SUBST(OPAL_AS_LABEL_SUFFIX)
 ])dnl
 
 
@@ -320,20 +320,20 @@ AC_DEFUN([OPAL_CHECK_ASM_ALIGN_LOG],[
         .align 4
 foo$opal_cv_asm_label_suffix
         .byte 2], 
-        [ompi_asm_addr=[`$NM conftest.$OBJEXT | $GREP foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
-        [ompi_asm_addr=""])
+        [opal_asm_addr=[`$NM conftest.$OBJEXT | $GREP foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
+        [opal_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
-    echo "configure: .align test address offset is $ompi_asm_addr" >&AC_FD_CC
-    if test "$ompi_asm_addr" = "16" -o "$ompi_asm_addr" = "10" ; then
+    echo "configure: .align test address offset is $opal_asm_addr" >&AC_FD_CC
+    if test "$opal_asm_addr" = "16" -o "$opal_asm_addr" = "10" ; then
        opal_cv_asm_align_log="yes"
     else
         opal_cv_asm_align_log="no"
     fi])
 
     if test "$opal_cv_asm_align_log" = "yes" -o "$opal_cv_asm_align_log" = "1" ; then
-        ompi_asm_align_log_result=1
+        opal_asm_align_log_result=1
     else
-        ompi_asm_align_log_result=0
+        opal_asm_align_log_result=0
     fi
 
     AC_DEFINE_UNQUOTED([OPAL_ASM_ALIGN_LOG],
@@ -561,7 +561,7 @@ AC_DEFUN([OPAL_CHECK_SPARCV8PLUS],[
 
 dnl #################################################################
 dnl
-dnl OMPI_CHECK_INLINE_GCC
+dnl OPAL_CHECK_INLINE_GCC
 dnl
 dnl Check if the compiler is capable of doing GCC-style inline
 dnl assembly.  Some compilers emit a warning and ignore the inline
@@ -581,7 +581,7 @@ dnl some compilers (i.e. earlier versions of Sun Studio 12) do not
 dnl necessarily handle xaddl properly, so that needs to be detected
 dnl during configure time.
 dnl
-dnl DEFINE OMPI_GCC_INLINE_ASSEMBLY to 0 or 1 depending on GCC
+dnl DEFINE OPAL_GCC_INLINE_ASSEMBLY to 0 or 1 depending on GCC
 dnl                support
 dnl
 dnl #################################################################
@@ -639,9 +639,9 @@ return ret;]])],
 
 dnl #################################################################
 dnl
-dnl OMPI_CHECK_INLINE_DEC
+dnl OPAL_CHECK_INLINE_DEC
 dnl
-dnl DEFINE OMPI_DEC to 0 or 1 depending on DEC
+dnl DEFINE OPAL_DEC to 0 or 1 depending on DEC
 dnl                support
 dnl
 dnl #################################################################
@@ -674,9 +674,9 @@ return 0;]])],
 
 dnl #################################################################
 dnl
-dnl OMPI_CHECK_INLINE_XLC
+dnl OPAL_CHECK_INLINE_XLC
 dnl
-dnl DEFINE OMPI_XLC to 0 or 1 depending on XLC
+dnl DEFINE OPAL_XLC to 0 or 1 depending on XLC
 dnl                support
 dnl
 dnl #################################################################
@@ -920,10 +920,10 @@ AC_MSG_ERROR([Can not continue.])
         #
         case $host_os in
         aix*)
-            ompi_asm_arch_config="aix"
+            opal_asm_arch_config="aix"
             ;;
         *)
-            ompi_asm_arch_config="default"
+            opal_asm_arch_config="default"
             ;;
          esac
 
@@ -934,12 +934,12 @@ AC_MSG_ERROR([Can not continue.])
 
          # format:
          #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
-         asm_format="${ompi_asm_arch_config}"
+         asm_format="${opal_asm_arch_config}"
          asm_format="${asm_format}-${opal_cv_asm_text}-${opal_cv_asm_global}"
          asm_format="${asm_format}-${opal_cv_asm_label_suffix}-${opal_cv_asm_gsym}"
          asm_format="${asm_format}-${opal_cv_asm_lsym}"
          asm_format="${asm_format}-${opal_cv_asm_type}-${opal_asm_size}"
-         asm_format="${asm_format}-${ompi_asm_align_log_result}"
+         asm_format="${asm_format}-${opal_asm_align_log_result}"
          if test "$opal_cv_asm_arch" = "POWERPC32" -o "$opal_cv_asm_arch" = "POWERPC64" ; then
              asm_format="${asm_format}-${opal_cv_asm_powerpc_r_reg}"
          else
@@ -959,7 +959,7 @@ AC_MSG_ERROR([Can not continue.])
         AC_SUBST([OPAL_ASSEMBLY_FORMAT])
       fi # if opal_cv_asm_builtin = BUILTIN_SYNC
 
-    result="OMPI_$opal_cv_asm_arch"
+    result="OPAL_$opal_cv_asm_arch"
     OPAL_ASSEMBLY_ARCH="$opal_cv_asm_arch"
     AC_MSG_CHECKING([for asssembly architecture])
     AC_MSG_RESULT([$opal_cv_asm_arch])
@@ -967,7 +967,7 @@ AC_MSG_ERROR([Can not continue.])
         [Architecture type of assembly to use for atomic operations and CMA])
     AC_SUBST([OPAL_ASSEMBLY_ARCH])
 
-    result="OMPI_$opal_cv_asm_builtin"
+    result="OPAL_$opal_cv_asm_builtin"
     OPAL_ASSEMBLY_BUILTIN="$opal_cv_asm_builtin"
     AC_MSG_CHECKING([for builtin atomics])
     AC_MSG_RESULT([$opal_cv_asm_builtin])
@@ -975,7 +975,7 @@ AC_MSG_ERROR([Can not continue.])
         [Whether to use builtin atomics])
     AC_SUBST([OPAL_ASSEMBLY_BUILTIN])
 
-    OMPI_ASM_FIND_FILE
+    OPAL_ASM_FIND_FILE
 
     unset result asm_format
 ])dnl
@@ -983,13 +983,13 @@ AC_MSG_ERROR([Can not continue.])
 
 dnl #################################################################
 dnl
-dnl OMPI_ASM_FIND_FILE
+dnl OPAL_ASM_FIND_FILE
 dnl
 dnl
 dnl do all the evil mojo to provide a working assembly file
 dnl
 dnl #################################################################
-AC_DEFUN([OMPI_ASM_FIND_FILE], [
+AC_DEFUN([OPAL_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
@@ -1021,8 +1021,8 @@ if test "$opal_cv_asm_arch" != "WINDOWS" -a "$opal_cv_asm_builtin" != "BUILTIN_S
             AC_MSG_CHECKING([whether possible to generate assembly file])
             mkdir -p opal/asm/generated
             opal_cv_asm_file="atomic-local.s"
-            ompi_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $top_ompi_srcdir/opal/asm/base $top_ompi_builddir/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
-            if AC_TRY_EVAL(ompi_try) ; then
+            opal_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $top_ompi_srcdir/opal/asm/base $top_opal_builddir/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
+            if AC_TRY_EVAL(opal_try) ; then
                 # save the warnings
                 cat conftest.out >&AC_FD_CC
                 AC_MSG_RESULT([yes])

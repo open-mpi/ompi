@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,26 +26,26 @@
 #define OPAL_SYS_ARCHITECTURE_H
 
 /* Architectures */
-#define OMPI_UNSUPPORTED    0000
-#define OMPI_IA32           0010
-#define OMPI_IA64           0020
-#define OMPI_AMD64          0030
-#define OMPI_ALPHA          0040
-#define OMPI_POWERPC32      0050
-#define OMPI_POWERPC64      0051
-#define OMPI_SPARC          0060
-#define OMPI_SPARCV9_32     0061
-#define OMPI_SPARCV9_64     0062
-#define OMPI_MIPS           0070
-#define OMPI_ARM            0100
-#define OMPI_BUILTIN_SYNC   0200
-#define OMPI_BUILTIN_OSX    0201
-#define OMPI_BUILTIN_NO     0202
+#define OPAL_UNSUPPORTED    0000
+#define OPAL_IA32           0010
+#define OPAL_IA64           0020
+#define OPAL_AMD64          0030
+#define OPAL_ALPHA          0040
+#define OPAL_POWERPC32      0050
+#define OPAL_POWERPC64      0051
+#define OPAL_SPARC          0060
+#define OPAL_SPARCV9_32     0061
+#define OPAL_SPARCV9_64     0062
+#define OPAL_MIPS           0070
+#define OPAL_ARM            0100
+#define OPAL_BUILTIN_SYNC   0200
+#define OPAL_BUILTIN_OSX    0201
+#define OPAL_BUILTIN_NO     0202
 
 /* Formats */
-#define OMPI_DEFAULT        1000  /* standard for given architecture */
-#define OMPI_DARWIN         1001  /* Darwin / OS X on PowerPC */
-#define OMPI_PPC_LINUX      1002  /* Linux on PowerPC */
-#define OMPI_AIX            1003  /* AIX on Power / PowerPC */
+#define OPAL_DEFAULT        1000  /* standard for given architecture */
+#define OPAL_DARWIN         1001  /* Darwin / OS X on PowerPC */
+#define OPAL_PPC_LINUX      1002  /* Linux on PowerPC */
+#define OPAL_AIX            1003  /* AIX on Power / PowerPC */
 
 #endif /* #ifndef OPAL_SYS_ARCHITECTURE_H */
