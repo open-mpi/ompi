@@ -35,9 +35,9 @@ opal_show_subtitle "OPAL Configuration options"
 #
 
 if test -d .svn -o -d .hg -o -d .git; then
-    OMPI_DEVEL=1
+    OPAL_DEVEL=1
 else
-    OMPI_DEVEL=0
+    OPAL_DEVEL=0
 fi
 
 
@@ -99,7 +99,7 @@ else
     WANT_MEM_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_debug" -a "$OMPI_DEVEL" = 1; then
+if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_debug" -a "$OPAL_DEVEL" = 1; then
     WANT_MEM_DEBUG=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -123,7 +123,7 @@ else
     WANT_MEM_PROFILE=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_profile" -a "$OMPI_DEVEL" = 1; then
+if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_profile" -a "$OPAL_DEVEL" = 1; then
     WANT_MEM_PROFILE=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -147,7 +147,7 @@ else
     WANT_PICKY_COMPILER=0
 fi
 #################### Early development override ####################
-if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a "$OMPI_DEVEL" = 1; then
+if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a "$OPAL_DEVEL" = 1; then
     WANT_PICKY_COMPILER=1
     echo "--> developer override: enable picky compiler by default"
 fi
@@ -169,7 +169,7 @@ else
     WANT_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a "$OMPI_DEVEL" = 1; then
+if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a "$OPAL_DEVEL" = 1; then
     WANT_DEBUG=1
     echo "--> developer override: enable debugging code by default"
 fi
@@ -292,13 +292,13 @@ AC_ARG_ENABLE([heterogeneous],
                      platform support (default: disabled)])])
 if test "$enable_heterogeneous" = "yes" ; then
      AC_MSG_RESULT([yes])
-     ompi_want_heterogeneous=1
+     opal_want_heterogeneous=1
 else
      AC_MSG_RESULT([no])
-     ompi_want_heterogeneous=0
+     opal_want_heterogeneous=0
 fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_HETEROGENEOUS_SUPPORT], 
-                   [$ompi_want_heterogeneous], 
+                   [$opal_want_heterogeneous], 
                    [Enable features required for heterogeneous support])
 
 
@@ -397,12 +397,12 @@ AC_ARG_WITH([ident-string],
 if test "$with_ident_string" = "" -o "$with_ident_string" = "no"; then
     with_ident_string="%VERSION%"
 fi
-# This is complicated, because $OMPI_VERSION may have spaces in it.
+# This is complicated, because $OPAL_VERSION may have spaces in it.
 # So put the whole sed expr in single quotes -- i.e., directly
-# substitute %VERSION% for (not expanded) $OMPI_VERSION.
-with_ident_string="`echo $with_ident_string | sed -e 's/%VERSION%/$OMPI_VERSION/'`"
+# substitute %VERSION% for (not expanded) $OPAL_VERSION.
+with_ident_string="`echo $with_ident_string | sed -e 's/%VERSION%/$OPAL_VERSION/'`"
 
-# Now eval an echo of that so that the "$OMPI_VERSION" token is
+# Now eval an echo of that so that the "$OPAL_VERSION" token is
 # replaced with its value.  Enclose the whole thing in "" so that it
 # ends up as 1 token.
 with_ident_string="`eval echo $with_ident_string`"

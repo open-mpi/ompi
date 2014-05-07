@@ -105,21 +105,21 @@ AC_DEFUN([OPAL_SETUP_FT],[
     if test "$opal_setup_ft_options" = "yes"; then 
         AC_MSG_CHECKING([if want checkpoint/restart enabled debugging option])
     fi
-    if test "$ompi_want_ft" = "0"; then
-        ompi_want_prd=0
+    if test "$opal_want_ft" = "0"; then
+        opal_want_prd=0
         if test "$opal_setup_ft_options" = "yes"; then 
             AC_MSG_RESULT([Disabled (fault tolerance disabled --without-ft)])
         fi
     elif test "$enable_crdebug" = "yes"; then
-        ompi_want_prd=1
+        opal_want_prd=1
         AC_MSG_RESULT([Enabled])
     else
-        ompi_want_prd=0
+        opal_want_prd=0
         if test "$opal_setup_ft_options" = "yes"; then 
             AC_MSG_RESULT([Disabled])
         fi
     fi
-    AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [$ompi_want_prd],
+    AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [$opal_want_prd],
                        [Whether we want checkpoint/restart enabled debugging functionality or not])
 
     if test "$opal_setup_ft_options" = "yes"; then 
