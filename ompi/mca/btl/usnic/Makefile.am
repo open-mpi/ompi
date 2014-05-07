@@ -103,7 +103,7 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_btl_usnic_la_SOURCES = $(component_sources)
 mca_btl_usnic_la_LDFLAGS = -module -avoid-version $(btl_usnic_LDFLAGS) 
 mca_btl_usnic_la_LIBADD = $(btl_usnic_LIBS) \
-    $(top_ompi_builddir)/ompi/mca/common/verbs/libmca_common_verbs.la
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/verbs/libmca_common_verbs.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)

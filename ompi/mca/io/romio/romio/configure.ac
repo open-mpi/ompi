@@ -82,12 +82,12 @@ if test -f "$srcdir/../../../../../config/opal_mca.m4"; then
     # appropriate include directory (don't know why automake
     # doesn't do this # automatically).
 
-    top_ompi_srcdir='$(top_srcdir)/../../../../..'
-    top_ompi_builddir='$(top_builddir)/../../../../..'
-    with_mpi="$top_ompi_srcdir"
+    OMPI_TOP_SRCDIR='$(top_srcdir)/../../../../..'
+    OMPI_TOP_BUILDDIR='$(top_builddir)/../../../../..'
+    with_mpi="$OMPI_TOP_SRCDIR"
     AC_MSG_RESULT([in Open MPI source tree -- good])
-    AC_SUBST(top_ompi_srcdir)
-    AC_SUBST(top_ompi_builddir)
+    AC_SUBST(OMPI_TOP_SRCDIR)
+    AC_SUBST(OMPI_TOP_BUILDDIR)
 else
     AC_MSG_RESULT([not found])
     AC_MSG_WARN([*** Could not find Open MPI support files])

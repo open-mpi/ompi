@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -19,24 +19,24 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_EVAL_ARG(arg)
+# OPAL_EVAL_ARG(arg)
 # ------------------
 # evaluates and returns argument
-AC_DEFUN([OMPI_EVAL_ARG], [$1])
+AC_DEFUN([OPAL_EVAL_ARG], [$1])
 
 ######################################################################
 #
-# OMPI_MCA
+# OPAL_MCA
 #
 # configure the MCA (modular component architecture).  Works hand in hand
 # with Open MPI's autogen.pl, requiring it's specially formatted lists
 # of frameworks, components, etc.
 #
 # USAGE:
-#   OMPI_MCA()
+#   OPAL_MCA()
 #
 ######################################################################
-AC_DEFUN([OMPI_MCA],[
+AC_DEFUN([OPAL_MCA],[
     dnl for OPAL_CONFIGURE_USER env variable
     AC_REQUIRE([OPAL_CONFIGURE_SETUP])
 
@@ -322,7 +322,7 @@ AC_DEFUN([MCA_ORDER_COMPONENT_LIST], [
                          [m4_fatal([MCA_$1_$2_]mca_component[_PRIORITY not found, but required.])])])])
     m4_define([component_list], 
               [esyscmd([config/opal_mca_priority_sort.pl] m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
-                        [m4_ifval(mca_component, [mca_component ]OMPI_EVAL_ARG([MCA_]$1[_]$2[_]mca_component[_PRIORITY ]))]))])
+                        [m4_ifval(mca_component, [mca_component ]OPAL_EVAL_ARG([MCA_]$1[_]$2[_]mca_component[_PRIORITY ]))]))])
 ])
 
 AC_DEFUN([MCA_CHECK_IGNORED_PRIORITY], [
@@ -388,13 +388,13 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     # If there are components in the no configure list, but we're
     # doing one of the "special" selection logics, abort with a
     # reasonable message.
-    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST],
+    m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST],
           [m4_ifval(mca_$1_$2_no_config_component_list,
                    [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
-    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+    m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
           [m4_ifval(mca_$1_$2_no_config_component_list,
                    [m4_fatal([Framework $2 using STOP_AT_FIRST_PRIORITY but at least one component has no configure.m4])])])
-    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [PRIORITY],
+    m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [PRIORITY],
           [m4_ifval(mca_$1_$2_no_config_component_list,
                    [m4_fatal([Framework $2 using PRIORITY but at least one component has no configure.m4])])])
     # run the configure logic for the no-config components
@@ -409,9 +409,9 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
 
     # configure components that use built-in configuration scripts
     m4_ifdef([component_list], [m4_undefine([component_list])])
-    m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [MCA_ORDER_COMPONENT_LIST($1, $2)],
-          [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [MCA_ORDER_COMPONENT_LIST($1, $2)],
-                [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [PRIORITY], [MCA_ORDER_COMPONENT_LIST($1, $2)],
+    m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [MCA_ORDER_COMPONENT_LIST($1, $2)],
+          [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [MCA_ORDER_COMPONENT_LIST($1, $2)],
+                [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [PRIORITY], [MCA_ORDER_COMPONENT_LIST($1, $2)],
                        [m4_define([component_list], [mca_$1_$2_m4_config_component_list])])])])
 
     best_mca_component_priority=0
@@ -419,7 +419,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     components_last_result=0
     m4_foreach(mca_component, [component_list],
                [m4_ifval(mca_component,
-                  [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+                  [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
                          [AS_IF([test $best_mca_component_priority -gt MCA_$1_$2_]mca_component[_PRIORITY], [components_looking_for_succeed=0])])
                    MCA_CONFIGURE_M4_CONFIG_COMPONENT($1, $2, mca_component, 
                                                      [all_components],
@@ -429,18 +429,18 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                                                      [$components_looking_for_succeed],
                                                      [components_last_result=1],
                                                      [components_last_result=0])
-                   m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST],
+                   m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST],
                          [AS_IF([test $components_last_result -eq 1], [components_looking_for_succeed=0])])
-                   m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
-                         [AS_IF([test $components_last_result -eq 1], [best_mca_component_priority=]OMPI_EVAL_ARG([MCA_$1_$2_]mca_component[_PRIORITY]))])
+                   m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
+                         [AS_IF([test $components_last_result -eq 1], [best_mca_component_priority=]OPAL_EVAL_ARG([MCA_$1_$2_]mca_component[_PRIORITY]))])
                    ])])
 
     # configure components that provide their own configure script.
     # It would be really hard to run these for "find first that
     # works", so we don't :)
-    m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-        [m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
-             [m4_if(OMPI_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [PRIORITY], [],
+    m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
+        [m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
+             [m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [PRIORITY], [],
                  [MCA_CHECK_IGNORED_PRIORITY($1, $2)
                   AS_IF([test "$3" != "0"],
                         [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
@@ -457,9 +457,9 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
     AC_SUBST(MCA_$1_$2_DSO_COMPONENTS)
     AC_SUBST(MCA_$1_$2_STATIC_LTLIBS)
 
-    OMPI_MCA_MAKE_DIR_LIST(MCA_$1_$2_ALL_SUBDIRS, $2, [$all_components])
-    OMPI_MCA_MAKE_DIR_LIST(MCA_$1_$2_STATIC_SUBDIRS, $2, [$static_components])
-    OMPI_MCA_MAKE_DIR_LIST(MCA_$1_$2_DSO_SUBDIRS, $2, [$dso_components])
+    OPAL_MCA_MAKE_DIR_LIST(MCA_$1_$2_ALL_SUBDIRS, $2, [$all_components])
+    OPAL_MCA_MAKE_DIR_LIST(MCA_$1_$2_STATIC_SUBDIRS, $2, [$static_components])
+    OPAL_MCA_MAKE_DIR_LIST(MCA_$1_$2_DSO_SUBDIRS, $2, [$dso_components])
 
     # Create the final .h file that will be included in the type's
     # top-level glue.  This lists all the static components.  We don't
@@ -636,7 +636,7 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
 
             if test "$should_build" = "1" ; then
                 OPAL_CONFIG_SUBDIR([$1/mca/$2/$component],
-                                   [$ompi_subdir_args],
+                                   [$opal_subdir_args],
                                    [should_build=1], [should_build=0])
             fi
 
@@ -803,7 +803,7 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # don't have to implement the else clause in the literal check...
     AS_LITERAL_IF([$3],
         [AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""], 
-           [m4_if(OMPI_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
+           [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
             AS_IF([test "$8" = "static" -a "$stop_at_first" = "1"],
               [AS_IF([test "$with_devel_headers" = "yes"], 
                      [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
@@ -857,28 +857,28 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
 
     # build if:
     # - the component type is direct and we are that component
-    # - there is no ompi_ignore file
-    # - there is an ompi_ignore, but there is an empty ompi_unignore
-    # - there is an ompi_ignore, but username is in ompi_unignore
+    # - there is no opal_ignore file
+    # - there is an opal_ignore, but there is an empty opal_unignore
+    # - there is an opal_ignore, but username is in opal_unignore
     if test -d $component_path ; then
         # decide if we want the component to be built or not.  This
         # is spread out because some of the logic is a little complex
         # and test's syntax isn't exactly the greatest.  We want to
         # build the component by default.
         want_component=1
-        if test -f $component_path/.ompi_ignore ; then
-            # If there is an ompi_ignore file, don't build
+        if test -f $component_path/.opal_ignore ; then
+            # If there is an opal_ignore file, don't build
             # the component.  Note that this decision can be
             # overridden by the unignore logic below.
             want_component=0
         fi
-        if test -f $component_path/.ompi_unignore ; then
-            # if there is an empty ompi_unignore, that is
+        if test -f $component_path/.opal_unignore ; then
+            # if there is an empty opal_unignore, that is
             # equivalent to having your userid in the unignore file.
             # If userid is in the file, unignore the ignore file.
-            if test ! -s $component_path/.ompi_unignore ; then
+            if test ! -s $component_path/.opal_unignore ; then
                 want_component=1
-            elif test ! -z "`$GREP $OPAL_CONFIGURE_USER $component_path/.ompi_unignore`" ; then
+            elif test ! -z "`$GREP $OPAL_CONFIGURE_USER $component_path/.opal_unignore`" ; then
                 want_component=1
             fi
         fi
@@ -929,9 +929,9 @@ AC_DEFUN([MCA_SETUP_DIRECT_CALL],[
 ])
 
 
-# OMPI_MCA_MAKE_DIR_LIST(subst'ed variable, framework, shell list)
+# OPAL_MCA_MAKE_DIR_LIST(subst'ed variable, framework, shell list)
 # -------------------------------------------------------------------------
-AC_DEFUN([OMPI_MCA_MAKE_DIR_LIST],[
+AC_DEFUN([OPAL_MCA_MAKE_DIR_LIST],[
     $1=
     for item in $3 ; do
        $1="$$1 mca/$2/$item"

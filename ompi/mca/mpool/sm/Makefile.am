@@ -43,10 +43,10 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_sm_la_SOURCES = $(sources)
 mca_mpool_sm_la_LDFLAGS = -module -avoid-version
 mca_mpool_sm_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/sm/libmca_common_sm.la
 if OPAL_cuda_support
 mca_mpool_sm_la_LIBADD += \
-    $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)
