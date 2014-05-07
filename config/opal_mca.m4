@@ -524,7 +524,7 @@ EOF
 #
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
-    ompi_show_subsubsubtitle "MCA component $2:$3 (no configuration)"
+    opal_show_subsubsubtitle "MCA component $2:$3 (no configuration)"
 
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, 
                               [should_build=$8], [should_build=0])
@@ -570,8 +570,8 @@ AC_DEFUN([MCA_CONFIGURE_NO_CONFIG_COMPONENT],[
 ######################################################################
 AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     m4_ifdef([MCA_$1_$2_$3_PRIORITY],
-        [ompi_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro, priority MCA_$1_$2_$3_PRIORITY)"],
-        [ompi_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro)"])
+        [opal_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro, priority MCA_$1_$2_$3_PRIORITY)"],
+        [opal_show_subsubsubtitle "MCA component $2:$3 (m4 configuration macro)"])
 
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
@@ -628,7 +628,7 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
     for component_path in $srcdir/$1/mca/$2/* ; do
         component="`basename $component_path`"
         if test -d $component_path -a -x $component_path/configure ; then
-            ompi_show_subsubsubtitle "MCA component $2:$component (need to configure)"
+            opal_show_subsubsubtitle "MCA component $2:$component (need to configure)"
 
             MCA_COMPONENT_BUILD_CHECK($1, $2, $component, 
                                       [should_build=1], [should_build=0])

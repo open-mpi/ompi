@@ -95,7 +95,7 @@ AC_DEFUN([OMPI_CONTRIB],[
 ######################################################################
 AC_DEFUN([_OMPI_CONTRIB_CONFIGURE],[
 
-    ompi_show_subsubsubtitle "$1 (m4 configuration macro)"
+    opal_show_subsubsubtitle "$1 (m4 configuration macro)"
 
     # Put in a convenient enable/disable switch (it's a little more
     # user friendly than
