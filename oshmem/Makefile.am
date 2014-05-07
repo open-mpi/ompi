@@ -64,7 +64,7 @@ liboshmem_la_LIBADD = \
 	$(fortran_oshmem_lib) \
 	$(fortran_pshmem_lib) \
 	$(MCA_oshmem_FRAMEWORK_LIBS) \
-	$(top_ompi_builddir)/ompi/libmpi.la
+	$(OSHMEM_TOP_BUILDDIR)/ompi/libmpi.la
 liboshmem_la_DEPENDENCIES = $(liboshmem_la_LIBADD)
 liboshmem_la_LDFLAGS = \
         -version-info $(liboshmem_so_version) \

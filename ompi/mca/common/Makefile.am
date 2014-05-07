@@ -19,7 +19,7 @@
 
 # Note that this file must exist, even though it is empty (there is no
 # "base" directory for the common framework).  autogen.pl and
-# ompi_mca.m4 assume that every framework has a top-level Makefile.am.
+# opal_mca.m4 assume that every framework has a top-level Makefile.am.
 # We *could* adjust the framework glue code to exclude "common" from
 # this requirement, but it's just a lot easier to have an empty
 # Makefile.am here.

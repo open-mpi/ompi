@@ -47,9 +47,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc172_POST_CONFIG],[
            # Add some stuff to CPPFLAGS so that the rest of the source
            # tree can be built
            file=$opal_hwloc_hwloc172_basedir/hwloc
-           CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_SRCDIR/$file/include"
-           AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
+           CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_SRCDIR/$file/include"
+           AS_IF([test "$OPAL_TOP_BUILDDIR" != "$OPAL_TOP_SRCDIR"],
+                 [CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_BUILDDIR/$file/include"])
            unset file
           ])
     OPAL_VAR_SCOPE_POP
@@ -105,7 +105,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc172_CONFIG],[
 
                    # Build flags for our Makefile.am
                    opal_hwloc_hwloc172_LDFLAGS='$(HWLOC_EMBEDDED_LDFLAGS)'
-                   opal_hwloc_hwloc172_LIBS='$(top_ompi_builddir)/'"$opal_hwloc_hwloc172_basedir"'/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
+                   opal_hwloc_hwloc172_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_hwloc_hwloc172_basedir"'/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
                    opal_hwloc_hwloc172_support=yes
 
                    AC_DEFINE_UNQUOTED([HWLOC_HWLOC172_HWLOC_VERSION], 

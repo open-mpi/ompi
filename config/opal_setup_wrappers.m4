@@ -150,7 +150,7 @@ AC_DEFUN([OPAL_SETUP_RPATH],[
 # (because if script A sources script B, and B calls "exit", then both
 # B and A will exit).  Instead, we have to send the output to a file
 # and then source that.
-$OMPI_TOP_BUILDDIR/libtool --config > $rpath_outfile
+$OPAL_TOP_BUILDDIR/libtool --config > $rpath_outfile
 
 chmod +x $rpath_outfile
 . ./$rpath_outfile

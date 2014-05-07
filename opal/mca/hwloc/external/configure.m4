@@ -46,8 +46,8 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
            CPPFLAGS="$CPPFLAGS $opal_hwloc_external_CPPFLAGS"
            LDFLAGS="$LDFLAGS $opal_hwloc_external_LDFLAGS"
            LIBS="$LIBS $opal_hwloc_external_LIBS"
-           AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [CPPFLAGS="$CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
+           AS_IF([test "$OPAL_TOP_BUILDDIR" != "$OPAL_TOP_SRCDIR"],
+                 [CPPFLAGS="$CPPFLAGS -I$OPAL_TOP_BUILDDIR/$file/include"])
            unset file
 
            # We have to do some extra indirection to get the

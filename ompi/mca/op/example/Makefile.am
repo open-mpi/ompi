@@ -49,7 +49,7 @@ sources = \
 # MCA_BUILD_ompi_<framework>_<component>_DSO AM_CONDITIONAL to indicate
 # which way this component should be built.
 
-if MCA_BUILD_op_example_DSO
+if MCA_BUILD_ompi_op_example_DSO
 lib =
 lib_sources =
 component = mca_op_example.la

@@ -135,7 +135,7 @@ m4_ifdef([project_ompi],
           # It's icky that we have to hard-code the names of the
           # common components here.  :-( This could probably be done
           # transparently by adding some intelligence in autogen.sh
-          # and/or ompi_mca.m4, but I don't have the cycles to do this
+          # and/or opal_mca.m4, but I don't have the cycles to do this
           # right now.
           AC_SUBST(libmca_common_cuda_so_version)
           AC_SUBST(libmca_common_mx_so_version)
@@ -214,6 +214,7 @@ AH_TOP([/* -*- c -*-
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -238,10 +239,22 @@ AH_BOTTOM([
 
 OPAL_BASIC_SETUP
 
-top_ompi_srcdir="$OMPI_TOP_SRCDIR"
-AC_SUBST(top_ompi_srcdir)
-top_ompi_builddir="$OMPI_TOP_BUILDDIR"
-AC_SUBST(top_ompi_builddir)
+OPAL_TOP_SRCDIR="$OMPI_TOP_SRCDIR"
+OPAL_TOP_BUILDDIR="$OMPI_TOP_BUILDDIR"
+AC_SUBST(OPAL_TOP_SRCDIR)
+AC_SUBST(OPAL_TOP_BUILDDIR)
+
+m4_ifdef([project_orte],
+         [ORTE_TOP_SRCDIR="$OMPI_TOP_SRCDIR"
+          ORTE_TOP_BUILDDIR="$OMPI_TOP_BUILDDIR"
+          AC_SUBST(ORTE_TOP_SRCDIR)
+          AC_SUBST(ORTE_TOP_BUILDDIR)])
+
+m4_ifdef([project_oshmem],
+         [OSHMEM_TOP_SRCDIR="$OMPI_TOP_SRCDIR"
+          OSHMEM_TOP_BUILDDIR="$OMPI_TOP_BUILDDIR"
+          AC_SUBST(OSHMEM_TOP_SRCDIR)
+          AC_SUBST(OSHMEM_TOP_BUILDDIR)])
 
 ############################################################################
 # Configuration options
@@ -1139,10 +1152,10 @@ OPAL_SETUP_FT
 opal_show_title "Modular Component Architecture (MCA) setup"
 
 AC_MSG_CHECKING([for subdir args])
-OPAL_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
-AC_MSG_RESULT([$ompi_subdir_args])
+OPAL_CONFIG_SUBDIR_ARGS([opal_subdir_args])
+AC_MSG_RESULT([$opal_subdir_args])
 
-OMPI_MCA
+OPAL_MCA
 
 m4_ifdef([project_ompi], [OMPI_REQUIRE_ENDPOINT_TAG_FINI])
 
@@ -1351,7 +1364,7 @@ fi
 # If that macro is defined, we'll run it here.
 #
 # Unfortunately, aclocal is not smart enough to parse something like
-# the following in ompi_mca.m4 (when we're already m4 looping over the
+# the following in opal_mca.m4 (when we're already m4 looping over the
 # project list):
 #
 # m4_foreach(mca_project, [mca_project_list], 

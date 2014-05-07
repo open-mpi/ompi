@@ -49,7 +49,7 @@ mca_mpool_grdma_la_LDFLAGS = -module -avoid-version
 mca_mpool_grdma_la_LIBADD = $(mpool_grdma_LIBS)
 if OPAL_cuda_support
 mca_mpool_grdma_la_LIBADD += \
-    $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
+    $(OMPI_TOP_BUILDDIR)/ompi/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -30,7 +30,7 @@ AC_DEFUN([OPAL_CHECK_COMPILER], [
     AC_CACHE_CHECK([for compiler $lower], opal_cv_compiler_[$1],
     [
             CPPFLAGS_orig=$CPPFLAGS
-            CPPFLAGS="-I${top_ompi_srcdir}/opal/include/opal $CPPFLAGS"
+            CPPFLAGS="-I${OPAL_TOP_SRCDIR}/opal/include/opal $CPPFLAGS"
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +62,7 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRING], [
     AC_CACHE_CHECK([for compiler $lower], opal_cv_compiler_[$1],
     [
             CPPFLAGS_orig=$CPPFLAGS
-            CPPFLAGS="-I${top_ompi_srcdir}/opal/include/opal $CPPFLAGS"
+            CPPFLAGS="-I${OPAL_TOP_SRCDIR}/opal/include/opal $CPPFLAGS"
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,7 +95,7 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRINGIFY], [
     AC_CACHE_CHECK([for compiler $lower], opal_cv_compiler_[$1],
     [
             CPPFLAGS_orig=$CPPFLAGS
-            CPPFLAGS="-I${top_ompi_srcdir}/opal/include/opal $CPPFLAGS"
+            CPPFLAGS="-I${OPAL_TOP_SRCDIR}/opal/include/opal $CPPFLAGS"
             AC_TRY_RUN([
 #include <stdio.h>
 #include <stdlib.h>

@@ -37,7 +37,7 @@ lib_LTLIBRARIES = libopen-rte.la
 libopen_rte_la_SOURCES =
 libopen_rte_la_LIBADD = \
 	$(MCA_orte_FRAMEWORK_LIBS) \
-	$(top_ompi_builddir)/opal/libopen-pal.la
+	$(ORTE_TOP_BUILDDIR)/opal/libopen-pal.la
 libopen_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
 libopen_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
 

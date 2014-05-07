@@ -999,11 +999,11 @@ if test "$opal_cv_asm_arch" != "WINDOWS" -a "$opal_cv_asm_builtin" != "BUILTIN_S
     # see if we have a pre-built one already
     AC_MSG_CHECKING([for pre-built assembly file])
     opal_cv_asm_file=""
-    if $GREP "$opal_cv_asm_arch" "${top_ompi_srcdir}/opal/asm/asm-data.txt" | $FGREP "$opal_cv_asm_format" >conftest.out 2>&1 ; then
+    if $GREP "$opal_cv_asm_arch" "${OPAL_TOP_SRCDIR}/opal/asm/asm-data.txt" | $FGREP "$opal_cv_asm_format" >conftest.out 2>&1 ; then
         opal_cv_asm_file="`cut -f3 conftest.out`"
         if test ! "$opal_cv_asm_file" = "" ; then
             opal_cv_asm_file="atomic-${opal_cv_asm_file}.s"
-            if test -f "${top_ompi_srcdir}/opal/asm/generated/${opal_cv_asm_file}" ; then
+            if test -f "${OPAL_TOP_SRCDIR}/opal/asm/generated/${opal_cv_asm_file}" ; then
                 AC_MSG_RESULT([yes ($opal_cv_asm_file)])
             else
                 AC_MSG_RESULT([no ($opal_cv_asm_file not found)])
@@ -1021,7 +1021,7 @@ if test "$opal_cv_asm_arch" != "WINDOWS" -a "$opal_cv_asm_builtin" != "BUILTIN_S
             AC_MSG_CHECKING([whether possible to generate assembly file])
             mkdir -p opal/asm/generated
             opal_cv_asm_file="atomic-local.s"
-            opal_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $top_ompi_srcdir/opal/asm/base $top_ompi_builddir/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
+            opal_try='$PERL $OPAL_TOP_SRCDIR/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $OPAL_TOP_SRCDIR/opal/asm/base $OPAL_TOP_BUILDDIR/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
             if AC_TRY_EVAL(opal_try) ; then
                 # save the warnings
                 cat conftest.out >&AC_FD_CC

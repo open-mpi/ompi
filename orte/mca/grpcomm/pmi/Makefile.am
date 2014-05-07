@@ -38,7 +38,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_grpcomm_pmi_la_SOURCES = $(sources)
 mca_grpcomm_pmi_la_LDFLAGS = -module -avoid-version $(grpcomm_pmi_LDFLAGS)
 mca_grpcomm_pmi_la_LIBADD = $(grpcomm_pmi_LIBS) \
-	$(top_ompi_builddir)/opal/mca/common/pmi/libmca_common_pmi.la
+	$(ORTE_TOP_BUILDDIR)/opal/mca/common/pmi/libmca_common_pmi.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_grpcomm_pmi_la_SOURCES =$(sources)
