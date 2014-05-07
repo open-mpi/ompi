@@ -76,7 +76,7 @@ AC_DEFINE([HAVE_MPI_OFFSET], [1], [Will always be 1 - OMPI has MPI_OFFSET])
 			   
 # Open MPI: look for top Open MPI directory
 AC_MSG_CHECKING([for Open MPI support files])
-if test -f "$srcdir/../../../../../config/ompi_mca.m4"; then
+if test -f "$srcdir/../../../../../config/opal_mca.m4"; then
 
     # This is needed for VPATH builds, so that it will -I the
     # appropriate include directory (don't know why automake
