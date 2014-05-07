@@ -1021,7 +1021,7 @@ if test "$opal_cv_asm_arch" != "WINDOWS" -a "$opal_cv_asm_builtin" != "BUILTIN_S
             AC_MSG_CHECKING([whether possible to generate assembly file])
             mkdir -p opal/asm/generated
             opal_cv_asm_file="atomic-local.s"
-            opal_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $top_ompi_srcdir/opal/asm/base $top_opal_builddir/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
+            opal_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $opal_cv_asm_arch "$opal_cv_asm_format" $top_ompi_srcdir/opal/asm/base $top_ompi_builddir/opal/asm/generated/$opal_cv_asm_file >conftest.out 2>&1'
             if AC_TRY_EVAL(opal_try) ; then
                 # save the warnings
                 cat conftest.out >&AC_FD_CC
