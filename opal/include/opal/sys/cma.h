@@ -30,19 +30,19 @@
 
 /* Cross Memory Attach is so far only supported under linux */
 
-#if OPAL_ASSEMBLY_ARCH == OMPI_AMD64
+#if OPAL_ASSEMBLY_ARCH == OPAL_AMD64
 #define __NR_process_vm_readv 310
 #define __NR_process_vm_writev 311
-#elif OPAL_ASSEMBLY_ARCH == OMPI_IA32
+#elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
 #define __NR_process_vm_readv 347
 #define __NR_process_vm_writev 348
-#elif OPAL_ASSEMBLY_ARCH == OMPI_IA64
+#elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
 #define __NR_process_vm_readv 1332
 #define __NR_process_vm_writev 1333
-#elif OPAL_ASSEMBLY_ARCH == OMPI_POWERPC32
+#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
 #define __NR_process_vm_readv 351
 #define __NR_process_vm_writev 352
-#elif OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64
+#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
 #define __NR_process_vm_readv 351
 #define __NR_process_vm_writev 352
 #else

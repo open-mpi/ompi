@@ -17,8 +17,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SYS_ARCH_ATOMIC_H
-#define OMPI_SYS_ARCH_ATOMIC_H 1
+#ifndef OPAL_SYS_ARCH_ATOMIC_H
+#define OPAL_SYS_ARCH_ATOMIC_H 1
 
 /*
  * On ia32, we use cmpxchg.
@@ -56,7 +56,7 @@
  * Memory Barriers
  *
  *********************************************************************/
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline void opal_atomic_mb(void)
 {
@@ -75,7 +75,7 @@ static inline void opal_atomic_wmb(void)
     MB();
 }
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 
 /**********************************************************************
@@ -83,7 +83,7 @@ static inline void opal_atomic_wmb(void)
  * Atomic math operations
  *
  *********************************************************************/
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
                                         int32_t oldval,
@@ -100,12 +100,12 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
    return (int)ret;
 }
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #define opal_atomic_cmpset_acq_32 opal_atomic_cmpset_32
 #define opal_atomic_cmpset_rel_32 opal_atomic_cmpset_32
 
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 #if 0
 
@@ -148,12 +148,12 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
 }
 #endif /* if 0 */
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
 #define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
 
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 /**
  * atomic_add - add integer to atomic variable
@@ -194,6 +194,6 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
    return (ret-i);
 }
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
+#endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

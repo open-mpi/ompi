@@ -29,10 +29,10 @@ cat > $CFILE<<EOF
 #include <inttypes.h>
 #define static
 #define inline
-#define OMPI_GCC_INLINE_ASSEMBLY 1
+#define OPAL_GCC_INLINE_ASSEMBLY 1
 #define OPAL_WANT_SMP_LOCKS 1
 #include "atomic.h"
 EOF
 
-gcc -m64 -O3 -DOPAL_ASSEMBLY_ARCH=OMPI_SPARCV9_64 -I. -S $CFILE -o atomic64.s
-gcc -mv8plus -DOPAL_ASSEMBLY_ARCH=OMPI_SPARCV9_32 -O3 -I. -S $CFILE -o atomic32.s
+gcc -m64 -O3 -DOPAL_ASSEMBLY_ARCH=OPAL_SPARCV9_64 -I. -S $CFILE -o atomic64.s
+gcc -mv8plus -DOPAL_ASSEMBLY_ARCH=OPAL_SPARCV9_32 -O3 -I. -S $CFILE -o atomic32.s

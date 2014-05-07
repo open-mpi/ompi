@@ -21,7 +21,7 @@
 #include "opal/sys/atomic.h"
 #include "opal/sys/architecture.h"
 
-#if OPAL_ASSEMBLY_ARCH == OMPI_SPARC
+#if OPAL_ASSEMBLY_ARCH == OPAL_SPARC
 
 #if OPAL_WANT_SMP_LOCKS
 
@@ -82,4 +82,4 @@ opal_atomic_sub_32(volatile int32_t *addr, int delta)
 }
 
 
-#endif /* OPAL_ASSEMBLY_ARCH == OMPI_SPARC32 */
+#endif /* OPAL_ASSEMBLY_ARCH == OPAL_SPARC32 */

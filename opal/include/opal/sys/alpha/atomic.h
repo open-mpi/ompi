@@ -16,8 +16,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SYS_ARCH_ATOMIC_H
-#define OMPI_SYS_ARCH_ATOMIC_H 1
+#ifndef OPAL_SYS_ARCH_ATOMIC_H
+#define OPAL_SYS_ARCH_ATOMIC_H 1
 
 /*
  * On alpha, everything is load-locked, store-conditional...
@@ -55,7 +55,7 @@
  * Memory Barriers
  *
  *********************************************************************/
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline void opal_atomic_mb(void)
 {
@@ -74,7 +74,7 @@ static inline void opal_atomic_wmb(void)
     WMB();
 }
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 
 /**********************************************************************
@@ -82,7 +82,7 @@ static inline void opal_atomic_wmb(void)
  * Atomic math operations
  *
  *********************************************************************/
-#if OMPI_GCC_INLINE_ASSEMBLY
+#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                                          int32_t oldval, int32_t newval)
@@ -174,7 +174,7 @@ static inline int opal_atomic_cmpset_rel_64(volatile int64_t *addr,
 }
 
 
-#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 
-#endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
+#endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

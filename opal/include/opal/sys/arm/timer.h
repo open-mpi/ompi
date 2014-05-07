@@ -9,8 +9,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SYS_ARCH_TIMER_H
-#define OMPI_SYS_ARCH_TIMER_H 1
+#ifndef OPAL_SYS_ARCH_TIMER_H
+#define OPAL_SYS_ARCH_TIMER_H 1
 
 #include <sys/times.h>
 
@@ -30,4 +30,4 @@ opal_sys_timer_get_cycles(void)
 
 #define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
 
-#endif /* ! OMPI_SYS_ARCH_TIMER_H */
+#endif /* ! OPAL_SYS_ARCH_TIMER_H */

@@ -56,7 +56,7 @@
 
 /* do some quick #define cleanup in cases where we are doing
    testing... */
-#ifdef OMPI_DISABLE_INLINE_ASM
+#ifdef OPAL_DISABLE_INLINE_ASM
 #undef OPAL_C_GCC_INLINE_ASSEMBLY
 #define OPAL_C_GCC_INLINE_ASSEMBLY 0
 #undef OPAL_C_DEC_INLINE_ASSEMBLY
@@ -65,17 +65,17 @@
 #define OPAL_C_XLC_INLINE_ASSEMBLY 0
 #endif
 
-/* define OMPI_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
-   OMPI_C_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
+/* define OPAL_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
+   OPAL_C_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
    are in C or C++ */
 #if defined(c_plusplus) || defined(__cplusplus)
 /* We no longer support inline assembly for C++ as OPAL is a C-only interface */
-#define OMPI_GCC_INLINE_ASSEMBLY 0
-#define OMPI_DEC_INLINE_ASSEMBLY 0
+#define OPAL_GCC_INLINE_ASSEMBLY 0
+#define OPAL_DEC_INLINE_ASSEMBLY 0
 #define OPAL_XLC_INLINE_ASSEMBLY 0
 #else
-#define OMPI_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
-#define OMPI_DEC_INLINE_ASSEMBLY OPAL_C_DEC_INLINE_ASSEMBLY
+#define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
+#define OPAL_DEC_INLINE_ASSEMBLY OPAL_C_DEC_INLINE_ASSEMBLY
 #define OPAL_XLC_INLINE_ASSEMBLY OPAL_C_XLC_INLINE_ASSEMBLY
 #endif
 
@@ -109,7 +109,7 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * files if we need to specify them as inline or non-inline 
  * 
  *********************************************************************/
-#if !OMPI_GCC_INLINE_ASSEMBLY
+#if !OPAL_GCC_INLINE_ASSEMBLY
 #define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER 0
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_32 0
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_64 0
@@ -139,31 +139,31 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  *********************************************************************/ 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */ 
-#elif OPAL_ASSEMBLY_BUILTIN == OMPI_BUILTIN_SYNC
+#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_SYNC
 #include "opal/sys/sync_builtin/atomic.h"
-#elif OPAL_ASSEMBLY_BUILTIN == OMPI_BUILTIN_OSX
+#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_OSX
 #include "opal/sys/osx/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_ALPHA
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ALPHA
 #include "opal/sys/alpha/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_AMD64
+#elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
 #include "opal/sys/amd64/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_ARM
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
 #include "opal/sys/arm/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_IA32
+#elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
 #include "opal/sys/ia32/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_IA64
+#elif OPAL_ASSEMBLY_ARCH == OPAL_IA64
 #include "opal/sys/ia64/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_MIPS
+#elif OPAL_ASSEMBLY_ARCH == OPAL_MIPS
 #include "opal/sys/mips/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_POWERPC32
+#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
 #include "opal/sys/powerpc/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_POWERPC64
+#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
 #include "opal/sys/powerpc/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_SPARC
+#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARC
 #include "opal/sys/sparc/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_32
+#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_32
 #include "opal/sys/sparcv9/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64
+#elif OPAL_ASSEMBLY_ARCH == OPAL_SPARCV9_64
 #include "opal/sys/sparcv9/atomic.h"
 #endif
 
@@ -402,7 +402,7 @@ int32_t opal_atomic_sub_32(volatile int32_t *addr, int delta);
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 */
 
 #if ! OPAL_HAVE_ATOMIC_MATH_32
-/* fix up the value of ompi_have_atomic_math_32 to allow for C versions */
+/* fix up the value of opal_have_atomic_math_32 to allow for C versions */
 #undef OPAL_HAVE_ATOMIC_MATH_32
 #define OPAL_HAVE_ATOMIC_MATH_32 OPAL_HAVE_ATOMIC_CMPSET_32
 #endif
@@ -433,7 +433,7 @@ int64_t opal_atomic_sub_64(volatile int64_t *addr, int64_t delta);
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 */
 
 #if ! OPAL_HAVE_ATOMIC_MATH_64
-/* fix up the value of ompi_have_atomic_math_64 to allow for C versions */
+/* fix up the value of opal_have_atomic_math_64 to allow for C versions */
 #undef OPAL_HAVE_ATOMIC_MATH_64
 #define OPAL_HAVE_ATOMIC_MATH_64 OPAL_HAVE_ATOMIC_CMPSET_64
 #endif

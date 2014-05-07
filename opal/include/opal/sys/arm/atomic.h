@@ -28,8 +28,8 @@
  * See Documentation/arm/kernel_user_helpers.txt in the kernel tree for details
  */
 
-#ifndef OMPI_SYS_ARCH_ATOMIC_H
-#define OMPI_SYS_ARCH_ATOMIC_H 1
+#ifndef OPAL_SYS_ARCH_ATOMIC_H
+#define OPAL_SYS_ARCH_ATOMIC_H 1
 
 #if OPAL_WANT_SMP_LOCKS
 
@@ -109,7 +109,7 @@ void opal_atomic_wmb(void)
  *
  *********************************************************************/
 
-#if (OMPI_GCC_INLINE_ASSEMBLY && (OPAL_ASM_ARM_VERSION >= 6))
+#if (OPAL_GCC_INLINE_ASSEMBLY && (OPAL_ASM_ARM_VERSION >= 6))
 
 #define OPAL_HAVE_ATOMIC_CMPSET_32 1
 #define OPAL_HAVE_ATOMIC_MATH_32 1
@@ -280,4 +280,4 @@ static inline int opal_atomic_cmpset_rel_32(volatile int32_t *addr,
 
 #endif
 
-#endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
+#endif /* ! OPAL_SYS_ARCH_ATOMIC_H */
