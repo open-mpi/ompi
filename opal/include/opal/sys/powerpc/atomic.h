@@ -89,7 +89,7 @@ void opal_atomic_wmb(void)
     WMB();
 }
 
-#elif OMPI_XLC_INLINE_ASSEMBLY /* end OMPI_GCC_INLINE_ASSEMBLY */
+#elif OPAL_XLC_INLINE_ASSEMBLY /* end OMPI_GCC_INLINE_ASSEMBLY */
 
 /* Yeah, I don't know who thought this was a reasonable syntax for
  * inline assembly.  Do these because they are used so often and they
