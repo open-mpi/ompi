@@ -76,7 +76,7 @@
 
 /* $(datadir)/package-name/.  You probably want to use this instead of
    OPAL_DATADIR */
-#define OPAL_PKGDATADIR "@ompidatadir@"
+#define OPAL_PKGDATADIR "@opaldatadir@"
 
 /* The directory for installing read-only data files that pertain to a
    single machine–that is to say, files for configuring a host. Mailer
@@ -109,14 +109,14 @@
 #define OPAL_LIBDIR "@libdir@"
 
 /* $(libdir)/package-name/.  This is where components should go */
-#define OPAL_PKGLIBDIR "@ompilibdir@"
+#define OPAL_PKGLIBDIR "@opallibdir@"
 
 /* The directory for installing header files to be included by user
    programs with the C ‘#include’ preprocessor directive. */
 #define OPAL_INCLUDEDIR "@includedir@"
 
 /* $(includedir)/package-name/.  The devel headers go in here */
-#define OPAL_PKGINCLUDEDIR "@ompiincludedir@"
+#define OPAL_PKGINCLUDEDIR "@opalincludedir@"
 
 /* The directory for installing the Info files for this package. */
 #define OPAL_INFODIR "@infodir@"

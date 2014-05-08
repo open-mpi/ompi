@@ -24,7 +24,7 @@ component_noinst = libmca_errmgr_default_tool.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_errmgr_default_tool_la_SOURCES = $(sources)
 mca_errmgr_default_tool_la_LDFLAGS = -module -avoid-version

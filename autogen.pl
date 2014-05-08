@@ -259,17 +259,17 @@ sub mca_process_component {
 sub ignored {
     my ($dir) = @_;
 
-    # If this directory does not have .ompi_ignore, or if it has a
-    # .ompi_unignore that has my username in it, then add it to the
+    # If this directory does not have .opal_ignore, or if it has a
+    # .opal_unignore that has my username in it, then add it to the
     # list of components.
     my $ignored = 0;
 
-    if (-f "$dir/.ompi_ignore") {
+    if (-f "$dir/.opal_ignore") {
         $ignored = 1;
     }
-    if (-f "$dir/.ompi_unignore") {
-        open(UNIGNORE, "$dir/.ompi_unignore") ||
-            my_die "Can't open $dir/.ompi_unignore file";
+    if (-f "$dir/.opal_unignore") {
+        open(UNIGNORE, "$dir/.opal_unignore") ||
+            my_die "Can't open $dir/.opal_unignore file";
         my $unignore;
         $unignore .= $_
             while (<UNIGNORE>);
@@ -353,7 +353,7 @@ sub mca_process_framework {
 
                 # Check ignore status
                 if (ignored("$dir/$d")) {
-                    verbose "    => Ignored (found .ompi_ignore file)\n";
+                    verbose "    => Ignored (found .opal_ignore file)\n";
                 } else {
                     mca_process_component($topdir, $project, $framework, $d);
                 }

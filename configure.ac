@@ -1401,16 +1401,38 @@ case "`uname`" in
     ;;
 esac
 
-# ompidatadir, ompilibdir, and ompiinclude are essentially the same as
+# opaldatadir, opallibdir, and opalinclude are essentially the same as
 # pkg*dir, but will always be */openmpi.  This is to make it a bit
 # easier to deal with the problem of opal, orte, and ompi built from
 # their own tarballs, with their own PACKAGE variables.
-ompidatadir='${datadir}/openmpi'
-ompilibdir='${libdir}/openmpi'
-ompiincludedir='${includedir}/openmpi'
-AC_SUBST(ompidatadir)
-AC_SUBST(ompilibdir)
-AC_SUBST(ompiincludedir)
+opaldatadir='${datadir}/openmpi'
+opallibdir='${libdir}/openmpi'
+opalincludedir='${includedir}/openmpi'
+AC_SUBST(opaldatadir)
+AC_SUBST(opallibdir)
+AC_SUBST(opalincludedir)
+
+m4_ifdef([project_orte],
+         [ortedatadir="$opaldatadir"
+          AC_SUBST(ortedatadir)
+          ortelibdir="$opallibdir"
+          AC_SUBST(ortelibdir)
+          orteincludedir="$opalincludedir"
+          AC_SUBST(orteincludedir)])
+m4_ifdef([project_ompi],
+         [ompidatadir="$opaldatadir"
+          AC_SUBST(ompidatadir)
+          ompilibdir="$opallibdir"
+          AC_SUBST(ompilibdir)
+          ompiincludedir="$opalincludedir"
+          AC_SUBST(ompiincludedir)])
+m4_ifdef([project_oshmem],
+         [oshmemdatadir="$opaldatadir"
+          AC_SUBST(oshmemdatadir)
+          oshmemlibdir="$opallibdir"
+          AC_SUBST(oshmemlibdir)
+          oshmemincludedir="$opalincludedir"
+          AC_SUBST(oshmemincludedir)])
 
 opal_show_subtitle "Final output"
 

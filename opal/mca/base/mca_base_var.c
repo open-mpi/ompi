@@ -339,7 +339,7 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_file_prefix);
 
     ret = asprintf(&mca_base_param_file_path, "%s" OPAL_PATH_SEP "amca-param-sets%c%s",
-                   opal_install_dirs.ompidatadir, OPAL_ENV_SEP, cwd);
+                   opal_install_dirs.opaldatadir, OPAL_ENV_SEP, cwd);
     if (0 > ret) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

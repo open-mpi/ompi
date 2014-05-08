@@ -37,7 +37,7 @@ hnp_SOURCES = \
     iof_hnp_send.c \
     iof_hnp_receive.c
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_hnp_la_SOURCES = $(hnp_SOURCES)
 mca_iof_hnp_la_LDFLAGS = -module -avoid-version

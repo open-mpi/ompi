@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -37,13 +38,13 @@ dnl
 #  prefix_REPO_REV
 #  prefix_RELEASE_DATE
 m4_define([OPAL_GET_VERSION],[
-    : ${ompi_ver_need_repo_rev=1}
+    : ${opal_ver_need_repo_rev=1}
     : ${svnversion_result=-1}
 
     dnl quote eval to suppress macro expansion with non-GNU m4
     if test -f "$1"; then
         srcdir=`dirname $1`
-        ompi_vers=`sed -n "
+        opal_vers=`sed -n "
 	t clear
 	: clear
 	s/^major/$2_MAJOR_VERSION/
@@ -57,7 +58,7 @@ m4_define([OPAL_GET_VERSION],[
 	b
 	: print
 	p" < "$1"`
-	[eval] "$ompi_vers"
+	[eval] "$opal_vers"
 
         # Only print release version if it isn't 0
         if test $$2_RELEASE_VERSION -ne 0 ; then
@@ -68,7 +69,7 @@ m4_define([OPAL_GET_VERSION],[
         $2_VERSION="${$2_VERSION}${$2_GREEK_VERSION}"
         $2_BASE_VERSION=$$2_VERSION
 
-        if test $$2_WANT_REPO_REV -eq 1 && test $ompi_ver_need_repo_rev -eq 1 ; then
+        if test $$2_WANT_REPO_REV -eq 1 && test $opal_ver_need_repo_rev -eq 1 ; then
             if test "$svnversion_result" != "-1" ; then
                 $2_REPO_REV=$svnversion_result
             fi

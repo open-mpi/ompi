@@ -48,7 +48,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_ras_alps_la_SOURCES = $(component_sources)
 mca_ras_alps_la_LDFLAGS = -module -avoid-version $(ras_alps_LDFLAGS)

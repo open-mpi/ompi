@@ -35,7 +35,7 @@ tool_SOURCES = \
     iof_tool_component.c \
     iof_tool_receive.c
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_tool_la_SOURCES = $(tool_SOURCES)
 mca_iof_tool_la_LDFLAGS = -module -avoid-version

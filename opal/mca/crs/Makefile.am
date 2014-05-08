@@ -39,7 +39,7 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-opaldir = $(ompiincludedir)/$(subdir)
+opaldir = $(opalincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
 

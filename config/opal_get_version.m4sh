@@ -30,10 +30,10 @@ option="$2"
 case "$option" in
     # svnversion can take a while to run.  If we don't need it, don't run it.
     --major|--minor|--release|--greek|--base|--help)
-        ompi_ver_need_repo_rev=0
+        opal_ver_need_repo_rev=0
         ;;
     *)
-        ompi_ver_need_repo_rev=1
+        opal_ver_need_repo_rev=1
 esac
 
 

@@ -24,7 +24,7 @@ component_noinst = libmca_rtc_hwloc.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rtc_hwloc_la_SOURCES = $(sources)
 mca_rtc_hwloc_la_LDFLAGS = -module -avoid-version

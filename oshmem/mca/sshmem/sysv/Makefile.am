@@ -27,7 +27,7 @@ component_noinst = libmca_sshmem_sysv.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sshmem_sysv_la_SOURCES = $(sources)
 mca_sshmem_sysv_la_LDFLAGS = -module -avoid-version

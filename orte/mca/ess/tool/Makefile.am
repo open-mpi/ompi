@@ -34,7 +34,7 @@ component_noinst = libmca_ess_tool.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_tool_la_SOURCES = $(sources)
 mca_ess_tool_la_LDFLAGS = -module -avoid-version

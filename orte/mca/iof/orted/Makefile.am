@@ -36,7 +36,7 @@ orted_SOURCES = \
     iof_orted_read.c \
     iof_orted_receive.c
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_orted_la_SOURCES = $(orted_SOURCES)
 mca_iof_orted_la_LDFLAGS = -module -avoid-version

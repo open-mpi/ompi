@@ -17,7 +17,7 @@ libmca_if_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-opaldir = $(ompiincludedir)/opal/mca/if
+opaldir = $(opalincludedir)/opal/mca/if
 nobase_opal_HEADERS = $(headers)
 endif
 

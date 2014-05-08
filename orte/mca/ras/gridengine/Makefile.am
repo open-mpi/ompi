@@ -38,7 +38,7 @@ component_noinst = libmca_ras_gridengine.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_gridengine_la_SOURCES = $(sources)
 mca_ras_gridengine_la_LDFLAGS = -module -avoid-version

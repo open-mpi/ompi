@@ -231,7 +231,7 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
         orte_info_show_path(orte_info_path_libdir, opal_install_dirs.libdir);
         orte_info_show_path(orte_info_path_incdir, opal_install_dirs.includedir);
         orte_info_show_path(orte_info_path_mandir, opal_install_dirs.mandir);
-        orte_info_show_path(orte_info_path_pkglibdir, opal_install_dirs.ompilibdir);
+        orte_info_show_path(orte_info_path_pkglibdir, opal_install_dirs.opallibdir);
         orte_info_show_path(orte_info_path_libexecdir, opal_install_dirs.libexecdir);
         orte_info_show_path(orte_info_path_datarootdir, opal_install_dirs.datarootdir);
         orte_info_show_path(orte_info_path_datadir, opal_install_dirs.datadir);
@@ -239,9 +239,9 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
         orte_info_show_path(orte_info_path_sharedstatedir, opal_install_dirs.sharedstatedir);
         orte_info_show_path(orte_info_path_localstatedir, opal_install_dirs.localstatedir);
         orte_info_show_path(orte_info_path_infodir, opal_install_dirs.infodir);
-        orte_info_show_path(orte_info_path_pkgdatadir, opal_install_dirs.ompidatadir);
-        orte_info_show_path(orte_info_path_pkglibdir, opal_install_dirs.ompilibdir);
-        orte_info_show_path(orte_info_path_pkgincludedir, opal_install_dirs.ompiincludedir);
+        orte_info_show_path(orte_info_path_pkgdatadir, opal_install_dirs.opaldatadir);
+        orte_info_show_path(orte_info_path_pkglibdir, opal_install_dirs.opallibdir);
+        orte_info_show_path(orte_info_path_pkgincludedir, opal_install_dirs.opalincludedir);
     } else {
         count = opal_cmd_line_get_ninsts(cmd_line, "path");
         for (i = 0; i < count; ++i) {
@@ -258,7 +258,7 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
             } else if (0 == strcmp(orte_info_path_mandir, scope)) {
                 orte_info_show_path(orte_info_path_mandir, opal_install_dirs.mandir);
             } else if (0 == strcmp(orte_info_path_pkglibdir, scope)) {
-                orte_info_show_path(orte_info_path_pkglibdir, opal_install_dirs.ompilibdir);
+                orte_info_show_path(orte_info_path_pkglibdir, opal_install_dirs.opallibdir);
             } else if (0 == strcmp(orte_info_path_sysconfdir, scope)) {
                 orte_info_show_path(orte_info_path_sysconfdir, opal_install_dirs.sysconfdir);
             } else if (0 == strcmp(orte_info_path_exec_prefix, scope)) {
@@ -278,9 +278,9 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
             } else if (0 == strcmp(orte_info_path_infodir, scope)) {
                 orte_info_show_path(orte_info_path_infodir, opal_install_dirs.infodir);
             } else if (0 == strcmp(orte_info_path_pkgdatadir, scope)) {
-                orte_info_show_path(orte_info_path_pkgdatadir, opal_install_dirs.ompidatadir);
+                orte_info_show_path(orte_info_path_pkgdatadir, opal_install_dirs.opaldatadir);
             } else if (0 == strcmp(orte_info_path_pkgincludedir, scope)) {
-                orte_info_show_path(orte_info_path_pkgincludedir, opal_install_dirs.ompiincludedir);
+                orte_info_show_path(orte_info_path_pkgincludedir, opal_install_dirs.opalincludedir);
             } else {
                 char *usage = opal_cmd_line_get_usage_msg(cmd_line);
                 orte_show_help("help-orte-info.txt", "usage", true, usage);

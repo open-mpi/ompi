@@ -29,7 +29,7 @@ include opal/Makefile.am
 EXTRA_DIST = $(headers)
 
 if WANT_INSTALL_HEADERS 
-opaldir = $(ompiincludedir)
+opaldir = $(opalincludedir)
 nobase_dist_opal_HEADERS = $(headers)
 nobase_nodist_opal_HEADERS = $(nodist_headers)
 endif

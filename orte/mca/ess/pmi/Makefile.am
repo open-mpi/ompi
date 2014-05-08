@@ -28,7 +28,7 @@ component_noinst = libmca_ess_pmi.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_pmi_la_SOURCES = $(sources)
 mca_ess_pmi_la_LDFLAGS = -module -avoid-version $(ess_pmi_LDFLAGS)

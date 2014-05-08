@@ -29,7 +29,7 @@ libmca_shmem_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-opaldir = $(ompiincludedir)/$(subdir)
+opaldir = $(opalincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
 
