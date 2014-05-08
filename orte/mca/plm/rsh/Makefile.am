@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-plm-rsh.txt
+dist_ortedata_DATA = help-plm-rsh.txt
 
 sources = \
         plm_rsh.h \

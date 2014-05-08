@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-state-staged-hnp.txt
+dist_ortedata_DATA = help-state-staged-hnp.txt
 
 sources = \
         state_staged_hnp.h \

@@ -14,7 +14,7 @@ noinst_LTLIBRARIES = libmca_sec.la
 libmca_sec_la_SOURCES =
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_opaldata_DATA =
 
 # local files
 headers = sec.h

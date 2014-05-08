@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-rmaps-lama.txt
+dist_ortedata_DATA = help-orte-rmaps-lama.txt
 
 sources = \
         rmaps_lama_module.c \

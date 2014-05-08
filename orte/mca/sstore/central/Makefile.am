@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-sstore-central.txt
+dist_ortedata_DATA = help-orte-sstore-central.txt
 
 sources = \
         sstore_central.h \

@@ -32,12 +32,12 @@ bin_PROGRAMS = opal_wrapper
 
 nodist_man_MANS = opal_wrapper.1
 
-dist_ompidata_DATA = help-opal-wrapper.txt
+dist_opaldata_DATA = help-opal-wrapper.txt
 
 # Only install the following for developer-level installs
 if WANT_INSTALL_HEADERS
 
-nodist_ompidata_DATA = \
+nodist_opaldata_DATA = \
 	opalcc-wrapper-data.txt \
 	opalc++-wrapper-data.txt
 

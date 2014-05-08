@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-oshmem-sshmem-sysv.txt
+dist_oshmemdata_DATA = help-oshmem-sshmem-sysv.txt
 
 sources = \
         sshmem_sysv.h \

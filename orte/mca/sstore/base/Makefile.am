@@ -17,4 +17,4 @@ libmca_sstore_la_SOURCES += \
         base/sstore_base_select.c \
         base/sstore_base_fns.c
 
-dist_ompidata_DATA = base/help-orte-sstore-base.txt
+dist_ortedata_DATA = base/help-orte-sstore-base.txt

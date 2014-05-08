@@ -14,7 +14,7 @@ noinst_LTLIBRARIES = libmca_dstore.la
 libmca_dstore_la_SOURCES =
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_opaldata_DATA =
 
 # local files
 headers = dstore.h dstore_types.h

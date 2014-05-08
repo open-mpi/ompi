@@ -22,7 +22,7 @@ sources = \
         plm_slurm_component.c \
         plm_slurm_module.c
 
-dist_ompidata_DATA = help-plm-slurm.txt
+dist_ortedata_DATA = help-plm-slurm.txt
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

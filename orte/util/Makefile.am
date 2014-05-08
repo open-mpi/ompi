@@ -22,7 +22,7 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-dist_ompidata_DATA += util/hostfile/help-hostfile.txt \
+dist_ortedata_DATA += util/hostfile/help-hostfile.txt \
                      util/dash_host/help-dash-host.txt \
                      util/help-regex.txt
 

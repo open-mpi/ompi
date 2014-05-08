@@ -22,7 +22,7 @@ noinst_LTLIBRARIES = libmca_ras.la
 libmca_ras_la_SOURCES =
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_ortedata_DATA =
 
 # local files
 headers = ras.h ras_types.h

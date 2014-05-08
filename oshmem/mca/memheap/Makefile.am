@@ -14,7 +14,7 @@ libmca_memheap_la_SOURCES =
 libmca_memheap_la_LDFLAGS =
 libmca_memheap_la_LIBADD =
 
-dist_ompidata_DATA = 
+dist_oshmemdata_DATA = 
 
 # local files
 headers = memheap.h

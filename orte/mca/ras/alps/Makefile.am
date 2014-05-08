@@ -20,7 +20,7 @@
 
 AM_CPPFLAGS = $(ras_alps_CPPFLAGS)
 
-dist_ompidata_DATA = help-ras-alps.txt \
+dist_ortedata_DATA = help-ras-alps.txt \
 		  ras-alps-command.sh
 
 install-data-hook:

@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-odls-default.txt
+dist_ortedata_DATA = help-orte-odls-default.txt
 
 sources = \
         odls_default.h \

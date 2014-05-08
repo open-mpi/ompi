@@ -20,7 +20,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-oob-tcp.txt
+dist_ortedata_DATA = help-oob-tcp.txt
 
 sources = \
           oob_tcp_component.h \

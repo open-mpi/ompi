@@ -74,7 +74,7 @@ liboshmem_la_LDFLAGS = \
 headers =
 noinst_LTLIBRARIES =
 include_HEADERS =
-dist_ompidata_DATA =
+dist_oshmemdata_DATA =
 liboshmem_la_SOURCES += $(headers)
 nodist_man_MANS =
 

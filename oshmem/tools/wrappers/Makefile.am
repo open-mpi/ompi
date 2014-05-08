@@ -8,7 +8,7 @@
 #
 # $HEADER$
 
-dist_ompidata_DATA =  \
+dist_oshmemdata_DATA =  \
 	shmemcc-wrapper-data.txt \
 	shmemfort-wrapper-data.txt
 

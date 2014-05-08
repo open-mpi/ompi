@@ -19,7 +19,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-ras-gridengine.txt
+dist_ortedata_DATA = help-ras-gridengine.txt
 
 sources = \
         ras_gridengine.h \

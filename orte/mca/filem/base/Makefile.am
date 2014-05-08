@@ -25,4 +25,4 @@ libmca_filem_la_SOURCES += \
         base/filem_base_receive.c \
         base/filem_base_fns.c
 
-dist_ompidata_DATA = base/help-orte-filem-base.txt
+dist_ortedata_DATA = base/help-orte-filem-base.txt

@@ -21,7 +21,7 @@
 
 AM_LFLAGS = -Porte_rmaps_rank_file_
 LEX_OUTPUT_ROOT = lex.orte_rmaps_rank_file_
-dist_ompidata_DATA = help-rmaps_rank_file.txt
+dist_ortedata_DATA = help-rmaps_rank_file.txt
 
 sources = \
         rmaps_rank_file.c \

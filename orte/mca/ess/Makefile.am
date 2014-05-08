@@ -24,7 +24,7 @@ noinst_LTLIBRARIES = libmca_ess.la
 libmca_ess_la_SOURCES =
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_ortedata_DATA =
 
 # local files
 headers = ess.h

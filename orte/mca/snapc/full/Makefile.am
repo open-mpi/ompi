@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-snapc-full.txt
+dist_ortedata_DATA = help-orte-snapc-full.txt
 
 sources = \
         snapc_full.h \

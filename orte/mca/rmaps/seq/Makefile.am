@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-rmaps-seq.txt
+dist_ortedata_DATA = help-orte-rmaps-seq.txt
 
 sources = \
         rmaps_seq.c \

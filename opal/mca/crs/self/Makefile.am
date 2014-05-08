@@ -18,7 +18,7 @@
 AM_CPPFLAGS = \
     $(LTDLINCL)
 
-dist_ompidata_DATA = help-opal-crs-self.txt
+dist_opaldata_DATA = help-opal-crs-self.txt
 
 sources = \
         crs_self.h \

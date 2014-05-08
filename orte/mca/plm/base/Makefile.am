@@ -30,4 +30,4 @@ libmca_plm_la_SOURCES += \
 	base/plm_base_proxy.c \
 	base/plm_base_orted_cmds.c
 
-dist_ompidata_DATA += base/help-plm-base.txt
+dist_ortedata_DATA += base/help-plm-base.txt

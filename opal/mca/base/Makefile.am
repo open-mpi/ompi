@@ -25,7 +25,7 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libmca_base.la
 
-dist_ompidata_DATA = help-mca-base.txt help-mca-var.txt
+dist_opaldata_DATA = help-mca-base.txt help-mca-var.txt
 
 # Source code files
 

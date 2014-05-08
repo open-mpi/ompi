@@ -22,7 +22,7 @@ noinst_LTLIBRARIES = libmca_plm.la
 libmca_plm_la_SOURCES =
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_ortedata_DATA =
 
 # local files
 headers = plm.h plm_types.h

@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-filem-raw.txt
+dist_ortedata_DATA = help-orte-filem-raw.txt
 
 sources = \
         filem_raw.h \
