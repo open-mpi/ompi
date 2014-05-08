@@ -123,6 +123,7 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
 bool ompi_mpi_init_started = false;
 bool ompi_mpi_initialized = false;
 bool ompi_mpi_finalized = false;
+bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
@@ -380,7 +381,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     struct timeval ompistart, ompistop;
-    bool rte_setup = false;
     ompi_rte_collective_t *coll;
     char *cmd=NULL, *av=NULL;
 
@@ -470,7 +470,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: ompi_rte_init failed";
         goto error;
     }
-    rte_setup = true;
+    ompi_rte_initialized = true;
     
     /* check for timing request - get stop time and report elapsed time if so */
     if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
@@ -955,16 +955,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         /* Only print a message if one was not already printed */
         if (NULL != error) {
             const char *err_msg = opal_strerror(ret);
-            /* If RTE was not setup yet, don't use opal_show_help */
-            if (rte_setup) {
-                opal_show_help("help-mpi-runtime",
-                               "mpi_init:startup:internal-failure", true,
-                               "MPI_INIT", "MPI_INIT", error, err_msg, ret);
-            } else {
-                opal_show_help("help-mpi-runtime",
-                               "mpi_init:startup:internal-failure", true,
-                               "MPI_INIT", "MPI_INIT", error, err_msg, ret);
-            }
+            opal_show_help("help-mpi-runtime",
+                           "mpi_init:startup:internal-failure", true,
+                           "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         }
         return ret;
     }

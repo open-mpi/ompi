@@ -422,6 +422,7 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
         return ret;
     }
+    ompi_rte_initialized = false;
 
     /* now close the rte framework */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_rte_base_framework) ) ) {
