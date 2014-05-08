@@ -926,11 +926,13 @@ int ompi_btl_usnic_connectivity_agent_init(void)
     /* Create the event base */
     evbase = opal_event_base_create();
 
-    /* Make a struct timeval for use with timer events */
+    /* Make a struct timeval for use with timer events.  Note that the
+       MCA param is expressed in terms of *milli*seconds, but the
+       timeval timeout is expressed in terms of *micro*seconds. */
     ack_timeout.tv_sec =
         mca_btl_usnic_component.connectivity_ack_timeout / 1000;
-    ack_timeout.tv_usec = mca_btl_usnic_component.connectivity_ack_timeout;
-    ack_timeout.tv_usec -= ack_timeout.tv_sec * 1000;
+    ack_timeout.tv_usec =
+        1000 * (mca_btl_usnic_component.connectivity_ack_timeout % 1000);
 
     /* Create lists */
     OBJ_CONSTRUCT(&listeners, opal_list_t);
