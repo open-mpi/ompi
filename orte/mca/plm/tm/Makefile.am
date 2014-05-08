@@ -42,7 +42,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_plm_tm_la_SOURCES = $(component_sources)
 mca_plm_tm_la_LDFLAGS = -module -avoid-version $(plm_tm_LDFLAGS)

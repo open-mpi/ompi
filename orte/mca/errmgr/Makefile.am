@@ -30,7 +30,7 @@ dist_ompidata_DATA =
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ortedir = $(ompiincludedir)/$(subdir)
+ortedir = $(orteincludedir)/$(subdir)
 nobase_orte_HEADERS = $(headers)
 endif
 

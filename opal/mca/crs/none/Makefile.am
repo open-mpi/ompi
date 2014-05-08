@@ -33,7 +33,7 @@ component_noinst = libmca_crs_none.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_none_la_SOURCES = $(sources)
 mca_crs_none_la_LDFLAGS = -module -avoid-version

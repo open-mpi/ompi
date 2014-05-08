@@ -24,7 +24,7 @@ component_noinst = libmca_dstore_pmi.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_dstore_pmi_la_SOURCES = $(sources)
 mca_dstore_pmi_la_CPPFLAGS = $(dstore_pmi_CPPFLAGS)

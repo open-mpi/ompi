@@ -74,11 +74,11 @@ opal_installdirs_base_open(mca_base_open_flag_t flags)
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
                          mandir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
-                         ompidatadir);
+                         opaldatadir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
-                         ompilibdir);
+                         opallibdir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
-                         ompiincludedir);
+                         opalincludedir);
     }
 
     /* expand out all the fields */
@@ -110,12 +110,12 @@ opal_installdirs_base_open(mca_base_open_flag_t flags)
         opal_install_dirs_expand_setup(opal_install_dirs.infodir);
     opal_install_dirs.mandir = 
         opal_install_dirs_expand_setup(opal_install_dirs.mandir);
-    opal_install_dirs.ompidatadir = 
-        opal_install_dirs_expand_setup(opal_install_dirs.ompidatadir);
-    opal_install_dirs.ompilibdir = 
-        opal_install_dirs_expand_setup(opal_install_dirs.ompilibdir);
-    opal_install_dirs.ompiincludedir = 
-        opal_install_dirs_expand_setup(opal_install_dirs.ompiincludedir);
+    opal_install_dirs.opaldatadir = 
+        opal_install_dirs_expand_setup(opal_install_dirs.opaldatadir);
+    opal_install_dirs.opallibdir = 
+        opal_install_dirs_expand_setup(opal_install_dirs.opallibdir);
+    opal_install_dirs.opalincludedir = 
+        opal_install_dirs_expand_setup(opal_install_dirs.opalincludedir);
 
 #if 0
     fprintf(stderr, "prefix:         %s\n", opal_install_dirs.prefix);
@@ -161,9 +161,9 @@ opal_installdirs_base_close(void)
     free(opal_install_dirs.includedir);
     free(opal_install_dirs.infodir);
     free(opal_install_dirs.mandir);
-    free(opal_install_dirs.ompidatadir);
-    free(opal_install_dirs.ompilibdir);
-    free(opal_install_dirs.ompiincludedir);
+    free(opal_install_dirs.opaldatadir);
+    free(opal_install_dirs.opallibdir);
+    free(opal_install_dirs.opalincludedir);
 
     return mca_base_framework_components_close (&opal_installdirs_base_framework, NULL);
 }

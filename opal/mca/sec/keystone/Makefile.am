@@ -24,7 +24,7 @@ component_noinst = libmca_sec_keystone.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sec_keystone_la_SOURCES = $(sources)
 mca_sec_keystone_la_LDFLAGS = -module -avoid-version

@@ -82,7 +82,7 @@ $(nodist_liboshmem_c_pshmem_la_SOURCES):
 
 if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
-oshmemdir = $(ompiincludedir)/$(subdir)
+oshmemdir = $(oshmemincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
 endif
 endif

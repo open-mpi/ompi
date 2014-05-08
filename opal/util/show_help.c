@@ -62,7 +62,7 @@ int opal_show_help_init(void)
     lds.lds_want_stderr = true;
     output_stream = opal_output_open(&lds);
     
-    opal_argv_append_nosize(&search_dirs, opal_install_dirs.ompidatadir);
+    opal_argv_append_nosize(&search_dirs, opal_install_dirs.opaldatadir);
     
     return OPAL_SUCCESS;
 }

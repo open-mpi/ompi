@@ -75,9 +75,9 @@ installdirs_env_open(void)
     SET_FIELD(includedir, "OPAL_INCLUDEDIR");
     SET_FIELD(infodir, "OPAL_INFODIR");
     SET_FIELD(mandir, "OPAL_MANDIR");
-    SET_FIELD(ompidatadir, "OPAL_PKGDATADIR");
-    SET_FIELD(ompilibdir, "OPAL_PKGLIBDIR");
-    SET_FIELD(ompiincludedir, "OPAL_PKGINCLUDEDIR");
+    SET_FIELD(opaldatadir, "OPAL_PKGDATADIR");
+    SET_FIELD(opallibdir, "OPAL_PKGLIBDIR");
+    SET_FIELD(opalincludedir, "OPAL_PKGINCLUDEDIR");
 
     return OPAL_SUCCESS;
 }

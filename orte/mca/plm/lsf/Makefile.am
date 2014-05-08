@@ -40,7 +40,7 @@ component_noinst = libmca_plm_lsf.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_plm_lsf_la_SOURCES = $(sources)
 mca_plm_lsf_la_LDFLAGS = -module -avoid-version $(plm_lsf_LDFLAGS)

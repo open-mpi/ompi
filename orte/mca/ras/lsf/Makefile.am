@@ -38,7 +38,7 @@ proxy_SOURCES = \
     ras_lsf_module.c \
     ras_lsf_component.c
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ras_lsf_la_SOURCES = $(proxy_SOURCES)
 mca_ras_lsf_la_LIBADD = $(ras_lsf_LIBS)

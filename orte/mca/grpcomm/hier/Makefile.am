@@ -34,7 +34,7 @@ component_noinst = libmca_grpcomm_hier.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_grpcomm_hier_la_SOURCES = $(sources)
 mca_grpcomm_hier_la_LDFLAGS = -module -avoid-version

@@ -24,7 +24,7 @@ component_noinst = libmca_dfs_orted.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_dfs_orted_la_SOURCES = $(sources)
 mca_dfs_orted_la_LDFLAGS = -module -avoid-version

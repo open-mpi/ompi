@@ -37,7 +37,7 @@ component_noinst  = libmca_crs_blcr.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_blcr_la_SOURCES  = $(sources)
 mca_crs_blcr_la_LDFLAGS  = -module -avoid-version $(crs_blcr_LDFLAGS)

@@ -81,7 +81,7 @@ nodist_man_MANS =
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-oshmemdir = $(ompiincludedir)/$(subdir)
+oshmemdir = $(oshmemincludedir)/$(subdir)
 nobase_oshmem_HEADERS = $(headers)
 endif
 

@@ -39,11 +39,11 @@ static void opal_mutex_construct(opal_mutex_t *m)
     pthread_mutexattr_init(&attr);
 
     /* set type to ERRORCHECK so that we catch recursive locks */
-#if OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP
+#if OPAL_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
-#elif OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK
+#elif OPAL_HAVE_PTHREAD_MUTEX_ERRORCHECK
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-#endif /* OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP */
+#endif /* OPAL_HAVE_PTHREAD_MUTEX_ERRORCHECK_NP */
 
     pthread_mutex_init(&m->m_lock_pthread, &attr);
     pthread_mutexattr_destroy(&attr);

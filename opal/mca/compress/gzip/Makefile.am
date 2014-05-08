@@ -29,7 +29,7 @@ component_noinst = libmca_compress_gzip.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_compress_gzip_la_SOURCES = $(sources)
 mca_compress_gzip_la_LDFLAGS = -module -avoid-version

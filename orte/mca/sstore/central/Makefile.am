@@ -30,7 +30,7 @@ component_noinst = libmca_sstore_central.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sstore_central_la_SOURCES = $(sources)
 mca_sstore_central_la_LDFLAGS = -module -avoid-version

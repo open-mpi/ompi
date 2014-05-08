@@ -64,6 +64,6 @@ libmca_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-opaldir = $(ompiincludedir)/$(subdir)
+opaldir = $(opalincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif

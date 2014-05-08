@@ -34,7 +34,7 @@ component_noinst = libmca_pstat_test.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pstat_test_la_SOURCES = $(sources)
 mca_pstat_test_la_LDFLAGS = -module -avoid-version

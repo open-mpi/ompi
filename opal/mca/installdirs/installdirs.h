@@ -53,10 +53,10 @@ struct opal_install_dirs_t {
 
        Note that these field names match macros set by configure that
        are used in Makefile.am files.  E.g., project help files are
-       installed into $(ompidatadir). */
-    char* ompidatadir;
-    char* ompilibdir;
-    char* ompiincludedir;
+       installed into $(opaldatadir). */
+    char* opaldatadir;
+    char* opallibdir;
+    char* opalincludedir;
 };
 typedef struct opal_install_dirs_t opal_install_dirs_t;
 

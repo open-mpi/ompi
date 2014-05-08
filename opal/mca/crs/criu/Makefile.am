@@ -37,7 +37,7 @@ component_noinst  = libmca_crs_criu.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_crs_criu_la_SOURCES  = $(sources)
 mca_crs_criu_la_LDFLAGS  = -module -avoid-version $(crs_criu_LDFLAGS)

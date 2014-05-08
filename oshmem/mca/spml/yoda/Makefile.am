@@ -35,7 +35,7 @@ component_noinst = libmca_spml_yoda.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(oshmemlibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_spml_yoda_la_SOURCES = $(yoda_sources)
 mca_spml_yoda_la_LDFLAGS = -module -avoid-version

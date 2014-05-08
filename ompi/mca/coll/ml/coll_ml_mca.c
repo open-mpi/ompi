@@ -278,7 +278,7 @@ int mca_coll_ml_register_params(void)
     OBJ_RELEASE(new_enum);
 
     asprintf(&str, "%s/mca-coll-ml.config",
-            opal_install_dirs.ompidatadir);
+            opal_install_dirs.opaldatadir);
     if (NULL == str) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

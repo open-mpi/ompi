@@ -26,7 +26,7 @@ component_noinst = libmca_rmaps_ppr.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmaps_ppr_la_SOURCES = $(sources)
 mca_rmaps_ppr_la_LDFLAGS = -module -avoid-version

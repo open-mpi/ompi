@@ -13,6 +13,8 @@
 	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
 	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
 	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
+	  -e 's/#OPAL_DATE#/@OMPI_RELEASE_DATE@/g' \
+	  -e 's/#ORTE_DATE#/@OMPI_RELEASE_DATE@/g' \
 	  > $@ < $<
 
 .3in.3:
@@ -20,6 +22,8 @@
 	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
 	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
 	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
+	  -e 's/#OPAL_DATE#/@OMPI_RELEASE_DATE@/g' \
+	  -e 's/#ORTE_DATE#/@OMPI_RELEASE_DATE@/g' \
 	  > $@ < $<
 
 .7in.7:
@@ -27,6 +31,8 @@
 	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
 	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
 	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
+	  -e 's/#OPAL_DATE#/@OMPI_RELEASE_DATE@/g' \
+	  -e 's/#ORTE_DATE#/@OMPI_RELEASE_DATE@/g' \
 	  > $@ < $<
 
 # A little verbosity magic; "make" will show the terse output.  "make

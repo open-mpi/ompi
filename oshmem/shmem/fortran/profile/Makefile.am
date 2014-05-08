@@ -127,7 +127,7 @@ $(nodist_liboshmem_fortran_pshmem_la_SOURCES):
 
 if PROJECT_OSHMEM
 if WANT_INSTALL_HEADERS
-oshmemdir = $(ompiincludedir)/$(subdir)
+oshmemdir = $(oshmemincludedir)/$(subdir)
 oshmem_HEADERS = $(headers)
 endif
 endif

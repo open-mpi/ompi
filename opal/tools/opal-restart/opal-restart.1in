@@ -7,7 +7,7 @@
 .\" Man page for OPAL's opal-restart command
 .\" 
 .\" .TH name     section center-footer   left-footer  center-header
-.TH     OPAL-RESTART  1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.TH     OPAL-RESTART  1 "#OPAL_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .\" **************************
 .\"    Name Section
 .\" **************************
@@ -99,8 +99,8 @@ replaced by the name of the program to be restarted followed by any arguments
 that need to be passed to the program. For example, if under normal execution
 we would start our program "foo" as:
 
-   \fBshell$\fP setenv OMPI_MCA_crs=self
-   \fBshell$\fP setenv OMPI_MCA_crs_self_prefix=my_callback_prefix
+   \fBshell$\fP setenv OPAL_MCA_crs=self
+   \fBshell$\fP setenv OPAL_MCA_crs_self_prefix=my_callback_prefix
    \fBshell$\fP ./foo arg1 arg2
 
 To restart this process, we may only need to call:

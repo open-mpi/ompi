@@ -25,7 +25,7 @@ component_noinst = libmca_dstore_hash.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_dstore_hash_la_SOURCES = $(sources)
 mca_dstore_hash_la_LDFLAGS = -module -avoid-version

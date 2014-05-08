@@ -61,7 +61,7 @@ headers += libevent/opal_rename.h libevent/event.h libevent/evutil.h libevent/ut
            libevent/include/event2/tag.h \
            libevent/include/event2/thread.h \
            libevent/include/event2/util.h
-opaldir = $(ompiincludedir)/$(subdir)
+opaldir = $(opalincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 
 nobase_nodist_opal_HEADERS = libevent/include/event2/event-config.h

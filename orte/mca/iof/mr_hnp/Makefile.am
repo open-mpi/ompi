@@ -27,7 +27,7 @@ mr_hnp_SOURCES = \
     iof_mrhnp_read.c \
     iof_mrhnp_receive.c
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_iof_mr_hnp_la_SOURCES = $(mr_hnp_SOURCES)
 mca_iof_mr_hnp_la_LDFLAGS = -module -avoid-version

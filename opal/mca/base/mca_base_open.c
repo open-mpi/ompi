@@ -75,10 +75,10 @@ int mca_base_open(void)
 
     /* define the system and user default paths */
 #if OPAL_WANT_HOME_CONFIG_FILES
-    mca_base_system_default_path = strdup(opal_install_dirs.ompilibdir);
+    mca_base_system_default_path = strdup(opal_install_dirs.opallibdir);
     asprintf(&mca_base_user_default_path, "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_home_directory());
 #else
-    asprintf(&mca_base_system_default_path, "%s", opal_install_dirs.ompilibdir); 
+    asprintf(&mca_base_system_default_path, "%s", opal_install_dirs.opallibdir); 
 #endif
 
     /* see if the user wants to override the defaults */

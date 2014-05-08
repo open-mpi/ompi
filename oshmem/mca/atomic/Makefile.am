@@ -18,7 +18,7 @@ libmca_atomic_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-oshmemdir = $(ompiincludedir)/$(subdir)
+oshmemdir = $(oshmemincludedir)/$(subdir)
 nobase_oshmem_HEADERS = $(headers)
 nobase_nodist_oshmem_HEADERS = $(nodist_headers)
 endif
