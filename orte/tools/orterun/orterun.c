@@ -1081,15 +1081,17 @@ int orterun(int argc, char *argv[])
     /* ensure all local procs are dead */
     orte_odls.kill_local_procs(NULL);
 
+ DONE:
     /* if it was created, remove the debugger attach fifo */
-    if (fifo_active) {
-        opal_event_del(attach);
-        free(attach);
+    if (0 <= attach_fd) {
+        if (fifo_active) {
+            opal_event_del(attach);
+            free(attach);
+        }
         close(attach_fd);
         unlink(MPIR_attach_fifo);
     }
 
- DONE:
     /* cleanup and leave */
     orte_finalize();
 
