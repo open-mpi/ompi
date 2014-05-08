@@ -1977,7 +1977,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                                 mca_btl_openib_component.receive_queues)) {
                     opal_show_help("help-mpi-btl-openib.txt",
                                    "locally conflicting receive_queues", true,
-                                   opal_install_dirs.ompidatadir,
+                                   opal_install_dirs.opaldatadir,
                                    ompi_process_info.nodename,
                                    ibv_get_device_name(receive_queues_device->ib_dev),
                                    receive_queues_device->ib_dev_attr.vendor_id,
@@ -2001,7 +2001,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 mca_btl_openib_component.receive_queues_source) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "locally conflicting receive_queues", true,
-                               opal_install_dirs.ompidatadir,
+                               opal_install_dirs.opaldatadir,
                                ompi_process_info.nodename,
                                ibv_get_device_name(receive_queues_device->ib_dev),
                                receive_queues_device->ib_dev_attr.vendor_id,
