@@ -8,3 +8,4 @@ Applied this from the upstream hwloc master, slightly modified for this
 local version of v1.7 that we have:
 
 7489287 topology-linux.c: ensure fd is marked as close-on-exec
+3aa0ed6 topology-linux.c: Stevens says we should GETFD before we SETFD, so we do
