@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = \
+dist_oshmemdata_DATA = \
 	help-shmem-spml-yoda.txt
 
 EXTRA_DIST = post_configure.sh

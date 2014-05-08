@@ -47,4 +47,4 @@ libmca_shmem_posix_la_SOURCES = $(sources)
 libmca_shmem_posix_la_LDFLAGS = -module -avoid-version
 
 # help file
-dist_ompidata_DATA = help-opal-shmem-posix.txt
+dist_opaldata_DATA = help-opal-shmem-posix.txt

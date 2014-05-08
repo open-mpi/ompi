@@ -21,7 +21,7 @@
 
 SUBDIRS = keyval
 
-dist_ompidata_DATA = help-opal-util.txt
+dist_opaldata_DATA = help-opal-util.txt
 
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy

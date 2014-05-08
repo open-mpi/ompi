@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-rmaps-resilient.txt
+dist_ortedata_DATA = help-orte-rmaps-resilient.txt
 
 sources = \
         rmaps_resilient.c \

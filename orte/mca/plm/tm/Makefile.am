@@ -19,7 +19,7 @@
 
 AM_CPPFLAGS = $(plm_tm_CPPFLAGS)
 
-dist_ompidata_DATA = help-plm-tm.txt
+dist_ortedata_DATA = help-plm-tm.txt
 
 sources = \
         plm_tm.h \

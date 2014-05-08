@@ -19,7 +19,7 @@
 
 AM_CPPFLAGS = $(ras_slurm_CPPFLAGS)
 
-dist_ompidata_DATA = help-ras-slurm.txt
+dist_ortedata_DATA = help-ras-slurm.txt
 
 sources = \
         ras_slurm.h \

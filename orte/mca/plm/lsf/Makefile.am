@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = $(plm_lsf_CPPFLAGS)
 
-dist_ompidata_DATA = help-plm-lsf.txt
+dist_ortedata_DATA = help-plm-lsf.txt
 
 sources = \
         plm_lsf.h \

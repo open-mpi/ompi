@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA += base/help-dstore-base.txt
+dist_opaldata_DATA += base/help-dstore-base.txt
 
 headers += \
 	base/base.h

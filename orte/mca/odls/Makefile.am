@@ -22,7 +22,7 @@ noinst_LTLIBRARIES = libmca_odls.la
 libmca_odls_la_SOURCES =
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_ortedata_DATA =
 
 # local files
 headers = odls.h odls_types.h

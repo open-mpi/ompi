@@ -14,7 +14,7 @@
 AM_CPPFLAGS = \
     $(LTDLINCL)
 
-dist_ompidata_DATA = help-opal-crs-none.txt
+dist_opaldata_DATA = help-opal-crs-none.txt
 
 sources = \
         crs_none.h \

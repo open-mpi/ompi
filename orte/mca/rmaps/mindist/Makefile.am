@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-orte-rmaps-md.txt
+dist_ortedata_DATA = help-orte-rmaps-md.txt
 
 sources = \
         rmaps_mindist.h \

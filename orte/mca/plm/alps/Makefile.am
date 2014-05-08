@@ -22,7 +22,7 @@ sources = \
         plm_alps_component.c \
         plm_alps_module.c
 
-dist_ompidata_DATA = help-plm-alps.txt
+dist_ortedata_DATA = help-plm-alps.txt
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

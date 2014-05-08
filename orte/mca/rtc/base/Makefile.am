@@ -15,4 +15,4 @@ libmca_rtc_la_SOURCES += \
         base/rtc_base_select.c \
         base/rtc_base_stubs.c
 
-dist_ompidata_DATA = base/help-orte-rtc-base.txt
+dist_ortedata_DATA = base/help-orte-rtc-base.txt

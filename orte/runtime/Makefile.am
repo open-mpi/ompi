@@ -22,7 +22,7 @@
 
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
-dist_ompidata_DATA += runtime/help-orte-runtime.txt
+dist_ortedata_DATA += runtime/help-orte-runtime.txt
 
 headers += \
         runtime/runtime.h \

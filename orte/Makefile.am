@@ -44,7 +44,7 @@ libopen_rte_la_LDFLAGS = -version-info $(libopen_rte_so_version)
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
-dist_ompidata_DATA =
+dist_ortedata_DATA =
 libopen_rte_la_SOURCES += $(headers)
 
 # Conditionally install the header files

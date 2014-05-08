@@ -13,7 +13,7 @@ noinst_LTLIBRARIES = libmca_state.la
 libmca_state_la_SOURCES =
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_ortedata_DATA =
 
 # local files
 headers = state.h state_types.h

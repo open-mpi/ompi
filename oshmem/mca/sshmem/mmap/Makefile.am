@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-oshmem-sshmem-mmap.txt
+dist_oshmemdata_DATA = help-oshmem-sshmem-mmap.txt
 
 sources = \
         sshmem_mmap.h \

@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = base/help-opal-hwloc-base.txt
+dist_opaldata_DATA = base/help-opal-hwloc-base.txt
 
 headers += \
         base/base.h

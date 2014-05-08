@@ -18,7 +18,7 @@
 CFLAGS = $(crs_blcr_CFLAGS)
 AM_CPPFLAGS = $(crs_blcr_CPPFLAGS)
 
-dist_ompidata_DATA = help-opal-crs-blcr.txt
+dist_opaldata_DATA = help-opal-crs-blcr.txt
 
 sources = \
         crs_blcr.h \

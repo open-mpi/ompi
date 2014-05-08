@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-ras-simulator.txt
+dist_ortedata_DATA = help-ras-simulator.txt
 
 sources = \
         ras_sim.h \

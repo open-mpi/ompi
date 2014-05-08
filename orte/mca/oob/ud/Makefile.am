@@ -19,7 +19,7 @@
 
 AM_CPPFLAGS = $(orte_oob_ud_CPPFLAGS)
 
-dist_ompidata_DATA = help-oob-ud.txt
+dist_ortedata_DATA = help-oob-ud.txt
 
 sources = \
 	oob_ud_component.c \

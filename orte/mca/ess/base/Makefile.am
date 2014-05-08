@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA += base/help-ess-base.txt
+dist_ortedata_DATA += base/help-ess-base.txt
 
 headers += \
         base/base.h

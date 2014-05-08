@@ -31,7 +31,7 @@ libmca_rmaps_la_SOURCES += \
         base/rmaps_base_ranking.c \
         base/rmaps_base_print_fns.c
 
-dist_ompidata_DATA = base/help-orte-rmaps-base.txt
+dist_ortedata_DATA = base/help-orte-rmaps-base.txt
 
 if OPAL_HAVE_HWLOC
 libmca_rmaps_la_SOURCES += \

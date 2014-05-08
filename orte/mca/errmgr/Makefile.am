@@ -26,7 +26,7 @@ headers = errmgr.h
 libmca_errmgr_la_SOURCES += $(headers)
 
 # pkgdata setup
-dist_ompidata_DATA =
+dist_ortedata_DATA =
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS

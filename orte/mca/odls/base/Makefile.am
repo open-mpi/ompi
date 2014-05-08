@@ -27,4 +27,4 @@ libmca_odls_la_SOURCES += \
         base/odls_base_select.c \
         base/odls_base_default_fns.c
 
-dist_ompidata_DATA += base/help-orte-odls-base.txt
+dist_ortedata_DATA += base/help-orte-odls-base.txt

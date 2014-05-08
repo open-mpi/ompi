@@ -36,7 +36,7 @@ docdir      = $(opaldatadir)/doc
 doc_DATA    = COPYRIGHT-ptmalloc2.txt
 
 # Help file
-dist_ompidata_DATA = help-opal-memory-linux.txt
+dist_opaldata_DATA = help-opal-memory-linux.txt
 
 # This component is only ever built statically (i.e., slurped into
 # libopen-pal) -- it is never built as a DSO.

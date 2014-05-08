@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA += base/help-shmem-mca.txt 
+dist_oshmemdata_DATA += base/help-shmem-mca.txt 
 
 headers += \
         base/base.h 

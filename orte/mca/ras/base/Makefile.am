@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA += base/help-ras-base.txt
+dist_ortedata_DATA += base/help-ras-base.txt
 
 headers += \
         base/base.h \

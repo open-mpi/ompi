@@ -19,7 +19,7 @@
 
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
-dist_ompidata_DATA += orted/help-orted.txt
+dist_ortedata_DATA += orted/help-orted.txt
 
 headers += \
 	orted/orted.h

@@ -19,7 +19,7 @@
 
 # Use the top-level Makefile.options
 
-dist_ompidata_DATA = help-ras-tm.txt
+dist_ortedata_DATA = help-ras-tm.txt
 
 
 AM_CPPFLAGS = $(ras_tm_CPPFLAGS)
