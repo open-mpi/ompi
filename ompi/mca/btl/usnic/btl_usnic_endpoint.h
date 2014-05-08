@@ -65,15 +65,15 @@ typedef enum ompi_btl_usnic_channel_id_t {
 } ompi_btl_usnic_channel_id_t;
 
 typedef struct ompi_btl_usnic_addr_t {
-    ompi_btl_usnic_seq_t isn;
-    uint32_t qp_num[USNIC_NUM_CHANNELS];
     union ibv_gid gid;
+    uint32_t qp_num[USNIC_NUM_CHANNELS];
     uint32_t ipv4_addr;
     uint32_t cidrmask;
     uint32_t connectivity_udp_port;
-    uint8_t mac[6];
-    int mtu;
     uint32_t link_speed_mbps;
+    uint16_t mtu;
+    ompi_btl_usnic_seq_t isn;
+    uint8_t mac[6];
 } ompi_btl_usnic_addr_t;
 
 struct ompi_btl_usnic_send_segment_t;
