@@ -24,8 +24,7 @@ BEGIN_C_DECLS
 PN (void, pstart_pes, PSTART_PES, (MPI_Fint npes));
 PN (MPI_Fint, pnum_pes, PNUM_PES, (void));
 PN (MPI_Fint, pmy_pe, PMY_PE, (void));
-OSHMEM_DECLSPEC MPI_Fint p_my_pe(void);
-PN (void, shmem_finalize, SHMEM_FINALIZE, (void));
+OSHMEM_DECLSPEC MPI_Fint p_my_pe_(void);
 PN (void, pshmem_barrier_all, PSHMEM_BARRIER_ALL, (void));
 PN (void, pshpalloc, PSHPALLOC, (FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *errcode, MPI_Fint *abort));
 PN (void, pshpdeallc, PSHPDEALLC, (FORTRAN_POINTER_T *addr, MPI_Fint *errcode, MPI_Fint *abort));
@@ -134,8 +133,8 @@ PN (void, pshmem_real16_sum_to_all, PSHMEM_REAL16_SUM_TO_ALL, (FORTRAN_POINTER_T
 PN (void, pshmem_int2_prod_to_all, PSHMEM_INT2_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_int4_prod_to_all, PSHMEM_INT4_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_int8_prod_to_all, PSHMEM_INT8_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
-PN (void, shmem_comp4_prod_to_all, SHMEM_COMP4_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
-PN (void, shmem_comp8_prod_to_all, SHMEM_COMP8_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_comp4_prod_to_all, PSHMEM_COMP4_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
+PN (void, pshmem_comp8_prod_to_all, PSHMEM_COMP8_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_real4_prod_to_all, PSHMEM_REAL4_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_real8_prod_to_all, PSHMEM_REAL8_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
 PN (void, pshmem_real16_prod_to_all, PSHMEM_REAL16_PROD_TO_ALL, (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync));
