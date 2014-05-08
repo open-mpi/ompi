@@ -74,6 +74,7 @@ typedef struct ompi_btl_usnic_addr_t {
     uint16_t mtu;
     ompi_btl_usnic_seq_t isn;
     uint8_t mac[6];
+    uint8_t use_udp;
 } ompi_btl_usnic_addr_t;
 
 struct ompi_btl_usnic_send_segment_t;

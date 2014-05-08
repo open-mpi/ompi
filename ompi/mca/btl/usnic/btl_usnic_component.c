@@ -1145,6 +1145,7 @@ static int init_module_from_port(ompi_btl_usnic_module_t *module,
     module->device_context = port->device->context;
     module->port_num = port->port_num;
     module->numa_distance = 0;
+    module->local_addr.use_udp = mca_btl_usnic_component.use_udp;
 
     /* If we fail to query the GID, just warn and skip this port */
     if (0 != ibv_query_gid(module->device_context,
