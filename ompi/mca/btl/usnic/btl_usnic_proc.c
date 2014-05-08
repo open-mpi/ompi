@@ -588,7 +588,7 @@ static int match_modex(ompi_btl_usnic_module_t *module,
      * the min of the two MTUs?  Another choice is to disqualify this pairing
      * before running the matching algorithm on it. */
     if (*index_out >= 0 &&
-        proc->proc_modex[*index_out].mtu != module->if_mtu) {
+        proc->proc_modex[*index_out].mtu != (uint16_t) module->if_mtu) {
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
                     true,
                     ompi_process_info.nodename,
