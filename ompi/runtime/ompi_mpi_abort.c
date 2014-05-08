@@ -129,7 +129,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        initialized period of time, so no need to check that here.
        Sorry, Charlie... */
 
-    if (!ompi_mpi_initialized || ompi_mpi_finalized) {
+    if ((!ompi_mpi_initialized || ompi_mpi_finalized) && !ompi_rte_initialized) {
         fprintf(stderr, "[%s:%d] Local abort %s completed successfully; not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
                 host, (int) pid, ompi_mpi_finalized ? 
                 "after MPI_FINALIZE" : "before MPI_INIT");

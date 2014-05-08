@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      University of Houston.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,6 +53,8 @@ OMPI_DECLSPEC extern bool ompi_mpi_init_started;
 OMPI_DECLSPEC extern bool ompi_mpi_initialized;
 /** Has mpi been finalized? */
 OMPI_DECLSPEC extern bool ompi_mpi_finalized;
+/** Has the RTE been initialized? */
+OMPI_DECLSPEC extern bool ompi_rte_initialized;
 
 /** Do we have multiple threads? */
 OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
