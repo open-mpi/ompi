@@ -4297,7 +4297,7 @@ hwloc_linux_component_instantiate(struct hwloc_disc_component *component,
   struct hwloc_backend *backend;
   struct hwloc_linux_backend_data_s *data;
   const char * fsroot_path = _data1;
-  int root = -1;
+  int flags, root = -1;
 
   backend = hwloc_backend_alloc(component);
   if (!backend)
@@ -4324,8 +4324,11 @@ hwloc_linux_component_instantiate(struct hwloc_disc_component *component,
     goto out_with_data;
 
   /* Since this fd stays open after hwloc returns, mark it as
-     close-on-exec so that children don't inherit it */
-  if (fcntl(root, F_SETFD, FD_CLOEXEC) == -1) {
+     close-on-exec so that children don't inherit it.  Stevens says
+     that we should GETFD before we SETFD, so we do. */
+  flags = fcntl(root, F_GETFD, 0);
+  if (-1 == flags ||
+      -1 == fcntl(root, F_SETFD, FD_CLOEXEC | flags)) {
       close(root);
       root = -1;
       goto out_with_data;
