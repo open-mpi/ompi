@@ -70,7 +70,7 @@ nodist_liboshmem_c_pshmem_la_SOURCES = \
 	$(OSHMEM_API_SOURCES)
 
 #
-# Sym link in the sources from the real MPI directory
+# Sym link in the sources from the real OSHMEM directory
 #
 $(nodist_liboshmem_c_pshmem_la_SOURCES):
 	if test ! -r $@ ; then \

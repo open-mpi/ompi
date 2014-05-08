@@ -20,8 +20,14 @@ endif
 # Do we have the Fortran bindings?
 if OSHMEM_BUILD_FORTRAN_BINDINGS
 fortran_oshmem_lib = shmem/fortran/liboshmem_fortran.la
+
+if OSHMEM_PROFILING
+fortran_pshmem_lib = shmem/fortran/profile/liboshmem_fortran_pshmem.la
+endif
+
 else
 fortran_oshmem_lib =
+fortran_pshmem_lib =
 endif
 
 SUBDIRS = \
@@ -56,6 +62,7 @@ liboshmem_la_LIBADD = \
 	shmem/c/liboshmem_c.la \
 	$(c_pshmem_lib) \
 	$(fortran_oshmem_lib) \
+	$(fortran_pshmem_lib) \
 	$(MCA_oshmem_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/ompi/libmpi.la
 liboshmem_la_DEPENDENCIES = $(liboshmem_la_LIBADD)

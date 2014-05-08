@@ -14,6 +14,13 @@
 #include "oshmem/include/shmem.h"
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "stdio.h"
+
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHPDEALLC, shpdeallc)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHPDEALLC,
         shpdeallc_,

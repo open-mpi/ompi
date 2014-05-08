@@ -13,6 +13,12 @@
 #include "oshmem/shmem/fortran/bindings.h"
 #include "oshmem/include/shmem.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(START_PES, start_pes)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         START_PES,
         start_pes_,

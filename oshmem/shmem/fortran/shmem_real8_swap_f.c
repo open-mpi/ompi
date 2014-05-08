@@ -18,6 +18,12 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "stdio.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL8_SWAP, shmem_real8_swap)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_real8_t,
         SHMEM_REAL8_SWAP,
         shmem_real8_swap_,

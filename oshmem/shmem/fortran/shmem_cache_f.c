@@ -15,6 +15,17 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "ompi/datatype/ompi_datatype.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_SET_CACHE_INV, shmem_set_cache_inv)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_SET_CACHE_LINE_INV, shmem_set_cache_line_inv)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_CLEAR_CACHE_INV, shmem_clear_cache_inv)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_CLEAR_CACHE_LINE_INV, shmem_clear_cache_line_inv)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_UDCFLUSH, shmem_udcflush)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_UDCFLUSH_LINE, shmem_udcflush_line)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_SET_CACHE_INV,
         shmem_set_cache_inv_,

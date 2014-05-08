@@ -19,6 +19,12 @@
 #include "oshmem/op/op.h"
 #include "stdio.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT8_FADD, shmem_int8_fadd)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_integer8_t,
         SHMEM_INT8_FADD,
         shmem_int8_fadd_,

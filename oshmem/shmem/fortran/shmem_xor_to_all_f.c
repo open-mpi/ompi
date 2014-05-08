@@ -18,6 +18,24 @@
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT2_XOR_TO_ALL, shmem_int2_xor_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT4_XOR_TO_ALL, shmem_int4_xor_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT8_XOR_TO_ALL, shmem_int8_xor_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COMP4_XOR_TO_ALL, shmem_comp4_xor_to_all)
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COMP8_XOR_TO_ALL, shmem_comp8_xor_to_all)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        SHMEM_INT2_XOR_TO_ALL,
+        shmem_int2_xor_to_all_,
+        shmem_int2_xor_to_all__,
+        shmem_int2_xor_to_all_f,
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_INT4_XOR_TO_ALL,
         shmem_int4_xor_to_all_,
@@ -31,6 +49,22 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int8_xor_to_all_,
         shmem_int8_xor_to_all__,
         shmem_int8_xor_to_all_f,
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
+
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        SHMEM_COMP4_XOR_TO_ALL,
+        shmem_comp4_xor_to_all_,
+        shmem_comp4_xor_to_all__,
+        shmem_comp4_xor_to_all_f,
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
+
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        SHMEM_COMP8_XOR_TO_ALL,
+        shmem_comp8_xor_to_all_,
+        shmem_comp8_xor_to_all__,
+        shmem_comp8_xor_to_all_f,
         (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
@@ -97,6 +131,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
     }\
 }
 
+SHMEM_XOR_TO_ALL(shmem_int2_xor_to_all_f, oshmem_op_xor_fint2, OSHMEM_GROUP_CACHE_ENABLED)
 SHMEM_XOR_TO_ALL(shmem_int4_xor_to_all_f, oshmem_op_xor_fint4, OSHMEM_GROUP_CACHE_ENABLED)
 SHMEM_XOR_TO_ALL(shmem_int8_xor_to_all_f, oshmem_op_xor_fint8, OSHMEM_GROUP_CACHE_ENABLED)
 SHMEM_XOR_TO_ALL(shmem_comp4_xor_to_all_f, oshmem_op_xor_fint4, OSHMEM_GROUP_CACHE_ENABLED)

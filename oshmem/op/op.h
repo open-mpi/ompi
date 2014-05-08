@@ -41,6 +41,7 @@ enum {
     OSHMEM_OP_TYPE_FCOMPLEX,    /** Complex: float */
     OSHMEM_OP_TYPE_DCOMPLEX,    /** Complex: double */
 
+    OSHMEM_OP_TYPE_FINT2,       /** Fortran integer: int2 */
     OSHMEM_OP_TYPE_FINT4,       /** Fortran integer: int4 */
     OSHMEM_OP_TYPE_FINT8,       /** Fortran integer: int8 */
     OSHMEM_OP_TYPE_FREAL4,      /** Fortran integer: real4 */
@@ -91,6 +92,7 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_short;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_int;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_long;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_longlong;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_and_fint8;
 
@@ -99,6 +101,7 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_short;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_int;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_long;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_longlong;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_or_fint8;
 
@@ -107,6 +110,7 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_short;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_int;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_long;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_longlong;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_xor_fint8;
 
@@ -118,6 +122,7 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_longlong;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_float;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_double;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_longdouble;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_max_freal4;
@@ -132,6 +137,7 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_longlong;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_float;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_double;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_longdouble;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_min_freal4;
@@ -148,6 +154,7 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_double;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_longdouble;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_complexf;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_complexd;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_sum_freal4;
@@ -164,6 +171,7 @@ OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_double;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_longdouble;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_complexf;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_complexd;
+OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_fint2;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_fint4;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_fint8;
 OSHMEM_DECLSPEC extern oshmem_op_t* oshmem_op_prod_freal4;

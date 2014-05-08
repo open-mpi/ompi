@@ -17,6 +17,12 @@
 #include "oshmem/mca/spml/spml.h"
 #include "stdio.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/shmem/fortran/profile/pbindings.h"
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_GET128, shmem_get128)
+#include "oshmem/shmem/fortran/profile/defines.h"
+#endif
+
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         SHMEM_GET128,
         shmem_get128_,
