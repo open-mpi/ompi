@@ -220,6 +220,21 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
         return NULL;
     }
 
+    /* Sanity check: ensure that the remote proc agrees with this proc
+       on whether we're doing UDP or not.  Note that all endpoints on
+       the remote proc will have the same "use_udp" value, so we only
+       need to check one of them. */
+    if (proc->proc_modex[0].use_udp !=
+        mca_btl_usnic_component.use_udp) {
+        opal_show_help("help-mpi-btl-usnic.txt",
+                       "transport mismatch",
+                       true,
+                       ompi_process_info.nodename,
+                       proc->proc_ompi->proc_hostname);
+        OBJ_RELEASE(proc);
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     proc->proc_modex_claimed = (bool*) 
         calloc(proc->proc_modex_count, sizeof(bool));
     if (NULL == proc->proc_modex_claimed) {

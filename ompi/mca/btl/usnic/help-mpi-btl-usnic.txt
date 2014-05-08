@@ -278,3 +278,24 @@ abort.
   Server:              %s
   Device:              %s:%d (%s)
   Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
+#
+[transport mismatch]
+The underlying transports used by the usNIC driver stack on multiple
+servers do not match.  This configuration is unsupported and is almost
+certainly not what you want.
+
+This error indicates that the VIC firmware, Linux usNIC kernel driver,
+and/or Linux usNIC userspace drivers are not compatible between at
+least the following two servers:
+
+  Local server:  %s
+  Remote server: %s
+
+The usnic MPI transport will be deactivated in at least the one local
+MPI process that reported the problem.  This may lead to performance
+degradation, and may also result in aborting the overall MPI job.
+
+It is usually easiest to have the same VIC firmware, Linux usNIC
+kernel driver, and Linux usNIC userspace driver installed on all
+servers.
+#
