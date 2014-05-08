@@ -680,8 +680,9 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
     if (mca_spml_ikrit.ud_only) {
         mkeys[ptl].len = 0;
         mkeys[ptl].u.data = &mxm_empty_mem_key;
-    } else {
         return OSHMEM_SUCCESS;
+    } else {
+        return OSHMEM_ERROR;
     }
 #endif
 }
