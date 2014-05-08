@@ -433,6 +433,7 @@ syntax: glob
 ./ompi/mca/pml/bfo/Makefile.in
 ./ompi/mca/pml/cm/Makefile.in
 ./ompi/mca/pml/crcpw/Makefile.in
+./ompi/mca/pml/example/Makefile.in
 ./ompi/mca/pml/ob1/Makefile.in
 ./ompi/mca/pml/v/Makefile.in
 ./ompi/mca/pml/v/autogen.vprotocols
@@ -469,6 +470,7 @@ syntax: glob
 ./ompi/mca/topo/basic/Makefile.in
 ./ompi/mca/vprotocol/Makefile.in
 ./ompi/mca/vprotocol/base/Makefile.in
+./ompi/mca/vprotocol/example/Makefile.in
 ./ompi/mca/vprotocol/pessimist/Makefile.in
 ./ompi/mpi/Makefile.in
 ./ompi/mpi/c/Makefile.in
