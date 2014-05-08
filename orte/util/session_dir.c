@@ -69,7 +69,6 @@
 static int orte_create_dir(char *directory);
 
 static bool orte_dir_check_file(const char *root, const char *path);
-static bool orte_dir_check_file_output(const char *root, const char *path);
 
 static char *orte_build_job_session_dir(char *top_dir,
                                         orte_process_name_t *proc,
@@ -508,15 +507,10 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
         goto CLEANUP;
     }
     
-    if (ORTE_JOBID_WILDCARD != jobid) {
-        opal_os_dirpath_destroy(job_session_dir, true, orte_dir_check_file);
-    } else {
-        /* if we want the session_dir removed for ALL jobids, then
-         * just recursively blow the whole session away for our job family,
-         * saving only output files
-         */
-        opal_os_dirpath_destroy(job_session_dir, true, orte_dir_check_file_output);
-    }
+    /* recursively blow the whole session away for our job family,
+     * saving only output files
+     */
+    opal_os_dirpath_destroy(job_session_dir, true, orte_dir_check_file);
     
     /* now attempt to eliminate the top level directory itself - this
      * will fail if anything is present, but ensures we cleanup if
@@ -676,29 +670,6 @@ CLEANUP:
 
 static bool 
 orte_dir_check_file(const char *root, const char *path)
-{
-    struct stat st;
-    char *fullpath;
-
-    /*
-     * Keep:
-     *  - non-zero files starting with "output-"
-     */
-    if (0 == strncmp(path, "output-", strlen("output-"))) {
-        fullpath = opal_os_path(false, &fullpath, root, path, NULL);
-        stat(fullpath, &st);
-        free(fullpath);
-        if (0 == st.st_size) {
-            return true;
-        }
-        return false;
-    }
-
-    return true;
-}
-
-static bool 
-orte_dir_check_file_output(const char *root, const char *path)
 {
     struct stat st;
     char *fullpath;
