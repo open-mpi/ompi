@@ -220,18 +220,19 @@ Requires: %{mpi_selector_rpm_name}
 %endif
 
 %description
-Open MPI is a project combining technologies and resources from
-several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
-order to build the best MPI library available.
+Open MPI is an open source implementation of the Message Passing
+Interface specification (http://www.mpi-forum.org/) developed and
+maintained by a consortium of research, academic, and industry
+partners.
 
-The project includes implementation of SHMEM parallel
-programming library in the Partitioned Global Address Space.
-This library provides fast inter-processor communication for large
-messages using data passing and one-sided communication techniques.
-SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+Open MPI also includes an implementation of the OpenSHMEM parallel
+programming API (http://www.openshmem.org/).  OpenSHMEM is a
+Partitioned Global Address Space (PGAS) abstraction layer, which
+provides fast inter-process communication using one-sided
+communication techniques.
 
 This RPM contains all the tools necessary to compile, link, and run
-Open MPI/SHMEM jobs.
+Open MPI and OpenSHMEM jobs.
 
 %if !%{build_all_in_one_rpm}
 
@@ -253,19 +254,20 @@ Requires: %{modules_rpm_name}
 %endif
 
 %description runtime
-Open MPI is a project combining technologies and resources from several other
-projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
-MPI library available.
+Open MPI is an open source implementation of the Message Passing
+Interface specification (http://www.mpi-forum.org/) developed and
+maintained by a consortium of research, academic, and industry
+partners.
 
-The project includes implementation of SHMEM parallel
-programming library in the Partitioned Global Address Space.
-This library provides fast inter-processor communication for large
-messages using data passing and one-sided communication techniques.
-SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+Open MPI also includes an implementation of the OpenSHMEM parallel
+programming API (http://www.openshmem.org/).  OpenSHMEM is a
+Partitioned Global Address Space (PGAS) abstraction layer, which
+provides fast inter-process communication using one-sided
+communication techniques.
 
 This subpackage provides general tools (mpirun, mpiexec, etc.) and the
 Module Component Architecture (MCA) base and plugins necessary for
-running Open MPI/SHMEM jobs.
+running Open MPI/OpenSHMEM jobs.
 
 %endif
 
@@ -284,18 +286,20 @@ AutoReq: no
 Requires: %{name}-runtime
 
 %description devel
-Open MPI is a project combining technologies and resources from
-several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
-order to build the best MPI library available.
+Open MPI is an open source implementation of the Message Passing
+Interface specification (http://www.mpi-forum.org/) developed and
+maintained by a consortium of research, academic, and industry
+partners.
 
-The project includes implementation of SHMEM parallel
-programming library in the Partitioned Global Address Space.
-This library provides fast inter-processor communication for large
-messages using data passing and one-sided communication techniques.
-SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+Open MPI also includes an implementation of the OpenSHMEM parallel
+programming API (http://www.openshmem.org/).  OpenSHMEM is a
+Partitioned Global Address Space (PGAS) abstraction layer, which
+provides fast inter-process communication using one-sided
+communication techniques.
 
-This subpackage provides the development files for Open MPI/SHMEM, such as
-wrapper compilers and header files for MPI/SHMEM development.
+This subpackage provides the development files for Open MPI/OpenSHMEM,
+such as wrapper compilers and header files for MPI/OpenSHMEM
+development.
 
 #############################################################################
 #
@@ -312,17 +316,18 @@ AutoReq: no
 Requires: %{name}-runtime
 
 %description docs
-Open MPI is a project combining technologies and resources from several other
-projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
-MPI library available.
+Open MPI is an open source implementation of the Message Passing
+Interface specification (http://www.mpi-forum.org/) developed and
+maintained by a consortium of research, academic, and industry
+partners.
 
-The project includes implementation of SHMEM parallel
-programming library in the Partitioned Global Address Space.
-This library provides fast inter-processor communication for large
-messages using data passing and one-sided communication techniques.
-SHMEM API based on OpenSHMEM standard from http://www.openshmem.org/
+Open MPI also includes an implementation of the OpenSHMEM parallel
+programming API (http://www.openshmem.org/).  OpenSHMEM is a
+Partitioned Global Address Space (PGAS) abstraction layer, which
+provides fast inter-process communication using one-sided
+communication techniques.
 
-This subpackage provides the documentation for Open MPI/SHMEM.
+This subpackage provides the documentation for Open MPI/OpenSHMEM.
 
 #############################################################################
 #
