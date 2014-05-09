@@ -33,12 +33,12 @@
  *
  * If enabled (via MCA param), the usnic module_init() will setup the
  * client (and server on local rank 0).  For each usnic module, Each
- * client will RML send a request to the server asking it to listen on
- * its usnic interface.  The agent will discard duplicates and setup a
- * single UDP socket listener on the eth interface corresponding to
- * each requested usnic interface.  The agent returns the listening
- * UDP port number to the client, and each client puts this UDP port
- * number in their modex information.
+ * client will send a request to the server (via local Unix domain
+ * socket) asking it to listen on its usnic interface.  The agent will
+ * discard duplicates and setup a single UDP socket listener on the
+ * eth interface corresponding to each requested usnic interface.  The
+ * agent returns the listening UDP port number to the client, and each
+ * client puts this UDP port number in their modex information.
  *
  * At the first send to a given MPI process peer, the client will send
  * another request to the server asking it to verify connectivity to
@@ -68,7 +68,8 @@
  * the answer; the agent either verifies the connectivity successfully
  * or aborts the job.
  *
- * All client/agent communication is via the RML.
+ * All client/agent communication is via blocking calls to a local
+ * Unix domain socket.
  *
  * As mentioned above, the agent is smart about discarding duplicate
  * ping requests from clients.  Since a single agent serves all MPI
@@ -87,123 +88,69 @@ struct ompi_btl_usnic_module_t;
 #define ABORT(msg) ompi_btl_usnic_util_abort((msg), __FILE__, __LINE__, 1)
 
 /**
- * Helper macro to pack binary bytes into RML message buffers.
- *
- * Note that this macro will call ompi_btl_usnic_util_abort()
- * if an error occurs.
- */
-#define PACK_BYTES(buffer, value, num_bytes)                            \
-    do {                                                                \
-        int ret;                                                        \
-        ret = opal_dss.pack((buffer), (value), (num_bytes), OPAL_BYTE); \
-        if (OPAL_SUCCESS != ret) {                                      \
-            OMPI_ERROR_LOG(ret);                                        \
-            ABORT("Could not pack");                                    \
-        }                                                               \
-    } while(0)
-
-/**
- * @internal
- *
- * Back-end macro for PACK_STRING, PACK_INT32, and PACK_UINT32.
- *
- * Note that this macro will call ompi_btl_usnic_util_abort()
- * if an error occurs.
- */
-#define PACK_(buffer, type, opal_type, value)                           \
-    do {                                                                \
-        int ret;                                                        \
-        type temp = (type) (value);                                     \
-        if (OPAL_SUCCESS !=                                             \
-            (ret = opal_dss.pack((buffer), &temp, 1, opal_type))) {     \
-            OMPI_ERROR_LOG(ret);                                        \
-            ABORT("Could not pack");                                    \
-        }                                                               \
-    } while(0)
-
-/**
- * Helper macro the pack a string into RML message buffers.
- */
-#define PACK_STRING(buffer, value) PACK_(buffer, char *, OPAL_STRING, value)
-/**
- * Helper macro the pack an int32_ into RML message buffers.
- */
-#define PACK_INT32(buffer, value)  PACK_(buffer, int32_t, OPAL_INT32, value)
-/**
- * Helper macro the pack a uint32_t into RML message buffers.
- */
-#define PACK_UINT32(buffer, value) PACK_(buffer, uint32_t, OPAL_UINT32, value)
-
-/**
- * Helper macro to unpack binary bytes from RML message buffers.
- *
- * Note that all of these macros will call ompi_btl_usnic_util_abort() if
- * an error occurs.
- */
-#define UNPACK_BYTES(buffer, value, num_bytes)                          \
-    do {                                                                \
-        int ret_value, n = (num_bytes);                                 \
-        ret_value = opal_dss.unpack((buffer), value, &n, OPAL_BYTE);    \
-        if (OPAL_SUCCESS != ret_value) {                                \
-            OMPI_ERROR_LOG(ret_value);                                  \
-            ABORT("Could not unpack");                                  \
-        }                                                               \
-    } while(0)
-
-/**
- * @internal
- *
- * Back-end macro for UNPACK_STRING, UNPACK_INT32, and UNPACK_UINT32
- *
- * Note that this macro will call ompi_btl_usnic_util_abort() if an error
- * occurs.
- *
- * Also note that we use a temp variable of the correct type because
- * some of the values passed in to this macro are volatile, and the
- * call to opal_dss.unpack() will discard that volatile qualifier.
- */
-#define UNPACK(buffer, type, opal_unpack_type, value)                   \
-    do {                                                                \
-        int ret_value, n = 1;                                           \
-        type temp;                                                      \
-        value = (type) 0;                                               \
-        ret_value = opal_dss.unpack((buffer), &temp, &n, opal_unpack_type); \
-        if (OPAL_SUCCESS != ret_value) {                                \
-            OMPI_ERROR_LOG(ret_value);                                  \
-            ABORT("Could not unpack");                                  \
-        } else {                                                        \
-            value = (type) temp;                                        \
-        }                                                               \
-    } while(0)
-
-/**
- * Helper macro to unpack a string from RML message buffers.
- */
-#define UNPACK_STRING(buffer, value)                            \
-    UNPACK(buffer, char *, OPAL_STRING, value);
-/**
- * Helper macro to unpack an int32_t from RML message buffers.
- */
-#define UNPACK_INT32(buffer, value)                             \
-    UNPACK(buffer, int32_t, OPAL_INT32, value);
-/**
- * Helper macro to unpack a uint32_t from RML message buffers.
- */
-#define UNPACK_UINT32(buffer, value)                            \
-    UNPACK(buffer, uint32_t, OPAL_UINT32, value)
-
-/**
- * RML message types.  This value is packed as the first field in each
- * RML message to identify its type.  Use a non-zero value as the
- * first enum just as defensive programming (i.e., it's a slightly
- * lower chance that an uninitialized message type would randomly
- * match these values).
+ * Local IPC socket message types.  This value is either sent or
+ * packed as the first field in each message to identify its type.
+ * Use a non-zero value as the first enum just as defensive
+ * programming (i.e., it's a slightly lower chance that an
+ * uninitialized message type would randomly match these values).
  */
 enum {
     CONNECTIVITY_AGENT_CMD_LISTEN = 17,
     CONNECTIVITY_AGENT_CMD_PING,
     CONNECTIVITY_AGENT_CMD_MAX
 };
+
+#define CONNECTIVITY_NODENAME_LEN 128
+#define CONNECTIVITY_IFNAME_LEN 32
+
+/*
+ * Unix domain socket name
+ */
+#define CONNECTIVITY_SOCK_NAME "btl-usnic-cagent-socket"
+
+/*
+ * Magic token to ensure that client/server recognize each other
+ */
+#define CONNECTIVITY_MAGIC_TOKEN "-*-I am usNIC; hear me roar-*-"
+
+/*
+ * Fields for the LISTEN command.  This struct is sent down the IPC
+ * socket from the cclient to the cagent.
+ */
+typedef struct {
+    uint32_t ipv4_addr;
+    uint32_t cidrmask;
+    uint32_t mtu;
+    char nodename[CONNECTIVITY_NODENAME_LEN];
+    char if_name[CONNECTIVITY_IFNAME_LEN];
+    char usnic_name[CONNECTIVITY_IFNAME_LEN];
+    uint8_t mac[6];
+} ompi_btl_usnic_connectivity_cmd_listen_t;
+
+/*
+ * Command+fields for the reply to the LISTEN command.  This struct is
+ * sent down the IPC socket from the cagent to the cclient.
+ */
+typedef struct {
+    int32_t cmd;
+    uint32_t ipv4_addr;
+    uint32_t udp_port;
+} ompi_btl_usnic_connectivity_cmd_listen_reply_t;
+
+/*
+ * Fields for the PING command.  This struct is sent down the IPC
+ * socket from the cclient to the cagent.
+ */
+typedef struct {
+    uint32_t src_ipv4_addr;
+    uint32_t src_udp_port;
+    uint32_t dest_ipv4_addr;
+    uint32_t dest_cidrmask;
+    uint32_t dest_udp_port;
+    uint32_t mtu;
+    char dest_nodename[CONNECTIVITY_NODENAME_LEN];
+    uint8_t dest_mac[6];
+} ompi_btl_usnic_connectivity_cmd_ping_t;
 
 /**
  * Startup the connectivity client.
