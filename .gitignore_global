@@ -47,7 +47,6 @@ vc70.pdb
 .hg
 .hgignore_local
 config.lt
-orcm
 config/ylwrap
 config/config.guess
 config/config.sub
@@ -520,9 +519,7 @@ orte/include/orte/frameworks.h
 orte/mca/dfs/vc70.pdb
 orte/mca/dfs/base/*.obj
 orte/mca/errmgr/vc70.pdb
-orte/mca/errmgr/orcm
 orte/mca/errmgr/base/*.obj
-orte/mca/ess/orcm
 orte/mca/filem/orte_filem.7
 orte/mca/odls/default/.gdb_history
 orte/mca/oob/tcp/acinclude.m4
@@ -545,7 +542,6 @@ orte/mca/oob/usock/autom4te.cache
 orte/mca/oob/usock/.lam*
 orte/mca/rmaps/rank_file/rmaps_rank_file_lex.c
 orte/mca/rmaps/rank_file/rankfile_lex.c
-orte/mca/routed/orcm
 orte/mca/rtc/base/*.obj
 orte/mca/snapc/orte_snapc.7
 orte/mca/sstore/orte_sstore.7

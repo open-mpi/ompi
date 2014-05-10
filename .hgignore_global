@@ -20,7 +20,6 @@ syntax: glob
 ./.hgignore_local
 ./.gitignore_local
 ./config.lt
-./orcm
 ./config/ylwrap
 ./config/Makefile.in
 ./config/compile
@@ -725,14 +724,12 @@ syntax: glob
 ./orte/mca/dfs/test/Makefile.in
 ./orte/mca/errmgr/Makefile.in
 ./orte/mca/errmgr/vc70.pdb
-./orte/mca/errmgr/orcm
 ./orte/mca/errmgr/base/*.obj
 ./orte/mca/errmgr/default_app/Makefile.in
 ./orte/mca/errmgr/default_hnp/Makefile.in
 ./orte/mca/errmgr/default_orted/Makefile.in
 ./orte/mca/errmgr/default_tool/Makefile.in
 ./orte/mca/ess/Makefile.in
-./orte/mca/ess/orcm
 ./orte/mca/ess/alps/Makefile.in
 ./orte/mca/ess/base/Makefile.in
 ./orte/mca/ess/env/Makefile.in
@@ -802,7 +799,6 @@ syntax: glob
 ./orte/mca/rml/ftrm/Makefile.in
 ./orte/mca/rml/oob/Makefile.in
 ./orte/mca/routed/Makefile.in
-./orte/mca/routed/orcm
 ./orte/mca/routed/binomial/Makefile.in
 ./orte/mca/routed/debruijn/Makefile.in
 ./orte/mca/routed/direct/Makefile.in
