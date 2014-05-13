@@ -9,6 +9,7 @@ Username    Name                        Affiliation(s)
 abbyz       Abhishek Kulkarni           IU
 adi         Adrian Knoth                UJ
 adkulkar    Abhishek Kulkarni           IU
+adrian      Adrian Reber                HE
 afriedle    Andrew Friedley             IU, SNL
 alekseys    Aleksey Senin               Mellanox
 alex        Alex Margolin               Mellanox
@@ -32,15 +33,16 @@ dgdimick    Denis Dimick                LANL
 dgoodell    Dave Goodell                Cisco
 dkerr       Donald Kerr                 Sun, Oracle
 dlacher     Dan Lacher                  Sun
+dorons      Doron Shoham                Mellanox
 edgar       Edgar Gabriel               HLRS, UH, UTK
 emallove    Ethan Mallove               Sun, Oracle
 eugene      Eugene Loh                  Sun, Oracle
 gef         Graham Fagg                 UTK
-ggouaillardet Gilles Gouaillardet       RIST
 gingery     Ginger Young                LANL
 gleb        Gleb Natapov                Voltaire
 gshipman    Galen Shipman               LANL
 gwatson     Greg Watson                 LANL
+hadi        Hadi Montakhabi             UH
 herault     Thomas Herault              INRIA
 hjelmn      Nathan Hjelm                LANL
 hpcstork    Sven Stork                  HLRS
@@ -48,38 +50,43 @@ htor        Torsten Hoefler             IU, TUC
 igb         Iain Bason                  Sun, Oracle
 igoru       Igor Usarov                 Mellanox
 jdmason     Jon Mason                   Chelsio
-jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL
+jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL, UWL
 jladd       Joshua Ladd                 Mellanox
 jnysal      Nysal Jan                   IBM
+jroman      Jose E. Roman               UPV
 jsquyres    Jeff Squyres                Cisco, IU
 jurenz      Matthias Jurenz             ZIH
 karenn      Karen Norteman              Sun
+kliteyn     Yevgeny Kliteynik           Mellanox
 kmroz       Karl Mroz                   UBC
 knuepfer    Andreas Knuepfer            ZIH
 koenig      Greg Koenig                 ORNL
 lemarini    Pierre Lemarinier           UTK
 lennyve     Lenny Verkhovsky            Mellanox
 lums        Andrew Lumsdaine            IU
+manjugv     Manjunath Gorentla Venkata  ORNL
 matney      Ken Matney                  ORNL
 miked       Mike Dubman                 Mellanox
+alinas      Alina Sklarevich            Mellanox
 devendar    Devendar Bureddy            Mellanox
 mitch       Mitch Sukalski              SNL
 mschaara    Mohamad Chaarawi            UH
 mt          Mark Taylor                 LANL
 naughtont   Tom Naughton                ORNL
 ollie       Li-Ta Lo                    LANL
+osvegis     Oscar Vega-Gisbert          UPV
 paklui      Pak Lui                     Sun
-pasha       Pavel Shamis                Mellanox
+pasha       Pavel Shamis                Mellanox, ORNL
 patrick     Patrick Geoffray            Myricom
 penoff      Brad Penoff                 UBC
 pjesa       Jelena Pjesivac-Grbovic     UTK
 pkambadu    Prabhanjan Kambadur         IU
-rasmussn    Craig Rasmussen             LANL
+rasmussn    Craig Rasmussen             LANL, UO
 rbbrigh     Ron Brightwell              SNL
 rfaucett    Reese Faucette              Cisco
 rhc         Ralph Castain               LANL, Cisco, Intel
-rlgraham    Rich Graham                 ORNL, LANL
-rolfv       Rolf Vandevaart             Sun, Oracle
+rlgraham    Rich Graham                 ORNL, LANL, Mellanox
+rolfv       Rolf Vandevaart             Sun, Oracle, NVIDIA
 rta         Rob Awles                   LANL
 rusraink    Rainer Keller               HLRS, ORNL
 sami        Sami Ayyorgun               LANL
@@ -88,6 +95,7 @@ santhana    Gopal Santhanaraman         OSU
 sboehm      Swen Boehm                  ORNL
 sharonm     Sharon Melamed              Voltaire
 shiqing     Shiqing Fan                 HLRS
+sjeaugey    Sylvain Jeaugey             Bull
 surs        Sayantan Sur                OSU
 sushant     Sushant Sharma              LANL
 swise       Steve Wise                  Chelsio
@@ -97,15 +105,18 @@ tprins      Tim Prins                   IU, LANL
 twoodall    Tim Woodall                 LANL
 vasily      Vasily Filipov              Mellanox
 vsahay      Vishal Sahay                IU
+vvenkatesan Vishwanath Venkatesan       UH
 wbland      Wesley Bland                UTK
+yaeld       Yael Dalen                  Mellanox
 yosefe      Yossi Etigin                Mellanox
 yuw         Weikuan Yu                  LANL, OSU
 
-Affiliaion abbreviations:
--------------------------
+Affiliation abbreviations:
+--------------------------
 
 Chelsio = Chelsio Communications, Inc.
 Cisco = Cisco Systems, Inc.
+HE = Hochschule Esslingen
 HLRS = High Performance Computing Center, Stuttgart
 IU = Indiana University
 LANL = Los Alamos National Laboratory
@@ -122,7 +133,10 @@ Sun = Sun Microsystems, Inc.
 TUC = Technische Universtaet Chemnitz
 UBC = University of British Columbia
 UJ = Friedrich-Schiller-Universitat Jena
+UH = University of Houston
+OU = University of Oregon
+UPV = Universitat Politecnica de Valencia
 UTK = University of Tennessee, Knoxville
+UWL = University of Wisconsin-La Crosse
 Mellanox = Mellanox
 ZIH = Technische Universitaet Dresden
-RIST = Research Organization for Information Science and Technology
