@@ -528,9 +528,14 @@ Trunk (not on release branches yet)
   for chasing it down.
 
 
-1.6.6 (unreleased)
-------------------
+1.6.6
+-----
 
+- Prevent integer overflow in datatype creation.  Thanks to Gilles
+  Gouaillardet for identifying the problem and providing a preliminary
+  version of the patch.
+- Ensure help-opal-hwloc-base.txt is included in distribution
+  tarballs.  Thanks to Gilles Gouaillardet for supplying the patch.
 - Correctly handle the invalid status for NULL and inactive requests.
   Thanks to KAWASHIMA Takahiro for submitting the initial patch.
 - Fixed MPI_STATUS_SIZE Fortran issue when used with 8-byte Fortran
