@@ -305,7 +305,7 @@ int bcol_basesmuma_bank_init_opti(struct mca_bcol_base_memory_block_desc_t *payl
         &(cs->sm_connections_list),
         &(sm_bcol->payload_backing_files_info),
         sm_bcol->super.sbgp_partner_module->group_comm,
-        input_file,cs->payload_base_fname,
+        input_file, cs->payload_base_fname,
         false);
     if( OMPI_SUCCESS != ret ) {
         goto exit_ERROR;

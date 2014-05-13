@@ -97,7 +97,7 @@ static void
 mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
 {
     /* local variables */
-    int i;
+    mca_sbgp_base_module_t *sbgp_module = sm_module->super.sbgp_partner_module;
     mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
 
     /*
@@ -119,10 +119,9 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
     /* Remove Lmsg Reduce Offsets Array */
     free_lmsg_reduce_offsets_array(sm_module);
 
-
     /* collective topology data */
     if( sm_module->fanout_read_tree) {
-        for(i=0 ; i < sm_module->super.size_of_subgroup ; i++ ) {
+        for (int i = 0 ; i < sm_module->super.size_of_subgroup ; i++ ) {
             if(0 < sm_module->fanout_read_tree[i].n_children ) {
                 free(sm_module->fanout_read_tree[i].children_ranks);
                 sm_module->fanout_read_tree[i].children_ranks=NULL;
@@ -137,7 +136,7 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
      * size of subgroup) of array reduction_tree
      */
     if( sm_module->reduction_tree) {
-        for(i=0 ; i < sm_module->super.size_of_subgroup ; i++ ) {
+        for (int i = 0 ; i < sm_module->super.size_of_subgroup ; i++ ) {
             if(0 < sm_module->reduction_tree[i].n_children ) {
                 free(sm_module->reduction_tree[i].children_ranks);
                 sm_module->reduction_tree[i].children_ranks=NULL;
@@ -198,7 +197,7 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
 
 #if 1
     if(sm_module->scatter_kary_tree) {
-        for(i=0 ; i < sm_module->super.size_of_subgroup ; i++ ) {
+        for (int i = 0 ; i < sm_module->super.size_of_subgroup ; i++ ) {
             if(0 < sm_module->scatter_kary_tree[i].n_children) {
                 free(sm_module->scatter_kary_tree[i].children_ranks);
                 sm_module->scatter_kary_tree[i].children_ranks=NULL;
@@ -217,20 +216,20 @@ mca_bcol_basesmuma_module_destruct(mca_bcol_basesmuma_module_t *sm_module)
                               sm_module->ml_mem.num_banks,
                               sm_module->ml_mem.num_buffers_per_bank);
 
-    for (i = 0; i < BCOL_NUM_OF_FUNCTIONS; i++){
+    for (int i = 0; i < BCOL_NUM_OF_FUNCTIONS; i++){
         /* gvm FIX: Go through the list and destroy each item */
         /* Destroy the function table object for each bcol type list */
         OPAL_LIST_DESTRUCT((&sm_module->super.bcol_fns_table[i]));
     }
 
     if (NULL != sm_module->payload_backing_files_info) {
-        free(sm_module->payload_backing_files_info);
-        sm_module->payload_backing_files_info = NULL;
+        bcol_basesmuma_smcm_release_connections (sm_module, sbgp_module, &cs->sm_connections_list,
+                                                 &sm_module->payload_backing_files_info);
     }
 
     if (NULL != sm_module->ctl_backing_files_info) {
-        free(sm_module->ctl_backing_files_info);
-        sm_module->ctl_backing_files_info = NULL;
+        bcol_basesmuma_smcm_release_connections (sm_module, sbgp_module, &cs->sm_connections_list,
+                                                 &sm_module->ctl_backing_files_info);
     }
 
     if (NULL != sm_module->ml_mem.bank_release_counter) {
