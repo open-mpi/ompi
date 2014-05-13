@@ -255,6 +255,11 @@ btl_ugni_component_close(void)
 {
     ompi_common_ugni_fini ();
 
+    if (mca_btl_ugni_component.modules) {
+        free (mca_btl_ugni_component.modules);
+        mca_btl_ugni_component.modules = NULL;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -394,11 +399,11 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
         /* check if the endpoint is known */
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || NULL == ep)) {
             BTL_ERROR(("received connection attempt from an unknown peer. rc: %d, ep: %p, id: 0x%" PRIx64,
-                       rc, ep, ugni_module->wc_remote_attr.proc_id));
+                       rc, (void *) ep, ugni_module->wc_remote_attr.proc_id));
             return OMPI_ERR_NOT_FOUND;
         }
     } else {
-        BTL_VERBOSE(("directed datagram complete for endpoint %p", ep));
+        BTL_VERBOSE(("directed datagram complete for endpoint %p", (void *) ep));
     }
 
     /* should not have gotten a NULL endpoint */
@@ -406,7 +411,7 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
 
     BTL_VERBOSE(("got a datagram completion: id = %" PRIx64 ", state = %d, "
                  "data = 0x%" PRIx64 ", ep = %p, remote id: %d", datagram_id, post_state,
-                 data, ep, remote_id));
+                 data, (void *) ep, remote_id));
 
     /* NTH: TODO -- error handling */
     (void) mca_btl_ugni_ep_connect_progress (ep);

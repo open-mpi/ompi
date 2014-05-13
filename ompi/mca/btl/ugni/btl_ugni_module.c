@@ -83,6 +83,7 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     OBJ_CONSTRUCT(&ugni_module->ep_wait_list, opal_list_t);
     OBJ_CONSTRUCT(&ugni_module->endpoints, opal_pointer_array_t);
     OBJ_CONSTRUCT(&ugni_module->id_to_endpoint, opal_hash_table_t);
+    OBJ_CONSTRUCT(&ugni_module->smsg_mboxes, ompi_free_list_t);
 
     ugni_module->device = dev;
     dev->btl_ctx = (void *) ugni_module;
@@ -122,13 +123,6 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
             break;
         }
     }
-
-    OBJ_DESTRUCT(&ugni_module->eager_frags_send);
-    OBJ_DESTRUCT(&ugni_module->eager_frags_recv);
-    OBJ_DESTRUCT(&ugni_module->smsg_frags);
-    OBJ_DESTRUCT(&ugni_module->rdma_frags);
-    OBJ_DESTRUCT(&ugni_module->rdma_int_frags);
-    OBJ_DESTRUCT(&ugni_module->ep_wait_list);
 
     /* close all open connections and release endpoints */
     if (ugni_module->initialized) {
@@ -182,6 +176,13 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
         }
     }
 
+    OBJ_DESTRUCT(&ugni_module->eager_frags_send);
+    OBJ_DESTRUCT(&ugni_module->eager_frags_recv);
+    OBJ_DESTRUCT(&ugni_module->smsg_frags);
+    OBJ_DESTRUCT(&ugni_module->rdma_frags);
+    OBJ_DESTRUCT(&ugni_module->rdma_int_frags);
+    OBJ_DESTRUCT(&ugni_module->ep_wait_list);
+    OBJ_DESTRUCT(&ugni_module->smsg_mboxes);
     OBJ_DESTRUCT(&ugni_module->pending_smsg_frags_bb);
     OBJ_DESTRUCT(&ugni_module->id_to_endpoint);
     OBJ_DESTRUCT(&ugni_module->endpoints);

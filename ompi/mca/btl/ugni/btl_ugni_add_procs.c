@@ -37,7 +37,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
     int rc;
 
     if (false == ugni_module->initialized) {
-        (void) ompi_proc_world (&ntotal_procs);
+        ntotal_procs = ompi_comm_size ((ompi_communicator_t *) MPI_COMM_WORLD);
 
         rc = opal_pointer_array_init (&ugni_module->endpoints, ntotal_procs, 1 << 24, 512);
         if (OPAL_SUCCESS != rc) {
@@ -78,7 +78,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
         }
 
         /* Add this endpoint to the pointer array. */
-        BTL_VERBOSE(("initialized uGNI endpoint for proc id: 0x%" PRIx64 " ptr: %p", proc_id, peers[i]));
+        BTL_VERBOSE(("initialized uGNI endpoint for proc id: 0x%" PRIx64 " ptr: %p", proc_id, (void *) peers[i]));
         opal_hash_table_set_value_uint64 (&ugni_module->id_to_endpoint, proc_id, peers[i]);
 
         /* Set the reachable bit */
@@ -151,7 +151,7 @@ int mca_btl_ugni_del_procs (struct mca_btl_base_module_t *btl,
         /* lookup this proc in the hash table */
         (void) opal_hash_table_get_value_uint64 (&ugni_module->id_to_endpoint, proc_id, (void **) &ep);
 
-        BTL_VERBOSE(("deleting endpoint with proc id 0x%" PRIx64 ", ptr: %p", proc_id, ep));
+        BTL_VERBOSE(("deleting endpoint with proc id 0x%" PRIx64 ", ptr: %p", proc_id, (void *) ep));
 
         if (NULL != ep) {
             mca_btl_ugni_release_ep (ep);
@@ -349,8 +349,6 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         BTL_ERROR(("error creating eager receive fragment free list"));
         return rc;
     }
-
-    OBJ_CONSTRUCT(&ugni_module->smsg_mboxes, ompi_free_list_t);
 
     if (0 == mca_btl_ugni_component.mbox_increment) {
         /* limit mailbox allocations to either 12.5% of available registrations
