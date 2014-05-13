@@ -4,6 +4,8 @@
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +21,7 @@
 
 BEGIN_C_DECLS
 
-typedef mca_topo_base_component_2_1_0_t mca_topo_basic_component_t;
+typedef mca_topo_base_component_2_2_0_t mca_topo_basic_component_t;
 /* Public component instance */
 OMPI_MODULE_DECLSPEC extern mca_topo_basic_component_t
     mca_topo_basic_component;

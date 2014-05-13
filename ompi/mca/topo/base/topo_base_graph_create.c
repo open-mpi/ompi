@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,7 +50,7 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
     ompi_communicator_t *new_comm;
     int new_rank, num_procs, ret, i;
     ompi_proc_t **topo_procs = NULL;
-    mca_topo_base_comm_graph_2_1_0_t* graph;
+    mca_topo_base_comm_graph_2_2_0_t* graph;
 
     num_procs = old_comm->c_local_group->grp_proc_count;
     new_rank = old_comm->c_local_group->grp_my_rank;
@@ -66,13 +68,11 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
         nnodes = 0;
     }
 
-    graph = (mca_topo_base_comm_graph_2_1_0_t*)malloc(sizeof(mca_topo_base_comm_graph_2_1_0_t));
+    graph = OBJ_NEW(mca_topo_base_comm_graph_2_2_0_t);
     if( NULL == graph ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     graph->nnodes = nnodes;
-    graph->index = NULL;
-    graph->edges = NULL;
 
     /* Don't do any of the other initialization if we're not supposed
        to be part of the new communicator (because nnodes has been
@@ -85,7 +85,7 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
     if (MPI_UNDEFINED != new_rank) {
         graph->index = (int*)malloc(sizeof(int) * nnodes);
         if (NULL == graph->index) {
-            free(graph);
+            OBJ_RELEASE(graph);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         memcpy(graph->index, index, nnodes * sizeof(int));
@@ -93,13 +93,16 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
         /* Graph communicator; copy the right data to the common information */
         graph->edges = (int*)malloc(sizeof(int) * index[nnodes-1]);
         if (NULL == graph->edges) {
-            free(graph->index);
-            free(graph);
+            OBJ_RELEASE(graph);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         memcpy(graph->edges, edges, index[nnodes-1] * sizeof(int));
 
         topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+        if (NULL == topo_procs) {
+           OBJ_RELEASE(graph);
+           return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
             memcpy(topo_procs, 
                    old_comm->c_local_group->grp_proc_pointers,
@@ -115,9 +118,7 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
     new_comm = ompi_comm_allocate(nnodes, 0);
     if (NULL == new_comm) {
         free(topo_procs);
-        free(graph->edges);
-        free(graph->index);
-        free(graph);
+        OBJ_RELEASE(graph);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -125,9 +126,7 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
                            new_rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
         free(topo_procs);
-        free(graph->edges);
-        free(graph->index);
-        free(graph);
+        OBJ_RELEASE(graph);
         ompi_comm_free (&new_comm);
         return ret;
     }
@@ -145,3 +144,22 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
 
     return OMPI_SUCCESS;
 }
+
+static void mca_topo_base_comm_graph_2_2_0_construct(mca_topo_base_comm_graph_2_2_0_t * graph) {
+    graph->nnodes = 0;
+    graph->index = NULL;
+    graph->edges = NULL;
+}
+
+static void mca_topo_base_comm_graph_2_2_0_destruct(mca_topo_base_comm_graph_2_2_0_t * graph) {
+    if (NULL != graph->index) {
+        free(graph->index);
+    }
+    if (NULL != graph->edges) {
+        free(graph->edges);
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_topo_base_comm_graph_2_2_0_t, opal_object_t,
+                   mca_topo_base_comm_graph_2_2_0_construct,
+                   mca_topo_base_comm_graph_2_2_0_destruct);

@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,7 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
                                         mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
-    const mca_topo_base_comm_cart_2_1_0_t *cart = comm->c_topo->mtc.cart;
+    const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
     const int rank = ompi_comm_rank (comm);
     ompi_request_t **reqs;
     ptrdiff_t lb, extent;
@@ -101,7 +103,7 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
                                          mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
-    const mca_topo_base_comm_graph_2_1_0_t *graph = comm->c_topo->mtc.graph;
+    const mca_topo_base_comm_graph_2_2_0_t *graph = comm->c_topo->mtc.graph;
     const int rank = ompi_comm_rank (comm);
     const int *edges;
     int degree;
@@ -146,7 +148,7 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
                                               mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
-    const mca_topo_base_comm_dist_graph_2_1_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
+    const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
     const int *inedges, *outedges;
     int indegree, outdegree;
     ompi_request_t **reqs;

@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +35,7 @@ comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
 mca_topo_basic_component_t mca_topo_basic_component = 
 {
     {
-        MCA_TOPO_BASE_VERSION_2_1_0,
+        MCA_TOPO_BASE_VERSION_2_2_0,
 
         "basic",
         OMPI_MAJOR_VERSION,

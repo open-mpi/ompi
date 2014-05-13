@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +40,7 @@ int mca_topo_base_graph_neighbors (ompi_communicator_t* comm,
                                    int maxneighbors,
                                    int *neighbors)
 {
-    mca_topo_base_comm_graph_2_1_0_t* graph = comm->c_topo->mtc.graph;
+    mca_topo_base_comm_graph_2_2_0_t* graph = comm->c_topo->mtc.graph;
     int nnbrs, i, *p;
 
     /*

@@ -3,6 +3,8 @@
  *                    University Research and Technology
  *                    Corporation.  All rights reserved.
  * Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  */
 
 #include "ompi_config.h"
@@ -16,7 +18,7 @@ int mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm,
                                              int *inneighbors,
                                              int *outneighbors, int *weighted)
 {
-    mca_topo_base_comm_dist_graph_2_1_0_t* dist_graph = comm->c_topo->mtc.dist_graph;
+    mca_topo_base_comm_dist_graph_2_2_0_t* dist_graph = comm->c_topo->mtc.dist_graph;
 
     if (!OMPI_COMM_IS_DIST_GRAPH(comm)) {
         return OMPI_ERR_NOT_FOUND;

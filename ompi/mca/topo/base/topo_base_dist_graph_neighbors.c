@@ -8,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2011-2012 INRIA.  All rights reserved.
  * Copyright (c) 2011-2012 Universite Bordeaux 1
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  */
 
 #include "ompi_config.h"
@@ -23,7 +25,7 @@ int mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm,
                                        int maxoutdegree,
                                        int destinations[], int destweights[])
 {
-    mca_topo_base_comm_dist_graph_2_1_0_t *dg = comm->c_topo->mtc.dist_graph;
+    mca_topo_base_comm_dist_graph_2_2_0_t *dg = comm->c_topo->mtc.dist_graph;
     int i;
 
     if (!OMPI_COMM_IS_DIST_GRAPH(comm)) {

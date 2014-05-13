@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,7 +51,7 @@ int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
-        mca_topo_base_comm_cart_2_1_0_t* cart;
+        mca_topo_base_comm_cart_2_2_0_t* cart;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,

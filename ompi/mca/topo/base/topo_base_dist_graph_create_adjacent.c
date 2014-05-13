@@ -8,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2011-2012 INRIA.  All rights reserved.
  * Copyright (c) 2011-2012 Université Bordeaux 1
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  */
 
 #include "ompi_config.h"
@@ -27,7 +29,7 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
                                              ompi_info_t *info, int reorder,
                                              ompi_communicator_t **newcomm)
 {
-    mca_topo_base_comm_dist_graph_2_1_0_t *topo = NULL;
+    mca_topo_base_comm_dist_graph_2_2_0_t *topo = NULL;
     int err;
 
     if( OMPI_SUCCESS != (err = ompi_comm_create(comm_old,
@@ -39,7 +41,7 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
 
     assert( NULL == (*newcomm)->c_topo );
 
-    topo = (mca_topo_base_comm_dist_graph_2_1_0_t*)malloc(sizeof(mca_topo_base_comm_dist_graph_2_1_0_t));
+    topo = (mca_topo_base_comm_dist_graph_2_2_0_t*)malloc(sizeof(mca_topo_base_comm_dist_graph_2_2_0_t));
     if( NULL == topo ) {
         goto bail_out;
     }
