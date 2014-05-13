@@ -1154,6 +1154,11 @@ int bcol_basesmuma_smcm_allgather_connection(
                                              bcol_basesmuma_smcm_file_t input, char *base_fname,
                                              bool map_all);
 
+/* clean up the backing files associated with a basesmuma bcol module */
+int bcol_basesmuma_smcm_release_connections (mca_bcol_basesmuma_module_t *sm_bcol_module,
+                                             mca_sbgp_base_module_t *sbgp_module, opal_list_t *peer_list,
+                                             bcol_basesmuma_smcm_proc_item_t ***back_files);
+
 /*
  * this function initializes the internal scratch buffers and control
  * structures that will be used by the module
