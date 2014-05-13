@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2011-2014 Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +38,9 @@
 #define OMPI_SPARCV9_64     0062
 #define OMPI_MIPS           0070
 #define OMPI_ARM            0100
-#define OMPI_SYNC_BUILTIN   0200
+#define OMPI_BUILTIN_SYNC   0200
+#define OMPI_BUILTIN_OSX    0201
+#define OMPI_BUILTIN_NO     0202
 
 /* Formats */
 #define OMPI_DEFAULT        1000  /* standard for given architecture */

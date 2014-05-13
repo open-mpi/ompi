@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2011-2014 Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,25 +59,20 @@
 #ifdef OMPI_DISABLE_INLINE_ASM
 #undef OPAL_C_GCC_INLINE_ASSEMBLY
 #define OPAL_C_GCC_INLINE_ASSEMBLY 0
-#undef OMPI_CXX_GCC_INLINE_ASSEMBLY
-#define OMPI_CXX_GCC_INLINE_ASSEMBLY 0
 #undef OPAL_C_DEC_INLINE_ASSEMBLY
 #define OPAL_C_DEC_INLINE_ASSEMBLY 0
-#undef OMPI_CXX_DEC_INLINE_ASSEMBLY
-#define OMPI_CXX_DEC_INLINE_ASSEMBLY 0
 #undef OPAL_C_XLC_INLINE_ASSEMBLY
 #define OPAL_C_XLC_INLINE_ASSEMBLY 0
-#undef OMPI_CXX_XLC_INLINE_ASSEMBLY
-#define OMPI_CXX_XLC_INLINE_ASSEMBLY 0
 #endif
 
 /* define OMPI_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
-   OMPI_{C,CXX}_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
+   OMPI_C_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
    are in C or C++ */
 #if defined(c_plusplus) || defined(__cplusplus)
-#define OMPI_GCC_INLINE_ASSEMBLY OMPI_CXX_GCC_INLINE_ASSEMBLY
-#define OMPI_DEC_INLINE_ASSEMBLY OMPI_CXX_DEC_INLINE_ASSEMBLY
-#define OMPI_XLC_INLINE_ASSEMBLY OMPI_CXX_XLC_INLINE_ASSEMBLY
+/* We no longer support inline assembly for C++ as OPAL is a C-only interface */
+#define OMPI_GCC_INLINE_ASSEMBLY 0
+#define OMPI_DEC_INLINE_ASSEMBLY 0
+#define OMPI_XLC_INLINE_ASSEMBLY 0
 #else
 #define OMPI_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
 #define OMPI_DEC_INLINE_ASSEMBLY OPAL_C_DEC_INLINE_ASSEMBLY
@@ -144,6 +139,10 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  *********************************************************************/
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */ 
+#elif OPAL_ASSEMBLY_BUILTIN == OMPI_BUILTIN_SYNC
+#include "opal/sys/sync_builtin/atomic.h"
+#elif OPAL_ASSEMBLY_BUILTIN == OMPI_BUILTIN_OSX
+#include "opal/sys/osx/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_WINDOWS
 /* windows first, as they have API-level primitives for this stuff */
 #include "opal/sys/win32/atomic.h"
@@ -169,8 +168,6 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #include "opal/sys/sparcv9/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 #include "opal/sys/sparcv9/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OMPI_SYNC_BUILTIN
-#include "opal/sys/sync_builtin/atomic.h"
 #endif
 
 #ifndef DOXYGEN
