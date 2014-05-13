@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -114,5 +117,13 @@ static int mca_bml_base_open(mca_base_open_flag_t flags)
 
 static int mca_bml_base_close( void )
 {
-  return mca_base_framework_close(&ompi_btl_base_framework);
+    int ret;
+
+    /* close any open components (including the selected one) */
+    ret = mca_base_framework_components_close(&ompi_bml_base_framework, NULL);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    return mca_base_framework_close(&ompi_btl_base_framework);
 }
