@@ -206,6 +206,7 @@ orte_node_state_t) */
 #define ORTE_NODE_STATE_DO_NOT_USE     4
 /** Node is up, but not part of the node pool for jobs */
 #define ORTE_NODE_STATE_NOT_INCLUDED   5
+#define ORTE_NODE_STATE_ADDED         7  // Node was dynamically added to pool
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own
