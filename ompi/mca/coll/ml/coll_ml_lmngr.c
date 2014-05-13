@@ -59,7 +59,7 @@ static void destruct_lmngr(mca_coll_ml_lmngr_t *lmngr)
 
     while(!opal_list_is_empty(&lmngr->blocks_list)) {
         item = opal_list_remove_first(&lmngr->blocks_list);
-        OBJ_DESTRUCT(item);
+        OBJ_RELEASE(item);
     }
 
     OBJ_DESTRUCT(&lmngr->blocks_list);
