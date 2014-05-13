@@ -118,7 +118,7 @@ void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_
  * datatypes.  The current code has macros that cannot handle a convertor
  * argument to the memcpy call.
  */
-void *opal_cuda_memcpy_sync(void *dest, void *src, size_t size)
+void *opal_cuda_memcpy_sync(void *dest, const void *src, size_t size)
 {
     int res;
     res = ftable.gpu_cu_memcpy(dest, src, size);
