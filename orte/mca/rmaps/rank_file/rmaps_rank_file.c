@@ -14,6 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *  
  * $COPYRIGHT$
  * 
@@ -247,6 +248,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 OBJ_RETAIN(node);
                 opal_pointer_array_add(map->nodes, node);
                 node->mapped = true;
+                ++(jdata->map->num_nodes);
             }
             proc = orte_rmaps_base_setup_proc(jdata, node, i);
             if ((node->slots < (int)node->num_procs) ||
