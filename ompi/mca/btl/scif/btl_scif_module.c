@@ -131,6 +131,7 @@ mca_btl_scif_module_finalize (struct mca_btl_base_module_t *btl)
     /* close the listening endpoint */
     if (-1 != mca_btl_scif_module.scif_fd) {
         scif_close (mca_btl_scif_module.scif_fd);
+        pthread_join(mca_btl_scif_module.listen_thread, NULL);
     }
 
     mca_btl_scif_module.scif_fd = -1;
