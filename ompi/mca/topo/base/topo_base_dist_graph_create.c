@@ -8,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  */
 
 #include "ompi_config.h"
@@ -34,7 +36,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                                         int n, int nodes[],
                                         int degrees[], int targets[], 
                                         int weights[],
-                                        mca_topo_base_comm_dist_graph_2_1_0_t** ptopo)
+                                        mca_topo_base_comm_dist_graph_2_2_0_t** ptopo)
 {
     int i, j, err, count, left_over, pending_reqs, current_pos, index, csize;
     int *rin = NULL, *rout, *temp = NULL;
@@ -42,7 +44,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     size_t int_size, how_much;
     ompi_status_public_t status;
     ompi_request_t **reqs = NULL;
-    mca_topo_base_comm_dist_graph_2_1_0_t* topo=NULL;
+    mca_topo_base_comm_dist_graph_2_2_0_t* topo=NULL;
 
     ompi_datatype_type_size( (ompi_datatype_t*)&ompi_mpi_int, &int_size);
 
@@ -119,13 +121,11 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
      * - indexes[0] total number of in edges
      * - indexes[1] total number of out edges
      */
-    topo = (mca_topo_base_comm_dist_graph_2_1_0_t*)malloc(sizeof(mca_topo_base_comm_dist_graph_2_1_0_t));
+    topo = OBJ_NEW(mca_topo_base_comm_dist_graph_2_2_0_t);
     if( NULL == topo ) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto bail_out;
     }
-    topo->in = topo->inw = NULL;
-    topo->out = topo->outw = NULL;
     topo->indegree  = idx[0].in;
     topo->outdegree = idx[0].out;
     topo->weighted = (weights != MPI_UNWEIGHTED);
@@ -273,19 +273,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
         free(cnt);
     }
     if( NULL != topo ) {
-        if ( NULL != topo->in ) {
-            free(topo->in);
-        }
-        if ( NULL != topo->out ) {
-            free(topo->out);
-        }
-        if ( NULL != topo->inw ) {
-            free(topo->inw);
-        }
-        if ( NULL != topo->outw ) {
-            free(topo->outw);
-        }
-        free(topo);
+        OBJ_RELEASE(topo);
     }
     return err;
 }
@@ -323,3 +311,32 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
     }
     return err;
 }
+
+static void mca_topo_base_comm_dist_graph_2_2_0_construct(mca_topo_base_comm_dist_graph_2_2_0_t * dist_graph) {
+    dist_graph->in = NULL;
+    dist_graph->inw = NULL;
+    dist_graph->out = NULL;
+    dist_graph->outw = NULL;
+    dist_graph->indegree = 0;
+    dist_graph->outdegree = 0;
+    dist_graph->weighted = false;
+}
+
+static void mca_topo_base_comm_dist_graph_2_2_0_destruct(mca_topo_base_comm_dist_graph_2_2_0_t * dist_graph) {
+    if (NULL != dist_graph->in) {
+        free(dist_graph->in);
+    }
+    if (NULL != dist_graph->inw) {
+        free(dist_graph->inw);
+    }
+    if (NULL != dist_graph->out) {
+        free(dist_graph->out);
+    }
+    if (NULL != dist_graph->outw) {
+        free(dist_graph->outw);
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_topo_base_comm_dist_graph_2_2_0_t, opal_object_t,
+                   mca_topo_base_comm_dist_graph_2_2_0_construct,
+                   mca_topo_base_comm_dist_graph_2_2_0_destruct);

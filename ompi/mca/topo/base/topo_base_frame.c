@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,8 +39,22 @@
  */
 #include "ompi/mca/topo/base/static-components.h"
 
+static void mca_topo_base_module_construct(mca_topo_base_module_t * topo) {
+    memset(&(topo->mtc), 0, sizeof(topo->mtc));
+}
+
+static void mca_topo_base_module_destruct(mca_topo_base_module_t * topo) {
+    /* topo->mtc is an union of pointers to opal_object_t.
+       In order to release it, we just have to call OBJ_RELEASE on any of the member,
+       (cart in this case) and the appropriate object destructor will be called */
+    if (NULL != topo->mtc.cart) {
+        OBJ_RELEASE(topo->mtc.cart);
+    }
+}
+
 OBJ_CLASS_INSTANCE(mca_topo_base_module_t, opal_object_t,
-                   NULL, NULL);
+                   mca_topo_base_module_construct,
+                   mca_topo_base_module_destruct);
 
 static int mca_topo_base_close(void) 
 {

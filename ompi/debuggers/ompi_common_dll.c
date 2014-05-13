@@ -4,6 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -363,22 +365,22 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
            that field from the mca_topo_base_module_2_1_0_t type. */
 
         /* Cart type */
-        missing_in_action = "mca_topo_base_comm_cart_2_1_0_t";
+        missing_in_action = "mca_topo_base_comm_cart_2_2_0_t";
         cart_type = mqs_find_type(image, missing_in_action, mqs_lang_c);
         if (!cart_type) {
             goto type_missing;
         }
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.ndims,
-                          cart_type, mca_topo_base_comm_cart_2_1_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
                           ndims);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.dims,
-                          cart_type, mca_topo_base_comm_cart_2_1_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
                           dims);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.periods,
-                          cart_type, mca_topo_base_comm_cart_2_1_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
                           periods);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.coords,
-                          cart_type, mca_topo_base_comm_cart_2_1_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
                           coords);
         i_info->mca_topo_base_module_t.offset.mtc_cart.ndims   += offset;
         i_info->mca_topo_base_module_t.offset.mtc_cart.dims    += offset;
@@ -386,50 +388,50 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         i_info->mca_topo_base_module_t.offset.mtc_cart.coords  += offset;
 
         /* Graph type */
-        missing_in_action = "mca_topo_base_comm_graph_2_1_0_t";
+        missing_in_action = "mca_topo_base_comm_graph_2_2_0_t";
         graph_type = mqs_find_type(image, missing_in_action, mqs_lang_c);
         if (!graph_type) {
             goto type_missing;
         }
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_graph.nnodes,
-                          graph_type, mca_topo_base_comm_graph_2_1_0_t, 
+                          graph_type, mca_topo_base_comm_graph_2_2_0_t, 
                           nnodes);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_graph.index,
-                          graph_type, mca_topo_base_comm_graph_2_1_0_t, 
+                          graph_type, mca_topo_base_comm_graph_2_2_0_t, 
                           index);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_graph.edges,
-                          graph_type, mca_topo_base_comm_graph_2_1_0_t, 
+                          graph_type, mca_topo_base_comm_graph_2_2_0_t, 
                           edges);
         i_info->mca_topo_base_module_t.offset.mtc_graph.nnodes += offset;
         i_info->mca_topo_base_module_t.offset.mtc_graph.index  += offset;
         i_info->mca_topo_base_module_t.offset.mtc_graph.edges  += offset;
 
         /* Distributed Graph type */
-        missing_in_action = "mca_topo_base_comm_dist_graph_2_1_0_t";
+        missing_in_action = "mca_topo_base_comm_dist_graph_2_2_0_t";
         dist_graph_type = mqs_find_type(image, missing_in_action, mqs_lang_c);
         if (!dist_graph_type) {
             goto type_missing;
         }
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.in,
-                          dist_graph_type, mca_topo_base_comm_dist_graph_2_1_0_t,
+                          dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           in);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.inw,
-                          dist_graph_type, mca_topo_base_comm_dist_graph_2_1_0_t,
+                          dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           inw);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.out,
-                          dist_graph_type, mca_topo_base_comm_dist_graph_2_1_0_t,
+                          dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           out);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.outw,
-                          dist_graph_type, mca_topo_base_comm_dist_graph_2_1_0_t,
+                          dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           outw);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.indegree,
-                          dist_graph_type, mca_topo_base_comm_dist_graph_2_1_0_t,
+                          dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           indegree);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.outdegree,
-                          dist_graph_type, mca_topo_base_comm_dist_graph_2_1_0_t,
+                          dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           outdegree);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_dist_graph.weighted,
-                          dist_graph_type, mca_topo_base_comm_dist_graph_2_1_0_t,
+                          dist_graph_type, mca_topo_base_comm_dist_graph_2_2_0_t,
                           weighted);
 
         /* These fields are outside of the union */

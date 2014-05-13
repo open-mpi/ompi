@@ -13,6 +13,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,12 +46,12 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
                             ompi_communicator_t** new_comm)
 {
     struct ompi_communicator_t *temp_comm;
-    mca_topo_base_comm_cart_2_1_0_t *old_cart;
+    mca_topo_base_comm_cart_2_2_0_t *old_cart;
     int errcode, colour, key, colfactor, keyfactor;
     int ndim, dim, i;
     int *d, *dorig = NULL, *dold, *c, *r, *p, *porig = NULL, *pold;
     mca_topo_base_module_t* topo;
-    mca_topo_base_comm_cart_2_1_0_t* cart;
+    mca_topo_base_comm_cart_2_2_0_t* cart;
 
     *new_comm = MPI_COMM_NULL;
     old_cart = comm->c_topo->mtc.cart;
@@ -115,7 +117,7 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
                 }
             }
         }
-        cart = (mca_topo_base_comm_cart_2_1_0_t*)calloc(1, sizeof(mca_topo_base_comm_cart_2_1_0_t));
+        cart = (mca_topo_base_comm_cart_2_2_0_t*)calloc(1, sizeof(mca_topo_base_comm_cart_2_2_0_t));
         if( NULL == cart ) {
             ompi_comm_free(&temp_comm);
             return OMPI_ERR_OUT_OF_RESOURCE;

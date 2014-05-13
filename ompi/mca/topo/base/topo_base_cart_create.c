@@ -13,6 +13,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All right
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +57,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
     int nprocs = 1, i, *p, new_rank, num_procs, ret;
     ompi_communicator_t *new_comm;
     ompi_proc_t **topo_procs = NULL;
-    mca_topo_base_comm_cart_2_1_0_t* cart;
+    mca_topo_base_comm_cart_2_2_0_t* cart;
 
     num_procs = old_comm->c_local_group->grp_proc_count;
     new_rank = old_comm->c_local_group->grp_my_rank;
@@ -86,7 +88,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         num_procs = 0;
     }
 
-    cart = (mca_topo_base_comm_cart_2_1_0_t*)calloc(1, sizeof(mca_topo_base_comm_cart_2_1_0_t));
+    cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
     if( NULL == cart ) {
         ompi_comm_free(&new_comm);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -98,7 +100,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
     if( ndims > 0 ) {
         cart->dims = (int*)malloc(sizeof(int) * ndims);
         if (NULL == cart->dims) {
-            free(cart);
+            OBJ_RELEASE(cart);
             return OMPI_ERROR;
         }
         memcpy(cart->dims, dims, ndims * sizeof(int));
@@ -106,17 +108,14 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         /* Cartesian communicator; copy the right data to the common information */
         cart->periods = (int*)malloc(sizeof(int) * ndims);
         if (NULL == cart->periods) {
-            if(NULL != cart->dims) free(cart->dims);
-            free(cart);
+            OBJ_RELEASE(cart);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         memcpy(cart->periods, periods, ndims * sizeof(int));
         
         cart->coords = (int*)malloc(sizeof(int) * ndims);
         if (NULL == cart->coords) {
-            free(cart->periods);
-            if(NULL != cart->dims) free(cart->dims);
-            free(cart);
+            OBJ_RELEASE(cart);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         {  /* setup the cartesian topology */
@@ -139,6 +138,10 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
            the new one.  The topology module is then able to work on this
            copy and rearrange it as it deems fit. */
         topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+        if (NULL == topo_procs) {
+            OBJ_RELEASE(cart);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
             memcpy(topo_procs,
                    old_comm->c_local_group->grp_proc_pointers,
@@ -154,10 +157,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
     new_comm = ompi_comm_allocate(num_procs, 0);
     if (NULL == new_comm) {
         free(topo_procs);
-        if(NULL != cart->periods) free(cart->periods);
-        if(NULL != cart->coords) free(cart->coords);
-        if(NULL != cart->dims) free(cart->dims);
-        free(cart);
+        OBJ_RELEASE(cart);
         return MPI_ERR_INTERN;
     }
 
@@ -165,11 +165,9 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
                            new_rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
+        free(topo_procs);
+        OBJ_RELEASE(cart);
         ompi_comm_free (&new_comm);
-        if(NULL != cart->periods) free(cart->periods);
-        if(NULL != cart->coords) free(cart->coords);
-        if(NULL != cart->dims) free(cart->dims);
-        free(cart);
         return ret;
     }
 
@@ -187,3 +185,26 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
     /* end here */
     return OMPI_SUCCESS;
 }
+
+static void mca_topo_base_comm_cart_2_2_0_construct(mca_topo_base_comm_cart_2_2_0_t * cart) {
+    cart->ndims = 0;
+    cart->dims = NULL;
+    cart->periods = NULL;
+    cart->coords = NULL;
+}
+
+static void mca_topo_base_comm_cart_2_2_0_destruct(mca_topo_base_comm_cart_2_2_0_t * cart) {
+    if (NULL != cart->dims) {
+        free(cart->dims);
+    }
+    if (NULL != cart->periods) {
+        free(cart->periods);
+    }
+    if (NULL != cart->coords) {
+        free(cart->coords);
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_topo_base_comm_cart_2_2_0_t, opal_object_t,
+                   mca_topo_base_comm_cart_2_2_0_construct,
+                   mca_topo_base_comm_cart_2_2_0_destruct);

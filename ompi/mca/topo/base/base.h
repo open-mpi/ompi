@@ -12,6 +12,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -161,7 +163,7 @@ mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                                     int n, int nodes[],
                                     int degrees[], int targets[], 
                                     int weights[],
-                                    mca_topo_base_comm_dist_graph_2_1_0_t** ptopo);
+                                    mca_topo_base_comm_dist_graph_2_2_0_t** ptopo);
 
 OMPI_DECLSPEC int
 mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +36,7 @@ static int init_query(const mca_base_component_t *m,
                       mca_base_component_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
-static int init_query_2_1_0(const mca_base_component_t *component,
+static int init_query_2_2_0(const mca_base_component_t *component,
                             mca_base_component_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
@@ -95,12 +97,12 @@ static int init_query(const mca_base_component_t *m,
 
     /* This component has been successfully opened, now try to query
        it and see if it wants to run in this job.  Nothing interesting
-       happened in the topo framework before v2.1.0, so don't bother
+       happened in the topo framework before v2.2.0, so don't bother
        supporting anything before then. */
     if (2 == m->mca_type_major_version &&
-        1 == m->mca_type_minor_version &&
+        2 == m->mca_type_minor_version &&
         0 == m->mca_type_release_version) {
-        ret = init_query_2_1_0(m, entry, enable_progress_threads,
+        ret = init_query_2_2_0(m, entry, enable_progress_threads,
                                enable_mpi_threads);
     } else {
         /* unrecognised API version */
@@ -132,13 +134,13 @@ static int init_query(const mca_base_component_t *m,
 }
 
 
-static int init_query_2_1_0(const mca_base_component_t *component,
+static int init_query_2_2_0(const mca_base_component_t *component,
                             mca_base_component_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads) 
 {
-    mca_topo_base_component_2_1_0_t *topo = 
-        (mca_topo_base_component_2_1_0_t *) component;
+    mca_topo_base_component_2_2_0_t *topo = 
+        (mca_topo_base_component_2_2_0_t *) component;
     
     return topo->topoc_init_query(enable_progress_threads,
                                   enable_mpi_threads);
