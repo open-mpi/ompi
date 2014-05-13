@@ -40,12 +40,13 @@
 #include "ompi/mca/bcol/base/static-components.h"
 
 static int mca_bcol_base_open(mca_base_open_flag_t flags);
+static int mca_bcol_base_close (void);
 static int mca_bcol_base_register(mca_base_register_flag_t flags);
 
 /*
 **  * Global variables
 **   */
-MCA_BASE_FRAMEWORK_DECLARE(ompi, bcol, NULL, mca_bcol_base_register, mca_bcol_base_open, NULL,
+MCA_BASE_FRAMEWORK_DECLARE(ompi, bcol, NULL, mca_bcol_base_register, mca_bcol_base_open, mca_bcol_base_close,
                            mca_bcol_base_static_components, 0);
 
 OMPI_DECLSPEC opal_list_t mca_bcol_base_components_in_use;
@@ -137,19 +138,10 @@ static int mca_bcol_base_set_components_to_use(opal_list_t *bcol_components_avai
     char **bcols_requested;
     const char *b_component_name;
 
-    size_t b_str_len;
-    int i, cnt, n_bcol_types = 0;
-
     /* split the requst for the bcol modules */
     bcols_requested = opal_argv_split(ompi_bcol_bcols_string, ',');
     if (NULL == bcols_requested) {
         return OMPI_ERROR;
-    }
-
-    /* count arguments - set number of levels to match the input value */
-    cnt = 0;
-    while (bcols_requested[cnt]) {
-        cnt++;
     }
 
     /* Initialize list */
@@ -157,17 +149,13 @@ static int mca_bcol_base_set_components_to_use(opal_list_t *bcol_components_avai
 
     /* figure out basic collective modules to use */
     /* loop over list of components requested */
-    for (i = 0; i < cnt; i++) {
+    for (int i = 0 ; bcols_requested[i] ; ++i) {
         /* loop over discovered components */
         OPAL_LIST_FOREACH(b_cli, bcol_components_avail, mca_base_component_list_item_t) {
             b_component = b_cli->cli_component;
-
-
             b_component_name = b_component->mca_component_name;
-            b_str_len = strlen(b_component_name);
 
-            if ((b_str_len == strlen(bcols_requested[i])) &&
-                    (0 == strncmp(b_component_name,bcols_requested[i],b_str_len))) {
+            if (0 == strcmp (b_component_name, bcols_requested[i])) {
                 /* found selected component */
                 b_clj = OBJ_NEW(mca_base_component_list_item_t);
                 if (NULL == b_clj) {
@@ -177,8 +165,6 @@ static int mca_bcol_base_set_components_to_use(opal_list_t *bcol_components_avai
                 b_clj->cli_component = b_component;
                 opal_list_append(bcol_components_in_use,
                                 (opal_list_item_t *) b_clj);
-
-                n_bcol_types++;
                 break;
              } /* end check for bcol component */
          }
@@ -191,15 +177,7 @@ static int mca_bcol_base_set_components_to_use(opal_list_t *bcol_components_avai
     ** release resources
     ** */
 
-    cnt = 0;
-    while (bcols_requested[cnt]) {
-        free(bcols_requested[cnt]);
-        cnt++;
-    }
-
-    if (bcols_requested) {
-        free(bcols_requested);
-    }
+    opal_argv_free (bcols_requested);
 
     return OMPI_SUCCESS;
 }
@@ -235,6 +213,9 @@ static int mca_bcol_base_open(mca_base_open_flag_t flags)
 
     ret = mca_bcol_base_set_components_to_use(&ompi_bcol_base_framework.framework_components,
                                               &mca_bcol_base_components_in_use);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
 
     /* memory registration compatibilities */
     bcol_mpool_compatibility[BCOL_SHARED_MEMORY_UMA][BCOL_SHARED_MEMORY_UMA]=1;
@@ -246,6 +227,19 @@ static int mca_bcol_base_open(mca_base_open_flag_t flags)
     bcol_mpool_compatibility[BCOL_IB_OFFLOAD]          [BCOL_SHARED_MEMORY_UMA]=1;
 
     return OMPI_SUCCESS;
+}
+
+static int mca_bcol_base_close (void)
+{
+    opal_list_item_t *item;
+
+    while (NULL != (item = opal_list_remove_first (&mca_bcol_base_components_in_use))) {
+        OBJ_RELEASE(item);
+    }
+
+    OBJ_DESTRUCT(&mca_bcol_base_components_in_use);
+
+    return mca_base_framework_components_close(&ompi_bcol_base_framework, NULL);
 }
 
 /*
@@ -346,8 +340,13 @@ static void mca_bcol_base_coll_fn_desc_constructor(mca_bcol_base_coll_fn_desc_t 
 
 static void mca_bcol_base_coll_fn_desc_destructor(mca_bcol_base_coll_fn_desc_t *fn)
 {
-    free(fn->comm_attr);
-    free(fn->inv_attr);
+    if (fn->comm_attr) {
+        free(fn->comm_attr);
+    }
+
+    if (fn->inv_attr) {
+        free(fn->inv_attr);
+    }
 }
 
 OBJ_CLASS_INSTANCE(mca_bcol_base_coll_fn_desc_t,
@@ -368,5 +367,3 @@ OBJ_CLASS_INSTANCE(mca_bcol_base_lmngr_block_t,
         opal_list_item_t,
         lmngr_block_constructor,
         lnmgr_block_destructor);
-
-
