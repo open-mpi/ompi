@@ -20,7 +20,7 @@ release=6
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=a1
+greek=rc1
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.
@@ -79,12 +79,12 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=1:8:0
+libmpi_so_version=1:9:0
 libmpi_cxx_so_version=1:2:0
 libmpi_f77_so_version=1:7:0
 libmpi_f90_so_version=4:0:3
-libopen_rte_so_version=4:3:0
-libopen_pal_so_version=4:5:0
+libopen_rte_so_version=4:4:0
+libopen_pal_so_version=4:6:0
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
