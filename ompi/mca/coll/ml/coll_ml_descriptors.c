@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +22,9 @@ static inline void mca_coll_ml_fragment_constructor(mca_coll_ml_fragment_t *frag
 
 static inline void mca_coll_ml_fragment_destructor(mca_coll_ml_fragment_t *frag)
 {
+ assert(frag->fn_args != NULL);
+ free(frag->fn_args);
+ frag->fn_args = NULL;
 }
 
 static inline void mca_coll_ml_descriptor_constructor(mca_coll_ml_descriptor_t *descriptor)

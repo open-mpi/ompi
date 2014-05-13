@@ -5,6 +5,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,19 +93,10 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
 
     memset ((void*)((intptr_t) module + sizeof (module->super)), 0, sizeof(*module) - sizeof(module->super));
 
-    module->max_fn_calls = 0;
-    module->initialized = false;
-    module->comm = NULL;
-    module->collective_sequence_num = 0;
-    module->no_data_collective_sequence_num = 0;
-    module->payload_block = NULL;
-
-    module->reference_convertor = NULL;
+    memset ((char *) module + sizeof (module->super), 0, sizeof (*module) - sizeof (module->super));
 
     /* It's critical to reset data_offset to zero */
     module->data_offset = -1;
-
-    module->coll_ml_barrier_function = NULL;
 
     /* If the topology support zero level and no fragmentation was requested */
     for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
@@ -112,22 +105,8 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
         topo->global_highest_hier_group_index = -1;
         topo->number_of_all_subgroups = -1;
         topo->n_levels = -1;
-        topo->sort_list = NULL;
-        topo->hier_layout_info = NULL;
         topo->all_bcols_mode = ~(0); /* set to all bits */
-        topo->route_vector = NULL;
-        topo->array_of_all_subgroups = NULL;
-        topo->component_pairs = NULL;
-        topo->hier_layout_info = NULL;
         topo->status = COLL_ML_TOPO_DISABLED; /* all topologies are not used by default */
-
-        /* Init ordering info */
-        topo->topo_ordering_info.next_inorder = 0;
-        topo->topo_ordering_info.next_order_num = 0;
-        topo->topo_ordering_info.num_bcols_need_ordering = 0;
-
-        memset(topo->hierarchical_algorithms, 0,
-               BCOL_NUM_OF_FUNCTIONS * sizeof(coll_ml_collective_description_t *));
     }
 
     for (coll_i = 0; coll_i < ML_NUM_OF_FUNCTIONS; coll_i++) {
@@ -160,10 +139,12 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
 static void
 mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
 {
-    int i, j, k,fnc, index_topo;
+    int i, j, k, fnc, index_topo;
     mca_coll_ml_topology_t *topo;
 
     ML_VERBOSE(4, ("ML module destruct"));
+
+    ml_coll_hier_reduce_cleanup(module);
 
     for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
         topo = &module->topo_list[index_topo];
@@ -208,10 +189,14 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
             free(topo->array_of_all_subgroups);
             topo->array_of_all_subgroups = NULL;
         }
+        if (NULL != topo->hier_layout_info) {
+            free(topo->hier_layout_info);
+            topo->hier_layout_info = NULL;
+        }
     }
 
-    OBJ_DESTRUCT(&(module->active_bcols_list));
-    OBJ_DESTRUCT(&(module->waiting_for_memory_list));
+    OPAL_LIST_DESTRUCT(&(module->active_bcols_list));
+    OPAL_LIST_DESTRUCT(&(module->waiting_for_memory_list));
 
     /* gvm Leak FIX Remove fragment free list */
     OBJ_DESTRUCT(&(module->fragment_descriptors));
@@ -226,8 +211,26 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
     OBJ_DESTRUCT(&(module->coll_ml_collective_descriptors));
 
     if (NULL != module->coll_ml_barrier_function) {
+        if (NULL != module->coll_ml_barrier_function->component_functions) {
+            free(module->coll_ml_barrier_function->component_functions);
+            module->coll_ml_barrier_function->component_functions = NULL;
+        }
         free(module->coll_ml_barrier_function);
+        module->coll_ml_barrier_function = NULL;
     }
+
+    if (module->coll_ml_memsync_function) {
+        if (module->coll_ml_memsync_function->component_functions) {
+            free(module->coll_ml_memsync_function->component_functions);
+            module->coll_ml_memsync_function->component_functions = NULL;
+        }
+        free(module->coll_ml_memsync_function);
+        module->coll_ml_memsync_function = NULL;
+    }
+
+    ml_coll_hier_allreduce_cleanup_new(module);
+    ml_coll_hier_allgather_cleanup(module);
+    ml_coll_hier_bcast_cleanup(module);
 
     /* release saved collectives */
     ML_RELEASE_FALLBACK(module, allreduce);
@@ -532,7 +535,7 @@ static int ml_module_memory_initialization(mca_coll_ml_module_t *ml_module)
     ml_module->payload_block = mca_coll_ml_allocate_block(cs,ml_module->payload_block);
 
     if (NULL == ml_module->payload_block) {
-        ML_ERROR(("mca_coll_ml_allocate_block exited with error.\n"));
+        ML_VERBOSE(1, ("mca_coll_ml_allocate_block exited with error.\n"));
         return OMPI_ERROR;
     }
 
@@ -1612,6 +1615,8 @@ static int ml_discover_hierarchy(mca_coll_ml_module_t *ml_module)
                                  1, MPI_INT, ompi_comm_rank(ml_module->comm),
                                  MPI_MIN, ompi_comm_size(ml_module->comm), comm_ranks,
                                  ml_module->comm);
+
+	free(comm_ranks);
 
         if (OMPI_SUCCESS != ret) {
             ML_ERROR(("comm_allreduce - failed to collect max_comm data"));
@@ -3088,8 +3093,61 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     return &(ml_module->super);
 
  CLEANUP:
-    /* Vasily: RLG:  Need to cleanup free lists */
+    /* Vasily: RLG:  Need to cleanup free lists
+     * do some quick and ugly cleanup */
     if (NULL != ml_module) {
+        int i, j, k,fnc, index_topo, alg;
+        mca_coll_ml_topology_t *topo;
+        ml_coll_hier_reduce_cleanup(ml_module);
+
+        for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
+            topo = &ml_module->topo_list[index_topo];
+            if (COLL_ML_TOPO_DISABLED == topo->status) {
+                /* skip the topology */
+                continue;
+            }
+
+            if (NULL != topo->component_pairs) {
+                for(i = 0; i < topo->n_levels; ++i) {
+                    for(j = 0; j < topo->component_pairs[i].num_bcol_modules; ++j) {
+                        OBJ_RELEASE(topo->component_pairs[i].bcol_modules[j]);
+                    }
+                    /* free the array of bcol module */
+                    free(topo->component_pairs[i].bcol_modules);
+
+                    OBJ_RELEASE(topo->component_pairs[i].subgroup_module);
+                }
+
+                free(topo->component_pairs);
+            }
+
+            /* gvm Leak FIX Free collective algorithms structure */
+            for (fnc = 0; fnc < BCOL_NUM_OF_FUNCTIONS; fnc++) {
+                if (NULL != topo->hierarchical_algorithms[fnc]){
+                    free(topo->hierarchical_algorithms[fnc]);
+                }
+            }
+
+            /* free up the route vector memory */
+            if (NULL != topo->route_vector) {
+                free(topo->route_vector);
+            }
+            /* free resrouce description */
+            if(NULL != topo->array_of_all_subgroups) {
+                for( k=0 ; k < topo->number_of_all_subgroups ; k++ ) {
+                    if(0 < topo->array_of_all_subgroups[k].n_ranks) {
+                        free(topo->array_of_all_subgroups[k].rank_data);
+                        topo->array_of_all_subgroups[k].rank_data = NULL;
+                    }
+                }
+                free(topo->array_of_all_subgroups);
+                topo->array_of_all_subgroups = NULL;
+            }
+            if (NULL != topo->hier_layout_info) {
+                free(topo->hier_layout_info);
+                topo->hier_layout_info = NULL;
+            }
+        }
         OBJ_RELEASE(ml_module);
     }
 

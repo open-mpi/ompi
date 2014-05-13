@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -147,11 +149,37 @@ mca_bcol_ptpcoll_module_destruct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
 
     OBJ_DESTRUCT(&ptpcoll_module->collreqs_free);
 
-    if( NULL != ptpcoll_module->super.list_n_connected ){
+    if (NULL != ptpcoll_module->super.list_n_connected) {
         free(ptpcoll_module->super.list_n_connected);
         ptpcoll_module->super.list_n_connected = NULL;
     }
 
+    for (i = 0; i < BCOL_NUM_OF_FUNCTIONS; i++){
+        OPAL_LIST_DESTRUCT((&ptpcoll_module->super.bcol_fns_table[i]));
+    }
+
+
+    if (NULL != ptpcoll_module->kn_proxy_extra_index) {
+        free(ptpcoll_module->kn_proxy_extra_index);
+        ptpcoll_module->kn_proxy_extra_index = NULL;
+    }
+
+    if (NULL != ptpcoll_module->alltoall_iovec) {
+        free(ptpcoll_module->alltoall_iovec);
+        ptpcoll_module->alltoall_iovec = NULL;
+    }
+
+    if (NULL != ptpcoll_module->narray_knomial_proxy_extra_index) {
+        free(ptpcoll_module->narray_knomial_proxy_extra_index);
+        ptpcoll_module->narray_knomial_proxy_extra_index = NULL;
+    }
+    if (NULL != ptpcoll_module->narray_knomial_node) {
+        free(ptpcoll_module->narray_knomial_node);
+        ptpcoll_module->narray_knomial_node = NULL;
+    }
+
+    netpatterns_cleanup_recursive_knomial_allgather_tree_node(&ptpcoll_module->knomial_allgather_tree);
+    netpatterns_cleanup_recursive_knomial_tree_node(&ptpcoll_module->knomial_exchange_tree);
 
 }
 

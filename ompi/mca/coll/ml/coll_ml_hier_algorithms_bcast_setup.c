@@ -1,6 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -799,4 +804,58 @@ int ml_coll_hier_bcast_setup(mca_coll_ml_module_t *ml_module)
 
     topo_info->hierarchical_algorithms[BCOL_BCAST] = NULL;
     return ret;
+}
+
+void ml_coll_hier_bcast_cleanup(mca_coll_ml_module_t *ml_module)
+{
+    /* Hierarchy Setup */
+    int i, alg;
+    int topo_index = 0;
+    mca_coll_ml_topology_t *topo_info = ml_module->topo_list;
+
+    for (i = 0; i < ML_NUM_MSG; i++) {
+
+        switch (i) {
+            case ML_SMALL_MSG:
+            case ML_LARGE_MSG:
+                break;
+            default:
+                topo_info->hierarchical_algorithms[ML_BCAST] = NULL;
+                return;
+        }
+
+        alg = mca_coll_ml_component.coll_config[ML_BCAST][i].algorithm_id;
+        topo_index = ml_module->collectives_topology_map[ML_BCAST][alg];
+        if (ML_UNDEFINED == alg || ML_UNDEFINED == topo_index) {
+            ML_ERROR(("No topology index or algorithm was defined"));
+            topo_info->hierarchical_algorithms[ML_BCAST] = NULL;
+            return;
+        }
+
+        if (NULL == ml_module->coll_ml_bcast_functions[alg]) {
+            continue;
+        }
+
+        switch (alg) {
+            case ML_BCAST_SMALL_DATA_KNOWN:
+            case ML_BCAST_LARGE_DATA_KNOWN:
+            case ML_BCAST_SMALL_DATA_UNKNOWN:
+            case ML_BCAST_LARGE_DATA_UNKNOWN:
+            case ML_BCAST_SMALL_DATA_SEQUENTIAL:
+            case ML_BCAST_LARGE_DATA_SEQUENTIAL:
+                if (ml_module->coll_ml_bcast_functions[alg]->component_functions) {
+                    free(ml_module->coll_ml_bcast_functions[alg]->component_functions);
+                    ml_module->coll_ml_bcast_functions[alg]->component_functions = NULL;
+                }
+
+                if (ml_module->coll_ml_bcast_functions[alg]) {
+                    free(ml_module->coll_ml_bcast_functions[alg]);
+                    ml_module->coll_ml_bcast_functions[alg] = NULL;
+                }
+                break;
+            default:
+                topo_info->hierarchical_algorithms[ML_BCAST] = NULL;
+                return;
+        }
+    }
 }

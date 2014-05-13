@@ -5,6 +5,8 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -336,10 +338,16 @@ int mca_bcol_base_bcol_fns_table_init(struct mca_bcol_base_module_t *bcol_module
     return OMPI_SUCCESS;
 }
 
+static void mca_bcol_base_coll_fn_desc_destructor(mca_bcol_base_coll_fn_desc_t *fn)
+{
+    free(fn->comm_attr);
+    free(fn->inv_attr);
+}
+
 OBJ_CLASS_INSTANCE(mca_bcol_base_coll_fn_desc_t,
                    opal_list_item_t,
                    NULL,
-                   NULL);
+                   mca_bcol_base_coll_fn_desc_destructor);
 
 static void lmngr_block_constructor(mca_bcol_base_lmngr_block_t *item) 
 {

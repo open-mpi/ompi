@@ -6,6 +6,8 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -185,6 +187,11 @@ int bcol_basesmuma_smcm_allgather_connection(
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    /* FIXME *back_files might have been already allocated
+     * so free it in order to avoid a memory leak */
+    if (NULL != *back_files) {
+        free (*back_files);
+    }
     *back_files = backing_files;
 
     my_id = ompi_proc_local();
