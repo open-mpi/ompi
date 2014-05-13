@@ -250,12 +250,12 @@ int ompi_common_ugni_init (void)
         ptr = &my_rank;
         OBJ_CONSTRUCT(&myvals, opal_list_t);
         rc = opal_dstore.fetch (opal_dstore_internal,
-                                ORTE_NAME_PRINT(&my_proc->proc_name),
+                                (opal_identifier_t *)&my_proc->proc_name,
                                 OMPI_DB_GLOBAL_RANK,
                                 &myvals);
         if (OPAL_SUCCESS == rc) {
-            kv = (opal_value_t*)opal_list_get_first(&myvals):
-            if (OPAL_SUCCESS != opal_value_unload(&kv, (void**)&ptr, OPAL_UINT32)) {
+            kv = (opal_value_t*)opal_list_get_first(&myvals);
+            if (OPAL_SUCCESS != opal_value_unload(kv, (void**)&ptr, OPAL_UINT32)) {
                 my_rank = my_proc->proc_name.vpid;
             }
         } else {
