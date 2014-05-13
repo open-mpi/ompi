@@ -393,8 +393,6 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
 const char *orte_node_state_to_str(orte_node_state_t state)
 {
     switch(state) {
-    case ORTE_NODE_STATE_UNDEF:
-        return "UNDEF";
     case ORTE_NODE_STATE_UNKNOWN:
         return "UNKNOWN";
     case ORTE_NODE_STATE_DOWN:
