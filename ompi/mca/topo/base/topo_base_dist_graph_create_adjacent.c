@@ -41,7 +41,7 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
 
     assert( NULL == (*newcomm)->c_topo );
 
-    topo = (mca_topo_base_comm_dist_graph_2_2_0_t*)malloc(sizeof(mca_topo_base_comm_dist_graph_2_2_0_t));
+    topo = OBJ_NEW(mca_topo_base_comm_dist_graph_2_2_0_t);
     if( NULL == topo ) {
         goto bail_out;
     }
