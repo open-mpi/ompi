@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -298,7 +300,7 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
         frag->segments[1].base.seg_addr.pval = data_ptr;
         frag->segments[1].base.seg_len       = *size;
         frag->base.des_src_cnt = 2;
-    } else {        
+    } else {
         /* buffered send */
         (void) MCA_BTL_SCIF_FRAG_ALLOC_EAGER(endpoint, frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
@@ -314,6 +316,7 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
                 mca_btl_scif_frag_return (frag);
                 return NULL;
             }
+            *size = max_size;
         }
 
         frag->segments[0].base.seg_len = reserve + *size;
