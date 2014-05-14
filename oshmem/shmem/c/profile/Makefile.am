@@ -31,6 +31,7 @@ headers = defines.h
 
 OSHMEM_API_SOURCES = \
 	pshmem_init.c \
+	pshmem_finalize.c \
 	pshmem_free.c \
 	pshmem_alloc.c \
 	pshmem_realloc.c \

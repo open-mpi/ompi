@@ -54,6 +54,10 @@ extern "C" {
  */
 OSHMEM_DECLSPEC  void pstart_pes(int npes);
 
+/*
+ * Finalization routines
+ */
+OSHMEM_DECLSPEC  void pshmem_finalize(void) OSHMEM_DESTRUCTOR;
 
 /*
  * Query routines

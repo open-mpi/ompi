@@ -17,7 +17,15 @@
  * pshmem_* symbols
  */
 
+/*
+ * Initialization routines
+ */
 #define start_pes                   pstart_pes
+
+/*
+ * Finalization routines
+ */
+#define shmem_finalize              pshmem_finalize
 
 
 /* 
