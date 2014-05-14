@@ -304,6 +304,7 @@ int mca_pml_ob1_component_fini(void)
     OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);
     OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
     OBJ_DESTRUCT(&mca_pml_ob1.lock);
+    OBJ_DESTRUCT(&mca_pml_ob1.send_ranges);
 
     if( NULL != mca_pml_ob1.allocator ) {
         (void)mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator);
