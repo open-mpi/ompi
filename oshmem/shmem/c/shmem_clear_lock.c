@@ -20,6 +20,7 @@
 #include "oshmem/shmem/shmem_lock.h"
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_clear_lock = pshmem_clear_lock
 #include "oshmem/shmem/c/profile/defines.h"
 #endif

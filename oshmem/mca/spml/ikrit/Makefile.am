@@ -10,7 +10,7 @@
 #
 
 dist_ompidata_DATA = \
-	help-shmem-spml-ikrit.txt
+	help-oshmem-spml-ikrit.txt
 
 AM_CPPFLAGS = $(spml_ikrit_CPPFLAGS)
 

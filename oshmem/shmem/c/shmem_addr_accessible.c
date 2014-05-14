@@ -16,6 +16,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_addr_accessible = pshmem_addr_accessible
 #include "oshmem/shmem/c/profile/defines.h"
 #endif

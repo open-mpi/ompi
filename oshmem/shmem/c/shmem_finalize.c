@@ -16,10 +16,16 @@
 #include "oshmem/include/shmem.h"
 #include "oshmem/runtime/runtime.h"
 
-int shmem_finalize(void)
+#if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
+#pragma weak shmem_finalize = pshmem_finalize
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
+void shmem_finalize(void)
 {
     OPAL_CR_FINALIZE_LIBRARY();
 
-    return oshmem_shmem_finalize();
+    oshmem_shmem_finalize();
 }
 

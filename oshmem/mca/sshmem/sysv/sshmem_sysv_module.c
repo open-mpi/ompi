@@ -194,28 +194,31 @@ segment_create(map_segment_t *ds_buf,
     /* Create a new shared memory segment and save the shmid. */
     shmid = shmget(IPC_PRIVATE, size, flags);
     if (shmid == MAP_SEGMENT_SHM_INVALID) {
-        OPAL_OUTPUT_VERBOSE(
-            (5, oshmem_sshmem_base_framework.framework_output,
-             "Failed to shmget() %llu bytes (errno=%d)",
-             (unsigned long long)size, errno));
-
-        opal_show_help("help-oshmem-sshmem-sysv.txt",
+        opal_show_help("help-oshmem-sshmem.txt",
                        "create segment failure",
                        true,
-                       orte_process_info.nodename, (unsigned) size,
+                       "sysv",
+                       orte_process_info.nodename, (unsigned long long) size,
                        strerror(errno), errno);
+        opal_show_help("help-oshmem-sshmem-sysv.txt",
+                       "sysv:create segment failure",
+                       true);
         return OSHMEM_ERROR;
     }
 
     /* Attach to the sement */
     addr = shmat(shmid, (void *) mca_sshmem_base_start_address, 0);
     if (addr == (void *) -1L) {
-        OPAL_OUTPUT_VERBOSE(
-           (5, oshmem_sshmem_base_framework.framework_output,
-           "Failed to shmat() %llu bytes (errno=%d)",
-                      (unsigned long long)size, errno)
-            );
-        shmctl(shmid, IPC_RMID, NULL );
+        opal_show_help("help-oshmem-sshmem.txt",
+                       "create segment failure",
+                       true,
+                       "sysv",
+                       orte_process_info.nodename, (unsigned long long) size,
+                       strerror(errno), errno);
+        opal_show_help("help-oshmem-sshmem-sysv.txt",
+                       "sysv:create segment failure",
+                       true);
+        shmctl(shmid, IPC_RMID, NULL);
         return OSHMEM_ERR_OUT_OF_RESOURCE;
     }
 

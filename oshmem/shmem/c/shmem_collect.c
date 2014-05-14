@@ -102,6 +102,7 @@ static void _shmem_collect(void *target,
 }
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_collect32 = pshmem_collect32
 #pragma weak shmem_collect64 = pshmem_collect64
 #pragma weak shmem_fcollect32 = pshmem_fcollect32

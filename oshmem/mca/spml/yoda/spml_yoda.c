@@ -10,6 +10,7 @@
 
 #include "oshmem_config.h"
 
+#include "opal/util/show_help.h"
 #include "orte/include/orte/types.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -823,9 +824,13 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
                                 put_via_send);
 
         if (OPAL_UNLIKELY(!des || !des->des_src )) {
-            SPML_ERROR("shmem OOM error need %d bytes", ncopied);
             SPML_ERROR("src=%p nfrags = %d frag_size=%d",
                        src_addr, nfrags, frag_size);
+            SPML_ERROR("shmem OOM error need %d bytes", ncopied);
+            opal_show_help("help-oshmem-spml-yoda.txt",
+                           "internal_oom_error",
+                           true,
+                           "Put", ncopied, mca_spml_yoda.bml_alloc_threshold);
             oshmem_shmem_abort(-1);
         }
 

@@ -228,6 +228,11 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         if (OSHMEM_SUCCESS == ret) {
             oshmem_shmem_initialized = true;
 
+            if (OSHMEM_SUCCESS != shmem_lock_init()) {
+                SHMEM_API_ERROR( "shmem_lock_init() failed");
+                return OSHMEM_ERROR;
+            }
+
             /* this is a collective op, implies barrier */
             MCA_MEMHEAP_CALL(get_all_mkeys());
 
@@ -434,11 +439,6 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     /* This call should be done after memheap initialization */
     if (OSHMEM_SUCCESS != (ret = mca_scoll_enable())) {
         error = "mca_scoll_enable() failed";
-        goto error;
-    }
-
-    if (OSHMEM_SUCCESS != shmem_lock_init()) {
-        error = "shmem_lock_init() failed";
         goto error;
     }
 

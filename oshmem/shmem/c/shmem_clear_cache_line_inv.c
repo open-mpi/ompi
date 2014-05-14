@@ -18,6 +18,7 @@
 #include "opal/sys/architecture.h"
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_clear_cache_line_inv = pshmem_clear_cache_line_inv
 #include "oshmem/shmem/c/profile/defines.h"
 #endif

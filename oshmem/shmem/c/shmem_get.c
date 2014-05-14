@@ -44,6 +44,7 @@
     }
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_char_get = pshmem_char_get
 #pragma weak shmem_short_get = pshmem_short_get
 #pragma weak shmem_int_get = pshmem_int_get
@@ -53,6 +54,7 @@
 #pragma weak shmem_double_get = pshmem_double_get
 #pragma weak shmem_longdouble_get = pshmem_longdouble_get
 #pragma weak shmem_getmem = pshmem_getmem
+#pragma weak shmem_get16 = pshmem_get16
 #pragma weak shmem_get32 = pshmem_get32
 #pragma weak shmem_get64 = pshmem_get64
 #pragma weak shmem_get128 = pshmem_get128
@@ -90,6 +92,7 @@ SHMEM_TYPE_GET(_longdouble, long double)
     }
 
 SHMEM_TYPE_GETMEM(_getmem, 1)
+SHMEM_TYPE_GETMEM(_get16, 2)
 SHMEM_TYPE_GETMEM(_get32, 4)
 SHMEM_TYPE_GETMEM(_get64, 8)
 SHMEM_TYPE_GETMEM(_get128, 16)

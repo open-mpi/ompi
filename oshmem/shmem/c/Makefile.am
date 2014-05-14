@@ -15,12 +15,12 @@ if OSHMEM_PROFILING
 endif
 
 OSHMEM_AUX_SOURCES = \
-	shmem_finalize.c \
 	shmem_lock.c \
 	globalexit.c
 
 OSHMEM_API_SOURCES = \
 	shmem_init.c \
+	shmem_finalize.c \
 	shmem_free.c \
 	shmem_alloc.c \
 	shmem_realloc.c \

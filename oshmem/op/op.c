@@ -50,6 +50,9 @@ oshmem_op_t* oshmem_op_and_longlong = NULL;
 oshmem_op_t* oshmem_op_and_fint2 = NULL;
 oshmem_op_t* oshmem_op_and_fint4 = NULL;
 oshmem_op_t* oshmem_op_and_fint8 = NULL;
+oshmem_op_t* oshmem_op_and_int16 = NULL;
+oshmem_op_t* oshmem_op_and_int32 = NULL;
+oshmem_op_t* oshmem_op_and_int64 = NULL;
 
 /* Bitwise OR */
 oshmem_op_t* oshmem_op_or_short = NULL;
@@ -59,6 +62,9 @@ oshmem_op_t* oshmem_op_or_longlong = NULL;
 oshmem_op_t* oshmem_op_or_fint2 = NULL;
 oshmem_op_t* oshmem_op_or_fint4 = NULL;
 oshmem_op_t* oshmem_op_or_fint8 = NULL;
+oshmem_op_t* oshmem_op_or_int16 = NULL;
+oshmem_op_t* oshmem_op_or_int32 = NULL;
+oshmem_op_t* oshmem_op_or_int64 = NULL;
 
 /* Bitwise XOR */
 oshmem_op_t* oshmem_op_xor_short = NULL;
@@ -68,6 +74,9 @@ oshmem_op_t* oshmem_op_xor_longlong = NULL;
 oshmem_op_t* oshmem_op_xor_fint2 = NULL;
 oshmem_op_t* oshmem_op_xor_fint4 = NULL;
 oshmem_op_t* oshmem_op_xor_fint8 = NULL;
+oshmem_op_t* oshmem_op_xor_int16 = NULL;
+oshmem_op_t* oshmem_op_xor_int32 = NULL;
+oshmem_op_t* oshmem_op_xor_int64 = NULL;
 
 /* MAX */
 oshmem_op_t* oshmem_op_max_short = NULL;
@@ -83,6 +92,9 @@ oshmem_op_t* oshmem_op_max_fint8 = NULL;
 oshmem_op_t* oshmem_op_max_freal4 = NULL;
 oshmem_op_t* oshmem_op_max_freal8 = NULL;
 oshmem_op_t* oshmem_op_max_freal16 = NULL;
+oshmem_op_t* oshmem_op_max_int16 = NULL;
+oshmem_op_t* oshmem_op_max_int32 = NULL;
+oshmem_op_t* oshmem_op_max_int64 = NULL;
 
 /* MIN */
 oshmem_op_t* oshmem_op_min_short = NULL;
@@ -98,6 +110,9 @@ oshmem_op_t* oshmem_op_min_fint8 = NULL;
 oshmem_op_t* oshmem_op_min_freal4 = NULL;
 oshmem_op_t* oshmem_op_min_freal8 = NULL;
 oshmem_op_t* oshmem_op_min_freal16 = NULL;
+oshmem_op_t* oshmem_op_min_int16 = NULL;
+oshmem_op_t* oshmem_op_min_int32 = NULL;
+oshmem_op_t* oshmem_op_min_int64 = NULL;
 
 /* SUM */
 oshmem_op_t* oshmem_op_sum_short = NULL;
@@ -115,6 +130,9 @@ oshmem_op_t* oshmem_op_sum_fint8 = NULL;
 oshmem_op_t* oshmem_op_sum_freal4 = NULL;
 oshmem_op_t* oshmem_op_sum_freal8 = NULL;
 oshmem_op_t* oshmem_op_sum_freal16 = NULL;
+oshmem_op_t* oshmem_op_sum_int16 = NULL;
+oshmem_op_t* oshmem_op_sum_int32 = NULL;
+oshmem_op_t* oshmem_op_sum_int64 = NULL;
 
 /* PROD */
 oshmem_op_t* oshmem_op_prod_short = NULL;
@@ -132,6 +150,9 @@ oshmem_op_t* oshmem_op_prod_fint8 = NULL;
 oshmem_op_t* oshmem_op_prod_freal4 = NULL;
 oshmem_op_t* oshmem_op_prod_freal8 = NULL;
 oshmem_op_t* oshmem_op_prod_freal16 = NULL;
+oshmem_op_t* oshmem_op_prod_int16 = NULL;
+oshmem_op_t* oshmem_op_prod_int32 = NULL;
+oshmem_op_t* oshmem_op_prod_int64 = NULL;
 
 #define FUNC_OP_CREATE(name, type_name, type, calc)  \
     void oshmem_op_##name##_##type_name##_func(void *in, void *out, int count); \
@@ -166,6 +187,9 @@ FUNC_OP_CREATE(and, longlong, long long, __and_op)
 FUNC_OP_CREATE(and, fint2, ompi_fortran_integer4_t, __and_op)
 FUNC_OP_CREATE(and, fint4, ompi_fortran_integer4_t, __and_op)
 FUNC_OP_CREATE(and, fint8, ompi_fortran_integer8_t, __and_op)
+FUNC_OP_CREATE(and, int16, int16_t, __and_op)
+FUNC_OP_CREATE(and, int32, int32_t, __and_op)
+FUNC_OP_CREATE(and, int64, int64_t, __and_op)
 
 /* Bitwise OR */
 #define __or_op(a, b) ((a) | (b))
@@ -176,6 +200,9 @@ FUNC_OP_CREATE(or, longlong, long long, __or_op)
 FUNC_OP_CREATE(or, fint2, ompi_fortran_integer2_t, __or_op)
 FUNC_OP_CREATE(or, fint4, ompi_fortran_integer4_t, __or_op)
 FUNC_OP_CREATE(or, fint8, ompi_fortran_integer8_t, __or_op)
+FUNC_OP_CREATE(or, int16, int16_t, __or_op)
+FUNC_OP_CREATE(or, int32, int32_t, __or_op)
+FUNC_OP_CREATE(or, int64, int64_t, __or_op)
 
 /* Bitwise XOR */
 #define __xor_op(a, b) ((a) ^ (b))
@@ -186,6 +213,9 @@ FUNC_OP_CREATE(xor, longlong, long long, __xor_op)
 FUNC_OP_CREATE(xor, fint2, ompi_fortran_integer4_t, __xor_op)
 FUNC_OP_CREATE(xor, fint4, ompi_fortran_integer4_t, __xor_op)
 FUNC_OP_CREATE(xor, fint8, ompi_fortran_integer8_t, __xor_op)
+FUNC_OP_CREATE(xor, int16, int16_t, __xor_op)
+FUNC_OP_CREATE(xor, int32, int32_t, __xor_op)
+FUNC_OP_CREATE(xor, int64, int64_t, __xor_op)
 
 /* MAX */
 #define __max_op(a, b) ((a) > (b) ? (a) : (b))
@@ -204,6 +234,9 @@ FUNC_OP_CREATE(max, freal8, ompi_fortran_real8_t, __max_op)
 #if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(max, freal16, ompi_fortran_real16_t, __max_op)
 #endif
+FUNC_OP_CREATE(max, int16, int16_t, __max_op)
+FUNC_OP_CREATE(max, int32, int32_t, __max_op)
+FUNC_OP_CREATE(max, int64, int64_t, __max_op)
 
 /* MIN */
 #define __min_op(a, b) ((a) < (b) ? (a) : (b))
@@ -222,6 +255,9 @@ FUNC_OP_CREATE(min, freal8, ompi_fortran_real8_t, __min_op)
 #if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(min, freal16, ompi_fortran_real16_t, __min_op)
 #endif
+FUNC_OP_CREATE(min, int16, int16_t, __min_op)
+FUNC_OP_CREATE(min, int32, int32_t, __min_op)
+FUNC_OP_CREATE(min, int64, int64_t, __min_op)
 
 /* SUM */
 #define __sum_op(a, b) ((a) + (b))
@@ -242,6 +278,9 @@ FUNC_OP_CREATE(sum, freal8, ompi_fortran_real8_t, __sum_op)
 #if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(sum, freal16, ompi_fortran_real16_t, __sum_op)
 #endif
+FUNC_OP_CREATE(sum, int16, int16_t, __sum_op)
+FUNC_OP_CREATE(sum, int32, int32_t, __sum_op)
+FUNC_OP_CREATE(sum, int64, int64_t, __sum_op)
 
 /* PROD */
 #define __prod_op(a, b) ((a) * (b))
@@ -262,6 +301,9 @@ FUNC_OP_CREATE(prod, freal8, ompi_fortran_real8_t, __prod_op)
 #if OMPI_HAVE_FORTRAN_REAL16
 FUNC_OP_CREATE(prod, freal16, ompi_fortran_real16_t, __prod_op)
 #endif
+FUNC_OP_CREATE(prod, int16, int16_t, __prod_op)
+FUNC_OP_CREATE(prod, int32, int32_t, __prod_op)
+FUNC_OP_CREATE(prod, int64, int64_t, __prod_op)
 
 int oshmem_op_init(void)
 {
@@ -284,6 +326,9 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(and, fint2, ompi_fortran_integer2_t, OSHMEM_OP_AND, OSHMEM_OP_TYPE_FINT2);
     OBJ_OP_CREATE(and, fint4, ompi_fortran_integer4_t, OSHMEM_OP_AND, OSHMEM_OP_TYPE_FINT4);
     OBJ_OP_CREATE(and, fint8, ompi_fortran_integer8_t, OSHMEM_OP_AND, OSHMEM_OP_TYPE_FINT8);
+    OBJ_OP_CREATE(and, int16, int16_t, OSHMEM_OP_AND, OSHMEM_OP_TYPE_INT16_T);
+    OBJ_OP_CREATE(and, int32, int32_t, OSHMEM_OP_AND, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(and, int64, int64_t, OSHMEM_OP_AND, OSHMEM_OP_TYPE_INT64_T);
 
     /* Bitwise OR */
     OBJ_OP_CREATE(or, short, short, OSHMEM_OP_OR, OSHMEM_OP_TYPE_SHORT);
@@ -293,6 +338,9 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(or, fint2, ompi_fortran_integer2_t, OSHMEM_OP_OR, OSHMEM_OP_TYPE_FINT2);
     OBJ_OP_CREATE(or, fint4, ompi_fortran_integer4_t, OSHMEM_OP_OR, OSHMEM_OP_TYPE_FINT4);
     OBJ_OP_CREATE(or, fint8, ompi_fortran_integer8_t, OSHMEM_OP_OR, OSHMEM_OP_TYPE_FINT8);
+    OBJ_OP_CREATE(or, int16, int16_t, OSHMEM_OP_OR, OSHMEM_OP_TYPE_INT16_T);
+    OBJ_OP_CREATE(or, int32, int32_t, OSHMEM_OP_OR, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(or, int64, int64_t, OSHMEM_OP_OR, OSHMEM_OP_TYPE_INT64_T);
 
     /* Bitwise XOR */
     OBJ_OP_CREATE(xor, short, short, OSHMEM_OP_XOR, OSHMEM_OP_TYPE_SHORT);
@@ -302,6 +350,9 @@ int oshmem_op_init(void)
     OBJ_OP_CREATE(xor, fint2, ompi_fortran_integer2_t, OSHMEM_OP_XOR, OSHMEM_OP_TYPE_FINT2);
     OBJ_OP_CREATE(xor, fint4, ompi_fortran_integer4_t, OSHMEM_OP_XOR, OSHMEM_OP_TYPE_FINT4);
     OBJ_OP_CREATE(xor, fint8, ompi_fortran_integer8_t, OSHMEM_OP_XOR, OSHMEM_OP_TYPE_FINT8);
+    OBJ_OP_CREATE(xor, int16, int16_t, OSHMEM_OP_XOR, OSHMEM_OP_TYPE_INT16_T);
+    OBJ_OP_CREATE(xor, int32, int32_t, OSHMEM_OP_XOR, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(xor, int64, int64_t, OSHMEM_OP_XOR, OSHMEM_OP_TYPE_INT64_T);
 
     /* MAX */
     OBJ_OP_CREATE(max, short, short, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_SHORT);
@@ -319,6 +370,9 @@ int oshmem_op_init(void)
 #if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(max, freal16, ompi_fortran_real16_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_FREAL16);
 #endif
+    OBJ_OP_CREATE(max, int16, int16_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_INT16_T);
+    OBJ_OP_CREATE(max, int32, int32_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(max, int64, int64_t, OSHMEM_OP_MAX, OSHMEM_OP_TYPE_INT64_T);
 
     /* MIN */
     OBJ_OP_CREATE(min, short, short, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_SHORT);
@@ -336,6 +390,9 @@ int oshmem_op_init(void)
 #if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(min, freal16, ompi_fortran_real16_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_FREAL16);
 #endif
+    OBJ_OP_CREATE(min, int16, int16_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_INT16_T);
+    OBJ_OP_CREATE(min, int32, int32_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(min, int64, int64_t, OSHMEM_OP_MIN, OSHMEM_OP_TYPE_INT64_T);
 
     /* SUM */
     OBJ_OP_CREATE(sum, short, short, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_SHORT);
@@ -355,6 +412,9 @@ int oshmem_op_init(void)
 #if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(sum, freal16, ompi_fortran_real16_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_FREAL16);
 #endif
+    OBJ_OP_CREATE(sum, int16, int16_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_INT16_T);
+    OBJ_OP_CREATE(sum, int32, int32_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(sum, int64, int64_t, OSHMEM_OP_SUM, OSHMEM_OP_TYPE_INT64_T);
 
     /* PROD */
     OBJ_OP_CREATE(prod, short, short, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_SHORT);
@@ -374,6 +434,9 @@ int oshmem_op_init(void)
 #if OMPI_HAVE_FORTRAN_REAL16
     OBJ_OP_CREATE(prod, freal16, ompi_fortran_real16_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_FREAL16);
 #endif
+    OBJ_OP_CREATE(prod, int16, int16_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_INT16_T);
+    OBJ_OP_CREATE(prod, int32, int32_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_INT32_T);
+    OBJ_OP_CREATE(prod, int64, int64_t, OSHMEM_OP_PROD, OSHMEM_OP_TYPE_INT64_T);
 
     return OSHMEM_SUCCESS;
 }

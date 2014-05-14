@@ -44,6 +44,8 @@
     }
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
+#pragma weak shmem_char_g = pshmem_char_g
 #pragma weak shmem_short_g = pshmem_short_g
 #pragma weak shmem_int_g = pshmem_int_g
 #pragma weak shmem_long_g = pshmem_long_g
@@ -51,9 +53,13 @@
 #pragma weak shmem_float_g = pshmem_float_g
 #pragma weak shmem_double_g = pshmem_double_g
 #pragma weak shmem_longdouble_g = pshmem_longdouble_g
+#pragma weak shmem_int16_g = pshmem_int16_g
+#pragma weak shmem_int32_g = pshmem_int32_g
+#pragma weak shmem_int64_g = pshmem_int64_g
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+SHMEM_TYPE_G(_char, char)
 SHMEM_TYPE_G(_short, short)
 SHMEM_TYPE_G(_int, int)
 SHMEM_TYPE_G(_long, long)
@@ -61,3 +67,6 @@ SHMEM_TYPE_G(_longlong, long long)
 SHMEM_TYPE_G(_float, float)
 SHMEM_TYPE_G(_double, double)
 SHMEM_TYPE_G(_longdouble, long double)
+SHMEM_TYPE_G(_int16, int16_t)
+SHMEM_TYPE_G(_int32, int32_t)
+SHMEM_TYPE_G(_int64, int64_t)

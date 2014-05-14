@@ -58,6 +58,8 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
     long *long_addr, long_value;
     short *short_addr, short_value;
     long long *longlong_addr, longlong_value;
+    int32_t *int32_addr, int32_value;
+    int64_t *int64_addr, int64_value;
     ompi_fortran_integer_t *fint_addr, fint_value;
     ompi_fortran_integer4_t *fint4_addr, fint4_value;
     ompi_fortran_integer8_t *fint8_addr, fint8_value;
@@ -91,6 +93,20 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
         longlong_value = *(long long*) value;
         longlong_addr = (long long*) addr;
         SPML_BASE_DO_WAIT(res, longlong_addr, cmp, longlong_value);
+        break;
+
+       /* Int32_t */
+    case SHMEM_INT32_T:
+        int32_value = *(int32_t*) value;
+        int32_addr = (int32_t*) addr;
+        SPML_BASE_DO_WAIT(res, int32_addr, cmp, int32_value);
+        break;
+
+       /* Int64_t */
+    case SHMEM_INT64_T:
+        int64_value = *(int64_t*) value;
+        int64_addr = (int64_t*) addr;
+        SPML_BASE_DO_WAIT(res, int64_addr, cmp, int64_value);
         break;
 
         /*C equivalent of Fortran integer type */

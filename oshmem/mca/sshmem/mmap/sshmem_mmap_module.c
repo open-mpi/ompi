@@ -194,16 +194,15 @@ segment_create(map_segment_t *ds_buf,
                 0);
 
     if (MAP_FAILED == addr) {
-        OPAL_OUTPUT_VERBOSE(
-           (5, oshmem_sshmem_base_framework.framework_output,
-           "Failed to mmap() %llu bytes (errno=%d)",
-                      (unsigned long long)size, errno)
-            );
-        opal_show_help("help-oshmem-sshmem-mmap.txt",
-                "mmap segment failed",
+        opal_show_help("help-oshmem-sshmem.txt",
+                "create segment failure",
+                "mmap",
                 true,
-                orte_process_info.nodename, (unsigned) size,
-                strerror(errno),errno);
+                orte_process_info.nodename, (unsigned long long) size,
+                strerror(errno), errno);
+        opal_show_help("help-oshmem-sshmem-mmap.txt",
+                       "mmap:create segment failure",
+                       true);
         return OSHMEM_ERR_OUT_OF_RESOURCE;
     }
 

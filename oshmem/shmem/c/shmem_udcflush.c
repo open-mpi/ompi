@@ -17,6 +17,7 @@
 #include "opal/sys/architecture.h"
 
 #if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
 #pragma weak shmem_udcflush = pshmem_udcflush
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
