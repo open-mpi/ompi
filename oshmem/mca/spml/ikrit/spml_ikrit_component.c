@@ -74,7 +74,7 @@ static int check_mxm_tls(char *var)
                     "%s=%s",
                     var, getenv(var)
                     )) {
-            orte_show_help("help-shmem-spml-ikrit.txt", "mxm tls", true,
+            orte_show_help("help-oshmem-spml-ikrit.txt", "mxm tls", true,
                     str);
             free(str);
         }
@@ -190,7 +190,7 @@ int spml_ikrit_progress(void)
 
     err = mxm_progress(mca_spml_ikrit.mxm_context);
     if ((MXM_OK != err) && (MXM_ERR_NO_PROGRESS != err)) {
-        orte_show_help("help-shmem-spml-ikrit.txt",
+        orte_show_help("help-oshmem-spml-ikrit.txt",
                        "errors during mxm_progress",
                        true,
                        mxm_error_string(err));
@@ -240,7 +240,7 @@ static int mca_spml_ikrit_component_open(void)
             SPML_VERBOSE(1,
                          "No supported device found, disqualifying spml/ikrit");
         } else {
-            orte_show_help("help-shmem-spml-ikrit.txt",
+            orte_show_help("help-oshmem-spml-ikrit.txt",
                            "mxm init",
                            true,
                            mxm_error_string(err));
@@ -252,7 +252,7 @@ static int mca_spml_ikrit_component_open(void)
                         MXM_SHMEM_MQ_ID,
                         &mca_spml_ikrit.mxm_mq);
     if (MXM_OK != err) {
-        orte_show_help("help-shmem-spml-ikrit.txt",
+        orte_show_help("help-oshmem-spml-ikrit.txt",
                        "mxm mq create",
                        true,
                        mxm_error_string(err));
@@ -295,7 +295,7 @@ static int spml_ikrit_mxm_init(void)
                         mca_spml_ikrit.mxm_ep_opts,
                         &mca_spml_ikrit.mxm_ep);
     if (MXM_OK != err) {
-        orte_show_help("help-shmem-spml-ikrit.txt",
+        orte_show_help("help-oshmem-spml-ikrit.txt",
                        "unable to create endpoint",
                        true,
                        mxm_error_string(err));

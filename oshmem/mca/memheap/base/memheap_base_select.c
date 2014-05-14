@@ -150,7 +150,7 @@ int mca_memheap_base_select()
 
     /* Verify that some module was initialized */
     if (NULL == mca_memheap_base_module_initialized) {
-        opal_show_help("help-shmem-mca.txt",
+        opal_show_help("help-oshmem-memheap.txt",
                        "find-available:none-found",
                        true,
                        "memheap");
