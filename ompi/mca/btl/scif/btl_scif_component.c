@@ -261,6 +261,7 @@ static mca_btl_base_module_t **mca_btl_scif_component_init (int *num_btl_modules
     }
 
     base_modules[0] = &mca_btl_scif_module.super;
+    mca_btl_scif_module.exiting = false;
 
     rc = mca_btl_scif_modex_send ();
     if (OMPI_SUCCESS != rc) {
