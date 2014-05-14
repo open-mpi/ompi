@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,6 +59,9 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, event, NULL, NULL, opal_event_base_open,
 
 static int opal_event_base_close(void)
 {
+    opal_event_base_free (opal_event_base);
+    opal_event_base = NULL;
+
     /* cleanup components even though they are statically opened */
     return mca_base_framework_components_close (&opal_event_base_framework,
 						NULL);
