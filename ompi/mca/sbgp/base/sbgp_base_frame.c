@@ -93,7 +93,7 @@ static int ompi_sbgp_set_components_to_use(opal_list_t *sbgp_components_avail,
         }
 
         sbgp_string_size = opal_argv_count (sbgp_string);
-        if (sbgp_string_size < 1 | sbgp_string_size > 2) {
+        if (sbgp_string_size < 1 || sbgp_string_size > 2) {
             opal_output(ompi_sbgp_base_framework.framework_output,
                         "Requested SBGP configuration is illegal %s",
                         subgroups_requested[i]);
