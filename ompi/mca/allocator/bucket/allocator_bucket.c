@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reseved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,8 +48,17 @@ static int mca_allocator_num_buckets;
 
 int mca_allocator_bucket_finalize(struct mca_allocator_base_module_t* allocator)
 {
+    mca_allocator_bucket_t *bucket = (mca_allocator_bucket_t *) allocator;
+
     mca_allocator_bucket_cleanup(allocator);
+
+    for (int i = 0 ; i < bucket->num_buckets ; ++i) {
+        OBJ_DESTRUCT(&bucket->buckets[i].lock);
+    }
+
+    free (bucket->buckets);
     free(allocator);
+
     return(OMPI_SUCCESS);
 }
 
