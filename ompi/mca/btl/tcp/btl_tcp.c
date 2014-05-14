@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -82,7 +82,7 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         }
 
         if(NULL == (tcp_proc = mca_btl_tcp_proc_create(ompi_proc))) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            continue;
         }
 
         /*
@@ -100,6 +100,7 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         tcp_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
         if(NULL == tcp_endpoint) {
             OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
+            OBJ_RELEASE(ompi_proc);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -107,6 +108,7 @@ int mca_btl_tcp_add_procs( struct mca_btl_base_module_t* btl,
         rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
         if(rc != OMPI_SUCCESS) {
             OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
+            OBJ_RELEASE(ompi_proc);
             OBJ_RELEASE(tcp_endpoint);
             continue;
         }
