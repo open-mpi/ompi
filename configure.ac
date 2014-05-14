@@ -44,7 +44,7 @@ AC_LANG([C])
 # We don't have the version number to put in here yet, and we can't
 # call OPAL_GET_VERSION (etc.) before AC_INIT.  So use the shell
 # version.  project_name_* comes from config/project_list.m4, which
-# was set during autogen.sh.
+# was set during autogen.pl.
 
 AC_INIT([project_name_long],
         [m4_normalize(esyscmd([config/opal_get_version.sh VERSION --base]))],
@@ -134,7 +134,7 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_java_so_version)
           # It's icky that we have to hard-code the names of the
           # common components here.  :-( This could probably be done
-          # transparently by adding some intelligence in autogen.sh
+          # transparently by adding some intelligence in autogen.pl
           # and/or opal_mca.m4, but I don't have the cycles to do this
           # right now.
           AC_SUBST(libmca_common_cuda_so_version)
