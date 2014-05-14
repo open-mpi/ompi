@@ -54,7 +54,7 @@ static void opal_free_list_destruct(opal_free_list_t* fl)
     opal_list_item_t *item;
 
     if (fl->fl_elem_class) {
-        OPAL_LIST_FOREACH(item, &fl->super, opal_list_item_t) {
+        while (NULL != (item = opal_list_remove_first (&fl->super))) {
             /* destruct the item (we constructed it), the underlying memory will be
              * reclaimed when we free the slab below */
             OBJ_DESTRUCT(item);
