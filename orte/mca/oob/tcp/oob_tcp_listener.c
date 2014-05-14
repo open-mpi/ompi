@@ -837,6 +837,7 @@ static void connection_handler(int sd, short flags, void* cbdata)
         }
     }
     if (!found) {
+        close(new_connection->fd); // close this so the remote end hangs up
         opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
@@ -920,6 +921,7 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
         }
     }
     if (!found) {
+        close(sd); // close this so the remote end hangs up
         opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
