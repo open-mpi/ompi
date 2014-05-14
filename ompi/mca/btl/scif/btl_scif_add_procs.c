@@ -117,7 +117,7 @@ static void *mca_btl_scif_connect_accept (void *arg)
 
         rc = scif_poll (&pollepd, 1, -1);
         if (1 == rc) {
-            if (SCIF_POLLIN != pollepd.revents) {
+            if (SCIF_POLLIN != pollepd.revents || mca_btl_scif_module.exiting) {
                 break;
             }
 
