@@ -413,7 +413,7 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 #else
     err = mxm_ep_get_address(mca_spml_ikrit.mxm_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
     if (MXM_OK != err) {
-        orte_show_help("help-shmem-spml-ikrit.txt", "unable to get endpoint address", true,
+        orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
                 mxm_error_string(err));
         return OSHMEM_ERROR;
     }
