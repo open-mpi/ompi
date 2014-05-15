@@ -398,6 +398,7 @@ int orte_ess_base_app_finalize(void)
 
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
+    (void) mca_base_framework_close(&orte_state_base_framework);
 
     /* release the event base */
     opal_event_base_free(orte_event_base);

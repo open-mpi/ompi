@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,17 +65,32 @@ static int orte_oob_base_close(void)
 {
     mca_oob_base_component_t *component;
     mca_base_component_list_item_t *cli;
+    opal_object_t *value;
+    uint64_t key;
+    void *node;
+    int rc;
 
     /* shutdown all active transports */
-    OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
+    while (NULL != (cli = (mca_base_component_list_item_t *) opal_list_remove_first (&orte_oob_base.actives))) {
         component = (mca_oob_base_component_t*)cli->cli_component;
         if (NULL != component->shutdown) {
             component->shutdown();
         }
+        OBJ_RELEASE(cli);
     }
 
     /* destruct our internal lists */
     OBJ_DESTRUCT(&orte_oob_base.actives);
+
+    /* release all peers from the hash table */
+    rc = opal_hash_table_get_first_key_uint64 (&orte_oob_base.peers, &key,
+                                               (void **) &value, &node);
+    while (OPAL_SUCCESS == rc) {
+        OBJ_RELEASE(value);
+        rc = opal_hash_table_get_next_key_uint64 (&orte_oob_base.peers, &key,
+                                                  (void **) &value, node, &node);
+    }
+
     OBJ_DESTRUCT(&orte_oob_base.peers);
 
     return mca_base_framework_components_close(&orte_oob_base_framework, NULL);
