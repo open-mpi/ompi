@@ -1,11 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
-  * $COPYRIGHT$
+ * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
@@ -126,11 +127,15 @@ static int store(struct opal_dstore_base_module_t *imod,
      * a pre-existing value
      */
     kv = opal_dstore_base_lookup_keyval(proc_data, val->key);
+#if OPAL_ENABLE_DEBUG
+    char *_data_type = opal_dss.lookup_data_type(val->type);
     OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
                          "dstore:hash:store: %s key %s[%s] for proc %" PRIu64 "",
                          (NULL == kv ? "storing" : "updating"),
-                         val->key, opal_dss.lookup_data_type(val->type), id));
-    
+                         val->key, _data_type, id));
+    free (_data_type);
+#endif
+
     if (NULL != kv) {
         opal_list_remove_item(&proc_data->data, &kv->super);
         OBJ_RELEASE(kv);
