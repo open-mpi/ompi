@@ -78,6 +78,9 @@ static inline int mca_btl_scif_ep_init (mca_btl_base_endpoint_t *endpoint,
 
     rc = ompi_modex_recv (&mca_btl_scif_component.super.btl_version, peer_proc,
                           (void **) &modex, &msg_size);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
     assert (msg_size == sizeof (endpoint->port_id));
 
     endpoint->port_id = modex->port_id;
@@ -88,6 +91,8 @@ static inline int mca_btl_scif_ep_init (mca_btl_base_endpoint_t *endpoint,
     endpoint->seq_next = 0x00001010;
     endpoint->seq_expected = 0x00001010;
 #endif
+
+    free (modex);
 
     return OMPI_SUCCESS;
 }

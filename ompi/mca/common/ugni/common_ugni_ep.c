@@ -45,6 +45,8 @@ int ompi_common_ugni_endpoint_for_proc (ompi_common_ugni_device_t *dev, ompi_pro
 
     *ep = endpoint;
 
+    free (modex);
+
     return OMPI_SUCCESS;
 }
 

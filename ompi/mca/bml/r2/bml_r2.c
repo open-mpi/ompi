@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
@@ -208,7 +208,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         /* for each proc that is reachable */
         for( p = 0; p < n_new_procs; p++ ) {
             if(opal_bitmap_is_set_bit(reachable, p)) {
-                ompi_proc_t *proc = new_procs[p]; 
+                ompi_proc_t *proc = new_procs[p];
                 mca_bml_base_endpoint_t * bml_endpoint = 
                     (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; 
                 mca_bml_base_btl_t* bml_btl; 
@@ -469,6 +469,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
             
             rc = btl->btl_del_procs(btl,1,&proc,&bml_btl->btl_endpoint);
             if(OMPI_SUCCESS != rc) {
+                free(del_procs);
                 return rc;
             }
 
@@ -493,6 +494,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
             if (btl != 0) {
                 rc = btl->btl_del_procs(btl,1,&proc,&bml_btl->btl_endpoint);
                 if(OMPI_SUCCESS != rc) {
+                    free(del_procs);
                     return rc;
                 }
             }
@@ -503,6 +505,8 @@ static int mca_bml_r2_del_procs(size_t nprocs,
         OBJ_RELEASE(bml_endpoint);
         
     }
+    free(del_procs);
+
     return OMPI_SUCCESS;
 }
 
