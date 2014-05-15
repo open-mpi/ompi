@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,17 +73,17 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
 {
     int rc = OMPI_SUCCESS, tmprc;
     char *msg_id_str_to_tx = NULL;
-    opal_buffer_t *buffer = NULL;
     sm_return_t smr;
 
-    if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
     OBJ_CONSTRUCT(&smr.buf, opal_buffer_t);
 
     /* figure out if i am the root proc in the group.  if i am, bcast the
      * message the rest of the local procs. */
     if (proc0) {
+        opal_buffer_t *buffer = NULL;
+        if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         size_t p;
         /* pack the data that we are going to send. first the queueing id, then
          * the shmem_ds buf. note that msg_id_str is used only for verifying
