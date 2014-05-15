@@ -173,7 +173,11 @@ mca_bcol_ptpcoll_module_destruct(mca_bcol_ptpcoll_module_t *ptpcoll_module)
         free(ptpcoll_module->narray_knomial_proxy_extra_index);
         ptpcoll_module->narray_knomial_proxy_extra_index = NULL;
     }
+
     if (NULL != ptpcoll_module->narray_knomial_node) {
+        for(i = 0; i < ptpcoll_module->full_narray_tree_size; i++) {
+            netpatterns_cleanup_narray_knomial_tree (ptpcoll_module->narray_knomial_node + i);
+        }
         free(ptpcoll_module->narray_knomial_node);
         ptpcoll_module->narray_knomial_node = NULL;
     }
