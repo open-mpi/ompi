@@ -74,6 +74,8 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
     bool found;
     orte_grpcomm_collective_t *cptr;
 
+    OBJ_RELEASE(caddy);
+
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:base:modex: performing modex",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

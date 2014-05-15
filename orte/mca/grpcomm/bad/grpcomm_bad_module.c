@@ -142,6 +142,8 @@ static void process_barrier(int fd, short args, void *cbdata)
     opal_buffer_t *buf;
     orte_namelist_t *nm;
 
+    OBJ_RELEASE(caddy);
+
     /* if we are a singleton and routing isn't enabled,
      * then we have nobody with which to communicate, so
      * we can just declare success
@@ -215,6 +217,8 @@ static void process_allgather(int fd, short args, void *cbdata)
     opal_buffer_t *buf;
     orte_namelist_t *nm;
     opal_list_item_t *item;
+
+    OBJ_RELEASE(caddy);
 
     /* if we are a singleton and routing isn't enabled,
      * then we have nobody with which to communicate, so

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -180,6 +181,10 @@ static int tcp_component_close(void)
 {
     int i;
     mca_oob_tcp_module_t *mod;
+    opal_object_t *value;
+    uint64_t key;
+    void *node;
+    int rc;
 
     /* don't cleanup the listen thread as it wasn't constructed
      * for anything other than the HNP, and we don't want to incur
@@ -214,6 +219,15 @@ static int tcp_component_close(void)
         opal_argv_free(mca_oob_tcp_component.ipv6ports);
     }
 #endif
+
+    /* release all peers from the hash table */
+    rc = opal_hash_table_get_first_key_uint64 (&mca_oob_tcp_component.peers, &key,
+                                               (void **) &value, &node);
+    while (OPAL_SUCCESS == rc) {
+        OBJ_RELEASE(value);
+        rc = opal_hash_table_get_next_key_uint64 (&mca_oob_tcp_component.peers, &key,
+                                                  (void **) &value, node, &node);
+    }
 
     OBJ_DESTRUCT(&mca_oob_tcp_component.peers);
 
