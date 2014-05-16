@@ -1,10 +1,10 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2012      The University of Tennessee and The University
+# Copyright (c) 2012-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2012      Inria.  All rights reserved.
+# Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
 #

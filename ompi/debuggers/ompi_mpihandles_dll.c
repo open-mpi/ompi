@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow

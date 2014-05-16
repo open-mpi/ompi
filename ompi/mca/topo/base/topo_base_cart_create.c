@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All right
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science

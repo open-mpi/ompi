@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2011      The University of Tennessee and The University
+ * Copyright (c) 2011-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      INRIA.  All rights reserved.
- * Copyright (c) 2011      Université Bordeaux 1
+ * Copyright (c) 2011-2013 Inria.  All rights reserved.
+ * Copyright (c) 2011-2013 Université Bordeaux 1
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -80,3 +80,4 @@ void ompi_dist_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *inneighbors,
           OMPI_SINGLE_INT_2_FINT(outneighbors);
     }
 }
+

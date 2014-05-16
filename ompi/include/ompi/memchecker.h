@@ -5,6 +5,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
  *
  * $COPYRIGHT$
  *

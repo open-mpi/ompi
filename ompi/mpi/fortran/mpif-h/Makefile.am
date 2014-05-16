@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2012 The University of Tennessee and The University
+# Copyright (c) 2004-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
@@ -10,8 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011-2012 Inria.  All rights reserved.
-# Copyright (c) 2011-2012 Universite Bordeaux 1
+# Copyright (c) 2011-2013 Inria.  All rights reserved.
+# Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
