@@ -197,6 +197,8 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct ompi_
         }
 #endif
 
+        free (modex);
+
         ep->next_fbox_out = 0;
         ep->next_fbox_in  = 0;
 

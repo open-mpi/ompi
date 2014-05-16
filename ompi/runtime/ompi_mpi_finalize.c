@@ -74,6 +74,7 @@
 #include "ompi/mca/mpool/base/mpool_base_tree.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "ompi/mca/allocator/base/base.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/pubsub/base/base.h"
@@ -409,6 +410,9 @@ int ompi_mpi_finalize(void)
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_rcache_base_framework))) {
+        return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_allocator_base_framework))) {
         return ret;
     }
 
