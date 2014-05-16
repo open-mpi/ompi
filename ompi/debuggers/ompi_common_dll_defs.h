@@ -3,6 +3,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow

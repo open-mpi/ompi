@@ -2,12 +2,11 @@
  * Copyright (c) 2008      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2011-2012 The University of Tennessee and The University
+ * Copyright (c) 2012-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- *
- * Author(s): Torsten Hoefler 
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
  *
  */
 
@@ -67,3 +66,4 @@ int MPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree,
                                                              destinations, destweights);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
+

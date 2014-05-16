@@ -1,10 +1,11 @@
 /*   
  * Copyright (c) 2009      Sun Microsystems, Inc  All rights reserved.
-  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      The University of Tennessee and The University
+ * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
-  * $COPYRIGHT$
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 

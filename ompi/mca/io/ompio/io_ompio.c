@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2012-2013 INRIA.  All rights reserved.
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow

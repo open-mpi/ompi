@@ -4,6 +4,7 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 The University of Tennessee and The University of
  *                         Tennessee Research Foundation.  All rights reserved.
+ * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
