@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,8 +11,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -117,6 +120,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                                     component->btl_version.mca_component_name);
 
                 opal_list_remove_item(&ompi_btl_base_framework.framework_components, &cli->super);
+                OBJ_RELEASE(cli);
                 mca_base_component_close((mca_base_component_t *) component,
                                          ompi_btl_base_framework.framework_output);
             } 
