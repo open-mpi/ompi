@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,10 +13,10 @@
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
-  *                         All rights reserved.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -235,6 +235,15 @@ int ompi_comm_finalize(void)
     /* disconnect all dynamic communicators */
     ompi_dpm.dyn_finalize();
 
+    /* Free the attributes on comm world. This is not done in the
+     * destructor as we delete attributes in ompi_comm_free (which
+     * is not called for comm world) */
+    if (NULL != ompi_mpi_comm_world.comm.c_keyhash) {
+        /* Ignore errors when deleting attributes on comm_world */
+        (void) ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_world.comm, ompi_mpi_comm_world.comm.c_keyhash);
+        OBJ_RELEASE(ompi_mpi_comm_world.comm.c_keyhash);
+    }
+
     /* Shut down MPI_COMM_WORLD */
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
 
@@ -303,6 +312,7 @@ int ompi_comm_finalize(void)
 
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
+    OBJ_DESTRUCT (&ompi_comm_f_to_c_table);
 
     /* finalize the comm_reg stuff */
     ompi_comm_reg_finalize();
