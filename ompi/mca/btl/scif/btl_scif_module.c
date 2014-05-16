@@ -116,6 +116,8 @@ mca_btl_scif_module_finalize (struct mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&mca_btl_scif_module.dma_frags);
     OBJ_DESTRUCT(&mca_btl_scif_module.eager_frags);
 
+    mca_btl_scif_module.exiting = true;
+
     /* close all open connections and release endpoints */
     if (NULL != scif_module->endpoints) {
         for (i = 0 ; i < scif_module->endpoint_count ; ++i) {
@@ -130,8 +132,13 @@ mca_btl_scif_module_finalize (struct mca_btl_base_module_t *btl)
 
     /* close the listening endpoint */
     if (-1 != mca_btl_scif_module.scif_fd) {
-        scif_close (mca_btl_scif_module.scif_fd);
+        /* wake up the scif thread */
+        scif_epd_t tmpfd;
+        tmpfd = scif_open();
+        scif_connect (tmpfd, &mca_btl_scif_module.port_id);
         pthread_join(mca_btl_scif_module.listen_thread, NULL);
+        scif_close(tmpfd);
+        scif_close (mca_btl_scif_module.scif_fd);
     }
 
     mca_btl_scif_module.scif_fd = -1;

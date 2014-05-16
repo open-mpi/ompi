@@ -90,6 +90,8 @@ typedef struct mca_btl_scif_module_t {
     ompi_free_list_t eager_frags;
 
     pthread_t listen_thread;
+
+    volatile bool exiting;
 } mca_btl_scif_module_t;
 
 typedef struct mca_btl_scif_component_t {

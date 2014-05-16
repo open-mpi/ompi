@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,6 +120,14 @@ static void *mca_btl_scif_connect_accept (void *arg)
         rc = scif_poll (&pollepd, 1, -1);
         if (1 == rc) {
             if (SCIF_POLLIN != pollepd.revents) {
+                break;
+            }
+            if (mca_btl_scif_module.exiting) {
+                /* accept the connection so scif_connect() does not timeout */
+                struct scif_portID peer;
+                scif_epd_t newepd;
+                scif_accept(mca_btl_scif_module.scif_fd, &peer, &newepd, SCIF_ACCEPT_SYNC);
+                scif_close(newepd);
                 break;
             }
 
