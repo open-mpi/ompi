@@ -423,7 +423,6 @@ syntax: glob
 ./ompi/mca/rte/orte/ompi-top.1
 ./ompi/mca/rte/orte/ompi-server.1
 ./ompi/mca/rte/orte/mpirun.1
-./ompi/mca/rte/pmi/Makefile.in
 ./ompi/mca/sbgp/Makefile.in
 ./ompi/mca/sbgp/basesmsocket/Makefile.in
 ./ompi/mca/sbgp/basesmuma/Makefile.in
