@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -114,7 +115,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
     if(NULL == btl_proc)
         return NULL;
     btl_proc->proc_ompi = ompi_proc;
-    
+
     /* add to hash table of all proc instance */
     opal_hash_table_set_value_uint64(&mca_btl_tcp_component.tcp_procs,
                                      hash, btl_proc);
@@ -126,7 +127,8 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
                                   (void**)&btl_proc->proc_addrs,
                                   &size );
     if(rc != OMPI_SUCCESS) {
-        BTL_ERROR(("mca_base_modex_recv: failed with return value=%d", rc));
+        if(OPAL_ERR_NOT_FOUND != rc)
+            BTL_ERROR(("ompi_modex_recv: failed with return value=%d", rc));
         OBJ_RELEASE(btl_proc);
         return NULL;
     }
@@ -145,6 +147,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(ompi_proc_t* ompi_proc)
         OBJ_RELEASE(btl_proc);
         return NULL;
     }
+
     if(NULL == mca_btl_tcp_component.tcp_local && ompi_proc == ompi_proc_local()) {
         mca_btl_tcp_component.tcp_local = btl_proc;
     }

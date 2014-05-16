@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1042,7 +1043,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
                          NULL );
-                                                                                                                                  
+
     ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_max,
                          sizeof (mca_btl_tcp_frag_max_t) + 
                          mca_btl_tcp_module.super.btl_max_send_size,
@@ -1053,7 +1054,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
                          NULL );
-                                                                                                                                  
+
     ompi_free_list_init_new( &mca_btl_tcp_component.tcp_frag_user,
                          sizeof (mca_btl_tcp_frag_user_t),
                          opal_cache_line_size,
@@ -1063,7 +1064,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          mca_btl_tcp_component.tcp_free_list_max,
                          mca_btl_tcp_component.tcp_free_list_inc,
                          NULL );
-                                                                                                                                  
+
     /* create a BTL TCP module for selected interfaces */
     if(OMPI_SUCCESS != (ret = mca_btl_tcp_component_create_instances() )) {
         return 0;
