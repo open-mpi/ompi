@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -68,6 +70,7 @@ ompi_osc_base_finalize(void)
         ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
             ((mca_base_component_list_item_t*) item)->cli_component;
         component->osc_finalize();
+        OBJ_RELEASE(item);
     }
     return OMPI_SUCCESS;
 }
