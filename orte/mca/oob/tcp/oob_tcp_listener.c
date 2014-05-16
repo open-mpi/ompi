@@ -837,8 +837,25 @@ static void connection_handler(int sd, short flags, void* cbdata)
         }
     }
     if (!found) {
-        opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* let's just assign it to the first module we have as we
+         * can't do any better - this is just an assignment to a
+         * specific software module to handle the connection
+         */
+        for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
+            if (NULL != (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
+                /* process the connection */
+                mod->api.accept_connection((struct mca_oob_tcp_module_t*)mod, new_connection->fd,
+                                           (struct sockaddr*) &(new_connection->addr));
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            close(new_connection->fd); // close this so the remote end hangs up
+            opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
     }
 
     /* cleanup */
@@ -920,8 +937,24 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
         }
     }
     if (!found) {
-        opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* let's just assign it to the first module we have as we
+         * can't do any better - this is just an assignment to a
+         * specific software module to handle the connection
+         */
+        for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
+            if (NULL != (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
+                /* process the connection */
+                mod->api.accept_connection((struct mca_oob_tcp_module_t*)mod, sd, &addr);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            close(sd); // close this so the remote end hangs up
+            opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
     }
 }
 
