@@ -15,6 +15,8 @@
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -482,7 +484,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
              */
             n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_eager);
             for(n_index = 0; n_index < n_size; n_index++) {
-                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
+                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_eager, n_index);
                 if(search_bml_btl->btl == btl) {
                     memset(search_bml_btl, 0, sizeof(mca_bml_base_btl_t));
                     break;
