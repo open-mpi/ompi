@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -264,6 +267,7 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
     opal_if_t* intf;
     int error;
     struct addrinfo hints, *res = NULL, *r;
+    int if_kernel_index;
     size_t len;
 
     if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
@@ -283,16 +287,15 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
     }
 
     for (r = res; r != NULL; r = r->ai_next) {
-        for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
-            intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
-            intf =  (opal_if_t*)opal_list_get_next(intf)) {
-            
+        OPAL_LIST_FOREACH(intf, &opal_if_list, opal_if_t) {
             if (AF_INET == r->ai_family && AF_INET == intf->af_family) {
                 struct sockaddr_in ipv4;
                 len = (r->ai_addrlen < sizeof(struct sockaddr_in)) ? r->ai_addrlen : sizeof(struct sockaddr_in);
                 memcpy(&ipv4, r->ai_addr, len);
                 if (opal_net_samenetwork((struct sockaddr*)&ipv4, (struct sockaddr*)&intf->if_addr, intf->if_mask)) {
-                    return intf->if_kernel_index;
+                    if_kernel_index = intf->if_kernel_index;
+                    freeaddrinfo (res);
+                    return if_kernel_index;
                 }
             }
 #if OPAL_ENABLE_IPV6
@@ -302,7 +305,9 @@ int16_t opal_ifaddrtokindex(const char* if_addr)
                 memcpy(&ipv6, r->ai_addr, len);
                 if (opal_net_samenetwork((struct sockaddr*)((struct sockaddr_in6*)&intf->if_addr),
                                          (struct sockaddr*)&ipv6, intf->if_mask)) {
-                    return intf->if_kernel_index;
+                    if_kernel_index = intf->if_kernel_index;
+                    freeaddrinfo (res);
+                    return if_kernel_index;
                 }
             }
 #endif
