@@ -1,5 +1,6 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
@@ -39,6 +40,9 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     bool reachable;
     char *rmluri;
 
+    /* done with this. release it now */
+    OBJ_RELEASE(cd);
+
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "%s oob:base:send to target %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -68,7 +72,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                 ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                 ORTE_RML_SEND_COMPLETE(msg);
-                OBJ_RELEASE(cd);
                 return;
             }
         } else {
@@ -91,7 +94,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                                 ORTE_ERROR_LOG(rc);
                                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                                 ORTE_RML_SEND_COMPLETE(msg);
-                                OBJ_RELEASE(cd);
                                 return;
                             }
                         }
@@ -106,7 +108,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
             if (!reachable) {
                 msg->status = ORTE_ERR_ADDRESSEE_UNKNOWN;
                 ORTE_RML_SEND_COMPLETE(msg);
-                OBJ_RELEASE(cd);
                 return;
             }
         }
@@ -123,7 +124,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&msg->dst));
         if (ORTE_SUCCESS == (rc = pr->component->send_nb(msg))) {
-            OBJ_RELEASE(cd);
             return;
         }
     }
@@ -154,7 +154,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
             ORTE_ERROR_LOG(rc);
             msg->status = rc;
             ORTE_RML_SEND_COMPLETE(msg);
-            OBJ_RELEASE(cd);
             return;
         }
     }
@@ -170,7 +169,6 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
         msg->status = ORTE_ERR_NO_PATH_TO_TARGET;
         ORTE_RML_SEND_COMPLETE(msg);
     }
-    OBJ_RELEASE(cd);
 }
 
 /**
