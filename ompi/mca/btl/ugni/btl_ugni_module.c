@@ -170,7 +170,15 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
         if (GNI_RC_SUCCESS != rc) {
             BTL_VERBOSE(("btl/ugni error destroying endpoint"));
         }
+    }
 
+    OBJ_DESTRUCT(&ugni_module->pending_smsg_frags_bb);
+    OBJ_DESTRUCT(&ugni_module->id_to_endpoint);
+    OBJ_DESTRUCT(&ugni_module->endpoints);
+    OBJ_DESTRUCT(&ugni_module->failed_frags);
+
+    if (ugni_module->initialized) {
+        /* need to tear down the mpools *after* the free lists */
         if (NULL != ugni_module->smsg_mpool) {
             (void) mca_mpool_base_module_destroy (ugni_module->smsg_mpool);
             ugni_module->smsg_mpool  = NULL;
@@ -181,11 +189,6 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
             ugni_module->super.btl_mpool = NULL;
         }
     }
-
-    OBJ_DESTRUCT(&ugni_module->pending_smsg_frags_bb);
-    OBJ_DESTRUCT(&ugni_module->id_to_endpoint);
-    OBJ_DESTRUCT(&ugni_module->endpoints);
-    OBJ_DESTRUCT(&ugni_module->failed_frags);
 
     ugni_module->initialized = false;
 
