@@ -47,6 +47,14 @@ static void mca_coll_hcoll_module_construct(mca_coll_hcoll_module_t *hcoll_modul
     mca_coll_hcoll_module_clear(hcoll_module);
 }
 
+void mca_coll_hcoll_mem_release_cb(void *buf, size_t length,
+                                          void *cbdata, bool from_alloc)
+{
+#if HCOLL_API > HCOLL_VERSION(3,0)
+    hcoll_mem_unmap(buf, length, cbdata, from_alloc);
+#endif
+}
+
 static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module)
 {
     mca_coll_hcoll_module_t *module;
@@ -224,6 +232,12 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
         HCOL_VERBOSE(10,"Calling hcoll_init();");
         rc = hcoll_init();
+
+        if (cm->using_mem_hooks && hcoll_check_mem_release_cb_needed()) {
+            opal_mem_hooks_register_release(mca_coll_hcoll_mem_release_cb, NULL);
+        } else {
+            cm->using_mem_hooks = 0;
+        }
 
         if (HCOLL_SUCCESS != rc){
             cm->hcoll_enable = 0;
