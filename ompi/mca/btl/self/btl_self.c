@@ -259,7 +259,6 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = flags;
-    (void)rc;  /* unused but needed by a macro */
     return &frag->base;
 }
  
