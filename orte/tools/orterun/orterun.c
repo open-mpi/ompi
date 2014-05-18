@@ -561,6 +561,7 @@ static int create_app(int argc, char* argv[],
 static int init_globals(void);
 static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line);
 static int parse_locals(orte_job_t *jdata, int argc, char* argv[]);
+static void set_classpath_jar_file(orte_app_context_t *app, int index, char *jarfile);
 static int parse_appfile(orte_job_t *jdata, char *filename, char ***env);
 static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                          int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
@@ -2016,16 +2017,8 @@ static int create_app(int argc, char* argv[],
                 NULL != strstr(app->argv[i], "classpath")) {
                 /* yep - but does it include the path to the mpi libs? */
                 found = true;
-                if (NULL == strstr(app->argv[i+1], "mpi.jar")) {
-                    /* nope - need to add it */
-                    if (':' == app->argv[i+1][strlen(app->argv[i+1]-1)]) {
-                        asprintf(&value, "%s%s/mpi.jar", app->argv[i+1], opal_install_dirs.libdir);
-                    } else {
-                        asprintf(&value, "%s:%s/mpi.jar", app->argv[i+1], opal_install_dirs.libdir);
-                    }
-                    free(app->argv[i+1]);
-                    app->argv[i+1] = value;
-                }
+                set_classpath_jar_file(app, i+1, "mpi.jar");
+                set_classpath_jar_file(app, i+1, "shmem.jar");
                 break;
             }
         }
@@ -2033,28 +2026,12 @@ static int create_app(int argc, char* argv[],
             /* check to see if CLASSPATH is in the environment */
             for (i=0; NULL != environ[i]; i++) {
                 if (0 == strncmp(environ[i], "CLASSPATH", strlen("CLASSPATH"))) {
-                    /* check if mpi.jar is present */
-                    if (NULL != strstr(environ[i], "mpi.jar")) {
-                        /* yes - just add the envar to the argv in the
-                         * right format
-                         */
-                        value = strchr(environ[i], '=');
-                        ++value; /* step over the = */
-                        opal_argv_insert_element(&app->argv, 1, value);
-                        opal_argv_insert_element(&app->argv, 1, "-cp");
-                    } else {
-                        /* need to add it */
-                        value = strchr(environ[i], '=');
-                        ++value; /* step over the = */
-                        if (':' == value[strlen(value-1)]) {
-                            asprintf(&param, "%s%s/mpi.jar", value, opal_install_dirs.libdir);
-                        } else {
-                            asprintf(&param, "%s:%s/mpi.jar", value, opal_install_dirs.libdir);
-                        }
-                        opal_argv_insert_element(&app->argv, 1, param);
-                        opal_argv_insert_element(&app->argv, 1, "-cp");
-                        free(param);
-                    }
+                    value = strchr(environ[i], '=');
+                    ++value; /* step over the = */
+                    opal_argv_insert_element(&app->argv, 1, value);
+                    set_classpath_jar_file(app, 1, "mpi.jar");
+                    set_classpath_jar_file(app, 1, "shmem.jar");
+                    opal_argv_insert_element(&app->argv, 1, "-cp");
                     found = true;
                     break;
                 }
@@ -2064,7 +2041,8 @@ static int create_app(int argc, char* argv[],
                  * to include the current directory and trust that
                  * the user set cwd if necessary
                  */
-                asprintf(&value, ".:%s/mpi.jar", opal_install_dirs.libdir);
+                asprintf(&value, ".:%s/mpi.jar:%s/shmem.jar",
+                         opal_install_dirs.libdir, opal_install_dirs.libdir);
                 opal_argv_insert_element(&app->argv, 1, value);
                 free(value);
                 opal_argv_insert_element(&app->argv, 1, "-cp");
@@ -2117,6 +2095,18 @@ static int create_app(int argc, char* argv[],
     return rc;
 }
 
+static void set_classpath_jar_file(orte_app_context_t *app, int index, char *jarfile)
+{
+    if (NULL == strstr(app->argv[index], jarfile)) {
+        /* nope - need to add it */
+        char *fmt = ':' == app->argv[index][strlen(app->argv[index]-1)]
+                    ? "%s%s/%s" : "%s:%s/%s";
+        char *str;
+        asprintf(&str, fmt, app->argv[index], opal_install_dirs.libdir, jarfile);
+        free(app->argv[index]);
+        app->argv[index] = str;
+    }
+}
 
 static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
 {
