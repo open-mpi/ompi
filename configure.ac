@@ -146,7 +146,8 @@ m4_ifdef([project_ompi],
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
 m4_ifdef([project_oshmem],
-         [AC_SUBST(liboshmem_so_version)])
+         [AC_SUBST(liboshmem_so_version)
+          AC_SUBST(liboshmem_java_so_version)])
 AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libmca_opal_common_pmi_so_version)
 AC_SUBST(libopen_pal_so_version)
@@ -589,6 +590,7 @@ OPAL_CHECK_COMPILER_VERSION_ID
 ##################################
 # Only needed for OMPI
 m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
+m4_ifdef([project_oshmem], [OSHMEM_SETUP_JAVA_BINDINGS])
 
 
 ##################################
