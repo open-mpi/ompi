@@ -128,8 +128,27 @@ int mca_pml_ob1_isend(void *buf,
                       ompi_communicator_t * comm,
                       ompi_request_t ** request)
 {
-    int rc;
+    mca_pml_ob1_comm_t* ob1_comm = comm->c_pml_comm;
     mca_pml_ob1_send_request_t *sendreq = NULL;
+    ompi_proc_t *dst_proc = ompi_comm_peer_lookup (comm, dst);
+    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
+                                        dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+    int16_t seqn;
+    int rc;
+
+    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_comm->procs[dst].send_sequence, 1);
+
+    if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
+        rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
+                                      endpoint, comm);
+        if (OPAL_LIKELY(0 <= rc)) {
+            /* NTH: it is legal to return ompi_request_empty since the only valid
+             * field in a send completion status is whether or not the send was
+             * cancelled (which it can't be at this point anyway). */
+            *request = &ompi_request_empty;
+            return OMPI_SUCCESS;
+        }
+    }
 
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
     if (NULL == sendreq)
@@ -146,7 +165,7 @@ int mca_pml_ob1_isend(void *buf,
                              &(sendreq)->req_send.req_base,
                              PERUSE_SEND);
 
-    MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
+    MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
     *request = (ompi_request_t *) sendreq;
     return rc;
 }
