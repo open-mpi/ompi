@@ -482,9 +482,9 @@ static int mca_bml_r2_del_procs(size_t nprocs,
             /* remove this from next array so that we dont call it twice w/ 
              * the same address pointer
              */
-            n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_eager);
+            n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
             for(n_index = 0; n_index < n_size; n_index++) {
-                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_eager, n_index);
+                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
                 if(search_bml_btl->btl == btl) {
                     memset(search_bml_btl, 0, sizeof(mca_bml_base_btl_t));
                     break;
@@ -509,7 +509,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
         OBJ_RELEASE(proc); 
         /* do any required cleanup */
         OBJ_RELEASE(bml_endpoint);
-        
+        proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
     }
     free(del_procs);
 
