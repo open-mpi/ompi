@@ -12,7 +12,7 @@
 if OMPI_WANT_JAVA_BINDINGS
 
 # Get the include files that were generated from the .java source files
-AM_CPPFLAGS = -I$(top_builddir)/oshmem/shmem/java/java $(OPAL_JDK_CPPFLAGS) -DOPAL_DYN_LIB_SUFFIX=\"$(OPAL_DYN_LIB_SUFFIX)\"
+AM_CPPFLAGS = -I$(OSHMEM_TOP_BUILDDIR)/oshmem/shmem/java/java $(OPAL_JDK_CPPFLAGS) -DOPAL_DYN_LIB_SUFFIX=\"$(OPAL_DYN_LIB_SUFFIX)\"
 
 headers = \
         shmemJava.h
