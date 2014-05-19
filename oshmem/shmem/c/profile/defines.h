@@ -158,7 +158,6 @@
 #define shmem_int_swap              pshmem_int_swap
 #define shmem_long_swap             pshmem_long_swap
 #define shmem_longlong_swap         pshmem_longlong_swap
-#define shmem_int16_swap            pshmem_int16_swap
 #define shmem_int32_swap            pshmem_int32_swap
 #define shmem_int64_swap            pshmem_int64_swap
 
@@ -167,7 +166,6 @@
 #define shmem_int_cswap             pshmem_int_cswap
 #define shmem_long_cswap            pshmem_long_cswap
 #define shmem_longlong_cswap        pshmem_longlong_cswap
-#define shmem_int16_cswap           pshmem_int16_cswap
 #define shmem_int32_cswap           pshmem_int32_cswap
 #define shmem_int64_cswap           pshmem_int64_cswap
 
@@ -176,7 +174,6 @@
 #define shmem_int_fadd              pshmem_int_fadd
 #define shmem_long_fadd             pshmem_long_fadd
 #define shmem_longlong_fadd         pshmem_longlong_fadd
-#define shmem_int16_fadd            pshmem_int16_fadd
 #define shmem_int32_fadd            pshmem_int32_fadd
 #define shmem_int64_fadd            pshmem_int64_fadd
 
@@ -184,7 +181,6 @@
 #define shmem_int_finc              pshmem_int_finc
 #define shmem_long_finc             pshmem_long_finc
 #define shmem_longlong_finc         pshmem_longlong_finc
-#define shmem_int16_finc            pshmem_int16_finc
 #define shmem_int32_finc            pshmem_int32_finc
 #define shmem_int64_finc            pshmem_int64_finc
 
@@ -192,7 +188,6 @@
 #define shmem_int_add               pshmem_int_add
 #define shmem_long_add              pshmem_long_add
 #define shmem_longlong_add          pshmem_longlong_add
-#define shmem_int16_add             pshmem_int16_add
 #define shmem_int32_add             pshmem_int32_add
 #define shmem_int64_add             pshmem_int64_add
 
@@ -200,7 +195,6 @@
 #define shmem_int_inc               pshmem_int_inc
 #define shmem_long_inc              pshmem_long_inc
 #define shmem_longlong_inc          pshmem_longlong_inc
-#define shmem_int16_inc             pshmem_int16_inc
 #define shmem_int32_inc             pshmem_int32_inc
 #define shmem_int64_inc             pshmem_int64_inc
 
