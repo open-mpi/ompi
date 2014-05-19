@@ -27,13 +27,13 @@
 
 #include "ompi/proc/proc.h"
 #include "ompi/patterns/comm/coll_ops.h"
+#include "opal/align.h"
 
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/align.h"
 
 #include "bcol_basesmuma.h"
 
@@ -400,6 +400,8 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
     /* local variables */
     int fd = -1;
     bcol_basesmuma_smcm_mmap_t *map = NULL;
+    int rc;
+
     /* if pointer is not allocated - return error.  We have no clue how the user will allocate or
      *   free this memory.
      */
@@ -414,6 +416,12 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
         opal_output (ompi_bcol_base_framework.framework_output, "basesmuma shared memory allocation ftruncate failed with errno: %d",
                     errno);
     } else {
+        /* ensure there is enough space for the backing store */
+        rc = ftruncate (fd, length);
+        if (0 > rc) {
+            opal_output (ompi_bcol_base_framework.framework_output, "failed to truncate the file to be mapped. errno: %d", errno);
+            return NULL;
+        }
 
         map = bcol_basesmuma_smcm_reg_mmap(in_ptr, fd, length, alignment, file_name);
         if (NULL == map) {
@@ -462,7 +470,9 @@ bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr,
     myaddr = (unsigned char *) seg;
     /* if we have a data segment (i.e. if 0 != data_seg_alignement) */
 
-    if ( 0 != alignment) {
+    /* all mmaped regions are required to be at least page size aligned so this
+     * code does nothing unless you want greater alignment */
+    if (alignment > getpagesize ()) {
         myaddr = OPAL_ALIGN_PTR(myaddr, alignment, unsigned char*);
 
         /* is addr past the end of the file? */
