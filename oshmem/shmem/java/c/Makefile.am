@@ -16,7 +16,7 @@ AM_CPPFLAGS = -I$(top_builddir)/oshmem/shmem/java/java $(OPAL_JDK_CPPFLAGS) -DOP
 
 headers = \
         shmemJava.h
-oshmemdir = $(ompiincludedir)/oshmem/shmem/java
+oshmemdir = $(oshmemincludedir)/oshmem/shmem/java
 oshmem_HEADERS = \
         $(headers)
 
@@ -26,7 +26,7 @@ liboshmem_java_la_SOURCES = \
 	shmem_Constant.c \
         shmem_ShMem.c
 
-liboshmem_java_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la
+liboshmem_java_la_LIBADD = $(OSHMEM_TOP_BUILDDIR)/oshmem/liboshmem.la
 liboshmem_java_la_LDFLAGS = -version-info $(liboshmem_java_so_version)
 
 endif
