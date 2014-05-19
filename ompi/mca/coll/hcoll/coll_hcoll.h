@@ -14,6 +14,7 @@
 
 #include "mpi.h"
 #include "opal/mca/mca.h"
+#include "opal/memoryhooks/memory.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
@@ -27,6 +28,9 @@
 
 
 #include "coll_hcoll_debug.h"
+#ifndef HCOLL_VERSION
+#define HCOLL_VERSION(major, minor) (((major)<<HCOLL_MAJOR_BIT)|((minor)<<HCOLL_MINOR_BIT))
+#endif
 BEGIN_C_DECLS
 
 
@@ -61,6 +65,8 @@ struct mca_coll_hcoll_component_t {
 
     /** Whether or not hcoll_init was ever called */
     bool libhcoll_initialized;
+
+    bool using_mem_hooks;
 
     /** MCA parameter: ON/OFF user defined datatype through HCOLL */
     int   hcoll_datatype_fallback;
@@ -195,6 +201,7 @@ int mca_coll_hcoll_iallreduce(void *sbuf, void *rbuf, int count,
                             ompi_request_t** request,
                             mca_coll_base_module_t *module);
 int mca_coll_hcoll_progress(void);
+void mca_coll_hcoll_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc);
 END_C_DECLS
 
 #endif

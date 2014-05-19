@@ -222,6 +222,20 @@ static int hcoll_open(void)
     hcoll_rte_fns_setup();
 
     cm->libhcoll_initialized = false;
+
+    /* Register memory hooks */
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
+         opal_mem_hooks_support_level()))
+    {
+        setenv("MXM_HCOLL_MEM_ON_DEMAND_MAP", "y", 0);
+        HCOL_VERBOSE(1, "Enabling on-demand memory mapping");
+        cm->using_mem_hooks = 1;
+    } else {
+        HCOL_VERBOSE(1, "Disabling on-demand memory mapping");
+        cm->using_mem_hooks = 0;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -233,6 +247,10 @@ static int hcoll_close(void)
 
     if (false == cm->libhcoll_initialized) {
         return OMPI_SUCCESS;
+    }
+
+    if (cm->using_mem_hooks) {
+        opal_mem_hooks_unregister_release(mca_coll_hcoll_mem_release_cb);
     }
 
     HCOL_VERBOSE(5,"HCOLL FINALIZE");
