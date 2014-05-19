@@ -82,7 +82,7 @@ ompi__v_MKDIR_0 = @echo "  MKDIR " $@;
 shmem/ShMem.class: $(JAVA_SRC_FILES)
 	$(OMPI_V_JAVAC) CLASSPATH=. ; \
 	export CLASSPATH ; \
-	$(JAVAC) -d . $(top_srcdir)/oshmem/shmem/java/java/*.java
+	$(JAVAC) -d . $(OSHMEM_TOP_SRCDIR)/oshmem/shmem/java/java/*.java
 
 # Similar to above, all the generated .h files are dependent upon the
 # token shmem/ShMem.class file.  Hence, all the classes will be generated
@@ -142,8 +142,8 @@ clean-local:
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ompihdir = $(ompiincludedir)/$(subdir)
-nobase_nodist_ompih_HEADERS = $(JAVA_H)
+oshmemdir = $(oshmemincludedir)/$(subdir)
+oshmem_HEADERS = $(headers)
 endif
 
 endif

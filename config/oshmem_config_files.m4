@@ -20,6 +20,10 @@ AC_DEFUN([OSHMEM_CONFIG_FILES],[
     oshmem/shmem/fortran/Makefile
     oshmem/shmem/fortran/profile/Makefile
 
+    oshmem/shmem/java/Makefile
+    oshmem/shmem/java/java/Makefile
+    oshmem/shmem/java/c/Makefile
+
     oshmem/tools/oshmem_info/Makefile
     oshmem/tools/wrappers/Makefile
     oshmem/tools/wrappers/shmemcc-wrapper-data.txt
