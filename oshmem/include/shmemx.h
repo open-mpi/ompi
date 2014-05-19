@@ -75,6 +75,10 @@ OSHMEM_DECLSPEC int64_t shmem_int64_cswap(int64_t *target, int64_t cond, int64_t
 OSHMEM_DECLSPEC int32_t shmem_int32_fadd(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC int64_t shmem_int64_fadd(int64_t *target, int64_t value, int pe);
 
+/* Atomic Fetch&Inc */
+OSHMEM_DECLSPEC int32_t pshmem_int32_finc(int32_t *target, int pe);
+OSHMEM_DECLSPEC int64_t pshmem_int64_finc(int64_t *target, int pe);
+
 /* Atomic Add*/
 OSHMEM_DECLSPEC void shmem_int32_add(int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC void shmem_int64_add(int64_t *target, int64_t value, int pe);

@@ -55,9 +55,13 @@
 #pragma weak shmem_int_finc = pshmem_int_finc
 #pragma weak shmem_long_finc = pshmem_long_finc
 #pragma weak shmem_longlong_finc = pshmem_longlong_finc
+#pragma weak shmem_int32_finc = pshmem_int32_finc
+#pragma weak shmem_int64_finc = pshmem_int64_finc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 SHMEM_TYPE_FINC(_int, int)
 SHMEM_TYPE_FINC(_long, long)
 SHMEM_TYPE_FINC(_longlong, long long)
+SHMEM_TYPE_FINC(_int32, int32_t)
+SHMEM_TYPE_FINC(_int64, int64_t)
