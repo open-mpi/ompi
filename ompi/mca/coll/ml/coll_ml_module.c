@@ -3096,7 +3096,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* Vasily: RLG:  Need to cleanup free lists
      * do some quick and ugly cleanup */
     if (NULL != ml_module) {
-        int i, j, k,fnc, index_topo, alg;
+        int i, j, k,fnc, index_topo;
         mca_coll_ml_topology_t *topo;
         ml_coll_hier_reduce_cleanup(ml_module);
 
