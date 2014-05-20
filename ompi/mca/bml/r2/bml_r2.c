@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -455,32 +455,38 @@ static int mca_bml_r2_del_procs(size_t nprocs,
             del_procs[n_del_procs++] = proc; 
         }
     }
-    
+
     for(p = 0; p < n_del_procs; p++) {
         ompi_proc_t *proc = del_procs[p];
         mca_bml_base_endpoint_t* bml_endpoint =
             (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         size_t f_index, f_size;
         size_t n_index, n_size;
- 
+
         /* notify each btl that the proc is going away */
-        f_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_eager);
+        f_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
         for(f_index = 0; f_index < f_size; f_index++) {
-            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_eager, f_index);
+            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, f_index);
             mca_btl_base_module_t* btl = bml_btl->btl;
-            
-            rc = btl->btl_del_procs(btl,1,&proc,&bml_btl->btl_endpoint);
+
+            rc = btl->btl_del_procs(btl, 1, &proc, &bml_btl->btl_endpoint);
             if(OMPI_SUCCESS != rc) {
                 free(del_procs);
                 return rc;
             }
 
-            /* remove this from next array so that we dont call it twice w/ 
-             * the same address pointer
-             */
-            n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
+            /* remove this from all other arrays */
+            n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_eager);
             for(n_index = 0; n_index < n_size; n_index++) {
-                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
+                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_eager, n_index);
+                if(search_bml_btl->btl == btl) {
+                    memset(search_bml_btl, 0, sizeof(mca_bml_base_btl_t));
+                    break;
+                }
+            }
+            n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
+            for(n_index = 0; n_index < n_size; n_index++) {
+                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma, n_index);
                 if(search_bml_btl->btl == btl) {
                     memset(search_bml_btl, 0, sizeof(mca_bml_base_btl_t));
                     break;
@@ -488,21 +494,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
             }
         }
 
-        /* notify each r2 that was not in the array of r2s for first fragments */
-        n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
-        for(n_index = 0; n_index < n_size; n_index++) {
-            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
-            mca_btl_base_module_t* btl = bml_btl->btl;
-            if (btl != 0) {
-                rc = btl->btl_del_procs(btl,1,&proc,&bml_btl->btl_endpoint);
-                if(OMPI_SUCCESS != rc) {
-                    free(del_procs);
-                    return rc;
-                }
-            }
-        }
-        
-        OBJ_RELEASE(proc); 
+        OBJ_RELEASE(proc);
         /* do any required cleanup */
         OBJ_RELEASE(bml_endpoint);
         proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
