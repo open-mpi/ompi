@@ -183,9 +183,7 @@ int mca_pml_ob1_send(void *buf,
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
                                         dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     mca_pml_ob1_send_request_t *sendreq =
-        alloca(sizeof(mca_pml_ob1_send_request_t) +
-               (mca_pml_ob1.max_rdma_per_request - 1) *
-               sizeof(mca_pml_ob1_com_btl_t));
+        alloca(mca_pml_base_send_requests.fl_frag_size);
     int16_t seqn;
     int rc;
 
