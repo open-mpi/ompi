@@ -495,7 +495,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
         /* notify each r2 that was not in the array of r2s for first fragments */
         n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
         for(n_index = 0; n_index < n_size; n_index++) {
-            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_eager, n_index);
+            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t* btl = bml_btl->btl;
             if (btl != 0) {
                 rc = btl->btl_del_procs(btl,1,&proc,&bml_btl->btl_endpoint);
