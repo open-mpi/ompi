@@ -90,9 +90,7 @@ int mca_pml_ob1_recv(void *addr,
                      ompi_status_public_t * status)
 {
     mca_pml_ob1_recv_request_t *recvreq =
-        alloca(sizeof(mca_pml_ob1_recv_request_t) +
-               (mca_pml_ob1.max_rdma_per_request - 1) *
-               sizeof(mca_pml_ob1_com_btl_t));
+        alloca(mca_pml_base_recv_requests.fl_frag_size);
     int rc;
 
     OBJ_CONSTRUCT(recvreq, mca_pml_ob1_recv_request_t);
