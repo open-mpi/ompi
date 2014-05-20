@@ -50,7 +50,6 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
 {
     int i, size, err;
     size_t sendtype_size, recvtype_size;
-    bool zerosend=true, zerorecv=true;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;

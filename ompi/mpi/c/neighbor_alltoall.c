@@ -98,8 +98,8 @@ int MPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendt
     ompi_datatype_type_size(sendtype, &sendtype_size);
     ompi_datatype_type_size(recvtype, &recvtype_size);
     if (((MPI_IN_PLACE == sendbuf) ||
-         (0 == sendcount || 0 == sendtype_size)) &&
-        (0 == recvcount || 0 == recvtype_size)) {
+         (0 == sendcount) || (0 == sendtype_size)) &&
+        ((0 == recvcount) || 0 == (recvtype_size))) {
         return MPI_SUCCESS;
     }
 
