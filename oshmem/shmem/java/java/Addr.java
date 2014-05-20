@@ -1,7 +1,6 @@
 package shmem;
 
 import java.nio.*;
-import static shmem.ShMem.slice;
 
 /**
  * Symmetric data object.
@@ -66,27 +65,16 @@ private native ByteBuffer realloc(long addr, int size);
 
 /**
  * Creates a new object that shares this object's content.
- * <p>Offsets will be the same at the beginning, but they will be independents.
- * @return The new object.
+ * @param offset Offset of the new data object.
+ * @return New data object.
  */
-public Addr duplicate()
+public Addr slice(int offset)
 {
     Addr addr = new Addr();
     addr.handle = handle;
     addr.offset = offset;
-    addr.buffer = buffer.duplicate();
+    addr.buffer = buffer;
     return addr;
-}
-
-/**
- * Sets the current offset of the data object.
- * @param offset Offset of the data object.
- * @return This data object.
- */
-public Addr offset(int offset)
-{
-    this.offset = offset;
-    return this;
 }
 
 /**
@@ -95,7 +83,7 @@ public Addr offset(int offset)
  */
 public ByteBuffer asByteBuffer()
 {
-    return slice(buffer, offset);
+    return ShMem.slice(buffer, offset);
 }
 
 /**
