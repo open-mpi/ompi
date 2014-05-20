@@ -401,32 +401,28 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     }
 
     /* see if we have a connection to everyone else */
-    for(p=0; p<n_new_procs; p++) {
+    for(p = 0; p < n_new_procs; p++) {
         ompi_proc_t *proc = new_procs[p];
 
         if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-            if (NULL == unreach_proc) {
-                unreach_proc = proc;
-            }
             ret = OMPI_ERR_UNREACH;
+            if (mca_bml_r2.show_unreach_errors) {
+                opal_show_help("help-mca-bml-r2.txt",
+                               "unreachable proc",
+                               true, 
+                               OMPI_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
+                               (NULL != ompi_proc_local_proc->proc_hostname ?
+                                ompi_proc_local_proc->proc_hostname : "unknown!"),
+                               OMPI_NAME_PRINT(&(proc->proc_name)),
+                               (NULL != ompi_proc_local_proc->proc_hostname ?
+                                ompi_proc_local_proc->proc_hostname : "unknown!"),
+                               btl_names);
+            }
+            break;
         }
     }
 
-    if (mca_bml_r2.show_unreach_errors && 
-        OMPI_ERR_UNREACH == ret) {
-        opal_show_help("help-mca-bml-r2.txt",
-                       "unreachable proc",
-                       true, 
-                       OMPI_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
-                       (NULL != ompi_proc_local_proc->proc_hostname ?
-                        ompi_proc_local_proc->proc_hostname : "unknown!"),
-                       OMPI_NAME_PRINT(&(unreach_proc->proc_name)),
-                       (NULL != ompi_proc_local_proc->proc_hostname ?
-                        ompi_proc_local_proc->proc_hostname : "unknown!"),
-                       btl_names);
-    }
-
-    free(new_procs); 
+    free(new_procs);
 
     return ret;
 }
