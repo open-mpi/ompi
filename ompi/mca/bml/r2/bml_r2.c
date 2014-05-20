@@ -475,23 +475,10 @@ static int mca_bml_r2_del_procs(size_t nprocs,
                 return rc;
             }
 
-            /* remove this from all other arrays */
-            n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_eager);
-            for(n_index = 0; n_index < n_size; n_index++) {
-                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_eager, n_index);
-                if(search_bml_btl->btl == btl) {
-                    memset(search_bml_btl, 0, sizeof(mca_bml_base_btl_t));
-                    break;
-                }
-            }
-            n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
-            for(n_index = 0; n_index < n_size; n_index++) {
-                mca_bml_base_btl_t* search_bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma, n_index);
-                if(search_bml_btl->btl == btl) {
-                    memset(search_bml_btl, 0, sizeof(mca_bml_base_btl_t));
-                    break;
-                }
-            }
+            /* The reference stored in btl_eager and btl_rdma will automatically
+             * dissapear once the btl_array destructor is called. Thus, there is
+             * no need for extra cleaning here.
+             */
         }
 
         OBJ_RELEASE(proc);
