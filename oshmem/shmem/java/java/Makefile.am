@@ -13,7 +13,8 @@
 JAVA_SRC_FILES = \
         Addr.java \
         Constant.java \
-        ShMem.java
+        ShMem.java \
+        ShMemException.java
 
 EXTRA_DIST = $(JAVA_SRC_FILES)
 
