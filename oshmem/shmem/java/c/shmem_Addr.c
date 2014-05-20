@@ -583,17 +583,13 @@ JNIEXPORT jlong JNICALL Java_shmem_Addr_fAddLong(
 JNIEXPORT jint JNICALL Java_shmem_Addr_fIncInt(
         JNIEnv *env, jobject jthis, jlong addr, jint pe)
 {
-    /*///
     return shmem_int32_finc((int32_t*)addr, pe);
-    */
 }
 
 JNIEXPORT jlong JNICALL Java_shmem_Addr_fIncLong(
         JNIEnv *env, jobject jthis, jlong addr, jint pe)
 {
-    /*///
     return shmem_int64_finc((int64_t*)addr, pe);
-    */
 }
 
 JNIEXPORT void JNICALL Java_shmem_Addr_addInt(
