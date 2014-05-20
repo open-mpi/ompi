@@ -541,7 +541,7 @@ static int _algorithm_central_collector(struct oshmem_group_t *group,
                   group->my_pe);
 
     /* Set own data size */
-    pSync[0] = (nlong ? nlong : SHMEM_SYNC_READY);
+    pSync[0] = (nlong ? (long)nlong : SHMEM_SYNC_READY);
 
     if (PE_root == group->my_pe) {
         long value = 0;
