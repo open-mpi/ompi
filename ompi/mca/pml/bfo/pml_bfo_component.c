@@ -190,7 +190,7 @@ mca_pml_bfo_component_init( int* priority,
 
     allocator_component = mca_allocator_component_lookup( mca_pml_bfo.allocator_name );
     if(NULL == allocator_component) {
-        opal_output(0, "mca_pml_bfo_component_open: can't find allocator: %s\n", mca_pml_bfo.allocator_name);
+        opal_output(0, "mca_pml_bfo_component_init: can't find allocator: %s\n", mca_pml_bfo.allocator_name);
         return NULL;
     }
 
@@ -198,7 +198,7 @@ mca_pml_bfo_component_init( int* priority,
                                                                 mca_pml_bfo_seg_alloc,
                                                                 mca_pml_bfo_seg_free, NULL);
     if(NULL == mca_pml_bfo.allocator) {
-        opal_output(0, "mca_pml_bfo_component_open: unable to initialize allocator\n");
+        opal_output(0, "mca_pml_bfo_component_init: unable to initialize allocator\n");
         return NULL;
     }
 
