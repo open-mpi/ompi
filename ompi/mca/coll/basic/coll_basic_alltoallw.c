@@ -14,6 +14,9 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,13 +73,18 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
 
     /* in-place alltoallw slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
+        size_t msg_size_i;
+        ompi_datatype_type_size(rdtypes[i], &msg_size_i);
+        msg_size_i *= rcounts[i];
         for (j = i+1 ; j < size ; ++j) {
-            ompi_datatype_type_extent (rdtypes[j], &ext);
+            size_t msg_size_j;
+            ompi_datatype_type_size(rdtypes[j], &msg_size_j);
+            msg_size_j *= rcounts[j];
 
             /* Initiate all send/recv to/from others. */
             preq = basic_module->mccb_reqs;
 
-            if (i == rank && rcounts[j] != 0) {
+            if (i == rank && msg_size_j != 0) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtypes[j], rcounts[j],
                                                            tmp_buffer, (char *) rbuf + rdisps[j]);
@@ -91,7 +99,7 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
                                           j, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
                                           comm, preq++));
                 if (MPI_SUCCESS != err) { goto error_hndl; }
-            } else if (j == rank && rcounts[i] != 0) {
+            } else if (j == rank && msg_size_i != 0) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtypes[i], rcounts[i],
                                                            tmp_buffer, (char *) rbuf + rdisps[i]);
@@ -111,7 +119,7 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
             }
 
             /* Wait for the requests to complete */
-            err = ompi_request_wait_all (2, basic_module->mccb_reqs, MPI_STATUS_IGNORE);
+            err = ompi_request_wait_all (2, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
             /* Free the requests. */
@@ -168,12 +176,10 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     psnd = ((char *) sbuf) + sdisps[rank];
     prcv = ((char *) rbuf) + rdisps[rank];
 
-    if (0 != scounts[rank]) {
-        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtypes[rank],
-                              prcv, rcounts[rank], rdtypes[rank]);
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
+    err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtypes[rank],
+                               prcv, rcounts[rank], rdtypes[rank]);
+    if (MPI_SUCCESS != err) {
+        return err;
     }
 
     /* If only one process, we're done. */
@@ -190,7 +196,11 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     /* Post all receives first -- a simple optimization */
 
     for (i = 0; i < size; ++i) {
-        if (i == rank || 0 == rcounts[i])
+        size_t msg_size;
+        ompi_datatype_type_size(rdtypes[i], &msg_size);
+        msg_size *= rcounts[i];
+       
+        if (i == rank || 0 == msg_size)
             continue;
 
         prcv = ((char *) rbuf) + rdisps[i];
@@ -208,7 +218,11 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     /* Now post all sends */
 
     for (i = 0; i < size; ++i) {
-        if (i == rank || 0 == scounts[i])
+        size_t msg_size;
+        ompi_datatype_type_size(sdtypes[i], &msg_size);
+        msg_size *= scounts[i];
+
+        if (i == rank || 0 == msg_size)
             continue;
 
         psnd = ((char *) sbuf) + sdisps[i];
@@ -276,15 +290,23 @@ mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
     size = ompi_comm_remote_size(comm);
 
     /* Initiate all send/recv to/from others. */
-    nreqs = size * 2;
+    nreqs = 0;
     preq = basic_module->mccb_reqs;
 
     /* Post all receives first -- a simple optimization */
     for (i = 0; i < size; ++i) {
+        size_t msg_size;
+        ompi_datatype_type_size(rdtypes[i], &msg_size);
+        msg_size *= rcounts[i];
+       
+        if (0 == msg_size)
+            continue;
+
         prcv = ((char *) rbuf) + rdisps[i];
         err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
                                       i, MCA_COLL_BASE_TAG_ALLTOALLW,
                                       comm, preq++));
+        ++nreqs;
         if (OMPI_SUCCESS != err) {
             mca_coll_basic_free_reqs(basic_module->mccb_reqs,
                                      nreqs);
@@ -294,11 +316,19 @@ mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
 
     /* Now post all sends */
     for (i = 0; i < size; ++i) {
+        size_t msg_size;
+        ompi_datatype_type_size(sdtypes[i], &msg_size);
+        msg_size *= scounts[i];
+
+        if (0 == msg_size)
+            continue;
+
         psnd = ((char *) sbuf) + sdisps[i];
         err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
                                       i, MCA_COLL_BASE_TAG_ALLTOALLW,
                                       MCA_PML_BASE_SEND_STANDARD, comm,
                                       preq++));
+        ++nreqs;
         if (OMPI_SUCCESS != err) {
             mca_coll_basic_free_reqs(basic_module->mccb_reqs,
                                      nreqs);
