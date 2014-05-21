@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -159,12 +159,10 @@ opal_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
       return opal_atomic_cmpset_64( (volatile int64_t*)addr,
                                     (int64_t)oldval, (int64_t)newval );
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
-   default:
-       /* This should never happen, so deliberately abort (hopefully
-          leaving a coreful for analysis) */
-       abort();
    }
-   return 0;  /* always fail */
+   abort();
+   /* This should never happen, so deliberately abort (hopefully
+      leaving a coreful for analysis) */
 }
 
 
@@ -184,12 +182,10 @@ opal_atomic_cmpset_acq_xx(volatile void* addr, int64_t oldval,
       return opal_atomic_cmpset_acq_64( (volatile int64_t*)addr,
                                         (int64_t)oldval, (int64_t)newval );
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
-   default:
-       /* This should never happen, so deliberately abort (hopefully
-          leaving a coreful for analysis) */
-       abort();
    }
-   return 0;  /* always fail */
+   /* This should never happen, so deliberately abort (hopefully
+      leaving a coreful for analysis) */
+   abort();
 }
 
 
@@ -209,12 +205,10 @@ opal_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
       return opal_atomic_cmpset_rel_64( (volatile int64_t*)addr,
                                         (int64_t)oldval, (int64_t)newval );
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
-   default:
-       /* This should never happen, so deliberately abort (hopefully
-          leaving a coreful for analysis) */
-       abort();
    }
-   return 0;  /* always fail */
+   /* This should never happen, so deliberately abort (hopefully
+      leaving a coreful for analysis) */
+   abort();
 }
 
 
@@ -231,7 +225,6 @@ opal_atomic_cmpset_ptr(volatile void* addr,
                                  (unsigned long) newval);
 #else
     abort();
-    return 0;
 #endif
 }
 
@@ -249,7 +242,6 @@ opal_atomic_cmpset_acq_ptr(volatile void* addr,
                                      (unsigned long) newval);
 #else
     abort();
-    return 0;
 #endif
 }
 
@@ -266,7 +258,6 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
                                      (unsigned long) newval);
 #else
     abort();
-    return 0;
 #endif
 }
 
