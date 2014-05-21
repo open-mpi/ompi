@@ -12,6 +12,8 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -270,7 +272,7 @@ do {                                                                            
             }                                                                     \
         }                                                                         \
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
-                                      &(recvreq->req_recv.req_base), max_data,    \
+                                      &(request->req_recv.req_base), max_data,    \
                                       PERUSE_RECV);                               \
         opal_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
                                      &data_offset );                              \
