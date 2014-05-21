@@ -103,7 +103,7 @@ static int ompi_mtl_mxm_component_register(void)
             &ompi_mtl_mxm.compiletime_version);
 
 #if MXM_API >= MXM_VERSION(3,0)
-    ompi_mtl_mxm.runtime_version = mxm_get_version_string();
+    ompi_mtl_mxm.runtime_version = (char *)mxm_get_version_string();
 #else
     cur_ver = mxm_get_version();
     major = (cur_ver >> MXM_MAJOR_BIT) & 0xff;
