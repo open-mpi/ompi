@@ -213,11 +213,14 @@ static int store(const opal_identifier_t *uid,
      * a pre-existing value
      */
     kv = lookup_keyval(proc_data, key);
+#if OPAL_ENABLE_DEBUG
+    char *_data_type = opal_dss.lookup_data_type(type);
     OPAL_OUTPUT_VERBOSE((5, opal_db_base_framework.framework_output,
                          "db:hash:store: %s key %s[%s] for proc %" PRIu64 "",
                          (NULL == kv ? "storing" : "updating"),
-                         key, opal_dss.lookup_data_type(type), id));
-
+                         key, _data_type, id));
+    free (_data_type);
+#endif
     if (NULL != kv) {
         opal_list_remove_item(&proc_data->data, &kv->super);
         OBJ_RELEASE(kv);
