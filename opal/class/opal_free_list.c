@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,6 +52,14 @@ static void opal_free_list_construct(opal_free_list_t* fl)
 static void opal_free_list_destruct(opal_free_list_t* fl)
 {
     opal_list_item_t *item;
+
+    if (fl->fl_elem_class) {
+        while (NULL != (item = opal_list_remove_first (&fl->super))) {
+            /* destruct the item (we constructed it), the underlying memory will be
+             * reclaimed when we free the slab below */
+            OBJ_DESTRUCT(item);
+        }
+    }
 
     while (NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
         /* destruct the item (we constructed it), then free the memory chunk */
