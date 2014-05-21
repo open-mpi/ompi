@@ -662,11 +662,31 @@ static int connect_accept(ompi_communicator_t *comm, int root,
 
 static int disconnect(ompi_communicator_t *comm)
 {
+    /* JMS Temporarily disable PML-based barrier and use RTE-based
+       barrier instead.  This is related to
+       https://svn.open-mpi.org/trac/ompi/ticket/4643. */
+#if 1
+    int ret;
+    ompi_rte_collective_t *coll;
+    coll = OBJ_NEW(ompi_rte_collective_t);
+    coll->id = ompi_process_info.peer_fini_barrier;
+    coll->active = true;
+    if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
+        OMPI_ERROR_LOG(ret);
+        return ret;
+    }
+
+    /* wait for barrier to complete */
+    OMPI_WAIT_FOR_COMPLETION(coll->active);
+    OBJ_RELEASE(coll);
+
+    return OMPI_SUCCESS;
+#else
     ompi_dpm_base_disconnect_obj *dobj;
     
     dobj = ompi_dpm_base_disconnect_init (comm);
     return ompi_dpm_base_disconnect_waitall(1, &dobj);
-    
+#endif    
 }
 
 static int spawn(int count, const char *array_of_commands[],
