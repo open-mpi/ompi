@@ -221,6 +221,25 @@ static int fini_vader_endpoint (struct mca_btl_base_endpoint_t *ep)
 
     if (NULL != ep->fbox_out) {
 #if OMPI_BTL_VADER_HAVE_XPMEM
+        if (ep->rcache) {
+            /* clean out the registration cache */
+            const int nregs = 100;
+            mca_mpool_base_registration_t *regs[nregs];
+            int reg_cnt;
+
+            do {
+                reg_cnt = ep->rcache->rcache_find_all(ep->rcache, 0, (size_t)-1,
+                                                      regs, nregs);
+
+                for (int i = 0 ; i < reg_cnt ; ++i) {
+                    /* otherwise dereg will fail on assert */
+                    regs[i]->ref_count = 0;
+                    OBJ_RELEASE(regs[i]);
+                }
+            } while (reg_cnt == nregs);
+
+            ep->rcache = NULL;
+        }
         xpmem_release (ep->apid);
 #else
         opal_shmem_segment_detach (&ep->seg_ds);
