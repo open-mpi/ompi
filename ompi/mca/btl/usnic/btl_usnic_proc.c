@@ -232,7 +232,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
                        ompi_process_info.nodename,
                        proc->proc_ompi->proc_hostname);
         OBJ_RELEASE(proc);
-        return OMPI_ERR_BAD_PARAM;
+        return NULL;
     }
 
     proc->proc_modex_claimed = (bool*) 
