@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,28 +89,29 @@ int mca_pml_ob1_recv(void *addr,
                      struct ompi_communicator_t *comm,
                      ompi_status_public_t * status)
 {
-    mca_pml_ob1_recv_request_t recvreq;
+    mca_pml_ob1_recv_request_t *recvreq =
+        alloca(mca_pml_base_recv_requests.fl_frag_size);
     int rc;
 
-    OBJ_CONSTRUCT(&recvreq, mca_pml_ob1_recv_request_t);
+    OBJ_CONSTRUCT(recvreq, mca_pml_ob1_recv_request_t);
 
-    MCA_PML_OB1_RECV_REQUEST_INIT(&recvreq, addr, count, datatype,
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
                                   src, tag, comm, false);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(recvreq.req_recv.req_base),
+                             &(recvreq->req_recv.req_base),
                              PERUSE_RECV);
 
-    MCA_PML_OB1_RECV_REQUEST_START(&recvreq);
-    ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
+    MCA_PML_OB1_RECV_REQUEST_START(recvreq);
+    ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
 
     if (NULL != status) {  /* return status */
-        *status = recvreq.req_recv.req_base.req_ompi.req_status;
+        *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
 
-    rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
-    MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq.req_recv);
-    OBJ_DESTRUCT(&recvreq);
+    rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+    MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
+    OBJ_DESTRUCT(recvreq);
 
     return rc;
 }

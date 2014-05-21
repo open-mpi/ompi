@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -162,7 +163,8 @@ int mca_pml_ob1_send(void *buf,
     ompi_proc_t *dst_proc = ompi_comm_peer_lookup (comm, dst);
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
                                         dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-    mca_pml_ob1_send_request_t sendreq;
+    mca_pml_ob1_send_request_t *sendreq =
+        alloca(mca_pml_base_send_requests.fl_frag_size);
     int16_t seqn;
     int rc;
 
@@ -194,11 +196,11 @@ int mca_pml_ob1_send(void *buf,
         }
     }
 
-    OBJ_CONSTRUCT(&sendreq, mca_pml_ob1_send_request_t);
-    sendreq.req_send.req_base.req_proc = dst_proc;
-    sendreq.src_des = NULL;
+    OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
+    sendreq->req_send.req_base.req_proc = dst_proc;
+    sendreq->src_des = NULL;
 
-    MCA_PML_OB1_SEND_REQUEST_INIT(&sendreq,
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                   buf,
                                   count,
                                   datatype,
@@ -206,19 +208,19 @@ int mca_pml_ob1_send(void *buf,
                                   comm, sendmode, false);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &sendreq.req_send.req_base,
+                             &sendreq->req_send.req_base,
                              PERUSE_SEND);
 
-    MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(&sendreq, endpoint, seqn, rc);
+    MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
     if (rc != OMPI_SUCCESS) {
         return rc;
     }
 
-    ompi_request_wait_completion(&sendreq.req_send.req_base.req_ompi);
+    ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
 
-    rc = sendreq.req_send.req_base.req_ompi.req_status.MPI_ERROR;
-    MCA_PML_BASE_SEND_REQUEST_FINI(&sendreq.req_send);
-    OBJ_DESTRUCT(&sendreq);
+    rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
+    MCA_PML_BASE_SEND_REQUEST_FINI(&sendreq->req_send);
+    OBJ_DESTRUCT(sendreq);
 
     return rc;
 }
