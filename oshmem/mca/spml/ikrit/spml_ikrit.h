@@ -81,6 +81,8 @@ struct mca_spml_ikrit_t {
     int free_list_num; /* initial size of free list */
     int free_list_max; /* maximum size of free list */
     int free_list_inc; /* number of elements to grow free list */
+    int bulk_connect; /* use bulk connect */
+    int bulk_disconnect; /* use bulk disconnect */
 
     bool enabled;
     opal_list_t active_peers;
