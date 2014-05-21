@@ -140,7 +140,6 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     size_t p, p_index, n_new_procs = 0;
     struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;  
     struct ompi_proc_t** new_procs = NULL; 
-    struct ompi_proc_t *unreach_proc = NULL;
     int rc, ret = OMPI_SUCCESS;
 
     if(0 == nprocs) {
@@ -461,7 +460,6 @@ static int mca_bml_r2_del_procs(size_t nprocs,
         mca_bml_base_endpoint_t* bml_endpoint =
             (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         size_t f_index, f_size;
-        size_t n_index, n_size;
 
         /* notify each btl that the proc is going away */
         f_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
