@@ -150,6 +150,10 @@ static int mca_spml_ikrit_component_register(void)
             mca_spml_ikrit_param_register_int("free_list_max", 1024, 0);
     mca_spml_ikrit.free_list_inc =
             mca_spml_ikrit_param_register_int("free_list_inc", 16, 0);
+    mca_spml_ikrit.bulk_connect =
+            mca_spml_ikrit_param_register_int("bulk_connect", 1, 0);
+    mca_spml_ikrit.bulk_disconnect =
+            mca_spml_ikrit_param_register_int("bulk_disconnect", 1, 0);
     mca_spml_ikrit.priority =
             mca_spml_ikrit_param_register_int("priority",
                                               20,

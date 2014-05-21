@@ -342,6 +342,12 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
     size_t i;
     opal_list_item_t *item;
 
+#if MXM_API >= MXM_VERSION(2,0)
+    if (mca_spml_ikrit.bulk_disconnect) {
+        mxm_ep_powerdown(mca_spml_ikrit.mxm_ep);
+    }
+#endif
+
     while (NULL != (item = opal_list_remove_first(&mca_spml_ikrit.active_peers))) {
     };
     OBJ_DESTRUCT(&mca_spml_ikrit.active_peers);
@@ -485,6 +491,14 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         free(ep_info);
     if (conn_reqs)
         free(conn_reqs);
+#endif
+
+#if MXM_API >= MXM_VERSION(2,0)
+    if (mca_spml_ikrit.bulk_connect) {
+        /* Need a barrier to ensure remote peers already created connection */
+        oshmem_shmem_barrier();
+        mxm_ep_wireup(mca_spml_ikrit.mxm_ep);
+    }
 #endif
 
     proc_self = oshmem_proc_group_find(oshmem_group_all, my_rank);
