@@ -154,6 +154,21 @@ static int plm_alps_init(void)
  */
 static int plm_alps_launch_job(orte_job_t *jdata)
 {
+    orte_app_context_t *app;
+
+    for (int i = 0 ; i < jdata->apps->size ; ++i) {
+        int env_count;
+
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+
+        for (env_count = 0 ; app->env && app->env[env_count] ; ++env_count);
+        /* disable PMI for the application. this will prevent the pmi library from printing useless warnings */
+        opal_argv_append (&env_count, &app->env, "PMI_NO_FORK=1");
+        opal_argv_append (&env_count, &app->env, "PMI_NO_PREINITIALIZE=1");
+    }
+
     if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
         /* this is a restart situation - skip to the mapping stage */
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
@@ -578,10 +593,6 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
             }
             free(newenv);
         }
-
-	/* Quiet annoying Cray PMI warnings. There is an open ticket to eliminate
-	 * them but they still exist as of PMI 5.0.1 */
-	opal_setenv("PMI_USE_LOGFILE", "/dev/null", true, &env);
 
         fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
         if(fd > 0) {
