@@ -107,6 +107,9 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         /* first num_local_procs items should be local procs */
         for (p = 1; p < num_local_procs; ++p) {
             /* a potential future optimization: use non-blocking routines */
+            if (p != (num_local_procs-1)) {
+                OBJ_RETAIN(buffer);
+            }
             tmprc = ompi_rte_send_buffer_nb(&(procs[p]->proc_name), buffer, tag,
                                             ompi_rte_send_cbfunc, NULL);
             if (0 > tmprc) {
