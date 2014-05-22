@@ -85,7 +85,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
      * message the rest of the local procs. */
     if (proc0) {
         opal_buffer_t *buffer = NULL;
-        int p;
+        size_t p;
         if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -115,7 +115,8 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
             rc = ompi_rte_send_buffer_nb(&(procs[p]->proc_name), buffer, tag,
                                          ompi_rte_send_cbfunc, NULL);
             if (0 > rc) {
-                OBJ_RELEASE(buffer);
+                OBJ_RELEASE(buffer);  /* remove the ref from 4 lines above */
+                OBJ_RELEASE(buffer);  /* and get rid of our own reference (OBJ_NEW) */
                 OMPI_ERROR_LOG(rc);
                 rc = OMPI_ERROR;
                 goto out;
