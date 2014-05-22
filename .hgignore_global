@@ -72,6 +72,11 @@ syntax: glob
 ./examples/hello_oshmem
 ./examples/ring_oshmemfh
 ./examples/hello_oshmemfh
+./examples/oshmem_circular_shift
+./examples/oshmem_max_reduction
+./examples/oshmem_shmalloc
+./examples/oshmem_strided_puts
+./examples/oshmem_symmetric_data
 ./ompi/Makefile.in
 ./ompi/libltdl
 ./ompi/GPATH
