@@ -71,62 +71,61 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
                              bool proc0,
                              char *msg_id_str)
 {
-    int rc = OMPI_SUCCESS, tmprc;
+    int rc = OMPI_SUCCESS;
     char *msg_id_str_to_tx = NULL;
     sm_return_t smr;
 
     OBJ_CONSTRUCT(&smr.buf, opal_buffer_t);
 
-    /* figure out if i am the root proc in the group.  if i am, bcast the
+    /* bump up the libevent polling frequency while we're in this RML recv,
+     * just to ensure we're checking libevent frequently. */
+    opal_progress_event_users_increment();
+
+        /* figure out if i am the root proc in the group.  if i am, bcast the
      * message the rest of the local procs. */
     if (proc0) {
         opal_buffer_t *buffer = NULL;
+        int p;
         if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        size_t p;
         /* pack the data that we are going to send. first the queueing id, then
          * the shmem_ds buf. note that msg_id_str is used only for verifying
          * "expected" common sm usage.  see "RML Messaging and Our Assumptions"
          * note in common_sm.c for more details. */
-        tmprc = opal_dss.pack(buffer, &msg_id_str, 1, OPAL_STRING);
-        if (OPAL_SUCCESS != tmprc) {
-            OMPI_ERROR_LOG(OMPI_ERR_PACK_FAILURE);
+        rc = opal_dss.pack(buffer, &msg_id_str, 1, OPAL_STRING);
+        if (OPAL_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             rc = OMPI_ERR_PACK_FAILURE;
+            OBJ_RELEASE(buffer);
             goto out;
         }
-        tmprc = opal_dss.pack(buffer, out_ds_buf,
-                              (int32_t)sizeof(opal_shmem_ds_t),
-                              OPAL_BYTE);
-        if (OPAL_SUCCESS != tmprc) {
-            OMPI_ERROR_LOG(OMPI_ERR_PACK_FAILURE);
+        rc = opal_dss.pack(buffer, out_ds_buf,
+                           (int32_t)sizeof(opal_shmem_ds_t),
+                           OPAL_BYTE);
+        if (OPAL_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             rc = OMPI_ERR_PACK_FAILURE;
+            OBJ_RELEASE(buffer);
             goto out;
         }
-        opal_progress_event_users_increment();
         /* first num_local_procs items should be local procs */
         for (p = 1; p < num_local_procs; ++p) {
-            /* a potential future optimization: use non-blocking routines */
-            if (p != (num_local_procs-1)) {
-                OBJ_RETAIN(buffer);
-            }
-            tmprc = ompi_rte_send_buffer_nb(&(procs[p]->proc_name), buffer, tag,
-                                            ompi_rte_send_cbfunc, NULL);
-            if (0 > tmprc) {
-                OMPI_ERROR_LOG(tmprc);
-                opal_progress_event_users_decrement();
+            OBJ_RETAIN(buffer);
+            rc = ompi_rte_send_buffer_nb(&(procs[p]->proc_name), buffer, tag,
+                                         ompi_rte_send_cbfunc, NULL);
+            if (0 > rc) {
+                OBJ_RELEASE(buffer);
+                OMPI_ERROR_LOG(rc);
                 rc = OMPI_ERROR;
                 goto out;
             }
         }
-        opal_progress_event_users_decrement();
+        OBJ_RELEASE(buffer);
     }
     /* i am NOT the root proc */
     else {
         int32_t num_vals;
-        /* bump up the libevent polling frequency while we're in this RML recv,
-         * just to ensure we're checking libevent frequently. */
-        opal_progress_event_users_increment();
         smr.active = true;
         smr.status = OMPI_ERROR;
         ompi_rte_recv_buffer_nb(&(procs[0]->proc_name),tag,
@@ -135,8 +134,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         while (smr.active) {
             opal_progress();
         }
-        
-        opal_progress_event_users_decrement();
+
         if (OMPI_SUCCESS != smr.status) {
             OMPI_ERROR_LOG(smr.status);
             rc = smr.status;
@@ -144,17 +142,17 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
         }
         /* unpack the buffer */
         num_vals = 1;
-        tmprc = opal_dss.unpack(&smr.buf, &msg_id_str_to_tx, &num_vals,
-                                OPAL_STRING);
-        if (0 > tmprc) {
-            OMPI_ERROR_LOG(OMPI_ERR_UNPACK_FAILURE);
+        rc = opal_dss.unpack(&smr.buf, &msg_id_str_to_tx, &num_vals,
+                             OPAL_STRING);
+        if (0 > rc) {
+            OMPI_ERROR_LOG(rc);
             rc = OMPI_ERROR;
             goto out;
         }
         num_vals = (int32_t)sizeof(opal_shmem_ds_t);
-        tmprc = opal_dss.unpack(&smr.buf, out_ds_buf, &num_vals, OPAL_BYTE);
-        if (0 > tmprc) {
-            OMPI_ERROR_LOG(OMPI_ERR_UNPACK_FAILURE);
+        rc = opal_dss.unpack(&smr.buf, out_ds_buf, &num_vals, OPAL_BYTE);
+        if (0 > rc) {
+            OMPI_ERROR_LOG(rc);
             rc = OMPI_ERROR;
             goto out;
         }
@@ -167,13 +165,12 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
                            true, ompi_process_info.nodename,
                            msg_id_str, msg_id_str_to_tx);
             rc = OMPI_ERROR;
-            /* here for extra debug info only */
-            assert(0);
             goto out;
         }
     }
 
 out:
+    opal_progress_event_users_decrement();
     if (NULL != msg_id_str_to_tx) {
         free(msg_id_str_to_tx);
         msg_id_str_to_tx = NULL;
