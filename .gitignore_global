@@ -109,6 +109,11 @@ examples/ring_oshmem
 examples/hello_oshmem
 examples/ring_oshmemfh
 examples/hello_oshmemfh
+examples/oshmem_circular_shift
+examples/oshmem_max_reduction
+examples/oshmem_shmalloc
+examples/oshmem_strided_puts
+examples/oshmem_symmetric_data
 ompi/libltdl
 ompi/GPATH
 ompi/GRTAGS
