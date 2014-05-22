@@ -665,10 +665,14 @@ static int disconnect(ompi_communicator_t *comm)
     /* JMS Temporarily disable PML-based barrier and use RTE-based
        barrier instead.  This is related to
        https://svn.open-mpi.org/trac/ompi/ticket/4643. */
-#if 1
+#if 0
     int ret;
     ompi_rte_collective_t *coll;
     coll = OBJ_NEW(ompi_rte_collective_t);
+    /* Ralph points out that we need a unique barrier ID for this
+       operation (similar to what we do in connect/accept).  So #if0
+       out this code for now; Ralph will be working on this
+       shortly. */
     coll->id = ompi_process_info.peer_fini_barrier;
     coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
