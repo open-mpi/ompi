@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,10 +25,13 @@
 
 headers += \
         communicator/communicator.h \
-	communicator/comm_request.h
+	communicator/comm_request.h \
+	communicator/comm_helpers.h
 
 libmpi_la_SOURCES += \
         communicator/comm_init.c \
 	communicator/comm.c \
 	communicator/comm_cid.c \
-	communicator/comm_request.c
+	communicator/comm_request.c \
+	communicator/comm_helpers.c
+
