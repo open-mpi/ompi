@@ -48,7 +48,7 @@ int  main(void)
     printf("%d/%d dst =", my_pe, num_pes);
 
     for (i = 0; i < N; i+= 1) {
-        printf(" %d", dst[i]);
+        printf(" %ld", dst[i]);
     }
 
     printf("\n");

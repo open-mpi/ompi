@@ -14,7 +14,7 @@
 int main (int argc, char * argv[])
 {
     static int rbuf = -1;
-    int proc, nproc, next, prev;
+    int proc, nproc, next;
     int message = 10;
 
     start_pes(0);
