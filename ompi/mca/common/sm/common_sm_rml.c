@@ -77,11 +77,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
 
     OBJ_CONSTRUCT(&smr.buf, opal_buffer_t);
 
-    /* bump up the libevent polling frequency while we're in this RML recv,
-     * just to ensure we're checking libevent frequently. */
-    opal_progress_event_users_increment();
-
-        /* figure out if i am the root proc in the group.  if i am, bcast the
+    /* figure out if i am the root proc in the group.  if i am, bcast the
      * message the rest of the local procs. */
     if (proc0) {
         opal_buffer_t *buffer = NULL;
@@ -171,7 +167,6 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *out_ds_buf,
     }
 
 out:
-    opal_progress_event_users_decrement();
     if (NULL != msg_id_str_to_tx) {
         free(msg_id_str_to_tx);
         msg_id_str_to_tx = NULL;
