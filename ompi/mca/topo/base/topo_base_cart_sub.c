@@ -118,7 +118,7 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
                 }
             }
         }
-        cart = (mca_topo_base_comm_cart_2_2_0_t*)calloc(1, sizeof(mca_topo_base_comm_cart_2_2_0_t));
+        cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
         if( NULL == cart ) {
             ompi_comm_free(&temp_comm);
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -133,7 +133,7 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
             if (NULL == cart->coords) {
                 free(cart->periods);
                 if(NULL != cart->dims) free(cart->dims);
-                free(cart);
+                OBJ_RELEASE(cart);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
             {  /* setup the cartesian topology */
