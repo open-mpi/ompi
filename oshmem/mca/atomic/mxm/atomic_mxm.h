@@ -64,4 +64,14 @@ OBJ_CLASS_DECLARATION(mca_atomic_mxm_module_t);
 
 END_C_DECLS
 
+#if MXM_API >= MXM_VERSION(2,0)
+static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
+
+    if (0 == mkey->len) {
+        return MXM_INVALID_MEM_HANDLE;
+    }
+    return (mxm_mem_key_t *)mkey->u.data;
+}
+#endif
+
 #endif /* MCA_ATOMIC_MXM_H */

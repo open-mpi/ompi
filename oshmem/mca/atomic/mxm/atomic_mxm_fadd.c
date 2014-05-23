@@ -22,7 +22,6 @@
 
 #include "atomic_mxm.h"
 
-
 int mca_atomic_mxm_fadd(void *target,
                         void *prev,
                         const void *value,
@@ -36,6 +35,7 @@ int mca_atomic_mxm_fadd(void *target,
     int ptl_id;
     mxm_send_req_t sreq;
     mxm_error_t mxm_err;
+    sshmem_mkey_t *r_mkey;
     static char dummy_buf[8];
 
     my_pe = oshmem_my_proc_id();
@@ -77,11 +77,11 @@ int mca_atomic_mxm_fadd(void *target,
     if (MXM_PTL_SHM == ptl_id) {
         ptl_id = MXM_PTL_RDMA;
     }
-
-    if (!mca_memheap.memheap_get_cached_mkey(pe,
+    r_mkey = mca_memheap.memheap_get_cached_mkey(pe,
                                              target,
                                              ptl_id,
-                                             &remote_addr)) {
+                                             &remote_addr);
+    if (!r_mkey) {
         ATOMIC_ERROR("[#%d] %p is not address of symmetric variable",
                      my_pe, target);
         oshmem_shmem_abort(-1);
@@ -100,7 +100,7 @@ int mca_atomic_mxm_fadd(void *target,
     sreq.op.atomic.remote_memh  = MXM_INVALID_MEM_HANDLE;
     memcpy(&sreq.op.atomic.value8, value, nlong);
 #else
-    sreq.op.atomic.remote_mkey  = MXM_INVALID_MEM_HANDLE;
+    sreq.op.atomic.remote_mkey = to_mxm_mkey(r_mkey);
     memcpy(&sreq.op.atomic.value, value, nlong);
 #endif
     sreq.op.atomic.order = nlong_order;
