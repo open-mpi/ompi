@@ -19,7 +19,9 @@ int ompi_comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int 
     if (OMPI_COMM_IS_CART(comm)) { 
         int ndims;
         res = MPI_Cartdim_get(comm, &ndims)  ;
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Cartdim_get() (%i)\n", res); return res; }
+        if (MPI_SUCCESS != res) {
+            return res;
+        }
         /* outdegree is always 2*ndims because we need to iterate over empty buffers for MPI_PROC_NULL */
         *outdegree = *indegree = 2*ndims;
         *weighted = 0;
@@ -27,7 +29,9 @@ int ompi_comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int 
         int rank, nneighbors;
         MPI_Comm_rank(comm, &rank);
         res = MPI_Graph_neighbors_count(comm, rank, &nneighbors);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Graph_neighbors_count() (%i)\n", res); return res; }
+        if (MPI_SUCCESS != res) {
+            return res;
+        }
         *outdegree = *indegree = nneighbors;
         *weighted = 0;
     } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
@@ -53,11 +57,15 @@ int ompi_comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourc
     if (OMPI_COMM_IS_CART(comm)) { 
         int ndims, i, rpeer, speer;
         res = MPI_Cartdim_get(comm, &ndims);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Cartdim_get() (%i)\n", res); return res; }
+        if (MPI_SUCCESS != res) {
+            return res;
+        }
 
         for(i = 0; i<ndims; i++) {
           res = MPI_Cart_shift(comm, i, 1, &rpeer, &speer);
-          if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Cart_shift() (%i)\n", res); return res; }
+          if (MPI_SUCCESS != res) {
+              return res;
+          }
           sources[index] = destinations[index] = rpeer; index++;
           sources[index] = destinations[index] = speer; index++;
         }
@@ -65,11 +73,15 @@ int ompi_comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourc
         int rank;
         MPI_Comm_rank(comm, &rank);
         res = MPI_Graph_neighbors(comm, rank, maxindegree, sources);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Graph_neighbors_count() (%i)\n", res); return res; }
+        if (MPI_SUCCESS != res) {
+            return res;
+        }
         for(int i=0; i<maxindegree; i++) destinations[i] = sources[i];
     } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
         res = MPI_Dist_graph_neighbors(comm, maxindegree, sources, sourceweights, maxoutdegree, destinations, destweights);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Graph_neighbors_count() (%i)\n", res); return res; }
+        if (MPI_SUCCESS != res) {
+            return res;
+        }
     } else {
         return MPI_ERR_ARG;
     }
