@@ -241,7 +241,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
         if (HCOLL_SUCCESS != rc){
             cm->hcoll_enable = 0;
-            opal_progress_unregister(hcoll_progress_fn);
+            opal_progress_unregister(mca_coll_hcoll_progress);
             HCOL_ERROR("Hcol library init failed");
             return NULL;
         }
@@ -252,7 +252,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         if (OMPI_SUCCESS != err) {
             cm->hcoll_enable = 0;
             hcoll_finalize();
-            opal_progress_unregister(hcoll_progress_fn);
+            opal_progress_unregister(mca_coll_hcoll_progress);
             HCOL_ERROR("Hcol comm keyval create failed");
             return NULL;
         }
@@ -263,7 +263,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         if (!cm->libhcoll_initialized) {
             cm->hcoll_enable = 0;
             hcoll_finalize();
-            opal_progress_unregister(hcoll_progress_fn);
+            opal_progress_unregister(mca_coll_hcoll_progress);
         }
         return NULL;
     }
@@ -282,7 +282,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         if (!cm->libhcoll_initialized) {
             cm->hcoll_enable = 0;
             hcoll_finalize();
-            opal_progress_unregister(hcoll_progress_fn);
+            opal_progress_unregister(mca_coll_hcoll_progress);
         }
         return NULL;
     }
