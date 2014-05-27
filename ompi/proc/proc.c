@@ -231,7 +231,7 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
     kvn.key = strdup(OPAL_DSTORE_LOCALITY);
     kvn.type = OPAL_HWLOC_LOCALITY_T;
     kvn.data.uint16 = locality;
-    ret = opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&proc, &kvn);
+    ret = opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&proc->proc_name, &kvn);
     OBJ_DESTRUCT(&kvn);
     /* set the proc's local value as well */
     proc->proc_flags = locality;
