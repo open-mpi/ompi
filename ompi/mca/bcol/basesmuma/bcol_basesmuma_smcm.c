@@ -41,6 +41,10 @@
 
 #define SM_BACKING_FILE_NAME_MAX_LEN 256
 
+static bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr, int fd, size_t length,
+                                                                 size_t addr_offset, size_t alignment,
+                                                                 char *file_name);
+
 struct file_info_t {
     uint32_t vpid;
     uint32_t jobid;
@@ -60,13 +64,7 @@ static void bcol_basesmuma_smcm_proc_item_t_construct (bcol_basesmuma_smcm_proc_
 static void bcol_basesmuma_smcm_proc_item_t_destruct (bcol_basesmuma_smcm_proc_item_t * item)
 {
     if (item->sm_mmap) {
-        bcol_basesmuma_smcm_mmap_t *map = item->sm_mmap;
-
-        if (map->map_seg) {
-            (void) munmap ((void *) map->map_seg, map->map_size);
-        }
-
-        free (map);
+        OBJ_RELEASE(item->sm_mmap);
     }
 
     if (item->sm_file.file_name) {
@@ -80,57 +78,27 @@ OBJ_CLASS_INSTANCE(bcol_basesmuma_smcm_proc_item_t,
                    bcol_basesmuma_smcm_proc_item_t_construct,
                    bcol_basesmuma_smcm_proc_item_t_destruct);
 
-
-
-
-bcol_basesmuma_smcm_mmap_t* bcol_basesmuma_smcm_create_mmap(int fd, size_t size, char *file_name,
-                                                            size_t size_ctl_structure,
-                                                            size_t data_seg_alignment)
+static void bcol_basesmuma_smcm_mmap_construct (bcol_basesmuma_smcm_mmap_t *smcm_mmap)
 {
-    bcol_basesmuma_smcm_mmap_t *map;
-    bcol_basesmuma_smcm_file_header_t *seg;
-    unsigned char *addr = NULL;
-
-    /* map the file and initialize segment state */
-    seg = (bcol_basesmuma_smcm_file_header_t*)
-        mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if((void*)-1 == seg) {
-        return NULL;
-    }
-
-    /* set up the map object */
-    map = (bcol_basesmuma_smcm_mmap_t* )malloc(sizeof(bcol_basesmuma_smcm_mmap_t));
-    assert(map);
-
-    strncpy(map->map_path, file_name, OPAL_PATH_MAX);
-    /* the first entry in the file is the control structure. The first
-       entry in the control structure is an mca_common_sm_file_header_t
-       element */
-    map->map_seg = seg;
-
-    addr = ((unsigned char *)seg) + size_ctl_structure;
-    /* If we have a data segment (i.e., if 0 != data_seg_alignment),
-       then make it the first aligned address after the control
-       structure. */
-    if (0 != data_seg_alignment) {
-        addr = OPAL_ALIGN_PTR(addr,  data_seg_alignment, unsigned char*);
-
-        /* is addr past end of file ? */
-        if((unsigned char*)seg + size < addr) {
-            opal_output (ompi_bcol_base_framework.framework_output, "bcol_basesmuma_smcm_mmap_init: "
-                        "memory region too small len %lu  addr %p",
-                        (unsigned long)size, addr);
-            return NULL;
-        }
-    }
-    map->data_addr = addr;
-    map->map_addr = (unsigned char *)seg;
-    map->map_size = size;
-
-    return map;
+    memset ((char *) smcm_mmap + sizeof (smcm_mmap->super), 0, sizeof (*smcm_mmap) - sizeof (smcm_mmap->super));
 }
 
+static void bcol_basesmuma_smcm_mmap_destruct (bcol_basesmuma_smcm_mmap_t *smcm_mmap)
+{
+    if (smcm_mmap->map_seg) {
+        munmap (smcm_mmap->map_seg, smcm_mmap->map_size);
+        smcm_mmap->map_seg = NULL;
+    }
 
+    if (smcm_mmap->map_path) {
+        free (smcm_mmap->map_path);
+        smcm_mmap->map_path = NULL;
+    }
+}
+
+OBJ_CLASS_INSTANCE(bcol_basesmuma_smcm_mmap_t, opal_list_item_t,
+                   bcol_basesmuma_smcm_mmap_construct,
+                   bcol_basesmuma_smcm_mmap_destruct);
 
 
 /* smcm_allgather_connection:
@@ -187,8 +155,7 @@ int bcol_basesmuma_smcm_allgather_connection(
     bcol_basesmuma_smcm_proc_item_t **backing_files;
     struct file_info_t local_file;
     struct file_info_t *all_files=NULL;
-    signal(SIGSEGV, SIG_DFL);
-    signal(SIGABRT, SIG_DFL);
+
     /* sanity check */
     if (strlen(input.file_name) > SM_BACKING_FILE_NAME_MAX_LEN-1) {
         opal_output (ompi_bcol_base_framework.framework_output, "backing file name too long:  %s len :: %d",
@@ -317,10 +284,11 @@ int bcol_basesmuma_smcm_allgather_connection(
         }
 
         /* map the file */
-        temp->sm_mmap = bcol_basesmuma_smcm_create_mmap(fd,temp->sm_file.size,
-                                                        temp->sm_file.file_name,
-                                                        temp->sm_file.size_ctl_structure,
-                                                        getpagesize());
+        temp->sm_mmap = bcol_basesmuma_smcm_reg_mmap (NULL, fd, temp->sm_file.size,
+                                                      temp->sm_file.size_ctl_structure,
+                                                      temp->sm_file.data_seg_alignment,
+                                                      temp->sm_file.file_name);
+        close (fd);
         if (NULL == temp->sm_mmap) {
             opal_output (ompi_bcol_base_framework.framework_output, "mmapping failed to map remote peer's file");
             OBJ_RELEASE(temp);
@@ -376,16 +344,6 @@ int bcol_basesmuma_smcm_release_connections (mca_bcol_basesmuma_module_t *sm_bco
  }
 
 
-
-OBJ_CLASS_INSTANCE(
-                   bcol_basesmuma_smcm_mmap_t,
-                   opal_list_item_t,
-                   NULL,
-                   NULL
-                   );
-
-
-
 /*
  * mmap the specified file as a shared file.  No information exchange with other
  * processes takes place within this routine.
@@ -423,7 +381,7 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
             return NULL;
         }
 
-        map = bcol_basesmuma_smcm_reg_mmap(in_ptr, fd, length, alignment, file_name);
+        map = bcol_basesmuma_smcm_reg_mmap(in_ptr, fd, length, 0, alignment, file_name);
         if (NULL == map) {
             return NULL;
         }
@@ -437,11 +395,9 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
 
 }
 
-bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr,
-                                                          int fd,
-                                                          size_t length,
-                                                          size_t alignment,
-                                                          char *file_name)
+static bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr, int fd, size_t length,
+                                                                 size_t addr_offset, size_t alignment,
+                                                                 char *file_name)
 {
 
     /* local variables */
@@ -450,6 +406,12 @@ bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr,
     unsigned char* myaddr = NULL;
     int flags = MAP_SHARED;
 
+    /* set up the map object */
+    map = OBJ_NEW(bcol_basesmuma_smcm_mmap_t);
+    if (OPAL_UNLIKELY(NULL == map)) {
+        return NULL;
+    }
+
     /* map the file and initialize the segment state */
     if (NULL != in_ptr) {
         flags |= MAP_FIXED;
@@ -457,32 +419,28 @@ bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr,
     seg = (bcol_basesmuma_smcm_file_header_t *)
         mmap(in_ptr, length, PROT_READ|PROT_WRITE, flags, fd, 0);
     if((void*)-1 == seg) {
+        OBJ_RELEASE(map);
         return NULL;
     }
 
-    /* set up the map object */
-
-    /*map = OBJ_NEW(mca_common_sm_mmap_t); */
-    map=(bcol_basesmuma_smcm_mmap_t *)malloc(sizeof(bcol_basesmuma_smcm_mmap_t));
-    assert(map);
-    strncpy(map->map_path, file_name, OPAL_PATH_MAX);
+    map->map_path = strdup (file_name);
 
     /* the first entry in the file is the control structure. the first entry
        in the control structure is an mca_common_sm_file_header_t element */
     map->map_seg = seg;
 
-    myaddr = (unsigned char *) seg;
+    myaddr = (unsigned char *) seg + addr_offset;
     /* if we have a data segment (i.e. if 0 != data_seg_alignement) */
 
-    /* all mmaped regions are required to be at least page size aligned so this
-     * code does nothing unless you want greater alignment */
-    if (alignment > getpagesize ()) {
+    if (alignment) {
         myaddr = OPAL_ALIGN_PTR(myaddr, alignment, unsigned char*);
 
         /* is addr past the end of the file? */
         if ((unsigned char *) seg+length < myaddr) {
             opal_output (ompi_bcol_base_framework.framework_output, "mca_bcol_basesmuma_sm_alloc_mmap: memory region too small len %lu add %p",
                         (unsigned long) length, myaddr);
+            OBJ_RELEASE(map);
+            munmap (seg, length);
             return NULL;
         }
 

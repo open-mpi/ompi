@@ -256,41 +256,9 @@ static int basesmuma_open(void)
  */
 static int mca_bcol_basesmuma_deregister_ctl_sm(mca_bcol_basesmuma_component_t *bcol_component)
 {
-
-    /* local variables */
-    int ret;
-    bcol_basesmuma_smcm_mmap_t *sm_ctl_structs;
-
-    /* get a handle on the backing file */
-    sm_ctl_structs=bcol_component->sm_ctl_structs;
-    /* Nothing to free */
-    if (!sm_ctl_structs){
-        return OMPI_SUCCESS;
+    if (NULL != bcol_component->sm_ctl_structs) {
+        OBJ_RELEASE(bcol_component->sm_ctl_structs);
     }
-
-    /* unmap the shared memory file */
-    ret=munmap((void *) sm_ctl_structs->map_addr, sm_ctl_structs->map_size);
-    if( 0 > ret) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Failed to munmap the shared memory file %s",
-                     sm_ctl_structs->map_path);
-        return OMPI_ERROR;
-    }
-
-    /* set the pointer to NULL */
-    /*sm_ctl_structs->map_addr = NULL;*/
-
-    /* remove the file */
-#if 0
-    ret = remove(sm_ctl_structs->map_path);
-    if( 0 > ret) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Failed to remove the shared memory file %s. reason = %s",
-                     sm_ctl_structs->map_path, strerror (errno));
-        return OMPI_ERROR;
-    }
-#endif
-
-    free (bcol_component->sm_ctl_structs);
-    bcol_component->sm_ctl_structs = NULL;
 
     return OMPI_SUCCESS;
 }
