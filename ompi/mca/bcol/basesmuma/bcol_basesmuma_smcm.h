@@ -44,7 +44,7 @@ typedef struct bcol_basesmuma_smcm_file_header_t {
 
 typedef struct bcol_basesmuma_smcm_mmap_t {
     /* double link list element */
-    opal_list_item_t map_item;
+    opal_list_item_t super;
     /* pointer to header imbeded in the shared memory file */
     bcol_basesmuma_smcm_file_header_t *map_seg;
     /* base address of the mmap'ed file */
@@ -54,7 +54,7 @@ typedef struct bcol_basesmuma_smcm_mmap_t {
     /* How big it is (in bytes) */
     size_t map_size;
     /* Filename */
-    char map_path[OPAL_PATH_MAX];
+    char *map_path;
 } bcol_basesmuma_smcm_mmap_t;
 
 OBJ_CLASS_DECLARATION(bcol_basesmuma_smcm_mmap_t);
@@ -96,12 +96,6 @@ OMPI_DECLSPEC extern bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(voi
                 size_t length,
                 size_t alignment,
                 char* file_name);
-
-OMPI_DECLSPEC extern bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_reg_mmap(void *in_ptr,
-                int fd,
-                size_t length,
-                size_t alignment,
-                char *file_name);
 
 OMPI_DECLSPEC extern bcol_basesmuma_smcm_mmap_t* bcol_basesmuma_smcm_create_mmap(int fd, 
         size_t size, char *file_name,
