@@ -15,7 +15,7 @@ likely abort.
 [pmi2-init-returned-bad-values]
 PMI2 initialized but returned bad values for size and rank.
 This is symptomatic of either a failure to use the
-"-mpi=pmi2" flag in SLURM, or a borked PMI2 installation.
+"--mpi=pmi2" flag in SLURM, or a borked PMI2 installation.
 If running under SLURM, try adding "-mpi=pmi2" to your
 srun command line. If that doesn't work, or if you are
 not running under SLURM, try removing or renaming the
