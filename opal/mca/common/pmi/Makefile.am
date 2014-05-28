@@ -2,7 +2,8 @@
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
-#                         reserved. 
+#                         reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,6 +24,8 @@
 # against other dynamic components is *not* supported!
 
 AM_CPPFLAGS = $(common_pmi_CPPFLAGS)
+
+dist_ompidata_DATA = help-common-pmi.txt
 
 # control whether building an installed library or a convenience
 # (noinst) library

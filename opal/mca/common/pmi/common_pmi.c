@@ -5,7 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +23,7 @@
 #include <pmi2.h>
 #endif
 
+#include "opal/util/show_help.h"
 #include "common_pmi.h"
 
 static int mca_common_pmi_init_count = 0;
@@ -37,20 +38,29 @@ bool mca_common_pmi_init (void) {
 #if WANT_PMI2_SUPPORT
     {
         int spawned, size, rank, appnum;
+        int rc;
+
+        size = -1;
+        rank = -1;
+        appnum = -1;
 
         /* if we can't startup PMI, we can't be used */
         if (PMI2_Initialized ()) {
             return true;
         }
 
-        if (PMI_SUCCESS == PMI2_Init(&spawned, &size, &rank, &appnum)) {
-            mca_common_pmi_init_size = size;
-            mca_common_pmi_init_rank = rank;
-            mca_common_pmi_init_count--;
-            return true;
-        } else {
+        if (PMI2_SUCCESS != (rc = PMI2_Init(&spawned, &size, &rank, &appnum))) {
+            opal_show_help("help-common-pmi.txt", "pmi2-init-failed", true, rc);
             return false;
         }
+        if (size < 0 || rank < 0 ) {
+            opal_show_help("help-common-pmi.txt", "pmi2-init-returned-bad-values", true);
+            return false;
+        }
+        mca_common_pmi_init_size = size;
+        mca_common_pmi_init_rank = rank;
+        mca_common_pmi_init_count--;
+        return true;
     }
 #else
     {
