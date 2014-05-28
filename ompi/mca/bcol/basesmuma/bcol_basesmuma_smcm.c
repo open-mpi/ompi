@@ -403,10 +403,14 @@ bcol_basesmuma_smcm_mmap_t * bcol_basesmuma_smcm_reg_mmap(void *in_ptr,
     bcol_basesmuma_smcm_mmap_t *map;
     bcol_basesmuma_smcm_file_header_t *seg;
     unsigned char* myaddr = NULL;
+    int flags = MAP_SHARED;
 
     /* map the file and initialize the segment state */
+    if (NULL != in_ptr) {
+        flags |= MAP_FIXED;
+    }
     seg = (bcol_basesmuma_smcm_file_header_t *)
-        mmap(in_ptr, length, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_FIXED, fd, 0);
+        mmap(in_ptr, length, PROT_READ|PROT_WRITE, flags, fd, 0);
     if((void*)-1 == seg) {
         return NULL;
     }
