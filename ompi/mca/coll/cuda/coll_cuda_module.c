@@ -87,7 +87,6 @@ mca_coll_cuda_comm_query(struct ompi_communicator_t *comm,
     }
 
     *priority = mca_coll_cuda_component.priority;
-    strcpy(cuda_module->super.coll_name, "cuda");
 
     /* Choose whether to use [intra|inter] */
     cuda_module->super.coll_module_enable = mca_coll_cuda_module_enable;
