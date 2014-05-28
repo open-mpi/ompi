@@ -217,24 +217,8 @@ static int mca_pml_ob1_component_register(void)
 
 static int mca_pml_ob1_component_open(void)
 {
-    mca_allocator_base_component_t* allocator_component;
-
     mca_pml_ob1_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_pml_ob1_output, mca_pml_ob1_verbose);
-
-    allocator_component = mca_allocator_component_lookup( mca_pml_ob1.allocator_name );
-    if(NULL == allocator_component) {
-        opal_output(0, "mca_pml_ob1_component_open: can't find allocator: %s\n", mca_pml_ob1.allocator_name);
-        return OMPI_ERROR;
-    }
-
-    mca_pml_ob1.allocator = allocator_component->allocator_init(true,
-                                                                mca_pml_ob1_seg_alloc,
-                                                                mca_pml_ob1_seg_free, NULL);
-    if(NULL == mca_pml_ob1.allocator) {
-        opal_output(0, "mca_pml_ob1_component_open: unable to initialize allocator\n");
-        return OMPI_ERROR;
-    }
 
     mca_pml_ob1.enabled = false; 
     return mca_base_framework_open(&ompi_bml_base_framework, 0);
@@ -259,6 +243,8 @@ mca_pml_ob1_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
+    mca_allocator_base_component_t* allocator_component;
+
     opal_output_verbose( 10, mca_pml_ob1_output,
                          "in ob1, my priority is %d\n", mca_pml_ob1.priority);
 
@@ -267,6 +253,20 @@ mca_pml_ob1_component_init( int* priority,
         return NULL;
     }
     *priority = mca_pml_ob1.priority;
+
+    allocator_component = mca_allocator_component_lookup( mca_pml_ob1.allocator_name );
+    if(NULL == allocator_component) {
+        opal_output(0, "mca_pml_ob1_component_init: can't find allocator: %s\n", mca_pml_ob1.allocator_name);
+        return NULL;
+    }
+
+    mca_pml_ob1.allocator = allocator_component->allocator_init(true,
+                                                                mca_pml_ob1_seg_alloc,
+                                                                mca_pml_ob1_seg_free, NULL);
+    if(NULL == mca_pml_ob1.allocator) {
+        opal_output(0, "mca_pml_ob1_component_init: unable to initialize allocator\n");
+        return NULL;
+    }
 
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
                                           enable_mpi_threads)) {
