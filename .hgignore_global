@@ -276,6 +276,7 @@ syntax: glob
 ./ompi/mca/coll/Makefile.in
 ./ompi/mca/coll/basic/Makefile.in
 ./ompi/mca/coll/basic/coll-basic-version.h*
+./ompi/mca/coll/cuda/Makefile.in
 ./ompi/mca/coll/demo/Makefile.in
 ./ompi/mca/coll/demo/acinclude.m4
 ./ompi/mca/coll/demo/configure.ac
