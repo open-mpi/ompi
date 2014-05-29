@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science 
+ *                         and Technology (RIST). All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,10 +117,11 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
     OPAL_PTRDIFF_TYPE extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
 
     DUMP( "opal_convertor_generic_simple_position( %p, &%ld )\n", (void*)pConvertor, (long)*position );
+    assert(*position > pConvertor->bConverted);
 
     /* We dont want to have to parse the datatype multiple times. What we are interested in
      * here is to compute the number of completed datatypes that we can move forward, update
-     * the the counters and finally compute the position taking in account only the remaining
+     * the  counters and finally compute the position taking in account only the remaining
      * elements. The only problem is that we have to modify all the elements on the stack.
      */
     iov_len_local = *position - pConvertor->bConverted;
@@ -129,11 +132,8 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
                                " iov_len_local %lu count_desc %d\n",
                                (unsigned long)pConvertor->bConverted, (unsigned long)*position, (unsigned long)pConvertor->pDesc->size,
                                (unsigned long)iov_len_local, count_desc ); );
-        /**
-         * Update all the stack except the last one which is supposed to be for
-         * the last partial element description.
-         */
-        for( type = 0; type < pConvertor->stack_pos; type++ )
+        /* Update all the stack including the last one */
+        for( type = 0; type <= pConvertor->stack_pos; type++ )
             pStack[type].disp += count_desc * extent;
         pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
         iov_len_local = *position - pConvertor->bConverted;
@@ -149,13 +149,27 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]);
-    base_pointer += pStack->disp;
 
     DO_DEBUG( opal_output( 0, "position start pos_desc %d count_desc %d disp %llx\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %llx\n",
                            pos_desc, count_desc, (unsigned long long)(base_pointer - pConvertor->pBaseBuf),
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (unsigned long long)pStack->disp ); );
-
+    /* Last data has been only partially converted. Compute the relative position */
+    if( 0 != pConvertor->partial_length ) {
+        size_t element_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
+        size_t missing_length = element_length - pConvertor->partial_length;
+        if( missing_length >= iov_len_local ) {
+            pConvertor->partial_length = (pConvertor->partial_length + iov_len_local) % element_length;
+            pConvertor->bConverted    += iov_len_local;
+            assert(pConvertor->partial_length < element_length);
+            return 0;
+        }
+        pConvertor->partial_length = (pConvertor->partial_length + missing_length) % element_length;
+        assert(pConvertor->partial_length == 0);
+        pConvertor->bConverted += missing_length;
+        iov_len_local -= missing_length;
+        count_desc--;
+    }
     while( 1 ) {
         if( OPAL_DATATYPE_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
             DO_DEBUG( opal_output( 0, "position end_loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
@@ -232,7 +246,7 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
     if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_UINT1, count_desc,
-                    base_pointer - pStack->disp - pConvertor->pBaseBuf );
+                    base_pointer - pConvertor->pBaseBuf );
         DO_DEBUG( opal_output( 0, "position save stack stack_pos %d pos_desc %d count_desc %d disp %llx\n",
                                pConvertor->stack_pos, pStack->index, (int)pStack->count, (unsigned long long)pStack->disp ); );
         return 0;

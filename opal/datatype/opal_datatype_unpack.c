@@ -166,23 +166,22 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
 static inline uint32_t
 opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pElem,
                               unsigned char* partial_data,
-                              OPAL_PTRDIFF_TYPE start_position, OPAL_PTRDIFF_TYPE end_position,
+                              OPAL_PTRDIFF_TYPE start_position, OPAL_PTRDIFF_TYPE length,
                               unsigned char** user_buffer )
 {
     char unused_byte = 0x7F, saved_data[16];
     unsigned char temporary[16], *temporary_buffer = temporary;
-    unsigned char* real_data = *user_buffer + pElem->elem.disp;
-    uint32_t i, length, count_desc = 1;
+    unsigned char* user_data = *user_buffer + pElem->elem.disp;
+    uint32_t i, count_desc = 1;
     size_t data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
 
     DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
                            "\tbConverted %lu total_length %lu count %d\n",
-                           (unsigned long)start_position, (unsigned long)end_position, (unsigned long)data_length, *user_buffer,
+                           (unsigned long)start_position, (unsigned long)start_position + length, (unsigned long)data_length, *user_buffer,
                            (unsigned long)pConvertor->bConverted, (unsigned long)pConvertor->local_size, pConvertor->count ); );
 
     /* Find a byte that is not used in the partial buffer */
  find_unused_byte:
-    length = (uint32_t)(end_position - start_position);
     for( i = 0; i < length; i++ ) {
         if( unused_byte == partial_data[i] ) {
             unused_byte--;
@@ -192,17 +191,16 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
 
     /* Copy and fill the rest of the buffer with the unused byte */
     memset( temporary, unused_byte, data_length );
-    MEMCPY( temporary + start_position, partial_data, (end_position - start_position) );
+    MEMCPY( temporary + start_position, partial_data, length );
 
 #if OPAL_CUDA_SUPPORT
-    /* In the case where the data is being unpacked from device
-     * memory, need to use the special host to device memory copy.
-     * Note this code path was only seen on large receives of
-     * noncontiguous data via buffered sends. */
-    pConvertor->cbmemcpy(saved_data, real_data, data_length, pConvertor );
+    /* In the case where the data is being unpacked from device memory, need to
+     * use the special host to device memory copy.  Note this code path was only
+     * seen on large receives of noncontiguous data via buffered sends. */
+    pConvertor->cbmemcpy(saved_data, user_data, data_length, pConvertor );
 #else
     /* Save the content of the user memory */
-    MEMCPY( saved_data, real_data, data_length );
+    MEMCPY( saved_data, user_data, data_length );
 #endif
 
     /* Then unpack the data into the user memory */
@@ -216,22 +214,22 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
      * buffer back into the user memory.
      */
 #if OPAL_CUDA_SUPPORT
-    /* Need to copy the modified real_data again so we can see which
+    /* Need to copy the modified user_data again so we can see which
      * bytes need to be converted back to their original values.  Note
      * this code path was only seen on large receives of noncontiguous
      * data via buffered sends. */
     {
         char resaved_data[16];
-        pConvertor->cbmemcpy(resaved_data, real_data, data_length, pConvertor );
+        pConvertor->cbmemcpy(resaved_data, user_data, data_length, pConvertor );
         for( i = 0; i < data_length; i++ ) {
             if( unused_byte == resaved_data[i] )
-                pConvertor->cbmemcpy(&real_data[i], &saved_data[i], 1, pConvertor);
+                pConvertor->cbmemcpy(&user_data[i], &saved_data[i], 1, pConvertor);
         }
     }
 #else
     for( i = 0; i < data_length; i++ ) {
-        if( unused_byte == real_data[i] )
-            real_data[i] = saved_data[i];
+        if( unused_byte == user_data[i] )
+            user_data[i] = saved_data[i];
     }
 #endif
     return 0;
@@ -296,7 +294,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             COMPUTE_CSUM( iov_ptr, missing_length, pConvertor );
             opal_unpack_partial_datatype( pConvertor, pElem,
                                           iov_ptr,
-                                          pConvertor->partial_length, element_length,
+                                          pConvertor->partial_length, element_length - pConvertor->partial_length,
                                           &conv_ptr );
             --count_desc;
             if( 0 == count_desc ) {
@@ -304,7 +302,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                 pos_desc++;  /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             }
-            iov_ptr += missing_length;
+            iov_ptr       += missing_length;
             iov_len_local -= missing_length;
             pConvertor->partial_length = 0;  /* nothing more inside */
         }
