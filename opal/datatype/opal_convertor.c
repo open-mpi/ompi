@@ -418,17 +418,19 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
     int32_t rc;
 
     /**
-     * If we plan to rollback the convertor then first we have to set it
-     * at the beginning.
+     * create_stack_with_pos_contig always set the position relative to the ZERO
+     * position, so there is no need for special handling. In all other cases,
+     * if we plan to rollback the convertor then first we have to reset it at
+     * the beginning.
      */
-    if( (0 == (*position)) || ((*position) < convertor->bConverted) ) {
-        rc = opal_convertor_create_stack_at_begining( convertor, opal_datatype_local_sizes );
-        if( 0 == (*position) ) return rc;
-    }
     if( OPAL_LIKELY(convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) {
         rc = opal_convertor_create_stack_with_pos_contig( convertor, (*position),
                                                           opal_datatype_local_sizes );
     } else {
+        if( (0 == (*position)) || ((*position) < convertor->bConverted) ) {
+            rc = opal_convertor_create_stack_at_begining( convertor, opal_datatype_local_sizes );
+            if( 0 == (*position) ) return rc;
+        }
         rc = opal_convertor_generic_simple_position( convertor, position );
         /**
          * If we have a non-contigous send convertor don't allow it move in the middle
