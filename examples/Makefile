@@ -155,7 +155,7 @@ ring_oshmemfh: ring_oshmemfh.f90
 	$(SHMEMFC) $(FCFLAGS) $? -o $@
 
 oshmem_shmalloc: oshmem_shmalloc.c
-	$(SHMEMFC) $(FCFLAGS) $? -o $@
+	$(SHMEMCC) $(CCFLAGS) $? -o $@
 
 oshmem_circular_shift: oshmem_circular_shift.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
