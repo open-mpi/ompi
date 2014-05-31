@@ -337,7 +337,6 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                 if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_peer,
                                                             (opal_identifier_t*)(&proc->proc_name),
                                                             key, &myvals))) {
-                    ORTE_ERROR_LOG(rc);
                     OPAL_LIST_DESTRUCT(&myvals);
                     return rc;
                 }
