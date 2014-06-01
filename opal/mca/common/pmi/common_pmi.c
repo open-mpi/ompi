@@ -59,6 +59,7 @@ static int mca_initialize_pmi_v2(void)
      * even launched by a PMI server before attempting
      * to use PMI */
     if (NULL == getenv("PMI_FD")) {
+        opal_show_help("help-common-pmi.txt", "pmi2-init-failed", true, rc);
         return OPAL_ERROR;
     }
 
@@ -123,13 +124,6 @@ static int mca_initialize_pmi_v1(void)
     PMI_BOOL initialized;
     int spawned;
     int rc, ret = OPAL_ERROR;
-
-    /* deal with a Slurm bug by first checking if we were
-     * even launched by a PMI server before attempting
-     * to use PMI */
-    if (NULL == getenv("PMI_FD")) {
-        return OPAL_ERROR;
-    }
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
