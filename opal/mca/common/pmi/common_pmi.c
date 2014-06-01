@@ -59,7 +59,6 @@ static int mca_initialize_pmi_v2(void)
      * even launched by a PMI server before attempting
      * to use PMI */
     if (NULL == getenv("PMI_FD")) {
-        opal_show_help("help-common-pmi.txt", "pmi2-init-failed", true, rc);
         return OPAL_ERROR;
     }
 
