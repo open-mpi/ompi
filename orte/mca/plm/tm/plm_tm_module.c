@@ -150,7 +150,7 @@ static int plm_tm_init(void)
 
 static int plm_tm_launch_job(orte_job_t *jdata)
 {
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         /* this is a restart situation - skip to the mapping stage */
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
     } else {
@@ -188,13 +188,14 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_job_t *daemons, *jdata;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
     int32_t launchid, *ldptr;
+    char *prefix_dir = NULL;
 
     jdata = state->jdata;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
      */
-    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
+    if (ORTE_FLAG_TEST(state->jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
         OBJ_RELEASE(state);
@@ -270,7 +271,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         }
         
         /* if this daemon already exists, don't launch it! */
-        if (node->daemon_launched) {
+        if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             continue;
         }
         
@@ -330,14 +331,15 @@ static void launch_daemons(int fd, short args, void *cbdata)
         there
     */
     app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
-    if (NULL != app->prefix_dir) {
+    orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING);
+    if (NULL != prefix_dir) {
         char *newenv;
         
         for (i = 0; NULL != env && NULL != env[i]; ++i) {
             /* Reset PATH */
             if (0 == strncmp("PATH=", env[i], 5)) {
                 asprintf(&newenv, "%s/%s:%s", 
-                            app->prefix_dir, bin_base, env[i] + 5);
+                            prefix_dir, bin_base, env[i] + 5);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -349,7 +351,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
             /* Reset LD_LIBRARY_PATH */
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
                 asprintf(&newenv, "%s/%s:%s", 
-                            app->prefix_dir, lib_base, env[i] + 16);
+                            prefix_dir, lib_base, env[i] + 16);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -358,6 +360,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
                 free(newenv);
             } 
         }
+        free(prefix_dir);
     }
     
     /* Iterate through each of the nodes and spin

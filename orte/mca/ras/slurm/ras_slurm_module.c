@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -739,6 +739,7 @@ static void recv_data(int fd, short args, void *cbdata)
     orte_app_context_t *app;
     orte_jobid_t jobid;
     orte_job_t *jdata;
+    char **dash_host = NULL;
 
     opal_output_verbose(2, orte_ras_base_framework.framework_output,
                         "%s ras:slurm: dynamic allocation - data recvd",
@@ -802,6 +803,8 @@ static void recv_data(int fd, short args, void *cbdata)
     idx = -1;
     sjob = -1;
     nodelist = NULL;
+    /* release the current dash_host as that contained the *desired* allocation */
+    orte_remove_attribute(&app->attributes, ORTE_APP_DASH_HOST);
     for (i=1; NULL != alloc[i]; i++) {
         if (ORTE_SUCCESS != parse_alloc_msg(alloc[i], &idx, &sjob, &nodelist, &tpn)) {
             orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, jtrk->cmd);
@@ -820,9 +823,6 @@ static void recv_data(int fd, short args, void *cbdata)
             opal_pointer_array_set_item(&jtrk->apps, idx, aptrk);
         }
         aptrk->sjob = sjob;
-        /* release the current dash_host as that contained the *desired* allocation */
-        opal_argv_free(app->dash_host);
-        app->dash_host = NULL;
         /* since the nodelist/tpn may contain regular expressions, parse them */
         if (ORTE_SUCCESS != (rc = orte_ras_slurm_discover(nodelist, tpn, &ndtmp))) {
             ORTE_ERROR_LOG(rc);
@@ -835,7 +835,7 @@ static void recv_data(int fd, short args, void *cbdata)
          */
         while (NULL != (item = opal_list_remove_first(&ndtmp))) {
             nd = (orte_node_t*)item;
-            opal_argv_append_nosize(&app->dash_host, nd->name);
+            opal_argv_append_nosize(&dash_host, nd->name);
             /* check for duplicates */
             found = false;
             for (itm = opal_list_get_first(&nds);
@@ -861,6 +861,12 @@ static void recv_data(int fd, short args, void *cbdata)
     /* cleanup */
     opal_argv_free(alloc);
     OBJ_DESTRUCT(&ndtmp);
+    if (NULL != dash_host) {
+        tpn = opal_argv_join(dash_host, ',');
+        orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL, (void*)tpn, OPAL_STRING);
+        opal_argv_free(dash_host);
+        free(tpn);
+    }
 
     if (opal_list_is_empty(&nds)) {
         /* if we get here, then we were able to contact slurm,
@@ -908,6 +914,7 @@ static int dyn_allocate(orte_job_t *jdata)
     int i;
     struct timeval tv;
     local_jobtracker_t *jtrk;
+    int64_t i64, *i64ptr;
 
     if (NULL == mca_ras_slurm_component.config_file) {
         opal_output(0, "Cannot perform dynamic allocation as no Slurm configuration file provided");
@@ -956,6 +963,7 @@ static int dyn_allocate(orte_job_t *jdata)
     free(tmp);
 
     /* for each app, add its allocation request info */
+    i64ptr = &i64;
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
@@ -969,8 +977,8 @@ static int dyn_allocate(orte_job_t *jdata)
         opal_argv_append_nosize(&cmd, tmp);
         free(tmp);
         /* if we were given a minimum number of nodes, pass it along */
-        if (0 < app->min_number_of_nodes) {
-            asprintf(&tmp, "N=%ld", (long int)app->min_number_of_nodes);
+        if (orte_get_attribute(&app->attributes, ORTE_APP_MIN_NODES, (void**)&i64ptr, OPAL_INT64)) {
+            asprintf(&tmp, "N=%ld", (long int)i64);
             opal_argv_append_nosize(&cmd, tmp);
             free(tmp);
         }
@@ -985,7 +993,7 @@ static int dyn_allocate(orte_job_t *jdata)
             free(tmp);
         }
         /* add the mandatory/optional flag */
-        if (app->mandatory) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_MANDATORY, NULL, OPAL_BOOL)) {
             opal_argv_append_nosize(&cmd, "flag=mandatory");
         } else {
             opal_argv_append_nosize(&cmd, "flag=optional");
@@ -1071,13 +1079,17 @@ static char* get_node_list(orte_app_context_t *app)
     int j;
     char **total_host = NULL;
     char *nodes;
+    char **dash_host, *dh;
 
-    if (NULL == app->dash_host) {
+    if (!orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&dh, OPAL_STRING)) {
         return NULL;
     }
-    for (j=0; NULL != app->dash_host[j]; j++) {
-        opal_argv_append_unique_nosize(&total_host, app->dash_host[j], false);
+    dash_host = opal_argv_split(dh, ',');
+    free(dh);
+    for (j=0; NULL != dash_host[j]; j++) {
+        opal_argv_append_unique_nosize(&total_host, dash_host[j], false);
     }
+    opal_argv_free(dash_host);
     if (NULL == total_host) {
         return NULL;
     }
