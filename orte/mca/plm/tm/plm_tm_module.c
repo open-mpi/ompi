@@ -187,6 +187,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     char* vpid_string;
     orte_job_t *daemons, *jdata;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    int32_t launchid, *ldptr;
 
     jdata = state->jdata;
 
@@ -362,6 +363,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* Iterate through each of the nodes and spin
      * up a daemon.
      */
+    ldptr = &launchid;
     for (i = 0; i < map->nodes->size; i++) {
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
@@ -396,10 +398,15 @@ static void launch_daemons(int fd, short args, void *cbdata)
             if (NULL != param) free(param);
         }
         
-        rc = tm_spawn(argc, argv, env, node->launch_id, tm_task_ids + launched, tm_events + launched);
+        launchid = 0;
+        if (!orte_get_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) {
+            orte_show_help("help-plm-tm.txt", "tm-spawn-failed", true, argv[0], node->name, 0);
+            rc = ORTE_ERROR;
+            goto cleanup;
+        }
+        rc = tm_spawn(argc, argv, env, launchid, tm_task_ids + launched, tm_events + launched);
         if (TM_SUCCESS != rc) {
-            orte_show_help("help-plm-tm.txt", "tm-spawn-failed",
-                           true, argv[0], node->name, node->launch_id);
+            orte_show_help("help-plm-tm.txt", "tm-spawn-failed", true, argv[0], node->name, launchid);
             rc = ORTE_ERROR;
             goto cleanup;
         }

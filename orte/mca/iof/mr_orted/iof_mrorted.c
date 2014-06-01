@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -319,6 +320,12 @@ static void mrorted_complete(const orte_job_t *jdata)
     orte_iof_proc_t *proct;
     unsigned char data[1];
     opal_list_item_t *item;
+    orte_jobid_t stdout_target, *jbptr;
+
+    /* get the stdout target */
+    stdout_target = ORTE_JOBID_INVALID;
+    jbptr = &stdout_target;
+    orte_get_attribute(&((orte_job_t*)jdata)->attributes, ORTE_JOB_STDOUT_TARGET, (void**)&jbptr, ORTE_JOBID);
 
     /* the job is complete - close out the stdin
      * of any procs it was feeding
@@ -327,7 +334,7 @@ static void mrorted_complete(const orte_job_t *jdata)
          item != opal_list_get_end(&mca_iof_mr_orted_component.procs);
          item = opal_list_get_next(item)) {
         proct = (orte_iof_proc_t*)item;
-        if (proct->name.jobid == jdata->stdout_target) {
+        if (proct->name.jobid == stdout_target) {
             if (NULL == proct->sink) {
                 opal_output(0, "NULL SINK FOR PROC %s", ORTE_NAME_PRINT(&proct->name));
                 continue;

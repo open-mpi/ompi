@@ -2,6 +2,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -817,16 +818,21 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
      * Display Mapping
      */
     if( 10 <= opal_output_get_verbosity(orte_rmaps_base_framework.framework_output) ) {
+        char *cpu_bitmap;
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:lama: ---------------------------------");
         for( j = 0; j < jdata->procs->size; ++j) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
                 continue;
             }
-
+            cpu_bitmap = NULL;
+            orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)cpu_bitmap, OPAL_STRING);
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Ordering: Proc. %2d on Node %10s - Slot %s",
-                                proc->name.vpid, proc->node->name, proc->cpu_bitmap);
+                                proc->name.vpid, proc->node->name, cpu_bitmap);
+            if (NULL != cpu_bitmap) {
+                free(cpu_bitmap);
+            }
         }
     }
 
@@ -1060,11 +1066,7 @@ static int rmaps_lama_map_core_iter_level(orte_job_t *jdata,
                 /*
                  * Set the binding for this process
                  */
-                proc->cpu_bitmap = strdup(slot_list);
-                /** JJH: Need to associate with an HWLOC object... hummm.... */
-                proc->locale = NULL;
-                /* proc->locale = obj; */
-
+                orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, slot_list, OPAL_STRING);
                 /*
                  * Insert the proc into the 'native' ordering location.
                  */
@@ -1205,12 +1207,12 @@ static int orte_rmaps_lama_map_process(orte_job_t *jdata,
     /*
      * Add this node to the map, but only once
      */
-    if( !node->mapped ) {
+    if( !ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED) ) {
         if (ORTE_SUCCESS > (ret = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
-        node->mapped = true;
+        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
         OBJ_RETAIN(node);  /* maintain accounting on object */
         ++(jdata->map->num_nodes);
     }

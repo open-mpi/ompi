@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -54,6 +55,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
     bool write_out=false;
     orte_node_t *node;
     orte_proc_t *daemon;
+    orte_jobid_t stdout_target, *jbptr;
 
     /* read up to the fragment size */
     numbytes = read(fd, data, sizeof(data));
@@ -111,14 +113,15 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
     
     if (ORTE_IOF_STDOUT & rev->tag) {
         /* see if we need to forward this output */
-        jdata = orte_get_job_data_object(rev->name.jobid);
-        if (ORTE_JOBID_INVALID == jdata->stdout_target) {
+        stdout_target = ORTE_JOBID_INVALID;
+        jbptr = &stdout_target;
+        if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_STDOUT_TARGET, (void**)&jbptr, ORTE_JOBID)) {
             /* end of the chain - just output the info */
             write_out = true;
             goto PROCESS;
         }
         /* it goes to the next job in the chain */
-        jdata = orte_get_job_data_object(jdata->stdout_target);
+        jdata = orte_get_job_data_object(stdout_target);
         map = jdata->map;
         for (i=0; i < map->nodes->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {

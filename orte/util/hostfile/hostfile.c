@@ -130,7 +130,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
     orte_node_t* node;
     bool got_max = false;
     char* value;
-    char** argv;
+    char **argv, **aliases, *aptr;
     char* node_name = NULL;
     char* node_alias = NULL;
     char* username = NULL;
@@ -196,7 +196,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 node = OBJ_NEW(orte_node_t);
                 node->name = node_name;
                 if (NULL != username) {
-                    node->username = strdup(username);
+                    orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
                 }
                 opal_list_append(exclude, &node->super);
             }
@@ -227,26 +227,37 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             node->name = node_name;
             node->slots = 1;
             if (NULL != username) {
-                node->username = strdup(username);
+                orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
             }
             opal_list_append(updates, &node->super);
         } else {
             /* this node was already found once - add a slot and mark slots as "given" */
             node->slots++;
-            node->slots_given = true;
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
         }
         /* do we need to record an alias for this node? */
         if (NULL != node_alias) {
             /* add to list of aliases for this node - only add if unique */
-            opal_argv_append_unique_nosize(&node->alias, node_alias, false);
+            aptr = NULL;
+            aliases = NULL;
+            orte_get_attribute(&node->attributes, ORTE_NODE_ALIAS, (void**)&aptr, OPAL_STRING);
+            if (NULL != aptr) {
+                aliases = opal_argv_split(aptr, ',');
+                free(aptr);
+            }
+            opal_argv_append_unique_nosize(&aliases, node_alias, false);
             free(node_alias);
+            aptr = opal_argv_join(aliases, ',');
+            opal_argv_free(aliases);
+            orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, aptr, OPAL_STRING);
+            free(aptr);
         }
     } else if (ORTE_HOSTFILE_RELATIVE == token) {
         /* store this for later processing */
         node = OBJ_NEW(orte_node_t);
         node->name = strdup(orte_util_hostfile_value.sval);
         if (NULL != username) {
-            node->username = strdup(username);
+            orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
         }
         opal_list_append(updates, &node->super);
     } else if (ORTE_HOSTFILE_RANK == token) {
@@ -289,7 +300,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             node->name = node_name;
             node->slots = 1;
             if (NULL != username) {
-                node->username = strdup(username);
+                orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
+                free(username);
+                username = NULL;
             }
             opal_list_append(updates, &node->super);
         } else {
@@ -302,7 +315,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
         /* mark the slots as "given" since we take them as being the
          * number specified via the rankfile
          */
-        node->slots_given = true;
+        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
         /* skip to end of line */
         while (!orte_util_hostfile_done &&
                ORTE_HOSTFILE_NEWLINE != token) {
@@ -325,7 +338,12 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             goto done;
 
         case ORTE_HOSTFILE_USERNAME:
-            node->username = hostfile_parse_string();
+            username = hostfile_parse_string();
+            if (NULL != username) {
+                orte_set_attribute(&node->attributes, ORTE_NODE_USERNAME, ORTE_ATTR_LOCAL, username, OPAL_STRING);
+                free(username);
+                username = NULL;
+            }
             break;
 
         case ORTE_HOSTFILE_COUNT:
@@ -340,7 +358,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
-            if (node->slots_given) {
+            if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                 /* multiple definitions were given for the
                  * slot count - this is not allowed
                  */
@@ -352,7 +370,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
                 return ORTE_ERROR;
             }
             node->slots = rc;
-            node->slots_given = true;
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
 
             /* Ensure that slots_max >= slots */
             if (node->slots_max != 0 && node->slots_max < node->slots) {
@@ -402,9 +420,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
     }
 
  done:
-    if (got_max && !node->slots_given) {
+    if (got_max && !ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
         node->slots = node->slots_max;
-        node->slots_given = true;
+        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
     }
 
     return ORTE_SUCCESS;
@@ -693,7 +711,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                             opal_list_append(&keep, item1);
                         } else {
                             /* mark as included */
-                            node_from_list->mapped = true;
+                            ORTE_FLAG_SET(node_from_list, ORTE_NODE_FLAG_MAPPED);
                         }
                         --num_empty;
                     }
@@ -733,7 +751,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                             opal_list_append(&keep, item1);
                         } else {
                             /* mark as included */
-                            node_from_list->mapped = true;
+                            ORTE_FLAG_SET(node_from_list, ORTE_NODE_FLAG_MAPPED);
                         }
                         break;
                     }
@@ -779,7 +797,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                         opal_list_append(&keep, item1);
                     } else {
                         /* mark as included */
-                        node_from_list->mapped = true;
+                        ORTE_FLAG_SET(node_from_list, ORTE_NODE_FLAG_MAPPED);
                     }
                     found = true;
                     break;

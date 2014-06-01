@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -132,6 +133,41 @@ typedef char* orte_iov_base_ptr_t;
 typedef void* orte_iov_base_ptr_t;
 #endif
 
+/* ORTE attribute */
+typedef uint16_t orte_attribute_key_t;
+#define ORTE_ATTR_KEY_T   OPAL_UINT16
+typedef struct {
+    opal_list_item_t super;             /* required for this to be on lists */
+    orte_attribute_key_t key;           /* key identifier */
+    opal_data_type_t type;              /* the type of value stored */
+    bool local;                         // whether or not to pack/send this value
+    union {
+        bool flag;
+        uint8_t byte;
+        char *string;
+        size_t size;
+        pid_t pid;
+        int integer;
+        int8_t int8;
+        int16_t int16;
+        int32_t int32;
+        int64_t int64;
+        unsigned int uint;
+        uint8_t uint8;
+        uint16_t uint16;
+        uint32_t uint32;
+        uint64_t uint64;
+        opal_byte_object_t bo;
+        opal_buffer_t buf;
+        float fval;
+        struct timeval tv;
+        void *ptr;  // never packed or passed anywhere
+        orte_vpid_t vpid;
+        orte_jobid_t jobid;
+    } data;
+} orte_attribute_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
+
 
 /* General ORTE types - support handled within DSS */
 #define    ORTE_STD_CNTR            (OPAL_DSS_ID_DYNAMIC + 1)  /**< standard counter type */
@@ -163,6 +199,9 @@ typedef void* orte_iov_base_ptr_t;
 
 /* IOF types */
 #define    ORTE_IOF_TAG             (OPAL_DSS_ID_DYNAMIC + 20)
+
+/* Attribute */
+#define    ORTE_ATTRIBUTE           (OPAL_DSS_ID_DYNAMIC + 21)
 
 
 /* provide a boundary for others to use */

@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -142,6 +143,8 @@ int orte_dt_copy_proc(orte_proc_t **dest, orte_proc_t *src, opal_data_type_t typ
  */
 int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, opal_data_type_t type)
 {
+    opal_value_t *kv, *kvnew;
+
     /* create the new object */
     *dest = OBJ_NEW(orte_app_context_t);
     if (NULL == *dest) {
@@ -160,39 +163,12 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     if (NULL != src->cwd) {
         (*dest)->cwd = strdup(src->cwd);
     }
-    (*dest)->user_specified_cwd = src->user_specified_cwd;
-    
-    if (NULL != src->hostfile) {
-        (*dest)->hostfile = strdup(src->hostfile);
-    }
-    
-    if (NULL != src->add_hostfile) {
-        (*dest)->add_hostfile = strdup(src->add_hostfile);
-    }
-    
-    (*dest)->add_host = opal_argv_copy(src->add_host);
-    
-    (*dest)->dash_host = opal_argv_copy(src->dash_host);
-    
-    if (NULL != src->prefix_dir) {
-        (*dest)->prefix_dir = strdup(src->prefix_dir);
-    }
-    
-    (*dest)->preload_binary = src->preload_binary;
-    
-    if( NULL != src->preload_files) {
-        (*dest)->preload_files  = strdup(src->preload_files);
-    }
-    
-    (*dest)->recovery_defined = src->recovery_defined;
-    (*dest)->max_restarts = src->max_restarts;
 
-#if OPAL_ENABLE_FT_CR == 1
-    if( NULL != src->sstore_load) {
-        (*dest)->sstore_load  = strdup(src->sstore_load);
+    OPAL_LIST_FOREACH(kv, &src->attributes, opal_value_t) {
+        opal_dss.copy((void**)&kvnew, kv, OPAL_VALUE);
+        opal_list_append(&(*dest)->attributes, &kvnew->super);
     }
-#endif
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -364,6 +340,21 @@ int orte_dt_copy_iof_tag(orte_iof_tag_t **dest, orte_iof_tag_t *src, opal_data_t
     }
     
     memcpy(*dest, src, datasize);
+    
+    return ORTE_SUCCESS;
+}
+
+int orte_dt_copy_attr(orte_attribute_t **dest, orte_attribute_t *src, opal_data_type_t type)
+{
+    *dest = OBJ_NEW(orte_attribute_t);
+    if (NULL == *dest) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    (*dest)->key = src->key;
+    (*dest)->type = src->type;
+
+    memcpy(&(*dest)->data, &src->data, sizeof(src->data));
     
     return ORTE_SUCCESS;
 }

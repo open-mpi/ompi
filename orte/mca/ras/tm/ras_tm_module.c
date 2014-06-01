@@ -208,7 +208,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
             
             node = OBJ_NEW(orte_node_t);
             node->name = hostname;
-            node->launch_id = nodeid;
+            orte_set_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, ORTE_ATTR_LOCAL, &nodeid, OPAL_INT32);
             node->slots_inuse = 0;
             node->slots_max = 0;
             node->slots = ppn;

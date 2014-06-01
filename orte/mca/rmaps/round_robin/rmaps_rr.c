@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,7 +58,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
      * when rr mapping is desired - allow
      * restarting of failed apps
      */
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr: job %s is being restarted - rr cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));

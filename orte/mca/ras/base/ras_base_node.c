@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +70,8 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     orte_node_t *node, *hnp_node;
     char *ptr;
     bool hnp_alone = true;
+    orte_attribute_t *kv;
+    char **alias=NULL, **nalias;
 
     /* get the number of nodes */
     num_nodes = (orte_std_cntr_t)opal_list_get_size(nodes);
@@ -117,18 +120,17 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             /* copy the allocation data to that node's info */
             hnp_node->slots += node->slots;
             hnp_node->slots_max = node->slots_max;
-            hnp_node->launch_id = node->launch_id;
-            if (orte_managed_allocation) {
+            /* copy across any attributes */
+            OPAL_LIST_FOREACH(kv, &node->attributes, orte_attribute_t) {
+                orte_set_attribute(&node->attributes, kv->key, ORTE_ATTR_LOCAL, &kv->data, kv->type);
+            }
+            if (orte_managed_allocation || ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                 /* the slots are always treated as sacred
                  * in managed allocations
                  */
-                hnp_node->slots_given = true;
+                ORTE_FLAG_SET(hnp_node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             } else {
-                /* in unmanaged allocations, take whatever
-                 * was determined by the hostfile or dash-host
-                 * parsers
-                 */
-                hnp_node->slots_given = node->slots_given;
+                ORTE_FLAG_UNSET(hnp_node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             }
             /* use the local name for our node - don't trust what
              * we got from an RM. If requested, store the resolved
@@ -137,15 +139,29 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             if (orte_show_resolved_nodenames) {
                 /* if the node name is different, store it as an alias */
                 if (0 != strcmp(node->name, hnp_node->name)) {
-                    /* add to list of aliases for this node - only add if unique */
-                    opal_argv_append_unique_nosize(&hnp_node->alias, node->name, false);
-                }
-                if (NULL != node->alias) {
-                    /* now copy over any aliases that are unique */
-                    for (i=0; NULL != node->alias[i]; i++) {
-                        opal_argv_append_unique_nosize(&hnp_node->alias, node->alias[i], false);
+                    /* get any current list of aliases */
+                    ptr = NULL;
+                    orte_get_attribute(&hnp_node->attributes, ORTE_NODE_ALIAS, (void**)&ptr, OPAL_STRING);
+                    if (NULL != ptr) {
+                        alias = opal_argv_split(ptr, ',');
+                        free(ptr);
                     }
+                    /* add to list of aliases for this node - only add if unique */
+                    opal_argv_append_unique_nosize(&alias, node->name, false);
                 }
+                if (orte_get_attribute(&node->attributes, ORTE_NODE_ALIAS, (void**)&ptr, OPAL_STRING)) {
+                    nalias = opal_argv_split(ptr, ',');
+                    /* now copy over any aliases that are unique */
+                    for (i=0; NULL != nalias[i]; i++) {
+                        opal_argv_append_unique_nosize(&alias, nalias[i], false);
+                    }
+                    opal_argv_free(nalias);
+                }
+                /* and store the result */
+                ptr = opal_argv_join(alias, ',');
+                opal_argv_free(alias);
+                orte_set_attribute(&hnp_node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, ptr, OPAL_STRING);
+                free(ptr);
             }
             /* don't keep duplicate copy */
             OBJ_RELEASE(node);
@@ -160,7 +176,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                 /* the slots are always treated as sacred
                  * in managed allocations
                  */
-                node->slots_given = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             }
             /* insert it into the array */
             node->index = opal_pointer_array_add(orte_node_pool, (void*)node);

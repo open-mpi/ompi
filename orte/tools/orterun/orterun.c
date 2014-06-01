@@ -571,8 +571,7 @@ static void spawn_next_job(opal_buffer_t *bptr, void *cbdata)
     orte_job_t *jdata = (orte_job_t*)cbdata;
 
     /* add the data to the job's file map */
-    jdata->file_maps = OBJ_NEW(opal_buffer_t);
-    opal_dss.copy_payload(jdata->file_maps, bptr);
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_FILE_MAPS, ORTE_ATTR_GLOBAL, &bptr, OPAL_BUFFER);
 
     /* spawn the next job */
     orte_plm.spawn(jdata);
@@ -810,7 +809,7 @@ int orterun(int argc, char *argv[])
     
     /* if we want the argv's indexed, indicate that */
     if (orterun_globals.index_argv) {
-        jdata->controls |= ORTE_JOB_CONTROL_INDEX_ARGV;
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_INDEX_ARGV, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     }
 
     /* Parse each app, adding it to the job object */
@@ -901,8 +900,9 @@ int orterun(int argc, char *argv[])
        Since there always MUST be at least one app_context, we are safe in
        doing this.
     */
+    param = NULL;
     if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0)) &&
-        NULL != app->prefix_dir) {
+        orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&param, OPAL_STRING)) {
         char *oldenv, *newenv, *lib_base, *bin_base;
         
         /* copy the prefix into the daemon job so that any launcher
@@ -913,13 +913,13 @@ int orterun(int argc, char *argv[])
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        dapp->prefix_dir = strdup(app->prefix_dir);
+        orte_set_attribute(&dapp->attributes, ORTE_APP_PREFIX_DIR, ORTE_ATTR_LOCAL, param, OPAL_STRING);
 
         lib_base = opal_basename(opal_install_dirs.libdir);
         bin_base = opal_basename(opal_install_dirs.bindir);
 
         /* Reset PATH */
-        newenv = opal_os_path( false, app->prefix_dir, bin_base, NULL );
+        newenv = opal_os_path( false, param, bin_base, NULL );
         oldenv = getenv("PATH");
         if (NULL != oldenv) {
             char *temp;
@@ -935,7 +935,7 @@ int orterun(int argc, char *argv[])
         free(bin_base);
         
         /* Reset LD_LIBRARY_PATH */
-        newenv = opal_os_path( false, app->prefix_dir, lib_base, NULL );
+        newenv = opal_os_path( false, param, lib_base, NULL );
         oldenv = getenv("LD_LIBRARY_PATH");
         if (NULL != oldenv) {
             char* temp;
@@ -950,6 +950,7 @@ int orterun(int argc, char *argv[])
         }
         free(newenv);
         free(lib_base);
+        free(param);
     }
     
     /* pre-condition any network transports that require it */
@@ -1809,10 +1810,10 @@ static int create_app(int argc, char* argv[],
             /* construct the absolute path */
             app->cwd = opal_os_path(false, cwd, orterun_globals.wdir, NULL);
         }
-        app->user_specified_cwd = true;
+        orte_set_attribute(&app->attributes, ORTE_APP_USER_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     } else if (orterun_globals.set_cwd_to_session_dir) {
-        app->set_cwd_to_session_dir = true;
-        app->user_specified_cwd = true;
+        orte_set_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+        orte_set_attribute(&app->attributes, ORTE_APP_USER_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
     } else {
         if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
             orte_show_help("help-orterun.txt", "orterun:init-failure",
@@ -1820,7 +1821,6 @@ static int create_app(int argc, char* argv[],
             goto cleanup;
         }
         app->cwd = strdup(cwd);
-        app->user_specified_cwd = false;
     }
 
     /* if this is the first app_context, check for prefix directions.
@@ -1886,8 +1886,7 @@ static int create_app(int argc, char* argv[],
                         return ORTE_ERR_FATAL;
                     }
                 }
-
-                app->prefix_dir = strdup(param);
+                orte_set_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, ORTE_ATTR_GLOBAL, param, OPAL_STRING);
                 free(param);
             }
         }
@@ -1904,26 +1903,31 @@ static int create_app(int argc, char* argv[],
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "hostfile", 0, 0);
-            app->hostfile = strdup(value);
+            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_LOCAL, value, OPAL_STRING);
         }
     }
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "machinefile"))) {
-        if(1 < j || NULL != app->hostfile) {
+        if(1 < j || orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING)) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
                            true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "machinefile", 0, 0);
-            app->hostfile = strdup(value);
+            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_LOCAL, value, OPAL_STRING);
         }
     }
  
     /* Did the user specify any hosts? */
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "host"))) {
+        char **targ=NULL, *tval;
         for (i = 0; i < j; ++i) {
             value = opal_cmd_line_get_param(&cmd_line, "host", i, 0);
-            opal_argv_append_nosize(&app->dash_host, value);
+            opal_argv_append_nosize(&targ, value);
         }
+        tval = opal_argv_join(targ, ',');
+        orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL, tval, OPAL_STRING);
+        opal_argv_free(targ);
+        free(tval);
     }
 
     /* check for bozo error */
@@ -1938,22 +1942,23 @@ static int create_app(int argc, char* argv[],
     total_num_apps++;
 
     /* Capture any preload flags */
-    app->preload_binary = orterun_globals.preload_binaries;
+    if (orterun_globals.preload_binaries) {
+        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+    }
     /* if we were told to cwd to the session dir and the app was given in
      * relative syntax, then we need to preload the binary to
      * find the app - don't do this for java apps, however, as we
      * can't easily find the class on the cmd line. Java apps have to
      * preload their binary via the preload_files option
      */
-    if (app->set_cwd_to_session_dir &&
+    if (orte_get_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, NULL, OPAL_BOOL) &&
         !opal_path_is_absolute(app->argv[0]) &&
         NULL == strstr(app->argv[0], "java")) {
-        app->preload_binary = true;
+        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
     }
     if (NULL != orterun_globals.preload_files) {
-        app->preload_files  = strdup(orterun_globals.preload_files);
-    } else {
-        app->preload_files = NULL;
+        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, ORTE_ATTR_LOCAL,
+                           orterun_globals.preload_files, OPAL_STRING);
     }
 
 #if OPAL_ENABLE_FT_CR == 1
@@ -2691,10 +2696,10 @@ static void setup_debugger_job(void)
      */
     orte_plm_base_create_jobid(debugger);
     /* flag the job as being debugger daemons */
-    debugger->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
+    ORTE_FLAG_SET(debugger, ORTE_JOB_FLAG_DEBUGGER_DAEMON);
     /* unless directed, we do not forward output */
     if (!MPIR_forward_output) {
-        debugger->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+        ORTE_FLAG_SET(debugger, ORTE_JOB_FLAG_FORWARD_OUTPUT);
     }
     /* dont push stdin */
     debugger->stdin_target = ORTE_VPID_INVALID;
@@ -2717,7 +2722,7 @@ static void setup_debugger_job(void)
         return;
     }
     app->cwd = strdup(cwd);
-    app->user_specified_cwd = false;
+    orte_remove_attribute(&app->attributes, ORTE_APP_USER_CWD);
     opal_argv_append_nosize(&app->argv, app->app);
     build_debugger_args(app);
     opal_pointer_array_add(debugger->apps, app);
@@ -2765,7 +2770,6 @@ static void setup_debugger_job(void)
 
         OBJ_RETAIN(node);  /* maintain accounting on object */    
         proc->node = node;
-        proc->nodename = node->name;
         /* add the proc to the job */
         opal_pointer_array_set_item(debugger->procs, proc->name.vpid, proc);
         debugger->num_procs++;
@@ -2800,6 +2804,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
     orte_vpid_t i, j;
     opal_buffer_t *buf;
     int rc, k;
+    char **aliases, *aptr;
 
     /* if we couldn't get thru the mapper stage, we might
      * enter here with no procs. Avoid the "zero byte malloc"
@@ -2823,7 +2828,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                 if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, k))) {
                     continue;
                 }
-                if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
+                if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
                     /* ignore debugger jobs */
                     continue;
                 }
@@ -2885,9 +2890,17 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
         }
         
         /* take the indicated alias as the hostname, if aliases exist */
-        if (orte_retain_aliases &&
-            orte_use_hostname_alias <= opal_argv_count(proc->node->alias)) {
-            MPIR_proctable[i].host_name = strdup(proc->node->alias[orte_use_hostname_alias-1]);
+        if (orte_retain_aliases) {
+            aliases = NULL;
+            aptr = NULL;
+            if (orte_get_attribute(&proc->node->attributes, ORTE_NODE_ALIAS, (void**)aptr, OPAL_STRING)) {
+                aliases = opal_argv_split(aptr, ',');
+                free(aptr);
+                if (orte_use_hostname_alias <= opal_argv_count(aliases)) {
+                    MPIR_proctable[i].host_name = strdup(aliases[orte_use_hostname_alias-1]);
+                }
+                opal_argv_free(aliases);
+            }
         } else {
             /* just use the default name */
             MPIR_proctable[i].host_name = strdup(proc->node->name);
@@ -2932,7 +2945,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
                 if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, k))) {
                     continue;
                 }
-                if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
+                if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
                     /* ignore debugger jobs */
                     continue;
                 }

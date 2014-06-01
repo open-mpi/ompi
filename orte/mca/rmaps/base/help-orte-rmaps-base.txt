@@ -292,4 +292,15 @@ qualifier to the binding policy.
 Although we were able to map your job, we are unable to launch
 it at this time due to required resources being busy. Please
 try again later.
+#
+[rmaps:no-locale]
+The request to bind processes could not be completed due to
+an internal error - the locale of the following process was
+not set by the mapper code:
+
+  Process:  %s
+
+Please contact the OMPI developers for assistance. Meantime,
+you will still be able to run your application without binding
+by specifying "--bind-to none" on your command line.
 

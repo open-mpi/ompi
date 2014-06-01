@@ -39,7 +39,6 @@
 void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
                                     opal_list_t *my_children)
 {
-    opal_list_item_t *item;
     orte_routed_tree_t *child;
     orte_namelist_t *nm;
     int i;
@@ -57,7 +56,7 @@ void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
                     continue;
                 }
                 /* exclude anyone known not alive */
-                if (proc->alive) {
+                if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_ALIVE)) {
                     nm = OBJ_NEW(orte_namelist_t);
                     nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
                     nm->name.vpid = proc->name.vpid;
@@ -70,10 +69,7 @@ void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
             }
         } else {
             /* the xcast always goes to our children */
-            for (item = opal_list_get_first(my_children);
-                 item != opal_list_get_end(my_children);
-                 item = opal_list_get_next(item)) {
-                child = (orte_routed_tree_t*)item;
+            OPAL_LIST_FOREACH(child, my_children, orte_routed_tree_t) {
                 nm = OBJ_NEW(orte_namelist_t);
                 nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
                 nm->name.vpid = child->vpid;
@@ -82,10 +78,7 @@ void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
         }
     } else {
         /* I am a daemon - route to my children */
-        for (item = opal_list_get_first(my_children);
-             item != opal_list_get_end(my_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_routed_tree_t*)item;
+        OPAL_LIST_FOREACH(child, my_children, orte_routed_tree_t) {
             nm = OBJ_NEW(orte_namelist_t);
             nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
             nm->name.vpid = child->vpid;

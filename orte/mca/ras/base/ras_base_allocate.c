@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -113,6 +114,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     orte_std_cntr_t i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    char *hosts;
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate",
@@ -281,22 +283,23 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        if (NULL != app->hostfile) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:allocate adding hostfile %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 app->hostfile));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts));
             
             /* hostfile was specified - parse it and add it to the list */
-            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                                   app->hostfile))) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, hosts))) {
+                free(hosts);
                 OBJ_DESTRUCT(&nodes);
                 /* set an error event */
                 ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
                 return;
             }
-        } else if (!orte_soft_locations && NULL != app->dash_host) {
+            free(hosts);
+        } else if (!orte_soft_locations &&
+                   orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
             /* if we are using soft locations, then any dash-host would
              * just include desired nodes and not required. We don't want
              * to pick them up here as this would mean the request was
@@ -307,13 +310,14 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:allocate adding dash_hosts",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
-                                                                    app->dash_host))) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts))) {
+                free(hosts);
                 OBJ_DESTRUCT(&nodes);
                 ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
                 OBJ_RELEASE(caddy);
                 return;
             }
+            free(hosts);
         }
     }
 
@@ -447,6 +451,7 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
     int i;
     orte_app_context_t *app;
     orte_node_t *node;
+    char *hosts;
 
     /* construct a list to hold the results */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
@@ -468,22 +473,22 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        if (NULL != app->add_hostfile) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_ADD_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:add_hosts checking add-hostfile %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 app->add_hostfile));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts));
             
             /* hostfile was specified - parse it and add it to the list */
-            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                                   app->add_hostfile))) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, hosts))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
+                free(hosts);
                 return rc;
             }
             /* now indicate that this app is to run across it */
-            app->hostfile = app->add_hostfile;
-            app->add_hostfile = NULL;
+            orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_LOCAL, (void**)hosts, OPAL_STRING);
+            orte_remove_attribute(&app->attributes, ORTE_APP_ADD_HOSTFILE);
+            free(hosts);
         }
     }
 
@@ -500,22 +505,20 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        if (NULL != app->add_host) {
-            if (4 < opal_output_get_verbosity(orte_ras_base_framework.framework_output)) {
-                char *fff = opal_argv_join(app->add_host, ',');
-                opal_output(0, "%s ras:base:add_hosts checking add-host %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fff);
-                free(fff);
-            }
-            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
-                                                                    app->add_host))) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_ADD_HOST, (void**)&hosts, OPAL_STRING)) {
+            opal_output_verbose(5, orte_ras_base_framework.framework_output,
+                                "%s ras:base:add_hosts checking add-host %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts);
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
+                free(hosts);
                 return rc;
             }
             /* now indicate that this app is to run across them */
-            app->dash_host = app->add_host;
-            app->add_host = NULL;
+            orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL, hosts, OPAL_STRING);
+            orte_remove_attribute(&app->attributes, ORTE_APP_ADD_HOST);
+            free(hosts);
         }
     }
     

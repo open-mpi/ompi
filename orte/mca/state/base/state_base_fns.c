@@ -481,7 +481,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         pdata->state = state;
         jdata->num_launched++;
         if (jdata->num_launched == jdata->num_procs) {
-            if (jdata->controls & ORTE_JOB_CONTROL_DEBUGGER_DAEMON) {
+            if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
                 ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
             } else {
                 ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_RUNNING);
@@ -505,22 +505,22 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         if (NULL != orte_iof.close) {
             orte_iof.close(proc, ORTE_IOF_STDIN);
         }
-        pdata->iof_complete = true;
-        if (pdata->waitpid_recvd) {
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_IOF_COMPLETE);
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_WAITPID)) {
             ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
     } else if (ORTE_PROC_STATE_WAITPID_FIRED == state) {
         /* update the proc state */
         pdata->state = state;
-        pdata->waitpid_recvd = true;
-        if (pdata->iof_complete) {
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_WAITPID);
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_IOF_COMPLETE)) {
             ORTE_ACTIVATE_PROC_STATE(proc, ORTE_PROC_STATE_TERMINATED);
         }
     } else if (ORTE_PROC_STATE_TERMINATED == state) {
         /* update the proc state */
-        pdata->alive = false;
+        ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
         pdata->state = state;
-	if (pdata->local_proc) {
+	if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
@@ -554,6 +554,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     orte_std_cntr_t index;
     bool one_still_alive;
     orte_vpid_t lowest=0;
+    int32_t i32, *i32ptr;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:base:check_job_complete on job %s",
@@ -580,7 +581,8 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
         orte_iof.complete(jdata);
     }
 
-    if (0 < jdata->num_non_zero_exit && !orte_abort_non_zero_exit) {
+    i32ptr = &i32;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NUM_NONZERO_EXIT, (void**)i32ptr, OPAL_INT32) && !orte_abort_non_zero_exit) {
         if (!orte_report_child_jobs_separately || 1 == ORTE_LOCAL_JOBID(jdata->jobid)) {
             /* update the exit code */
             ORTE_UPDATE_EXIT_STATUS(lowest);
@@ -593,8 +595,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                     "-------------------------------------------------------",
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "the primary" : "child",
                     (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
-                    jdata->num_non_zero_exit,
-                    (1 == jdata->num_non_zero_exit) ? "process returned\na non-zero exit code." :
+                    i32, (1 == i32) ? "process returned\na non-zero exit code." :
                     "processes returned\nnon-zero exit codes.");
     }
 
@@ -608,8 +609,8 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      * anything further - just return here
      */
     if (NULL != jdata &&
-        (ORTE_JOB_CONTROL_CONTINUOUS_OP & jdata->controls ||
-         ORTE_JOB_CONTROL_RECOVERABLE & jdata->controls)) {
+        (orte_get_attribute(&jdata->attributes, ORTE_JOB_CONTINUOUS_OP, NULL, OPAL_BOOL) ||
+         ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RECOVERABLE))) {
         goto CHECK_ALIVE;
     }
     
@@ -683,7 +684,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
             /* maintain accounting */
             OBJ_RELEASE(node);
             /* flag that the node is no longer in a map */
-            node->mapped = false;
+            ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
@@ -730,7 +731,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                  * is maintained!
                  */
                 if (1 < j) {
-		    if (jdata->controls & ORTE_JOB_CONTROL_DEBUGGER_DAEMON) {
+		    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
 			/* this was a debugger daemon. notify that a debugger has detached */
 			ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
 		    }
@@ -741,7 +742,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
             continue;
         }
         /* if the job is flagged to not be monitored, skip it */
-        if (ORTE_JOB_CONTROL_DO_NOT_MONITOR & job->controls) {
+        if (ORTE_FLAG_TEST(job, ORTE_JOB_FLAG_DO_NOT_MONITOR)) {
             continue;
         }
         /* when checking for job termination, we must be sure to NOT check

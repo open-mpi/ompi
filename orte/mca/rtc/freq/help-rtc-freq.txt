@@ -1,0 +1,62 @@
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[conflict-freq]
+A specific frequency was given along with either or both a maximum
+and minimum frequency. If a specific frequency is given, then the
+max/min cannot be specified as well.
+
+  Freq:      %s
+  Max freq:  %s
+  Min freq:  %s
+
+Please correct the situation and try again.
+#
+[req-dir-not-found]
+The frequency control component cannot function as a required directory
+was not found on at least one node:
+
+  Node: %s
+  Dir:  %s
+
+The component cannot operate and has been disabled.
+#
+[no-cores-found]
+The frequency control component did not find any cores on at least one node:
+
+  Node:  %s
+
+The component cannot operate and has been disabled.
+#
+[unsupported-governor]
+A frequency governor was specified that is not supported on at least
+one node:
+
+  Node:      %s
+  Governor:  %s
+  Available: %s
+
+Please select one of the available governors and try again.
+#
+[permission-denied]
+An attempt to open a file required for setting the specified
+%s value has failed on at least one node:
+
+  Node:     %s
+  Filename: %s
+
+Check file permissions and try again.
+#
+[unsupported-freq]
+A frequency was specified that is not supported on at least
+one node:
+
+  Node:      %s
+  Freq:      %s
+  Available: %s
+
+Please select one of the available frequencies and try again.

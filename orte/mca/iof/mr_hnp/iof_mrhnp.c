@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -220,7 +221,7 @@ static int mrhnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
      * our stdin
      */
     jdata = orte_get_job_data_object(dst_name->jobid);
-    if (ORTE_JOB_CONTROL_MAPPER & jdata->controls) {
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_MAPPER, NULL, OPAL_BOOL)) {
         /* see if we already have it */
         found = false;
         for (j=0; j < mca_iof_mr_hnp_component.stdin_jobs.size; j++) {
@@ -336,7 +337,7 @@ static int mrhnp_pull(const orte_process_name_t* dst_name,
      * our stdin
      */
     jdata = orte_get_job_data_object(dst_name->jobid);
-    if (ORTE_JOB_CONTROL_MAPPER & jdata->controls) {
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_MAPPER, NULL, OPAL_BOOL)) {
         /* see if we already have it */
         found = false;
         for (j=0; j < mca_iof_mr_hnp_component.stdin_jobs.size; j++) {
@@ -472,8 +473,11 @@ static void mrhnp_complete(const orte_job_t *jdata)
     opal_list_item_t *item;
     int i;
     orte_node_t *node;
+    orte_jobid_t stdout_target, *jbptr;
 
-    if (ORTE_JOBID_INVALID == jdata->stdout_target) {
+    stdout_target = ORTE_JOBID_INVALID;
+    jbptr = &stdout_target;
+    if (!orte_get_attribute(&((orte_job_t*)jdata)->attributes, ORTE_JOB_STDOUT_TARGET, (void**)&jbptr, ORTE_JOBID)) {
         /* nothing to do */
         return;
     }
@@ -481,7 +485,7 @@ static void mrhnp_complete(const orte_job_t *jdata)
     /* the job is complete - close out the stdin
      * of any procs it was feeding
      */
-    jptr = orte_get_job_data_object(jdata->stdout_target);
+    jptr = orte_get_job_data_object(stdout_target);
     map = jptr->map;
     /* cycle thru the map to find any node that has at least
      * one proc from this job

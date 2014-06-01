@@ -77,8 +77,8 @@ typedef uint64_t opal_identifier_t;
     /* simple floating point type */
 #define    OPAL_FLOAT               (opal_data_type_t)   16
     /* system types */
-#define OPAL_TIMEVAL                (opal_data_type_t)   17
-#define OPAL_TIME                   (opal_data_type_t)   18
+#define    OPAL_TIMEVAL             (opal_data_type_t)   17
+#define    OPAL_TIME                (opal_data_type_t)   18
     /* OPAL types */
 #define    OPAL_BYTE_OBJECT         (opal_data_type_t)   19 /**< byte object structure */
 #define    OPAL_DATA_TYPE           (opal_data_type_t)   20 /**< data type */
@@ -88,6 +88,7 @@ typedef uint64_t opal_identifier_t;
 #define    OPAL_HWLOC_TOPO          (opal_data_type_t)   24 /**< hwloc topology */
 #define    OPAL_VALUE               (opal_data_type_t)   25 /**< opal value structure */
 #define    OPAL_BUFFER              (opal_data_type_t)   26 /**< pack the remaining contents of a buffer as an object */
+#define    OPAL_PTR                 (opal_data_type_t)   27 /**< pointer to void* */
 
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 
@@ -102,6 +103,7 @@ typedef struct {
     char *key;                          /* key string */
     opal_data_type_t type;              /* the type of value stored */
     union {
+        bool flag;
         uint8_t byte;
         char *string;
         size_t size;
@@ -119,6 +121,7 @@ typedef struct {
         opal_byte_object_t bo;
         float fval;
         struct timeval tv;
+        void *ptr;  // never packed or passed anywhere
     } data;
 } opal_value_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_t);

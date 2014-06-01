@@ -211,6 +211,7 @@ static void setup_job_complete(int fd, short args, void *cbdata)
     orte_app_context_t *app;
     orte_proc_t *proc;
     orte_vpid_t vpid;
+    opal_buffer_t *buf;
 
     /* check that the job meets our requirements */
     vpid = 0;
@@ -236,9 +237,9 @@ static void setup_job_complete(int fd, short args, void *cbdata)
              * in a pidmap message so we don't do it until
              * the proc is actually scheduled for launch
              */
-            proc->updated = false;
+            ORTE_FLAG_UNSET(proc, ORTE_PROC_FLAG_UPDATED);
             /* procs must not barrier when executing in stages */
-            proc->do_not_barrier = true;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_NOBARRIER, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
             /* add it to the job */
             opal_pointer_array_set_item(jdata->procs, vpid, proc);
             jdata->num_procs++;
@@ -259,8 +260,10 @@ static void setup_job_complete(int fd, short args, void *cbdata)
     }
 
     /* if there are any file_maps attached to this job, load them */
-    if (NULL != jdata->file_maps) {
-        orte_dfs.load_file_maps(jdata->jobid, jdata->file_maps, NULL, NULL);
+    buf = NULL;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FILE_MAPS, (void**)&buf, OPAL_BUFFER)) {
+        orte_dfs.load_file_maps(jdata->jobid, buf, NULL, NULL);
+        OBJ_RELEASE(buf);
     }
     orte_plm_base_setup_job_complete(0, 0, (void*)caddy);
 }
@@ -330,7 +333,8 @@ static void track_procs(int fd, short args, void *cbdata)
      * inside MPI_Init - if it did, that is not acceptable
      */
     if (ORTE_PROC_STATE_REGISTERED == state) {
-        if (pdata->mpi_proc && !jdata->gang_launched) {
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_AS_MPI) &&
+            !ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_GANG_LAUNCHED)) {
             /* we can't support this - issue an error and abort */
             orte_show_help("help-state-staged-hnp.txt", "mpi-procs-not-supported", true);
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SILENT_ABORT);
@@ -356,8 +360,8 @@ static void track_procs(int fd, short args, void *cbdata)
         if (NULL != orte_iof.close) {
             orte_iof.close(proc, ORTE_IOF_STDIN);
         }
-        pdata->iof_complete = true;
-        if (pdata->waitpid_recvd) {
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_IOF_COMPLETE);
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_WAITPID)) {
             goto terminated;
         }
         OBJ_RELEASE(caddy);
@@ -367,8 +371,8 @@ static void track_procs(int fd, short args, void *cbdata)
     if (ORTE_PROC_STATE_WAITPID_FIRED == state) {
         /* update the proc state */
         pdata->state = state;
-        pdata->waitpid_recvd = true;
-        if (pdata->iof_complete) {
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_WAITPID);
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_IOF_COMPLETE)) {
             goto terminated;
         }
         OBJ_RELEASE(caddy);
@@ -383,9 +387,9 @@ static void track_procs(int fd, short args, void *cbdata)
     if (ORTE_PROC_STATE_TERMINATED == state) {
     terminated:
         /* update the proc state */
-        pdata->alive = false;
+        ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
         pdata->state = ORTE_PROC_STATE_TERMINATED;
-        if (pdata->local_proc) {
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.

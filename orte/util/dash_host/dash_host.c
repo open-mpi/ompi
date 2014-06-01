@@ -44,21 +44,24 @@
  * relative node syntax should generate an immediate error
  */
 int orte_util_add_dash_host_nodes(opal_list_t *nodes,
-                                  char ** host_argv)
+                                  char *hosts)
 {
     opal_list_item_t *item, *itm;
     orte_std_cntr_t i, j, k;
     int rc;
+    char **host_argv=NULL;
     char **mapped_nodes = NULL, **mini_map;
     orte_node_t *node, *nd;
     opal_list_t adds;
     bool found;
+    char **aliases, *aptr;
 
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                          "%s dashhost: parsing args",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     OBJ_CONSTRUCT(&adds, opal_list_t);
+    host_argv = opal_argv_split(hosts, ',');
 
     /* Accumulate all of the host name mappings */
     for (j = 0; j < opal_argv_count(host_argv); ++j) {
@@ -115,7 +118,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                                      "%s dashhost: node %s already on list - slots %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots));
                 /* the dash-host option presumes definition of num_slots */
-                node->slots_given = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
                 break;
             }
         }
@@ -135,7 +138,18 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 if (orte_show_resolved_nodenames &&
                     0 != strcmp(mapped_nodes[i], orte_process_info.nodename)) {
                     /* add to list of aliases for this node - only add if unique */
-                    opal_argv_append_unique_nosize(&node->alias, mapped_nodes[i], false);
+                    aptr = NULL;
+                    aliases = NULL;
+                    orte_get_attribute(&node->attributes, ORTE_NODE_ALIAS, (void**)aptr, OPAL_STRING);
+                    if (NULL != aptr) {
+                        aliases = opal_argv_split(aptr, ',');
+                        free(aptr);
+                    }
+                    opal_argv_append_unique_nosize(&aliases, mapped_nodes[i], false);
+                    aptr = opal_argv_join(aliases, ',');
+                    opal_argv_free(aliases);
+                    orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, aptr, OPAL_STRING);
+                    free(aptr);
                 }
                 node->name = strdup(orte_process_info.nodename);
             } else {
@@ -150,7 +164,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             node->slots_max = 0;
             node->slots = 1;
             /* the dash-host option presumes definition of num_slots */
-            node->slots_given = true;
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
             opal_list_append(&adds, &node->super);
         }
     }
@@ -187,6 +201,9 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
     if (NULL != mapped_nodes) {
         opal_argv_free(mapped_nodes);
     }
+    if (NULL != host_argv) {
+        opal_argv_free(host_argv);
+    }
     OPAL_LIST_DESTRUCT(&adds);
 
     return rc;
@@ -197,13 +214,16 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
  * and relative mode, so we have to check for pre-existing
  * allocations if we are to use relative node syntax
  */
-static int parse_dash_host(char ***mapped_nodes, char** host_argv)
+static int parse_dash_host(char ***mapped_nodes, char *hosts)
 {
     orte_std_cntr_t j, k;
     int rc=ORTE_SUCCESS;
-    char **mini_map, *cptr;
+    char **mini_map=NULL, *cptr;
     int nodeidx;
     orte_node_t *node;
+    char **host_argv=NULL;
+
+    host_argv = opal_argv_split(hosts, ',');
 
     /* Accumulate all of the host name mappings */
     for (j = 0; j < opal_argv_count(host_argv); ++j) {
@@ -276,6 +296,9 @@ static int parse_dash_host(char ***mapped_nodes, char** host_argv)
     }
     
 cleanup:
+    if (NULL != host_argv) {
+        opal_argv_free(host_argv);
+    }
     if (NULL != mini_map) {
         opal_argv_free(mini_map);
     }
@@ -283,7 +306,7 @@ cleanup:
 }
 
 int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
-                                     char** host_argv,
+                                     char *hosts,
                                      bool remove)
 {
     opal_list_item_t* item;
@@ -295,7 +318,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
     int num_empty=0;
     opal_list_t keep;
     bool want_all_empty=false;
-    
+
     /* if the incoming node list is empty, then there
      * is nothing to filter!
      */
@@ -303,7 +326,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
         return ORTE_SUCCESS;
     }
 
-    if (ORTE_SUCCESS != (rc = parse_dash_host(&mapped_nodes, host_argv))) {
+    if (ORTE_SUCCESS != (rc = parse_dash_host(&mapped_nodes, hosts))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -366,7 +389,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                         opal_list_append(&keep, item);
                     } else {
                         /* mark the node as found */
-                        node->mapped = true;
+                        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                     }
                     --num_empty;
                 }
@@ -396,7 +419,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                         opal_list_append(&keep, item);
                     } else {
                         /* mark the node as found */
-                        node->mapped = true;
+                        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                     }
                     break;
                 }
@@ -460,13 +483,13 @@ cleanup:
 }
 
 int orte_util_get_ordered_dash_host_list(opal_list_t *nodes,
-                                         char ** host_argv)
+                                         char *hosts)
 {
     int rc, i;
     char **mapped_nodes = NULL;
     orte_node_t *node;
 
-    if (ORTE_SUCCESS != (rc = parse_dash_host(&mapped_nodes, host_argv))) {
+    if (ORTE_SUCCESS != (rc = parse_dash_host(&mapped_nodes, hosts))) {
         ORTE_ERROR_LOG(rc);
     }
     

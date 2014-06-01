@@ -5,6 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -72,7 +73,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     mca_base_component_t *c = &mca_rmaps_resilient_component.super.base_version;
     bool found;
 
-    if (!(ORTE_JOB_CONTROL_RESTART & jdata->controls)) {
+    if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         if (NULL != jdata->map->req_mapper &&
             0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
             /* a mapper has been specified, and it isn't me */
@@ -87,7 +88,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                 ORTE_JOBID_PRINT(jdata->jobid));
             return ORTE_ERR_TAKE_NEXT_OPTION;
         }
-    } else if (!(ORTE_JOB_CONTROL_PROCS_MIGRATING & jdata->controls)) {
+    } else if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_PROCS_MIGRATING)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:resilient: cannot map job %s - not in restart or migrating",
                             ORTE_JOBID_PRINT(jdata->jobid));
@@ -249,11 +250,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         if (!found) {
             OBJ_RETAIN(nd);
             opal_pointer_array_add(jdata->map->nodes, nd);
-            nd->mapped = true;
+            ORTE_FLAG_SET(nd, ORTE_NODE_FLAG_MAPPED);
         }
         OBJ_RETAIN(nd);  /* maintain accounting on object */    
         proc->node = nd;
-        proc->nodename = nd->name;
         nd->num_procs++;
         opal_pointer_array_add(nd->procs, (void*)proc);
         /* retain the proc struct so that we correctly track its release */
@@ -468,7 +468,8 @@ static int get_new_node(orte_proc_t *proc,
     /* set defaults */
     *ndret = NULL;
     nd = NULL;
-    oldnode = proc->node;
+    oldnode = NULL;
+    orte_get_attribute(&proc->attributes, ORTE_PROC_PRIOR_NODE, (void**)&oldnode, OPAL_PTR);
 
     /*
      * Get a list of all nodes
@@ -494,7 +495,7 @@ static int get_new_node(orte_proc_t *proc,
          * all
          */
         nd = (orte_node_t*)opal_list_get_first(&node_list);
-        proc->prior_node = oldnode;
+        orte_set_attribute(&proc->attributes, ORTE_PROC_PRIOR_NODE, ORTE_ATTR_LOCAL, oldnode, OPAL_PTR);
         OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
                              "%s rmaps:resilient: Placing process %s on node %s[%s] (only one avail node)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -551,8 +552,7 @@ static int get_new_node(orte_proc_t *proc,
         /* don't return to our prior location to avoid
          * "ricochet" effect
          */
-        if (NULL != proc->prior_node &&
-            node == proc->prior_node) {
+        if (NULL != oldnode && node == oldnode) {
             OPAL_OUTPUT_VERBOSE((7, orte_rmaps_base_framework.framework_output,
                                  "%s REMOVING PRIOR NODE %s[%s] FROM CANDIDATES",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -566,7 +566,7 @@ static int get_new_node(orte_proc_t *proc,
         /* if this node is empty, then it is the winner */
         if (0 == node->num_procs) {
             nd = node;
-            proc->prior_node = oldnode;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_PRIOR_NODE, ORTE_ATTR_LOCAL, oldnode, OPAL_PTR);
             break;
         }
         /* if this node has someone from my job, then skip it
@@ -594,13 +594,13 @@ static int get_new_node(orte_proc_t *proc,
         }
         /* get here if all tests pass - take this node */
         nd = node;
-        proc->prior_node = oldnode;
+        orte_set_attribute(&proc->attributes, ORTE_PROC_PRIOR_NODE, ORTE_ATTR_LOCAL, oldnode, OPAL_PTR);
         break;
     }
     if (NULL == nd) {
         /* didn't find anything */
-        if (NULL != proc->prior_node) {
-            nd = proc->prior_node;
+        if (NULL != oldnode) {
+            nd = oldnode;
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
                                  "%s rmaps:resilient: Placing process %s on prior node %s[%s] (no ftgrp)",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -608,10 +608,10 @@ static int get_new_node(orte_proc_t *proc,
                                  (NULL == nd->name) ? "NULL" : nd->name,
                                  (NULL == nd->daemon) ? "--" : ORTE_VPID_PRINT(nd->daemon->name.vpid)));
         } else {
-            nd = oldnode;
-            proc->prior_node = oldnode;
+            nd = proc->node;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_PRIOR_NODE, ORTE_ATTR_LOCAL, nd, OPAL_PTR);
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
-                                 "%s rmaps:resilient: Placing process %s back on old node %s[%s] (no ftgrp)",
+                                 "%s rmaps:resilient: Placing process %s back on same node %s[%s] (no ftgrp)",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name),
                                  (NULL == nd->name) ? "NULL" : nd->name,
@@ -821,10 +821,10 @@ static int map_to_ftgrps(orte_job_t *jdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == target) ? -1 : target->ftgrp, nd->name));
             /* if the node isn't in the map, add it */
-            if (!nd->mapped) {
+            if (!ORTE_FLAG_TEST(nd, ORTE_NODE_FLAG_MAPPED)) {
                 OBJ_RETAIN(nd);
                 opal_pointer_array_add(map->nodes, nd);
-                nd->mapped = true;
+                ORTE_FLAG_SET(nd, ORTE_NODE_FLAG_MAPPED);
             }
             if (NULL == orte_rmaps_base_setup_proc(jdata, nd, app->idx)) {
                 ORTE_ERROR_LOG(ORTE_ERROR);
@@ -840,7 +840,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
-                nd->oversubscribed = true;
+                ORTE_FLAG_SET(nd, ORTE_NODE_FLAG_OVERSUBSCRIBED);
             }
 
             /* track number of procs mapped */

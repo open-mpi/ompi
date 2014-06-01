@@ -13,6 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -521,7 +522,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 
                 node = OBJ_NEW(orte_node_t);
                 node->name = hostname;
-                node->launch_id = apSlots[ix].nid;
+                orte_set_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, ORTE_ATTR_LOCAL, &apSlots[ix].nid, OPAL_INT32);
                 node->slots_inuse = 0;
                 node->slots_max = 0;
                 node->slots = 1;
@@ -571,7 +572,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 
             node = OBJ_NEW(orte_node_t);
             node->name = hostname;
-            node->launch_id = apNodes[ix].nid;
+            orte_set_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, ORTE_ATTR_LOCAL, &apSlots[ix].nid, OPAL_INT32);
             node->slots_inuse = 0;
             node->slots_max = 0;
             node->slots = apNodes[ix].numPEs;

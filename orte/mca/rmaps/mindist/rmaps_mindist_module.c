@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,7 +77,7 @@ static int mindist_map(orte_job_t *jdata)
     /* this mapper can only handle initial launch
      * when mindist mapping is desired
      */
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:mindist: job %s is being restarted - mindist cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
@@ -227,7 +228,7 @@ static int mindist_map(orte_job_t *jdata)
                         rc = ORTE_ERR_SILENT;
                         goto error;
                     } else {
-                        node->oversubscribed = true;
+                        ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
                     }
                 }
             }
@@ -271,7 +272,7 @@ static int mindist_map(orte_job_t *jdata)
                         }
                         nprocs_mapped++;
                         j++;
-                        proc->locale = obj;
+                        orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
                     }
                     if ((nprocs_mapped == (int)app->num_procs) || (bynode && ((int)num_procs_to_assign == j))) {
                         break;
@@ -303,12 +304,12 @@ static int mindist_map(orte_job_t *jdata)
             }
             
             /* add the node to the map, if needed */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                     ORTE_ERROR_LOG(rc);
                     goto error;
                 }
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 jdata->map->num_nodes++;
             }
@@ -345,7 +346,7 @@ static int mindist_map(orte_job_t *jdata)
 
                 if (nprocs_mapped == app->num_procs)
                     break;
-                node->oversubscribed = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
                 opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:mindist: second pass assigning %d extra procs to node %s",
                         (int)num_procs_to_assign, node->name);
@@ -363,7 +364,7 @@ static int mindist_map(orte_job_t *jdata)
                         }
                         nprocs_mapped++;
                         k++;
-                        proc->locale = obj;
+                        orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
                         if (k > npus/orte_rmaps_base.cpus_per_rank-1) {
                             numa_item = opal_list_get_next(numa_item);
                             if (numa_item == opal_list_get_end(&numa_list)) { 

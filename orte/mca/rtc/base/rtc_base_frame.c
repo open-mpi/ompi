@@ -31,7 +31,9 @@
  * Global variables
  */
 orte_rtc_API_module_t orte_rtc = {
-    orte_rtc_base_set
+    orte_rtc_base_assign,
+    orte_rtc_base_set,
+    orte_rtc_base_get_avail_vals
 };
 orte_rtc_base_t orte_rtc_base;
 
@@ -74,3 +76,23 @@ static void mdes(orte_rtc_base_selected_module_t *active)
 OBJ_CLASS_INSTANCE(orte_rtc_base_selected_module_t,
                    opal_list_item_t,
                    NULL, mdes);
+
+static void rcon(orte_rtc_resource_t *p)
+{
+    p->component = NULL;
+    p->category = NULL;
+    OBJ_CONSTRUCT(&p->control, opal_value_t);
+}
+static void rdes(orte_rtc_resource_t *p)
+{
+    if (NULL != p->component) {
+        free(p->component);
+    }
+    if (NULL != p->category) {
+        free(p->category);
+    }
+    OBJ_DESTRUCT(&p->control);
+}
+OBJ_CLASS_INSTANCE(orte_rtc_resource_t,
+                   opal_list_item_t,
+                   rcon, rdes);

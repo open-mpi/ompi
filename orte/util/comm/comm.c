@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC. 
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -462,6 +463,7 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_PROC_INFO_CMD;
     orte_proc_t **proc_info;
     struct timeval tv;
+    char *nodename;
 
     /* set default response */
     *num_procs = 0;
@@ -572,12 +574,13 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
                 return ret;
             }
             cnt = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &proc_info[n]->nodename, &cnt, OPAL_STRING))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &nodename, &cnt, OPAL_STRING))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_DESTRUCT(&answer);
                 free(proc_info);
                 return ret;
             }
+            orte_set_attribute(&proc_info[n]->attributes, ORTE_PROC_NODENAME, ORTE_ATTR_LOCAL, nodename, OPAL_STRING);
         }
         *proc_info_array = proc_info;
         *num_procs = (int)cnt_procs;

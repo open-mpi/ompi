@@ -83,7 +83,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     bool initial_map=true;
 
     /* only handle initial launch of rf job */
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rf: job %s being restarted - rank_file cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
@@ -244,10 +244,10 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 goto error;
             }
             /* ensure the node is in the map */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 OBJ_RETAIN(node);
                 opal_pointer_array_add(map->nodes, node);
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                 ++(jdata->map->num_nodes);
             }
             proc = orte_rmaps_base_setup_proc(jdata, node, i);
@@ -262,7 +262,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
-                node->oversubscribed = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
             }
             /* set the vpid */
             proc->name.vpid = rank;
@@ -271,6 +271,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             if (NULL != slots) {
                 /* setup the bitmap */
                 hwloc_cpuset_t bitmap;
+                char *cpu_bitmap;
                 if (NULL == node->topology) {
                     /* not allowed - for rank-file, we must have
                      * the topology info
@@ -290,8 +291,10 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                  * leave that field NULL
                  */
                 /* set the proc to the specified map */
-                hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, bitmap);
+                hwloc_bitmap_list_asprintf(&cpu_bitmap, bitmap);
+                orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
                 /* cleanup */
+                free(cpu_bitmap);
                 hwloc_bitmap_free(bitmap);
             }
 #else

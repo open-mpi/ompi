@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,6 +63,7 @@ static int rank_span(orte_job_t *jdata,
     orte_vpid_t vpid;
     int cnt;
     opal_list_item_t *item;
+    hwloc_obj_t locale;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rank_span: for job %s",
@@ -130,12 +132,13 @@ static int rank_span(orte_job_t *jdata,
                         continue;
                     }
                     /* protect against bozo case */
-                    if (NULL == proc->locale) {
+                    locale = NULL;
+                    if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
                         ORTE_ERROR_LOG(ORTE_ERROR);
                         return ORTE_ERROR;
                     }
                     /* ignore procs not on this object */
-                    if (!hwloc_bitmap_intersects(obj->cpuset, proc->locale->cpuset)) {
+                    if (!hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
                         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                             "mca:rmaps:rank_span: proc at position %d is not on object %d",
                                             j, i);
@@ -182,6 +185,7 @@ static int rank_fill(orte_job_t *jdata,
     orte_vpid_t vpid;
     int cnt;
     opal_list_item_t *item;
+    hwloc_obj_t locale;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rank_fill: for job %s",
@@ -241,12 +245,13 @@ static int rank_fill(orte_job_t *jdata,
                     continue;
                 }
                  /* protect against bozo case */
-                if (NULL == proc->locale) {
+                locale = NULL;
+                if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
                     ORTE_ERROR_LOG(ORTE_ERROR);
                     return ORTE_ERROR;
                 }
                 /* ignore procs not on this object */
-                if (!hwloc_bitmap_intersects(obj->cpuset, proc->locale->cpuset)) {
+                if (!hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "mca:rmaps:rank_fill: proc at position %d is not on object %d",
                                         j, i);
@@ -292,6 +297,7 @@ static int rank_by(orte_job_t *jdata,
     opal_pointer_array_t objs;
     bool all_done;
     opal_list_item_t *item;
+    hwloc_obj_t locale;
 
     if (ORTE_RANKING_SPAN & ORTE_GET_RANKING_DIRECTIVE(jdata->map->ranking)) {
         return rank_span(jdata, app, nodes, target, cache_level);
@@ -375,8 +381,11 @@ static int rank_by(orte_job_t *jdata,
                     if (proc->app_idx != app->idx) {
                         continue;
                     }
+                    if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
+                        continue;
+                    }
                     /* ignore procs on other objects */
-                    if (!hwloc_bitmap_intersects(obj->cpuset, proc->locale->cpuset)) {
+                    if (!hwloc_bitmap_intersects(obj->cpuset, locale->cpuset)) {
                         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                             "mca:rmaps:rank_by: proc at position %d is not on object %d",
                                             j, i);

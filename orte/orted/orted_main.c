@@ -558,7 +558,7 @@ int orte_daemon(int argc, char *argv[])
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = 0;
-        proc->alive = true;
+        ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ALIVE);
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
         /* obviously, it is on my node */
@@ -580,9 +580,8 @@ int orte_daemon(int argc, char *argv[])
         proc->node_rank = 0;
         proc->app_rank = 0;
         proc->state = ORTE_PROC_STATE_RUNNING;
-        proc->alive = true;
         proc->app_idx = 0;
-        proc->local_proc = true;
+        ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
 
         /* account for the collectives in its modex/barriers */
         jdata->peer_modex = orte_grpcomm_base_get_coll_id();
@@ -621,23 +620,6 @@ int orte_daemon(int argc, char *argv[])
         nm->name.vpid = ORTE_VPID_WILDCARD;
         opal_list_append(&coll->participants, &nm->super);
 #endif
-
-        /* need to setup a pidmap for it */
-        if (ORTE_SUCCESS != (ret = orte_util_encode_pidmap(&orte_pidmap, false))) {
-            ORTE_ERROR_LOG(ret);
-            goto DONE;
-        }
-
-        /* if we don't yet have a daemon map, then we have to generate one
-         * to pass back to it
-         */
-        if (NULL != orte_nidmap.bytes) {
-            free(orte_nidmap.bytes);
-        }
-        if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(&orte_nidmap, false))) {
-            ORTE_ERROR_LOG(ret);
-            goto DONE;
-        }
 
         /* create a string that contains our uri + sysinfo */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);

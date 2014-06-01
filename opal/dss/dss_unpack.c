@@ -926,6 +926,11 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
         /* now unpack the right field */
         m=1;
         switch (ptr[i]->type) {
+        case OPAL_BOOL:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.flag, &m, OPAL_BOOL))) {
+                return ret;
+            }
+            break;
         case OPAL_BYTE:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.byte, &m, OPAL_BYTE))) {
                 return ret;
@@ -933,6 +938,11 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
             break;
         case OPAL_STRING:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.string, &m, OPAL_STRING))) {
+                return ret;
+            }
+            break;
+        case OPAL_SIZE:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.size, &m, OPAL_SIZE))) {
                 return ret;
             }
             break;

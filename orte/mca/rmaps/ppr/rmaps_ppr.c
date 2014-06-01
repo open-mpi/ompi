@@ -2,6 +2,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -95,7 +96,7 @@ static int ppr_mapper(orte_job_t *jdata)
     /* only handle initial launch of loadbalanced
      * or NPERxxx jobs - allow restarting of failed apps
      */
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:ppr: job %s being restarted - ppr cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
@@ -281,12 +282,12 @@ static int ppr_mapper(orte_job_t *jdata)
             }
 #endif
             /* add the node to the map, if needed */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                     ORTE_ERROR_LOG(rc);
                     goto error;
                 }
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 jdata->map->num_nodes++;
             }
@@ -304,7 +305,7 @@ static int ppr_mapper(orte_job_t *jdata)
                     }
                     nprocs_mapped++;
 #if OPAL_HAVE_HWLOC
-                    proc->locale = obj;
+                    orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
 #endif
                 }
 #if OPAL_HAVE_HWLOC
@@ -327,7 +328,7 @@ static int ppr_mapper(orte_job_t *jdata)
                             goto error;
                         }
                         nprocs_mapped++;
-                        proc->locale = obj;
+                        orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
                     }
                 }
 
@@ -364,7 +365,7 @@ static int ppr_mapper(orte_job_t *jdata)
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
-                node->oversubscribed = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
             }
 
             /* if we haven't mapped all the procs, continue on to the
@@ -448,6 +449,7 @@ static void prune(orte_jobid_t jobid,
     orte_proc_t *proc, *pptr, *procmax;
     opal_hwloc_level_t ll;
     char dang[64];
+    hwloc_obj_t locale;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: pruning level %d",
@@ -508,7 +510,12 @@ static void prune(orte_jobid_t jobid,
                 proc->app_idx != app_idx) {
                 continue;
             }
-            cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
+            locale = NULL;
+            if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                return;
+            }
+            cpus = opal_hwloc_base_get_available_cpus(node->topology, locale);
             if (hwloc_bitmap_intersects(avail, cpus)) {
                 nprocs++;
             }
@@ -557,7 +564,12 @@ static void prune(orte_jobid_t jobid,
                         proc->app_idx != app_idx) {
                         continue;
                     }
-                    cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
+                    locale = NULL;
+                    if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
+                        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                        return;
+                    }
+                    cpus = opal_hwloc_base_get_available_cpus(node->topology, locale);
                     if (hwloc_bitmap_intersects(childcpus, cpus)) {
                         nunder++;
                         if (NULL == pptr) {

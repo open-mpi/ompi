@@ -433,7 +433,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         if (0 == orte_routed.num_routes()) {
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
-                    proct->alive) {
+                    ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_ALIVE)) {
                     /* at least one is still alive */
                     return;
                 }
@@ -462,7 +462,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             if (0 == orte_routed.num_routes()) {
                 for (i=0; i < orte_local_children->size; i++) {
                     if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
-                        proct->alive) {
+                        ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_ALIVE)) {
                         /* at least one is still alive */
                         return;
                     }

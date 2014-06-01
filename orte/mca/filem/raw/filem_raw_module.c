@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -291,7 +292,7 @@ static int raw_preposition_files(orte_job_t *jdata,
     int flags, i, j;
     char **files=NULL;
     orte_filem_raw_outbound_t *outbound, *optr;
-    char *cptr, *nxt;
+    char *cptr, *nxt, *filestring;
     opal_list_t fsets;
     bool already_sent;
 
@@ -308,7 +309,7 @@ static int raw_preposition_files(orte_job_t *jdata,
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        if (app->preload_binary) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, NULL, OPAL_BOOL)) {
             /* add the executable to our list */
             OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                                  "%s filem:raw: preload executable %s",
@@ -329,8 +330,9 @@ static int raw_preposition_files(orte_job_t *jdata,
             app->argv[0] = strdup(app->app);
             fs->remote_target = strdup(app->app);
         }
-        if (NULL != app->preload_files) {
-            files = opal_argv_split(app->preload_files, ',');
+        if (orte_get_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, (void**)&filestring, OPAL_STRING)) {
+            files = opal_argv_split(filestring, ',');
+            free(filestring);
             for (j=0; NULL != files[j]; j++) {
                 fs = OBJ_NEW(orte_filem_base_file_set_t);
                 fs->local_target = strdup(files[j]);
@@ -421,10 +423,11 @@ static int raw_preposition_files(orte_job_t *jdata,
             /* replace the app's file list with the revised one so we
              * can find them on the remote end
              */
-            free(app->preload_files);
-            app->preload_files = opal_argv_join(files, ',');
+            filestring = opal_argv_join(files, ',');
+            orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, ORTE_ATTR_GLOBAL, filestring, OPAL_STRING);
             /* cleanup for the next app */
             opal_argv_free(files);
+            free(filestring);
         }
     }
     if (0 == opal_list_get_size(&fsets)) {
@@ -656,7 +659,7 @@ static int raw_link_local_files(orte_job_t *jdata,
     int i, j, rc;
     orte_filem_raw_incoming_t *inbnd;
     opal_list_item_t *item;
-    char **files=NULL, *bname;
+    char **files=NULL, *bname, *filestring;
 
     /* check my session directory for files I have received and
      * symlink them to the proc-level session directory of each
@@ -672,10 +675,11 @@ static int raw_link_local_files(orte_job_t *jdata,
     }
 
     /* get the list of files this app wants */
-    if (NULL != app->preload_files) {
-        files = opal_argv_split(app->preload_files, ',');
+    if (orte_get_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, (void**)&filestring, OPAL_STRING)) {
+        files = opal_argv_split(filestring, ',');
+        free(filestring);
     }
-    if (app->preload_binary) {
+    if (orte_get_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, NULL, OPAL_BOOL)) {
         /* add the app itself to the list */
         bname = opal_basename(app->app);
         opal_argv_append_nosize(&files, bname);
@@ -716,7 +720,7 @@ static int raw_link_local_files(orte_job_t *jdata,
             continue;
         }
         /* ignore children we have already handled */
-        if (proc->alive ||
+        if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_ALIVE) ||
             (ORTE_PROC_STATE_INIT != proc->state &&
              ORTE_PROC_STATE_RESTART != proc->state)) {
             continue;

@@ -404,7 +404,7 @@ static int do_child(orte_app_context_t* context,
         /* now set any child-level controls such as binding */
         orte_rtc.set(jobdat, child, &environ_copy, write_fd);
 
-    } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
+    } else if (!ORTE_FLAG_TEST(jobdat, ORTE_JOB_FLAG_FORWARD_OUTPUT)) {
         /* tie stdin/out/err/internal to /dev/null */
         int fdnull;
         for (i=0; i < 3; i++) {
@@ -499,7 +499,7 @@ static int do_parent(orte_app_context_t* context,
     orte_odls_pipe_err_msg_t msg;
     char file[ORTE_ODLS_MAX_FILE_LEN + 1], topic[ORTE_ODLS_MAX_TOPIC_LEN + 1], *str = NULL;
 
-    if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
+    if (NULL != child && ORTE_FLAG_TEST(jobdat, ORTE_JOB_FLAG_FORWARD_OUTPUT)) {
         /* connect endpoints IOF */
         rc = orte_iof_base_setup_parent(&child->name, &opts);
         if (ORTE_SUCCESS != rc) {
@@ -535,7 +535,11 @@ static int do_parent(orte_app_context_t* context,
 
         /* Otherwise, we got a warning or error message from the child */
         if (NULL != child) {
-            child->alive = msg.fatal ? 0 : 1;
+            if (msg.fatal) {
+                ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_ALIVE);
+            } else {
+                ORTE_FLAG_SET(child, ORTE_PROC_FLAG_ALIVE);
+            }
         }
 
         /* Read in the strings; ensure to terminate them with \0 */
@@ -598,7 +602,7 @@ static int do_parent(orte_app_context_t* context,
         if (msg.fatal) {
             if (NULL != child) {
                 child->state = ORTE_PROC_STATE_FAILED_TO_START;
-                child->alive = false;
+                ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_ALIVE);
             }
             close(read_fd);
             return ORTE_ERR_FAILED_TO_START;
@@ -610,7 +614,7 @@ static int do_parent(orte_app_context_t* context,
        launched successfully. */
     if (NULL != child) {
         child->state = ORTE_PROC_STATE_RUNNING;
-        child->alive = true;
+        ORTE_FLAG_SET(child, ORTE_PROC_FLAG_ALIVE);
     }
     close(read_fd);
     

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -285,7 +286,8 @@ static void track_procs(int fd, short argc, void *cbdata)
         /* if this proc registered as an MPI proc, and
          * MPI is not allowed, then that is an error
          */
-        if (!jdata->gang_launched && pdata->mpi_proc) {
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_AS_MPI) &&
+            !ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_GANG_LAUNCHED)) {
             /* abort the proc */
             /* notify the HNP of the error */
         }
@@ -296,10 +298,10 @@ static void track_procs(int fd, short argc, void *cbdata)
          * while we are still trying to notify the HNP of
          * successful launch for short-lived procs
          */
-        pdata->iof_complete = true;
-        if (pdata->waitpid_recvd) {
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_IOF_COMPLETE);
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_WAITPID)) {
             /* the proc has terminated */
-            pdata->alive = false;
+            ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
             pdata->state = ORTE_PROC_STATE_TERMINATED;
             /* retrieve any file maps posted by this process and forward them
              * to the HNP for collection
@@ -323,10 +325,10 @@ static void track_procs(int fd, short argc, void *cbdata)
          * while we are still trying to notify the HNP of
          * successful launch for short-lived procs
          */
-        pdata->waitpid_recvd = true;
-        if (pdata->iof_complete) {
+        ORTE_FLAG_SET(pdata, ORTE_PROC_FLAG_WAITPID);
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_IOF_COMPLETE)) {
             /* the proc has terminated */
-            pdata->alive = false;
+            ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
             pdata->state = ORTE_PROC_STATE_TERMINATED;
             /* retrieve any file maps posted by this process and forward them
              * to the HNP for collection
