@@ -74,6 +74,8 @@
 #include "orte/util/nidmap.h"
 
 static int orte_nidmap_verbose, orte_nidmap_output=-1;
+static int decode_app_nodemap(opal_byte_object_t *bo);
+static int decode_app_pidmap(opal_byte_object_t *bo);
 
 int orte_util_nidmap_init(opal_buffer_t *buffer)
 {
@@ -124,7 +126,7 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
         return rc;
     }
     /* unpack the node map */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo))) {
+    if (ORTE_SUCCESS != (rc = decode_app_nodemap(bo))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -138,7 +140,7 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
         return rc;
     }
     /* unpack the process map */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_pidmap(bo))) {
+    if (ORTE_SUCCESS != (rc = decode_app_pidmap(bo))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -296,10 +298,8 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
     int32_t i;
     int rc;
     opal_buffer_t buf;
-    char *ptr, *nodename;
     orte_job_t *daemons;
     orte_proc_t *dmn;
-    uint8_t flag;
 
     OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
                          "%s orte:util:encode_nidmap",
@@ -309,7 +309,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
      * nothing to send
      */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    if (update && !daemons->updated) {
+    if (update && !ORTE_FLAG_TEST(daemons, ORTE_JOB_FLAG_UPDATED)) {
         boptr->bytes = NULL;
         boptr->size = 0;
         return ORTE_SUCCESS;
@@ -320,17 +320,6 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
 
     /* send the number of nodes */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &daemons->num_procs, 1, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* flag if coprocessors were detected */
-    if (orte_coprocessors_detected) {
-        flag = 1;
-    } else {
-        flag = 0;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_UINT8))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -349,7 +338,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
         /* if we want an update nidmap and this daemon hasn't
          * been updated, then skip it
          */
-        if (update && !dmn->updated) {
+        if (update && !ORTE_FLAG_TEST(dmn, ORTE_PROC_FLAG_UPDATED)) {
             continue;
         }
         /* if the daemon doesn't have a node, that's an error */
@@ -362,55 +351,10 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* pack the name of the node */
-        if (!orte_keep_fqdn_hostnames) {
-            nodename = strdup(node->name);
-            /* if the nodename is an IP address, do not mess with it! */
-            if (!opal_net_isaddr(nodename)) {
-                /* not an IP address */
-                if (NULL != (ptr = strchr(nodename, '.'))) {
-                    *ptr = '\0';
-                }
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodename, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            free(nodename);
-        } else {
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->name, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        /* if requested, pack any aliases */
-        if (orte_retain_aliases) {
-            uint8_t naliases, ni;
-            naliases = opal_argv_count(node->alias);
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &naliases, 1, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            for (ni=0; ni < naliases; ni++) {
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->alias[ni], 1, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-        }
-
-        /* pack the oversubscribed flag */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->oversubscribed, 1, OPAL_UINT8))) {
+        /* pack the node */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node, 1, ORTE_NODE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
-        }
-
-        /* if coprocessors were detected, send the hostid for this node */
-        if (orte_coprocessors_detected) {
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node->hostid, 1, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
         }
     }
     
@@ -426,16 +370,15 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
 }
 
 /* decode a nodemap for an application process */
-int orte_util_decode_nodemap(opal_byte_object_t *bo)
+static int decode_app_nodemap(opal_byte_object_t *bo)
 {
     int n;
     orte_vpid_t num_daemons;
     orte_process_name_t daemon;
     opal_buffer_t buf;
     int rc=ORTE_SUCCESS;
-    uint8_t oversub;
-    char *nodename;
-    orte_vpid_t hostid;
+    orte_node_t *node;
+    orte_vpid_t hostid, *hostidptr;
     opal_value_t kv;
 
     OPAL_OUTPUT_VERBOSE((1, orte_nidmap_output,
@@ -458,26 +401,14 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         return rc;
     }
 
-    /* see if coprocessors were detected */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (0 == oversub) {
-        orte_coprocessors_detected = false;
-    } else {
-        orte_coprocessors_detected = true;
-    }
-
     /* set the daemon jobid */
     daemon.jobid = ORTE_DAEMON_JOBID(ORTE_PROC_MY_NAME->jobid);
 
     n=1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &daemon.vpid, &n, ORTE_VPID))) {
-        /* unpack and store the node's name */
+        /* unpack and store the node */
         n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &nodename, &n, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &node, &n, ORTE_NODE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -485,7 +416,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         OBJ_CONSTRUCT(&kv, opal_value_t);
         kv.key = strdup(ORTE_DB_HOSTNAME);
         kv.type = OPAL_STRING;
-        kv.data.string = strdup(nodename);
+        kv.data.string = strdup(node->name);
         if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                     (opal_identifier_t*)&daemon, &kv))) {
             ORTE_ERROR_LOG(rc);
@@ -497,9 +428,9 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         opal_output_verbose(2, orte_nidmap_output,
                             "%s storing nodename %s for daemon %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            nodename, ORTE_VPID_PRINT(daemon.vpid));
+                            node->name, ORTE_VPID_PRINT(daemon.vpid));
         OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(nodename);
+        kv.key = strdup(node->name);
         kv.type = OPAL_UINT32;
         kv.data.uint32 = daemon.vpid;
         if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
@@ -513,14 +444,14 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
                              "%s orte:util:decode:nidmap daemon %s node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_VPID_PRINT(daemon.vpid), nodename));
+                             ORTE_VPID_PRINT(daemon.vpid), node->name));
 
         /* if this is my daemon, then store the data for me too */
         if (daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
             OBJ_CONSTRUCT(&kv, opal_value_t);
             kv.key = strdup(ORTE_DB_HOSTNAME);
             kv.type = OPAL_STRING;
-            kv.data.string = strdup(nodename);
+            kv.data.string = strdup(node->name);
             if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
                 ORTE_ERROR_LOG(rc);
@@ -542,57 +473,13 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
             OBJ_DESTRUCT(&kv);
         }
 
-        /* if requested, unpack any aliases */
-        if (orte_retain_aliases) {
-            char *alias;
-            uint8_t naliases, ni;
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &naliases, &n, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            for (ni=0; ni < naliases; ni++) {
-                n=1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &alias, &n, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                /* store a cross-reference to the daemon for this nodename */
-                opal_output_verbose(2, orte_nidmap_output,
-                                    "%s storing alias %s for daemon %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    alias, ORTE_VPID_PRINT(daemon.vpid));
-                OBJ_CONSTRUCT(&kv, opal_value_t);
-                kv.key = strdup(alias);
-                kv.type = OPAL_UINT32;
-                kv.data.uint32 = daemon.vpid;
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                            (opal_identifier_t*)ORTE_NAME_WILDCARD, &kv))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&kv);
-                    return rc;
-                }
-                OBJ_DESTRUCT(&kv);
-                free(alias);
-            }
-        }
-
-        /* unpack and discard the oversubscribed flag - procs don't need it */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* if coprocessors were detected, unpack the hostid for the node - this
          * value is associate with this daemon, not with any application process
          */
-        if (orte_coprocessors_detected) {
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &hostid, &n, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
+        hostid = 0;
+        hostidptr = &hostid;
+        if (orte_get_attribute(&node->attributes, ORTE_NODE_HOSTID, (void**)hostidptr, ORTE_VPID)) {
+            orte_coprocessors_detected = true;  // obviously, coprocessors were detected
             OBJ_CONSTRUCT(&kv, opal_value_t);
             kv.key = strdup(ORTE_DB_HOSTID);
             kv.type = OPAL_UINT32;
@@ -616,7 +503,8 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
             }
             OBJ_DESTRUCT(&kv);
         }
-        free (nodename);
+        /* we don't need the node object itself */
+        OBJ_RELEASE(node);
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
@@ -636,16 +524,14 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
 {
     int n;
     orte_vpid_t vpid;
-    orte_node_t *node;
+    orte_node_t *node, *nptr;
     opal_buffer_t buf;
     int rc=ORTE_SUCCESS;
-    uint8_t oversub;
-    char *name;
     orte_job_t *daemons;
     orte_proc_t *dptr;
     orte_vpid_t num_daemons;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_nidmap_output,
+    OPAL_OUTPUT_VERBOSE((0, orte_nidmap_output,
                          "%s decode:nidmap decoding daemon nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -665,62 +551,21 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
         return rc;
     }
 
-    /* see if coprocessors were detected */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (0 == oversub) {
-        orte_coprocessors_detected = false;
-    } else {
-        orte_coprocessors_detected = true;
-    }
-
     /* transfer the data to the nodes */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     daemons->num_procs = num_daemons;
     n=1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &vpid, &n, ORTE_VPID))) {
-        /* unpack and store the node's name */
+        /* unpack and store the node */
         n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &name, &n, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &node, &n, ORTE_NODE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         /* do we already have this node? */
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid))) {
-            node = OBJ_NEW(orte_node_t);
-            node->name = name;
-            opal_pointer_array_set_item(orte_node_pool, vpid, node);
-        } else {
-            free(name);
-        }
-        /* if requested, unpack any aliases */
-        if (orte_retain_aliases) {
-            char *alias;
-            uint8_t naliases, ni;
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &naliases, &n, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            for (ni=0; ni < naliases; ni++) {
-                n=1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &alias, &n, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                opal_argv_append_nosize(&node->alias, alias);
-                free(alias);
-            }
-        }
-        /* unpack the oversubscribed flag */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &oversub, &n, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+        nptr = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, vpid);
+        /* set the new node object into the array */
+        opal_pointer_array_set_item(orte_node_pool, vpid, node);
         if (NULL == (dptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, vpid))) {
             dptr = OBJ_NEW(orte_proc_t);
             dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -736,22 +581,10 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             OBJ_RELEASE(dptr->node);
         }
         OBJ_RETAIN(node);
+        if (NULL != nptr) {
+            OBJ_RELEASE(nptr);
+        }
         dptr->node = node;
-        if (0 == oversub) {
-            node->oversubscribed = false;
-        } else {
-            node->oversubscribed = true;
-        }
-
-        /* if coprocessors were detected, unpack the hostid */
-        if (orte_coprocessors_detected) {
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &node->hostid, &n, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
@@ -769,17 +602,6 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     /* update num_daemons */
     orte_process_info.num_daemons = daemons->num_procs;
     
-    /* update the global nidmap object for sending to
-     * application procs
-     */
-    if (NULL != orte_nidmap.bytes) {
-        free(orte_nidmap.bytes);
-        orte_nidmap.bytes = NULL;
-    }
-    if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&orte_nidmap, false))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
     if (0 < opal_output_get_verbosity(orte_nidmap_output)) {
         int i;
         for (i=0; i < orte_node_pool->size; i++) {
@@ -797,32 +619,20 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     return rc;
 }
 
-int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
+/* encode ONLY the minimum amount of info that a proc needs in
+ * its local store. Since anything sent to an app is going
+ * to be considered an "update", just send what we know about */
+int orte_util_encode_app_pidmap(opal_byte_object_t *boptr)
 {
     orte_proc_t *proc;
     opal_buffer_t buf;
     int i, j, rc = ORTE_SUCCESS;
     orte_job_t *jdata;
-    bool include_all;
-    uint8_t flag;
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
-    /* check the daemon job to see if it has changed - perhaps
-     * new daemons were added as the result of a comm_spawn
-     */
-    jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    /* if it did change, then the pidmap will be going
-     * to new daemons - so we need to include everything.
-     * also include everything if we were asked to do so
-     */
-    if (jdata->updated || !update) {
-        include_all = true;
-    } else {
-        include_all = false;
-    }
-
+    /* we don't care about the daemon job, so don't include j=0 */
     for (j=1; j < orte_job_data->size; j++) {
         /* the job array is no longer left-justified and may
          * have holes in it as we recover resources at job
@@ -841,18 +651,12 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
         if (ORTE_JOB_STATE_TERMINATED < jdata->state) {
             continue;
         }
-        /* if we want an update version and there is nothing to update, ignore it */
-        if (!include_all && !jdata->updated) {
-            continue;
-        }
-        /* flag that we included it so we don't do so again */
-        jdata->updated = false;
         /* pack the jobid */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->jobid, 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
         }
-        /* pack the number of procs */
+        /* pack the total number of procs */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->num_procs, 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
@@ -862,75 +666,12 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
         }
-        /* cycle thru the job's procs, including only those that have
-         * been updated so we minimize the amount of info being sent
-         */
+        /* cycle thru the job's procs */
         for (i=0; i < jdata->procs->size; i++) {
             if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
                 continue;
             }
-            if (!proc->updated) {
-                continue;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->name.vpid, 1, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &(proc->node->daemon->name.vpid), 1, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->local_rank, 1, ORTE_LOCAL_RANK))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->node_rank, 1, ORTE_NODE_RANK))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-#if OPAL_HAVE_HWLOC
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->cpu_bitmap, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-#endif
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->state, 1, ORTE_PROC_STATE))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->app_idx, 1, ORTE_APP_IDX))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->do_not_barrier, 1, OPAL_BOOL))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc->restarts, 1, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-        }
-        /* pack an invalid vpid to flag the end of this job data */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &ORTE_NAME_INVALID->vpid, 1, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup_and_return;
-        }
-        /* if there is a file map, then include it */
-        if (NULL != jdata->file_maps) {
-            flag = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_UINT8))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->file_maps, 1, OPAL_BUFFER))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup_and_return;
-            }
-        } else {
-            flag = 0;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_UINT8))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &proc, 1, ORTE_PROC))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup_and_return;
             }
@@ -947,26 +688,17 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update)
 }
 
 /* only APPS call this function - daemons have their own */
-int orte_util_decode_pidmap(opal_byte_object_t *bo)
+static int decode_app_pidmap(opal_byte_object_t *bo)
 {
-    orte_vpid_t num_procs, offset;
-    orte_local_rank_t local_rank;
-    orte_node_rank_t node_rank;
-#if OPAL_HAVE_HWLOC
+    orte_vpid_t num_procs, offset, j;
     char *cpu_bitmap;
-#endif
     orte_std_cntr_t n;
     opal_buffer_t buf;
     int rc;
-    orte_proc_state_t state;
-    orte_app_idx_t app_idx;
-    int32_t restarts;
     orte_process_name_t proc, dmn;
-    uint8_t flag;
-    opal_buffer_t *bptr;
-    bool barrier;
     opal_list_t myvals;
     opal_value_t kv, *kvp;
+    orte_proc_t *pptr;
 
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -1014,7 +746,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         }
         /* only of possible use to ourselves */
         OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(ORTE_DB_NPROCS);
+        kv.key = strdup(ORTE_DB_NPROC_OFFSET);
         kv.type = OPAL_UINT32;
         kv.data.uint32 = offset;
         if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
@@ -1027,44 +759,24 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         /* cycle thru the data until we hit an INVALID vpid indicating
          * all data for this job has been read
          */
-        n=1;
-        while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &proc.vpid, &n, ORTE_VPID))) {
-            if (ORTE_VPID_INVALID == proc.vpid) {
-                break;
-            }
+        for (j=0; j < num_procs; j++) {
             n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &dmn.vpid, &n, ORTE_VPID))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &pptr, &n, ORTE_PROC))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &local_rank, &n, ORTE_LOCAL_RANK))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &node_rank, &n, ORTE_NODE_RANK))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-#if OPAL_HAVE_HWLOC
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &cpu_bitmap, &n, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-#endif
-            if (proc.jobid == ORTE_PROC_MY_NAME->jobid &&
-                proc.vpid == ORTE_PROC_MY_NAME->vpid) {
+            dmn.vpid = pptr->parent;  // complete the id of the daemon for this proc
+            if (pptr->name.jobid == ORTE_PROC_MY_NAME->jobid &&
+                pptr->name.vpid == ORTE_PROC_MY_NAME->vpid) {
                 /* set mine */
-                orte_process_info.my_local_rank = local_rank;
-                orte_process_info.my_node_rank = node_rank;
+                orte_process_info.my_local_rank = pptr->local_rank;
+                orte_process_info.my_node_rank = pptr->node_rank;
                 /* if we are the local leader (i.e., local_rank=0), then record it */
-                if (0 == local_rank) {
+                if (0 == pptr->local_rank) {
                     OBJ_CONSTRUCT(&kv, opal_value_t);
                     kv.key = strdup(OPAL_DSTORE_LOCALLDR);
                     kv.type = OPAL_UINT64;
-                    kv.data.uint64 = *(opal_identifier_t*)&proc;
+                    kv.data.uint64 = *(opal_identifier_t*)&(pptr->name);
                     if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
                         ORTE_ERROR_LOG(rc);
@@ -1073,21 +785,21 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                     }
                     OBJ_DESTRUCT(&kv);
                 }
-#if OPAL_HAVE_HWLOC
-                if (NULL != cpu_bitmap) {
-                    orte_process_info.cpuset = strdup(cpu_bitmap);
+                cpu_bitmap = NULL;
+                if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)cpu_bitmap, OPAL_STRING) &&
+                    NULL != cpu_bitmap) {
+                    orte_process_info.cpuset = cpu_bitmap;
                 }
-#endif
-            } else if (proc.jobid == ORTE_PROC_MY_NAME->jobid &&
-                       dmn.vpid == ORTE_PROC_MY_DAEMON->vpid) {
+            } else if (pptr->name.jobid == ORTE_PROC_MY_NAME->jobid &&
+                       pptr->parent == ORTE_PROC_MY_DAEMON->vpid) {
                 /* if we share a daemon, then add to my local peers */
                 orte_process_info.num_local_peers++;
                 /* if this is the local leader (i.e., local_rank=0), then record it */
-                if (0 == local_rank) {
+                if (0 == pptr->local_rank) {
                     OBJ_CONSTRUCT(&kv, opal_value_t);
                     kv.key = strdup(OPAL_DSTORE_LOCALLDR);
                     kv.type = OPAL_UINT64;
-                    kv.data.uint64 = *(opal_identifier_t*)&proc;
+                    kv.data.uint64 = *(opal_identifier_t*)&(pptr->name);
                     if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
                         ORTE_ERROR_LOG(rc);
@@ -1096,37 +808,14 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                     }
                     OBJ_DESTRUCT(&kv);
                 }
-            }
-            /* apps don't need the rest of the data in the buffer for this proc,
-             * but we have to unpack it anyway to stay in sync
-             */
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &state, &n, ORTE_PROC_STATE))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &app_idx, &n, ORTE_APP_IDX))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &barrier, &n, OPAL_BOOL))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &restarts, &n, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
             }
             /* store the values in the database - again, these are for our own internal use */
             OBJ_CONSTRUCT(&kv, opal_value_t);
             kv.key = strdup(OPAL_DSTORE_LOCALRANK);
             kv.type = OPAL_UINT16;
-            kv.data.uint16 = local_rank;
+            kv.data.uint16 = pptr->local_rank;
             if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                        (opal_identifier_t*)&proc, &kv))) {
+                                                        (opal_identifier_t*)&(pptr->name), &kv))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&kv);
                 goto cleanup;
@@ -1135,52 +824,51 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             OBJ_CONSTRUCT(&kv, opal_value_t);
             kv.key = strdup(ORTE_DB_NODERANK);
             kv.type = OPAL_UINT16;
-            kv.data.uint16 = node_rank;
+            kv.data.uint16 = pptr->node_rank;
             if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                        (opal_identifier_t*)&proc, &kv))) {
+                                                        (opal_identifier_t*)&(pptr->name), &kv))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&kv);
                 goto cleanup;
             }
             OBJ_DESTRUCT(&kv);
-#if OPAL_HAVE_HWLOC
-            if (NULL != cpu_bitmap) {
+            cpu_bitmap = NULL;
+            if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)cpu_bitmap, OPAL_STRING) &&
+                NULL != cpu_bitmap) {
                 OBJ_CONSTRUCT(&kv, opal_value_t);
                 kv.key = strdup(OPAL_DSTORE_CPUSET);
                 kv.type = OPAL_STRING;
-                kv.data.string = strdup(cpu_bitmap);
+                kv.data.string = cpu_bitmap;  // will free the storage when kv is destructed
                 if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                            (opal_identifier_t*)&proc, &kv))) {
+                                                            (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
                     goto cleanup;
                 }
                 /* also need a copy in nonpeer to support dynamic spawns */
                 if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
-                                                            (opal_identifier_t*)&proc, &kv))) {
+                                                            (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
                     goto cleanup;
                 }
                 OBJ_DESTRUCT(&kv);
-                free(cpu_bitmap);
             }
-#endif
             /* we don't need to store the rest of the values
              * for ourself in the database
              * as we already did so during startup
              */
-            if (proc.jobid != ORTE_PROC_MY_NAME->jobid ||
-                proc.vpid != ORTE_PROC_MY_NAME->vpid) {
+            if (pptr->name.jobid != ORTE_PROC_MY_NAME->jobid ||
+                pptr->name.vpid != ORTE_PROC_MY_NAME->vpid) {
                 /* store the data for this proc - the location of a proc is something
                  * we would potentially need to share with a non-peer
                  */
                 OBJ_CONSTRUCT(&kv, opal_value_t);
                 kv.key = strdup(ORTE_DB_DAEMON_VPID);
                 kv.type = OPAL_UINT32;
-                kv.data.uint32 = dmn.vpid;
+                kv.data.uint32 = pptr->parent;
                 if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
-                                                            (opal_identifier_t*)&proc, &kv))) {
+                                                            (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
                     goto cleanup;
@@ -1204,7 +892,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                                          ORTE_VPID_PRINT(kvp->data.uint32), ORTE_VPID_PRINT(dmn.vpid)));
                     /* store it as hostid for this proc */
                     if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
-                                                                (opal_identifier_t*)&proc, kvp))) {
+                                                                (opal_identifier_t*)&(pptr->name), kvp))) {
                         ORTE_ERROR_LOG(rc);
                         OPAL_LIST_DESTRUCT(&myvals);
                         goto cleanup;
@@ -1222,7 +910,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 }
                 kvp = (opal_value_t*)opal_list_get_first(&myvals);
                 if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
-                                                            (opal_identifier_t*)&proc, kvp))) {
+                                                            (opal_identifier_t*)&(pptr->name), kvp))) {
                     ORTE_ERROR_LOG(rc);
                     OPAL_LIST_DESTRUCT(&myvals);
                     goto cleanup;
@@ -1232,9 +920,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 OBJ_CONSTRUCT(&kv, opal_value_t);
                 kv.key = strdup(ORTE_DB_GLOBAL_RANK);
                 kv.type = OPAL_UINT32;
-                kv.data.uint32 = proc.vpid + offset;
+                kv.data.uint32 = pptr->name.vpid + offset;
                 if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                            (opal_identifier_t*)&proc, &kv))) {
+                                                            (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
                     goto cleanup;
@@ -1247,30 +935,15 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 OBJ_CONSTRUCT(&kv, opal_value_t);
                 kv.key = strdup(ORTE_DB_GLOBAL_RANK);
                 kv.type = OPAL_UINT32;
-                kv.data.uint32 = proc.vpid + offset;
+                kv.data.uint32 = pptr->name.vpid + offset;
                 if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
-                                                            (opal_identifier_t*)&proc, &kv))) {
+                                                            (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
                     goto cleanup;
                 }
                 OBJ_DESTRUCT(&kv);
             }
-        }
-        /* see if there is a file map */
-        n=1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &flag, &n, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        if (0 != flag) {
-            /* unpack it and discard */
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &bptr, &n, OPAL_BUFFER))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            OBJ_RELEASE(bptr);
         }
         /* setup for next cycle */
         n = 1;
@@ -1280,257 +953,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         goto cleanup;
     }
     rc = ORTE_SUCCESS;        
-
- cleanup:
-    OBJ_DESTRUCT(&buf);
-    return rc;
-}
-
-static void fm_release(void *cbdata)
-{
-    opal_buffer_t *bptr = (opal_buffer_t*)cbdata;
-
-    OBJ_RELEASE(bptr);
-}
-
-int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
-{
-    orte_jobid_t jobid;
-    orte_vpid_t vpid, num_procs, dmn;
-    orte_local_rank_t local_rank;
-    orte_node_rank_t node_rank;
-#if OPAL_HAVE_HWLOC
-    char *cpu_bitmap;
-#endif
-    orte_std_cntr_t n;
-    opal_buffer_t buf;
-    int rc, j, k;
-    orte_job_t *jdata, *daemons;
-    orte_proc_t *proc, *pptr;
-    orte_node_t *node, *nptr;
-    orte_proc_state_t state;
-    orte_app_idx_t app_idx;
-    int32_t restarts;
-    orte_job_map_t *map;
-    bool found;
-    uint8_t flag;
-    opal_buffer_t *bptr;
-    bool barrier;
-
-    /* xfer the byte object to a buffer for unpacking */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    if (ORTE_SUCCESS != (rc = opal_dss.load(&buf, bo->bytes, bo->size))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-
-    n = 1;
-    /* cycle through the buffer */
-    while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &jobid, &n, ORTE_JOBID))) {
-        /* see if we have this job object - could be a restart scenario */
-        if (NULL == (jdata = orte_get_job_data_object(jobid))) {
-            /* need to create this job */
-            jdata = OBJ_NEW(orte_job_t);
-            jdata->jobid = jobid;
-            opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jobid), jdata);
-        }
-        
-        /* setup the map */
-        map = jdata->map;
-        if (NULL == map) {
-            jdata->map = OBJ_NEW(orte_job_map_t);
-            map = jdata->map;
-        }
-
-        /* unpack the number of procs */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_procs, &n, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        jdata->num_procs = num_procs;
-
-        /* unpack the offset */
-        n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_procs, &n, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        jdata->offset = num_procs;
-
-        /* cycle thru the data until we hit an INVALID vpid indicating
-         * all data for this job has been read
-         */
-        n=1;
-        while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &vpid, &n, ORTE_VPID))) {
-            if (ORTE_VPID_INVALID == vpid) {
-                break;
-            }
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &dmn, &n, ORTE_VPID))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &local_rank, &n, ORTE_LOCAL_RANK))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &node_rank, &n, ORTE_NODE_RANK))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-#if OPAL_HAVE_HWLOC
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &cpu_bitmap, &n, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-#endif
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &state, &n, ORTE_PROC_STATE))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &app_idx, &n, ORTE_APP_IDX))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &barrier, &n, OPAL_BOOL))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &restarts, &n, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            /* store the data for this proc */
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
-                proc = OBJ_NEW(orte_proc_t);
-                proc->name.jobid = jdata->jobid;
-                proc->name.vpid = vpid;
-                opal_pointer_array_set_item(jdata->procs, vpid, proc);
-            }
-            /* lookup the node - should always be present */
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, dmn))) {
-                /* this should never happen, but protect ourselves anyway */
-                node = OBJ_NEW(orte_node_t);
-                /* get the daemon */
-                if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, dmn))) {
-                    pptr = OBJ_NEW(orte_proc_t);
-                    pptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
-                    pptr->name.vpid = dmn;
-                    opal_pointer_array_set_item(daemons->procs, dmn, pptr);
-                }
-                node->daemon = pptr;
-                opal_pointer_array_set_item(orte_node_pool, dmn, node);
-            }
-            if (NULL != proc->node) {
-                if (node != proc->node) {
-                    /* proc has moved - cleanup the prior node proc array */
-                    for (j=0; j < proc->node->procs->size; j++) {
-                        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(proc->node->procs, j))) {
-                            continue;
-                        }
-                        if (pptr == proc) {
-                            /* maintain accounting */
-                            OBJ_RELEASE(pptr);
-                            opal_pointer_array_set_item(proc->node->procs, j, NULL);
-                            proc->node->num_procs--;
-                            if (0 == proc->node->num_procs) {
-                                /* remove node from the map */
-                                for (k=0; k < map->nodes->size; k++) {
-                                    if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(map->nodes, k))) {
-                                        continue;
-                                    }
-                                    if (nptr == proc->node) {
-                                        /* maintain accounting */
-                                        OBJ_RELEASE(nptr);
-                                        opal_pointer_array_set_item(map->nodes, k, NULL);
-                                        map->num_nodes--;
-                                        break;
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-                OBJ_RELEASE(proc->node);
-            }
-            /* see if this node is already in the map */
-            found = false;
-            for (j=0; j < map->nodes->size; j++) {
-                if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(map->nodes, j))) {
-                    continue;
-                }
-                if (nptr == node) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                opal_pointer_array_add(map->nodes, node);
-                map->num_nodes++;
-            }
-            /* add the node to the proc */
-            OBJ_RETAIN(node);
-            proc->node = node;
-            /* add the proc to the node */
-            OBJ_RETAIN(proc);
-            opal_pointer_array_add(node->procs, proc);
-            /* update proc values */
-            proc->local_rank = local_rank;
-            proc->node_rank = node_rank;
-            proc->app_idx = app_idx;
-            proc->do_not_barrier = barrier;
-            proc->restarts = restarts;
-            proc->state = state;
-#if OPAL_HAVE_HWLOC
-            proc->cpu_bitmap = cpu_bitmap;
-#endif
-        }
-        /* see if we have a file map for this job */
-        n=1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &flag, &n, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        if (0 != flag) {
-            /* yep - retrieve and load it */
-            n=1;
-            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &bptr, &n, OPAL_BUFFER))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            if (NULL != orte_dfs.load_file_maps) {
-                orte_dfs.load_file_maps(jdata->jobid, bptr, fm_release, bptr);
-            }
-        }
-        /* setup for next cycle */
-        n = 1;
-    }
-    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    rc = ORTE_SUCCESS;
-    
-    /* update our global pidmap object for sending
-     * to procs
-     */
-    if (NULL != orte_pidmap.bytes) {
-        free(orte_pidmap.bytes);
-    }
-    if (ORTE_SUCCESS != (rc = orte_util_encode_pidmap(&orte_pidmap, false))) {
-        ORTE_ERROR_LOG(rc);
-    }
 
  cleanup:
     OBJ_DESTRUCT(&buf);

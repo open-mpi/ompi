@@ -275,7 +275,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* are any of my children still alive */
         for (i=0; i < orte_local_children->size; i++) {
             if (NULL != (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-                if (child->alive && child->state < ORTE_PROC_STATE_UNTERMINATED) {
+                if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_ALIVE) && child->state < ORTE_PROC_STATE_UNTERMINATED) {
                     goto cleanup;
                 }
             }
@@ -338,10 +338,10 @@ static void proc_errors(int fd, short args, void *cbdata)
              * later send the state info after full job termination
              */
             child->state = state;
-            child->waitpid_recvd = true;
-            if (child->iof_complete) {
+            ORTE_FLAG_SET(child, ORTE_PROC_FLAG_WAITPID);
+            if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_IOF_COMPLETE)) {
                 /* the proc has terminated */
-                child->alive = false;
+                ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_ALIVE);
                 /* Clean up the session directory as if we were the process
                  * itself.  This covers the case where the process died abnormally
                  * and didn't cleanup its own session directory.
@@ -607,7 +607,7 @@ static bool any_live_children(orte_jobid_t job)
         }
         /* is this child part of the specified job? */
         if ((job == child->name.jobid || ORTE_JOBID_WILDCARD == job) &&
-            child->alive) {
+            ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_ALIVE)) {
             return true;
         }
     }
@@ -702,7 +702,7 @@ static bool all_children_registered(orte_jobid_t job)
                 continue;
             }
             /* if this child has *not* registered yet, return false */
-            if (!child->registered) {
+            if (!ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_REG)) {
                 return false;
             }
         }
@@ -760,9 +760,9 @@ static void failed_start(orte_job_t *jobdat)
                  * is complete or else we will hang waiting for
                  * pipes to close that were never opened
                  */
-                child->iof_complete = true;
+                ORTE_FLAG_SET(child, ORTE_PROC_FLAG_IOF_COMPLETE);
                 /* ditto for waitpid */
-                child->waitpid_recvd = true;
+                ORTE_FLAG_SET(child, ORTE_PROC_FLAG_WAITPID);
             }
         }
     }

@@ -13,7 +13,7 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -456,6 +456,7 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
     char *tmp_str = NULL;
     char *global_snapshot_ref = NULL;
     char *global_snapshot_seq = NULL;
+    char *sload;
 
     /*
      * Get the snapshot restart command for this process
@@ -528,29 +529,22 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
      *   Reuse this app_context
      */
     if( cur_app_context->num_procs > 1 ) {
-        /* Create a new app_context */
-        new_app_context = OBJ_NEW(orte_app_context_t);
 
-        /* Copy over attributes */
+        /* Create a new app_context */
+        opal_dss.copy((void**)&new_app_context, cur_app_context, ORTE_APP_CONTEXT);
+
+        /* clear unused attributes */
         new_app_context->idx                    = cur_app_context->idx;
-        new_app_context->app                    = NULL; /* strdup(cur_app_context->app); */
+        free(new_app_context->app);
+        new_app_context->app                    = NULL;
         new_app_context->num_procs              = 1;
-        new_app_context->argv                   = NULL; /* opal_argv_copy(cur_app_context->argv); */
-        new_app_context->env                    = opal_argv_copy(cur_app_context->env);
-        new_app_context->cwd                    = (NULL == cur_app_context->cwd ? NULL :
-                                                   strdup(cur_app_context->cwd));
-        new_app_context->user_specified_cwd     = cur_app_context->user_specified_cwd;
-        new_app_context->hostfile               = (NULL == cur_app_context->hostfile ? NULL :
-                                                   strdup(cur_app_context->hostfile));
-        new_app_context->add_hostfile           = (NULL == cur_app_context->add_hostfile ? NULL :
-                                                   strdup(cur_app_context->add_hostfile));
-        new_app_context->dash_host              = opal_argv_copy(cur_app_context->dash_host);
-        new_app_context->prefix_dir             = (NULL == cur_app_context->prefix_dir ? NULL :
-                                                   strdup(cur_app_context->prefix_dir));
-        new_app_context->preload_binary         = false;
+        opal_argv_free(new_app_context->argv);
+        new_app_context->argv                   = NULL;
+
+        orte_remove_attribute(&new_app_context->attributes, ORTE_APP_PRELOAD_BIN);
 
         asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
-        asprintf(&(new_app_context->sstore_load),
+        asprintf(&sload,
                  "%s:%s:%s:%s:%s:%s",
                  location_str,
                  global_snapshot_ref,
@@ -558,9 +552,9 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
                  (vpid_snapshot->compress_comp == NULL ? "" : vpid_snapshot->compress_comp),
                  (vpid_snapshot->compress_postfix == NULL ? "" : vpid_snapshot->compress_postfix),
                  global_snapshot_seq);
-
-        new_app_context->used_on_node           = cur_app_context->used_on_node;
-
+        orte_set_attribute(&new_app_context->attributes, ORTE_APP_SSTORE_LOAD, ORTE_ATTR_LOCAL, sload, OPAL_STRING);
+        free(sload);
+        
         /* Add it to the job_t data structure */
         /*current_global_jobdata->num_apps++; */
         new_app_context->idx = (jobdata->num_apps);
@@ -583,7 +577,7 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
         new_app_context->argv = NULL;
 
         asprintf(&tmp_str, reference_fmt_str, vpid_snapshot->process_name.vpid);
-        asprintf(&(new_app_context->sstore_load),
+        asprintf(&sload,
                  "%s:%s:%s:%s:%s:%s",
                  location_str,
                  global_snapshot_ref,
@@ -591,6 +585,8 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
                  (vpid_snapshot->compress_comp == NULL ? "" : vpid_snapshot->compress_comp),
                  (vpid_snapshot->compress_postfix == NULL ? "" : vpid_snapshot->compress_postfix),
                  global_snapshot_seq);
+        orte_set_attribute(&new_app_context->attributes, ORTE_APP_SSTORE_LOAD, ORTE_ATTR_LOCAL, sload, OPAL_STRING);
+        free(sload);
     }
 
     /*
@@ -673,7 +669,7 @@ int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int s
     loc_proc.jobid = jobid;
     loc_proc.vpid  = 0;
     ORTE_ACTIVATE_PROC_STATE(&loc_proc, ORTE_PROC_STATE_KILLED_BY_CMD);
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_CONTROL_RESTART);
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FT_RESTART);
     while( !orte_snapc_base_has_recovered ) {
         opal_progress();
     }

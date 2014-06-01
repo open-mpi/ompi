@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,6 +47,7 @@
 #include "opal/util/path.h"
 #include "opal/util/opal_environ.h"
 
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/util/context_fns.h"
 
@@ -67,7 +69,8 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
         /* See if the directory was a user-specified directory.  If it
         was, barf because they specifically asked for something we
         can't provide. */
-        if (context->user_specified_cwd) {
+        if (orte_get_attribute(&context->attributes, ORTE_APP_USER_CWD,
+                               NULL, OPAL_BOOL)) {
             return ORTE_ERR_WDIR_NOT_FOUND;
         }
         

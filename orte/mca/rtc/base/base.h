@@ -61,8 +61,10 @@ typedef struct {
 } orte_rtc_base_selected_module_t;
 OBJ_CLASS_DECLARATION(orte_rtc_base_selected_module_t);
 
+ORTE_DECLSPEC void orte_rtc_base_assign(orte_job_t *jdata);
 ORTE_DECLSPEC void orte_rtc_base_set(orte_job_t *jdata, orte_proc_t *proc,
                                      char ***env, int error_fd);
+ORTE_DECLSPEC void orte_rtc_base_get_avail_vals(opal_list_t *vals);
 
 /* Called from the child to send a warning show_help message up the
    pipe to the waiting parent. */

@@ -693,6 +693,11 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
         }
         /* now pack the right field */
         switch (ptr[i]->type) {
+        case OPAL_BOOL:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.flag, 1, OPAL_BOOL))) {
+                return ret;
+            }
+            break;
         case OPAL_BYTE:
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.byte, 1, OPAL_BYTE))) {
                 return ret;
@@ -700,6 +705,11 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
             break;
         case OPAL_STRING:
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.string, 1, OPAL_STRING))) {
+                return ret;
+            }
+            break;
+        case OPAL_SIZE:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.size, 1, OPAL_SIZE))) {
                 return ret;
             }
             break;
@@ -779,6 +789,9 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.tv, 1, OPAL_TIMEVAL))) {
                 return ret;
             }
+            break;
+        case OPAL_PTR:
+            /* just ignore these values */
             break;
         default:
             opal_output(0, "PACK-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)ptr[i]->type);

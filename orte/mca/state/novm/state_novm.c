@@ -210,7 +210,7 @@ static void allocation_complete(int fd, short args, void *cbdata)
         goto done;
     }
     /* mark that we are not using a VM */
-    daemons->controls |= ORTE_JOB_CONTROL_NO_VM;
+    orte_set_attribute(&daemons->attributes, ORTE_JOB_NO_VM, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
 
 #if OPAL_HAVE_HWLOC
     {

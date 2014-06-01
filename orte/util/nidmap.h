@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,12 +45,9 @@ ORTE_DECLSPEC int orte_util_nidmap_init(opal_buffer_t *buffer);
 ORTE_DECLSPEC void orte_util_nidmap_finalize(void);
 
 ORTE_DECLSPEC int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update);
-ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo);
 
-ORTE_DECLSPEC int orte_util_encode_pidmap(opal_byte_object_t *boptr, bool update);
-ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr);
-ORTE_DECLSPEC int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo);
+ORTE_DECLSPEC int orte_util_encode_app_pidmap(opal_byte_object_t *boptr);
 
 #if ORTE_ENABLE_STATIC_PORTS
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);

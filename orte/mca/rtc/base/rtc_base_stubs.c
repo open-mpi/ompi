@@ -18,6 +18,18 @@
 
 #include "orte/mca/rtc/base/base.h"
 
+void orte_rtc_base_assign(orte_job_t *jdata)
+{
+    orte_rtc_base_selected_module_t *active;
+
+    OPAL_LIST_FOREACH(active, &orte_rtc_base.actives, orte_rtc_base_selected_module_t) {
+        if (NULL != active->module->assign) {
+            /* give this module a chance to operate on it */
+            active->module->assign(jdata);
+        }
+    }
+}
+
 void orte_rtc_base_set(orte_job_t *jdata, orte_proc_t *proc,
                        char ***environ_copy, int error_fd)
 {
@@ -27,6 +39,18 @@ void orte_rtc_base_set(orte_job_t *jdata, orte_proc_t *proc,
         if (NULL != active->module->set) {
             /* give this module a chance to operate on it */
             active->module->set(jdata, proc, environ_copy, error_fd);
+        }
+    }
+}
+
+void orte_rtc_base_get_avail_vals(opal_list_t *vals)
+{
+    orte_rtc_base_selected_module_t *active;
+
+    OPAL_LIST_FOREACH(active, &orte_rtc_base.actives, orte_rtc_base_selected_module_t) {
+        if (NULL != active->module->get_available_values) {
+            /* give this module a chance to operate on it */
+            active->module->get_available_values(vals);
         }
     }
 }

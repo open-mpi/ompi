@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,70 +54,78 @@ int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
                                  opal_list_t *nodes, bool remove)
 {
     int rc=ORTE_ERR_TAKE_NEXT_OPTION;
+    char *hosts;
 
     /* did the app_context contain a hostfile? */
-    if (NULL != app->hostfile) {
+    if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
         /* yes - filter the node list through the file, removing
          * any nodes not found in the file
          */
-        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(nodes, app->hostfile, remove))) {
+        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(nodes, hosts, remove))) {
             ORTE_ERROR_LOG(rc);
+            free(hosts);
             return rc;
         }
         /** check that anything is here */
         if (0 == opal_list_get_size(nodes)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "-hostfile", app->hostfile);
+                           true, app->app, "-hostfile", hosts);
+            free(hosts);
             return ORTE_ERR_SILENT;
         }
+        free(hosts);
     }
     /* did the app_context contain an add-hostfile? */
-    if (NULL != app->add_hostfile) {
+    if (orte_get_attribute(&app->attributes, ORTE_APP_ADD_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
         /* yes - filter the node list through the file, removing
          * any nodes not found in the file
          */
-        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(nodes, app->add_hostfile, remove))) {
+        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(nodes, hosts, remove))) {
+            free(hosts);
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         /** check that anything is here */
         if (0 == opal_list_get_size(nodes)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "-add-hostfile", app->hostfile);
+                           true, app->app, "-add-hostfile", hosts);
+            free(hosts);
             return ORTE_ERR_SILENT;
         }
+        free(hosts);
     }
     /* now filter the list through any -host specification */
-    if (!orte_soft_locations && NULL != app->dash_host) {
-        if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(nodes, app->dash_host, remove))) {
+    if (!orte_soft_locations &&
+        orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
+        if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(nodes, hosts, remove))) {
             ORTE_ERROR_LOG(rc);
+            free(hosts);
             return rc;
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(nodes)) {
-            char *foo;
-            foo = opal_argv_join(app->dash_host, ',');
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "-host", foo);
-            free(foo);
+                           true, app->app, "-host", hosts);
+            free(hosts);
             return ORTE_ERR_SILENT;
         }
+        free(hosts);
     }
     /* now filter the list through any add-host specification */
-    if (NULL != app->add_host) {
-        if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(nodes, app->add_host, remove))) {
+    if (orte_get_attribute(&app->attributes, ORTE_APP_ADD_HOST, (void**)&hosts, OPAL_STRING)) {
+        if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(nodes, hosts, remove))) {
             ORTE_ERROR_LOG(rc);
+            free(hosts);
             return rc;
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(nodes)) {
-            char *foo;
-            foo = opal_argv_join(app->dash_host, ',');
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "-add-host", foo);
-            free(foo);
+                           true, app->app, "-add-host", hosts);
+            free(hosts);
             return ORTE_ERR_SILENT;
         }
+        free(hosts);
     }
 
     return rc;
@@ -138,14 +147,15 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     orte_job_t *daemons;
     bool novm;
     opal_list_t nodes;
+    char *hosts;
 
     /** set default answer */
     *total_num_slots = 0;
     
     /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    /* see is we have a vm or not */
-    novm = ORTE_JOB_CONTROL_NO_VM & daemons->controls;
+    /* see if we have a vm or not */
+    novm = orte_get_attribute(&daemons->attributes, ORTE_JOB_NO_VM, NULL, OPAL_BOOL);
 
     /* if this is NOT a managed allocation, then we use the nodes
      * that were specified for this app - there is no need to collect
@@ -156,26 +166,28 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         /* if the app provided a dash-host, and we are not treating
          * them as requested or "soft" locations, then use those nodes
          */
-        if (!orte_soft_locations && NULL != app->dash_host) {
+        if (!orte_soft_locations &&
+            orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                 "%s using dash_host",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
-                                                                    app->dash_host))) {
+                                 "%s using dash_host %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts));
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts))) {
                 ORTE_ERROR_LOG(rc);
+                free(hosts);
                 return rc;
             }
-        } else if (NULL != app->hostfile) {
+            free(hosts);
+        } else if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
             /* otherwise, if the app provided a hostfile, then use that */
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using hostfile %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 app->hostfile));
-            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                                   app->hostfile))) {
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts));
+            if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, hosts))) {
+                free(hosts);
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            free(hosts);
         } else if (NULL != orte_rankfile) {
             /* use the rankfile, if provided */
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
@@ -288,7 +300,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                      * are getting for an initial map of a job,
                      * then mark all nodes as unmapped
                      */
-                    node->mapped = false;
+                    ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
                 }
                 if (NULL == nd || NULL == nd->daemon ||
                     NULL == node->daemon ||
@@ -342,7 +354,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                      * are getting for an initial map of a job,
                      * then mark all nodes as unmapped
                      */
-                    node->mapped = false;
+                    ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
                 }
                 opal_list_append(allocated_nodes, &node->super);
             }
@@ -399,7 +411,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  * are getting for an initial map of a job,
                  * then mark all nodes as unmapped
                  */
-                node->mapped = false;
+                    ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
             }
             if (NULL == nd || NULL == nd->daemon ||
 		NULL == node->daemon ||
@@ -558,10 +570,16 @@ orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
     /* flag the proc as ready for launch */
     proc->state = ORTE_PROC_STATE_INIT;
     proc->app_idx = idx;
+    /* mark the proc as UPDATED so it will be included in the launch */
+    ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_UPDATED);
+    if (NULL == node->daemon) {
+        proc->parent = ORTE_VPID_INVALID;
+    } else {
+        proc->parent = node->daemon->name.vpid;
+    }
 
     OBJ_RETAIN(node);  /* maintain accounting on object */    
     proc->node = node;
-    proc->nodename = node->name;
     node->num_procs++;
     if (node->slots_inuse < node->slots) {
         node->slots_inuse += orte_rmaps_base.cpus_per_rank;

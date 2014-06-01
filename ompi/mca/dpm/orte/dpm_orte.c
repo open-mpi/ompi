@@ -966,25 +966,25 @@ static int spawn(int count, const char *array_of_commands[],
             /* check for 'host' */
             ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                app->dash_host = opal_argv_split(host, ',');
+                orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, false, host, OPAL_STRING);
             }
  
             /* check for 'hostfile' */
             ompi_info_get (array_of_info[i], "hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                app->hostfile = strdup(host);
+                orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, false, host, OPAL_STRING);
             }
             
             /* check for 'add-hostfile' */
             ompi_info_get (array_of_info[i], "add-hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                app->add_hostfile = strdup(host);
+                orte_set_attribute(&app->attributes, ORTE_APP_ADD_HOSTFILE, false, host, OPAL_STRING);
             }
             
             /* check for 'add-host' */
             ompi_info_get (array_of_info[i], "add-host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                app->add_host = opal_argv_split(host, ',');
+                orte_set_attribute(&app->attributes, ORTE_APP_ADD_HOST, false, host, OPAL_STRING);
             }
             
             /* check for env */
@@ -1004,7 +1004,7 @@ static int spawn(int count, const char *array_of_commands[],
              */
             ompi_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix) - 1, prefix, &flag);
             if ( flag ) {
-                app->prefix_dir = strdup(prefix);
+                orte_set_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, false, prefix, OPAL_STRING);
             }
 
             /* check for 'wdir' */ 
@@ -1158,13 +1158,13 @@ static int spawn(int count, const char *array_of_commands[],
             /* check for 'preload_binary' */
             ompi_info_get_bool(array_of_info[i], "ompi_preload_binary", &local_spawn, &flag);
             if ( flag ) {
-                app->preload_binary = true;
+                orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, false, NULL, OPAL_BOOL);
             }
             
             /* check for 'preload_files' */ 
             ompi_info_get (array_of_info[i], "ompi_preload_files", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
-                app->preload_files = strdup(cwd);
+                orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, false, cwd, OPAL_STRING);
             }
             
             /* see if this is a non-mpi job - if so, then set the flag so ORTE
@@ -1172,7 +1172,7 @@ static int spawn(int count, const char *array_of_commands[],
              */
             ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
             if (flag && non_mpi) {
-                jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
+                orte_set_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, false, NULL, OPAL_BOOL);
             }
             
             /* see if this is an MCA param that the user wants applied to the child job */

@@ -897,7 +897,7 @@ cleanup:
 
 static int rsh_launch(orte_job_t *jdata)
 {
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         /* this is a restart situation - skip to the mapping stage */
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
     } else {
@@ -969,11 +969,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
     orte_plm_rsh_caddy_t *caddy;
     orte_grpcomm_collective_t coll;
+    char *username;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
      */
-    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & state->jdata->controls) {
+    if (ORTE_FLAG_TEST(state->jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
         ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
         OBJ_RELEASE(state);
@@ -1065,7 +1066,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * doing this.
      */
     app = (orte_app_context_t*)opal_pointer_array_get_item(state->jdata->apps, 0);
-    prefix_dir = app->prefix_dir;
+    orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING);
     /* we also need at least one node name so we can check what shell is
      * being used, if we have to
      */
@@ -1166,7 +1167,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         
     launch:
         /* if this daemon already exists, don't launch it! */
-        if (node->daemon_launched) {
+        if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s plm:rsh:launch daemon already exists on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1188,10 +1189,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
         
         /* setup node name */
         free(argv[node_name_index1]);
-        if (NULL != node->username &&
-            0 != strlen (node->username)) {
+        username = NULL;
+        if (orte_get_attribute(&node->attributes, ORTE_NODE_USERNAME, (void**)username, OPAL_STRING)) {
             asprintf (&argv[node_name_index1], "%s@%s",
-                      node->username, node->name);
+                      username, node->name);
+            free(username);
         } else {
             argv[node_name_index1] = strdup(node->name);
         }

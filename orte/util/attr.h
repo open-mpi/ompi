@@ -1,0 +1,174 @@
+/*
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#ifndef ORTE_ATTRS_H
+#define ORTE_ATTRS_H
+
+#include "orte_config.h"
+#include "orte/types.h"
+
+/*** FLAG FOR SETTING ATTRIBUTES - INDICATES IF THE
+ *** ATTRIBUTE IS TO BE SHARED WITH REMOTE PROCS OR NOT
+ */
+#define ORTE_ATTR_LOCAL    true      // for local use only
+#define ORTE_ATTR_GLOBAL   false     // include when sending this object
+
+
+/*** ATTRIBUTE FLAGS - never sent anywwhere ***/
+typedef uint8_t orte_app_context_flags_t;
+#define ORTE_APP_FLAG_USED_ON_NODE  0x01  // is being used on the local node
+
+
+/* APP_CONTEXT ATTRIBUTE KEYS */
+#define ORTE_APP_HOSTFILE         1    // string  - hostfile
+#define ORTE_APP_ADD_HOSTFILE     2    // string  - hostfile to be added
+#define ORTE_APP_DASH_HOST        3    // string  - hosts specified with -host option
+#define ORTE_APP_ADD_HOST         4    // string  - hosts to be added
+#define ORTE_APP_USER_CWD         5    // bool  - user specified cwd
+#define ORTE_APP_SSNDIR_CWD       6    // bool  - use session dir as cwd
+#define ORTE_APP_PRELOAD_BIN      7    // bool  - move binaries to remote nodes prior to exec
+#define ORTE_APP_PRELOAD_FILES    8    // string  - files to be moved to remote nodes prior to exec
+#define ORTE_APP_SSTORE_LOAD      9    // string
+#define ORTE_APP_RECOV_DEF       10    // bool  - whether or not a recovery policy was defined
+#define ORTE_APP_MAX_RESTARTS    11    // int32 - max number of times a process can be restarted
+#define ORTE_APP_MIN_NODES       12    // int64 - min number of nodes required
+#define ORTE_APP_MANDATORY       13    // bool - flag if nodes requested in -host are "mandatory" vs "optional"
+#define ORTE_APP_MAX_PPN         14    // uint32 - maximum number of procs/node for this app
+#define ORTE_APP_PREFIX_DIR      15    // string - prefix directory for this app, if override necessary
+
+#define ORTE_APP_MAX_KEY        100
+
+
+/*** NODE FLAGS - never sent anywhere ***/
+typedef uint8_t orte_node_flags_t;
+#define ORTE_NODE_FLAG_DAEMON_LAUNCHED    0x01   // whether or not the daemon on this node has been launched
+#define ORTE_NODE_FLAG_LOC_VERIFIED       0x02   // whether or not the location has been verified - used for
+                                                 // environments where the daemon's final destination is uncertain
+#define ORTE_NODE_FLAG_OVERSUBSCRIBED     0x04   // whether or not this node is oversubscribed
+#define ORTE_NODE_FLAG_MAPPED             0x08   // whether we have been added to the current map
+#define ORTE_NODE_FLAG_SLOTS_GIVEN        0x10   // the number of slots was specified - used only in non-managed environments
+
+
+/*** NODE ATTRIBUTE KEYS - never sent anywhere ***/
+#define ORTE_NODE_START_KEY    ORTE_APP_MAX_KEY
+
+#define ORTE_NODE_USERNAME       (ORTE_NODE_START_KEY + 1)
+#define ORTE_NODE_LAUNCH_ID      (ORTE_NODE_START_KEY + 2)   // int32 - Launch id needed by some systems to launch a proc on this node
+#define ORTE_NODE_HOSTID         (ORTE_NODE_START_KEY + 3)   // orte_vpid_t - if this "node" is a coprocessor being hosted on a different node, then
+                                                             // we need to know the id of our "host" to help any procs on us to determine locality
+#define ORTE_NODE_ALIAS          (ORTE_NODE_START_KEY + 4)   // comma-separate list of alternate names for the node
+#define ORTE_NODE_SERIAL_NUMBER  (ORTE_NODE_START_KEY + 5)   // string - serial number: used if node is a coprocessor
+
+#define ORTE_NODE_MAX_KEY        200
+
+/*** JOB FLAGS - included in orte_job_t transmissions ***/
+typedef uint16_t orte_job_flags_t;
+#define ORTE_JOB_FLAGS_T  OPAL_UINT16
+#define ORTE_JOB_FLAG_UPDATED            0x0001   // job has been updated and needs to be included in the pidmap message
+#define ORTE_JOB_FLAG_GANG_LAUNCHED      0x0002   // MPI is allowed on this job - i.e., all members of the job were simultaneously launched
+#define ORTE_JOB_FLAG_RESTARTED          0x0004   // some procs in this job are being restarted
+#define ORTE_JOB_FLAG_ABORTED            0x0008   // did this job abort?
+#define ORTE_JOB_FLAG_DEBUGGER_DAEMON    0x0010   // job is launching debugger daemons
+#define ORTE_JOB_FLAG_FORWARD_OUTPUT     0x0020   // forward output from the apps
+#define ORTE_JOB_FLAG_DO_NOT_MONITOR     0x0040   // do not monitor apps for termination
+#define ORTE_JOB_FLAG_FORWARD_COMM       0x0080   // 
+#define ORTE_JOB_FLAG_RECOVERABLE        0x0100   // job is recoverable
+#define ORTE_JOB_FLAG_RESTART            0x0200   //
+#define ORTE_JOB_FLAG_PROCS_MIGRATING    0x0400   // some procs in job are migrating from one node to another
+
+
+/***   JOB ATTRIBUTE KEYS   ***/
+#define ORTE_JOB_START_KEY   ORTE_NODE_MAX_KEY
+
+#define ORTE_JOB_LAUNCH_MSG_SENT        (ORTE_JOB_START_KEY + 1)     // timeval - time launch message was sent
+#define ORTE_JOB_LAUNCH_MSG_RECVD       (ORTE_JOB_START_KEY + 2)     // timeval - time launch message was recvd
+#define ORTE_JOB_MAX_LAUNCH_MSG_RECVD   (ORTE_JOB_START_KEY + 3)     // timeval - max time for launch msg to be received
+#define ORTE_JOB_FILE_MAPS              (ORTE_JOB_START_KEY + 4)     // opal_buffer_t - file maps associates with this job
+#define ORTE_JOB_CKPT_STATE             (ORTE_JOB_START_KEY + 5)     // size_t - ckpt state
+#define ORTE_JOB_CKPT_SNAPSHOT_REF      (ORTE_JOB_START_KEY + 6)     // string - snapshot reference
+#define ORTE_JOB_SNAP_LOC               (ORTE_JOB_START_KEY + 7)     // string - snapshot location
+#define ORTE_JOB_SNAPC_INIT_BAR         (ORTE_JOB_START_KEY + 8)     // orte_grpcomm_coll_id_t - collective id
+#define ORTE_JOB_SNAPC_FINI_BAR         (ORTE_JOB_START_KEY + 9)     // orte_grpcomm_coll_id_t - collective id
+#define ORTE_JOB_NUM_NONZERO_EXIT       (ORTE_JOB_START_KEY + 10)    // int32 - number of procs with non-zero exit codes
+#define ORTE_JOB_FAILURE_TIMER_EVENT    (ORTE_JOB_START_KEY + 11)    // opal_ptr (orte_timer_t*) - timer event for failure detect/response if fails to launch
+#define ORTE_JOB_ABORTED_PROC           (ORTE_JOB_START_KEY + 12)    // opal_ptr (orte_proc_t*) - proc that caused abort to happen
+#define ORTE_JOB_MAPPER                 (ORTE_JOB_START_KEY + 13)    // bool - job consists of MapReduce mappers
+#define ORTE_JOB_REDUCER                (ORTE_JOB_START_KEY + 14)    // bool - job consists of MapReduce reducers
+#define ORTE_JOB_COMBINER               (ORTE_JOB_START_KEY + 15)    // bool - job consists of MapReduce combiners
+#define ORTE_JOB_INDEX_ARGV             (ORTE_JOB_START_KEY + 16)    // bool - automatically index argvs
+#define ORTE_JOB_NO_VM                  (ORTE_JOB_START_KEY + 17)    // bool - do not use VM launch
+#define ORTE_JOB_SPIN_FOR_DEBUG         (ORTE_JOB_START_KEY + 18)    // bool - job consists of continuously operating apps
+#define ORTE_JOB_CONTINUOUS_OP          (ORTE_JOB_START_KEY + 19)    // bool - recovery policy defined for job
+#define ORTE_JOB_RECOVER_DEFINED        (ORTE_JOB_START_KEY + 20)    // bool - recovery policy has been defined
+#define ORTE_JOB_ENABLE_RECOVERY        (ORTE_JOB_START_KEY + 21)    // bool - enable recovery of these processes
+#define ORTE_JOB_NON_ORTE_JOB           (ORTE_JOB_START_KEY + 22)    // bool - non-orte job
+#define ORTE_JOB_STDOUT_TARGET          (ORTE_JOB_START_KEY + 23)    // orte_jobid_t - job that is to receive the stdout (on its stdin) from this one
+#define ORTE_JOB_POWER                  (ORTE_JOB_START_KEY + 24)    // string - power setting for nodes in job
+#define ORTE_JOB_MAX_FREQ               (ORTE_JOB_START_KEY + 25)    // string - max freq setting for nodes in job
+#define ORTE_JOB_MIN_FREQ               (ORTE_JOB_START_KEY + 26)    // string - min freq setting for nodes in job
+#define ORTE_JOB_GOVERNOR               (ORTE_JOB_START_KEY + 27)    // string - governor used for nodes in job
+
+#define ORTE_JOB_MAX_KEY   300
+
+
+/*** PROC FLAGS - never sent anywhere ***/
+typedef uint16_t orte_proc_flags_t;
+#define ORTE_PROC_FLAG_ALIVE         0x0001  // proc has been launched and has not yet terminated
+#define ORTE_PROC_FLAG_ABORT         0x0002  // proc called abort
+#define ORTE_PROC_FLAG_UPDATED       0x0004  // proc has been updated and need to be included in the next pidmap message
+#define ORTE_PROC_FLAG_LOCAL         0x0008  // indicate that this proc is local
+#define ORTE_PROC_FLAG_REPORTED      0x0010  // indicate proc has reported in
+#define ORTE_PROC_FLAG_REG           0x0020  // proc has registered
+#define ORTE_PROC_FLAG_HAS_DEREG     0x0040  // proc has deregistered
+#define ORTE_PROC_FLAG_AS_MPI        0x0080  // proc is MPI process
+#define ORTE_PROC_FLAG_IOF_COMPLETE  0x0100  // IOF has completed
+#define ORTE_PROC_FLAG_WAITPID       0x0200  // waitpid fired
+
+
+
+/***   PROCESS ATTRIBUTE KEYS   ***/
+#define ORTE_PROC_START_KEY   ORTE_JOB_MAX_KEY
+
+#define ORTE_PROC_NOBARRIER       (ORTE_PROC_START_KEY +  1)           // bool  - indicates proc should not barrier in orte_init
+#define ORTE_PROC_CPU_BITMAP      (ORTE_PROC_START_KEY +  2)           // string - string representation of cpu bindings
+#define ORTE_PROC_HWLOC_LOCALE    (ORTE_PROC_START_KEY +  3)           // opal_ptr (hwloc_obj_t) = pointer to object where proc was mapped
+#define ORTE_PROC_HWLOC_BOUND     (ORTE_PROC_START_KEY +  4)           // opal_ptr (hwloc_obj_t) = pointer to object where proc was bound
+#define ORTE_PROC_PRIOR_NODE      (ORTE_PROC_START_KEY +  5)           // void* - pointer to orte_node_t where this proc last executed
+#define ORTE_PROC_NRESTARTS       (ORTE_PROC_START_KEY +  6)           // int32 - number of times this process has been restarted
+#define ORTE_PROC_RESTART_TIME    (ORTE_PROC_START_KEY +  7)           // timeval - time of last restart
+#define ORTE_PROC_FAST_FAILS      (ORTE_PROC_START_KEY +  8)           // int32 - number of failures in "fast" window
+#define ORTE_PROC_CKPT_STATE      (ORTE_PROC_START_KEY +  9)           // size_t - ckpt state
+#define ORTE_PROC_CKPT_SNAP_REF   (ORTE_PROC_START_KEY + 10)           // string - snapshot reference
+#define ORTE_PROC_SNAP_LOC        (ORTE_PROC_START_KEY + 11)           // string - snapshot location
+#define ORTE_PROC_NODENAME        (ORTE_PROC_START_KEY + 12)           // string - node where proc is located, used only by tools
+#define ORTE_PROC_CGROUP          (ORTE_PROC_START_KEY + 13)           // string - name of cgroup this proc shall be assigned to
+
+#define ORTE_PROC_MAX_KEY   400
+
+
+/*** FLAG OPS ***/
+#define ORTE_FLAG_SET(p, f)         ((p)->flags |= (f))
+#define ORTE_FLAG_UNSET(p, f)       ((p)->flags &= ~(f))
+#define ORTE_FLAG_TEST(p, f)        ((p)->flags & (f))
+
+ORTE_DECLSPEC const char *orte_attr_key_to_str(orte_attribute_key_t key);
+
+/* Retrieve the named attribute from a list */
+ORTE_DECLSPEC bool orte_get_attribute(opal_list_t *attributes, orte_attribute_key_t key,
+                                      void **data, opal_data_type_t type);
+
+/* Set the named attribute in a list, overwriting any prior entry */
+ORTE_DECLSPEC int orte_set_attribute(opal_list_t *attributes, orte_attribute_key_t key,
+                                     bool local, void *data, opal_data_type_t type);
+
+/* Remove the named attribute from a list */
+ORTE_DECLSPEC void orte_remove_attribute(opal_list_t *attributes, orte_attribute_key_t key);
+
+
+#endif

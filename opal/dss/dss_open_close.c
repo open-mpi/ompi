@@ -72,6 +72,7 @@ static void opal_value_construct(opal_value_t* ptr)
 {
     ptr->key = NULL;
     ptr->type = OPAL_UNDEF;
+    memset(&ptr->data, 0, sizeof(ptr->data));
 }
 static void opal_value_destruct(opal_value_t* ptr)
 {

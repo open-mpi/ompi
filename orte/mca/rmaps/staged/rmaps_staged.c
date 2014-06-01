@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,8 +51,9 @@ static int staged_mapper(orte_job_t *jdata)
     orte_node_t *node, *next;
     bool work_to_do = false, first_pass = false;
     opal_list_item_t *item, *it2;
-    char *cptr, **minimap;
+    char *cptr, **minimap, *hosts, **dash_host;
     orte_vpid_t load;
+    orte_vpid_t max_ppn, *ppn;
 
     /* only use this mapper if it was specified */
     if (NULL == jdata->map->req_mapper ||
@@ -151,12 +153,13 @@ static int staged_mapper(orte_job_t *jdata)
          * app, remove all nodes from the list that exceed
          * that limit
          */
-        if (0 < app->max_procs_per_node) {
+        ppn = &max_ppn;
+        if (orte_get_attribute(&app->attributes, ORTE_APP_MAX_PPN, (void**)&ppn, OPAL_UINT32)) {
             item = opal_list_get_first(&node_list);
             while (item != opal_list_get_end(&node_list)) {
                 it2 = opal_list_get_next(item);
                 node = (orte_node_t*)item;
-                if (app->max_procs_per_node <= node->num_procs) {
+                if (max_ppn <= node->num_procs) {
                     opal_list_remove_item(&node_list, item);
                     OBJ_RELEASE(item);
                 }
@@ -174,11 +177,13 @@ static int staged_mapper(orte_job_t *jdata)
          * for those that match the requested locations and move those
          * to the desired list so we use them first
          */
-        if (NULL != app->dash_host) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
             OBJ_CONSTRUCT(&desired, opal_list_t);
+            dash_host = opal_argv_split(hosts, ',');
+            free(hosts);
             /* no particular order is required */
-            for (j=0; j < opal_argv_count(app->dash_host); j++) {
-                minimap = opal_argv_split(app->dash_host[j], ',');
+            for (j=0; j < opal_argv_count(dash_host); j++) {
+                minimap = opal_argv_split(dash_host[j], ',');
                 for (k=0; k < opal_argv_count(minimap); k++) {
                     cptr = minimap[k];
                     for (item = opal_list_get_first(&node_list);
@@ -200,6 +205,7 @@ static int staged_mapper(orte_job_t *jdata)
                 }
                 opal_argv_free(minimap);
             }
+            opal_argv_free(dash_host);
             /* if no nodes made the transition and the app specified soft
              * locations, then we can skip to look at the non-desired list
              */
@@ -247,7 +253,6 @@ static int staged_mapper(orte_job_t *jdata)
                 }
                 /* put the proc there */
                 proc->node = node;
-                proc->nodename = node->name;
                 /* the local rank is the number of procs
                  * on this node from this job - we don't
                  * directly track this number, so it must
@@ -284,14 +289,14 @@ static int staged_mapper(orte_job_t *jdata)
                 /* flag the proc as updated so it will be included
                  * in the next pidmap message
                  */
-                proc->updated =true;
+                ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_UPDATED);
                 /* add the node to the map, if needed */
-                if (!node->mapped) {
+                if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                     if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                         ORTE_ERROR_LOG(rc);
                         return rc;
                     }
-                    node->mapped = true;
+                    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                     OBJ_RETAIN(node);  /* maintain accounting on object */
                     jdata->map->num_nodes++;
                 }
@@ -345,7 +350,6 @@ static int staged_mapper(orte_job_t *jdata)
 				ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 				ORTE_NAME_PRINT(&proc->name), node->name);
             proc->node = node;
-            proc->nodename = node->name;
 	    /* the local rank is the number of procs
 	     * on this node from this job - we don't
 	     * directly track this number, so it must
@@ -382,14 +386,14 @@ static int staged_mapper(orte_job_t *jdata)
             /* flag the proc as updated so it will be included
              * in the next pidmap message
              */
-            proc->updated =true;
+            ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_UPDATED);
             /* add the node to the map, if needed */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 jdata->map->num_nodes++;
             }
@@ -417,7 +421,7 @@ static int staged_mapper(orte_job_t *jdata)
     /* flag that the job was updated so it will be
      * included in the pidmap message
      */
-    jdata->updated = true;
+    ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_UPDATED);
 
     /* if we successfully mapped ALL procs in the first pass,
      * then this job is capable of supporting MPI procs
@@ -427,7 +431,7 @@ static int staged_mapper(orte_job_t *jdata)
                             "%s mca:rmaps:staged: job %s is MPI-capable",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_JOBID_PRINT(jdata->jobid));
-        jdata->gang_launched = true;
+        ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_GANG_LAUNCHED);
     }
 
     return ORTE_SUCCESS;

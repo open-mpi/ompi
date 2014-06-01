@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,14 +31,14 @@
 BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_util_add_dash_host_nodes(opal_list_t *nodes,
-                                                char ** host_argv);
+                                                char *hosts);
     
 ORTE_DECLSPEC int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
-                                                   char ** host_argv,
+                                                   char *hosts,
                                                    bool remove);
 
 ORTE_DECLSPEC int orte_util_get_ordered_dash_host_list(opal_list_t *nodes,
-                                                       char ** host_argv);
+                                                       char *hosts);
 
 END_C_DECLS
 

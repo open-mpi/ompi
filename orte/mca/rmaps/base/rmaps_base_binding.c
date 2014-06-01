@@ -56,6 +56,7 @@ static void reset_usage(orte_node_t *node, orte_jobid_t jobid)
     int j;
     orte_proc_t *proc;
     opal_hwloc_obj_data_t *data=NULL;
+    hwloc_obj_t bound;
 
     opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                         "%s reset_usage: node %s has %d procs on it",
@@ -80,7 +81,9 @@ static void reset_usage(orte_node_t *node, orte_jobid_t jobid)
                                 ORTE_NAME_PRINT(&proc->name));
             continue;
         }
-        if (NULL == proc->bind_location) {
+        bound = NULL;
+        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)bound, OPAL_PTR) ||
+            NULL == bound) {
             /* this proc isn't bound - ignore it */
             opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
                                 "%s reset_usage: proc %s has no bind location",
@@ -88,10 +91,10 @@ static void reset_usage(orte_node_t *node, orte_jobid_t jobid)
                                 ORTE_NAME_PRINT(&proc->name));
             continue;
         }
-        data = (opal_hwloc_obj_data_t*)proc->bind_location->userdata;
+        data = (opal_hwloc_obj_data_t*)bound->userdata;
         if (NULL == data) {
             data = OBJ_NEW(opal_hwloc_obj_data_t);
-            proc->bind_location->userdata = data;
+            bound->userdata = data;
         }
         data->num_bound++;
         opal_output_verbose(10, orte_rmaps_base_framework.framework_output,
@@ -117,6 +120,8 @@ static int bind_upwards(orte_job_t *jdata,
     hwloc_cpuset_t cpus;
     unsigned int idx, ncpus;
     opal_hwloc_obj_data_t *data;
+    hwloc_obj_t locale;
+    char *cpu_bitmap;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind upwards for job %s with bindings %s",
@@ -135,23 +140,16 @@ static int bind_upwards(orte_job_t *jdata,
         if (proc->name.jobid != jdata->jobid) {
             continue;
         }
-        /* ignore procs that have already been bound - should
-         * never happen, but safer
-         */
-        if (NULL != proc->cpu_bitmap) {
-            continue;
-        }
         /* bozo check */
-        if (NULL == proc->locale) {
-            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                "BIND UPWARDS: LOCALE FOR PROC %s IS NULL",
-                                ORTE_NAME_PRINT(&proc->name));
+        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
+            orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-locale", true, ORTE_NAME_PRINT(&proc->name));
             return ORTE_ERR_SILENT;
         }
         /* starting at the locale, move up thru the parents
          * to find the target object type
          */
-        for (obj = proc->locale->parent; NULL != obj; obj = obj->parent) {
+        cpu_bitmap = NULL;
+        for (obj = locale->parent; NULL != obj; obj = obj->parent) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s bind:upward target %s type %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -187,26 +185,30 @@ static int bind_upwards(orte_job_t *jdata,
                 }
                 /* bind it here */
                 cpus = opal_hwloc_base_get_available_cpus(node->topology, obj);
-                hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
+                hwloc_bitmap_list_asprintf(&cpu_bitmap, cpus);
+                orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
                 /* record the location */
-                proc->bind_location = obj;
+                orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "%s BOUND PROC %s TO %s[%s:%u] on node %s",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ORTE_NAME_PRINT(&proc->name),
-                                    proc->cpu_bitmap,
+                                    cpu_bitmap,
                                     hwloc_obj_type_string(target),
                                     idx, node->name);
                 break;
             }
         }
-        if (NULL == proc->cpu_bitmap && OPAL_BINDING_REQUIRED(jdata->map->binding)) {
+        if (NULL == cpu_bitmap && OPAL_BINDING_REQUIRED(jdata->map->binding)) {
             /* didn't find anyone to bind to - this is an error
              * unless the user specified if-supported
              */
             orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-target-not-found", true,
                            opal_hwloc_base_print_binding(map->binding), node->name);
             return ORTE_ERR_SILENT;
+        }
+        if (NULL != cpu_bitmap) {
+            free(cpu_bitmap);
         }
     }
 
@@ -227,6 +229,8 @@ static int bind_downwards(orte_job_t *jdata,
     opal_hwloc_obj_data_t *data;
     int total_cpus;
     hwloc_cpuset_t totalcpuset;
+    hwloc_obj_t locale;
+    char *cpu_bitmap;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind downward for job %s with bindings %s",
@@ -245,18 +249,17 @@ static int bind_downwards(orte_job_t *jdata,
         if (proc->name.jobid != jdata->jobid) {
             continue;
         }
-        /* ignore procs that have already been bound - should
-         * never happen, but safer
-         */
-        if (NULL != proc->cpu_bitmap) {
-            continue;
+        /* bozo check */
+        locale = NULL;
+        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
+            orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-locale", true, ORTE_NAME_PRINT(&proc->name));
+            return ORTE_ERR_SILENT;
         }
         /* we don't know if the target is a direct child of this locale,
          * or if it is some depth below it, so we have to conduct a bit
          * of a search. Let hwloc find the min usage one for us.
          */
-        trg_obj = opal_hwloc_base_find_min_bound_target_under_obj(node->topology,
-                                                                  proc->locale,
+        trg_obj = opal_hwloc_base_find_min_bound_target_under_obj(node->topology, locale,
                                                                   target, cache_level);
         if (NULL == trg_obj) {
             /* there aren't any such targets under this object */
@@ -265,7 +268,7 @@ static int bind_downwards(orte_job_t *jdata,
             return ORTE_ERR_SILENT;
         }
         /* record the location */
-        proc->bind_location = trg_obj;
+        orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, ORTE_ATTR_LOCAL, trg_obj, OPAL_PTR);
         /* start with a clean slate */
         hwloc_bitmap_zero(totalcpuset);
         total_cpus = 0;
@@ -306,7 +309,7 @@ static int bind_downwards(orte_job_t *jdata,
                      */
                     data->num_bound--;  // maintain count
                     /* show the proc as not bound */
-                    proc->bind_location = NULL;
+                    orte_remove_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND);
                     hwloc_bitmap_zero(totalcpuset);
                     break;
                 }
@@ -319,7 +322,11 @@ static int bind_downwards(orte_job_t *jdata,
             /* move to the next location, in case we need it */
             nxt_obj = trg_obj->next_cousin;
         } while (total_cpus < orte_rmaps_base.cpus_per_rank);
-        hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, totalcpuset);
+        hwloc_bitmap_list_asprintf(&cpu_bitmap, totalcpuset);
+        orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
+        if (NULL != cpu_bitmap) {
+            free(cpu_bitmap);
+        }
         if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
             char tmp1[1024], tmp2[1024];
             if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1),
@@ -359,6 +366,8 @@ static int bind_in_place(orte_job_t *jdata,
     unsigned int idx, ncpus;
     struct hwloc_topology_support *support;
     opal_hwloc_obj_data_t *data;
+    hwloc_obj_t locale;
+    char *cpu_bitmap;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind in place for job %s with bindings %s",
@@ -440,26 +449,25 @@ static int bind_in_place(orte_job_t *jdata,
             if (proc->name.jobid != jdata->jobid) {
                 continue;
             }
-            /* ignore procs that have already been bound - should
-             * never happen, but safer
-             */
-            if (NULL != proc->cpu_bitmap) {
-                continue;
+            /* bozo check */
+            if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
+                orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-locale", true, ORTE_NAME_PRINT(&proc->name));
+                return ORTE_ERR_SILENT;
             }
             /* get the index of this location */
-            if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology, proc->locale, OPAL_HWLOC_AVAILABLE))) {
+            if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology, locale, OPAL_HWLOC_AVAILABLE))) {
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                 return ORTE_ERR_SILENT;
             }
             /* track the number bound */
-            data = (opal_hwloc_obj_data_t*)proc->locale->userdata;
+            data = (opal_hwloc_obj_data_t*)locale->userdata;
             data->num_bound++;
              opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "BINDING PROC %s TO %s NUMBER %u",
                                 ORTE_NAME_PRINT(&proc->name),
-                                hwloc_obj_type_string(proc->locale->type), idx);
+                                hwloc_obj_type_string(locale->type), idx);
             /* get the number of cpus under this location */
-            if (0 == (ncpus = opal_hwloc_base_get_npus(node->topology, proc->locale))) {
+            if (0 == (ncpus = opal_hwloc_base_get_npus(node->topology, locale))) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-available-cpus", true, node->name);
                 return ORTE_ERR_SILENT;
             }
@@ -475,17 +483,20 @@ static int bind_in_place(orte_job_t *jdata,
                 return ORTE_ERR_SILENT;
             }
             /* bind the proc here */
-            cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
-            hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
+            cpus = opal_hwloc_base_get_available_cpus(node->topology, locale);
+            hwloc_bitmap_list_asprintf(&cpu_bitmap, cpus);
+            orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
             /* record the location */
-            proc->bind_location = proc->locale;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, ORTE_ATTR_LOCAL, locale, OPAL_PTR);
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s BOUND PROC %s TO %s[%s:%u] on node %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(&proc->name),
-                                proc->cpu_bitmap,
-                                hwloc_obj_type_string(proc->locale->type),
+                                cpu_bitmap, hwloc_obj_type_string(locale->type),
                                 idx, node->name);
+            if (NULL != cpu_bitmap) {
+                free(cpu_bitmap);
+            }
         }
     }
 
@@ -502,6 +513,7 @@ static int bind_to_cpuset(orte_job_t *jdata)
     struct hwloc_topology_support *support;
     opal_hwloc_topo_data_t *sum;
     hwloc_obj_t root;
+    char *cpu_bitmap;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind job %s to cpuset %s",
@@ -571,13 +583,11 @@ static int bind_to_cpuset(orte_job_t *jdata)
             if (proc->name.jobid != jdata->jobid) {
                 continue;
             }
-            /* ignore procs that have already been bound - should
-             * never happen, but safer
-             */
-            if (NULL != proc->cpu_bitmap) {
-                continue;
+            hwloc_bitmap_list_asprintf(&cpu_bitmap, sum->available);
+            orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
+            if (NULL != cpu_bitmap) {
+                free(cpu_bitmap);
             }
-            hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, sum->available);
         }
     }
     return ORTE_SUCCESS;

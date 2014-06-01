@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,6 +74,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t *node_list=NULL;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
+    char *hosts;
 
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
                          "%s rmaps:seq mapping job %s",
@@ -83,7 +85,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
      * when seq mapping is desired - allow
      * restarting of failed apps
      */
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:seq: job %s is being restarted - seq cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
@@ -141,19 +143,23 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         }
     
         /* dash-host trumps hostfile */
-        if (NULL != app->dash_host) {
+        if (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
             node_list = OBJ_NEW(opal_list_t);
-            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_dash_host_list(node_list, app->dash_host))) {
+            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_dash_host_list(node_list, hosts))) {
                 ORTE_ERROR_LOG(rc);
+                free(hosts);
                 goto error;
-            }            
+            }
+            free(hosts);
             nd = (orte_node_t*)opal_list_get_first(node_list);
-        } else if (NULL != app->hostfile) {
+        } else if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
             node_list = OBJ_NEW(opal_list_t);
-            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_host_list(node_list, app->hostfile))) {
+            if (ORTE_SUCCESS != (rc = orte_util_get_ordered_host_list(node_list, hosts))) {
                 ORTE_ERROR_LOG(rc);
+                free(hosts);
                 goto error;
-            }            
+            }
+            free(hosts);
             nd = (orte_node_t*)opal_list_get_first(node_list);
         } else if (NULL != default_node_list) {
             node_list = default_node_list;
@@ -218,10 +224,10 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 goto error;
             }
             /* ensure the node is in the map */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 OBJ_RETAIN(node);
                 opal_pointer_array_add(map->nodes, node);
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
             }
             proc = orte_rmaps_base_setup_proc(jdata, node, i);
             if ((node->slots < (int)node->num_procs) ||
@@ -235,17 +241,23 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
-                node->oversubscribed = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
             }
             /* assign the vpid */
             proc->name.vpid = vpid++;
 
 #if OPAL_HAVE_HWLOC
-            /* assign the locale - okay for the topo to be null as
-             * it just means it wasn't returned
-             */
-            if (NULL != node->topology) {
-                proc->locale = hwloc_get_root_obj(node->topology);
+            {
+                hwloc_obj_t locale;
+
+                /* assign the locale - okay for the topo to be null as
+                 * it just means it wasn't returned
+                 */
+                if (NULL != node->topology) {
+                    locale = hwloc_get_root_obj(node->topology);
+                    orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE,
+                                       ORTE_ATTR_LOCAL, locale, OPAL_PTR);
+                }
             }
 #endif
 

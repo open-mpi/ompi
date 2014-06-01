@@ -140,6 +140,7 @@ static int rte_init(void)
     orte_node_t *node;
     orte_proc_t *proc;
     orte_app_context_t *app;
+    char **aliases, *aptr;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -239,12 +240,6 @@ static int rte_init(void)
         fprintf(orte_xml_fp, "<mpirun>\n");
         fflush(orte_xml_fp);
     }
-
-    /* setup the global nidmap/pidmap object */
-    orte_nidmap.bytes = NULL;
-    orte_nidmap.size = 0;
-    orte_pidmap.bytes = NULL;
-    orte_pidmap.size = 0;
 
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
@@ -414,7 +409,6 @@ static int rte_init(void)
     proc->state = ORTE_PROC_STATE_RUNNING;
     OBJ_RETAIN(node);  /* keep accounting straight */
     proc->node = node;
-    proc->nodename = node->name;
     opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
 
     /* record that the daemon (i.e., us) is on this node 
@@ -425,14 +419,19 @@ static int rte_init(void)
      */
     OBJ_RETAIN(proc);   /* keep accounting straight */
     node->daemon = proc;
-    node->daemon_launched = true;
+    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
     node->state = ORTE_NODE_STATE_UP;
     
     /* if we are to retain aliases, get ours */
     if (orte_retain_aliases) {
-        opal_ifgetaliases(&node->alias);
+        aliases = NULL;
+        opal_ifgetaliases(&aliases);
         /* add our own local name to it */
-        opal_argv_append_nosize(&node->alias, orte_process_info.nodename);
+        opal_argv_append_nosize(&aliases, orte_process_info.nodename);
+        aptr = opal_argv_join(aliases, ',');
+        opal_argv_free(aliases);
+        orte_set_attribute(&node->attributes, ORTE_NODE_ALIAS, ORTE_ATTR_LOCAL, aptr, OPAL_STRING);
+        free(aptr);
     }
 
     /* record that the daemon job is running */
@@ -577,7 +576,8 @@ static int rte_init(void)
         /* see if I am on a coprocessor */
         coprocessors = opal_hwloc_base_check_on_coprocessor();
         if (NULL != coprocessors) {
-            node->serial_number = coprocessors;
+            orte_set_attribute(&node->attributes, ORTE_NODE_SERIAL_NUMBER, ORTE_ATTR_LOCAL, coprocessors, OPAL_STRING);
+            free(coprocessors);
             orte_coprocessors_detected = true;
         }
     }

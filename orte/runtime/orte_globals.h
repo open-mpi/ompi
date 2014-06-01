@@ -48,6 +48,7 @@
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/util/attr.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/error_strings.h"
@@ -206,21 +207,6 @@ ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
 typedef uint16_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL    OPAL_UINT16
 
-#define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x0002
-#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x0014
-#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x0008
-#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x0010
-#define ORTE_JOB_CONTROL_FORWARD_COMM       0x0020
-#define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x0040
-#define ORTE_JOB_CONTROL_RECOVERABLE        0x0080
-#define ORTE_JOB_CONTROL_SPIN_FOR_DEBUG     0x0100
-#define ORTE_JOB_CONTROL_RESTART            0x0200
-#define ORTE_JOB_CONTROL_PROCS_MIGRATING    0x0400
-#define ORTE_JOB_CONTROL_MAPPER             0x0800
-#define ORTE_JOB_CONTROL_REDUCER            0x1000
-#define ORTE_JOB_CONTROL_COMBINER           0x2000
-#define ORTE_JOB_CONTROL_NO_VM              0x4000
-#define ORTE_JOB_CONTROL_INDEX_ARGV         0x8000
 
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
@@ -258,44 +244,15 @@ typedef struct {
     char  **env;
     /** Current working directory for this app */
     char   *cwd;
-    /** Whether the cwd was set by the user or by the system */
-    bool user_specified_cwd;
-    /** Whether to set the current working directory to the proc session dir */
-    bool set_cwd_to_session_dir;
-    /* Any hostfile that was specified */
-    char *hostfile;
-    /* Hostfile for adding hosts to an existing allocation */
-    char *add_hostfile;
-    /* Hosts to be added to an existing allocation - analagous to -host */
-    char **add_host;
-    /** argv of hosts passed in to -host */
-    char ** dash_host;
-    /** list of resource constraints to be applied
-     * when selecting hosts for this app
+    /* flags */
+    orte_app_context_flags_t flags;
+    /* provide a list of attributes for this app_context in place
+     * of having a continually-expanding list of fixed-use values.
+     * This is a list of opal_value_t's, with the intent of providing
+     * flexibility without constantly expanding the memory footprint
+     * every time we want some new (rarely used) option
      */
-    opal_list_t resource_constraints;
-    /** Prefix directory for this app (or NULL if no override necessary) */
-    char *prefix_dir;
-    /** Preload the binary on the remote machine (in PLM via FileM) */
-    bool preload_binary;
-    /** Preload the comma separated list of files to the remote machines cwd */
-    char * preload_files;
-    /* is being used on the local node */
-    bool used_on_node;
-#if OPAL_ENABLE_FT_CR == 1
-    /** What files SStore should load before local launch, if any */
-    char *sstore_load;
-#endif
-    /* recovery policy has been defined */
-    bool recovery_defined;
-    /* max number of times a process can be restarted */
-    int32_t max_restarts;
-    /* maximum number of procs/node for this app */
-    orte_vpid_t max_procs_per_node;
-    /* flag if nodes requested in -host are "mandatory" vs "optional" */
-    bool mandatory;
-    /* min number of nodes required */
-    int64_t min_number_of_nodes;
+    opal_list_t attributes;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
@@ -308,36 +265,14 @@ typedef struct {
     orte_std_cntr_t index;
     /** String node name */
     char *name;
-    /* serial number - used if node is a coprocessor */
-    char *serial_number;
-    /* argv-like array of aliases for this node */
-    char **alias;
-    /* if this "node" is a coprocessor being hosted on a
-     * different node, then we need to know the id of our
-     * "host" to help any procs on us to determine locality
-     */
-    orte_vpid_t hostid;
     /* daemon on this node */
     struct orte_proc_t *daemon;
-    /* whether or not this daemon has been launched */
-    bool daemon_launched;
-    /* whether or not the location has been verified - used
-     * for environments where the daemon's final destination
-     * is uncertain
-     */
-    bool location_verified;
-    /** Launch id - needed by some systems to launch a proc on this node */
-    int32_t launch_id;
     /** number of procs on this node */
     orte_vpid_t num_procs;
     /* array of pointers to procs on this node */
     opal_pointer_array_t *procs;
     /* next node rank on this node */
     orte_node_rank_t next_node_rank;
-    /* whether or not we are oversubscribed */
-    bool oversubscribed;
-    /* whether we have been added to the current map */
-    bool mapped;
     /** State of this node */
     orte_node_state_t state;
     /** A "soft" limit on the number of slots available on the node.
@@ -345,10 +280,6 @@ typedef struct {
         that we have been allocated on this note and would be the
         "ideal" number of processes for us to launch. */
     orte_std_cntr_t slots;
-    /* a flag indicating that the number of slots was specified - used
-     * only in non-managed environments
-     */
-    bool slots_given;
     /** How many processes have already been launched, used by one or
         more jobs on this node. */
     orte_std_cntr_t slots_inuse;
@@ -363,14 +294,14 @@ typedef struct {
         specified limit.  For example, if we have two processors, we
         may want to allow up to four processes but no more. */
     orte_std_cntr_t slots_max;
-    /** Username on this node, if specified */
-    char *username;
 #if OPAL_HAVE_HWLOC
     /* system topology for this node */
     hwloc_topology_t topology;
 #endif
-    /* history of resource usage - sized by sensor framework */
-    opal_ring_buffer_t stats;
+    /* flags */
+    orte_node_flags_t flags;
+    /* list of orte_attribute_t */
+    opal_list_t attributes;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
@@ -381,31 +312,14 @@ typedef struct {
     orte_jobid_t jobid;
     /* offset to the total number of procs */
     orte_vpid_t offset;
-    /* flag indicating that the job has been updated
-     * and needs to be included in the pidmap message
-     */
-    bool updated;
     /* app_context array for this job */
     opal_pointer_array_t *apps;
     /* number of app_contexts in the array */
     orte_app_idx_t num_apps;
-    /* flags to control the launch of this job - see above
-     * for description of supported flags
-     */
-    orte_job_controls_t controls;
-    /* timer event for failure detect/response if fails to launch */
-    orte_timer_t *failure_timer;
-    /* flag to indicate that MPI is allowed on this job - i.e.,
-     * that all members of the job are being simultaneously
-     * launched
-     */
-    bool gang_launched;
     /* rank desiring stdin - for now, either one rank, all ranks
      * (wildcard), or none (invalid)
      */
     orte_vpid_t stdin_target;
-    /* job that is to receive the stdout (on its stdin) from this one */
-    orte_jobid_t stdout_target;
     /* collective ids */
     orte_grpcomm_coll_id_t peer_modex;
     orte_grpcomm_coll_id_t peer_init_barrier;
@@ -424,8 +338,6 @@ typedef struct {
     orte_node_t *bookmark;
     /* state of the overall job */
     orte_job_state_t state;
-    /* some procs in this job are being restarted */
-    bool restart;
     /* number of procs mapped */
     orte_vpid_t num_mapped;
     /* number of procs launched */
@@ -436,38 +348,14 @@ typedef struct {
     orte_vpid_t num_terminated;
     /* number of daemons reported launched so we can track progress */
     orte_vpid_t num_daemons_reported;
-    /* number of procs with non-zero exit codes */
-    int32_t num_non_zero_exit;
     /* originator of a dynamic spawn */
     orte_process_name_t originator;
-    /* did this job abort? */
-    bool abort;
-    /* proc that caused that to happen */
-    struct orte_proc_t *aborted_proc;
-    /* recovery policy has been defined */
-    bool recovery_defined;
-    /* enable recovery of these processes */
-    bool enable_recovery;
-    /* time launch message was sent */
-    struct timeval launch_msg_sent;
-    /* time launch message was recvd */
-    struct timeval launch_msg_recvd;
-    /* max time for launch msg to be received */
-    struct timeval max_launch_msg_recvd;
+    /* number of local procs */
     orte_vpid_t num_local_procs;
-    /* file maps associates with this job */
-    opal_buffer_t *file_maps;
-#if OPAL_ENABLE_FT_CR == 1
-    /* ckpt state */
-    size_t ckpt_state;
-    /* snapshot reference */
-    char *ckpt_snapshot_ref;
-    /* snapshot location */
-    char *ckpt_snapshot_loc;
-    /* collective ids */
-    orte_grpcomm_coll_id_t snapc_init_barrier;
-    orte_grpcomm_coll_id_t snapc_fini_barrier;
-#endif
+    /* flags */
+    orte_job_flags_t flags;
+    /* attributes */
+    opal_list_t attributes;
 } orte_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_t);
 
@@ -476,7 +364,9 @@ struct orte_proc_t {
     opal_list_item_t super;
     /* process name */
     orte_process_name_t name;
-    /* the vpid of my parent */
+    /* the vpid of my parent - the daemon vpid for an app
+     * or the vpid of the parent in the routing tree of
+     * a daemon */
     orte_vpid_t parent;
     /* pid */
     pid_t pid;
@@ -502,71 +392,18 @@ struct orte_proc_t {
     orte_proc_state_t last_errmgr_state;
     /* process state */
     orte_proc_state_t state;
-    /* shortcut for determinng proc has been launched
-     * and has not yet terminated
-     */
-    bool alive;
-    /* flag if it called abort */
-    bool aborted;
-    /* flag that the proc has been updated and need to be
-     * included in the next pidmap message
-     */
-    bool updated;
     /* exit code */
     orte_exit_code_t exit_code;
     /* the app_context that generated this proc */
     orte_app_idx_t app_idx;
-#if OPAL_HAVE_HWLOC
-    /* hwloc object to which this process was mapped */
-    hwloc_obj_t locale;
-    /* hwloc object to which this process is bound */
-    hwloc_obj_t bind_location;
-    /* string representation of cpu bindings */
-    char *cpu_bitmap;
-#endif
     /* pointer to the node where this proc is executing */
     orte_node_t *node;
-    /* indicate that this proc is local */
-    bool local_proc;
-    /* indicate that this proc should not barrier - used
-     * for restarting processes
-     */
-    bool do_not_barrier;
-    /* pointer to the node where this proc last executed */
-    orte_node_t *prior_node;
-    /* name of the node where this proc is executing - this
-     * is used simply to pass that info to a calling
-     * tool since it may not have a node array available
-     */
-    char *nodename;
     /* RML contact info */
     char *rml_uri;
-    /* number of times this process has been restarted */
-    int32_t restarts;
-    /* time of last restart */
-    struct timeval last_failure;
-    /* number of failures in "fast" window */
-    int32_t fast_failures;
-    /* flag to indicate proc has reported in */
-    bool reported;
-    /* if heartbeat recvd during last time period */
-    int beat;
-    /* history of resource usage - sized by sensor framework */
-    opal_ring_buffer_t stats;
-    /* track finalization */
-    bool registered;
-    bool mpi_proc;
-    bool deregistered;
-    bool iof_complete;
-    bool waitpid_recvd;
-#if OPAL_ENABLE_FT_CR == 1
-    /* ckpt state */
-    size_t ckpt_state;
-    /* snapshot reference */
-    char *ckpt_snapshot_ref;
-    /* snapshot location */
-    char *ckpt_snapshot_loc;
-#endif
+    /* some boolean flags */
+    orte_proc_flags_t flags;
+    /* list of opal_value_t attributes */
+    opal_list_t attributes;
 };
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
@@ -737,10 +574,6 @@ ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;
 
 /* maximum size of virtual machine - used to subdivide allocation */
 ORTE_DECLSPEC extern int orte_max_vm_size;
-
-/* global nidmap/pidmap for daemons to give to apps */
-ORTE_DECLSPEC extern opal_byte_object_t orte_nidmap;
-ORTE_DECLSPEC extern opal_byte_object_t orte_pidmap;
 
 /* user debugger */
 ORTE_DECLSPEC extern char *orte_base_user_debugger;

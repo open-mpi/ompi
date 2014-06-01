@@ -97,7 +97,7 @@ int orte_plm_base_create_jobid(orte_job_t *jdata)
     }
 #endif
 
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         /* this job is being restarted - do not assign it
          * a new jobid
          */

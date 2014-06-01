@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,6 +76,7 @@ int orte_dt_compare_tags(orte_rml_tag_t *value1,
                          opal_data_type_t type);
 int orte_dt_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, opal_data_type_t type);
 int orte_dt_compare_iof_tag(orte_iof_tag_t *value1, orte_iof_tag_t *value2, opal_data_type_t type);
+int orte_dt_compare_attr(orte_attribute_t *value1, orte_attribute_t *value2, opal_data_type_t type);
 
 /** Data type copy functions */
 int orte_dt_copy_std_cntr(orte_std_cntr_t **dest, orte_std_cntr_t *src, opal_data_type_t type);
@@ -95,6 +97,7 @@ int orte_dt_copy_tag(orte_rml_tag_t **dest,
                            opal_data_type_t type);
 int orte_dt_copy_daemon_cmd(orte_daemon_cmd_flag_t **dest, orte_daemon_cmd_flag_t *src, opal_data_type_t type);
 int orte_dt_copy_iof_tag(orte_iof_tag_t **dest, orte_iof_tag_t *src, opal_data_type_t type);
+int orte_dt_copy_attr(orte_attribute_t **dest, orte_attribute_t *src, opal_data_type_t type);
 
 /** Data type pack functions */
 int orte_dt_pack_std_cntr(opal_buffer_t *buffer, const void *src,
@@ -133,6 +136,8 @@ int orte_dt_pack_daemon_cmd(opal_buffer_t *buffer, const void *src,
                           int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_iof_tag(opal_buffer_t *buffer, const void *src, int32_t num_vals,
                          opal_data_type_t type);
+int orte_dt_pack_attr(opal_buffer_t *buffer, const void *src, int32_t num_vals,
+                      opal_data_type_t type);
 
 /** Data type print functions */
 int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t type);
@@ -142,6 +147,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type);
 int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *src, opal_data_type_t type);
 int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_data_type_t type);
+int orte_dt_print_attr(char **output, char *prefix, orte_attribute_t *src, opal_data_type_t type);
 
 /** Data type unpack functions */
 int orte_dt_unpack_std_cntr(opal_buffer_t *buffer, void *dest,
@@ -178,6 +184,8 @@ int orte_dt_unpack_daemon_cmd(opal_buffer_t *buffer, void *dest,
                             int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_iof_tag(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
                            opal_data_type_t type);
+int orte_dt_unpack_attr(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
+                        opal_data_type_t type);
 
 END_C_DECLS
 

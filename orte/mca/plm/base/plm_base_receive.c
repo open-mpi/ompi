@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -133,6 +134,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     int8_t flag;
     int i;
     char **env;
+    char *prefix_dir;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive processing msg",
@@ -176,9 +178,13 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
          */
         app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
         child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
-        if (NULL != app->prefix_dir &&
-            NULL == child_app->prefix_dir) {
-            child_app->prefix_dir = strdup(app->prefix_dir);
+        prefix_dir = NULL;
+        if (orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)prefix_dir, OPAL_STRING) &&
+            !orte_get_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, NULL, OPAL_STRING)) {
+            orte_set_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, ORTE_ATTR_GLOBAL, prefix_dir, OPAL_STRING);
+        }
+        if (NULL != prefix_dir) {
+            free(prefix_dir);
         }
 
         /* if the user asked to forward any envars, cycle through the app contexts
@@ -364,9 +370,9 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                 goto DEPART;
             }
             if (1 == flag) {
-                proc->mpi_proc = true;
+                ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_AS_MPI);
             } else {
-                proc->mpi_proc = false;
+                ORTE_FLAG_UNSET(proc, ORTE_PROC_FLAG_AS_MPI);
             }
             ORTE_ACTIVATE_PROC_STATE(&name, ORTE_PROC_STATE_REGISTERED);
             count=1;

@@ -575,6 +575,9 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_TIMEVAL\tKey: %s\tValue: %ld.%06ld", prefx,
                  src->key, (long)src->data.tv.tv_sec, (long)src->data.tv.tv_usec);
         break;
+    case OPAL_PTR:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_PTR\tKey: %s", prefx, src->key);
+        break;
     default:
         asprintf(output, "%sOPAL_VALUE: Data type: UNKNOWN\tKey: %s\tValue: UNPRINTABLE",
                  prefx, src->key);

@@ -81,6 +81,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             }
         } else {
             /* don't default to bound */
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: mapping by slot resetting binding policy to NONE as node is oversubscribed");
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         }
 #endif
@@ -119,12 +121,12 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
 
         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
             /* add this node to the map - do it only once */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 ++(jdata->map->num_nodes);
             }
@@ -133,7 +135,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             }
             nprocs_mapped++;
 #if OPAL_HAVE_HWLOC
-            proc->locale = obj;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
 #endif
         }
     }
@@ -177,12 +179,12 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         }
 #endif
         /* add this node to the map - do it only once */
-        if (!node->mapped) {
+        if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
             if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            node->mapped = true;
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
             OBJ_RETAIN(node);  /* maintain accounting on object */
             ++(jdata->map->num_nodes);
         }
@@ -204,7 +206,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             }
             nprocs_mapped++;
 #if OPAL_HAVE_HWLOC
-            proc->locale = obj;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
 #endif
         }
         /* not all nodes are equal, so only set oversubscribed for
@@ -214,7 +216,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
-            node->oversubscribed = true;
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
         }
     }
     return ORTE_SUCCESS;
@@ -270,6 +272,8 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             }
         } else {
             /* don't default to bound */
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: mapping by node resetting binding policy to NONE as node is oversubscribed");
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         }
 #endif
@@ -325,12 +329,12 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             }
 #endif
             /* add this node to the map, but only do so once */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                     ORTE_ERROR_LOG(idx);
                     return idx;
                 }
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 ++(jdata->map->num_nodes);
             }
@@ -393,7 +397,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 }
                 nprocs_mapped++;
 #if OPAL_HAVE_HWLOC
-                proc->locale = obj;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
 #endif
             }
             /* not all nodes are equal, so only set oversubscribed for
@@ -403,7 +407,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
-                node->oversubscribed = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -431,7 +435,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             }
             nprocs_mapped++;
 #if OPAL_HAVE_HWLOC
-            proc->locale = obj;
+            orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
 #endif
             /* not all nodes are equal, so only set oversubscribed for
              * this node if it is in that state
@@ -440,7 +444,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
-                node->oversubscribed = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -531,6 +535,8 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
             }
         } else {
             /* don't default to bound */
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: mapping no-span resetting binding policy to NONE as node is oversubscribed");
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         }
     }
@@ -579,12 +585,12 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 }
             }
             /* add this node to the map, if reqd */
-            if (!node->mapped) {
+            if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                     ORTE_ERROR_LOG(idx);
                     return idx;
                 }
-                node->mapped = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
                 OBJ_RETAIN(node);  /* maintain accounting on object */
                 ++(jdata->map->num_nodes);
             }
@@ -612,7 +618,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                     }
                     nprocs_mapped++;
                     nmapped++;
-                    proc->locale = obj;
+                    orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
                 }
             } while (nmapped < nprocs && nprocs_mapped < (int)app->num_procs);
             add_one = true;
@@ -623,7 +629,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 /* flag the node as oversubscribed so that sched-yield gets
                  * properly set
                  */
-                node->oversubscribed = true;
+                ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -687,6 +693,8 @@ static int byobj_span(orte_job_t *jdata,
             }
         } else {
             /* don't default to bound */
+            opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
+                                "mca:rmaps:rr: mapping span resetting binding policy to NONE as node is oversubscribed");
             OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NONE);
         }
     }
@@ -731,12 +739,12 @@ static int byobj_span(orte_job_t *jdata,
     nprocs_mapped = 0;
     OPAL_LIST_FOREACH(node, node_list, orte_node_t) {
         /* add this node to the map, if reqd */
-        if (!node->mapped) {
+        if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
             if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                 ORTE_ERROR_LOG(idx);
                 return idx;
             }
-            node->mapped = true;
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_MAPPED);
             OBJ_RETAIN(node);  /* maintain accounting on object */
             ++(jdata->map->num_nodes);
         }
@@ -769,7 +777,7 @@ static int byobj_span(orte_job_t *jdata,
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
                 nprocs_mapped++;
-                proc->locale = obj;
+                orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
             }
             /* keep track of the node we last used */
             jdata->bookmark = node;
@@ -781,7 +789,7 @@ static int byobj_span(orte_job_t *jdata,
             /* flag the node as oversubscribed so that sched-yield gets
              * properly set
              */
-            node->oversubscribed = true;
+            ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
         }
         if (nprocs_mapped == app->num_procs) {
             /* we are done */
