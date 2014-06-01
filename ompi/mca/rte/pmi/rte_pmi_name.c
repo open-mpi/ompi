@@ -12,10 +12,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "opal/dss/dss.h"
 #include "opal/threads/tsd.h"

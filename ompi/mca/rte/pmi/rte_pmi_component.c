@@ -14,10 +14,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
+#include "opal/runtime/opal_params.h"
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
@@ -70,30 +68,14 @@ ompi_rte_init(int *argc, char ***argv)
     char *node_info;
     hwloc_obj_t root;
     hwloc_cpuset_t boundset, rootset;
-    char *tmp_str;
+    char *tmp_str, *error;
 
-#if WANT_PMI2_SUPPORT
-    {
-        int spawned, appnum;
-
-        if (PMI2_Initialized ()) return OMPI_SUCCESS;
-        if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
-            return OMPI_ERROR;
-        }
+    // Initialize PMI
+    int rc = mca_common_pmi_init (opal_pmi_version);
+    
+    if ( OPAL_SUCCESS != rc ) {
+        return rc;
     }
-#else
-    {
-        PMI_BOOL initialized;
-
-        if (PMI_SUCCESS != PMI_Initialized(&initialized)) {
-            return OMPI_ERROR;
-        }
-
-        if (PMI_TRUE != initialized && PMI_SUCCESS != PMI_Init(&initialized)) {
-            return OMPI_ERROR;
-        }
-    }
-#endif
 
     /* be kind, set line buffering */
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -103,19 +85,27 @@ ompi_rte_init(int *argc, char ***argv)
         return ret;
     }
 
-    PMI_Get_appnum(&tmp);
+    // Setup job name
+    tmp = mca_common_pmi_appnum();
     ompi_rte_my_process_name.jobid = tmp;
-    PMI_Get_rank(&rank);
-    ompi_rte_my_process_name.vpid = rank;
-
     ompi_process_info.app_num = ompi_rte_my_process_name.jobid;
     ompi_process_info.pid = getpid();
-    PMI_Get_size(&size);
+
+    // Setup rank information
+    rank = mca_common_pmi_rank();
+    ompi_rte_my_process_name.vpid = rank;
+
+    // Setup process groups size
+    size = mca_common_pmi_size();
     ompi_process_info.num_procs = size;
-    PMI_Get_clique_size(&tmp);
-    node_ranks = malloc(tmp * sizeof(int));
-    if (NULL == node_ranks)  return OMPI_ERROR;
-    PMI_Get_clique_ranks(node_ranks, tmp);
+
+
+    rc = mca_common_pmi_local_info(rank, &node_ranks, &tmp, &error);
+    if( OPAL_SUCCESS != rc ){
+        // FIX ME: maybe we somehow should use error message to
+        // help user understand the reason of failure?
+        return rc;
+    }
     ompi_process_info.num_local_peers = tmp;
     for (i = 0 ; i < ompi_process_info.num_local_peers ; ++i) {
         if (rank == node_ranks[i]) {
@@ -164,8 +154,7 @@ ompi_rte_init(int *argc, char ***argv)
     if (OMPI_SUCCESS != ret) return ret;
 
     /* Fill in things the attributes want to know... */
-    ret = PMI_Get_universe_size(&tmp);
-    if (OMPI_SUCCESS != ret) return OMPI_ERROR;    
+    tmp = mca_common_pmi_universe();
     asprintf(&tmp_str, "%d", tmp);
     setenv("OMPI_UNIVERSE_SIZE", tmp_str, 1);
     free(tmp_str);
@@ -195,6 +184,7 @@ ompi_rte_finalize(void)
 {
     ompi_rte_pmi_db_fini();
     ompi_rte_pmi_name_fini();
+    mca_common_pmi_finalize();
     opal_finalize();
     return OMPI_SUCCESS;
 }

@@ -14,6 +14,7 @@
 #include "orte/constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/runtime/opal_params.h"
 #include "opal/mca/common/pmi/common_pmi.h"
 
 #include "orte/util/proc_info.h"
@@ -80,7 +81,7 @@ int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
      * selection will have been turned "off" for us
      */
     if (ORTE_PROC_IS_APP &&
-        mca_common_pmi_init()) {
+        OPAL_SUCCESS == mca_common_pmi_init(opal_pmi_version)) {
         /* if PMI is available, make it available for use by MPI procs */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_grpcomm_pmi_module;

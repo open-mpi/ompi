@@ -12,6 +12,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/runtime/opal_params.h"
 #include "opal/mca/common/pmi/common_pmi.h"
 
 #include "ompi/constants.h"
@@ -73,7 +74,9 @@ static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
     /* if we are indirectly launched via orted, the
      * selection will have been turned "off" for us
      */
-    if (mca_common_pmi_init ()) {
+    int rc = mca_common_pmi_init (opal_pmi_version);
+    
+    if ( OPAL_SUCCESS == rc ) {
         *priority = my_priority;
         *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
         return OMPI_SUCCESS;

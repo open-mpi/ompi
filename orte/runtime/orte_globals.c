@@ -102,6 +102,7 @@ char *orte_set_slots = NULL;
 bool orte_display_allocation;
 bool orte_display_devel_allocation;
 bool orte_soft_locations = false;
+int orted_pmi_version = 0;
 
 /* launch agents */
 char *orte_launch_agent = NULL;

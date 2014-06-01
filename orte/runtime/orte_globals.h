@@ -703,6 +703,9 @@ ORTE_DECLSPEC extern char *orte_rankfile;
 ORTE_DECLSPEC extern int orte_num_allocated_nodes;
 ORTE_DECLSPEC extern char *orte_node_regex;
 
+/* PMI version control */
+ORTE_DECLSPEC extern int orted_pmi_version;
+
 /* tool communication controls */
 ORTE_DECLSPEC extern bool orte_report_events;
 ORTE_DECLSPEC extern char *orte_report_events_uri;

@@ -13,10 +13,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "opal/util/error.h"
 #include "opal/util/output.h"
@@ -40,14 +37,14 @@ ompi_rte_abort(int error_code, char *fmt, ...)
 
     va_end(ap);
 
-    PMI_Abort(error_code, msg);
+    mca_common_pmi_abort(error_code, msg);
 }
 
 
 int
 ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs, int status)
 {
-    PMI_Abort(status, "");
+    mca_common_pmi_abort(status, "N/A");
     return OMPI_SUCCESS;
 }
 

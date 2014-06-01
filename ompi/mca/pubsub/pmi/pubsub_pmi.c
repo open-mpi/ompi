@@ -12,10 +12,6 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
 
 #include "opal/mca/common/pmi/common_pmi.h"
 
@@ -37,40 +33,21 @@ static int init(void)
  */
 static int publish ( const char *service_name, ompi_info_t *info, const char *port_name )
 {
-    int rc;
-
-#if WANT_PMI2_SUPPORT
-    if (PMI_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, NULL, port_name))) {
-        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_publish");
-        return OMPI_ERROR;
-    }
-#else
-    if (PMI_SUCCESS != (rc = PMI_Publish_name(service_name, port_name))) {
-        OPAL_PMI_ERROR(rc, "PMI_Publish_name");
-        return OMPI_ERROR;
-    }
-#endif
-    return OMPI_SUCCESS;
+    return mca_common_pmi_publish(service_name,port_name);
 }
 
 static char* lookup ( const char *service_name, ompi_info_t *info )
 {
     char *port=NULL;
-    int rc;
-
-#if WANT_PMI2_SUPPORT
-    port = (char*)malloc(1024*sizeof(char));  /* arbitrary size */
-    if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, NULL, port, 1024))) {
-        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
-        free(port);
-        return NULL;
+    int rc = mca_common_pmi_lookup(service_name, &port);
+    /* in error case port will be set to NULL
+     * this is what our callers expect to see
+     * In future maybe som error handling need?
+     */
+    if( rc != OPAL_SUCCESS ){
+        // improove error processing
+        return port; // NULL ?
     }
-#else
-    if (PMI_SUCCESS != (rc = PMI_Lookup_name(service_name, port))) {
-        OPAL_PMI_ERROR(rc, "PMI_Lookup_name");
-        return NULL;
-    }
-#endif
     return port;
 }
 
@@ -78,20 +55,7 @@ static char* lookup ( const char *service_name, ompi_info_t *info )
  * delete the entry */
 static int unpublish ( const char *service_name, ompi_info_t *info )
 {
-    int rc;
-
-#if WANT_PMI2_SUPPORT
-    if (PMI_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, NULL))) {
-        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
-        return OMPI_ERROR;
-    }
-#else
-    if (PMI_SUCCESS != (rc = PMI_Unpublish_name(service_name))) {
-        OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
-        return OMPI_ERROR;
-    }
-#endif
-    return OMPI_SUCCESS;;
+    return mca_common_pmi_unpublish( service_name );
 }
 
 

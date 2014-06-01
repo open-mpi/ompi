@@ -11,17 +11,13 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "opal/mca/base/base.h"
 
-#include "opal/mca/common/pmi/common_pmi.h"
-
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/dstore/base/base.h"
+#include "opal/runtime/opal_params.h"
 #include "dstore_pmi.h"
 
 static int dstore_pmi_component_register(void);
@@ -85,7 +81,8 @@ static bool component_avail(void)
      * will force our selection if we are direct-launched,
      * and the orted will turn us "off" if indirectly launched
      */
-    if (mca_common_pmi_init() && OPAL_SUCCESS == setup_pmi()) {
+    int rc = mca_common_pmi_init(opal_pmi_version);
+    if ( OPAL_SUCCESS == rc && OPAL_SUCCESS == setup_pmi()) {
         return true;
     }
     /* if not, then we are not available */
@@ -130,56 +127,23 @@ static int setup_pmi(void)
 {
     int max_length, rc;
 
-#if WANT_PMI2_SUPPORT
-    pmi_vallen_max = PMI2_MAX_VALLEN;
-    max_length = PMI2_MAX_VALLEN;
-#else
-    rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
-    if (PMI_SUCCESS != rc) {
-        OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
-                             "dstore:pmi:pmi_setup failed %s with error %s",
-                             "PMI_Get_value_length_max",
-                             opal_errmgr_base_pmi_error(rc)));
-        return OPAL_ERROR;
-    }
-
-    if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
-        OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
-                             "dstore:pmi:pmi_setup failed %s with error %s",
-                             "PMI_KVS_Get_name_length_max",
-                             opal_errmgr_base_pmi_error(rc)));
-        return OPAL_ERROR;
-    }
-#endif
+    pmi_vallen_max = mca_common_pmi_vallen();
+    max_length = mca_common_pmi_kvslen();
     pmi_kvs_name = (char*)malloc(max_length);
     if (NULL == pmi_kvs_name) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-#if WANT_PMI2_SUPPORT
-    rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
-#else
-    rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
-#endif
-    if (PMI_SUCCESS != rc) {
-        OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
-                             "dstore:pmi:pmi_setup failed %s with error %s on maxlength %d",
-                             "PMI_KVS_Get_my_name",
-                             opal_errmgr_base_pmi_error(rc), max_length));
-        return OPAL_ERROR;
-    }
-
-#if WANT_PMI2_SUPPORT
-    pmi_keylen_max = PMI2_MAX_KEYLEN;
-#else
-    if (PMI_SUCCESS != (rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max))) {
+    rc = mca_common_pmi_kvsname(pmi_kvs_name, max_length);
+    if( OPAL_SUCCESS != rc ){
         OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
                              "dstore:pmi:pmi_setup failed %s with error %s",
-                             "PMI_KVS_Get_key_length_max",
+                             "mca_common_pmi_jobname",
                              opal_errmgr_base_pmi_error(rc)));
-        return OPAL_ERROR;
+        return rc;
     }
-#endif
+
+    pmi_keylen_max = mca_common_pmi_keylen();
 
     return OPAL_SUCCESS;
 }

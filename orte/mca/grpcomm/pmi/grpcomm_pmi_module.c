@@ -18,13 +18,10 @@
 #include "orte/types.h"
 
 #include <string.h>
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
 
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/runtime/opal_params.h"
 #include "opal/mca/common/pmi/common_pmi.h"
 #include "opal/mca/dstore/dstore.h"
 
@@ -62,7 +59,7 @@ orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
  */
 static int init(void)
 {
-     return ORTE_SUCCESS;
+    return mca_common_pmi_init(opal_pmi_version);
 }
 
 /**
@@ -70,6 +67,7 @@ static int init(void)
  */
 static void finalize(void)
 {
+    mca_common_pmi_finalize();
     return;
 }
 
@@ -107,19 +105,9 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
         return ORTE_SUCCESS;
     }
     
-#if WANT_PMI2_SUPPORT
-    /* PMI2 doesn't provide a barrier, so use the Fence function here */
-    if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
-        OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
-        return ORTE_ERROR;
+    if( OPAL_SUCCESS != (rc = mca_common_pmi_barrier()) ){
+        return rc;
     }
-#else
-    /* use the PMI barrier function */
-    if (PMI_SUCCESS != (rc = PMI_Barrier())) {
-        OPAL_PMI_ERROR(rc, "PMI_Barrier");
-        return ORTE_ERROR;
-    }
-#endif
 
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi barrier complete",
@@ -152,58 +140,20 @@ static int modex(orte_grpcomm_collective_t *coll)
     int rc, i;
     opal_list_t myvals;
     opal_value_t *kv, kvn;
+    char *error;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* discover the local ranks */
-#if WANT_PMI2_SUPPORT
-    {
-        char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-        int found;
-        int my_node;
-
-        rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-        if (!found || PMI_SUCCESS != rc) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-            opal_output(0, "%s could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            return ORTE_ERROR;
-        }
-
-        local_ranks = orte_grpcomm_pmi2_parse_pmap(pmapping, ORTE_PROC_MY_NAME->vpid, &my_node, &local_rank_count);
-        if (NULL == local_ranks) {
-            opal_output(0, "%s could not get PMI_process_mapping",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            return ORTE_ERROR;
-        }
-
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                             "%s: pmapping: %s my_node=%d lr_count=%d\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), pmapping, my_node, local_rank_count));
-       
-        free(pmapping);
+    rc = mca_common_pmi_local_info(ORTE_PROC_MY_NAME->vpid, &local_ranks,
+                                  &local_rank_count, &error);
+    if( OPAL_SUCCESS != rc){
+        opal_output(0, "%s could not get PMI_process_mapping: %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), error);
+        return ORTE_ERROR;
     }
-#else
-    rc = PMI_Get_clique_size (&local_rank_count);
-    if (PMI_SUCCESS != rc) {
-	ORTE_ERROR_LOG(ORTE_ERROR);
-	return ORTE_ERROR;
-    }
-
-    local_ranks = calloc (local_rank_count, sizeof (int));
-    if (NULL == local_ranks) {
-	ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    rc = PMI_Get_clique_ranks (local_ranks, local_rank_count);
-    if (PMI_SUCCESS != rc) {
-	ORTE_ERROR_LOG(ORTE_ERROR);
-	return ORTE_ERROR;
-    }
-#endif
-
 
     /* our RTE data was constructed and pushed in the ESS pmi component */
 
