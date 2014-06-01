@@ -7,6 +7,8 @@ import java.nio.*;
  */
 public final class ShMem
 {
+private static final ByteOrder nativeOrder = ByteOrder.nativeOrder();
+
 public static final int CMP_EQ, CMP_GE, CMP_GT, CMP_LE, CMP_LT, CMP_NE;
 
 public static final int BARRIER_SYNC_SIZE,
@@ -119,7 +121,7 @@ public static native void quiet();
 public static ByteBuffer newByteBuffer(int capacity)
 {
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf;
 }
 
@@ -132,7 +134,7 @@ public static ShortBuffer newShortBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 2;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 2);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asShortBuffer();
 }
 
@@ -145,7 +147,7 @@ public static IntBuffer newIntBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 4;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 4);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asIntBuffer();
 }
 
@@ -158,7 +160,7 @@ public static LongBuffer newLongBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 8;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 8);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asLongBuffer();
 }
 
@@ -171,7 +173,7 @@ public static FloatBuffer newFloatBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 4;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 4);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asFloatBuffer();
 }
 
@@ -184,7 +186,7 @@ public static DoubleBuffer newDoubleBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 8;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 8);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asDoubleBuffer();
 }
 
@@ -197,9 +199,22 @@ public static DoubleBuffer newDoubleBuffer(int capacity)
  */
 public static ByteBuffer slice(ByteBuffer buf, int offset)
 {
-    buf.position(offset);
-    ByteOrder order = buf.order();
-    return buf.slice().order(order);
+    return ((ByteBuffer)buf.clear().position(offset))
+            .slice().order(nativeOrder);
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static ByteBuffer slice(ByteBuffer buf, int offset, int length)
+{
+    return ((ByteBuffer)buf.limit(offset + length)
+            .position(offset)).slice().order(nativeOrder);
 }
 
 /**
@@ -211,8 +226,20 @@ public static ByteBuffer slice(ByteBuffer buf, int offset)
  */
 public static ShortBuffer slice(ShortBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((ShortBuffer)buf.clear().position(offset)).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static ShortBuffer slice(ShortBuffer buf, int offset, int length)
+{
+    return ((ShortBuffer)buf.limit(offset + length).position(offset)).slice();
 }
 
 /**
@@ -224,8 +251,20 @@ public static ShortBuffer slice(ShortBuffer buf, int offset)
  */
 public static IntBuffer slice(IntBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((IntBuffer)buf.clear().position(offset)).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static IntBuffer slice(IntBuffer buf, int offset, int length)
+{
+    return ((IntBuffer)buf.limit(offset + length).position(offset)).slice();
 }
 
 /**
@@ -237,8 +276,20 @@ public static IntBuffer slice(IntBuffer buf, int offset)
  */
 public static LongBuffer slice(LongBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((LongBuffer)buf.clear().position(offset)).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static LongBuffer slice(LongBuffer buf, int offset, int length)
+{
+    return ((LongBuffer)buf.limit(offset + length).position(offset)).slice();
 }
 
 /**
@@ -250,8 +301,20 @@ public static LongBuffer slice(LongBuffer buf, int offset)
  */
 public static FloatBuffer slice(FloatBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((FloatBuffer)buf.clear().position(offset)).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static FloatBuffer slice(FloatBuffer buf, int offset, int length)
+{
+    return ((FloatBuffer)buf.limit(offset + length).position(offset)).slice();
 }
 
 /**
@@ -263,8 +326,20 @@ public static FloatBuffer slice(FloatBuffer buf, int offset)
  */
 public static DoubleBuffer slice(DoubleBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((DoubleBuffer)buf.clear().position(offset)).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static DoubleBuffer slice(DoubleBuffer buf, int offset, int length)
+{
+    return ((DoubleBuffer)buf.limit(offset + length).position(offset)).slice();
 }
 
 /**
@@ -277,7 +352,20 @@ public static DoubleBuffer slice(DoubleBuffer buf, int offset)
 public static ByteBuffer slice(byte[] buf, int offset)
 {
     return ByteBuffer.wrap(buf, offset, buf.length - offset)
-                     .slice().order(ByteOrder.nativeOrder());
+                     .slice().order(nativeOrder);
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static ByteBuffer slice(byte[] buf, int offset, int length)
+{
+    return ByteBuffer.wrap(buf, offset, length).slice().order(nativeOrder);
 }
 
 /**
@@ -297,11 +385,37 @@ public static ShortBuffer slice(short[] buf, int offset)
  * <p>The content of the new buffer will start at the specified offset.
  * @param buf    buffer
  * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static ShortBuffer slice(short[] buf, int offset, int length)
+{
+    return ShortBuffer.wrap(buf, offset, length).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
  * @return the new buffer.
  */
 public static IntBuffer slice(int[] buf, int offset)
 {
     return IntBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static IntBuffer slice(int[] buf, int offset, int length)
+{
+    return IntBuffer.wrap(buf, offset, length).slice();
 }
 
 /**
@@ -321,6 +435,19 @@ public static LongBuffer slice(long[] buf, int offset)
  * <p>The content of the new buffer will start at the specified offset.
  * @param buf    buffer
  * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static LongBuffer slice(long[] buf, int offset, int length)
+{
+    return LongBuffer.wrap(buf, offset, length).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
  * @return the new buffer.
  */
 public static FloatBuffer slice(float[] buf, int offset)
@@ -333,11 +460,37 @@ public static FloatBuffer slice(float[] buf, int offset)
  * <p>The content of the new buffer will start at the specified offset.
  * @param buf    buffer
  * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static FloatBuffer slice(float[] buf, int offset, int length)
+{
+    return FloatBuffer.wrap(buf, offset, length).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
  * @return the new buffer.
  */
 public static DoubleBuffer slice(double[] buf, int offset)
 {
     return DoubleBuffer.wrap(buf, offset, buf.length - offset).slice();
+}
+
+/**
+ * Creates a new buffer whose content is a shared subsequence of a buffer.
+ * <p>The content of the new buffer will start at the specified offset.
+ * @param buf    buffer
+ * @param offset offset
+ * @param length length
+ * @return the new buffer.
+ */
+public static DoubleBuffer slice(double[] buf, int offset, int length)
+{
+    return DoubleBuffer.wrap(buf, offset, length).slice();
 }
 
 } // ShMem

@@ -24,6 +24,7 @@ lib_LTLIBRARIES = liboshmem_java.la
 liboshmem_java_la_SOURCES = \
         shmem_Addr.c \
 	shmem_Constant.c \
+	shmem_PSync.c \
         shmem_ShMem.c
 
 liboshmem_java_la_LIBADD = $(OSHMEM_TOP_BUILDDIR)/oshmem/liboshmem.la

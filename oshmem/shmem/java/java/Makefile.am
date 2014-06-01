@@ -13,6 +13,7 @@
 JAVA_SRC_FILES = \
         Addr.java \
         Constant.java \
+	PSync.java \
         ShMem.java \
         ShMemException.java
 
@@ -28,6 +29,7 @@ if OMPI_WANT_JAVA_BINDINGS
 JAVA_H = \
         shmem_Addr.h \
 	shmem_Constant.h \
+	shmem_PSync.h \
         shmem_ShMem.h
 
 # A little verbosity magic; "make" will show the terse output.  "make
