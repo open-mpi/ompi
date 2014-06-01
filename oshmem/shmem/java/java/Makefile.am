@@ -126,8 +126,8 @@ doc: shmem/ShMem.class
 	@touch doc
 
 jdoc-install: doc
-	-$(MKDIR_P) $(DESTDIR)$(docdir)/../oshmem/javadoc
-	cp -rp doc/* $(DESTDIR)$(docdir)/../oshmem/javadoc
+	-$(MKDIR_P) $(DESTDIR)$(docdir)/javadoc-oshmem
+	cp -rp doc/* $(DESTDIR)$(docdir)/javadoc-oshmem
 
 jdoc-uninstall:
 	-rm -rf $(DESTDIR)$(docdir)/../oshmem/javadoc
