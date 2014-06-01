@@ -50,6 +50,7 @@ mca_mtl_mxm_module_t ompi_mtl_mxm = {
 };
 
 
+#if MXM_API < MXM_VERSION(2,0)
 static uint32_t ompi_mtl_mxm_get_job_id(void)
 {
     uint8_t  unique_job_key[16];
@@ -81,6 +82,7 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
 
     return job_key;
 }
+#endif
 
 int ompi_mtl_mxm_progress(void);
 #if MXM_API >= MXM_VERSION(2,0)
@@ -281,12 +283,15 @@ int ompi_mtl_mxm_module_init(void)
 
     mxlr = 0;
     lr = -1;
+    jobid = 0;
 
+#if MXM_API < MXM_VERSION(2,0)
     jobid = ompi_mtl_mxm_get_job_id();
     if (0 == jobid) {
     	MXM_ERROR("Failed to generate jobid");
     	return OMPI_ERROR;
     }
+#endif
 
     if (NULL == (procs = ompi_proc_world(&totps))) {
         MXM_ERROR("Unable to obtain process list");
