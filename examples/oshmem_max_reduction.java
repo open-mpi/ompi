@@ -12,17 +12,13 @@ public class oshmem_max_reduction
         int numPEs = ShMem.getNumPEs(),
             myPE   = ShMem.getMyPE();
 
-        Addr src   = new Addr(8 * N), // long is 8 bytes.
-             dst   = new Addr(8 * N),
-             pWrk  = new Addr(8 * ShMem.REDUCE_SYNC_SIZE),
-             pSync = new Addr(8 * ShMem.BCAST_SYNC_SIZE);
+        Addr  src   = new Addr(8 * N), // long is 8 bytes.
+              dst   = new Addr(8 * N),
+              pWrk  = new Addr(8 * ShMem.REDUCE_SYNC_SIZE);
+        PSync pSync = new PSync(ShMem.BCAST_SYNC_SIZE);
 
-        LongBuffer srcBuf   = src.asLongBuffer(),
-                   dstBuf   = dst.asLongBuffer(),
-                   pSyncBuf = pSync.asLongBuffer();
-
-        for(int i = 0; i < ShMem.BCAST_SYNC_SIZE; i++)
-            pSyncBuf.put(i, ShMem.SYNC_VALUE);
+        LongBuffer srcBuf = src.asLongBuffer(),
+                   dstBuf = dst.asLongBuffer();
 
         for(int i = 0; i < N; i++)
             srcBuf.put(i, myPE + i);

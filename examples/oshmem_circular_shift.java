@@ -16,7 +16,7 @@ public class oshmem_circular_shift
         System.out.println("Process "+ myPE +" gets message from "+
                            peer +" ("+ numPEs +" processes in ring)");
 
-        bbb.getInt(aaa, 1, peer);
+        bbb.getInt(aaa, peer);
         ShMem.barrierAll();
         bbb.free();
         System.out.println("Process "+ myPE +" exiting");
