@@ -169,7 +169,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
         opal_argv_append (&env_count, &app->env, "PMI_NO_PREINITIALIZE=1");
     }
 
-    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
         /* this is a restart situation - skip to the mapping stage */
         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
     } else {
@@ -206,7 +206,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
      */
-    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & state->jdata->controls) {
+    if (ORTE_FLAG_TEST(state->jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
         ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
         OBJ_RELEASE(state);
@@ -304,7 +304,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         /* if the daemon already exists on this node, then
          * don't include it
          */
-        if (node->daemon_launched) {
+        if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             continue;
         }
         
@@ -378,7 +378,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(state->jdata->apps, i))) {
             continue;
         }
-        app_prefix_dir = app->prefix_dir;
+        orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&app_prefix_dir, OPAL_STRING);
         /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {
@@ -398,6 +398,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
                                  cur_prefix);
                 }
             }
+            free(app_prefix_dir);
         }
     }
 
