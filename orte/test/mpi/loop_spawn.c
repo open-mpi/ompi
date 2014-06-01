@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 
     MPI_Init( &argc, &argv);
 
-    for (iter = 0; iter < 1000; ++iter) {
+    for (iter = 0; iter < 100; ++iter) {
         MPI_Comm_spawn(EXE_TEST, NULL, 1, MPI_INFO_NULL,
                        0, MPI_COMM_WORLD, &comm, &err);
         printf("parent: MPI_Comm_spawn #%d return : %d\n", iter, err);
@@ -33,6 +33,7 @@ int main(int argc, char **argv)
         printf("parent: MPI_Comm_spawn #%d rank %d, size %d\n", 
                iter, rank, size);
         MPI_Comm_free(&merged);
+        MPI_Comm_disconnect(&comm);
     }
 
     MPI_Finalize();

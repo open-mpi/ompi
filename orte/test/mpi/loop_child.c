@@ -23,6 +23,7 @@ int main( int argc, char **argv )
     printf("Child merged rank = %d, size = %d\n", rank, size);
    
     MPI_Comm_free(&merged);
+    MPI_Comm_disconnect(&parent);
     MPI_Finalize();
     printf("Child %d: exiting\n", (int)getpid());
     return 0;
