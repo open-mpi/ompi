@@ -7,8 +7,8 @@ import java.nio.*;
  */
 public final class Addr
 {
-protected long handle;     // Address of the block memory.
-protected int  offset;     // Current offset of the data object.
+private long handle;     // Address of the block memory.
+private int  offset;     // Current offset of the data object.
 private ByteBuffer buffer; // Direct buffer of the block memory.
 
 static
@@ -65,7 +65,7 @@ private native ByteBuffer realloc(long addr, int size);
 
 /**
  * Creates a new object that shares this object's content.
- * @param offset Offset of the new data object.
+ * @param offset Offset of the new data object, in bytes.
  * @return New data object.
  */
 public Addr slice(int offset)
@@ -134,6 +134,15 @@ public DoubleBuffer asDoubleBuffer()
 {
     buffer.position(offset);
     return buffer.asDoubleBuffer();
+}
+
+/**
+ * Writes a {@code byte} value to symmetric data object.
+ * @param value Value to be written.
+ */
+public void putByte(byte value)
+{
+    buffer.put(offset, value);
 }
 
 /**
@@ -363,22 +372,19 @@ private native void putDouble(long addr, double value, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source capacity.
  * <p>Java binding of {@code shmem_char_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putByte(Buffer source, int len, int pe)
+public void putByte(ByteBuffer source, int pe)
 {
+    int len = source.capacity();
+
     if(source.isDirect())
-    {
         putByteBuffer(addr(), source, len, pe);
-    }
     else
-    {
-        putByteArray(addr(), (byte[])source.array(),
-                     source.arrayOffset(), len, pe);
-    }
+        putByteArray(addr(), source.array(), source.arrayOffset(), len, pe);
 }
 
 private native void putByteBuffer(long addr, Buffer src, int len, int pe);
@@ -386,14 +392,14 @@ private native void putByteBuffer(long addr, Buffer src, int len, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source length.
  * <p>Java binding of {@code shmem_char_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putByte(byte[] source, int len, int pe)
+public void putByte(byte[] source, int pe)
 {
-    putByteArray(addr(), source, 0, len, pe);
+    putByteArray(addr(), source, 0, source.length, pe);
 }
 
 private native void putByteArray(
@@ -402,22 +408,19 @@ private native void putByteArray(
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source capacity.
  * <p>Java binding of {@code shmem_short_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putShort(Buffer source, int len, int pe)
+public void putShort(ShortBuffer source, int pe)
 {
+    int len = source.capacity();
+
     if(source.isDirect())
-    {
         putShortBuffer(addr(), source, len, pe);
-    }
     else
-    {
-        putShortArray(addr(), (short[])source.array(),
-                      source.arrayOffset(), len, pe);
-    }
+        putShortArray(addr(), source.array(), source.arrayOffset(), len, pe);
 }
 
 private native void putShortBuffer(long addr, Buffer src, int len, int pe);
@@ -425,14 +428,14 @@ private native void putShortBuffer(long addr, Buffer src, int len, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source length.
  * <p>Java binding of {@code shmem_short_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putShort(short[] source, int len, int pe)
+public void putShort(short[] source, int pe)
 {
-    putShortArray(addr(), source, 0, len, pe);
+    putShortArray(addr(), source, 0, source.length, pe);
 }
 
 private native void putShortArray(
@@ -441,22 +444,19 @@ private native void putShortArray(
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source capacity.
  * <p>Java binding of {@code shmem_int_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putInt(Buffer source, int len, int pe)
+public void putInt(IntBuffer source, int pe)
 {
+    int len = source.capacity();
+
     if(source.isDirect())
-    {
         putIntBuffer(addr(), source, len, pe);
-    }
     else
-    {
-        putIntArray(addr(), (int[])source.array(),
-                    source.arrayOffset(), len, pe);
-    }
+        putIntArray(addr(), source.array(), source.arrayOffset(), len, pe);
 }
 
 private native void putIntBuffer(long addr, Buffer src, int len, int pe);
@@ -464,14 +464,14 @@ private native void putIntBuffer(long addr, Buffer src, int len, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source length.
  * <p>Java binding of {@code shmem_int_put}.
- * @param source Array to be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putInt(int[] source, int len, int pe)
+public void putInt(int[] source, int pe)
 {
-    putIntArray(addr(), source, 0, len, pe);
+    putIntArray(addr(), source, 0, source.length, pe);
 }
 
 private native void putIntArray(long addr, int[] src, int off, int len, int pe);
@@ -479,22 +479,19 @@ private native void putIntArray(long addr, int[] src, int off, int len, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source capacity.
  * <p>Java binding of {@code shmem_long_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putLong(Buffer source, int len, int pe)
+public void putLong(LongBuffer source, int pe)
 {
+    int len = source.capacity();
+
     if(source.isDirect())
-    {
         putLongBuffer(addr(), source, len, pe);
-    }
     else
-    {
-        putLongArray(addr(), (long[])source.array(),
-                     source.arrayOffset(), len, pe);
-    }
+        putLongArray(addr(), source.array(), source.arrayOffset(), len, pe);
 }
 
 private native void putLongBuffer(long addr, Buffer src, int len, int pe);
@@ -502,14 +499,14 @@ private native void putLongBuffer(long addr, Buffer src, int len, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source length.
  * <p>Java binding of {@code shmem_long_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putLong(long[] source, int len, int pe)
+public void putLong(long[] source, int pe)
 {
-    putLongArray(addr(), source, 0, len, pe);
+    putLongArray(addr(), source, 0, source.length, pe);
 }
 
 private native void putLongArray(
@@ -518,22 +515,19 @@ private native void putLongArray(
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source capacity.
  * <p>Java binding of {@code shmem_float_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putFloat(Buffer source, int len, int pe)
+public void putFloat(FloatBuffer source, int pe)
 {
+    int len = source.capacity();
+
     if(source.isDirect())
-    {
         putFloatBuffer(addr(), source, len, pe);
-    }
     else
-    {
-        putFloatArray(addr(), (float[])source.array(),
-                      source.arrayOffset(), len, pe);
-    }
+        putFloatArray(addr(), source.array(), source.arrayOffset(), len, pe);
 }
 
 private native void putFloatBuffer(long addr, Buffer src, int len, int pe);
@@ -541,14 +535,14 @@ private native void putFloatBuffer(long addr, Buffer src, int len, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source length.
  * <p>Java binding of {@code shmem_float_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putFloat(float[] source, int len, int pe)
+public void putFloat(float[] source, int pe)
 {
-    putFloatArray(addr(), source, 0, len, pe);
+    putFloatArray(addr(), source, 0, source.length, pe);
 }
 
 private native void putFloatArray(
@@ -557,22 +551,19 @@ private native void putFloatArray(
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source capacity.
  * <p>Java binding of {@code shmem_double_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putDouble(Buffer source, int len, int pe)
+public void putDouble(DoubleBuffer source, int pe)
 {
+    int len = source.capacity();
+
     if(source.isDirect())
-    {
         putDoubleBuffer(addr(), source, len, pe);
-    }
     else
-    {
-        putDoubleArray(addr(), (double[])source.array(),
-                       source.arrayOffset(), len, pe);
-    }
+        putDoubleArray(addr(), source.array(), source.arrayOffset(), len, pe);
 }
 
 private native void putDoubleBuffer(long addr, Buffer src, int len, int pe);
@@ -580,14 +571,14 @@ private native void putDoubleBuffer(long addr, Buffer src, int len, int pe);
 /**
  * Copies contiguous data from a local object to an object
  * on the destination PE.
+ * <p>The number of elements to be transferred is the source length.
  * <p>Java binding of {@code shmem_double_put}.
- * @param source Buffer be transferred to the target data object.
- * @param len    Number of elements in the target and source objects.
+ * @param source Buffer to be transferred to the target data object.
  * @param pe     Target PE.
  */
-public void putDouble(double[] source, int len, int pe)
+public void putDouble(double[] source, int pe)
 {
-    putDoubleArray(addr(), source, 0, len, pe);
+    putDoubleArray(addr(), source, 0, source.length, pe);
 }
 
 private native void putDoubleArray(
@@ -647,7 +638,7 @@ private native void iPutShortArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iPutInt(Buffer source, int tst, int sst, int len, int pe)
+public void iPutInt(IntBuffer source, int tst, int sst, int len, int pe)
 {
     if(source.isDirect())
     {
@@ -655,7 +646,7 @@ public void iPutInt(Buffer source, int tst, int sst, int len, int pe)
     }
     else
     {
-        iPutIntArray(addr(), (int[])source.array(),
+        iPutIntArray(addr(), source.array(),
                      source.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -691,7 +682,7 @@ private native void iPutIntArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iPutLong(Buffer source, int tst, int sst, int len, int pe)
+public void iPutLong(LongBuffer source, int tst, int sst, int len, int pe)
 {
     if(source.isDirect())
     {
@@ -699,7 +690,7 @@ public void iPutLong(Buffer source, int tst, int sst, int len, int pe)
     }
     else
     {
-        iPutLongArray(addr(), (long[])source.array(),
+        iPutLongArray(addr(), source.array(),
                       source.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -735,7 +726,7 @@ private native void iPutLongArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iPutFloat(Buffer source, int tst, int sst, int len, int pe)
+public void iPutFloat(FloatBuffer source, int tst, int sst, int len, int pe)
 {
     if(source.isDirect())
     {
@@ -743,7 +734,7 @@ public void iPutFloat(Buffer source, int tst, int sst, int len, int pe)
     }
     else
     {
-        iPutFloatArray(addr(), (float[])source.array(),
+        iPutFloatArray(addr(), source.array(),
                        source.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -779,7 +770,7 @@ private native void iPutFloatArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iPutDouble(Buffer source, int tst, int sst, int len, int pe)
+public void iPutDouble(DoubleBuffer source, int tst, int sst, int len, int pe)
 {
     if(source.isDirect())
     {
@@ -787,7 +778,7 @@ public void iPutDouble(Buffer source, int tst, int sst, int len, int pe)
     }
     else
     {
-        iPutDoubleArray(addr(), (double[])source.array(),
+        iPutDoubleArray(addr(), source.array(),
                         source.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -893,36 +884,33 @@ private native double getDouble(long addr, int pe);
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target capacity.
  * <p>Java binding of {@code shmem_char_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getByte(Buffer target, int len, int pe)
+public void getByte(ByteBuffer target, int pe)
 {
+    int len = target.capacity();
+
     if(target.isDirect())
-    {
         getByteBuffer(addr(), target, len, pe);
-    }
     else
-    {
-        getByteArray(addr(), (byte[])target.array(),
-                     target.arrayOffset(), len, pe);
-    }
+        getByteArray(addr(), target.array(), target.arrayOffset(), len, pe);
 }
 
 private native void getByteBuffer(long addr, Buffer target, int len, int pe);
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target length.
  * <p>Java binding of {@code shmem_char_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getByte(byte[] target, int len, int pe)
+public void getByte(byte[] target, int pe)
 {
-    getByteArray(addr(), target, 0, len, pe);
+    getByteArray(addr(), target, 0, target.length, pe);
 }
 
 private native void getByteArray(
@@ -930,36 +918,33 @@ private native void getByteArray(
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target capacity.
  * <p>Java binding of {@code shmem_short_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getShort(Buffer target, int len, int pe)
+public void getShort(ShortBuffer target, int pe)
 {
+    int len = target.capacity();
+
     if(target.isDirect())
-    {
         getShortBuffer(addr(), target, len, pe);
-    }
     else
-    {
-        getShortArray(addr(), (short[])target.array(),
-                     target.arrayOffset(), len, pe);
-    }
+        getShortArray(addr(), target.array(), target.arrayOffset(), len, pe);
 }
 
 private native void getShortBuffer(long addr, Buffer target, int len, int pe);
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target length.
  * <p>Java binding of {@code shmem_short_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getShort(short[] target, int len, int pe)
+public void getShort(short[] target, int pe)
 {
-    getShortArray(addr(), target, 0, len, pe);
+    getShortArray(addr(), target, 0, target.length, pe);
 }
 
 private native void getShortArray(
@@ -967,36 +952,33 @@ private native void getShortArray(
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target capacity.
  * <p>Java binding of {@code shmem_int_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getInt(Buffer target, int len, int pe)
+public void getInt(IntBuffer target, int pe)
 {
+    int len = target.capacity();
+
     if(target.isDirect())
-    {
         getIntBuffer(addr(), target, len, pe);
-    }
     else
-    {
-        getIntArray(addr(), (int[])target.array(),
-                    target.arrayOffset(), len, pe);
-    }
+        getIntArray(addr(), target.array(), target.arrayOffset(), len, pe);
 }
 
 private native void getIntBuffer(long addr, Buffer target, int len, int pe);
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target length.
  * <p>Java binding of {@code shmem_int_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getInt(int[] target, int len, int pe)
+public void getInt(int[] target, int pe)
 {
-    getIntArray(addr(), target, 0, len, pe);
+    getIntArray(addr(), target, 0, target.length, pe);
 }
 
 private native void getIntArray(
@@ -1004,36 +986,33 @@ private native void getIntArray(
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target capacity.
  * <p>Java binding of {@code shmem_long_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getLong(Buffer target, int len, int pe)
+public void getLong(LongBuffer target, int pe)
 {
+    int len = target.capacity();
+
     if(target.isDirect())
-    {
         getLongBuffer(addr(), target, len, pe);
-    }
     else
-    {
-        getLongArray(addr(), (long[])target.array(),
-                     target.arrayOffset(), len, pe);
-    }
+        getLongArray(addr(), target.array(), target.arrayOffset(), len, pe);
 }
 
 private native void getLongBuffer(long addr, Buffer target, int len, int pe);
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target length.
  * <p>Java binding of {@code shmem_long_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getLong(long[] target, int len, int pe)
+public void getLong(long[] target, int pe)
 {
-    getLongArray(addr(), target, 0, len, pe);
+    getLongArray(addr(), target, 0, target.length, pe);
 }
 
 private native void getLongArray(
@@ -1041,36 +1020,33 @@ private native void getLongArray(
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target capacity.
  * <p>Java binding of {@code shmem_float_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getFloat(Buffer target, int len, int pe)
+public void getFloat(FloatBuffer target, int pe)
 {
+    int len = target.capacity();
+
     if(target.isDirect())
-    {
         getFloatBuffer(addr(), target, len, pe);
-    }
     else
-    {
-        getFloatArray(addr(), (float[])target.array(),
-                      target.arrayOffset(), len, pe);
-    }
+        getFloatArray(addr(), target.array(), target.arrayOffset(), len, pe);
 }
 
 private native void getFloatBuffer(long addr, Buffer target, int len, int pe);
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target length.
  * <p>Java binding of {@code shmem_float_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getFloat(float[] target, int len, int pe)
+public void getFloat(float[] target, int pe)
 {
-    getFloatArray(addr(), target, 0, len, pe);
+    getFloatArray(addr(), target, 0, target.length, pe);
 }
 
 private native void getFloatArray(
@@ -1078,36 +1054,33 @@ private native void getFloatArray(
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target capacity.
  * <p>Java binding of {@code shmem_double_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getDouble(Buffer target, int len, int pe)
+public void getDouble(DoubleBuffer target, int pe)
 {
+    int len = target.capacity();
+
     if(target.isDirect())
-    {
         getDoubleBuffer(addr(), target, len, pe);
-    }
     else
-    {
-        getDoubleArray(addr(), (double[])target.array(),
-                       target.arrayOffset(), len, pe);
-    }
+        getDoubleArray(addr(), target.array(), target.arrayOffset(), len, pe);
 }
 
 private native void getDoubleBuffer(long addr, Buffer target, int len, int pe);
 
 /**
  * Copies contiguous data to a local object from an object on the target PE.
+ * <p>The number of elements to be transferred is the target length.
  * <p>Java binding of {@code shmem_double_get}.
  * @param target Buffer in which to save de data on the local PE.
- * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void getDouble(double[] target, int len, int pe)
+public void getDouble(double[] target, int pe)
 {
-    getDoubleArray(addr(), target, 0, len, pe);
+    getDoubleArray(addr(), target, 0, target.length, pe);
 }
 
 private native void getDoubleArray(
@@ -1122,7 +1095,7 @@ private native void getDoubleArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iGetShort(Buffer target, int tst, int sst, int len, int pe)
+public void iGetShort(ShortBuffer target, int tst, int sst, int len, int pe)
 {
     if(target.isDirect())
     {
@@ -1130,7 +1103,7 @@ public void iGetShort(Buffer target, int tst, int sst, int len, int pe)
     }
     else
     {
-        iGetShortArray(addr(), (short[])target.array(),
+        iGetShortArray(addr(), target.array(),
                        target.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -1149,7 +1122,7 @@ private native void iGetShortBuffer(
  */
 public void iGetShort(short[] target, int tst, int sst, int len, int pe)
 {
-    iGetShortArray(handle + 2L * offset, target, 0, tst, sst, len, pe);
+    iGetShortArray(addr(), target, 0, tst, sst, len, pe);
 }
 
 private native void iGetShortArray(
@@ -1164,7 +1137,7 @@ private native void iGetShortArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iGetInt(Buffer target, int tst, int sst, int len, int pe)
+public void iGetInt(IntBuffer target, int tst, int sst, int len, int pe)
 {
     if(target.isDirect())
     {
@@ -1172,7 +1145,7 @@ public void iGetInt(Buffer target, int tst, int sst, int len, int pe)
     }
     else
     {
-        iGetIntArray(addr(), (int[])target.array(),
+        iGetIntArray(addr(), target.array(),
                      target.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -1206,7 +1179,7 @@ private native void iGetIntArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iGetLong(Buffer target, int tst, int sst, int len, int pe)
+public void iGetLong(LongBuffer target, int tst, int sst, int len, int pe)
 {
     if(target.isDirect())
     {
@@ -1214,7 +1187,7 @@ public void iGetLong(Buffer target, int tst, int sst, int len, int pe)
     }
     else
     {
-        iGetLongArray(addr(), (long[])target.array(),
+        iGetLongArray(addr(), target.array(),
                       target.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -1248,7 +1221,7 @@ private native void iGetLongArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iGetFloat(Buffer target, int tst, int sst, int len, int pe)
+public void iGetFloat(FloatBuffer target, int tst, int sst, int len, int pe)
 {
     if(target.isDirect())
     {
@@ -1256,7 +1229,7 @@ public void iGetFloat(Buffer target, int tst, int sst, int len, int pe)
     }
     else
     {
-        iGetFloatArray(addr(), (float[])target.array(),
+        iGetFloatArray(addr(), target.array(),
                        target.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -1290,7 +1263,7 @@ private native void iGetFloatArray(
  * @param len    Number of elements in the target and source objects.
  * @param pe     Target PE.
  */
-public void iGetDouble(Buffer target, int tst, int sst, int len, int pe)
+public void iGetDouble(DoubleBuffer target, int tst, int sst, int len, int pe)
 {
     if(target.isDirect())
     {
@@ -1298,7 +1271,7 @@ public void iGetDouble(Buffer target, int tst, int sst, int len, int pe)
     }
     else
     {
-        iGetDoubleArray(addr(), (double[])target.array(),
+        iGetDoubleArray(addr(), target.array(),
                         target.arrayOffset(), tst, sst, len, pe);
     }
 }
@@ -1645,10 +1618,10 @@ private native void waitUntilLong(long addr, int cmp, long value);
  * @param PE_start The lowest PE number of the active set of PEs.
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void broadcast32(Addr source, int nlong, int PE_root, int PE_start,
-                        int logPE_stride, int PE_size, Addr pSync)
+                        int logPE_stride, int PE_size, PSync pSync)
 {
     broadcast32(addr(), source.addr(), nlong, PE_root,
                 PE_start, logPE_stride, PE_size, pSync.addr());
@@ -1668,10 +1641,10 @@ private native void broadcast32(
  * @param PE_start The lowest PE number of the active set of PEs.
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void broadcast64(Addr source, int nlong, int PE_root, int PE_start,
-                        int logPE_stride, int PE_size, Addr pSync)
+                        int logPE_stride, int PE_size, PSync pSync)
 {
     broadcast64(addr(), source.addr(), nlong, PE_root,
                 PE_start, logPE_stride, PE_size, pSync.addr());
@@ -1689,10 +1662,10 @@ private native void broadcast64(
  * @param PE_start The lowest PE number of the active set of PEs.
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void collect32(Addr source, int nlong, int PE_start,
-                      int logPE_stride, int PE_size, Addr pSync)
+                      int logPE_stride, int PE_size, PSync pSync)
 {
     collect32(addr(), source.addr(), nlong, PE_start,
               logPE_stride, PE_size, pSync.addr());
@@ -1710,10 +1683,10 @@ private native void collect32(
  * @param PE_start The lowest PE number of the active set of PEs.
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void collect64(Addr source, int nlong, int PE_start,
-                      int logPE_stride, int PE_size, Addr pSync)
+                      int logPE_stride, int PE_size, PSync pSync)
 {
     collect64(addr(), source.addr(), nlong, PE_start,
               logPE_stride, PE_size, pSync.addr());
@@ -1731,10 +1704,10 @@ private native void collect64(
  * @param PE_start The lowest PE number of the active set of PEs.
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void fcollect32(Addr source, int nlong, int PE_start,
-                       int logPE_stride, int PE_size, Addr pSync)
+                       int logPE_stride, int PE_size, PSync pSync)
 {
     fcollect32(addr(), source.addr(), nlong, PE_start,
                logPE_stride, PE_size, pSync.addr());
@@ -1752,10 +1725,10 @@ private native void fcollect32(
  * @param PE_start The lowest PE number of the active set of PEs.
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void fcollect64(Addr source, int nlong, int PE_start,
-                       int logPE_stride, int PE_size, Addr pSync)
+                       int logPE_stride, int PE_size, PSync pSync)
 {
     fcollect64(addr(), source.addr(), nlong, PE_start,
                logPE_stride, PE_size, pSync.addr());
@@ -1775,10 +1748,10 @@ private native void fcollect64(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code short} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void andToAllShort(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     andToAllShort(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1798,10 +1771,10 @@ private native void andToAllShort(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code int} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void andToAllInt(Addr source, int nreduce, int PE_start,
-                        int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                        int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     andToAllInt(addr(), source.addr(), nreduce, PE_start,
                 logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1821,10 +1794,10 @@ private native void andToAllInt(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code long} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void andToAllLong(Addr source, int nreduce, int PE_start,
-                         int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                         int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     andToAllLong(addr(), source.addr(), nreduce, PE_start,
                  logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1844,10 +1817,10 @@ private native void andToAllLong(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code short} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void orToAllShort(Addr source, int nreduce, int PE_start,
-                         int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                         int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     orToAllShort(addr(), source.addr(), nreduce, PE_start,
                  logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1867,10 +1840,10 @@ private native void orToAllShort(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code int} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void orToAllInt(Addr source, int nreduce, int PE_start,
-                       int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                       int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     orToAllInt(addr(), source.addr(), nreduce, PE_start,
                logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1890,10 +1863,10 @@ private native void orToAllInt(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code long} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void orToAllLong(Addr source, int nreduce, int PE_start,
-                        int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                        int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     orToAllLong(addr(), source.addr(), nreduce, PE_start,
                 logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1913,10 +1886,10 @@ private native void orToAllLong(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code short} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void xorToAllShort(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     xorToAllShort(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1936,10 +1909,10 @@ private native void xorToAllShort(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code int} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void xorToAllInt(Addr source, int nreduce, int PE_start,
-                        int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                        int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     xorToAllInt(addr(), source.addr(), nreduce, PE_start,
                 logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1959,10 +1932,10 @@ private native void xorToAllInt(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code long} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void xorToAllLong(Addr source, int nreduce, int PE_start,
-                         int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                         int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     xorToAllLong(addr(), source.addr(), nreduce, PE_start,
                  logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -1982,10 +1955,10 @@ private native void xorToAllLong(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code short} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void maxToAllShort(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     maxToAllShort(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2005,10 +1978,10 @@ private native void maxToAllShort(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code int} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void maxToAllInt(Addr source, int nreduce, int PE_start,
-                        int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                        int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     maxToAllInt(addr(), source.addr(), nreduce, PE_start,
                 logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2028,10 +2001,10 @@ private native void maxToAllInt(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code long} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void maxToAllLong(Addr source, int nreduce, int PE_start,
-                         int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                         int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     maxToAllLong(addr(), source.addr(), nreduce, PE_start,
                  logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2051,10 +2024,10 @@ private native void maxToAllLong(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code float} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void maxToAllFloat(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     maxToAllFloat(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2074,10 +2047,11 @@ private native void maxToAllFloat(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code double} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void maxToAllDouble(Addr source, int nreduce, int PE_start,
-                           int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                           int logPE_stride, int PE_size,
+                           Addr pWrk, PSync pSync)
 {
     maxToAllDouble(addr(), source.addr(), nreduce, PE_start,
                    logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2097,10 +2071,10 @@ private native void maxToAllDouble(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code short} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void minToAllShort(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     minToAllShort(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2120,10 +2094,10 @@ private native void minToAllShort(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code int} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void minToAllInt(Addr source, int nreduce, int PE_start,
-                        int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                        int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     minToAllInt(addr(), source.addr(), nreduce, PE_start,
                 logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2143,10 +2117,10 @@ private native void minToAllInt(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code long} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void minToAllLong(Addr source, int nreduce, int PE_start,
-                         int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                         int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     minToAllLong(addr(), source.addr(), nreduce, PE_start,
                  logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2166,10 +2140,10 @@ private native void minToAllLong(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code float} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void minToAllFloat(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     minToAllFloat(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2189,10 +2163,11 @@ private native void minToAllFloat(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code double} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void minToAllDouble(Addr source, int nreduce, int PE_start,
-                           int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                           int logPE_stride, int PE_size,
+                           Addr pWrk, PSync pSync)
 {
     minToAllDouble(addr(), source.addr(), nreduce, PE_start,
                    logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2212,10 +2187,10 @@ private native void minToAllDouble(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code short} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void sumToAllShort(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     sumToAllShort(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2235,10 +2210,10 @@ private native void sumToAllShort(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code int} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void sumToAllInt(Addr source, int nreduce, int PE_start,
-                        int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                        int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     sumToAllInt(addr(), source.addr(), nreduce, PE_start,
                 logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2258,10 +2233,10 @@ private native void sumToAllInt(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code long} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void sumToAllLong(Addr source, int nreduce, int PE_start,
-                         int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                         int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     sumToAllLong(addr(), source.addr(), nreduce, PE_start,
                  logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2281,10 +2256,10 @@ private native void sumToAllLong(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code float} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void sumToAllFloat(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     sumToAllFloat(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2304,10 +2279,11 @@ private native void sumToAllFloat(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code double} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void sumToAllDouble(Addr source, int nreduce, int PE_start,
-                           int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                           int logPE_stride, int PE_size,
+                           Addr pWrk, PSync pSync)
 {
     sumToAllDouble(addr(), source.addr(), nreduce, PE_start,
                    logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2327,10 +2303,11 @@ private native void sumToAllDouble(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code short} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void prodToAllShort(Addr source, int nreduce, int PE_start,
-                           int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                           int logPE_stride, int PE_size,
+                           Addr pWrk, PSync pSync)
 {
     prodToAllShort(addr(), source.addr(), nreduce, PE_start,
                    logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2350,10 +2327,10 @@ private native void prodToAllShort(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code int} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void prodToAllInt(Addr source, int nreduce, int PE_start,
-                         int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                         int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     prodToAllInt(addr(), source.addr(), nreduce, PE_start,
                  logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2373,10 +2350,10 @@ private native void prodToAllInt(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code long} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void prodToAllLong(Addr source, int nreduce, int PE_start,
-                          int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                          int logPE_stride, int PE_size, Addr pWrk, PSync pSync)
 {
     prodToAllLong(addr(), source.addr(), nreduce, PE_start,
                   logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2396,10 +2373,11 @@ private native void prodToAllLong(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code float} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void prodToAllFloat(Addr source, int nreduce, int PE_start,
-                           int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                           int logPE_stride, int PE_size,
+                           Addr pWrk, PSync pSync)
 {
     prodToAllFloat(addr(), source.addr(), nreduce, PE_start,
                    logPE_stride, PE_size, pWrk.addr(), pSync.addr());
@@ -2419,10 +2397,11 @@ private native void prodToAllFloat(
  * @param logPE_stride Log (base 2) of the stride between PE numbers.
  * @param PE_size  Number of PEs in the active set.
  * @param pWrk     Symmetric {@code double} work array.
- * @param pSync    Symmetric {@code long} work array.
+ * @param pSync    Symmetric work array.
  */
 public void prodToAllDouble(Addr source, int nreduce, int PE_start,
-                            int logPE_stride, int PE_size, Addr pWrk, Addr pSync)
+                            int logPE_stride, int PE_size,
+                            Addr pWrk, PSync pSync)
 {
     prodToAllDouble(addr(), source.addr(), nreduce, PE_start,
                     logPE_stride, PE_size, pWrk.addr(), pSync.addr());
