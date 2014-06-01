@@ -137,10 +137,12 @@ CLEANUP:
 static void process_barrier(int fd, short args, void *cbdata)
 {
     orte_grpcomm_caddy_t *caddy = (orte_grpcomm_caddy_t*)cbdata;
-    orte_grpcomm_collective_t *coll = caddy->op;
+    orte_grpcomm_collective_t *coll = caddy->op, *cptr;
+    opal_list_item_t *item;
     int rc;
     opal_buffer_t *buf;
     orte_namelist_t *nm;
+    bool found;
 
     OBJ_RELEASE(caddy);
 
@@ -161,9 +163,6 @@ static void process_barrier(int fd, short args, void *cbdata)
         return;
     }
 
-    /* setup the collective */
-    opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
-
     if (0 == opal_list_get_size(&coll->participants)) {
         /* add a wildcard name to the participants so the daemon knows
          * that everyone in my job must participate
@@ -172,27 +171,114 @@ static void process_barrier(int fd, short args, void *cbdata)
         nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
         nm->name.vpid = ORTE_VPID_WILDCARD;
         opal_list_append(&coll->participants, &nm->super);
-    }
 
-    /* pack the collective - no data should be involved, but we need
-     * to ensure we get the header info correct so it can be
-     * unpacked without error
-     */
-    buf = OBJ_NEW(opal_buffer_t);
-    orte_grpcomm_base_pack_collective(buf, ORTE_PROC_MY_NAME->jobid,
-                                      coll, ORTE_GRPCOMM_INTERNAL_STG_APP);
+        /* setup the collective */
+        opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
 
-    /* send the buffer to my daemon */
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_COLLECTIVE,
-                                          orte_rml_send_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
+        /* pack the collective - no data should be involved, but we need
+         * to ensure we get the header info correct so it can be
+         * unpacked without error
+         */
+        buf = OBJ_NEW(opal_buffer_t);
+        orte_grpcomm_base_pack_collective(buf, ORTE_PROC_MY_NAME->jobid,
+                                          coll, ORTE_GRPCOMM_INTERNAL_STG_APP);
+    
+        /* send the buffer to my daemon */
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_COLLECTIVE,
+                                              orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
+            coll->active = false;
+            return;
+        }
+    
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:bad barrier with daemons underway",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return;
     }
-    
+
+    /* if the participants were specified, then we must do a direct
+     * barrier across them since the daemons won't know anything about
+     * the collective and/or who is participating. We have to start by
+     * seeing if the collective is already present - a race condition
+     * exists where other participants may have already sent us their
+     * contribution. This would place the collective on the global
+     * array, but leave it marked as "inactive" until we call
+     * modex with the list of participants */
+    found = false;
+    OPAL_LIST_FOREACH(cptr, &orte_grpcomm_base.active_colls, orte_grpcomm_collective_t) {
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
+                             "%s CHECKING COLL id %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             cptr->id));
+            
+        if (coll->id == cptr->id) {
+            found = true;
+            /* remove the old entry - we will replace it
+             * with the barrier one
+             */
+            opal_list_remove_item(&orte_grpcomm_base.active_colls, &cptr->super);
+            break;
+        }
+    }
+    if (found) {
+        /* since it already exists, the list of
+         * targets contains the list of procs
+         * that have already sent us their info. Cycle
+         * thru the targets and move those entries to
+         * the barrier object
+         */
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:bad collective %d already exists - removing prior copy",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (int)coll->id));
+        while (NULL != (item = opal_list_remove_first(&cptr->targets))) {
+            opal_list_append(&coll->targets, item);
+        }
+        /* cleanup */
+        OBJ_RELEASE(cptr);
+    }
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:bad adding collective %d with %d participants to global list",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (int)coll->id, (int)opal_list_get_size(&coll->participants)));
+    /* now add the barrier to the global list of active collectives */
+    opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
+
+    /* pack the collective id */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&coll->buffer, &coll->id, 1, ORTE_GRPCOMM_COLL_ID_T))) {
+        ORTE_ERROR_LOG(rc);
+        coll->active = false;
+        return;
+    }
+
+    /* send directly to each participant - note that this will
+     * include ourselves, which is fine as it will aid in
+     * determining the collective is complete
+     */
+    OPAL_LIST_FOREACH(nm, &coll->participants, orte_namelist_t) {
+        buf = OBJ_NEW(opal_buffer_t);
+        opal_dss.copy_payload(buf, &coll->buffer);
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:bad sending collective %d to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (int)coll->id,
+                             ORTE_NAME_PRINT(&nm->name)));
+        if (0 > (rc = orte_rml.send_buffer_nb(&nm->name, buf,
+                                              ORTE_RML_TAG_COLLECTIVE,
+                                              orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(buf);
+            opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
+            coll->active = false;
+            return;
+        }
+    }
+
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:bad barrier underway",
+                         "%s grpcomm:bad: barrier posted",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 }
 

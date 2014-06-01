@@ -136,21 +136,38 @@ static void coll_id_req(int status, orte_process_name_t* sender,
                         opal_buffer_t* buffer, orte_rml_tag_t tag,
                         void* cbdata)
 {
-    orte_grpcomm_coll_id_t id;
+    orte_grpcomm_coll_id_t *id;
     opal_buffer_t *relay;
     int rc;
+    int32_t num, n;
 
-    id = orte_grpcomm_base_get_coll_id();
+    /* unpack the number of id's being requested */
+    n=1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &num, &n, OPAL_INT32))) {
+        if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* assume one id was requested */
+        num = 1;
+    }
+    id = (orte_grpcomm_coll_id_t*)malloc(num * sizeof(orte_grpcomm_coll_id_t));
+    for (n=0; n < num; n++) {
+        id[n] = orte_grpcomm_base_get_coll_id();
+    }
+
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:base:receive proc %s requested coll id - returned id %d",
+                         "%s grpcomm:base:receive proc %s requested %d coll id's",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender), id));
+                         ORTE_NAME_PRINT(sender), num));
     relay = OBJ_NEW(opal_buffer_t);
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(relay, &id, 1, ORTE_GRPCOMM_COLL_ID_T))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(relay, id, num, ORTE_GRPCOMM_COLL_ID_T))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(relay);
+        free(id);
         return;
     }
+    free(id);
     if (0 > (rc = orte_rml.send_buffer_nb(sender, relay, ORTE_RML_TAG_COLL_ID,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
