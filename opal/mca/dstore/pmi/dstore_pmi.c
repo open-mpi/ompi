@@ -15,10 +15,8 @@
 
 #include <time.h>
 #include <string.h>
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
+
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include <regex.h>
 
@@ -30,7 +28,6 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 
-#include "opal/mca/common/pmi/common_pmi.h"
 #include "opal/mca/dstore/base/base.h"
 #include "dstore_pmi.h"
 
@@ -73,26 +70,16 @@ static char* setup_key(mca_dstore_pmi_module_t *mod,
  * PMI functions, we define a set of wrappers for those
  * common functions we will use
  */
-static int kvs_put(mca_dstore_pmi_module_t *mod,
+static inline int kvs_put(mca_dstore_pmi_module_t *mod,
                    const char *key, const char *value)
 {
-#if WANT_PMI2_SUPPORT
-    return PMI2_KVS_Put(key, value);
-#else
-    return PMI_KVS_Put(mod->pmi_kvs_name, key, value);
-#endif
+    return mca_common_pmi_put(mod->pmi_kvs_name, key, value);
 }
 
-static int kvs_get(mca_dstore_pmi_module_t *mod,
+static inline int kvs_get(mca_dstore_pmi_module_t *mod,
                    const char *key, char *value, int valuelen)
 {
-#if WANT_PMI2_SUPPORT
-    int len;
-
-    return PMI2_KVS_Get(mod->pmi_kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
-#else
-    return PMI_KVS_Get(mod->pmi_kvs_name, key, value, valuelen);
-#endif
+    return mca_common_pmi_get(mod->pmi_kvs_name, key, value, valuelen);
 }
 
 static void finalize(struct opal_dstore_base_module_t *imod)
@@ -164,9 +151,7 @@ static int pmi_commit_packed(mca_dstore_pmi_module_t *mod,
 
 	rc = kvs_put(mod, pmikey, tmp);
 	free(pmikey);
-	if (PMI_SUCCESS != rc) {
-	    OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
-	    rc = OPAL_ERROR;
+    if (OPAL_SUCCESS != rc) {
 	    break;
 	}
 
@@ -265,7 +250,7 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
 
     pmi_tmp = calloc (mod->pmi_vallen_max, 1);
     if (NULL == pmi_tmp) {
-	return OPAL_ERR_OUT_OF_RESOURCE;
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* read all of the packed data from this proc */
@@ -275,7 +260,7 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
         sprintf (tmp_key, "key%d", remote_key);
 
         if (NULL == (pmikey = setup_key(mod, proc, tmp_key))) {
-	    rc = OPAL_ERR_OUT_OF_RESOURCE;
+            rc = OPAL_ERR_OUT_OF_RESOURCE;
             OPAL_ERROR_LOG(rc);
             return rc;
         }
@@ -284,21 +269,21 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
                              "GETTING KEY %s", pmikey));
 
         rc = kvs_get(mod, pmikey, pmi_tmp, mod->pmi_vallen_max);
-	free (pmikey);
-        if (PMI_SUCCESS != rc) {
-	    break;
+        free (pmikey);
+        if (OPAL_SUCCESS != rc) {
+            break;
         }
 
-	size = strlen (pmi_tmp);
+        size = strlen (pmi_tmp);
 
-	if (NULL == tmp_encoded) {
-	    tmp_encoded = malloc (size + 1);
-	} else {
-	    tmp_encoded = realloc (tmp_encoded, bytes_read + size + 1);
-	}
+        if (NULL == tmp_encoded) {
+            tmp_encoded = malloc (size + 1);
+        } else {
+            tmp_encoded = realloc (tmp_encoded, bytes_read + size + 1);
+        }
 
-	strcpy (tmp_encoded + bytes_read, pmi_tmp);
-	bytes_read += size;
+        strcpy (tmp_encoded + bytes_read, pmi_tmp);
+        bytes_read += size;
 
         /* is the string terminator present? */
         if ('-' == tmp_encoded[bytes_read-1]) {
@@ -316,7 +301,7 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
         *packed_data = (char *) pmi_decode (tmp_encoded, len);
         free (tmp_encoded);
         if (NULL == *packed_data) {
-	    return OPAL_ERR_OUT_OF_RESOURCE;
+            return OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
 
@@ -497,20 +482,11 @@ static void commit(struct opal_dstore_base_module_t *imod,
     /* commit the packed data to PMI */
     pmi_commit_packed(mod, id);
     
-#if WANT_PMI2_SUPPORT
-    PMI2_KVS_Fence();
-#else
-    {
-        int rc;
-        
-        if (PMI_SUCCESS != (rc = PMI_KVS_Commit(mod->pmi_kvs_name))) {
-            OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
-            return;
-        }
-        /* Barrier here to ensure all other procs have committed */
-        PMI_Barrier();
+    int rc = mca_common_pmi_commit(mod->pmi_kvs_name);
+    if( OPAL_SUCCESS != rc ){
+        // TODO: What we do here? failure exit?
+
     }
-#endif
 }
 
 static int fetch(struct opal_dstore_base_module_t *imod,

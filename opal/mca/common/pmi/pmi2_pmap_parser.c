@@ -10,14 +10,10 @@
  * $HEADER$
  *
  */
+
+#include "pmi2_pmap_parser.h"
 #ifdef STANDALONE_TEST
 #define WANT_PMI2_SUPPORT 1
-#else
-#include "orte_config.h"
-#include "orte/constants.h"
-#include "orte/types.h"
-
-#include "grpcomm_pmi.h"
 #endif
 
 /**
@@ -134,7 +130,7 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
  * @return array that contains ranks local to my_rank or NULL
  * on failure. Array must be freed by the caller. 
  */ 
-int *orte_grpcomm_pmi2_parse_pmap(char *pmap, int my_rank,
+int *mca_common_pmi2_parse_pmap(char *pmap, int my_rank,
                                   int *node, int *nlrs)
 {
     char *p;

@@ -18,6 +18,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#include "opal/runtime/opal_params.h"
 #include "opal/mca/common/pmi/common_pmi.h"
 
 #include "orte/util/proc_info.h"
@@ -65,7 +66,7 @@ static int pmi_component_open(void)
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
     /* we are available anywhere PMI is available, but not for HNP itself */
-    if (!ORTE_PROC_IS_HNP && mca_common_pmi_init()) {
+    if (!ORTE_PROC_IS_HNP && OPAL_SUCCESS == mca_common_pmi_init(opal_pmi_version)) {
         /* if PMI is available, use it */
         *priority = 35;
         *module = (mca_base_module_t *)&orte_ess_pmi_module;

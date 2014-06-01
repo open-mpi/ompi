@@ -38,11 +38,6 @@
 #include <ifaddrs.h>
 #endif
 
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
-
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
@@ -134,17 +129,11 @@ static int rte_init(void)
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
         /* get our rank from PMI */
-        if (!mca_common_pmi_rank(&i)) {
-            error = "could not get PMI rank";
-            goto error;
-        }
+        i = mca_common_pmi_rank();
         ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
 
         /* get the number of procs from PMI */
-        if (!mca_common_pmi_size(&i)) {
-            error = "could not get PMI universe size";
-            goto error;
-        }
+        i = mca_common_pmi_universe();
         orte_process_info.num_procs = i + 1;  /* compensate for orterun */
 
         /* complete setup */
@@ -158,31 +147,10 @@ static int rte_init(void)
     }
 
     /* we are a direct-launched MPI process */
-
-#if WANT_PMI2_SUPPORT
-    /* Get domain id */
-    pmi_id = (char*)malloc(PMI2_MAX_VALLEN);
-    if (PMI_SUCCESS != (ret = PMI2_Job_GetId(pmi_id, PMI2_MAX_VALLEN))) {
-        error = "PMI2_Job_GetId failed";
+    if( OPAL_SUCCESS != (ret = mca_common_pmi_id(&pmi_id, &error)) ){
         goto error;
     }
-#else
-    {
-        int pmi_maxlen;
 
-        /* get our PMI id length */
-        if (PMI_SUCCESS != (ret = PMI_Get_id_length_max(&pmi_maxlen))) {
-            error = "PMI_Get_id_length_max";
-            goto error;
-        }
-        pmi_id = (char*)malloc(pmi_maxlen);
-        if (PMI_SUCCESS != (ret = PMI_Get_kvs_domain_id(pmi_id, pmi_maxlen))) {
-            free(pmi_id);
-            error = "PMI_Get_kvs_domain_id";
-            goto error;
-        }
-    }
-#endif
     /* PMI is very nice to us - the domain id is an integer followed
      * by a '.', followed by essentially a stepid. The first integer
      * defines an overall job number. The second integer is the number of
@@ -204,17 +172,11 @@ static int rte_init(void)
     ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
 
     /* get our rank */
-    if (!mca_common_pmi_rank(&i)) {
-        error = "could not get PMI rank";
-        goto error;
-    }
+    i = mca_common_pmi_rank();
     ORTE_PROC_MY_NAME->vpid = i;
-
     /* get the number of procs from PMI */
-    if (!mca_common_pmi_size(&i)) {
-        error = "could not get PMI universe size";
-        goto error;
-    }
+    // FIX ME: What do we need here - size or universe?
+    i = mca_common_pmi_universe();
     orte_process_info.num_procs = i;
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
@@ -267,69 +229,10 @@ static int rte_init(void)
         goto error;
     }
 
-#if WANT_PMI2_SUPPORT
-    {
-        /* get our local proc info to find our local rank */
-        char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
-        int found, sid, nodes, k;
-        orte_vpid_t n;
-        char *p;
-        ret = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-        if (!found || PMI_SUCCESS != ret) { /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
-            error = "could not get PMI_process_mapping (PMI2_Info_GetJobAttr() failed)";
-            goto error;
-        }
-
-        i = 0; n = 0; procs = 0;
-        if (NULL != (p = strstr(pmapping, "(vector"))) {
-            while (NULL != (p = strstr(p+1, ",("))) {
-                if (3 == sscanf(p, ",(%d,%d,%d)", &sid, &nodes, &procs)) {
-                    for (k = 0; k < nodes; k++) {
-                        if ((ORTE_PROC_MY_NAME->vpid >= n) &&
-                            (ORTE_PROC_MY_NAME->vpid < (n + procs))) {
-                            break;
-                        }
-                        n += procs;
-                    }
-                } else {
-                    procs = 0;
-                }
-            }
-        }
-        free(pmapping);
-
-        if (0 < procs) {
-            ranks = (int*)malloc(procs * sizeof(int));
-            for (i=0; i < procs; i++) {
-                ranks[i] = n + i;
-            }
-        }
-
-        if (NULL == ranks) {
-            error = "could not get PMI_process_mapping";
-            goto error;
-        }
-    }
-#else
-    /* get our local proc info to find our local rank */
-    if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&procs))) {
-        OPAL_PMI_ERROR(ret, "PMI_Get_clique_size");
-        error = "could not get PMI clique size";
+    ret = mca_common_pmi_local_info(ORTE_PROC_MY_NAME->vpid, &ranks, &procs, &error);
+    if( OPAL_SUCCESS != ret ){
         goto error;
     }
-    /* now get the specific ranks */
-    ranks = (int*)calloc(procs, sizeof(int));
-    if (NULL == ranks) {
-        error = "could not get memory for local ranks";
-        ret = ORTE_ERR_OUT_OF_RESOURCE;
-        goto error;
-    }
-    if (PMI_SUCCESS != (ret = PMI_Get_clique_ranks(ranks, procs))) {
-        OPAL_PMI_ERROR(ret, "PMI_Get_clique_ranks");
-        error = "could not get clique ranks";
-        goto error;
-    }
-#endif
     /* store the number of local peers - remember, we want the number
      * of peers that share the node WITH ME, so we have to subtract
      * ourselves from that number
@@ -533,11 +436,7 @@ static void rte_abort(int status, bool report)
     /* PMI doesn't like NULL messages, but our interface
      * doesn't provide one - so rig one up here
      */
-#if WANT_PMI2_SUPPORT
-    PMI2_Abort(status, "N/A");
-#else
-    PMI_Abort(status, "N/A");
-#endif
+    mca_common_pmi_abort(status, "N/A");
 
     /* - Clean out the global structures 
      * (not really necessary, but good practice) */

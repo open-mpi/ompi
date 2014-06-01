@@ -12,10 +12,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "opal/threads/tsd.h"
 #include "ompi/constants.h"
@@ -35,30 +32,19 @@ coll_construct(ompi_rte_collective_t *coll)
 OBJ_CLASS_INSTANCE(ompi_rte_collective_t, opal_object_t, coll_construct, NULL);
 
 
-int
-ompi_rte_modex(ompi_rte_collective_t *coll)
+int ompi_rte_modex(ompi_rte_collective_t *coll)
 {
     int len, ret;
     char *kvs;
 
-    ret = PMI_KVS_Get_name_length_max(&len);
-    if (PMI_SUCCESS != ret) return OMPI_ERROR;
-
+    len = mca_common_pmi_kvslen();
     kvs = malloc(len);
     if (NULL == kvs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    ret = PMI_KVS_Get_my_name(kvs, len);
-    if (PMI_SUCCESS != ret) return OMPI_ERROR;
-
-    ret = PMI_KVS_Commit(kvs);
-    if (PMI_SUCCESS != ret) return OMPI_ERROR;
-
-    ret = PMI_Barrier();
-    if (PMI_SUCCESS != ret) return OMPI_ERROR;
-
-    return OMPI_SUCCESS;
+    mca_common_pmi_kvsname(kvs, len);
+    return mca_common_pmi_commit(kvs);
 }
 
 
@@ -67,10 +53,10 @@ ompi_rte_barrier(ompi_rte_collective_t *coll)
 {
     int ret;
 
-    ret = PMI_Barrier();
-    if (PMI_SUCCESS != ret) return OMPI_ERROR;
+    ret = mca_common_pmi_barrier();
+    if (OPAL_SUCCESS != ret) 
+        return OMPI_ERROR;
 
     coll->active = false;
-
     return OMPI_SUCCESS;
 }

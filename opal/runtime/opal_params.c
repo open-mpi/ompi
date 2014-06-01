@@ -45,6 +45,7 @@
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
+int opal_pmi_version = 0;
 
 #if OPAL_ENABLE_FT_CR == 1
 bool opal_base_distill_checkpoint_ready = false;
@@ -178,6 +179,18 @@ int opal_register_params(void)
     if (0 > ret) {
 	return ret;
     }
+
+    opal_pmi_version = 0;
+#ifdef WANT_PMI2_SUPPORT
+    (void) mca_base_var_register ("opal", "opal", NULL, "pmi_version",
+                                  "Set preferred PMI version: 0 => auto detect, 1 = PMIv1, 2 = PMIv2",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &opal_pmi_version);
+#else
+    opal_pmi_version = 1;
+#endif
+
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();

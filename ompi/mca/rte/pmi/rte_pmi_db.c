@@ -12,10 +12,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <pmi.h>
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
+#include "opal/mca/common/pmi/common_pmi.h"
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -66,22 +63,12 @@ OBJ_CLASS_INSTANCE(local_data_t,
  */
 static int kvs_put(const char *key, const char *value)
 {
-#if WANT_PMI2_SUPPORT
-    return PMI2_KVS_Put(key, value);
-#else
-    return PMI_KVS_Put(pmi_kvs_name, key, value);
-#endif
+    return mca_common_pmi_put(pmi_kvs_name, key, value);
 }
 
 static int kvs_get(const char *key, char *value, int valuelen)
 {
-#if WANT_PMI2_SUPPORT
-    int len;
-
-    return PMI2_KVS_Get(pmi_kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
-#else
-    return PMI_KVS_Get(pmi_kvs_name, key, value, valuelen);
-#endif
+    return mca_common_pmi_get(pmi_kvs_name, key, value, valuelen);
 }
 
 
@@ -89,45 +76,19 @@ static int setup_pmi(void)
 {
     int max_length, rc;
 
-#if WANT_PMI2_SUPPORT
-    pmi_vallen_max = PMI2_MAX_VALLEN;
-#else
-    rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
-    if (PMI_SUCCESS != rc) {
-        return OMPI_ERROR;
-    }
-#endif
+    pmi_vallen_max = mca_common_pmi_vallen();
+    max_length = mca_common_pmi_kvslen();
+    pmi_keylen_max = mca_common_pmi_keylen();
 
-#if WANT_PMI2_SUPPORT
-    /* TODO -- is this ok */
-    max_length = 1024;
-#else
-    if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
-        return OMPI_ERROR;
-    }
-#endif
     pmi_kvs_name = (char*)malloc(max_length);
     if (NULL == pmi_kvs_name) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-#if WANT_PMI2_SUPPORT
-    rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
-#else
-    rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
-#endif
-    if (PMI_SUCCESS != rc) {
-        return OMPI_ERROR;
+    rc = mca_common_pmi_kvsname(pmi_kvs_name, max_length);
+    if( OPAL_SUCCESS != rc ){
+        return rc;
     }
-
-#if WANT_PMI2_SUPPORT
-    pmi_keylen_max = PMI2_MAX_KEYLEN;
-#else
-    if (PMI_SUCCESS != (rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max))) {
-        return OMPI_ERROR;
-    }
-#endif
-
     return OMPI_SUCCESS;
 }
 
@@ -259,7 +220,7 @@ static char* fetch_string(const char *key)
     tmp_val = (char*)malloc(pmi_vallen_max * sizeof(char));
 
     /* the first section of the string has the original key, so fetch it */
-    if (PMI_SUCCESS != kvs_get(key, tmp_val, pmi_vallen_max)) {
+    if (OPAL_SUCCESS != kvs_get(key, tmp_val, pmi_vallen_max)) {
         OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
         free(tmp_val);
         return NULL;
@@ -285,7 +246,7 @@ static char* fetch_string(const char *key)
         /* create the key */
         asprintf(&tmpkey, "%s:%d", key, i);
         /* fetch it */
-        if (PMI_SUCCESS != kvs_get(tmpkey, tmp_val, pmi_vallen_max)) {
+        if (OPAL_SUCCESS != kvs_get(tmpkey, tmp_val, pmi_vallen_max)) {
             OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
             free(tmp_val);
             free(tmpkey);
@@ -441,11 +402,11 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                     pmikey, pmidata);
 
-        if (PMI_SUCCESS != (rc = kvs_put(pmikey, pmidata))) {
+        if ( OPAL_SUCCESS != (rc = kvs_put(pmikey, pmidata))) {
             free(pmidata);
             free(pmikey);
             opal_argv_free(strdata);
-            return OMPI_ERROR;
+            return rc;
         }
         free(pmidata);
         /* for each remaining segment, augment the key with the index */
@@ -456,10 +417,10 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         pmikey, strdata[i]);
 
-            if (PMI_SUCCESS != (rc = kvs_put(tmpkey, strdata[i]))) {
+            if (OPAL_SUCCESS != (rc = kvs_put(tmpkey, strdata[i]))) {
                 free(pmikey);
                 opal_argv_free(strdata);
-                return OMPI_ERROR;
+                return rc;
             }
             free(tmpkey);
         }
@@ -518,8 +479,8 @@ ompi_rte_db_store(const ompi_process_name_t *proc,
                 pmikey, pmidata);
 
     rc = kvs_put(pmikey, pmidata);
-    if (PMI_SUCCESS != rc) {
-	return OMPI_ERROR;
+    if (OPAL_SUCCESS != rc) {
+        return rc;
     }
     free(pmidata);
     free(pmikey);
@@ -629,7 +590,7 @@ ompi_rte_db_fetch(const struct ompi_proc_t *pptr,
 	OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
 	return OMPI_ERR_BAD_PARAM;
     }
-    if (PMI_SUCCESS != kvs_get(pmikey, tmp_val, pmi_vallen_max)) {
+    if (OPAL_SUCCESS != kvs_get(pmikey, tmp_val, pmi_vallen_max)) {
         OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
         free(pmikey);
         return OMPI_ERR_NOT_FOUND;

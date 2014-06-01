@@ -1,0 +1,24 @@
+# -*- text -*-
+#
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+[pmi2-init-failed]
+PMI2 failed to initialize, returning an error code of %d.
+We cannot use PMI2 at this time, and your job will
+likely abort.
+#
+[pmi2-init-returned-bad-values]
+PMI2 initialized but returned bad values for size and rank.
+This is symptomatic of either a failure to use the
+"--mpi=pmi2" flag in SLURM, or a borked PMI2 installation.
+If running under SLURM, try adding "-mpi=pmi2" to your
+srun command line. If that doesn't work, or if you are
+not running under SLURM, try removing or renaming the
+pmi2.h header file so PMI2 support will not automatically
+be built, reconfigure and build OMPI, and then try again
+with only PMI1 support enabled.
