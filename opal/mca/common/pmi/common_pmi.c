@@ -44,6 +44,14 @@ bool mca_common_pmi_init (void) {
         rank = -1;
         appnum = -1;
 
+        /* deal with a Slurm bug by first checking if we were
+         * even launched by a PMI server before attempting
+         * to use PMI */
+        if (NULL == getenv("PMI_FD")) {
+            mca_common_pmi_init_count--;
+            return false;
+        }
+
         /* if we can't startup PMI, we can't be used */
         if (PMI2_Initialized ()) {
             return true;
@@ -51,10 +59,12 @@ bool mca_common_pmi_init (void) {
 
         if (PMI2_SUCCESS != (rc = PMI2_Init(&spawned, &size, &rank, &appnum))) {
             opal_show_help("help-common-pmi.txt", "pmi2-init-failed", true, rc);
+            mca_common_pmi_init_count--;
             return false;
         }
         if (size < 0 || rank < 0 ) {
             opal_show_help("help-common-pmi.txt", "pmi2-init-returned-bad-values", true);
+            mca_common_pmi_init_count--;
             return false;
         }
         mca_common_pmi_init_size = size;
@@ -65,6 +75,14 @@ bool mca_common_pmi_init (void) {
 #else
     {
         PMI_BOOL initialized;
+
+        /* deal with a Slurm bug by first checking if we were
+         * even launched by a PMI server before attempting
+         * to use PMI */
+        if (NULL == getenv("PMI_FD")) {
+            mca_common_pmi_init_count--;
+            return false;
+        }
 
         if (PMI_SUCCESS != PMI_Initialized(&initialized)) {
             mca_common_pmi_init_count--;
