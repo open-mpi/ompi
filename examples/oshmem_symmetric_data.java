@@ -25,7 +25,7 @@ public class oshmem_symmetric_data
             // static makes it symmetric
             // put "size" words into target on each PE
             for(int i = 1; i < numPE; i++)
-                target.putInt(source, SIZE, i);
+                target.putInt(source, i);
         }
 
         ShMem.barrierAll(); // sync sender and receiver
