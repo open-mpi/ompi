@@ -1372,6 +1372,7 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     int k;
     mca_oob_tcp_component_peer_t *pr;
     orte_rml_send_t *snd;
+    orte_oob_base_peer_t *bpr;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:unknown hop called for peer %s on interface %s",
@@ -1417,6 +1418,39 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     }
 
  cleanup:
+    /* mark that this component cannot reach this hop */
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
+                                                         ui64, (void**)&bpr) ||
+        NULL == bpr) {
+        /* the overall OOB has no knowledge of this hop. Only
+         * way this could happen is if the peer contacted us
+         * via this component, and it wasn't entered into the
+         * OOB framework hash table. We have no way of knowing
+         * what to do next, so just output an error message and
+         * abort */
+        opal_output(0, "%s ERROR: message to %s requires routing and the OOB has no knowledge of the reqd hop %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&mop->snd->hdr.dst),
+                    ORTE_NAME_PRINT(&mop->hop));
+        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
+        OBJ_RELEASE(mop);
+        return;
+    }
+    opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
+
+    /* mark that this component cannot reach this destination either */
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
+                                                         ui64, (void**)&bpr) ||
+        NULL == bpr) {
+       opal_output(0, "%s ERROR: message to %s requires routing and the OOB has no knowledge of this process",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&mop->snd->hdr.dst));
+       ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
+        OBJ_RELEASE(mop);
+        return;
+    }
+    opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
+
     /* post the message to the OOB so it can see
      * if another component can transfer it
      */
