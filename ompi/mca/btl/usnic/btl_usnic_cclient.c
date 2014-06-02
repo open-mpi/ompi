@@ -17,6 +17,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <alloca.h>
+#include <time.h>
 
 #include "opal_stdint.h"
 #include "opal/threads/mutex.h"
@@ -73,8 +74,10 @@ int ompi_btl_usnic_connectivity_client_init(void)
     assert(strlen(ipc_filename) <= sizeof(sun.sun_path));
 #endif
 
-    /* Wait for the agent to create its socket */
+    /* Wait for the agent to create its socket.  Timeout after 10
+       seconds if we don't find the socket. */
     struct stat sbuf;
+    time_t start = time(NULL);
     while (1) {
         int ret = stat(ipc_filename, &sbuf);
         if (0 == ret) {
@@ -90,6 +93,11 @@ int ompi_btl_usnic_connectivity_client_init(void)
         /* If the named socket wasn't there yet, then give the agent a
            little time to establish it */
         usleep(1);
+
+        if (time(NULL) - start > 10) {
+            ABORT("connectivity client timeout waiting for server socket to appear");
+            /* Will not return */
+        }
     }
 
     /* Connect */
