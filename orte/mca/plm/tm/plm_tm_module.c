@@ -320,15 +320,15 @@ static void launch_daemons(int fd, short args, void *cbdata)
     /* add our umask -- see big note in orted.c */
     current_umask = umask(0);
     umask(current_umask);
-    asprintf(&var, "0%o", current_umask);
+    (void)asprintf(&var, "0%o", current_umask);
     opal_setenv("ORTE_DAEMON_UMASK_VALUE", var, true, &env);
     free(var);
     
     /* If we have a prefix, then modify the PATH and
-        LD_LIBRARY_PATH environment variables. We only allow
-        a single prefix to be specified. Since there will
-        always be at least one app_context, we take it from
-        there
+       LD_LIBRARY_PATH environment variables. We only allow
+       a single prefix to be specified. Since there will
+       always be at least one app_context, we take it from
+       there
     */
     app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
     orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING);
@@ -338,8 +338,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
         for (i = 0; NULL != env && NULL != env[i]; ++i) {
             /* Reset PATH */
             if (0 == strncmp("PATH=", env[i], 5)) {
-                asprintf(&newenv, "%s/%s:%s", 
-                            prefix_dir, bin_base, env[i] + 5);
+                (void)asprintf(&newenv, "%s/%s:%s", 
+                               prefix_dir, bin_base, env[i] + 5);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -350,8 +350,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
             
             /* Reset LD_LIBRARY_PATH */
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
-                asprintf(&newenv, "%s/%s:%s", 
-                            prefix_dir, lib_base, env[i] + 16);
+                (void)asprintf(&newenv, "%s/%s:%s", 
+                               prefix_dir, lib_base, env[i] + 16);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -372,7 +372,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
             continue;
         }
         /* if this daemon already exists, don't launch it! */
-        if (node->daemon_launched) {
+        if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             continue;
         }
  
