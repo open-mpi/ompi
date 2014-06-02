@@ -60,14 +60,16 @@ int MPI_Ineighbor_alltoallw(const void *sendbuf, const int sendcounts[], const M
 
         err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
         if (MPI_SUCCESS == err) {
-            for ( i = 0; i < outdegree; i++ ) {
-                memchecker_datatype(sendtypes[i]);
+            if (MPI_IN_PLACE != sendbuf) {
+                for ( i = 0; i < outdegree; i++ ) {
+                    memchecker_datatype(sendtypes[i]);
 
-                ompi_datatype_type_extent(sendtypes[i], &send_ext);
+                    ompi_datatype_type_extent(sendtypes[i], &send_ext);
 
-                memchecker_call(&opal_memchecker_base_isdefined,
-                                (char *)(sendbuf)+sdispls[i]*send_ext,
-                                sendcounts[i], sendtypes[i]);
+                    memchecker_call(&opal_memchecker_base_isdefined,
+                                    (char *)(sendbuf)+sdispls[i]*send_ext,
+                                    sendcounts[i], sendtypes[i]);
+                }
             }
             for ( i = 0; i < indegree; i++ ) {
                 memchecker_datatype(recvtypes[i]);
