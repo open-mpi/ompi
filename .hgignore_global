@@ -459,7 +459,6 @@ syntax: glob
 ./ompi/mca/rte/orte/ompi-restart.1
 ./ompi/mca/rte/orte/ompi-checkpoint.1
 ./ompi/mca/rte/orte/mpirun.1
-./ompi/mca/rte/pmi/Makefile.in
 ./ompi/mca/sbgp/Makefile.in
 ./ompi/mca/sbgp/basesmsocket/Makefile.in
 ./ompi/mca/sbgp/basesmuma/Makefile.in
@@ -811,6 +810,7 @@ syntax: glob
 ./orte/mca/routed/radix/Makefile.in
 ./orte/mca/rtc/Makefile.in
 ./orte/mca/rtc/base/*.obj
+./orte/mca/rtc/freq/Makefile.in
 ./orte/mca/rtc/hwloc/Makefile.in
 ./orte/mca/snapc/Makefile.in
 ./orte/mca/snapc/orte_snapc.7
@@ -1037,6 +1037,7 @@ syntax: glob
 ./oshmem/shmem/java/java/shmem_ShMem.h
 ./oshmem/shmem/java/java/shmem
 ./oshmem/shmem/java/java/shmem_Addr.h
+./oshmem/shmem/java/java/shmem_PSync.h
 ./oshmem/tools/oshmem_info/oshmem_info
 ./oshmem/tools/oshmem_info/oshmem_info.1
 ./oshmem/tools/oshmem_info/Makefile.in
