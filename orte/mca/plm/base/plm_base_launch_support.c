@@ -500,7 +500,7 @@ static void timer_cb(int fd, short event, void *cbdata)
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
 
     /* free event */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FAILURE_TIMER_EVENT, (void**)timer, OPAL_PTR)) {
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FAILURE_TIMER_EVENT, (void**)&timer, OPAL_PTR)) {
         /* timer is an orte_timer_t object */
         OBJ_RELEASE(timer);
         orte_remove_attribute(&jdata->attributes, ORTE_JOB_FAILURE_TIMER_EVENT);
@@ -603,7 +603,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
     jdata = caddy->jdata;
 
     /* if a timer was defined, cancel it */
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FAILURE_TIMER_EVENT, (void**)timer, OPAL_PTR)) {
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FAILURE_TIMER_EVENT, (void**)&timer, OPAL_PTR)) {
         opal_event_evtimer_del(timer->ev);
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:launch deleting timeout for job %s",
