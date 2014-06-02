@@ -13,6 +13,8 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -155,8 +157,12 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
     if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_nonpeer,
                                                  (opal_identifier_t*)&proc->proc_name,
                                                  OMPI_RTE_NODE_ID, &myvals))) {
-        OPAL_LIST_DESTRUCT(&myvals);
-        return ret;
+        if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_peer,
+                                                     (opal_identifier_t*)&proc->proc_name,
+                                                     OMPI_RTE_NODE_ID, &myvals))) {
+            OPAL_LIST_DESTRUCT(&myvals);
+            return ret;
+        }
     }
     kv = (opal_value_t*)opal_list_get_first(&myvals);
     vpid = kv->data.uint32;
@@ -198,9 +204,13 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
                                                          (opal_identifier_t*)&proc->proc_name,
                                                          OPAL_DSTORE_CPUSET, &myvals))) {
                 /* check the nonpeer data in case of comm_spawn */
-                ret = opal_dstore.fetch(opal_dstore_nonpeer,
-                                        (opal_identifier_t*)&proc->proc_name,
-                                        OPAL_DSTORE_CPUSET, &myvals);
+                if (OMPI_SUCCESS != ( ret = opal_dstore.fetch(opal_dstore_nonpeer,
+                                                              (opal_identifier_t*)&proc->proc_name,
+                                                              OPAL_DSTORE_CPUSET, &myvals))) {
+                    ret = opal_dstore.fetch(opal_dstore_peer,
+                                            (opal_identifier_t*)&proc->proc_name,
+                                            OPAL_DSTORE_CPUSET, &myvals);
+                }
             }
             if (OMPI_SUCCESS != ret) {
                 /* we don't know their cpuset, so nothing more we can say */
