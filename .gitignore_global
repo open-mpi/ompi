@@ -717,6 +717,7 @@ oshmem/shmem/java/java/shmem_Constant.h
 oshmem/shmem/java/java/shmem_ShMem.h
 oshmem/shmem/java/java/shmem
 oshmem/shmem/java/java/shmem_Addr.h
+oshmem/shmem/java/java/shmem_PSync.h
 oshmem/tools/oshmem_info/oshmem_info
 oshmem/tools/oshmem_info/oshmem_info.1
 oshmem/tools/wrappers/shmemcc-wrapper-data.txt
