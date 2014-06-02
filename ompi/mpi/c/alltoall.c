@@ -51,11 +51,13 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int err;
 
     MEMCHECKER(
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
-        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
         memchecker_comm(comm);
+        if (MPI_IN_PLACE != sendbuf) {
+            memchecker_datatype(sendtype);
+            memchecker_call(&opal_memchecker_base_isdefined, (void *)sendbuf, sendcount, sendtype);
+        }
+        memchecker_datatype(recvtype);
+        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
     );
 
     if (MPI_PARAM_CHECK) {
