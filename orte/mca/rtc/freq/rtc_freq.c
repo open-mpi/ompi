@@ -184,14 +184,22 @@ static int init(void)
         
         /* read/save the current settings */
         filename = opal_os_path(false, trk->directory, "scaling_governor", NULL);
-        fp = fopen(filename, "r");
+        if (NULL == (fp = fopen(filename, "rw"))) {
+            free(filename);
+            OBJ_RELEASE(trk);
+            continue;
+        }
         trk->system_governor = orte_getline(fp);
         trk->current_governor = strdup(trk->system_governor);
         fclose(fp);
         free(filename);
 
         filename = opal_os_path(false, trk->directory, "scaling_max_freq", NULL);
-        fp = fopen(filename, "r");
+        if (NULL == (fp = fopen(filename, "rw"))) {
+            free(filename);
+            OBJ_RELEASE(trk);
+            continue;
+        }
         tmp = orte_getline(fp);
         fclose(fp);
         trk->system_max_freq = strtoul(tmp, NULL, 10) / 1000000.0;
@@ -200,7 +208,11 @@ static int init(void)
         free(tmp);
 
         filename = opal_os_path(false, trk->directory, "scaling_min_freq", NULL);
-        fp = fopen(filename, "r");
+        if (NULL == (fp = fopen(filename, "rw"))) {
+            free(filename);
+            OBJ_RELEASE(trk);
+            continue;
+        }
         tmp = orte_getline(fp);
         fclose(fp);
         trk->system_min_freq = strtoul(tmp, NULL, 10) / 1000000.0;
@@ -210,47 +222,54 @@ static int init(void)
 
         /* get the list of available governors */
         filename = opal_os_path(false, trk->directory, "scaling_available_governors", NULL);
-        if (NULL != (fp = fopen(filename, "r"))) {
-            tmp = orte_getline(fp);
-            fclose(fp);
+        if (NULL == (fp = fopen(filename, "r"))) {
             free(filename);
-            if (NULL != tmp) {
-                vals = opal_argv_split(tmp, ' ');
-                free(tmp);
-                for (k=0; NULL != vals[k]; k++) {
-                    kv = OBJ_NEW(opal_value_t);
-                    kv->type = OPAL_STRING;
-                    kv->data.string = strdup(vals[k]);
-                    opal_list_append(&trk->governors, &kv->super);
-                }
-                opal_argv_free(vals);
+            OBJ_RELEASE(trk);
+            continue;
+        }
+        tmp = orte_getline(fp);
+        fclose(fp);
+        free(filename);
+        if (NULL != tmp) {
+            vals = opal_argv_split(tmp, ' ');
+            free(tmp);
+            for (k=0; NULL != vals[k]; k++) {
+                kv = OBJ_NEW(opal_value_t);
+                kv->type = OPAL_STRING;
+                kv->data.string = strdup(vals[k]);
+                opal_list_append(&trk->governors, &kv->super);
             }
+            opal_argv_free(vals);
         }
 
         /* get the list of available frequencies */
         filename = opal_os_path(false, trk->directory, "scaling_available_frequencies", NULL);
-        if (NULL != (fp = fopen(filename, "r"))) {
-            tmp = orte_getline(fp);
-            fclose(fp);
+        if (NULL == (fp = fopen(filename, "r"))) {
             free(filename);
-            if (NULL != tmp) {
-                vals = opal_argv_split(tmp, ' ');
-                free(tmp);
-                for (k=0; NULL != vals[k]; k++) {
-                    kv = OBJ_NEW(opal_value_t);
-                    kv->type = OPAL_FLOAT;
-                    kv->data.fval = strtoul(vals[k], NULL, 10) / 1000000.0;
-                    opal_list_append(&trk->frequencies, &kv->super);
-                }
-                opal_argv_free(vals);
+            OBJ_RELEASE(trk);
+            continue;
+        }
+        tmp = orte_getline(fp);
+        fclose(fp);
+        free(filename);
+        if (NULL != tmp) {
+            vals = opal_argv_split(tmp, ' ');
+            free(tmp);
+            for (k=0; NULL != vals[k]; k++) {
+                kv = OBJ_NEW(opal_value_t);
+                kv->type = OPAL_FLOAT;
+                kv->data.fval = strtoul(vals[k], NULL, 10) / 1000000.0;
+                opal_list_append(&trk->frequencies, &kv->super);
             }
+            opal_argv_free(vals);
         }
 
         /* see if setspeed is supported */
         filename = opal_os_path(false, trk->directory, "scaling_setspeed", NULL);
-        if (access(filename, W_OK)) {
+        if (NULL != (fp = fopen(filename, "rw"))) {
             trk->setspeed = true;
         }
+        fclose(fp);
         free(filename);
 
         /* add to our list */
@@ -260,8 +279,10 @@ static int init(void)
 
     if (0 == opal_list_get_size(&tracking)) {
         /* nothing to read */
-        orte_show_help("help-orcm-sensor-freq.txt", "no-cores-found",
-                       true, orte_process_info.nodename);
+        if (0 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
+            orte_show_help("help-orcm-sensor-freq.txt", "no-cores-found",
+                           true, orte_process_info.nodename);
+        }
         OPAL_LIST_DESTRUCT(&tracking);
         return ORTE_ERROR;
     }

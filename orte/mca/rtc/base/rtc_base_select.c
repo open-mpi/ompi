@@ -1,7 +1,5 @@
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,9 +65,6 @@ int orte_rtc_base_select(void)
             opal_output_verbose(5, orte_rtc_base_framework.framework_output,
                                 "mca:rtc:select: Skipping component [%s]. Query failed to return a module",
                                 component->mca_component_name );
-            continue;
-        }
-        if (0 == priority) {
             continue;
         }
         nmodule = (orte_rtc_base_module_t*) module;
