@@ -455,14 +455,6 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         return NULL;
     }
 
-    /* Setup the connectivity checking agent and client. */
-    if (mca_btl_usnic_component.connectivity_enabled) {
-        if (OMPI_SUCCESS != ompi_btl_usnic_connectivity_agent_init() ||
-            OMPI_SUCCESS != ompi_btl_usnic_connectivity_client_init()) {
-            return NULL;
-        }
-    }
-
     /************************************************************************
      * Below this line, we assume that usnic is loaded on all procs,
      * and therefore we will guarantee to the the modex send, even if
@@ -518,6 +510,14 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: no usNICs found");
             goto free_include_list;
+        }
+    }
+
+    /* Setup the connectivity checking agent and client. */
+    if (mca_btl_usnic_component.connectivity_enabled) {
+        if (OMPI_SUCCESS != ompi_btl_usnic_connectivity_agent_init() ||
+            OMPI_SUCCESS != ompi_btl_usnic_connectivity_client_init()) {
+            return NULL;
         }
     }
 
