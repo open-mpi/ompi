@@ -726,14 +726,14 @@ static void orte_job_destruct(orte_job_t* job)
     /* release any pointers in the attributes */
     evtimer = NULL;
     if (orte_get_attribute(&job->attributes, ORTE_JOB_FAILURE_TIMER_EVENT,
-                           (void**)evtimer, OPAL_PTR)) {
+                           (void**)&evtimer, OPAL_PTR)) {
         orte_remove_attribute(&job->attributes, ORTE_JOB_FAILURE_TIMER_EVENT);
         /* the timer is a pointer to orte_timer_t */
         OBJ_RELEASE(evtimer);
     }
     proc = NULL;
     if (orte_get_attribute(&job->attributes, ORTE_JOB_ABORTED_PROC,
-                           (void**)proc, OPAL_PTR)) {
+                           (void**)&proc, OPAL_PTR)) {
         orte_remove_attribute(&job->attributes, ORTE_JOB_ABORTED_PROC);
         /* points to an orte_proc_t */
         OBJ_RELEASE(proc);

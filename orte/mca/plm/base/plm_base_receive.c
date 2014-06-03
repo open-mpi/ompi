@@ -179,7 +179,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
         child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
         prefix_dir = NULL;
-        if (orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)prefix_dir, OPAL_STRING) &&
+        if (orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING) &&
             !orte_get_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, NULL, OPAL_STRING)) {
             orte_set_attribute(&child_app->attributes, ORTE_APP_PREFIX_DIR, ORTE_ATTR_GLOBAL, prefix_dir, OPAL_STRING);
         }

@@ -961,7 +961,7 @@ static int parseable_print(orte_ps_mpirun_info_t *hnpinfo)
                 appname = opal_basename(app->app);
             }
             nodename = NULL;
-            orte_get_attribute(&proc->attributes, ORTE_PROC_NODENAME, (void**)nodename, OPAL_STRING);
+            orte_get_attribute(&proc->attributes, ORTE_PROC_NODENAME, (void**)&nodename, OPAL_STRING);
             printf("process:%s:rank:%s:pid:%lu:node:%s:state:%s\n",
                    appname, ORTE_VPID_PRINT(proc->name.vpid),
                    (unsigned long)proc->pid,

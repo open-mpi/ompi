@@ -309,7 +309,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
                  (int)src->slots, (int)src->slots_max);
         /* does this node have any aliases? */
         tmp3 = NULL;
-        if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)tmp3, OPAL_STRING)) {
+        if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)&tmp3, OPAL_STRING)) {
             alias = opal_argv_split(tmp3, ',');
             for (i=0; NULL != alias[i]; i++) {
                 asprintf(&tmp2, "%s%s\t<noderesolve resolved=\"%s\"/>\n", tmp, pfx2, alias[i]);
@@ -335,7 +335,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
                      (long)src->slots, (long)src->slots_max);
             /* does this node have any aliases? */
             tmp3 = NULL;
-            if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)tmp3, OPAL_STRING)) {
+            if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)&tmp3, OPAL_STRING)) {
                 alias = opal_argv_split(tmp3, ',');
                 for (i=0; NULL != alias[i]; i++) {
                     asprintf(&tmp2, "%s%s\tresolved from %s\n", tmp, pfx2, alias[i]);
@@ -356,7 +356,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
                  (long)src->slots, (long)src->slots_max, (long)src->num_procs);
         /* does this node have any aliases? */
         tmp3 = NULL;
-        if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)tmp3, OPAL_STRING)) {
+        if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)&tmp3, OPAL_STRING)) {
             alias = opal_argv_split(tmp3, ',');
             for (i=0; NULL != alias[i]; i++) {
                 asprintf(&tmp2, "%s%s\tresolved from %s\n", tmp, pfx2, alias[i]);
@@ -375,7 +375,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
              pfx2, (NULL == src->name) ? "UNKNOWN" : src->name, src->state);
     /* does this node have any aliases? */
     tmp3 = NULL;
-    if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)tmp3, OPAL_STRING)) {
+    if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)&tmp3, OPAL_STRING)) {
         alias = opal_argv_split(tmp3, ',');
         for (i=0; NULL != alias[i]; i++) {
             asprintf(&tmp2, "%s%s\tresolved from %s\n", tmp, pfx2, alias[i]);
@@ -411,7 +411,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     tmp = tmp2;
     
     tmp3 = NULL;
-    if (orte_get_attribute(&src->attributes, ORTE_NODE_USERNAME, (void**)tmp3, OPAL_STRING)) {
+    if (orte_get_attribute(&src->attributes, ORTE_NODE_USERNAME, (void**)&tmp3, OPAL_STRING)) {
         asprintf(&tmp2, "%s\n%s\tUsername on node: %s", tmp, pfx2, tmp3);
         free(tmp3);
         free(tmp);
@@ -503,7 +503,7 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
             char tmp1[1024], tmp2[1024];
             char *str=NULL, *cpu_bitmap=NULL;
 ;
-            if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)cpu_bitmap, OPAL_STRING)) {
+            if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING)) {
                 mycpus = hwloc_bitmap_alloc();
                 hwloc_bitmap_list_sscanf(mycpus, cpu_bitmap);
                 if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), src->node->topology, mycpus)) {
@@ -634,7 +634,7 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
     }
     
     tmp3 = NULL;
-    orte_get_attribute(&src->attributes, ORTE_APP_PREFIX_DIR, (void**)tmp3, OPAL_STRING);
+    orte_get_attribute(&src->attributes, ORTE_APP_PREFIX_DIR, (void**)&tmp3, OPAL_STRING);
     asprintf(&tmp2, "%s\n%s\tWorking dir: %s\n%s\tPrefix: %s\n%s\tUsed on node: %s", tmp,
              pfx2, (NULL == src->cwd) ? "NULL" : src->cwd,
              pfx2, (NULL == tmp3) ? "NULL" : tmp3,

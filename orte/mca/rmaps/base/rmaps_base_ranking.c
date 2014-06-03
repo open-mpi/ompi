@@ -133,7 +133,7 @@ static int rank_span(orte_job_t *jdata,
                     }
                     /* protect against bozo case */
                     locale = NULL;
-                    if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
+                    if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
                         ORTE_ERROR_LOG(ORTE_ERROR);
                         return ORTE_ERROR;
                     }
@@ -246,7 +246,7 @@ static int rank_fill(orte_job_t *jdata,
                 }
                  /* protect against bozo case */
                 locale = NULL;
-                if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
+                if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
                     ORTE_ERROR_LOG(ORTE_ERROR);
                     return ORTE_ERROR;
                 }

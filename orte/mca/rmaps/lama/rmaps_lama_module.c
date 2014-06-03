@@ -826,7 +826,7 @@ static int orte_rmaps_lama_map_core(orte_job_t *jdata)
                 continue;
             }
             cpu_bitmap = NULL;
-            orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)cpu_bitmap, OPAL_STRING);
+            orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING);
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:lama: Ordering: Proc. %2d on Node %10s - Slot %s",
                                 proc->name.vpid, proc->node->name, cpu_bitmap);

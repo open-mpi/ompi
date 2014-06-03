@@ -2893,7 +2893,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
         if (orte_retain_aliases) {
             aliases = NULL;
             aptr = NULL;
-            if (orte_get_attribute(&proc->node->attributes, ORTE_NODE_ALIAS, (void**)aptr, OPAL_STRING)) {
+            if (orte_get_attribute(&proc->node->attributes, ORTE_NODE_ALIAS, (void**)&aptr, OPAL_STRING)) {
                 aliases = opal_argv_split(aptr, ',');
                 free(aptr);
                 if (orte_use_hostname_alias <= opal_argv_count(aliases)) {
