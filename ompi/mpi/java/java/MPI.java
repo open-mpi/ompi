@@ -57,6 +57,7 @@ public final class MPI
 private static boolean initialized, finalized;
 private static byte[] buffer = null; // Buffer allocation
 private static final int MAX_PROCESSOR_NAME = 256;
+private static final ByteOrder nativeOrder = ByteOrder.nativeOrder();
 
 public static final Intracomm COMM_WORLD, COMM_SELF;
 
@@ -673,7 +674,7 @@ protected static Object attrGet(byte[] value) throws MPIException
 public static ByteBuffer newByteBuffer(int capacity)
 {
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf;
 }
 
@@ -686,7 +687,7 @@ public static CharBuffer newCharBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 2;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 2);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asCharBuffer();
 }
 
@@ -699,7 +700,7 @@ public static ShortBuffer newShortBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 2;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 2);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asShortBuffer();
 }
 
@@ -712,7 +713,7 @@ public static IntBuffer newIntBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 4;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 4);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asIntBuffer();
 }
 
@@ -725,7 +726,7 @@ public static LongBuffer newLongBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 8;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 8);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asLongBuffer();
 }
 
@@ -738,7 +739,7 @@ public static FloatBuffer newFloatBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 4;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 4);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asFloatBuffer();
 }
 
@@ -751,7 +752,7 @@ public static DoubleBuffer newDoubleBuffer(int capacity)
 {
     assert capacity <= Integer.MAX_VALUE / 8;
     ByteBuffer buf = ByteBuffer.allocateDirect(capacity * 8);
-    buf.order(ByteOrder.nativeOrder());
+    buf.order(nativeOrder);
     return buf.asDoubleBuffer();
 }
 
@@ -808,9 +809,8 @@ protected static boolean isHeapBuffer(Object obj)
  */
 public static ByteBuffer slice(ByteBuffer buf, int offset)
 {
-    buf.position(offset);
-    ByteOrder order = buf.order();
-    return buf.slice().order(order);
+    return ((ByteBuffer)buf.clear().position(offset))
+            .slice().order(nativeOrder);
 }
 
 /**
@@ -822,8 +822,7 @@ public static ByteBuffer slice(ByteBuffer buf, int offset)
  */
 public static CharBuffer slice(CharBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((CharBuffer)buf.clear().position(offset)).slice();
 }
 
 /**
@@ -835,8 +834,7 @@ public static CharBuffer slice(CharBuffer buf, int offset)
  */
 public static ShortBuffer slice(ShortBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((ShortBuffer)buf.clear().position(offset)).slice();
 }
 
 /**
@@ -848,8 +846,7 @@ public static ShortBuffer slice(ShortBuffer buf, int offset)
  */
 public static IntBuffer slice(IntBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((IntBuffer)buf.clear().position(offset)).slice();
 }
 
 /**
@@ -861,8 +858,7 @@ public static IntBuffer slice(IntBuffer buf, int offset)
  */
 public static LongBuffer slice(LongBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((LongBuffer)buf.clear().position(offset)).slice();
 }
 
 /**
@@ -874,8 +870,7 @@ public static LongBuffer slice(LongBuffer buf, int offset)
  */
 public static FloatBuffer slice(FloatBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((FloatBuffer)buf.clear().position(offset)).slice();
 }
 
 /**
@@ -887,8 +882,7 @@ public static FloatBuffer slice(FloatBuffer buf, int offset)
  */
 public static DoubleBuffer slice(DoubleBuffer buf, int offset)
 {
-    buf.position(offset);
-    return buf.slice();
+    return ((DoubleBuffer)buf.clear().position(offset)).slice();
 }
 
 /**
@@ -901,7 +895,7 @@ public static DoubleBuffer slice(DoubleBuffer buf, int offset)
 public static ByteBuffer slice(byte[] buf, int offset)
 {
     return ByteBuffer.wrap(buf, offset, buf.length - offset)
-                     .slice().order(ByteOrder.nativeOrder());
+                     .slice().order(nativeOrder);
 }
 
 /**
