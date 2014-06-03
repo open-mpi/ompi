@@ -379,7 +379,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                         char *cpu_bitmap;
 
                         loc = NULL;
-                        if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)loc, OPAL_PTR)) {
+                        if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&loc, OPAL_PTR)) {
                             hwloc_bitmap_list_snprintf(locale, 64, loc->cpuset);
                         }
                         cpu_bitmap = NULL;

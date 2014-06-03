@@ -478,7 +478,7 @@ static int decode_app_nodemap(opal_byte_object_t *bo)
          */
         hostid = 0;
         hostidptr = &hostid;
-        if (orte_get_attribute(&node->attributes, ORTE_NODE_HOSTID, (void**)hostidptr, ORTE_VPID)) {
+        if (orte_get_attribute(&node->attributes, ORTE_NODE_HOSTID, (void**)&hostidptr, ORTE_VPID)) {
             orte_coprocessors_detected = true;  // obviously, coprocessors were detected
             OBJ_CONSTRUCT(&kv, opal_value_t);
             kv.key = strdup(ORTE_DB_HOSTID);
@@ -786,7 +786,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                     OBJ_DESTRUCT(&kv);
                 }
                 cpu_bitmap = NULL;
-                if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)cpu_bitmap, OPAL_STRING) &&
+                if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
                     NULL != cpu_bitmap) {
                     orte_process_info.cpuset = cpu_bitmap;
                 }
@@ -833,7 +833,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
             }
             OBJ_DESTRUCT(&kv);
             cpu_bitmap = NULL;
-            if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)cpu_bitmap, OPAL_STRING) &&
+            if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
                 NULL != cpu_bitmap) {
                 OBJ_CONSTRUCT(&kv, opal_value_t);
                 kv.key = strdup(OPAL_DSTORE_CPUSET);

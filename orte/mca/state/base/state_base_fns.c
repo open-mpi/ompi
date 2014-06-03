@@ -582,7 +582,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     }
 
     i32ptr = &i32;
-    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NUM_NONZERO_EXIT, (void**)i32ptr, OPAL_INT32) && !orte_abort_non_zero_exit) {
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_NUM_NONZERO_EXIT, (void**)&i32ptr, OPAL_INT32) && !orte_abort_non_zero_exit) {
         if (!orte_report_child_jobs_separately || 1 == ORTE_LOCAL_JOBID(jdata->jobid)) {
             /* update the exit code */
             ORTE_UPDATE_EXIT_STATUS(lowest);

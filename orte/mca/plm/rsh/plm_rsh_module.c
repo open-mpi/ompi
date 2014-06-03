@@ -1190,7 +1190,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         /* setup node name */
         free(argv[node_name_index1]);
         username = NULL;
-        if (orte_get_attribute(&node->attributes, ORTE_NODE_USERNAME, (void**)username, OPAL_STRING)) {
+        if (orte_get_attribute(&node->attributes, ORTE_NODE_USERNAME, (void**)&username, OPAL_STRING)) {
             (void)asprintf (&argv[node_name_index1], "%s@%s",
                             username, node->name);
             free(username);

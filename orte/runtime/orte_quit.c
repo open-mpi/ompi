@@ -170,7 +170,7 @@ static void dump_aborted_procs(void)
             ORTE_JOB_STATE_ABORT_ORDERED != job->state) {
             /* this is a guilty party */
             proc = NULL;
-            orte_get_attribute(&job->attributes, ORTE_JOB_ABORTED_PROC, (void**)proc, OPAL_PTR);
+            orte_get_attribute(&job->attributes, ORTE_JOB_ABORTED_PROC, (void**)&proc, OPAL_PTR);
             /* cycle through and count the number that were killed or aborted */
             for (i=0; i < job->procs->size; i++) {
                 if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(job->procs, i))) {

@@ -511,7 +511,7 @@ static void prune(orte_jobid_t jobid,
                 continue;
             }
             locale = NULL;
-            if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
+            if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return;
             }
@@ -565,7 +565,7 @@ static void prune(orte_jobid_t jobid,
                         continue;
                     }
                     locale = NULL;
-                    if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)locale, OPAL_PTR)) {
+                    if (orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                         return;
                     }

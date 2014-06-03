@@ -82,7 +82,7 @@ static void reset_usage(orte_node_t *node, orte_jobid_t jobid)
             continue;
         }
         bound = NULL;
-        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)bound, OPAL_PTR) ||
+        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bound, OPAL_PTR) ||
             NULL == bound) {
             /* this proc isn't bound - ignore it */
             opal_output_verbose(10, orte_rmaps_base_framework.framework_output,

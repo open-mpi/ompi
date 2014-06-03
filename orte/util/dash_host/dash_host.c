@@ -140,7 +140,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                     /* add to list of aliases for this node - only add if unique */
                     aptr = NULL;
                     aliases = NULL;
-                    orte_get_attribute(&node->attributes, ORTE_NODE_ALIAS, (void**)aptr, OPAL_STRING);
+                    orte_get_attribute(&node->attributes, ORTE_NODE_ALIAS, (void**)&aptr, OPAL_STRING);
                     if (NULL != aptr) {
                         aliases = opal_argv_split(aptr, ',');
                         free(aptr);
