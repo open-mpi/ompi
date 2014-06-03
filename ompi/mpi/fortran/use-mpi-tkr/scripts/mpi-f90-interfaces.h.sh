@@ -5575,7 +5575,7 @@ output_292() {
     cat <<EOF
 
 subroutine ${procedure}(comm_old, n, sources, degrees, destinations, &
-        weights, info, reorder, comm_dist_graph, ierr)
+        weights, info, reorder, comm_dist_graph, ierror)
   integer, intent(in) :: comm_old
   integer, intent(in) :: n
   integer, dimension(n), intent(in) :: sources
@@ -5585,7 +5585,7 @@ subroutine ${procedure}(comm_old, n, sources, degrees, destinations, &
   logical, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5607,7 +5607,7 @@ output_293() {
 
 subroutine ${procedure}(comm_old, indegree, sources, sourceweights, &
        outdegree, destinations, destweights, info, reorder, &
-       comm_dist_graph, ierr)
+       comm_dist_graph, ierror)
   integer, intent(in) :: comm_old
   integer, intent(in) :: indegree
   integer, dimension(indegree), intent(in) :: sources
@@ -5618,7 +5618,7 @@ subroutine ${procedure}(comm_old, indegree, sources, sourceweights, &
   logical, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5638,12 +5638,12 @@ output_294() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(comm, indegree, outdegree, weighted, ierr)
+subroutine ${procedure}(comm, indegree, outdegree, weighted, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: indegree
   integer, intent(out) :: outdegree
   logical, intent(out) :: weighted
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
@@ -5664,7 +5664,7 @@ output_295() {
     cat <<EOF
 
 subroutine ${procedure}(comm, maxindegree, sources, sourceweights, &
-       maxoutdegree, destinations, destweights, ierr)
+       maxoutdegree, destinations, destweights, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: maxindegree
   integer, dimension(maxindegree), intent(out) :: sources
@@ -5672,7 +5672,7 @@ subroutine ${procedure}(comm, maxindegree, sources, sourceweights, &
   integer, intent(in) :: maxoutdegree
   integer, dimension(maxoutdegree), intent(out) :: destinations
   integer, dimension(maxoutdegree), intent(out) :: destweights
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine ${procedure}
 
 EOF
