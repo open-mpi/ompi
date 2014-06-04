@@ -268,8 +268,8 @@ static int init(void)
         filename = opal_os_path(false, trk->directory, "scaling_setspeed", NULL);
         if (NULL != (fp = fopen(filename, "rw"))) {
             trk->setspeed = true;
+            fclose(fp);
         }
-        fclose(fp);
         free(filename);
 
         /* add to our list */
