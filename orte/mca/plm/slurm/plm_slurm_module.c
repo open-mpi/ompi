@@ -375,6 +375,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(state->jdata->apps, n))) {
             continue;
         }
+        app_prefix_dir = NULL;
         orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&app_prefix_dir, OPAL_STRING);
         /* Check for already set cur_prefix_dir -- if different,
            complain */
