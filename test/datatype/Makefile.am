@@ -4,6 +4,8 @@
 #                         reserved.
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -12,12 +14,16 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw unpack_ooo
     MPI_CHECKS = to_self ddt_pack
 endif
 TESTS = opal_datatype_test $(MPI_TESTS)
 
 check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
+
+unpack_ooo_SOURCES = unpack_ooo.c ddt_lib.c ddt_lib.h
+unpack_ooo_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+unpack_ooo_LDADD = $(top_builddir)/ompi/libmpi.la
 
 ddt_test_SOURCES = ddt_test.c ddt_lib.c ddt_lib.h
 ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
