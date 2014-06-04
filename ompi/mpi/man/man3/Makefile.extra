@@ -301,7 +301,6 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Testsome.3 \
         mpi/man/man3/MPI_Topo_test.3 \
         mpi/man/man3/MPI_Type_c2f.3 \
-        mpi/man/man3/MPI_Type_f2c.3 \
         mpi/man/man3/MPI_Type_commit.3 \
         mpi/man/man3/MPI_Type_contiguous.3 \
         mpi/man/man3/MPI_Type_create_darray.3 \
