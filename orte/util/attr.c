@@ -215,6 +215,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
         return "PROC-NODENAME";
     case ORTE_PROC_CGROUP:
         return "PROC-CGROUP";
+    case ORTE_PROC_NBEATS:
+        return "PROC-NBEATS";
 
     default:
         return "UNKNOWN-KEY";
