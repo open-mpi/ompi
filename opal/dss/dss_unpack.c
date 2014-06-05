@@ -1063,16 +1063,15 @@ int opal_dss_unpack_buffer_contents(opal_buffer_t *buffer, void *dest,
         if (OPAL_SUCCESS != (ret = opal_dss_unpack_sizet(buffer, &nbytes, &m, OPAL_SIZE))) {
             return ret;
         }
+        m = nbytes;
         /* setup the buffer's data region */
         if (0 < nbytes) {
             ptr[i]->base_ptr = (char*)malloc(nbytes);
+            /* unpack the bytes */
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_byte(buffer, ptr[i]->base_ptr, &m, OPAL_BYTE))) {
+                return ret;
+            }
         }
-        /* unpack the bytes */
-        m=nbytes;
-        if (OPAL_SUCCESS != (ret = opal_dss_unpack_byte(buffer, ptr[i]->base_ptr, &m, OPAL_BYTE))) {
-            return ret;
-        }
-        /* fill-in the metadata */
         ptr[i]->pack_ptr = ptr[i]->base_ptr + m;
         ptr[i]->unpack_ptr = ptr[i]->base_ptr;
         ptr[i]->bytes_allocated = nbytes;

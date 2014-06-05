@@ -822,8 +822,12 @@ int opal_dss_pack_buffer_contents(opal_buffer_t *buffer, const void *src,
             return ret;
         }
         /* pack the bytes */
-        if (OPAL_SUCCESS != (ret = opal_dss_pack_byte(buffer, ptr[i]->base_ptr, ptr[i]->bytes_used, OPAL_BYTE))) {
-            return ret;
+        if (0 < ptr[i]->bytes_used) {
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_byte(buffer, ptr[i]->base_ptr, ptr[i]->bytes_used, OPAL_BYTE))) {
+                return ret;
+            }
+        } else {
+            ptr[i]->base_ptr = NULL;
         }
     }
     return OPAL_SUCCESS;
