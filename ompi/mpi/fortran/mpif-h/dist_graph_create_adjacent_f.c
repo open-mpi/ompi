@@ -72,12 +72,10 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
 {
     MPI_Info c_info;
     MPI_Comm c_comm_old, c_comm_graph;
-    const int *c_destweights, *c_sourceweights;
+    int *c_destweights, *c_sourceweights;
 
     OMPI_ARRAY_NAME_DECL(sources);
-    OMPI_ARRAY_NAME_DECL(sourceweights);
     OMPI_ARRAY_NAME_DECL(destinations);
-    OMPI_ARRAY_NAME_DECL(destweights);
 
     c_comm_old = MPI_Comm_f2c(*comm_old);
     c_info = MPI_Info_f2c(*info);
