@@ -790,11 +790,6 @@ static void* listen_thread(opal_object_t *obj)
 static void connection_handler(int sd, short flags, void* cbdata)
 {
     mca_oob_tcp_pending_connection_t *new_connection;
-    int i;
-    mca_oob_tcp_module_t *mod;
-    bool found;
-    struct sockaddr modaddr;
-    uint32_t netmask;
 
     new_connection = (mca_oob_tcp_pending_connection_t*)cbdata;
 
@@ -806,58 +801,9 @@ static void connection_handler(int sd, short flags, void* cbdata)
                         opal_net_get_hostname((struct sockaddr*) &new_connection->addr),
                         opal_net_get_port((struct sockaddr*) &new_connection->addr));
 
-    /* cycle across all interfaces until we find the one that
-     * "owns" this connection - i.e., it is handling the
-     * incoming address space
-     */
-    found = false;
-    for(i = opal_ifbegin(); i >= 0; i = opal_ifnext(i)){
-        /* see if the incoming address is within the address space
-         * of this interface
-         */
-        if (OPAL_SUCCESS != opal_ifindextoaddr(i, &modaddr, sizeof(modaddr))) {
-            continue;
-        }
-        if (OPAL_SUCCESS != opal_ifindextomask(i, &netmask, sizeof(netmask))) {
-            continue;
-        }
-        if (opal_net_samenetwork((struct sockaddr*)&new_connection->addr, &modaddr, netmask)) {
-            /* lookup the corresponding kernel index of this interface */
-            i = opal_ifindextokindex(i);
-            /* get the module */
-            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-                found = false;
-                break;
-            }
-            /* process the connection */
-            mod->api.accept_connection((struct mca_oob_tcp_module_t*)mod, new_connection->fd,
-                                       (struct sockaddr*) &(new_connection->addr));
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        /* let's just assign it to the first module we have as we
-         * can't do any better - this is just an assignment to a
-         * specific software module to handle the connection
-         */
-        for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
-            if (NULL != (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-                /* process the connection */
-                mod->api.accept_connection((struct mca_oob_tcp_module_t*)mod, new_connection->fd,
-                                           (struct sockaddr*) &(new_connection->addr));
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            close(new_connection->fd); // close this so the remote end hangs up
-            opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-    }
-
+    /* process the connection */
+    mca_oob_tcp_module.api.accept_connection(new_connection->fd,
+                                             (struct sockaddr*) &(new_connection->addr));
     /* cleanup */
     OBJ_RELEASE(new_connection);
 }
@@ -870,11 +816,6 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
     struct sockaddr addr;
     opal_socklen_t addrlen = sizeof(struct sockaddr);
     int sd;
-    int i;
-    mca_oob_tcp_module_t *mod;
-    bool found;
-    struct sockaddr modaddr;
-    uint32_t netmask;
 
     sd = accept(incoming_sd, (struct sockaddr*)&addr, &addrlen);
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -907,55 +848,8 @@ static void connection_event_handler(int incoming_sd, short flags, void* cbdata)
         return;
     }
 
-    /* cycle across all interfaces untile we find the one that
-     * "owns" this connection - i.e., it is handling the
-     * incoming address space
-     */
-    found = false;
-    for(i = opal_ifbegin(); i >= 0; i = opal_ifnext(i)){
-        /* see if the incoming address is within the address space
-         * of this interface
-         */
-        if (OPAL_SUCCESS != opal_ifindextoaddr(i, &modaddr, sizeof(modaddr))) {
-            continue;
-        }
-        if (OPAL_SUCCESS != opal_ifindextomask(i, &netmask, sizeof(netmask))) {
-            continue;
-        }
-        if (opal_net_samenetwork((struct sockaddr*)&addr, &modaddr, netmask)) {
-            /* lookup the corresponding kernel index of this interface */
-            i = opal_ifindextokindex(i);
-            /* get the module */
-            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-                found = false;
-                break;
-            }
-            /* process the connection */
-            mod->api.accept_connection((struct mca_oob_tcp_module_t*)mod, sd, &addr);
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        /* let's just assign it to the first module we have as we
-         * can't do any better - this is just an assignment to a
-         * specific software module to handle the connection
-         */
-        for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
-            if (NULL != (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-                /* process the connection */
-                mod->api.accept_connection((struct mca_oob_tcp_module_t*)mod, sd, &addr);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            close(sd); // close this so the remote end hangs up
-            opal_output(0, "%s CONNECTION REQUEST ON UNKNOWN INTERFACE",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
-    }
+    /* process the connection */
+    mca_oob_tcp_module.api.accept_connection(sd, &addr);
 }
 
 

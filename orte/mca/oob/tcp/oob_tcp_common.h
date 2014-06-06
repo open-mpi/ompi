@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,6 +30,5 @@
 
 ORTE_MODULE_DECLSPEC void orte_oob_tcp_set_socket_options(int sd);
 ORTE_MODULE_DECLSPEC char* mca_oob_tcp_state_print(mca_oob_tcp_state_t state);
-ORTE_MODULE_DECLSPEC mca_oob_tcp_peer_t* mca_oob_tcp_peer_lookup(mca_oob_tcp_module_t *md,
-                                                                 const orte_process_name_t *name);
+ORTE_MODULE_DECLSPEC mca_oob_tcp_peer_t* mca_oob_tcp_peer_lookup(const orte_process_name_t *name);
 #endif /* _MCA_OOB_TCP_COMMON_H_ */

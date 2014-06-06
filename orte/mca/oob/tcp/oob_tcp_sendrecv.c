@@ -123,7 +123,6 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
 {
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)cbdata;
     mca_oob_tcp_send_t* msg = peer->send_msg;
-    mca_oob_tcp_module_t *mod = (mca_oob_tcp_module_t*)peer->mod;
     int rc;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -138,7 +137,7 @@ void mca_oob_tcp_send_handler(int sd, short flags, void *cbdata)
                             "%s tcp:send_handler %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             mca_oob_tcp_state_print(peer->state));
-        mca_oob_tcp_peer_complete_connect(mod, peer);
+        mca_oob_tcp_peer_complete_connect(peer);
         /* de-activate the send event until the connection
          * handshake completes
          */
@@ -374,7 +373,7 @@ static int read_bytes(mca_oob_tcp_peer_t* peer)
                 OBJ_RELEASE(peer->recv_msg);
                 peer->recv_msg = NULL;
             }
-            mca_oob_tcp_peer_close((mca_oob_tcp_module_t*)peer->mod, peer);
+            mca_oob_tcp_peer_close(peer);
             //if (NULL != mca_oob_tcp.oob_exception_callback) {
             //   mca_oob_tcp.oob_exception_callback(&peer->peer_name, ORTE_RML_PEER_DISCONNECTED);
             //}
@@ -397,7 +396,6 @@ static int read_bytes(mca_oob_tcp_peer_t* peer)
 void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
 {
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)cbdata;
-    mca_oob_tcp_module_t *mod = (mca_oob_tcp_module_t*)peer->mod;
     int rc;
     orte_process_name_t hop;
     mca_oob_tcp_peer_t *relay;
@@ -414,7 +412,7 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
 
     switch (peer->state) {
     case MCA_OOB_TCP_CONNECT_ACK:
-        if (ORTE_SUCCESS == (rc = mca_oob_tcp_peer_recv_connect_ack(mod, peer, peer->sd, NULL))) {
+        if (ORTE_SUCCESS == (rc = mca_oob_tcp_peer_recv_connect_ack(peer, peer->sd, NULL))) {
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "%s:tcp:recv:handler starting send/recv events",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -504,7 +502,7 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                     "%s:tcp:recv:handler error reading bytes - closing connection",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                mca_oob_tcp_peer_close(mod, peer);
+                mca_oob_tcp_peer_close(peer);
                 return;
             }
         }
@@ -549,22 +547,21 @@ void mca_oob_tcp_recv_handler(int sd, short flags, void *cbdata)
                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                             ORTE_NAME_PRINT(&peer->name));
                         /* let the component know about the problem */
-                        ORTE_ACTIVATE_TCP_MSG_ERROR(mod, NULL, peer->recv_msg, &hop, mca_oob_tcp_component_no_route);
+                        ORTE_ACTIVATE_TCP_MSG_ERROR(NULL, peer->recv_msg, &hop, mca_oob_tcp_component_no_route);
                         /* cleanup */
                         OBJ_RELEASE(peer->recv_msg);
                         return;
                     } else {
-                        /* does this module know how to reach the next hop? */
+                        /* does we know how to reach the next hop? */
                         memcpy(&ui64, (char*)&hop, sizeof(uint64_t));
-                        if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mod->peers, ui64, (void**)&relay)) {
+                        if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_module.peers, ui64, (void**)&relay)) {
                             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                                "%s ADDRESS OF NEXT HOP %s TO %s IS UNKNOWN VIA MODULE %s",
+                                                "%s ADDRESS OF NEXT HOP %s TO %s IS UNKNOWN",
                                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                                 ORTE_NAME_PRINT(&hop),
-                                                ORTE_NAME_PRINT(&peer->recv_msg->hdr.dst),
-                                                peer->mod->if_name);
+                                                ORTE_NAME_PRINT(&peer->recv_msg->hdr.dst));
                             /* let the component know about the problem */
-                            ORTE_ACTIVATE_TCP_MSG_ERROR(mod, NULL, peer->recv_msg, &hop, mca_oob_tcp_component_hop_unknown);
+                            ORTE_ACTIVATE_TCP_MSG_ERROR(NULL, peer->recv_msg, &hop, mca_oob_tcp_component_hop_unknown);
                             /* cleanup */
                             OBJ_RELEASE(peer->recv_msg);
                             return;

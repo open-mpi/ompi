@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,21 +55,17 @@ typedef struct {
 OBJ_CLASS_DECLARATION(mca_oob_tcp_nicaddr_t);
 
 /* Module definition */
-typedef void (*mca_oob_tcp_module_init_fn_t)(struct mca_oob_tcp_module_t *mod);
-typedef void (*mca_oob_tcp_module_fini_fn_t)(struct mca_oob_tcp_module_t *mod);
-typedef void (*mca_oob_tcp_module_accept_connection_fn_t)(struct mca_oob_tcp_module_t *md,
-                                                          const int accepted_fd,
+typedef void (*mca_oob_tcp_module_init_fn_t)(void);
+typedef void (*mca_oob_tcp_module_fini_fn_t)(void);
+typedef void (*mca_oob_tcp_module_accept_connection_fn_t)(const int accepted_fd,
                                                           const struct sockaddr *addr);
-typedef void (*mca_oob_tcp_module_set_peer_fn_t)(struct mca_oob_tcp_module_t *mod,
-                                                 const orte_process_name_t* name,
+typedef void (*mca_oob_tcp_module_set_peer_fn_t)(const orte_process_name_t* name,
                                                  const uint16_t af_family,
                                                  const char *net, const char *ports);
-typedef void (*mca_oob_tcp_module_ping_fn_t)(struct mca_oob_tcp_module_t *mod,
-                                             const orte_process_name_t *proc);
-typedef void (*mca_oob_tcp_module_send_nb_fn_t)(struct mca_oob_tcp_module_t *mod,
-                                                orte_rml_send_t *msg);
+typedef void (*mca_oob_tcp_module_ping_fn_t)(const orte_process_name_t *proc);
+typedef void (*mca_oob_tcp_module_send_nb_fn_t)(orte_rml_send_t *msg);
 typedef void (*mca_oob_tcp_module_resend_nb_fn_t)(struct mca_oob_tcp_msg_error_t *mop);
-typedef void (*mca_oob_tcp_module_ft_event_fn_t)(struct mca_oob_tcp_module_t *mod, int state);
+typedef void (*mca_oob_tcp_module_ft_event_fn_t)(int state);
 
 typedef struct {
     mca_oob_tcp_module_init_fn_t               init;
@@ -82,14 +79,9 @@ typedef struct {
 } mca_oob_tcp_module_api_t;
 typedef struct {
     mca_oob_tcp_module_api_t  api;
-    int idx;                                  // index in the module array
     opal_event_base_t          *ev_base;      /* event base for the module progress thread */
     bool                       ev_active;
     opal_thread_t              progress_thread;
-    int                        af_family;     // interface family - v4 or v6
-    char*                      if_name;       /* string name of the interface */
-    int                        if_kidx;       /* interface kernel index */
-    opal_list_t                addresses;     /* list of addresses served by this NIC */
     opal_hash_table_t          peers;         // connection addresses for peers
 } mca_oob_tcp_module_t;
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_module_t mca_oob_tcp_module;

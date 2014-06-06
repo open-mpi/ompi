@@ -145,12 +145,8 @@ static int tcp_component_open(void)
         mca_oob_tcp_component.listen_thread_tv.tv_usec = 0;
     }
     mca_oob_tcp_component.addr_count = 0;
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.modules, opal_pointer_array_t);
-    opal_pointer_array_init(&mca_oob_tcp_component.modules, 4, INT_MAX, 2);
     mca_oob_tcp_component.ipv4conns = NULL;
     mca_oob_tcp_component.ipv4ports = NULL;
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.peers, opal_hash_table_t);
-    opal_hash_table_init(&mca_oob_tcp_component.peers, 32);
 
 #if OPAL_ENABLE_IPV6
     mca_oob_tcp_component.ipv6conns = NULL;
@@ -179,30 +175,8 @@ static int tcp_component_open(void)
  */
 static int tcp_component_close(void)
 {
-    int i;
-    mca_oob_tcp_module_t *mod;
-    opal_object_t *value;
-    uint64_t key;
-    void *node;
-    int rc;
-
-    /* don't cleanup the listen thread as it wasn't constructed
-     * for anything other than the HNP, and we don't want to incur
-     * the timeout penalty when the HNP exits that would be required
-     * to stop the thread
-     */
-
-    /* cleanup listen event list */
+   /* cleanup listen event list */
     OBJ_DESTRUCT(&mca_oob_tcp_component.listeners);
-
-    /* cleanup modules */
-    for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
-        if (NULL != (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-            free(mod->if_name);
-            free(mod);
-        }
-    }
-    OBJ_DESTRUCT(&mca_oob_tcp_component.modules);
 
     if (NULL != mca_oob_tcp_component.ipv4conns) {
         opal_argv_free(mca_oob_tcp_component.ipv4conns);
@@ -219,17 +193,6 @@ static int tcp_component_close(void)
         opal_argv_free(mca_oob_tcp_component.ipv6ports);
     }
 #endif
-
-    /* release all peers from the hash table */
-    rc = opal_hash_table_get_first_key_uint64 (&mca_oob_tcp_component.peers, &key,
-                                               (void **) &value, &node);
-    while (OPAL_SUCCESS == rc) {
-        OBJ_RELEASE(value);
-        rc = opal_hash_table_get_next_key_uint64 (&mca_oob_tcp_component.peers, &key,
-                                                  (void **) &value, node, &node);
-    }
-
-    OBJ_DESTRUCT(&mca_oob_tcp_component.peers);
 
     return ORTE_SUCCESS;
 }
@@ -445,20 +408,15 @@ static int tcp_component_register(void)
 
 
 static char **split_and_resolve(char **orig_str, char *name);
-static int mca_oob_tcp_create(int if_idx,
-                              const char *if_name);
 
 static bool component_available(void)
 {
-    int i, j, rc;
+    int i, rc;
     char **interfaces = NULL;
     bool including = false, excluding = false;
     char name[32];
     struct sockaddr_storage my_ss;
     int kindex;
-    bool add_this_nic;
-    mca_oob_tcp_module_t *mod;
-    mca_oob_tcp_nicaddr_t *nicaddr;
 
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "oob:tcp: component_available called");
@@ -550,30 +508,6 @@ static bool component_available(void)
             }
         }
 
-        /* we know we want this address - check if we have seen this NIC before */
-        add_this_nic = true;
-        for (j = 0; j < mca_oob_tcp_component.modules.size; j++) {
-            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, j))) {
-                continue;
-            }
-            /* Have we seen this NIC already? */
-            if (kindex == mod->if_kidx) {
-                add_this_nic = false;
-                /* we don't want another module to be created. But we still need to preserve
-                 * the address as a given NIC can have multiple addresses. 
-                 */
-                    nicaddr = OBJ_NEW(mca_oob_tcp_nicaddr_t);
-                    nicaddr->af_family = my_ss.ss_family;
-                    memcpy(&nicaddr->addr, &my_ss, sizeof(struct sockaddr));
-                    opal_list_append(&mod->addresses, &nicaddr->super);
-                    opal_output_verbose(10, orte_oob_base_framework.framework_output,
-                                        "%s oob:tcp:init adding %s address to interface %s",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        (AF_INET == my_ss.ss_family) ? "V4" : "V6", name);
-                break;
-            }
-        }
-
         /* Refs ticket #3019
          * it would probably be worthwhile to print out a warning if OMPI detects multiple
          * IP interfaces that are "up" on the same subnet (because that's a Bad Idea). Note
@@ -581,18 +515,6 @@ static bool component_available(void)
          * list MCA params. If we detect redundant ports, we can also automatically ignore
          * them so that applications won't hang. 
          */
-
-        if (add_this_nic) {
-            opal_output_verbose(10, orte_oob_base_framework.framework_output,
-                                "%s oob:tcp:init creating module for %s address on interface %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                (AF_INET == my_ss.ss_family) ? "V4" : "V6", name);
-            /* we want to support this interface, so create a module for it */
-            if (ORTE_SUCCESS != (rc = mca_oob_tcp_create(kindex, name))) {
-                ORTE_ERROR_LOG(rc);
-                return false;
-            }
-        }
 
         /* add this address to our connections */
         if (AF_INET == my_ss.ss_family) {
@@ -624,7 +546,11 @@ static bool component_available(void)
         opal_argv_free(interfaces);
     }
 
-    if (0 == mca_oob_tcp_component.num_modules) {
+    if (0 == opal_argv_count(mca_oob_tcp_component.ipv4conns)
+#if OPAL_ENABLE_IPV6
+        && 0 == opal_argv_count(mca_oob_tcp_component.ipv6conns)
+#endif
+        ) {
         if (including) {
             orte_show_help("help-oob-tcp.txt", "no-included-found", true, mca_oob_tcp_component.if_include);
         } else if (excluding) {
@@ -632,27 +558,26 @@ static bool component_available(void)
         }
         return false;
     }
+
+    /* set the module event base - this is where we would spin off a separate
+     * progress thread if so desired */
+    mca_oob_tcp_module.ev_base = orte_event_base;
+
     return true;
 }
 
 /* Start all modules */
 static int component_startup(void)
 {
-    mca_oob_tcp_module_t *mod;
-    int i, rc;
+    int rc;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP STARTUP",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    /* start the modules */
-    for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
-        if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-            continue;
-        }
-        if (NULL != mod->api.init) {
-            mod->api.init((struct mca_oob_tcp_module_t*)mod);
-        }
+    /* start the module */
+    if (NULL != mca_oob_tcp_module.api.init) {
+        mca_oob_tcp_module.api.init();
     }
 
     /* start the listening thread/event */
@@ -664,7 +589,6 @@ static int component_startup(void)
 
 static void component_shutdown(void)
 {
-    mca_oob_tcp_module_t *mod;
     int i;
     opal_list_item_t *item;
 
@@ -683,87 +607,31 @@ static void component_shutdown(void)
         OBJ_RELEASE(item);
     }
 
-    /* shutdown the modules */
-    for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
-        if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-            continue;
-        }
-        if (NULL != mod->api.finalize) {
-            mod->api.finalize((struct mca_oob_tcp_module_t*)mod);
-        }
+    /* shutdown the module */
+    if (NULL != mca_oob_tcp_module.api.finalize) {
+        mca_oob_tcp_module.api.finalize();
     }
 }
 
 static int component_send(orte_rml_send_t *msg)
 {
-    int i;
-    mca_oob_tcp_component_peer_t *pr;
-    uint64_t ui64;
-    mca_oob_tcp_module_t *mod;
-
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                         "%s oob:tcp:send_nb to peer %s:%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&msg->dst), msg->tag);
 
-    /* do we know some way of potentially reaching this peer? */
-    memcpy(&ui64, (char*)&msg->dst, sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pr)) {
-        /* nope - let someone else try */
-        return ORTE_ERR_TAKE_NEXT_OPTION;
-    }
-    /* if we knew the peer but have found all routes unreachable, then
-     * we can't send it
+    /* the module is potentially running on its own event
+     * base, so all it can do is push our send request
+     * onto an event - it cannot tell us if it will
+     * succeed. The module will first see if it knows
+     * of a way to send the data to the target, and then
+     * attempt to send the data. It  will call the cbfunc
+     * with the status upon completion - if it can't do it for
+     * some reason, it will call the component error
+     * function so we can do something about it
      */
-    if (NULL == pr || opal_bitmap_is_clear(&pr->reachable)) {
-        return ORTE_ERR_TAKE_NEXT_OPTION;
-    }
-
-    /* if a module is assigned, then use it */
-    if (NULL != pr->mod) {
-        /* the module is potentially running on its own event
-         * base, so all it can do is push our send request
-         * onto an event - it cannot tell us if it will
-         * succeed. The module will attempt to send the data and
-         * will call the cbfunc with the status
-         * upon completion - if it can't do it for
-         * some reason, it will call the component error
-         * function so we can try with another module
-         */
-        pr->mod->api.send_nb((struct mca_oob_tcp_module_t*)pr->mod, msg);
-        return ORTE_SUCCESS;
-    }
-
-    /* if a module isn't assigned, give it to the highest priority reachable
-     * module as a place to start. The module will attempt to send the data and
-     * will call the cbfunc with the status upon completion - if it can't do it for
-     * some reason, it will call the component error function so we can try with another module
-     */
-    for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
-        if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-            continue;
-        }
-        /* check to see if we have a contact address for this peer or
-         * some route to it
-         */
-        if (!opal_bitmap_is_set_bit(&pr->reachable, mod->if_kidx)) {
-            continue;
-        }
-        /* mark that this module has been assigned */
-        pr->mod = mod;
-        /* pass the message along to be sent */
-        mod->api.send_nb((struct mca_oob_tcp_module_t*)mod, msg);
-        /* upon successful completion, we will mark the module as the "best"
-         * one for future messages
-         */
-        return ORTE_SUCCESS;
-    }
-
-    /* if for some reason all our modules are down,
-     * then let the base stub keep searching
-     */
-    return ORTE_ERR_TAKE_NEXT_OPTION;
+    mca_oob_tcp_module.api.send_nb(msg);
+    return ORTE_SUCCESS;
 }
 
 static char* component_get_addr(void)
@@ -818,12 +686,10 @@ static int component_set_addr(orte_process_name_t *peer,
 {
     char **addrs, *hptr;
     char *tcpuri=NULL, *host, *ports;
-    int i, j, k, rc;
-    mca_oob_tcp_module_t *mod, *firstmod;
-    mca_oob_tcp_component_peer_t *pr;
+    int i, j;
     uint16_t af_family = AF_UNSPEC;
     uint64_t ui64;
-    bool found, assigned;
+    bool found;
 
     memcpy(&ui64, (char*)peer, sizeof(uint64_t));
     /* cycle across component parts and see if one belongs to us */
@@ -890,7 +756,6 @@ static int component_set_addr(orte_process_name_t *peer,
 
 
         /* cycle across the provided addrs */
-        assigned = false;
         for (j=0; NULL != addrs[j]; j++) {
             /* if they gave us "localhost", then just take the first conn on our list */
             if (0 == strcasecmp(addrs[j], "localhost")) {
@@ -914,37 +779,7 @@ static int component_set_addr(orte_process_name_t *peer,
             } else {
                 host = addrs[j];
             }
-            /* lookup the kernel index of this address */
-            if (0 >= (k = opal_ifaddrtokindex(host))) {
-                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s UNFOUND KERNEL INDEX %d FOR ADDRESS %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
-                /* we don't have an interface on this subnet - ignore it */
-                continue;
-            }
-            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s NO MODULE AT KINDEX %d FOR ADDRESS %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), k, host);
-                continue;
-            }
-            /* record that this peer may be reachable via this module, but don't assign
-             * the peer to this module until later when we actually connect
-             */
-            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                "%s PEER %s MAY BE REACHABLE USING MODULE AT KINDEX %d INTERFACE %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(peer), k, mod->if_name);
-            if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                                 ui64, (void**)&pr) || NULL == pr) {
-                pr = OBJ_NEW(mca_oob_tcp_component_peer_t);
-                if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers,
-                                                                           ui64, (void*)pr))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
-            opal_bitmap_set_bit(&pr->reachable, k);
+ 
             /* pass this proc, and its ports, to the
              * module for handling - this module will be responsible
              * for communicating with the proc via this network.
@@ -953,101 +788,10 @@ static int component_set_addr(orte_process_name_t *peer,
              * call into their own event base for processing.
              */
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                "%s PASSING ADDR %s TO INTERFACE %s AT KERNEL INDEX %d",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host,
-                                mod->if_name, k);
-            mod->api.set_peer((struct mca_oob_tcp_module_t*)mod,
-                              peer, af_family, host, ports);
+                                "%s PASSING ADDR %s TO MODULE",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host);
+            mca_oob_tcp_module.api.set_peer(peer, af_family, host, ports);
             found = true;
-            assigned = true;
-        }
-        /* if we cycled thru all their addresses without finding a match in our
-         * interfaces, then it remains possible that they have a routed system
-         * that can still route messages to the destination. So give it a chance
-         * to succeed by assigning each provided address to the first module in our list,
-         * and let the normal failure progression ultimately determine if we
-         * can reach this peer. A future enhancement could be to do a better
-         * job of matching provided addresses with available interfaces, perhaps
-         * looking at the number of matching octets and assigning the address
-         * to the interface with the most matches - but that's for someone else
-         * to address :-)
-         */
-        if (!assigned) {
-            firstmod = NULL;
-            for (k=0; k < mca_oob_tcp_component.modules.size; k++) {
-                if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-                    continue;
-                }
-                if (NULL == firstmod) {
-                    firstmod = mod;
-                    break;
-                }
-            }
-            if (NULL == firstmod) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                return ORTE_ERR_NOT_FOUND;
-            }
-            for (j=0; NULL != addrs[j]; j++) {
-                /* if they gave us "localhost", then just take the first conn on our list */
-                if (0 == strcasecmp(addrs[j], "localhost")) {
-#if OPAL_ENABLE_IPV6
-                    if (AF_INET6 == af_family) {
-                        if (NULL == mca_oob_tcp_component.ipv6conns ||
-                            NULL == mca_oob_tcp_component.ipv6conns[0]) {
-                            continue;
-                        }
-                        host = mca_oob_tcp_component.ipv6conns[0];
-                    } else {
-#endif
-                        if (NULL == mca_oob_tcp_component.ipv4conns ||
-                            NULL == mca_oob_tcp_component.ipv4conns[0]) {
-                            continue;
-                        }
-                        host = mca_oob_tcp_component.ipv4conns[0];
-#if OPAL_ENABLE_IPV6
-                    }
-#endif
-                } else {
-                    host = addrs[j];
-                }
-                /* record that this peer may be reachable via this module, but don't assign
-                 * the peer to this module until later when we actually connect
-                 */
-                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s PEER %s MAY BE REACHABLE BY ROUTING - ASSIGNING MODULE AT KINDEX %d INTERFACE %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(peer), k, firstmod->if_name);
-                if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                                     ui64, (void**)&pr) || NULL == pr) {
-                    pr = OBJ_NEW(mca_oob_tcp_component_peer_t);
-                    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers,
-                                                                               ui64, (void*)pr))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                }
-                opal_bitmap_set_bit(&pr->reachable, k);
-                /* pass this proc, and its ports, to the
-                 * module for handling - this module will be responsible
-                 * for communicating with the proc via this network.
-                 * Note that the modules are *not* necessarily running
-                 * on our event base - thus, the modules will push this
-                 * call into their own event base for processing.
-                 */
-                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s PASSING ADDR %s TO INTERFACE %s AT KERNEL INDEX %d",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host,
-                                    firstmod->if_name, k);
-                mod->api.set_peer((struct mca_oob_tcp_module_t*)firstmod,
-                                  peer, af_family, host, ports);
-                found = true;
-            }
-        }
-        if (NULL != addrs) {
-            opal_argv_free(addrs);
-        }
-        if (NULL != tcpuri) {
-            free(tcpuri);
         }
     }
     if (found) {
@@ -1062,9 +806,6 @@ static int component_set_addr(orte_process_name_t *peer,
 static bool component_is_reachable(orte_process_name_t *peer)
 {
     orte_process_name_t hop;
-    uint64_t ui64;
-    mca_oob_tcp_component_peer_t *pr, *pnew;
-    int rc;
 
     /* if we have a route to this peer, then we can reach it */
     hop = orte_routed.get_route(peer);
@@ -1075,105 +816,33 @@ static bool component_is_reachable(orte_process_name_t *peer)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return false;
     }
-    /* we have a route, but which (if any) module can reach the hop? */
-    memcpy(&ui64, (char*)&hop, sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pr)) {
-        /* nope - we can't get there */
-        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s is NOT reachable by TCP",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        return false;
-    }
-    /* if we know the hop but have found all routes unreachable, then
-     * we can't send it
-     */
-    if (NULL == pr || opal_bitmap_is_clear(&pr->reachable)) {
-        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s is NOT reachable by TCP",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        return false;
-    }
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s is reachable by TCP",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* mark it so we can find this peer when we try to send */
-    memcpy(&ui64, (char*)peer, sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pnew) || NULL == pnew) {
-        pnew = OBJ_NEW(mca_oob_tcp_component_peer_t);
-        opal_bitmap_copy(&pnew->reachable, &pr->reachable);
-        if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers,
-                                                                   ui64, (void*)pnew))) {
-            ORTE_ERROR_LOG(rc);
-            return false;
-        }
-    }
+    /* assume we can reach the hop - the module will tell us if it can't
+     * when we try to send the first time, and then we'll correct it */
     return true;
 }
 
 #if OPAL_ENABLE_FT_CR == 1
 static int component_ft_event(int state)
 {
-    mca_oob_tcp_module_t *mod;
     int i;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP FT EVENT", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    for (i=0; i < mca_oob_tcp_component.modules.size; i++) {
-        if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, i))) {
-            continue;
-        }
-        if (NULL != mod->api.ft_event) {
-            mod->api.ft_event((struct mca_oob_tcp_module_t*)mod, state);
-        }
+    /* pass it into the module */
+    if (NULL != mca_oob_tcp_module.api.ft_event) {
+        mca_oob_tcp_module.>api.ft_event(state);
     }
 
     return ORTE_SUCCESS;
 }
 #endif
 
-/*
- *  Create a module instance and add to modules array.
- */
-static int mca_oob_tcp_create(int kindex, const char *if_name)
-{
-    mca_oob_tcp_module_t *mod;
-
-    OPAL_OUTPUT_VERBOSE((1, orte_oob_base_framework.framework_output,
-                         "%s creating OOB-TCP module for interface %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), if_name));
-    mod = (mca_oob_tcp_module_t*)malloc(sizeof(mca_oob_tcp_module_t));
-    if (NULL == mod) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    mod->if_name = strdup(if_name);
-    /* copy the APIs across */
-    memcpy(mod, &mca_oob_tcp_module.api, sizeof(mca_oob_tcp_module_api_t));
-    /* point to the interface it will service */
-    mod->if_kidx = kindex;
-    /* setup the list of addresses */
-    OBJ_CONSTRUCT(&mod->addresses, opal_list_t);
-
-    /* setup the default event base */
-    mod->ev_base = orte_event_base;
-
-    /* add it to our array */
-    opal_pointer_array_set_item(&mca_oob_tcp_component.modules, kindex, mod);
-    mca_oob_tcp_component.num_modules++;
-    return ORTE_SUCCESS;
-}
-
 void mca_oob_tcp_component_set_module(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_peer_op_t *pop = (mca_oob_tcp_peer_op_t*)cbdata;
     uint64_t ui64;
     int rc;
-    mca_oob_tcp_component_peer_t *pr;
     orte_oob_base_peer_t *bpr;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
@@ -1181,23 +850,11 @@ void mca_oob_tcp_component_set_module(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    /* retrieve the peer's name */
-    memcpy(&ui64, (char*)&(pop->peer), sizeof(uint64_t));
-
-    /* mark that this peer is being handled by the specified module */
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pr) || NULL == pr) {
-        /* must have come from an inbound connection */
-        pr = OBJ_NEW(mca_oob_tcp_component_peer_t);
-        opal_bitmap_set_bit(&pr->reachable, pop->mod->if_kidx);
-        opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers, ui64, pr);
-    }
-    pr->mod = pop->mod;
-
-    /* make sure the OOB knows that we are handling this peer - we
+    /* make sure the OOB knows that we can reach this peer - we
      * are in the same event base as the OOB base, so we can
      * directly access its storage
      */
+    memcpy(&ui64, (char*)&pop->peer, sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
                                                          ui64, (void**)&bpr) || NULL == bpr) {
         bpr = OBJ_NEW(orte_oob_base_peer_t);
@@ -1207,10 +864,8 @@ void mca_oob_tcp_component_set_module(int fd, short args, void *cbdata)
     if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
                                                                ui64, bpr))) {
         ORTE_ERROR_LOG(rc);
-        goto cleanup;
     }
 
- cleanup:
     OBJ_RELEASE(pop);
 }
 
@@ -1218,74 +873,27 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_peer_op_t *pop = (mca_oob_tcp_peer_op_t*)cbdata;
     uint64_t ui64;
-    int rc, k;
-    mca_oob_tcp_component_peer_t *pr;
-    mca_oob_tcp_module_t *mod;
+    orte_oob_base_peer_t *bpr;
+    int rc;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:lost connection called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    /* retrieve the peer's name */
-    memcpy(&ui64, (char*)&(pop->peer), sizeof(uint64_t));
-
-    /* mark that this peer is no longer reachable from this module */
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pr) || NULL == pr) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        goto cleanup;
-    }
-    opal_bitmap_clear_bit(&pr->reachable, pop->mod->if_kidx);
-
     /* if we are terminating, or recovery isn't enabled, then don't attempt to reconnect */
     if (!orte_enable_recovery || orte_orteds_term_ordered || orte_finalizing || orte_abnormal_term_ordered) {
         goto cleanup;
     }
 
-    /* if at least one module can still reach this peer, then we *might* be okay */
-    if (!opal_bitmap_is_clear(&pr->reachable)) {
-        /* any pending messages were re-queued when the module closed the connection */
-        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s tcp:lost connection still can reach peer %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&pop->peer));
-        for (k=0; k < mca_oob_tcp_component.modules.size; k++) {
-            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-                continue;
-            }
-            if (opal_bitmap_is_set_bit(&pr->reachable, k)) {
-                /* we cannot look into the module itself to see if messages
-                 * are pending that would cause a connection to the next address
-                 * to occur as the module could be operating in a separate event
-                 * base. Instead, we trigger an event to ask it to start
-                 * the connection procedure by issuing a "ping" request
-                 */
-                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s tcp:lost pinging peer %s on interface %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&pop->peer), mod->if_name);
-                mod->api.ping((struct mca_oob_tcp_module_t*)mod, &pop->peer);
-                /* cleanup */ 
-                OBJ_RELEASE(pop);
-                return;
-            }
-        }
+    /* Mark that we no longer support this peer */
+    memcpy(&ui64, (char*)&pop->peer, sizeof(uint64_t));
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
+                                                         ui64, (void**)&bpr) || NULL == bpr) {
+        bpr = OBJ_NEW(orte_oob_base_peer_t);
     }
-
-    /* if we get here, then we no longer have any way to reach this peer.
-     * Mark that we no longer support this peer
-     */
-    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&mca_oob_tcp_component.peers,
-                                                               ui64, NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
-    /* do the same to the OOB's table - for now, we don't worry about shifting to
-     * another component. Eventually, we will want to push this decision to
-     * the OOB so it can try other components and eventually error out
-     */
-    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
+    opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
+   if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
                                                                ui64, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -1304,48 +912,28 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
 void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_msg_error_t *mop = (mca_oob_tcp_msg_error_t*)cbdata;
-    mca_oob_tcp_module_t *mod;
     uint64_t ui64;
-    int k;
-    mca_oob_tcp_component_peer_t *pr;
+    int rc;
+    orte_oob_base_peer_t *bpr;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s tcp:no route called for peer %s on interface %s",
+                        "%s tcp:no route called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&mop->hop),
-                        mop->mod->if_name);
+                        ORTE_NAME_PRINT(&mop->hop));
 
-    /* retrieve the hop's name */
+    /* mark that we cannot reach this hop */
     memcpy(&ui64, (char*)&(mop->hop), sizeof(uint64_t));
-
-    /* get the peer object */
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pr) || NULL == pr) {
-        goto cleanup;
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
+                                                         ui64, (void**)&bpr) || NULL == bpr) {
+        bpr = OBJ_NEW(orte_oob_base_peer_t);
     }
-    
-    /* ensure we mark that this peer isn't reachable by this module */
-    opal_bitmap_clear_bit(&pr->reachable, mop->mod->if_kidx);
-
-    /* do we have any other modules (i.e., NICs) we can try? */
-    for (k=0; k < mca_oob_tcp_component.modules.size; k++) {
-        if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-            continue;
-        }
-        if (opal_bitmap_is_set_bit(&pr->reachable, k)) {
-            /* let this module try */
-            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                "%s tcp:unknown hop attempting send to peer %s via interface %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&mop->hop), mod->if_name);
-            mod->api.send_nb((struct mca_oob_tcp_module_t*)mod, mop->rmsg);
-            OBJ_RELEASE(mop);
-            return;
-        }
+    opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
+    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
+                                                               ui64, NULL))) {
+        ORTE_ERROR_LOG(rc);
     }
 
-    /* if we get here, then we have no other modules - so we report
-     * the error back to the OOB and let it try other components
+    /* report the error back to the OOB and let it try other components
      * or declare a problem
      */
     if (!orte_finalizing && !orte_abnormal_term_ordered) {
@@ -1353,32 +941,24 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
         if (ORTE_SUCCESS != orte_routed.route_lost(&mop->hop)) {
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
         } else {
-            orte_show_help("help-oob-tcp.txt", "unable-to-commiunicate",
-                           true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                           ORTE_NAME_PRINT(&mop->hop));
             ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
         }
     }
 
- cleanup:
     OBJ_RELEASE(mop);
 }
 
 void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_msg_error_t *mop = (mca_oob_tcp_msg_error_t*)cbdata;
-    mca_oob_tcp_module_t *mod;
     uint64_t ui64;
-    int k;
-    mca_oob_tcp_component_peer_t *pr;
     orte_rml_send_t *snd;
     orte_oob_base_peer_t *bpr;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s tcp:unknown hop called for peer %s on interface %s",
+                        "%s tcp:unknown hop called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&mop->hop),
-                        mop->mod->if_name);
+                        ORTE_NAME_PRINT(&mop->hop));
 
     if (orte_finalizing || orte_abnormal_term_ordered) {
         /* just ignore the problem */
@@ -1386,39 +966,8 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
         return;
     }
 
-    /* retrieve the hop's name */
+   /* mark that this component cannot reach this hop */
     memcpy(&ui64, (char*)&(mop->hop), sizeof(uint64_t));
-
-    /* get the peer object */
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pr) || NULL == pr) {
-        /* cleanup */
-        goto cleanup;
-
-    }
-    
-    /* ensure we mark that this peer isn't reachable by this module */
-    opal_bitmap_clear_bit(&pr->reachable, mop->mod->if_kidx);
-
-    /* do we have any other modules (i.e., NICs) we can try? */
-    for (k=0; k < mca_oob_tcp_component.modules.size; k++) {
-        if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-            continue;
-        }
-        if (opal_bitmap_is_set_bit(&pr->reachable, k)) {
-            /* let this module try */
-            opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                "%s tcp:unknown hop attempting send to peer %s via interface %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&mop->hop), mod->if_name);
-            mod->api.resend((struct mca_oob_tcp_msg_error_t*)mop);
-            OBJ_RELEASE(mop);
-            return;
-        }
-    }
-
- cleanup:
-    /* mark that this component cannot reach this hop */
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
                                                          ui64, (void**)&bpr) ||
         NULL == bpr) {
@@ -1439,13 +988,14 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
 
     /* mark that this component cannot reach this destination either */
+    memcpy(&ui64, (char*)&(mop->snd->hdr.dst), sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
                                                          ui64, (void**)&bpr) ||
         NULL == bpr) {
-       opal_output(0, "%s ERROR: message to %s requires routing and the OOB has no knowledge of this process",
+        opal_output(0, "%s ERROR: message to %s requires routing and the OOB has no knowledge of this process",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&mop->snd->hdr.dst));
-       ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
+        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
         OBJ_RELEASE(mop);
         return;
     }
@@ -1474,68 +1024,24 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
 void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_peer_op_t *pop = (mca_oob_tcp_peer_op_t*)cbdata;
-    mca_oob_tcp_module_t *mod;
-    uint64_t ui64;
-    int k;
-    mca_oob_tcp_component_peer_t *pr;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:failed_to_connect called for peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    /* get the peer object */
-    memcpy(&ui64, (char*)&(pop->peer), sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_component.peers,
-                                                         ui64, (void**)&pr) || NULL == pr) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        goto cleanup;
-    }
-    /* mark the peer as unreachable via this interface */
-    opal_bitmap_clear_bit(&pr->reachable, pop->mod->if_kidx);
-
-    /* if we are terminating, then don't attempt to reconnect */
+   /* if we are terminating, then don't attempt to reconnect */
     if (orte_orteds_term_ordered || orte_finalizing || orte_abnormal_term_ordered) {
         OBJ_RELEASE(pop);
         return;
     }
 
-    /* if at least one module can still reach this peer, then we *might* be okay */
-    if (!opal_bitmap_is_clear(&pr->reachable)) {
-        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                            "%s tcp:attempting different module for connection to peer %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&pop->peer));
-        for (k=0; k < mca_oob_tcp_component.modules.size; k++) {
-            if (NULL == (mod = (mca_oob_tcp_module_t*)opal_pointer_array_get_item(&mca_oob_tcp_component.modules, k))) {
-                continue;
-            }
-            if (opal_bitmap_is_set_bit(&pr->reachable, k)) {
-                /* we cannot look into the module itself to see if messages
-                 * are pending that would cause a connection to the next address
-                 * to occur as the module could be operating in a separate event
-                 * base. Instead, we trigger an event to ask it to start
-                 * the connection procedure by issuing a "ping" request
-                 */
-                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s tcp:lost pinging peer %s on interface %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&pop->peer), mod->if_name);
-                mod->api.ping((struct mca_oob_tcp_module_t*)mod, &pop->peer);
-                /* cleanup */ 
-                OBJ_RELEASE(pop);
-                return;
-            }
-        }
-    }
-
-    /* get here if nobody else can reach it - activate the proc state */
+    /* activate the proc state */
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:failed_to_connect unable to reach peer %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
- cleanup:
     /* if this was a lifeline, then alert */
     if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
         ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
@@ -1726,21 +1232,6 @@ OBJ_CLASS_INSTANCE(mca_oob_tcp_msg_op_t,
 OBJ_CLASS_INSTANCE(mca_oob_tcp_conn_op_t,
                    opal_object_t,
                    NULL, NULL);
-
-static void cmp_peer_cons(mca_oob_tcp_component_peer_t *ptr)
-{
-    ptr->mod = NULL;
-    OBJ_CONSTRUCT(&ptr->reachable, opal_bitmap_t);
-    opal_bitmap_init(&ptr->reachable, 8);  // default to 8 bits
-}
-static void cmp_peer_des(mca_oob_tcp_component_peer_t *ptr)
-{
-    OBJ_DESTRUCT(&ptr->reachable);
-}
-OBJ_CLASS_INSTANCE(mca_oob_tcp_component_peer_t,
-                   opal_object_t,
-                   cmp_peer_cons, cmp_peer_des);
-
 
 OBJ_CLASS_INSTANCE(mca_oob_tcp_ping_t,
                    opal_object_t,
