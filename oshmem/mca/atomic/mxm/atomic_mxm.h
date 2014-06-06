@@ -28,8 +28,6 @@ BEGIN_C_DECLS
 OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t
 mca_atomic_mxm_component;
 
-extern int mca_atomic_mxm_priority_param;
-
 /* this component works with spml:ikrit only */
 extern mca_spml_ikrit_t *mca_spml_self;
 

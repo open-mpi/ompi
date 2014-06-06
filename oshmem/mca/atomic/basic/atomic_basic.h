@@ -24,8 +24,6 @@ BEGIN_C_DECLS
 OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t
 mca_atomic_basic_component;
 
-extern int mca_atomic_basic_priority_param;
-
 OSHMEM_DECLSPEC void atomic_basic_lock(int pe);
 OSHMEM_DECLSPEC void atomic_basic_unlock(int pe);
 

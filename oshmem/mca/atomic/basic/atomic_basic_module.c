@@ -96,7 +96,7 @@ mca_atomic_basic_query(int *priority)
 {
     mca_atomic_basic_module_t *module;
 
-    *priority = mca_atomic_basic_priority_param;
+    *priority = mca_atomic_basic_component.priority;
 
     module = OBJ_NEW(mca_atomic_basic_module_t);
     if (module) {
