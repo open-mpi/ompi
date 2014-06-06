@@ -551,25 +551,69 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
     }
     
     switch (src->type) {
+    case OPAL_BYTE:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BYTE\tKey: %s\tValue: %x",
+                 prefx, src->key, src->data.byte);
+        break;
     case OPAL_STRING:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tValue: %s",
                  prefx, src->key, src->data.string);
         break;
+    case OPAL_SIZE:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_SIZE\tKey: %s\tValue: %lu",
+                 prefx, src->key, (unsigned long)src->data.size);
+        break;
+    case OPAL_PID:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_PID\tKey: %s\tValue: %lu",
+                 prefx, src->key, (unsigned long)src->data.pid);
+        break;
+    case OPAL_INT:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT\tKey: %s\tValue: %d",
+                 prefx, src->key, src->data.integer);
+        break;
+    case OPAL_INT8:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT8\tKey: %s\tValue: %d",
+                 prefx, src->key, (int)src->data.int8);
+        break;
     case OPAL_INT16:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tValue: %d",
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT16\tKey: %s\tValue: %d",
                  prefx, src->key, (int)src->data.int16);
         break;
     case OPAL_INT32:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT32\tKey: %s\tValue: %d",
                  prefx, src->key, src->data.int32);
         break;
-    case OPAL_PID:
-        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_STRING\tKey: %s\tValue: %lu",
-                 prefx, src->key, (unsigned long)src->data.pid);
+    case OPAL_INT64:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_INT64\tKey: %s\tValue: %ld",
+                 prefx, src->key, (long)src->data.int64);
+        break;
+    case OPAL_UINT:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT\tKey: %s\tValue: %u",
+                 prefx, src->key, src->data.uint);
+        break;
+    case OPAL_UINT8:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT8\tKey: %s\tValue: %u",
+                 prefx, src->key, (unsigned int)src->data.uint8);
+        break;
+    case OPAL_UINT16:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT16\tKey: %s\tValue: %u",
+                 prefx, src->key, (unsigned int)src->data.uint16);
+        break;
+    case OPAL_UINT32:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT32\tKey: %s\tValue: %u",
+                 prefx, src->key, src->data.uint32);
+        break;
+    case OPAL_UINT64:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_UINT64\tKey: %s\tValue: %lu",
+                 prefx, src->key, (unsigned long)src->data.uint64);
         break;
     case OPAL_FLOAT:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_FLOAT\tKey: %s\tValue: %f",
                  prefx, src->key, src->data.fval);
+        break;
+    case OPAL_BYTE_OBJECT:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BYTE_OBJECT\tKey: %s\tData: %s\tSize: %lu",
+            prefx, src->key, (NULL == src->data.bo.bytes) ? "NULL" : "NON-NULL", (unsigned long)src->data.bo.size);
         break;
     case OPAL_TIMEVAL:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_TIMEVAL\tKey: %s\tValue: %ld.%06ld", prefx,
