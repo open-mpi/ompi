@@ -146,6 +146,9 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_DIRECT_MODEX           48
 #define ORTE_RML_TAG_DIRECT_MODEX_RESP      49
 
+/* notifier support */
+#define ORTE_RML_TAG_NOTIFIER_HNP           50
+
 #define ORTE_RML_TAG_MAX                   100
 
 
