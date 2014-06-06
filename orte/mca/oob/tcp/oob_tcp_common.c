@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,15 +107,13 @@ void orte_oob_tcp_set_socket_options(int sd)
 #endif
 }
 
-mca_oob_tcp_peer_t* mca_oob_tcp_peer_lookup(mca_oob_tcp_module_t *md,
-                                            const orte_process_name_t *name)
+mca_oob_tcp_peer_t* mca_oob_tcp_peer_lookup(const orte_process_name_t *name)
 {
-    mca_oob_tcp_module_t *mod = (mca_oob_tcp_module_t*)md;
     mca_oob_tcp_peer_t *peer;
     uint64_t ui64;
 
     memcpy(&ui64, (char*)name, sizeof(uint64_t));
-    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mod->peers, ui64, (void**)&peer)) {
+    if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&mca_oob_tcp_module.peers, ui64, (void**)&peer)) {
         return NULL;
     }
     return peer;

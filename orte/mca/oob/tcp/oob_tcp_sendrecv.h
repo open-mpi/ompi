@@ -85,8 +85,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
             /* if we aren't connected, then start connecting */         \
             if (MCA_OOB_TCP_CONNECTED != (p)->state) {                  \
                 (p)->state = MCA_OOB_TCP_CONNECTING;                    \
-                ORTE_ACTIVATE_TCP_CONN_STATE((p)->mod, (p),             \
-                                         mca_oob_tcp_peer_try_connect); \
+                ORTE_ACTIVATE_TCP_CONN_STATE((p), mca_oob_tcp_peer_try_connect); \
             } else {                                                    \
                 /* ensure the send event is active */                   \
                 if (!(p)->send_ev_active) {                             \
@@ -220,12 +219,11 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
-    mca_oob_tcp_module_t *mod;
     orte_rml_send_t *msg;
 } mca_oob_tcp_msg_op_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_op_t);
 
-#define ORTE_ACTIVATE_TCP_POST_SEND(m, ms, cbfunc)                      \
+#define ORTE_ACTIVATE_TCP_POST_SEND(ms, cbfunc)                         \
     do {                                                                \
         mca_oob_tcp_msg_op_t *mop;                                      \
         opal_output_verbose(5, orte_oob_base_framework.framework_output, \
@@ -234,9 +232,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_op_t);
                             __FILE__, __LINE__,                         \
                             ORTE_NAME_PRINT(&((ms)->dst)));             \
         mop = OBJ_NEW(mca_oob_tcp_msg_op_t);                            \
-        mop->mod = (m);                                                 \
         mop->msg = (ms);                                                \
-        opal_event_set((m)->ev_base, &mop->ev, -1,                      \
+        opal_event_set(mca_oob_tcp_module.ev_base, &mop->ev, -1,        \
                        OPAL_EV_WRITE, (cbfunc), mop);                   \
         opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
         opal_event_active(&mop->ev, OPAL_EV_WRITE, 1);                  \
@@ -245,14 +242,13 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_op_t);
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
-    mca_oob_tcp_module_t *mod;
     orte_rml_send_t *rmsg;
     mca_oob_tcp_send_t *snd;
     orte_process_name_t hop;
 } mca_oob_tcp_msg_error_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
 
-#define ORTE_ACTIVATE_TCP_MSG_ERROR(m, s, r, h, cbfunc)                 \
+#define ORTE_ACTIVATE_TCP_MSG_ERROR(s, r, h, cbfunc)                    \
     do {                                                                \
         mca_oob_tcp_msg_error_t *mop;                                   \
         mca_oob_tcp_send_t *snd;                                        \
@@ -263,7 +259,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
                             __FILE__, __LINE__,                         \
                             ORTE_NAME_PRINT((h)));                      \
         mop = OBJ_NEW(mca_oob_tcp_msg_error_t);                         \
-        mop->mod = (m);                                                 \
         if (NULL != (s)) {                                              \
             mop->snd = (s);                                             \
         } else if (NULL != (r)) {                                       \
@@ -285,6 +280,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
         }                                                               \
         mop->hop.jobid = (h)->jobid;                                    \
         mop->hop.vpid = (h)->vpid;                                      \
+        /* this goes to the OOB framework, so use that event base */    \
         opal_event_set(orte_event_base, &mop->ev, -1,                   \
                        OPAL_EV_WRITE, (cbfunc), mop);                   \
         opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
@@ -300,16 +296,15 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
                             __FILE__, __LINE__,                         \
                             ORTE_NAME_PRINT(&((mop)->hop)));            \
         mp = OBJ_NEW(mca_oob_tcp_msg_error_t);                          \
-        mp->mod = (mop)->mod;                                           \
         mp->snd = (mop)->snd;                                           \
         mp->hop = (mop)->hop;                                           \
-        opal_event_set(mp->mod->ev_base, &mp->ev, -1,                   \
+        opal_event_set(mca_oob_tcp_module.ev_base, &mp->ev, -1,         \
                        OPAL_EV_WRITE, (cbfunc), mp);                    \
         opal_event_set_priority(&mp->ev, ORTE_MSG_PRI);                 \
         opal_event_active(&mp->ev, OPAL_EV_WRITE, 1);                   \
     } while(0);
 
-#define ORTE_ACTIVATE_TCP_NO_ROUTE(m, r, h, c)                          \
+#define ORTE_ACTIVATE_TCP_NO_ROUTE(r, h, c)                             \
     do {                                                                \
         mca_oob_tcp_msg_error_t *mop;                                   \
         opal_output_verbose(5, orte_oob_base_framework.framework_output, \
@@ -318,10 +313,10 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_error_t);
                             __FILE__, __LINE__,                         \
                             ORTE_NAME_PRINT((h)));                      \
         mop = OBJ_NEW(mca_oob_tcp_msg_error_t);                         \
-        mop->mod = (m);                                                 \
         mop->rmsg = (r);                                                \
         mop->hop.jobid = (h)->jobid;                                    \
         mop->hop.vpid = (h)->vpid;                                      \
+        /* this goes to the OOB framework, so use that event base */    \
         opal_event_set(orte_event_base, &mop->ev, -1,                   \
                        OPAL_EV_WRITE, (c), mop);                        \
         opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
