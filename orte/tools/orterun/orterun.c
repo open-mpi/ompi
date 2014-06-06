@@ -1951,10 +1951,13 @@ static int create_app(int argc, char* argv[],
      * can't easily find the class on the cmd line. Java apps have to
      * preload their binary via the preload_files option
      */
-    if (orte_get_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, NULL, OPAL_BOOL) &&
-        !opal_path_is_absolute(app->argv[0]) &&
+    if (!opal_path_is_absolute(app->argv[0]) &&
         NULL == strstr(app->argv[0], "java")) {
-        orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+        if (orterun_globals.preload_binaries) {
+            orte_set_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+        } else if (orte_get_attribute(&app->attributes, ORTE_APP_SSNDIR_CWD, NULL, OPAL_BOOL)) {
+            orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+        }
     }
     if (NULL != orterun_globals.preload_files) {
         orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, ORTE_ATTR_LOCAL,
