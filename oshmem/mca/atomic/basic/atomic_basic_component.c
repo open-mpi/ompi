@@ -24,11 +24,11 @@ const char *mca_atomic_basic_component_version_string =
 /*
  * Global variable
  */
-int mca_atomic_basic_priority_param = -1;
 
 /*
  * Local function
  */
+static int _basic_register(void);
 static int _basic_open(void);
 
 /*
@@ -50,9 +50,14 @@ mca_atomic_base_component_t mca_atomic_basic_component = {
         OSHMEM_MINOR_VERSION,
         OSHMEM_RELEASE_VERSION,
 
-        /* Component open and close functions */
+        /* component open */
         _basic_open,
-        NULL
+        /* component close */
+        NULL,
+        /* component query */
+        NULL,
+        /* component register */
+        _basic_register
     },
     {
         /* The component is checkpoint ready */
@@ -66,17 +71,22 @@ mca_atomic_base_component_t mca_atomic_basic_component = {
     mca_atomic_basic_query
 };
 
+static int _basic_register(void)
+{
+    mca_atomic_basic_component.priority = 75;
+    mca_base_component_var_register (&mca_atomic_basic_component.atomic_version,
+                                     "priority", "Priority of the atomic:basic "
+                                     "component (default: 75)", MCA_BASE_VAR_TYPE_INT,
+                                     NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                     OPAL_INFO_LVL_3,
+                                     MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                     &mca_atomic_basic_component.priority);
+
+    return OSHMEM_SUCCESS;
+}
+
 static int _basic_open(void)
 {
-    mca_atomic_basic_priority_param = 75;
-    (void) mca_base_component_var_register(&mca_atomic_basic_component.atomic_version,
-                                           "priority",
-                                           "Priority of the atomic:basic component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_atomic_basic_priority_param);
-
     return OSHMEM_SUCCESS;
 }
 

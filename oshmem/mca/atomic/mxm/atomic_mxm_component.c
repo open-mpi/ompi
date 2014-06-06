@@ -27,12 +27,12 @@ const char *mca_atomic_mxm_component_version_string =
 /*
  * Global variable
  */
-int mca_atomic_mxm_priority_param = -1;
 mca_spml_ikrit_t *mca_spml_self = NULL;
 
 /*
  * Local function
  */
+static int _mxm_register(void);
 static int _mxm_open(void);
 
 /*
@@ -54,9 +54,14 @@ mca_atomic_base_component_t mca_atomic_mxm_component = {
         OSHMEM_MINOR_VERSION,
         OSHMEM_RELEASE_VERSION,
 
-        /* Component open and close functions */
+        /* component open */
         _mxm_open,
-        NULL
+        /* component close */
+        NULL,
+        /* component query */
+        NULL,
+        /* component register */
+        _mxm_register
     },
     {
         /* The component is checkpoint ready */
@@ -70,6 +75,20 @@ mca_atomic_base_component_t mca_atomic_mxm_component = {
     mca_atomic_mxm_query
 };
 
+static int _mxm_register(void)
+{
+    mca_atomic_mxm_component.priority = 100;
+    mca_base_component_var_register (&mca_atomic_mxm_component.atomic_version,
+                                     "priority", "Priority of the atomic:mxm "
+                                     "component (default: 100)", MCA_BASE_VAR_TYPE_INT,
+                                     NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                     OPAL_INFO_LVL_3,
+                                     MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                     &mca_atomic_mxm_component.priority);
+
+    return OSHMEM_SUCCESS;
+}
+
 static int _mxm_open(void)
 {
     /*
@@ -82,15 +101,6 @@ static int _mxm_open(void)
         return OSHMEM_ERR_NOT_AVAILABLE;
     }
     mca_spml_self = (mca_spml_ikrit_t *)mca_spml.self;
-
-    mca_atomic_mxm_priority_param = 100;
-    (void) mca_base_component_var_register(&mca_atomic_mxm_component.atomic_version,
-                                           "priority",
-                                           "Priority of the basic atomic:mxm component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_atomic_mxm_priority_param);
 
     return OSHMEM_SUCCESS;
 }

@@ -20,7 +20,7 @@ int oshmem_preconnect_all = 0;
 int oshmem_shmem_register_params(void)
 {
     (void) mca_base_var_register("oshmem",
-                                 "runtime",
+                                 "oshmem",
                                  NULL,
                                  "lock_recursive",
                                  "Whether or not distributed locking support recursive calls (default = no)",
@@ -33,7 +33,7 @@ int oshmem_shmem_register_params(void)
                                  &oshmem_shmem_lock_recursive);
 
     (void) mca_base_var_register("oshmem",
-                                 "runtime",
+                                 "oshmem",
                                  NULL,
                                  "api_verbose",
                                  "Verbosity level of the shmem c functions (default = 0)",
