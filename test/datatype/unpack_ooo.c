@@ -110,12 +110,12 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
     }
 
     for (j = 0; j < N; ++j) {
-        if (bar[j].i[0] != (123+j) ||
+        if (bar[j].i[0] != pbar[j].i[0] ||
             bar[j].i[1] != 0 ||
-            bar[j].i[2] != (789+j) ||
-            bar[j].d[0] != (123.456+j) ||
+            bar[j].i[2] != pbar[j].i[1] ||
+            bar[j].d[0] != pbar[j].d[0] ||
             bar[j].d[1] != 0.0 ||
-            bar[j].d[2] != (789.123+j)) {
+            bar[j].d[2] != pbar[j].d[1]) {
             if(0 == errors) {
                 fprintf(stderr, "ERROR ! count=%d, position=%d, ptr = %p"
                         " got (%d,%d,%d,%g,%g,%g) expected (%d,%d,%d,%g,%g,%g)\n", 
