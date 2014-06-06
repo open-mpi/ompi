@@ -773,10 +773,12 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                     OBJ_DESTRUCT(&kv);
                 }
                 cpu_bitmap = NULL;
+#if OPAL_HAVE_HWLOC
                 if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
                     NULL != cpu_bitmap) {
                     orte_process_info.cpuset = cpu_bitmap;
                 }
+#endif
             } else if (pptr->name.jobid == ORTE_PROC_MY_NAME->jobid &&
                        pptr->parent == ORTE_PROC_MY_DAEMON->vpid) {
                 /* if we share a daemon, then add to my local peers */
