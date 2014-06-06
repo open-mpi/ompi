@@ -69,12 +69,11 @@ void ompi_dist_graph_create_f(MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources
     MPI_Comm c_comm_old, c_comm_graph;
     int count = 0, i;
     MPI_Info c_info;
-    const int *c_weights;
+    int *c_weights;
 
     OMPI_ARRAY_NAME_DECL(sources);
     OMPI_ARRAY_NAME_DECL(degrees);
     OMPI_ARRAY_NAME_DECL(destinations);
-    OMPI_ARRAY_NAME_DECL(weights);
 
     c_comm_old = MPI_Comm_f2c(*comm_old);
     c_info = MPI_Info_f2c(*info);
