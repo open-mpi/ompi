@@ -129,6 +129,8 @@ OMPI_DECLSPEC int netpatterns_setup_narray_tree(int tree_order, int my_rank, int
 /* setup an n-array tree with k-nomial levels */
 OMPI_DECLSPEC int netpatterns_setup_narray_knomial_tree( int tree_order, int my_rank, int num_nodes,
         netpatterns_narray_knomial_tree_node_t *my_node);
+/* cleanup an n-array tree setup by the above function */
+OMPI_DECLSPEC void netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_node_t *my_node);
 
 /* setup an multi-nomial tree - for each node in the tree
  *  this returns it's parent, and it's children 

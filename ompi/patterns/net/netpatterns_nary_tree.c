@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -155,6 +158,18 @@ Error:
 
     /* error return */
     return OMPI_ERROR;
+}
+
+void netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_node_t *my_node)
+{
+    if (my_node->children_ranks) {
+	free (my_node->children_ranks);
+	my_node->children_ranks = NULL;
+    }
+
+    if (0 != my_node->my_rank) {
+	netpatterns_cleanup_recursive_knomial_tree_node (&my_node->k_node);
+    }
 }
 
 int netpatterns_setup_narray_knomial_tree(
