@@ -52,42 +52,40 @@ mca_spml_base_component_2_0_0_t mca_spml_yoda_component = {
 
 };
 
-static inline int mca_spml_yoda_param_register_int(const char *param_name,
+static inline void mca_spml_yoda_param_register_int(const char *param_name,
                                                    int default_value,
-                                                   const char *help_msg)
+                                                   const char *help_msg,
+                                                   int *storage)
 {
-    int param_value;
-
-    param_value = default_value;
+    *storage = default_value;
     (void) mca_base_component_var_register(&mca_spml_yoda_component.spmlm_version,
                                            param_name,
                                            help_msg,
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &param_value);
-
-    return param_value;
+                                           storage);
 }
 
 static int mca_spml_yoda_component_register(void)
 {
-    mca_spml_yoda.free_list_num =
-            mca_spml_yoda_param_register_int("free_list_num", 1024, 0);
-    mca_spml_yoda.free_list_max =
-            mca_spml_yoda_param_register_int("free_list_max", 1024, 0);
-    mca_spml_yoda.free_list_inc =
-            mca_spml_yoda_param_register_int("free_list_inc", 16, 0);
-    mca_spml_yoda.bml_alloc_threshold =
-            mca_spml_yoda_param_register_int("bml_alloc_threshold",
-                                             3,
-                                             "number of puts to wait \
-                                              in case of put/get temporary buffer \
-                                              allocation failture");
-    mca_spml_yoda.priority =
-            mca_spml_yoda_param_register_int("priority",
-                                             10,
-                                             "[integer] yoda priority");
+    mca_spml_yoda_param_register_int("free_list_num", 1024,
+                                      0,
+                                      &mca_spml_yoda.free_list_num);
+    mca_spml_yoda_param_register_int("free_list_max", 1024,
+                                      0,
+                                      &mca_spml_yoda.free_list_max);
+    mca_spml_yoda_param_register_int("free_list_inc", 16,
+                                      0,
+                                      &mca_spml_yoda.free_list_inc);
+    mca_spml_yoda_param_register_int("bml_alloc_threshold", 3,
+                                      "number of puts to wait \
+                                      in case of put/get temporary buffer \
+                                      allocation failture",
+                                      &mca_spml_yoda.bml_alloc_threshold);
+    mca_spml_yoda_param_register_int("priority", 10,
+                                      "[integer] yoda priority",
+                                      &mca_spml_yoda.priority);
     return OSHMEM_SUCCESS;
 }
 

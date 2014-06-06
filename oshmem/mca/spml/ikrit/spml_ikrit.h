@@ -92,6 +92,7 @@ struct mca_spml_ikrit_t {
     int   ud_only;  /* only ud transport is used. In this case 
                        it is possible to speedup mkey exchange 
                        and not to register memheap */
+    int np;
 #if MXM_API >= MXM_VERSION(2,0)
     int unsync_conn_max;
 #endif

@@ -60,7 +60,7 @@ mca_spml_base_component_2_0_0_t mca_spml_ikrit_component = {
 };
 
 #if MXM_API >= MXM_VERSION(2,1)
-static int check_mxm_tls(char *var)
+static inline int check_mxm_tls(char *var)
 {
     char *str;
 
@@ -88,7 +88,7 @@ static int check_mxm_tls(char *var)
     return OSHMEM_SUCCESS;
 }
 
-static int set_mxm_tls()
+static inline int set_mxm_tls()
 {
     char *tls;
 
@@ -106,25 +106,22 @@ static int set_mxm_tls()
 }
 #endif
 
-static inline int mca_spml_ikrit_param_register_int(const char* param_name,
+static inline void mca_spml_ikrit_param_register_int(const char* param_name,
                                                     int default_value,
-                                                    const char *help_msg)
+                                                    const char *help_msg,
+                                                    int *storage)
 {
-    int param_value;
-
-    param_value = default_value;
+    *storage = default_value;
     (void) mca_base_component_var_register(&mca_spml_ikrit_component.spmlm_version,
                                            param_name,
                                            help_msg,
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &param_value);
-
-    return param_value;
+                                           storage);
 }
 
-static void  mca_spml_ikrit_param_register_string(const char* param_name,
+static inline void  mca_spml_ikrit_param_register_string(const char* param_name,
                                                     char* default_value,
                                                     const char *help_msg,
                                                     char **storage)
@@ -137,51 +134,51 @@ static void  mca_spml_ikrit_param_register_string(const char* param_name,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            storage);
-
 }
 
 static int mca_spml_ikrit_component_register(void)
 {
-    int np;
-
-    mca_spml_ikrit.free_list_num =
-            mca_spml_ikrit_param_register_int("free_list_num", 1024, 0);
-    mca_spml_ikrit.free_list_max =
-            mca_spml_ikrit_param_register_int("free_list_max", 1024, 0);
-    mca_spml_ikrit.free_list_inc =
-            mca_spml_ikrit_param_register_int("free_list_inc", 16, 0);
-    mca_spml_ikrit.bulk_connect =
-            mca_spml_ikrit_param_register_int("bulk_connect", 1, 0);
-    mca_spml_ikrit.bulk_disconnect =
-            mca_spml_ikrit_param_register_int("bulk_disconnect", 1, 0);
-    mca_spml_ikrit.priority =
-            mca_spml_ikrit_param_register_int("priority",
-                                              20,
-                                              "[integer] ikrit priority");
+    mca_spml_ikrit_param_register_int("free_list_num", 1024,
+                                      0,
+                                      &mca_spml_ikrit.free_list_num);
+    mca_spml_ikrit_param_register_int("free_list_max", 1024,
+                                      0,
+                                      &mca_spml_ikrit.free_list_max);
+    mca_spml_ikrit_param_register_int("free_list_inc", 16,
+                                      0,
+                                      &mca_spml_ikrit.free_list_inc);
+    mca_spml_ikrit_param_register_int("bulk_connect", 1,
+                                      0,
+                                      &mca_spml_ikrit.bulk_connect);
+    mca_spml_ikrit_param_register_int("bulk_disconnect", 1,
+                                      0,
+                                      &mca_spml_ikrit.bulk_disconnect);
+    mca_spml_ikrit_param_register_int("priority", 20,
+                                      "[integer] ikrit priority",
+                                      &mca_spml_ikrit.priority);
 
     mca_spml_ikrit_param_register_string("mxm_tls",
                                          "rc,ud,self",
                                          "[string] TL channels for MXM",
                                          &mca_spml_ikrit.mxm_tls);
 
-    np = mca_spml_ikrit_param_register_int("np",
+     mca_spml_ikrit_param_register_int("np",
 #if MXM_API <= MXM_VERSION(2,0)
                                            128,
 #else
                                            0,
 #endif
-                                           "[integer] Minimal allowed job's NP to activate ikrit");
+                                           "[integer] Minimal allowed job's NP to activate ikrit", &mca_spml_ikrit.np);
 #if MXM_API >= MXM_VERSION(2,0)
-    mca_spml_ikrit.unsync_conn_max = 
-            mca_spml_ikrit_param_register_int("unsync_conn_max",
-                                           8,
-                                           "[integer] Max number of connections that do not require notification of PUT operation remote completion. Increasing this number improves efficiency of p2p communication but increases overhead of shmem_fence/shmem_quiet/shmem_barrier");
+    mca_spml_ikrit_param_register_int("unsync_conn_max", 8,
+                                      "[integer] Max number of connections that do not require notification of PUT operation remote completion. Increasing this number improves efficiency of p2p communication but increases overhead of shmem_fence/shmem_quiet/shmem_barrier",
+                                      &mca_spml_ikrit.unsync_conn_max);
 #endif
 
-    if (oshmem_num_procs() < np) {
+    if (oshmem_num_procs() < mca_spml_ikrit.np) {
         SPML_VERBOSE(1,
                      "Not enough ranks (%d<%d), disqualifying spml/ikrit",
-                     oshmem_num_procs(), np);
+                     oshmem_num_procs(), mca_spml_ikrit.np);
         return OSHMEM_ERR_NOT_AVAILABLE;
     }
 
