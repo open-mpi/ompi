@@ -797,7 +797,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
      * just do memcpy
      */
     if ((YODA_BTL_SM == ybtl->btl_type)
-            && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
+            && mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
         memcpy((void *) (unsigned long) rva, src_addr, size);
         return OSHMEM_SUCCESS;
     }
@@ -1061,7 +1061,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
      * just do memcpy
      */
     if ((YODA_BTL_SM == ybtl->btl_type)
-            && OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(src_addr) && src_addr != rva)) {
+            && mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
         memcpy(dst_addr, (void *) rva, size);
         /* must call progress here to avoid deadlock. Scenarion:
          * pe1 pols pe2 via shm get. pe2 tries to get static variable from node one, which goes to sm btl
