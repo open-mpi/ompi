@@ -713,7 +713,18 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
             }
             OBJ_RELEASE(nm);
         }
+        /* if we are a daemon, then we are done with this collective - the return message
+         * will flow directly thru to the participants via xcast */
+        if (ORTE_PROC_IS_DAEMON) {
+            opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
+            OBJ_RELEASE(coll);
+            return;
+        }
     }
+
+
+    /* FOR MODEX AND BARRIERS ONLY HNP WILL REACH THIS POINT */
+
     /* clear the list for reuse */
     while (NULL != (nm = (orte_namelist_t*)opal_list_remove_first(&coll->targets))) {
         OBJ_RELEASE(nm);
