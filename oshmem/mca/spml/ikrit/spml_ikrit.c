@@ -782,7 +782,7 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
         return OSHMEM_ERROR;
     }
 
-    if (OPAL_UNLIKELY(!mca_memheap.memheap_is_symmetric_addr(src_addr) || src_addr == rva))
+    if (!mca_memheap_base_can_local_copy(r_mkey, src_addr))
         return OSHMEM_ERROR;
 
     SPML_VERBOSE(100,
@@ -1027,7 +1027,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 #endif
     if (ptl_id == MXM_PTL_SHM) {
 
-        if (OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
+        if (mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
             memcpy((void *) (unsigned long) rva, src_addr, size);
             /* call progress as often as we would have with regular put */
             if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
@@ -1169,7 +1169,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 #endif
     if (ptl_id == MXM_PTL_SHM) {
 
-        if (OPAL_LIKELY(mca_memheap.memheap_is_symmetric_addr(dst_addr) && dst_addr != rva)) {
+        if (mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
             memcpy((void *) (unsigned long) rva, src_addr, size);
             /* call progress as often as we would have with regular put */
             if (++count % SPML_IKRIT_PACKETS_PER_SYNC == 0)
