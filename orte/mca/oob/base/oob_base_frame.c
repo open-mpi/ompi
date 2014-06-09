@@ -86,7 +86,9 @@ static int orte_oob_base_close(void)
     rc = opal_hash_table_get_first_key_uint64 (&orte_oob_base.peers, &key,
                                                (void **) &value, &node);
     while (OPAL_SUCCESS == rc) {
-        OBJ_RELEASE(value);
+        if (NULL != value) {
+            OBJ_RELEASE(value);
+        }
         rc = opal_hash_table_get_next_key_uint64 (&orte_oob_base.peers, &key,
                                                   (void **) &value, node, &node);
     }
