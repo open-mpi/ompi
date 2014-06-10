@@ -35,14 +35,9 @@ typedef struct {
 } mca_oob_tcp_addr_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_addr_t);
 
-/* object for tracking peers in modules */
+/* object for tracking peers in the module */
 typedef struct {
     opal_list_item_t super;
-    /* we frequently need access to
-     * the module (e.g., its event
-     * base) to activate subsequent peer states
-     */
-    mca_oob_tcp_module_t *mod;
     /* although not required, there is enough debug
      * value that retaining the name makes sense
      */
@@ -67,7 +62,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
-    mca_oob_tcp_module_t *mod;
     orte_process_name_t peer;
     uint16_t af_family;
     char *net;
@@ -75,37 +69,35 @@ typedef struct {
 } mca_oob_tcp_peer_op_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_op_t);
 
-#define ORTE_ACTIVATE_TCP_PEER_OP(m, p, a, n, pts, cbfunc)     \
-    do {                                                        \
-        mca_oob_tcp_peer_op_t *pop;                            \
-        pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                  \
-        pop->mod = (m);                                         \
-        pop->peer.jobid = (p)->jobid;                           \
-        pop->peer.vpid = (p)->vpid;                             \
-        pop->af_family = (a);                                   \
-        if (NULL != (n)) {                                      \
-            pop->net = strdup((n));                             \
-        }                                                       \
-        if (NULL != (pts)) {                                    \
-            pop->port = strdup((pts));                          \
-        }                                                       \
-        opal_event_set((m)->ev_base, &pop->ev, -1,              \
-                       OPAL_EV_WRITE, (cbfunc), pop);           \
-        opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);        \
-        opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);          \
+#define ORTE_ACTIVATE_TCP_PEER_OP(p, a, n, pts, cbfunc)                 \
+    do {                                                                \
+        mca_oob_tcp_peer_op_t *pop;                                     \
+        pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                           \
+        pop->peer.jobid = (p)->jobid;                                   \
+        pop->peer.vpid = (p)->vpid;                                     \
+        pop->af_family = (a);                                           \
+        if (NULL != (n)) {                                              \
+            pop->net = strdup((n));                                     \
+        }                                                               \
+        if (NULL != (pts)) {                                            \
+            pop->port = strdup((pts));                                  \
+        }                                                               \
+        opal_event_set(mca_oob_tcp_module.ev_base, &pop->ev, -1,        \
+                       OPAL_EV_WRITE, (cbfunc), pop);                   \
+        opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \
+        opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \
     } while(0);
     
-#define ORTE_ACTIVATE_TCP_CMP_OP(m, p, cbfunc)                 \
-    do {                                                        \
-        mca_oob_tcp_peer_op_t *pop;                            \
-        pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                  \
-        pop->mod = (m);                                         \
-        pop->peer.jobid = (p)->jobid;                           \
-        pop->peer.vpid = (p)->vpid;                             \
-        opal_event_set(orte_event_base, &pop->ev, -1,           \
-                       OPAL_EV_WRITE, (cbfunc), pop);           \
-        opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);        \
-        opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);          \
+#define ORTE_ACTIVATE_TCP_CMP_OP(p, cbfunc)                             \
+    do {                                                                \
+        mca_oob_tcp_peer_op_t *pop;                                     \
+        pop = OBJ_NEW(mca_oob_tcp_peer_op_t);                           \
+        pop->peer.jobid = (p)->jobid;                                   \
+        pop->peer.vpid = (p)->vpid;                                     \
+        opal_event_set(mca_oob_tcp_module.ev_base, &pop->ev, -1,        \
+                       OPAL_EV_WRITE, (cbfunc), pop);                   \
+        opal_event_set_priority(&pop->ev, ORTE_MSG_PRI);                \
+        opal_event_active(&pop->ev, OPAL_EV_WRITE, 1);                  \
     } while(0);
 
 #endif /* _MCA_OOB_TCP_PEER_H_ */

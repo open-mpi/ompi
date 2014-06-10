@@ -43,8 +43,6 @@ typedef struct {
     mca_oob_base_component_t super;          /**< base OOB component */
     uint32_t addr_count;                     /**< total number of addresses */
     int num_links;                           /**< number of logical links per physical device */
-    opal_pointer_array_t modules;            /**< array of available modules */
-    int                  num_modules;
     int                  max_retries;        /**< max number of retries before declaring peer gone */
     opal_list_t          events;             /**< events for monitoring connections */
     int                  peer_limit;         /**< max size of tcp peer cache */
@@ -72,32 +70,16 @@ typedef struct {
 #endif
 
     /* connection support */
-    char*              my_uri;                 /**< uri for connecting to the TCP modules */
+    char*              my_uri;                 /**< uri for connecting to the TCP module */
     int                num_hnp_ports;          /**< number of ports the HNP should listen on */
     opal_list_t        listeners;              /**< List of sockets being monitored by event or thread */
     opal_thread_t      listen_thread;          /**< handle to the listening thread */
     bool               listen_thread_active;
     struct timeval     listen_thread_tv;       /**< Timeout when using listen thread */
     int                stop_thread[2];         /**< pipe used to exit the listen thread */
-
-    /* peers available via this transport - the index is the process name,
-     * and the pointer returned is the pointer to the last module that
-     * said it could reach that peer. When a module loses its connection
-     * to the peer, this pointer either gets set to NULL (if nobody can
-     * reach the peer) or to the next module that can. Must be accessed
-     * only from the framework-level event base
-     */
-    opal_hash_table_t  peers;
 } mca_oob_tcp_component_t;
 
 ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
-
-typedef struct {
-    opal_object_t super;
-    mca_oob_tcp_module_t *mod;  // current module handling this peer
-    opal_bitmap_t reachable;    // marks the modules that can reach at least one of the peer's addresses
-} mca_oob_tcp_component_peer_t;
-OBJ_CLASS_DECLARATION(mca_oob_tcp_component_peer_t);
 
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_set_module(int fd, short args, void *cbdata);
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata);
