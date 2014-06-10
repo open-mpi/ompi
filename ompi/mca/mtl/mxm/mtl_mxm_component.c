@@ -120,7 +120,7 @@ static int ompi_mtl_mxm_component_open(void)
         MXM_VERBOSE(1, "Disabling on-demand memory mapping");
         ompi_mtl_mxm.using_mem_hooks = 0;
     }
-    setenv("MXM_SINGLE_THREAD", ompi_mpi_thread_multiple ? "n" : "y" , 0);
+    setenv("MXM_MPI_SINGLE_THREAD", ompi_mpi_thread_multiple ? "n" : "y" , 0);
 #endif
 
 #if MXM_API >= MXM_VERSION(2,1)
