@@ -928,6 +928,7 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     mca_oob_tcp_msg_error_t *mop = (mca_oob_tcp_msg_error_t*)cbdata;
     uint64_t ui64;
     orte_rml_send_t *snd;
+    orte_oob_base_peer_t *bpr;
 
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s tcp:unknown hop called for peer %s",
