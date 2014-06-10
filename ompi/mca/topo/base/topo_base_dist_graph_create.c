@@ -8,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  */
 
 #include "ompi_config.h"
@@ -43,6 +45,8 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     ompi_status_public_t status;
     ompi_request_t **reqs = NULL;
     mca_topo_base_comm_dist_graph_2_1_0_t* topo=NULL;
+
+    assert(module->type == OMPI_COMM_DIST_GRAPH);
 
     ompi_datatype_type_size( (ompi_datatype_t*)&ompi_mpi_int, &int_size);
 

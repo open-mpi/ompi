@@ -13,6 +13,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All right
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -166,6 +168,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
         ompi_comm_free (&new_comm);
+        free(topo_procs);
         if(NULL != cart->periods) free(cart->periods);
         if(NULL != cart->coords) free(cart->coords);
         if(NULL != cart->dims) free(cart->dims);

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,8 +39,64 @@
  */
 #include "ompi/mca/topo/base/static-components.h"
 
+static void mca_topo_base_module_construct(mca_topo_base_module_t * topo) {
+    memset(&(topo->mtc), 0, sizeof(topo->mtc));
+}
+
+static void mca_topo_base_module_destruct(mca_topo_base_module_t * topo) {
+    assert (OMPI_COMM_CART == topo->type ||
+            OMPI_COMM_GRAPH == topo->type ||
+            OMPI_COMM_DIST_GRAPH == topo->type);
+
+    switch (topo->type) {
+        case OMPI_COMM_CART:
+            if (NULL != topo->mtc.cart) {
+                if (NULL != topo->mtc.cart->dims) {
+                    free(topo->mtc.cart->dims);
+                }
+                if (NULL != topo->mtc.cart->periods) {
+                    free(topo->mtc.cart->periods);
+                }
+                if (NULL != topo->mtc.cart->coords) {
+                    free(topo->mtc.cart->coords);
+                }
+                free(topo->mtc.cart);
+            }
+            break;
+        case OMPI_COMM_GRAPH: 
+            if (NULL != topo->mtc.graph) {
+                if (NULL != topo->mtc.graph->index) {
+                    free(topo->mtc.graph->index);
+                }
+                if (NULL != topo->mtc.graph->edges) {
+                    free(topo->mtc.graph->edges);
+                }
+                free(topo->mtc.graph);
+            }
+            break;
+        case OMPI_COMM_DIST_GRAPH: 
+            if (NULL != topo->mtc.dist_graph) {
+                if (NULL != topo->mtc.dist_graph->in) {
+                    free(topo->mtc.dist_graph->in);
+                }
+                if (NULL != topo->mtc.dist_graph->inw) {
+                    free(topo->mtc.dist_graph->inw);
+                }
+                if (NULL != topo->mtc.dist_graph->out) {
+                    free(topo->mtc.dist_graph->out);
+                }
+                if (NULL != topo->mtc.dist_graph->outw) {
+                    free(topo->mtc.dist_graph->outw);
+                }
+                free(topo->mtc.dist_graph);
+            }
+            break;
+    }
+}
+
 OBJ_CLASS_INSTANCE(mca_topo_base_module_t, opal_object_t,
-                   NULL, NULL);
+                   mca_topo_base_module_construct,
+                   mca_topo_base_module_destruct);
 
 static int mca_topo_base_close(void) 
 {

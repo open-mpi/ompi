@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -313,8 +315,8 @@ struct mca_topo_base_module_t {
     } topo;
 
     /* This union caches the parameters passed when the communicator
-       was created.  Look in comm->c_flags to figure out whether this
-       is a cartesian, graph, or dist graph communicator. */
+       was created.  Either look in comm->c_flags or type to figure out
+       whether this is a cartesian, graph, or dist graph communicator. */
     mca_topo_base_comm_cgd_union_t mtc;
 };
 
