@@ -310,21 +310,8 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
         return rc;
     }
 
-    /* only send info on nodes that have daemons on them, and
-     * only regarding daemons that have changed - i.e., new
-     * daemons since the last time we sent the info - so we
-     * minimize the size of the nidmap message. The daemon
-     * will maintain a global picture of the overall nidmap
-     * as it receives updates, and pass that down to the procs
-     */
     for (i=0; i < daemons->procs->size; i++) {
         if (NULL == (dmn = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, i))) {
-            continue;
-        }
-        /* if we want an update nidmap and this daemon hasn't
-         * been updated, then skip it
-         */
-        if (update && !dmn->updated) {
             continue;
         }
         /* if the daemon doesn't have a node, that's an error */
