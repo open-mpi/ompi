@@ -67,7 +67,7 @@ static int get_my_cred(opal_identifier_t *my_id,
             my_cred.credential = (char*)cd->bytes;
             my_cred.size = cd->size;
         } else {
-            my_cred.credential = strdup("12345");
+            my_cred.credential = strdup("1234567");
             my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
         }
     }
