@@ -153,6 +153,16 @@ typedef struct mca_memheap_base_module_t mca_memheap_base_module_t;
 
 OSHMEM_DECLSPEC extern mca_memheap_base_module_t mca_memheap;
 
+/**
+ * check if memcpy() can be used to copy data to dst_addr
+ * must be memheap address and segment must be mapped
+ */
+static inline int mca_memheap_base_can_local_copy(sshmem_mkey_t *mkey, void *dst_addr) {
+    return mca_memheap.memheap_is_symmetric_addr(dst_addr) &&
+        0 == mkey->len && mkey->u.key;
+}
+
+
 END_C_DECLS
 
 #endif /* MCA_MEMHEAP_H */

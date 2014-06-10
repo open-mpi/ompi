@@ -185,8 +185,6 @@ verbs_runtime_query(mca_base_module_t **module,
             ib_mr = ibv_exp_reg_shared_mr(&in_smr);
             if (NULL == ib_mr) {
                 mca_sshmem_verbs_component.has_shared_mr = 0;
-                /* device does not support shared memory allocation, select another component */
-                rc = OSHMEM_ERR_OUT_OF_RESOURCE;
             } else {
                 opal_value_array_append_item(&device->ib_mr_array, &ib_mr);
                 mca_sshmem_verbs_component.has_shared_mr = 1;
