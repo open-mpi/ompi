@@ -1146,7 +1146,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     
     /* see if the mapper thinks we are oversubscribed */
     oversubscribed = false;
-    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
+    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         ORTE_ACTIVATE_JOB_STATE(jobdat, ORTE_JOB_STATE_FAILED_TO_LAUNCH);
         goto ERROR_OUT;
