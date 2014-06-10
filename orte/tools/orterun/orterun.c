@@ -1938,10 +1938,13 @@ static int create_app(int argc, char* argv[],
      * can't easily find the class on the cmd line. Java apps have to
      * preload their binary via the preload_files option
      */
-    if (app->set_cwd_to_session_dir &&
-        !opal_path_is_absolute(app->argv[0]) &&
+    if (!opal_path_is_absolute(app->argv[0]) &&
         NULL == strstr(app->argv[0], "java")) {
-        app->preload_binary = true;
+        if (app->preload_binary) {
+            app->set_cwd_to_session_dir = true;
+        } else if (app->set_cwd_to_session_dir) {
+            app->preload_binary = true;
+        }
     }
     if (NULL != orterun_globals.preload_files) {
         app->preload_files  = strdup(orterun_globals.preload_files);
