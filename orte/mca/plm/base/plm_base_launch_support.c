@@ -416,6 +416,10 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                     continue;
                 }
+                /* if we don't have a daemon assigned to this node, ignore it */
+                if (NULL == node->daemon) {
+                    continue;
+                }
                 /* if we don't have a serial number, then we are not a coprocessor */
                 if (NULL == node->serial_number) {
                     /* set our hostid to our own daemon vpid */
