@@ -68,7 +68,7 @@ int opal_bitmap_set_max_size (opal_bitmap_t *bm, int max_size)
      * we set it (in numbers of bits!), otherwise it is
      * set to INT_MAX in the constructor.
      */
-    bm->max_size = (max_size + SIZE_OF_BASE_TYPE - 1) / SIZE_OF_BASE_TYPE;
+    bm->max_size = (int)(((size_t)max_size + SIZE_OF_BASE_TYPE - 1) / SIZE_OF_BASE_TYPE);
 
     return OPAL_SUCCESS;
 }
@@ -86,7 +86,7 @@ opal_bitmap_init(opal_bitmap_t *bm, int size)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    bm->array_size = (size + SIZE_OF_BASE_TYPE - 1) / SIZE_OF_BASE_TYPE;
+    bm->array_size = (int)(((size_t)size + SIZE_OF_BASE_TYPE - 1) / SIZE_OF_BASE_TYPE);
     if( NULL != bm->bitmap ) {
         free(bm->bitmap);
         if(bm->max_size < bm->array_size)
@@ -120,7 +120,7 @@ opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
          out of range. We don't throw any error here, because this is
          valid and we simply expand the bitmap */
         
-        new_size = (index / bm->array_size + 1 ) * bm->array_size;
+        new_size = (int)(((size_t)index / bm->array_size + 1 ) * bm->array_size);
         if( new_size > bm->max_size )
             new_size = bm->max_size;
         
