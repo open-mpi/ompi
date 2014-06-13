@@ -410,7 +410,9 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         /* we also need to ensure we are mapping to a high-enough level to have
          * multiple cpus beneath it - by default, we'll go to the NUMA level */
         if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
-            if (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) >= ORTE_MAPPING_BYCORE) {
+            if (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYHWTHREAD ||
+              (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYCORE &&
+              !opal_hwloc_use_hwthreads_as_cpus)) {
                 orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low-init", true);
                 return ORTE_ERR_SILENT;
             }
