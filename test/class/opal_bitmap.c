@@ -11,7 +11,6 @@
 #include "opal/constants.h"
 
 #define BSIZE 26
-#define SIZE_OF_CHAR (sizeof(char) * 8)
 #define OPAL_INVALID_BIT -1
 #define ERR_CODE -2
 
@@ -59,7 +58,7 @@ int main(int argc, char *argv[])
 #endif
 
     /* Initialize bitmap  */
-
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
     PRINT_VALID_ERR;
     err = opal_bitmap_init(NULL, 2);
     if (err == OPAL_ERR_BAD_PARAM)
@@ -203,7 +202,7 @@ void test_bitmap_find_and_set(opal_bitmap_t *bm)
 
     /* Setting beyond the current size of bitmap  */
     opal_bitmap_set_all_bits(bm);
-    bsize = bm->array_size * SIZE_OF_CHAR;
+    bsize = opal_bitmap_size(bm);
     result = find_and_set(bm, bsize);
     TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
 }
@@ -224,8 +223,7 @@ void test_bitmap_set_all(opal_bitmap_t *bm)
 int set_bit(opal_bitmap_t *bm, int bit)
 {
     int err = opal_bitmap_set_bit(bm, bit);
-    if (err != 0 
-	|| !(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
+    if (err != 0 || !opal_bitmap_is_set_bit(bm, bit)) {
 	    fprintf(error_out, "ERROR: set_bit for bit = %d\n\n", bit);
 	    return ERR_CODE;
 	}
@@ -236,8 +234,7 @@ int set_bit(opal_bitmap_t *bm, int bit)
 int clear_bit(opal_bitmap_t *bm, int bit)
 {
     int err = opal_bitmap_clear_bit(bm, bit);
-    if ((err != 0)
-	|| (bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
+    if ((err != 0) || opal_bitmap_is_set_bit(bm, bit)) {
 	fprintf(error_out, "ERROR: clear_bit for bit = %d \n\n", bit);
 	return ERR_CODE;
     }
@@ -255,21 +252,17 @@ int is_set_bit(opal_bitmap_t *bm, int bit)
             fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n",bit);
             return ERR_CODE;
         }
-        if (!(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
-            fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n",bit);
-            return ERR_CODE;
-        }
         return 0;
     }
     
-	if (!result) {
-        if (0 <= bit && bit <= bm->array_size && !(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
+    if (!result) {
+        if (0 <= bit && bit <= bm->array_size && !opal_bitmap_is_set_bit(bm, bit)) {
             fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n",bit);
             return ERR_CODE;
         }
         return 0;
     }
-	
+
     return 0;
 }
 
@@ -301,7 +294,7 @@ int clear_all(opal_bitmap_t *bm)
     }
     for (i = 0; i < bm->array_size; ++i)
 	if (bm->bitmap[i] != 0) {
-	    fprintf(error_out, "ERROR: clear_all for bitmap arry entry %d\n\n",
+	    fprintf(error_out, "ERROR: clear_all for bitmap array entry %d\n\n",
 		    i);
 	    return ERR_CODE;
 	}
@@ -316,7 +309,7 @@ int set_all(opal_bitmap_t *bm)
        return ERR_CODE;
    }
    for (i = 0; i < bm->array_size; ++i)
-       if (bm->bitmap[i] != 0xff) {
+       if (bm->bitmap[i] != 0xffffffffffffffffUL) {
 	   fprintf(error_out, "ERROR: set_all for bitmap arry entry %d\n\n", i);
 	   return ERR_CODE;
        }

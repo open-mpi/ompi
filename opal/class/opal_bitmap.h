@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -51,10 +51,10 @@
 BEGIN_C_DECLS
 
 struct opal_bitmap_t {
-    opal_object_t super;   /**< Subclass of opal_object_t */
-    unsigned char *bitmap; /**< The actual bitmap array of characters */
-    int array_size;        /**< The actual array size that maintains the bitmap */
-    int max_size;          /**< The maximum size that this bitmap may grow (optional) */
+    opal_object_t  super;       /**< Subclass of opal_object_t */
+    uint64_t      *bitmap;      /**< The actual bitmap array of characters */
+    int            array_size;  /**< The actual array size that maintains the bitmap */
+    int            max_size;    /**< The maximum size that this bitmap may grow (optional) */
 };
 
 typedef struct opal_bitmap_t opal_bitmap_t;
@@ -165,7 +165,7 @@ OPAL_DECLSPEC int opal_bitmap_set_all_bits(opal_bitmap_t *bm);
  */
 static inline int opal_bitmap_size(opal_bitmap_t *bm)
 {
-    return (NULL == bm) ? 0 : (bm->array_size * ((int) (sizeof(char) * 8)));
+    return (NULL == bm) ? 0 : (bm->array_size * ((int) (sizeof(*bm->bitmap) * 8)));
 }
 
 
@@ -178,8 +178,12 @@ static inline int opal_bitmap_size(opal_bitmap_t *bm)
  */
 static inline void opal_bitmap_copy(opal_bitmap_t *dest, opal_bitmap_t *src)
 {
-    dest->bitmap = (unsigned char*)malloc(src->array_size);
-    memcpy(dest->bitmap, src->bitmap, src->array_size);
+    if( dest->array_size < src->array_size ) {
+        if( NULL != dest->bitmap) free(dest->bitmap);
+        dest->max_size = src->max_size;
+        dest->bitmap = (uint64_t*)malloc(src->array_size*sizeof(uint64_t));
+    }
+    memcpy(dest->bitmap, src->bitmap, src->array_size * sizeof(uint64_t));
     dest->array_size = src->array_size;
 }
 
