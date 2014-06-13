@@ -9,11 +9,6 @@
 #include "mpi_Info.h"
 #include "mpiJava.h"
 
-/*
- * Class:     mpi_Info
- * Method:    create
- * Signature: ()J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Info_create(JNIEnv *env, jobject jthis)
 {
     MPI_Info info;
@@ -22,31 +17,16 @@ JNIEXPORT jlong JNICALL Java_mpi_Info_create(JNIEnv *env, jobject jthis)
     return (jlong)info;
 }
 
-/*
- * Class:     mpi_Info
- * Method:    getEnv
- * Signature: ()J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Info_getEnv(JNIEnv *env, jclass clazz)
 {
     return (jlong)MPI_INFO_ENV;
 }
 
-/*
- * Class:     mpi_Info
- * Method:    getNull
- * Signature: ()J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Info_getNull(JNIEnv *env, jclass clazz)
 {
     return (jlong)MPI_INFO_NULL;
 }
 
-/*
- * Class:     mpi_Info
- * Method:    set
- * Signature: (JLjava/lang/String;Ljava/lang/String;)V
- */
 JNIEXPORT void JNICALL Java_mpi_Info_set(
         JNIEnv *env, jobject jthis, jlong handle, jstring jkey, jstring jvalue)
 {
@@ -60,11 +40,6 @@ JNIEXPORT void JNICALL Java_mpi_Info_set(
     (*env)->ReleaseStringUTFChars(env, jvalue, value);
 }
 
-/*
- * Class:     mpi_Info
- * Method:    get
- * Signature: (JLjava/lang/String;)Ljava/lang/String;
- */
 JNIEXPORT jstring JNICALL Java_mpi_Info_get(
         JNIEnv *env, jobject jthis, jlong handle, jstring jkey)
 {
@@ -95,11 +70,6 @@ JNIEXPORT jstring JNICALL Java_mpi_Info_get(
     return jvalue;
 }
 
-/*
- * Class:     mpi_Info
- * Method:    delete
- * Signature: (JLjava/lang/String;)V
- */
 JNIEXPORT void JNICALL Java_mpi_Info_delete(
         JNIEnv *env, jobject jthis, jlong handle, jstring jkey)
 {
@@ -109,11 +79,6 @@ JNIEXPORT void JNICALL Java_mpi_Info_delete(
     (*env)->ReleaseStringUTFChars(env, jkey, key);
 }
 
-/*
- * Class:     mpi_Info
- * Method:    size
- * Signature: (J)I
- */
 JNIEXPORT jint JNICALL Java_mpi_Info_size(
         JNIEnv *env, jobject jthis, jlong handle)
 {
@@ -123,11 +88,6 @@ JNIEXPORT jint JNICALL Java_mpi_Info_size(
     return (jint)nkeys;
 }
 
-/*
- * Class:     mpi_Info
- * Method:    getKey
- * Signature: (JI)Ljava/lang/String;
- */
 JNIEXPORT jstring JNICALL Java_mpi_Info_getKey(
         JNIEnv *env, jobject jthis, jlong handle, jint i)
 {
@@ -138,12 +98,7 @@ JNIEXPORT jstring JNICALL Java_mpi_Info_getKey(
            ? NULL : (*env)->NewStringUTF(env, key);
 }
 
-/*
- * Class:     mpi_Info
- * Method:    clone
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_mpi_Info_clone(
+JNIEXPORT jlong JNICALL Java_mpi_Info_dup(
         JNIEnv *env, jobject jthis, jlong handle)
 {
     MPI_Info newInfo;
@@ -152,11 +107,6 @@ JNIEXPORT jlong JNICALL Java_mpi_Info_clone(
     return (jlong)newInfo;
 }
 
-/*
- * Class:     mpi_Info
- * Method:    free
- * Signature: (J)J
- */
 JNIEXPORT jlong JNICALL Java_mpi_Info_free(
         JNIEnv *env, jobject jthis, jlong handle)
 {
@@ -166,11 +116,6 @@ JNIEXPORT jlong JNICALL Java_mpi_Info_free(
     return (jlong)info;
 }
 
-/*
- * Class:     mpi_Info
- * Method:    isNull
- * Signature: (J)Z
- */
 JNIEXPORT jboolean JNICALL Java_mpi_Info_isNull(
         JNIEnv *env, jobject jthis, jlong handle)
 {

@@ -178,7 +178,6 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
         (*env)->DeleteLocalRef(env, jc);
     }
 
-    ompi_java_init_native_Datatype(env);
     ompi_java_findClasses(env);
     return value;
 }
@@ -208,7 +207,6 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
     int rc = MPI_Init_thread(&len, &sargs, required, &provided);
     ompi_java_exceptionCheck(env, rc);
 
-    ompi_java_init_native_Datatype(env);
     ompi_java_findClasses(env);
     return provided;
 }
@@ -380,7 +378,8 @@ void ompi_java_findClasses(JNIEnv *env)
     ompi_java.DistGraphNeighborsClass = ompi_java_findClass(
                                         env, "mpi/DistGraphNeighbors");
 
-    ompi_java.ExceptionClass  = ompi_java_findClass(env, "mpi/MPIException");
+    ompi_java.StatusClass    = ompi_java_findClass(env, "mpi/Status");
+    ompi_java.ExceptionClass = ompi_java_findClass(env, "mpi/MPIException");
 
     ompi_java.ExceptionInit = (*env)->GetMethodID(
                               env, ompi_java.ExceptionClass,
@@ -410,6 +409,7 @@ void ompi_java_deleteClasses(JNIEnv *env)
     (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
     (*env)->DeleteGlobalRef(env, ompi_java.ExceptionClass);
     (*env)->DeleteGlobalRef(env, ompi_java.IntegerClass);
     (*env)->DeleteGlobalRef(env, ompi_java.LongClass);
