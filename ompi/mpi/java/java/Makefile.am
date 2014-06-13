@@ -182,8 +182,8 @@ doc: mpi/MPI.class
 	@touch doc
 
 jdoc-install: doc
-	-$(MKDIR_P) $(DESTDIR)$(docdir)/javadoc
-	cp -rp doc/* $(DESTDIR)$(docdir)/javadoc
+	-$(MKDIR_P) $(DESTDIR)$(docdir)/javadoc-openmpi
+	cp -rp doc/* $(DESTDIR)$(docdir)/javadoc-openmpi
 
 jdoc-uninstall:
 	-rm -rf $(DESTDIR)$(docdir)/javadoc
