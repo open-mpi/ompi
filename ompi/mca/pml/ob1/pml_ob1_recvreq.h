@@ -163,6 +163,9 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(true == recvreq->req_recv.req_base.req_free_called) {
+        if( MPI_SUCCESS != recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR ) {
+            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST, true);
+        }
         MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
     } else {
         /* initialize request status */

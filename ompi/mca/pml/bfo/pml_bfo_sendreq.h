@@ -247,6 +247,10 @@ send_request_pml_complete(mca_pml_bfo_send_request_t *sendreq)
     if(false == sendreq->req_send.req_base.req_ompi.req_complete) {
         /* Should only be called for long messages (maybe synchronous) */
         MCA_PML_BFO_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+    } else {
+        if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
+            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST, true);
+        }
     }
     sendreq->req_send.req_base.req_pml_complete = true;
 #if PML_BFO
