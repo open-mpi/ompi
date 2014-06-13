@@ -285,8 +285,8 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     if (1 < orte_rmaps_base.cpus_per_rank) {
         orte_show_help("help-orte-rmaps-base.txt", "deprecated", true,
                        "--cpus-per-proc, -cpus-per-proc, --cpus-per-rank, -cpus-per-rank",
-                       "--map-by <obj>:PE=N",
-                       "rmaps_base_cpus_per_proc", "rmaps_base_mapping_policy=<obj>:PE=N");
+                       "--map-by <obj>:PE=N, default <obj>=NUMA",
+                       "rmaps_base_cpus_per_proc", "rmaps_base_mapping_policy=<obj>:PE=N, default <obj>=NUMA");
     }
 
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&orte_rmaps_base.mapping,
@@ -406,6 +406,22 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             } else {
                 OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
             }
+        }
+        /* we also need to ensure we are mapping to a high-enough level to have
+         * multiple cpus beneath it - by default, we'll go to the NUMA level */
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            if (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYHWTHREAD ||
+              (ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping) == ORTE_MAPPING_BYCORE &&
+              !opal_hwloc_use_hwthreads_as_cpus)) {
+                orte_show_help("help-orte-rmaps-base.txt", "mapping-too-low-init", true);
+                return ORTE_ERR_SILENT;
+            }
+        } else {
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "%s rmaps:base pe/rank set - setting mapping to BYNUMA",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYNUMA);
+            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
         }
 #endif
     }
@@ -565,6 +581,10 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
                 return ORTE_ERR_SILENT;
             }
             orte_rmaps_base.cpus_per_rank = strtol(ptr, NULL, 10);
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "%s rmaps:base setting pe/rank to %d",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                orte_rmaps_base.cpus_per_rank);
             found = true;
         } else if (0 == strncasecmp(ck2[i], "oversubscribe", strlen(ck2[i]))) {
             ORTE_UNSET_MAPPING_DIRECTIVE(*tmp, ORTE_MAPPING_NO_OVERSUBSCRIBE);
@@ -577,7 +597,8 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
         } else {
             /* unrecognized modifier */
             opal_argv_free(ck2);
-            return ORTE_ERR_BAD_PARAM;
+                orte_show_help("help-orte-rmaps-base.txt", "unrecog-modifier", true, ck2[i]);
+                return ORTE_ERR_SILENT;
         }
     }
     opal_argv_free(ck2);
@@ -603,6 +624,11 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
     tmp = 0;
     *device = NULL;
 
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                        "%s rmaps:base set policy with %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (NULL == inspec) ? "NULL" : inspec);
+
     if (NULL == inspec) {
         ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
     } else {
@@ -610,9 +636,28 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
         /* see if a colon was included - if so, then we have a policy + modifier */
         ck = strchr(spec, ':');
         if (NULL != ck) {
+            /* if the colon is the first character of the string, then we
+             * just have modifiers on the default mapping policy */
+            if (ck == spec) {
+                ck++;
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "%s rmaps:base only modifiers %s provided - assuming bysocket mapping",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ck);
+                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYSOCKET);
+                if (ORTE_ERR_SILENT == (rc = check_modifiers(ck, &tmp)) &&
+                    ORTE_ERR_BAD_PARAM != rc) {
+                    free(spec);
+                    return ORTE_ERR_SILENT;
+                }
+                free(spec);
+                goto setpolicy;
+            }
             /* split the string */
             *ck = '\0';
             ck++;
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "%s rmaps:base policy %s modifiers %s provided",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), spec, ck);
             /* if the policy is "dist", then we set the policy to that value
              * and save the second argument as the device
              */
@@ -721,9 +766,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
         ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
     }
 
-#if OPAL_HAVE_HWLOC
  setpolicy:
-#endif
     *policy = tmp;
 
     return ORTE_SUCCESS;

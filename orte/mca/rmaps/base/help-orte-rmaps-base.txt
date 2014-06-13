@@ -287,8 +287,37 @@ impact performance when combined with the requested binding
 operation. We will continue, but will not bind the processes.
 This warning can be omitted by adding the "overload-allowed"
 qualifier to the binding policy.
-# 
-[cannot-launch] 
-Although we were able to map your job, we are unable to launch 
-it at this time due to required resources being busy. Please 
-try again later. 
+#
+[cannot-launch]
+Although we were able to map your job, we are unable to launch
+it at this time due to required resources being busy. Please
+try again later.
+#
+[rmaps:no-locale]
+The request to bind processes could not be completed due to
+an internal error - the locale of the following process was
+not set by the mapper code:
+
+  Process:  %s
+
+Please contact the OMPI developers for assistance. Meantime,
+you will still be able to run your application without binding
+by specifying "--bind-to none" on your command line.
+#
+[mapping-too-low-init]
+A request for multiple cpus-per-proc was given, but a directive
+was also give to map to an object level that cannot support that
+directive.
+
+Please specify a mapping level that has more than one cpu, or
+else let us define a default mapping that will allow multiple
+cpus-per-proc.
+#
+[unrecog-modifier]
+A modifier was given to the --map-by directive that is not
+recognized:
+
+  Modifier:  %s
+
+Please see "mpirun --help" for a description of supported
+modifiers.
