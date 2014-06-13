@@ -559,6 +559,11 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
     int i;
     bool found = false;
 
+    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                        "%s rmaps:base check modifiers with %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (NULL == ck) ? "NULL" : ck);
+
     if (NULL == ck) {
         return ORTE_SUCCESS;
     }
@@ -597,8 +602,7 @@ static int check_modifiers(char *ck, orte_mapping_policy_t *tmp)
         } else {
             /* unrecognized modifier */
             opal_argv_free(ck2);
-                orte_show_help("help-orte-rmaps-base.txt", "unrecog-modifier", true, ck2[i]);
-                return ORTE_ERR_SILENT;
+            return ORTE_ERR_BAD_PARAM;
         }
     }
     opal_argv_free(ck2);
