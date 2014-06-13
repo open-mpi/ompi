@@ -170,10 +170,7 @@ static int ompi_mtl_mxm_component_open(void)
 
 static int ompi_mtl_mxm_component_close(void)
 {
-    unsigned long cur_ver;
-
-    cur_ver = mxm_get_version();
-    if ((cur_ver == MXM_API) && (ompi_mtl_mxm.mxm_context != NULL)) {
+    if (ompi_mtl_mxm.mxm_context != NULL) {
         mxm_cleanup(ompi_mtl_mxm.mxm_context);
         ompi_mtl_mxm.mxm_context = NULL;
         OBJ_DESTRUCT(&mca_mtl_mxm_component.mxm_messages);
