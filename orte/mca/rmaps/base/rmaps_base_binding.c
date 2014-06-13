@@ -359,7 +359,7 @@ static int bind_in_place(orte_job_t *jdata,
     unsigned int idx, ncpus;
     struct hwloc_topology_support *support;
     opal_hwloc_obj_data_t *data;
-    hwloc_obj_t locale, sib;
+    hwloc_obj_t sib;
     bool found;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -465,14 +465,14 @@ static int bind_in_place(orte_job_t *jdata,
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                     "%s bind_in_place: searching right",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                sib = locale;
+                sib = proc->locale;
                 found = false;
                 while (NULL != (sib = sib->next_cousin)) {
                     data = (opal_hwloc_obj_data_t*)sib->userdata;
                     ncpus = opal_hwloc_base_get_npus(node->topology, sib);
                     if (data->num_bound < ncpus) {
                         found = true;
-                        locale = sib;
+                        proc->locale = sib;
                         break;
                     }
                 }
@@ -481,13 +481,13 @@ static int bind_in_place(orte_job_t *jdata,
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                         "%s bind_in_place: searching left",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                    sib = locale;
+                    sib = proc->locale;
                     while (NULL != (sib = sib->prev_cousin)) {
                         data = (opal_hwloc_obj_data_t*)sib->userdata;
                         ncpus = opal_hwloc_base_get_npus(node->topology, sib);
                         if (data->num_bound < ncpus) {
                             found = true;
-                            locale = sib;
+                            proc->locale = sib;
                             break;
                         }
                     }
@@ -506,12 +506,12 @@ static int bind_in_place(orte_job_t *jdata,
                 }
             }
             /* track the number bound */
-            data = (opal_hwloc_obj_data_t*)locale->userdata;  // just in case it changed
+            data = (opal_hwloc_obj_data_t*)proc->locale->userdata;  // just in case it changed
             data->num_bound++;
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "BINDING PROC %s TO %s NUMBER %u",
                                 ORTE_NAME_PRINT(&proc->name),
-                                hwloc_obj_type_string(locale->type), idx);
+                                hwloc_obj_type_string(proc->locale->type), idx);
             /* bind the proc here */
             cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
             hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
