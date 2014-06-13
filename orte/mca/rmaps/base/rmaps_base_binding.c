@@ -359,6 +359,8 @@ static int bind_in_place(orte_job_t *jdata,
     unsigned int idx, ncpus;
     struct hwloc_topology_support *support;
     opal_hwloc_obj_data_t *data;
+    hwloc_obj_t locale, sib;
+    bool found;
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: bind in place for job %s with bindings %s",
@@ -450,33 +452,70 @@ static int bind_in_place(orte_job_t *jdata,
             if (UINT_MAX == (idx = opal_hwloc_base_get_obj_idx(node->topology, proc->locale, OPAL_HWLOC_AVAILABLE))) {
                 return ORTE_ERR_SILENT;
             }
-            /* track the number bound */
             data = (opal_hwloc_obj_data_t*)proc->locale->userdata;
-            data->num_bound++;
-             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                "BINDING PROC %s TO %s NUMBER %u",
-                                ORTE_NAME_PRINT(&proc->name),
-                                hwloc_obj_type_string(proc->locale->type), idx);
             /* get the number of cpus under this location */
             if (0 == (ncpus = opal_hwloc_base_get_npus(node->topology, proc->locale))) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-available-cpus", true, node->name);
                 return ORTE_ERR_SILENT;
             }
-            /* error out if adding a proc would cause overload and that wasn't allowed,
-             * and it wasn't a default binding policy (i.e., the user requested it)
-             */
-            if (ncpus < data->num_bound &&
-                !OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
-                OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
-                orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
-                               opal_hwloc_base_print_binding(map->binding), node->name,
-                               data->num_bound, ncpus);
-                return ORTE_ERR_SILENT;
+            /* if we don't have enough cpus to support this additional proc, try
+             * shifting the location to a cousin that can support it - the important
+             * thing is that we maintain the same level in the topology */
+            if (ncpus < (data->num_bound+1)) {
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "%s bind_in_place: searching right",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                sib = locale;
+                found = false;
+                while (NULL != (sib = sib->next_cousin)) {
+                    data = (opal_hwloc_obj_data_t*)sib->userdata;
+                    ncpus = opal_hwloc_base_get_npus(node->topology, sib);
+                    if (data->num_bound < ncpus) {
+                        found = true;
+                        locale = sib;
+                        break;
+                    }
+                }
+                if (!found) {
+                    /* try the other direction */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "%s bind_in_place: searching left",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                    sib = locale;
+                    while (NULL != (sib = sib->prev_cousin)) {
+                        data = (opal_hwloc_obj_data_t*)sib->userdata;
+                        ncpus = opal_hwloc_base_get_npus(node->topology, sib);
+                        if (data->num_bound < ncpus) {
+                            found = true;
+                            locale = sib;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    /* no place to put this - see if overload is allowed and
+                     * error out if adding a proc would cause overload and that wasn't allowed,
+                     * and it wasn't a default binding policy (i.e., the user requested it)*/
+                    if (!OPAL_BIND_OVERLOAD_ALLOWED(jdata->map->binding) &&
+                        OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                        orte_show_help("help-orte-rmaps-base.txt", "rmaps:binding-overload", true,
+                                       opal_hwloc_base_print_binding(map->binding), node->name,
+                                       data->num_bound, ncpus);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
             }
+            /* track the number bound */
+            data = (opal_hwloc_obj_data_t*)locale->userdata;  // just in case it changed
+            data->num_bound++;
+            opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                "BINDING PROC %s TO %s NUMBER %u",
+                                ORTE_NAME_PRINT(&proc->name),
+                                hwloc_obj_type_string(locale->type), idx);
             /* bind the proc here */
             cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
             hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, cpus);
-            /* record the location */
+            /* update the location, in case it changed */
             proc->bind_location = proc->locale;
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s BOUND PROC %s TO %s[%s:%u] on node %s",
