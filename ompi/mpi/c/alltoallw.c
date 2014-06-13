@@ -60,17 +60,17 @@ int MPI_Alltoallw(const void *sendbuf, const int sendcounts[],
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for ( i = 0; i < size; i++ ) {
-            memchecker_datatype(sendtypes[i]);
+            if (MPI_IN_PLACE != sendbuf) {
+                memchecker_datatype(sendtypes[i]);
+                ompi_datatype_type_extent(sendtypes[i], &send_ext);
+                memchecker_call(&opal_memchecker_base_isdefined,
+                                (char *)(sendbuf)+sdispls[i]*send_ext,
+                                sendcounts[i], sendtypes[i]);
+            }
             memchecker_datatype(recvtypes[i]);
-            
-            ompi_datatype_type_extent(sendtypes[i], &send_ext);
             ompi_datatype_type_extent(recvtypes[i], &recv_ext);
-
-            memchecker_call(&opal_memchecker_base_isdefined,
-                            (char *)(sendbuf)+sdispls[i]*send_ext,
-                            sendcounts[i], sendtypes[i]);
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            (char *)(recvbuf)+sdispls[i]*recv_ext,
+                            (char *)(recvbuf)+rdispls[i]*recv_ext,
                             recvcounts[i], recvtypes[i]);
         }
     );

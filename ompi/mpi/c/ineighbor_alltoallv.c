@@ -56,21 +56,25 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
         ptrdiff_t recv_ext;
         ptrdiff_t send_ext;
 
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-
-        ompi_datatype_type_extent(recvtype, &recv_ext);
-        ompi_datatype_type_extent(sendtype, &send_ext);
-
         memchecker_comm(comm);
+
+        if (MPI_IN_PLACE != sendbuf) {
+            memchecker_datatype(sendtype);
+            ompi_datatype_type_extent(recvtype, &recv_ext);
+        }
+
+        memchecker_datatype(recvtype);
+        ompi_datatype_type_extent(sendtype, &send_ext);
 
         err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
         if (MPI_SUCCESS == err) {
-            for ( i = 0; i < outdegree; i++ ) {
-                /* check if send chunks are defined. */
-                memchecker_call(&opal_memchecker_base_isdefined,
-                                (char *)(sendbuf)+sdispls[i]*send_ext,
-                                sendcounts[i], sendtype);
+            if (MPI_IN_PLACE != sendbuf) {
+                for ( i = 0; i < outdegree; i++ ) {
+                    /* check if send chunks are defined. */
+                    memchecker_call(&opal_memchecker_base_isdefined,
+                                    (char *)(sendbuf)+sdispls[i]*send_ext,
+                                    sendcounts[i], sendtype);
+                }
             }
             for ( i = 0; i < indegree; i++ ) {
                 /* check if receive chunks are addressable. */
