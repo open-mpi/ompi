@@ -192,6 +192,19 @@ practical point of view, this implies an overhead associated to all
 buffers that are represented by Java arrays. The overhead is small
 for small buffers but increases for large arrays.
 
+There is a pool of temporary buffers with a default capacity of 64K.
+If a temporary buffer of 64K or less is needed, then the buffer will
+be obtained from the pool. But if the buffer is larger, then it will
+be necessary to allocate the buffer and free it later.
+
+The default capacity of pool buffers can be modified with an 'mca'
+parameter:
+
+    mpirun --mca mpi_java_eager size ...
+
+Where 'size' is the number of bytes, or kilobytes if it ends with 'k',
+or megabytes if it ends with 'm'.
+
 An alternative is to use "direct buffers" provided by standard
 classes available in the Java SDK such as ByteBuffer. For convenience
 we provide a few static methods "new[Type]Buffer" in the MPI class

@@ -23,6 +23,8 @@
 
 package mpi;
 
+import java.nio.*;
+
 /**
  * The {@code Datatype} class represents {@code MPI_Datatype} handles.
  */
@@ -539,5 +541,15 @@ public void deleteAttr(int keyval) throws MPIException
 }
 
 private native void deleteAttr(long type, int keyval) throws MPIException;
+
+/**
+ * Gets the offset of a buffer in bytes.
+ * @param buffer buffer
+ * @return offset in bytes
+ */
+protected int getOffset(Object buffer)
+{
+    return baseSize * ((Buffer)buffer).arrayOffset();
+}
 
 } // Datatype
