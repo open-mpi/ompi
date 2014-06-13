@@ -28,6 +28,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/communicator/comm_helpers.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
@@ -48,8 +49,8 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
                             const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
                             MPI_Request *request)
 {
-    int i, size, err;
-    size_t sendtype_size, recvtype_size;
+    int i, err;
+    int indegree, outdegree, weighted;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -63,16 +64,20 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
 
         memchecker_comm(comm);
 
-        size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
-        for ( i = 0; i < size; i++ ) {
-            /* check if send chunks are defined. */
-            memchecker_call(&opal_memchecker_base_isdefined,
-                            (char *)(sendbuf)+sdispls[i]*send_ext,
-                            sendcounts[i], sendtype);
-            /* check if receive chunks are addressable. */
-            memchecker_call(&opal_memchecker_base_isaddressable,
-                            (char *)(recvbuf)+rdispls[i]*recv_ext,
-                            recvcounts[i], recvtype);
+        err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
+        if (MPI_SUCCESS == err) {
+            for ( i = 0; i < outdegree; i++ ) {
+                /* check if send chunks are defined. */
+                memchecker_call(&opal_memchecker_base_isdefined,
+                                (char *)(sendbuf)+sdispls[i]*send_ext,
+                                sendcounts[i], sendtype);
+            }
+            for ( i = 0; i < indegree; i++ ) {
+                /* check if receive chunks are addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable,
+                                (char *)(recvbuf)+rdispls[i]*recv_ext,
+                                recvcounts[i], recvtype);
+            }
         }
     );
 
@@ -94,21 +99,15 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
-        size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
-        for (i = 0; i < size; ++i) {
+        err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
+        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+        for (i = 0; i < outdegree; ++i) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+        }
+        for (i = 0; i < indegree; ++i) {
             OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtype, recvcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-        }
-
-        if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
-            int me = ompi_comm_rank(comm);
-            ompi_datatype_type_size(sendtype, &sendtype_size);
-            ompi_datatype_type_size(recvtype, &recvtype_size);
-            if ((sendtype_size*sendcounts[me]) != (recvtype_size*recvcounts[me])) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
-            }
         }
     }
 
