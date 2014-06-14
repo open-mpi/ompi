@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -413,13 +414,10 @@ int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len)
 
 bool opal_bitmap_is_clear(opal_bitmap_t *bm)
 {
-    int i, len;
-    int index, offset;
-
-    len = bm->array_size * SIZE_OF_BASE_TYPE;
+    int i;
 
     for (i = 0; i < bm->array_size; ++i) {
-        if (0 != bm->bitmap[index]) {
+        if (0 != bm->bitmap[i]) {
             return false;
         }
     }
