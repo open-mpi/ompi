@@ -73,8 +73,8 @@ typedef struct {
     opal_list_t frequencies;
     /* mark if setspeed is supported */
     bool setspeed;
-} corefreq_tracker_t;
-static void ctr_con(corefreq_tracker_t *trk)
+} rtefreq_tracker_t;
+static void ctr_con(rtefreq_tracker_t *trk)
 {
     trk->directory = NULL;
     trk->system_governor = NULL;
@@ -83,7 +83,7 @@ static void ctr_con(corefreq_tracker_t *trk)
     OBJ_CONSTRUCT(&trk->frequencies, opal_list_t);
     trk->setspeed = false;
 }
-static void ctr_des(corefreq_tracker_t *trk)
+static void ctr_des(rtefreq_tracker_t *trk)
 {
     if (NULL != trk->directory) {
         free(trk->directory);
@@ -97,7 +97,7 @@ static void ctr_des(corefreq_tracker_t *trk)
     OPAL_LIST_DESTRUCT(&trk->governors);
     OPAL_LIST_DESTRUCT(&trk->frequencies);
 }
-OBJ_CLASS_INSTANCE(corefreq_tracker_t,
+OBJ_CLASS_INSTANCE(rtefreq_tracker_t,
                    opal_list_item_t,
                    ctr_con, ctr_des);
 
@@ -129,7 +129,7 @@ static int init(void)
     struct dirent *entry;
     char *filename, *tmp, **vals;
     FILE *fp;
-    corefreq_tracker_t *trk;
+    rtefreq_tracker_t *trk;
     opal_value_t *kv;
 
     /* always construct this so we don't segfault in finalize */
@@ -172,7 +172,7 @@ static int init(void)
         }
 
         /* track the info for this core */
-        trk = OBJ_NEW(corefreq_tracker_t);
+        trk = OBJ_NEW(rtefreq_tracker_t);
         /* trailing digits are the core id */
         for (k=strlen(entry->d_name)-1; 0 <= k; k--) {
             if (!isdigit(entry->d_name[k])) {
@@ -289,7 +289,7 @@ static int init(void)
 
     /* report out the results, if requested */
     if (9 < opal_output_get_verbosity(orte_rtc_base_framework.framework_output)) {
-        OPAL_LIST_FOREACH(trk, &tracking, corefreq_tracker_t) {
+        OPAL_LIST_FOREACH(trk, &tracking, rtefreq_tracker_t) {
             opal_output(0, "%s\tCore: %d  Governor: %s MaxFreq: %f MinFreq: %f\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), trk->core,
                         trk->system_governor, trk->system_max_freq, trk->system_min_freq);
@@ -393,7 +393,7 @@ static void set(orte_job_t *jdata,
                 int write_fd)
 {
     char *governor, *tmp, **vals;
-    corefreq_tracker_t *trk;
+    rtefreq_tracker_t *trk;
     opal_value_t *kv;
     float freq, *fptr, minfreq;
     bool setspeed_used = false;
@@ -410,7 +410,7 @@ static void set(orte_job_t *jdata,
     governor = NULL;
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_GOVERNOR, (void**)&governor, OPAL_STRING)) {
         /* loop thru all the cpus on this node */
-        OPAL_LIST_FOREACH(trk, &tracking, corefreq_tracker_t) {
+        OPAL_LIST_FOREACH(trk, &tracking, rtefreq_tracker_t) {
             /* does the requested value match the current setting? */
             if (0 == strcmp(trk->current_governor, governor)) {
                 continue;
@@ -464,7 +464,7 @@ static void set(orte_job_t *jdata,
     fptr = &freq;
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_MAX_FREQ, (void**)&fptr, OPAL_FLOAT)) {
         /* loop thru all the cpus on this node */
-        OPAL_LIST_FOREACH(trk, &tracking, corefreq_tracker_t) {
+        OPAL_LIST_FOREACH(trk, &tracking, rtefreq_tracker_t) {
             /* does the requested value match the current setting? */
             if (trk->current_max_freq == freq) {
                 continue;
@@ -520,7 +520,7 @@ static void set(orte_job_t *jdata,
 
     if (!setspeed_used && 0.0 < minfreq) {
         /* need to process the min freq value - loop thru all the cpus on this node */
-        OPAL_LIST_FOREACH(trk, &tracking, corefreq_tracker_t) {
+        OPAL_LIST_FOREACH(trk, &tracking, rtefreq_tracker_t) {
             /* does the requested value match the current setting? */
             if (trk->current_min_freq == minfreq) {
                 continue;
@@ -570,14 +570,14 @@ static void set(orte_job_t *jdata,
 
 static void getvals(opal_list_t *vals)
 {
-    corefreq_tracker_t *trk;
+    rtefreq_tracker_t *trk;
     orte_rtc_resource_t *res;
     opal_value_t *kv;
     char *tmp, **args;
 
     res = OBJ_NEW(orte_rtc_resource_t);
 
-    OPAL_LIST_FOREACH(trk, &tracking, corefreq_tracker_t) {
+    OPAL_LIST_FOREACH(trk, &tracking, rtefreq_tracker_t) {
         res = OBJ_NEW(orte_rtc_resource_t);
         res->component = strdup(mca_rtc_freq_component.super.base_version.mca_component_name);
         asprintf(&res->category, "core-%d", trk->core);
