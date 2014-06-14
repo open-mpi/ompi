@@ -123,10 +123,10 @@ be found on node %s.
 A request was made to bind to that would result in binding more
 processes than cpus on a resource:
 
-   Bind to:         %s
-   Node:            %s
+   Bind to:     %s
+   Node:        %s
    #processes:  %d
-   #cpus:          %d
+   #cpus:       %d
 
 You can override this protection by adding the "overload-allowed"
 option to your binding directive.
@@ -312,13 +312,3 @@ directive.
 Please specify a mapping level that has more than one cpu, or
 else let us define a default mapping that will allow multiple
 cpus-per-proc.
-#
-[unrecog-modifier]
-A modifier was given to the --map-by directive that is not
-recognized:
-
-  Modifier:  %s
-
-Please see "mpirun --help" for a description of supported
-modifiers.
-
