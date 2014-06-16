@@ -59,30 +59,31 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (indegree < 0 || outdegree < 0 || NULL == comm_dist_graph) {
-            return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, "MPI_Dist_create_graph_adjacent 1");
+            return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
+                                          "MPI_Dist_graph_create_adjacent negative degree");
         } else if ((indegree > 0 &&
                     (NULL == sources || NULL == sourceweights)) ||
                    (outdegree > 0 &&
                     (NULL == destinations || NULL == destweights))) {
-            return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, "MPI_Dist_create_graph adjacent 2");
+            return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, "MPI_Dist_graph_create_adjacent mismatched sources or destinations");
         }
         comm_size = ompi_comm_size(comm_old);
         for (i = 0; i < indegree; ++i) {
             if (sources[i] < 0 || sources[i] >= comm_size) {
                 return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
-                                              FUNC_NAME);
+                                              "MPI_Dist_graph_create_adjacent invalid sources");
             } else if (MPI_UNWEIGHTED != sourceweights && sourceweights[i] < 0) {
                 return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
-                                              "MPI_Dist_create_graph adjacent 3");
+                                              "MPI_Dist_graph_create_adjacent invalid sourceweights");
             }
         }
         for (i = 0; i < outdegree; ++i) {
             if (destinations[i] < 0 || destinations[i] >= comm_size) {
                 return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
-                                              FUNC_NAME);
+                                              "MPI_Dist_graph_create_adjacent invalid destinations");
             } else if (MPI_UNWEIGHTED != destweights && destweights[i] < 0) {
                 return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG,
-                                              "MPI_Dist_create_graph_adjacent 4\n");
+                                              "MPI_Dist_graph_create_adjacent invalid destweights");
             }
         }
     }
@@ -100,3 +101,4 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
                                                            reorder, comm_dist_graph);
     OMPI_ERRHANDLER_RETURN(err, comm_old, err, FUNC_NAME);
 }
+
