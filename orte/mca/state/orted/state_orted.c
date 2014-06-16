@@ -409,7 +409,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                         if (NULL != (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                             ORTE_FLAG_TEST(pptr, ORTE_PROC_FLAG_ALIVE)) {
                             /* at least one is still alive */
-                            goto moveon;
+                            goto cleanup;
                         }
                     }
                     /* call our appropriate exit procedure */

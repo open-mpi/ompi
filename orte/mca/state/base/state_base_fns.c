@@ -462,6 +462,7 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
     orte_proc_state_t state = caddy->proc_state;
     orte_job_t *jdata;
     orte_proc_t *pdata;
+    int i;
 
     opal_output_verbose(5, orte_state_base_framework.framework_output,
                         "%s state:base:track_procs called for proc %s state %s",
@@ -527,6 +528,26 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
              */
             orte_session_dir_finalize(proc);
 	}
+        /* if we are trying to terminate and our routes are
+         * gone, then terminate ourselves IF no local procs
+         * remain (might be some from another job)
+         */
+        if (orte_orteds_term_ordered &&
+            0 == orte_routed.num_routes()) {
+            for (i=0; i < orte_local_children->size; i++) {
+                if (NULL != (pdata = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
+                    ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_ALIVE)) {
+                    /* at least one is still alive */
+                    goto cleanup;
+                }
+            }
+            /* call our appropriate exit procedure */
+            OPAL_OUTPUT_VERBOSE((5, orte_state_base_framework.framework_output,
+                                 "%s state:base all routes and children gone - exiting",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            goto cleanup;
+        }
         /* return the allocated slot for reuse */
         cleanup_node(pdata);
 	/* track job status */
