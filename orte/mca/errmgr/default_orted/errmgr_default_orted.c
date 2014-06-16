@@ -415,6 +415,34 @@ static void proc_errors(int fd, short args, void *cbdata)
     }
 
     if (ORTE_PROC_STATE_TERMINATED < state) {
+        /* if we were ordered to terminate, mark this proc as dead and see if
+         * any of our routes or local  children remain alive - if not, then
+         * terminate ourselves. */
+        if (orte_orteds_term_ordered) {
+            for (i=0; i < orte_local_children->size; i++) {
+                if (NULL != (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                    if (child->name.jobid == proc->jobid &&
+                        child->name.vpid == proc->vpid) {
+                        child->state = state;
+                        ORTE_FLAG_UNSET(child, ORTE_PROC_FLAG_ALIVE);
+                        continue;
+                    }
+                    if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_ALIVE)) {
+                        goto keep_going;
+                    }
+                }
+            }
+            /* if all my routes and children are gone, then terminate
+               ourselves nicely (i.e., this is a normal termination) */
+            if (0 == orte_routed.num_routes()) {
+                OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                                     "%s errmgr:default:orted all routes gone - exiting",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+            }
+        }
+
+ keep_going:
         /* if the job hasn't completed and the state is abnormally
          * terminated, then we need to alert the HNP right away
          */
