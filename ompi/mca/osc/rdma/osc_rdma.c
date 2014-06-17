@@ -89,6 +89,12 @@ ompi_osc_rdma_free(ompi_win_t *win)
 
     OBJ_DESTRUCT(&module->pending_acc);
 
+    while (NULL != (item = opal_list_remove_first (&module->pending_posts))) {
+        OBJ_RELEASE(item);
+    }
+
+    OBJ_DESTRUCT(&module->pending_posts);
+
     osc_rdma_gc_clean ();
 
     if (NULL != module->peers) {

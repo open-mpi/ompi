@@ -1654,7 +1654,7 @@ static int ompi_osc_rdma_callback (ompi_request_t *request)
         process_frag(module, (ompi_osc_rdma_frag_header_t *) base_header);
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_POST:
-        (void) osc_rdma_incoming_post (module);
+        (void) osc_rdma_incoming_post (module, source);
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_LOCK_ACK:
         ompi_osc_rdma_process_lock_ack(module, (ompi_osc_rdma_header_lock_ack_t *) base_header);
