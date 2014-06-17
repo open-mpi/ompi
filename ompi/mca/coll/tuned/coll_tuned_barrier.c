@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -48,6 +48,61 @@ static mca_base_var_enum_value_t barrier_algorithms[] = {
     {6, "tree"},
     {0, NULL}
 };
+
+/**
+ * A quick version of the MPI_Sendreceive implemented for the barrier.
+ * No actual data is moved across the wire, we use 0-byte messages to
+ * signal a two peer synchronization.
+ */
+static inline int
+ompi_coll_tuned_sendrecv_zero(int dest, int stag,
+                              int source, int rtag,
+                              MPI_Comm comm)
+
+{
+    int err, line = 0;
+    ompi_request_t* reqs[2];
+    ompi_status_public_t statuses[2];
+
+    /* post new irecv */
+    err = MCA_PML_CALL(irecv( NULL, 0, MPI_BYTE, source, rtag,
+                              comm, &reqs[0]));
+    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+
+    /* send data to children */
+    err = MCA_PML_CALL(isend( NULL, 0, MPI_BYTE, dest, stag,
+                              MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
+    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+
+    err = ompi_request_wait_all( 2, reqs, statuses );
+    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+
+    return (MPI_SUCCESS);
+
+ error_handler:
+    /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
+     * code that we can propagate up the stack. Instead, look for the real
+     * error code from the MPI_ERROR in the status.
+     */
+    if( MPI_ERR_IN_STATUS == err ) {
+        /* At least we know the error was detected during the wait_all */
+        int err_index = 1;
+        if( MPI_SUCCESS == statuses[0].MPI_ERROR ) {
+            err_index = 0;
+        }
+        err = statuses[err_index].MPI_ERROR;
+        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred in the %s"
+                                              " stage of ompi_coll_tuned_sendrecv_zero\n",
+                      __FILE__, line, err, (0 == err_index ? "receive" : "send")));
+    } else {
+        /* Error discovered during the posting of the irecv or isend,
+         * and no status is available.
+         */
+        OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
+                      __FILE__, line, err));
+    }
+    return err;
+}
 
 /*
  * Barrier is ment to be a synchronous operation, as some BTLs can mark 
@@ -157,11 +212,9 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
         if (rank >= adjsize) {
             /* send message to lower ranked node */
             remote = rank - adjsize;
-            err = ompi_coll_tuned_sendrecv_actual(NULL, 0, MPI_BYTE, remote,
-                                                  MCA_COLL_BASE_TAG_BARRIER,
-                                                  NULL, 0, MPI_BYTE, remote,
-                                                  MCA_COLL_BASE_TAG_BARRIER,
-                                                  comm, MPI_STATUS_IGNORE);
+            err = ompi_coll_tuned_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER,
+                                                remote, MCA_COLL_BASE_TAG_BARRIER,
+                                                comm);
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
 
         } else if (rank < (size - adjsize)) {
@@ -184,11 +237,9 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
             if (remote >= adjsize) continue;
 
             /* post receive from the remote node */
-            err = ompi_coll_tuned_sendrecv_actual(NULL, 0, MPI_BYTE, remote,
-                                                  MCA_COLL_BASE_TAG_BARRIER,
-                                                  NULL, 0, MPI_BYTE, remote,
-                                                  MCA_COLL_BASE_TAG_BARRIER,
-                                                  comm, MPI_STATUS_IGNORE);
+            err = ompi_coll_tuned_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER,
+                                                remote, MCA_COLL_BASE_TAG_BARRIER,
+                                                comm);
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
         }
     }
@@ -235,11 +286,9 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
         to   = (rank + distance) % size;
 
         /* send message to lower ranked node */
-        err = ompi_coll_tuned_sendrecv_actual(NULL, 0, MPI_BYTE, to, 
-                                              MCA_COLL_BASE_TAG_BARRIER,
-                                              NULL, 0, MPI_BYTE, from, 
-                                              MCA_COLL_BASE_TAG_BARRIER,
-                                              comm, MPI_STATUS_IGNORE);
+        err = ompi_coll_tuned_sendrecv_zero(to, MCA_COLL_BASE_TAG_BARRIER,
+                                            from, MCA_COLL_BASE_TAG_BARRIER,
+                                            comm);
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
     }
 
@@ -266,11 +315,9 @@ int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm,
                  "ompi_coll_tuned_barrier_intra_two_procs rank %d", remote));
     remote = (remote + 1) & 0x1;
 
-    err = ompi_coll_tuned_sendrecv_actual(NULL, 0, MPI_BYTE, remote, 
-                                          MCA_COLL_BASE_TAG_BARRIER, 
-                                          NULL, 0, MPI_BYTE, remote, 
-                                          MCA_COLL_BASE_TAG_BARRIER,
-                                          comm, MPI_STATUS_IGNORE);
+    err = ompi_coll_tuned_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER, 
+                                        remote, MCA_COLL_BASE_TAG_BARRIER,
+                                        comm);
     return (err);
 }
 

@@ -51,8 +51,6 @@ int MPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MP
 {
     int i, err;
     int indegree, outdegree, weighted;
-    size_t sendtype_size, recvtype_size;
-    bool zerosend=true, zerorecv=true;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -117,32 +115,6 @@ int MPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MP
             OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtypes[i], recvcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
-    }
-
-    /* Do we need to do anything? */
-
-    err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
-    OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-    for (i = 0; i < indegree; ++i) {
-        ompi_datatype_type_size(recvtypes[i], &recvtype_size);
-        if (0 != recvtype_size && 0 != recvcounts[i]) {
-            zerorecv = false;
-            break;
-        }
-    }
-    if (MPI_IN_PLACE == sendbuf) {
-        zerosend = zerorecv;
-    } else {
-        for (i = 0; i < outdegree; ++i) {
-            ompi_datatype_type_size(sendtypes[i], &sendtype_size);
-            if (0 != sendtype_size && 0 != sendcounts[i]) {
-                zerosend = false;
-                break;
-            }
-        }
-    }
-    if (zerosend && zerorecv) {
-        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
