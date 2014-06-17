@@ -2141,9 +2141,9 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              * in odls_default_module.c.
              */
             OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                 "%s SENDING FORCE SIGKILL TO %s",
+                                 "%s SENDING FORCE SIGKILL TO %s pid %lu",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name)));
+                                 ORTE_NAME_PRINT(&child->name), (unsigned long)child->pid));
             kill_local(child->pid, SIGKILL);
             
             /* indicate the waitpid fired as this is effectively what
