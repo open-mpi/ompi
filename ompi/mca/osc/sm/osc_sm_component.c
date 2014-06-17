@@ -15,11 +15,9 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
-#include "ompi/request/request.h"
 #include "ompi/class/ompi_free_list.h"
 
 #include "osc_sm.h"
-#include "osc_sm_request.h"
 
 static int component_open(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
@@ -110,22 +108,6 @@ component_open(void)
 static int
 component_init(bool enable_progress_threads, bool enable_mpi_threads)
 {
-    int ret;
-
-    ret = ompi_free_list_init(&mca_osc_sm_component.requests,
-                              sizeof(ompi_request_t),
-                              OBJ_CLASS(ompi_request_t),
-                              0,
-                              0,
-                              8,
-                              NULL);
-    if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: ompi_free_list_init failed: %d\n",
-                            __FILE__, __LINE__, ret);
-        return ret;
-    }
-
     return OMPI_SUCCESS;
 }
 
