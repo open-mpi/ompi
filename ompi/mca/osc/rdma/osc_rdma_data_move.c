@@ -763,6 +763,16 @@ static int ompi_osc_rdma_acc_op_queue (ompi_osc_rdma_module_t *module, ompi_osc_
 static int replace_cb (ompi_request_t *request)
 {
     ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
+    int rank = MPI_PROC_NULL;
+
+    if (request->req_status.MPI_TAG & 0x01) {
+        rank = request->req_status.MPI_SOURCE;
+    }
+
+    mark_incoming_completion (module, rank);
+
+    /* put this request on the garbage colletion list */
+    osc_rdma_gc_add_request (request);
 
     /* unlock the accumulate lock */
     ompi_osc_rdma_accumulate_unlock (module);
