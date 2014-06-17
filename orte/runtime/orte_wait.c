@@ -165,7 +165,7 @@ static void register_callback(int fd, short args, void *cbdata)
         }
     }
 
-    /* we just override any existing registration */
+   /* we just override any existing registration */
     OPAL_LIST_FOREACH(t2, &pending_cbs, orte_wait_tracker_t) {
         if (t2->child == trk->child) {
             t2->cbfunc = trk->cbfunc;
@@ -248,33 +248,32 @@ static void wait_signal_callback(int fd, short event, void *arg)
         return;
     }
 
-    /* retrieve the pid */
- retry:
-    pid = waitpid(-1, &status, WNOHANG);
-    if (-1 == pid && EINTR == errno) {
-        /* try it again */
-        goto retry;
-    }
-    /* if we got garbage, then nothing we can do */
-    if (pid <= 0) {
-        return;
-    }
-
-    /* we are already in an event, so it is safe to access the list */
-    OPAL_LIST_FOREACH(t2, &pending_cbs, orte_wait_tracker_t) {
-        if (pid == t2->child->pid) {
-            /* found it! */
-            t2->child->exit_code = status;
-            if (NULL != t2->cbfunc) {
-                t2->cbfunc(t2->child, t2->cbdata);
-            }
-            opal_list_remove_item(&pending_cbs, &t2->super);
-            OBJ_RELEASE(t2);
+    /* we can have multiple children leave but only get one
+     * sigchild callback, so reap all the waitpids until we
+     * don't get anything valid back */
+    while (1) {
+        pid = waitpid(-1, &status, WNOHANG);
+        if (-1 == pid && EINTR == errno) {
+            /* try it again */
+            continue;
+        }
+        /* if we got garbage, then nothing we can do */
+        if (pid <= 0) {
             return;
         }
+        
+        /* we are already in an event, so it is safe to access the list */
+        OPAL_LIST_FOREACH(t2, &pending_cbs, orte_wait_tracker_t) {
+            if (pid == t2->child->pid) {
+                /* found it! */
+                t2->child->exit_code = status;
+                if (NULL != t2->cbfunc) {
+                    t2->cbfunc(t2->child, t2->cbdata);
+                }
+                opal_list_remove_item(&pending_cbs, &t2->super);
+                OBJ_RELEASE(t2);
+                break;
+            }
+        }
     }
-
-    /* if we get here, then this sigchild occurred prior to someone
-     * registering it, or after someone mistakenly removed it. Either
-     * way, there really isn't anything we can do with it */
 }
