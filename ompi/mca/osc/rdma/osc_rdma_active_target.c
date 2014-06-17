@@ -35,7 +35,7 @@
 /**
  * ompi_osc_rdma_pending_post_t:
  *
- * Describes a post operation that was encountered outside it's
+ * Describes a post operation that was encountered outside its
  * matching start operation.
  */
 struct ompi_osc_rdma_pending_post_t {
@@ -46,6 +46,22 @@ typedef struct ompi_osc_rdma_pending_post_t ompi_osc_rdma_pending_post_t;
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_pending_post_t);
 
 OBJ_CLASS_INSTANCE(ompi_osc_rdma_pending_post_t, opal_list_item_t, NULL, NULL);
+
+static bool lookup_proc_in_group (ompi_group_t *group, ompi_proc_t *proc)
+{
+    int group_size = ompi_group_size (group);
+
+    for (int i = 0 ; i < group_size ; ++i) {
+        ompi_proc_t *group_proc = ompi_group_peer_lookup (group, i);
+
+        /* it is safe to compare procs by pointer */
+        if (group_proc == proc) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 static int*
 get_comm_ranks(ompi_osc_rdma_module_t *module,
@@ -189,17 +205,12 @@ ompi_osc_rdma_start(ompi_group_t *group,
 
     OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_rdma_pending_post_t) {
         ompi_proc_t *pending_proc = ompi_comm_peer_lookup (module->comm, pending_post->rank);
-        int group_size = ompi_group_size (module->sc_group);
 
-        for (int i = 0 ; i < group_size ; ++i) {
-            ompi_proc_t *group_proc = ompi_group_peer_lookup (module->sc_group, i);
-
-            if (group_proc == pending_proc) {
-                ++module->num_post_msgs;
-                opal_list_remove_item (&module->pending_posts, &pending_post->super);
-                OBJ_RELEASE(pending_post);
-                break;
-            }
+        if (lookup_proc_in_group (module->sc_group, pending_proc)) {
+            ++module->num_post_msgs;
+            opal_list_remove_item (&module->pending_posts, &pending_post->super);
+            OBJ_RELEASE(pending_post);
+            break;
         }
     }
 
@@ -469,24 +480,11 @@ ompi_osc_rdma_test(ompi_win_t *win,
 int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module, int source)
 {
     ompi_proc_t *source_proc = ompi_comm_peer_lookup (module->comm, source);
-    bool matched = false;
 
     OPAL_THREAD_LOCK(&module->lock);
 
-    if (module->sc_group) {
-        const int group_size = ompi_group_size (module->sc_group);
-
-        for (int i = 0 ; i < group_size ; ++i) {
-            ompi_proc_t *group_proc = ompi_group_peer_lookup (module->sc_group, i);
-
-            if (group_proc == source_proc) {
-                matched = true;
-                break;
-            }
-        }
-    }
-
-    if (!matched) {
+    /* verify that this proc is part of the current start group */
+    if (!module->sc_group || !lookup_proc_in_group (module->sc_group, source_proc)) {
         ompi_osc_rdma_pending_post_t *pending_post = OBJ_NEW(ompi_osc_rdma_pending_post_t);
 
         pending_post->rank = source;
