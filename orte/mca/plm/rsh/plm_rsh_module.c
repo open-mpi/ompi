@@ -921,6 +921,7 @@ static void process_launch_list(int fd, short args, void *cbdata)
         }
         caddy = (orte_plm_rsh_caddy_t*)item;
         /* register the sigchild callback */
+        ORTE_FLAG_SET(caddy->daemon, ORTE_PROC_FLAG_ALIVE);
         orte_wait_cb(caddy->daemon, rsh_wait_daemon, (void*)caddy);
 
         /* fork a child to exec the rsh/ssh session */
