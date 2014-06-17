@@ -1490,6 +1490,7 @@ static int start_compression(orte_sstore_stage_local_snapshot_info_t *handle_inf
 {
     int ret, exit_status = ORTE_SUCCESS;
     char * postfix = NULL;
+    orte_proc_t *proc;
 
     /* Sanity Check */
     if( !orte_sstore_stage_enabled_compression ) {
@@ -1531,11 +1532,10 @@ static int start_compression(orte_sstore_stage_local_snapshot_info_t *handle_inf
                          app_info->compress_pid,
                          ORTE_NAME_PRINT(&(app_info->name)) ));
 
-    if( ORTE_SUCCESS != (ret = orte_wait_cb(app_info->compress_pid, sstore_stage_local_compress_waitpid_cb, app_info) ) ) {
-        ORTE_ERROR_LOG(ret);
-        exit_status = ret;
-        goto cleanup;
-    }
+    proc = OBJ_NEW(orte_proc_t);
+    proc->pid = app_info->compress_pid;
+
+    orte_wait_cb(proc, sstore_stage_local_compress_waitpid_cb, app_info);
 
  cleanup:
     if( NULL != postfix ) {
@@ -1546,7 +1546,7 @@ static int start_compression(orte_sstore_stage_local_snapshot_info_t *handle_inf
     return exit_status;
 }
 
-static void sstore_stage_local_compress_waitpid_cb(pid_t pid, int status, void* cbdata)
+static void sstore_stage_local_compress_waitpid_cb(orte_proc_t *proc, void* cbdata)
 {
     orte_sstore_stage_local_app_snapshot_info_t *app_info = NULL;
 
@@ -1558,6 +1558,7 @@ static void sstore_stage_local_compress_waitpid_cb(pid_t pid, int status, void* 
                          ORTE_NAME_PRINT(&(app_info->name)) ));
 
     app_info->compress_pid = 0;
+    OBJ_RELEASE(proc);
 }
 
 static int wait_all_compressed(orte_sstore_stage_local_snapshot_info_t *handle_info)
