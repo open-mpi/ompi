@@ -11,6 +11,8 @@
 #include "orte/types.h"
 #include "orte/constants.h"
 
+#include "opal/dss/dss.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/util/attr.h"

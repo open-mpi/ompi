@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +36,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"

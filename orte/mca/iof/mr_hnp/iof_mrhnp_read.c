@@ -28,6 +28,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"

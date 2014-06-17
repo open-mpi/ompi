@@ -13,6 +13,7 @@
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,16 +46,15 @@
 #include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "opal/mca/event/event.h"
-#include "opal/runtime/opal_progress.h"
 
 #include "orte/types.h"
 #include "orte/mca/rml/rml_types.h"
-#include "opal/runtime/opal_progress.h"
+#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
-/** typedef for callback function used in \c ompi_rte_wait_cb */
-typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
+/** typedef for callback function used in \c orte_wait_cb */
+typedef void (*orte_wait_fn_t)(orte_proc_t *proc, void *data);
 
 /**
  * Disable / re-Enable SIGCHLD handler
@@ -66,50 +66,16 @@ ORTE_DECLSPEC void orte_wait_enable(void);
 ORTE_DECLSPEC void orte_wait_disable(void);
 
 /**
- * Wait for process terminiation
- *
- * Similar to \c waitpid, \c orte_waitpid utilizes the run-time
- * event library for process terminiation notification.  The \c
- * WUNTRACED option is not supported, but the \c WNOHANG option is
- * supported.
- *
- * \note A \c wpid value of \c -1 is not currently supported and will
- * return an error.
- */
-ORTE_DECLSPEC pid_t orte_waitpid(pid_t wpid, int *status, int options);
-
-
-/**
  * Register a callback for process termination
  *
- * Register a callback for notification when \c wpid causes a SIGCHLD.
+ * Register a callback for notification when this process causes a SIGCHLD.
  * \c waitpid() will have already been called on the process at this
  * time.  
- *
- * If a thread is already blocked in \c ompi_rte_waitpid for \c wpid,
- * this function will return \c ORTE_ERR_EXISTS.  It is illegal for
- * multiple callbacks to be registered for a single \c wpid
- * (OMPI_EXISTS will be returned in this case).
- *
- * \warning It is not legal for \c wpid to be -1 when registering a
- * callback.
  */
-ORTE_DECLSPEC int orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data);
+ORTE_DECLSPEC void orte_wait_cb(orte_proc_t *proc, orte_wait_fn_t callback, void *data);
 
-ORTE_DECLSPEC int orte_wait_cb_cancel(pid_t wpid);
+ORTE_DECLSPEC void orte_wait_cb_cancel(orte_proc_t *proc);
 
-ORTE_DECLSPEC int orte_wait_cb_disable(void);
-
-ORTE_DECLSPEC int orte_wait_cb_enable(void);
-
-/* define an object for timer events */
-typedef struct {
-    opal_object_t super;
-    struct timeval tv;
-    opal_event_t *ev;
-    void *payload;
-} orte_timer_t;
-OBJ_CLASS_DECLARATION(orte_timer_t);
 
 /* In a few places, we need to barrier until something happens
  * that changes a flag to indicate we can release - e.g., waiting
@@ -207,11 +173,6 @@ OBJ_CLASS_DECLARATION(orte_timer_t);
  * Initialize the wait system (allocate mutexes, etc.)
  */
 ORTE_DECLSPEC int orte_wait_init(void);
-
-/**
- * Kill all processes we are waiting on.
- */
-ORTE_DECLSPEC int orte_wait_kill(int sig);
 
 /**
  * \internal

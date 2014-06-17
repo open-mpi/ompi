@@ -4,7 +4,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,6 +19,7 @@
 #include <string.h>
 #endif
 
+#include "opal/dss/dss.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/util/output.h"

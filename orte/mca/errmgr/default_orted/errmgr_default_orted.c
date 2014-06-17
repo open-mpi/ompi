@@ -416,7 +416,7 @@ static void proc_errors(int fd, short args, void *cbdata)
 
     if (ORTE_PROC_STATE_TERMINATED < state) {
         /* if we were ordered to terminate, mark this proc as dead and see if
-         * any of our routes or local  children remain alive - if not, then
+         * any of our routes or local children remain alive - if not, then
          * terminate ourselves. */
         if (orte_orteds_term_ordered) {
             for (i=0; i < orte_local_children->size; i++) {
@@ -440,6 +440,8 @@ static void proc_errors(int fd, short args, void *cbdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
             }
+            /* no need to alert the HNP - we are already on our way out */
+            goto cleanup;
         }
 
  keep_going:

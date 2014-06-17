@@ -20,6 +20,7 @@
 #endif
 
 #include "opal/util/output.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/dfs/dfs.h"
 #include "orte/mca/errmgr/errmgr.h"
