@@ -508,7 +508,7 @@ static int plm_slurm_finalize(void)
 }
 
 
-static void srun_wait_cb(pid_t pid, int status, void* cbdata){
+static void srun_wait_cb(orte_proc_t *proc, void* cbdata){
     orte_job_t *jdata;
     
     /* According to the SLURM folks, srun always returns the highest exit
@@ -545,7 +545,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
         /* if this is after launch, then we need to abort only if the status
          * returned is non-zero - i.e., if the orteds exited with an error
          */
-        if (0 != status) {
+        if (0 != proc->exit_code) {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
@@ -555,7 +555,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ABORTED);
         }
         /* otherwise, check to see if this is the primary pid */
-        if (primary_srun_pid == pid) {
+        if (primary_srun_pid == proc->pid) {
             /* in this case, we just want to fire the proper trigger so
              * mpirun can exit
              */
@@ -567,6 +567,8 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_TERMINATED);
         }
     }
+    /* done with this dummy */
+    OBJ_RELEASE(proc);
 }
 
 
@@ -576,6 +578,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
     int fd;
     int srun_pid;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
+    orte_proc_t *dummy;
 
     if (NULL == exec_argv) {
         return ORTE_ERR_NOT_FOUND;
@@ -588,6 +591,12 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
     
+    /* setup a dummy proc object to track the srun */
+    dummy = OBJ_NEW(orte_proc_t);
+    dummy->pid = srun_pid;
+    /* setup the waitpid so we can find out if srun succeeds! */
+    orte_wait_cb(dummy, srun_wait_cb, NULL);
+
     if (0 == srun_pid) {  /* child */
         char *bin_base = NULL, *lib_base = NULL;
 
@@ -677,8 +686,6 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
             primary_pid_set = true;
         }
         
-        /* setup the waitpid so we can find out if srun succeeds! */
-        orte_wait_cb(srun_pid, srun_wait_cb, NULL);
         free(exec_argv);
     }
 

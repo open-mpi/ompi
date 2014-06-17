@@ -107,7 +107,7 @@ orte_plm_base_module_t orte_plm_alps_module = {
 /*
  * Local variables
  */
-static pid_t alps_pid = 0;
+static orte_proc_t *alpsrun = NULL;
 static bool failed_launch;
 static void launch_daemons(int fd, short args, void *cbdata);
 
@@ -462,8 +462,10 @@ static int plm_alps_terminate_orteds(void)
      * do NOT ERROR_LOG any return code to avoid confusing, duplicate error
      * messages
      */
-    orte_wait_cb_cancel(alps_pid);
-    
+    if (NULL != alpsrun) {
+        orte_wait_cb_cancel(alpsrun);
+    }
+
     /* now tell them to die */
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -478,8 +480,8 @@ static int plm_alps_terminate_orteds(void)
  */
 static int plm_alps_signal_job(orte_jobid_t jobid, int32_t signal)
 {
-    if (0 != alps_pid) {
-        kill(alps_pid, (int)signal);
+    if (NULL != alpsrun && 0 != alpsrun->pid) {
+        kill(alpsrun->pid, (int)signal);
    }
     return ORTE_SUCCESS;
 }
@@ -489,6 +491,10 @@ static int plm_alps_finalize(void)
 {
     int rc;
     
+    if (NULL != alpsrun) {
+        OBJ_RELEASE(alpsrun);
+    }
+
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
@@ -498,7 +504,7 @@ static int plm_alps_finalize(void)
 }
 
 
-static void alps_wait_cb(pid_t pid, int status, void* cbdata){
+static void alps_wait_cb(orte_proc_t *proc, void* cbdata){
     orte_job_t *jdata;
 
     /* According to the ALPS folks, alps always returns the highest exit
@@ -518,7 +524,7 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
     */
     jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     
-    if (0 != status) {
+    if (0 != proc->exit_code) {
         if (failed_launch) {
             /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
@@ -531,7 +537,6 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ABORTED);
         }
     }
-    
 }
 
 
@@ -551,6 +556,11 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
     
+    alpsrun = OBJ_NEW(orte_proc_t);
+    alpsrun->pid = alps_pid;
+    /* setup the waitpid so we can find out if alps succeeds! */
+    orte_wait_cb(alpsrun, alps_wait_cb, NULL);
+
     if (0 == alps_pid) {  /* child */
         char *bin_base = NULL, *lib_base = NULL;
 
@@ -635,8 +645,6 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
         sides of the fork... */
         setpgid(alps_pid, alps_pid);
         
-        /* setup the waitpid so we can find out if alps succeeds! */
-        orte_wait_cb(alps_pid, alps_wait_cb, NULL);
         free(exec_argv);
     }
 
