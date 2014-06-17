@@ -196,19 +196,3 @@ ompi_osc_rdma_frag_flush_all(ompi_osc_rdma_module_t *module)
 
     return OMPI_SUCCESS;
 }
-
-int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module)
-{
-    OPAL_THREAD_LOCK(&module->lock);
-    module->num_post_msgs++;
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "received post message. num_post_msgs = %d", module->num_post_msgs));
-
-    if (0 == module->num_post_msgs) {
-        module->active_eager_send_active = true;
-    }
-    opal_condition_broadcast (&module->cond);
-    OPAL_THREAD_UNLOCK(&module->lock);
-
-    return OMPI_SUCCESS;
-}

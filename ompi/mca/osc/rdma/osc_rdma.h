@@ -201,6 +201,10 @@ struct ompi_osc_rdma_module_t {
     /* enforce accumulate semantics */
     opal_atomic_lock_t accumulate_lock;
     opal_list_t        pending_acc;
+
+    /* enforce pscw matching */
+    /** list of unmatched post messages */
+    opal_list_t        pending_posts;
 };
 typedef struct ompi_osc_rdma_module_t ompi_osc_rdma_module_t;
 OMPI_MODULE_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;
@@ -328,7 +332,7 @@ int ompi_osc_rdma_rget_accumulate(void *origin_addr,
 int ompi_osc_rdma_fence(int assert, struct ompi_win_t *win);
 
 /* received a post message */
-int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module);
+int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module, int source);
 
 int ompi_osc_rdma_start(struct ompi_group_t *group,
                         int assert,

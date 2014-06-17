@@ -356,6 +356,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     OBJ_CONSTRUCT(&module->locks_pending, opal_list_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_list_t);
     OBJ_CONSTRUCT(&module->pending_acc, opal_list_t);
+    OBJ_CONSTRUCT(&module->pending_posts, opal_list_t);
 
     /* options */
     /* FIX ME: should actually check this value... */
