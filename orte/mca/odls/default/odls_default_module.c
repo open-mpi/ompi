@@ -693,7 +693,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     if (pid == 0) {
 	close(p[0]);
 #if HAVE_SETPGID
-        //        setpgid(0, 0);
+        setpgid(0, 0);
 #endif
         do_child(context, child, environ_copy, jobdat, p[1], opts);
         /* Does not return */
