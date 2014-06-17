@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,6 +52,9 @@ int MPI_Win_unlock(int rank, MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RANK, FUNC_NAME);
         }
     }
+
+    /* NTH: do not bother keeping track of unlocking MPI_PROC_NULL. */
+    if (MPI_PROC_NULL == rank) return MPI_SUCCESS;
 
     OPAL_CR_ENTER_LIBRARY();
 
