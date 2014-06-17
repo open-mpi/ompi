@@ -49,8 +49,6 @@ int MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
                   MPI_Datatype recvtype, MPI_Comm comm) 
 {
     int i, size, err;
-    size_t sendtype_size, recvtype_size;
-    bool zerosend=true, zerorecv=true;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -112,6 +110,7 @@ int MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
         }
 
         if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
+            size_t sendtype_size, recvtype_size;
             int me = ompi_comm_rank(comm);
             ompi_datatype_type_size(sendtype, &sendtype_size);
             ompi_datatype_type_size(recvtype, &recvtype_size);
@@ -119,33 +118,6 @@ int MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
             }
         }
-    }
-
-    /* Do we need to do anything? */
-
-    ompi_datatype_type_size(sendtype, &sendtype_size);
-    ompi_datatype_type_size(recvtype, &recvtype_size);
-    size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
-    if (0 != recvtype_size) {
-        for (i = 0; i < size; ++i) {
-            if (0 != recvcounts[i]) {
-                zerorecv = false;
-                break;
-            }
-        }
-    }
-    if (MPI_IN_PLACE == sendbuf) {
-        zerosend = zerorecv;
-    } else if (0 != sendtype_size) {
-        for (i = 0; i < size; ++i) {
-            if (0 != sendcounts[i]) {
-                zerosend = false;
-                break;
-            }
-        }
-    }
-    if (zerosend && zerorecv) {
-        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
