@@ -8,8 +8,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- *
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,6 +49,7 @@
 #include "opal/util/argv.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"

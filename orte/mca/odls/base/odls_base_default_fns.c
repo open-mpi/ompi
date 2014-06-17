@@ -432,17 +432,18 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 
 #if OPAL_ENABLE_FT_CR == 1
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR, (void**)gidptr, )) {
-    coll = orte_grpcomm_base_setup_collective(jdata->snapc_init_barrier);
-    nm = OBJ_NEW(orte_namelist_t);
-    nm->name.jobid = jdata->jobid;
-    nm->name.vpid = ORTE_VPID_WILDCARD;
-    opal_list_append(&coll->participants, &nm->super);
+        coll = orte_grpcomm_base_setup_collective(jdata->snapc_init_barrier);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
 
-    coll = orte_grpcomm_base_setup_collective(jdata->snapc_fini_barrier);
-    nm = OBJ_NEW(orte_namelist_t);
-    nm->name.jobid = jdata->jobid;
-    nm->name.vpid = ORTE_VPID_WILDCARD;
-    opal_list_append(&coll->participants, &nm->super);
+        coll = orte_grpcomm_base_setup_collective(jdata->snapc_fini_barrier);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+    }
 #endif
 
     /* progress any pending collectives */
@@ -1407,7 +1408,12 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 }
             }
             
-            rc = fork_local(app, child, app->env, jobdat);
+            orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
+            if (ORTE_SUCCESS != (rc = fork_local(app, child, app->env, jobdat))) {
+                orte_wait_cb_cancel(child);
+                child->exit_code = ORTE_ERR_SILENT; /* error message already output */
+                ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
+            }
             /* if we indexed the argv, we need to restore it to
              * its original form
              */
@@ -1452,21 +1458,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
          * to their current location
          */
         chdir(basedir);
-    }
-
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                         "%s odls:launch setting waitpids",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-    /* setup the waitpids on the children that started */
-    for (idx=0; idx < orte_local_children->size; idx++) {
-        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, idx))) {
-            continue;
-        }
-        if (child->name.jobid == jobdat->jobid &&
-            ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_ALIVE)) {
-            orte_wait_cb(child->pid, odls_base_default_wait_local_proc, NULL);
-        }
     }
 
  GETOUT:
@@ -1744,40 +1735,18 @@ CLEANUP:
  *  Wait for a callback indicating the child has completed.
  */
 
-void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
+void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
 {
-    orte_proc_t *proc=NULL, *cptr;
     int i;
     orte_job_t *jobdat;
     orte_proc_state_t state=ORTE_PROC_STATE_WAITPID_FIRED;
     char *abortfile, *jobfam, *job, *vpidstr;
-
-    /* find this child */
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (cptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-        if (pid == cptr->pid) {
-            proc = cptr;
-            break;
-        }
-    }
-    if (NULL == proc) {
-        /* get here if we didn't find the child, or if the specified child
-         * is already dead. If the latter, then we have a problem as it
-         * means we are detecting it exiting multiple times
-         */
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                             "%s odls:wait_local_proc did not find pid %ld in table!",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (long)pid));
-        return;
-    }
+    orte_proc_t *cptr;
 
     opal_output_verbose(5, orte_odls_base_framework.framework_output,
                         "%s odls:wait_local_proc child process %s pid %ld terminated",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&proc->name), (long)pid);
+                        ORTE_NAME_PRINT(&proc->name), (long)proc->pid);
     
     /* if the child was previously flagged as dead, then just
      * ensure that its exit state gets reported to avoid hanging
@@ -1815,9 +1784,9 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     }
     
     /* determine the state of this process */
-    if (WIFEXITED(status)) {
+    if (WIFEXITED(proc->exit_code)) {
         /* set the exit status appropriately */
-        proc->exit_code = WEXITSTATUS(status);
+        proc->exit_code = WEXITSTATUS(proc->exit_code);
 
         OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                              "%s odls:waitpid_fired child %s exit code %d",
@@ -1979,7 +1948,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
          * the termination code to exit status translation the
          * same way
          */
-        proc->exit_code = WTERMSIG(status) + 128;
+        proc->exit_code = WTERMSIG(proc->exit_code) + 128;
 
         OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                              "%s odls:waitpid_fired child process %s terminated with signal",
@@ -1992,6 +1961,23 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     ORTE_ACTIVATE_PROC_STATE(&proc->name, state);
 }
 
+typedef struct {
+    orte_proc_t *child;
+    orte_odls_base_kill_local_fn_t kill_local;
+} odls_kill_caddy_t;
+
+static void kill_cbfunc(int fd, short args, void *cbdata)
+{
+    odls_kill_caddy_t *cd = (odls_kill_caddy_t*)cbdata;
+
+    if (!ORTE_FLAG_TEST(cd->child, ORTE_PROC_FLAG_ALIVE) || 0 == cd->child->pid) {
+        free(cd);
+        return;
+    }
+    cd->kill_local(cd->child->pid, SIGKILL);
+    free(cd);
+}
+    
 int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                             orte_odls_base_kill_local_fn_t kill_local,
                                             orte_odls_base_child_died_fn_t child_died)
@@ -2116,64 +2102,49 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             /* cancel the waitpid callback as this induces unmanageable race
              * conditions when we are deliberately killing the process
              */
-            orte_wait_cb_cancel(child->pid);
+            orte_wait_cb_cancel(child);
             
-            /* First send a SIGCONT in case the process is in stopped state.
-               If it is in a stopped state and we do not first change it to
-               running, then SIGTERM will not get delivered.  Ignore return
-               value. */
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                 "%s SENDING SIGCONT TO %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name)));
-            kill_local(child->pid, SIGCONT);
+            if (!do_cleanup) {
+                odls_kill_caddy_t *cd;
 
-            /* Send a sigterm to the process before sigkill to be nice */
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                 "%s SENDING SIGTERM TO %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&child->name)));
-            kill_local(child->pid, SIGTERM);
-
-            /* check to see if it died - the child_died function will continue
-             * to check until we reach the timeout
-	     *
-	     * In practice, it doesn't matter what child_died reports
-	     * - we KILL the process anyway, to be sure it's dead.
-	     * However, what it does do is delay the KILL until either
-	     * the process is verified dead or the timeout elapsed,
-	     * which gives it time enough to shut down.
-             */
-            if (!child_died(child)) {
-                /* if it still isn't dead, try killing it one more time */
+                /* if we are killing only selected procs, then do so in a gentle
+                   fashion. First send a SIGCONT in case the process is in stopped state.
+                   If it is in a stopped state and we do not first change it to
+                   running, then SIGTERM will not get delivered.  Ignore return
+                   value. */
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                     "%s SENDING SIGKILL TO %s",
+                                     "%s SENDING SIGCONT TO %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name)));
-            } else {
-                /* Force the SIGKILL just to make sure things are dead
-                 * This fixes an issue that, if the application is masking
-                 * SIGTERM, then the child_died()
-                 * may return 'true' even though waipid returns with 0.
-                 * It does this to avoid a race condition, per documentation
-                 * in odls_default_module.c.
-                 */
+                kill_local(child->pid, SIGCONT);
+
+                /* Send a sigterm to the process before sigkill to be nice */
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                     "%s SENDING FORCE SIGKILL TO %s",
+                                     "%s SENDING SIGTERM TO %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name)));
+                kill_local(child->pid, SIGTERM);
+                /* provide a polite delay so the proc has a chance to react */
+                cd = (odls_kill_caddy_t*)malloc(sizeof(odls_kill_caddy_t));
+                OBJ_RETAIN(child);  // protect against race conditions
+                cd->child = child;
+                cd->kill_local = kill_local;
+                ORTE_TIMER_EVENT(1, 0, kill_cbfunc, ORTE_SYS_PRI);
+                continue;
             }
+
+            /* Force the SIGKILL just to make sure things are dead
+             * This fixes an issue that, if the application is masking
+             * SIGTERM, then the child_died()
+             * may return 'true' even though waipid returns with 0.
+             * It does this to avoid a race condition, per documentation
+             * in odls_default_module.c.
+             */
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
+                                 "%s SENDING FORCE SIGKILL TO %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&child->name)));
             kill_local(child->pid, SIGKILL);
-            /* Double check that it actually died this time */
-            if (!child_died(child)) {
-                orte_show_help("help-orte-odls-base.txt",
-                               "orte-odls-base:could-not-kill",
-                               true, orte_process_info.nodename, child->pid);
-            } else
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
-                                     "%s odls:kill_local_proc child %s killed",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&child->name)));
             
             /* indicate the waitpid fired as this is effectively what
              * has happened
@@ -2312,9 +2283,11 @@ int orte_odls_base_default_restart_proc(orte_proc_t *child,
                          "%s restarting app %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), app->app));
 
-    rc = fork_local(app, child, app->env, jobdat);
-    if (ORTE_SUCCESS == rc) {
-        orte_wait_cb(child->pid, odls_base_default_wait_local_proc, NULL);
+    orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
+    if (ORTE_SUCCESS != (rc = fork_local(app, child, app->env, jobdat))) {
+        orte_wait_cb_cancel(child);
+        child->exit_code = ORTE_ERR_SILENT; /* error message already output */
+        ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
     }
     
  CLEANUP:

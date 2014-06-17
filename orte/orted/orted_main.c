@@ -96,6 +96,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/runtime/orte_quit.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/orted/orted.h"
 

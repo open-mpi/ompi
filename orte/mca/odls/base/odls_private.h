@@ -107,7 +107,7 @@ ORTE_DECLSPEC void orte_odls_base_default_launch_local(int fd, short sd, void *c
 ORTE_DECLSPEC int
 orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buffer, orte_rml_tag_t tag);
 
-ORTE_DECLSPEC void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata);
+ORTE_DECLSPEC void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata);
 
 /* define a function type to signal a local proc */
 typedef int (*orte_odls_base_signal_local_fn_t)(pid_t pid, int signum);

@@ -256,11 +256,10 @@ static int rsh_init(void)
 /**
  * Callback on daemon exit.
  */
-static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
+static void rsh_wait_daemon(orte_proc_t *daemon, void* cbdata)
 {
     orte_job_t *jdata;
     orte_plm_rsh_caddy_t *caddy=(orte_plm_rsh_caddy_t*)cbdata;
-    orte_proc_t *daemon=caddy->daemon;
     
     if (orte_orteds_term_ordered || orte_abnormal_term_ordered) {
         /* ignore any such report - it will occur if we left the
@@ -270,7 +269,8 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         return;
     }
 
-    if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) { /* if abnormal exit */
+    if (! WIFEXITED(daemon->exit_code) ||
+        ! WEXITSTATUS(daemon->exit_code) == 0) { /* if abnormal exit */
         /* if we are not the HNP, send a message to the HNP alerting it
          * to the failure
          */
@@ -279,10 +279,10 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s daemon %d failed with status %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (int)daemon->name.vpid, WEXITSTATUS(status)));
+                                 (int)daemon->name.vpid, WEXITSTATUS(daemon->exit_code)));
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.pack(buf, &(daemon->name.vpid), 1, ORTE_VPID);
-            opal_dss.pack(buf, &status, 1, OPAL_INT);
+            opal_dss.pack(buf, &daemon->exit_code, 1, OPAL_INT);
             orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                     ORTE_RML_TAG_REPORT_REMOTE_LAUNCH,
                                     orte_rml_send_callback, NULL);
@@ -294,9 +294,9 @@ static void rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s daemon %d failed with status %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (int)daemon->name.vpid, WEXITSTATUS(status)));
+                                 (int)daemon->name.vpid, WEXITSTATUS(daemon->exit_code)));
             /* set the exit status */
-            ORTE_UPDATE_EXIT_STATUS(WEXITSTATUS(status));
+            ORTE_UPDATE_EXIT_STATUS(WEXITSTATUS(daemon->exit_code));
             /* note that this daemon failed */
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
             /* increment the #daemons terminated so we will exit properly */
@@ -920,11 +920,14 @@ static void process_launch_list(int fd, short args, void *cbdata)
             break;
         }
         caddy = (orte_plm_rsh_caddy_t*)item;
-        
+        /* register the sigchild callback */
+        orte_wait_cb(caddy->daemon, rsh_wait_daemon, (void*)caddy);
+
         /* fork a child to exec the rsh/ssh session */
         pid = fork();
         if (pid < 0) {
             ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
+            orte_wait_cb_cancel(caddy->daemon);
             continue;
         }
         
@@ -941,12 +944,7 @@ static void process_launch_list(int fd, short args, void *cbdata)
             OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                  "%s plm:rsh: recording launch of daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&(caddy->daemon->name))));
-            
-            /* setup callback on sigchild - wait until setup above is complete
-             * as the callback can occur in the call to orte_wait_cb
-             */
-            orte_wait_cb(pid, rsh_wait_daemon, (void*)caddy);
+                                 ORTE_NAME_PRINT(&(caddy->daemon->name))));            
             num_in_progress++;
         }
     }

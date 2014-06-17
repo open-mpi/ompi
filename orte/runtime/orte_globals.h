@@ -53,7 +53,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/error_strings.h"
 #include "orte/runtime/runtime.h"
-#include "orte/runtime/orte_wait.h"
 
 
 BEGIN_C_DECLS
@@ -106,6 +105,15 @@ ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
 /* error manager callback function */
 typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);
+
+/* define an object for timer events */
+typedef struct {
+    opal_object_t super;
+    struct timeval tv;
+    opal_event_t *ev;
+    void *payload;
+} orte_timer_t;
+OBJ_CLASS_DECLARATION(orte_timer_t);
 
 ORTE_DECLSPEC extern int orte_exit_status;
 

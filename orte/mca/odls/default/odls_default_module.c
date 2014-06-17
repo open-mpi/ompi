@@ -178,13 +178,13 @@ static bool odls_default_child_died(orte_proc_t *child)
      * the default 1s actually means 'somwhere between 0 and 1s'. */
     end = time(NULL) + orte_odls_globals.timeout_before_sigkill + 1;
     do {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
+        OPAL_OUTPUT_VERBOSE((20, orte_odls_base_framework.framework_output,
                              "%s odls:default:WAITPID CHECKING PID %d WITH TIMEOUT %d SECONDS",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid),
                              orte_odls_globals.timeout_before_sigkill + 1));
         ret = waitpid(child->pid, &child->exit_code, WNOHANG);
         if (child->pid == ret) {
-            OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((20, orte_odls_base_framework.framework_output,
                                  "%s odls:default:WAITPID INDICATES PROC %d IS DEAD",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
             /* It died -- return success */
@@ -204,14 +204,14 @@ static bool odls_default_child_died(orte_proc_t *child)
 	     * which will occasionally trip the timeout for cases that
 	     * are right on the edge.)
              */
-            OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((20, orte_odls_base_framework.framework_output,
                                  "%s odls:default:WAITPID INDICATES PID %d MAY HAVE ALREADY EXITED",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
 	    /* Do nothing, process still alive */
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
-            OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((20, orte_odls_base_framework.framework_output,
                                  "%s odls:default:WAITPID INDICATES PID %d NO LONGER EXISTS",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
             return true;
@@ -693,7 +693,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     if (pid == 0) {
 	close(p[0]);
 #if HAVE_SETPGID
-        setpgid(0, 0);
+        //        setpgid(0, 0);
 #endif
         do_child(context, child, environ_copy, jobdat, p[1], opts);
         /* Does not return */

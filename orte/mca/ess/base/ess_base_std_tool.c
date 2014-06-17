@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -53,6 +53,7 @@
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/ess/base/base.h"
 

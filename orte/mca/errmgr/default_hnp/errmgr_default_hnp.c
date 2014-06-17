@@ -460,9 +460,10 @@ static void proc_errors(int fd, short args, void *cbdata)
             OBJ_RETAIN(pptr);
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
         }
-        /* abnormal termination - abort */
-        default_hnp_abort(jdata);
         break;
 
     case ORTE_PROC_STATE_ABORTED_BY_SIG:
@@ -478,9 +479,10 @@ static void proc_errors(int fd, short args, void *cbdata)
             OBJ_RETAIN(pptr);
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
         }
-        /* abnormal termination - abort */
-        default_hnp_abort(jdata);
         break;
 
     case ORTE_PROC_STATE_TERM_WO_SYNC:
@@ -502,9 +504,10 @@ static void proc_errors(int fd, short args, void *cbdata)
              * we overwrite the process' exit code with the default error code
              */
             ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
         }
-        /* abnormal termination - abort */
-        default_hnp_abort(jdata);
         break;
 
     case ORTE_PROC_STATE_FAILED_TO_START:
@@ -526,14 +529,15 @@ static void proc_errors(int fd, short args, void *cbdata)
             OBJ_RETAIN(pptr);
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
         }
         /* if this was a daemon, report it */
         if (jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
             /* output a message indicating we failed to launch a daemon */
             orte_show_help("help-errmgr-base.txt", "failed-daemon-launch", true);
         }
-        /* abnormal termination - abort */
-        default_hnp_abort(jdata);
         break;
 
     case ORTE_PROC_STATE_CALLED_ABORT:
@@ -549,9 +553,10 @@ static void proc_errors(int fd, short args, void *cbdata)
             OBJ_RETAIN(pptr);
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
         }
-        /* abnormal termination - abort */
-        default_hnp_abort(jdata);
         break;
 
     case ORTE_PROC_STATE_TERM_NON_ZERO:
@@ -575,9 +580,10 @@ static void proc_errors(int fd, short args, void *cbdata)
                 /* retain the object so it doesn't get free'd */
                 OBJ_RETAIN(pptr);
                 ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
+                /* abnormal termination - abort, but only do it once
+                 * to avoid creating a lot of confusion */
+                default_hnp_abort(jdata);
             }
-            /* user requested we abort in this scenario */
-            default_hnp_abort(jdata);
         } else {
             /* user requested we consider this normal termination */
             if (jdata->num_terminated >= jdata->num_procs) {
@@ -600,11 +606,12 @@ static void proc_errors(int fd, short args, void *cbdata)
             OBJ_RETAIN(pptr);
             ORTE_FLAG_SET(jdata, ORTE_JOB_FLAG_ABORTED);
             ORTE_UPDATE_EXIT_STATUS(pptr->exit_code);
+            /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
         }
         /* remove from dependent routes, if it is one */
         orte_routed.route_lost(proc);
-        /* kill all jobs */
-        default_hnp_abort(jdata);
         break;
 
     case ORTE_PROC_STATE_UNABLE_TO_SEND_MSG:
@@ -619,8 +626,11 @@ static void proc_errors(int fd, short args, void *cbdata)
             ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
             break;
         }
-        /* kill all jobs */
-        default_hnp_abort(jdata);
+        if (!ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_ABORTED)) {
+             /* abnormal termination - abort, but only do it once
+             * to avoid creating a lot of confusion */
+            default_hnp_abort(jdata);
+        }
         break;
 
     default:

@@ -29,6 +29,7 @@
 #endif
 
 #include "opal/mca/event/event.h"
+#include "opal/dss/dss.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"

@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,6 +37,8 @@
 #include <sys/fcntl.h>
 #endif
 #endif
+
+#include "opal/dss/dss.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"

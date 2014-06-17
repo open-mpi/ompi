@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,6 +39,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"

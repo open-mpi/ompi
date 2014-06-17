@@ -4,6 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -14,7 +15,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/dss/dss_types.h"
+#include "opal/dss/dss.h"
 #include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"

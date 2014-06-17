@@ -30,6 +30,7 @@
 #endif
 
 #include "opal/util/argv.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/data_type_support/orte_dt_support.h"
