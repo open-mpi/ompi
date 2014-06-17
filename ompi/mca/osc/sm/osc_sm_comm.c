@@ -17,8 +17,6 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
 #include "osc_sm.h"
-#include "osc_sm_request.h"
-
 
 int
 ompi_osc_sm_rput(void *origin_addr,
@@ -32,7 +30,6 @@ ompi_osc_sm_rput(void *origin_addr,
                  struct ompi_request_t **ompi_req)
 {
     int ret;
-    ompi_osc_sm_request_t *request;
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
     void *remote_address;
@@ -44,20 +41,18 @@ ompi_osc_sm_rput(void *origin_addr,
                          target_count, target_dt->name,
                          (unsigned long) win));
 
-    OMPI_OSC_SM_REQUEST_ALLOC(win, request);
-    if (NULL == request) return OMPI_ERR_OUT_OF_RESOURCE;
-    *ompi_req = &request->super;
-
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
     ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
                                remote_address, target_count, target_dt);
     if (OMPI_SUCCESS != ret) {
-        OMPI_OSC_SM_REQUEST_RETURN(request);
         return ret;
     }
 
-    OMPI_OSC_SM_REQUEST_COMPLETE(request);
+    /* the only valid field of RMA request status is the MPI_ERROR field.
+     * ompi_request_empty has status MPI_SUCCESS and indicates the request is
+     * complete. */
+    *ompi_req = &ompi_request_empty;
 
     return OMPI_SUCCESS;
 }
@@ -75,7 +70,6 @@ ompi_osc_sm_rget(void *origin_addr,
                  struct ompi_request_t **ompi_req)
 {
     int ret;
-    ompi_osc_sm_request_t *request;
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
     void *remote_address;
@@ -87,20 +81,18 @@ ompi_osc_sm_rget(void *origin_addr,
                          target_count, target_dt->name,
                          (unsigned long) win));
 
-    OMPI_OSC_SM_REQUEST_ALLOC(win, request);
-    if (NULL == request) return OMPI_ERR_OUT_OF_RESOURCE;
-    *ompi_req = &request->super;
-
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
     ret = ompi_datatype_sndrcv(remote_address, target_count, target_dt,
                                origin_addr, origin_count, origin_dt);
     if (OMPI_SUCCESS != ret) {
-        OMPI_OSC_SM_REQUEST_RETURN(request);
         return ret;
     }
 
-    OMPI_OSC_SM_REQUEST_COMPLETE(request);
+    /* the only valid field of RMA request status is the MPI_ERROR field.
+     * ompi_request_empty has status MPI_SUCCESS and indicates the request is
+     * complete. */
+    *ompi_req = &ompi_request_empty;
 
     return OMPI_SUCCESS;
 }
@@ -119,7 +111,6 @@ ompi_osc_sm_raccumulate(void *origin_addr,
                         struct ompi_request_t **ompi_req)
 {
     int ret;
-    ompi_osc_sm_request_t *request;
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
     void *remote_address;
@@ -131,10 +122,6 @@ ompi_osc_sm_raccumulate(void *origin_addr,
                          target_count, target_dt->name,
                          op->o_name,
                          (unsigned long) win));
-
-    OMPI_OSC_SM_REQUEST_ALLOC(win, request);
-    if (NULL == request) return OMPI_ERR_OUT_OF_RESOURCE;
-    *ompi_req = &request->super;
 
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
@@ -149,7 +136,10 @@ ompi_osc_sm_raccumulate(void *origin_addr,
     }
     opal_atomic_unlock(&module->node_states[target].accumulate_lock);
 
-    OMPI_OSC_SM_REQUEST_COMPLETE(request);
+    /* the only valid field of RMA request status is the MPI_ERROR field.
+     * ompi_request_empty has status MPI_SUCCESS and indicates the request is
+     * complete. */
+    *ompi_req = &ompi_request_empty;
 
     return ret;
 }
@@ -172,7 +162,6 @@ ompi_osc_sm_rget_accumulate(void *origin_addr,
                                   struct ompi_request_t **ompi_req)
 {
     int ret;
-    ompi_osc_sm_request_t *request;
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
     void *remote_address;
@@ -184,10 +173,6 @@ ompi_osc_sm_rget_accumulate(void *origin_addr,
                          target_count, target_dt->name,
                          op->o_name,
                          (unsigned long) win));
-
-    OMPI_OSC_SM_REQUEST_ALLOC(win, request);
-    if (NULL == request) return OMPI_ERR_OUT_OF_RESOURCE;
-    *ompi_req = &request->super;
 
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
@@ -209,7 +194,10 @@ ompi_osc_sm_rget_accumulate(void *origin_addr,
  done:
     opal_atomic_unlock(&module->node_states[target].accumulate_lock);
 
-    OMPI_OSC_SM_REQUEST_COMPLETE(request);
+    /* the only valid field of RMA request status is the MPI_ERROR field.
+     * ompi_request_empty has status MPI_SUCCESS and indicates the request is
+     * complete. */
+    *ompi_req = &ompi_request_empty;
 
     return ret;
 }
