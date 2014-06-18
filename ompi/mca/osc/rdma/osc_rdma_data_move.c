@@ -740,11 +740,9 @@ static int ompi_osc_rdma_acc_op_queue (ompi_osc_rdma_module_t *module, ompi_osc_
     switch (header->base.type) {
     case OMPI_OSC_RDMA_HDR_TYPE_ACC:
     case OMPI_OSC_RDMA_HDR_TYPE_ACC_LONG:
-        pending_acc->header.acc = header->acc;
-        break;
     case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
     case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
-        pending_acc->header.get_acc = header->get_acc;
+        pending_acc->header.acc = header->acc;
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_CSWAP:
         pending_acc->header.cswap = header->cswap;
@@ -765,6 +763,16 @@ static int ompi_osc_rdma_acc_op_queue (ompi_osc_rdma_module_t *module, ompi_osc_
 static int replace_cb (ompi_request_t *request)
 {
     ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) request->req_complete_cb_data;
+    int rank = MPI_PROC_NULL;
+
+    if (request->req_status.MPI_TAG & 0x01) {
+        rank = request->req_status.MPI_SOURCE;
+    }
+
+    mark_incoming_completion (module, rank);
+
+    /* put this request on the garbage colletion list */
+    osc_rdma_gc_add_request (request);
 
     /* unlock the accumulate lock */
     ompi_osc_rdma_accumulate_unlock (module);
@@ -904,11 +912,11 @@ static int ompi_osc_rdma_acc_long_start (ompi_osc_rdma_module_t *module, int sou
  * function. It will release the lock when the operation is complete.
  */
 static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source, void *data, size_t data_len,
-                                     ompi_datatype_t *datatype, ompi_osc_rdma_header_get_acc_t *get_acc_header)
+                                     ompi_datatype_t *datatype, ompi_osc_rdma_header_acc_t *acc_header)
 {
     void *target = (unsigned char*) module->baseptr +
-        ((unsigned long) get_acc_header->displacement * module->disp_unit);
-    struct ompi_op_t *op = ompi_osc_base_op_create(get_acc_header->op);
+        ((unsigned long) acc_header->displacement * module->disp_unit);
+    struct ompi_op_t *op = ompi_osc_base_op_create(acc_header->op);
     struct osc_rdma_accumulate_data_t *acc_data;
     ompi_proc_t *proc;
     int ret;
@@ -917,13 +925,13 @@ static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source,
     assert (NULL != proc);
 
     do {
-        ret = osc_rdma_accumulate_allocate (module, source, target, data, data_len, proc, get_acc_header->count,
+        ret = osc_rdma_accumulate_allocate (module, source, target, data, data_len, proc, acc_header->count,
                                             datatype, op, 1, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
         }
 
-        ret = ompi_osc_rdma_isend_w_cb (target, get_acc_header->count, datatype, source, get_acc_header->tag,
+        ret = ompi_osc_rdma_isend_w_cb (target, acc_header->count, datatype, source, acc_header->tag,
                                         module->comm, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
@@ -947,17 +955,17 @@ static int ompi_osc_rdma_gacc_start (ompi_osc_rdma_module_t *module, int source,
  * @param[in] module         - OSC RDMA module
  * @param[in] source         - Source rank
  * @param[in] datatype       - Accumulation datatype
- * @param[in] get_acc_header - Accumulate header
+ * @param[in] acc_header     - Accumulate header
  *
  * The module's accumulation lock must be held before calling this
  * function. It will release the lock when the operation is complete.
  */
 static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source, ompi_datatype_t *datatype,
-                                     ompi_osc_rdma_header_get_acc_t *get_acc_header)
+                                     ompi_osc_rdma_header_acc_t *acc_header)
 {
     void *target = (unsigned char*) module->baseptr +
-        ((unsigned long) get_acc_header->displacement * module->disp_unit);
-    struct ompi_op_t *op = ompi_osc_base_op_create(get_acc_header->op);
+        ((unsigned long) acc_header->displacement * module->disp_unit);
+    struct ompi_op_t *op = ompi_osc_base_op_create(acc_header->op);
     struct osc_rdma_accumulate_data_t *acc_data;
     ompi_datatype_t *primitive_datatype;
     ompi_request_t *recv_request;
@@ -971,7 +979,7 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
     assert (NULL != proc);
 
     /* allocate a temporary buffer to receive the accumulate data */
-    buflen = datatype_buffer_length (datatype, get_acc_header->count);
+    buflen = datatype_buffer_length (datatype, acc_header->count);
 
     do {
         buffer = malloc (buflen);
@@ -985,22 +993,22 @@ static int ompi_osc_gacc_long_start (ompi_osc_rdma_module_t *module, int source,
             break;
         }
 
-        primitive_count *= get_acc_header->count;
+        primitive_count *= acc_header->count;
 
-        ret = osc_rdma_accumulate_allocate (module, source, target, buffer, buflen, proc, get_acc_header->count,
+        ret = osc_rdma_accumulate_allocate (module, source, target, buffer, buflen, proc, acc_header->count,
                                             datatype, op, 2, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
         }
 
-        ret = ompi_osc_rdma_irecv_w_cb (buffer, get_acc_header->count, datatype, source, get_acc_header->tag,
+        ret = ompi_osc_rdma_irecv_w_cb (buffer, acc_header->count, datatype, source, acc_header->tag,
                                         module->comm, &recv_request, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
             break;
         }
 
-        ret = ompi_osc_rdma_isend_w_cb (target, primitive_count, primitive_datatype, source, get_acc_header->tag,
+        ret = ompi_osc_rdma_isend_w_cb (target, primitive_count, primitive_datatype, source, acc_header->tag,
                                         module->comm, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             /* cancel the receive and free the accumulate data */
@@ -1115,11 +1123,11 @@ int ompi_osc_rdma_progress_pending_acc (ompi_osc_rdma_module_t *module)
     case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
         ret = ompi_osc_rdma_gacc_start (module, pending_acc->source, pending_acc->data,
                                         pending_acc->data_len, pending_acc->datatype,
-                                        &pending_acc->header.get_acc);
+                                        &pending_acc->header.acc);
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
         ret = ompi_osc_gacc_long_start (module, pending_acc->source, pending_acc->datatype,
-                                        &pending_acc->header.get_acc);
+                                        &pending_acc->header.acc);
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_CSWAP:
         ret = ompi_osc_rdma_cswap_start (module, pending_acc->source, pending_acc->data,
@@ -1210,9 +1218,9 @@ static inline int process_acc_long (ompi_osc_rdma_module_t* module, int source,
 }
 
 static inline int process_get_acc(ompi_osc_rdma_module_t *module, int source,
-                                  ompi_osc_rdma_header_get_acc_t *get_acc_header)
+                                  ompi_osc_rdma_header_acc_t *acc_header)
 {
-    char *data = (char *) (get_acc_header + 1);
+    char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
     void *buffer = NULL;
     uint64_t data_len;
@@ -1228,7 +1236,7 @@ static inline int process_get_acc(ompi_osc_rdma_module_t *module, int source,
         return ret;
     }
 
-    data_len = get_acc_header->len - ((char*) data - (char*) get_acc_header);
+    data_len = acc_header->len - ((char*) data - (char*) acc_header);
 
     if (0 == ompi_osc_rdma_accumulate_trylock (module)) {
         /* make a copy of the data since the buffer needs to be returned */
@@ -1243,23 +1251,23 @@ static inline int process_get_acc(ompi_osc_rdma_module_t *module, int source,
         }
 
         ret = ompi_osc_rdma_gacc_start (module, source, buffer, data_len, datatype,
-                                        get_acc_header);
+                                        acc_header);
     } else {
         /* queue the operation */
-        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) get_acc_header,
+        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) acc_header,
                                           source, data, data_len, datatype);
     }
 
     /* Release datatype & op */
     OBJ_RELEASE(datatype);
 
-    return (OMPI_SUCCESS == ret) ? (int) get_acc_header->len : ret;
+    return (OMPI_SUCCESS == ret) ? (int) acc_header->len : ret;
 }
 
 static inline int process_get_acc_long(ompi_osc_rdma_module_t *module, int source,
-                                       ompi_osc_rdma_header_get_acc_t *get_acc_header)
+                                       ompi_osc_rdma_header_acc_t *acc_header)
 {
-    char *data = (char *) (get_acc_header + 1);
+    char *data = (char *) (acc_header + 1);
     struct ompi_datatype_t *datatype;
     int ret;
 
@@ -1274,17 +1282,17 @@ static inline int process_get_acc_long(ompi_osc_rdma_module_t *module, int sourc
     }
 
     if (0 == ompi_osc_rdma_accumulate_trylock (module)) {
-        ret = ompi_osc_gacc_long_start (module, source, datatype, get_acc_header);
+        ret = ompi_osc_gacc_long_start (module, source, datatype, acc_header);
     } else {
         /* queue the operation */
-        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) get_acc_header,
+        ret = ompi_osc_rdma_acc_op_queue (module, (ompi_osc_rdma_header_t *) acc_header,
                                           source, NULL, 0, datatype);
     }
 
     /* Release datatype & op */
     OBJ_RELEASE(datatype);
 
-    return OMPI_SUCCESS == ret ? (int) get_acc_header->len : ret;
+    return OMPI_SUCCESS == ret ? (int) acc_header->len : ret;
 }
 
 
@@ -1440,7 +1448,7 @@ static int process_large_datatype_request_cb (ompi_request_t *request)
         (void) process_acc_long (module, source, &header->acc);
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
-        (void) process_get_acc_long (module, source, &header->get_acc);
+        (void) process_get_acc_long (module, source, &header->acc);
         break;
     default:
         /* developer error */
@@ -1490,8 +1498,8 @@ static int process_large_datatype_request (ompi_osc_rdma_module_t *module, int s
         tag = header->acc.tag;
         break;
     case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
-        header_len = sizeof (header->get_acc);
-        tag = header->get_acc.tag;
+        header_len = sizeof (header->acc);
+        tag = header->acc.tag;
         break;
     default:
         /* developer error */
@@ -1588,11 +1596,11 @@ static inline int process_frag (ompi_osc_rdma_module_t *module,
                 break;
 
             case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC:
-                ret = process_get_acc (module, frag->source, &header->get_acc);
+                ret = process_get_acc (module, frag->source, &header->acc);
                 break;
 
             case OMPI_OSC_RDMA_HDR_TYPE_GET_ACC_LONG:
-                ret = process_get_acc_long (module, frag->source, &header->get_acc);
+                ret = process_get_acc_long (module, frag->source, &header->acc);
                 break;
 
             case OMPI_OSC_RDMA_HDR_TYPE_FLUSH_REQ:

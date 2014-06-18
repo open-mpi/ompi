@@ -496,14 +496,14 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
 
     OPAL_THREAD_LOCK(&module->lock);
 
-    frag_len = sizeof(ompi_osc_rdma_header_acc_t) + ddt_len + payload_len;
+    frag_len = sizeof(*header) + ddt_len + payload_len;
     ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
     if (OMPI_SUCCESS != ret) {
-        frag_len = sizeof(ompi_osc_rdma_header_acc_t) + ddt_len;
+        frag_len = sizeof(*header) + ddt_len;
         ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
         if (OMPI_SUCCESS != ret) {
             /* allocate space for the header plus space to store ddt_len */
-            frag_len = sizeof(ompi_osc_rdma_header_put_t) + 8;
+            frag_len = sizeof(*header) + 8;
             ret = ompi_osc_rdma_frag_alloc(module, target, frag_len, &frag, &ptr);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 OPAL_THREAD_UNLOCK(&module->lock);
@@ -525,7 +525,7 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
     header->count = target_count;
     header->displacement = target_disp;
     header->op = op->o_f_to_c_index;
-    ptr += sizeof(ompi_osc_rdma_header_acc_t);
+    ptr += sizeof (*header);
 
     do {
         ret = ompi_datatype_get_pack_description(target_dt, &packed_ddt);
@@ -983,7 +983,7 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
     bool is_long_datatype = false;
     bool is_long_msg = false;
     ompi_osc_rdma_frag_t *frag;
-    ompi_osc_rdma_header_get_acc_t *header;
+    ompi_osc_rdma_header_acc_t *header;
     size_t ddt_len, payload_len, frag_len;
     char *ptr;
     const void *packed_ddt;
@@ -1046,7 +1046,7 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
         ret = ompi_osc_rdma_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
         if (OMPI_SUCCESS != ret) {
             /* allocate space for the header plus space to store ddt_len */
-            frag_len = sizeof(ompi_osc_rdma_header_put_t) + 8;
+            frag_len = sizeof(*header) + 8;
             ret = ompi_osc_rdma_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 OPAL_THREAD_UNLOCK(&module->lock);
@@ -1070,7 +1070,7 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
 
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    header = (ompi_osc_rdma_header_get_acc_t *) ptr;
+    header = (ompi_osc_rdma_header_acc_t *) ptr;
     header->base.flags = 0;
     header->len = frag_len;
     header->count = target_count;
