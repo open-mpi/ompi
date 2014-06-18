@@ -11,10 +11,10 @@
 # This is the US/English help file for the Open MPI usnic BTL.
 #
 [ibv API failed]
-Open MPI failed a basic verbs operation on a Cisco usNIC device.  This
-is highly unusual and shouldn't happen.  It suggests that there may be
-something wrong with the usNIC or OpenFabrics configuration on this
-server.
+Open MPI failed a basic verbs operation on a Cisco usNIC interface.
+This is highly unusual and shouldn't happen.  It suggests that there
+may be something wrong with the usNIC or OpenFabrics configuration on
+this server.
 
 In addition to any suggestions listed below, you might want to check
 the Linux "memlock" limits on your system (they should probably be
@@ -22,12 +22,11 @@ the Linux "memlock" limits on your system (they should probably be
 
     http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
 
-Open MPI will skip this device/port in the usnic BTL, which may result
-in either lower performance or your job aborting.
+Open MPI will skip this usNIC interface in the usnic BTL, which may
+result in either lower performance or your job aborting.
 
   Server:          %s
-  Device:          %s
-  Port:            %d
+  usNIC interface: %s (which is %s)
   Failed function: %s (%s:%d)
   Description:     %s
 #
@@ -42,11 +41,11 @@ need to provision at least as many usNICs as MPI processes on that
 server.  In each usNIC, you need to provision at least two each of the
 following: send queues, receive queues, and completion queues.
 
-Open MPI will skip this device in the usnic BTL, which may result in
-either lower performance or your job aborting.
+Open MPI will skip this usNIC interface in the usnic BTL, which may
+result in either lower performance or your job aborting.
 
   Server:          %s
-  Device:          %s
+  usNIC interface: %s
   Description:     %s
 #
 [create ibv resource failed]
@@ -61,21 +60,20 @@ usually means one of two things:
 
      http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
 
-This Open MPI job will skip this device/port in the usnic BTL, which
-may result in either lower performance or the job aborting.
+This Open MPI job will skip this usNIC interface in the usnic BTL,
+which may result in either lower performance or the job aborting.
 
   Server:          %s
-  Device:          %s
+  usNIC interface: %s (which is %s)
   Failed function: %s (%s:%d)
   Description:     %s
 #
 [async event]
-Open MPI detected a fatal error on a usNIC port.  Your MPI job will
-now abort; sorry.
+Open MPI detected a fatal error on a usNIC interface.  Your MPI job
+will now abort; sorry.
 
   Server:           %s
-  Device:           %s
-  Port:             %d
+  usNIC interface:  %s (which is %s)
   Async event code: %s (%d)
 #
 [internal error during init]
@@ -84,12 +82,11 @@ highly unusual and shouldn't happen.  It suggests that there may be
 something wrong with the usNIC or OpenFabrics configuration on this
 server.
 
-Open MPI will skip this device/port in the usnic BTL, which may result
-in either lower performance or your job aborting.
+Open MPI will skip this usNIC interface in the usnic BTL, which may
+result in either lower performance or your job aborting.
 
   Server:          %s
-  Device:          %s
-  Port:            %d
+  usNIC interface: %s (which is %s)
   Failure:         %s (%s:%d)
   Description:     %s
 #
@@ -106,17 +103,16 @@ server.
   Error:        %s
 #
 [verbs_port_bw failed]
-Open MPI failed to query the supported bandwidth of a port on a Cisco
-usNIC device.  This is unusual and shouldn't happen.  It suggests that
-there may be something wrong with the usNIC or OpenFabrics
-configuration on this server.
+Open MPI failed to query the supported bandwidth of a usNIC interface.
+This is unusual and shouldn't happen.  It suggests that there may be
+something wrong with the usNIC or OpenFabrics configuration on this
+server.
 
-Open MPI will skip this device/port in the usnic BTL, which may result
-in either lower performance or your job aborting.
+Open MPI will skip this usNIC interface in the usnic BTL, which may
+result in either lower performance or your job aborting.
 
-  Server:     %s
-  Device:     %s
-  Port:       %d
+  Server:          %s
+  usNIC interface: %s (which is %s)
 #
 [check_reg_mem_basics fail]
 The usNIC BTL failed to initialize while trying to register some
@@ -142,16 +138,16 @@ value will be ignored.
   Message:    %s
 #
 [MTU mismatch]
-The MTU does not match on local and remote hosts.  All interfaces on all
-hosts participating in an MPI job must be configured with the same MTU.
-The device and port listed below will not be used to communicate with this
-remote host.
+The MTU does not match on local and remote hosts.  All interfaces on
+all hosts participating in an MPI job must be configured with the same
+MTU.  The usNIC interface listed below will not be used to communicate
+with this remote host.
 
-  Local host:  %s
-  Device/port: %s/%d
-  Local MTU:   %d
-  Remote host: %s
-  Remote MTU:  %d
+  Local host:      %s
+  usNIC interface: %s (which is %s)
+  Local MTU:       %d
+  Remote host:     %s
+  Remote MTU:      %d
 #
 [rtnetlink init fail]
 The usnic BTL failed to initialize the rtnetlink query subsystem.
@@ -244,7 +240,7 @@ application will likely either run with degraded performance and/or
 abort.
 
   Server:              %s
-  Device:              %s:%d (%s)
+  usNIC interface:     %s:%d (%s)
   Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
 #
 [transport mismatch]

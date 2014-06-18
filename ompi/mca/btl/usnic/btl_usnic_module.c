@@ -127,7 +127,7 @@ static int create_ahs(size_t array_len, size_t num_endpoints,
                                    true,
                                    ompi_process_info.nodename,
                                    ibv_get_device_name(module->device),
-                                   module->port_num,
+                                   module->if_name,
                                    "ibv_create_ah()", __FILE__, __LINE__,
                                    "Failed to create an address handle");
                     return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1597,7 +1597,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
                            true, 
                            ompi_process_info.nodename,
                            ibv_get_device_name(module->device), 
-                           module->port_num,
+                           module->if_name,
                            ibv_event_type_str(event.event_type),
                            event.event_type);
             module->pml_error_callback(&module->super, 
@@ -1658,7 +1658,8 @@ init_qp(
         opal_show_help("help-mpi-btl-usnic.txt", "create ibv resource failed",
                        true, 
                        ompi_process_info.nodename,
-                       ibv_get_device_name(module->device), 
+                       ibv_get_device_name(module->device),
+                       module->if_name,
                        "ibv_create_qp()", __FILE__, __LINE__,
                        "Failed to create a usNIC queue pair");
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1678,7 +1679,7 @@ init_qp(
                        true, 
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
-                       module->port_num,
+                       module->if_name,
                        "ibv_modify_qp()", __FILE__, __LINE__,
                        "Failed to modify an existing queue pair");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -1693,7 +1694,7 @@ init_qp(
                        true, 
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device), 
-                       module->port_num,
+                       module->if_name,
                        "ibv_query_qp()", __FILE__, __LINE__,
                        "Failed to query an existing queue pair");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -1721,7 +1722,7 @@ static int move_qp_to_rtr(ompi_btl_usnic_module_t *module,
                        true, 
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
-                       module->port_num,
+                       module->if_name,
                        "ibv_modify_qp", __FILE__, __LINE__,
                        "Failed to move QP to RTR state");
         return OMPI_ERROR;
@@ -1744,7 +1745,7 @@ static int move_qp_to_rts(ompi_btl_usnic_module_t *module,
                        true, 
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
-                       module->port_num,
+                       module->if_name,
                        "ibv_modify_qp", __FILE__, __LINE__,
                        "Failed to move QP to RTS state");
         return OMPI_ERROR;
@@ -1823,6 +1824,7 @@ ompi_btl_usnic_channel_init(
                        true, 
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
+                       module->if_name,
                        "ibv_create_cq()", __FILE__, __LINE__,
                        "Failed to create a usNIC completion queue");
         goto error;
@@ -1868,7 +1870,7 @@ ompi_btl_usnic_channel_init(
                            true, 
                            ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
-                           module->port_num,
+                           module->if_name,
                            "get freelist buffer()", __FILE__, __LINE__,
                            "Failed to get receive buffer from freelist");
             abort();    /* this is impossible */
@@ -1883,7 +1885,7 @@ ompi_btl_usnic_channel_init(
                            true, 
                            ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
-                           module->port_num,
+                           module->if_name,
                            "ibv_post_recv", __FILE__, __LINE__,
                            "Failed to post receive buffer");
             goto error;
@@ -1971,7 +1973,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                        true, 
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device), 
-                       module->port_num,
+                       module->if_name,
                        "ibv_alloc_pd()", __FILE__, __LINE__,
                        "Failed to create a PD; is the usnic_verbs Linux kernel module loaded?");
         return OMPI_ERROR;
@@ -1992,7 +1994,7 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
                        true, 
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
-                       module->port_num,
+                       module->if_name,
                        "create mpool", __FILE__, __LINE__,
                        "Failed to allocate registered memory; check Linux memlock limits");
         goto dealloc_pd;
