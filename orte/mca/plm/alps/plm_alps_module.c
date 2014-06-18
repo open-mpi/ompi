@@ -558,6 +558,8 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
     
     alpsrun = OBJ_NEW(orte_proc_t);
     alpsrun->pid = alps_pid;
+    /* be sure to mark it as alive so we don't instantly fire */
+    ORTE_FLAG_SET(dummy, ORTE_PROC_FLAG_ALIVE);
     /* setup the waitpid so we can find out if alps succeeds! */
     orte_wait_cb(alpsrun, alps_wait_cb, NULL);
 
