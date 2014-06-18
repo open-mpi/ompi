@@ -203,9 +203,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         if (NULL == module->node_states) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     } else {
+        unsigned long total, *rbuf;
         char *data_file;
-        int *rbuf;
-        int total, i, flag;
+        int i, flag;
         size_t pagesize;
 	size_t state_size;
 
@@ -218,7 +218,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         pagesize = 4096;
 #endif
 
-        rbuf = malloc(sizeof(int) * ompi_comm_size(module->comm));
+        rbuf = malloc(sizeof(unsigned long) * ompi_comm_size(module->comm));
         if (NULL == rbuf) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
         module->noncontig = false;
@@ -232,8 +232,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         } else {
             total = size;
         }
-        ret = module->comm->c_coll.coll_allgather(&total, 1, MPI_INT,
-                                                  rbuf, 1, MPI_INT,
+        ret = module->comm->c_coll.coll_allgather(&total, 1, MPI_UNSIGNED_LONG,
+                                                  rbuf, 1, MPI_UNSIGNED_LONG,
                                                   module->comm,
                                                   module->comm->c_coll.coll_allgather_module);
         if (OMPI_SUCCESS != ret) return ret;
