@@ -82,6 +82,15 @@ static inline int ompi_osc_rdma_put_self (void *source, int source_count, ompi_d
         ((unsigned long) target_disp * module->disp_unit);
     int ret;
 
+    /* if we are in active target mode wait until all post messages arrive */
+    if (module->sc_group && !module->active_eager_send_active) {
+        OPAL_THREAD_LOCK(&module->lock);
+        while (0 != module->num_post_msgs) {
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+        OPAL_THREAD_UNLOCK(&module->lock);
+    }
+
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
         return OMPI_ERR_RMA_SYNC;
     }
@@ -107,6 +116,15 @@ static inline int ompi_osc_rdma_get_self (void *target, int target_count, ompi_d
         ((unsigned long) source_disp * module->disp_unit);
     int ret;
 
+    /* if we are in active target mode wait until all post messages arrive */
+    if (module->sc_group && !module->active_eager_send_active) {
+        OPAL_THREAD_LOCK(&module->lock);
+        while (0 != module->num_post_msgs) {
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+        OPAL_THREAD_UNLOCK(&module->lock);
+    }
+
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
         return OMPI_ERR_RMA_SYNC;
     }
@@ -129,6 +147,15 @@ static inline int ompi_osc_rdma_cas_self (void *source, void *compare, void *res
 {
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) target_disp * module->disp_unit);
+
+    /* if we are in active target mode wait until all post messages arrive */
+    if (module->sc_group && !module->active_eager_send_active) {
+        OPAL_THREAD_LOCK(&module->lock);
+        while (0 != module->num_post_msgs) {
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+        OPAL_THREAD_UNLOCK(&module->lock);
+    }
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
         return OMPI_ERR_RMA_SYNC;
@@ -154,6 +181,15 @@ static inline int ompi_osc_rdma_acc_self (void *source, int source_count, ompi_d
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) target_disp * module->disp_unit);
     int ret;
+
+    /* if we are in active target mode wait until all post messages arrive */
+    if (module->sc_group && !module->active_eager_send_active) {
+        OPAL_THREAD_LOCK(&module->lock);
+        while (0 != module->num_post_msgs) {
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+        OPAL_THREAD_UNLOCK(&module->lock);
+    }
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
         return OMPI_ERR_RMA_SYNC;
@@ -190,6 +226,15 @@ static inline int ompi_osc_rdma_gacc_self (void *source, int source_count, ompi_
     void *target = (unsigned char*) module->baseptr +
         ((unsigned long) target_disp * module->disp_unit);
     int ret;
+
+    /* if we are in active target mode wait until all post messages arrive */
+    if (module->sc_group && !module->active_eager_send_active) {
+        OPAL_THREAD_LOCK(&module->lock);
+        while (0 != module->num_post_msgs) {
+            opal_condition_wait(&module->cond, &module->lock);
+        }
+        OPAL_THREAD_UNLOCK(&module->lock);
+    }
 
     if (!(module->passive_target_access_epoch || module->active_eager_send_active)) {
         return OMPI_ERR_RMA_SYNC;
