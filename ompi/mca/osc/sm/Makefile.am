@@ -14,9 +14,7 @@ sm_sources = \
 	osc_sm_comm.c \
 	osc_sm_component.c \
 	osc_sm_active_target.c \
-	osc_sm_passive_target.c \
-	osc_sm_request.c \
-	osc_sm_request.h
+	osc_sm_passive_target.c
 
 AM_CPPFLAGS = $(osc_sm_CPPFLAGS)
 
