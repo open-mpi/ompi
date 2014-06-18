@@ -641,8 +641,6 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
                                         cmd.ipv4_addr, udp_listener->udp_port);
 
     /* All done! */
-    opal_output_verbose(20, USNIC_OUT,
-                        "====== usNIC connectivity agent LISTEN all setup");
     return;
 }
 
@@ -768,8 +766,6 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
             ap->dest_udp_port == cmd.dest_udp_port) {
             /* We already have results from pinging this IP address /
                port, so there's no need for further action */
-            opal_output_verbose(20, USNIC_OUT,
-                                "====== usNIC connectivity agent already pinged this peer");
             return;
         }
     }
