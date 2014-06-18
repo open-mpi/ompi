@@ -32,6 +32,37 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/base/base.h"
 
+/**
+ * ompi_osc_rdma_pending_post_t:
+ *
+ * Describes a post operation that was encountered outside its
+ * matching start operation.
+ */
+struct ompi_osc_rdma_pending_post_t {
+    opal_list_item_t super;
+    int rank;
+};
+typedef struct ompi_osc_rdma_pending_post_t ompi_osc_rdma_pending_post_t;
+OBJ_CLASS_DECLARATION(ompi_osc_rdma_pending_post_t);
+
+OBJ_CLASS_INSTANCE(ompi_osc_rdma_pending_post_t, opal_list_item_t, NULL, NULL);
+
+static bool group_contains_proc (ompi_group_t *group, ompi_proc_t *proc)
+{
+    int group_size = ompi_group_size (group);
+
+    for (int i = 0 ; i < group_size ; ++i) {
+        ompi_proc_t *group_proc = ompi_group_peer_lookup (group, i);
+
+        /* it is safe to compare procs by pointer */
+        if (group_proc == proc) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static int*
 get_comm_ranks(ompi_osc_rdma_module_t *module,
                ompi_group_t *sub_group)
@@ -153,6 +184,7 @@ ompi_osc_rdma_start(ompi_group_t *group,
                     ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
+    ompi_osc_rdma_pending_post_t *pending_post, *next;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_start entering..."));
@@ -170,6 +202,17 @@ ompi_osc_rdma_start(ompi_group_t *group,
     ompi_group_increment_proc_count(group);
 
     module->sc_group = group;    
+
+    OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_rdma_pending_post_t) {
+        ompi_proc_t *pending_proc = ompi_comm_peer_lookup (module->comm, pending_post->rank);
+
+        if (group_contains_proc (module->sc_group, pending_proc)) {
+            ++module->num_post_msgs;
+            opal_list_remove_item (&module->pending_posts, &pending_post->super);
+            OBJ_RELEASE(pending_post);
+            break;
+        }
+    }
 
     /* disable eager sends until we've receved the proper number of
        post messages, at which time we know all our peers are ready to
@@ -434,3 +477,33 @@ ompi_osc_rdma_test(ompi_win_t *win,
     return ret;
 }
 
+int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module, int source)
+{
+    ompi_proc_t *source_proc = ompi_comm_peer_lookup (module->comm, source);
+
+    OPAL_THREAD_LOCK(&module->lock);
+
+    /* verify that this proc is part of the current start group */
+    if (!module->sc_group || !group_contains_proc (module->sc_group, source_proc)) {
+        ompi_osc_rdma_pending_post_t *pending_post = OBJ_NEW(ompi_osc_rdma_pending_post_t);
+
+        pending_post->rank = source;
+
+        opal_list_append (&module->pending_posts, &pending_post->super);
+
+        OPAL_THREAD_UNLOCK(&module->lock);
+        return OMPI_SUCCESS;
+    }
+
+    module->num_post_msgs++;
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "received post message. num_post_msgs = %d", module->num_post_msgs));
+
+    if (0 == module->num_post_msgs) {
+        module->active_eager_send_active = true;
+    }
+    opal_condition_broadcast (&module->cond);
+    OPAL_THREAD_UNLOCK(&module->lock);
+
+    return OMPI_SUCCESS;
+}
