@@ -154,6 +154,8 @@ A request was made to bind a process, but at least one node does NOT
 support binding processes to cpus.
 
   Node:  %s
+This usually is due to not having libnumactl and libnumactl-devel
+installed on the node.
 #
 [rmaps:membind-not-supported]
 WARNING: a request was made to bind a process. While the system
@@ -162,8 +164,9 @@ support binding memory to the process location.
 
   Node:  %s
 
-This is a warning only; your job will continue, though performance may
-be degraded.
+This usually is due to not having libnumactl and libnumactl-devel
+installed on the node. This is a warning only; your job will continue,
+though performance may be degraded.
 #
 [rmaps:membind-not-supported-fatal]
 A request was made to bind a process. While the system
@@ -172,8 +175,9 @@ support binding memory to the process location.
 
   Node:  %s
 
-The provided memory binding policy requires that we abort the
-job at this time.
+This usually is due to not having libnumactl and libnumactl-devel
+installed on the node. The provided memory binding policy requires
+that we abort the job at this time.
 #
 [rmaps:no-bindable-objects]
 No bindable objects of the specified type were available
