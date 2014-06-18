@@ -594,6 +594,8 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
     /* setup a dummy proc object to track the srun */
     dummy = OBJ_NEW(orte_proc_t);
     dummy->pid = srun_pid;
+    /* be sure to mark it as alive so we don't instantly fire */
+    ORTE_FLAG_SET(dummy, ORTE_PROC_FLAG_ALIVE);
     /* setup the waitpid so we can find out if srun succeeds! */
     orte_wait_cb(dummy, srun_wait_cb, NULL);
 

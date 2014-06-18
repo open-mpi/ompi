@@ -1534,6 +1534,8 @@ static int start_compression(orte_sstore_stage_local_snapshot_info_t *handle_inf
 
     proc = OBJ_NEW(orte_proc_t);
     proc->pid = app_info->compress_pid;
+    /* be sure to mark it as alive so we don't instantly fire */
+    ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_ALIVE);
 
     orte_wait_cb(proc, sstore_stage_local_compress_waitpid_cb, app_info);
 
