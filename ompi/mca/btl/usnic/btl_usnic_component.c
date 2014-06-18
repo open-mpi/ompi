@@ -617,7 +617,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                            true, 
                            ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
-                           module->port_num,
+                           module->if_name,
                            "ibv_query_device", __FILE__, __LINE__,
                            "Failed to query usNIC device; is the usnic_verbs Linux kernel module loaded?");
             --mca_btl_usnic_component.num_modules;
@@ -1156,7 +1156,7 @@ static int init_module_from_port(ompi_btl_usnic_module_t *module,
                        true,
                        ompi_process_info.nodename,
                        ibv_get_device_name(module->device),
-                       module->port_num,
+                       module->if_name,
                        "ibv_query_gid", __FILE__, __LINE__,
                        "Failed to query usNIC GID");
         return OMPI_ERROR;
@@ -1204,7 +1204,7 @@ static int init_module_from_port(ompi_btl_usnic_module_t *module,
                            true,
                            ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
-                           module->port_num);
+                           module->if_name);
             return OMPI_ERROR;
         }
     }
