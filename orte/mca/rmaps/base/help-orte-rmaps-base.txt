@@ -123,10 +123,10 @@ be found on node %s.
 A request was made to bind to that would result in binding more
 processes than cpus on a resource:
 
-   Bind to:         %s
-   Node:            %s
+   Bind to:     %s
+   Node:        %s
    #processes:  %d
-   #cpus:          %d
+   #cpus:       %d
 
 You can override this protection by adding the "overload-allowed"
 option to your binding directive.

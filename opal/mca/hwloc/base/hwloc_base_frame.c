@@ -517,8 +517,12 @@ int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec
         OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_NONE);
     } else {
         tmpvals = opal_argv_split(spec, ':');
-        if (1 < opal_argv_count(tmpvals)) {
-            quals = opal_argv_split(tmpvals[1], ',');
+        if (1 < opal_argv_count(tmpvals) || ':' == spec[0]) {
+            if (':' == spec[0]) {
+                quals = opal_argv_split(&spec[1], ',');
+            } else {
+                quals = opal_argv_split(tmpvals[1], ',');
+            }
             for (i=0; NULL != quals[i]; i++) {
                 if (0 == strncasecmp(quals[i], "if-supported", strlen(quals[i]))) {
                     tmp |= OPAL_BIND_IF_SUPPORTED;
@@ -533,7 +537,7 @@ int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec
             }
             opal_argv_free(quals);
         }
-        if (NULL == tmpvals[0]) {
+        if (NULL == tmpvals[0] || ':' == spec[0]) {
             OPAL_SET_BINDING_POLICY(tmp, OPAL_BIND_TO_CORE);
             tmp &= ~OPAL_BIND_GIVEN;
         } else {
