@@ -50,7 +50,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     orte_job_map_t *map;
     int rc, i;
     bool did_map;
-    opal_list_item_t *item;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -248,7 +247,12 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         orte_node_t *node;
         hwloc_topology_t t0;
         int i;
-        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            OBJ_RELEASE(caddy);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+            return;
+        }
         t0 = node->topology;
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
@@ -270,10 +274,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         mod = (orte_rmaps_base_selected_module_t*)opal_list_get_first(&orte_rmaps_base.selected_modules);
         jdata->map->req_mapper = strdup(mod->component->mca_component_name);
     }
-    for (item = opal_list_get_first(&orte_rmaps_base.selected_modules);
-         item != opal_list_get_end(&orte_rmaps_base.selected_modules);
-         item = opal_list_get_next(item)) {
-        mod = (orte_rmaps_base_selected_module_t*)item;
+    OPAL_LIST_FOREACH(mod, &orte_rmaps_base.selected_modules, orte_rmaps_base_selected_module_t) {
         if (ORTE_SUCCESS == (rc = mod->module->map_job(jdata)) ||
             ORTE_ERR_RESOURCE_BUSY == rc) {
             did_map = true;
@@ -414,7 +415,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 p0 = (orte_proc_t*)opal_pointer_array_get_item(node->procs, 0);
                 procbitmap = NULL;
                 p0bitmap = NULL;
-                orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
+                orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
                 orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING);
                 opal_output(orte_clean_output, "\t<locality>");
                 for (j=1; j < node->procs->size; j++) {
