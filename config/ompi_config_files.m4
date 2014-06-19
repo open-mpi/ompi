@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,7 +28,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/use-mpi-tkr/Makefile
         ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
         ompi/mpi/fortran/use-mpi-tkr/fortran_kinds.sh
-        ompi/mpi/fortran/use-mpi-tkr/scripts/Makefile
         ompi/mpi/fortran/use-mpi-ignore-tkr/Makefile
         ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
         ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h

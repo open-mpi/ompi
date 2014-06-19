@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # $COPYRIGHT$
@@ -20,51 +20,15 @@
 # $HEADER$
 #
 
-SUBDIRS = scripts
-
 # THIS MAKEFILE IS OLD AND ONLY TO SUPPORT FORTRAN COMPILERS THAT DO
-# NOT SUPPORT "IGNORE TKR" FUNCTIONALITY (cough cough gfortran cough
-# cough).  All reasonable Fortran compilers support ignore TKR and
-# don't compile this directory -- instead, they compile
-# ompi/fortran/use-mpi-ignore-tkr.  
-
-# This tree is left over to support non-ignore-tkr compilers, but
-# hasn't been updated much.  Indeed, many of the comments pre-date
-# ignore-tkr days and haven't been updated.
+# NOT SUPPORT "IGNORE TKR" FUNCTIONALITY (i.e., gfortran before v4.9).
+# All other Fortran compilers support ignore TKR and don't compile
+# this directory -- instead, they compile
+# ompi/fortran/use-mpi-ignore-tkr.
 
 if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 
 ########################################################################
-
-# This Makefile.am is quite complex and confusing.  Part of the
-# problem is that Libtool (v1.5.18) does not understand F90, so we
-# have to do a few things manually (and no shared libraries). Here's a
-# summary of what is happening:
-#
-# Depedencies / who generates whom:
-#
-# configure generates fortran_kinds.sh
-#       |
-#      \|/
-# fortran_kinds.sh ----> sourced by scripts/* ----> generates mpi_*.f90
-#                                 |                         |
-#                                \|/                        |
-#                    generates mpi-f90-interfaces.h         |
-#                    /                                      |
-#                   \/                                      |
-#  mpi-f90-interfaces.h                                     |
-#                 |                                         |
-#                \|/                                       \|/
-#            used by mpi.F90                 used by mpi_*.f90
-#           /        |                               |
-#          /        \|/                             \|/
-#         /  generates mpi.o                 generates mpi_*.o
-#        \/                 \               /
-# generates mpi module      \/             \/
-# (filename unknown)      generates libmpi_f90.a
-#
-# Once you understand this diagram, this Makefile is much more clear.
-# 
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG). -I$(srcdir) \
@@ -80,40 +44,6 @@ if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 
 lib_LTLIBRARIES += libmpi_usempi.la
 
-# Ensure that the F90 interfaces are re-generated based on the values
-# that come in from configure
-
-mpi-f90-interfaces.h: fortran_kinds.sh
-
-CLEANFILES += mpi-f90-interfaces.h
-
-# Run scripts to generate the f90 source files.  We only need to
-# generate the .f90 files once, so the "test" checks to see if the
-# file exists before running the script.  However, the
-# mpi-f90-interfaces.h file may need to be generated multiple times
-# (even if it already exists), such as if someone re-runs configure
-# and changes the value fortran_kinds.sh (which is taken care of by
-# the mpi-f90-interfaces.h dependency on fortran_kinds.sh, above).
-
-mpi-f90-interfaces.h: $(srcdir)/scripts/mpi-f90-interfaces.h.sh
-	@ p="`pwd`"; \
-	echo $(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p \> $@; \
-	$(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p > $@
-
-# Unbelievably, some versions of sh (cough cough Solaris 9 cough
-# cough) actually seem to internally perform a "cd" into a
-# subdirectory when you run "./foo/bar", such that if you try to
-# source a script in the top-level directory in the bar script (e.g.,
-# ". some_script" in the bar script), it will try to run it in the
-# "foo" subdirectory, rather than the top-level directory!  #$@#$%#$%
-# So we have to pass in the pwd to the scripts so that they know where
-# some_script is.
-
-$(nodist_libmpi_usempi_la_SOURCES): fortran_kinds.sh
-	@ p="`pwd`"; \
-	echo $(srcdir)/scripts/$@.sh $$p \> $@; \
-	$(srcdir)/scripts/$@.sh $$p > $@ ;
-
 # Automake doesn't know how to do F90 dependency analysis, so manually
 # list this here (i.e., "mpi-f90-interfaces.h" is included in
 # mpi.F90).
@@ -125,31 +55,26 @@ $(nodist_libmpi_usempi_la_SOURCES): fortran_kinds.sh
 mpi.o: mpi.F90 mpi-f90-interfaces.h
 	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) $<
 
-BUILT_SOURCES = mpi-f90-interfaces.h
 endif
-
-# mpi.F90 is the only f90 source file directly in libmpif90 that gets
-# distributed.  
-
-libmpi_usempi_la_SOURCES = mpi.F90
-libmpi_usempi_la_LIBADD = \
-     $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la
-
-# These files are all generated by scripts in the scripts/ directory.
 
 # Per MPI-3 p610:34-41, if we're building a TKR mpi module, we should
 # not build any interfaces for MPI subroutines that take a choice
-# buffer dummy argument.
+# buffer dummy argument.  We therefore really only need to build a
+# handful of subroutines.
 
-nodist_libmpi_usempi_la_SOURCES = \
-     mpi_sizeof.f90 \
+libmpi_usempi_la_SOURCES = \
+     mpi.F90 \
+     mpi-f90-interfaces.h \
      mpi_comm_spawn_multiple_f90.f90 \
+     mpi_sizeof.f90 \
      mpi_testall_f90.f90 \
      mpi_testsome_f90.f90 \
      mpi_waitall_f90.f90 \
      mpi_waitsome_f90.f90 \
      mpi_wtick_f90.f90 \
      mpi_wtime_f90.f90
+libmpi_usempi_la_LIBADD = \
+     $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la
 
 # Set the library version
 libmpi_usempi_la_LDFLAGS = \
