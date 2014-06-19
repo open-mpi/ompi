@@ -3351,7 +3351,7 @@ end interface
 interface MPI_Dist_graph_create
 
 subroutine MPI_Dist_graph_create(comm_old, n, sources, degrees, destinations, &
-        weights, info, reorder, comm_dist_graph, ierr)
+        weights, info, reorder, comm_dist_graph, ierror)
   integer, intent(in) :: comm_old
   integer, intent(in) :: n
   integer, dimension(n), intent(in) :: sources
@@ -3361,7 +3361,7 @@ subroutine MPI_Dist_graph_create(comm_old, n, sources, degrees, destinations, &
   logical, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine MPI_Dist_graph_create
 
 end interface
@@ -3371,7 +3371,7 @@ interface MPI_Dist_graph_create_adjacent
 
 subroutine MPI_Dist_graph_create_adjacent(comm_old, indegree, sources, sourceweights, &
        outdegree, destinations, destweights, info, reorder, &
-       comm_dist_graph, ierr)
+       comm_dist_graph, ierror)
   integer, intent(in) :: comm_old
   integer, intent(in) :: indegree
   integer, dimension(indegree), intent(in) :: sources
@@ -3382,7 +3382,7 @@ subroutine MPI_Dist_graph_create_adjacent(comm_old, indegree, sources, sourcewei
   logical, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine MPI_Dist_graph_create_adjacent
 
 end interface
@@ -3390,12 +3390,12 @@ end interface
 
 interface MPI_Dist_graph_neighbors_count
 
-subroutine MPI_Dist_graph_neighbors_count(comm, indegree, outdegree, weighted, ierr)
+subroutine MPI_Dist_graph_neighbors_count(comm, indegree, outdegree, weighted, ierror)
   integer, intent(in) :: comm
   integer, intent(out) :: indegree
   integer, intent(out) :: outdegree
   logical, intent(out) :: weighted
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine MPI_Dist_graph_neighbors_count
 
 end interface
@@ -3404,7 +3404,7 @@ end interface
 interface MPI_Dist_graph_neighbors
 
 subroutine MPI_Dist_graph_neighbors(comm, maxindegree, sources, sourceweights, &
-       maxoutdegree, destinations, destweights, ierr)
+       maxoutdegree, destinations, destweights, ierror)
   integer, intent(in) :: comm
   integer, intent(in) :: maxindegree
   integer, dimension(maxindegree), intent(out) :: sources
@@ -3412,7 +3412,7 @@ subroutine MPI_Dist_graph_neighbors(comm, maxindegree, sources, sourceweights, &
   integer, intent(in) :: maxoutdegree
   integer, dimension(maxoutdegree), intent(out) :: destinations
   integer, dimension(maxoutdegree), intent(out) :: destweights
-  integer, intent(out) :: ierr
+  integer, intent(out) :: ierror
 end subroutine MPI_Dist_graph_neighbors
 
 end interface
