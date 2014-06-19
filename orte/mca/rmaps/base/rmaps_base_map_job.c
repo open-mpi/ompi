@@ -413,15 +413,15 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 /* test locality - for the first node, print the locality of each proc relative to the first one */
                 node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, 0);
                 p0 = (orte_proc_t*)opal_pointer_array_get_item(node->procs, 0);
-                procbitmap = NULL;
                 p0bitmap = NULL;
-                orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
                 orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING);
                 opal_output(orte_clean_output, "\t<locality>");
                 for (j=1; j < node->procs->size; j++) {
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                         continue;
                     }
+                    procbitmap = NULL;
+                    orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
                     locality = opal_hwloc_base_get_relative_locality(node->topology,
                                                                      p0bitmap,
                                                                      procbitmap);
