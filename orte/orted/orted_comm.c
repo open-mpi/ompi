@@ -430,11 +430,16 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         /* flag that orteds were ordered to terminate */
         orte_orteds_term_ordered = true;
         /* if all my routes and local children are gone, then terminate ourselves */
-        if (0 == orte_routed.num_routes()) {
+        if (0 == (ret = orte_routed.num_routes())) {
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL != (proct = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i)) &&
                     ORTE_FLAG_TEST(proct, ORTE_PROC_FLAG_ALIVE)) {
                     /* at least one is still alive */
+                    if (orte_debug_daemons_flag) {
+                        opal_output(0, "%s orted_cmd: exit cmd, but proc %s is alive",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&proct->name));
+                    }
                     return;
                 }
             }
@@ -444,6 +449,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
+        } else if (orte_debug_daemons_flag) {
+            opal_output(0, "%s orted_cmd: exit cmd, %d routes still exit",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret);
         }
         return;
         break;
