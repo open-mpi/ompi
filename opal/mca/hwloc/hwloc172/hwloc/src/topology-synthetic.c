@@ -307,7 +307,9 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
       /* 1GB in memory nodes, 256k 4k-pages.  */
       obj->memory.local_memory = 1024*1024*1024;
       obj->memory.page_types_len = 1;
-      obj->memory.page_types = malloc(sizeof(*obj->memory.page_types));
+      if (NULL == (obj->memory.page_types = malloc(sizeof(*obj->memory.page_types)))) {
+          abort();
+      }
       memset(obj->memory.page_types, 0, sizeof(*obj->memory.page_types));
       obj->memory.page_types[0].size = 4096;
       obj->memory.page_types[0].count = 256*1024;
