@@ -98,16 +98,6 @@ subroutine MPI_Sizeof0DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof0DR8
 
-subroutine MPI_Sizeof0DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof0DR16
-
 subroutine MPI_Sizeof0DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -127,16 +117,6 @@ subroutine MPI_Sizeof0DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof0DC16
-
-subroutine MPI_Sizeof0DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof0DC32
 
 subroutine MPI_Sizeof1DCH(x, size, ierror)
   implicit none
@@ -218,16 +198,6 @@ subroutine MPI_Sizeof1DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof1DR8
 
-subroutine MPI_Sizeof1DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, dimension(*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof1DR16
-
 subroutine MPI_Sizeof1DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -247,16 +217,6 @@ subroutine MPI_Sizeof1DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof1DC16
-
-subroutine MPI_Sizeof1DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, dimension(*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof1DC32
 
 
 subroutine MPI_Sizeof2DCH(x, size, ierror)
@@ -339,16 +299,6 @@ subroutine MPI_Sizeof2DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof2DR8
 
-subroutine MPI_Sizeof2DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, dimension(1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof2DR16
-
 subroutine MPI_Sizeof2DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -368,16 +318,6 @@ subroutine MPI_Sizeof2DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof2DC16
-
-subroutine MPI_Sizeof2DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, dimension(1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof2DC32
 
 
 subroutine MPI_Sizeof3DCH(x, size, ierror)
@@ -460,16 +400,6 @@ subroutine MPI_Sizeof3DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof3DR8
 
-subroutine MPI_Sizeof3DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, dimension(1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof3DR16
-
 subroutine MPI_Sizeof3DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -489,16 +419,6 @@ subroutine MPI_Sizeof3DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof3DC16
-
-subroutine MPI_Sizeof3DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, dimension(1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof3DC32
 
 
 subroutine MPI_Sizeof4DCH(x, size, ierror)
@@ -581,16 +501,6 @@ subroutine MPI_Sizeof4DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof4DR8
 
-subroutine MPI_Sizeof4DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, dimension(1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof4DR16
-
 subroutine MPI_Sizeof4DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -610,16 +520,6 @@ subroutine MPI_Sizeof4DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof4DC16
-
-subroutine MPI_Sizeof4DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, dimension(1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof4DC32
 
 
 subroutine MPI_Sizeof5DCH(x, size, ierror)
@@ -702,16 +602,6 @@ subroutine MPI_Sizeof5DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof5DR8
 
-subroutine MPI_Sizeof5DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, dimension(1,1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof5DR16
-
 subroutine MPI_Sizeof5DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -731,16 +621,6 @@ subroutine MPI_Sizeof5DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof5DC16
-
-subroutine MPI_Sizeof5DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, dimension(1,1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof5DC32
 
 
 subroutine MPI_Sizeof6DCH(x, size, ierror)
@@ -823,16 +703,6 @@ subroutine MPI_Sizeof6DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof6DR8
 
-subroutine MPI_Sizeof6DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, dimension(1,1,1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof6DR16
-
 subroutine MPI_Sizeof6DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -852,16 +722,6 @@ subroutine MPI_Sizeof6DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof6DC16
-
-subroutine MPI_Sizeof6DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, dimension(1,1,1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof6DC32
 
 
 subroutine MPI_Sizeof7DCH(x, size, ierror)
@@ -944,16 +804,6 @@ subroutine MPI_Sizeof7DR8(x, size, ierror)
   ierror = 0
 end subroutine MPI_Sizeof7DR8
 
-subroutine MPI_Sizeof7DR16(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  real*16, dimension(1,1,1,1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_REAL16
-  ierror = 0
-end subroutine MPI_Sizeof7DR16
-
 subroutine MPI_Sizeof7DC8(x, size, ierror)
   implicit none
   include 'fortran_sizes.h'
@@ -973,18 +823,3 @@ subroutine MPI_Sizeof7DC16(x, size, ierror)
   size = OMPI_SIZEOF_F90_COMPLEX16
   ierror = 0
 end subroutine MPI_Sizeof7DC16
-
-subroutine MPI_Sizeof7DC32(x, size, ierror)
-  implicit none
-  include 'fortran_sizes.h'
-  complex*32, dimension(1,1,1,1,1,1,*), intent(in) :: x
-  integer, intent(out) :: size
-  integer, intent(out) :: ierror
-  size = OMPI_SIZEOF_F90_COMPLEX32
-  ierror = 0
-end subroutine MPI_Sizeof7DC32
-
-
-
-
-
