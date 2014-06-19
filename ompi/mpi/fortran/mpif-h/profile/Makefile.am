@@ -314,6 +314,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         prput_f.c \
         pcompare_and_swap_f.c \
         pfetch_and_op_f.c \
+        pwin_allocate_shared_f.c \
         pwin_call_errhandler_f.c \
         pwin_complete_f.c \
         pwin_create_errhandler_f.c \
@@ -332,6 +333,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pwin_set_attr_f.c \
         pwin_set_errhandler_f.c \
         pwin_set_name_f.c \
+        pwin_shared_query_f.c \
         pwin_start_f.c \
         pwin_test_f.c \
         pwin_unlock_f.c \

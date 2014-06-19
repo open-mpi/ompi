@@ -344,6 +344,7 @@
 #define ompi_waitany_f pompi_waitany_f
 #define ompi_wait_f pompi_wait_f
 #define ompi_waitsome_f pompi_waitsome_f
+#define ompi_win_allocate_shared_f pompi_win_allocate_shared_f
 #define ompi_win_call_errhandler_f pompi_win_call_errhandler_f
 #define ompi_win_complete_f pompi_win_complete_f
 #define ompi_win_create_f pompi_win_create_f
@@ -366,6 +367,7 @@
 #define ompi_win_set_attr_f pompi_win_set_attr_f
 #define ompi_win_set_errhandler_f pompi_win_set_errhandler_f
 #define ompi_win_set_name_f pompi_win_set_name_f
+#define ompi_win_shared_query_f pompi_win_shared_query_f
 #define ompi_win_start_f pompi_win_start_f
 #define ompi_win_test_f pompi_win_test_f
 #define ompi_win_unlock_f pompi_win_unlock_f

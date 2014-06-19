@@ -343,6 +343,7 @@ libmpi_mpifh_la_SOURCES += \
         rput_f.c \
         compare_and_swap_f.c \
         fetch_and_op_f.c \
+        win_allocate_shared_f.c \
         win_call_errhandler_f.c \
         win_complete_f.c \
         win_create_errhandler_f.c \
@@ -361,6 +362,7 @@ libmpi_mpifh_la_SOURCES += \
         win_set_attr_f.c \
         win_set_errhandler_f.c \
         win_set_name_f.c \
+        win_shared_query_f.c \
         win_start_f.c \
         win_test_f.c \
         win_unlock_f.c \
