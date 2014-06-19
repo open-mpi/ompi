@@ -19,13 +19,20 @@
 # MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
-AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/base \
+AM_FCFLAGS = -I$(top_builddir)/ompi/include \
+             -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG). \
              -I$(top_srcdir) $(FCFLAGS_f90)
 
+MOSTLYCLEANFILES = *.mod
+
 lib_LTLIBRARIES = libmpi_usempif08.la
+
+module_sentinel_file = \
+        libforce_usempif08_internal_modules_to_be_built.la
+
+noinst_LTLIBRARIES = $(module_sentinel_file)
 
 mpi_api_files = \
         abort_f08.F90 \
@@ -705,7 +712,6 @@ endif
 libmpi_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         $(pmpi_api_files) \
-        mpi-f08-sizeof.F90 \
         mpi-f-interfaces-bind.h \
         pmpi-f-interfaces-bind.h \
         attr-fn-f08-callback-interfaces.h \
@@ -718,20 +724,11 @@ libmpi_usempif08_la_SOURCES = \
 # Include the mpi_f08-based MPI extensions in libmpi_usempif08, too.
 #
 
-module_sentinel_file = \
-        $(top_builddir)/ompi/mpi/fortran/base/libforce_usempif08_internal_modules_to_be_built.la
-
 libmpi_usempif08_la_LIBADD = \
-        $(module_sentinel_file) \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
         $(top_builddir)/ompi/libmpi.la
+libmpi_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
 libmpi_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
-
-#
-# Clean up all module files
-#
-
-MOSTLYCLEANFILES = *.mod
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them
@@ -753,6 +750,38 @@ mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
 mpi-f08.lo: attr-fn-f08-callback-interfaces.h
 mpi-f08.lo: conversion-fn-null-f08-interface.h
 
+###########################################################################
+
+# f08 support modules
+
+libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
+        mpi-f08-types.F90 \
+        mpi-f08-interfaces.F90 \
+        mpi-f08-interfaces-callbacks.F90 \
+        pmpi-f08-interfaces.F90
+
+config_h = \
+    $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h \
+    $(top_srcdir)/ompi/mpi/fortran/configure-fortran-output-bottom.h
+
+#
+# Automake doesn't do Fortran dependency analysis, so must list them
+# manually here.  Bummer!
+#
+
+mpi-f08-types.lo: $(config_h)
+mpi-f08-types.lo: mpi-f08-types.F90
+mpi-f08-interfaces.lo: $(config_h)
+mpi-f08-interfaces.lo: mpi-f08-interfaces.F90
+mpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
+mpi-f08-interfaces-callbacks.lo: $(config_h)
+mpi-f08-interfaces-callbacks.lo: mpi-f08-interfaces-callbacks.F90
+mpi-f08-interfaces-callbacks.lo: mpi-f08-types.lo
+pmpi-f08-interfaces.lo: $(config_h)
+pmpi-f08-interfaces.lo: pmpi-f08-interfaces.F90
+pmpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
+
+###########################################################################
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(
