@@ -2107,7 +2107,7 @@ interface MPI_Win_allocate_shared
 subroutine MPI_Win_allocate_shared(size, disp_unit, info, comm, &
       baseptr, win, ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
-  include 'mpif-config.h'
+  use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
   INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
   INTEGER, INTENT(IN) ::  disp_unit
   TYPE(MPI_Info), INTENT(IN) ::  info
@@ -2117,7 +2117,6 @@ subroutine MPI_Win_allocate_shared(size, disp_unit, info, comm, &
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
 end subroutine MPI_Win_allocate_shared
 end interface
-
 
 interface  MPI_Win_create_keyval
 subroutine MPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,win_keyval, &
@@ -3243,7 +3242,7 @@ interface MPI_Win_shared_query
 subroutine MPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&
       ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
-  include 'mpif-config.h'
+  use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
   TYPE(MPI_Win), INTENT(IN) ::  win
   INTEGER, INTENT(IN) ::  rank
   INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
