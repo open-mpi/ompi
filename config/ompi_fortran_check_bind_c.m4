@@ -18,8 +18,8 @@ dnl
 dnl $HEADER$
 dnl
 
-# Check whether or not the Fortran compiler supports BIND(C) or not
-
+# Check whether or not the Fortran compiler supports iso_c_binding or not
+#
 # OMPI_FORTRAN_CHECK_ISO_C_BINDING([action if found], [action if not found])
 # ----------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_CHECK_ISO_C_BINDING],[
