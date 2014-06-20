@@ -81,144 +81,18 @@ static inline void compute_sf_size(ompi_btl_usnic_send_frag_t *sfrag)
     sfrag->sf_size += frag->uf_src_seg[1].seg_len;
 }
 
-/* The call to ibv_create_ah() may initiate an ARP resolution, and may
- * therefore take some time to complete.  Hence, it will return 1 of 3
- * things:
- *
- * 1. a valid new ah
- * 2. NULL and errno == EAGAIN (ARP not complete; try again later)
- * 3. NULL and errno != EAGAIN (fatal error)
- *
- * Since ibv_create_ah() is therefore effectively non-blocking, we
- * gang all the endpoint ah creations here in this loop so that we can
- * get some parallelization of ARP resolution.
- */
-static int create_ahs(size_t array_len, size_t num_endpoints,
-                      struct mca_btl_base_endpoint_t** endpoints,
-                      ompi_btl_usnic_module_t *module)
-{
-    size_t i;
-    struct ibv_ah_attr ah_attr;
-    size_t num_ah_left;
-    time_t ts_last_created;
-
-    /* memset the ah_attr to both silence valgrind warnings (since the
-       attr struct ends up getting written down an fd to the kernel)
-       and actually zero out all the fields that we don't care about /
-       want to be logically false. */
-    memset(&ah_attr, 0, sizeof(ah_attr));
-    ah_attr.is_global = 1;
-    ah_attr.port_num = 1;
-
-    ts_last_created = time(NULL);
-    num_ah_left = num_endpoints;
-
-    /* Mark all endpoints as unreachable (this should already be done,
-       but just be defensive) */
-    for (i = 0; i < array_len; i++) {
-        if (NULL != endpoints[i]) {
-            endpoints[i]->endpoint_remote_ah = NULL;
-        }
-    }
-
-    while (num_ah_left > 0) {
-        for (i = 0; i < array_len; i++) {
-            if (NULL != endpoints[i] &&
-                NULL == endpoints[i]->endpoint_remote_ah) {
-                ah_attr.grh.dgid = endpoints[i]->endpoint_remote_addr.gid;
-                endpoints[i]->endpoint_remote_ah =
-                    ibv_create_ah(module->pd, &ah_attr);
-
-                /* Got a successfully-created AH */
-                if (NULL != endpoints[i]->endpoint_remote_ah) {
-                    ts_last_created = time(NULL);
-                    --num_ah_left;
-                }
-
-                /* Got some kind of address failure.  This usually
-                   means that we couldn't find a route to that peer
-                   (e.g., the networking is hosed between us).  So
-                   just mark that we can't reach this peer, and print
-                   a pretty warning. */
-                else if (EADDRNOTAVAIL == errno) {
-                    OBJ_RELEASE(endpoints[i]);
-                    endpoints[i] = NULL;
-                    --num_ah_left;
-
-                    /* Print a pretty warning */
-                    if (mca_btl_usnic_component.show_route_failures) {
-                        char local[IPV4STRADDRLEN], remote[IPV4STRADDRLEN];
-                        ompi_btl_usnic_snprintf_ipv4_addr(local, sizeof(local),
-                                                          module->local_addr.ipv4_addr,
-                                                          module->local_addr.cidrmask);
-                        ompi_btl_usnic_snprintf_ipv4_addr(remote, sizeof(remote),
-                                                          endpoints[i]->endpoint_remote_addr.ipv4_addr,
-                                                          endpoints[i]->endpoint_remote_addr.cidrmask);
-
-                        opal_show_help("help-mpi-btl-usnic.txt", "create_ah failed",
-                                       true,
-                                       ompi_process_info.nodename,
-                                       local,
-                                       module->if_name,
-                                       ibv_get_device_name(module->device),
-                                       endpoints[i]->endpoint_proc->proc_ompi->proc_hostname,
-                                       remote);
-                    }
-
-                }
-
-                /* Got some other kind of error -- give up on this
-                   interface. */
-                else if (EAGAIN != errno) {
-                    opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                                   true,
-                                   ompi_process_info.nodename,
-                                   ibv_get_device_name(module->device),
-                                   module->if_name,
-                                   "ibv_create_ah()", __FILE__, __LINE__,
-                                   "Failed to create an address handle");
-                    return OMPI_ERR_OUT_OF_RESOURCE;
-                }
-            }
-        }
-
-        /* Has it been too long since our last AH creation (ARP
-           resolution)?  If so, we're probably never going to finish,
-           so just mark all remaining endpoints as unreachable and
-           bail. */
-        if (num_ah_left > 0 &&
-            time(NULL) > (ts_last_created + mca_btl_usnic_component.arp_timeout)) {
-            opal_show_help("help-mpi-btl-usnic.txt", "ibv_create_ah timeout",
-                           true,
-                           ompi_process_info.nodename,
-                           ibv_get_device_name(module->device),
-                           module->port_num,
-                           module->if_name,
-                           mca_btl_usnic_component.arp_timeout);
-            break;
-        }
-    }
-
-    opal_output_verbose(5, USNIC_OUT,
-                        "btl:usnic: made %" PRIsize_t " address handles",
-                        (num_endpoints - num_ah_left));
-    return OMPI_SUCCESS;
-}
-
 /*
- *  Add procs to this BTL module, receiving endpoint information from
- *  the modex.
+ * Loop over all procs sent to us in add_procs and see if we want to
+ * add a proc/endpoint for them.
  */
-static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
-                             size_t nprocs,
-                             struct ompi_proc_t **ompi_procs,
-                             struct mca_btl_base_endpoint_t** endpoints,
-                             opal_bitmap_t* reachable)
+static int add_procs_create_endpoints(ompi_btl_usnic_module_t *module,
+                                      size_t nprocs,
+                                      ompi_proc_t **ompi_procs,
+                                      mca_btl_base_endpoint_t **endpoints)
 {
-    ompi_btl_usnic_module_t* module = (ompi_btl_usnic_module_t*) base_module;
-    ompi_proc_t* my_proc;
-    size_t i, count;
     int rc;
+    ompi_proc_t* my_proc;
+    size_t num_created = 0;
 
     /* get pointer to my proc structure */
     my_proc = ompi_proc_local();
@@ -226,8 +100,8 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    count = 0;
-    for (i = 0; i < nprocs; i++) {
+    /* Loop over the procs we were given */
+    for (size_t i = 0; i < nprocs; i++) {
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         ompi_btl_usnic_proc_t* usnic_proc;
         mca_btl_base_endpoint_t* usnic_endpoint;
@@ -262,7 +136,7 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
          * reach this proc via this module, move on to the next proc. */
         usnic_endpoint = NULL;
         rc = ompi_btl_usnic_create_endpoint(module, usnic_proc,
-                &usnic_endpoint);
+                                            &usnic_endpoint);
         if (OMPI_SUCCESS != rc) {
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic:%s: unable to create endpoint for module=%p proc=%p\n",
@@ -271,86 +145,256 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
             continue;
         }
 
-        /* Add to array of all procs (proc_match gave us a reference) */
+        /* We like this new endpoint; save it */
         opal_pointer_array_add(&module->all_procs, usnic_proc);
 
+        union ibv_gid gid = usnic_endpoint->endpoint_remote_addr.gid;
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: new usnic peer: subnet = 0x%016" PRIx64 ", interface = 0x%016" PRIx64,
-                            ntoh64(usnic_endpoint->endpoint_remote_addr.gid.global.subnet_prefix),
-                            ntoh64(usnic_endpoint->endpoint_remote_addr.gid.global.interface_id));
+                            "btl:usnic: new usnic peer endpoint: subnet = 0x%016" PRIx64 ", interface = 0x%016" PRIx64,
+                            ntoh64(gid.global.subnet_prefix),
+                            ntoh64(gid.global.interface_id));
 
-        opal_bitmap_set_bit(reachable, i);
         endpoints[i] = usnic_endpoint;
-        opal_output_verbose(15, USNIC_OUT,
-                            "btl:usnic: made %p endpoint", (void*) usnic_endpoint);
-        count++;
+        ++num_created;
     }
+
     opal_output_verbose(5, USNIC_OUT,
-                        "btl:usnic: made %" PRIsize_t " endpoints", count);
+                        "btl:usnic: made %" PRIsize_t " endpoints",
+                        num_created);
+    return OMPI_SUCCESS;
+}
 
-    /* Create address handles for all the newly-created endpoints */
-    rc = create_ahs(nprocs, count, endpoints, module);
+/*
+ * Print a warning about how the remote peer was unreachable.
+ *
+ * This is a separate helper function simply because it's somewhat
+ * bulky to put inline.
+ */
+static void add_procs_warn_ah_fail(ompi_btl_usnic_module_t *module,
+                                   ompi_btl_usnic_endpoint_t *endpoint)
+{
+    /* Only show the warning if it is enabled */
+    if (!mca_btl_usnic_component.show_route_failures) {
+        return;
+    }
 
-    /* If we got non-SUCCESS back, destroy everything */
-    if (OMPI_SUCCESS != rc) {
-        opal_output_verbose(15, USNIC_OUT,
-                            "btl:usnic: creating address handles failed on %s/%s, destroying all endpoints",
-                            ibv_get_device_name(module->device),
-                            module->if_name);
+    char local[IPV4STRADDRLEN], remote[IPV4STRADDRLEN];
+    ompi_btl_usnic_snprintf_ipv4_addr(local, sizeof(local),
+                                      module->local_addr.ipv4_addr,
+                                      module->local_addr.cidrmask);
+    ompi_btl_usnic_snprintf_ipv4_addr(remote, sizeof(remote),
+                                      endpoint->endpoint_remote_addr.ipv4_addr,
+                                      endpoint->endpoint_remote_addr.cidrmask);
 
-        ompi_btl_usnic_endpoint_t *ep;
-        opal_list_item_t *item, *next;
-        OPAL_LIST_FOREACH_SAFE(item, next, &(module->all_endpoints), opal_list_item_t) {
-            ep = container_of(item, ompi_btl_usnic_endpoint_t,
-                              endpoint_endpoint_li);
-            if (NULL != ep->endpoint_remote_ah) {
-                ibv_destroy_ah(ep->endpoint_remote_ah);
-                ep->endpoint_remote_ah = NULL;
-            }
-            OBJ_RELEASE(ep);
-        }
+    opal_output_verbose(15, USNIC_OUT,
+                        "btl:usnic: %s/%s (%s) couldn't reach peer %s",
+                        ibv_get_device_name(module->device),
+                        module->if_name, local, remote);
+    opal_show_help("help-mpi-btl-usnic.txt", "create_ah failed",
+                   true,
+                   ompi_process_info.nodename,
+                   local,
+                   module->if_name,
+                   ibv_get_device_name(module->device),
+                   endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                   remote);
+}
 
-        for (i = 0; i < nprocs; ++i) {
-            endpoints[i] = NULL;
-            opal_bitmap_clear_bit(reachable, i);
+/* The call to ibv_create_ah() may initiate an ARP resolution, and may
+ * therefore take some time to complete.  Hence, it will return 1 of 4
+ * things:
+ *
+ * 1. a valid new ah
+ * 2. NULL and errno == EAGAIN (ARP not complete; try again later)
+ * 3. NULL and errno == EADDRNOTAVAIL (unable to reach peer)
+ * 4. NULL and errno != (EAGAIN or ADDRNOTAVAIL) (fatal error)
+ *
+ * Since ibv_create_ah() is therefore effectively non-blocking, we
+ * gang all the endpoint ah creations here in this loop so that we can
+ * get some parallelization of ARP resolution.
+ */
+static int add_procs_create_ahs(ompi_btl_usnic_module_t *module,
+                                size_t array_len,
+                                struct mca_btl_base_endpoint_t **endpoints)
+{
+    int ret = OMPI_SUCCESS;
+    size_t i;
+    size_t num_ah_left;
+    time_t ts_last_created;
+    struct ibv_ah_attr ah_attr;
+
+    /* memset the ah_attr to both silence valgrind warnings (since the
+       attr struct ends up getting written down an fd to the kernel)
+       and actually zero out all the fields that we don't care about
+       and want to be logically false. */
+    memset(&ah_attr, 0, sizeof(ah_attr));
+    ah_attr.is_global = 1;
+    ah_attr.port_num = 1;
+
+    /* Mark all endpoints as unreachable (this should already be done,
+       but just be defensive) */
+    for (num_ah_left = i = 0; i < array_len; i++) {
+        if (NULL != endpoints[i]) {
+            endpoints[i]->endpoint_remote_ah = NULL;
+            ++num_ah_left;
         }
     }
 
-    /* If we got success, check for NULL ah values in the array */
-    else {
-        for (i = 0; i < nprocs; i++) {
+    ts_last_created = time(NULL);
+    while (num_ah_left > 0) {
+        for (i = 0; i < array_len; i++) {
             if (NULL != endpoints[i] &&
                 NULL == endpoints[i]->endpoint_remote_ah) {
-                ompi_btl_usnic_endpoint_t *ep = endpoints[i];
+                ah_attr.grh.dgid = endpoints[i]->endpoint_remote_addr.gid;
+                endpoints[i]->endpoint_remote_ah =
+                    ibv_create_ah(module->pd, &ah_attr);
 
-                /* We have already done a show_help() with this same
-                   basic info in create_ahs(), but do an
-                   opal_output_verbose() here, because show_help()
-                   will only show the first problem -- not all of
-                   them. */
-                char local[IPV4STRADDRLEN], remote[IPV4STRADDRLEN];
-                ompi_btl_usnic_snprintf_ipv4_addr(local, sizeof(remote),
-                                                  module->local_addr.ipv4_addr,
-                                                  module->local_addr.cidrmask);
-                ompi_btl_usnic_snprintf_ipv4_addr(remote, sizeof(remote),
-                                                  ep->endpoint_remote_addr.ipv4_addr,
-                                                  ep->endpoint_remote_addr.cidrmask);
-                opal_output_verbose(15, USNIC_OUT,
-                                    "btl:usnic: %s/%s (%s) couldn't reach peer %s",
-                                    ibv_get_device_name(module->device),
-                                    module->if_name, local, remote);
+                /* Got a successfully-created AH */
+                if (NULL != endpoints[i]->endpoint_remote_ah) {
+                    ts_last_created = time(NULL);
+                    --num_ah_left;
+                }
 
-                opal_list_remove_item(&(module->all_endpoints),
-                                      &(ep->endpoint_endpoint_li));
-                OBJ_RELEASE(ep);
-                endpoints[i] = NULL;
+                /* Got some kind of address failure.  This usually
+                   means that we couldn't find a route to that peer
+                   (e.g., the networking is hosed between us).  So
+                   just mark that we can't reach this peer, and print
+                   a pretty warning. */
+                else if (EADDRNOTAVAIL == errno) {
+                    add_procs_warn_ah_fail(module, endpoints[i]);
 
-                opal_bitmap_clear_bit(reachable, i);
+                    OBJ_RELEASE(endpoints[i]);
+                    endpoints[i] = NULL;
+                    --num_ah_left;
+                }
+
+                /* Got some other kind of error -- give up on this
+                   interface. */
+                else if (EAGAIN != errno) {
+                    opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
+                                   true,
+                                   ompi_process_info.nodename,
+                                   ibv_get_device_name(module->device),
+                                   module->if_name,
+                                   "ibv_create_ah()", __FILE__, __LINE__,
+                                   "Failed to create an address handle");
+                    ret = OMPI_ERR_OUT_OF_RESOURCE;
+                    break;
+                }
             }
+        }
+
+        /* Has it been too long since our last AH creation (ARP
+           resolution)?  If so, we're probably never going to finish,
+           so just mark all remaining endpoints as unreachable and
+           bail. */
+        if (num_ah_left > 0 &&
+            time(NULL) > (ts_last_created +
+                          mca_btl_usnic_component.arp_timeout)) {
+            opal_show_help("help-mpi-btl-usnic.txt", "ibv_create_ah timeout",
+                           true,
+                           ompi_process_info.nodename,
+                           ibv_get_device_name(module->device),
+                           module->port_num,
+                           module->if_name,
+                           mca_btl_usnic_component.arp_timeout);
+            break;
+        }
+
+        /* If we still have addresses that aren't resolved yet, sleep
+           a little to let kernel threads do some work behind the
+           scenes */
+        if (num_ah_left > 0) {
+            usleep(1);
+        }
+    }
+
+    /* Look through the list:
+       - If something went wrong above, free all endpoints.
+       - If an otherwise-valid endpoint has no AH, that means we timed
+         out trying to resolve it, so just release that endpoint. */
+    size_t num_created = 0;
+    for (i = 0; i < array_len; i++) {
+        if (NULL != endpoints[i]) {
+            if (OMPI_SUCCESS != ret ||
+                NULL == endpoints[i]->endpoint_remote_ah) {
+                OBJ_RELEASE(endpoints[i]);
+                endpoints[i] = NULL;
+            } else {
+                ++num_created;
+            }
+        }
+    }
+
+    /* All done */
+    opal_output_verbose(5, USNIC_OUT,
+                        "btl:usnic: made %" PRIsize_t " address handles",
+                        num_created);
+    return ret;
+}
+
+/*
+ * Add procs to this BTL module, receiving endpoint information from
+ * the modex.  This is done in 2 phases:
+ *
+ * 1. Find (or create) the remote proc, and create the associated
+ *    endpoint.
+ * 2. Resolve the address handles for all remote endpoints.
+ *
+ * The second part is a separate loop from the first part to allow the
+ * address lookups to be done in parallel.  This comes at a cost,
+ * however: we may determine during the 2nd part that we should tear
+ * down some or all the endpoints that we created in the 1st part.
+ * For example, ibv_create_ah() may fail in a fatal way (i.e., we
+ * should fail the entire add_procs()), or it may fail for one or more
+ * peers (i.e., we should just mark those peers as unreachable and not
+ * add a proc or endpoint for them).
+ */
+static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
+                             size_t nprocs,
+                             struct ompi_proc_t **ompi_procs,
+                             struct mca_btl_base_endpoint_t** endpoints,
+                             opal_bitmap_t* reachable)
+{
+    ompi_btl_usnic_module_t* module = (ompi_btl_usnic_module_t*) base_module;
+    int rc;
+
+    /* First, create endpoints (and procs, if they're not already
+       created) for all the usnic-reachable procs we were given. */
+    rc = add_procs_create_endpoints(module, nprocs, ompi_procs, endpoints);
+    if (OMPI_SUCCESS != rc) {
+        goto fail;
+    }
+
+    /* Create address handles for all the newly-created endpoints */
+    rc = add_procs_create_ahs(module, nprocs, endpoints);
+    if (OMPI_SUCCESS != rc) {
+        goto fail;
+    }
+
+    /* Find all the endpoints with address handles and mark them as
+       reachable */
+    for (size_t i = 0; i < nprocs; ++i) {
+        if (NULL != endpoints[i] &&
+            NULL != endpoints[i]->endpoint_remote_ah) {
+            opal_bitmap_set_bit(reachable, i);
         }
     }
 
     return OMPI_SUCCESS;
+
+ fail:
+    /* If we get here, it means something went terribly wrong.  Scorch
+       the earth: destroy all endpoints and say that nothing was
+       reachable. */
+    for (size_t i = 0; i < nprocs; ++i) {
+        if (NULL != endpoints[i]) {
+            OBJ_RELEASE(endpoints[i]);
+            endpoints[i] = NULL;
+        }
+    }
+
+    return rc;
 }
 
 /*
@@ -400,7 +444,7 @@ static int usnic_del_procs(struct mca_btl_base_module_t *base_module,
                 }
             }
 
-            /* remove proc from this module */
+            /* remove proc from this module, and decrement its refcount */
             for (index = 0; index < module->all_procs.size; ++index) {
                 if (opal_pointer_array_get_item(&module->all_procs, index) ==
                         proc) {
