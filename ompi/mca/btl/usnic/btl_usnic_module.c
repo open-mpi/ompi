@@ -99,7 +99,7 @@ static int create_ahs(size_t array_len, size_t num_endpoints,
 {
     size_t i;
     struct ibv_ah_attr ah_attr;
-    size_t num_ah_created;
+    size_t num_ah_left;
     time_t ts_last_created;
 
     /* memset the ah_attr to both silence valgrind warnings (since the
@@ -111,18 +111,65 @@ static int create_ahs(size_t array_len, size_t num_endpoints,
     ah_attr.port_num = 1;
 
     ts_last_created = time(NULL);
-    num_ah_created = 0;
-    while (num_ah_created < num_endpoints) {
+    num_ah_left = num_endpoints;
+
+    /* Mark all endpoints as unreachable (this should already be done,
+       but just be defensive) */
+    for (i = 0; i < array_len; i++) {
+        if (NULL != endpoints[i]) {
+            endpoints[i]->endpoint_remote_ah = NULL;
+        }
+    }
+
+    while (num_ah_left > 0) {
         for (i = 0; i < array_len; i++) {
             if (NULL != endpoints[i] &&
                 NULL == endpoints[i]->endpoint_remote_ah) {
                 ah_attr.grh.dgid = endpoints[i]->endpoint_remote_addr.gid;
                 endpoints[i]->endpoint_remote_ah =
                     ibv_create_ah(module->pd, &ah_attr);
+
+                /* Got a successfully-created AH */
                 if (NULL != endpoints[i]->endpoint_remote_ah) {
                     ts_last_created = time(NULL);
-                    ++num_ah_created;
-                } else if (EAGAIN != errno) {
+                    --num_ah_left;
+                }
+
+                /* Got some kind of address failure.  This usually
+                   means that we couldn't find a route to that peer
+                   (e.g., the networking is hosed between us).  So
+                   just mark that we can't reach this peer, and print
+                   a pretty warning. */
+                else if (EADDRNOTAVAIL == errno) {
+                    OBJ_RELEASE(endpoints[i]);
+                    endpoints[i] = NULL;
+                    --num_ah_left;
+
+                    /* Print a pretty warning */
+                    if (mca_btl_usnic_component.show_route_failures) {
+                        char local[IPV4STRADDRLEN], remote[IPV4STRADDRLEN];
+                        ompi_btl_usnic_snprintf_ipv4_addr(local, sizeof(local),
+                                                          module->local_addr.ipv4_addr,
+                                                          module->local_addr.cidrmask);
+                        ompi_btl_usnic_snprintf_ipv4_addr(remote, sizeof(remote),
+                                                          endpoints[i]->endpoint_remote_addr.ipv4_addr,
+                                                          endpoints[i]->endpoint_remote_addr.cidrmask);
+
+                        opal_show_help("help-mpi-btl-usnic.txt", "create_ah failed",
+                                       true,
+                                       ompi_process_info.nodename,
+                                       local,
+                                       module->if_name,
+                                       ibv_get_device_name(module->device),
+                                       endpoints[i]->endpoint_proc->proc_ompi->proc_hostname,
+                                       remote);
+                    }
+
+                }
+
+                /* Got some other kind of error -- give up on this
+                   interface. */
+                else if (EAGAIN != errno) {
                     opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                                    true,
                                    ompi_process_info.nodename,
@@ -137,8 +184,9 @@ static int create_ahs(size_t array_len, size_t num_endpoints,
 
         /* Has it been too long since our last AH creation (ARP
            resolution)?  If so, we're probably never going to finish,
-           so just bail. */
-        if (num_ah_created < num_endpoints &&
+           so just mark all remaining endpoints as unreachable and
+           bail. */
+        if (num_ah_left > 0 &&
             time(NULL) > (ts_last_created + mca_btl_usnic_component.arp_timeout)) {
             opal_show_help("help-mpi-btl-usnic.txt", "ibv_create_ah timeout",
                            true,
@@ -147,12 +195,13 @@ static int create_ahs(size_t array_len, size_t num_endpoints,
                            module->port_num,
                            module->if_name,
                            mca_btl_usnic_component.arp_timeout);
-            return OMPI_ERR_UNREACH;
+            break;
         }
     }
 
     opal_output_verbose(5, USNIC_OUT,
-                        "btl:usnic: made %" PRIsize_t " address handles", num_endpoints);
+                        "btl:usnic: made %" PRIsize_t " address handles",
+                        (num_endpoints - num_ah_left));
     return OMPI_SUCCESS;
 }
 
@@ -241,20 +290,64 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
 
     /* Create address handles for all the newly-created endpoints */
     rc = create_ahs(nprocs, count, endpoints, module);
+
+    /* If we got non-SUCCESS back, destroy everything */
     if (OMPI_SUCCESS != rc) {
-        for (i = 0; i < nprocs; i++) {
-            if (NULL != endpoints[i]) {
-                opal_list_remove_item(&(module->all_endpoints),
-                                      &(endpoints[i]->endpoint_endpoint_li));
-                OBJ_RELEASE(endpoints[i]);
-                endpoints[i] = NULL;
+        opal_output_verbose(15, USNIC_OUT,
+                            "btl:usnic: creating address handles failed on %s/%s, destroying all endpoints",
+                            ibv_get_device_name(module->device),
+                            module->if_name);
+
+        ompi_btl_usnic_endpoint_t *ep;
+        opal_list_item_t *item, *next;
+        OPAL_LIST_FOREACH_SAFE(item, next, &(module->all_endpoints), opal_list_item_t) {
+            ep = container_of(item, ompi_btl_usnic_endpoint_t,
+                              endpoint_endpoint_li);
+            if (NULL != ep->endpoint_remote_ah) {
+                ibv_destroy_ah(ep->endpoint_remote_ah);
+                ep->endpoint_remote_ah = NULL;
             }
+            OBJ_RELEASE(ep);
+        }
+
+        for (i = 0; i < nprocs; ++i) {
+            endpoints[i] = NULL;
             opal_bitmap_clear_bit(reachable, i);
         }
-        /* Allow falling through to return OMPI_SUCCESS, even though
-           we couldn't reach everyone (and therefore we gave up).  Let
-           the PML know that this module basically isn't reachable,
-           but it's free to continue with other BTL modules. */
+    }
+
+    /* If we got success, check for NULL ah values in the array */
+    else {
+        for (i = 0; i < nprocs; i++) {
+            if (NULL != endpoints[i] &&
+                NULL == endpoints[i]->endpoint_remote_ah) {
+                ompi_btl_usnic_endpoint_t *ep = endpoints[i];
+
+                /* We have already done a show_help() with this same
+                   basic info in create_ahs(), but do an
+                   opal_output_verbose() here, because show_help()
+                   will only show the first problem -- not all of
+                   them. */
+                char local[IPV4STRADDRLEN], remote[IPV4STRADDRLEN];
+                ompi_btl_usnic_snprintf_ipv4_addr(local, sizeof(remote),
+                                                  module->local_addr.ipv4_addr,
+                                                  module->local_addr.cidrmask);
+                ompi_btl_usnic_snprintf_ipv4_addr(remote, sizeof(remote),
+                                                  ep->endpoint_remote_addr.ipv4_addr,
+                                                  ep->endpoint_remote_addr.cidrmask);
+                opal_output_verbose(15, USNIC_OUT,
+                                    "btl:usnic: %s/%s (%s) couldn't reach peer %s",
+                                    ibv_get_device_name(module->device),
+                                    module->if_name, local, remote);
+
+                opal_list_remove_item(&(module->all_endpoints),
+                                      &(ep->endpoint_endpoint_li));
+                OBJ_RELEASE(ep);
+                endpoints[i] = NULL;
+
+                opal_bitmap_clear_bit(reachable, i);
+            }
+        }
     }
 
     return OMPI_SUCCESS;

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -260,6 +260,14 @@ int ompi_btl_usnic_component_register(void)
     /* Default to bandwidth auto-detection */
     ompi_btl_usnic_module_template.super.btl_bandwidth = 0;
     ompi_btl_usnic_module_template.super.btl_latency = 4;
+
+    /* Show "cannot find route" warnings? */
+    mca_btl_usnic_component.show_route_failures = true;
+    CHECK(reg_bool("show_route_failures",
+                   "Whether to show a warning when route failures between MPI process peers are detected (default = 1, enabled; 0 = disabled)",
+                   mca_btl_usnic_component.show_route_failures,
+                   &mca_btl_usnic_component.show_route_failures,
+                   OPAL_INFO_LVL_3));
 
     /* Connectivity verification */
     mca_btl_usnic_component.connectivity_enabled = true;
