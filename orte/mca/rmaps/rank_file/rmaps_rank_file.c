@@ -471,8 +471,6 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                         } else {
                             rfmap->node_name = strdup(node_name);
                         }
-                        free(node_name);
-                        node_name = NULL;
                 }
                 break;
             case ORTE_RANKFILE_SLOT:
