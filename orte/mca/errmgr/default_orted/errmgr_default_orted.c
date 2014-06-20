@@ -221,21 +221,27 @@ static void proc_errors(int fd, short args, void *cbdata)
     orte_ns_cmp_bitmask_t mask=ORTE_NS_CMP_ALL;
     int i;
 
-    /*
-     * if orte is trying to shutdown, just let it
-     */
-    if (orte_finalizing) {
-        goto cleanup;
-    }
-
     OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_orted:proc_errors process %s error state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          orte_proc_state_to_str(state)));
 
+    /*
+     * if orte is trying to shutdown, just let it
+     */
+    if (orte_finalizing) {
+        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:default_orted:proc_errors finalizing - ignoring error",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        goto cleanup;
+    }
+
     /* if this is a heartbeat failure, let the HNP handle it */
     if (ORTE_PROC_STATE_HEARTBEAT_FAILED == state) {
+        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:default_orted:proc_errors heartbeat failed - ignoring error",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto cleanup;
     }
 
@@ -261,11 +267,17 @@ static void proc_errors(int fd, short args, void *cbdata)
     if (ORTE_PROC_STATE_COMM_FAILED == state) {
         /* if it is our own connection, ignore it */
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, proc)) {
+            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                                 "%s errmgr:default_orted:proc_errors comm_failed to self - ignoring error",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             goto cleanup;
         }
         /* was it a daemon? */
         if (proc->jobid != ORTE_PROC_MY_NAME->jobid) {
             /* nope - ignore */
+            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                                 "%s errmgr:default_orted:proc_errors comm_failed to non-daemon - ignoring error",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             goto cleanup;
         }
         OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
@@ -300,6 +312,9 @@ static void proc_errors(int fd, short args, void *cbdata)
     /* get the job object */
     if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
         /* must already be complete */
+        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:default_orted:proc_errors NULL jdata - ignoring error",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto cleanup;
     }
 
@@ -307,6 +322,9 @@ static void proc_errors(int fd, short args, void *cbdata)
      * ignore this call
      */
     if (0 == jdata->num_local_procs) {
+        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
+                             "%s errmgr:default_orted:proc_errors no local procs - ignoring error",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto cleanup;
     }
 
@@ -444,7 +462,7 @@ static void proc_errors(int fd, short args, void *cbdata)
             goto cleanup;
         }
 
- keep_going:
+    keep_going:
         /* if the job hasn't completed and the state is abnormally
          * terminated, then we need to alert the HNP right away
          */
