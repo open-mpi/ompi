@@ -190,7 +190,10 @@ typedef struct ompi_btl_usnic_component_t {
 
     struct usnic_rtnl_sk *unlsk;
 
-    /** convertor packing threshold */
+    /** disable the "cannot find route" warnings (for network setups
+        where this is known/acceptable) */
+    bool show_route_failures;
+
     /** connectivity verification: ACK timeout, number of retries
         before issue an error/abort the job */
     bool connectivity_enabled;

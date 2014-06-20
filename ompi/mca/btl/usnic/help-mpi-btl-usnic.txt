@@ -263,3 +263,22 @@ It is usually easiest to have the same VIC firmware, Linux usNIC
 kernel driver, and Linux usNIC userspace driver installed on all
 servers.
 #
+[create_ah failed]
+WARNING: Open MPI failed to find a route to a peer IP address via a
+specific usNIC interface.  This usually indicates a problem in the IP
+routing between these peers.
+
+Open MPI will skip this usNIC interface when communicating with that
+peer, which may result in lower performance to that peer.  It may also
+result in your job aborting if there are no other network paths to
+that peer.
+
+Note that this error message defaults to only printing for the *first*
+pair of MPI process peers that exhibit this problem; this same problem
+may exist for other peer pairs, too.
+
+  Local interface: %s:%s (which is %s and %s)
+  Peer:            %s:%s
+
+NOTE: You can set the MCA param btl_usnic_show_route_failures to 0 to
+disable this warning.
