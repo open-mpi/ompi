@@ -1749,6 +1749,7 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
                         ORTE_NAME_PRINT(&proc->name), (long)proc->pid);
     
     /* if the child was previously flagged as dead, then just
+     * update its exit status and
      * ensure that its exit state gets reported to avoid hanging
      */
     if (!ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_ALIVE)) {
@@ -1756,6 +1757,11 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
                              "%s odls:waitpid_fired child %s was already dead",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc->name)));
+        if (WIFEXITED(proc->exit_code)) {
+            proc->exit_code = WEXITSTATUS(proc->exit_code);
+        } else {
+            proc->exit_code = WTERMSIG(proc->exit_code) + 128;
+        }
         goto MOVEON;
     }
 
@@ -1860,7 +1866,7 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
                  * felt it was non-normal - in this latter case, we do not
                  * require that the proc deregister before terminating
                  */
-                if (0 != proc->exit_code) {
+                if (0 != proc->exit_code && orte_abort_non_zero_exit) {
                     state = ORTE_PROC_STATE_TERM_NON_ZERO;
                     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                                          "%s odls:waitpid_fired child process %s terminated normally "
@@ -1922,7 +1928,7 @@ void odls_base_default_wait_local_proc(orte_proc_t *proc, void* cbdata)
              * none of them will. This is considered acceptable. Still
              * flag it as abnormal if the exit code was non-zero
              */
-            if (0 != proc->exit_code) {
+            if (0 != proc->exit_code && orte_abort_non_zero_exit) {
                 state = ORTE_PROC_STATE_TERM_NON_ZERO;
             } else {
                 state = ORTE_PROC_STATE_WAITPID_FIRED;
@@ -2158,8 +2164,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             /* check for everything complete - this will remove
              * the child object from our local list
              */
-            if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_IOF_COMPLETE) &&
-                ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_WAITPID)) {
+            if (ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_COMPLETE)) {
                 ORTE_ACTIVATE_PROC_STATE(&child->name, child->state);
             }
         }

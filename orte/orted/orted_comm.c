@@ -450,7 +450,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             }
             ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
         } else if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_cmd: exit cmd, %d routes still exit",
+            opal_output(0, "%s orted_cmd: exit cmd, %d routes still exist",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret);
         }
         return;

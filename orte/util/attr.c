@@ -191,6 +191,11 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
         return "JOB-MIN_FREQ";
     case ORTE_JOB_GOVERNOR:
         return "JOB-FREQ-GOVERNOR";
+    case ORTE_JOB_FAIL_NOTIFIED:
+        return "JOB-FAIL-NOTIFIED";
+    case ORTE_JOB_TERM_NOTIFIED:
+        return "JOB-TERM-NOTIFIED";
+
     case ORTE_PROC_NOBARRIER:
         return "PROC-NOBARRIER";
     case ORTE_PROC_CPU_BITMAP:
