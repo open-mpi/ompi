@@ -114,6 +114,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     /* convenience def */
     map = jdata->map;
     
+    /* setup the node list */
+    OBJ_CONSTRUCT(&node_list, opal_list_t);
+
     /* pickup the first app - there must be at least one */
     if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0))) {
         rc = ORTE_ERR_SILENT;
@@ -138,7 +141,6 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     /* start at the beginning... */
     vpid_start = 0;
     jdata->num_procs = 0;
-    OBJ_CONSTRUCT(&node_list, opal_list_t);
     OBJ_CONSTRUCT(&rankmap, opal_pointer_array_t);
     
     /* parse the rankfile, storing its results in the rankmap */
@@ -183,20 +185,11 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             rank = vpid_start + k;
             /* get the rankfile entry for this rank */
             if (NULL == (rfmap = (orte_rmaps_rank_file_map_t*)opal_pointer_array_get_item(&rankmap, rank))) {
+                /* all ranks must be specified */
+                orte_show_help("help-rmaps_rank_file.txt", "missing-rank", true, rank, orte_rankfile);
+                rc = ORTE_ERR_SILENT;
+                goto error;
 #if OPAL_HAVE_HWLOC
-                /* no entry for this rank - if a default slot_list was given,
-                 * then use it instead
-                 */
-                if (NULL != opal_hwloc_base_slot_list) {
-                    slots = opal_hwloc_base_slot_list;
-                } else {
-#endif
-                    /* all ranks must be specified */
-                    orte_show_help("help-rmaps_rank_file.txt", "missing-rank", true, rank, orte_rankfile);
-                    rc = ORTE_ERR_SILENT;
-                    goto error;
-#if OPAL_HAVE_HWLOC
-                }
             } else {
                 if (0 == strlen(rfmap->slot_list)) {
                     /* rank was specified but no slot list given - that's an error */
@@ -210,10 +203,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             
             /* find the node where this proc was assigned */
             node = NULL;
-            for (item = opal_list_get_first(&node_list);
-                 item != opal_list_get_end(&node_list);
-                 item = opal_list_get_next(item)) {
-                nd = (orte_node_t*)item;
+            OPAL_LIST_FOREACH(nd, &node_list, orte_node_t) {
                 if (NULL != rfmap->node_name &&
                     0 == strcmp(nd->name, rfmap->node_name)) {
                     node = nd;
@@ -250,7 +240,11 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 node->mapped = true;
                 ++(jdata->map->num_nodes);
             }
-            proc = orte_rmaps_base_setup_proc(jdata, node, i);
+            if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, i))) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
             if ((node->slots < (int)node->num_procs) ||
                 (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
@@ -337,10 +331,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     return rc;
 
  error:
-    while(NULL != (item = opal_list_remove_first(&node_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&node_list);
+    OPAL_LIST_DESTRUCT(&node_list);
     
     return rc;
 }
@@ -453,11 +444,11 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             node_name = strdup(argv[0]);
                         } else if (2 == cnt) {
                             node_name = strdup(argv[1]);
-                        }
-                        else {
+                        } else {
                             orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                             rc = ORTE_ERR_BAD_PARAM;
                             ORTE_ERROR_LOG(rc);
+                            opal_argv_free(argv);
                             goto unlock;
                         }
                         opal_argv_free (argv);
@@ -466,6 +457,8 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                             orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                             rc = ORTE_ERR_BAD_PARAM;
                             ORTE_ERROR_LOG(rc);
+                            free(node_name);
+                            node_name = NULL;
                             goto unlock;
                         }
                         /* check if this is the local node */
@@ -491,6 +484,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                     orte_show_help("help-rmaps_rank_file.txt", "bad-assign", true, rank, 
                                    opal_pointer_array_get_item(assigned_ranks_array, rank), rankfile);
                     rc = ORTE_ERR_BAD_PARAM;
+                    free(value);
                     goto unlock;
                 } else {
                     /* prepare rank assignment string for the help message in case of a bad-assign */
@@ -503,11 +497,13 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                     orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                     rc = ORTE_ERR_BAD_PARAM;
                     ORTE_ERROR_LOG(rc);
+                    free(value);
                     goto unlock;
                 }
                 for (i=0; i < 64 && '\0' != value[i]; i++) {
                     rfmap->slot_list[i] = value[i];
                 }
+                free(value);
                 break;
         }
     }
