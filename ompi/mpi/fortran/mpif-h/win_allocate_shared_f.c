@@ -37,7 +37,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_SHARED,
                             pompi_win_allocate_shared_f,
                             (MPI_Aint *size, MPI_Fint *disp_unit,
                              MPI_Fint *info, MPI_Fint *comm, char *baseptr,
-                             MPI_Fint *win, MPI_Fint *ierr)
+                             MPI_Fint *win, MPI_Fint *ierr),
+                            (size, disp_unit, info, comm, baseptr, win, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -58,7 +59,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_SHARED,
                             ompi_win_allocate_shared_f,
                             (MPI_Aint *size, MPI_Fint *disp_unit,
                              MPI_Fint *info, MPI_Fint *comm, char *baseptr,
-                             MPI_Fint *win, MPI_Fint *ierr)
+                             MPI_Fint *win, MPI_Fint *ierr),
+                            (size, disp_unit, info, comm, baseptr, win, ierr) )
 #endif
 
 
