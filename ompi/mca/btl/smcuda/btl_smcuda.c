@@ -436,10 +436,7 @@ static struct mca_btl_base_endpoint_t *
 create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
 {
     struct mca_btl_base_endpoint_t *ep;
-
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
     char path[PATH_MAX];
-#endif
 
     ep = (struct mca_btl_base_endpoint_t*)
         malloc(sizeof(struct mca_btl_base_endpoint_t));
@@ -449,7 +446,6 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
 
     OBJ_CONSTRUCT(&ep->pending_sends, opal_list_t);
     OBJ_CONSTRUCT(&ep->endpoint_lock, opal_mutex_t);
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
     sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu",
             ompi_process_info.job_session_dir,
             (unsigned long)proc->proc_name.vpid);
@@ -460,7 +456,6 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
         free(ep);
         return NULL;
     }
-#endif
 #if OPAL_CUDA_SUPPORT
     {
         mca_mpool_base_resources_t resources; /* unused, but needed */

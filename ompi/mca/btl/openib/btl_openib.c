@@ -179,11 +179,7 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 
     if(NULL == device->ib_cq[cq]) {
         device->ib_cq[cq] = create_cq_compat(device->ib_dev_context, cq_size,
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
                 device, device->ib_channel,
-#else
-                NULL, NULL,
-#endif
                 0);
 
         if (NULL == device->ib_cq[cq]) {
@@ -192,7 +188,6 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
             return OMPI_ERROR;
         }
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
         if(ibv_req_notify_cq(device->ib_cq[cq], 0)) {
             mca_btl_openib_show_init_error(__FILE__, __LINE__,
                                            "ibv_req_notify_cq",
@@ -210,7 +205,6 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
             }
         }
         OPAL_THREAD_UNLOCK(&device->device_lock);
-#endif
     }
 #ifdef HAVE_IBV_RESIZE_CQ
     else if (cq_size > mca_btl_openib_component.ib_cq_size[cq]){
@@ -736,13 +730,12 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
             return OMPI_ERROR;
         }
     }
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+
     /* Prepare data for thread, but not starting it */
     OBJ_CONSTRUCT(&device->thread, opal_thread_t);
     device->thread.t_run = mca_btl_openib_progress_thread;
     device->thread.t_arg = device;
     device->progress = false;
-#endif
 #endif
 
 #if HAVE_XRC

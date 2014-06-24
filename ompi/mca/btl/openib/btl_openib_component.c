@@ -868,9 +868,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->ib_dev_context = NULL;
     device->ib_pd = NULL;
     device->mpool = NULL;
-#if OMPI_ENABLE_PROGRESS_THREADS
     device->ib_channel = NULL;
-#endif
     device->btls = 0;
     device->endpoints = NULL;
     device->device_btls = NULL;
@@ -905,7 +903,6 @@ static void device_destruct(mca_btl_openib_device_t *device)
     int i;
 
 #if OPAL_HAVE_THREADS
-#if OMPI_ENABLE_PROGRESS_THREADS
     if(device->progress) {
         device->progress = false;
         if (pthread_cancel(device->thread.t_handle)) {
@@ -918,7 +915,6 @@ static void device_destruct(mca_btl_openib_device_t *device)
         BTL_VERBOSE(("Failed to close comp_channel"));
         goto device_error;
     }
-#endif
     /* signaling to async_tread to stop poll for this device */
     if (mca_btl_openib_component.use_async_event_thread &&
         -1 != mca_btl_openib_component.async_pipe[1]) {
@@ -1628,7 +1624,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         device->use_eager_rdma = values.use_eager_rdma;
     }
     /* Eager RDMA is not currently supported with progress threads */
-    if (device->use_eager_rdma && OMPI_ENABLE_PROGRESS_THREADS) {
+    if (device->use_eager_rdma) {
         device->use_eager_rdma = 0;
         opal_show_help("help-mpi-btl-openib.txt",
                        "eager RDMA and progress threads", true);
@@ -1648,7 +1644,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
          goto error;
     }
 
-#if OMPI_ENABLE_PROGRESS_THREADS
     device->ib_channel = ibv_create_comp_channel(device->ib_dev_context);
     if (NULL == device->ib_channel) {
         BTL_ERROR(("error creating channel for %s errno says %s",
@@ -1656,7 +1651,6 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                     strerror(errno)));
         goto error;
     }
-#endif
 
     ret = OMPI_SUCCESS;
 
@@ -2024,11 +2018,9 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
 error:
-#if OMPI_ENABLE_PROGRESS_THREADS
     if (device->ib_channel) {
         ibv_destroy_comp_channel(device->ib_channel);
     }
-#endif
     if (device->mpool) {
         mca_mpool_base_module_destroy(device->mpool);
     }
@@ -3445,7 +3437,6 @@ error:
     return count;
 }
 
-#if OMPI_ENABLE_PROGRESS_THREADS
 void* mca_btl_openib_progress_thread(opal_object_t* arg)
 {
     opal_thread_t* thread = (opal_thread_t*)arg;
@@ -3483,7 +3474,6 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
 
     return PTHREAD_CANCELED;
 }
-#endif
 
 static int progress_one_device(mca_btl_openib_device_t *device)
 {

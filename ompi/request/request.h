@@ -370,11 +370,9 @@ static inline int ompi_request_free(ompi_request_t** request)
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
     if(false == req->req_complete) {
-#if OMPI_ENABLE_PROGRESS_THREADS
         if(opal_progress_spin(&req->req_complete)) {
             return;
         }
-#endif
         OPAL_THREAD_LOCK(&ompi_request_lock);
         ompi_request_waiting++;
         while(false == req->req_complete) {
