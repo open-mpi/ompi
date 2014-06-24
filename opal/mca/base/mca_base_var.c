@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1602,6 +1603,17 @@ static void var_constructor(mca_base_var_t *var)
  */
 static void var_destructor(mca_base_var_t *var)
 {
+    if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type &&
+        NULL != var->mbv_storage &&
+        NULL != var->mbv_storage->stringval) {
+        free (var->mbv_storage->stringval);
+    }
+
+    /* don't release the boolean enumerator */
+    if (MCA_BASE_VAR_TYPE_BOOL != var->mbv_type && NULL != var->mbv_enumerator) {
+        OBJ_RELEASE(var->mbv_enumerator);
+    }
+
     if (NULL != var->mbv_variable_name) {
         free(var->mbv_variable_name);
     }
@@ -1613,16 +1625,6 @@ static void var_destructor(mca_base_var_t *var)
     }
     if (NULL != var->mbv_description) {
         free(var->mbv_description);
-    }
-    if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type &&
-        NULL != var->mbv_storage &&
-        NULL != var->mbv_storage->stringval) {
-        free (var->mbv_storage->stringval);
-    }
-
-    /* don't release the boolean enumerator */
-    if (MCA_BASE_VAR_TYPE_BOOL != var->mbv_type && NULL != var->mbv_enumerator) {
-        OBJ_RELEASE(var->mbv_enumerator);
     }
 
     /* Destroy the synonym array */
