@@ -190,7 +190,7 @@ int ompi_btl_usnic_find_ip(ompi_btl_usnic_module_t *module, uint8_t mac[6])
             inet_ntop(AF_INET, &(module->if_ipv4_addr),
                       addr_string, sizeof(addr_string));
             ompi_btl_usnic_sprintf_mac(mac_string, mac);
-            opal_output_verbose(5, mca_btl_base_verbose,
+            opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: found usNIC device corresponds to IP device %s, %s/%d, MAC %s",
                                 module->if_name, addr_string, module->if_cidrmask, 
                                 mac_string);
