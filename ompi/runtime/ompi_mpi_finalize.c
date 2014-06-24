@@ -217,7 +217,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* wait for barrier to complete */
-    OMPI_WAIT_FOR_COMPLETION(coll->active);
+    OMPI_LAZY_WAIT_FOR_COMPLETION(coll->active);
     OBJ_RELEASE(coll);
 
     /* check for timing request - get stop time and report elapsed
