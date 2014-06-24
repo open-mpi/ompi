@@ -717,6 +717,7 @@ libmpi_usempif08_la_SOURCES = \
         attr-fn-f08-callback-interfaces.h \
         conversion-fn-null-f08-interface.h \
         mpi-f08.F90 \
+        mpi-f08-types.F90 \
         constants.h \
         constants.c
 
