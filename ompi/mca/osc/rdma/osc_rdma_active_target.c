@@ -442,10 +442,6 @@ ompi_osc_rdma_test(ompi_win_t *win,
     ompi_group_t *group;
     int ret = OMPI_SUCCESS;
 
-#if !OMPI_ENABLE_PROGRESS_THREADS
-    opal_progress();
-#endif
-
     if (NULL == module->pw_group) {
         return OMPI_ERR_RMA_SYNC;
     }

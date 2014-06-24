@@ -50,9 +50,6 @@ static bool event_started = false;
 void mca_oob_ud_event_start_monitor (mca_oob_ud_device_t *device)
 {
     if (!event_started) {
-#if !ORTE_ENABLE_PROGRESS_THREADS
-        opal_progress_event_users_increment ();
-#endif
         opal_event_set (orte_event_base, &device->event, device->ib_channel->fd,
                         OPAL_EV_READ, mca_oob_ud_event_dispatch, (void *) device);
         opal_event_add (&device->event, NULL);
@@ -63,9 +60,6 @@ void mca_oob_ud_event_start_monitor (mca_oob_ud_device_t *device)
 void mca_oob_ud_event_stop_monitor (mca_oob_ud_device_t *device)
 {
     if (event_started) {
-#if !ORTE_ENABLE_PROGRESS_THREADS
-        opal_progress_event_users_decrement ();
-#endif
         opal_event_del (&device->event);
         mca_oob_ud_stop_events (device);
         event_started = false;

@@ -113,10 +113,8 @@ typedef struct sm_fifo_t sm_fifo_t;
  * Shared Memory resource managment
  */
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
 #define DATA (char)0
 #define DONE (char)1
-#endif
 
 typedef struct mca_btl_sm_mem_node_t {
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
@@ -169,11 +167,9 @@ struct mca_btl_sm_component_t {
     int mem_node;
     int num_mem_nodes;
     
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
     opal_thread_t sm_fifo_thread;
-#endif
     struct mca_btl_sm_t      **sm_btls;
     struct mca_btl_sm_frag_t **table;
     size_t sm_num_btls;
@@ -542,11 +538,8 @@ extern void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
  */
 int mca_btl_sm_ft_event(int state);
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_sm_component_event_thread(opal_object_t*);
-#endif
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
 #define MCA_BTL_SM_SIGNAL_PEER(peer) \
 { \
     unsigned char cmd = DATA; \
@@ -554,9 +547,6 @@ void mca_btl_sm_component_event_thread(opal_object_t*);
         opal_output(0, "mca_btl_sm_send: write fifo failed: errno=%d\n", errno); \
     } \
 }
-#else
-#define MCA_BTL_SM_SIGNAL_PEER(peer)
-#endif
 
 END_C_DECLS
 
