@@ -374,7 +374,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
        the ALPS plm) */
     cur_prefix = NULL;
     for (i=0; i < state->jdata->apps->size; i++) {
-        char *app_prefix_dir;
+        char *app_prefix_dir = NULL;
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(state->jdata->apps, i))) {
             continue;
         }
@@ -544,6 +544,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
                                 char *prefix)
 {
     int fd;
+    pid_t alps_pid;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
     if (NULL == exec_argv) {
@@ -559,7 +560,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
     alpsrun = OBJ_NEW(orte_proc_t);
     alpsrun->pid = alps_pid;
     /* be sure to mark it as alive so we don't instantly fire */
-    ORTE_FLAG_SET(dummy, ORTE_PROC_FLAG_ALIVE);
+    ORTE_FLAG_SET(alpsrun, ORTE_PROC_FLAG_ALIVE);
     /* setup the waitpid so we can find out if alps succeeds! */
     orte_wait_cb(alpsrun, alps_wait_cb, NULL);
 

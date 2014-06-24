@@ -26,6 +26,11 @@
 #include <pmi.h>
 #if WANT_PMI2_SUPPORT
 #include <pmi2.h>
+
+#if !defined(PMI2_SUCCESS)
+#define PMI2_SUCCESS PMI_SUCCESS
+#endif
+
 #endif
 
 #include "common_pmi.h"

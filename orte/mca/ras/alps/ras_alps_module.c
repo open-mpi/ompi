@@ -365,6 +365,25 @@ ras_alps_getline(FILE *fp)
     return NULL;
 }
 
+static int compare_nodes (opal_list_item_t **a, opal_list_item_t **b)
+{
+    orte_node_t *nodea = (orte_node_t *) *a;
+    orte_node_t *nodeb = (orte_node_t *) *b;
+    int32_t launcha, launchb, *ldptr;
+
+    ldptr = &launcha;
+    if (!orte_get_attribute(&nodea->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) { 
+        return 0;
+    }
+
+    ldptr = &launchb;
+    if (!orte_get_attribute(&nodea->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) { 
+        return 0;
+    }
+
+    return (launcha > launchb) ? 1 : -1;
+}
+
 static int
 orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                                 unsigned int *uMe)
@@ -392,7 +411,6 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 #else
     placeNodeList_t *apNodes;
 #endif
-    bool            added;
     opal_list_item_t *item;
 
     orte_ras_alps_get_appinfo_attempts(&max_appinfo_read_attempts);
@@ -529,22 +547,8 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                 /* need to order these node ids so the regex generator
                  * can properly function
                  */
-                added = false;
-                for (item = opal_list_get_first(nodes);
-                     item != opal_list_get_end(nodes);
-                     item = opal_list_get_next(item)) {
-                    n2 = (orte_node_t*)item;
-                    if (node->launch_id < n2->launch_id) {
-                        /* insert the new node before this one */
-                        opal_list_insert_pos(nodes, item, &node->super);
-                        added = true;
-                        break;
-                    }
-                }
-                if (!added) {
-                    /* add it to the end */
-                    opal_list_append(nodes, &node->super);
-                }
+                /* add it to the end */
+                opal_list_append(nodes, &node->super);
                 sNodes++;                   /* Increment the node count       */
             }
         }
@@ -572,34 +576,23 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 
             node = OBJ_NEW(orte_node_t);
             node->name = hostname;
-            orte_set_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, ORTE_ATTR_LOCAL, &apSlots[ix].nid, OPAL_INT32);
+            orte_set_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, ORTE_ATTR_LOCAL, &apNodes[ix].nid, OPAL_INT32);
             node->slots_inuse = 0;
             node->slots_max = 0;
             node->slots = apNodes[ix].numPEs;
             /* need to order these node ids so the regex generator
              * can properly function
              */
-            added = false;
-            for (item = opal_list_get_first(nodes);
-                 item != opal_list_get_end(nodes);
-                 item = opal_list_get_next(item)) {
-                n2 = (orte_node_t*)item;
-                if (node->launch_id < n2->launch_id) {
-                    /* insert the new node before this one */
-                    opal_list_insert_pos(nodes, item, &node->super);
-                    added = true;
-                    break;
-                }
-            }
-            if (!added) {
-                /* add it to the end */
-                opal_list_append(nodes, &node->super);
-            }
+            /* add it to the end */
+            opal_list_append(nodes, &node->super);
             sNodes++;                   /* Increment the node count       */
         }
 #endif
         break;                              /* Extended details ignored       */
     }
+
+    opal_list_sort (nodes, compare_nodes);
+
     free(cpBuf);                            /* Free the buffer                */
 
     return ORTE_SUCCESS;
