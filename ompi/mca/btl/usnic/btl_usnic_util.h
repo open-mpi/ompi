@@ -82,6 +82,16 @@ usnic_convertor_pack_simple(
 void ompi_btl_usnic_exit(void);
 
 /*
+ * Long enough to hold "xxx.xxx.xxx.xxx/xx"
+ */
+#define IPV4STRADDRLEN 20
+
+/*
+ * Long enough to hold "xx:xx:xx:xx:xx:xx"
+ */
+#define MACSTRLEN 18
+
+/*
  * If cidrmask==0, it is not included in the output string.  addr is
  * expected to be in network byte order.
  */

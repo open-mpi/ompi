@@ -188,7 +188,7 @@ static ompi_btl_usnic_proc_t *create_proc(ompi_proc_t *ompi_proc)
         opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
                        true,
                        ompi_process_info.nodename,
-                       "<none>", 0,
+                       "<none>", "<none>",
                        "ompi_modex_recv() failed", __FILE__, __LINE__,
                        opal_strerror(rc));
         OBJ_RELEASE(proc);
@@ -608,7 +608,7 @@ static int match_modex(ompi_btl_usnic_module_t *module,
                     true,
                     ompi_process_info.nodename,
                     ibv_get_device_name(module->device),
-                    module->port_num,
+                    module->if_name,
                     module->if_mtu,
                     (NULL == proc->proc_ompi->proc_hostname) ?
                     "unknown" : proc->proc_ompi->proc_hostname,

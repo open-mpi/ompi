@@ -62,12 +62,12 @@ typedef struct {
     /* Data from the LISTEN command message */
     uint32_t ipv4_addr;
     uint32_t cidrmask;
-    char ipv4_addr_str[IPV4ADDRLEN];
+    char ipv4_addr_str[IPV4STRADDRLEN];
     uint32_t mtu;
     char *nodename;
     char *if_name;
     char *usnic_name;
-    char mac_str[MACLEN];
+    char mac_str[MACSTRLEN];
 
     /* File descriptor, UDP port, buffer to receive messages, and event */
     int fd;
@@ -380,7 +380,7 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
         return;
     }
 
-    char src_ipv4_addr_str[IPV4ADDRLEN];
+    char src_ipv4_addr_str[IPV4STRADDRLEN];
     ompi_btl_usnic_snprintf_ipv4_addr(src_ipv4_addr_str,
                                       sizeof(src_ipv4_addr_str),
                                       msg->src_ipv4_addr, 0);
@@ -688,7 +688,7 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
     agent_ping_t *ap = (agent_ping_t*) context;
     ap->timer_active = false;
 
-    char dest_ipv4_addr_str[IPV4ADDRLEN];
+    char dest_ipv4_addr_str[IPV4STRADDRLEN];
     ompi_btl_usnic_snprintf_ipv4_addr(dest_ipv4_addr_str,
                                       sizeof(dest_ipv4_addr_str),
                                       ap->dest_ipv4_addr, ap->dest_cidrmask);
@@ -727,7 +727,7 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
             topic = "connectivity error: small bad, large bad";
         }
 
-        char mac_str[MACLEN], ipv4_addr_str[IPV4ADDRLEN];
+        char mac_str[MACSTRLEN], ipv4_addr_str[IPV4STRADDRLEN];
         ompi_btl_usnic_snprintf_ipv4_addr(ipv4_addr_str, sizeof(ipv4_addr_str),
                                           ap->dest_ipv4_addr,
                                           ap->dest_cidrmask);
