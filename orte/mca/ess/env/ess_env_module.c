@@ -57,7 +57,6 @@
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
-#include "opal/mca/db/db.h"
 #endif
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
