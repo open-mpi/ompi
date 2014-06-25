@@ -127,6 +127,9 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
                        [define to 1 if usnic BTL unit tests are enabled, 0 otherwise])
     unset unit_tests
 
+    # for if_nametoindex(3)
+    AC_CHECK_HEADERS([net/if.h])
+
     OMPI_CHECK_OPENFABRICS([btl_usnic],
                         [btl_usnic_happy="yes"],
                         [btl_usnic_happy="no"])
