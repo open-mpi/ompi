@@ -193,7 +193,7 @@ static int wait_all_apps_updated(orte_sstore_stage_local_snapshot_info_t *handle
 
 static int start_compression(orte_sstore_stage_local_snapshot_info_t *handle_info,
                              orte_sstore_stage_local_app_snapshot_info_t *app_info);
-static void sstore_stage_local_compress_waitpid_cb(pid_t pid, int status, void* cbdata);
+static void sstore_stage_local_compress_waitpid_cb(orte_proc_t *proc, void* cbdata);
 static int wait_all_compressed(orte_sstore_stage_local_snapshot_info_t *handle_info);
 
 static int orte_sstore_stage_local_preload_files(char **local_location, bool *skip_xfer,
@@ -1556,7 +1556,7 @@ static void sstore_stage_local_compress_waitpid_cb(orte_proc_t *proc, void* cbda
 
     OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                          "sstore:stage:(local): waitpid(%6d) Compression finished for Process %s",
-                         (int)pid,
+                         (int)proc->pid,
                          ORTE_NAME_PRINT(&(app_info->name)) ));
 
     app_info->compress_pid = 0;
