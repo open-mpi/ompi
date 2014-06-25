@@ -139,6 +139,10 @@ int ompi_mpi_finalize(void)
      */
     (void)mca_pml_base_bsend_detach(NULL, NULL);
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
+#endif
+
     /* Redo ORTE calling opal_progress_event_users_increment() during
        MPI lifetime, to get better latency when not using TCP */
     opal_progress_event_users_increment();

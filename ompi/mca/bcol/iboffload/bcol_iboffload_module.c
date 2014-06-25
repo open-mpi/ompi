@@ -775,7 +775,11 @@ int mca_bcol_iboffload_adjust_cq(mca_bcol_iboffload_device_t *device,
 
     if (NULL == *ib_cq) {
         *ib_cq = ibv_create_cq_compat(device->dev.ib_dev_context, cq_size,
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
                 device, device->ib_channel,
+#else
+                NULL, NULL,
+#endif
                 0);
 
         if (NULL == *ib_cq) {

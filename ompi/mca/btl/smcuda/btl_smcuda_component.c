@@ -278,6 +278,7 @@ static int mca_btl_smcuda_component_close(void)
         OBJ_RELEASE(mca_btl_smcuda_component.sm_seg);
     }
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* close/cleanup fifo create for event notification */
     if(mca_btl_smcuda_component.sm_fifo_fd > 0) {
         /* write a done message down the pipe */
@@ -291,6 +292,7 @@ static int mca_btl_smcuda_component_close(void)
         close(mca_btl_smcuda_component.sm_fifo_fd);
         unlink(mca_btl_smcuda_component.sm_fifo_path);
     }
+#endif
 
 CLEANUP:
 
@@ -881,6 +883,7 @@ mca_btl_smcuda_component_init(int *num_btls,
         return NULL;
     }
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
     sprintf( mca_btl_smcuda_component.sm_fifo_path,
              "%s"OPAL_PATH_SEP"sm_fifo.%lu", ompi_process_info.job_session_dir,
@@ -902,6 +905,7 @@ mca_btl_smcuda_component_init(int *num_btls,
     mca_btl_smcuda_component.sm_fifo_thread.t_run =
         (opal_thread_fn_t)mca_btl_smcuda_component_event_thread;
     opal_thread_start(&mca_btl_smcuda_component.sm_fifo_thread);
+#endif
 
     mca_btl_smcuda_component.sm_btls =
         (mca_btl_smcuda_t **)malloc(mca_btl_smcuda_component.sm_max_btls *
@@ -947,6 +951,7 @@ mca_btl_smcuda_component_init(int *num_btls,
  *  SM component progress.
  */
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_btl_smcuda_component_event_thread(opal_object_t* thread)
 {
     while(1) {
@@ -962,6 +967,7 @@ void mca_btl_smcuda_component_event_thread(opal_object_t* thread)
         mca_btl_smcuda_component_progress();
     }
 }
+#endif
 
 void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep) 
 { 

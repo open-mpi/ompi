@@ -29,7 +29,9 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 
+#if OMPI_ENABLE_PROGRESS_THREADS
 static int ompi_progress_thread_count=0;
+#endif
 
 int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
@@ -87,13 +89,16 @@ int ompi_request_default_wait_any(
     int *index,
     ompi_status_public_t * status)
 {
+#if OMPI_ENABLE_PROGRESS_THREADS
     int c;
+#endif
     size_t i=0, num_requests_null_inactive=0;
     int rc = OMPI_SUCCESS;
     int completed = -1;
     ompi_request_t **rptr=NULL;
     ompi_request_t *request=NULL;
 
+#if OMPI_ENABLE_PROGRESS_THREADS
     /* poll for completion */
     OPAL_THREAD_ADD32(&ompi_progress_thread_count,1);
     for (c = 0; completed < 0 && c < opal_progress_spin_count; c++) {
@@ -122,6 +127,7 @@ int ompi_request_default_wait_any(
         opal_progress();
     }
     OPAL_THREAD_ADD32(&ompi_progress_thread_count,-1);
+#endif
 
     /* give up and sleep until completion */
     OPAL_THREAD_LOCK(&ompi_request_lock);
@@ -159,7 +165,10 @@ int ompi_request_default_wait_any(
     ompi_request_waiting--;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
+#if OMPI_ENABLE_PROGRESS_THREADS
 finished:
+#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
@@ -438,7 +447,9 @@ int ompi_request_default_wait_some(
     int * indices,
     ompi_status_public_t * statuses)
 {
+#if OMPI_ENABLE_PROGRESS_THREADS
     int c;
+#endif
     size_t i, num_requests_null_inactive=0, num_requests_done=0;
     int rc = MPI_SUCCESS;
     ompi_request_t **rptr=NULL;
@@ -449,6 +460,7 @@ int ompi_request_default_wait_some(
         indices[i] = 0;
     }
 
+#if OMPI_ENABLE_PROGRESS_THREADS
     /* poll for completion */
     OPAL_THREAD_ADD32(&ompi_progress_thread_count,1);
     for (c = 0; c < opal_progress_spin_count; c++) {
@@ -478,6 +490,7 @@ int ompi_request_default_wait_some(
         opal_progress();
     }
     OPAL_THREAD_ADD32(&ompi_progress_thread_count,-1);
+#endif
 
     /*
      * We only get here when outcount still is 0.
@@ -512,7 +525,10 @@ int ompi_request_default_wait_some(
     ompi_request_waiting--;
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
+#if OMPI_ENABLE_PROGRESS_THREADS
 finished:
+#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+
 #if OPAL_ENABLE_FT_CR == 1
     if( opal_cr_is_enabled) {
         rptr = requests;
