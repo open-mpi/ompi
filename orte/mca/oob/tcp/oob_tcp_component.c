@@ -824,14 +824,12 @@ static bool component_is_reachable(orte_process_name_t *peer)
 #if OPAL_ENABLE_FT_CR == 1
 static int component_ft_event(int state)
 {
-    int i;
-
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP FT EVENT", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* pass it into the module */
     if (NULL != mca_oob_tcp_module.api.ft_event) {
-        mca_oob_tcp_module.>api.ft_event(state);
+        mca_oob_tcp_module.api.ft_event(state);
     }
 
     return ORTE_SUCCESS;
