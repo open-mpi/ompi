@@ -147,10 +147,10 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
         return "JOB-FILE-MAPS";
     case ORTE_JOB_CKPT_STATE:
         return "JOB-CKPT-STATE";
-    case ORTE_JOB_CKPT_SNAPSHOT_REF:
-        return "JOB-CKPT-SNAPSHOT-REF";
-    case ORTE_JOB_SNAP_LOC:
-        return "JOB-SNAP-LOCATION";
+    case ORTE_JOB_SNAPSHOT_REF:
+        return "JOB-SNAPSHOT-REF";
+    case ORTE_JOB_SNAPSHOT_LOC:
+        return "JOB-SNAPSHOT-LOC";
     case ORTE_JOB_SNAPC_INIT_BAR:
         return "JOB-SNAPC-INIT-BARRIER-ID";
     case ORTE_JOB_SNAPC_FINI_BAR:
@@ -214,10 +214,10 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
         return "PROC-FAST-FAILS";
     case ORTE_PROC_CKPT_STATE:
         return "PROC-CKPT-STATE";
-    case ORTE_PROC_CKPT_SNAP_REF:
-        return "PROC-CKPT-SNAP-REF";
-    case ORTE_PROC_SNAP_LOC:
-        return "PROC-SNAP-LOC";
+    case ORTE_PROC_SNAPSHOT_REF:
+        return "PROC-SNAPHOT-REF";
+    case ORTE_PROC_SNAPSHOT_LOC:
+        return "PROC-SNAPSHOT-LOC";
     case ORTE_PROC_NODENAME:
         return "PROC-NODENAME";
     case ORTE_PROC_CGROUP:
