@@ -24,6 +24,7 @@
 #include <unistd.h>
 #endif  /* HAVE_UNIST_H */
 
+#include "opal/dss/dss.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
@@ -42,6 +43,7 @@
 
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/runtime/ompi_cr.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "crcp_bkmrk.h"
 #include "crcp_bkmrk_pml.h"

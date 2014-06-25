@@ -34,6 +34,8 @@
 #endif /* HAVE_DIRENT_H */
 #include <time.h>
 
+#include "opal/dss/dss.h"
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 

@@ -34,7 +34,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-#include "opal/mca/db/db.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
