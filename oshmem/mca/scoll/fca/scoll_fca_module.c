@@ -1,12 +1,15 @@
 /**
- *   Copyright (c) 2013      Mellanox Technologies, Inc.
- *                           All rights reserved.
- *     $COPYRIGHT$
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
  *
- *       Additional copyrights may follow
+ * Additional copyrights may follow
  *
- *         $HEADER$
- *          */
+ * $HEADER$
+ */
+
 #include "oshmem_config.h"
 #include "scoll_fca.h"
 #include <stdio.h>
@@ -109,7 +112,7 @@ static int have_remote_peers(struct oshmem_group_t *group,
     ret = 0;
     for (i = 0; i < size; ++i) {
         proc = group->proc_array[i];
-        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             ++*local_peers;
         } else {
             ret = 1;
@@ -132,7 +135,7 @@ static int _get_local_ranks(mca_scoll_fca_module_t *fca_module)
     fca_module->num_local_procs = 0;
     for (rank = 0; rank < comm->proc_count; ++rank) {
         proc = comm->proc_array[rank];
-        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             if (proc->proc_name.vpid == (uint32_t) fca_module->rank) {
                 fca_module->local_proc_idx = fca_module->num_local_procs;
             }
@@ -151,7 +154,7 @@ static int _get_local_ranks(mca_scoll_fca_module_t *fca_module)
     i = 0;
     for (rank = 0; rank < comm->proc_count; ++rank) {
         proc = comm->proc_array[rank];
-        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             fca_module->local_ranks[i++] = rank;
         }
     }
