@@ -1,12 +1,14 @@
 /**
- *   Copyright (c) 2013      Mellanox Technologies, Inc.
- *                           All rights reserved.
- *     $COPYRIGHT$
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
  *
- *       Additional copyrights may follow
+ * Additional copyrights may follow
  *
- *         $HEADER$
- *          */
+ * $HEADER$
+ */
 
 #ifndef MCA_SCOLL_FCA_H
 #define MCA_SCOLL_FCA_H
@@ -18,12 +20,6 @@
 #include "oshmem/util/oshmem_util.h"
 #include "scoll_fca_api.h"
 #include "scoll_fca_debug.h"
-
-#ifdef OMPI_PROC_FLAG_LOCAL
-#define FCA_IS_LOCAL_PROCESS(n) ((n) & OMPI_PROC_FLAG_LOCAL)
-#else
-#define FCA_IS_LOCAL_PROCESS(n) OPAL_PROC_ON_LOCAL_NODE(n)
-#endif
 
 BEGIN_C_DECLS
 struct mca_scoll_fca_component_t {
