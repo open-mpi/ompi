@@ -264,7 +264,6 @@ syntax: glob
 ./ompi/mca/btl/openib/btl_openib_lex.c
 ./ompi/mca/btl/portals4/Makefile.in
 ./ompi/mca/btl/scif/Makefile.in
-./ompi/mca/btl/sctp/Makefile.in
 ./ompi/mca/btl/self/Makefile.in
 ./ompi/mca/btl/sm/Makefile.in
 ./ompi/mca/btl/smcuda/Makefile.in
