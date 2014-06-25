@@ -16,7 +16,6 @@ enable_ipv6=no
 enable_mpi_fortran=no
 enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
-enable_mpi_java=yes
 enable_memchecker=no
 enable_vt=no
 enable_mca_no_build=crs,memchecker,snapc,crcp,rml-ftrm
@@ -25,5 +24,8 @@ with_memory_manager=no
 with_devel_headers=yes
 with_xgrid=no
 with_slurm=no
-with_jdk_bindir=$JAVA_HOME/bin
-with_jdk_headers=$JAVA_HOME/include
+if [ -n "$JAVA_HOME" ]; then
+    with_jdk_bindir=$JAVA_HOME/bin
+    with_jdk_headers=$JAVA_HOME/include
+    enable_mpi_java=yes
+fi
