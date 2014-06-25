@@ -310,6 +310,7 @@ static uint64_t compute_weight(
 
     metric = 0;
     err = ompi_btl_usnic_nl_ip_rt_lookup(mca_btl_usnic_component.unlsk,
+                                         module->if_name,
                                          module->if_ipv4_addr,
                                          proc_modex_addr->ipv4_addr,
                                          &metric);

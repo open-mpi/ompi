@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 /* the netlink headers have many C99-isms that cause warnings on the v1.6
  * branch when --enable-picky is passed to configure :( */
@@ -44,6 +45,7 @@ struct usnic_rtnl_sk {
 
 struct nl_lookup_arg {
 	uint32_t	nh_addr;
+	int		oif;
 	int		found;
 	int		replied;
 	int		msg_count;
@@ -128,9 +130,17 @@ static int rtnl_raw_parse_cb(struct nl_msg *msg, void *arg)
 		return NL_STOP;
 	}
 
-        if (tb[RTA_METRICS]) {
+	if (tb[RTA_OIF]) {
+		if (nla_get_u32(tb[RTA_OIF]) == (uint32_t)lookup_arg->oif)
+			found = 1;
+		else
+			usnic_err("Retrieved route has a different outgoing interface %d (expected %d)\n",
+					nla_get_u32(tb[RTA_OIF]),
+					lookup_arg->oif);
+	}
+
+        if (found && tb[RTA_METRICS]) {
             lookup_arg->metric = (int)nla_get_u32(tb[RTA_METRICS]);
-            found = 1;
         }
 
 	if (found && tb[RTA_GATEWAY])
@@ -171,7 +181,9 @@ static int nl_set_recv_timeout(struct nl_sock *sock)
 	return err;
 }
 
-int ompi_btl_usnic_nl_ip_rt_lookup(struct usnic_rtnl_sk *unlsk, uint32_t src_addr,
+int ompi_btl_usnic_nl_ip_rt_lookup(struct usnic_rtnl_sk *unlsk,
+                                   const char *src_ifname,
+                                   uint32_t src_addr,
                                    uint32_t dst_addr, int *metric)
 {
 	struct nl_msg 		*nlm;
@@ -179,8 +191,15 @@ int ompi_btl_usnic_nl_ip_rt_lookup(struct usnic_rtnl_sk *unlsk, uint32_t src_add
 	struct nl_lookup_arg    arg;
 	int	msg_cnt;
 	int		     	err;
+	int oif;
+
+	oif = if_nametoindex(src_ifname);
+	if (0 == oif) {
+	    return errno;
+	}
 
 	arg.nh_addr 	= 0;
+	arg.oif		= oif;
 	arg.found	= 0;
 	arg.replied	= 0;
 	arg.unlsk	= unlsk;
