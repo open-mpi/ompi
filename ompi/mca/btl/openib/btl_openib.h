@@ -372,9 +372,11 @@ struct mca_btl_base_endpoint_t;
 typedef struct mca_btl_openib_device_t {
     opal_object_t super;
     struct ibv_device *ib_dev;  /* the ib device */
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     struct ibv_comp_channel *ib_channel; /* Channel event for the device */
     opal_thread_t thread;                /* Progress thread */
     volatile bool progress;              /* Progress status */
+#endif
     opal_mutex_t device_lock;          /* device level lock */
     struct ibv_context *ib_dev_context;
     struct ibv_device_attr ib_dev_attr;
@@ -503,7 +505,9 @@ struct mca_btl_openib_reg_t {
 };
 typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 extern void* mca_btl_openib_progress_thread(opal_object_t*);
+#endif
 
 
 /**

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2012-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +37,9 @@ struct mca_btl_base_endpoint_t {
 #if OPAL_CUDA_SUPPORT
     mca_mpool_base_module_t *mpool; /**< mpool for remotely registered memory */
 #endif /* OPAL_CUDA_SUPPORT */
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     int fifo_fd;        /**< pipe/fifo used to signal endpoint that data is queued */
+#endif
     opal_list_t pending_sends; /**< pending data to send */
 
     /** lock for concurrent access to endpoint state */

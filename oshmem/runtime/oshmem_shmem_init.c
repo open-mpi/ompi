@@ -346,14 +346,16 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     }
 
     if (OSHMEM_SUCCESS
-        != (ret = mca_spml_base_select(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+            != (ret = mca_spml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
+                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_spml_base_select() failed";
         goto error;
     }
 
     if (OSHMEM_SUCCESS
             != (ret =
-                mca_scoll_base_find_available(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+                    mca_scoll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                                  OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_scoll_base_find_available() failed";
         goto error;
     }
@@ -428,7 +430,8 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     if (OSHMEM_SUCCESS
             != (ret =
-                mca_atomic_base_find_available(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+                    mca_atomic_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_atomic_base_find_available() failed";
         goto error;
     }

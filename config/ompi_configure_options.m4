@@ -275,5 +275,11 @@ AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [$OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
                    [Whether we built the 'use mpi_f08' prototype subarray-based implementation or not (i.e., whether to build the use-mpi-f08-desc prototype or the regular use-mpi-f08 implementation)])
 
+dnl We no longer support the old OMPI_ENABLE_PROGRESS_THREADS.  At
+dnl some point, this should die.
+AC_DEFINE([OMPI_ENABLE_PROGRESS_THREADS],
+          [0],
+          [Whether we want OMPI progress threads enabled])
+
 ])dnl
 

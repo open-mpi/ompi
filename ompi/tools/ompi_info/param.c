@@ -275,12 +275,14 @@ void ompi_info_do_config(bool want_all)
         (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
                        (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
                        OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no", "yes");
+                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                       OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #else
         (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
                        (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
                        OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no", "yes");
+                       OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
+                       OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #endif
     } else {
         threads = strdup("no");

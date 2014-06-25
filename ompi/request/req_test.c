@@ -32,7 +32,11 @@ int ompi_request_default_test( ompi_request_t ** rptr,
                        ompi_status_public_t * status )
 {
     ompi_request_t *request = *rptr;
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    int do_it_once = 0;
 
+ recheck_request_status:
+#endif
     opal_atomic_mb();
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
@@ -77,6 +81,17 @@ int ompi_request_default_test( ompi_request_t ** rptr,
            later! */
         return ompi_request_free(rptr);
     }
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    if( 0 == do_it_once ) {
+        /**
+         * If we run the opal_progress then check the status of the request before
+         * leaving. We will call the opal_progress only once per call.
+         */
+        opal_progress();
+        do_it_once++;
+        goto recheck_request_status;
+    }
+#endif
     *completed = false;
     return OMPI_SUCCESS;
 }
@@ -148,6 +163,9 @@ int ompi_request_default_test_any(
     *index = MPI_UNDEFINED;
     if(num_requests_null_inactive != count) {
         *completed = false;
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+        opal_progress();
+#endif
     } else {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
@@ -183,6 +201,9 @@ int ompi_request_default_test_all(
 
     if (num_completed != count) {
         *completed = false;
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+        opal_progress();
+#endif
         return OMPI_SUCCESS;
     }
 
@@ -291,6 +312,9 @@ int ompi_request_default_test_some(
     *outcount = num_requests_done;
 
     if (num_requests_done == 0) {
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+        opal_progress();
+#endif
         return OMPI_SUCCESS;
     }
 

@@ -21,7 +21,9 @@
 #ifndef MCA_BTL_SELF_ENDPOINT_H
 #define MCA_BTL_SELF_ENDPOINT_H
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 #include "opal/mca/event/event.h"
+#endif
 
 /**
  *  An abstraction that represents a connection to a endpoint process.

@@ -543,7 +543,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     if (OMPI_SUCCESS != 
-        (ret = ompi_op_base_find_available(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_op_base_find_available() failed";
         goto error;
     }
@@ -600,13 +601,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Select which MPI components to use */
 
     if (OMPI_SUCCESS != 
-        (ret = mca_mpool_base_init(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
+                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_pml_base_select(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
+                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_pml_base_select() failed";
         goto error;
     }
@@ -655,13 +658,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_coll_base_find_available(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = ompi_osc_base_find_available(1, OMPI_ENABLE_THREAD_MULTIPLE))) {
+        (ret = ompi_osc_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_osc_base_find_available() failed";
         goto error;
     }
@@ -752,7 +757,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* If thread support was enabled, then setup OPAL to allow for
        them. */
-    if ((*provided != MPI_THREAD_SINGLE)) {
+    if ((OMPI_ENABLE_PROGRESS_THREADS == 1) ||
+        (*provided != MPI_THREAD_SINGLE)) {
         opal_set_using_threads(true);
     }
 
@@ -832,7 +838,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
 
-   /* wire up the mpi interface, if requested.  Do this after the
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    /* Start setting up the event engine for MPI operations.  Don't
+       block in the event library, so that communications don't take
+       forever between procs in the dynamic code.  This will increase
+       CPU utilization for the remainder of MPI_INIT when we are
+       blocking on RTE-level events, but may greatly reduce non-TCP
+       latency. */
+    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
+#endif
+    
+    /* wire up the mpi interface, if requested.  Do this after the
        non-block switch for non-TCP performance.  Do before the
        polling change as anyone with a complex wire-up is going to be
        using the oob. */
