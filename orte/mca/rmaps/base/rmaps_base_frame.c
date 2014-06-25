@@ -515,8 +515,10 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         }
         ORTE_UNSET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SUBSCRIBE_GIVEN);
+#if OPAL_HAVE_HWLOC
         /* also set the overload allowed flag */
         opal_hwloc_binding_policy |= OPAL_BIND_ALLOW_OVERLOAD;
+#endif
     }
 
     /* should we display a detailed (developer-quality) version of the map after determining it? */
