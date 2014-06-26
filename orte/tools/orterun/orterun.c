@@ -1965,10 +1965,9 @@ static int create_app(int argc, char* argv[],
     }
 
 #if OPAL_ENABLE_FT_CR == 1
-    if( NULL != orterun_globals.sstore_load ) {
-        app->sstore_load = strdup(orterun_globals.sstore_load);
-    } else {
-        app->sstore_load = NULL;
+    if(NULL != orterun_globals.sstore_load) {
+        orte_set_attribute(&app->attributes, ORTE_APP_SSTORE_LOAD, ORTE_ATTR_LOCAL,
+                           orterun_globals.sstore_load, OPAL_STRING);
     }
 #endif
 

@@ -257,7 +257,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
             return ORTE_ERR_NOT_FOUND;
         }
 
-        if( ORTE_JOB_CONTROL_RESTART == jdata->controls ) {
+        if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RESTART)) {
             OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Restarting Job %s...",
                                  ORTE_JOBID_PRINT(jobid)));

@@ -607,19 +607,26 @@ int orte_daemon(int argc, char *argv[])
         opal_list_append(&coll->participants, &nm->super);
 
 #if OPAL_ENABLE_FT_CR == 1
-        jdata->snapc_init_barrier = orte_grpcomm_base_get_coll_id();
-        coll = orte_grpcomm_base_setup_collective(jdata->snapc_init_barrier);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
+        {
+            orte_grpcomm_coll_id_t id;
+            id = orte_grpcomm_base_get_coll_id();
+            coll = orte_grpcomm_base_setup_collective(id);
+            nm = OBJ_NEW(orte_namelist_t);
+            nm->name.jobid = jdata->jobid;
+            nm->name.vpid = ORTE_VPID_WILDCARD;
+            opal_list_append(&coll->participants, &nm->super);
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR,
+                               ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
 
-        jdata->snapc_fini_barrier = orte_grpcomm_base_get_coll_id();
-        coll = orte_grpcomm_base_setup_collective(jdata->snapc_fini_barrier);
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = jdata->jobid;
-        nm->name.vpid = ORTE_VPID_WILDCARD;
-        opal_list_append(&coll->participants, &nm->super);
+            id = orte_grpcomm_base_get_coll_id();
+            coll = orte_grpcomm_base_setup_collective(id);
+            nm = OBJ_NEW(orte_namelist_t);
+            nm->name.jobid = jdata->jobid;
+            nm->name.vpid = ORTE_VPID_WILDCARD;
+            opal_list_append(&coll->participants, &nm->super);
+            orte_set_attribute(&jdata->attributes, ORTE_JOB_SNAPC_FINI_BAR,
+                               ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
+        }
 #endif
 
         /* create a string that contains our uri + sysinfo */
