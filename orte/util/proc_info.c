@@ -83,7 +83,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .peer_modex =                      -1,
     .peer_init_barrier =               -1,
     .peer_fini_barrier =               -1,
-    .my_hostid =                       ORTE_VPID_INVALID
+    .my_hostid =                       ORTE_VPID_INVALID,
 #if OPAL_ENABLE_FT_CR == 1
     .snapc_init_barrier =              -1,
     .snapc_fini_barrier =              -1,
