@@ -753,9 +753,10 @@ static int disconnect(ompi_communicator_t *comm)
     orte_dpm_prequest_t *req, *preq;
     ompi_group_t *group;
 
-    /* JMS Temporarily disable PML-based barrier and use RTE-based
-       barrier instead.  This is related to
-       https://svn.open-mpi.org/trac/ompi/ticket/4643. */
+    /* Note that we explicitly use an RTE-based barrier (vs. an MPI
+       barrier).  See a lengthy comment in
+       ompi/runtime/ompi_mpi_finalize.c for a much more detailed
+       rationale. */
 
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:disconnect comm_cid %d",

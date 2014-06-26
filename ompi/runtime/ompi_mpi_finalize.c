@@ -207,11 +207,26 @@ int ompi_mpi_finalize(void)
       have many other, much higher priority issues to handle that deal
       with non-erroneous cases. */
 
-    /* wait for everyone to reach this point
-       This is a grpcomm barrier instead of an MPI barrier because an
-       MPI barrier doesn't ensure that all messages have been transmitted
-       before exiting, so the possibility of a stranded message exists.
-    */
+    /* Wait for everyone to reach this point.  This is a grpcomm
+       barrier instead of an MPI barrier for (at least) two reasons:
+
+       1. An MPI barrier doesn't ensure that all messages have been
+          transmitted before exiting (e.g., a BTL can lie and buffer a
+          message without actually injecting it to the network, and
+          therefore require further calls to that BTL's progress), so
+          the possibility of a stranded message exists.
+
+       2. If the MPI communication is using an unreliable transport,
+          there's a problem of knowing that everyone has *left* the
+          barrier.  E.g., one proc can send its ACK to the barrier
+          message to a peer and then leave the barrier, but the ACK
+          can get lost and therefore the peer is left in the barrier.
+
+       Point #1 has been known for a long time; point #2 emerged after
+       we added the first unreliable BTL to Open MPI and fixed the
+       del_procs behavior around May of 2014 (see
+       https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
+       more details). */
     coll = OBJ_NEW(ompi_rte_collective_t);
     coll->id = ompi_process_info.peer_fini_barrier;
     coll->active = true;
