@@ -130,7 +130,7 @@ void hcoll_rte_fns_setup(void)
                 0, 0,
                 /* NOTE: hack - need to parametrize this */
                 10,
-                50,
+                -1,
                 10,
                 /* No Mpool */
                 NULL,
