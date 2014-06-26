@@ -512,11 +512,18 @@ int global_coord_end_ckpt(orte_snapc_base_quiesce_t *datum)
     if( currently_migrating ) {
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) End Ckpt: Flush the modex cached data\n"));
-        if (OPAL_SUCCESS != (ret = opal_db.remove(NULL, NULL))) {
+
+        /* TODO: You can't pass NULL as the identifier - what you'll need to do is
+         * close all open dstore handles, and then open the ones you need
+         */
+#if 0
+        if (OPAL_SUCCESS != (ret = opal_dstore.remove(NULL, NULL))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
+#endif
+
         orte_grpcomm.finalize();
         if (ORTE_SUCCESS != (ret = orte_grpcomm.init())) {
             ORTE_ERROR_LOG(ret);
