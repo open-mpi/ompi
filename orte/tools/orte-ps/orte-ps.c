@@ -538,6 +538,9 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
     orte_jobid_t mask=0x0000ffff;
 #if OPAL_ENABLE_FT_CR == 1
     char * state_str = NULL;
+    size_t ckpt_state;
+    char *snap_ref = NULL;
+    char *snap_loc = NULL;
 #endif
 
     for(i=0; i < num_jobs; i++) {
@@ -561,18 +564,17 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         len_slots  = 6;
         len_vpid_r = (int) strlen("Num Procs");
 #if OPAL_ENABLE_FT_CR == 1
-        orte_snapc_ckpt_state_str(&state_str, job->ckpt_state);
+        orte_get_attribute(&job->attributes, ORTE_JOB_CKPT_STATE, (void**)&ckpt_state, OPAL_INT32);
+        orte_get_attribute(&job->attributes, ORTE_JOB_SNAPSHOT_REF, (void**)&snap_ref, OPAL_STRING);
+        orte_get_attribute(&job->attributes, ORTE_JOB_SNAPSHOT_LOC, (void**)&snap_loc, OPAL_STRING);
+        orte_snapc_ckpt_state_str(&state_str, ckpt_state);
         len_ckpt_s = (int) (strlen(state_str) < strlen("Ckpt State") ?
                             strlen("Ckpt State") :
                             strlen(state_str) );
-        len_ckpt_r = (int) (NULL == job->ckpt_snapshot_ref ? strlen("Ckpt Ref") :
-                            (strlen(job->ckpt_snapshot_ref) < strlen("Ckpt Ref") ?
-                             strlen("Ckpt Ref") :
-                             strlen(job->ckpt_snapshot_ref) ) );
-        len_ckpt_l = (int) (NULL == job->ckpt_snapshot_loc ? strlen("Ckpt Loc") :
-                            (strlen(job->ckpt_snapshot_loc) < strlen("Ckpt Loc") ?
-                             strlen("Ckpt Loc") :
-                             strlen(job->ckpt_snapshot_loc) ) );
+        len_ckpt_r = (int) (NULL == snap_ref ? strlen("Ckpt Ref") : (strlen(snap_ref) < strlen("Ckpt Ref") ?
+                             strlen("Ckpt Ref") : strlen(snap_ref)));
+        len_ckpt_l = (int) (NULL == snap_loc ? strlen("Ckpt Loc") : (strlen(snap_loc) < strlen("Ckpt Loc") ?
+                             strlen("Ckpt Loc") : strlen(snap_loc)));
 #else
         len_ckpt_s = -3;
         len_ckpt_r = -3;
@@ -614,12 +616,8 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         printf("%*d | ",  len_vpid_r,  job->num_procs);
 #if OPAL_ENABLE_FT_CR == 1
         printf("%*s | ",  len_ckpt_s,  state_str);
-        printf("%*s | ",  len_ckpt_r,  (NULL == job->ckpt_snapshot_ref ? 
-                                        "" :
-                                        job->ckpt_snapshot_ref) );
-        printf("%*s |",   len_ckpt_l,  (NULL == job->ckpt_snapshot_loc ? 
-                                        "" :
-                                        job->ckpt_snapshot_loc) );
+        printf("%*s | ",  len_ckpt_r,  (NULL == snap_ref ?  "" : snap_ref));
+        printf("%*s |",   len_ckpt_l,  (NULL == snap_loc ?  "" : snap_loc));
 #endif
         printf("\n");
 
@@ -648,6 +646,9 @@ static int pretty_print_vpids(orte_job_t *job) {
     char *o_proc_name;
 #if OPAL_ENABLE_FT_CR == 1
     char *state_str = NULL;
+    size_t ckpt_state;
+    char *snap_ref = NULL;
+    char *snap_loc = NULL;
 #endif
     char *nodename;
 
@@ -715,19 +716,20 @@ static int pretty_print_vpids(orte_job_t *job) {
 
         if( (int)strlen(orte_proc_state_to_str(vpid->state)) > len_state)
             len_state = strlen(orte_proc_state_to_str(vpid->state));
-        
+
 #if OPAL_ENABLE_FT_CR == 1
-        orte_snapc_ckpt_state_str(&state_str, vpid->ckpt_state);
+        orte_get_attribute(&vpid->attributes, ORTE_PROC_CKPT_STATE, (void**)&ckpt_state, OPAL_INT32);
+        orte_get_attribute(&vpid->attributes, ORTE_PROC_SNAPSHOT_REF, (void**)&snap_ref, OPAL_STRING);
+        orte_get_attribute(&vpid->attributes, ORTE_PROC_SNAPSHOT_LOC, (void**)&snap_loc, OPAL_STRING);
+        orte_snapc_ckpt_state_str(&state_str, ckpt_state);
         if( (int)strlen(state_str) > len_ckpt_s)
             len_ckpt_s = strlen(state_str);
-        
-        if( NULL != vpid->ckpt_snapshot_ref &&
-            (int)strlen(vpid->ckpt_snapshot_ref) > len_ckpt_r) 
-            len_ckpt_r = strlen(vpid->ckpt_snapshot_ref);
-        
-        if( NULL != vpid->ckpt_snapshot_loc &&
-            (int)strlen(vpid->ckpt_snapshot_loc) > len_ckpt_l) 
-            len_ckpt_l = strlen(vpid->ckpt_snapshot_loc);
+
+        if(NULL != snap_ref && (int)strlen(snap_ref) > len_ckpt_r)
+            len_ckpt_r = strlen(snap_ref);
+
+        if(NULL != snap_loc && (int)strlen(snap_loc) > len_ckpt_l)
+            len_ckpt_l = strlen(snap_loc);
 #endif
     }
 
@@ -798,12 +800,8 @@ static int pretty_print_vpids(orte_job_t *job) {
         
 #if OPAL_ENABLE_FT_CR == 1
         printf("%*s | ",  len_ckpt_s, state_str);
-        printf("%*s | ",  len_ckpt_r, (NULL == vpid->ckpt_snapshot_ref ? 
-                                       "" : 
-                                       vpid->ckpt_snapshot_ref));
-        printf("%*s |",   len_ckpt_l, (NULL == vpid->ckpt_snapshot_loc ? 
-                                       "" : 
-                                       vpid->ckpt_snapshot_loc));
+        printf("%*s | ",  len_ckpt_r, (NULL == snap_ref ?  "" : snap_ref));
+        printf("%*s |",   len_ckpt_l, (NULL == snap_loc ?  "" : snap_loc));
 #endif
         printf("\n");
         

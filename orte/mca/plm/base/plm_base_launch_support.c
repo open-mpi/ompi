@@ -290,7 +290,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
 
 #if OPAL_ENABLE_FT_CR == 1
     {
-        orte_grpcomm_collective_id_t id;
+        orte_grpcomm_coll_id_t id;
         id = orte_grpcomm_base_get_coll_id();
         orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
         (void) mca_base_var_env_name("orte_snapc_init_barrier_id", &barcr1_par);
