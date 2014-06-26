@@ -27,7 +27,6 @@
 #include "opal/mca/pmi/base/static-components.h"
 
 opal_pmi_base_module_t opal_pmi;
-opal_pmi_base_t opal_pmi_base;
 
 static int opal_pmi_base_frame_close(void)
 {

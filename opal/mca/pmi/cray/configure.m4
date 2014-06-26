@@ -12,11 +12,12 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_opal_pmi_cray_CONFIG], [
     AC_CONFIG_FILES([opal/mca/pmi/cray/Makefile])
-         
-    OPAL_CHECK_PMI_CRAY([pmi_cray], [pmi_cray_good=1], [pmi_cray_good=0])
+
+    AC_REQUIRE([OPAL_CHECK_UGNI])
+    OPAL_CHECK_PMI([pmi_cray], [pmi_cray_good=1], [pmi_cray_good=0])
          
     # Evaluate succeed / fail
-    AS_IF([test "$pmi_cray_good" = 1],
+    AS_IF([test "$pmi_cray_good" = 1 -a "$opal_check_ugni_happy" = "yes"],
           [$1],
           [$2])
 

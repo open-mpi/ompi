@@ -13,10 +13,11 @@
 AC_DEFUN([MCA_opal_pmi_s2_CONFIG], [
     AC_CONFIG_FILES([opal/mca/pmi/s2/Makefile])
          
-    OPAL_CHECK_PMI_S2([pmi_s2], [pmi_s2_good=1], [pmi_s2_good=0])
+    AC_REQUIRE([OPAL_CHECK_UGNI])
+    OPAL_CHECK_PMI([pmi_s2], [pmi_s2_good=1], [pmi_s2_good=0])
          
     # Evaluate succeed / fail
-    AS_IF([test "$pmi_s2_good" = 1],
+    AS_IF([test "$pmi_s2_good" = 1 -a "$opal_have_pmi2" = 1 -a "$opal_check_ugni_happy" = "no"],
           [$1],
           [$2])
 

@@ -16,5 +16,8 @@ headers += \
 
 libmca_pmi_la_SOURCES += \
 	base/pmi_base_frame.c \
-	base/pmi_base_select.c \
+	base/pmi_base_select.c
+
+if WANT_PMI_SUPPORT
         base/pmi_base_fns.c
+endif
