@@ -83,6 +83,8 @@ static int cray_lookup(const char service_name[],
                        char port[], int portLen);
 static int cray_unpublish(const char service_name[], 
                           const struct MPID_Info *info_ptr);
+static int cray_local_info(int vpid, int **ranks_ret,
+                           int *procs_ret, char **error);
 
 opal_pmi_base_module_t opal_pmi_cray_module = {
     cray_init,
@@ -105,7 +107,8 @@ opal_pmi_base_module_t opal_pmi_cray_module = {
     cray_get_job_attr_array,
     cray_publish,
     cray_lookup,
-    cray_unpublish
+    cray_unpublish,
+    cray_local_info
 };
 
 // usage accounting

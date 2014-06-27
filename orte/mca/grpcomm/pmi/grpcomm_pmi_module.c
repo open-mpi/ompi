@@ -22,7 +22,7 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal_params.h"
-#include "opal/mca/common/pmi/common_pmi.h"
+#include "opal/mca/pmi/pmi.h"
 #include "opal/mca/dstore/dstore.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -67,7 +67,7 @@ static int init(void)
  */
 static void finalize(void)
 {
-    mca_common_pmi_finalize();
+    opal_pmi.finalize();
     return;
 }
 
@@ -105,7 +105,7 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
         return ORTE_SUCCESS;
     }
     
-    if( OPAL_SUCCESS != (rc = mca_common_pmi_barrier()) ){
+    if( OPAL_SUCCESS != (rc = opal_pmi.fence()) ){
         return rc;
     }
 
@@ -147,8 +147,8 @@ static int modex(orte_grpcomm_collective_t *coll)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* discover the local ranks */
-    rc = mca_common_pmi_local_info(ORTE_PROC_MY_NAME->vpid, &local_ranks,
-                                  &local_rank_count, &error);
+    rc = opal_pmi.get_local_info(ORTE_PROC_MY_NAME->vpid, &local_ranks,
+                                 &local_rank_count, &error);
     if( OPAL_SUCCESS != rc){
         opal_output(0, "%s could not get PMI_process_mapping: %s",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), error);

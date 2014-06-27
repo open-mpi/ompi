@@ -145,6 +145,11 @@ typedef int (*opal_pmi_base_module_nameserv_lookup_fn_t)(const char service_name
 typedef int (*opal_pmi_base_module_nameserv_unpublish_fn_t)(const char service_name[], 
                                                             const struct MPID_Info *info_ptr);
 
+/* Not an official PMI API, but something we use. Unfortunately, the calls required to
+ * retrieve the necessary info are not common between the different versions */
+typedef int (*opal_pmi_base_module_get_local_info_fn_t)(int vpid, int **ranks_ret,
+                                                        int *procs_ret, char **error);
+
 /*
  * the standard public API data structure
  */
@@ -170,6 +175,7 @@ typedef struct {
     opal_pmi_base_module_nameserv_publish_fn_t       publish;
     opal_pmi_base_module_nameserv_lookup_fn_t        lookup;
     opal_pmi_base_module_nameserv_unpublish_fn_t     unpublish;
+    opal_pmi_base_module_get_local_info_fn_t         get_local_info;
 } opal_pmi_base_module_t;
 
 typedef struct {

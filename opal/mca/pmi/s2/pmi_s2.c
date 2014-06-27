@@ -83,6 +83,8 @@ static int s2_lookup(const char service_name[],
                      char port[], int portLen);
 static int s2_unpublish(const char service_name[], 
                         const struct MPID_Info *info_ptr);
+static int s2_local_info(int vpid, int **ranks_ret,
+                         int *procs_ret, char **error);
 
 opal_pmi_base_module_t opal_pmi_s2_module = {
     s2_init,
@@ -105,7 +107,8 @@ opal_pmi_base_module_t opal_pmi_s2_module = {
     s2_get_job_attr_array,
     s2_publish,
     s2_lookup,
-    s2_unpublish
+    s2_unpublish,
+    s2_local_info
 };
 
 // usage accounting

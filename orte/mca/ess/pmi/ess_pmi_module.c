@@ -45,7 +45,7 @@
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
-#include "opal/mca/common/pmi/common_pmi.h"
+#include "opal/mca/pmi/pmi.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -86,7 +86,7 @@ static int rte_init(void)
     char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
     char *cs_env, *string_key;
-    char *pmi_id=NULL;
+    char pmi_id[256];
     int *ranks=NULL;
     orte_jobid_t jobid;
     char *rmluri;
@@ -129,11 +129,17 @@ static int rte_init(void)
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
         /* get our rank from PMI */
-        i = mca_common_pmi_rank();
+        if (OPAL_SUCCESS != (ret = opal_pmi.get_rank(&i))) {
+            error = "getting rank";
+            goto error;
+        }
         ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
 
         /* get the number of procs from PMI */
-        i = mca_common_pmi_universe();
+        if (OPAL_SUCCESS != (ret = opal_pmi.get_size(&i))) {
+            error = "getting size";
+            goto error;
+        }
         orte_process_info.num_procs = i + 1;  /* compensate for orterun */
 
         /* complete setup */
@@ -147,11 +153,12 @@ static int rte_init(void)
     }
 
     /* we are a direct-launched MPI process */
-    if( OPAL_SUCCESS != (ret = mca_common_pmi_id(&pmi_id, &error)) ){
+    if (OPAL_SUCCESS != (ret = opal_pmi.get_jobid(pmi_id, 256))) {
+        error = "get jobid";
         goto error;
     }
 
-    /* PMI is very nice to us - the domain id is an integer followed
+    /* PMI is very nice to us - the job id is an integer followed
      * by a '.', followed by essentially a stepid. The first integer
      * defines an overall job number. The second integer is the number of
      * individual jobs we have run within that allocation. So we translate
@@ -166,17 +173,22 @@ static int rte_init(void)
         localj++; /* step over the '.' */
         stepid = strtol(localj, NULL, 10) + 1; /* add one to avoid looking like a daemon */
     }
-    free(pmi_id);
 
     /* now build the jobid */
     ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
 
     /* get our rank */
-    i = mca_common_pmi_rank();
+    if (OPAL_SUCCESS != (ret = opal_pmi.get_rank(&i))) {
+        error = "getting rank";
+        goto error;
+    }
     ORTE_PROC_MY_NAME->vpid = i;
+
     /* get the number of procs from PMI */
-    // FIX ME: What do we need here - size or universe?
-    i = mca_common_pmi_universe();
+    if (OPAL_SUCCESS != (ret = opal_pmi.get_size(&i))) {
+        error = "getting size";
+        goto error;
+    }
     orte_process_info.num_procs = i;
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
@@ -229,7 +241,7 @@ static int rte_init(void)
         goto error;
     }
 
-    ret = mca_common_pmi_local_info(ORTE_PROC_MY_NAME->vpid, &ranks, &procs, &error);
+    ret = opal_pmi.get_local_info(ORTE_PROC_MY_NAME->vpid, &ranks, &procs, &error);
     if( OPAL_SUCCESS != ret ){
         goto error;
     }

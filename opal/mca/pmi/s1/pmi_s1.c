@@ -77,6 +77,8 @@ static int s1_lookup(const char service_name[],
                      char port[], int portLen);
 static int s1_unpublish(const char service_name[], 
                         const struct MPID_Info *info_ptr);
+static int s1_local_info(int vpid, int **ranks_ret,
+                         int *procs_ret, char **error);
 
 opal_pmi_base_module_t opal_pmi_s1_module = {
     s1_init,
@@ -99,7 +101,8 @@ opal_pmi_base_module_t opal_pmi_s1_module = {
     s1_get_job_attr_array,
     s1_publish,
     s1_lookup,
-    s1_unpublish
+    s1_unpublish,
+    s1_local_info
 };
 
 // usage accounting
@@ -238,7 +241,7 @@ static int s1_spawn(int count, const char * cmds[],
 
 static int s1_get_jobid(char jobId[], int jobIdSize)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_SUCCESS;
 }
 
 static int s1_get_rank(int *rank)
