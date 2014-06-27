@@ -231,6 +231,43 @@ typedef union {
 #define USNIC_PORT_QUERY_MAGIC (0x43494e7375534355ULL)
 
 /*
+ * Probe for the magic number to see if the userspace side of verbs is
+ * new enough to include UDP transport support.
+ *
+ * If the userspace side is too old to include UDP support, then it
+ * will fail the magic probe.  If somehow we eneded up with a "new"
+ * userspace (e.g., that supports UDP) and an "old" kernel module
+ * (e.g., that does not support UDP), then the userspace will fail the
+ * ABI check with the kernel module and we won't get this far at all.
+ *
+ * NB: it will be complicated if we ever need to extend this scheme
+ * (e.g., if we support something other than UDP someday), because the
+ * real way to know what the actual transport is will be to call a
+ * usnic verbs extension, and that code is all currently over in the
+ * usnic BTL, which we can't call from here.
+ */
+static int usnic_magic_probe(struct ibv_context *context)
+{
+    int rc;
+    port_query_u u;
+
+    rc = ibv_query_port(context, 42, &u.attr);
+    /* See comment in btl_usnic_ext.c about why we have to check
+       for rc==0 *and* the magic number. */
+    if (0 == rc && USNIC_PORT_QUERY_MAGIC == u.qpt.magic) {
+        /* We only support version 1 of the lookup function in
+           this particular version of Open MPI */
+        if (1 == u.qpt.lookup_version) {
+            return USNIC_UDP;
+        } else {
+            return USNIC_UNKNOWN;
+        }
+    } else {
+        return USNIC_L2;
+    }
+}
+
+/*
  * usNIC devices will always return one of three
  * device->transport_type values:
  *
@@ -241,8 +278,12 @@ typedef union {
  * transport is usNIC/L2 or usNIC/UDP -- you have to do an additional
  * probe to figure it out.
  *
- * 2. TRANSPORT_USNIC: should probably never be returned on a customer
- * system.  In this case, the transport is guaranteed to be usNIC/L2.
+ * 2. TRANSPORT_USNIC: for some systems that updated to include the
+ * RDMA_TRANSPORT_USNIC constant, but not the RDMA_TRANSPORT_USNIC_UDP
+ * constant, with the drivers downloaded from cisco.com (e.g., RHEL
+ * 7.0).  This is just like the TRANSPORT_IWARP case: we have to do an
+ * additional probe to figure out whether the transport is usNIC/L2 or
+ * usNIC/UDP.
  *
  * 3. TRANSPORT_USNIC_UDP: on systems with new kernels and new
  * libibverbs.  In this case, the transport is guaranteed to be
@@ -255,33 +296,8 @@ static int usnic_transport(struct ibv_device *device,
         return USNIC_UNKNOWN;
     }
 
-    /* If we got a transport type of IWARP, see if the magic query
-       exists.  If it does, the transport type is UDP.  If it does
-       not, the transport type is L2.
-
-       NB: it will be complicated if we ever need to extend this
-       scheme (e.g., if we support something other than UDP someday),
-       because the real way to know what the actual transport is will
-       be to call a usnic verbs extension, and that code is all
-       currently over in the usnic BTL, which we can't call from
-       here. */
     if (IBV_TRANSPORT_IWARP == device->transport_type) {
-        int rc;
-        port_query_u u;
-        rc = ibv_query_port(context, 42, &u.attr);
-        /* See comment in btl_usnic_ext.c about why we have to check
-           for rc==0 *and* the magic number. */
-        if (0 == rc && USNIC_PORT_QUERY_MAGIC == u.qpt.magic) {
-            /* We only support version 1 of the lookup function in
-               this particular version of Open MPI */
-            if (1 == u.qpt.lookup_version) {
-                return USNIC_UDP;
-            } else {
-                return USNIC_UNKNOWN;
-            }
-        } else {
-            return USNIC_L2;
-        }
+        return usnic_magic_probe(context);
     }
 
 #if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
@@ -293,10 +309,8 @@ static int usnic_transport(struct ibv_device *device,
 #endif
 
 #if HAVE_DECL_IBV_TRANSPORT_USNIC
-    /* If we got the transport type of USNIC, then it's definitely
-       the L2 transport. */
     if (IBV_TRANSPORT_USNIC == device->transport_type) {
-        return USNIC_L2;
+        return usnic_magic_probe(context);
     }
 #endif
 
