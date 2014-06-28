@@ -11,7 +11,7 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-#include "opal/mca/common/pmi/common_pmi.h"
+#include "opal/mca/pmi/pmi.h"
 
 #include "opal/mca/base/base.h"
 

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,7 +17,7 @@
 #include <time.h>
 #include <string.h>
 
-#include "opal/mca/common/pmi/common_pmi.h"
+#include "opal/mca/pmi/pmi.h"
 
 #include <regex.h>
 
@@ -66,22 +67,6 @@ static char* setup_key(mca_dstore_pmi_module_t *mod,
 
 /* Local variables */
 
-/* Because Cray uses PMI2 extensions for some, but not all,
- * PMI functions, we define a set of wrappers for those
- * common functions we will use
- */
-static inline int kvs_put(mca_dstore_pmi_module_t *mod,
-                   const char *key, const char *value)
-{
-    return mca_common_pmi_put(mod->pmi_kvs_name, key, value);
-}
-
-static inline int kvs_get(mca_dstore_pmi_module_t *mod,
-                   const char *key, char *value, int valuelen)
-{
-    return mca_common_pmi_get(mod->pmi_kvs_name, key, value, valuelen);
-}
-
 static void finalize(struct opal_dstore_base_module_t *imod)
 {
     mca_dstore_pmi_module_t *mod;
@@ -123,6 +108,7 @@ static int pmi_commit_packed(mca_dstore_pmi_module_t *mod,
     char tmp_key[32], save;
     char *encoded_data;
     int rc, left;
+    opal_value_t kv;
 
     if (mod->pmi_packed_data_off == 0) {
 	/* nothing to write */
@@ -134,24 +120,23 @@ static int pmi_commit_packed(mca_dstore_pmi_module_t *mod,
 	return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.type = OPAL_STRING;  // we always pass stringified data
     for (left = strlen (encoded_data), tmp = encoded_data ; left ; ) {
 	size_t value_size = mod->pmi_vallen_max > left ? left : mod->pmi_vallen_max - 1;
 
 	sprintf (tmp_key, "key%d", mod->pmi_pack_key);
         
-	if (NULL == (pmikey = setup_key(mod, proc, tmp_key))) {
-	    OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
-	    rc = OPAL_ERR_BAD_PARAM;
-	    break;
-	}
-
 	/* only write value_size bytes */
 	save = tmp[value_size];
 	tmp[value_size] = '\0';
 
-	rc = kvs_put(mod, pmikey, tmp);
-	free(pmikey);
-    if (OPAL_SUCCESS != rc) {
+        kv->key = tmp_key;
+        kv->data.string = tmp;
+	rc = opal_pmi.put(proc, mod->pmi_kvs_name, &kv);
+        kv->key = NULL;
+        kv->data.string = NULL;
+        if (OPAL_SUCCESS != rc) {
 	    break;
 	}
 
@@ -163,6 +148,7 @@ static int pmi_commit_packed(mca_dstore_pmi_module_t *mod,
 
 	rc = OPAL_SUCCESS;
     }
+    OBJ_DESTRUCT(&kv);
 
     if (encoded_data) {
 	free(encoded_data);
@@ -243,17 +229,14 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
     int remote_key, size;
     size_t bytes_read;
     int rc;
+    opal_value_t kv;
 
     /* set default */
     *packed_data = NULL;
     *len = 0;
 
-    pmi_tmp = calloc (mod->pmi_vallen_max, 1);
-    if (NULL == pmi_tmp) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
     /* read all of the packed data from this proc */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
     for (remote_key = 0, bytes_read = 0 ; ; ++remote_key) {
         char tmp_key[32];
 
@@ -268,13 +251,13 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
         OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
                              "GETTING KEY %s", pmikey));
 
-        rc = kvs_get(mod, pmikey, pmi_tmp, mod->pmi_vallen_max);
+        rc = opal_pmi.get(&proc, pmikey, &kv);
         free (pmikey);
         if (OPAL_SUCCESS != rc) {
             break;
         }
 
-        size = strlen (pmi_tmp);
+        size = strlen (kv->data.string);
 
         if (NULL == tmp_encoded) {
             tmp_encoded = malloc (size + 1);
@@ -282,14 +265,17 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
             tmp_encoded = realloc (tmp_encoded, bytes_read + size + 1);
         }
 
-        strcpy (tmp_encoded + bytes_read, pmi_tmp);
+        strcpy (tmp_encoded + bytes_read, kv->data.string);
         bytes_read += size;
+        free(kv->data.string);
+        kv->data.string = NULL;
 
         /* is the string terminator present? */
         if ('-' == tmp_encoded[bytes_read-1]) {
             break;
         }
     }
+    OBJ_DESTRUCT(&kv);
 
     free (pmi_tmp);
 

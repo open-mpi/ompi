@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,8 +30,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_dstore_pmi_la_SOURCES = $(sources)
 mca_dstore_pmi_la_CPPFLAGS = $(dstore_pmi_CPPFLAGS)
 mca_dstore_pmi_la_LDFLAGS = -module -avoid-version $(dstore_pmi_LDFLAGS)
-mca_dstore_pmi_la_LIBADD = $(dstore_pmi_LIBS) \
-	$(OPAL_TOP_BUILDDIR)/opal/mca/common/pmi/libmca_common_pmi.la
+mca_dstore_pmi_la_LIBADD = $(dstore_pmi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_dstore_pmi_la_SOURCES =$(sources)
