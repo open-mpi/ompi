@@ -152,6 +152,7 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
         opal_dss.pack(msg, &tr_id, 1, OPAL_UINT32);
         opal_dss.pack(msg, &mkey->va_base, 1, OPAL_UINT64);
         if (0 == mkey->va_base) {
+            assert(mkey->is_sm == 1);
             opal_dss.pack(msg, &mkey->u.key, 1, OPAL_UINT64);
         } else {
             opal_dss.pack(msg, &mkey->len, 1, OPAL_UINT16);
@@ -168,12 +169,14 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
 
 static void memheap_attach_segment(sshmem_mkey_t *mkey, int tr_id)
 {
-    /* process special case when va was got using shmget(IPC_PRIVATE)
+    /* process special case when va was got using sshmem
      * this case is notable for:
-     * - key is set as (type|seg_id);
+     * - key is set as (seg_id);
      * - va_base is set as 0;
+     * - len is set as 0;
      */
     assert(mkey->va_base == 0);
+    assert(mkey->len == 0);
 
     MEMHEAP_VERBOSE(5,
             "shared memory usage tr_id: %d va_base: 0x%p len: %d key %llx",
@@ -213,8 +216,10 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
         if (0 == memheap_oob.mkeys[tr_id].va_base) {
             cnt = 1;
             opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].u.key, &cnt, OPAL_UINT64);
-            if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags))
+            if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+                memheap_oob.mkeys[tr_id].is_sm = 1;
                 memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
+            }
         } else {
             cnt = 1;
             opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].len, &cnt, OPAL_UINT16);

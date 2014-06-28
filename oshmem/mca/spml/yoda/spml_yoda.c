@@ -404,6 +404,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
         /* If we have shared memory just save its id*/
         if (YODA_BTL_SM == ybtl->btl_type
                 && MAP_SEGMENT_SHM_INVALID != (int)shmid) {
+            mkeys[i].is_sm = 1;
             mkeys[i].u.key = shmid;
             mkeys[i].va_base = 0;
             continue;
@@ -1069,7 +1070,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
      * just do memcpy
      */
     if ((YODA_BTL_SM == ybtl->btl_type)
-            && mca_memheap_base_can_local_copy(r_mkey, dst_addr)) {
+            && mca_memheap_base_can_local_copy(r_mkey, src_addr)) {
         memcpy(dst_addr, (void *) rva, size);
         /* must call progress here to avoid deadlock. Scenarion:
          * pe1 pols pe2 via shm get. pe2 tries to get static variable from node one, which goes to sm btl
