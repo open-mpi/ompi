@@ -112,6 +112,13 @@ static int _check_address(struct map_segment_desc *seg)
                         data_end, seg->start);
         return OSHMEM_ERROR;
     }
+
+    if ((uintptr_t)seg->end > (uintptr_t)data_end) {
+        MEMHEAP_VERBOSE(100,
+                        "adjust segment: data _end < segment end (%p < %p",
+                        data_end, seg->end);
+         seg->end = data_end;
+    }
 #endif
     return OSHMEM_SUCCESS;
 }
