@@ -86,6 +86,7 @@ typedef enum {
 typedef struct sshmem_mkey {
     void* va_base;
     uint16_t len;
+    int is_sm;
     union {
         void *data;
         uint64_t key;

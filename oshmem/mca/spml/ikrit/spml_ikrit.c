@@ -555,6 +555,7 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
         switch (i) {
         case MXM_PTL_SHM:
             if ((int)shmid != MAP_SEGMENT_SHM_INVALID) {
+                mkeys[i].is_sm = 1;
                 mkeys[i].u.key = shmid;
                 mkeys[i].va_base = 0;
             } else {
