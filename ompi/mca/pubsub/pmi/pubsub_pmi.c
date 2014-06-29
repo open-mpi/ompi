@@ -14,7 +14,7 @@
 #include "ompi/constants.h"
 
 
-#include "opal/mca/pmi/pmi.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/info/info.h"
 #include "ompi/mca/rte/rte.h"
@@ -34,13 +34,13 @@ static int init(void)
  */
 static int publish ( const char *service_name, ompi_info_t *info, const char *port_name )
 {
-    return opal_pmi.publish(service_name,port_name);
+    return opal_pmix.publish(service_name,port_name);
 }
 
 static char* lookup ( const char *service_name, ompi_info_t *info )
 {
     char *port=NULL;
-    int rc = opal_pmi.lookup(service_name, &port);
+    int rc = opal_pmix.lookup(service_name, &port);
     /* in error case port will be set to NULL
      * this is what our callers expect to see
      * In future maybe som error handling need?
@@ -56,7 +56,7 @@ static char* lookup ( const char *service_name, ompi_info_t *info )
  * delete the entry */
 static int unpublish ( const char *service_name, ompi_info_t *info )
 {
-    return opal_pmi.unpublish(service_name);
+    return opal_pmix.unpublish(service_name);
 }
 
 
@@ -65,6 +65,7 @@ static int unpublish ( const char *service_name, ompi_info_t *info )
  */
 static int finalize(void)
 {
+    opal_pmix.finalize();
     return OMPI_SUCCESS;
 }
 

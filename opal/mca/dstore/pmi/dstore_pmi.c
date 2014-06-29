@@ -28,6 +28,7 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "opal/mca/dstore/base/base.h"
 #include "dstore_pmi.h"
@@ -133,7 +134,7 @@ static int pmi_commit_packed(mca_dstore_pmi_module_t *mod,
 
         kv->key = tmp_key;
         kv->data.string = tmp;
-	rc = opal_pmi.put(proc, mod->pmi_kvs_name, &kv);
+	rc = opal_pmix.put(proc, mod->pmi_kvs_name, &kv);
         kv->key = NULL;
         kv->data.string = NULL;
         if (OPAL_SUCCESS != rc) {
@@ -251,7 +252,7 @@ static int pmi_get_packed(mca_dstore_pmi_module_t *mod,
         OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
                              "GETTING KEY %s", pmikey));
 
-        rc = opal_pmi.get(&proc, pmikey, &kv);
+        rc = opal_pmix.get(&proc, pmikey, &kv);
         free (pmikey);
         if (OPAL_SUCCESS != rc) {
             break;

@@ -15,17 +15,45 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 
-#include "pmi2_pmap_parser.h"
-
 #include <string.h>
 #include <pmi.h>
 
-#include "pmi_s1.h"
+#include "pmix_s1.h"
 
 static int s1_init(void);
 static int s1_fini(void);
 static bool s1_initialized(void);
 static int s1_abort(int flag, const char msg[]);
+static int s1_get_jobid(char jobId[], int jobIdSize);
+static int s1_get_rank(int *rank);
+static int s1_get_size(opal_pmix_scope_t scope, int *size);
+static int s1_get_appnum(int *appnum);
+static int s1_fence(void);
+static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
+static int s1_put(opal_identifier_t *id,
+                  const char key[],
+                  opal_pmix_scope_t scope,
+                  opal_value_t *kv);
+static int s1_get(opal_identifier_t *id,
+                  const char *key,
+                  opal_value_t *kv);
+static void s1_get_nb(opal_identifier_t *id,
+                      const char *key,
+                      opal_pmix_cbfunc_t cbfunc,
+                      void *cbdata);
+static int s1_publish(opal_identifier_t *id,
+                      const char service_name[],
+                      const struct MPID_Info *info_ptr,
+                      const char port[]);
+static int s1_lookup(opal_identifier_t *id,
+                     const char service_name[],
+                     const struct MPID_Info *info_ptr,
+                     char port[], int portLen);
+static int s1_unpublish(opal_identifier_t *id,
+                        const char service_name[], 
+                        const struct MPID_Info *info_ptr);
+static int s1_local_info(int vpid, int **ranks_ret,
+                         int *procs_ret, char **error);
 static int s1_spawn(int count, const char * cmds[],
                     int argcs[], const char ** argvs[],
                     const int maxprocs[],
@@ -35,96 +63,58 @@ static int s1_spawn(int count, const char * cmds[],
                     const struct MPID_Info *preput_keyval_vector[],
                     char jobId[], int jobIdSize,
                     int errors[]);
-static int s1_get_jobid(char jobId[], int jobIdSize);
-static int s1_get_rank(int *rank);
-static int s1_get_size(int *size);
 static int s1_job_connect(const char jobId[],
                           PMI2_Connect_comm_t *conn);
 static int s1_job_disconnect(const char jobId[]);
-static int s1_put(const char key[], const char value[]);
-static int s1_fence(void);
-static int s1_get(const char *jobid,
-                  int src_pmi_id,
-                  const char key[],
-                  char value [],
-                  int maxvalue,
-                  int *vallen);
-static int s1_get_node_attr(const char name[],
-                            char value[],
-                            int valuelen,
-                            int *found,
-                            int waitfor);
-static int s1_get_node_attr_array(const char name[],
-                                  int array[],
-                                  int arraylen,
-                                  int *outlen,
-                                  int *found);
-static int s1_put_node_attr(const char name[], const char value[]);
-static int s1_get_job_attr(const char name[],
-                           char value[],
-                           int valuelen,
-                           int *found);
-static int s1_get_job_attr_array(const char name[],
-                                 int array[],
-                                 int arraylen,
-                                 int *outlen,
-                                 int *found);
-static int s1_publish(const char service_name[],
-                      const struct MPID_Info *info_ptr,
-                      const char port[]);
-static int s1_lookup(const char service_name[],
-                     const struct MPID_Info *info_ptr,
-                     char port[], int portLen);
-static int s1_unpublish(const char service_name[], 
-                        const struct MPID_Info *info_ptr);
-static int s1_local_info(int vpid, int **ranks_ret,
-                         int *procs_ret, char **error);
 
-opal_pmi_base_module_t opal_pmi_s1_module = {
+const opal_pmix_base_module_t opal_pmix_s1_module = {
     s1_init,
     s1_fini,
     s1_initialized,
     s1_abort,
-    s1_spawn,
     s1_get_jobid,
     s1_get_rank,
     s1_get_size,
-    s1_job_connect,
-    s1_job_disconnect,
-    s1_put,
+    s1_get_appnum,
     s1_fence,
+    s1_fence_nb,
+    s1_put,
     s1_get,
-    s1_get_node_attr,
-    s1_get_node_attr_array,
-    s1_put_node_attr,
-    s1_get_job_attr,
-    s1_get_job_attr_array,
+    s1_get_nb,
     s1_publish,
     s1_lookup,
     s1_unpublish,
-    s1_local_info
+    s1_local_info,
+    s1_spawn,
+    s1_job_connect,
+    s1_job_disconnect
 };
 
 // usage accounting
-static int mca_common_pmi_init_count = 0;
+static int mca_common_pmix_init_count = 0;
 
 // per-launch selection between PMI versions
-static int mca_common_pmi_version = 0;
+static int mca_common_pmix_version = 0;
 
 // PMI constant values:
-static int pmi_kvslen_max = 0;
-static int pmi_keylen_max = 0;
-static int pmi_vallen_max = 0;
+static int pmix_kvslen_max = 0;
+static int pmix_keylen_max = 0;
+static int pmix_vallen_max = 0;
 
 // Job environment description
-static int pmi_size = 0;
-static int pmi_rank = 0;
-static int pmi_appnum = 0;
-static int pmi_usize = 0;
-static char *pmi_kvs_name = NULL;
+static int pmix_size = 0;
+static int pmix_rank = 0;
+static int pmix_appnum = 0;
+static int pmix_usize = 0;
+static char *pmix_kvs_name = NULL;
 
-static char* pmi_error(int pmi_err);
-#define OPAL_PMI_ERROR(a) pmi_error(a)
+static char* pmix_error(int pmix_err);
+#define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
+    do {                                                        \
+        opal_output(0, "%s [%s:%d:%s]: %s\n",                   \
+                    pmi_func, __FILE__, __LINE__, __func__,     \
+                    pmi_error(pmi_err));                        \
+    } while(0);
 
 static int s1_init(void)
 {
@@ -143,55 +133,55 @@ static int s1_init(void)
     }
 
     // Initialize space demands
-    rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
+    rc = PMI_KVS_Get_value_length_max(&pmix_vallen_max);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_value_length_max");
         goto err_exit;
     }
 
-    rc = PMI_KVS_Get_name_length_max(&pmi_kvslen_max);
+    rc = PMI_KVS_Get_name_length_max(&pmix_kvslen_max);
     if (PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
         goto err_exit;
     }
 
-    rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max);
+    rc = PMI_KVS_Get_key_length_max(&pmix_keylen_max);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_key_length_max");
         goto err_exit;
     }
 
     // Initialize job environment information
-    rc = PMI_Get_rank(&pmi_rank);
+    rc = PMI_Get_rank(&pmix_rank);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_rank");
         return OPAL_ERROR;
     }
-    rc = PMI_Get_universe_size(&pmi_usize);
+    rc = PMI_Get_universe_size(&pmix_usize);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_universe_size");
         goto err_exit;
     }
 
-    rc = PMI_Get_size(&pmi_size);
+    rc = PMI_Get_size(&pmix_size);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_size");
         goto err_exit;
     }
 
-    rc = PMI_Get_appnum(&pmi_appnum);
+    rc = PMI_Get_appnum(&pmix_appnum);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_appnum");
         goto err_exit;
     }
 
-    pmi_kvs_name = (char*)malloc(pmi_kvslen_max);
-    if( pmi_kvs_name == NULL ){
+    pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
+    if( pmix_kvs_name == NULL ){
          ret = OPAL_ERR_OUT_OF_RESOURCE;
          goto err_exit;
     }
 
-    rc = PMI_KVS_Get_my_name(pmi_kvs_name,pmi_kvslen_max);
+    rc = PMI_KVS_Get_my_name(pmix_kvs_name,pmix_kvslen_max);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
         goto err_exit;
@@ -205,11 +195,11 @@ err_exit:
 }
 
 static int s1_fini(void) {
-    if (0 == pmi_init_count) {
+    if (0 == pmix_init_count) {
         return OPAL_SUCCESS;
     }
 
-    if (0 == --pmi_init_count) {
+    if (0 == --pmix_init_count) {
         PMI_Finalize ();
     }
     return OPAL_SUCCESS;
@@ -217,7 +207,7 @@ static int s1_fini(void) {
 
 static bool s1_initialized(void)
 {
-    if (0 < pmi_init_count) {
+    if (0 < pmix_init_count) {
         return true;
     }
     return false;
@@ -248,13 +238,13 @@ static int s1_get_jobid(char jobId[], int jobIdSize)
 
 static int s1_get_rank(int *rank)
 {
-    *rank = pmi_rank;
+    *rank = pmix_rank;
     return OPAL_SUCCESS;
 }
 
 static int s1_get_size(int *size)
 {
-    *size = pmi_size;
+    *size = pmix_size;
     return OPAL_SUCCESS;
 }
 
@@ -262,7 +252,7 @@ static int s1_put(const char key[], const char value[])
 {
     int rc;
 
-    rc = PMI_KVS_Put(pmi_kvs_name, key, value);
+    rc = PMI_KVS_Put(pmix_kvs_name, key, value);
     if( PMI_SUCCESS != rc ){
         OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
         return OPAL_ERROR;
@@ -274,7 +264,7 @@ static int s1_fence(void)
 {
     /* if we haven't already done it, ensure we have committed our values */
     if (!s1_committed) {
-        if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmi_kvs_name))) {
+        if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmix_kvs_name))) {
             OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
             return OPAL_ERROR;
         }
@@ -290,7 +280,7 @@ static int s1_fence(void)
 }
 
 static int s1_get(const char *jobid,
-                  int src_pmi_id,
+                  int src_pmix_id,
                   const char key[],
                   char value [],
                   int maxvalue,
@@ -298,7 +288,7 @@ static int s1_get(const char *jobid,
 {
     int rc;
 
-    rc = PMI_KVS_Get(pmi_kvs_name, key, value, vallen);
+    rc = PMI_KVS_Get(pmix_kvs_name, key, value, vallen);
     if( PMI_SUCCESS != rc ){
         OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
         return OPAL_ERROR;
@@ -389,7 +379,7 @@ static int s1_unpublish(const char service_name[],
     return OPAL_SUCCESS;;
 }
 
-static int pmi_local_info(int vpid, int **ranks_ret,
+static int pmix_local_info(int vpid, int **ranks_ret,
                           int *procs_ret, char **error)
 {
     int *ranks;
@@ -399,18 +389,18 @@ static int pmi_local_info(int vpid, int **ranks_ret,
     /* get our local proc info to find our local rank */
     if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&procs))) {
         OPAL_PMI_ERROR(rc, "PMI_Get_clique_size");
-        *error = "mca_common_pmi_local_info: could not get PMI clique size";
+        *error = "mca_common_pmix_local_info: could not get PMI clique size";
         return OPAL_ERROR;
     }
     /* now get the specific ranks */
     ranks = (int*)calloc(procs, sizeof(int));
     if (NULL == ranks) {
-        *error = "mca_common_pmi_local_info: could not get memory for local ranks";
+        *error = "mca_common_pmix_local_info: could not get memory for local ranks";
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, procs))) {
         OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
-        *error = "mca_common_pmi_local_info: could not get clique ranks";
+        *error = "mca_common_pmix_local_info: could not get clique ranks";
         return OPAL_ERROR;
     }
 
@@ -419,11 +409,11 @@ static int pmi_local_info(int vpid, int **ranks_ret,
     return OPAL_SUCCESS;
 }
 
-static char* pmi_error(int pmi_err)
+static char* pmix_error(int pmix_err)
 {
     char * err_msg;
 
-    switch(pmi_err) {
+    switch(pmix_err) {
         case PMI_FAIL: err_msg = "Operation failed"; break;
         case PMI_ERR_INIT: err_msg = "PMI is not initialized"; break;
         case PMI_ERR_NOMEM: err_msg = "Input buffer not large enough"; break;
@@ -439,7 +429,7 @@ static char* pmi_error(int pmi_err)
         case PMI_ERR_INVALID_KEYVALP: err_msg = "Invalid keyvalp argument"; break;
         case PMI_ERR_INVALID_SIZE: err_msg = "Invalid size argument"; break;
 #if defined(PMI_ERR_INVALID_KVS)
-	/* pmi.h calls this a valid return code but mpich doesn't define it (slurm does). */
+	/* pmix.h calls this a valid return code but mpich doesn't define it (slurm does). */
         case PMI_ERR_INVALID_KVS: err_msg = "Invalid kvs argument"; break;
 #endif
         case PMI_SUCCESS: err_msg = "Success"; break;

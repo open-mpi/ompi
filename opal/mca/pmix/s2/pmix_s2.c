@@ -26,7 +26,7 @@
 #include <pmi.h>
 #include <pmi2.h>
 
-#include "pmi_s2.h"
+#include "pmix_s2.h"
 
 static int s2_init(void);
 static int s2_fini(void);
@@ -50,7 +50,7 @@ static int s2_job_disconnect(const char jobId[]);
 static int s2_put(const char key[], const char value[]);
 static int s2_fence(void);
 static int s2_get(const char *jobid,
-                  int src_pmi_id,
+                  int src_pmix_id,
                   const char key[],
                   char value [],
                   int maxvalue,
@@ -86,7 +86,7 @@ static int s2_unpublish(const char service_name[],
 static int s2_local_info(int vpid, int **ranks_ret,
                          int *procs_ret, char **error);
 
-opal_pmi_base_module_t opal_pmi_s2_module = {
+opal_pmix_base_module_t opal_pmix_s2_module = {
     s2_init,
     s2_fini,
     s2_initialized,
@@ -112,22 +112,27 @@ opal_pmi_base_module_t opal_pmi_s2_module = {
 };
 
 // usage accounting
-static int pmi_init_count = 0;
+static int pmix_init_count = 0;
 
 // PMI constant values:
-static int pmi_kvslen_max = 0;
-static int pmi_keylen_max = 0;
-static int pmi_vallen_max = 0;
+static int pmix_kvslen_max = 0;
+static int pmix_keylen_max = 0;
+static int pmix_vallen_max = 0;
 
 // Job environment description
-static int pmi_size = 0;
-static int pmi_rank = 0;
-static int pmi_appnum = 0;
-static int pmi_usize = 0;
-static char *pmi_kvs_name = NULL;
+static int pmix_size = 0;
+static int pmix_rank = 0;
+static int pmix_appnum = 0;
+static int pmix_usize = 0;
+static char *pmix_kvs_name = NULL;
 
-static char* pmi_error(int pmi_err);
-#define OPAL_PMI_ERROR(a) pmi_error(a)
+static char* pmix_error(int pmix_err);
+#define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
+    do {                                                        \
+        opal_output(0, "%s [%s:%d:%s]: %s\n",                   \
+                    pmi_func, __FILE__, __LINE__, __func__,     \
+                    pmi_error(pmi_err));                        \
+    } while(0);
 
 static int s2_init(void)
 {
@@ -144,36 +149,36 @@ static int s2_init(void)
     rank = -1;
     appnum = -1;
     if (PMI2_SUCCESS != (rc = PMI2_Init(&spawned, &size, &rank, &appnum))) {
-        opal_show_help("help-pmi-base.txt", "pmi2-init-failed", true, rc);
+        opal_show_help("help-pmix-base.txt", "pmix2-init-failed", true, rc);
         return OPAL_ERROR;
     }
     if( size < 0 || rank < 0 ){
-        opal_show_help("help-pmi-base.txt", "pmi2-init-returned-bad-values", true);
+        opal_show_help("help-pmix-base.txt", "pmix2-init-returned-bad-values", true);
         goto err_exit;
     }
 
-    pmi_size = size;
-    pmi_rank = rank;
-    pmi_appnum = appnum;
+    pmix_size = size;
+    pmix_rank = rank;
+    pmix_appnum = appnum;
 
-    pmi_vallen_max = PMI2_MAX_VALLEN;
-    pmi_kvslen_max = PMI2_MAX_VALLEN; // FIX ME: What to put here for versatility?
-    pmi_keylen_max = PMI2_MAX_KEYLEN;
+    pmix_vallen_max = PMI2_MAX_VALLEN;
+    pmix_kvslen_max = PMI2_MAX_VALLEN; // FIX ME: What to put here for versatility?
+    pmix_keylen_max = PMI2_MAX_KEYLEN;
 
     rc = PMI2_Info_GetJobAttr("universeSize", buf, 16, &found);
     if( PMI2_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_universe_size");
         goto err_exit;
     }
-    pmi_usize = atoi(buf);
+    pmix_usize = atoi(buf);
 
-    pmi_kvs_name = (char*)malloc(pmi_kvslen_max);
-    if( pmi_kvs_name == NULL ){
+    pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
+    if( pmix_kvs_name == NULL ){
          PMI2_Finalize();
          ret = OPAL_ERR_OUT_OF_RESOURCE;
          goto err_exit;
     }
-    rc = PMI2_Job_GetId(pmi_kvs_name, pmi_kvslen_max);
+    rc = PMI2_Job_GetId(pmix_kvs_name, pmix_kvslen_max);
     if( PMI2_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
         goto err_exit;
@@ -186,18 +191,18 @@ err_exit:
 }
 
 static void s2_fini(void) {
-    if (0 == pmi_init_count) {
+    if (0 == pmix_init_count) {
         return;
     }
 
-    if (0 == --pmi_init_count) {
+    if (0 == --pmix_init_count) {
         PMI2_Finalize();
     }
 }
 
 static bool s2_initialized(void)
 {
-    if (0 < pmi_init_count) {
+    if (0 < pmix_init_count) {
         return true;
     }
     return false;
@@ -228,13 +233,13 @@ static int s2_get_jobid(char jobId[], int jobIdSize)
 
 static int s2_get_rank(int *rank)
 {
-    *rank = pmi_rank;
+    *rank = pmix_rank;
     return OPAL_SUCCESS;
 }
 
 static int s2_get_size(int *size)
 {
-    *size = pmi_size;
+    *size = pmix_size;
     return OPAL_SUCCESS;
 }
 
@@ -259,7 +264,7 @@ static int s2_fence(void)
 }
 
 static int s2_get(const char *jobid,
-                  int src_pmi_id,
+                  int src_pmix_id,
                   const char key[],
                   char value [],
                   int maxvalue,
@@ -364,7 +369,7 @@ static int s2_local_info(int vpid, int **ranks_ret,
 
     char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
     if( pmapping == NULL ){
-        *error = "mca_common_pmi_local_info: could not get memory for PMIv2 process mapping";
+        *error = "mca_common_pmix_local_info: could not get memory for PMIv2 process mapping";
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     int found;
@@ -374,13 +379,13 @@ static int s2_local_info(int vpid, int **ranks_ret,
     if( !found || PMI2_SUCCESS != rc ) {
         /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
         OPAL_PMI_ERROR(rc,"PMI2_Info_GetJobAttr");
-        *error = "mca_common_pmi_local_info: could not get PMI_process_mapping";
+        *error = "mca_common_pmix_local_info: could not get PMI_process_mapping";
         return OPAL_ERROR;
     }
 
-    ranks = mca_common_pmi2_parse_pmap(pmapping, vpid, &my_node, &procs);
+    ranks = mca_common_pmix2_parse_pmap(pmapping, vpid, &my_node, &procs);
     if (NULL == ranks) {
-        *error = "mca_common_pmi_local_info: could not get memory for PMIv2 local ranks";
+        *error = "mca_common_pmix_local_info: could not get memory for PMIv2 local ranks";
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -390,11 +395,11 @@ static int s2_local_info(int vpid, int **ranks_ret,
     return OPAL_SUCCESS;
 }
 
-static char* pmi_error(int pmi_err)
+static char* pmix_error(int pmix_err)
 {
     char * err_msg;
 
-    switch(pmi_err) {
+    switch(pmix_err) {
         case PMI_FAIL: err_msg = "Operation failed"; break;
         case PMI_ERR_INIT: err_msg = "PMI is not initialized"; break;
         case PMI_ERR_NOMEM: err_msg = "Input buffer not large enough"; break;
@@ -410,7 +415,7 @@ static char* pmi_error(int pmi_err)
         case PMI_ERR_INVALID_KEYVALP: err_msg = "Invalid keyvalp argument"; break;
         case PMI_ERR_INVALID_SIZE: err_msg = "Invalid size argument"; break;
 #if defined(PMI_ERR_INVALID_KVS)
-	/* pmi.h calls this a valid return code but mpich doesn't define it (slurm does). */
+	/* pmix.h calls this a valid return code but mpich doesn't define it (slurm does). */
         case PMI_ERR_INVALID_KVS: err_msg = "Invalid kvs argument"; break;
 #endif
         case PMI_SUCCESS: err_msg = "Success"; break;

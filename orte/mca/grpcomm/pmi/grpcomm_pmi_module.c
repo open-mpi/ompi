@@ -22,7 +22,7 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal_params.h"
-#include "opal/mca/pmi/pmi.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/mca/dstore/dstore.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -59,7 +59,7 @@ orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
  */
 static int init(void)
 {
-    return mca_common_pmi_init(opal_pmi_version);
+    return OPAL_SUCCESS;
 }
 
 /**
@@ -67,7 +67,7 @@ static int init(void)
  */
 static void finalize(void)
 {
-    opal_pmi.finalize();
+    opal_pmix.finalize();  // matches the init call in the component query function
     return;
 }
 
@@ -105,7 +105,7 @@ static int pmi_barrier(orte_grpcomm_collective_t *coll)
         return ORTE_SUCCESS;
     }
     
-    if( OPAL_SUCCESS != (rc = opal_pmi.fence()) ){
+    if( OPAL_SUCCESS != (rc = opal_pmix.fence()) ){
         return rc;
     }
 
@@ -147,7 +147,7 @@ static int modex(orte_grpcomm_collective_t *coll)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* discover the local ranks */
-    rc = opal_pmi.get_local_info(ORTE_PROC_MY_NAME->vpid, &local_ranks,
+    rc = opal_pmix.get_local_info(ORTE_PROC_MY_NAME->vpid, &local_ranks,
                                  &local_rank_count, &error);
     if( OPAL_SUCCESS != rc){
         opal_output(0, "%s could not get PMI_process_mapping: %s",

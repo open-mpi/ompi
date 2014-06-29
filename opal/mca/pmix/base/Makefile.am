@@ -9,11 +9,11 @@
 # $HEADER$
 #
 
-dist_opaldata_DATA += base/help-pmi-base.txt
+dist_opaldata_DATA += base/help-pmix-base.txt
 
 headers += \
 	base/base.h
 
-libmca_pmi_la_SOURCES += \
-	base/pmi_base_frame.c \
-	base/pmi_base_select.c
+libmca_pmix_la_SOURCES += \
+	base/pmix_base_frame.c \
+	base/pmix_base_select.c

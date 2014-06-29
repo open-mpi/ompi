@@ -7,18 +7,18 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(LTDLINCL)
+AM_CPPFLAGS = $(LTDLINCL) $(pmix_CPPFLAGS)
 
 # main library setup
-noinst_LTLIBRARIES = libmca_pmi.la
-libmca_pmi_la_SOURCES =
+noinst_LTLIBRARIES = libmca_pmix.la
+libmca_pmix_la_SOURCES =
 
 # pkgdata setup
 dist_opaldata_DATA =
 
 # local files
-headers = pmi.h
-libmca_pmi_la_SOURCES += $(headers)
+headers = pmix.h
+libmca_pmix_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS

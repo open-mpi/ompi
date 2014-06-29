@@ -45,7 +45,7 @@
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
-#include "opal/mca/pmi/pmi.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -129,14 +129,14 @@ static int rte_init(void)
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
         /* get our rank from PMI */
-        if (OPAL_SUCCESS != (ret = opal_pmi.get_rank(&i))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.get_rank(&i))) {
             error = "getting rank";
             goto error;
         }
         ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
 
         /* get the number of procs from PMI */
-        if (OPAL_SUCCESS != (ret = opal_pmi.get_size(&i))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.get_size(&i))) {
             error = "getting size";
             goto error;
         }
@@ -153,7 +153,7 @@ static int rte_init(void)
     }
 
     /* we are a direct-launched MPI process */
-    if (OPAL_SUCCESS != (ret = opal_pmi.get_jobid(pmi_id, 256))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix.get_jobid(pmi_id, 256))) {
         error = "get jobid";
         goto error;
     }
@@ -178,14 +178,14 @@ static int rte_init(void)
     ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
 
     /* get our rank */
-    if (OPAL_SUCCESS != (ret = opal_pmi.get_rank(&i))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix.get_rank(&i))) {
         error = "getting rank";
         goto error;
     }
     ORTE_PROC_MY_NAME->vpid = i;
 
     /* get the number of procs from PMI */
-    if (OPAL_SUCCESS != (ret = opal_pmi.get_size(&i))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix.get_size(&i))) {
         error = "getting size";
         goto error;
     }
@@ -241,7 +241,7 @@ static int rte_init(void)
         goto error;
     }
 
-    ret = opal_pmi.get_local_info(ORTE_PROC_MY_NAME->vpid, &ranks, &procs, &error);
+    ret = opal_pmix.get_local_info(ORTE_PROC_MY_NAME->vpid, &ranks, &procs, &error);
     if( OPAL_SUCCESS != ret ){
         goto error;
     }

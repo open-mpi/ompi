@@ -14,7 +14,7 @@
 #include "ompi_config.h"
 
 #include "opal/runtime/opal_params.h"
-#include "opal/mca/pmi/pmi.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/rte/rte.h"
@@ -75,7 +75,7 @@ static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
     /* if we are indirectly launched via orted, the
      * selection will have been turned "off" for us
      */
-    int rc = opal_pmi.init ();
+    int rc = opal_pmix.init ();
     
     if ( OPAL_SUCCESS == rc ) {
         *priority = my_priority;

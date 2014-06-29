@@ -18,18 +18,16 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_framework.h"
 
-#include "opal/mca/pmi/pmi.h"
+#include "opal/mca/pmix/pmix.h"
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC extern mca_base_framework_t opal_pmi_base_framework;
+OPAL_DECLSPEC extern mca_base_framework_t opal_pmix_base_framework;
 
 /**
- * Select a pmi module
+ * Select a pmix module
  */
-OPAL_DECLSPEC int opal_pmi_base_select(void);
-
-OPAL_DECLSPEC char* opal_pmi_base_error(int pmi_err);
+OPAL_DECLSPEC int opal_pmix_base_select(void);
 
 END_C_DECLS
 

@@ -11,7 +11,7 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-#include "opal/mca/pmi/pmi.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "opal/mca/base/base.h"
 
@@ -81,7 +81,7 @@ static bool component_avail(void)
      * will force our selection if we are direct-launched,
      * and the orted will turn us "off" if indirectly launched
      */
-    int rc = mca_common_pmi_init(opal_pmi_version);
+    int rc = opal_pmix.init();
     if ( OPAL_SUCCESS == rc && OPAL_SUCCESS == setup_pmi()) {
         return true;
     }
@@ -92,7 +92,7 @@ static bool component_avail(void)
 
 static void component_finalize(void)
 {
-    mca_common_pmi_finalize();
+    opal_pmix.finalize();
     if (NULL != pmi_kvs_name) {
         free(pmi_kvs_name);
     }
