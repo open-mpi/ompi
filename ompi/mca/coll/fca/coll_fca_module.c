@@ -1,11 +1,14 @@
-/**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
-  $HEADER$
+/*
+ * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
+
 #include "coll_fca.h"
 
 /*
@@ -42,7 +45,7 @@ static int have_remote_peers(ompi_group_t *group, size_t size, int *local_peers)
     ret = 0;
     for (i = 0; i < size; ++i) {
         proc = ompi_group_peer_lookup(group, i);
-        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             ++*local_peers;
         } else {
             ret = 1;
@@ -69,7 +72,7 @@ static int __get_local_ranks(mca_coll_fca_module_t *fca_module)
     fca_module->num_local_procs = 0;
     for (rank = 0; rank < ompi_comm_size(comm); ++rank) {
         proc = __local_rank_lookup(comm, rank);
-        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             if (rank == fca_module->rank) {
                 fca_module->local_proc_idx = fca_module->num_local_procs;
             }
@@ -89,7 +92,7 @@ static int __get_local_ranks(mca_coll_fca_module_t *fca_module)
     i = 0;
     for (rank = 0; rank < ompi_comm_size(comm); ++rank) {
         proc = __local_rank_lookup(comm, rank);
-        if (FCA_IS_LOCAL_PROCESS(proc->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             fca_module->local_ranks[i++] = rank;
         }
     }

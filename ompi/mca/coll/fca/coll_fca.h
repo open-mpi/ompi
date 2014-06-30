@@ -1,12 +1,13 @@
-/**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
-  $COPYRIGHT$
-
-  Additional copyrights may follow
-
-  $HEADER$
+/*
+ * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
  */
-
 
 #ifndef MCA_COLL_FCA_H
 #define MCA_COLL_FCA_H
@@ -57,14 +58,6 @@
 #define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(__dtype, __count) \
                                   ompi_ddt_is_contiguous_memory_layout(__dtype, __count)
 #endif
-
-
-#ifdef OMPI_PROC_FLAG_LOCAL
-#define FCA_IS_LOCAL_PROCESS(n) ((n) & OMPI_PROC_FLAG_LOCAL)
-#else
-#define FCA_IS_LOCAL_PROCESS(n) OPAL_PROC_ON_LOCAL_NODE(n)
-#endif
-
 
 BEGIN_C_DECLS
 
