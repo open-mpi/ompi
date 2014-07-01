@@ -696,26 +696,27 @@ int orte_sstore_stage_local_fetch_app_deps(orte_app_context_t *app)
     orte_proc_t *child = NULL;
     int loc_argc = 0;
     bool skip_xfer = false;
+    char *sload = NULL;
 
-    if( !app->used_on_node || NULL == app->sstore_load ) {
+    orte_get_attribute(&app->attributes, ORTE_APP_SSTORE_LOAD, (void **)&sload, OPAL_STRING);
+
+    if(!ORTE_FLAG_TEST(app, ORTE_APP_FLAG_USED_ON_NODE) || NULL == sload) {
         OPAL_OUTPUT_VERBOSE((30, mca_sstore_stage_component.super.output_handle,
                              "sstore:stage:(local): fetch_app_deps(%3d): Not for this daemon (%s, %d, %s)",
-                             app->idx,
-                             (app->used_on_node ? "T" : "F"),
-                             (int)app->num_procs,
-                             app->sstore_load));
+                             app->idx, (ORTE_FLAG_TEST(app, ORTE_APP_FLAG_USED_ON_NODE) ? "T" : "F"),
+                             (int)app->num_procs, sload));
         /* Nothing to do */
         goto cleanup;
     }
 
     OPAL_OUTPUT_VERBOSE((10, mca_sstore_stage_component.super.output_handle,
                          "sstore:stage:(local): fetch_app_deps(%3d): %s",
-                         app->idx, app->sstore_load));
+                         app->idx, sload));
 
     /*
      * Extract the 'ref:seq' parameter
      */
-    sstore_args = opal_argv_split(app->sstore_load, ':');
+    sstore_args = opal_argv_split(sload, ':');
     req_snap_loc        = strdup(sstore_args[0]);
     req_snap_global_ref = strdup(sstore_args[1]);
     req_snap_ref        = strdup(sstore_args[2]);

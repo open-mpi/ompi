@@ -216,6 +216,44 @@ int mca_coll_hcoll_alltoall(void *sbuf, int scount,
     return rc;
 }
 
+int mca_coll_hcoll_gatherv(void* sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void* rbuf, int *rcounts, int *displs,
+                            struct ompi_datatype_t *rdtype,
+                            int root,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module)
+{
+    dte_data_representation_t stype;
+    dte_data_representation_t rtype;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL GATHERV");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback gatherv;",
+                     sdtype->super.name,
+                     rdtype->super.name);
+        rc = hcoll_module->previous_gatherv(sbuf,scount,sdtype,
+                                           rbuf, rcounts, displs, rdtype,root,
+                                           comm, hcoll_module->previous_gatherv_module);
+        return rc;
+    }
+    rc = hcoll_collectives.coll_gatherv(sbuf,scount,stype,rbuf,rcounts,displs, rtype, root, hcoll_module->hcoll_context);
+    if (HCOLL_SUCCESS != rc){
+        HCOL_VERBOSE(20,"RUNNING FALLBACK GATHERV");
+        rc = hcoll_module->previous_gatherv(sbuf,scount,sdtype,
+                                           rbuf, rcounts, displs, rdtype,root,
+                                           comm, hcoll_module->previous_igatherv_module);
+    }
+    return rc;
+
+}
+
 int mca_coll_hcoll_ibarrier(struct ompi_communicator_t *comm,
                             ompi_request_t ** request,
                             mca_coll_base_module_t *module)
@@ -355,5 +393,48 @@ int mca_coll_hcoll_iallreduce(void *sbuf, void *rbuf, int count,
                                              comm, request, hcoll_module->previous_iallreduce_module);
     }
     return rc;
+}
+
+int mca_coll_hcoll_igatherv(void* sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void* rbuf, int *rcounts, int *displs,
+                            struct ompi_datatype_t *rdtype,
+                            int root,
+                            struct ompi_communicator_t *comm,
+                            ompi_request_t ** request,
+                            mca_coll_base_module_t *module)
+{
+    dte_data_representation_t stype;
+    dte_data_representation_t rtype;
+    int rc;
+    void** rt_handle;
+    HCOL_VERBOSE(20,"RUNNING HCOL IGATHERV");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    rt_handle = (void**) request;
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback igatherv;",
+                     sdtype->super.name,
+                     rdtype->super.name);
+        rc = hcoll_module->previous_igatherv(sbuf,scount,sdtype,
+                                           rbuf, rcounts, displs, rdtype,root,
+                                           comm, request,
+                                           hcoll_module->previous_igatherv_module);
+        return rc;
+    }
+    rc = hcoll_collectives.coll_igatherv(sbuf,scount,stype,rbuf,rcounts,displs, rtype, root, hcoll_module->hcoll_context, rt_handle);
+    if (HCOLL_SUCCESS != rc){
+        HCOL_VERBOSE(20,"RUNNING FALLBACK IGATHERV");
+        rc = hcoll_module->previous_igatherv(sbuf,scount,sdtype,
+                                           rbuf, rcounts, displs, rdtype,root,
+                                           comm, request,
+                                           hcoll_module->previous_igatherv_module);
+    }
+    return rc;
+
 }
 
