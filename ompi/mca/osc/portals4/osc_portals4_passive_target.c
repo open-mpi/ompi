@@ -219,6 +219,8 @@ ompi_osc_portals4_lock(int lock_type,
     ompi_osc_portals4_outstanding_lock_t* lock;    
     int ret;
 
+    module->passive_target_access_epoch = true;
+
     lock = OBJ_NEW(ompi_osc_portals4_outstanding_lock_t);
     lock->target = target;
 
@@ -278,6 +280,8 @@ ompi_osc_portals4_unlock(int target,
         ret = OMPI_SUCCESS;
     }
 
+    module->passive_target_access_epoch = false;
+
     OBJ_RELEASE(lock);
 
     return ret;
@@ -292,6 +296,8 @@ ompi_osc_portals4_lock_all(int assert,
         (ompi_osc_portals4_module_t*) win->w_osc_module;
     ompi_osc_portals4_outstanding_lock_t* lock;    
     int ret = OMPI_SUCCESS;
+
+    module->passive_target_access_epoch = true;
 
     lock = OBJ_NEW(ompi_osc_portals4_outstanding_lock_t);
     lock->target = -1;
@@ -354,6 +360,8 @@ ompi_osc_portals4_unlock_all(struct ompi_win_t *win)
         }
     }
 
+    module->passive_target_access_epoch = false;
+
     OBJ_RELEASE(lock);
 
     return OMPI_SUCCESS;
@@ -378,6 +386,11 @@ ompi_osc_portals4_flush(int target,
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
 
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     return ompi_osc_portals4_complete_all(module);
 }
 
@@ -387,6 +400,11 @@ ompi_osc_portals4_flush_all(struct ompi_win_t *win)
 {
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
+
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     return ompi_osc_portals4_complete_all(module);
 }
@@ -399,6 +417,11 @@ ompi_osc_portals4_flush_local(int target,
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
 
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     return ompi_osc_portals4_complete_all(module);
 }
 
@@ -408,6 +431,11 @@ ompi_osc_portals4_flush_local_all(struct ompi_win_t *win)
 {
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
+
+    /* flush is only allowed from within a passive target epoch */
+    if (!module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     return ompi_osc_portals4_complete_all(module);
 }
