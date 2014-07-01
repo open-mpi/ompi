@@ -19,6 +19,8 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1141,7 +1143,7 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
         struct ompi_proc_t **procs,
         struct mca_btl_base_endpoint_t ** peers)
 {
-    int i,ep_index;
+    int i, ep_index;
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl;
     mca_btl_openib_endpoint_t* endpoint;
 
@@ -1157,8 +1159,19 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
                 continue;
             }
             if (endpoint == del_endpoint) {
+                int j;
                 BTL_VERBOSE(("in del_procs %d, setting another endpoint to null",
                              ep_index));
+                /* remove the endpoint from eager_rdma_buffers */
+                for (j=0; j<openib_btl->device->eager_rdma_buffers_count; j++) {
+                    if (openib_btl->device->eager_rdma_buffers[j] == endpoint) {
+                        /* should it be obj_reference_count == 2 ? */
+                        assert(((opal_object_t*)endpoint)->obj_reference_count > 1);
+                        OBJ_RELEASE(endpoint);
+                        openib_btl->device->eager_rdma_buffers[j] = NULL;
+                        /* can we simply break and leave the for loop ? */
+                    }
+                }
                 opal_pointer_array_set_item(openib_btl->device->endpoints,
                         ep_index, NULL);
                 assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
