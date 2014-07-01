@@ -886,7 +886,7 @@ ompi_osc_portals4_get_accumulate(void *origin_addr,
                               NULL,
                               0,
                               NULL,
-                              ptl_op,
+                              PTL_SWAP,
                               ptl_dt);
                 sent += msg_length;
             } while (sent < length);
