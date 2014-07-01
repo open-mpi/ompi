@@ -804,3 +804,7 @@ test/util/opal_path_nfs.out
 test/util/opal_bit_ops
 test/util/*.log
 test/util/*.trs
+ompi/contrib/vt/vt/extlib/otf/otf_vc08.sln
+ompi/mpi/fortran/use-mpi-f08-desc/ISO_Fortran_binding.h
+ompi/mpi/java/README
+opal/win32/win_compat.h
