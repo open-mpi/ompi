@@ -13,13 +13,11 @@
 #include "opal_config.h"
 #include "opal/types.h"
 
-#if 0
 #if WANT_PMI_SUPPORT
 #include <pmi.h>
 #endif
 #if WANT_PMI2_SUPPORT
 #include <pmi2.h>
-#endif
 #endif
 
 #include "opal/mca/mca.h"
