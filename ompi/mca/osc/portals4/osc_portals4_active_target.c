@@ -25,10 +25,16 @@ ompi_osc_portals4_fence(int assert, struct ompi_win_t *win)
         (ompi_osc_portals4_module_t*) win->w_osc_module;
     int comm_ret, ret;
 
+    /* can't enter an active target epoch when in a passive target epoch */
+    if (module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     comm_ret = ompi_osc_portals4_complete_all(module);
 
     ret = module->comm->c_coll.coll_barrier(module->comm,
                                             module->comm->c_coll.coll_barrier_module);
+
     return (OMPI_SUCCESS == comm_ret) ? ret : comm_ret;
 }
 
@@ -40,6 +46,11 @@ ompi_osc_portals4_start(struct ompi_group_t *group,
 {
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
+
+    /* can't enter an active target epoch when in a passive target epoch */
+    if (module->passive_target_access_epoch) {
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     if (0 == (assert & MPI_MODE_NOCHECK)) {
         int size;

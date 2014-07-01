@@ -98,6 +98,8 @@ struct ompi_osc_portals4_module_t {
     ompi_group_t *post_group;
     opal_list_t outstanding_locks;
 
+    bool passive_target_access_epoch; /* True if the access epoch is a passive target access epoch */
+
     /* things that are remotely accessible */
     ompi_osc_portals4_node_state_t state;
 };
