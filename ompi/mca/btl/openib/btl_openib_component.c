@@ -19,6 +19,8 @@
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +40,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <math.h>
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
 /*
  * The include of malloc.h below breaks abstractions in OMPI (by
@@ -105,6 +108,7 @@
 #include "btl_openib_ip.h"
 #include "ompi/runtime/params.h"
 
+#define EPS 1.e-6
 /*
  * Local functions
  */
@@ -2098,7 +2102,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
 
 struct dev_distance {
     struct ibv_device *ib_dev;
-    int distance;
+    float distance;
 };
 
 static int compare_distance(const void *p1, const void *p2)
@@ -2106,14 +2110,20 @@ static int compare_distance(const void *p1, const void *p2)
     const struct dev_distance *d1 = (const struct dev_distance *) p1;
     const struct dev_distance *d2 = (const struct dev_distance *) p2;
 
-    return d1->distance - d2->distance;
+    if (d1->distance > (d2->distance+EPS)) {
+        return 1;
+    } else if ((d1->distance + EPS) < d2->distance) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
-static int get_ib_dev_distance(struct ibv_device *dev)
+static float get_ib_dev_distance(struct ibv_device *dev)
 {
     /* If we don't have hwloc, we'll default to a distance of 0,
        because we have no way of measuring. */
-    int distance = 0;
+    float distance = 0;
 
     /* Override any distance logic so all devices are used */
     if (0 != mca_btl_openib_component.ignore_locality) {
@@ -2121,7 +2131,8 @@ static int get_ib_dev_distance(struct ibv_device *dev)
     }
 
 #if OPAL_HAVE_HWLOC
-    int a, b, i;
+    float a, b;
+    int i;
     hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
     hwloc_obj_t my_obj, ibv_obj, node_obj;
 
@@ -2303,7 +2314,7 @@ btl_openib_component_init(int *num_btl_modules,
     unsigned short seedv[3];
     mca_btl_openib_frag_init_data_t *init_data;
     struct dev_distance *dev_sorted;
-    int distance;
+    float distance;
     int index, value;
     bool found;
     mca_base_var_source_t source;
@@ -2556,7 +2567,7 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
         if (0 != mca_btl_openib_component.ib_num_btls &&
-            distance != dev_sorted[i].distance) {
+            (dev_sorted[i].distance - distance) > EPS) {
             opal_output_verbose(1, ompi_btl_base_framework.framework_output, 
                                 "[rank=%d] openib: skipping device %s; it is too far away", 
                                 ORTE_PROC_MY_NAME->vpid,
