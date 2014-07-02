@@ -40,7 +40,6 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <math.h>
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
 /*
  * The include of malloc.h below breaks abstractions in OMPI (by
