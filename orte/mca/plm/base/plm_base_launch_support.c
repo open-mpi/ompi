@@ -236,13 +236,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     int i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    char *modx_par, *modx_val;
-    char *bar1_par, *bar1_val;
-    char *bar2_par, *bar2_val;
-#if OPAL_ENABLE_FT_CR == 1
-    char *barcr1_par, *barcr1_val;
-    char *barcr2_par, *barcr2_val;
-#endif
+    orte_grpcomm_coll_id_t id;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_job",
@@ -278,28 +272,19 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     }
 
     /* get collective ids for the std MPI operations */
-    caddy->jdata->peer_modex = orte_grpcomm_base_get_coll_id();
-    (void) mca_base_var_env_name ("orte_peer_modex_id", &modx_par);
-    asprintf(&modx_val, "%d", caddy->jdata->peer_modex);
-    caddy->jdata->peer_init_barrier = orte_grpcomm_base_get_coll_id();
-    (void) mca_base_var_env_name ("orte_peer_init_barrier_id", &bar1_par);
-    asprintf(&bar1_val, "%d", caddy->jdata->peer_init_barrier);
-    caddy->jdata->peer_fini_barrier = orte_grpcomm_base_get_coll_id();
-    (void) mca_base_var_env_name ("orte_peer_fini_barrier_id", &bar2_par);
-    asprintf(&bar2_val, "%d", caddy->jdata->peer_fini_barrier);
+    id = orte_grpcomm_base_get_coll_id();
+    orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_PEER_MODX_ID, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
+    id = orte_grpcomm_base_get_coll_id();
+    orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_INIT_BAR_ID, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
+    id = orte_grpcomm_base_get_coll_id();
+    orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_FINI_BAR_ID, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
+
 
 #if OPAL_ENABLE_FT_CR == 1
-    {
-        orte_grpcomm_coll_id_t id;
-        id = orte_grpcomm_base_get_coll_id();
-        orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
-        (void) mca_base_var_env_name("orte_snapc_init_barrier_id", &barcr1_par);
-        asprintf(&barcr1_val, "%d", id);
-        id = orte_grpcomm_base_get_coll_id();
-        orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_SNAPC_FINI_BAR, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
-        (void) mca_base_var_env_name("orte_snapc_fini_barrier_id", &barcr2_par);
-        asprintf(&barcr2_val, "%d", id);
-    }
+    id = orte_grpcomm_base_get_coll_id();
+    orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
+    id = orte_grpcomm_base_get_coll_id();
+    orte_set_attribute(&caddy->jdata->attributes, ORTE_JOB_SNAPC_FINI_BAR, ORTE_ATTR_GLOBAL, &id, ORTE_GRPCOMM_COLL_ID_T);
 #endif
 
     /* if app recovery is not defined, set apps to defaults */
@@ -310,27 +295,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
         if (!orte_get_attribute(&app->attributes, ORTE_APP_RECOV_DEF, NULL, OPAL_BOOL)) {
             orte_set_attribute(&app->attributes, ORTE_APP_MAX_RESTARTS, ORTE_ATTR_LOCAL, &orte_max_restarts, OPAL_INT32);
         }
-        /* set the envars for the collective ids */
-        opal_setenv(modx_par, modx_val, true, &app->env);
-        opal_setenv(bar1_par, bar1_val, true, &app->env);
-        opal_setenv(bar2_par, bar2_val, true, &app->env);
-#if OPAL_ENABLE_FT_CR == 1
-        opal_setenv(barcr1_par, barcr1_val, true, &app->env);
-        opal_setenv(barcr2_par, barcr2_val, true, &app->env);
-#endif
     }
-    free(modx_par);
-    free(modx_val);
-    free(bar1_par);
-    free(bar1_val);
-    free(bar2_par);
-    free(bar2_val);
-#if OPAL_ENABLE_FT_CR == 1
-    free(barcr1_par);
-    free(barcr1_val);
-    free(barcr2_par);
-    free(barcr2_val);
-#endif
 
     /* set the job state to the next position */
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_INIT_COMPLETE);
