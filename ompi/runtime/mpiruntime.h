@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -186,7 +186,7 @@ int ompi_mpi_finalize(void);
  * Abort the processes of comm
  */
 OMPI_DECLSPEC int ompi_mpi_abort(struct ompi_communicator_t* comm,
-                   int errcode, bool kill_remote_of_intercomm);
+                                 int errcode);
 
 /**
  * Do a preconnect of MPI connections (i.e., force connections to

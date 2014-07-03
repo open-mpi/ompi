@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2014 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -54,7 +54,7 @@ static void sb_mmap_alloc(void)
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: ftruncate: %s", 
                      strerror(errno));
         close(sb.sb_fd);
-        ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);
+        ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE);
     }
     sb.sb_addr = (uintptr_t) mmap((void *) sb.sb_addr, sb.sb_length, 
                                   PROT_WRITE | PROT_READ, 
@@ -65,7 +65,7 @@ static void sb_mmap_alloc(void)
         V_OUTPUT_ERR("pml_v: vprotocol_pessimist: sender_based_alloc: mmap: %s", 
                      strerror(errno));
         close(sb.sb_fd);
-        ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE, false);
+        ompi_mpi_abort(MPI_COMM_NULL, MPI_ERR_NO_SPACE);
     }
 }
 

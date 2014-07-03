@@ -1,7 +1,10 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -773,7 +776,7 @@ mca_bcol_iboffload_free_tasks_frags_resources(
 static void fatal_error(char *mesg)
 {
     IBOFFLOAD_ERROR(("FATAL ERROR: %s", mesg));
-    ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_INTERN, true);
+    ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_INTERN);
 }
 
 #define RELEASE_COLLFRAG(cf)                                                    \
