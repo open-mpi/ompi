@@ -270,26 +270,6 @@ static void job_errors(int fd, short args, void *cbdata)
     OBJ_RELEASE(caddy);
 }
 
-static void cleanup_local_proc(orte_job_t *jdata,
-                               orte_process_name_t *proc)
-{
-    orte_proc_t *pptr;
-    int i;
-
-    /* see if this is a local proc to me */
-    for (i=0; i < orte_local_children->size; i++) {
-        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
-            continue;
-        }
-        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, proc, &pptr->name)) {
-            opal_pointer_array_set_item(orte_local_children, i, NULL);
-            OBJ_RELEASE(pptr);
-            jdata->num_local_procs--;
-            return;
-        }
-    }
-}
-
 static void proc_errors(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -401,10 +381,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         pptr->state = state;
         jdata->num_terminated++;
     }
-    /* since we only come here if the proc terminated,
-     * cleanup the local proc, if required
-     */
-    cleanup_local_proc(jdata, proc);
 
     /* if we were ordered to terminate, mark this proc as dead and see if
      * any of our routes or local  children remain alive - if not, then
