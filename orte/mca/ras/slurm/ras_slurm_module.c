@@ -803,8 +803,6 @@ static void recv_data(int fd, short args, void *cbdata)
     idx = -1;
     sjob = -1;
     nodelist = NULL;
-    /* release the current dash_host as that contained the *desired* allocation */
-    orte_remove_attribute(&app->attributes, ORTE_APP_DASH_HOST);
     for (i=1; NULL != alloc[i]; i++) {
         if (ORTE_SUCCESS != parse_alloc_msg(alloc[i], &idx, &sjob, &nodelist, &tpn)) {
             orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, jtrk->cmd);
@@ -817,6 +815,8 @@ static void recv_data(int fd, short args, void *cbdata)
             opal_argv_free(alloc);
             return;
         }
+        /* release the current dash_host as that contained the *desired* allocation */
+        orte_remove_attribute(&app->attributes, ORTE_APP_DASH_HOST);
         /* track the Slurm jobid */
         if (NULL == (aptrk = (local_apptracker_t*)opal_pointer_array_get_item(&jtrk->apps, idx))) {
             aptrk = OBJ_NEW(local_apptracker_t);
