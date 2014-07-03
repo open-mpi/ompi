@@ -107,7 +107,6 @@ static OBJ_CLASS_INSTANCE(orte_wait_tracker_t,
 
 /* Local Variables */
 static opal_event_t handler;
-static volatile int cb_enabled = true;
 static opal_list_t pending_cbs;
 
 /* Local Function Prototypes */
