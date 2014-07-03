@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -32,6 +32,7 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#include <errno.h>
 
 #include "opal/mca/backtrace/backtrace.h"
 
@@ -43,15 +44,75 @@
 
 static bool have_been_invoked = false;
 
+
+/*
+ * Local helper function to build an array of all the procs in a
+ * communicator, excluding this process.
+ *
+ * Killing a just the indicated peers must be implemented for
+ * MPI_Abort() to work according to the standard language for
+ * a 'high-quality' implementation.
+ *
+ * It would be nifty if we could differentiate between the
+ * abort scenarios (but we don't, currently):
+ *      - MPI_Abort()
+ *      - MPI_ERRORS_ARE_FATAL
+ *      - Victim of MPI_Abort()
+ */
+static void try_kill_peers(ompi_communicator_t *comm,
+                           int errcode)
+{
+    int nprocs;
+    ompi_process_name_t *procs;
+
+    nprocs = ompi_comm_size(comm);
+    /* ompi_comm_remote_size() returns 0 if not an intercomm, so
+       this is safe */
+    nprocs += ompi_comm_remote_size(comm);
+
+    procs = (ompi_process_name_t*) calloc(nprocs, sizeof(ompi_process_name_t));
+    if (NULL == procs) {
+        /* quick clean orte and get out */
+        ompi_rte_abort(errno, "Abort: unable to alloc memory to kill procs");
+    }
+
+    /* put all the local group procs in the abort list */
+    int rank, i, count;
+    rank = ompi_comm_rank(comm);
+    for (count = i = 0; i < ompi_comm_size(comm); ++i) {
+        if (rank == i) {
+            /* Don't include this process in the array */
+            --nprocs;
+        } else {
+            assert(count <= nprocs);
+            procs[count++] =
+                ompi_group_get_proc_ptr(comm->c_remote_group, i)->proc_name;
+        }
+    }
+
+    /* if requested, kill off remote group procs too */
+    for (i = 0; i < ompi_comm_remote_size(comm); ++i) {
+        assert(count <= nprocs);
+        procs[count++] =
+            ompi_group_get_proc_ptr(comm->c_remote_group, i)->proc_name;
+    }
+
+    if (nprocs > 0) {
+        ompi_rte_abort_peers(procs, nprocs, errcode);
+    }
+
+    /* We could fall through here if ompi_rte_abort_peers() fails, or
+       if (nprocs == 0).  Either way, tidy up and let the caller
+       handle it. */
+    free(procs);
+}
+
 int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode)
 {
-    int count = 0, i, ret;
     char *msg, *host, hostname[MAXHOSTNAMELEN];
     pid_t pid = 0;
-    ompi_process_name_t *abort_procs;
-    int32_t nabort_procs;
 
     /* Protection for recursive invocation */
     if (have_been_invoked) {
@@ -59,9 +120,9 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     }
     have_been_invoked = true;
 
-    /* If MPI is initialized, we know we have a runtime nodename, so use that.  Otherwise, call
-       gethostname. */
-    if (ompi_mpi_initialized) {
+    /* If MPI is initialized, we know we have a runtime nodename, so
+       use that.  Otherwise, call gethostname. */
+    if (ompi_rte_initialized) {
         host = ompi_process_info.nodename;
     } else {
         gethostname(hostname, sizeof(hostname));
@@ -123,79 +184,32 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         }
     }
 
-    /* If OMPI isn't setup yet/any more, then don't even try killing
-       everyone.  OMPI's initialized period covers all runtime
-       initialized period of time, so no need to check that here.
-       Sorry, Charlie... */
-
-    if ((!ompi_mpi_initialized || ompi_mpi_finalized) && !ompi_rte_initialized) {
-        fprintf(stderr, "[%s:%d] Local abort %s completed successfully; not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
+    /* If the RTE isn't setup yet/any more, then don't even try
+       killing everyone.  Sorry, Charlie... */
+    if (!ompi_rte_initialized) {
+        fprintf(stderr, "[%s:%d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
                 host, (int) pid, ompi_mpi_finalized ? 
-                "after MPI_FINALIZE" : "before MPI_INIT");
-        exit(errcode);
+                "after MPI_FINALIZE started" : "before MPI_INIT completed");
+        exit(errcode == 0 ? 1 : errcode);
     }
 
-    /* abort local procs in the communicator.  If the communicator is
-       an intercommunicator AND the abort has explicitly requested
-       that we abort the remote procs, then do that as well. */
-    nabort_procs = ompi_comm_size(comm);
-
-    /* ompi_comm_remote_size() returns 0 if not an intercomm, so
-       this is cool */
-    nabort_procs += ompi_comm_remote_size(comm);
-
-    abort_procs = (ompi_process_name_t*)malloc(sizeof(ompi_process_name_t) * nabort_procs);
-    if (NULL == abort_procs) {
-        /* quick clean orte and get out */
-        ompi_rte_abort(errcode, "Abort unable to malloc memory to kill procs");
+    /* If OMPI is initialized and we have a non-NULL communicator,
+       then try to kill just that set of processes */
+    if (ompi_mpi_initialized && !ompi_mpi_finalized && NULL != comm) {
+        try_kill_peers(comm, errcode);
     }
 
-    /* put all the local procs in the abort list */
-    for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
-        if (OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
-                                 &comm->c_local_group->grp_proc_pointers[i]->proc_name,
-                                 OMPI_PROC_MY_NAME)) {
-            assert(count <= nabort_procs);
-            abort_procs[count++] = comm->c_local_group->grp_proc_pointers[i]->proc_name;
-        } else {
-            /* don't terminate me just yet */
-            nabort_procs--;
-        }
-    }
+    /* We can fall through to here in a few cases:
 
-    /* if requested, kill off remote procs too */
-    for (i = 0 ; i < ompi_comm_remote_size(comm) ; ++i) {
-        if (OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
-                                 &comm->c_remote_group->grp_proc_pointers[i]->proc_name,
-                                 OMPI_PROC_MY_NAME)) {
-            assert(count <= nabort_procs);
-            abort_procs[count++] =
-                comm->c_remote_group->grp_proc_pointers[i]->proc_name;
-        } else {
-            /* don't terminate me just yet */
-            nabort_procs--;
-        }
-    }
+       1. The attempt to kill just a subset of peers via
+          try_kill_peers() failed (e.g., as of July 2014, ORTE does
+          returns NOT_IMPLENTED from orte_rte_abort_peers()).
+       2. MPI wasn't initialized, was already finalized, or we got a
+          NULL communicator.
 
-    if (nabort_procs > 0) {
-        /* This must be implemented for MPI_Abort() to work according to the
-         * standard language for a 'high-quality' implementation.
-         * It would be nifty if we could differentiate between the
-         * abort scenarios:
-         *      - MPI_Abort()
-         *      - MPI_ERRORS_ARE_FATAL
-         *      - Victim of MPI_Abort()
-         */
-        /*
-         * Abort peers in this communicator group. Does not include self.
-         */
-        if( OMPI_SUCCESS != (ret = ompi_rte_abort_peers(abort_procs, nabort_procs, errcode)) ) {
-            ompi_rte_abort(errcode, "Open MPI failed to abort all of the procs requested (%d).", ret);
-        }
-    }
-
-    /* now that we've aborted everyone else, gracefully die. */
+       In all of these cases, the only sensible thing left to do is to
+       kill the entire job.  Wah wah. */
     ompi_rte_abort(errcode, NULL);
-    
-    return OMPI_SUCCESS;
+
+    /* Does not return */
 }
