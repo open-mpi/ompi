@@ -332,7 +332,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
     { "rmaps_base_oversubscribe", '\0', "oversubscribe", "oversubscribe", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes are allowed to be oversubscribed, even on a managed system"},
+      "Nodes are allowed to be oversubscribed, even on a managed system, and overloading of processing elements"},
     { "rmaps_base_cpus_per_rank", '\0', "cpus-per-proc", "cpus-per-proc", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Number of cpus to use for each process [default=1]" },
