@@ -295,7 +295,6 @@ static int add_procs_create_ahs(ompi_btl_usnic_module_t *module,
                            true,
                            ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
-                           module->port_num,
                            module->if_name,
                            mca_btl_usnic_component.arp_timeout);
             break;
