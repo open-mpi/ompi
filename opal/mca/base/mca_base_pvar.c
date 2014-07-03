@@ -829,17 +829,16 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
         }
 
         /* build the message*/
-        asprintf(&tmp, "mca:%s:%s:pvar:%s:", framework, component,
-                 full_name);
+        (void)asprintf(&tmp, "mca:%s:%s:pvar:%s:", framework, component, full_name);
 
-        asprintf(out[0] + line++, "%sclass:%s", tmp, pvar_class_names[pvar->var_class]);
-        asprintf(out[0] + line++, "%sread-only:%s", tmp, mca_base_pvar_is_readonly(pvar) ? "true" : "false");
-        asprintf(out[0] + line++, "%scontinuous:%s", tmp, mca_base_pvar_is_continuous(pvar) ? "true" : "false");
-        asprintf(out[0] + line++, "%satomic:%s", tmp, mca_base_pvar_is_atomic(pvar) ? "true" : "false");
+        (void)asprintf(out[0] + line++, "%sclass:%s", tmp, pvar_class_names[pvar->var_class]);
+        (void)asprintf(out[0] + line++, "%sread-only:%s", tmp, mca_base_pvar_is_readonly(pvar) ? "true" : "false");
+        (void)asprintf(out[0] + line++, "%scontinuous:%s", tmp, mca_base_pvar_is_continuous(pvar) ? "true" : "false");
+        (void)asprintf(out[0] + line++, "%satomic:%s", tmp, mca_base_pvar_is_atomic(pvar) ? "true" : "false");
 
         /* if it has a help message, output the help message */
         if (pvar->description) {
-            asprintf(out[0] + line++, "%shelp:%s", tmp, pvar->description);
+            (void)asprintf(out[0] + line++, "%shelp:%s", tmp, pvar->description);
         }
 
         if (NULL != pvar->enumerator) {
@@ -853,11 +852,12 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
                     continue;
                 }
 
-                asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
+                (void)asprintf(out[0] + line++, "%senumerator:value:%d:%s", tmp, enum_value, enum_string);
             }
         }
 
-        asprintf(out[0] + line++, "%stype:%s", tmp, var_type_names[pvar->type]);
+        (void)asprintf(out[0] + line++, "%stype:%s", tmp, var_type_names[pvar->type]);
+        free(tmp);  // release tmp storage
     } else {
         /* there will be at most three lines in the pretty print case */
         *out = (char **) calloc (3, sizeof (char *));
@@ -865,11 +865,11 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        asprintf (out[0] + line++, "performance \"%s\" (type: %s, class: %s)", full_name,
-                  var_type_names[pvar->type], pvar_class_names[pvar->var_class]);
+        (void)asprintf (out[0] + line++, "performance \"%s\" (type: %s, class: %s)", full_name,
+                        var_type_names[pvar->type], pvar_class_names[pvar->var_class]);
 
         if (pvar->description) {
-            asprintf(out[0] + line++, "%s", pvar->description);
+            (void)asprintf(out[0] + line++, "%s", pvar->description);
         }
 
         if (NULL != pvar->enumerator) {
@@ -877,7 +877,7 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
 
             ret = pvar->enumerator->dump(pvar->enumerator, &values);
             if (OPAL_SUCCESS == ret) {
-                asprintf (out[0] + line++, "Values: %s", values);
+                (void)asprintf (out[0] + line++, "Values: %s", values);
                 free (values);
             }
         }
