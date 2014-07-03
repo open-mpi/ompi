@@ -2326,7 +2326,8 @@ btl_openib_component_init(int *num_btl_modules,
 #endif
     /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
     if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
-        BTL_VERBOSE(("openib BTL disqualifying itself because MPI_THREAD_MULTIPLE is being used"));
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
+                            "btl:openib: MPI_THREAD_MULTIPLE not suppported; skipping this component");
         goto no_btls;
     }
 

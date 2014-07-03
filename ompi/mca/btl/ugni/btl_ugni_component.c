@@ -288,6 +288,13 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     unsigned int i;
     int rc;
 
+    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
+    if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+        opal_output_verbose(5, ompi_btl_base_framework.framework_output,
+                            "btl:ugni: MPI_THREAD_MULTIPLE not supported; skipping this component");
+        return NULL;
+    }
+
     if (16384 < mca_btl_ugni_component.ugni_smsg_limit) {
         mca_btl_ugni_component.ugni_smsg_limit = 16384;
     }
