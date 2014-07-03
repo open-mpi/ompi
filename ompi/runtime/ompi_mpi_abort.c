@@ -45,8 +45,7 @@ static bool have_been_invoked = false;
 
 int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
-               int errcode,
-               bool kill_remote_of_intercomm)
+               int errcode)
 {
     int count = 0, i, ret;
     char *msg, *host, hostname[MAXHOSTNAMELEN];
@@ -141,11 +140,9 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        that we abort the remote procs, then do that as well. */
     nabort_procs = ompi_comm_size(comm);
 
-    if (kill_remote_of_intercomm) {
-        /* ompi_comm_remote_size() returns 0 if not an intercomm, so
-           this is cool */
-        nabort_procs += ompi_comm_remote_size(comm);
-    }
+    /* ompi_comm_remote_size() returns 0 if not an intercomm, so
+       this is cool */
+    nabort_procs += ompi_comm_remote_size(comm);
 
     abort_procs = (ompi_process_name_t*)malloc(sizeof(ompi_process_name_t) * nabort_procs);
     if (NULL == abort_procs) {
@@ -167,18 +164,16 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     }
 
     /* if requested, kill off remote procs too */
-    if (kill_remote_of_intercomm) {
-        for (i = 0 ; i < ompi_comm_remote_size(comm) ; ++i) {
-            if (OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
-                                     &comm->c_remote_group->grp_proc_pointers[i]->proc_name,
-                                     OMPI_PROC_MY_NAME)) {
-                assert(count <= nabort_procs);
-                abort_procs[count++] =
-                    comm->c_remote_group->grp_proc_pointers[i]->proc_name;
-            } else {
-                /* don't terminate me just yet */
-                nabort_procs--;
-            }
+    for (i = 0 ; i < ompi_comm_remote_size(comm) ; ++i) {
+        if (OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
+                                 &comm->c_remote_group->grp_proc_pointers[i]->proc_name,
+                                 OMPI_PROC_MY_NAME)) {
+            assert(count <= nabort_procs);
+            abort_procs[count++] =
+                comm->c_remote_group->grp_proc_pointers[i]->proc_name;
+        } else {
+            /* don't terminate me just yet */
+            nabort_procs--;
         }
     }
 

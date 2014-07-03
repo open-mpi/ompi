@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -336,15 +336,17 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
         backend_fatal_no_aggregate(type, comm, name, error_code, arglist);
     }
 
-    /* Should we do something more intelligent than just using
-       COMM_SELF? */
+    /* In most instances the communicator will be valid. If not, we are either early in
+     * the initialization or we are dealing with a window. Thus, it is good enough to abort
+     * on MPI_COMM_SELF, the error will propagate.
+     */
     if (comm == NULL) {
         comm = &ompi_mpi_comm_self.comm;
     }
 
     if (NULL != error_code) {
-        ompi_mpi_abort(comm, *error_code, false);
+        ompi_mpi_abort(comm, *error_code);
     } else {
-        ompi_mpi_abort(comm, 1, false);
+        ompi_mpi_abort(comm, 1);
     }
 }

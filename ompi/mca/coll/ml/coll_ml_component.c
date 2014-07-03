@@ -4,6 +4,9 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,7 +100,7 @@ void mca_coll_ml_abort_ml(char *message)
 {
     ML_ERROR(("ML Collective FATAL ERROR: %s", message));
     /* shutdown the MPI */
-    ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_INTERN, true);
+    ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_INTERN);
 }
 /*
  * progress function
