@@ -133,6 +133,12 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
              * mapped nodes, taking into account the number of cpus/rank
              */
             app->num_procs = num_slots / orte_rmaps_base.cpus_per_rank;
+            /* sometimes, we have only one "slot" assigned, but may
+             * want more than one cpu/rank - so ensure we always wind
+             * up with at least one proc */
+            if (0 == app->num_procs) {
+                app->num_procs = 1;
+            }
         }
         
         /* Make assignments */
