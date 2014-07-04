@@ -75,20 +75,6 @@ int MPI_Start(MPI_Request *request)
         OPAL_CR_EXIT_LIBRARY();
         return ret;
 
-#if 0
-    case OMPI_REQUEST_NOOP:
-        /**
-         * We deal with a MPI_PROC_NULL request. If the request is
-         * already active, fall back to the error case in the default.
-         * Otherwise, mark it active so we can correctly handle it in
-         * the wait*.
-         */
-        if( OMPI_REQUEST_INACTIVE == (*request)->req_state ) {
-            (*request)->req_state = OMPI_REQUEST_ACTIVE;
-            return MPI_SUCCESS;
-        }
-#endif
-
     default:
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
     }
