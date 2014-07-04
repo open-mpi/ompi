@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,6 +38,20 @@ int mca_pml_bfo_start(size_t count, ompi_request_t** requests)
         mca_pml_base_request_t *pml_request = (mca_pml_base_request_t*)requests[i];
         if(NULL == pml_request) {
             continue;
+        }
+        if (OMPI_REQUEST_NOOP == requests[i]->req_type) {
+            /**
+             * We deal with a MPI_PROC_NULL request. If the request is
+             * already active, return OMPI_ERR_REQUEST err.
+             * Otherwise, mark it active so we can correctly handle it in
+             * the wait*.
+             */
+            if( OMPI_REQUEST_INACTIVE == requests[i]->req_state ) {
+                requests[i]->req_state = OMPI_REQUEST_ACTIVE;
+                continue;
+            } else {
+                return OMPI_ERR_REQUEST;
+            }
         }
         if (OMPI_REQUEST_PML != requests[i]->req_type) {
             continue;
