@@ -67,7 +67,12 @@ static opal_list_t tracking;
 static bool inited = false;
 static void wakeup(int fd, short args, void *cbdata)
 {
-    opal_output(0, "progress:wakeup invoked");
+    opal_progress_tracker_t *trk = (opal_progress_tracker_t*)cbdata;
+
+    /* if this event fired, then the blocker event will
+     * be deleted from the event base by libevent, so flag
+     * it so we don't try to delete it again */
+    trk->block_active = false;
 }
 
 
@@ -101,7 +106,7 @@ opal_event_base_t *opal_start_progress_thread(char *name,
             OBJ_RELEASE(trk);
             return NULL;
         }
-        opal_event_set(trk->ev_base, &trk->block, trk->pipe[0], OPAL_EV_READ, wakeup, NULL);
+        opal_event_set(trk->ev_base, &trk->block, trk->pipe[0], OPAL_EV_READ, wakeup, trk);
         opal_event_add(&trk->block, 0);
         trk->block_active = true;
     }
@@ -127,6 +132,7 @@ opal_event_base_t *opal_start_progress_thread(char *name,
 void opal_stop_progress_thread(char *name, bool cleanup)
 {
     opal_progress_tracker_t *trk;
+    int i;
 
     if (!inited) {
         /* nothing we can do */
@@ -136,6 +142,13 @@ void opal_stop_progress_thread(char *name, bool cleanup)
     /* find the specified engine */
     OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
+            /* if present, use the block to break it loose just in
+             * case the thread is blocking in a call to select for
+             * a long time */
+            if (trk->block_active) {
+                i=1;
+                write(trk->pipe[1], &i, sizeof(int));
+            }
             /* break the event loop */
             opal_event_base_loopbreak(trk->ev_base);
             /* wait for thread to exit */
@@ -167,6 +180,12 @@ int opal_restart_progress_thread(char *name)
                 OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
                 return OPAL_ERR_NOT_SUPPORTED;
             }
+            /* ensure the block is set, if requested */
+            if (0 <= trk->pipe[0] && !trk->block_active) {
+                opal_event_add(&trk->block, 0);
+                trk->block_active = true;
+            }
+            /* start the thread again */
             if (OPAL_SUCCESS != (rc = opal_thread_start(&trk->engine))) {
                 OPAL_ERROR_LOG(rc);
                 return rc;
