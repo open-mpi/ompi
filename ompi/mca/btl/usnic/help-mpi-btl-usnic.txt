@@ -272,7 +272,7 @@ application will likely either run with degraded performance and/or
 abort.
 
   Server:              %s
-  usNIC interface:     %s:%d (%s)
+  usNIC interface:     %s (which is %s)
   Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
 #
 [transport mismatch]
