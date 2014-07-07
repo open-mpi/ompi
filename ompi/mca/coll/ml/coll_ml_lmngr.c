@@ -39,6 +39,7 @@ static void construct_lmngr(mca_coll_ml_lmngr_t *lmngr)
     lmngr->list_block_size = cm->lmngr_block_size;
     lmngr->list_alignment = cm->lmngr_alignment;
     lmngr->list_size = cm->lmngr_size;
+    lmngr->n_resources = 0;
     lmngr->base_addr = NULL; /* If the base addr is not null, the struct was initilized
                                 and memory was allocated */
     /* Not sure that lock is required */
@@ -57,14 +58,13 @@ static void destruct_lmngr(mca_coll_ml_lmngr_t *lmngr)
 
     ML_VERBOSE(6, ("Destructing list manager %p", (void *)lmngr));
 
-    while(!opal_list_is_empty(&lmngr->blocks_list)) {
-        item = opal_list_remove_first(&lmngr->blocks_list);
+    while (NULL != (item = opal_list_remove_first(&lmngr->blocks_list))) {
         OBJ_RELEASE(item);
     }
 
     OBJ_DESTRUCT(&lmngr->blocks_list);
 
-    if (NULL != lmngr->base_addr) {
+    if (NULL != lmngr->alloc_base) {
         for( i = 0; i < max_nc; i++ ) {
             nc = lmngr->net_context[i];
             rc = nc->deregister_memory_fn(nc->context_data,
@@ -74,15 +74,17 @@ static void destruct_lmngr(mca_coll_ml_lmngr_t *lmngr)
             }
         }
 
-        ML_VERBOSE(10, ("Release base addr %p", lmngr->base_addr));
+        ML_VERBOSE(10, ("Release base addr %p", lmngr->alloc_base));
 
-        free(lmngr->base_addr);
+        free(lmngr->alloc_base);
+        lmngr->alloc_base = NULL;
         lmngr->base_addr = NULL;
     }
 
     lmngr->list_block_size = 0;
     lmngr->list_alignment = 0;
     lmngr->list_size = 0;
+    lmngr->n_resources = 0;
 
     OBJ_DESTRUCT(&lmngr->mem_lock);
 }
@@ -206,15 +208,16 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
         ML_ERROR(("Failed to allocate memory: %s [%d]", errno, strerror(errno)));
         return OMPI_ERROR;
     }
+    lmngr->alloc_base = lmngr->base_addr;
 #else
-    lmngr->base_addr = 
+    lmngr->alloc_base =
         malloc(lmngr->list_size * lmngr->list_block_size + lmngr->list_alignment);
-    if(NULL == lmngr->base_addr) {
+    if(NULL == lmngr->alloc_base) {
         ML_ERROR(("Failed to allocate memory: %s [%d]", errno, strerror(errno)));
         return OMPI_ERROR;
     }
 
-    lmngr->base_addr = (void*)OPAL_ALIGN((uintptr_t)lmngr->base_addr, 
+    lmngr->base_addr = (void*)OPAL_ALIGN((uintptr_t)lmngr->alloc_base,
             lmngr->list_alignment, uintptr_t);
 #endif
     
