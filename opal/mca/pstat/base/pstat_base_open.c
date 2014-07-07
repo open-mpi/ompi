@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,7 +52,24 @@ opal_pstat_base_module_t opal_pstat = {
 };
 
 /* Use default register/open/close functions */
-MCA_BASE_FRAMEWORK_DECLARE(opal, pstat, "process statistics", NULL, NULL, NULL,
+static int opal_pstat_base_close(void)
+{
+    /* let the selected module finalize */
+    if (NULL != opal_pstat.finalize) {
+            opal_pstat.finalize();
+    }
+
+    return mca_base_framework_components_close(&opal_pstat_base_framework, NULL);
+}
+
+static int opal_pstat_base_open(mca_base_open_flag_t flags)
+{
+    /* Open up all available components */
+    return mca_base_framework_components_open(&opal_pstat_base_framework, flags);
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(opal, pstat, "process statistics", NULL,
+                           opal_pstat_base_open, opal_pstat_base_close,
                            mca_pstat_base_static_components, 0);
 
 static int opal_pstat_base_unsupported_init(void)
