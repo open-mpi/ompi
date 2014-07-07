@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -199,7 +199,7 @@
 Summary: A powerful implementation of MPI/SHMEM
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 1
+Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
@@ -208,6 +208,7 @@ Vendor: %{?_vendorinfo:%{_vendorinfo}}%{!?_vendorinfo:%{_vendor}}
 Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
 Prefix: %{_prefix}
 Provides: mpi
+Provides: openmpi = %{version}
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 %if %{disable_auto_requires}
 AutoReq: no
@@ -246,6 +247,8 @@ Open MPI and OpenSHMEM jobs.
 Summary: Tools and plugin modules for running Open MPI/SHMEM jobs
 Group: Development/Libraries
 Provides: mpi
+Provides: openmpi = %{version}
+Provides: openmpi-runtime = %{version}
 %if %{disable_auto_requires}
 AutoReq: no
 %endif
@@ -283,6 +286,7 @@ Group: Development/Libraries
 %if %{disable_auto_requires}
 AutoReq: no
 %endif
+Provides: openmpi-devel = %{version}
 Requires: %{name}-runtime
 
 %description devel
@@ -313,6 +317,7 @@ Group: Development/Documentation
 %if %{disable_auto_requires}
 AutoReq: no
 %endif
+Provides: openmpi-docs = %{version}
 Requires: %{name}-runtime
 
 %description docs
@@ -749,6 +754,11 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Mon Jul 07 2014 Jeff Squyres <jsquyres@cisco.com>
+- Several minor fixes from Oliver Lahaye: fix dates in changelog,
+  added %{?dist} tag to the Release field, and added some Provides
+  fields in case %{name} is overridden.
+
 * Mon Jun 24 2013 Igor Ivanov <Igor.Ivanov@itseez.com>
 - Add Open SHMEM parallel programming library as part of Open MPI
 
@@ -789,7 +799,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
   _FORTIFY_SOURCE processing on platforms where it just doesn't work
   (even with gcc; also reported by Jim Kusznir).
 
-* Thu Sep  8 2009 Jeff Squyres <jsquyres@cisco.com>
+* Tue Sep  8 2009 Jeff Squyres <jsquyres@cisco.com>
 - Change shell_scripts_basename to not include version number to
   accomodate what mpi-selector expects.
 
@@ -860,14 +870,14 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 - Ensure to list sysconfdir in the files list if it's outside of the
   prefix.
 
-* Wed Mar 30 2006 Jeff Squyres <jsquyres@cisco.com>
+* Thu Mar 30 2006 Jeff Squyres <jsquyres@cisco.com>
 - Lots of bit rot updates
 - Reorganize and rename the subpackages
 - Add / formalize a variety of rpmbuild --define options
 - Comment out the docs subpackage for the moment (until we have some
   documentation -- coming in v1.1!)
 
-* Wed May 03 2005 Jeff Squyres <jsquyres@open-mpi.org>
+* Tue May 03 2005 Jeff Squyres <jsquyres@open-mpi.org>
 - Added some defines for LANL defaults
 - Added more defines for granulatirty of installation location for
   modulefile
