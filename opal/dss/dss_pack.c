@@ -348,6 +348,27 @@ int opal_dss_pack_float(opal_buffer_t *buffer, const void *src,
     return OPAL_SUCCESS;
 }
 
+/* DOUBLE */
+int opal_dss_pack_double(opal_buffer_t *buffer, const void *src,
+                         int32_t num_vals, opal_data_type_t type)
+{
+    int ret = OPAL_SUCCESS;
+    int32_t i;
+    double *ssrc = (double*)src;
+    char *convert;
+
+    for (i = 0; i < num_vals; ++i) {
+        asprintf(&convert, "%f", ssrc[i]);
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &convert, 1, OPAL_STRING))) {
+            free(convert);
+            return ret;
+        }
+        free(convert);
+    }
+
+    return OPAL_SUCCESS;
+}
+
 /* TIMEVAL */
 int opal_dss_pack_timeval(opal_buffer_t *buffer, const void *src,
                           int32_t num_vals, opal_data_type_t type)
@@ -779,6 +800,11 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
             break;
         case OPAL_FLOAT:
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.fval, 1, OPAL_FLOAT))) {
+                return ret;
+            }
+            break;
+        case OPAL_DOUBLE:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.dval, 1, OPAL_DOUBLE))) {
                 return ret;
             }
             break;

@@ -425,6 +425,32 @@ int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
     return OPAL_SUCCESS;
 }
 
+int opal_dss_unpack_double(opal_buffer_t *buffer, void *dest,
+                           int32_t *num_vals, opal_data_type_t type)
+{
+    int32_t i, n;
+    double *desttmp = (double*) dest;
+    int ret;
+    char *convert;
+
+   OPAL_OUTPUT( ( opal_dss_verbose, "opal_dss_unpack_double * %d\n", (int)*num_vals ) );
+    /* check to see if there's enough data in buffer */
+    if (opal_dss_too_small(buffer, (*num_vals)*sizeof(double))) {
+        return OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
+    }
+
+    /* unpack the data */
+    for (i = 0; i < (*num_vals); ++i) {
+        n=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_string(buffer, &convert, &n, OPAL_STRING))) {
+            return ret;
+        }
+        desttmp[i] = strtod(convert, NULL);
+        free(convert);
+    }
+    return OPAL_SUCCESS;
+}
+
 int opal_dss_unpack_timeval(opal_buffer_t *buffer, void *dest,
                             int32_t *num_vals, opal_data_type_t type)
 {
@@ -1021,6 +1047,11 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
             break;
         case OPAL_FLOAT:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.fval, &m, OPAL_FLOAT))) {
+                return ret;
+            }
+            break;
+        case OPAL_DOUBLE:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.dval, &m, OPAL_DOUBLE))) {
                 return ret;
             }
             break;

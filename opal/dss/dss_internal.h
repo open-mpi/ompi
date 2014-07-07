@@ -312,6 +312,9 @@ int opal_dss_pack_buffer_contents(opal_buffer_t *buffer, const void *src,
 int opal_dss_pack_float(opal_buffer_t *buffer, const void *src,
                         int32_t num_vals, opal_data_type_t type);
 
+int opal_dss_pack_double(opal_buffer_t *buffer, const void *src,
+                         int32_t num_vals, opal_data_type_t type);
+
 int opal_dss_pack_timeval(opal_buffer_t *buffer, const void *src,
                           int32_t num_vals, opal_data_type_t type);
 
@@ -368,6 +371,9 @@ int opal_dss_unpack_buffer_contents(opal_buffer_t *buffer, void *dest,
 
 int opal_dss_unpack_float(opal_buffer_t *buffer, void *dest,
                           int32_t *num_vals, opal_data_type_t type);
+
+int opal_dss_unpack_double(opal_buffer_t *buffer, void *dest,
+                           int32_t *num_vals, opal_data_type_t type);
 
 int opal_dss_unpack_timeval(opal_buffer_t *buffer, void *dest,
                             int32_t *num_vals, opal_data_type_t type);
@@ -445,6 +451,8 @@ int opal_dss_compare_buffer_contents(opal_buffer_t *value1, opal_buffer_t *value
 
 int opal_dss_compare_float(float *value1, float *value2, opal_data_type_t type);
 
+int opal_dss_compare_double(double *value1, double *value2, opal_data_type_t type);
+
 int opal_dss_compare_timeval(struct timeval *value1, struct timeval *value2, opal_data_type_t type);
 
 int opal_dss_compare_time(time_t *value1, time_t *value2, opal_data_type_t type);
@@ -482,6 +490,7 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
 int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_data_type_t type);
 int opal_dss_print_buffer_contents(char **output, char *prefix, opal_buffer_t *src, opal_data_type_t type);
 int opal_dss_print_float(char **output, char *prefix, float *src, opal_data_type_t type);
+int opal_dss_print_double(char **output, char *prefix, double *src, opal_data_type_t type);
 int opal_dss_print_timeval(char **output, char *prefix, struct timeval *src, opal_data_type_t type);
 int opal_dss_print_time(char **output, char *prefix, time_t *src, opal_data_type_t type);
 

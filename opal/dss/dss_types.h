@@ -74,21 +74,22 @@ typedef uint64_t opal_identifier_t;
 #define    OPAL_UINT16              (opal_data_type_t)   13 /**< a 16-bit unsigned integer */
 #define    OPAL_UINT32              (opal_data_type_t)   14 /**< a 32-bit unsigned integer */
 #define    OPAL_UINT64              (opal_data_type_t)   15 /**< a 64-bit unsigned integer */
-    /* simple floating point type */
+    /* floating point types */
 #define    OPAL_FLOAT               (opal_data_type_t)   16
+#define    OPAL_DOUBLE              (opal_data_type_t)   17
     /* system types */
-#define    OPAL_TIMEVAL             (opal_data_type_t)   17
-#define    OPAL_TIME                (opal_data_type_t)   18
+#define    OPAL_TIMEVAL             (opal_data_type_t)   18
+#define    OPAL_TIME                (opal_data_type_t)   19
     /* OPAL types */
-#define    OPAL_BYTE_OBJECT         (opal_data_type_t)   19 /**< byte object structure */
-#define    OPAL_DATA_TYPE           (opal_data_type_t)   20 /**< data type */
-#define    OPAL_NULL                (opal_data_type_t)   21 /**< don't interpret data type */
-#define    OPAL_PSTAT               (opal_data_type_t)   22 /**< process statistics */
-#define    OPAL_NODE_STAT           (opal_data_type_t)   23 /**< node statistics */
-#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   24 /**< hwloc topology */
-#define    OPAL_VALUE               (opal_data_type_t)   25 /**< opal value structure */
-#define    OPAL_BUFFER              (opal_data_type_t)   26 /**< pack the remaining contents of a buffer as an object */
-#define    OPAL_PTR                 (opal_data_type_t)   27 /**< pointer to void* */
+#define    OPAL_BYTE_OBJECT         (opal_data_type_t)   20 /**< byte object structure */
+#define    OPAL_DATA_TYPE           (opal_data_type_t)   21 /**< data type */
+#define    OPAL_NULL                (opal_data_type_t)   22 /**< don't interpret data type */
+#define    OPAL_PSTAT               (opal_data_type_t)   23 /**< process statistics */
+#define    OPAL_NODE_STAT           (opal_data_type_t)   24 /**< node statistics */
+#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   25 /**< hwloc topology */
+#define    OPAL_VALUE               (opal_data_type_t)   26 /**< opal value structure */
+#define    OPAL_BUFFER              (opal_data_type_t)   27 /**< pack the remaining contents of a buffer as an object */
+#define    OPAL_PTR                 (opal_data_type_t)   28 /**< pointer to void* */
 
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 
@@ -120,6 +121,7 @@ typedef struct {
         uint64_t uint64;
         opal_byte_object_t bo;
         float fval;
+        double dval;
         struct timeval tv;
         void *ptr;  // never packed or passed anywhere
     } data;
