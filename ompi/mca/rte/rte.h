@@ -2,6 +2,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -247,6 +248,18 @@ OMPI_DECLSPEC extern mca_base_framework_t ompi_rte_base_framework;
                             __FILE__, __LINE__);                        \
         while ((flg)) {                                                \
             opal_progress();                                            \
+        }                                                               \
+    }while(0);
+
+#define OMPI_LAZY_WAIT_FOR_COMPLETION(flg)                              \
+    do {                                                                \
+        opal_output_verbose(1, ompi_rte_base_framework.framework_output, \
+                            "%s lazy waiting on RTE event at %s:%d",    \
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),         \
+                            __FILE__, __LINE__);                        \
+        while ((flg)) {                                                 \
+            opal_progress();                                            \
+            usleep(100);                                                \
         }                                                               \
     }while(0);
 
