@@ -185,11 +185,12 @@ int ompi_osc_rdma_lock(int lock_type, int target, int assert, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_outstanding_lock_t *lock;
+    ompi_osc_rdma_peer_t *peer = module->peers + target;
     int ret = OMPI_SUCCESS;
 
     /* Check if no_locks is set. TODO: we also need to track whether we are in an
      * active target epoch. Fence can make this tricky to track. */
-    if (NULL == module->passive_eager_send_active) {
+    if (NULL == module->passive_eager_send_active || module->sc_group) {
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -202,6 +203,9 @@ int ompi_osc_rdma_lock(int lock_type, int target, int assert, ompi_win_t *win)
     OPAL_THREAD_LOCK(&module->lock);
     module->passive_eager_send_active[target] = false;
     module->passive_target_access_epoch = true;
+
+    /* when the lock ack returns we will be in an access epoch with this peer */
+    peer->access_epoch = true;
 
     /* create lock item */
     lock = OBJ_NEW(ompi_osc_rdma_outstanding_lock_t);
@@ -249,6 +253,7 @@ int ompi_osc_rdma_unlock(int target, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_outstanding_lock_t *lock = NULL;
+    ompi_osc_rdma_peer_t *peer = module->peers + target;
     int ret = OMPI_SUCCESS;
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -299,6 +304,8 @@ int ompi_osc_rdma_unlock(int target, ompi_win_t *win)
     module->epoch_outgoing_frag_count[target] = 0;
     module->passive_target_access_epoch = false;
 
+    peer->access_epoch = false;
+
     /* delete the lock */
     opal_list_remove_item (&module->outstanding_locks, &lock->super);
     OBJ_RELEASE(lock);
@@ -328,6 +335,7 @@ int ompi_osc_rdma_lock_all(int assert, struct ompi_win_t *win)
         module->passive_eager_send_active[i] = false;
     }
     module->passive_target_access_epoch = true;
+    module->all_access_epoch = true;
 
     /* create lock item */
     lock = OBJ_NEW(ompi_osc_rdma_outstanding_lock_t);
@@ -434,6 +442,7 @@ int ompi_osc_rdma_unlock_all (struct ompi_win_t *win)
     OBJ_RELEASE(lock);
 
     module->passive_target_access_epoch = false;
+    module->all_access_epoch = false;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_unlock_all complete"));
