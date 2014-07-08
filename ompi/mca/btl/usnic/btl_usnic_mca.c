@@ -291,6 +291,13 @@ int ompi_btl_usnic_component_register(void)
                   &mca_btl_usnic_component.connectivity_num_retries,
                   REGINT_GE_ONE, OPAL_INFO_LVL_3));
 
+    mca_btl_usnic_component.connectivity_map_prefix = NULL;
+    CHECK(reg_string("connectivity_map",
+                     "Display the usNIC connectivity map.  If this parameter is specified, it is the filename prefix emitted by each MPI process.  The full filename emitted by each process is of the form: <prefix>-<hostname>.<pid>.<jobid>.<MCW rank>.txt.",
+                     mca_btl_usnic_component.connectivity_map_prefix,
+                     &mca_btl_usnic_component.connectivity_map_prefix,
+                     REGSTR_EMPTY_OK, OPAL_INFO_LVL_3));
+
     /* Register some synonyms to the ompi common verbs component */
     ompi_common_verbs_mca_register(&mca_btl_usnic_component.super.btl_version);
 

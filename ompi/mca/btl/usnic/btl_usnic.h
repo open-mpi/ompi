@@ -202,6 +202,10 @@ typedef struct ompi_btl_usnic_component_t {
 
     /* ibv_create_ah() (i.e., ARP) timeout */
     int arp_timeout;
+
+    /* Prefix for the connectivity map filename (map will be output if
+       the prefix is non-NULL) */
+    char *connectivity_map_prefix;
 } ompi_btl_usnic_component_t;
 
 OMPI_MODULE_DECLSPEC extern ompi_btl_usnic_component_t mca_btl_usnic_component;
@@ -234,6 +238,11 @@ int ompi_btl_usnic_component_register(void);
  * Routine which can be called from a debugger to print module, endpoint,
  * fragment, and segment state to standard output. */
 void ompi_btl_usnic_component_debug(void);
+
+/**
+ * Called to output the connectivity map
+ */
+void ompi_btl_usnic_connectivity_map(void);
 
 END_C_DECLS
 #endif
