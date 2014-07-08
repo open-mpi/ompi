@@ -88,6 +88,7 @@ struct ompi_osc_rdma_peer_t {
     /** Number of acks pending.  New requests can not be sent out if there are
      * acks pending (to fulfill the ordering constraints of accumulate) */
     uint32_t num_acks_pending;
+    bool access_epoch;
 };
 typedef struct ompi_osc_rdma_peer_t ompi_osc_rdma_peer_t;
 
@@ -165,6 +166,9 @@ struct ompi_osc_rdma_module_t {
 
     /** start sending data eagerly */
     bool active_eager_send_active;
+
+    /** Indicates the window is in an all access epoch (fence, lock_all) */
+    bool all_access_epoch;
 
     bool *passive_eager_send_active;
 
@@ -688,6 +692,11 @@ static inline void ompi_osc_rdma_accumulate_unlock (ompi_osc_rdma_module_t *modu
     if (0 != opal_list_get_size (&module->pending_acc)) {
         ompi_osc_rdma_progress_pending_acc (module);
     }
+}
+
+static inline bool ompi_osc_rdma_check_access_epoch (ompi_osc_rdma_module_t *module, int rank)
+{
+   return module->all_access_epoch || module->peers[rank].access_epoch;
 }
 
 END_C_DECLS
