@@ -33,7 +33,6 @@ opal_dstore_base_API_t opal_dstore = {
     opal_dstore_base_open,
     opal_dstore_base_close,
     opal_dstore_base_store,
-    opal_dstore_base_commit,
     opal_dstore_base_fetch,
     opal_dstore_base_remove_data
 };
