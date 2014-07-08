@@ -424,7 +424,7 @@ int mca_base_var_get_value (int vari, const void *value,
     }
 
     if (!VAR_IS_VALID(var[0])) {
-        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        return OPAL_ERR_NOT_FOUND;
     }
 
     if (NULL != value) {
@@ -843,7 +843,7 @@ int mca_base_var_get (int vari, const mca_base_var_t **var)
     }
 
     if (!VAR_IS_VALID(*(var[0]))) {
-        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        return OPAL_ERR_NOT_FOUND;
     }
 
     return OPAL_SUCCESS;
