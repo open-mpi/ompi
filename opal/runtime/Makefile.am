@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -33,7 +34,8 @@ headers += \
         runtime/opal.h \
         runtime/opal_cr.h \
         runtime/opal_info_support.h \
-        runtime/opal_params.h
+        runtime/opal_params.h \
+        runtime/opal_progress_threads.h
 
 libopen_pal_la_SOURCES += \
         runtime/opal_progress.c \
@@ -41,4 +43,5 @@ libopen_pal_la_SOURCES += \
         runtime/opal_init.c \
         runtime/opal_params.c \
         runtime/opal_cr.c \
-        runtime/opal_info_support.c
+        runtime/opal_info_support.c \
+        runtime/opal_progress_threads.c

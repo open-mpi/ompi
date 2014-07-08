@@ -600,6 +600,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_list_t);
 
+    module->passive_target_access_epoch = false;
+
 #if OPAL_ASSEMBLY_ARCH == OMPI_AMD64 || OPAL_ASSEMBLY_ARCH == IA32
     *model = MPI_WIN_UNIFIED;
 #else

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -225,7 +225,7 @@ int ompi_errhandler_runtime_callback(opal_pointer_array_t *errors) {
         errcode = err->errcode;
     }
         
-    ompi_mpi_abort(MPI_COMM_WORLD, errcode, false);
+    ompi_mpi_abort(MPI_COMM_WORLD, errcode);
     return OMPI_SUCCESS;
 }
 

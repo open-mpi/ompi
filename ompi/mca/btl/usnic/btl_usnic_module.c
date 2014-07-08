@@ -260,7 +260,8 @@ static int add_procs_create_ahs(ompi_btl_usnic_module_t *module,
                    (e.g., the networking is hosed between us).  So
                    just mark that we can't reach this peer, and print
                    a pretty warning. */
-                else if (EADDRNOTAVAIL == errno) {
+                else if (EADDRNOTAVAIL == errno ||
+                         EHOSTUNREACH == errno) {
                     add_procs_warn_ah_fail(module, endpoints[i]);
 
                     OBJ_RELEASE(endpoints[i]);
@@ -295,7 +296,6 @@ static int add_procs_create_ahs(ompi_btl_usnic_module_t *module,
                            true,
                            ompi_process_info.nodename,
                            ibv_get_device_name(module->device),
-                           module->port_num,
                            module->if_name,
                            mca_btl_usnic_component.arp_timeout);
             break;

@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +31,7 @@ struct mca_coll_ml_lmngr_t {
 
     /* base (allocated) address of the memory pool */
     void* base_addr;
+    void *alloc_base;
 
     /* size of memory chunks */
     size_t list_block_size;

@@ -120,7 +120,6 @@ fn_exit:
 int MPIU_datatype_full_size(MPI_Datatype datatype, MPI_Aint *size)
 {
     int error_code = MPI_SUCCESS;
-    MPI_Aint extent = 0;
     MPI_Aint true_extent = 0;
     MPI_Aint true_lb = 0;
 

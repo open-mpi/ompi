@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,24 +67,13 @@ int MPI_Start(MPI_Request *request)
 
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
+    case OMPI_REQUEST_NOOP:
         OPAL_CR_ENTER_LIBRARY();
 
         ret = MCA_PML_CALL(start(1, request));
 
         OPAL_CR_EXIT_LIBRARY();
         return ret;
-
-    case OMPI_REQUEST_NOOP:
-        /**
-         * We deal with a MPI_PROC_NULL request. If the request is
-         * already active, fall back to the error case in the default.
-         * Otherwise, mark it active so we can correctly handle it in
-         * the wait*.
-         */
-        if( OMPI_REQUEST_INACTIVE == (*request)->req_state ) {
-            (*request)->req_state = OMPI_REQUEST_ACTIVE;
-            return MPI_SUCCESS;
-        }
 
     default:
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);

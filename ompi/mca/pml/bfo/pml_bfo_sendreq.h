@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -249,7 +249,7 @@ send_request_pml_complete(mca_pml_bfo_send_request_t *sendreq)
         MCA_PML_BFO_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
     } else {
         if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST, true);
+            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
         }
     }
     sendreq->req_send.req_base.req_pml_complete = true;

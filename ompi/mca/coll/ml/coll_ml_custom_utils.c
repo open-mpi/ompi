@@ -4,6 +4,9 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,7 +73,7 @@ int mca_coll_ml_check_if_bcol_is_used(const char *bcol_name, const mca_coll_ml_m
     ranks_in_comm = (int *) malloc(comm_size * sizeof(int));
     if (OPAL_UNLIKELY(NULL == ranks_in_comm)) {
         ML_ERROR(("Memory allocation failed."));
-        ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_NO_MEM, true);
+        ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_NO_MEM);
         /* not reached but causes a clang warning to not return here */
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -107,7 +110,7 @@ int mca_coll_ml_check_if_bcol_is_used(const char *bcol_name, const mca_coll_ml_m
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         ML_ERROR(("comm_allreduce_pml failed."));
-        ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_OP, true);
+        ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_OP);
     }
 
     free(ranks_in_comm);

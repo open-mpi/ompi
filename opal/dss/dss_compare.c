@@ -183,6 +183,15 @@ int opal_dss_compare_float(float *value1, float *value2, opal_data_type_t type)
     return OPAL_EQUAL;
 }
 
+int opal_dss_compare_double(double *value1, double *value2, opal_data_type_t type)
+{
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+
 /*
  * NON-NUMERIC SYSTEM TYPES
  */

@@ -370,6 +370,26 @@ int opal_dss_print_float(char **output, char *prefix,
     return OPAL_SUCCESS;
 }
 
+int opal_dss_print_double(char **output, char *prefix,
+                          double *src, opal_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_DOUBLE\tValue: NULL pointer", prefx);
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: OPAL_DOUBLE\tValue: %f", prefx, *src);
+
+    return OPAL_SUCCESS;
+}
+
 int opal_dss_print_time(char **output, char *prefix,
                         time_t *src, opal_data_type_t type)
 {
@@ -610,6 +630,10 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
     case OPAL_FLOAT:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_FLOAT\tKey: %s\tValue: %f",
                  prefx, src->key, src->data.fval);
+        break;
+    case OPAL_DOUBLE:
+        asprintf(output, "%sOPAL_VALUE: Data type: OPAL_DOUBLE\tKey: %s\tValue: %f",
+                 prefx, src->key, src->data.dval);
         break;
     case OPAL_BYTE_OBJECT:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BYTE_OBJECT\tKey: %s\tData: %s\tSize: %lu",
