@@ -98,29 +98,6 @@ int opal_dstore_base_store(int dstorehandle,
     return hdl->module->store((struct opal_dstore_base_module_t*)hdl->module, id, kv);
 }
 
-void opal_dstore_base_commit(int dstorehandle,
-                             const opal_identifier_t *id)
-{
-    opal_dstore_handle_t *hdl;
-
-    if (dstorehandle < 0) {
-        OPAL_ERROR_LOG(OPAL_ERR_NOT_INITIALIZED);
-        return;
-    }
-
-    if (NULL == (hdl = (opal_dstore_handle_t*)opal_pointer_array_get_item(&opal_dstore_base.handles, dstorehandle))) {
-        OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
-        return;
-    }
-
-    if (NULL != hdl->module->commit) {
-        opal_output_verbose(1, opal_dstore_base_framework.framework_output,
-                            "committing data in %s dstore", (NULL == hdl->name) ? "NULL" : hdl->name);
-        hdl->module->commit((struct opal_dstore_base_module_t*)hdl->module, id);
-    }
-}
-
-
 int opal_dstore_base_fetch(int dstorehandle,
                            const opal_identifier_t *id,
                            const char *key,

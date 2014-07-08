@@ -17,8 +17,6 @@
 #include <time.h>
 #include <string.h>
 
-#include "opal/mca/pmi/pmi.h"
-
 #include <regex.h>
 
 #include "opal_stdint.h"
@@ -40,8 +38,6 @@ static void finalize(struct opal_dstore_base_module_t *imod);
 static int store(struct opal_dstore_base_module_t *imod,
                  const opal_identifier_t *proc,
                  opal_value_t *kv);
-static void commit(struct opal_dstore_base_module_t *mod,
-                   const opal_identifier_t *id);
 static int fetch(struct opal_dstore_base_module_t *imod,
                  const opal_identifier_t *proc,
                  const char *key,
@@ -54,17 +50,10 @@ mca_dstore_pmi_module_t opal_dstore_pmi_module = {
         NULL,
         finalize,
         store,
-        commit,
         fetch,
         remove_data
     }
 };
-
-
-static char *pmi_encode(const void *val, size_t vallen);
-static uint8_t* pmi_decode(const char *data, size_t *retlen);
-static char* setup_key(mca_dstore_pmi_module_t *mod,
-                       opal_identifier_t name, const char *key);
 
 /* Local variables */
 
@@ -76,11 +65,6 @@ static void finalize(struct opal_dstore_base_module_t *imod)
     char *node;
 
     mod = (mca_dstore_pmi_module_t*)imod;
-
-    if (NULL != mod->pmi_kvs_name) {
-        free(mod->pmi_kvs_name);
-        mod->pmi_kvs_name = NULL;
-    }
 
     /* to assist in getting a clean valgrind, cycle thru the hash table
      * and release all data stored in it
@@ -430,11 +414,6 @@ static int store(struct opal_dstore_base_module_t *imod,
         return OPAL_SUCCESS;
     }
 
-    /* add it to our PMI payload */
-    if (OPAL_SUCCESS != (rc = pmi_store_encoded(mod, val->key, (void*)&val->data, val->type))) {
-        OPAL_ERROR_LOG(rc);
-        return rc;
-    }
     /* retain a local copy */
     kv = opal_dstore_base_lookup_keyval(proc_data, val->key);
     OPAL_OUTPUT_VERBOSE((5, opal_dstore_base_framework.framework_output,
@@ -453,27 +432,13 @@ static int store(struct opal_dstore_base_module_t *imod,
     }
     opal_list_append(&proc_data->data, &kv->super);
 
-    return OPAL_SUCCESS;
-}
-
-static void commit(struct opal_dstore_base_module_t *imod,
-                   const opal_identifier_t *uid)
-{
-    mca_dstore_pmi_module_t *mod;
-    opal_identifier_t id;
-
-    mod = (mca_dstore_pmi_module_t*)imod;
-    /* to protect alignment, copy the identifier across */
-    memcpy(&id, uid, sizeof(opal_identifier_t));
-
-    /* commit the packed data to PMI */
-    pmi_commit_packed(mod, id);
-    
-    int rc = mca_common_pmi_commit(mod->pmi_kvs_name);
-    if( OPAL_SUCCESS != rc ){
-        // TODO: What we do here? failure exit?
-
+    /* let the active pmix component process it */
+    if (OPAL_SUCCESS != (rc = opal_pmix.put(uid, val->key, PMIX_GLOBAL, kv))) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
     }
+
+    return OPAL_SUCCESS;
 }
 
 static int fetch(struct opal_dstore_base_module_t *imod,

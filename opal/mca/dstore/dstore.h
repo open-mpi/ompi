@@ -77,13 +77,6 @@ typedef int (*opal_dstore_base_API_store_fn_t)(int dstorehandle,
                                                opal_value_t *kv);
 
 /*
- * Commit data to the database - action depends on implementation within
- * each active component
- */
-typedef void (*opal_dstore_base_API_commit_fn_t)(int dstorehandle,
-                                                 const opal_identifier_t *id);
-
-/*
  * Retrieve data
  *
  * Retrieve data for the given primary key associated with the specified key. Wildcards
@@ -112,7 +105,6 @@ typedef struct {
     opal_dstore_base_API_open_fn_t           open;
     opal_dstore_base_API_close_fn_t          close;
     opal_dstore_base_API_store_fn_t          store;
-    opal_dstore_base_API_commit_fn_t         commit;
     opal_dstore_base_API_fetch_fn_t          fetch;
     opal_dstore_base_API_remove_fn_t         remove;
 } opal_dstore_base_API_t;
@@ -146,10 +138,6 @@ typedef int (*opal_dstore_base_module_store_fn_t)(struct opal_dstore_base_module
                                                   const opal_identifier_t *id,
                                                   opal_value_t *kv);
 
-/* commit data */
-typedef void (*opal_dstore_base_module_commit_fn_t)(struct opal_dstore_base_module_t *mod,
-                                                    const opal_identifier_t *id);
-
 /* fetch data from the module */
 typedef int (*opal_dstore_base_module_fetch_fn_t)(struct opal_dstore_base_module_t *mod,
                                                   const opal_identifier_t *id,
@@ -168,7 +156,6 @@ typedef struct {
     opal_dstore_base_module_init_fn_t            init;
     opal_dstore_base_module_finalize_fn_t        finalize;
     opal_dstore_base_module_store_fn_t           store;
-    opal_dstore_base_module_commit_fn_t          commit;
     opal_dstore_base_module_fetch_fn_t           fetch;
     opal_dstore_base_module_remove_fn_t          remove;
 } opal_dstore_base_module_t;

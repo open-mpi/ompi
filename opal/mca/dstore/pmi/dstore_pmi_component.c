@@ -26,11 +26,6 @@ static opal_dstore_base_module_t *component_create(void);
 static void component_finalize(void);
 static int setup_pmi(void);
 
-/* local storage */
-static char *pmi_kvs_name = NULL;
-static int pmi_vallen_max = -1;
-static int pmi_keylen_max = -1;
-
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -81,8 +76,7 @@ static bool component_avail(void)
      * will force our selection if we are direct-launched,
      * and the orted will turn us "off" if indirectly launched
      */
-    int rc = opal_pmix.init();
-    if ( OPAL_SUCCESS == rc && OPAL_SUCCESS == setup_pmi()) {
+    if ( OPAL_SUCCESS == opal_pmix.init()) {
         return true;
     }
     /* if not, then we are not available */
@@ -93,9 +87,6 @@ static bool component_avail(void)
 static void component_finalize(void)
 {
     opal_pmix.finalize();
-    if (NULL != pmi_kvs_name) {
-        free(pmi_kvs_name);
-    }
 }
 
 static opal_dstore_base_module_t *component_create(void)
@@ -109,42 +100,8 @@ static opal_dstore_base_module_t *component_create(void)
     }
     /* copy the APIs across */
     memcpy(mod, &opal_dstore_pmi_module.api, sizeof(opal_dstore_base_module_t));
-    /* copy the global values */
-    mod->pmi_kvs_name = strdup(pmi_kvs_name);
-    mod->pmi_vallen_max = pmi_vallen_max;
-    mod->pmi_keylen_max = pmi_keylen_max;
-    /* init the other values */
-    mod->pmi_packed_data = NULL;
-    mod->pmi_pack_key = 0;
-    mod->pmi_packed_data_off = 0;
     OBJ_CONSTRUCT(&mod->hash_data, opal_hash_table_t);
     opal_hash_table_init(&mod->hash_data, 256);
 
     return (opal_dstore_base_module_t*)mod;
 }
-
-static int setup_pmi(void)
-{
-    int max_length, rc;
-
-    pmi_vallen_max = mca_common_pmi_vallen();
-    max_length = mca_common_pmi_kvslen();
-    pmi_kvs_name = (char*)malloc(max_length);
-    if (NULL == pmi_kvs_name) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    rc = mca_common_pmi_kvsname(pmi_kvs_name, max_length);
-    if( OPAL_SUCCESS != rc ){
-        OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
-                             "dstore:pmi:pmi_setup failed %s with error %s",
-                             "mca_common_pmi_jobname",
-                             opal_errmgr_base_pmi_error(rc)));
-        return rc;
-    }
-
-    pmi_keylen_max = mca_common_pmi_keylen();
-
-    return OPAL_SUCCESS;
-}
-

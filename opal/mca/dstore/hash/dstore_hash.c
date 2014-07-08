@@ -48,7 +48,6 @@ mca_dstore_hash_module_t opal_dstore_hash_module = {
         init,
         finalize,
         store,
-        NULL,
         fetch,
         remove_data
     }

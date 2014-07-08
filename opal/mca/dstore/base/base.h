@@ -70,8 +70,6 @@ OPAL_DECLSPEC int opal_dstore_base_close(int dstorehandle);
 OPAL_DECLSPEC int opal_dstore_base_store(int dstorehandle,
                                          const opal_identifier_t *id,
                                          opal_value_t *kv);
-OPAL_DECLSPEC void opal_dstore_base_commit(int dstorehandle,
-                                           const opal_identifier_t *id);
 OPAL_DECLSPEC int opal_dstore_base_fetch(int dstorehandle,
                                          const opal_identifier_t *id,
                                          const char *key,

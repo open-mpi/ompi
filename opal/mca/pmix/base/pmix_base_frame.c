@@ -49,3 +49,6 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, NULL, NULL,
                            opal_pmix_base_frame_close,
                            mca_pmix_base_static_components, 0);
 
+OBJ_CLASS_INSTANCE(pmix_info_t,
+                   opal_list_item_t,
+                   NULL, NULL);

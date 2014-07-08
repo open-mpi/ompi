@@ -13,13 +13,6 @@
 #include "opal_config.h"
 #include "opal/types.h"
 
-#if WANT_PMI_SUPPORT
-#include <pmi.h>
-#endif
-#if WANT_PMI2_SUPPORT
-#include <pmi2.h>
-#endif
-
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
 #include "opal/dss/dss_types.h"
@@ -27,19 +20,19 @@
 
 BEGIN_C_DECLS
 
-/* protect a couple of definitions that may not
- * be available in some versions of PMI, but are
- * needed to ensure pmix.h can compile */
-#ifndef MPID_Info
-typedef struct MPID_Info {
-    uint16_t foo;
-} MPID_Info;
-#endif
-#ifndef PMI2_Connect_comm_t
-typedef struct PMI2_Connect_comm {
-    uint16_t foo;
-} PMI2_Connect_comm_t;
-#endif
+/* define some maximum sizes */
+#define PMIX_MAX_VALLEN   1024
+#define PMIX_MAX_INFO_KEY  255
+#define PMIX_MAX_INFO_VAL 1024
+
+/* define an INFO object corresponding to
+ * the MPI_Info structure */
+typedef struct {
+    opal_list_item_t super;
+    char key[PMIX_MAX_INFO_KEY];
+    char value[PMIX_MAX_INFO_VAL];
+} pmix_info_t;
+OBJ_CLASS_DECLARATION(pmix_info_t);
 
 /* define a scope for data "put" by PMI per the following:
  *
@@ -53,9 +46,9 @@ typedef struct PMI2_Connect_comm {
  *              regardless of location
  */
 typedef uint8_t opal_pmix_scope_t;
-#define PMI_LOCAL   0x01
-#define PMI_REMOTE  0x02
-#define PMI_GLOBAL  0x03
+#define PMIX_LOCAL   0x01
+#define PMIX_REMOTE  0x02
+#define PMIX_GLOBAL  0x03
 
 /* callback function for non-blocking operations */
 typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
@@ -136,31 +129,31 @@ typedef void (*opal_pmix_base_module_get_nb_fn_t)(opal_identifier_t *id,
                                                  opal_pmix_cbfunc_t cbfunc,
                                                  void *cbdata);
 
-/* Nameserv_publish - note that this API has been modified from the current PMI standard
+/* Publish - note that this API has been modified from the current PMI standard
  * to include the process identifier so we can form the PMI key within the active
- * component instead of sprinkling that code all over the code base. As this is an extension
- * of the PMI-1 Publish_name function, it serves both PMI2 and PMI1 calls */
-typedef int (*opal_pmix_base_module_nameserv_publish_fn_t)(opal_identifier_t *id,
-                                                          const char service_name[],
-                                                          const struct MPID_Info *info_ptr,
-                                                          const char port[]);
+ * component instead of sprinkling that code all over the code base. The "info" parameter
+ * consists of a list of pmix_info_t objects */
+typedef int (*opal_pmix_base_module_publish_fn_t)(opal_identifier_t *id,
+                                                  const char service_name[],
+                                                  opal_list_t *info,
+                                                  const char port[]);
 
-/* Nameserv_lookup - note that this API has been modified from the current PMI standard
+/* Lookup - note that this API has been modified from the current PMI standard
  * to include the process identifier so we can form the PMI key within the active
- * component instead of sprinkling that code all over the code base. As this is an extension
-* of the PMI-1 Publish_name function, it serves both PMI2 and PMI1 calls */
-typedef int (*opal_pmix_base_module_nameserv_lookup_fn_t)(opal_identifier_t *id,
-                                                         const char service_name[],
-                                                         const struct MPID_Info *info_ptr,
-                                                         char port[], int portLen);
+ * component instead of sprinkling that code all over the code base. The "info" parameter
+ * consists of a list of pmix_info_t objects */
+typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_identifier_t *id,
+                                                 const char service_name[],
+                                                 opal_list_t *info,
+                                                 char port[], int portLen);
 
-/* Nameserv_unpublish - note that this API has been modified from the current PMI standard
+/* Unpublish - note that this API has been modified from the current PMI standard
  * to include the process identifier so we can form the PMI key within the active
- * component instead of sprinkling that code all over the code base. As this is an extension
-* of the PMI-1 Unpublish_name function, it serves both PMI2 and PMI1 calls */
-typedef int (*opal_pmix_base_module_nameserv_unpublish_fn_t)(opal_identifier_t *id,
-                                                            const char service_name[], 
-                                                            const struct MPID_Info *info_ptr);
+ * component instead of sprinkling that code all over the code base. The "info" parameter
+ * consists of a list of pmix_info_t objects */
+typedef int (*opal_pmix_base_module_unpublish_fn_t)(opal_identifier_t *id,
+                                                    const char service_name[], 
+                                                    opal_list_t *info);
 
 /* Not an official PMI API, but something we use. Unfortunately, the calls required to
  * retrieve the necessary info are not common between the different versions */
@@ -176,16 +169,13 @@ typedef int (*opal_pmix_base_module_get_local_info_fn_t)(int vpid, int **ranks_r
 typedef int (*opal_pmix_base_module_spawn_fn_t)(int count, const char * cmds[],
                                                int argcs[], const char ** argvs[],
                                                const int maxprocs[],
-                                               const int info_keyval_sizes[],
-                                               const struct MPID_Info *info_keyval_vectors[],
-                                               int preput_keyval_size,
-                                               const struct MPID_Info *preput_keyval_vector[],
+                                               opal_list_t *info_keyval_vector,
+                                               opal_list_t *preput_keyval_vector,
                                                char jobId[], int jobIdSize,
                                                int errors[]);
 
 /* PMI2_Job_Connect */
-typedef int (*opal_pmix_base_module_job_connect_fn_t)(const char jobId[],
-                                                     PMI2_Connect_comm_t *conn);
+typedef int (*opal_pmix_base_module_job_connect_fn_t)(const char jobId[]);
 
 /* PMI2_Job_Disconnect */
 typedef int (*opal_pmix_base_module_job_disconnect_fn_t)(const char jobId[]);
@@ -210,9 +200,9 @@ typedef struct {
     opal_pmix_base_module_put_fn_t                    put;
     opal_pmix_base_module_get_fn_t                    get;
     opal_pmix_base_module_get_nb_fn_t                 get_nb;
-    opal_pmix_base_module_nameserv_publish_fn_t       publish;
-    opal_pmix_base_module_nameserv_lookup_fn_t        lookup;
-    opal_pmix_base_module_nameserv_unpublish_fn_t     unpublish;
+    opal_pmix_base_module_publish_fn_t                publish;
+    opal_pmix_base_module_lookup_fn_t                 lookup;
+    opal_pmix_base_module_unpublish_fn_t              unpublish;
     opal_pmix_base_module_get_local_info_fn_t         get_local_info;
     /* currently unused APIs */
     opal_pmix_base_module_spawn_fn_t                  spawn;
