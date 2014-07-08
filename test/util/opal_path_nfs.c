@@ -138,6 +138,12 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
             continue;
         }
 
+        /* Per https://svn.open-mpi.org/trac/ompi/ticket/4767, Linux
+           lies about fuse filesystems.  Skip them. */
+        if (0 == strncasecmp(fs, "fuse.", 5)) {
+            continue;
+        }
+
         /* If we get an fs type of "none", skip it (e.g.,
            http://www.open-mpi.org/community/lists/devel/2012/09/11493.php) */
         if (0 == strcasecmp(fs, "none")) {
