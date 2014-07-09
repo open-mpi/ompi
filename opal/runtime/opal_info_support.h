@@ -98,6 +98,8 @@ OPAL_DECLSPEC void opal_info_do_arch(void);
 
 OPAL_DECLSPEC void opal_info_do_hostname(void);
 
+OPAL_DECLSPEC void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line);
+
 OPAL_DECLSPEC void opal_info_out(const char *pretty_message, const char *plain_message, const char *value);
 
 OPAL_DECLSPEC void opal_info_out_int(const char *pretty_message, 

@@ -62,6 +62,7 @@ static char **mca_base_var_file_list = NULL;
 static char *mca_base_var_override_file = NULL;
 static char *mca_base_var_file_prefix = NULL;
 static char *mca_base_param_file_path = NULL;
+static char *mca_base_env_list = NULL;
 static bool mca_base_var_suppress_override_warning = false;
 static opal_list_t mca_base_var_file_values;
 static opal_list_t mca_base_var_override_values;
@@ -72,11 +73,12 @@ static opal_hash_table_t mca_base_var_index_hash;
 
 const char *var_type_names[] = {
     "int",
-    "unsigned",
-    "unsigned long",
-    "unsigned long long",
+    "unsigned_int",
+    "unsigned_long",
+    "unsigned_long_long",
     "size_t",
     "string",
+    "version_string",
     "bool",
     "double"
 };
@@ -87,6 +89,7 @@ const size_t var_type_sizes[] = {
     sizeof (unsigned long),
     sizeof (unsigned long long),
     sizeof (size_t),
+    sizeof (char),
     sizeof (char),
     sizeof (bool),
     sizeof (double)
@@ -123,6 +126,7 @@ static int mca_base_var_cache_files (bool rel_path_search);
 static int var_set_initial (mca_base_var_t *var);
 static int var_get (int vari, mca_base_var_t **var_out, bool original);
 static int var_value_string (mca_base_var_t *var, char **value_string);
+static int mca_base_var_process_env_list(void);
 
 /*
  * classes
@@ -255,8 +259,58 @@ int mca_base_var_init(void)
         mca_base_var_initialized = true; 
 
         mca_base_var_cache_files(false);
+
+        /* set nesessary env variables for external usage */
+        mca_base_var_process_env_list();
     }
 
+    return OPAL_SUCCESS;
+}
+
+static int mca_base_var_process_env_list(void)
+{
+    int i, ret;
+    char** tokens;
+    char* ptr;
+    char* param, *value;
+    ret = mca_base_var_register ("opal", "mca", "base", "env_list",
+                                 "Set SHELL env variables",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
+    if ((0 > ret) || (NULL == mca_base_env_list)) {
+        return OPAL_SUCCESS;
+    }
+    tokens = opal_argv_split(mca_base_env_list, '+');
+    if (NULL != tokens) {
+        for (i = 0; NULL != tokens[i]; i++) {
+            if (NULL == (ptr = strchr(tokens[i], '='))) {
+                value = getenv(tokens[i]);
+                if (NULL != value) {
+                    if (NULL != strchr(value, '=')) {
+                        param = strdup(value);
+                        value = strchr(param, '=');
+                        *value = '\0';
+                        value++;
+                        opal_setenv(param, value, true, &environ);
+                        free(param);
+                    } else {
+                        opal_setenv(tokens[i], value, true, &environ);
+                    }
+                } else {
+                    opal_show_help("help-mca-var.txt", "incorrect-env-list-param",
+                            true, tokens[i], mca_base_env_list);
+                }
+            } else {
+                param = strdup(tokens[i]);
+                value = strchr(param, '=');
+                *value = '\0';
+                value++;
+                opal_setenv(param, value, true, &environ);
+                free(param);
+            }
+        }
+        opal_argv_free(tokens);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -424,7 +478,7 @@ int mca_base_var_get_value (int vari, const void *value,
     }
 
     if (!VAR_IS_VALID(var[0])) {
-        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        return OPAL_ERR_NOT_FOUND;
     }
 
     if (NULL != value) {
@@ -601,6 +655,7 @@ static int var_set_from_string (mca_base_var_t *var, char *src)
         dst->lfval = strtod (src, NULL);
         break;
     case MCA_BASE_VAR_TYPE_STRING:
+    case MCA_BASE_VAR_TYPE_VERSION_STRING:
         var_set_string (var, src);
         break;
     case MCA_BASE_VAR_TYPE_MAX:
@@ -641,7 +696,7 @@ int mca_base_var_set_value (int vari, const void *value, size_t size, mca_base_v
         }
     }
 
-    if (MCA_BASE_VAR_TYPE_STRING != var->mbv_type) {
+    if (MCA_BASE_VAR_TYPE_STRING != var->mbv_type && MCA_BASE_VAR_TYPE_VERSION_STRING != var->mbv_type) {
         memmove (var->mbv_storage, value, var_type_sizes[var->mbv_type]);
     } else {
         var_set_string (var, (char *) value);
@@ -683,7 +738,7 @@ int mca_base_var_deregister(int vari)
     }
 
     /* Release the current value if it is a string. */
-    if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type &&
+    if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type || MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type) &&
         var->mbv_storage->stringval) {
         free (var->mbv_storage->stringval);
         var->mbv_storage->stringval = NULL;
@@ -843,7 +898,7 @@ int mca_base_var_get (int vari, const mca_base_var_t **var)
     }
 
     if (!VAR_IS_VALID(*(var[0]))) {
-        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        return OPAL_ERR_NOT_FOUND;
     }
 
     return OPAL_SUCCESS;
@@ -883,7 +938,7 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
             continue;
         }
 
-        if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type &&
+        if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type || MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type) &&
             NULL == var->mbv_storage->stringval) {
             continue;
         }
@@ -1275,7 +1330,7 @@ static int register_variable (const char *project_name, const char *framework_na
         var->mbv_storage = storage;
 
         /* make a copy of the default string value */
-        if (MCA_BASE_VAR_TYPE_STRING == type && NULL != ((char **)storage)[0]) {
+        if ((MCA_BASE_VAR_TYPE_STRING == type || MCA_BASE_VAR_TYPE_VERSION_STRING == type) && NULL != ((char **)storage)[0]) {
             ((char **)storage)[0] = strdup (((char **)storage)[0]);
         }
     }
@@ -1603,7 +1658,8 @@ static void var_constructor(mca_base_var_t *var)
  */
 static void var_destructor(mca_base_var_t *var)
 {
-    if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type &&
+    if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type ||
+                MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type) &&
         NULL != var->mbv_storage &&
         NULL != var->mbv_storage->stringval) {
         free (var->mbv_storage->stringval);
@@ -1707,6 +1763,7 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
             ret = asprintf (value_string, "%" PRIsize_t, value->sizetval);
             break;
         case MCA_BASE_VAR_TYPE_STRING:
+        case MCA_BASE_VAR_TYPE_VERSION_STRING:
             ret = asprintf (value_string, "%s", 
                             value->stringval ? value->stringval : "");
             break;
@@ -2002,3 +2059,4 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
 
     return OPAL_SUCCESS;
 }
+

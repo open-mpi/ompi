@@ -1,0 +1,26 @@
+! -*- f90 -*-
+!
+! Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
+!               All Rights reserved.
+! $COPYRIGHT$
+
+subroutine MPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
+      baseptr, win, ierror)
+   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
+   use :: mpi_f08, only : ompi_win_allocate_shared_f
+   implicit none
+   INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
+   INTEGER, INTENT(IN) ::  disp_unit
+   TYPE(MPI_Info), INTENT(IN) ::  info
+   TYPE(MPI_Comm), INTENT(IN) ::  comm
+   TYPE(C_PTR), INTENT(OUT) ::  baseptr
+   TYPE(MPI_Win), INTENT(OUT) ::  win
+   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
+   integer :: c_ierror
+
+  call ompi_win_allocate_shared_f(size, disp_unit, info%MPI_VAL, comm%MPI_VAL, baseptr, win%MPI_VAL, c_ierror)
+   if (present(ierror)) ierror = c_ierror
+
+end subroutine MPI_Win_allocate_shared_f08

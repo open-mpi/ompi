@@ -37,7 +37,7 @@ int MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosit
     do {
         rc = mca_base_var_get (cvar_index, &var);
         if (OPAL_SUCCESS != rc) {
-            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc) ? MPI_T_ERR_INVALID_INDEX :
+            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX :
                 MPI_ERR_OTHER;
             break;
         }

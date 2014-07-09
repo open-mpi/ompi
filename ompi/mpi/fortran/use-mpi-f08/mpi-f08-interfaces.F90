@@ -2104,7 +2104,7 @@ end subroutine MPI_Type_set_name_f08
 end interface  MPI_Type_set_name
 
 interface MPI_Win_allocate_shared
-subroutine MPI_Win_allocate_shared(size, disp_unit, info, comm, &
+subroutine MPI_Win_allocate_shared_f08(size, disp_unit, info, comm, &
       baseptr, win, ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
   use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
@@ -2115,7 +2115,7 @@ subroutine MPI_Win_allocate_shared(size, disp_unit, info, comm, &
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
   TYPE(MPI_Win), INTENT(OUT) ::  win
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
-end subroutine MPI_Win_allocate_shared
+end subroutine MPI_Win_allocate_shared_f08
 end interface
 
 interface  MPI_Win_create_keyval
@@ -3239,7 +3239,7 @@ end subroutine MPI_Win_post_f08
 end interface  MPI_Win_post
 
 interface MPI_Win_shared_query
-subroutine MPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&
+subroutine MPI_Win_shared_query_f08(win, rank, size, disp_unit, baseptr,&
       ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
@@ -3249,7 +3249,7 @@ subroutine MPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&
   INTEGER, INTENT(OUT) ::  disp_unit
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
-end subroutine MPI_Win_shared_query
+end subroutine MPI_Win_shared_query_f08
 end interface
 
 interface  MPI_Win_start

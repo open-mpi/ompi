@@ -158,6 +158,10 @@ int main(int argc, char *argv[])
                             &mca_types, ompi_info_cmd_line);
         acted = true;
     }
+    if (opal_cmd_line_is_taken(ompi_info_cmd_line, "type")) {
+        opal_info_do_type(ompi_info_cmd_line);
+        acted = true;
+    }
     
     /* If no command line args are specified, show default set */
     

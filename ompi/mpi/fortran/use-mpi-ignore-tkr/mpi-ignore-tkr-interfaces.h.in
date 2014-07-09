@@ -8486,6 +8486,18 @@ subroutine MPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&
   integer, intent(out) :: ierror
 end subroutine MPI_Win_shared_query
 
+subroutine MPI_Win_shared_query_cptr(win, rank, size, disp_unit, baseptr,&
+      ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer, intent(in) :: win
+  integer, intent(in) :: rank
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: size
+  integer, intent(out) :: disp_unit
+  type(C_PTR), intent(out) :: baseptr
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_shared_query_cptr
+
 end interface
 
 
