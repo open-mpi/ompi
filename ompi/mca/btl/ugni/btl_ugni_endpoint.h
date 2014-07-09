@@ -51,18 +51,19 @@ typedef struct mca_btl_base_endpoint_t {
     int index;
 } mca_btl_base_endpoint_t;
 
-OBJ_CLASS_DECLARATION(mca_btl_base_endpoint_t);
+typedef mca_btl_base_endpoint_t  mca_btl_ugni_endpoint_t;
+OBJ_CLASS_DECLARATION(mca_btl_ugni_endpoint_t);
 
-int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep);
-int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnect);
+int mca_btl_ugni_ep_connect_progress (mca_btl_ugni_endpoint_t *ep);
+int mca_btl_ugni_ep_disconnect (mca_btl_ugni_endpoint_t *ep, bool send_disconnect);
 
 static inline int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module,
-                                        mca_btl_base_endpoint_t **ep,
+                                        mca_btl_ugni_endpoint_t **ep,
                                         mca_btl_ugni_module_t *btl,
                                         ompi_proc_t *peer_proc) {
-    mca_btl_base_endpoint_t *endpoint;
+    mca_btl_ugni_endpoint_t *endpoint;
 
-    endpoint = OBJ_NEW(mca_btl_base_endpoint_t);
+    endpoint = OBJ_NEW(mca_btl_ugni_endpoint_t);
     assert (endpoint != NULL);
 
     endpoint->smsg_progressing = 0;
@@ -78,7 +79,7 @@ static inline int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module,
     return OMPI_SUCCESS;
 }
 
-static inline void mca_btl_ugni_release_ep (mca_btl_base_endpoint_t *ep) {
+static inline void mca_btl_ugni_release_ep (mca_btl_ugni_endpoint_t *ep) {
     int rc;
 
     if (ep->common) {
@@ -100,7 +101,7 @@ static inline void mca_btl_ugni_release_ep (mca_btl_base_endpoint_t *ep) {
     OBJ_RELEASE(ep);
 }
 
-static inline int mca_btl_ugni_check_endpoint_state (mca_btl_base_endpoint_t *ep) {
+static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep) {
     int rc;
 
     if (OPAL_LIKELY(MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state)) {
