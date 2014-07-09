@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-dist_oshmemdata_DATA = base/help-oshmem-sshmem.txt
+dist_ompidata_DATA = base/help-oshmem-sshmem.txt
 
 headers += \
         base/base.h
