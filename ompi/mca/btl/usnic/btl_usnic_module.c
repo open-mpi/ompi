@@ -378,6 +378,20 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
         }
     }
 
+    /* This is fairly gross, but we need to output the connectivity
+       map after add_procs() has been called on all existing usnic
+       modules.  The only way I can think to do that is to count each
+       time add_procs() is called, and when we're at a multiple of
+       component.num_modules (i.e., add_procs() has been called on
+       each module -- both during MPI_INIT and dynamic process cases),
+       call the function to output the map. */
+    static int num_times_add_procs_called = 0;
+    ++num_times_add_procs_called;
+    if (0 == (num_times_add_procs_called %
+              mca_btl_usnic_component.num_modules)) {
+        ompi_btl_usnic_connectivity_map();
+    }
+
     return OMPI_SUCCESS;
 
  fail:

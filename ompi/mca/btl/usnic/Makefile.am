@@ -62,6 +62,7 @@ sources = \
     btl_usnic_graph.h \
     btl_usnic_graph.c \
     btl_usnic_hwloc.h \
+    btl_usnic_map.c \
     btl_usnic_mca.c \
     btl_usnic_proc.c \
     btl_usnic_proc.h \
