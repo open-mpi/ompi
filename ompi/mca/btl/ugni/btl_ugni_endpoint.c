@@ -28,7 +28,7 @@ static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep)
     OBJ_DESTRUCT(&ep->lock);
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_base_endpoint_t, opal_list_item_t,
+OBJ_CLASS_INSTANCE(mca_btl_ugni_endpoint_t, opal_list_item_t,
                    mca_btl_ugni_ep_construct, mca_btl_ugni_ep_destruct);
 
 static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
@@ -155,7 +155,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
     /* send all pending messages */
     BTL_VERBOSE(("endpoint connected. posting %u sends", (unsigned int) opal_list_get_size (&ep->frag_wait_list)));
 
-    rc = mca_btl_progress_send_wait_list (ep);
+    rc = mca_btl_ugni_progress_send_wait_list (ep);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         ep->wait_listed = true;
         opal_list_append (&ep->btl->ep_wait_list, &ep->super);

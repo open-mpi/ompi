@@ -272,7 +272,7 @@ int mca_btl_scif_sendi (struct mca_btl_base_module_t *btl,
     return OMPI_SUCCESS;
 }
 
-int mca_btl_progress_send_wait_list (mca_btl_base_endpoint_t *endpoint)
+int mca_btl_scif_progress_send_wait_list (mca_btl_base_endpoint_t *endpoint)
 {
     mca_btl_scif_base_frag_t *frag;
     int rc = OMPI_SUCCESS;
