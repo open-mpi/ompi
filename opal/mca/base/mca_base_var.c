@@ -63,6 +63,7 @@ static char *mca_base_var_override_file = NULL;
 static char *mca_base_var_file_prefix = NULL;
 static char *mca_base_param_file_path = NULL;
 static char *mca_base_env_list = NULL;
+static char *mca_base_env_list_sep = ";";
 static bool mca_base_var_suppress_override_warning = false;
 static opal_list_t mca_base_var_file_values;
 static opal_list_t mca_base_var_override_values;
@@ -273,14 +274,29 @@ static int mca_base_var_process_env_list(void)
     char** tokens;
     char* ptr;
     char* param, *value;
+    char sep;
     ret = mca_base_var_register ("opal", "mca", "base", "env_list",
                                  "Set SHELL env variables",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
-    if ((0 > ret) || (NULL == mca_base_env_list)) {
+    ret = mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
+                                 "Set SHELL env variables delimiter. Default: semicolon ';'",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
+    if (NULL == mca_base_env_list) {
         return OPAL_SUCCESS;
     }
-    tokens = opal_argv_split(mca_base_env_list, ';');
+    sep = ';';
+    if (NULL != mca_base_env_list_sep) {
+        if (1 == strlen(mca_base_env_list_sep)) {
+            sep = mca_base_env_list_sep[0];
+        } else {
+            opal_show_help("help-mca-var.txt", "incorrect-env-list-sep",
+                    true, mca_base_env_list_sep);
+            return OPAL_SUCCESS;
+        }
+    }
+    tokens = opal_argv_split(mca_base_env_list, (int)sep);
     if (NULL != tokens) {
         for (i = 0; NULL != tokens[i]; i++) {
             if (NULL == (ptr = strchr(tokens[i], '='))) {
