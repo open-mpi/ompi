@@ -282,6 +282,7 @@ mpi_api_files = \
         waitany_f08.F90 \
         wait_f08.F90 \
         waitsome_f08.F90 \
+        win_allocate_shared_f08.F90 \
         win_call_errhandler_f08.F90 \
         win_complete_f08.F90 \
         win_create_errhandler_f08.F90 \
@@ -304,6 +305,7 @@ mpi_api_files = \
         win_set_attr_f08.F90 \
         win_set_errhandler_f08.F90 \
         win_set_name_f08.F90 \
+        win_shared_query_f08.F90 \
         win_start_f08.F90 \
         win_test_f08.F90 \
         win_unlock_f08.F90 \
@@ -622,6 +624,7 @@ pmpi_api_files = \
         profile/pwaitany_f08.F90 \
         profile/pwait_f08.F90 \
         profile/pwaitsome_f08.F90 \
+        profile/pwin_allocate_shared_f08.F90 \
         profile/pwin_call_errhandler_f08.F90 \
         profile/pwin_complete_f08.F90 \
         profile/pwin_create_errhandler_f08.F90 \
@@ -644,6 +647,7 @@ pmpi_api_files = \
         profile/pwin_set_attr_f08.F90 \
         profile/pwin_set_errhandler_f08.F90 \
         profile/pwin_set_name_f08.F90 \
+        profile/pwin_shared_query_f08.F90 \
         profile/pwin_start_f08.F90 \
         profile/pwin_test_f08.F90 \
         profile/pwin_unlock_f08.F90 \

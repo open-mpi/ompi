@@ -2895,6 +2895,15 @@ subroutine MPI_Win_allocate_shared(size, disp_unit, info, comm, &
   integer, intent(out) :: ierror
 end subroutine MPI_Win_allocate_shared
 
+subroutine MPI_Win_allocate_shared_cptr(size, disp_unit, info, comm, &
+     baseptr, win, ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer :: disp_unit, info, comm, win, ierror
+  integer(KIND=MPI_ADDRESS_KIND) :: size
+  type(C_PTR) :: baseptr
+end subroutine MPI_Win_allocate_shared_cptr
+
 end interface
 
 
@@ -3106,6 +3115,18 @@ subroutine MPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&
   integer(KIND=MPI_ADDRESS_KIND), intent(out) :: baseptr
   integer, intent(out) :: ierror
 end subroutine MPI_Win_shared_query
+
+subroutine MPI_Win_shared_query_cptr(win, rank, size, disp_unit, baseptr,&
+      ierror)
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  include 'mpif-config.h'
+  integer, intent(in) :: win
+  integer, intent(in) :: rank
+  integer(KIND=MPI_ADDRESS_KIND), intent(out) :: size
+  integer, intent(out) :: disp_unit
+  type(C_PTR), intent(out) :: baseptr
+  integer, intent(out) :: ierror
+end subroutine MPI_Win_shared_query_cptr
 
 end interface
 
