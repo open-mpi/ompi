@@ -121,3 +121,14 @@ starting your job.
 
   Value:      %s
   Source:     %s
+#
+[incorrect-env-list-param]
+WARNING: The format of MCA parameter "mca_base_env_list" is a plus-sign (+) delimited
+list of VAR=VAL and/or VAR instances, e.g.: -mca mca_base_env_list VAR1=VAL1+VAR2+VAR3=VAL3;... 
+If a variable, VAR, is listed but not explicitly assigned a value in the command line, VAR will 
+be assigned the value set in the executing environment.
+
+The following environment variable was listed unassigned in "mca_base_env_list", but was
+not found in your environment:
+  Variable:             %s
+  MCA variable value:   %s
