@@ -538,8 +538,7 @@ void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line)
 {
     mca_base_var_info_lvl_t max_level = OPAL_INFO_LVL_9;
     int count;
-    char *type, *component, *str;
-    bool found;
+    char *type, *str;
     int i, j, k, len, ret;
     char *p;
     const mca_base_var_t *var;
