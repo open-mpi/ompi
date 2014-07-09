@@ -649,4 +649,15 @@ reached:
 The job will now be aborted. Please check your code and/or
 adjust/remove the job execution time limit (as specified
 by MPIEXEC_TIMEOUT in your environment).
-
+#
+[orterun:deprecated-env-set]
+WARNING: The mechanism by which environment variables are passed to OMPI is changing!!
+Specifically, beginning in the 1.9.x/2.0.x series, using "-x" to set environment 
+variables is deprecated. Please use the "mca_base_env_list" MCA parameter. With this new 
+mechanism, mpirun ... -x env_foo1=bar1 -x env_foo2=bar2 -x env_foo3 ...
+becomes: mpirun ... -mca mca_base_env_list env_foo1=bar1+env_foo2=bar2+env_foo3 ...
+#
+[orterun:conflict-env-set]
+ERROR: You have attempted to pass environment variables to OMPI with both the "-x" method (deprecated starting 
+in the 1.9.x/2.0.x series) and by setting the MCA parameter "mca_base_env_list". OMPI does not support mixing
+these two methods. Please choose one method and try launching your job again. You job will now abort.

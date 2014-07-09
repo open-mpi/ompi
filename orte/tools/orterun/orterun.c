@@ -1722,6 +1722,13 @@ static int create_app(int argc, char* argv[],
 
     /* Did the user request to export any environment variables on the cmd line? */
     if (opal_cmd_line_is_taken(&cmd_line, "x")) {
+        char* env_set_flag = getenv("OMPI_MCA_mca_base_env_list");
+        if (NULL != env_set_flag) {
+            orte_show_help("help-orterun.txt", "orterun:conflict-env-set", false);
+            return ORTE_ERR_FATAL;
+        } else {
+            orte_show_help("help-orterun.txt", "orterun:deprecated-env-set", false);
+        }
         j = opal_cmd_line_get_ninsts(&cmd_line, "x");
         for (i = 0; i < j; ++i) {
             param = opal_cmd_line_get_param(&cmd_line, "x", i, 0);
