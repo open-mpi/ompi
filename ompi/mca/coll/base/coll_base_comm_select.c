@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -15,7 +15,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -157,61 +157,58 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 
         /* initialize the module */
         ret = avail->ac_module->coll_module_enable(avail->ac_module, comm);
-        if (OMPI_SUCCESS != ret) {
-            mca_coll_base_comm_unselect(comm);
-            continue;
+        if (OMPI_SUCCESS == ret) {
+            /* copy over any of the pointers */
+            COPY(avail->ac_module, comm, allgather);
+            COPY(avail->ac_module, comm, allgatherv);
+            COPY(avail->ac_module, comm, allreduce);
+            COPY(avail->ac_module, comm, alltoall);
+            COPY(avail->ac_module, comm, alltoallv);
+            COPY(avail->ac_module, comm, alltoallw);
+            COPY(avail->ac_module, comm, barrier);
+            COPY(avail->ac_module, comm, bcast);
+            COPY(avail->ac_module, comm, exscan);
+            COPY(avail->ac_module, comm, gather);
+            COPY(avail->ac_module, comm, gatherv);
+            COPY(avail->ac_module, comm, reduce);
+            COPY(avail->ac_module, comm, reduce_scatter_block);
+            COPY(avail->ac_module, comm, reduce_scatter);
+            COPY(avail->ac_module, comm, scan);
+            COPY(avail->ac_module, comm, scatter);
+            COPY(avail->ac_module, comm, scatterv);
+
+            COPY(avail->ac_module, comm, iallgather);
+            COPY(avail->ac_module, comm, iallgatherv);
+            COPY(avail->ac_module, comm, iallreduce);
+            COPY(avail->ac_module, comm, ialltoall);
+            COPY(avail->ac_module, comm, ialltoallv);
+            COPY(avail->ac_module, comm, ialltoallw);
+            COPY(avail->ac_module, comm, ibarrier);
+            COPY(avail->ac_module, comm, ibcast);
+            COPY(avail->ac_module, comm, iexscan);
+            COPY(avail->ac_module, comm, igather);
+            COPY(avail->ac_module, comm, igatherv);
+            COPY(avail->ac_module, comm, ireduce);
+            COPY(avail->ac_module, comm, ireduce_scatter_block);
+            COPY(avail->ac_module, comm, ireduce_scatter);
+            COPY(avail->ac_module, comm, iscan);
+            COPY(avail->ac_module, comm, iscatter);
+            COPY(avail->ac_module, comm, iscatterv);
+
+            /* We can not reliably check if this comm has a topology
+             * at this time. The flags are set *after* coll_select */
+            COPY_NEIGH(avail->ac_module, comm, neighbor_allgather);
+            COPY_NEIGH(avail->ac_module, comm, neighbor_allgatherv);
+            COPY_NEIGH(avail->ac_module, comm, neighbor_alltoall);
+            COPY_NEIGH(avail->ac_module, comm, neighbor_alltoallv);
+            COPY_NEIGH(avail->ac_module, comm, neighbor_alltoallw);
+
+            COPY_NEIGH(avail->ac_module, comm, ineighbor_allgather);
+            COPY_NEIGH(avail->ac_module, comm, ineighbor_allgatherv);
+            COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoall);
+            COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoallv);
+            COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoallw);
         }
-
-        /* copy over any of the pointers */
-        COPY(avail->ac_module, comm, allgather);
-        COPY(avail->ac_module, comm, allgatherv);
-        COPY(avail->ac_module, comm, allreduce);
-        COPY(avail->ac_module, comm, alltoall);
-        COPY(avail->ac_module, comm, alltoallv);
-        COPY(avail->ac_module, comm, alltoallw);
-        COPY(avail->ac_module, comm, barrier);
-        COPY(avail->ac_module, comm, bcast);
-        COPY(avail->ac_module, comm, exscan);
-        COPY(avail->ac_module, comm, gather);
-        COPY(avail->ac_module, comm, gatherv);
-        COPY(avail->ac_module, comm, reduce);
-        COPY(avail->ac_module, comm, reduce_scatter_block);
-        COPY(avail->ac_module, comm, reduce_scatter);
-        COPY(avail->ac_module, comm, scan);
-        COPY(avail->ac_module, comm, scatter);
-        COPY(avail->ac_module, comm, scatterv);
-
-        COPY(avail->ac_module, comm, iallgather);
-        COPY(avail->ac_module, comm, iallgatherv);
-        COPY(avail->ac_module, comm, iallreduce);
-        COPY(avail->ac_module, comm, ialltoall);
-        COPY(avail->ac_module, comm, ialltoallv);
-        COPY(avail->ac_module, comm, ialltoallw);
-        COPY(avail->ac_module, comm, ibarrier);
-        COPY(avail->ac_module, comm, ibcast);
-        COPY(avail->ac_module, comm, iexscan);
-        COPY(avail->ac_module, comm, igather);
-        COPY(avail->ac_module, comm, igatherv);
-        COPY(avail->ac_module, comm, ireduce);
-        COPY(avail->ac_module, comm, ireduce_scatter_block);
-        COPY(avail->ac_module, comm, ireduce_scatter);
-        COPY(avail->ac_module, comm, iscan);
-        COPY(avail->ac_module, comm, iscatter);
-        COPY(avail->ac_module, comm, iscatterv);
-
-        /* We can not reliably check if this comm has a topology
-         * at this time. The flags are set *after* coll_select */
-        COPY_NEIGH(avail->ac_module, comm, neighbor_allgather);
-        COPY_NEIGH(avail->ac_module, comm, neighbor_allgatherv);
-        COPY_NEIGH(avail->ac_module, comm, neighbor_alltoall);
-        COPY_NEIGH(avail->ac_module, comm, neighbor_alltoallv);
-        COPY_NEIGH(avail->ac_module, comm, neighbor_alltoallw);
-
-        COPY_NEIGH(avail->ac_module, comm, ineighbor_allgather);
-        COPY_NEIGH(avail->ac_module, comm, ineighbor_allgatherv);
-        COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoall);
-        COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoallv);
-        COPY_NEIGH(avail->ac_module, comm, ineighbor_alltoallw);
 
         /* release the original module reference and the list item */
         OBJ_RELEASE(avail->ac_module);
