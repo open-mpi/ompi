@@ -355,7 +355,7 @@ static int mca_btl_scif_progress_sends (mca_btl_base_endpoint_t *ep)
 {
     /* try sending any wait listed fragments */
     if (OPAL_UNLIKELY(0 != opal_list_get_size (&ep->frag_wait_list))) {
-        return mca_btl_progress_send_wait_list (ep);
+        return mca_btl_scif_progress_send_wait_list (ep);
     }
 
     return 0;

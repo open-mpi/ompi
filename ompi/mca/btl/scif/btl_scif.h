@@ -224,7 +224,7 @@ mca_btl_scif_alloc(struct mca_btl_base_module_t *btl,
                    struct mca_btl_base_endpoint_t *endpoint,
                    uint8_t order, size_t size, uint32_t flags);
 
-int mca_btl_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
+int mca_btl_scif_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 
 typedef struct mca_btl_scif_reg_t {
     mca_mpool_base_registration_t base;

@@ -131,7 +131,7 @@ mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
-int mca_btl_progress_send_wait_list (mca_btl_base_endpoint_t *endpoint)
+int mca_btl_ugni_progress_send_wait_list (mca_btl_base_endpoint_t *endpoint)
 {
     mca_btl_ugni_base_frag_t *frag;
     int rc;

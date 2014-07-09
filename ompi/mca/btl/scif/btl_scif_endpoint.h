@@ -61,19 +61,21 @@ typedef struct mca_btl_base_endpoint_t {
 #endif
 } mca_btl_base_endpoint_t;
 
-OBJ_CLASS_DECLARATION(mca_btl_base_endpoint_t);
+typedef mca_btl_base_endpoint_t  mca_btl_scif_endpoint_t;
 
-int mca_btl_scif_ep_connect (mca_btl_base_endpoint_t *ep);
+OBJ_CLASS_DECLARATION(mca_btl_scif_endpoint_t);
+
+int mca_btl_scif_ep_connect (mca_btl_scif_endpoint_t *ep);
 int mca_btl_scif_ep_connect_start_passive (void);
 
-static inline int mca_btl_scif_ep_init (mca_btl_base_endpoint_t *endpoint,
+static inline int mca_btl_scif_ep_init (mca_btl_scif_endpoint_t *endpoint,
                                         mca_btl_scif_module_t *btl,
                                         ompi_proc_t *peer_proc) {
     mca_btl_scif_modex_t *modex;
     size_t msg_size;
     int rc;
 
-    OBJ_CONSTRUCT(endpoint, mca_btl_base_endpoint_t);
+    OBJ_CONSTRUCT(endpoint, mca_btl_scif_endpoint_t);
     endpoint->state = MCA_BTL_SCIF_EP_STATE_INIT;
 
     rc = ompi_modex_recv (&mca_btl_scif_component.super.btl_version, peer_proc,
@@ -97,7 +99,7 @@ static inline int mca_btl_scif_ep_init (mca_btl_base_endpoint_t *endpoint,
     return OMPI_SUCCESS;
 }
 
-static inline int mca_btl_scif_ep_release (mca_btl_base_endpoint_t *ep)
+static inline int mca_btl_scif_ep_release (mca_btl_scif_endpoint_t *ep)
 {
     OBJ_DESTRUCT(ep);
     return OMPI_SUCCESS;
