@@ -1407,6 +1407,19 @@ subroutine pompi_type_set_name_f(type,type_name,ierror,type_name_len) &
    INTEGER, VALUE, INTENT(IN) :: type_name_len
 end subroutine pompi_type_set_name_f
 
+subroutine pompi_win_allocate_shared_f(size, disp_unit, info, comm, &
+      baseptr, win, ierror) BIND(C, name="ompi_win_allocate_shared_f")
+  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+  use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
+  INTEGER, INTENT(IN) ::  disp_unit
+  INTEGER, INTENT(IN) ::  info
+  INTEGER, INTENT(IN) ::  comm
+  TYPE(C_PTR), INTENT(OUT) ::  baseptr
+  INTEGER, INTENT(OUT) ::  win
+  INTEGER, INTENT(OUT) ::  ierror
+end subroutine pompi_win_allocate_shared_f
+
 subroutine pompi_win_create_keyval_f(win_copy_attr_fn,win_delete_attr_fn, &
                                     win_keyval,extra_state,ierror) &
    BIND(C, name="pompi_win_create_keyval_f")
@@ -2249,6 +2262,18 @@ subroutine pompi_win_post_f(group,assert,win,ierror) &
    INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_post_f
+
+subroutine pompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
+      ierror) BIND(C, name="ompi_win_shared_query_f")
+  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
+  use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+  INTEGER, INTENT(IN) ::  win
+  INTEGER, INTENT(IN) ::  rank
+  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
+  INTEGER, INTENT(OUT) ::  disp_unit
+  TYPE(C_PTR), INTENT(OUT) ::  baseptr
+  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
+end subroutine pompi_win_shared_query_f
 
 subroutine pompi_win_start_f(group,assert,win,ierror) &
    BIND(C, name="pompi_win_start_f")
