@@ -280,7 +280,7 @@ static int mca_base_var_process_env_list(void)
     if ((0 > ret) || (NULL == mca_base_env_list)) {
         return OPAL_SUCCESS;
     }
-    tokens = opal_argv_split(mca_base_env_list, '+');
+    tokens = opal_argv_split(mca_base_env_list, ';');
     if (NULL != tokens) {
         for (i = 0; NULL != tokens[i]; i++) {
             if (NULL == (ptr = strchr(tokens[i], '='))) {
