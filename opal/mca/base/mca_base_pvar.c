@@ -432,7 +432,7 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
             obj_handle = NULL;
         } else if (0 != pvar->bind && NULL == obj_handle) {
             /* this is an application error. what is the correct error code? */
-            ret = OPAL_ERROR;
+            ret = OPAL_ERR_BAD_PARAM;
             break;
         }
 

@@ -424,7 +424,7 @@ int mca_base_var_get_value (int vari, const void *value,
     }
 
     if (!VAR_IS_VALID(var[0])) {
-        return OPAL_ERR_BAD_PARAM;
+        return OPAL_ERR_NOT_FOUND;
     }
 
     if (NULL != value) {
@@ -835,7 +835,18 @@ int mca_base_var_set_flag (int vari, mca_base_var_flag_t flag, bool set)
  */
 int mca_base_var_get (int vari, const mca_base_var_t **var)
 {
-    return var_get (vari, (mca_base_var_t **) var, false);
+    int ret;
+    ret = var_get (vari, (mca_base_var_t **) var, false);
+
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    if (!VAR_IS_VALID(*(var[0]))) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 /*

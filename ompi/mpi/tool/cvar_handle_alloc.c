@@ -48,7 +48,7 @@ int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
 
         rc = mca_base_var_get(cvar_index, &new_handle->var);
         if (OPAL_SUCCESS != rc) {
-            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc) ? MPI_T_ERR_INVALID_INDEX:
+            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX:
                 MPI_ERR_OTHER;
             free (new_handle);
             break;
