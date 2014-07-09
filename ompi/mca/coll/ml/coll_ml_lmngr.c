@@ -59,7 +59,7 @@ static void destruct_lmngr(mca_coll_ml_lmngr_t *lmngr)
     ML_VERBOSE(6, ("Destructing list manager %p", (void *)lmngr));
 
     while (NULL != (item = opal_list_remove_first(&lmngr->blocks_list))) {
-        OBJ_DESTRUCT(item);
+        OBJ_RELEASE(item);
     }
 
     OBJ_DESTRUCT(&lmngr->blocks_list);
@@ -258,10 +258,10 @@ mca_bcol_base_lmngr_block_t* mca_coll_ml_lmngr_alloc (
 
     /* Check if the list manager was initialized */
     if(OPAL_UNLIKELY(NULL == lmngr->base_addr)) {
-        ML_VERBOSE(7 ,("Starting memory initialization\n"));
+        ML_VERBOSE(7 ,("Starting memory initialization"));
         rc = mca_coll_ml_lmngr_init(lmngr);
         if (OMPI_SUCCESS != rc) {
-            ML_ERROR(("Failed to init memory\n"));
+            ML_ERROR(("Failed to init memory"));
             return NULL;
         }
     }

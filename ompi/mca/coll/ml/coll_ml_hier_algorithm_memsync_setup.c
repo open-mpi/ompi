@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,13 +32,12 @@ static int mca_coll_ml_build_memsync_schedule(
     mca_coll_ml_collective_operation_description_t  *schedule;
 
     *coll_desc = (mca_coll_ml_collective_operation_description_t *)
-                  malloc(sizeof(mca_coll_ml_collective_operation_description_t));
+      calloc(1, sizeof(mca_coll_ml_collective_operation_description_t));
 
     schedule = *coll_desc;
     if (OPAL_UNLIKELY(NULL == schedule)) {
-        ML_ERROR(("Can't allocate memory.\n"));
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto Barrier_Setup_Error;
+        ML_ERROR(("Can't allocate memory."));
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if (topo_info->global_highest_hier_group_index ==
@@ -61,7 +63,7 @@ static int mca_coll_ml_build_memsync_schedule(
                                      calloc(n_fcns, sizeof(struct mca_coll_ml_compound_functions_t));
 
     if (OPAL_UNLIKELY(NULL == schedule->component_functions)) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto Barrier_Setup_Error;
     }
@@ -132,7 +134,7 @@ static int mca_coll_ml_build_memsync_schedule(
         if (comp_fn->num_dependent_tasks > 0) {
             comp_fn->dependent_task_indices = (int *) calloc(comp_fn->num_dependent_tasks, sizeof(int));
             if (OPAL_UNLIKELY(NULL == comp_fn->dependent_task_indices)) {
-                ML_ERROR(("Can't allocate memory.\n"));
+                ML_ERROR(("Can't allocate memory."));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto Barrier_Setup_Error;
             }
@@ -154,7 +156,7 @@ static int mca_coll_ml_build_memsync_schedule(
 
     rc = ml_coll_barrier_constant_group_data_setup(topo_info, schedule);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        ML_ERROR(("Failed to init const group data.\n"));
+        ML_ERROR(("Failed to init const group data."));
         goto Barrier_Setup_Error;
     }
 
@@ -167,6 +169,9 @@ Barrier_Setup_Error:
         free(schedule->component_functions);
         schedule->component_functions = NULL;
     }
+
+    free (schedule);
+    *coll_desc = NULL;
 
     return rc;
 }

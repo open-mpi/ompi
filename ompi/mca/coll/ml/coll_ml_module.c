@@ -92,8 +92,6 @@ mca_coll_ml_module_construct(mca_coll_ml_module_t *module)
     int index_topo, coll_i, st_i;
     mca_coll_ml_topology_t *topo;
 
-    memset ((void*)((intptr_t) module + sizeof (module->super)), 0, sizeof(*module) - sizeof(module->super));
-
     memset ((char *) module + sizeof (module->super), 0, sizeof (*module) - sizeof (module->super));
 
     /* It's critical to reset data_offset to zero */
@@ -144,8 +142,6 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
     mca_coll_ml_topology_t *topo;
 
     ML_VERBOSE(4, ("ML module destruct"));
-
-    ml_coll_hier_reduce_cleanup(module);
 
     for (index_topo = 0; index_topo < COLL_ML_TOPO_MAX; index_topo++) {
         topo = &module->topo_list[index_topo];
@@ -232,6 +228,7 @@ mca_coll_ml_module_destruct(mca_coll_ml_module_t *module)
     ml_coll_hier_allreduce_cleanup_new(module);
     ml_coll_hier_allgather_cleanup(module);
     ml_coll_hier_bcast_cleanup(module);
+    ml_coll_hier_reduce_cleanup(module);
 
     /* release saved collectives */
     ML_RELEASE_FALLBACK(module, allreduce);
@@ -390,7 +387,7 @@ static void generate_active_bcols_list(mca_coll_ml_module_t *ml_module)
                  * function is not provided we skip this bcol, since it isn't used
                  * for memory synchronization (for instance - ptpcoll )*/
                 if (NULL == GET_BCOL_SYNC_FN(bcol_module)) {
-                    ML_VERBOSE(10,(" No sync function was provided by bcol %s\n",
+                    ML_VERBOSE(10,(" No sync function was provided by bcol %s",
                                    bcol_module->bcol_component->bcol_version.mca_component_name));
                     continue;
                 }
@@ -536,7 +533,7 @@ static int ml_module_memory_initialization(mca_coll_ml_module_t *ml_module)
     ml_module->payload_block = mca_coll_ml_allocate_block(cs,ml_module->payload_block);
 
     if (NULL == ml_module->payload_block) {
-        ML_VERBOSE(1, ("mca_coll_ml_allocate_block exited with error.\n"));
+        ML_VERBOSE(1, ("mca_coll_ml_allocate_block exited with error."));
         return OMPI_ERROR;
     }
 
@@ -545,7 +542,7 @@ static int ml_module_memory_initialization(mca_coll_ml_module_t *ml_module)
     nbuffers = cs->n_payload_buffs_per_bank;
     buf_size = cs->payload_buffer_size;
 
-    ML_VERBOSE(10, ("Call for initialize block.\n"));
+    ML_VERBOSE(10, ("Call for initialize block."));
 
     ret = mca_coll_ml_initialize_block(ml_module->payload_block,
                                        nbuffers, nbanks, buf_size, ml_module->data_offset,
@@ -554,13 +551,13 @@ static int ml_module_memory_initialization(mca_coll_ml_module_t *ml_module)
         return ret;
     }
 
-    ML_VERBOSE(10, ("Call for register bcols.\n"));
+    ML_VERBOSE(10, ("Call for register bcols."));
 
     /* inititialize the memory with all of the bcols:
        loop through the bcol modules and invoke the memory init */
     ret = mca_coll_ml_register_bcols(ml_module);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("mca_coll_ml_register_bcols returned an error.\n"));
+        ML_ERROR(("mca_coll_ml_register_bcols returned an error."));
         /* goto CLEANUP; */
         return ret;
     }
@@ -631,7 +628,7 @@ static int check_global_view_of_subgroups( int n_procs_selected,
     return ret;
 }
 
-static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ranks_in_all_subgroups, int my_rank_in_list)
+static int ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ranks_in_all_subgroups, int my_rank_in_list)
 {
     int *list_n_connected;
     int group_size, rank, i, j, knt, offset, k, my_sbgp = 0;
@@ -645,6 +642,10 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
     mca_coll_ml_leader_offset_info_t *loc_leader = (mca_coll_ml_leader_offset_info_t *)
         malloc(sizeof(mca_coll_ml_leader_offset_info_t)*(n_hier+1));
 
+    if (NULL == loc_leader) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     /* first thing I want to know is where does the first level end */
     level_one_knt = 0;
 
@@ -652,7 +653,7 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
         level_one_knt++;
     }
 
-    /* fprintf(stderr,"PPP %d %d %d \n", level_one_knt, array_of_all_subgroup_ranks[0].level_in_hierarchy, num_total_subgroups); */
+    /* fprintf(stderr,"PPP %d %d %d ", level_one_knt, array_of_all_subgroup_ranks[0].level_in_hierarchy, num_total_subgroups); */
 
     /* I want to cache this number for unpack*/
     array_of_all_subgroup_ranks->level_one_index = level_one_knt;
@@ -694,7 +695,11 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
         /* malloc some memory for the new list to cache
            on the bcol module
         */
-        list_n_connected = (int *) malloc(sizeof(int)*group_size);
+        list_n_connected = (int *) calloc(group_size, sizeof (int));
+        if (NULL == list_n_connected) {
+            free (loc_leader);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         /* next thing to do is to find out which subgroup I'm in
          * at this particular level
@@ -805,6 +810,8 @@ static void ml_init_k_nomial_trees(mca_coll_ml_topology_t *topo, int *list_of_ra
 
     /* what other goodies do I want to cache on the ml-module? */
     topo->hier_layout_info = loc_leader;
+
+    return OMPI_SUCCESS;
 }
 
 static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
@@ -838,7 +845,7 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
                              ompi_comm_size(comm), map_to_comm_ranks,
                              comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_VERBOSE(10, ("comm_allreduce_pml failed. root reduction\n"));
+        ML_VERBOSE(10, ("comm_allreduce_pml failed. root reduction"));
         goto exit_ERROR;
     }
 
@@ -847,19 +854,18 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
                        MPI_INT, my_rank, ompi_comm_size(comm),
                        map_to_comm_ranks,comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_VERBOSE(10, ("comm_bcast_pml failed. num_total_subgroups bcast\n"));
+        ML_VERBOSE(10, ("comm_bcast_pml failed. num_total_subgroups bcast"));
         goto exit_ERROR;
     }
 
     scratch_space=(int *)malloc(4*sizeof(int)*(*num_total_subgroups));
     if (OPAL_UNLIKELY(NULL == scratch_space)) {
-        ML_VERBOSE(10, ("Cannot allocate memory scratch_space.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory scratch_space."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
 
     if( my_rank == root ) {
-        sum=0;
         for(i=0 ; i < (*num_total_subgroups) ; i++ ) {
             scratch_space[4*i]=(*array_of_all_subgroup_ranks)[i].root_rank_in_comm;
             scratch_space[4*i+1]=(*array_of_all_subgroup_ranks)[i].n_ranks;
@@ -871,7 +877,7 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
                        MPI_INT, my_rank, ompi_comm_size(comm),
                        map_to_comm_ranks, comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_VERBOSE(10, ("comm_allreduce_pml failed. scratch_space bcast\n"));
+        ML_VERBOSE(10, ("comm_allreduce_pml failed. scratch_space bcast"));
         goto exit_ERROR;
     }
     if( my_rank != root ) {
@@ -883,7 +889,7 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
             (*array_of_all_subgroup_ranks)=(sub_group_params_t *)
                 malloc(sizeof(sub_group_params_t)*(*num_total_subgroups));
             if (OPAL_UNLIKELY(NULL == (*array_of_all_subgroup_ranks))) {
-                ML_VERBOSE(10, ("Cannot allocate memory array_of_all_subgroup_ranks.\n"));
+                ML_VERBOSE(10, ("Cannot allocate memory array_of_all_subgroup_ranks."));
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit_ERROR;
             }
@@ -901,11 +907,11 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
     for(i=0 ; i < (*num_total_subgroups) ; i++ ) {
         sum+=(*array_of_all_subgroup_ranks)[i].n_ranks;
     }
-    if( in_num_total_subgroups != (*num_total_subgroups) ) {
+    if( in_num_total_subgroups != (*num_total_subgroups) && sum > 0 ) {
         (*list_of_ranks_in_all_subgroups)=(int *)
             realloc((*list_of_ranks_in_all_subgroups),sizeof(int)*sum);
         if (OPAL_UNLIKELY(NULL == (*list_of_ranks_in_all_subgroups))) {
-            ML_VERBOSE(10, ("Cannot allocate memory *list_of_ranks_in_all_subgroups.\n"));
+            ML_VERBOSE(10, ("Cannot allocate memory *list_of_ranks_in_all_subgroups."));
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit_ERROR;
         }
@@ -914,7 +920,7 @@ static int ml_setup_full_tree_data(mca_coll_ml_topology_t *topo,
                          MPI_INT, my_rank, ompi_comm_size(comm),
                          map_to_comm_ranks, comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_VERBOSE(10, ("Bcast failed for list_of_ranks_in_all_subgroups \n"));
+        ML_VERBOSE(10, ("Bcast failed for list_of_ranks_in_all_subgroups "));
         goto exit_ERROR;
     }
 
@@ -1042,11 +1048,16 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
             PROVIDE_SUFFICIENT_MEMORY((*sub_group_meta_data), dummy1,
                                       (*size_of_sub_group_meta_data),
                                       sub_group_params_t, (*num_total_subgroups), 1, 5);
+            if (OPAL_UNLIKELY(NULL == (*sub_group_meta_data))) {
+                ML_VERBOSE(10, ("Cannot allocate memory for sub_group_meta_data."));
+                rc = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit_ERROR;
+            }
             /* do this for the temporary memory slots */
             PROVIDE_SUFFICIENT_MEMORY(temp, dummy2,
                                       knt1, int32_t *, knt2, 1, 5);
-            if (OPAL_UNLIKELY(NULL == (*sub_group_meta_data))) {
-                ML_VERBOSE(10, ("Cannot allocate memory for sub_group_meta_data.\n"));
+            if (OPAL_UNLIKELY(NULL == temp)) {
+                ML_VERBOSE(10, ("Cannot allocate memory for temporary storage"));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit_ERROR;
             }
@@ -1055,9 +1066,9 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
 
             /* no need for this here - use a temporary ptr */
             temp[knt2]=
-                (int *)malloc(sizeof(int)*size_of_all_selected);
+                (int *)calloc(size_of_all_selected, sizeof(int));
             if (OPAL_UNLIKELY(NULL == temp[knt2] ) ){
-                ML_VERBOSE(10, ("Cannot allocate memory for sub_group_meta_data.\n"));
+                ML_VERBOSE(10, ("Cannot allocate memory for sub_group_meta_data."));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit_ERROR;
             }
@@ -1080,7 +1091,7 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
                               int, (*num_ranks_in_list_of_ranks_in_all_subgroups),
                               size_of_all_selected,size_of_all_selected);
     if (OPAL_UNLIKELY(NULL == (*list_of_ranks_in_all_subgroups))) {
-        ML_VERBOSE(10, ("Cannot allocate memory for list_of_ranks_in_all_subgroups.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory for list_of_ranks_in_all_subgroups."));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -1104,12 +1115,12 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
     }
 
     /* clean up temporary storage */
-    if(NULL != temp) {
+ exit_ERROR:
+    if (NULL != temp) {
         free(temp);
     }
 
     /* return */
- exit_ERROR:
     return rc;
 }
 
@@ -1119,7 +1130,7 @@ static int topo_parse (sub_group_params_t *sub_group_meta_data, int index, int *
     int total_ranks_represented = 0, ranks_represented;
 
     if (0 == sub_group_meta_data[index].level_in_hierarchy) {
-        ML_VERBOSE(10, ("Copying data for index %d to %d. Ranks at this level: %d\n", index, *dst_offset,
+        ML_VERBOSE(10, ("Copying data for index %d to %d. Ranks at this level: %d", index, *dst_offset,
                         sub_group_meta_data[index].n_ranks));
 
         /* move level one subgroup data */
@@ -1130,14 +1141,14 @@ static int topo_parse (sub_group_params_t *sub_group_meta_data, int index, int *
         *dst_offset += sub_group_meta_data[index].n_ranks;
     }
 
-    ML_VERBOSE(10, ("Subgroup %d has %d ranks. level = %d\n", index, sub_group_meta_data[index].n_ranks,
+    ML_VERBOSE(10, ("Subgroup %d has %d ranks. level = %d", index, sub_group_meta_data[index].n_ranks,
                     sub_group_meta_data[index].level_in_hierarchy));
 
     /* fill in subgroup ranks */
     sub_group_meta_data[index].rank_data=(rank_properties_t *)
         malloc(sizeof(rank_properties_t) * sub_group_meta_data[index].n_ranks);
     if (OPAL_UNLIKELY(NULL == sub_group_meta_data[index].rank_data)) {
-        ML_VERBOSE(10, ("Cannot allocate memory for rank_data \n"));
+        ML_VERBOSE(10, ("Cannot allocate memory for rank_data "));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1155,11 +1166,11 @@ static int topo_parse (sub_group_params_t *sub_group_meta_data, int index, int *
         sub_group_meta_data[index].rank_data[j].rank = rank;
 
         if (sub_group_meta_data[index].level_in_hierarchy) {
-            ML_VERBOSE(10, ("Looking for subgroup containing %d as root\n", rank));
+            ML_VERBOSE(10, ("Looking for subgroup containing %d as root", rank));
 
             for (next_level = index - 1 ; next_level >= 0 ; --next_level) {
                 if (rank == sub_group_meta_data[next_level].root_rank_in_comm) {
-                    ML_VERBOSE(10, ("Subgroup %d has root %d\n", next_level, rank));
+                    ML_VERBOSE(10, ("Subgroup %d has root %d", next_level, rank));
                     break;
                 }
             }
@@ -1185,7 +1196,7 @@ static int topo_parse (sub_group_params_t *sub_group_meta_data, int index, int *
             total_ranks_represented++;
         }
 
-        ML_VERBOSE(10, ("Group %d, level %d, index %d, rank %d represents %d ranks\n", index,
+        ML_VERBOSE(10, ("Group %d, level %d, index %d, rank %d represents %d ranks", index,
                         sub_group_meta_data[index].level_in_hierarchy, j, rank,
                         sub_group_meta_data[index].rank_data[j].num_of_ranks_represented));
     }
@@ -1342,7 +1353,7 @@ static int mca_coll_ml_read_allbcols_settings(mca_coll_ml_module_t *ml_module,
      */
     bcols_in_use = (int *) calloc(2 * n_hierarchies, sizeof(int));
     if (OPAL_UNLIKELY(NULL == bcols_in_use)) {
-        ML_VERBOSE(10, ("Cannot allocate memory for bcols_in_use.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory for bcols_in_use."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -1386,7 +1397,7 @@ static int mca_coll_ml_read_allbcols_settings(mca_coll_ml_module_t *ml_module,
                              MPI_MAX, ompi_comm_size(ml_module->comm),
                              ranks_map, ml_module->comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_VERBOSE(10, ("comm_allreduce_pml failed. bcols_in_use reduction\n"));
+        ML_VERBOSE(10, ("comm_allreduce_pml failed. bcols_in_use reduction"));
         goto exit_ERROR;
     }
 
@@ -1481,7 +1492,7 @@ static int ml_discover_hierarchy(mca_coll_ml_module_t *ml_module)
 
     if ((size_bcol_list != size_sbgp_list) || size_sbgp_list < 1 || size_bcol_list < 1) {
         ML_ERROR(("Error: (size of mca_bcol_base_components_in_use = %d)"
-                  " != (size of mca_sbgp_base_components_in_use = %d) or zero.\n",
+                  " != (size of mca_sbgp_base_components_in_use = %d) or zero.",
                   size_bcol_list, size_sbgp_list));
         return OMPI_ERROR;
     }
@@ -1547,7 +1558,7 @@ static int ml_discover_hierarchy(mca_coll_ml_module_t *ml_module)
 
         comm_ranks = (int *)calloc(ompi_comm_size(ml_module->comm), sizeof(int));
         if (OPAL_UNLIKELY(NULL == comm_ranks)) {
-            ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+            ML_VERBOSE(10, ("Cannot allocate memory."));
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -1623,14 +1634,14 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     /* allocates scratch space */
     all_selected = (int32_t *) calloc(ompi_comm_size(ml_module->comm), sizeof(int32_t));
     if (OPAL_UNLIKELY(NULL == all_selected)) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
 
     map_to_comm_ranks = (int *) calloc(ompi_comm_size(ml_module->comm), sizeof(int));
     if (OPAL_UNLIKELY(NULL == map_to_comm_ranks)) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -1642,7 +1653,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     copy_procs = (ompi_proc_t **) calloc(ompi_comm_size(ml_module->comm),
                                          sizeof(ompi_proc_t *));
     if (OPAL_UNLIKELY(NULL == copy_procs)) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -1659,7 +1670,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     /* setup information for all-reduce over out of band */
     index_proc_selected = (int32_t *) malloc(sizeof(int32_t) * n_procs_in);
     if (OPAL_UNLIKELY(NULL == index_proc_selected)) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -1670,7 +1681,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
     topo->component_pairs = (hierarchy_pairs *) calloc(n_hierarchies, sizeof(hierarchy_pairs));
     if (OPAL_UNLIKELY(NULL == topo->component_pairs)) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -1711,12 +1722,15 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     sbgp_cli = (sbgp_base_component_keyval_t *) opal_list_get_first(&mca_sbgp_base_components_in_use);
     bcol_cli = (mca_base_component_list_item_t *) opal_list_get_first(&mca_bcol_base_components_in_use);
 
-    ML_VERBOSE(10, ("Loop over hierarchies.\n"));
+    ML_VERBOSE(10, ("Loop over hierarchies."));
 
     i_hier = 0;
     while ((opal_list_item_t *) sbgp_cli != opal_list_get_end(&mca_sbgp_base_components_in_use)){
         /* number of processes selected with this sbgp on all ranks */
         int global_n_procs_selected;
+
+        /* silence clang warnings */
+        assert (NULL != bcol_cli && NULL != sbgp_cli);
 
         /*
         ** obtain the list of  ranks in the current level
@@ -1753,7 +1767,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         ML_VERBOSE(10,("Passed include %s exclude %s", include_sbgp_name, exclude_sbgp_name));
 
         /* discover subgroup */
-        ML_VERBOSE(10, ("Discover subgroup: hier level - %d.\n", i_hier));
+        ML_VERBOSE(10, ("Discover subgroup: hier level - %d.", i_hier));
         module = sbgp_component->select_procs(copy_procs, n_procs_in,
                                               ml_module->comm,
                                               sbgp_cli->key_value, &ptr_output);
@@ -1788,7 +1802,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             n_procs_selected = module->group_size;
         }
 
-        ML_VERBOSE(10, ("Hier level - %d; group size - %d\n", i_hier, n_procs_selected));
+        ML_VERBOSE(10, ("Hier level - %d; group size - %d", i_hier, n_procs_selected));
 
         /* setup array indicating all procs that were selected */
         for (i = 0; i < n_procs_in; i++) {
@@ -1830,7 +1844,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                 local_leader = map_to_comm_ranks[module->group_list[0]];
 
 #endif
-                ML_VERBOSE(10,("The local leader selected for hierarchy %d is rank %d \n",
+                ML_VERBOSE(10,("The local leader selected for hierarchy %d is rank %d ",
                                i_hier, local_leader));
 
                 ll_p1 = local_leader + 1;
@@ -1845,12 +1859,12 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         }
 
         /* gather the information from all the other remaining ranks */
-        ML_VERBOSE(10, ("Call for comm_allreduce_pml.\n"));
+        ML_VERBOSE(10, ("Call for comm_allreduce_pml."));
         ret = comm_allgather_pml(&in_allgather_value,
                                  all_selected, 1, MPI_INT, my_rank_in_list,
                                  n_procs_in, map_to_comm_ranks ,ml_module->comm);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            ML_VERBOSE(10, ("comm_allreduce_pml failed.\n"));
+            ML_VERBOSE(10, ("comm_allreduce_pml failed."));
             goto exit_ERROR;
         }
 
@@ -1859,7 +1873,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             ret = check_global_view_of_subgroups(n_procs_selected,
                                                  n_procs_in, ll_p1, all_selected, module );
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                ML_VERBOSE(10, ("check_global_view_of_subgroups failed.\n"));
+                ML_VERBOSE(10, ("check_global_view_of_subgroups failed."));
                 goto exit_ERROR;
             }
         }
@@ -1869,7 +1883,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
         ** the communicator.
         */
 
-        ML_VERBOSE(10, ("Change the list of procs; hier level - %d.\n", i_hier));
+        ML_VERBOSE(10, ("Change the list of procs; hier level - %d.", i_hier));
         for (group_index = 0; group_index < n_procs_selected; group_index++) {
             module->group_list[group_index] = map_to_comm_ranks[module->group_list[group_index]];
             /* set my rank within the group */
@@ -1892,7 +1906,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                                     &num_total_subgroups, map_to_comm_ranks,i_hier);
 
         if( OMPI_SUCCESS != ret ) {
-            ML_VERBOSE(10, (" Error: get_new_subgroup_data returned %d \n",ret));
+            ML_VERBOSE(10, (" Error: get_new_subgroup_data returned %d ",ret));
             goto exit_ERROR;
         }
 
@@ -1946,11 +1960,11 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             pair->bcol_index = bcol_index;
 
             /* create bcol modules */
-            ML_VERBOSE(10, ("Create bcol modules.\n"));
+            ML_VERBOSE(10, ("Create bcol modules."));
             pair->bcol_modules = pair->bcol_component->collm_comm_query(module, &pair->num_bcol_modules);
             /* failed to create a new module */
             if (OPAL_UNLIKELY(NULL == pair->bcol_modules)) {
-                ML_VERBOSE(10, ("Failed to create new modules.\n"));
+                ML_VERBOSE(10, ("Failed to create new modules."));
                 ret = OMPI_ERROR;
                 goto exit_ERROR;
             }
@@ -1960,9 +1974,9 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             }
 
             /* Append new network contexts to our memory managment */
-            ML_VERBOSE(10, ("Append new network contexts to our memory managment.\n"));
+            ML_VERBOSE(10, ("Append new network contexts to our memory managment."));
             if (OPAL_UNLIKELY(OMPI_SUCCESS != append_new_network_context(pair))) {
-                ML_VERBOSE(10, ("Exit with error. - append new network context\n"));
+                ML_VERBOSE(10, ("Exit with error. - append new network context"));
                 ret = OMPI_ERROR;
                 goto exit_ERROR;
             }
@@ -1987,6 +2001,8 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
              * set largest power of 2 for this group
              */
             module->n_levels_pow2 = ml_fls(module->group_size);
+            /* silence a clang warning */
+            assert (module->n_levels_pow2 > 0 && module->n_levels_pow2 < 32);
             module->pow_2 = 1 << module->n_levels_pow2;
 
             n_hier++;
@@ -2048,18 +2064,17 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
     /* If I was not done, it means that we skipped all subgroups and no hierarchy was build */
     if (0 == i_am_done) {
+        
         if (NULL != include_sbgp_name || NULL != exclude_sbgp_name) {
             /* User explicitly asked for specific type of topology, which generates empty group */
-            ML_ERROR(("ML topology configuration explicitly requested to %s subgroup %s. "
-                      "Such configuration results in a creation of empty groups. As a result, ML framework can't "
-                      "configure requested collective operations. ML framework will be disabled.",
-                      NULL != include_sbgp_name ? "include only" : "exclude",
-                      NULL != include_sbgp_name ? include_sbgp_name : exclude_sbgp_name
-                      ));
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "empty-sub-group", true,
+                        NULL != include_sbgp_name ? include_sbgp_name : exclude_sbgp_name);
             ret = OMPI_ERROR;
             goto exit_ERROR;
         }
-        ML_VERBOSE(10, ("Empty hierarchy..."));
+
+        ML_VERBOSE(10, ("Constructing empty hierarchy"));
         ret = OMPI_SUCCESS;
         goto exit_ERROR;
     }
@@ -2083,14 +2098,14 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                              MPI_MIN, original_group_size,
                              map_to_comm_ranks, ml_module->comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_VERBOSE(10, ("comm_allreduce_pml failed. all_reduce_buffer2_in reduction\n"));
+        ML_VERBOSE(10, ("comm_allreduce_pml failed. all_reduce_buffer2_in reduction"));
         goto exit_ERROR;
     }
 
     topo->global_lowest_hier_group_index = all_reduce_buffer2_out[0];
     topo->global_highest_hier_group_index = -all_reduce_buffer2_out[1];
 
-    ML_VERBOSE(10, ("The lowest index and highest index was successfully found.\n"));
+    ML_VERBOSE(10, ("The lowest index and highest index was successfully found."));
 
     ML_VERBOSE(10, ("ml_discover_hierarchy done, n_levels %d lowest_group_index %d highest_group_index %d,"
                     " original_group_size %d my_lowest_group_index %d my_highest_group_index %d",
@@ -2108,7 +2123,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                                   &list_of_ranks_in_all_subgroups);
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        ML_VERBOSE(10, ("comm_allreduce_pml failed:  bcols_in_use reduction %d \n",ret));
+        ML_VERBOSE(10, ("comm_allreduce_pml failed:  bcols_in_use reduction %d ",ret));
         goto exit_ERROR;
     }
 
@@ -2116,12 +2131,16 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     topo->number_of_all_subgroups = num_total_subgroups;
     topo->array_of_all_subgroups = array_of_all_subgroup_ranks;
 
-    ml_init_k_nomial_trees(topo, list_of_ranks_in_all_subgroups, ompi_comm_rank(ml_module->comm));
+    ret = ml_init_k_nomial_trees(topo, list_of_ranks_in_all_subgroups, ompi_comm_rank(ml_module->comm));
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        goto exit_ERROR;
+    }
+
     /* Set the route table if know-root type of algorithms is used */
     if (COLL_ML_STATIC_BCAST == mca_coll_ml_component.bcast_algorithm) {
         ret = mca_coll_ml_fill_in_route_tab(topo, ml_module->comm);
         if (OMPI_SUCCESS != ret) {
-            ML_ERROR(("mca_coll_ml_fill_in_route_tab returned an error.\n"));
+            ML_ERROR(("mca_coll_ml_fill_in_route_tab returned an error."));
             goto exit_ERROR;
         }
     }
@@ -2135,7 +2154,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
  exit_ERROR:
 
-    ML_VERBOSE(10, ("Discovery done\n"));
+    ML_VERBOSE(10, ("Discovery done"));
 
     /* free temp resources */
     if (NULL != all_selected) {
@@ -2206,15 +2225,12 @@ int mca_coll_ml_allreduce_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
     sbgp_cli = (sbgp_base_component_keyval_t *)
         opal_list_get_first(&mca_sbgp_base_components_in_use);
 
-    for (bcol_cli = (mca_base_component_list_item_t *)
-             opal_list_get_first(&mca_bcol_base_components_in_use);
-         (opal_list_item_t *) bcol_cli !=
-             opal_list_get_end(&mca_bcol_base_components_in_use);
-         bcol_cli = (mca_base_component_list_item_t *)
-             opal_list_get_next((opal_list_item_t *) bcol_cli),
-             sbgp_cli = (sbgp_base_component_keyval_t *)
-             opal_list_get_next((opal_list_item_t *) sbgp_cli)) {
+    OPAL_LIST_FOREACH(bcol_cli, &mca_bcol_base_components_in_use, mca_base_component_list_item_t) {
         bcol_component = (mca_bcol_base_component_2_0_0_t *) bcol_cli->cli_component;
+
+        /* silence false-positive clang warning */
+        assert (NULL != sbgp_cli);
+
         if (NULL != bcol_component->coll_support_all_types &&
             !bcol_component->coll_support_all_types(BCOL_ALLREDUCE)) {
             mca_base_component_list_item_t *bcol_cli_next;
@@ -2232,38 +2248,26 @@ int mca_coll_ml_allreduce_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             ML_VERBOSE(10, ("Topology build: sbgp %s will be excluded.",
                             sbgp_component->sbgp_version.mca_component_name));
 
+                  
             /* If there isn't additional component supports all types => print warning */
             if (1 == opal_list_get_size(&mca_bcol_base_components_in_use) ||
                 (opal_list_item_t *) bcol_cli_next ==
                 opal_list_get_end(&mca_bcol_base_components_in_use)) {
-                ML_ERROR(("\n--------------------------------------------------------------------------------\n"
-                          "The BCOL component %s doesn't support \n"
-                          "all possible tuples (OPERATION X DATATYPE) for Allreduce \n"
-                          "and you didn't provide additional one for alternative topology building, \n"
-                          "as a result ML isn't be run correctly and its behavior is undefined. \n"
-                          "You should run this bcol with another one supports all possible tuples, \n"
-                          "\"--mca bcol_base_string %s,ptpcoll --mca sbgp_base_subgroups_string %s,p2p\" for example.\n",
-                          bcol_component->bcol_version.mca_component_name,
-                          bcol_component->bcol_version.mca_component_name,
-                          sbgp_component->sbgp_version.mca_component_name));
+                opal_show_help("help-mpi-coll-ml.txt",
+                       "allreduce-not-supported", true,
+                        bcol_component->bcol_version.mca_component_name);
+
             } else {
                 bcol_component_next = (mca_bcol_base_component_2_0_0_t *)
                     bcol_cli_next->cli_component;
 
                 if (NULL != bcol_component_next->coll_support_all_types &&
                     !bcol_component_next->coll_support_all_types(BCOL_ALLREDUCE)) {
-                    ML_ERROR(("\n--------------------------------------------------------------------------------\n"
-                              "The BCOL component %s doesn't support \n"
-                              "all possible tuples for Allreduce. \n"
-                              "While you did provid an additional %s bcol component for alternative topology building, \n"
-                              "this component also lacks support for all tuples. \n"
-                              "As a result, ML Allreduce's behavior is undefined. \n"
-                              "You must provide a component that supports all possible tuples, e.g. \n"
-                              "\"--mca bcol_base_string %s,ptpcoll --mca sbgp_base_subgroups_string %s,p2p\n",
-                              bcol_component->bcol_version.mca_component_name,
-                              bcol_component_next->bcol_version.mca_component_name,
-                              bcol_component->bcol_version.mca_component_name,
-                              sbgp_component->sbgp_version.mca_component_name));
+
+                    opal_show_help("help-mpi-coll-ml.txt",
+                       "allreduce-alt-nosupport", true,
+                        bcol_component->bcol_version.mca_component_name);
+
                 }
             }
 
@@ -2271,6 +2275,8 @@ int mca_coll_ml_allreduce_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
                                                         &ml_module->topo_list[COLL_ML_HR_ALLREDUCE],
                                                         n_hierarchies, sbgp_component->sbgp_version.mca_component_name, NULL);
         }
+
+        sbgp_cli = (sbgp_base_component_keyval_t *) opal_list_get_next((opal_list_item_t *) sbgp_cli);
     }
 
     return OMPI_SUCCESS;
@@ -2300,8 +2306,8 @@ int mca_coll_ml_fulltree_iboffload_only_hierarchy_discovery(mca_coll_ml_module_t
                                                 n_hierarchies, NULL, "ibnet");
 }
 
-#define IS_RECHABLE 1
-#define IS_NOT_RECHABLE -1
+#define IS_REACHABLE 1
+#define IS_NOT_REACHABLE -1
 
 static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_communicator_t *comm)
 {
@@ -2318,18 +2324,18 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
 
     all_reachable_ranks = (int32_t *) malloc(comm_size * sizeof(int32_t));
     if (NULL == all_reachable_ranks) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
 
     for (i = 0; i < comm_size; ++i) {
-        all_reachable_ranks[i] = IS_NOT_RECHABLE;
+        all_reachable_ranks[i] = IS_NOT_REACHABLE;
     }
 
     route_table = (int32_t **) calloc(topo->n_levels, sizeof(int32_t *));
     if (NULL == route_table) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
@@ -2337,25 +2343,25 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
     topo->route_vector = (mca_bcol_base_route_info_t *)
         calloc(comm_size, sizeof(mca_bcol_base_route_info_t));
     if (NULL == topo->route_vector) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit_ERROR;
     }
 
-    all_reachable_ranks[my_rank] = IS_RECHABLE;
+    all_reachable_ranks[my_rank] = IS_REACHABLE;
 
     for (level = 0; level < topo->n_levels; ++level) {
         sbgp_group = topo->component_pairs[level].subgroup_module;
 
         route_table[level] = (int32_t *) malloc(comm_size * sizeof(int32_t));
         if (NULL == route_table[level]) {
-            ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+            ML_VERBOSE(10, ("Cannot allocate memory."));
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit_ERROR;
         }
 
         for (i = 0; i < comm_size; ++i) {
-            if (IS_NOT_RECHABLE != all_reachable_ranks[i]) {
+            if (IS_NOT_REACHABLE != all_reachable_ranks[i]) {
                 all_reachable_ranks[i] = sbgp_group->my_index;
             }
         }
@@ -2368,14 +2374,14 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
                                 sbgp_group->group_list,
                                 comm);
         if (OMPI_SUCCESS != rc) {
-            ML_VERBOSE(10, ("comm_allreduce failed.\n"));
+            ML_VERBOSE(10, ("comm_allreduce failed."));
             goto exit_ERROR;
         }
 
         for (i = 0; i < comm_size; ++i) {
-            if (IS_NOT_RECHABLE !=
+            if (IS_NOT_REACHABLE !=
                 route_table[level][i]) {
-                all_reachable_ranks[i] = IS_RECHABLE;
+                all_reachable_ranks[i] = IS_REACHABLE;
             }
         }
     }
@@ -2385,7 +2391,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
     /* If there are unreachable ranks =>
        reach them through leader of my upper layer */
     for (i = 0; i < comm_size; ++i) {
-        if (IS_NOT_RECHABLE ==
+        if (IS_NOT_REACHABLE ==
             route_table[level - 1][i]) {
             route_table[level - 1][i] = 0;
         }
@@ -2395,7 +2401,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
 
     for (i = 0; i < comm_size; ++i) {
         for (level = 0; level < topo->n_levels; ++level) {
-            if (IS_NOT_RECHABLE != route_table[level][i]) {
+            if (IS_NOT_REACHABLE != route_table[level][i]) {
                 topo->route_vector[i].level = level;
                 topo->route_vector[i].rank = route_table[level][i];
                 break;
@@ -2465,7 +2471,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
             assert(COLL_ML_ROUTE_BUFF_SIZE + buff > output);
         }
 
-        ML_VERBOSE(10, ("\nThe table is:\n============\n%s\n", buff));
+        ML_VERBOSE(10, ("\nThe table is:\n============%s", buff));
         free(buff);
     }
 #endif
@@ -2480,7 +2486,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
 
  exit_ERROR:
 
-    ML_VERBOSE(10, ("Exit with error status - %d.\n", rc));
+    ML_VERBOSE(10, ("Exit with error status - %d.", rc));
     if (NULL != route_table) {
         for (level = 0; level < topo->n_levels; ++level) {
             if (NULL != route_table[level]) {
@@ -2648,7 +2654,7 @@ static int check_for_max_supported_ml_modules(struct ompi_communicator_t *comm)
 
     comm_ranks = (int *)calloc(ompi_comm_size(comm), sizeof(int));
     if (OPAL_UNLIKELY(NULL == comm_ranks)) {
-        ML_VERBOSE(10, ("Cannot allocate memory.\n"));
+        ML_VERBOSE(10, ("Cannot allocate memory."));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for (i = 0; i < ompi_comm_size(comm); i++) {
@@ -2682,7 +2688,7 @@ static int check_for_max_supported_ml_modules(struct ompi_communicator_t *comm)
         static int verbosity_level = 5;					\
         static int module_num = 0;                                      \
         ML_VERBOSE(10, ("ML module - %p num %d for comm - %p, "		\
-                        "comm size - %d, ML component prio - %d.\n",	\
+                        "comm size - %d, ML component prio - %d.",	\
                         ml_module, ++module_num, comm, ompi_comm_size(comm), *priority)); \
         /* For now I want to always print that we enter ML -		\
            at the past there was an issue that we did not enter ML and actually run with tuned. \
@@ -2732,9 +2738,11 @@ static int setup_bcast_table(mca_coll_ml_module_t *module)
         if (1 == cm->enable_fragmentation || (2 == cm->enable_fragmentation && !has_zero_copy)) {
             module->bcast_fn_index_table[1] = ML_BCAST_SMALL_DATA_KNOWN;
         } else if (!has_zero_copy) {
-            ML_ERROR(("ML couldn't be used: because the mca param coll_ml_enable_fragmentation "
-                      "was set to zero and there is a bcol doesn't support zero copy method."));
+
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "fragmentation-disabled", true);
             return OMPI_ERROR;
+
         } else {
             module->bcast_fn_index_table[1] = ML_BCAST_LARGE_DATA_KNOWN;
         }
@@ -2742,8 +2750,10 @@ static int setup_bcast_table(mca_coll_ml_module_t *module)
         module->bcast_fn_index_table[0] = ML_BCAST_SMALL_DATA_UNKNOWN;
 
         if (NULL == module->coll_ml_bcast_functions[ML_BCAST_LARGE_DATA_UNKNOWN]) {
-            ML_ERROR(("ML couldn't be used: because the mca param coll_ml_bcast_algorithm was not set "
-                      "to static and no function is available."));
+
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "static-bcast-disabled", true);
+
             return OMPI_ERROR;
         }
 
@@ -2753,8 +2763,10 @@ static int setup_bcast_table(mca_coll_ml_module_t *module)
         if (1 == cm->enable_fragmentation || (2 == cm->enable_fragmentation && !has_zero_copy)) {
             module->bcast_fn_index_table[1] = ML_BCAST_SMALL_DATA_UNKNOWN;
         } else if (!has_zero_copy) {
-            ML_ERROR(("ML couldn't be used: because the mca param coll_ml_enable_fragmentation "
-                      "was set to zero and there is a bcol doesn't support zero copy method."));
+
+            opal_show_help("help-mpi-coll-ml.txt",
+                       "fragmentation-disabled", true);
+
             return OMPI_ERROR;
         } else {
             /* If the topology support zero level and no fragmentation was requested */
@@ -2874,7 +2886,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     mca_coll_ml_component_t *cs = &mca_coll_ml_component;
     bool iboffload_was_requested = mca_coll_ml_check_if_bcol_is_requested("iboffload");
 
-    ML_VERBOSE(10, ("ML comm query start.\n"));
+    ML_VERBOSE(10, ("ML comm query start."));
 
     /**
      * No support for inter-communicator yet.
@@ -2884,18 +2896,21 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
         return NULL;
     }
 
+    /* NTH: Disabled this check until we have a better one. */
+#if 0
     if (!ompi_rte_proc_is_bound) {
         /* do not enable coll/ml unless this process is bound (for now) */
         *priority = -1;
         return NULL;
     }
+#endif
 
     /**
      * If it is inter-communicator and size is less than 2 we have specialized modules
      * to handle the intra collective communications.
      */
     if (OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) < 2) {
-        ML_VERBOSE(10, ("It is inter-communicator and size is less than 2.\n"));
+        ML_VERBOSE(10, ("It is inter-communicator and size is less than 2."));
         *priority = -1;
         return NULL;
     }
@@ -2914,7 +2929,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
         }
     }
 
-    ML_VERBOSE(10, ("Create ML module start.\n"));
+    ML_VERBOSE(10, ("Create ML module start."));
 
     /* allocate and initialize an ml  module */
     ml_module = OBJ_NEW(mca_coll_ml_module_t);
@@ -2965,7 +2980,7 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
        one module instantiated.  We may want to use the same collective cap
        capabilities over more than one set of procs.  Each module will store
        the relevant information for a given set of procs */
-    ML_VERBOSE(10, ("Call for setup schedule.\n"));
+    ML_VERBOSE(10, ("Call for setup schedule."));
     ret = ml_coll_schedule_setup(ml_module);
     if (OMPI_SUCCESS != ret) {
         ML_VERBOSE(1, ("ml_coll_schedule_setup exit with error"));
@@ -2973,17 +2988,17 @@ mca_coll_ml_comm_query(struct ompi_communicator_t *comm, int *priority)
     }
 
     /* Setup bcast table */
-    ML_VERBOSE(10, ("Setup bcast table\n"));
+    ML_VERBOSE(10, ("Setup bcast table"));
     ret = setup_bcast_table(ml_module);
     if (OMPI_SUCCESS != ret) {
         ML_VERBOSE(1, ("setup_bcast_table exit with error"));
         goto CLEANUP;
     }
 
-    ML_VERBOSE(10, ("Setup pointer to collectives calls.\n"));
+    ML_VERBOSE(10, ("Setup pointer to collectives calls."));
     init_coll_func_pointers(ml_module);
 
-    ML_VERBOSE(10, ("Setup free lists\n"));
+    ML_VERBOSE(10, ("Setup free lists"));
     ret = init_lists(ml_module);
     if (OMPI_SUCCESS != ret) {
         goto CLEANUP;
@@ -3142,7 +3157,7 @@ ml_module_enable(mca_coll_base_module_t *module,
     snprintf(output_buffer, sizeof(output_buffer), "%s (cid %d)", comm->c_name,
              comm->c_contextid);
 
-    ML_VERBOSE(10, ("coll:ml:enable: new communicator: %s.\n", output_buffer));
+    ML_VERBOSE(10, ("coll:ml:enable: new communicator: %s.", output_buffer));
 
     /* All done */
     return OMPI_SUCCESS;

@@ -86,31 +86,16 @@ int mca_bcol_basesmuma_register_sm(void *context_data, void *base, size_t size,
 
 int mca_bcol_basesmuma_deregister_sm(void *context_data, void *reg)
 {
-    /* NTH -- code was disable. why? */
-#if 0
     /* local variables */
-    int ret;
     bcol_basesmuma_registration_data_t *sm_reg =
         (bcol_basesmuma_registration_data_t*) context_data;
 
-    /* unmap the shared memory file */
-    ret = munmap((void *) sm_reg->base_addr, sm_reg->size);
-    if( 0 > ret) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Failed to munmap the shared memory file %s",sm_reg->file_name);
-        return OMPI_ERROR;
+    if (sm_reg->sm_mmap) {
+        OBJ_RELEASE(sm_reg->sm_mmap);
     }
 
     /* set the pointer to NULL */
     sm_reg->base_addr = NULL;
-
-    /* remove the file */
-    ret = remove(sm_reg->file_name);
-    if( 0 > ret) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Failed to remove the shared memory file %s. reason = %s",
-                     sm_reg->file_name, strerror (errno));
-        return OMPI_ERROR;
-    }
-#endif
 
     return OMPI_SUCCESS;
 }

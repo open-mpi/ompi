@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -466,6 +468,7 @@ do {                                                                            
     for (i = 0; i < (schedule)->n_fns; ++i) {                                   \
         mca_bcol_base_module_t *current_bcol =                                  \
             (schedule)->component_functions[i].constant_group_data.bcol_module; \
+        assert (NULL != current_bcol);                                          \
         if (current_bcol->bcol_component->need_ordering) {                      \
             (schedule)->n_fns_need_ordering++;                                  \
         }                                                                       \

@@ -23,10 +23,8 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-
+#include "opal/align.h"
 #include "bcol_basesmuma.h"
-
-#define ROUND_UP_POW2(x, y) (((x) + ((y) - 1)) & ~((y) - 1))
 
 /*
  * Public string showing the coll ompi_sm V2 component version number
@@ -258,38 +256,9 @@ static int basesmuma_open(void)
  */
 static int mca_bcol_basesmuma_deregister_ctl_sm(mca_bcol_basesmuma_component_t *bcol_component)
 {
-
-    /* local variables */
-    int ret;
-    bcol_basesmuma_smcm_mmap_t *sm_ctl_structs;
-
-    /* get a handle on the backing file */
-    sm_ctl_structs=bcol_component->sm_ctl_structs;
-    /* Nothing to free */
-    if (!sm_ctl_structs){
-        return OMPI_SUCCESS;
+    if (NULL != bcol_component->sm_ctl_structs) {
+        OBJ_RELEASE(bcol_component->sm_ctl_structs);
     }
-
-    /* unmap the shared memory file */
-    ret=munmap((void *) sm_ctl_structs->map_addr, sm_ctl_structs->map_size);
-    if( 0 > ret) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Failed to munmap the shared memory file %s",
-                     sm_ctl_structs->map_path);
-        return OMPI_ERROR;
-    }
-
-    /* set the pointer to NULL */
-    /*sm_ctl_structs->map_addr = NULL;*/
-
-    /* remove the file */
-#if 0
-    ret = remove(sm_ctl_structs->map_path);
-    if( 0 > ret) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Failed to remove the shared memory file %s. reason = %s",
-                     sm_ctl_structs->map_path, strerror (errno));
-        return OMPI_ERROR;
-    }
-#endif
 
     return OMPI_SUCCESS;
 }
@@ -312,7 +281,6 @@ static int basesmuma_close(void)
         OBJ_DESTRUCT(item);
     }
     OBJ_DESTRUCT(&(cs->ctl_structures));
-
 
     /* deregister the progress function */
     ret=opal_progress_unregister(bcol_basesmuma_progress);
@@ -369,7 +337,7 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
     /* local variables */
     int name_length, ret;
     size_t ctl_length;
-    char *name, *ctl_mem;
+    char *name;
     size_t page_size = getpagesize ();
 
     /* set the file name */
@@ -400,18 +368,10 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
     ctl_length+=cs->my_scratch_shared_memory_size;
 
     /* round up to multiple of page size */
-    ctl_length = ROUND_UP_POW2(ctl_length, page_size);
-
-    /* allocate memory that will be mmaped */
-    ctl_mem=(char *)valloc(ctl_length);
-    if( !ctl_mem) {
-        opal_output (ompi_bcol_base_framework.framework_output, "failed to allocate bcol/basesmuma control memory");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+    ctl_length = OPAL_ALIGN(ctl_length, page_size, size_t);
 
     /* allocate the shared file */
-    cs->sm_ctl_structs=bcol_basesmuma_smcm_mem_reg(ctl_mem,
-                                                   ctl_length,getpagesize(),name);
+    cs->sm_ctl_structs=bcol_basesmuma_smcm_mem_reg (NULL, ctl_length, getpagesize(), name);
     if( !cs->sm_ctl_structs) {
         opal_output (ompi_bcol_base_framework.framework_output,
                      "In mca_bcol_basesmuma_allocate_sm_ctl_memory failed to allocathe backing file %s\n", name);

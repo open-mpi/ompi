@@ -45,7 +45,7 @@ static int mca_coll_ml_build_allgather_schedule(mca_coll_ml_topology_t *topo_inf
     ret = mca_coll_ml_schedule_init_scratch(topo_info, &h_info,
                                             &scratch_indx, &scratch_num);
     if (OMPI_SUCCESS != ret) {
-        ML_ERROR(("Can't mca_coll_ml_schedule_init_scratch.\n"));
+        ML_ERROR(("Can't mca_coll_ml_schedule_init_scratch."));
         goto Error;
     }
     assert(NULL != scratch_indx);
@@ -54,7 +54,7 @@ static int mca_coll_ml_build_allgather_schedule(mca_coll_ml_topology_t *topo_inf
     schedule = *coll_desc =
         mca_coll_ml_schedule_alloc(&h_info);
     if (NULL == schedule) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -106,9 +106,7 @@ static int mca_coll_ml_build_allgather_schedule(mca_coll_ml_topology_t *topo_inf
     if (NULL != scratch_num) {
         free(scratch_num);
     }
-    if (NULL != schedule->component_functions) {
-        free(schedule->component_functions);
-    }
+
     return ret;
 }
 
@@ -118,7 +116,7 @@ int ml_coll_hier_allgather_setup(mca_coll_ml_module_t *ml_module)
     int ret, topo_index, alg;
     mca_coll_ml_topology_t *topo_info = ml_module->topo_list;
 
-    ML_VERBOSE(10,("entering allgather setup\n"));
+    ML_VERBOSE(10,("entering allgather setup"));
 
 #if 0
     /* used to validate the recursive k - ing allgather tree */

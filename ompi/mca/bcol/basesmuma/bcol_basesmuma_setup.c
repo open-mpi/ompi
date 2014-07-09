@@ -327,16 +327,67 @@ exit_ERROR:
     return ret;
 }
 
+static int base_bcol_basesmuma_setup_ctl (mca_bcol_basesmuma_module_t *sm_bcol_module,
+                                          mca_bcol_basesmuma_component_t *cs)
+{
+    const int my_index = sm_bcol_module->super.sbgp_partner_module->my_index;;
+    bcol_basesmuma_smcm_file_t input_file;
+    int ret;
+
+    /* exchange remote addressing information if it has not already been done  */
+    if (NULL == sm_bcol_module->ctl_backing_files_info) {
+        input_file.file_name=cs->sm_ctl_structs->map_path;
+        input_file.size=cs->sm_ctl_structs->map_size;
+        input_file.size_ctl_structure=0;
+        input_file.data_seg_alignment=BASESMUMA_CACHE_LINE_SIZE;
+        input_file.mpool_size=cs->sm_ctl_structs->map_size;
+        ret = bcol_basesmuma_smcm_allgather_connection(sm_bcol_module,
+                                                       sm_bcol_module->super.sbgp_partner_module,
+                                                       &(cs->sm_connections_list),
+                                                       &(sm_bcol_module->ctl_backing_files_info),
+                                                       sm_bcol_module->super.sbgp_partner_module->group_comm,
+                                                       input_file, cs->clt_base_fname,
+                                                       false);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+    }
+
+    /* fill in the pointer to other ranks scartch shared memory */
+    if (NULL == sm_bcol_module->shared_memory_scratch_space) {
+        sm_bcol_module->shared_memory_scratch_space =
+            calloc (sm_bcol_module->super.sbgp_partner_module->group_size, sizeof (void *));
+        if (!sm_bcol_module->shared_memory_scratch_space) {
+            opal_output (ompi_bcol_base_framework.framework_output, "Cannot allocate memory for shared_memory_scratch_space.");
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        for (int i = 0 ; i < sm_bcol_module->super.sbgp_partner_module->group_size ; ++i) {
+            if (i == my_index) {
+                /* local file data is not cached in this list */
+                continue;
+            }
+
+            sm_bcol_module->shared_memory_scratch_space[i] =
+                (void *)((intptr_t) sm_bcol_module->ctl_backing_files_info[i]->sm_mmap +
+                         cs->scratch_offset_from_base_ctl_file);
+        }
+
+        sm_bcol_module->shared_memory_scratch_space[my_index] =
+            (void *)((intptr_t) cs->sm_ctl_structs->map_addr + cs->scratch_offset_from_base_ctl_file);
+    }
+
+    return OMPI_SUCCESS;
+}
+
 int base_bcol_basesmuma_setup_ctl_struct(
     mca_bcol_basesmuma_module_t *sm_bcol_module,
     mca_bcol_basesmuma_component_t *cs,
     sm_buffer_mgmt *ctl_mgmt)
 {
-    int ret=OMPI_SUCCESS,i,n_ctl,n_levels;
+    int n_ctl, n_levels;
     int n_ctl_structs;
-    int cnt;
     size_t malloc_size;
-    bcol_basesmuma_smcm_file_t input_file;
 
     /*
      * set my no user-data conrol structures
@@ -371,98 +422,46 @@ int base_bcol_basesmuma_setup_ctl_struct(
          ctl_mgmt->num_mem_banks ) *
          ctl_mgmt->size_of_group *
          sizeof(void *);
-    ctl_mgmt->ctl_buffs= malloc(malloc_size);
-    if( !ctl_mgmt->ctl_buffs ) {
-        ret=OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit_ERROR;
+    ctl_mgmt->ctl_buffs = malloc(malloc_size);
+    if (!ctl_mgmt->ctl_buffs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-    /* exchange remote addressing information  */
-    input_file.file_name=cs->sm_ctl_structs->map_path;
-    input_file.size=cs->sm_ctl_structs->map_size;
-    input_file.size_ctl_structure=0;
-    input_file.data_seg_alignment=BASESMUMA_CACHE_LINE_SIZE;
-    input_file.mpool_size=cs->sm_ctl_structs->map_size;
-    ret=bcol_basesmuma_smcm_allgather_connection(
-        sm_bcol_module,
-        sm_bcol_module->super.sbgp_partner_module,
-        &(cs->sm_connections_list),
-        &(sm_bcol_module->ctl_backing_files_info),
-        sm_bcol_module->super.sbgp_partner_module->group_comm,
-        input_file, cs->clt_base_fname,
-        false);
-    if (OMPI_SUCCESS != ret) {
-        goto exit_ERROR;
-    }
-
-    /* fill in the pointer to other ranks scartch shared memory */
-    sm_bcol_module->shared_memory_scratch_space=
-        malloc(sizeof(void *)*
-                sm_bcol_module->super.sbgp_partner_module->group_size);
-    if( !sm_bcol_module->shared_memory_scratch_space ) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Cannot allocate memory for shared_memory_scratch_space.\n");
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit_ERROR;
-    }
-    for(i=0 ; i < sm_bcol_module->super.sbgp_partner_module->group_size ; i++ ) {
-	if(i == sm_bcol_module->super.sbgp_partner_module->my_index) {
-	    /* local file data is not cached in thi slist */
-	    continue;
-	}
-	sm_bcol_module->shared_memory_scratch_space[i]=(void *)(
-	    (char *)(sm_bcol_module->ctl_backing_files_info[i]->sm_mmap)+
-	    cs->scratch_offset_from_base_ctl_file);
-    }
-    i=sm_bcol_module->super.sbgp_partner_module->my_index;
-    sm_bcol_module->shared_memory_scratch_space[i]=(void *)(
-        (char *)(cs->sm_ctl_structs->map_addr)+cs->scratch_offset_from_base_ctl_file);
 
     /*
      * setup the no-data buffer managment data
      */
-    n_ctl=ctl_mgmt->num_mem_banks;
-    ctl_mgmt->ctl_buffs_mgmt=(mem_bank_management_t *)
-        malloc(sizeof(mem_bank_management_t)*n_ctl);
-    if( !ctl_mgmt->ctl_buffs_mgmt ) {
-        opal_output (ompi_bcol_base_framework.framework_output, "Cannot allocate memory for ctl_buffs_mgmt. ret = %d\n",ret);
-        ret = OMPI_ERROR;
-        goto exit_ERROR;
+    n_ctl = ctl_mgmt->num_mem_banks;
+    ctl_mgmt->ctl_buffs_mgmt = (mem_bank_management_t *) calloc (n_ctl, sizeof (mem_bank_management_t));
+    if (!ctl_mgmt->ctl_buffs_mgmt) {
+        opal_output (ompi_bcol_base_framework.framework_output, "Cannot allocate memory for ctl_buffs_mgmt");
+        free (ctl_mgmt->ctl_buffs);
+        ctl_mgmt->ctl_buffs = NULL;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* initialize each individual element */
-    cnt=cs->basesmuma_num_regions_per_bank*cs->basesmuma_num_mem_banks;
-    for( i=0 ; i < n_ctl ; i++ ) {
+    for (int i = 0 ; i < n_ctl ; ++i) {
         opal_list_item_t *item;
         opal_mutex_t *mutex_ptr;
-        ctl_mgmt->ctl_buffs_mgmt[i].bank_gen_counter= 0;
+
         ctl_mgmt->ctl_buffs_mgmt[i].available_buffers=
             ctl_mgmt->num_buffs_per_mem_bank;
         ctl_mgmt->ctl_buffs_mgmt[i].number_of_buffers=
             ctl_mgmt->num_buffs_per_mem_bank;
-        ctl_mgmt->ctl_buffs_mgmt[i].n_buffs_freed= 0;
-        mutex_ptr= &(ctl_mgmt->ctl_buffs_mgmt[i].mutex);
+        mutex_ptr = &(ctl_mgmt->ctl_buffs_mgmt[i].mutex);
         OBJ_CONSTRUCT(mutex_ptr, opal_mutex_t);
         ctl_mgmt->ctl_buffs_mgmt[i].index_shared_mem_ctl_structs=i;
 
-        item=(opal_list_item_t *)&(ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc);
-        OBJ_CONSTRUCT(item,opal_list_item_t);
-        ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.sm_module=
+        item = (opal_list_item_t *)&(ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc);
+        OBJ_CONSTRUCT(item, opal_list_item_t);
+        ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.sm_module =
             sm_bcol_module;
-        ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.pool_index= i;
+        ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.pool_index = i;
         /* get the sm_buffer_mgmt pointer for the control structures */
-        ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.coll_buff=ctl_mgmt;
-        ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.ml_memory_block_descriptor=
-            NULL;
-
-        cnt++;
+        ctl_mgmt->ctl_buffs_mgmt[i].nb_barrier_desc.coll_buff = ctl_mgmt;
     }
 
-
-    return ret;
-
-exit_ERROR:
-
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -514,10 +513,9 @@ int base_bcol_basesmuma_setup_library_buffers(
         data_ptr=cs->sm_ctl_structs->data_addr;
 
         for( i=0 ; i < max_elements ; i++ ) {
-            list_data_t *item=OBJ_NEW(list_data_t);
+            list_data_t *item = OBJ_NEW(list_data_t);
             if( !item ) {
-                ret=OMPI_ERR_OUT_OF_RESOURCE;
-                goto exit_ERROR;
+                return OMPI_ERR_OUT_OF_RESOURCE;
             }
             item->data=(void *)data_ptr;
             opal_list_append(&(cs->ctl_structures),(opal_list_item_t *)item);
@@ -538,35 +536,30 @@ int base_bcol_basesmuma_setup_library_buffers(
     /* intialize no_userdata_ctl */
     sm_bcol_module->no_userdata_ctl=(list_data_t *)
         opal_list_remove_last(&(cs->ctl_structures));
-    if( !sm_bcol_module->no_userdata_ctl) {
-        ret=OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit_ERROR;
-    }
-    ret=base_bcol_basesmuma_setup_ctl_struct(
-            sm_bcol_module, cs, &(sm_bcol_module->colls_no_user_data));
-    if( OMPI_SUCCESS != ret ) {
-        goto exit_ERROR;
+    if (!sm_bcol_module->no_userdata_ctl) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* intialize userdata_ctl */
-    sm_bcol_module->userdata_ctl=(list_data_t *)
+    sm_bcol_module->userdata_ctl = (list_data_t *)
         opal_list_remove_last(&(cs->ctl_structures));
-    if( !sm_bcol_module->userdata_ctl) {
-        ret=OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit_ERROR;
+    if (!sm_bcol_module->userdata_ctl) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    /* FIXME base_bcol_basesmuma_setup_ctl_struct will allocate
-     * sm_bcol_module->shared_memory_scratch_space which was previously
-     * allocated by the previous call to base_bcol_basesmuma_setup_ctl_struct
-     * so let's free it in order to avoid a memory leak */
-    free(sm_bcol_module->shared_memory_scratch_space);
-    sm_bcol_module->shared_memory_scratch_space = NULL;
+    ret = base_bcol_basesmuma_setup_ctl (sm_bcol_module, cs);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
 
-    ret=base_bcol_basesmuma_setup_ctl_struct(
-            sm_bcol_module, cs, &(sm_bcol_module->colls_with_user_data));
+    ret = base_bcol_basesmuma_setup_ctl_struct (sm_bcol_module, cs, &(sm_bcol_module->colls_no_user_data));
     if( OMPI_SUCCESS != ret ) {
-        goto exit_ERROR;
+        return ret;
+    }
+
+    ret = base_bcol_basesmuma_setup_ctl_struct (sm_bcol_module, cs, &(sm_bcol_module->colls_with_user_data));
+    if( OMPI_SUCCESS != ret ) {
+        return ret;
     }
 
     /* used for blocking recursive doubling barrier */
@@ -576,23 +569,19 @@ int base_bcol_basesmuma_setup_library_buffers(
      *   of the shared memory file, and fill in the table with the
      *   address of all the control structues.
      */
-    ret= base_bcol_basesmuma_exchange_ctl_params(sm_bcol_module, cs,
+    ret = base_bcol_basesmuma_exchange_ctl_params(sm_bcol_module, cs,
         &(sm_bcol_module->colls_no_user_data),sm_bcol_module->no_userdata_ctl);
     if( OMPI_SUCCESS != ret ) {
-        goto exit_ERROR;
+        return ret;
     }
 
-    ret= base_bcol_basesmuma_exchange_ctl_params(sm_bcol_module, cs,
+    ret = base_bcol_basesmuma_exchange_ctl_params(sm_bcol_module, cs,
         &(sm_bcol_module->colls_with_user_data),sm_bcol_module->userdata_ctl);
     if( OMPI_SUCCESS != ret ) {
-        goto exit_ERROR;
+        return ret;
     }
 
-    return ret;
-
-exit_ERROR:
-
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 OBJ_CLASS_INSTANCE(list_data_t,

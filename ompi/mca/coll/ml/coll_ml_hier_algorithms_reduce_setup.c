@@ -74,25 +74,25 @@ static int mca_coll_ml_build_static_reduce_schedule(
     mca_coll_ml_collective_operation_description_t  *schedule = NULL;
 
     *coll_desc = (mca_coll_ml_collective_operation_description_t *)
-                  malloc(sizeof(mca_coll_ml_collective_operation_description_t));
+        calloc(1, sizeof(mca_coll_ml_collective_operation_description_t));
 
     schedule = *coll_desc;
     if (OPAL_UNLIKELY(NULL == schedule)) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
 
-    scratch_indx = (int *) malloc(sizeof(int) * (n_hiers));
+    scratch_indx = (int *) calloc (n_hiers, sizeof (int));
     if (NULL == scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
 
     scratch_num = (int *) malloc(sizeof(int) * (n_hiers));
     if (NULL == scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -138,7 +138,7 @@ static int mca_coll_ml_build_static_reduce_schedule(
                                      calloc(n_fcns, sizeof(struct mca_coll_ml_compound_functions_t));
 
     if (OPAL_UNLIKELY(NULL == schedule->component_functions)) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -205,7 +205,7 @@ static int mca_coll_ml_build_static_reduce_schedule(
     schedule->comp_fn_arr = (struct mca_coll_ml_compound_functions_t **)
         calloc(n_hiers,sizeof(struct mca_coll_ml_compound_functions_t *));
     if (NULL == schedule->comp_fn_arr) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto Error;
     }
@@ -267,15 +267,32 @@ static int mca_coll_ml_build_static_reduce_schedule(
 
     MCA_COLL_ML_SET_SCHEDULE_ORDER_INFO(schedule);
 
+    /* reduce does not use the component functions so we no longer need this. see
+     *  coll_ml_reduce.c:442 */
+    free (schedule->component_functions);
+    schedule->component_functions = NULL;
+
     free(scratch_num);
     free(scratch_indx);
 
     return OMPI_SUCCESS;
 
 Error:
-    if (NULL != schedule->component_functions) {
-        free(schedule->component_functions);
-        schedule->component_functions = NULL;
+    if (NULL != scratch_num) {
+        free (scratch_num);
+    }
+
+    if (NULL != scratch_indx) {
+        free (scratch_indx);
+    }
+
+    if (NULL != schedule) {
+        if (NULL != schedule->component_functions) {
+            free(schedule->component_functions);
+            schedule->component_functions = NULL;
+        }
+        free (schedule);
+        *coll_desc = NULL;
     }
 
     return ret;
@@ -331,23 +348,24 @@ void ml_coll_hier_reduce_cleanup(mca_coll_ml_module_t *ml_module)
         return;
     }
 
-    for (i=0; i<ml_module->topo_list[topo_index].n_levels; i++) {
-        if (NULL != ml_module->coll_ml_reduce_functions[alg]) {
-            if (NULL != ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i]) {
+    if (NULL == ml_module->coll_ml_reduce_functions[alg]) {
+        return;
+    }
+
+    if (ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr) {
+        for (i=0; i<ml_module->topo_list[topo_index].n_levels; i++) {
+            if (ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i]) {
                 free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i]);
                 ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr[i] = NULL;
             }
-            if (NULL != ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr) {
-                free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr);
-                ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr = NULL;
-            }
-            if (NULL != ml_module->coll_ml_reduce_functions[alg]->component_functions) {
-                free(ml_module->coll_ml_reduce_functions[alg]->component_functions);
-                ml_module->coll_ml_reduce_functions[alg]->component_functions = NULL;
-            }
-            free(ml_module->coll_ml_reduce_functions[alg]);
-            ml_module->coll_ml_reduce_functions[alg] = NULL;
         }
+
+        free(ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr);
+        ml_module->coll_ml_reduce_functions[alg]->comp_fn_arr = NULL;
     }
 
+    ml_module->coll_ml_reduce_functions[alg]->component_functions = NULL;
+
+    free(ml_module->coll_ml_reduce_functions[alg]);
+    ml_module->coll_ml_reduce_functions[alg] = NULL;
 }

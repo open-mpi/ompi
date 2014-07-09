@@ -456,14 +456,14 @@ int mca_coll_ml_allgather_start (void *sbuf, int scount,
 
             mca_coll_ml_convertor_pack(
                     (void *) ((uintptr_t) src_buffer_desc->data_addr + frag_len *
-                              (coll_op->coll_schedule->topo_info->hier_layout_info[0].offset +
-                               coll_op->coll_schedule->topo_info->hier_layout_info[0].level_one_index)),
+                              (topo_info->hier_layout_info[0].offset +
+                               topo_info->hier_layout_info[0].level_one_index)),
                     frag_len, &coll_op->full_message.send_convertor);
         } else {
             /* change 6 */
             memcpy((void *)((uintptr_t)src_buffer_desc->data_addr + frag_len *
-                            (coll_op->coll_schedule->topo_info->hier_layout_info[0].offset +
-                             coll_op->coll_schedule->topo_info->hier_layout_info[0].level_one_index)),
+                            (topo_info->hier_layout_info[0].offset +
+                             topo_info->hier_layout_info[0].level_one_index)),
                     sbuf, frag_len);
         }
 

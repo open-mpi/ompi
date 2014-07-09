@@ -13,7 +13,8 @@ AM_LFLAGS = -Pcoll_ml_config_yy
 LEX_OUTPUT_ROOT = lex.coll_ml_config_yy
 
 dist_ompidata_DATA = \
-        mca-coll-ml.config
+        mca-coll-ml.config \
+		help-mpi-coll-ml.txt
 
 not_used_yet = 
 

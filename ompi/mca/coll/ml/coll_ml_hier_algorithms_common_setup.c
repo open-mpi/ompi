@@ -28,14 +28,14 @@ int mca_coll_ml_schedule_init_scratch(mca_coll_ml_topology_t *topo_info,
     scratch_indx = *out_scratch_indx = 
         (int *) calloc(n_hiers * 2, sizeof(int));
     if (NULL == *out_scratch_indx) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     scratch_num = *out_scratch_num = 
         (int *) calloc(n_hiers * 2, sizeof(int));
     if (NULL == *out_scratch_num) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         free(out_scratch_indx);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -98,7 +98,7 @@ mca_coll_ml_collective_operation_description_t *
     schedule = (mca_coll_ml_collective_operation_description_t *)
         malloc(sizeof(mca_coll_ml_collective_operation_description_t));
     if (NULL == schedule) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         return NULL;
     }
 
@@ -109,7 +109,7 @@ mca_coll_ml_collective_operation_description_t *
     schedule->component_functions = (struct mca_coll_ml_compound_functions_t *)
         calloc(h_info->nbcol_functions, sizeof(struct mca_coll_ml_compound_functions_t));
     if (NULL == schedule->component_functions) {
-        ML_ERROR(("Can't allocate memory.\n"));
+        ML_ERROR(("Can't allocate memory."));
         free(schedule);
         return NULL;
     }

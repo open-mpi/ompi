@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -182,6 +182,10 @@ static int coll_ml_progress()
                     }
                 } else {
                     rc = seq_coll_op->sequential_routine.seq_task_setup(seq_coll_op);
+                    if (OMPI_SUCCESS != rc) {
+                        mca_coll_ml_abort_ml("Failed to run sequential task setup");
+                    }
+
                     seq_coll_op->sequential_routine.current_bcol_status = SEQ_TASK_PENDING;
                     continue;
                 }
@@ -390,12 +394,28 @@ static int ml_close(void)
     }
 
     OBJ_DESTRUCT(&cs->memory_manager);
+    OBJ_DESTRUCT(&cs->pending_tasks_mutex);
+    OBJ_DESTRUCT(&cs->pending_tasks);
+    OBJ_DESTRUCT(&cs->active_tasks_mutex);
+    OBJ_DESTRUCT(&cs->active_tasks);
+    OBJ_DESTRUCT(&cs->sequential_collectives_mutex);
+    OBJ_DESTRUCT(&cs->sequential_collectives);
 
     /* deregister progress function */
-    ret=opal_progress_unregister(coll_ml_progress);
+    ret = opal_progress_unregister(coll_ml_progress);
     if (OMPI_SUCCESS != ret ) {
-        fprintf(stderr," failed to un-register the ml progress function \n");
-        fflush(stderr);
+        OMPI_ERROR_LOG(ret);
+        return ret;
+    }
+
+    /* close the sbgp and bcol frameworks */
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_sbgp_base_framework))) {
+        OMPI_ERROR_LOG(ret);
+        return ret;
+    }
+
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_bcol_base_framework))) {
+        OMPI_ERROR_LOG(ret);
         return ret;
     }
 
