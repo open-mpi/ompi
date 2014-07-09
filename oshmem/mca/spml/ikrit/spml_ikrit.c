@@ -552,10 +552,10 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
     }
 
     for (i = 0; i < MXM_PTL_LAST; i++) {
+        mkeys[i].u.key = MAP_SEGMENT_SHM_INVALID;
         switch (i) {
         case MXM_PTL_SHM:
             if ((int)shmid != MAP_SEGMENT_SHM_INVALID) {
-                mkeys[i].is_sm = 1;
                 mkeys[i].u.key = shmid;
                 mkeys[i].va_base = 0;
             } else {
@@ -687,18 +687,20 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
     if (seg > 1)
         return OSHMEM_ERROR;
 
+    mkeys[ptl].len = 0;
+    mkeys[ptl].u.key = MAP_SEGMENT_SHM_INVALID;
     return OSHMEM_SUCCESS;
 #else
     /* we are actually registering memory in 2.0 and later.
-     * So can not really skip mkey exchange
+     * So can only skip mkey exchange when ud is the only transport
      */
     if (mca_spml_ikrit.ud_only) {
         mkeys[ptl].len = 0;
-        mkeys[ptl].u.data = &mxm_empty_mem_key;
+        mkeys[ptl].u.key = MAP_SEGMENT_SHM_INVALID;
         return OSHMEM_SUCCESS;
-    } else {
-        return OSHMEM_ERROR;
-    }
+    } 
+
+    return OSHMEM_ERROR;
 #endif
 }
 
