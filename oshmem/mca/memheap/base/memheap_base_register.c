@@ -23,12 +23,11 @@ static int _reg_segment(map_segment_t *s, int *num_btl);
 
 int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
 {
-    int ret = OSHMEM_SUCCESS;
+    int ret;
     int i;
 
     for (i = 0; i < memheap_map->n_segments; i++) {
         map_segment_t *s = &memheap_map->mem_segs[i];
-        int _ret;
 
         MEMHEAP_VERBOSE(5,
                         "register seg#%02d: 0x%p - 0x%p %llu bytes type=0x%X id=0x%X",
@@ -38,23 +37,22 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
                         (long long)((uintptr_t)s->end - (uintptr_t)s->seg_base_addr),
                         s->type,
                         s->seg_id);
-        _ret = _reg_segment(s, &memheap_map->num_transports);
-        if (OSHMEM_SUCCESS != _ret) {
-            ret = _ret;
+        ret = _reg_segment(s, &memheap_map->num_transports);
+        if (OSHMEM_SUCCESS != ret) {
+            mca_memheap_base_dereg(memheap_map);
+            return ret;
         }
     }
 
-    return ret;
+    return OSHMEM_SUCCESS;
 }
 
 int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
 {
-    int ret = OSHMEM_SUCCESS;
     int i;
 
     for (i = 0; i < memheap_map->n_segments; i++) {
         map_segment_t *s = &memheap_map->mem_segs[i];
-        int _ret;
 
         if (!MAP_SEGMENT_IS_VALID(s))
             continue;
@@ -65,13 +63,10 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
                         s->seg_base_addr,
                         s->end,
                         (long long)((uintptr_t)s->end - (uintptr_t)s->seg_base_addr));
-        _ret = _dereg_segment(s);
-        if (OSHMEM_SUCCESS != _ret) {
-            ret = _ret;
-        }
+        (void)_dereg_segment(s);
     }
 
-    return ret;
+    return OSHMEM_SUCCESS;
 }
 
 static int _dereg_segment(map_segment_t *s)
