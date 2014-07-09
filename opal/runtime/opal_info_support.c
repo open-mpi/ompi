@@ -138,6 +138,8 @@ int opal_info_init(int argc, char **argv,
                             "Show architecture Open MPI was compiled on");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'c', NULL, "config", 0, 
                             "Show configuration options");
+    opal_cmd_line_make_opt3(opal_info_cmd_line, 't', NULL, "type", 1,
+                            "Show internal MCA parameters with the type specified in parameter.");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'h', NULL, "help", 0, 
                             "Show this help message");
     opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "pretty-print", 0, 
@@ -532,6 +534,63 @@ void opal_info_err_params(opal_pointer_array_t *component_map)
     return;
 }
 
+void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line)
+{
+    mca_base_var_info_lvl_t max_level = OPAL_INFO_LVL_9;
+    int count;
+    char *type, *component, *str;
+    bool found;
+    int i, j, k, len, ret;
+    char *p;
+    const mca_base_var_t *var;
+    char** strings, *message;
+    const mca_base_var_group_t *group;
+    p = "type";
+
+    if (NULL != (str = opal_cmd_line_get_param (opal_info_cmd_line, "level", 0, 0))) {
+        char *tmp;
+
+        errno = 0;
+        max_level = strtol (str, &tmp, 10) + OPAL_INFO_LVL_1 - 1;
+        if (0 != errno || '\0' != tmp[0] || max_level < OPAL_INFO_LVL_1 || max_level > OPAL_INFO_LVL_9) {
+            char *usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
+            opal_show_help("help-opal_info.txt", "invalid-level", true, str);
+            free(usage);
+            exit(1);
+        }
+    }
+
+    count = opal_cmd_line_get_ninsts(opal_info_cmd_line, p);
+    len = mca_base_var_get_count ();
+
+    for (k = 0; k < count; ++k) {
+        type = opal_cmd_line_get_param(opal_info_cmd_line, p, k, 0);
+        for (i = 0; i < len; ++i) {
+            ret = mca_base_var_get (i, &var);
+            if (OPAL_SUCCESS != ret) {
+                continue;
+            }
+            if (0 == strcmp(type, var_type_names[var->mbv_type]) && (var->mbv_info_lvl <= max_level)) {
+                ret = mca_base_var_dump(var->mbv_index, &strings, !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE : MCA_BASE_VAR_DUMP_READABLE);
+                if (OPAL_SUCCESS != ret) {
+                    continue;
+                }
+                (void) mca_base_var_group_get(var->mbv_group_index, &group);
+                for (j = 0 ; strings[j] ; ++j) {
+                    if (0 == j && opal_info_pretty) {
+                        asprintf (&message, "MCA %s", group->group_framework);
+                        opal_info_out(message, message, strings[j]);
+                        free(message);
+                    } else {
+                        opal_info_out("", "", strings[j]);
+                    }
+                    free(strings[j]);
+                }
+                free(strings);
+            }
+        }
+    }
+}
 
 static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, mca_base_var_info_lvl_t max_level, bool want_internal)
 {

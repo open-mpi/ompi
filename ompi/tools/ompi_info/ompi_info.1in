@@ -83,6 +83,12 @@ Show MCA parameters.  The first parameter is the type of the component
 to display; the second parameter is the specific component to display
 (or the keyword "all", meaning "display all components of this type").
 .TP 8
+.I \-t|\-\-type
+Show MCA parameters of the type specified in the parameter. Accepts the
+following parameters: unsigned_int, unsigned_long, unsigned_long_long,
+size_t, string, version_string, bool, double. By default level
+is 9 unless it is specified with \-\-level.
+.TP 8
 .I \-\-parsable
 When used in conjunction with other parameters, the output is
 displayed in a machine-parsable format
@@ -240,6 +246,12 @@ component in a human-readable / prettyprint format.
 ompi_info --param btl tcp --parsable
 Show the level 1 MCA parameters of the "tcp" BTL component in a
 machine-parsable format.
+.
+.
+.TP
+ompi_info --type string --pretty-print --level 3
+Show the level 3 MCA parameters of string type in a human-readable /
+prettyprint format.
 .
 .
 .TP
