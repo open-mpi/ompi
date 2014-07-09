@@ -301,6 +301,10 @@ static inline int ompi_osc_rdma_put_w_req (void *origin_addr, int origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name, win->w_name));
 
+    if (!ompi_osc_rdma_check_access_epoch (module, target)) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     /* short-circuit case */
     if (0 == origin_count || 0 == target_count) {
         if (request) {
@@ -473,6 +477,10 @@ ompi_osc_rdma_accumulate_w_req (void *origin_addr, int origin_count,
                          target_count, target_dt->name, op->o_name,
                          win->w_name));
 
+    if (!ompi_osc_rdma_check_access_epoch (module, target)) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     /* short-circuit case */
     if (0 == origin_count || 0 == target_count) {
         if (request) {
@@ -643,6 +651,10 @@ int ompi_osc_rdma_compare_and_swap (void *origin_addr, void *compare_addr,
                          (unsigned long) result_addr, dt->name, target, (int) target_disp,
                          win->w_name));
 
+    if (!ompi_osc_rdma_check_access_epoch (module, target)) {
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     /* optimize self case. TODO: optimize local case */
     if (ompi_comm_rank (module->comm) == target) {
         return ompi_osc_rdma_cas_self (origin_addr, compare_addr, result_addr, dt, target_disp,
@@ -787,6 +799,10 @@ static inline int ompi_osc_rdma_rget_internal (void *origin_addr, int origin_cou
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name, win->w_name));
+
+    if (!ompi_osc_rdma_check_access_epoch (module, target)) {
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     /* gets are always request based, so that we know where to land the data */
     OMPI_OSC_RDMA_REQUEST_ALLOC(win, rdma_request);
@@ -996,6 +1012,10 @@ int ompi_osc_rdma_rget_accumulate_internal (void *origin_addr, int origin_count,
                          (unsigned long) result_addr, result_count, result_datatype->name,
                          target_rank, (int) target_disp, target_count, target_datatype->name,
                          op->o_name, win->w_name));
+
+    if (!ompi_osc_rdma_check_access_epoch (module, target_rank)) {
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     /* get_accumulates are always request based, so that we know where to land the data */
     OMPI_OSC_RDMA_REQUEST_ALLOC(win, rdma_request);

@@ -117,6 +117,7 @@ ompi_osc_rdma_fence(int assert, ompi_win_t *win)
     /* active sends are now active (we will close the epoch if NOSUCCEED is specified) */
     if (0 == (assert & MPI_MODE_NOSUCCEED)) {
         module->active_eager_send_active = true;
+        module->all_access_epoch = true;
     }
 
     /* short-circuit the noprecede case */
@@ -166,7 +167,8 @@ ompi_osc_rdma_fence(int assert, ompi_win_t *win)
         /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly
          * stated that MPI_MODE_NOSUCCEED ends the epoch but it is a safe assumption. */
         module->active_eager_send_active = false;
-    }
+        module->all_access_epoch = false;
+   }
 
  cleanup:
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
@@ -185,13 +187,14 @@ ompi_osc_rdma_start(ompi_group_t *group,
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_pending_post_t *pending_post, *next;
-
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_start entering..."));
+    ompi_osc_rdma_peer_t *peer;
+    int group_size;
+    int *ranks;
 
     OPAL_THREAD_LOCK(&module->lock);
 
-    /* ensure we're not already in a start */
+    /* ensure we're not already in a start or passive target. we can no check for all
+     * access here due to fence */
     if (NULL != module->sc_group || module->passive_target_access_epoch) {
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
@@ -203,14 +206,32 @@ ompi_osc_rdma_start(ompi_group_t *group,
 
     module->sc_group = group;    
 
+    /* mark all procs in this group as being in an access epoch */
+    group_size = ompi_group_size (module->sc_group);
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "ompi_osc_rdma_start entering with group size %d...",
+                         group_size));
+
+    ranks = get_comm_ranks(module, module->sc_group);
+    if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+    for (int i = 0 ; i < group_size ; ++i) {
+        /* when the post comes in we will be in an access epoch with this proc */
+        module->peers[ranks[i]].access_epoch = true;
+    }
+
+    free (ranks);
+
     OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_rdma_pending_post_t) {
         ompi_proc_t *pending_proc = ompi_comm_peer_lookup (module->comm, pending_post->rank);
 
         if (group_contains_proc (module->sc_group, pending_proc)) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Consumed unexpected post message from %d",
+                                 pending_post->rank));
             ++module->num_post_msgs;
             opal_list_remove_item (&module->pending_posts, &pending_post->super);
             OBJ_RELEASE(pending_post);
-            break;
         }
     }
 
@@ -219,12 +240,12 @@ ompi_osc_rdma_start(ompi_group_t *group,
        receive messages. */
     module->active_eager_send_active = false;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "num_post_msgs = %d", module->num_post_msgs));
-
     /* possible we've already received a couple in messages, so
        add however many we're going to wait for */
     module->num_post_msgs -= ompi_group_size(module->sc_group);
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "num_post_msgs = %d", module->num_post_msgs));
 
     /* if we've already received all the post messages, we can eager
        send.  Otherwise, eager send will be enabled when
@@ -246,10 +267,12 @@ ompi_osc_rdma_complete(ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_header_complete_t complete_req;
+    ompi_osc_rdma_peer_t *peer;
     int ret = OMPI_SUCCESS;
     int i;
     int *ranks = NULL;
     ompi_group_t *group;
+    int my_rank = ompi_comm_rank (module->comm);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_complete entering..."));
@@ -282,9 +305,20 @@ ompi_osc_rdma_complete(ompi_win_t *win)
        round. */
     OPAL_THREAD_UNLOCK(&module->lock);
     for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
+        if (my_rank == ranks[i]) {
+            /* shortcut for self */
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_rdma_complete self complete"));
+            module->num_complete_msgs++;
+            continue;
+        }
+
         complete_req.base.type = OMPI_OSC_RDMA_HDR_TYPE_COMPLETE;
         complete_req.base.flags = OMPI_OSC_RDMA_HDR_FLAG_VALID;
         complete_req.frag_count = module->epoch_outgoing_frag_count[ranks[i]];
+
+        peer = module->peers + ranks[i];
+
+        peer->access_epoch = false;
 
         ret = ompi_osc_rdma_control_send(module, 
                                          ranks[i],
@@ -344,13 +378,16 @@ ompi_osc_rdma_post(ompi_group_t *group,
     int ret = OMPI_SUCCESS;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_header_post_t post_req;
+    int my_rank = ompi_comm_rank(module->comm);
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_post entering..."));
-
+    /* can't check for all access epoch here due to fence */
     if (module->pw_group) {
         return OMPI_ERR_RMA_SYNC;
     }
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "ompi_osc_rdma_post entering with group size %d...",
+                         ompi_group_size (group)));
 
     /* save the group */
     OBJ_RETAIN(group);
@@ -382,6 +419,15 @@ ompi_osc_rdma_post(ompi_group_t *group,
 
     /* send a hello counter to everyone in group */
     for (int i = 0 ; i < ompi_group_size(module->pw_group) ; ++i) {
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Sending post message to rank %d", ranks[i]));
+
+        /* shortcut for self */
+        if (my_rank == ranks[i]) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_rdma_complete self post"));
+            osc_rdma_incoming_post (module, my_rank);
+            continue;
+        }
+
         post_req.base.type = OMPI_OSC_RDMA_HDR_TYPE_POST;
         post_req.base.flags = OMPI_OSC_RDMA_HDR_FLAG_VALID;
         post_req.windx = ompi_comm_get_cid(module->comm);
@@ -407,16 +453,19 @@ ompi_osc_rdma_wait(ompi_win_t *win)
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_group_t *group;
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_wait entering..."));
-
     if (NULL == module->pw_group) {
         return OMPI_ERR_RMA_SYNC;
     }
 
+    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                         "ompi_osc_rdma_wait entering..."));
+
     OPAL_THREAD_LOCK(&module->lock);
     while (0 != module->num_complete_msgs ||
              module->active_incoming_frag_count < module->active_incoming_frag_signal_count) {
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                             "num_complete_msgs = %d, active_incoming_frag_count = %d, active_incoming_frag_signal_count = %d",
+                             module->num_complete_msgs, module->active_incoming_frag_count, module->active_incoming_frag_signal_count));
         opal_condition_wait(&module->cond, &module->lock);
     }
 
@@ -486,6 +535,10 @@ int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module, int source)
     /* verify that this proc is part of the current start group */
     if (!module->sc_group || !group_contains_proc (module->sc_group, source_proc)) {
         ompi_osc_rdma_pending_post_t *pending_post = OBJ_NEW(ompi_osc_rdma_pending_post_t);
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                             "received unexpected post message from %d. module->sc_group = %p, size = %d",
+                             source, module->sc_group, module->sc_group ? ompi_group_size (module->sc_group) : 0));
 
         pending_post->rank = source;
 
