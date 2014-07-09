@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,7 @@ static int _reg_segment(map_segment_t *s, int *num_btl);
 
 int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
 {
-    int ret = OSHMEM_SUCCESS;
+    int ret;
     int i;
 
     for (i = 0; i < memheap_map->n_segments; i++) {
@@ -36,14 +38,17 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
                         s->type,
                         s->seg_id);
         ret = _reg_segment(s, &memheap_map->num_transports);
+        if (OSHMEM_SUCCESS != ret) {
+            mca_memheap_base_dereg(memheap_map);
+            return ret;
+        }
     }
 
-    return ret;
+    return OSHMEM_SUCCESS;
 }
 
 int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
 {
-    int ret = OSHMEM_SUCCESS;
     int i;
 
     for (i = 0; i < memheap_map->n_segments; i++) {
@@ -58,10 +63,10 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
                         s->seg_base_addr,
                         s->end,
                         (long long)((uintptr_t)s->end - (uintptr_t)s->seg_base_addr));
-        ret = _dereg_segment(s);
+        (void)_dereg_segment(s);
     }
 
-    return ret;
+    return OSHMEM_SUCCESS;
 }
 
 static int _dereg_segment(map_segment_t *s)

@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -450,6 +452,12 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
             if (NULL == des) {
                 SPML_ERROR("%s: failed to register source memory. ",
                            btl_type2str(ybtl->btl_type));
+                /* FIXME some cleanup might be needed here
+                 * yoda_context->btl_src_descriptor = NULL;
+                 * OBJ_DESTRUCT(&convertor);
+                 * *count = ???;
+                 */
+                return NULL;
             }
 
             yoda_context->btl_src_descriptor = des;
