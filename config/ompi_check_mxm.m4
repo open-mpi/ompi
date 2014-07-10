@@ -63,11 +63,11 @@ AC_DEFUN([OMPI_CHECK_MXM],[
             [AC_LANG_PROGRAM([[#include <mxm/api/mxm_version.h>]],
                 [[
 #ifndef MXM_VERSION
-#error "MXM Version is less than 1.5, please upgrade"
+#error "MXM Version is less than 2.1, please upgrade"
 #endif
 #
-#if MXM_API < MXM_VERSION(1,5)
-#error "MXM Version is less than 1.5, please upgrade"
+#if MXM_API < MXM_VERSION(2,1)
+#error "MXM Version is less than 2.1, please upgrade"
 #endif
                 ]])],
             [ompi_mxm_version_ok="yes"],
