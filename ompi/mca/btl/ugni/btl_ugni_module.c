@@ -219,10 +219,8 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
 
     frag->base.des_flags = flags;
     frag->base.order = order;
-    frag->base.des_src = &frag->segments[1].base;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = &frag->segments[1].base;
-    frag->base.des_dst_cnt = 1;
+    frag->base.des_local = &frag->segments[1].base;
+    frag->base.des_local_count = 1;
 
     frag->segments[0].base.seg_addr.pval = NULL;
     frag->segments[0].base.seg_len       = 0;
@@ -305,10 +303,10 @@ mca_btl_ugni_prepare_dst (mca_btl_base_module_t *btl,
     frag->segments[0].base.seg_len       = *size;
     frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
 
-    frag->base.des_dst     = &frag->segments->base;
-    frag->base.des_dst_cnt = 1;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
+    frag->base.des_local       = &frag->segments->base;
+    frag->base.des_local_count = 1;
+    frag->base.order           = order;
+    frag->base.des_flags       = flags;
 
     return (struct mca_btl_base_descriptor_t *) frag;
 }

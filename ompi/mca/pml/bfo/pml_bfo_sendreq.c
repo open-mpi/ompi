@@ -257,8 +257,8 @@ mca_pml_bfo_rndv_completion( mca_btl_base_module_t* btl,
      * have to be atomic.
      */
     req_bytes_delivered = mca_pml_bfo_compute_segment_length (btl->btl_seg_size,
-                                                              (void *) des->des_src,
-                                                              des->des_src_cnt,
+                                                              (void *) des->des_local,
+                                                              des->des_local_count,
                                                               sizeof(mca_pml_bfo_rendezvous_hdr_t));
 
 #if PML_BFO
@@ -287,8 +287,8 @@ mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
 
     /* count bytes of user data actually delivered and check for request completion */
     req_bytes_delivered = mca_pml_bfo_compute_segment_length (btl->btl_seg_size,
-                                                              (void *) des->des_src,
-                                                              des->des_src_cnt, 0);
+                                                              (void *) des->des_local,
+                                                              des->des_local_count, 0);
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     send_request_pml_complete_check(sendreq);
@@ -357,8 +357,8 @@ mca_pml_bfo_frag_completion( mca_btl_base_module_t* btl,
 
     /* count bytes of user data actually delivered */
     req_bytes_delivered = mca_pml_bfo_compute_segment_length (btl->btl_seg_size,
-                                                              (void *) des->des_src,
-                                                              des->des_src_cnt,
+                                                              (void *) des->des_local,
+                                                              des->des_local_count,
                                                               sizeof(mca_pml_bfo_frag_hdr_t));
 
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
@@ -409,7 +409,7 @@ int mca_pml_bfo_send_request_start_buffered(
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    segment = des->des_src;
+    segment = des->des_local;
 
     /* pack the data into the BTL supplied buffer */
     iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + 
@@ -562,7 +562,7 @@ int mca_pml_bfo_send_request_start_copy( mca_pml_bfo_send_request_t* sendreq,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    segment = des->des_src;
+    segment = des->des_local;
 
     if(size > 0) {
         /* pack the data into the supplied buffer */
@@ -657,7 +657,7 @@ int mca_pml_bfo_send_request_start_prepare( mca_pml_bfo_send_request_t* sendreq,
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    segment = des->des_src;
+    segment = des->des_local;
 
     /* build match header */
     hdr = (mca_pml_bfo_hdr_t*)segment->seg_addr.pval;
@@ -747,7 +747,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         src->des_cbfunc = mca_pml_bfo_rget_completion;
         src->des_cbdata = sendreq;
 
-        seg_size = bml_btl->btl->btl_seg_size * src->des_src_cnt;
+        seg_size = bml_btl->btl->btl_seg_size * src->des_local_count;
 
         /* allocate space for get hdr + segment list */
         mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
@@ -759,7 +759,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
             mca_bml_base_free(bml_btl, src);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        segment = des->des_src;
+        segment = des->des_local;
 
         /* build match header */
         hdr = (mca_pml_bfo_hdr_t*)segment->seg_addr.pval;
@@ -775,13 +775,13 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         MCA_PML_BFO_CHECK_FOR_RNDV_RESTART(hdr, sendreq, "RGET");
 #endif /* PML_BFO */
         hdr->hdr_rget.hdr_des.pval = src;
-        hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
+        hdr->hdr_rget.hdr_seg_cnt = src->des_local_count;
 
         bfo_hdr_hton(hdr, MCA_PML_BFO_HDR_TYPE_RGET,
                      sendreq->req_send.req_base.req_proc);
 
         /* copy segment data */
-        memmove (&hdr->hdr_rget + 1, src->des_src, seg_size);
+        memmove (&hdr->hdr_rget + 1, src->des_local, seg_size);
 
         des->des_cbfunc = mca_pml_bfo_send_ctl_completion;
 
@@ -808,7 +808,7 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         if( OPAL_UNLIKELY(NULL == des)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        segment = des->des_src;
+        segment = des->des_local;
             
         /* build hdr */
         hdr = (mca_pml_bfo_hdr_t*)segment->seg_addr.pval;
@@ -912,7 +912,7 @@ int mca_pml_bfo_send_request_start_rndv( mca_pml_bfo_send_request_t* sendreq,
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    segment = des->des_src;
+    segment = des->des_local;
 
     /* build hdr */
     hdr = (mca_pml_bfo_hdr_t*)segment->seg_addr.pval;
@@ -1145,7 +1145,7 @@ cannot_pack:
         des->des_cbdata = sendreq;
 
         /* setup header */
-        hdr = (mca_pml_bfo_frag_hdr_t*)des->des_src->seg_addr.pval;
+        hdr = (mca_pml_bfo_frag_hdr_t*)des->des_local->seg_addr.pval;
         hdr->hdr_common.hdr_flags = 0;
         hdr->hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_FRAG;
         hdr->hdr_frag_offset = range->range_send_offset;
@@ -1291,8 +1291,8 @@ int mca_pml_bfo_send_request_put_frag( mca_pml_bfo_rdma_frag_t* frag )
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    des->des_dst = (mca_btl_base_segment_t *) frag->rdma_segs;
-    des->des_dst_cnt = frag->rdma_hdr.hdr_rdma.hdr_seg_cnt;
+    des->des_remote = (mca_btl_base_segment_t *) frag->rdma_segs;
+    des->des_remote_count = frag->rdma_hdr.hdr_rdma.hdr_seg_cnt;
     des->des_cbfunc = mca_pml_bfo_put_completion;
     des->des_cbdata = frag;
 

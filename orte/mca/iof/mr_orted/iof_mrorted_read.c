@@ -115,6 +115,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
         /* see if we need to forward this output */
         stdout_target = ORTE_JOBID_INVALID;
         jbptr = &stdout_target;
+        jdata = orte_get_job_data_object(rev->name.jobid);
         if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_STDOUT_TARGET, (void**)&jbptr, ORTE_JOBID)) {
             /* end of the chain - just output the info */
             write_out = true;

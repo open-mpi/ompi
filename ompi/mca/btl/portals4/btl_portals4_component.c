@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,25 +45,19 @@ mca_btl_portals4_component_t mca_btl_portals4_component = {
     {
       /* First, the mca_base_module_t struct containing meta
          information about the module itself */
-      {
-        MCA_BTL_BASE_VERSION_2_0_0,
-
-        "portals4", /* MCA module name */
-        OMPI_MAJOR_VERSION,  /* MCA module major version */
-        OMPI_MINOR_VERSION,  /* MCA module minor version */
-        OMPI_RELEASE_VERSION,  /* MCA module release version */
-        mca_btl_portals4_component_open,  /* module open */
-        mca_btl_portals4_component_close,  /* module close */
-        NULL, /* component query */
-        mca_btl_portals4_component_register, /* component register */
+      .btl_version = {
+	MCA_BTL_DEFAULT_VERSION("portals4"),
+        .mca_open_component = mca_btl_portals4_component_open,
+        .mca_close_component = mca_btl_portals4_component_close,
+        .mca_register_component_params = mca_btl_portals4_component_register,
       },
-      {
+      .btl_data = {
           /* The component is not checkpoint ready */
-          MCA_BASE_METADATA_PARAM_NONE
+          .param_field = MCA_BASE_METADATA_PARAM_NONE
       },
       
-      mca_btl_portals4_component_init,  
-      mca_btl_portals4_component_progress,
+      .btl_init = mca_btl_portals4_component_init,
+      .btl_progress = mca_btl_portals4_component_progress,
     }
 };
 
@@ -724,11 +721,11 @@ mca_btl_portals4_component_progress(void)
                 frag = ev.user_ptr;
                 tag = (unsigned char) (ev.hdr_data);
 
-                frag->base.des_dst = seg;
+                frag->base.des_local = seg;
                 seg[0].seg_addr.pval = ev.start;
                 seg[0].seg_len = ev.mlength;
 
-                frag->base.des_dst_cnt = 1;
+                frag->base.des_local_count = 1;
 
                 reg = mca_btl_base_active_message_trigger + tag;
                 OPAL_OUTPUT_VERBOSE((50, ompi_btl_base_framework.framework_output,

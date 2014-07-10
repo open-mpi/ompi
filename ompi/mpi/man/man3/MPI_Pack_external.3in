@@ -113,10 +113,10 @@ to MPI_Pack_external.
 		    buf, 1000, &position); 
 		MPI_Pack_external("external32", &msg, i, MPI_DOUBLE,
 		    buf, 1000, &position); 
-		MPI_Send(buf, position, MPI_PACKED, 1, 0,
+		MPI_Send(buf, position, MPI_BYTE, 1, 0,
 		    MPI_COMM_WORLD); 
 	} else {		/* RECEIVER CODE */ 
-		MPI_Recv(buf, 1, MPI_PACKED, 0, 0, MPI_COMM_WORLD,
+		MPI_Recv(buf, 1, MPI_BYTE, 0, 0, MPI_COMM_WORLD,
 		    MPI_STATUS_IGNORE);
 		MPI_Unpack_external("external32", buf, 1000, 
 		    MPI_INT, &i, 1, &position);
@@ -150,12 +150,12 @@ equivalent information that would have been stored in a message by one
 send call with a send buffer that is the "concatenation" of the
 individual send buffers.
 .sp
-A packing unit can be sent using type MPI_PACKED. Any point-to-point
+A packing unit can be sent using type MPI_BYTE. Any point-to-point
 or collective communication function can be used to move the sequence
 of bytes that forms the packing unit from one process to another. This
 packing unit can now be received using any receive operation, with any
 datatype. (The type-matching rules are relaxed for messages sent with
-type MPI_PACKED.)
+type MPI_BYTE.)
 .sp
 A packing unit can be unpacked into several successive messages. This
 is effected by several successive related calls to

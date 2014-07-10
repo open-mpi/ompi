@@ -82,7 +82,7 @@ static inline int mca_btl_ugni_post_wcb (mca_btl_ugni_base_frag_t *frag, bool ge
                                          mca_btl_ugni_segment_t *rem_seg, frag_cb_t cb) {
     frag->cbfunc = cb;
 
-    if (frag->base.des_src->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
+    if (frag->base.des_local->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
         return mca_btl_ugni_post_fma (frag, get ? GNI_POST_FMA_GET : GNI_POST_FMA_PUT, lcl_seg, rem_seg);
     }
 

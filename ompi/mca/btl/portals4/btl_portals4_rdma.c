@@ -39,7 +39,7 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_descriptor_t* descriptor)
 {
     mca_btl_portals4_module_t *portals4_btl = (mca_btl_portals4_module_t *) btl_base;
-    mca_btl_portals4_segment_t *src_seg = (mca_btl_portals4_segment_t *) descriptor->des_src;
+    mca_btl_portals4_segment_t *src_seg = (mca_btl_portals4_segment_t *) descriptor->des_remote;
     mca_btl_portals4_frag_t *frag = (mca_btl_portals4_frag_t*) descriptor;
     ptl_md_t md;
     int ret;

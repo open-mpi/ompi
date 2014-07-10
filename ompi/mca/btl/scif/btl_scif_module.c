@@ -163,10 +163,8 @@ mca_btl_scif_alloc(struct mca_btl_base_module_t *btl,
 
     frag->base.des_flags = flags;
     frag->base.order = order;
-    frag->base.des_src = &frag->segments[0].base;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = &frag->segments[0].base;
-    frag->base.des_dst_cnt = 1;
+    frag->base.des_local = &frag->segments[0].base;
+    frag->base.des_local_count = 1;
 
     frag->segments[0].base.seg_len       = size;
 
@@ -180,12 +178,11 @@ mca_btl_scif_free (struct mca_btl_base_module_t *btl,
     return mca_btl_scif_frag_return ((mca_btl_scif_base_frag_t *) des);
 }
 
-static inline int mca_btl_scif_prepare_dma (struct mca_btl_base_module_t *btl,
-                                            mca_btl_base_endpoint_t *endpoint,
-                                            void *data_ptr, size_t size,
-                                            mca_mpool_base_registration_t *registration,
-                                            uint8_t order, uint32_t flags,
-                                            mca_btl_scif_base_frag_t **frag_out)
+static inline mca_btl_base_descriptor_t *mca_btl_scif_prepare_dma (struct mca_btl_base_module_t *btl,
+                                                                   mca_btl_base_endpoint_t *endpoint,
+                                                                   void *data_ptr, size_t size,
+                                                                   mca_mpool_base_registration_t *registration,
+                                                                   uint8_t order, uint32_t flags)
 {
     mca_btl_scif_base_frag_t *frag;
     mca_btl_scif_reg_t *scif_reg;
@@ -197,13 +194,13 @@ static inline int mca_btl_scif_prepare_dma (struct mca_btl_base_module_t *btl,
         rc = mca_btl_scif_ep_connect (endpoint);
         if (OPAL_LIKELY(MCA_BTL_SCIF_EP_STATE_CONNECTED != endpoint->state)) {
             /* not yet connected */
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            return NULL;
         }
     }
 
     (void) MCA_BTL_SCIF_FRAG_ALLOC_DMA(endpoint, frag);
     if (OPAL_UNLIKELY(NULL == frag)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return NULL;
     }
 
     if (NULL == registration) {
@@ -211,7 +208,7 @@ static inline int mca_btl_scif_prepare_dma (struct mca_btl_base_module_t *btl,
                                             (mca_mpool_base_registration_t **) &registration);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             mca_btl_scif_frag_return (frag);
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            return NULL;
         }
 
         frag->registration = (mca_btl_scif_reg_t *) registration;
@@ -231,7 +228,7 @@ static inline int mca_btl_scif_prepare_dma (struct mca_btl_base_module_t *btl,
 
     if (OPAL_UNLIKELY((off_t) -1 == scif_reg->registrations[endpoint->id])) {
         mca_btl_scif_frag_return (frag);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return NULL;
     }
 
     frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
@@ -244,34 +241,24 @@ static inline int mca_btl_scif_prepare_dma (struct mca_btl_base_module_t *btl,
     frag->base.order       = order;
     frag->base.des_flags   = flags;
 
-    *frag_out = frag;
+    frag->base.des_local = &frag->segments->base;
+    frag->base.des_local_count = 1;
 
-    return OMPI_SUCCESS;
+    return &frag->base;
 }
 
-static mca_btl_base_descriptor_t *mca_btl_scif_prepare_src_dma (struct mca_btl_base_module_t *btl,
-                                                                mca_btl_base_endpoint_t *endpoint,
-                                                                mca_mpool_base_registration_t *registration,
-                                                                struct opal_convertor_t *convertor,
-                                                                uint8_t order, size_t *size,
-                                                                uint32_t flags)
+static inline mca_btl_base_descriptor_t *mca_btl_scif_prepare_dma_conv (struct mca_btl_base_module_t *btl,
+                                                                        mca_btl_base_endpoint_t *endpoint,
+                                                                        mca_mpool_base_registration_t *registration,
+                                                                        struct opal_convertor_t *convertor,
+                                                                        uint8_t order, size_t *size,
+                                                                        uint32_t flags)
 {
-    mca_btl_scif_base_frag_t *frag;
     void *data_ptr;
-    int rc;
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
-    rc = mca_btl_scif_prepare_dma (btl, endpoint, data_ptr, *size, registration,
-                                   order, flags, &frag);
-    if (OMPI_SUCCESS != rc) {
-        return NULL;
-    }
-
-    frag->base.des_src     = &frag->segments->base;
-    frag->base.des_src_cnt = 1;
-
-    return &frag->base;
+    return mca_btl_scif_prepare_dma (btl, endpoint, data_ptr, *size, registration, order, flags, &frag);
 }
 
 static inline struct mca_btl_base_descriptor_t *
@@ -302,7 +289,7 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
         frag->segments[0].base.seg_len       = reserve;
         frag->segments[1].base.seg_addr.pval = data_ptr;
         frag->segments[1].base.seg_len       = *size;
-        frag->base.des_src_cnt = 2;
+        frag->base.des_local_count = 2;
     } else {
         /* buffered send */
         (void) MCA_BTL_SCIF_FRAG_ALLOC_EAGER(endpoint, frag);
@@ -323,10 +310,10 @@ mca_btl_scif_prepare_src_send (struct mca_btl_base_module_t *btl,
         }
 
         frag->segments[0].base.seg_len = reserve + *size;
-        frag->base.des_src_cnt = 1;
+        frag->base.des_local_count = 1;
     }
 
-    frag->base.des_src     = &frag->segments->base;
+    frag->base.des_local   = &frag->segments->base;
     frag->base.order       = order;
     frag->base.des_flags   = flags;
 
@@ -341,11 +328,9 @@ static mca_btl_base_descriptor_t *mca_btl_scif_prepare_src (struct mca_btl_base_
                                                             uint32_t flags)
 {
     if (OPAL_LIKELY(reserve)) {
-        return mca_btl_scif_prepare_src_send (btl, endpoint, convertor,
-                                              order, reserve, size, flags);
+        return mca_btl_scif_prepare_src_send (btl, endpoint, convertor, order, reserve, size, flags);
     } else {
-        return mca_btl_scif_prepare_src_dma (btl, endpoint, registration,
-                                              convertor, order, size, flags);
+        return mca_btl_scif_prepare_dma_conv (btl, endpoint, registration, convertor, order, size, flags);
     }
 }
 
@@ -355,20 +340,5 @@ static mca_btl_base_descriptor_t *mca_btl_scif_prepare_dst (mca_btl_base_module_
                                                             opal_convertor_t *convertor, uint8_t order,
                                                             size_t reserve, size_t *size, uint32_t flags)
 {
-    mca_btl_scif_base_frag_t *frag;
-    void *data_ptr;
-    int rc;
-
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
-
-    rc = mca_btl_scif_prepare_dma (btl, endpoint, data_ptr, *size, registration,
-                                   order, flags, &frag);
-    if (OMPI_SUCCESS != rc) {
-        return NULL;
-    }
-
-    frag->base.des_dst     = &frag->segments->base;
-    frag->base.des_dst_cnt = 1;
-
-    return &frag->base;
+    return mca_btl_scif_prepare_dma_conv (btl, endpoint, registration, convertor, order, size, flags);
 }

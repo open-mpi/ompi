@@ -272,7 +272,7 @@ mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
                   struct mca_btl_base_endpoint_t *endpoint,
                   struct mca_btl_base_descriptor_t *des);
 
-int mca_btl_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
+int mca_btl_ugni_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 
 mca_btl_base_descriptor_t *
 mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,

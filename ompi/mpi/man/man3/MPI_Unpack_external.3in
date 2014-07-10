@@ -127,12 +127,12 @@ equivalent information that would have been stored in a message by one
 send call with a send buffer that is the "concatenation" of the
 individual send buffers.
 .sp
-A packing unit can be sent using type MPI_PACKED. Any point-to-point
+A packing unit can be sent using type MPI_BYTE. Any point-to-point
 or collective communication function can be used to move the sequence
 of bytes that forms the packing unit from one process to another. This
 packing unit can now be received using any receive operation, with any
 datatype: The type-matching rules are relaxed for messages sent with
-type MPI_PACKED.
+type MPI_BYTE.
 .sp
 A packing unit can be unpacked into several successive messages. This
 is effected by several successive related calls to

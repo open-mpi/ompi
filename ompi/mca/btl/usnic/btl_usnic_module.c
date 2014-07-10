@@ -70,15 +70,15 @@ static inline void compute_sf_size(ompi_btl_usnic_send_frag_t *sfrag)
 
     frag = &sfrag->sf_base;
 
-    assert(frag->uf_base.des_src_cnt > 0);
-    assert(frag->uf_base.des_src_cnt <= 2);
+    assert(frag->uf_base.des_local_count > 0);
+    assert(frag->uf_base.des_local_count <= 2);
 
     /* belt and suspenders: second len should be zero if only one SGE */
-    assert(2 == frag->uf_base.des_src_cnt || 0 == frag->uf_src_seg[1].seg_len);
+    assert(2 == frag->uf_base.des_local_count || 0 == frag->uf_local_seg[1].seg_len);
 
     sfrag->sf_size = 0;
-    sfrag->sf_size += frag->uf_src_seg[0].seg_len;
-    sfrag->sf_size += frag->uf_src_seg[1].seg_len;
+    sfrag->sf_size += frag->uf_local_seg[0].seg_len;
+    sfrag->sf_size += frag->uf_local_seg[1].seg_len;
 }
 
 /*
@@ -543,7 +543,7 @@ usnic_alloc(struct mca_btl_base_module_t* btl,
         }
 
         /* pointer to buffer for caller */
-        frag->sf_base.uf_base.des_src[0].seg_addr.pval = lfrag->lsf_buffer;
+        frag->sf_base.uf_base.des_local[0].seg_addr.pval = lfrag->lsf_buffer;
 
         MSGDEBUG1_OUT("usnic_alloc: packing frag %p on the fly", (void *)frag);
         lfrag->lsf_pack_on_the_fly = true;
@@ -561,8 +561,8 @@ usnic_alloc(struct mca_btl_base_module_t* btl,
     /* set up descriptor */
     desc = &frag->sf_base.uf_base;
     desc->des_flags = flags;
-    desc->des_src[0].seg_len = size;
-    desc->des_src_cnt = 1;
+    desc->des_local[0].seg_len = size;
+    desc->des_local_count = 1;
 
     return desc;
 }
@@ -664,19 +664,19 @@ prepare_src_small(
         assert(payload_len <= module->max_frag_payload);
         usnic_convertor_pack_simple(
                 convertor,
-                (IOVBASE_TYPE*)(intptr_t)(frag->sf_base.uf_src_seg[0].seg_addr.lval + reserve),
+                (IOVBASE_TYPE*)(intptr_t)(frag->sf_base.uf_local_seg[0].seg_addr.lval + reserve),
                 *size,
                 size);
         payload_len = reserve + *size;
-        frag->sf_base.uf_base.des_src_cnt = 1;
+        frag->sf_base.uf_base.des_local_count = 1;
         /* PML will copy header into beginning of segment */
-        frag->sf_base.uf_src_seg[0].seg_len = payload_len;
+        frag->sf_base.uf_local_seg[0].seg_len = payload_len;
     } else {
         opal_convertor_get_current_pointer(convertor,
-                                           &sfrag->ssf_base.sf_base.uf_src_seg[1].seg_addr.pval);
-        frag->sf_base.uf_base.des_src_cnt = 2;
-        frag->sf_base.uf_src_seg[0].seg_len = reserve;
-        frag->sf_base.uf_src_seg[1].seg_len = *size;
+                                           &sfrag->ssf_base.sf_base.uf_local_seg[1].seg_addr.pval);
+        frag->sf_base.uf_base.des_local_count = 2;
+        frag->sf_base.uf_local_seg[0].seg_len = reserve;
+        frag->sf_base.uf_local_seg[1].seg_len = *size;
     }
 
     frag->sf_base.uf_base.des_flags = flags;
@@ -892,11 +892,11 @@ prepare_src_large(
 
     /* The header location goes in SG[0], payload in SG[1].  If we are using a
      * convertor then SG[1].seg_len is accurate but seg_addr is NULL. */
-    frag->sf_base.uf_base.des_src_cnt = 2;
+    frag->sf_base.uf_base.des_local_count = 2;
 
     /* stash header location, PML will write here */
-    frag->sf_base.uf_src_seg[0].seg_addr.pval = &lfrag->lsf_ompi_header;
-    frag->sf_base.uf_src_seg[0].seg_len = reserve;
+    frag->sf_base.uf_local_seg[0].seg_addr.pval = &lfrag->lsf_ompi_header;
+    frag->sf_base.uf_local_seg[0].seg_len = reserve;
     /* make sure upper header small enough */
     assert(reserve <= sizeof(lfrag->lsf_ompi_header));
 
@@ -923,7 +923,7 @@ prepare_src_large(
         else {
             /* pack everything in the convertor into a chain of segments now,
              * leaving space for the PML header in the first segment */
-            lfrag->lsf_base.sf_base.uf_src_seg[0].seg_addr.pval =
+            lfrag->lsf_base.sf_base.uf_local_seg[0].seg_addr.pval =
                 pack_chunk_seg_chain_with_reserve(module, lfrag, reserve,
                                                   convertor, *size, size);
         }
@@ -932,14 +932,14 @@ prepare_src_large(
          * by both PML and this BTL will be correct.  For example, the PML adds
          * up the bytes in the descriptor segments to determine if an MPI-level
          * request is complete or not. */
-        frag->sf_base.uf_src_seg[1].seg_addr.pval = NULL;
-        frag->sf_base.uf_src_seg[1].seg_len = *size;
+        frag->sf_base.uf_local_seg[1].seg_addr.pval = NULL;
+        frag->sf_base.uf_local_seg[1].seg_len = *size;
     } else {
         /* convertor not needed, just save the payload pointer in SG[1] */
         lfrag->lsf_pack_on_the_fly = true;
         opal_convertor_get_current_pointer(convertor,
-                                           &frag->sf_base.uf_src_seg[1].seg_addr.pval);
-        frag->sf_base.uf_src_seg[1].seg_len = *size;
+                                           &frag->sf_base.uf_local_seg[1].seg_addr.pval);
+        frag->sf_base.uf_local_seg[1].seg_len = *size;
     }
 
     frag->sf_base.uf_base.des_flags = flags;
@@ -1017,10 +1017,10 @@ usnic_prepare_src(
     {
         unsigned i;
         mca_btl_base_descriptor_t *desc = &frag->sf_base.uf_base;
-        for (i=0; i<desc->des_src_cnt; ++i) {
+        for (i=0; i<desc->des_local_count; ++i) {
             opal_output(0, "  %d: ptr:%p len:%d\n", i,
-                        (void *)desc->des_src[i].seg_addr.pval,
-                        desc->des_src[i].seg_len);
+                        (void *)desc->des_local[i].seg_addr.pval,
+                        desc->des_local[i].seg_len);
         }
     }
 #endif
@@ -1057,8 +1057,8 @@ usnic_prepare_dst(
     opal_convertor_get_current_pointer(convertor, (void **) &data_ptr);
 
     /* make a seg entry pointing at data_ptr */
-    pfrag->uf_dst_seg[0].seg_addr.pval = data_ptr;
-    pfrag->uf_dst_seg[0].seg_len = *size;
+    pfrag->uf_remote_seg[0].seg_addr.pval = data_ptr;
+    pfrag->uf_remote_seg[0].seg_len = *size;
 
     pfrag->uf_base.order       = order;
     pfrag->uf_base.des_flags   = flags;
@@ -1095,16 +1095,16 @@ usnic_put(
             (int)frag->sf_size);
 #if MSGDEBUG1
     { unsigned i;
-        for (i=0; i<desc->des_src_cnt; ++i) {
+        for (i=0; i<desc->des_local_count; ++i) {
             opal_output(0, "  %d: ptr:%p len:%d%s\n", i,
-                    desc->des_src[i].seg_addr.pval,
-                    desc->des_src[i].seg_len,
+                    desc->des_local[i].seg_addr.pval,
+                    desc->des_local[i].seg_len,
                     (i==0)?" (source)":"");
         }
-        for (i=0; i<desc->des_dst_cnt; ++i) {
+        for (i=0; i<desc->des_remote_count; ++i) {
             opal_output(0, "  %d: ptr:%p len:%d%s\n", i,
-                    desc->des_dst[i].seg_addr.pval,
-                    desc->des_dst[i].seg_len,
+                    desc->des_remote[i].seg_addr.pval,
+                    desc->des_remote[i].seg_len,
                     (i==0)?" (dest)":"");
         }
     }
@@ -1112,7 +1112,7 @@ usnic_put(
 #endif
 
     /* copy out address - why does he not use our provided holder? */
-    frag->sf_base.uf_dst_seg[0].seg_addr.pval = desc->des_dst->seg_addr.pval;
+    frag->sf_base.uf_remote_seg[0].seg_addr.pval = desc->des_remote->seg_addr.pval;
 
     rc = ompi_btl_usnic_finish_put_or_send((ompi_btl_usnic_module_t *)btl,
                                            (ompi_btl_usnic_endpoint_t *)endpoint,
@@ -1332,7 +1332,7 @@ usnic_handle_large_send(
         /* only callback now if this was not a PUT and we own the fragment,
          * otherwise we need to wait until last byte is ACKed
          */
-        if (frag->sf_base.uf_dst_seg[0].seg_addr.pval == NULL &&
+        if (frag->sf_base.uf_remote_seg[0].seg_addr.pval == NULL &&
                 (frag->sf_base.uf_base.des_flags &
                  MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
 
@@ -1394,7 +1394,7 @@ ompi_btl_usnic_module_progress_sends(
 
         /*
          * small send?  (fragment fits in one segment)
-         * Send ptr and length will be in uf_src_seg[0]
+         * Send ptr and length will be in uf_local_seg[0]
          */
         if (frag->sf_base.uf_type == OMPI_BTL_USNIC_FRAG_SMALL_SEND) {
 
@@ -1424,7 +1424,7 @@ ompi_btl_usnic_module_progress_sends(
             ompi_btl_usnic_endpoint_send_segment(module, sseg);
 
             /* don't do callback yet if this is a put */
-            if (frag->sf_base.uf_dst_seg[0].seg_addr.pval == NULL) {
+            if (frag->sf_base.uf_remote_seg[0].seg_addr.pval == NULL) {
                 /* we have copied the data, perform a callback if
                  * we own the fragment and callback is requested.
                  * If we don't own the fragment, we cannot callback yet
@@ -1516,7 +1516,7 @@ usnic_send(
     frag = (ompi_btl_usnic_send_frag_t*) descriptor;
 
     assert(frag->sf_endpoint == endpoint);
-    frag->sf_base.uf_dst_seg[0].seg_addr.pval = NULL;      /* not a PUT */
+    frag->sf_base.uf_remote_seg[0].seg_addr.pval = NULL;      /* not a PUT */
 
     compute_sf_size(frag);
     frag->sf_ack_bytes_left = frag->sf_size;
@@ -1528,10 +1528,10 @@ usnic_send(
 #if MSGDEBUG1
     { unsigned i;
         opal_output(0, "  descriptor->des_flags=0x%x\n", descriptor->des_flags);
-        for (i=0; i<descriptor->des_src_cnt; ++i) {
+        for (i=0; i<descriptor->des_local_count; ++i) {
             opal_output(0, "  %d: ptr:%p len:%d\n", i,
-                    descriptor->des_src[i].seg_addr.pval,
-                    descriptor->des_src[i].seg_len);
+                    descriptor->des_local[i].seg_addr.pval,
+                    descriptor->des_local[i].seg_len);
         }
     }
 #endif
@@ -1558,16 +1558,16 @@ usnic_send(
         /* fix up verbs SG entries */
         sseg->ss_base.us_sg_entry[0].length =
             sizeof(ompi_btl_usnic_btl_header_t) + 
-            frag->sf_base.uf_src_seg[0].seg_len;
+            frag->sf_base.uf_local_seg[0].seg_len;
 
-        if (frag->sf_base.uf_base.des_src_cnt > 1) {
+        if (frag->sf_base.uf_base.des_local_count > 1) {
 
             /* only briefly, we will set it back to 1 before release */
             sseg->ss_send_desc.num_sge = 2;
             sseg->ss_base.us_sg_entry[1].addr =
-                frag->sf_base.uf_src_seg[1].seg_addr.lval,
+                frag->sf_base.uf_local_seg[1].seg_addr.lval,
             sseg->ss_base.us_sg_entry[1].length =
-                frag->sf_base.uf_src_seg[1].seg_len;
+                frag->sf_base.uf_local_seg[1].seg_len;
         } else {
             sseg->ss_send_desc.num_sge = 1;
         }
@@ -1583,15 +1583,15 @@ usnic_send(
         ompi_btl_usnic_endpoint_send_segment(module, sseg);
 
         /* make a copy of the data for retrans */
-        if (frag->sf_base.uf_base.des_src_cnt > 1) {
-            memcpy(((char *)(intptr_t)frag->sf_base.uf_src_seg[0].seg_addr.lval +
-                     frag->sf_base.uf_src_seg[0].seg_len),
-                    frag->sf_base.uf_src_seg[1].seg_addr.pval,
-                    frag->sf_base.uf_src_seg[1].seg_len);
+        if (frag->sf_base.uf_base.des_local_count > 1) {
+            memcpy(((char *)(intptr_t)frag->sf_base.uf_local_seg[0].seg_addr.lval +
+                     frag->sf_base.uf_local_seg[0].seg_len),
+                    frag->sf_base.uf_local_seg[1].seg_addr.pval,
+                    frag->sf_base.uf_local_seg[1].seg_len);
             /* update 1st segment length */
-            frag->sf_base.uf_base.des_src_cnt = 1;
-            frag->sf_base.uf_src_seg[0].seg_len +=
-                frag->sf_base.uf_src_seg[1].seg_len;
+            frag->sf_base.uf_base.des_local_count = 1;
+            frag->sf_base.uf_local_seg[0].seg_len +=
+                frag->sf_base.uf_local_seg[1].seg_len;
             /* set up VERBS SG list */
             /* this maintains invariant that num_sge=1 */
             sseg->ss_send_desc.num_sge = 1;

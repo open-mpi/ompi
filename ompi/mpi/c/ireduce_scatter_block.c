@@ -39,7 +39,7 @@
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Reduce_scatter_block";
+static const char FUNC_NAME[] = "MPI_Ireduce_scatter_block";
 
 
 int MPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,

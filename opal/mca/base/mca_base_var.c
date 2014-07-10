@@ -270,16 +270,16 @@ int mca_base_var_init(void)
 
 static int mca_base_var_process_env_list(void)
 {
-    int i, ret;
+    int i;
     char** tokens;
     char* ptr;
     char* param, *value;
     char sep;
-    ret = mca_base_var_register ("opal", "mca", "base", "env_list",
+    (void)mca_base_var_register ("opal", "mca", "base", "env_list",
                                  "Set SHELL env variables",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
-    ret = mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
+    (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
                                  "Set SHELL env variables delimiter. Default: semicolon ';'",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);

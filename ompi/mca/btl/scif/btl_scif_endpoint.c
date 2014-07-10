@@ -38,7 +38,7 @@ static void mca_btl_scif_ep_destruct (mca_btl_base_endpoint_t *ep) {
     OBJ_DESTRUCT(&ep->frag_wait_list);
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_base_endpoint_t, opal_list_item_t,
+OBJ_CLASS_INSTANCE(mca_btl_scif_endpoint_t, opal_list_item_t,
                    mca_btl_scif_ep_construct, mca_btl_scif_ep_destruct);
 
 static void mca_btl_scif_ep_free_buffer (mca_btl_base_endpoint_t *ep) {

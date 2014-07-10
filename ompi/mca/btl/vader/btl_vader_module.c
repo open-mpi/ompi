@@ -548,7 +548,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                 frag->segments[0].seg_len = reserve;
                 frag->segments[1].seg_len = *size;
                 frag->segments[1].seg_addr.pval = data_ptr;
-                frag->base.des_src_cnt = 2;
+                frag->base.des_local_count = 2;
             } else {
 #endif
 

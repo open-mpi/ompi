@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,7 +13,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -132,25 +133,19 @@ ompi_btl_usnic_component_t mca_btl_usnic_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
-        {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            "usnic", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            usnic_component_open,  /* component open */
-            usnic_component_close,  /* component close */
-            NULL, /* component query */
-            ompi_btl_usnic_component_register, /* component register */
+        .btl_version = {
+            MCA_BTL_DEFAULT_VERSION("usnic"),
+            .mca_open_component = usnic_component_open,
+            .mca_close_component = usnic_component_close,
+            .mca_register_component_params = ompi_btl_usnic_component_register,
         },
-        {
+        .btl_data = {
             /* The component is not checkpoint ready */
-            MCA_BASE_METADATA_PARAM_NONE
+            .param_field = MCA_BASE_METADATA_PARAM_NONE
         },
 
-        usnic_component_init,
-        usnic_component_progress,
+        .btl_init = usnic_component_init,
+        .btl_progress = usnic_component_progress,
     }
 };
 
@@ -1487,7 +1482,7 @@ static void dump_endpoint(ompi_btl_usnic_endpoint_t *endpoint)
 
             case OMPI_BTL_USNIC_FRAG_PUT_DEST:
                 /* put_dest frags are just a typedef to generic frags */
-                snprintf(tmp, sizeof(tmp), " put_addr=%p\n", frag->uf_dst_seg[0].seg_addr.pval);
+                snprintf(tmp, sizeof(tmp), " put_addr=%p\n", frag->uf_remote_seg[0].seg_addr.pval);
                 strncat(str, tmp, sizeof(str) - strlen(str) - 1);
                 opal_output(0, "%s", str);
             break;

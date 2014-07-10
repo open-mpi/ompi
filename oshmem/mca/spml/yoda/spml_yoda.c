@@ -152,7 +152,7 @@ static inline void mca_spml_yoda_bml_alloc( mca_bml_base_btl_t* bml_btl,
                        size,
                        flags);
 
-        if (OPAL_UNLIKELY(!(*des) || !(*des)->des_src ) && !is_fence_complete) {
+        if (OPAL_UNLIKELY(!(*des) || !(*des)->des_local ) && !is_fence_complete) {
             mca_spml_yoda_fence_internal(mca_spml_yoda.bml_alloc_threshold);
 
             is_fence_complete = true;
@@ -205,7 +205,7 @@ static void mca_yoda_put_callback(mca_btl_base_module_t* btl,
     size_t* size;
     void** l_addr;
 
-    size = (size_t *) des->des_dst->seg_addr.pval;
+    size = (size_t *) des->des_local->seg_addr.pval;
     l_addr = (void**) ( ((char*)size) + sizeof(*size));
     memcpy(*l_addr, ((char*)l_addr) + sizeof(*l_addr), *size);
 }
@@ -231,7 +231,7 @@ static void mca_yoda_get_callback(mca_btl_base_module_t* btl,
     putreq = NULL;
 
     /* Unpack data */
-    p = (void **)des->des_dst->seg_addr.pval;
+    p = (void **)des->des_local->seg_addr.pval;
     p_src = (void*) p;
 
     size = (size_t*)((char*)p_src + sizeof(*p_src) );
@@ -252,18 +252,18 @@ static void mca_yoda_get_callback(mca_btl_base_module_t* btl,
                             MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
                             1);
 
-    if (OPAL_UNLIKELY(!des_loc || !des_loc->des_src)) {
+    if (OPAL_UNLIKELY(!des_loc || !des_loc->des_local)) {
         SPML_ERROR("shmem OOM error need %d bytes", (int)*size);
         oshmem_shmem_abort(-1);
     }
-    spml_yoda_prepare_for_get_response((void*)des_loc->des_src->seg_addr.pval, *size, (void*)*p_src, (void*) *p_dst,(void*)*p_getreq,1);
+    spml_yoda_prepare_for_get_response((void*)des_loc->des_local->seg_addr.pval, *size, (void*)*p_src, (void*) *p_dst,(void*)*p_getreq,1);
 
     frag->rdma_req = putreq;
 
     /* Initialize callback data for put*/
     des_loc->des_cbdata = frag;
     des_loc->des_cbfunc = mca_spml_yoda_put_completion;
-    des_loc->des_src_cnt = 1;
+    des_loc->des_local_count = 1;
 
     OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_puts, 1);
 
@@ -299,7 +299,7 @@ static void mca_yoda_get_response_callback(mca_btl_base_module_t* btl,
     mca_spml_yoda_get_request_t* getreq;
 
     /* unpacking data*/
-    size = (size_t *) ( ((char*)des->des_dst->seg_addr.pval) );
+    size = (size_t *) ( ((char*)des->des_local->seg_addr.pval) );
     l_addr = (void**)( ((char*)size) + sizeof(*size));
     getreq = (mca_spml_yoda_get_request_t*)*(void**)((char*)l_addr + sizeof(*l_addr) + *size);
 
@@ -461,7 +461,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
             }
 
             yoda_context->btl_src_descriptor = des;
-            mkeys[i].u.data = des->des_src;
+            mkeys[i].u.data = des->des_local;
             mkeys[i].len  = ybtl->btl->btl_seg_size;
         }
 
@@ -832,7 +832,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
                                 MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
                                 put_via_send);
 
-        if (OPAL_UNLIKELY(!des || !des->des_src )) {
+        if (OPAL_UNLIKELY(!des || !des->des_local )) {
             SPML_ERROR("src=%p nfrags = %d frag_size=%d",
                        src_addr, nfrags, frag_size);
             SPML_ERROR("shmem OOM error need %d bytes", ncopied);
@@ -844,7 +844,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
         }
 
         /* copy data to allocated buffer*/
-        segment = des->des_src;
+        segment = des->des_local;
         spml_yoda_prepare_for_put((void*)segment->seg_addr.pval, ncopied,
                                   (void*)p_src, (void*)p_dst, put_via_send);
 
@@ -860,14 +860,14 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
         frag->rdma_segs[0].base_seg.seg_len = (put_via_send ?
                                                    ncopied + SPML_YODA_SEND_CONTEXT_SIZE :
                                                    ncopied);
-        des->des_dst = &frag->rdma_segs[0].base_seg;
+        des->des_remote = &frag->rdma_segs[0].base_seg;
 
         frag->rdma_req = putreq;
 
         /* initialize callback data for put*/
         des->des_cbdata = frag;
         des->des_cbfunc = mca_spml_yoda_put_completion;
-        des->des_dst_cnt = 1;
+        des->des_remote_count = 1;
 
         OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_puts, 1);
         /* put the data to remote side */
@@ -1130,14 +1130,14 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
                                     (int)frag_size,
                                     MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
                                     get_via_send);
-            if (OPAL_UNLIKELY(!des || !des->des_src)) {
+            if (OPAL_UNLIKELY(!des || !des->des_local)) {
                 SPML_ERROR("shmem OOM error need %d bytes", ncopied);
                 SPML_ERROR("src=%p nfrags = %d frag_size=%d",
                            src_addr, nfrags, frag_size);
                 oshmem_shmem_abort(-1);
             }
 
-            segment = des->des_src;
+            segment = des->des_local;
             spml_yoda_prepare_for_get((void*)segment->seg_addr.pval, ncopied, (void*)p_src, oshmem_my_proc_id(), (void*)p_dst, (void*) getreq);
             des->des_cbfunc = mca_spml_yoda_get_response_completion;
 
@@ -1176,7 +1176,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
             getreq->p_dst = (uint64_t*) p_dst;
             frag->size = ncopied;
             des->des_cbfunc = mca_spml_yoda_get_completion;
-            des->des_src = &frag->rdma_segs[0].base_seg;
+            des->des_remote = &frag->rdma_segs[0].base_seg;
 
             OPAL_THREAD_ADD32(&mca_spml_yoda.n_active_gets, 1);
         }
@@ -1192,7 +1192,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
         /**
          * Init remote side descriptor.
          */
-        des->des_src_cnt = 1;
+        des->des_remote_count = 1;
         des->des_cbdata = frag;
 
         /**

@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +35,9 @@
 #include <sys/param.h>
 #endif
 #include <errno.h>
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_object.h"
@@ -77,6 +81,10 @@ int main(int argc, char *argv[])
     int i, len;
     char *str;
     
+    /* protect against problems if someone passes us thru a pipe
+     * and then abnormally terminates the pipe early */
+    signal(SIGPIPE, SIG_IGN);
+
     /* Initialize the argv parsing handle */
     if (ORTE_SUCCESS != opal_init_util(&argc, &argv)) {
         orte_show_help("help-orte-info.txt", "lib-call-fail", true, 

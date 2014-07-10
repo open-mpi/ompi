@@ -406,4 +406,3 @@ static void recv_callback(int status, orte_process_name_t* sender,
     /* release */
     opal_mutex_unlock(&mca_rte_orte_component.lock);
 }
-

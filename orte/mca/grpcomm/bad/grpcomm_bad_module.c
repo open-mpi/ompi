@@ -210,9 +210,9 @@ static void process_barrier(int fd, short args, void *cbdata)
     found = false;
     OPAL_LIST_FOREACH(cptr, &orte_grpcomm_base.active_colls, orte_grpcomm_collective_t) {
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                             "%s CHECKING COLL id %d",
+                             "%s CHECKING COLL id %lu",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             cptr->id));
+                             (unsigned long)cptr->id));
             
         if (coll->id == cptr->id) {
             found = true;
@@ -231,9 +231,9 @@ static void process_barrier(int fd, short args, void *cbdata)
          * the barrier object
          */
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:bad collective %d already exists - removing prior copy",
+                             "%s grpcomm:bad collective %lu already exists - removing prior copy",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (int)coll->id));
+                             (unsigned long)coll->id));
         while (NULL != (item = opal_list_remove_first(&cptr->targets))) {
             opal_list_append(&coll->targets, item);
         }
@@ -241,9 +241,9 @@ static void process_barrier(int fd, short args, void *cbdata)
         OBJ_RELEASE(cptr);
     }
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:bad adding collective %d with %d participants to global list",
+                         "%s grpcomm:bad adding collective %lu with %d participants to global list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (int)coll->id, (int)opal_list_get_size(&coll->participants)));
+                         (unsigned long)coll->id, (int)opal_list_get_size(&coll->participants)));
     /* now add the barrier to the global list of active collectives */
     opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
 
@@ -262,9 +262,9 @@ static void process_barrier(int fd, short args, void *cbdata)
         buf = OBJ_NEW(opal_buffer_t);
         opal_dss.copy_payload(buf, &coll->buffer);
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:bad sending collective %d to %s",
+                             "%s grpcomm:bad sending collective %lu to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (int)coll->id,
+                             (unsigned long)coll->id,
                              ORTE_NAME_PRINT(&nm->name)));
         if (0 > (rc = orte_rml.send_buffer_nb(&nm->name, buf,
                                               ORTE_RML_TAG_COLLECTIVE,
@@ -302,7 +302,6 @@ static void process_allgather(int fd, short args, void *cbdata)
     int rc;
     opal_buffer_t *buf;
     orte_namelist_t *nm;
-    opal_list_item_t *item;
 
     OBJ_RELEASE(caddy);
 
@@ -344,9 +343,9 @@ static void process_allgather(int fd, short args, void *cbdata)
                                           gather, ORTE_GRPCOMM_INTERNAL_STG_APP);
 
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:bad sending collective %d to our daemon",
+                             "%s grpcomm:bad sending collective %lu to our daemon",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (int)gather->id));
+                             (unsigned long)gather->id));
         /* send to our daemon */
         if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
                                               ORTE_RML_TAG_COLLECTIVE,
@@ -361,16 +360,13 @@ static void process_allgather(int fd, short args, void *cbdata)
          * include ourselves, which is fine as it will aid in
          * determining the collective is complete
          */
-        for (item = opal_list_get_first(&gather->participants);
-             item != opal_list_get_end(&gather->participants);
-             item = opal_list_get_next(item)) {
-            nm = (orte_namelist_t*)item;
+        OPAL_LIST_FOREACH(nm, &gather->participants, orte_namelist_t) {
             buf = OBJ_NEW(opal_buffer_t);
             opal_dss.copy_payload(buf, &gather->buffer);
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                                 "%s grpcomm:bad sending collective %d to %s",
+                                 "%s grpcomm:bad sending collective %lu to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (int)gather->id,
+                                 (unsigned long)gather->id,
                                  ORTE_NAME_PRINT(&nm->name)));
             if (0 > (rc = orte_rml.send_buffer_nb(&nm->name, buf,
                                                   ORTE_RML_TAG_COLLECTIVE,

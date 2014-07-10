@@ -139,10 +139,10 @@ recv_seg_constructor(
     bseg->us_sg_entry[0].addr = (unsigned long) seg->rs_protocol_header;
 
     /* initialize mca descriptor */
-    seg->rs_desc.des_dst = &seg->rs_segment;
-    seg->rs_desc.des_dst_cnt = 1;
-    seg->rs_desc.des_src = NULL;
-    seg->rs_desc.des_src_cnt = 0;
+    seg->rs_desc.des_local = &seg->rs_segment;
+    seg->rs_desc.des_local_count = 1;
+    seg->rs_desc.des_remote = NULL;
+    seg->rs_desc.des_remote_count = 0;
 
     /*
      * This pointer is only correct for incoming segments of type
@@ -161,12 +161,12 @@ send_frag_constructor(ompi_btl_usnic_send_frag_t *frag)
 
     /* Fill in source descriptor */
     desc = &frag->sf_base.uf_base;
-    desc->des_src = frag->sf_base.uf_src_seg;
-    frag->sf_base.uf_src_seg[0].seg_len = 0;
-    frag->sf_base.uf_src_seg[1].seg_len = 0;
-    desc->des_src_cnt = 2;
-    desc->des_dst = frag->sf_base.uf_dst_seg;
-    desc->des_dst_cnt = 0;
+    desc->des_local = frag->sf_base.uf_local_seg;
+    frag->sf_base.uf_local_seg[0].seg_len = 0;
+    frag->sf_base.uf_local_seg[1].seg_len = 0;
+    desc->des_local_count = 2;
+    desc->des_remote = frag->sf_base.uf_remote_seg;
+    desc->des_remote_count = 0;
 
     desc->order = MCA_BTL_NO_ORDER;
     desc->des_flags = 0;
@@ -182,9 +182,9 @@ send_frag_destructor(ompi_btl_usnic_send_frag_t *frag)
 
     /* make sure nobody twiddled these values after the constructor */
     desc = &frag->sf_base.uf_base;
-    assert(desc->des_src == frag->sf_base.uf_src_seg);
-    assert(0 == frag->sf_base.uf_src_seg[0].seg_len);
-    /* PML may change desc->des_dst to point elsewhere, cannot assert that it
+    assert(desc->des_local == frag->sf_base.uf_local_seg);
+    assert(0 == frag->sf_base.uf_local_seg[0].seg_len);
+    /* PML may change desc->des_remote to point elsewhere, cannot assert that it
      * still points to our embedded segment */
 
     OBJ_DESTRUCT(&frag->sf_convertor);
@@ -208,7 +208,7 @@ small_send_frag_constructor(ompi_btl_usnic_small_send_frag_t *frag)
     frag->ssf_segment.ss_send_desc.send_flags = IBV_SEND_SIGNALED;
 
     /* save data pointer for PML */
-    frag->ssf_base.sf_base.uf_src_seg[0].seg_addr.pval =
+    frag->ssf_base.sf_base.uf_local_seg[0].seg_addr.pval =
         fseg->ss_base.us_payload.raw;
 }
 
@@ -220,7 +220,7 @@ small_send_frag_destructor(ompi_btl_usnic_small_send_frag_t *frag)
     fseg = &frag->ssf_segment;
     assert(fseg->ss_parent_frag == (struct ompi_btl_usnic_send_frag_t *)frag);
     assert(frag->ssf_base.sf_base.uf_type == OMPI_BTL_USNIC_FRAG_SMALL_SEND);
-    assert(frag->ssf_base.sf_base.uf_src_seg[0].seg_addr.pval ==
+    assert(frag->ssf_base.sf_base.uf_local_seg[0].seg_addr.pval ==
            fseg->ss_base.us_payload.raw);
     OBJ_DESTRUCT(fseg);
 }
@@ -231,7 +231,7 @@ large_send_frag_constructor(ompi_btl_usnic_large_send_frag_t *lfrag)
     lfrag->lsf_base.sf_base.uf_type = OMPI_BTL_USNIC_FRAG_LARGE_SEND;
 
     /* save data pointer for upper layer */
-    lfrag->lsf_base.sf_base.uf_src_seg[0].seg_addr.pval =
+    lfrag->lsf_base.sf_base.uf_local_seg[0].seg_addr.pval =
                     &lfrag->lsf_ompi_header;
 
     lfrag->lsf_buffer = NULL;
@@ -245,15 +245,15 @@ put_dest_frag_constructor(ompi_btl_usnic_put_dest_frag_t *pfrag)
     pfrag->uf_type = OMPI_BTL_USNIC_FRAG_PUT_DEST;
 
     /* point dest to our utility segment */
-    pfrag->uf_base.des_dst = pfrag->uf_dst_seg;
-    pfrag->uf_base.des_dst_cnt = 1;
+    pfrag->uf_base.des_local = pfrag->uf_remote_seg;
+    pfrag->uf_base.des_local_count = 1;
 }
 
 static void
 put_dest_frag_destructor(ompi_btl_usnic_put_dest_frag_t *pfrag)
 {
-    assert(pfrag->uf_base.des_dst == pfrag->uf_dst_seg);
-    assert(1 == pfrag->uf_base.des_dst_cnt);
+    assert(pfrag->uf_base.des_local == pfrag->uf_remote_seg);
+    assert(1 == pfrag->uf_base.des_local_count);
 }
 
 OBJ_CLASS_INSTANCE(ompi_btl_usnic_segment_t,

@@ -26,8 +26,8 @@
 int mca_btl_scif_get (struct mca_btl_base_module_t *btl,
                       struct mca_btl_base_endpoint_t *endpoint,
                       struct mca_btl_base_descriptor_t *des) {
-    mca_btl_scif_segment_t *src = (mca_btl_scif_segment_t *) des->des_src;
-    mca_btl_scif_segment_t *dst = (mca_btl_scif_segment_t *) des->des_dst;
+    mca_btl_scif_segment_t *src = (mca_btl_scif_segment_t *) des->des_remote;
+    mca_btl_scif_segment_t *dst = (mca_btl_scif_segment_t *) des->des_local;
     size_t len = lmin (src->base.seg_len, dst->base.seg_len);
     int rc, mark, flags = 0;
     off_t roffset, loffset;

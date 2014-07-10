@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
@@ -268,20 +268,16 @@ typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
  * A descriptor that holds the parameters to a send/put/get
  * operation along w/ a callback routine that is called on
  * completion of the request.
- * Note: from the initiator of a PUT operation des_src is the local memory 
- *       and des_dst is the remote memory 
- *       from the initiator of a GET operations des_dst is the local memory 
- *       and des_src is the remote memory 
- *       from the initiator of a SEND operation des_src is the local memory
- *       and des_dst is not used
+ * Note: receive callbacks will store the incomming data segments in
+ *       des_local
  */
 
 struct mca_btl_base_descriptor_t {
     ompi_free_list_item_t super;  
-    mca_btl_base_segment_t *des_src;    /**< source segments */
-    size_t des_src_cnt;                 /**< number of source segments */
-    mca_btl_base_segment_t *des_dst;    /**< destination segments */
-    size_t des_dst_cnt;                 /**< number of destination segments */
+    mca_btl_base_segment_t *des_local;  /**< local segments */
+    size_t des_local_count;             /**< number of local segments */
+    mca_btl_base_segment_t *des_remote; /**< remote segments */
+    size_t des_remote_count;            /**< number of destination segments */
     mca_btl_base_completion_fn_t des_cbfunc;  /**< local callback function */ 
     void* des_cbdata;                         /**< opaque callback data */
     void* des_context;                        /**< more opaque callback data */
@@ -401,7 +397,7 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  * completion function, this implies that all data payload in the 
  * mca_btl_base_descriptor_t must be copied out within this callback or 
  * forfeited back to the BTL.
- * Note also that descriptor segments (des_dst, des_src) must be base
+ * Note also that descriptor segments (des_local) must be base
  * segments for all callbacks.
  * 
  * @param[IN] btl        BTL module
@@ -851,11 +847,23 @@ struct mca_btl_base_module_t {
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 /*
- * Macro for use in modules that are of type btl v2.0.1
+ * Macro for use in modules that are of type btl v3.0.0
+ * NOTE: This is not the final version of 3.0.0. Consider it
+ * alpha until this comment is removed.
  */
-#define MCA_BTL_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "btl", 2, 0, 0
+#define MCA_BTL_BASE_VERSION_3_0_0              \
+    MCA_BASE_VERSION_2_0_0,                     \
+    .mca_type_name = "btl",                     \
+    .mca_type_major_version = 3,                \
+    .mca_type_minor_version = 0,                \
+    .mca_type_release_version = 0
+
+#define MCA_BTL_DEFAULT_VERSION(name)                       \
+    MCA_BTL_BASE_VERSION_3_0_0,                             \
+    .mca_component_name = name,                             \
+    .mca_component_major_version = OMPI_MAJOR_VERSION,      \
+    .mca_component_minor_version = OMPI_MINOR_VERSION,      \
+    .mca_component_release_version = OMPI_RELEASE_VERSION   \
 
 END_C_DECLS
 

@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -85,29 +85,22 @@ static int mca_btl_tcp_component_close(void);
 static char *mca_btl_tcp_if_seq_string;
 
 mca_btl_tcp_component_t mca_btl_tcp_component = {
-    {
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
 
-        {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            "tcp", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            mca_btl_tcp_component_open,  /* component open */
-            mca_btl_tcp_component_close,  /* component close */
-            NULL, /* component query */
-            mca_btl_tcp_component_register, /* component register */
+        .btl_version = {
+            MCA_BTL_DEFAULT_VERSION("tcp"),
+            .mca_open_component = mca_btl_tcp_component_open,
+            .mca_close_component = mca_btl_tcp_component_close,
+            .mca_register_component_params = mca_btl_tcp_component_register,
         },
-        {
+        .btl_data = {
             /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
+            .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        mca_btl_tcp_component_init,  
-        NULL,
+        .btl_init = mca_btl_tcp_component_init,
     }
 };
 

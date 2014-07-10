@@ -37,7 +37,7 @@
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Unpack_external ";
+static const char FUNC_NAME[] = "MPI_Unpack_external";
 
 
 int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insize,

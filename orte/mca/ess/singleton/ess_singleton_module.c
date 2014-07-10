@@ -194,11 +194,6 @@ static int rte_init(void)
         return rc;
     }
     
-    /* set the collective ids */
-    orte_process_info.peer_modex = 0;
-    orte_process_info.peer_init_barrier = 1;
-    orte_process_info.peer_fini_barrier = 2;
-
     /* to the best of our knowledge, we are alone */
     orte_process_info.my_node_rank = 0;
     orte_process_info.my_local_rank = 0;

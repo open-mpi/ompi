@@ -204,19 +204,6 @@ int mca_btl_self_send(
 );
 
 /**
- * Initiate a put to the peer.
- *
- * @param btl (IN)      BTL module
- * @param peer (IN)     BTL peer addressing
- */
-                                                                                                            
-int mca_btl_self_rdma(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor
-);
-
-/**
  * Fault Tolerance Event Notification Function
  * @param state Checkpoint Stae
  * @return OMPI_SUCCESS or failure status

@@ -51,12 +51,7 @@ mca_btl_vader_component_t mca_btl_vader_component = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
         .btl_version = {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            .mca_component_name = "vader",
-            .mca_component_major_version = OMPI_MAJOR_VERSION,
-            .mca_component_minor_version = OMPI_MINOR_VERSION,
-            .mca_component_release_version = OMPI_RELEASE_VERSION,
+            MCA_BTL_DEFAULT_VERSION("vader"),
             .mca_open_component = mca_btl_vader_component_open,
             .mca_close_component = mca_btl_vader_component_close,
             .mca_register_component_params = mca_btl_vader_component_register,
@@ -369,7 +364,7 @@ static inline int mca_btl_vader_poll_fifo (void)
 
     /* poll the fifo until it is empty or a limit has been hit (8 is arbitrary) */
     for (int fifo_count = 0 ; fifo_count < 16 ; ++fifo_count) {
-        mca_btl_vader_frag_t frag = {.base = {.des_dst = frag.segments, .des_dst_cnt = 1}};
+        mca_btl_vader_frag_t frag = {.base = {.des_local = frag.segments, .des_local_count = 1}};
 
         hdr = vader_fifo_read (mca_btl_vader_component.my_fifo, &endpoint);
         if (NULL == hdr) {
@@ -395,7 +390,7 @@ static inline int mca_btl_vader_poll_fifo (void)
             frag.segments[1].seg_len       = hdr->sc_iov.iov_len;
 
             /* recv upcall */
-            frag.base.des_dst_cnt = 2;
+            frag.base.des_local_count = 2;
             reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
             vader_return_registration (xpmem_reg, endpoint);
         } else {

@@ -93,16 +93,13 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, grpcomm, NULL, NULL, orte_grpcomm_base_open, or
                            mca_grpcomm_base_static_components, 0);
 
 
-orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_grpcomm_coll_id_t id)
+orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_jobid_t jobid, orte_grpcomm_coll_id_t id)
 {
-    opal_list_item_t *item;
     orte_grpcomm_collective_t *cptr, *coll;
+    orte_namelist_t *nm;
 
     coll = NULL;
-    for (item = opal_list_get_first(&orte_grpcomm_base.active_colls);
-         item != opal_list_get_end(&orte_grpcomm_base.active_colls);
-         item = opal_list_get_next(item)) {
-        cptr = (orte_grpcomm_collective_t*)item;
+    OPAL_LIST_FOREACH(cptr, &orte_grpcomm_base.active_colls, orte_grpcomm_collective_t) {
         if (id == cptr->id) {
             coll = cptr;
             break;
@@ -112,6 +109,11 @@ orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_grpcomm_coll_
         coll = OBJ_NEW(orte_grpcomm_collective_t);
         coll->id = id;
         opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
+        /* need to add the vpid name to the participants */
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
     }
 
     return coll;
@@ -120,7 +122,7 @@ orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_grpcomm_coll_
 /* local objects */
 static void collective_constructor(orte_grpcomm_collective_t *ptr)
 {
-    ptr->id = -1;
+    ptr->id = ORTE_GRPCOMM_COLL_ID_INVALID;
     ptr->active = false;
     ptr->num_local_recvd = 0;
     OBJ_CONSTRUCT(&ptr->local_bucket, opal_buffer_t);

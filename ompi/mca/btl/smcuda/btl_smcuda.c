@@ -833,11 +833,11 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
 
     }
 #endif /* OPAL_CUDA_SUPPORT */
-    frag->base.des_src = &(frag->segment.base);
-    frag->base.des_src_cnt = 1;
+    frag->base.des_local = &(frag->segment.base);
+    frag->base.des_local_count = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
+    frag->base.des_remote = NULL;
+    frag->base.des_remote_count = 0;
     frag->base.des_flags = flags;
     *size = max_data;
     return &frag->base;
@@ -1044,10 +1044,10 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
     opal_convertor_get_current_pointer( convertor, &ptr );
     frag->segment.base.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
 
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst = &frag->segment.base;
-    frag->base.des_dst_cnt = 1;
+    frag->base.des_remote = NULL;
+    frag->base.des_remote_count = 0;
+    frag->base.des_local = &frag->segment.base;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = flags;
     return &frag->base;
 }
@@ -1059,8 +1059,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
                         struct mca_btl_base_endpoint_t* ep,
                         struct mca_btl_base_descriptor_t* descriptor)
 {
-    mca_btl_smcuda_segment_t *src_seg = (mca_btl_smcuda_segment_t *) descriptor->des_src;
-    mca_btl_smcuda_segment_t *dst_seg = (mca_btl_smcuda_segment_t *) descriptor->des_dst;
+    mca_btl_smcuda_segment_t *src_seg = (mca_btl_smcuda_segment_t *) descriptor->des_remote;
+    mca_btl_smcuda_segment_t *dst_seg = (mca_btl_smcuda_segment_t *) descriptor->des_local;
     mca_mpool_common_cuda_reg_t rget_reg;
     mca_mpool_common_cuda_reg_t *reg_ptr = &rget_reg;
     int btl_ownership;

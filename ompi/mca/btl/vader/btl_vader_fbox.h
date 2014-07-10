@@ -120,8 +120,8 @@ static inline bool mca_btl_vader_check_fboxes (void)
             continue;
         }
 
-        desc.des_dst = &segment;
-        desc.des_dst_cnt = 1;
+        desc.des_local = &segment;
+        desc.des_local_count = 1;
 
         processed = true;
 
