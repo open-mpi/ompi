@@ -90,7 +90,7 @@ General, derived datatypes are allowed for datatype. The type signature of count
 .sp
 As in many of our sample code fragments, we assume that some of the variables (such as comm in the example above) have been assigned appropriate values.
 .sp
-WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
+.SH WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
 .sp
 When the communicator is an inter-communicator, the root process in the first group broadcasts data to all the processes in the second group.  The first group defines the root process.  That process uses MPI_ROOT as the value of its \fIroot\fR argument.  The remaining processes use MPI_PROC_NULL as the value of their \fIroot\fR argument.  All processes in the second group use the rank of that root process in the first group as the value of their \fIroot\fR argument.   The receive buffer arguments of the processes in the second group must be consistent with the send buffer argument of the root process in the first group.
 .sp  
