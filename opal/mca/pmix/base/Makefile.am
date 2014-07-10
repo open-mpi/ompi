@@ -16,4 +16,5 @@ headers += \
 
 libmca_pmix_la_SOURCES += \
 	base/pmix_base_frame.c \
-	base/pmix_base_select.c
+	base/pmix_base_select.c \
+        base/pmix_base_fns.c
