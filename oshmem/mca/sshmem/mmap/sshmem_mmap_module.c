@@ -207,7 +207,7 @@ segment_create(map_segment_t *ds_buf,
     }
 
     ds_buf->type = MAP_SEGMENT_ALLOC_MMAP;
-    ds_buf->seg_id = MAP_SEGMENT_SHM_INVALID; /* TODO: set id as 0 since as MAP_SEGMENT_SHM_INVALID is used for segment validation */
+    ds_buf->seg_id = MAP_SEGMENT_SHM_INVALID; 
     ds_buf->seg_base_addr = addr;
     ds_buf->seg_size = size;
     ds_buf->end = (void*)((uintptr_t)ds_buf->seg_base_addr + ds_buf->seg_size);

@@ -393,6 +393,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
 
         ybtl = &mca_spml_yoda.btl_type_map[i];
         mkeys[i].va_base = addr;
+        mkeys[i].u.key = MAP_SEGMENT_SHM_INVALID;
 
         if (!ybtl->use_cnt) {
             SPML_VERBOSE(10,
@@ -404,7 +405,6 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
         /* If we have shared memory just save its id*/
         if (YODA_BTL_SM == ybtl->btl_type
                 && MAP_SEGMENT_SHM_INVALID != (int)shmid) {
-            mkeys[i].is_sm = 1;
             mkeys[i].u.key = shmid;
             mkeys[i].va_base = 0;
             continue;

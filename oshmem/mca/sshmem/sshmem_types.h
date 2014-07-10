@@ -77,16 +77,18 @@ typedef enum {
 
 /**
  * memory key
- * We have two kinds of keys:
- * - shared memory type of keys. Memory segment must be attached before access
- *   such keys use va_base = 0 and key
- * - ib type of key. Key is passed with each put/get op.
- *   use va_base = <remote vaddr>, key is stored in mkey struct
+ * There are following types of keys:
+ * 1. 'shared memory' keys. Memory segment must be attached before access
+ *   such keys use va_base = 0, len = 0 and key != MAP_SEGMENT_SHM_INVALID
+ *   va_base will be set once segment is attached. 
+ * 2. empty key: len = 0, key == MAP_SEGMENT_SHM_INVALID
+ * 3. generic key: Key is passed with each put/get op.
+ *    use va_base = <remote vaddr>, key is stored in mkey struct:
+ *    len > 0, data = &<key_blob>
  */
 typedef struct sshmem_mkey {
     void* va_base;
     uint16_t len;
-    int is_sm;
     union {
         void *data;
         uint64_t key;
