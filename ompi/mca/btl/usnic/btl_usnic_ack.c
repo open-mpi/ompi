@@ -147,7 +147,7 @@ ompi_btl_usnic_handle_ack(
          * lines below.
          */
         if (frag->sf_ack_bytes_left == bytes_acked &&
-            ((frag->sf_base.uf_dst_seg[0].seg_addr.pval != NULL) ||
+            ((frag->sf_base.uf_remote_seg[0].seg_addr.pval != NULL) ||
              (frag->sf_base.uf_base.des_flags &
               MCA_BTL_DES_SEND_ALWAYS_CALLBACK))) {
             OMPI_BTL_USNIC_DO_SEND_FRAG_CB(module, frag, "send completion");

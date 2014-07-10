@@ -236,8 +236,8 @@ typedef struct ompi_btl_usnic_frag_t {
     ompi_btl_usnic_frag_type_t uf_type;
 
     /* utility segments */
-    mca_btl_base_segment_t uf_src_seg[2];
-    mca_btl_base_segment_t uf_dst_seg[1];
+    mca_btl_base_segment_t uf_local_seg[2];
+    mca_btl_base_segment_t uf_remote_seg[1];
 
     /* freelist this came from */
     ompi_free_list_t *uf_freelist;
@@ -294,8 +294,8 @@ typedef struct ompi_btl_usnic_large_send_frag_t {
 
 /* Shortcut member macros.  Access uf_src_seg array instead of the descriptor's
  * des_src ptr to save a deref. */
-#define lsf_des_src lsf_base.sf_base.uf_src_seg
-#define lsf_des_src_cnt lsf_base.sf_base.uf_base.des_src_cnt
+#define lsf_des_src       lsf_base.sf_base.uf_local_seg
+#define lsf_des_local_cnt lsf_base.sf_base.uf_base.des_local_count
 
 /**
  * small send fragment
@@ -454,8 +454,8 @@ ompi_btl_usnic_frag_return(
     opal_output(0, "freeing frag %p, type %s\n", (void *)frag,
             usnic_frag_type(frag->uf_type));
 #endif
-    frag->uf_src_seg[0].seg_len = 0;
-    frag->uf_src_seg[1].seg_len = 0;
+    frag->uf_local_seg[0].seg_len = 0;
+    frag->uf_local_seg[1].seg_len = 0;
 
     /* If this is a large fragment, we need to free any
      * attached storage
@@ -469,7 +469,7 @@ ompi_btl_usnic_frag_return(
         }
         lfrag->lsf_pack_on_the_fly = false;
 
-        if (2 == lfrag->lsf_des_src_cnt &&
+        if (2 == lfrag->lsf_des_local_cnt &&
             NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
             opal_convertor_cleanup(&lfrag->lsf_base.sf_convertor);
         }

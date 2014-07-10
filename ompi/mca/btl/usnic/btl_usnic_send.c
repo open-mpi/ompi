@@ -133,17 +133,17 @@ ompi_btl_usnic_finish_put_or_send(
          */
         if (frag->sf_base.uf_base.des_local_count > 1) {
             /* no convertor */
-            assert(NULL != frag->sf_base.uf_src_seg[1].seg_addr.pval);
+            assert(NULL != frag->sf_base.uf_local_seg[1].seg_addr.pval);
 
-            memcpy(((char *)(intptr_t)frag->sf_base.uf_src_seg[0].seg_addr.lval +
-                        frag->sf_base.uf_src_seg[0].seg_len),
-                    frag->sf_base.uf_src_seg[1].seg_addr.pval,
-                    frag->sf_base.uf_src_seg[1].seg_len);
+            memcpy(((char *)(intptr_t)frag->sf_base.uf_local_seg[0].seg_addr.lval +
+                        frag->sf_base.uf_local_seg[0].seg_len),
+                    frag->sf_base.uf_local_seg[1].seg_addr.pval,
+                    frag->sf_base.uf_local_seg[1].seg_len);
 
             /* update 1st segment length */
             frag->sf_base.uf_base.des_local_count = 1;
-            frag->sf_base.uf_src_seg[0].seg_len +=
-                frag->sf_base.uf_src_seg[1].seg_len;
+            frag->sf_base.uf_local_seg[0].seg_len +=
+                frag->sf_base.uf_local_seg[1].seg_len;
         }
 
         sseg->ss_base.us_sg_entry[0].length =
@@ -153,7 +153,7 @@ ompi_btl_usnic_finish_put_or_send(
         sseg->ss_channel = USNIC_DATA_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
 
-        if (frag->sf_base.uf_src_seg[0].seg_len < module->tiny_mtu) {
+        if (frag->sf_base.uf_local_seg[0].seg_len < module->tiny_mtu) {
             sseg->ss_send_desc.send_flags |= IBV_SEND_INLINE;
         }
     } else {

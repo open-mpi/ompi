@@ -167,7 +167,7 @@ ompi_btl_usnic_endpoint_send_segment(
 
     /* Fill in remote address to indicate PUT or not */
     sseg->ss_base.us_btl_header->put_addr =
-        frag->sf_base.uf_dst_seg[0].seg_addr.pval;
+        frag->sf_base.uf_remote_seg[0].seg_addr.pval;
 
     /* piggy-back an ACK if needed */
     ompi_btl_usnic_piggyback_ack(endpoint, sseg);
