@@ -210,7 +210,6 @@ int orte_plm_base_fork_hnp(void)
     int buffer_length, num_chars_read, chunk;
     char *orted_uri;
     int rc;
-    char *foo;
     orte_jobid_t jobid;
 
     /* A pipe is used to communicate between the parent and child to
@@ -301,10 +300,6 @@ int orte_plm_base_fork_hnp(void)
     }
     opal_argv_append(&argc, &argv, param);
     free(param);
-
-    foo = opal_argv_join(argv, ' ');
-    opal_output(0, "%s FORKING HNP: %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), foo);
-    free(foo);
 
     /* Fork off the child */
     orte_process_info.hnp_pid = fork();
