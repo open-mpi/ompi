@@ -30,8 +30,12 @@ if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 
 ########################################################################
 
+# Note the "-I." in the flags below.  This is because mpi.F90 includes
+# mpi-f90-interfaces.h, which will be in the build tree (i.e., the
+# current directory) because it is generated.
+
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
-             $(OMPI_FC_MODULE_FLAG). -I$(srcdir) \
+             $(OMPI_FC_MODULE_FLAG). -I$(srcdir) -I. \
              -I$(top_builddir)/ompi/mpi/fortran/use-mpi-tkr $(FCFLAGS_f90)
 
 # Do different things if the top-level configure decided that we're
@@ -48,12 +52,20 @@ lib_LTLIBRARIES += libmpi_usempi.la
 # list this here (i.e., "mpi-f90-interfaces.h" is included in
 # mpi.F90).
 
-# Note the "-I." in the command below.  This is because mpi.F90
-# includes mpi-f90-interfaces.h, which will be in the build tree
-# (i.e., the current directory) because it is generated.
+mpi.lo: mpi.F90
+mpi.lo: mpi-f90-interfaces.h
+mpi.lo: $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h
+mpi.lo: mpi-f90-cptr-interfaces.F90
 
-mpi.o: mpi.F90 mpi-f90-interfaces.h
-	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) $<
+# These files must be EXTRA_DIST'ed because they are included; they
+# are not compiled directly (and we *can't* list the .F90 file in
+# _SOURCES, because it would be compiled -- but it *must* have a .F90
+# suffix so that the Fortran compiler will interpret the #if
+# directives properly).
+
+EXTRA_DIST = \
+     mpi-f90-interfaces.h \
+     mpi-f90-cptr-interfaces.F90
 
 endif
 
@@ -64,7 +76,6 @@ endif
 
 libmpi_usempi_la_SOURCES = \
      mpi.F90 \
-     mpi-f90-interfaces.h \
      mpi_comm_spawn_multiple_f90.f90 \
      mpi_sizeof.f90 \
      mpi_testall_f90.f90 \
