@@ -14,6 +14,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/base/pmix_base_fns.h"
 
 BEGIN_C_DECLS
 

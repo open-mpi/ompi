@@ -32,29 +32,44 @@ static int s2_init(void);
 static int s2_fini(void);
 static bool s2_initialized(void);
 static int s2_abort(int flag, const char msg[]);
+static int s2_get_appnum(int *appnum);
 static int s2_spawn(int count, const char * cmds[],
-                    int argcs[], const char ** argvs[],
-                    const int maxprocs[],
-                    const int info_keyval_sizes[],
-                    const struct MPID_Info *info_keyval_vectors[],
-                    int preput_keyval_size,
-                    const struct MPID_Info *preput_keyval_vector[],
-                    char jobId[], int jobIdSize,
-                    int errors[]);
+        int argcs[], const char ** argvs[],
+        const int maxprocs[],
+        opal_list_t *info_keyval_vector,
+        opal_list_t *preput_keyval_vector,
+        char jobId[], int jobIdSize,
+        int errors[]);
 static int s2_get_jobid(char jobId[], int jobIdSize);
 static int s2_get_rank(int *rank);
-static int s2_get_size(int *size);
-static int s2_job_connect(const char jobId[],
-                          PMI2_Connect_comm_t *conn);
-static int s2_job_disconnect(const char jobId[]);
-static int s2_put(const char key[], const char value[]);
-static int s2_fence(void);
-static int s2_get(const char *jobid,
-                  int src_pmix_id,
+static int s2_get_size(opal_pmix_scope_t scope, int *size);
+static int s2_put(opal_identifier_t *id,
                   const char key[],
-                  char value [],
-                  int maxvalue,
-                  int *vallen);
+                  opal_pmix_scope_t scope,
+                  opal_value_t *kv);
+static int s2_fence(void);
+static int s2_get(opal_identifier_t *id,
+        const char *key,
+        opal_value_t *kv);
+static void s2_get_nb(opal_identifier_t *id,
+                      const char *key,
+                      opal_pmix_cbfunc_t cbfunc,
+                      void *cbdata);
+static int s2_publish(opal_identifier_t *id,
+        const char service_name[],
+        opal_list_t *info,
+        const char port[]);
+static int s2_lookup(opal_identifier_t *id,
+        const char service_name[],
+        opal_list_t *info,
+        char port[], int portLen);
+static int s2_unpublish(opal_identifier_t *id,
+        const char service_name[], 
+        opal_list_t *info);
+static int s2_local_info(int vpid, int **ranks_ret,
+                         int *procs_ret, char **error);
+static int s2_job_connect(const char jobId[]);
+static int s2_job_disconnect(const char jobId[]);
 static int s2_get_node_attr(const char name[],
                             char value[],
                             int valuelen,
@@ -75,40 +90,28 @@ static int s2_get_job_attr_array(const char name[],
                                  int arraylen,
                                  int *outlen,
                                  int *found);
-static int s2_publish(const char service_name[],
-                      const struct MPID_Info *info_ptr,
-                      const char port[]);
-static int s2_lookup(const char service_name[],
-                     const struct MPID_Info *info_ptr,
-                     char port[], int portLen);
-static int s2_unpublish(const char service_name[], 
-                        const struct MPID_Info *info_ptr);
-static int s2_local_info(int vpid, int **ranks_ret,
-                         int *procs_ret, char **error);
 
 opal_pmix_base_module_t opal_pmix_s2_module = {
     s2_init,
     s2_fini,
     s2_initialized,
     s2_abort,
-    s2_spawn,
     s2_get_jobid,
     s2_get_rank,
     s2_get_size,
-    s2_job_connect,
-    s2_job_disconnect,
-    s2_put,
+    s2_get_appnum,
     s2_fence,
+    s2_fence_nb,
+    s2_put,
     s2_get,
-    s2_get_node_attr,
-    s2_get_node_attr_array,
-    s2_put_node_attr,
-    s2_get_job_attr,
-    s2_get_job_attr_array,
+    s2_get_nb,
     s2_publish,
     s2_lookup,
     s2_unpublish,
-    s2_local_info
+    s2_local_info,
+    s2_spawn,
+    s2_job_connect,
+    s2_job_disconnect
 };
 
 // usage accounting
@@ -131,7 +134,7 @@ static char* pmix_error(int pmix_err);
     do {                                                        \
         opal_output(0, "%s [%s:%d:%s]: %s\n",                   \
                     pmi_func, __FILE__, __LINE__, __func__,     \
-                    pmi_error(pmi_err));                        \
+                    pmix_error(pmi_err));                        \
     } while(0);
 
 static int s2_init(void)
@@ -208,20 +211,28 @@ static bool s2_initialized(void)
     return false;
 }
 
-static void s2_abort(int status, char *msg)
+static int s2_abort(int status, char *msg)
 {
     PMI2_Abort(status, msg);
+    return OPAL_SUCCESS;
 }
 
+//static int s2_spawn(int count, const char * cmds[],
+//                    int argcs[], const char ** argvs[],
+//                    const int maxprocs[],
+//                    const int info_keyval_sizes[],
+//                    const struct MPID_Info *info_keyval_vectors[],
+//                    int preput_keyval_size,
+//                    const struct MPID_Info *preput_keyval_vector[],
+//                    char jobId[], int jobIdSize,
+//                    int errors[])
 static int s2_spawn(int count, const char * cmds[],
-                    int argcs[], const char ** argvs[],
-                    const int maxprocs[],
-                    const int info_keyval_sizes[],
-                    const struct MPID_Info *info_keyval_vectors[],
-                    int preput_keyval_size,
-                    const struct MPID_Info *preput_keyval_vector[],
-                    char jobId[], int jobIdSize,
-                    int errors[])
+        int argcs[], const char ** argvs[],
+        const int maxprocs[],
+        opal_list_t *info_keyval_vector,
+        opal_list_t *preput_keyval_vector,
+        char jobId[], int jobIdSize,
+        int errors[])
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
@@ -243,15 +254,20 @@ static int s2_get_size(int *size)
     return OPAL_SUCCESS;
 }
 
-static int s2_put(const char key[], const char value[])
-
+//static int s2_put(const char key[], const char value[])
+static int s2_put(opal_identifier_t *id,
+                  const char key[],
+                  opal_pmix_scope_t scope,
+                  opal_value_t *kv)
+{
     int rc;
-
+/*
     if( PMI2_SUCCESS != PMI2_KVS_Put(key, value) ){
         OPAL_PMI_ERROR(rc, "PMI2_KVS_Put");
         return OPAL_ERROR;
     }
-    return OPAL_SUCCESS;
+    return OPAL_SUCCESS;*/
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int s2_fence(void)
@@ -263,21 +279,25 @@ static int s2_fence(void)
     return OPAL_SUCCESS;
 }
 
-static int s2_get(const char *jobid,
-                  int src_pmix_id,
-                  const char key[],
-                  char value [],
-                  int maxvalue,
-                  int *vallen)
+//static int s2_get(const char *jobid,
+//                  int src_pmix_id,
+//                  const char key[],
+//                  char value [],
+//                  int maxvalue,
+//                  int *vallen)
+static int s2_get(opal_identifier_t *id,
+        const char *key,
+        opal_value_t *kv)
 {
-    int rc;
+/*    int rc;
     int len;
     rc = PMI2_KVS_Get(kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
     if( PMI2_SUCCESS != rc ){
         // OPAL_PMI2_ERROR(rc, "PMI_KVS_Put");
         return OPAL_ERROR;
     }
-    return OPAL_SUCCESS;
+    return OPAL_SUCCESS;*/
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int s2_get_node_attr(const char name[],
@@ -320,24 +340,35 @@ static int s2_get_job_attr_array(const char name[],
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int s2_publish(const char service_name[],
-                      const struct MPID_Info *info_ptr,
-                      const char port[])
+//static int s2_publish(opal_identifier_t *id,
+//                      const char service_name[],
+//                      const struct MPID_Info *info_ptr,
+//                      const char port[])
+static int s2_publish(opal_identifier_t *id,
+        const char service_name[],
+        opal_list_t *info,
+        const char port[])
 {
-    int rc;
+/*    int rc;
 
     if (PMI2_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, info_ptr, port))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_publish");
         return OPAL_ERROR;
     }
-    return OPAL_SUCCESS;
+    return OPAL_SUCCESS;*/
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int s2_lookup(const char service_name[],
-                     const struct MPID_Info *info_ptr,
-                     char port[], int portLen)
+//static int s2_lookup(opal_identifier_t *id,
+//                     const char service_name[],
+//                     const struct MPID_Info *info_ptr,
+//                     char port[], int portLen)
+static int s2_lookup(opal_identifier_t *id,
+        const char service_name[],
+        opal_list_t *info,
+        char port[], int portLen)
 {
-    int rc;
+    /*int rc;
 
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, info_ptr, port, portlen))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
@@ -345,19 +376,25 @@ static int s2_lookup(const char service_name[],
         return OPAL_ERROR;
     }
 
-    return OPAL_SUCCESS;
+    return OPAL_SUCCESS;*/
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int s2_unpublish(const char service_name[], 
-                        const struct MPID_Info *info_ptr)
+//static int s2_unpublish(opal_identifier_t *id,
+//                        const char service_name[], 
+//                        const struct MPID_Info *info_ptr)
+static int s2_unpublish(opal_identifier_t *id,
+        const char service_name[], 
+        opal_list_t *info)
 {
-    int rc;
+    /*int rc;
 
     if (PMI2_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, info_ptr))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
         return OPAL_ERROR;
     }
-    return OPAL_SUCCESS;;
+    return OPAL_SUCCESS;;*/
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int s2_local_info(int vpid, int **ranks_ret,
