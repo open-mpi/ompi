@@ -628,7 +628,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * as it will not return until the exchange is complete
      */
     coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_modex;
+    coll->id = ompi_rte_get_collective_id(OMPI_PROC_MY_NAME);
     coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_modex(coll))) {
         error = "rte_modex failed";
@@ -817,7 +817,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* wait for everyone to reach this point */
     coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_init_barrier;
+    coll->id = ompi_rte_get_collective_id(OMPI_PROC_MY_NAME);
     coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
         error = "rte_barrier failed";
