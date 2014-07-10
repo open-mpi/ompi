@@ -112,9 +112,11 @@ libmpi_java_so_version=3:0:2
 # lib changed
 # added interfaces: Java_mpi_comm_iDup
 # changed interfaces: Java_mpi_comm_dup... probably others
-liboshmem_so_version=3:0:2
+liboshmem_so_version=3:0:0
 # lib changed
 # added interfaces: shmem_int32_finc, shmem_int64_finc, profiling
+# changed interface: return type of shmem_finalize changed from int to
+# void (for oshemem spec compliance)
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
