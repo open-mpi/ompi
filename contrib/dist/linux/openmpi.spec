@@ -134,6 +134,10 @@
 # type: bool (0/1)
 %{!?allow_fortify_source: %define allow_fortify_source 1}
 
+# Select md5 packing algorithm, that src.rpm created on one distro can be read on another.
+%global _binary_filedigest_algorithm 1
+%global _source_filedigest_algorithm 1
+
 #############################################################################
 #
 # Configuration Logic
@@ -199,7 +203,7 @@
 Summary: A powerful implementation of MPI/SHMEM
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 1%{?dist}
+Release: 1
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
