@@ -999,7 +999,7 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         hdr->hdr_seg_cnt = dst->des_local_count;
 
         /* copy segments */
-        memmove (hdr + 1, dst->des_local_count, seg_size);
+        memmove (hdr + 1, dst->des_local, seg_size);
 
         if(!recvreq->req_ack_sent)
             recvreq->req_ack_sent = true;
