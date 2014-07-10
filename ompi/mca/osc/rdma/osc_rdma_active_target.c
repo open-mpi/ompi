@@ -187,7 +187,6 @@ ompi_osc_rdma_start(ompi_group_t *group,
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_pending_post_t *pending_post, *next;
-    ompi_osc_rdma_peer_t *peer;
     int group_size;
     int *ranks;
 
