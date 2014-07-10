@@ -35,7 +35,7 @@
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_comm_size";
+static const char FUNC_NAME[] = "MPI_Comm_size";
 
 
 int MPI_Comm_size(MPI_Comm comm, int *size) 

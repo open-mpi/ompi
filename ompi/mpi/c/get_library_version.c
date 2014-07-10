@@ -31,7 +31,7 @@
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_get_library_version";
+static const char FUNC_NAME[] = "MPI_Get_library_version";
 
 
 int MPI_Get_library_version(char *version, int *resultlen) 

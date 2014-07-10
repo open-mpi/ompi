@@ -77,7 +77,7 @@ Fortran only: Error status (integer).
 .ft R
 
 MPI_Reduce_scatter first does an element-wise reduction on vector of \fIcount\fP\
- =\ S(i)\fIrevcounts\fP[i] elements in the send buffer defined by \fIsendbuf\fP, \fIcount\fP, and
+ =\ S(i)\fIrecvcounts\fP[i] elements in the send buffer defined by \fIsendbuf\fP, \fIcount\fP, and
 \fIdatatype\fP. Next, the resulting vector of results is split into n disjoint
 segments, where n is the number of processes in the group. Segment i contains
 \fIrecvcounts\fP[i] elements. The ith segment is sent to process i and stored in

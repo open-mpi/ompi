@@ -35,7 +35,7 @@
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Message_f2c";
+static const char FUNC_NAME[] = "MPI_Message_c2f";
 
 
 MPI_Fint MPI_Message_c2f(MPI_Message message) 
