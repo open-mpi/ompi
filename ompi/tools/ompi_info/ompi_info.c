@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,6 +36,9 @@
 #include <sys/param.h>
 #endif
 #include <errno.h>
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #include "opal/version.h"
 #include "opal/mca/installdirs/installdirs.h"
@@ -72,6 +76,10 @@ int main(int argc, char *argv[])
     opal_pointer_array_t mca_types;
     opal_pointer_array_t component_map;
     opal_info_component_map_t *map;
+
+    /* protect against problems if someone passes us thru a pipe
+     * and then abnormally terminates the pipe early */
+    signal(SIGPIPE, SIG_IGN);
 
     /* Initialize the argv parsing handle */
     if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
