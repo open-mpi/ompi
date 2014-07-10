@@ -90,7 +90,7 @@ void mca_spml_yoda_get_completion(mca_btl_base_module_t* btl,
     /* decide if we need to copy buffer */
     if (getreq->p_dst) {
         memcpy(getreq->p_dst,
-               des->des_dst->seg_addr.pval,
+               des->des_remote->seg_addr.pval,
            frag->size);
     }
 
