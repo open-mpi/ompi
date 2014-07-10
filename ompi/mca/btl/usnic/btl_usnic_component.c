@@ -1482,7 +1482,7 @@ static void dump_endpoint(ompi_btl_usnic_endpoint_t *endpoint)
 
             case OMPI_BTL_USNIC_FRAG_PUT_DEST:
                 /* put_dest frags are just a typedef to generic frags */
-                snprintf(tmp, sizeof(tmp), " put_addr=%p\n", frag->uf_dst_seg[0].seg_addr.pval);
+                snprintf(tmp, sizeof(tmp), " put_addr=%p\n", frag->uf_remote_seg[0].seg_addr.pval);
                 strncat(str, tmp, sizeof(str) - strlen(str) - 1);
                 opal_output(0, "%s", str);
             break;
