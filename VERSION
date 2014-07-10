@@ -91,32 +91,14 @@ date="Unreleased developer copy"
 # format.
 
 libmpi_so_version=6:2:5
-# lib changed
 libmpi_cxx_so_version=2:3:1
 libmpi_mpifh_so_version=6:0:4
-# lib changed
-# added interfaces: MPI_Win_allocate_shared, MPI_Win_shared_query
 libmpi_usempi_tkr_so_version=4:2:3
-# lib changed
-#libmpi_usempi_ignore_tkr_so_version=4:2:3
-# ^^THIS VERSION NUMBER IS UNUSED (!)
 libmpi_usempif08_so_version=5:0:5
-# lib changed
-# added interfaces: MPI_Win_allocate_shared, MPI_Win_shared_query
 libopen_rte_so_version=7:4:0
-# lib changed
 libopen_pal_so_version=8:0:2
-# lib changed
-# added interfaces: opal_fd_set_cloexec
 libmpi_java_so_version=3:0:2
-# lib changed
-# added interfaces: Java_mpi_comm_iDup
-# changed interfaces: Java_mpi_comm_dup... probably others
 liboshmem_so_version=3:0:0
-# lib changed
-# added interfaces: shmem_int32_finc, shmem_int64_finc, profiling
-# changed interface: return type of shmem_finalize changed from int to
-# void (for oshemem spec compliance)
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
@@ -125,15 +107,10 @@ liboshmem_so_version=3:0:0
 
 # OMPI layer
 libmca_common_cuda_so_version=1:6:0
-# lib changed
 libmca_common_mx_so_version=2:5:0
 libmca_common_sm_so_version=4:4:0
-# lib changed
 libmca_common_ugni_so_version=2:1:2
-# lib changed
 libmca_common_verbs_so_version=2:3:2
-# lib changed
 
 # OPAL layer
 libmca_opal_common_pmi_so_version=2:2:1
-# lib changed
