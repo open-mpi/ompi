@@ -36,13 +36,11 @@
 
 BEGIN_C_DECLS
 
-/* declare a pair of global handles until such time
+/* declare a global handle until such time
  * as someone figures out how to separate the various
  * datastore channels
  */
-OPAL_DECLSPEC extern int opal_dstore_peer;
-OPAL_DECLSPEC extern int opal_dstore_internal;
-OPAL_DECLSPEC extern int opal_dstore_nonpeer;
+OPAL_DECLSPEC extern int opal_dstore_handle;
 
 /****    DEFINE THE PUBLIC API'S    ****/
 /*
