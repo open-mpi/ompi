@@ -39,6 +39,12 @@ module mpi
 
   include "ompi/mpi/fortran/base/conversion-fn-null-int-interface.h"
 
+! Functions that have overloaded interfaces with TYPE(C_PTR) (which
+! this compiler may or may not support).  We use an "if" preprocessor
+! macro in this file, so we need to use the preprocessor include
+! directive, not the Fortran include.
+#include "mpi-f90-cptr-interfaces.F90"
+
 ! This file is generated, and is *huge*.  Its size is directly related
 ! to the --with-f90-max-array-dim configure parameter.
 
