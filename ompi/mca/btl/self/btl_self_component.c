@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,12 +11,15 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
  */
+
 #include "ompi_config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -40,28 +44,21 @@ static int mca_btl_self_component_register(void);
  */
 
 mca_btl_self_component_t mca_btl_self_component = {
-    {  /* super is being filled in */
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
           about the component itself */
-        {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            "self", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            mca_btl_self_component_open,  /* component open */
-            mca_btl_self_component_close, /* component close */
-            NULL,
-            mca_btl_self_component_register
+        .btl_version = {
+            MCA_BTL_DEFAULT_VERSION("self"),
+            .mca_open_component = mca_btl_self_component_open,
+            .mca_close_component = mca_btl_self_component_close,
+            .mca_register_component_params = mca_btl_self_component_register,
         },
-        {
+        .btl_data = {
             /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
+            .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT,
         },
 
-        mca_btl_self_component_init,  
-        NULL,
+        .btl_init = mca_btl_self_component_init,
     }  /* end super */
 };
 

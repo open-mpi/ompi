@@ -38,10 +38,10 @@ mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TA
 
 static void mca_btl_base_descriptor_constructor(mca_btl_base_descriptor_t* des)
 {
-    des->des_src = NULL;
-    des->des_src_cnt = 0;
-    des->des_dst = NULL;
-    des->des_dst_cnt = 0;
+    des->des_local = NULL;
+    des->des_local_count = 0;
+    des->des_remote = NULL;
+    des->des_remote_count = 0;
     des->des_cbfunc = NULL;
     des->des_cbdata = NULL;
     des->des_flags = 0;

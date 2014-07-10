@@ -24,8 +24,8 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
                       struct mca_btl_base_endpoint_t *endpoint,
                       struct mca_btl_base_descriptor_t *des) {
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) des;
-    mca_btl_ugni_segment_t *src_seg = (mca_btl_ugni_segment_t *) des->des_src;
-    mca_btl_ugni_segment_t *dst_seg = (mca_btl_ugni_segment_t *) des->des_dst;
+    mca_btl_ugni_segment_t *src_seg = (mca_btl_ugni_segment_t *) des->des_remote;
+    mca_btl_ugni_segment_t *dst_seg = (mca_btl_ugni_segment_t *) des->des_local;
     size_t size = src_seg->base.seg_len - src_seg->extra_byte_count;
     bool check;
 
@@ -35,7 +35,7 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
     (void) mca_btl_ugni_check_endpoint_state(endpoint);
 
     /* Check if the get is aligned/sized on a multiple of 4 */
-    check = !!((des->des_src->seg_addr.lval | des->des_dst->seg_addr.lval | size) & 3);
+    check = !!((des->des_remote->seg_addr.lval | des->des_local->seg_addr.lval | size) & 3);
 
     if (OPAL_UNLIKELY(check || size > mca_btl_ugni_component.ugni_get_limit)) {
         /* switch to put */
@@ -85,16 +85,16 @@ static void mca_btl_ugni_callback_eager_get (mca_btl_ugni_base_frag_t *frag, int
 
     BTL_VERBOSE(("eager get for rem_ctx %p complete", frag->hdr.eager.ctx));
 
-    tmp.base.des_dst = segs;
+    tmp.base.des_local = segs;
     if (hdr_len) {
-        tmp.base.des_dst_cnt = 2;
+        tmp.base.des_local_count = 2;
 
         segs[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
         segs[0].seg_len       = hdr_len;
         segs[1].seg_addr.pval = frag->segments[0].base.seg_addr.pval;
         segs[1].seg_len       = payload_len;
     } else {
-        tmp.base.des_dst_cnt = 1;
+        tmp.base.des_local_count = 1;
 
         segs[0].seg_addr.pval = frag->segments[0].base.seg_addr.pval;
         segs[0].seg_len       = payload_len;
@@ -144,7 +144,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
         frag->segments[0].base.seg_len = frag->segments[1].base.seg_len =
             (hdr.eager.src_seg.base.seg_len + 3) & ~3;
 
-        frag->base.des_src = &frag->segments[1].base;
+        frag->base.des_remote = &frag->segments[1].base;
 
         rc = mca_btl_ugni_post_wcb (frag, GNI_POST_RDMA_GET, frag->segments, frag->segments + 1,
                                     mca_btl_ugni_callback_eager_get);

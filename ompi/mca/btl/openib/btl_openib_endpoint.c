@@ -119,7 +119,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
     eager_limit = mca_btl_openib_component.eager_limit +
         sizeof(mca_btl_openib_header_coalesced_t) +
         sizeof(mca_btl_openib_control_header_t);
-    if(des->des_src->seg_len + frag->coalesced_length <= eager_limit &&
+    if(des->des_local->seg_len + frag->coalesced_length <= eager_limit &&
             (des->des_flags & MCA_BTL_DES_FLAGS_PRIORITY)) {
         /* High priority frag. Try to send over eager RDMA */
         if(acquire_eager_rdma_send_credit(endpoint) == OMPI_SUCCESS)

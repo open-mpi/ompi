@@ -26,10 +26,8 @@ static void
 mca_btl_portals4_frag_common_send_constructor(mca_btl_portals4_frag_t* frag) 
 { 
     frag->base.des_flags = 0;
-    frag->base.des_dst = 0;
-    frag->base.des_dst_cnt = 0;
-    frag->base.des_src = &frag->segments[0].base;
-    frag->base.des_src_cnt = 2;
+    frag->base.des_local = &frag->segments[0].base;
+    frag->base.des_local_count = 2;
 
     frag->segments[0].base.seg_addr.pval = frag + 1;
     frag->segments[0].base.seg_len = frag->size;
@@ -67,10 +65,6 @@ static void
 mca_btl_portals4_frag_user_constructor(mca_btl_portals4_frag_t* frag) 
 { 
     frag->base.des_flags = 0;
-    frag->base.des_dst = 0;
-    frag->base.des_dst_cnt = 0;
-    frag->base.des_src = 0;
-    frag->base.des_src_cnt = 0;
     frag->size = 0; 
     frag->type = BTL_PORTALS4_FRAG_TYPE_USER;
 }

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -130,29 +130,23 @@ static bool malloc_hook_set = false;
 static int num_devices_intentionally_ignored = 0;
 
 mca_btl_openib_component_t mca_btl_openib_component = {
-    {
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
 
-        {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            "openib", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            btl_openib_component_open,  /* component open */
-            btl_openib_component_close,  /* component close */
-            NULL, /* component query */
-            btl_openib_component_register, /* component register */
+        .btl_version = {
+            MCA_BTL_DEFAULT_VERSION("openib"),
+            .mca_open_component = btl_openib_component_open,
+            .mca_close_component = btl_openib_component_close,
+            .mca_register_component_params = btl_openib_component_register,
         },
-        {
+        .btl_data = {
             /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
+            .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        btl_openib_component_init,
-        btl_openib_component_progress,
+        .btl_init = btl_openib_component_init,
+        .btl_progress = btl_openib_component_progress,
     }
 };
 
@@ -472,7 +466,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     mca_btl_openib_header_coalesced_t *clsc_hdr =
         (mca_btl_openib_header_coalesced_t*)(ctl_hdr + 1);
     mca_btl_active_message_callback_t* reg;
-    size_t len = des->des_dst->seg_len - sizeof(*ctl_hdr);
+    size_t len = des->des_local->seg_len - sizeof(*ctl_hdr);
 
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
@@ -523,8 +517,8 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
 
                 skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size - pad);
 
-                tmp_des.des_dst = &tmp_seg;
-                tmp_des.des_dst_cnt = 1;
+                tmp_des.des_local = &tmp_seg;
+                tmp_des.des_local_count = 1;
                 tmp_seg.seg_addr.pval = clsc_hdr + 1;
                 tmp_seg.seg_len = clsc_hdr->size;
 
@@ -2911,7 +2905,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
 
     /* advance the segment address past the header and subtract from the
      * length.*/
-    des->des_dst->seg_len = byte_len - sizeof(mca_btl_openib_header_t);
+    des->des_local->seg_len = byte_len - sizeof(mca_btl_openib_header_t);
 
     if(OPAL_LIKELY(!(is_credit_msg = is_credit_message(frag)))) {
         /* call registered callback */
@@ -2946,7 +2940,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         }
     } else {
         mca_btl_openib_rdma_credits_header_t *chdr =
-            (mca_btl_openib_rdma_credits_header_t *) des->des_dst->seg_addr.pval;
+            (mca_btl_openib_rdma_credits_header_t *) des->des_local->seg_addr.pval;
         if(ep->nbo) {
             BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(*chdr);
         }

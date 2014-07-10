@@ -38,6 +38,14 @@
 #include "btl_self_frag.h"
 #include "ompi/proc/proc.h"
 
+static int mca_btl_self_put (struct mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* endpoint,
+                             struct mca_btl_base_descriptor_t* des);
+
+static int mca_btl_self_get (struct mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* endpoint,
+                             struct mca_btl_base_descriptor_t* des);
+
 mca_btl_base_module_t mca_btl_self = {
     .btl_component = &mca_btl_self_component.super,
     .btl_add_procs = mca_btl_self_add_procs,
@@ -48,8 +56,8 @@ mca_btl_base_module_t mca_btl_self = {
     .btl_prepare_src = mca_btl_self_prepare_src,
     .btl_prepare_dst = mca_btl_self_prepare_dst,
     .btl_send = mca_btl_self_send,
-    .btl_put = mca_btl_self_rdma,
-    .btl_get = mca_btl_self_rdma,
+    .btl_put = mca_btl_self_put,
+    .btl_get = mca_btl_self_get,
     .btl_dump = mca_btl_base_dump,
     .btl_ft_event = mca_btl_self_ft_event,
 };
@@ -126,9 +134,9 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
     }
     
     frag->segment.seg_len = size;
-    frag->base.des_flags   = flags;
-    frag->base.des_src     = &(frag->segment);
-    frag->base.des_src_cnt = 1;
+    frag->base.des_flags       = flags;
+    frag->base.des_local       = &(frag->segment);
+    frag->base.des_local_count = 1;
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
@@ -143,10 +151,10 @@ int mca_btl_self_free( struct mca_btl_base_module_t* btl,
 {
     mca_btl_self_frag_t* frag = (mca_btl_self_frag_t*)des;
 
-    frag->base.des_src     = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst     = NULL;
-    frag->base.des_dst_cnt = 0;
+    frag->base.des_local        = NULL;
+    frag->base.des_local_count  = 0;
+    frag->base.des_remote       = NULL;
+    frag->base.des_remote_count = 0;
 
     if(frag->size == mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_RETURN_EAGER(frag);
@@ -223,8 +231,8 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         *size = max_data;
     }
     frag->base.des_flags = flags;
-    frag->base.des_src          = &frag->segment;
-    frag->base.des_src_cnt      = 1;
+    frag->base.des_local       = &frag->segment;
+    frag->base.des_local_count = 1;
 
     return &frag->base;
 }
@@ -256,8 +264,8 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     frag->segment.seg_addr.lval = (uint64_t)(uintptr_t) ptr;
 
     frag->segment.seg_len = reserve + max_data;
-    frag->base.des_dst = &frag->segment;
-    frag->base.des_dst_cnt = 1;
+    frag->base.des_local = &frag->segment;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = flags;
     return &frag->base;
 }
@@ -281,13 +289,12 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
      * We have to set the dst before the call to the function and reset them
      * after.
      */
-    des->des_dst     = des->des_src;
-    des->des_dst_cnt = des->des_src_cnt;
+    des->des_remote       = des->des_local;
+    des->des_remote_count = des->des_local_count;
     /* upcall */
     reg = mca_btl_base_active_message_trigger + tag;
     reg->cbfunc( btl, tag, des, reg->cbdata );
-    des->des_dst     = NULL;
-    des->des_dst_cnt = 0;
+
     /* send completion */
     if( des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK ) {
         des->des_cbfunc( btl, endpoint, des, OMPI_SUCCESS );
@@ -304,15 +311,13 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-                                                                                                                           
-int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
-                       struct mca_btl_base_endpoint_t* endpoint,
-                       struct mca_btl_base_descriptor_t* des )
+
+static int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
+                              struct mca_btl_base_endpoint_t* endpoint,
+                              struct mca_btl_base_descriptor_t* des,
+                              mca_btl_base_segment_t* src, size_t src_cnt,
+                              mca_btl_base_segment_t* dst, size_t dst_cnt)
 {
-    mca_btl_base_segment_t* src = des->des_src;
-    mca_btl_base_segment_t* dst = des->des_dst;
-    size_t src_cnt = des->des_src_cnt;
-    size_t dst_cnt = des->des_dst_cnt;
     unsigned char* src_addr = (unsigned char *)(uintptr_t) src->seg_addr.lval;
     size_t src_len = src->seg_len;
     unsigned char* dst_addr = (unsigned char *)(uintptr_t) dst->seg_addr.lval;
@@ -378,6 +383,22 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
         mca_btl_self_free( btl, des );
     }
     return OMPI_SUCCESS;
+}
+
+static int mca_btl_self_put (struct mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* endpoint,
+                             struct mca_btl_base_descriptor_t* des)
+{
+    return mca_btl_self_rdma (btl, endpoint, des, des->des_local, des->des_local_count,
+                              des->des_remote, des->des_remote_count);
+}
+
+static int mca_btl_self_get (struct mca_btl_base_module_t *btl,
+                             struct mca_btl_base_endpoint_t *endpoint,
+                             struct mca_btl_base_descriptor_t *des)
+{
+    return mca_btl_self_rdma (btl, endpoint, des, des->des_remote, des->des_remote_count,
+                              des->des_local, des->des_local_count);
 }
 
 int mca_btl_self_ft_event(int state) {

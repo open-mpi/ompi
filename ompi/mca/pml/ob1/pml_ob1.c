@@ -657,7 +657,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     fin->des_cbdata = NULL;
 
     /* fill in header */
-    hdr = (mca_pml_ob1_fin_hdr_t*)fin->des_src->seg_addr.pval;
+    hdr = (mca_pml_ob1_fin_hdr_t*)fin->des_local->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
     hdr->hdr_des = hdr_des;

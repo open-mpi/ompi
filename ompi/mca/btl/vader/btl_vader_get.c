@@ -38,8 +38,8 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
                        struct mca_btl_base_descriptor_t *des)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) des;
-    mca_btl_base_segment_t *src = des->des_src;
-    mca_btl_base_segment_t *dst = des->des_dst;
+    mca_btl_base_segment_t *src = des->des_remote;
+    mca_btl_base_segment_t *dst = des->des_local;
     const size_t size = min(dst->seg_len, src->seg_len);
     mca_mpool_base_registration_t *reg;
     void *rem_ptr;
@@ -63,8 +63,8 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
                        struct mca_btl_base_descriptor_t *des)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) des;
-    mca_btl_base_segment_t *src = des->des_src;
-    mca_btl_base_segment_t *dst = des->des_dst;
+    mca_btl_base_segment_t *src = des->des_remote;
+    mca_btl_base_segment_t *dst = des->des_local;
     const size_t size = min(dst->seg_len, src->seg_len);
     struct iovec src_iov = {.iov_base = src->seg_addr.pval, .iov_len = size};
     struct iovec dst_iov = {.iov_base = dst->seg_addr.pval, .iov_len = size};

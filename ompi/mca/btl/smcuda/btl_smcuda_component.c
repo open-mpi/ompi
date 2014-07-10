@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -84,28 +85,22 @@ typedef enum {
  * Shared Memory (SM) component instance.
  */
 mca_btl_smcuda_component_t mca_btl_smcuda_component = {
-    {  /* super is being filled in */
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
           about the component itself */
-        {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            "smcuda", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            mca_btl_smcuda_component_open,  /* component open */
-            mca_btl_smcuda_component_close,  /* component close */
-            NULL,
-            smcuda_register,
+        .btl_version = {
+            MCA_BTL_DEFAULT_VERSION("smcuda"),
+            .mca_open_component = mca_btl_smcuda_component_open,
+            .mca_close_component = mca_btl_smcuda_component_close,
+            .mca_register_component_params = smcuda_register,
         },
-        {
+        .btl_data = {
             /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
+            .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-        mca_btl_smcuda_component_init,
-        mca_btl_smcuda_component_progress,
+        .btl_init = mca_btl_smcuda_component_init,
+        .btl_progress = mca_btl_smcuda_component_progress,
     }  /* end super */
 };
 
@@ -694,7 +689,7 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t *endpoint;
     mca_btl_smcuda_t *smcuda_btl = (mca_btl_smcuda_t *)btl;
     mca_btl_smcuda_frag_t *frag = (mca_btl_smcuda_frag_t *)des;
-    mca_btl_base_segment_t* segments = des->des_dst;
+    mca_btl_base_segment_t* segments = des->des_local;
 
     /* Use the rank of the peer that sent the data to get to the endpoint
      * structure.  This is needed for PML callback. */
@@ -1065,8 +1060,8 @@ int mca_btl_smcuda_component_progress(void)
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_smcuda_hdr_t);
                 seg.seg_len = hdr->len;
-                Frag.base.des_dst_cnt = 1;
-                Frag.base.des_dst = &seg;
+                Frag.base.des_local_count = 1;
+                Frag.base.des_local = &seg;
 #if OPAL_CUDA_SUPPORT
                 Frag.hdr = hdr;  /* needed for peer rank in control messages */
 #endif /* OPAL_CUDA_SUPPORT */
