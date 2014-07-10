@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,9 +50,39 @@ BEGIN_C_DECLS
  */
 typedef void (*orte_grpcomm_collective_cbfunc_t)(opal_buffer_t *data, void *cbdata);
 
-typedef int32_t orte_grpcomm_coll_id_t;
-#define ORTE_GRPCOMM_COLL_ID_T   OPAL_INT32
-#define ORTE_GRPCOMM_COLL_ID_REQ  -1
+/* define a collective_id_t. In order to allow scalable
+ * generation of collective id's, they are formed as:
+ *
+ * top 32-bits are the jobid of the procs involved in
+ * the collective. For collectives across multiple jobs
+ * (e.g., in a connect_accept), the daemon jobid will
+ * be used as the id will be issued by mpirun. This
+ * won't cause problems because daemons don't use the
+ * collective_id
+ *
+ * bottom 32-bits are a rolling counter that recycles
+ * when the max is hit. The daemon will cleanup each
+ * collective upon completion, so this means a job can
+ * never have more than 2**32 collectives going on at
+ * a time. If someone needs more than that - they've got
+ * a problem.
+ *
+ * Note that this means (for now) that RTE-level collectives
+ * cannot be done by individual threads - they must be
+ * done at the overall process level. This is required as
+ * there is no guaranteed ordering for the collective id's,
+ * and all the participants must agree on the id of the
+ * collective they are executing. So if thread A on one
+ * process asks for a collective id before thread B does,
+ * but B asks before A on another process, the collectives will
+ * be mixed and not result in the expected behavior. We may
+ * find a way to relax this requirement in the future by
+ * adding a thread context id to the jobid field (maybe taking the
+ * lower 16-bits of that field).
+ */
+typedef uint64_t orte_grpcomm_coll_id_t;
+#define ORTE_GRPCOMM_COLL_ID_T   OPAL_UINT64
+#define ORTE_GRPCOMM_COLL_ID_INVALID  UINT64_MAX
 
 typedef int8_t orte_grpcomm_coll_t;
 #define ORTE_GRPCOMM_XCAST         1

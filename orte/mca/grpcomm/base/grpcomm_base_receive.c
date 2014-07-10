@@ -151,9 +151,13 @@ static void coll_id_req(int status, orte_process_name_t* sender,
         /* assume one id was requested */
         num = 1;
     }
+
+    /* coll id requests are for multi-job collectives, so we
+     * assign a collective id from the DAEMON job as not all
+     * procs in the participating jobs are required to participate */
     id = (orte_grpcomm_coll_id_t*)malloc(num * sizeof(orte_grpcomm_coll_id_t));
     for (n=0; n < num; n++) {
-        id[n] = orte_grpcomm_base_get_coll_id();
+        id[n] = orte_grpcomm_base_get_coll_id(ORTE_PROC_MY_NAME);
     }
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
@@ -197,8 +201,8 @@ static void app_recv(int status, orte_process_name_t* sender,
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:base:receive processing collective return for id %d recvd from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), id, ORTE_NAME_PRINT(sender)));
+                         "%s grpcomm:base:receive processing collective return for id %lu recvd from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (unsigned long)id, ORTE_NAME_PRINT(sender)));
 
     /* if the sender is my daemon, then this collective is
      * a global one and is complete
@@ -211,9 +215,9 @@ static void app_recv(int status, orte_process_name_t* sender,
              item = opal_list_get_next(item)) {
             coll = (orte_grpcomm_collective_t*)item;
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                 "%s CHECKING COLL id %d",
+                                 "%s CHECKING COLL id %lu",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 coll->id));
+                                 (unsigned long)coll->id));
             
             if (id == coll->id) {
                 /* see if the collective needs another step */
@@ -260,9 +264,9 @@ static void app_recv(int status, orte_process_name_t* sender,
          item = opal_list_get_next(item)) {
         cptr = (orte_grpcomm_collective_t*)item;
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                             "%s CHECKING COLL id %d",
+                             "%s CHECKING COLL id %lu",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             cptr->id));
+                             (unsigned long)cptr->id));
         
         if (id == cptr->id) {
             /* aha - we do have it */
@@ -453,21 +457,23 @@ static void daemon_local_recv(int status, orte_process_name_t* sender,
     }
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s WORKING COLLECTIVE %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), id));
+                         "%s WORKING COLLECTIVE %lu",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (unsigned long)id));
 
     /* setup the collective for this id - if it's already present,
      * then this will just return the existing structure
      */
-    coll = orte_grpcomm_base_setup_collective(id);
+    coll = orte_grpcomm_base_setup_collective(sender->jobid, id);
 
     /* record this proc's participation and its data */
     coll->num_local_recvd++;
     opal_dss.copy_payload(&coll->local_bucket, buffer);
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s PROGRESSING COLLECTIVE %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), id));
+                         "%s PROGRESSING COLLECTIVE %lu",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (unsigned long)id));
     orte_grpcomm_base_progress_collectives();
 }
 
@@ -514,15 +520,15 @@ void orte_grpcomm_base_progress_collectives(void)
     while (item != opal_list_get_end(&orte_grpcomm_base.active_colls)) {
         coll = (orte_grpcomm_collective_t*)item;
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                             "%s PROGRESSING COLL id %d",
+                             "%s PROGRESSING COLL id %lu",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             coll->id));
+                             (unsigned long)coll->id));
         /* if this collective is already locally complete, then ignore it */
         if (coll->locally_complete) {
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                 "%s COLL %d IS LOCALLY COMPLETE",
+                                 "%s COLL %lu IS LOCALLY COMPLETE",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 coll->id));
+                                 (unsigned long)coll->id));
             goto next_coll;
         }
         /* get the jobid of the participants in this collective */
@@ -536,9 +542,9 @@ void orte_grpcomm_base_progress_collectives(void)
              * this collective
              */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                 "%s COLL %d JOBID %s NOT FOUND",
+                                 "%s COLL %lu JOBID %s NOT FOUND",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 coll->id, ORTE_JOBID_PRINT(nm->name.jobid)));
+                                 (unsigned long)coll->id, ORTE_JOBID_PRINT(nm->name.jobid)));
             goto next_coll;
         }
         /* all local procs from this job are required to participate */
@@ -550,8 +556,9 @@ void orte_grpcomm_base_progress_collectives(void)
         /* see if all reqd participants are done */
         if (jdata->num_local_procs == coll->num_local_recvd) {
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                 "%s COLLECTIVE %d LOCALLY COMPLETE - SENDING TO GLOBAL COLLECTIVE",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), coll->id));
+                                 "%s COLLECTIVE %lu LOCALLY COMPLETE - SENDING TO GLOBAL COLLECTIVE",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (unsigned long)coll->id));
             /* mark it as locally complete */
             coll->locally_complete = true;
             /* pack the collective */
@@ -601,13 +608,14 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
     }
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:base:daemon_coll: WORKING COLLECTIVE %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), id));
+                         "%s grpcomm:base:daemon_coll: WORKING COLLECTIVE %lu",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (unsigned long)id));
 
     /* setup the collective for this id - if it's already present,
      * then this will just return the existing structure
      */
-    coll = orte_grpcomm_base_setup_collective(id);
+    coll = orte_grpcomm_base_setup_collective(sender->jobid, id);
 
     /* record that we received a bucket */
     coll->num_peer_buckets++;

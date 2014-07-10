@@ -38,27 +38,66 @@
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 
-#include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/runtime/orte_globals.h"
+#include "orte/util/attr.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/proc_info.h"
 #include "orte/orted/orted.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 
-orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void)
+orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(orte_process_name_t *nm)
 {
     orte_grpcomm_coll_id_t id;
+    opal_list_t myvals;
+    opal_value_t *kv;
+    uint64_t n;
 
-    /* assign the next collective id */
-    id = orte_grpcomm_base.coll_id;
+    OBJ_CONSTRUCT(&myvals, opal_list_t);
+    if (ORTE_SUCCESS != opal_dstore.fetch(opal_dstore_internal,
+                                          (opal_identifier_t*)nm,
+                                          ORTE_DB_COLL_ID_CNTR, &myvals)) {
+        /* start the counter */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(ORTE_DB_COLL_ID_CNTR);
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = 0;
+        opal_list_append(&myvals, &kv->super);
+    }
+    kv = (opal_value_t*)opal_list_get_first(&myvals);
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s CURRENT COLL ID COUNTER %u FOR PROC %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         kv->data.uint32, ORTE_NAME_PRINT(nm)));
+    /* construct the next collective id for this job */
+    id = kv->data.uint32;
+    n = (uint64_t)nm->jobid << 32;
+    id |= (n & 0xffffffff00000000);
+
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s ASSIGNED COLL ID %lu",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (unsigned long)id));
+
     /* rotate to the next value */
-    orte_grpcomm_base.coll_id++;
+    kv->data.uint32++;
+    if (UINT32_MAX == kv->data.uint32) {
+        /* need to rotate around */
+        kv->data.uint32 = 0;
+    }
+    if (ORTE_SUCCESS != opal_dstore.store(opal_dstore_internal,
+                                          (opal_identifier_t*)nm, kv)) {
+        OPAL_LIST_DESTRUCT(&myvals);
+        return ORTE_GRPCOMM_COLL_ID_INVALID;
+    }
+    OPAL_LIST_DESTRUCT(&myvals);
+
     return id;
 }
 
@@ -135,9 +174,9 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
              item = opal_list_get_next(item)) {
             cptr = (orte_grpcomm_collective_t*)item;
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                 "%s CHECKING COLL id %d",
+                                 "%s CHECKING COLL id %lu",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 cptr->id));
+                                 (unsigned long)cptr->id));
             
             if (modex->id == cptr->id) {
                 found = true;

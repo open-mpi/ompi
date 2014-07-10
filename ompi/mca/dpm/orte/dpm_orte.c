@@ -299,8 +299,9 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         }
 
         OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_framework.framework_output,
-                             "%s dpm:orte:connect_accept working with new collective ids %u %u",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), id[0], id[1]));
+                             "%s dpm:orte:connect_accept working with new collective ids %lu %lu",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (unsigned long)id[0], (unsigned long)id[1]));
 
         /* Generate the message buffer containing the number of processes and the list of
            participating processes */
