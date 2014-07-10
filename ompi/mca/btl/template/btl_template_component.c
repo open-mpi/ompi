@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,29 +48,23 @@ static int mca_btl_template_component_close(void);
 
 
 mca_btl_template_component_t mca_btl_template_component = {
-    {
+    .super = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
 
-        {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            "template", /* MCA component name */
-            OMPI_MAJOR_VERSION,  /* MCA component major version */
-            OMPI_MINOR_VERSION,  /* MCA component minor version */
-            OMPI_RELEASE_VERSION,  /* MCA component release version */
-            mca_btl_template_component_open,  /* component open */
-            mca_btl_template_component_close,  /* component close */
-            NULL, /* component query */
-            mca_btl_template_component_register, /* component register */
+        .btl_version = {
+            MCA_BTL_DEFAULT_VERSION("template"),
+            .mca_open_component = mca_btl_template_component_open,
+            .mca_close_component = mca_btl_template_component_close,
+            .mca_register_component_params = mca_btl_template_component_register,
         },
-        {
+        .btl_data = {
             /* The component is not checkpoint ready */
-            MCA_BASE_METADATA_PARAM_NONE
+            .param_field = MCA_BASE_METADATA_PARAM_NONE
         },
 
-        mca_btl_template_component_init,  
-        mca_btl_template_component_progress,
+        .btl_init = mca_btl_template_component_init,
+        .btl_progress = mca_btl_template_component_progress,
     }
 };
 

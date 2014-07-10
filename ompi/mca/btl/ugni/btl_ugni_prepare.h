@@ -42,10 +42,10 @@ mca_btl_ugni_prepare_src_send_nodata (struct mca_btl_base_module_t *btl,
     frag->segments[1].base.seg_addr.pval = NULL;
     frag->segments[1].base.seg_len       = 0;
 
-    frag->base.des_src     = &frag->segments->base;
-    frag->base.des_src_cnt = 1;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
+    frag->base.des_local       = &frag->segments->base;
+    frag->base.des_local_count = 1;
+    frag->base.order           = order;
+    frag->base.des_flags       = flags;
 
     return &frag->base;
 }
@@ -99,10 +99,10 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
     frag->segments[1].base.seg_addr.pval = data_ptr;
     frag->segments[1].base.seg_len       = *size;
 
-    frag->base.des_src     = &frag->segments->base;
-    frag->base.des_src_cnt = 2;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
+    frag->base.des_local       = &frag->segments->base;
+    frag->base.des_local_count = 2;
+    frag->base.order           = order;
+    frag->base.des_flags       = flags;
 
     return &frag->base;
 }
@@ -161,10 +161,10 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
     frag->segments[1].base.seg_addr.pval = frag->base.super.ptr;
     frag->segments[1].base.seg_len       = *size;
 
-    frag->base.des_src     = &frag->segments->base;
-    frag->base.des_src_cnt = 2;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
+    frag->base.des_local       = &frag->segments->base;
+    frag->base.des_local_count = 2;
+    frag->base.order           = order;
+    frag->base.des_flags       = flags;
 
     return &frag->base;
 }
@@ -252,10 +252,10 @@ mca_btl_ugni_prepare_src_rdma (struct mca_btl_base_module_t *btl,
     frag->segments[0].base.seg_addr.lval = (uint64_t)(uintptr_t) data_ptr;
     frag->segments[0].base.seg_len       = *size;
 
-    frag->base.des_src     = &frag->segments->base;
-    frag->base.des_src_cnt = 1;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
+    frag->base.des_local       = &frag->segments->base;
+    frag->base.des_local_count = 1;
+    frag->base.order           = order;
+    frag->base.des_flags       = flags;
 
     return &frag->base;
 }

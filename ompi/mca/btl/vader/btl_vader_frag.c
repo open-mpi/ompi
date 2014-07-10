@@ -34,10 +34,8 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
         frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
     }
 
-    frag->base.des_src     = frag->segments;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst     = frag->segments;
-    frag->base.des_dst_cnt = 1;
+    frag->base.des_local       = frag->segments;
+    frag->base.des_local_count = 1;
     frag->fbox = NULL;
 }
 

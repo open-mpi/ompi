@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -32,18 +32,13 @@ mca_btl_ugni_component_t mca_btl_ugni_component = {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
         .btl_version = {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            .mca_component_name = "ugni",
-            .mca_component_major_version = OMPI_MAJOR_VERSION,
-            .mca_component_minor_version = OMPI_MINOR_VERSION,
-            .mca_component_release_version = OMPI_RELEASE_VERSION,
+            MCA_BTL_DEFAULT_VERSION("ugni"),
             .mca_open_component = btl_ugni_component_open,
             .mca_close_component = btl_ugni_component_close,
             .mca_register_component_params = btl_ugni_component_register,
         },
         .btl_data = {
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
+            .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
         .btl_init = mca_btl_ugni_component_init,
         .btl_progress = mca_btl_ugni_component_progress,

@@ -238,8 +238,8 @@ mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
      * have to be atomic.
      */
     req_bytes_delivered = mca_pml_ob1_compute_segment_length (btl->btl_seg_size,
-                                                              (void *) des->des_src,
-                                                              des->des_src_cnt,
+                                                              (void *) des->des_local,
+                                                              des->des_local_count,
                                                               sizeof(mca_pml_ob1_rendezvous_hdr_t));
 
     mca_pml_ob1_rndv_completion_request( bml_btl, sendreq, req_bytes_delivered );
@@ -263,8 +263,8 @@ mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
     /* count bytes of user data actually delivered and check for request completion */
     if (OPAL_LIKELY(OMPI_SUCCESS == status)) {
         req_bytes_delivered = mca_pml_ob1_compute_segment_length (btl->btl_seg_size,
-                                                                  (void *) des->des_src,
-                                                                  des->des_src_cnt, 0);
+                                                                  (void *) des->des_local,
+                                                                  des->des_local_count, 0);
         OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
     }
     sendreq->src_des = NULL;
@@ -316,8 +316,8 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
 
     /* count bytes of user data actually delivered */
     req_bytes_delivered = mca_pml_ob1_compute_segment_length (btl->btl_seg_size,
-                                                              (void *) des->des_src,
-                                                              des->des_src_cnt,
+                                                              (void *) des->des_local,
+                                                              des->des_local_count,
                                                               sizeof(mca_pml_ob1_frag_hdr_t));
 
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
@@ -389,7 +389,7 @@ int mca_pml_ob1_send_request_start_buffered(
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    segment = des->des_src;
+    segment = des->des_local;
 
     /* pack the data into the BTL supplied buffer */
     iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + 
@@ -532,7 +532,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    segment = des->des_src;
+    segment = des->des_local;
 
     if(size > 0) {
         /* pack the data into the supplied buffer */
@@ -628,7 +628,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    segment = des->des_src;
+    segment = des->des_local;
 
     /* build match header */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
@@ -717,7 +717,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
 
     sendreq->src_des = src;
 
-    seg_size = bml_btl->btl->btl_seg_size * src->des_src_cnt;
+    seg_size = bml_btl->btl->btl_seg_size * src->des_local_count;
 
     /* allocate space for get hdr + segment list */
     mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER, sizeof (*hdr) + seg_size,
@@ -729,7 +729,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     }
 
     /* build match header */
-    hdr = (mca_pml_ob1_rget_hdr_t *) des->des_src->seg_addr.pval;
+    hdr = (mca_pml_ob1_rget_hdr_t *) des->des_local->seg_addr.pval;
 
     hdr->hdr_rndv.hdr_match.hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
     hdr->hdr_rndv.hdr_match.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RGET;
@@ -740,12 +740,12 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
     hdr->hdr_des.pval = src;
-    hdr->hdr_seg_cnt = src->des_src_cnt;
+    hdr->hdr_seg_cnt = src->des_local_count;
 
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_RGET, sendreq->req_send.req_base.req_proc);
 
     /* copy segment data */
-    memcpy (hdr + 1, src->des_src, seg_size);
+    memcpy (hdr + 1, src->des_local, seg_size);
 
     des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
     des->des_cbdata = sendreq;
@@ -825,7 +825,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    segment = des->des_src;
+    segment = des->des_local;
 
     /* build hdr */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
@@ -1047,7 +1047,7 @@ cannot_pack:
         des->des_cbdata = sendreq;
 
         /* setup header */
-        hdr = (mca_pml_ob1_frag_hdr_t*)des->des_src->seg_addr.pval;
+        hdr = (mca_pml_ob1_frag_hdr_t*)des->des_local->seg_addr.pval;
         hdr->hdr_common.hdr_flags = 0;
         hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FRAG;
         hdr->hdr_frag_offset = range->range_send_offset;
@@ -1201,10 +1201,10 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
         sendreq->src_des = NULL;
     }
 
-    des->des_dst     = (mca_btl_base_segment_t *) frag->rdma_segs;
-    des->des_dst_cnt = frag->rdma_hdr.hdr_rdma.hdr_seg_cnt;
-    des->des_cbfunc  = mca_pml_ob1_put_completion;
-    des->des_cbdata  = frag;
+    des->des_remote       = (mca_btl_base_segment_t *) frag->rdma_segs;
+    des->des_remote_count = frag->rdma_hdr.hdr_rdma.hdr_seg_cnt;
+    des->des_cbfunc       = mca_pml_ob1_put_completion;
+    des->des_cbdata       = frag;
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
                                   &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), save_size, PERUSE_SEND );

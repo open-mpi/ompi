@@ -174,10 +174,8 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     frag->segments[0].seg_len = size;
     frag->segments[0].seg_addr.pval = frag+1;
 
-    frag->base.des_src = frag->segments;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
+    frag->base.des_local = frag->segments;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = flags; 
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->btl = (mca_btl_tcp_module_t*)btl;
@@ -244,7 +242,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     frag->segments[0].seg_addr.pval = (frag + 1);
     frag->segments[0].seg_len = reserve;
 
-    frag->base.des_src_cnt = 1;
+    frag->base.des_local_count = 1;
     if(opal_convertor_need_buffers(convertor)) {
 
         if (max_data + reserve > frag->size) {
@@ -274,12 +272,12 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
 
         frag->segments[1].seg_addr.pval = iov.iov_base;
         frag->segments[1].seg_len = max_data;
-        frag->base.des_src_cnt = 2;
+        frag->base.des_local_count = 2;
     }
 
-    frag->base.des_src = frag->segments;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
+    frag->base.des_local = frag->segments;
+    frag->base.des_remote = NULL;
+    frag->base.des_remote_count = 0;
     frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     *size = max_data;
@@ -324,10 +322,10 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     frag->segments->seg_len = *size;
     opal_convertor_get_current_pointer( convertor, (void**)&(frag->segments->seg_addr.pval) );
 
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst = frag->segments;
-    frag->base.des_dst_cnt = 1;
+    frag->base.des_remote = NULL;
+    frag->base.des_remote_count = 0;
+    frag->base.des_local = frag->segments;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
@@ -361,7 +359,7 @@ int mca_btl_tcp_send( struct mca_btl_base_module_t* btl,
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
     frag->hdr.size = 0;
-    for( i = 0; i < (int)frag->base.des_src_cnt; i++) {
+    for( i = 0; i < (int)frag->base.des_local_count; i++) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+1].iov_len = frag->segments[i].seg_len;
         frag->iov[i+1].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
@@ -400,9 +398,9 @@ int mca_btl_tcp_put( mca_btl_base_module_t* btl,
     frag->iov_ptr = frag->iov;
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
-    frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->base.des_dst;
-    frag->iov[1].iov_len = frag->base.des_dst_cnt * sizeof(mca_btl_base_segment_t);
-    for( i = 0; i < (int)frag->base.des_src_cnt; i++ ) {
+    frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->base.des_remote;
+    frag->iov[1].iov_len = frag->base.des_remote_count * sizeof(mca_btl_base_segment_t);
+    for( i = 0; i < (int)frag->base.des_local_count; i++ ) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+2].iov_len = frag->segments[i].seg_len;
         frag->iov[i+2].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
@@ -410,7 +408,7 @@ int mca_btl_tcp_put( mca_btl_base_module_t* btl,
     }
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT;
-    frag->hdr.count = frag->base.des_dst_cnt;
+    frag->hdr.count = frag->base.des_remote_count;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
     return ((i = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : i);
 }
@@ -443,11 +441,11 @@ int mca_btl_tcp_get(
     frag->iov_ptr = frag->iov;
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
-    frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->base.des_src;
-    frag->iov[1].iov_len = frag->base.des_src_cnt * sizeof(mca_btl_base_segment_t);
+    frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->base.des_remote;
+    frag->iov[1].iov_len = frag->base.des_remote_count * sizeof(mca_btl_base_segment_t);
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_GET;
-    frag->hdr.count = frag->base.des_src_cnt;
+    frag->hdr.count = frag->base.des_remote_count;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
     return ((rc = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : rc);
 }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -32,15 +32,9 @@ mca_btl_scif_component_t mca_btl_scif_component = {
            about the component itself */
 
         .btl_version = {
-            MCA_BTL_BASE_VERSION_2_0_0,
-
-            .mca_component_name = "scif",
-            .mca_component_major_version = OMPI_MAJOR_VERSION,
-            .mca_component_minor_version = OMPI_MINOR_VERSION,
-            .mca_component_release_version = OMPI_RELEASE_VERSION,
+            MCA_BTL_DEFAULT_VERSION("scif"),
             .mca_open_component = btl_scif_component_open,
             .mca_close_component = btl_scif_component_close,
-            .mca_query_component = NULL,
             .mca_register_component_params = btl_scif_component_register,
         },
         .btl_data = {
@@ -323,11 +317,11 @@ static int mca_btl_scif_progress_recvs (mca_btl_base_endpoint_t *ep)
              * the fragment without introducing another copy here. this
              * limitation has not appeared to cause any performance
              * problems. */
-            frag.base.des_dst_cnt = 1;
+            frag.base.des_local_count = 1;
             frag.segments[0].base.seg_len = hdr->size;
             frag.segments[0].base.seg_addr.pval = (void *) (hdr + 1);
 
-            frag.base.des_dst = &frag.segments[0].base;
+            frag.base.des_local = &frag.segments[0].base;
 
             /* call the registered callback function */
             reg->cbfunc(&mca_btl_scif_module.super, hdr->tag, &frag.base, reg->cbdata);

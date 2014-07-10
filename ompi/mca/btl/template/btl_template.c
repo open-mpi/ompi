@@ -270,10 +270,8 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
         frag->segment.seg_len = max_data + reserve;
     }
 
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
+    frag->base.des_local = &frag->segment;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = 0;
     return &frag->base;
 }
@@ -313,10 +311,8 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     frag->segment.seg_len = *size;
     opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
 
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst = &frag->segment;
-    frag->base.des_dst_cnt = 1;
+    frag->base.des_local = &frag->segment;
+    frag->base.des_local_count = 1;
     frag->base.des_flags = 0;
     return &frag->base;
 }

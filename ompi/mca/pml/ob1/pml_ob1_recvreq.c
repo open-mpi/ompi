@@ -188,8 +188,8 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
 
     if( OPAL_LIKELY(status == OMPI_SUCCESS) ) {
         bytes_received = mca_pml_ob1_compute_segment_length (btl->btl_seg_size,
-                                                             (void *) des->des_dst,
-                                                             des->des_dst_cnt, 0);
+                                                             (void *) des->des_remote,
+                                                             des->des_remote_count, 0);
     }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
 
@@ -227,7 +227,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     }
 
     /* fill out header */
-    ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
+    ack = (mca_pml_ob1_ack_hdr_t*)des->des_local->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
     ack->hdr_common.hdr_flags = nordma ? MCA_PML_OB1_HDR_FLAGS_NORDMA : 0;
     ack->hdr_src_req.lval = hdr_src_req;
@@ -359,7 +359,7 @@ static int mca_pml_ob1_init_get_fallback (mca_pml_ob1_rdma_frag_t *frag,
     size_t seg_size;
     int rc;
 
-    seg_size = bml_btl->btl->btl_seg_size * dst->des_dst_cnt;
+    seg_size = bml_btl->btl->btl_seg_size * dst->des_local_count;
 
     /* prepare a descriptor for rdma control message */
     mca_bml_base_alloc (bml_btl, &ctl, MCA_BTL_NO_ORDER, sizeof (mca_pml_ob1_rdma_hdr_t) + seg_size,
@@ -371,7 +371,7 @@ static int mca_pml_ob1_init_get_fallback (mca_pml_ob1_rdma_frag_t *frag,
     ctl->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
         
     /* fill in rdma header */
-    hdr = (mca_pml_ob1_rdma_hdr_t *) ctl->des_src->seg_addr.pval;
+    hdr = (mca_pml_ob1_rdma_hdr_t *) ctl->des_local->seg_addr.pval;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_PUT;
     hdr->hdr_common.hdr_flags =
         (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0;
@@ -381,10 +381,10 @@ static int mca_pml_ob1_init_get_fallback (mca_pml_ob1_rdma_frag_t *frag,
     hdr->hdr_des.pval = dst;
     hdr->hdr_recv_req.pval = recvreq;
 
-    hdr->hdr_seg_cnt = dst->des_dst_cnt;
+    hdr->hdr_seg_cnt = dst->des_local_count;
 
     /* copy segments */
-    memcpy (hdr + 1, dst->des_dst, seg_size);
+    memcpy (hdr + 1, dst->des_local, seg_size);
 
     dst->des_cbfunc = mca_pml_ob1_put_completion;
     dst->des_cbdata = recvreq;
@@ -442,8 +442,8 @@ int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
         }
     }
 
-    descriptor->des_src = (mca_btl_base_segment_t *) frag->rdma_segs;
-    descriptor->des_src_cnt = frag->rdma_hdr.hdr_rdma.hdr_seg_cnt;
+    descriptor->des_remote = (mca_btl_base_segment_t *) frag->rdma_segs;
+    descriptor->des_remote_count = frag->rdma_hdr.hdr_rdma.hdr_seg_cnt;
     descriptor->des_cbfunc = mca_pml_ob1_rget_completion;
     descriptor->des_cbdata = frag;
 
@@ -565,8 +565,8 @@ void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvr
                                      bytes_delivered );
     /* Store the receive request in unused context pointer. */
     des->des_context = (void *)recvreq;
-    /* Store the amount of bytes in unused src count value */
-    des->des_src_cnt = bytes_delivered;
+    /* Store the amount of bytes in unused remote count value */
+    des->des_remote_count = bytes_delivered;
     /* Then record an event that will get triggered by a PML progress call which
      * checks the stream events.  If we get an error, abort.  Should get message
      * from CUDA code about what went wrong. */
@@ -591,7 +591,7 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
                                                   int status )
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_context;
-    size_t bytes_received = des->des_src_cnt;
+    size_t bytes_received = des->des_remote_count;
 
     OPAL_OUTPUT((-1, "frag_copy_finished (delivered=%d), frag=%p", (int)bytes_received, (void *)des));
     /* Call into the BTL so it can free the descriptor.  At this point, it is 
@@ -975,7 +975,7 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         dst->des_cbfunc = mca_pml_ob1_put_completion;
         dst->des_cbdata = recvreq;
 
-        seg_size = btl->btl_seg_size * dst->des_dst_cnt;
+        seg_size = btl->btl_seg_size * dst->des_local_count;
 
         /* prepare a descriptor for rdma control message */
         mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, sizeof(mca_pml_ob1_rdma_hdr_t) + seg_size,
@@ -988,7 +988,7 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         ctl->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
         
         /* fill in rdma header */
-        hdr = (mca_pml_ob1_rdma_hdr_t*)ctl->des_src->seg_addr.pval;
+        hdr = (mca_pml_ob1_rdma_hdr_t*)ctl->des_local->seg_addr.pval;
         hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_PUT;
         hdr->hdr_common.hdr_flags =
             (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0;
@@ -996,10 +996,10 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         hdr->hdr_des.pval = dst;
         hdr->hdr_recv_req.pval = recvreq;
         hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
-        hdr->hdr_seg_cnt = dst->des_dst_cnt;
+        hdr->hdr_seg_cnt = dst->des_local_count;
 
         /* copy segments */
-        memmove (hdr + 1, dst->des_dst, seg_size);
+        memmove (hdr + 1, dst->des_local_count, seg_size);
 
         if(!recvreq->req_ack_sent)
             recvreq->req_ack_sent = true;

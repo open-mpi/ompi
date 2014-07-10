@@ -151,8 +151,8 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
     if (NULL != btlname) free(btlname);
 
     /* Since we believe we have done a send, read or write, then the
-     * des_src fields should have valid data. */
-    assert(des->des_src != NULL);
+     * des_local fields should have valid data. */
+    assert(des->des_local != NULL);
 
     /* If the endpoint is not yet in the MCA_BTL_IB_CLOSED state, then
      * change the status.  Since this connection was mapped out in the
