@@ -284,6 +284,13 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                   OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi])
           ])
 
+    OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+           test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_ISO_C_BINDING(
+               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=1],
+               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=0])])
+
     AC_MSG_CHECKING([if building Fortran 'use mpi' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1],
           [AC_MSG_RESULT([yes])],
@@ -309,14 +316,11 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # the necessary forms of BIND(C)
     OMPI_FORTRAN_HAVE_BIND_C=0
 
-    OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have ISO C bindings, we won't build mpi_f08 at all
-           OMPI_FORTRAN_CHECK_ISO_C_BINDING(
-               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=1],
-               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
-                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+           AS_IF([test "$OMPI_FORTRAN_HAVE_ISO_C_BINDING" -eq 0],
+                 [OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
     OMPI_FORTRAN_HAVE_BIND_C_SUB=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
@@ -628,6 +632,7 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C,
                        [$OMPI_FORTRAN_HAVE_BIND_C],
                        [For ompi_info: Whether the compiler supports all forms of BIND(C) that we need])
+    AC_SUBST(OMPI_FORTRAN_HAVE_ISO_C_BINDING)
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_ISO_C_BINDING,
                        [$OMPI_FORTRAN_HAVE_ISO_C_BINDING],
                        [For ompi_info: Whether the compiler supports ISO_C_BINDING or not])

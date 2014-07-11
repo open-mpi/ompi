@@ -158,8 +158,8 @@ OSHMEM_DECLSPEC extern mca_memheap_base_module_t mca_memheap;
  * must be memheap address and segment must be mapped
  */
 static inline int mca_memheap_base_can_local_copy(sshmem_mkey_t *mkey, void *dst_addr) {
-    return mca_memheap.memheap_is_symmetric_addr(dst_addr) && 
-        0 == mkey->len && MAP_SEGMENT_SHM_INVALID != mkey->u.key; 
+    return mca_memheap.memheap_is_symmetric_addr(dst_addr) &&
+        (0 == mkey->len) && (MAP_SEGMENT_SHM_INVALID != (int)mkey->u.key);
 }
 
 

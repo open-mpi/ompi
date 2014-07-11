@@ -80,6 +80,12 @@ static int map_compare_endpoints(const void *aa, const void *bb)
     ompi_btl_usnic_endpoint_t *a = *((ompi_btl_usnic_endpoint_t**) aa);
     ompi_btl_usnic_endpoint_t *b = *((ompi_btl_usnic_endpoint_t**) bb);
 
+    if (NULL == a) {
+      return 1;
+    } else if (NULL == b) {
+      return -1;
+    }
+
     return strcmp(ibv_get_device_name(a->endpoint_module->device),
                   ibv_get_device_name(b->endpoint_module->device));
 }
@@ -90,13 +96,17 @@ static int map_compare_endpoints(const void *aa, const void *bb)
 static void map_output_endpoints(FILE *fp, ompi_btl_usnic_proc_t *proc)
 {
     size_t i;
+    size_t num_output;
     size_t size;
     ompi_btl_usnic_endpoint_t **eps;
     char ipv4[IPV4STRADDRLEN];
     char mac[MACSTRLEN];
 
     /* First, we must sort the endpoints on this proc by MCW rank so
-       that they're always output in a repeatable order. */
+       that they're always output in a repeatable order.  There may
+       also be NULL endpoints (if we didn't match that peer's
+       endpoint).  The sort will put NULLs at the end of the array,
+       where they can be easily ignored. */
     size = proc->proc_endpoint_count * sizeof(ompi_btl_usnic_endpoint_t *);
     eps = calloc(1, size);
     if (NULL == eps) {
@@ -109,9 +119,13 @@ static void map_output_endpoints(FILE *fp, ompi_btl_usnic_proc_t *proc)
           sizeof(ompi_btl_usnic_endpoint_t*),
           map_compare_endpoints);
 
-    /* Loop over and print the sorted endpoint information */
-    for (i = 0; i < proc->proc_endpoint_count; ++i) {
-        if (i > 0) {
+    /* Loop over and print the sorted endpoint information, ignoring
+       NULLs that might be at the end of the array. */
+    for (num_output = i = 0; i < proc->proc_endpoint_count; ++i) {
+        if (NULL == eps[i]) {
+            break;
+        }
+        if (num_output > 0) {
             fprintf(fp, ",");
         }
 
@@ -123,6 +137,7 @@ static void map_output_endpoints(FILE *fp, ompi_btl_usnic_proc_t *proc)
         fprintf(fp, "device=%s@peer_ip=%s@peer_mac=%s",
                 ibv_get_device_name(eps[i]->endpoint_module->device),
                 ipv4, mac);
+        ++num_output;
     }
     fprintf(fp, "\n");
 

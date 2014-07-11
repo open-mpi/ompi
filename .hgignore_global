@@ -880,6 +880,7 @@ syntax: glob
 ./orte/test/mpi/pconnect
 ./orte/test/mpi/thread_init
 ./orte/test/mpi/memcached-dummy
+./orte/test/mpi/coll_test
 ./orte/test/system/radix
 ./orte/test/system/sigusr_trap
 ./orte/test/system/orte_no_op
