@@ -95,7 +95,7 @@ static int ompi_mtl_mxm_component_register(void)
     ompi_mtl_mxm.compiletime_version = MXM_VERNO_STRING;
     (void) mca_base_component_var_register(c,
             MCA_COMPILETIME_VER,
-            "Version of the libmxm library ompi compiled with",
+            "Version of the libmxm library with which Open MPI was compiled",
             MCA_BASE_VAR_TYPE_VERSION_STRING,
             NULL, 0, 0,
             OPAL_INFO_LVL_3,
@@ -114,7 +114,7 @@ static int ompi_mtl_mxm_component_register(void)
 
     (void) mca_base_component_var_register(c,
             MCA_RUNTIME_VER,
-            "Version of the libmxm library ompi run with",
+            "Version of the libmxm library with which Open MPI is running",
             MCA_BASE_VAR_TYPE_VERSION_STRING,
             NULL, 0, 0,
             OPAL_INFO_LVL_3,
