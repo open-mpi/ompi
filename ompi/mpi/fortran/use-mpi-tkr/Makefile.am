@@ -13,6 +13,8 @@
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -42,7 +44,6 @@ AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
 # going to build F90 bindings or not.
 
 lib_LTLIBRARIES =
-if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 
 # Add the f90 library to the list of libraries to build
 
@@ -56,18 +57,6 @@ mpi.lo: mpi.F90
 mpi.lo: mpi-f90-interfaces.h
 mpi.lo: $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h
 mpi.lo: mpi-f90-cptr-interfaces.F90
-
-# These files must be EXTRA_DIST'ed because they are included; they
-# are not compiled directly (and we *can't* list the .F90 file in
-# _SOURCES, because it would be compiled -- but it *must* have a .F90
-# suffix so that the Fortran compiler will interpret the #if
-# directives properly).
-
-EXTRA_DIST = \
-     mpi-f90-interfaces.h \
-     mpi-f90-cptr-interfaces.F90
-
-endif
 
 # Per MPI-3 p610:34-41, if we're building a TKR mpi module, we should
 # not build any interfaces for MPI subroutines that take a choice
@@ -104,7 +93,6 @@ DISTCLEANFILES = $(nodist_libmpi_usempi_la_SOURCES)
 # may generate different filenames, so we have to use a glob.  :-(
 #
 
-if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 install-exec-hook:
 	@ for file in `ls *.mod`; do \
 	  echo $(INSTALL) $$file $(DESTDIR)$(libdir); \
@@ -116,15 +104,17 @@ uninstall-local:
 	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
 	  rm -f $(DESTDIR)$(libdir)/$$file; \
 	done
-else
-
-# Need to have empty targets because AM can't handle having an
-# AM_CONDITIONAL was targets in the "if" statement but not in the
-# "else".  :-(
-
-install-exec-hook:
-uninstall-local:
-endif
 
 # if OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS
 endif
+
+# These files must be EXTRA_DIST'ed because they are included; they
+# are not compiled directly (and we *can't* list the .F90 file in
+# _SOURCES, because it would be compiled -- but it *must* have a .F90
+# suffix so that the Fortran compiler will interpret the #if
+# directives properly).
+
+EXTRA_DIST = \
+     mpi-f90-interfaces.h \
+     mpi-f90-cptr-interfaces.F90
+
