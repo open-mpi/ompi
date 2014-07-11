@@ -258,7 +258,7 @@ static inline mca_btl_base_descriptor_t *mca_btl_scif_prepare_dma_conv (struct m
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
-    return mca_btl_scif_prepare_dma (btl, endpoint, data_ptr, *size, registration, order, flags, &frag);
+    return mca_btl_scif_prepare_dma (btl, endpoint, data_ptr, *size, registration, order, flags);
 }
 
 static inline struct mca_btl_base_descriptor_t *
