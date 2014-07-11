@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Inria.  All rights reserved.
- * Copyright (c) 2011-2012 Universite Bordeaux 1
+ * Copyright (c) 2011-2013 Inria.  All rights reserved.
+ * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -401,6 +401,8 @@ PN2(void, MPI_Waitall, mpi_waitall, MPI_WAITALL, (MPI_Fint *count, MPI_Fint *arr
 PN2(void, MPI_Waitany, mpi_waitany, MPI_WAITANY, (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Wait, mpi_wait, MPI_WAIT, (MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Waitsome, mpi_waitsome, MPI_WAITSOME, (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr));
+PN2(void, MPI_Win_allocate_shared, mpi_win_allocate_shared, MPI_WIN_ALLOCATE_SHARED, (MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, char *baseptr, MPI_Fint *win, MPI_Fint *ierr));
+PN2(void, MPI_Win_allocate_shared_cptr, mpi_win_allocate_shared_cptr, MPI_WIN_ALLOCATE_SHARED_CPTR, (MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, char *baseptr, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_call_errhandler, mpi_win_call_errhandler, MPI_WIN_CALL_ERRHANDLER, (MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN2(void, MPI_Win_complete, mpi_win_complete, MPI_WIN_COMPLETE, (MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_create, mpi_win_create, MPI_WIN_CREATE, (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr));
@@ -423,6 +425,8 @@ PN2(void, MPI_Win_post, mpi_win_post, MPI_WIN_POST, (MPI_Fint *group, MPI_Fint *
 PN2(void, MPI_Win_set_attr, mpi_win_set_attr, MPI_WIN_SET_ATTR, (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr));
 PN2(void, MPI_Win_set_errhandler, mpi_win_set_errhandler, MPI_WIN_SET_ERRHANDLER, (MPI_Fint *win, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN2(void, MPI_Win_set_name, mpi_win_set_name, MPI_WIN_SET_NAME, (MPI_Fint *win, char *win_name, MPI_Fint *ierr, int name_len));
+PN2(void, MPI_Win_shared_query, mpi_win_shared_query, MPI_WIN_SHARED_QUERY, (MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size, MPI_Fint *disp_unit, char *baseptr, MPI_Fint *ierr));
+PN2(void, MPI_Win_shared_query_cptr, mpi_win_shared_query_cptr, MPI_WIN_SHARED_QUERY_CPTR, (MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size, MPI_Fint *disp_unit, char *baseptr, MPI_Fint *ierr));
 PN2(void, MPI_Win_start, mpi_win_start, MPI_WIN_START, (MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_test, mpi_win_test, MPI_WIN_TEST, (MPI_Fint *win, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
 PN2(void, MPI_Win_unlock, mpi_win_unlock, MPI_WIN_UNLOCK, (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr));

@@ -83,6 +83,16 @@ included in the vX.Y.Z section and be denoted as:
 - Correct SLURM stdout/stderr redirection.
 - Added missing portals 4 files.
 - Performance improvements for blocking sends and receives.
+- Lots of cleanup to the ml collective component
+- Added new Java methods to provide full MPI coverage
+- Many OSHMEM cleanups
+- Prevent comm_spawn from automatically launching a VM across
+  all available nodes
+- Close many memory leaks to achieve valgrind-clean operation
+- Better handling of TCP connection discovery for mismatched networks
+  where we don't have a direct 1:1 subnet match between nodes
+- Prevent segfault when OMPI info tools are used in pipes and user
+  exits one step of that pipe before completing output
 
 
 1.8.1

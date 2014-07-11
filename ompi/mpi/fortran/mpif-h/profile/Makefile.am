@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2012 The University of Tennessee and The University
+# Copyright (c) 2004-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -11,8 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011-2012 Inria.  All rights reserved.
-# Copyright (c) 2011-2012 Universite Bordeaux 1
+# Copyright (c) 2011-2013 Inria.  All rights reserved.
+# Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -22,6 +22,7 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.man-page-rules
 
 #
 # OMPI_PROFILING_DEFINES flag is enabled when we want our MPI_* symbols
@@ -313,6 +314,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         prput_f.c \
         pcompare_and_swap_f.c \
         pfetch_and_op_f.c \
+        pwin_allocate_shared_f.c \
         pwin_call_errhandler_f.c \
         pwin_complete_f.c \
         pwin_create_errhandler_f.c \
@@ -331,6 +333,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pwin_set_attr_f.c \
         pwin_set_errhandler_f.c \
         pwin_set_name_f.c \
+        pwin_shared_query_f.c \
         pwin_start_f.c \
         pwin_test_f.c \
         pwin_unlock_f.c \
@@ -405,7 +408,7 @@ endif
 # Sym link in the sources from the real MPI directory
 #
 $(nodist_libmpi_mpifh_pmpi_la_SOURCES):
-	if test ! -r $@ ; then \
+	$(OMPI_V_LN_S) if test ! -r $@ ; then \
 	    pname=`echo $@ | cut -b '2-'` ; \
 	    $(LN_S) $(top_srcdir)/ompi/mpi/fortran/mpif-h/$$pname $@ ; \
 	fi

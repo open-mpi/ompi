@@ -23,8 +23,6 @@
 #
 
 AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
-    OPAL_VAR_SCOPE_PUSH([ompi_fortran_happy])
-
     # Default to building nothing
     OMPI_BUILD_FORTRAN_MPIFH_BINDINGS=0
     OMPI_BUILD_FORTRAN_USEMPI_BINDINGS=0
@@ -208,26 +206,11 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # How big should MPI_STATUS_SIZE be?  (i.e., the size of
     # MPI_STATUS, expressed in units of Fortran INTEGERs).  The C
     # equivalent of MPI_Status contains 4 C ints and a size_t.
-
-    # Per the thread starting here:
-    # http://www.open-mpi.org/community/lists/users/2013/10/22882.php,
-    # the size was computed wrong for a long time.  However, we can't
-    # change the size in the middle of the v1.6 series because it
-    # would break ABI.  Hence, we have to add an additional,
-    # non-default configure switch that allows users to intentionally
-    # break ABI if they want to.
-    AC_ARG_ENABLE([abi-breaking-fortran-status-i8-fix],
-        AC_HELP_STRING([--enable-abi-breaking-fortran-status-i8-fix],
-            [If the size of Fortran INTEGERs are larger than C ints, problems can occur with MPI_STATUS_SIZE.  Enabling this option fixes the issue, but breaks ABI with the rest of the v1.5/v1.6 series.  Note that if you use MPI_STATUS_IGNORE in your Fortran application and never examine an MPI_Status INTEGER array, you do not need this fix (default: disabled).]))
-    size=$OMPI_SIZEOF_FORTRAN_INTEGER
-    AS_IF([test "$enable_abi_breaking_fortran_status_i8_fix" = "yes"],
-          [size=$ac_cv_sizeof_int])
-
     OMPI_FORTRAN_STATUS_SIZE=0
     AC_MSG_CHECKING([for the value of MPI_STATUS_SIZE])
     bytes=`expr 4 \* $ac_cv_sizeof_int + $ac_cv_sizeof_size_t`
-    num_integers=`expr $bytes / $size`
-    sanity=`expr $num_integers \* $size`
+    num_integers=`expr $bytes / $ac_cv_sizeof_int`
+    sanity=`expr $num_integers \* $ac_cv_sizeof_int`
     AS_IF([test "$sanity" != "$bytes"],
           [AC_MSG_RESULT([unknown!])
            AC_MSG_WARN([WARNING: Size of C int: $ac_cv_sizeof_int])
@@ -261,46 +244,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], 4, [OMPI_FORTRAN_C_INT16_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 9, [OMPI_FORTRAN_C_INT32_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 18, [OMPI_FORTRAN_C_INT64_T_KIND])
-
-    # Get the kind value for Fortran MPI_INTEGER_KIND (corresponding
-    # to whatever is the same size as a F77 INTEGER -- for the
-    # most-likely-will-never-occur case where F77 INTEGER is smaller
-    # than an F90 INTEGER; see MPI-2 4.12.6.5.  As with OMPI
-    # FORTRAN_CHECK, use the official BIND(C) KIND names (see comment
-    # in fortran_check.m4).
-    if test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 2; then
-        OMPI_MPI_INTEGER_KIND=$OMPI_FORTRAN_C_INT16_T_KIND
-    elif test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 4; then
-        OMPI_MPI_INTEGER_KIND=$OMPI_FORTRAN_C_INT32_T_KIND
-    elif test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 8; then
-        OMPI_MPI_INTEGER_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
-    elif test $OMPI_SIZEOF_FORTRAN_INTEGER -eq 16; then
-        AC_MSG_ERROR([Cannot support Fortran MPI_INTEGER_KIND!])
-    fi
-    AC_SUBST(OMPI_MPI_INTEGER_KIND)
-
-    # Get the kind value for Fortran MPI_ADDRESS_KIND (corresponding
-    # to whatever is big enough to hold (void*)).
-    if test $ac_cv_sizeof_void_p = 2 ; then
-        OMPI_MPI_ADDRESS_KIND=$OMPI_FORTRAN_C_INT16_T_KIND
-    elif test $ac_cv_sizeof_void_p = 4 ; then
-        OMPI_MPI_ADDRESS_KIND=$OMPI_FORTRAN_C_INT32_T_KIND
-    elif test $ac_cv_sizeof_void_p = 8 ; then
-        OMPI_MPI_ADDRESS_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
-    elif test $ac_cv_sizeof_void_p = 16 ; then
-        AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
-    fi
-    AC_SUBST(OMPI_MPI_ADDRESS_KIND)
-    
-    # Get the kind value for Fortran MPI_OFFSET_KIND (corresponding to
-    # INTEGER*8).
-    OMPI_MPI_OFFSET_KIND=$OMPI_FORTRAN_C_INT64_T_KIND
-    AC_SUBST(OMPI_MPI_OFFSET_KIND)
-
-    # Get the kind value for Fortran MPI_COUNT_KIND (corresponding to 
-    # INTEGER*8) 
-    OMPI_MPI_COUNT_KIND=$OMPI_FORTRAN_C_INT64_T_KIND 
-    AC_SUBST(OMPI_MPI_COUNT_KIND) 
 
     #--------------------------------------------------------
     # This is all we need for the Fortran mpif.h MPI bindings
@@ -341,6 +284,13 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                   OMPI_FORTRAN_USEMPI_LIB=-lmpi_usempi])
           ])
 
+    OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+           test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_ISO_C_BINDING(
+               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=1],
+               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=0])])
+
     AC_MSG_CHECKING([if building Fortran 'use mpi' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1],
           [AC_MSG_RESULT([yes])],
@@ -366,14 +316,11 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # the necessary forms of BIND(C)
     OMPI_FORTRAN_HAVE_BIND_C=0
 
-    OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [ # If we don't have ISO C bindings, we won't build mpi_f08 at all
-           OMPI_FORTRAN_CHECK_ISO_C_BINDING(
-               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=1],
-               [OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
-                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+           AS_IF([test "$OMPI_FORTRAN_HAVE_ISO_C_BINDING" -eq 0],
+                 [OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
     OMPI_FORTRAN_HAVE_BIND_C_SUB=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
@@ -685,6 +632,7 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C,
                        [$OMPI_FORTRAN_HAVE_BIND_C],
                        [For ompi_info: Whether the compiler supports all forms of BIND(C) that we need])
+    AC_SUBST(OMPI_FORTRAN_HAVE_ISO_C_BINDING)
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_ISO_C_BINDING,
                        [$OMPI_FORTRAN_HAVE_ISO_C_BINDING],
                        [For ompi_info: Whether the compiler supports ISO_C_BINDING or not])

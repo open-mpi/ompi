@@ -1,10 +1,10 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      The University of Tennessee and The University
+ * Copyright (c) 2011-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      INRIA.  All rights reserved.
- * Copyright (c) 2011      Université Bordeaux 1
+ * Copyright (c) 2011-2013 Inria.  All rights reserved.
+ * Copyright (c) 2011-2013 Université Bordeaux 1
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$

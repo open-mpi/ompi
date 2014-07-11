@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Inria.  All rights reserved.
- * Copyright (c) 2011      Universite Bordeaux 1
+ * Copyright (c) 2011-2013 Inria.  All rights reserved.
+ * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -344,6 +344,8 @@
 #define ompi_waitany_f pompi_waitany_f
 #define ompi_wait_f pompi_wait_f
 #define ompi_waitsome_f pompi_waitsome_f
+#define ompi_win_allocate_shared_f pompi_win_allocate_shared_f
+#define ompi_win_allocate_shared_cptr_f pompi_win_allocate_shared_cptr_f
 #define ompi_win_call_errhandler_f pompi_win_call_errhandler_f
 #define ompi_win_complete_f pompi_win_complete_f
 #define ompi_win_create_f pompi_win_create_f
@@ -366,6 +368,8 @@
 #define ompi_win_set_attr_f pompi_win_set_attr_f
 #define ompi_win_set_errhandler_f pompi_win_set_errhandler_f
 #define ompi_win_set_name_f pompi_win_set_name_f
+#define ompi_win_shared_query_f pompi_win_shared_query_f
+#define ompi_win_shared_query_cptr_f pompi_win_shared_query_cptr_f
 #define ompi_win_start_f pompi_win_start_f
 #define ompi_win_test_f pompi_win_test_f
 #define ompi_win_unlock_f pompi_win_unlock_f

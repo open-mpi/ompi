@@ -18,8 +18,8 @@ dnl
 dnl $HEADER$
 dnl
 
-# Check whether or not the Fortran compiler supports BIND(C) or not
-
+# Check whether or not the Fortran compiler supports iso_c_binding or not
+#
 # OMPI_FORTRAN_CHECK_ISO_C_BINDING([action if found], [action if not found])
 # ----------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_CHECK_ISO_C_BINDING],[
@@ -96,7 +96,7 @@ end module]])],
 AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_TYPE_NAME],[
     AS_VAR_PUSHDEF([bind_c_type_name_var], [ompi_cv_fortran_have_bind_c_type_name])
 
-    # See comment in ompi_setup_mpi_fortran.m4: it is important that 
+    # See comment in ompi_setup_mpi_fortran.m4: it is important that
     # the bind(c) name in this text is longer than 32 characters.
 
     AC_CACHE_CHECK([if Fortran compiler supports TYPE(type), BIND(C, NAME="name")], bind_c_type_name_var,

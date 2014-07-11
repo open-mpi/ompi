@@ -3,6 +3,7 @@ program main
 interface
    subroutine print_array(A, count) BIND(C, name="print_array")
      !DEC$ ATTRIBUTES NO_ARG_CHECK :: A
+     !GCC$ ATTRIBUTES NO_ARG_CHECK :: A
      real :: A
      integer, value :: count
    end subroutine

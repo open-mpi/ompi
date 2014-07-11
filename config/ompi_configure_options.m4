@@ -256,7 +256,10 @@ AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 0],
       [AC_MSG_RESULT([none (use mpi_f08 disabled)])],
       [AS_IF([test "$enable_mpi_f08_subarray_prototype" = "yes"],
              [OMPI_BUILD_FORTRAN_F08_SUBARRAYS=1
-              AC_MSG_RESULT([extra crispy (subarray prototype)])],
+              AC_MSG_RESULT([extra crispy (subarray prototype)]) 
+              AC_MSG_WARN([Sorry, the subarray prototype is no longer available]) 
+              AC_MSG_WARN([Contact your favorite OMPI developer and ask for it to be re-enabled]) 
+              AC_MSG_ERROR([Cannot continue])],
              [AC_MSG_RESULT([regular (no subarray support)])])
       ])
 AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],

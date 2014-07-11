@@ -20,9 +20,9 @@
 
 max_array_rank=7
 
-ikinds="@OMPI_FORTRAN_IKINDS@"
-rkinds="@OMPI_FORTRAN_RKINDS@"
-ckinds="@OMPI_FORTRAN_CKINDS@"
+ikinds="1 2 4 8"
+rkinds="4 8 16"
+ckinds="8 16 32"
 
 # In prior versions of Open MPI, we used to allow the user to choose
 # which "size" of "use mpi" module to build: tiny, small, medium, and
