@@ -1410,7 +1410,7 @@ static int fca_register(void)
     mca_coll_fca_component.compiletime_version = FCA_VERNO_STRING;
     (void) mca_base_component_var_register(c,
             MCA_COMPILETIME_VER,
-            "Version of the libfca library ompi compiled with",
+            "Version of the libfca library with which Open MPI was compiled",
             MCA_BASE_VAR_TYPE_VERSION_STRING,
             NULL, 0, 0,
             OPAL_INFO_LVL_3,
@@ -1419,7 +1419,7 @@ static int fca_register(void)
     mca_coll_fca_component.runtime_version = fca_get_version_string();
     (void) mca_base_component_var_register(c,
             MCA_RUNTIME_VER,
-            "Version of the libfca library ompi run with",
+            "Version of the libfca library with which Open MPI is running",
             MCA_BASE_VAR_TYPE_VERSION_STRING,
             NULL, 0, 0,
             OPAL_INFO_LVL_3,
