@@ -738,31 +738,11 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
         OBJ_RELEASE(nm);
     }
 
-    /* determine how many contributors we need to recv - we know
-     * that all job objects were found, so we can skip that test
-     * while counting
-     */
-    np = 0;
-    for (item = opal_list_get_first(&coll->participants);
-         item != opal_list_get_end(&coll->participants);
-         item = opal_list_get_next(item)) {
-        nm = (orte_namelist_t*)item;
-        /* get the job object for this participant */
-        jdata = orte_get_job_data_object(nm->name.jobid);
-        if (ORTE_VPID_WILDCARD == nm->name.vpid) {
-            /* all procs from this job are required to participate */
-            np += jdata->num_procs;
-        } else {
-            np++;
-        }
-    }
-
-    /* are we done? */
-    if (np != coll->num_global_recvd) {
+    if (jdata->num_procs != coll->num_global_recvd) {
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:base:daemon_coll: MISSING CONTRIBUTORS: np %s ngr %s",
+                             "%s grpcomm:base:daemon_coll: MISSING CONTRIBUTORS: nprocs %s num_global_recvd %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_VPID_PRINT(np),
+                             ORTE_VPID_PRINT(jdata->num_procs),
                              ORTE_VPID_PRINT(coll->num_global_recvd)));
         return;
     }
@@ -770,28 +750,11 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
     /* since we discovered that the collective is complete, we
      * need to send it to all the participants
      */
-    for (item = opal_list_get_first(&coll->participants);
-         item != opal_list_get_end(&coll->participants);
-         item = opal_list_get_next(item)) {
-        nm = (orte_namelist_t*)item;
-        relay = OBJ_NEW(opal_buffer_t);
-        opal_dss.pack(relay, &coll->id, 1, ORTE_GRPCOMM_COLL_ID_T);
-        opal_dss.copy_payload(relay, &coll->buffer);
-        /* if the vpid is wildcard, then this goes to
-         * all daemons for relay
-         */
-        if (ORTE_VPID_WILDCARD == nm->name.vpid) {
-            orte_grpcomm.xcast(nm->name.jobid, relay, ORTE_RML_TAG_COLLECTIVE);
-            OBJ_RELEASE(relay);
-        } else {
-            /* send it to this proc */
-            if (0 > orte_rml.send_buffer_nb(&nm->name, relay, ORTE_RML_TAG_COLLECTIVE,
-                                            orte_rml_send_callback, NULL)) {
-                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-                OBJ_RELEASE(relay);
-            }
-        }
-    }
+    relay = OBJ_NEW(opal_buffer_t);
+    opal_dss.pack(relay, &coll->id, 1, ORTE_GRPCOMM_COLL_ID_T);
+    opal_dss.copy_payload(relay, &coll->buffer);
+    orte_grpcomm.xcast(jdata->jobid, relay, ORTE_RML_TAG_COLLECTIVE);
+    OBJ_RELEASE(relay);
 
     /* remove this collective */
     opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
