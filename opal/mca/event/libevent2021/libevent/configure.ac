@@ -13,7 +13,7 @@ AC_INIT([libevent], [2.0.21-stable], [http://libevent.org], [libevent])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Open MPI: changed to one 1 arg AM INIT_AUTOMAKE
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 # Open MPI: changed AM CONFIG_HEADER to AC CONFIG_HEADERS
 AC_CONFIG_HEADERS(config.h)
 AC_DEFINE(NUMERIC_VERSION, 0x02001500, [Numeric representation of the version])
