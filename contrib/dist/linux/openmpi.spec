@@ -203,7 +203,7 @@
 Summary: A powerful implementation of MPI/SHMEM
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 1
+Release: 1%{?dist}
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
