@@ -25,7 +25,7 @@ AC_INIT([openmpi_btl_tcp2], [1.0.0],
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
-AM_INIT_AUTOMAKE([foreign dist-bzip2 no-define 1.11])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 no-define 1.11 subdir-objects])
 AM_SILENT_RULES([yes])
 
 AC_LANG([C])
