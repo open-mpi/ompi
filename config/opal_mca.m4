@@ -225,7 +225,7 @@ AC_DEFUN([OPAL_MCA],[
                [# BWB: Until projects have seperate configure scripts
                 # and can skip running all of ORTE, just avoid recursing
                 # into orte sub directory if orte disabled
-                if test "mca_project" = "ompi" -a "$enable_mpi" != "no" || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem" || test "mca_project" = "orcm"; then
+                if test "mca_project" = "ompi" -a "$enable_mpi" != "no" || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem"; then
                    MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
                 fi
                 MCA_CONFIGURE_PROJECT(mca_project)])
