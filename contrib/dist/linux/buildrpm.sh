@@ -212,6 +212,7 @@ fi
 
 if test "$build_srpm" = "yes"; then
     echo "--> Building the Open MPI SRPM"
+    rpmbuild_options="$rpmbuild_options --define 'dist %{nil}'"
     cmd="$rpm_cmd $rpmbuild_options -bs $specdest"
     echo "--> $cmd"
     eval $cmd
