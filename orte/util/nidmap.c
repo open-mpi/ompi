@@ -863,23 +863,45 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                     goto cleanup;
                 }
                 OBJ_DESTRUCT(&kv);
-                /* if coprocessors were detected, lookup and store the hostid for this proc */
-                if (orte_coprocessors_detected) {
-                    /* lookup the hostid for this daemon */
+                /* in a singleton comm_spawn, we can be passed the name of a daemon, which
+                 * means that the proc's parent is invalid - check and avoid the rest of
+                 * this logic in that case */
+                if (ORTE_VPID_INVALID != dmn.vpid) {
+                    /* if coprocessors were detected, lookup and store the hostid for this proc */
+                    if (orte_coprocessors_detected) {
+                        /* lookup the hostid for this daemon */
+                        OBJ_CONSTRUCT(&myvals, opal_list_t);
+                        if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+                                                                    (opal_identifier_t*)&dmn,
+                                                                    ORTE_DB_HOSTID, &myvals))) {
+                            ORTE_ERROR_LOG(rc);
+                            OPAL_LIST_DESTRUCT(&myvals);
+                            goto cleanup;
+                        }
+                        kvp = (opal_value_t*)opal_list_get_first(&myvals);
+                        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                                             "%s FOUND HOSTID %s FOR DAEMON %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_VPID_PRINT(kvp->data.uint32), ORTE_VPID_PRINT(dmn.vpid)));
+                        /* store it as hostid for this proc */
+                        if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                                                                    (opal_identifier_t*)&(pptr->name), kvp))) {
+                            ORTE_ERROR_LOG(rc);
+                            OPAL_LIST_DESTRUCT(&myvals);
+                            goto cleanup;
+                        }
+                        OPAL_LIST_DESTRUCT(&myvals);
+                    }
+                    /* lookup and store the hostname for this proc */
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
-                    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+                    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                                 (opal_identifier_t*)&dmn,
-                                                                ORTE_DB_HOSTID, &myvals))) {
+                                                                ORTE_DB_HOSTNAME, &myvals))) {
                         ORTE_ERROR_LOG(rc);
                         OPAL_LIST_DESTRUCT(&myvals);
                         goto cleanup;
                     }
                     kvp = (opal_value_t*)opal_list_get_first(&myvals);
-                    OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
-                                         "%s FOUND HOSTID %s FOR DAEMON %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_VPID_PRINT(kvp->data.uint32), ORTE_VPID_PRINT(dmn.vpid)));
-                    /* store it as hostid for this proc */
                     if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
                                                                 (opal_identifier_t*)&(pptr->name), kvp))) {
                         ORTE_ERROR_LOG(rc);
@@ -888,23 +910,6 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                     }
                     OPAL_LIST_DESTRUCT(&myvals);
                 }
-                /* lookup and store the hostname for this proc */
-                OBJ_CONSTRUCT(&myvals, opal_list_t);
-                if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                            (opal_identifier_t*)&dmn,
-                                                            ORTE_DB_HOSTNAME, &myvals))) {
-                    ORTE_ERROR_LOG(rc);
-                    OPAL_LIST_DESTRUCT(&myvals);
-                    goto cleanup;
-                }
-                kvp = (opal_value_t*)opal_list_get_first(&myvals);
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
-                                                            (opal_identifier_t*)&(pptr->name), kvp))) {
-                    ORTE_ERROR_LOG(rc);
-                    OPAL_LIST_DESTRUCT(&myvals);
-                    goto cleanup;
-                }
-                OPAL_LIST_DESTRUCT(&myvals);
                 /* store this procs global rank - only used by us */
                 OBJ_CONSTRUCT(&kv, opal_value_t);
                 kv.key = strdup(ORTE_DB_GLOBAL_RANK);
