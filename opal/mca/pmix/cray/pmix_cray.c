@@ -20,8 +20,6 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 
-#include "pmi2_pmap_parser.h"
-
 #include <string.h>
 #include <pmi.h>
 #include <pmi2.h>
@@ -86,7 +84,7 @@ static int cray_unpublish(const char service_name[],
 static int cray_local_info(int vpid, int **ranks_ret,
                            int *procs_ret, char **error);
 
-opal_pmix_base_module_t opal_pmix_cray_module = {
+const opal_pmix_base_module_t opal_pmix_cray_module = {
     cray_init,
     cray_fini,
     cray_initialized,
@@ -131,7 +129,7 @@ static char* pmix_error(int pmix_err);
     do {                                                        \
         opal_output(0, "%s [%s:%d:%s]: %s\n",                   \
                     pmi_func, __FILE__, __LINE__, __func__,     \
-                    pmi_error(pmi_err));                        \
+                    pmix_error(pmi_err));                       \
     } while(0);
 
 static int cray_init(void)
@@ -148,7 +146,7 @@ static int cray_init(void)
     size = -1;
     rank = -1;
     appnum = -1;
-    if (PMI2_SUCCESS != (rc = PMI2_Init(&spawned, &size, &rank, &appnum))) {
+    if (PMI_SUCCESS != (rc = PMI2_Init(&spawned, &size, &rank, &appnum))) {
         opal_show_help("help-pmix-base.txt", "pmix2-init-failed", true, rc);
         return OPAL_ERROR;
     }
@@ -166,7 +164,7 @@ static int cray_init(void)
     pmix_keylen_max = PMI2_MAX_KEYLEN;
 
     rc = PMI2_Info_GetJobAttr("universeSize", buf, 16, &found);
-    if( PMI2_SUCCESS != rc ) {
+    if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_universe_size");
         goto err_exit;
     }
@@ -179,7 +177,7 @@ static int cray_init(void)
          goto err_exit;
     }
     rc = PMI2_Job_GetId(pmix_kvs_name, pmix_kvslen_max);
-    if( PMI2_SUCCESS != rc ) {
+    if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
         goto err_exit;
     }
@@ -190,14 +188,15 @@ err_exit:
     return ret;
 }
 
-static void cray_fini(void) {
+static int cray_fini(void) {
     if (0 == pmix_init_count) {
-        return;
+        return OPAL_SUCCESS;
     }
 
     if (0 == --pmix_init_count) {
         PMI2_Finalize();
     }
+    return OPAL_SUCCESS;
 }
 
 static bool cray_initialized(void)
@@ -208,9 +207,9 @@ static bool cray_initialized(void)
     return false;
 }
 
-static void cray_abort(int status, char *msg)
+static int cray_abort(int status, const char *msg)
 {
-    PMI2_Abort(status, msg);
+    return PMI2_Abort(status, msg);
 }
 
 static int cray_spawn(int count, const char * cmds[],
@@ -244,10 +243,11 @@ static int cray_get_size(int *size)
 }
 
 static int cray_put(const char key[], const char value[])
+{
 
     int rc;
 
-    if( PMI2_SUCCESS != PMI2_KVS_Put(key, value) ){
+    if( PMI_SUCCESS != PMI2_KVS_Put(key, value) ){
         OPAL_PMI_ERROR(rc, "PMI2_KVS_Put");
         return OPAL_ERROR;
     }
@@ -256,7 +256,9 @@ static int cray_put(const char key[], const char value[])
 
 static int cray_fence(void)
 {
-    if (PMI2_SUCCESS != (rc = PMI2_KVS_Fence())) {
+    int rc;
+
+    if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
         OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
         return OPAL_ERROR;
     }
@@ -271,9 +273,9 @@ static int cray_get(const char *jobid,
                     int *vallen)
 {
     int rc;
-    int len;
-    rc = PMI2_KVS_Get(kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
-    if( PMI2_SUCCESS != rc ){
+
+    rc = PMI2_KVS_Get(pmix_kvs_name, PMI2_ID_NULL, key, value, maxvalue, vallen);
+    if( PMI_SUCCESS != rc ){
         // OPAL_PMI2_ERROR(rc, "PMI_KVS_Put");
         return OPAL_ERROR;
     }
@@ -326,7 +328,7 @@ static int cray_publish(const char service_name[],
 {
     int rc;
 
-    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, info_ptr, port))) {
+    if (PMI_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, info_ptr, port))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_publish");
         return OPAL_ERROR;
     }
@@ -339,7 +341,7 @@ static int cray_lookup(const char service_name[],
 {
     int rc;
 
-    if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, info_ptr, port, portlen))) {
+    if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, info_ptr, port, portLen))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
         free(port);
         return OPAL_ERROR;
@@ -353,7 +355,7 @@ static int cray_unpublish(const char service_name[],
 {
     int rc;
 
-    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, info_ptr))) {
+    if (PMI_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, info_ptr))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
         return OPAL_ERROR;
     }
@@ -376,14 +378,14 @@ static int cray_local_info(int vpid, int **ranks_ret,
     int my_node;
 
     rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
-    if( !found || PMI2_SUCCESS != rc ) {
-        /* can't check PMI2_SUCCESS as some folks (i.e., Cray) don't define it */
+    if( !found || PMI_SUCCESS != rc ) {
+        /* can't check PMI_SUCCESS as some folks (i.e., Cray) don't define it */
         OPAL_PMI_ERROR(rc,"PMI2_Info_GetJobAttr");
         *error = "mca_common_pmix_local_info: could not get PMI_process_mapping";
         return OPAL_ERROR;
     }
 
-    ranks = mca_common_pmix2_parse_pmap(pmapping, vpid, &my_node, &procs);
+    ranks = pmix_cray_parse_pmap(pmapping, vpid, &my_node, &procs);
     if (NULL == ranks) {
         *error = "mca_common_pmix_local_info: could not get memory for PMIv2 local ranks";
         return OPAL_ERR_OUT_OF_RESOURCE;
