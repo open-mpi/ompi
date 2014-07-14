@@ -73,7 +73,8 @@ int orte_ess_slurm_component_query(mca_base_module_t **module, int *priority)
      * by mpirun in a slurm world, so make ourselves available
      */
     
-    if (NULL != getenv("SLURM_JOBID") &&
+    if (ORTE_PROC_IS_DAEMON &&
+        NULL != getenv("SLURM_JOBID") &&
         NULL != orte_process_info.my_hnp_uri) {
         *priority = 50;
         *module = (mca_base_module_t *)&orte_ess_slurm_module;
