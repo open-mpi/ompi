@@ -8,7 +8,7 @@ AC_INIT([OTF],
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config/m4)
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([foreign subdir-objects])
+AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_HEADERS([config.h])
 
 # If Automake supports silent rules, enable them.
