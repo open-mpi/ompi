@@ -40,7 +40,7 @@ BEGIN_C_DECLS
  * as someone figures out how to separate the various
  * datastore channels
  */
-OPAL_DECLSPEC extern int opal_dstore_handle;
+OPAL_DECLSPEC extern int opal_dstore_internal;
 
 /****    DEFINE THE PUBLIC API'S    ****/
 /*
@@ -161,11 +161,6 @@ typedef struct {
 /*
  * the component data structure
  */
-/* function to determine if this component is available for use.
- * Note that we do not use the standard component open
- * function as we do not want/need return of a module.
- */
-typedef bool (*mca_dstore_base_component_avail_fn_t)(void);
 
 /* create and return a datastore module */
 typedef opal_dstore_base_module_t* (*mca_dstore_base_component_create_hdl_fn_t)(void);
@@ -176,8 +171,6 @@ typedef void (*mca_dstore_base_component_finalize_fn_t)(void);
 typedef struct {
     mca_base_component_t                      base_version;
     mca_base_component_data_t                 base_data;
-    int                                       priority;
-    mca_dstore_base_component_avail_fn_t      available;
     mca_dstore_base_component_create_hdl_fn_t create_handle;
     mca_dstore_base_component_finalize_fn_t   finalize;
 } opal_dstore_base_component_t;

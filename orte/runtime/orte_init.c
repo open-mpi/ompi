@@ -31,6 +31,7 @@
 #include <unistd.h>
 #endif
 
+#include "opal/mca/pmix/base/base.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal.h"
@@ -121,6 +122,19 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     /* Ensure the rest of the process info structure is initialized */
     if (ORTE_SUCCESS != (ret = orte_proc_info())) {
         error = "orte_proc_info";
+        goto error;
+    }
+
+    /* we must have the pmix framework setup prior to opening/selecting ESS
+     * as some of those components may depend on it */
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_open";
+        goto error;
+    }
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
         goto error;
     }
 

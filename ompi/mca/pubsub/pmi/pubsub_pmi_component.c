@@ -67,20 +67,21 @@ static int pubsub_pmi_component_open(void)
 
 static int pubsub_pmi_component_close(void)
 {
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();
+    }
     return OMPI_SUCCESS;
 }
 
 static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are indirectly launched via orted, the
-     * selection will have been turned "off" for us
-     */
-    int rc = opal_pmix.init ();
+    if (NULL != opal_pmix.init) {
     
-    if ( OPAL_SUCCESS == rc ) {
-        *priority = my_priority;
-        *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
-        return OMPI_SUCCESS;
+        if (OPAL_SUCCESS == opal_pmix.init()) {
+            *priority = my_priority;
+            *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
+            return OMPI_SUCCESS;
+        }
     }
 
     /* we can't run */

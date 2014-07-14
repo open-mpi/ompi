@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,8 +31,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pubsub_pmi_la_SOURCES = $(local_sources)
 mca_pubsub_pmi_la_LDFLAGS = -module -avoid-version $(pubsub_pmi_LDFLAGS)
-mca_pubsub_pmi_la_LIBADD = $(pubsub_pmi_LIBS) \
-	$(OMPI_TOP_BUILDDIR)/opal/mca/common/pmi/libmca_common_pmi.la
+mca_pubsub_pmi_la_LIBADD = $(pubsub_pmi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pubsub_pmi_la_SOURCES = $(local_sources)

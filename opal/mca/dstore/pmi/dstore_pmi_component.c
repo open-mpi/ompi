@@ -20,12 +20,9 @@
 #include "opal/runtime/opal_params.h"
 #include "dstore_pmi.h"
 
-static int dstore_pmi_component_register(void);
-static bool component_avail(void);
-static opal_dstore_base_module_t *component_create(void);
 static void component_finalize(void);
 static int setup_pmi(void);
-
+static int dstore_pmi_query(mca_base_module_t **module, int *priority);
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -43,65 +40,34 @@ opal_dstore_base_component_t mca_dstore_pmi_component = {
         /* Component open and close functions */
         NULL,
         NULL,
-        NULL,
-        dstore_pmi_component_register
+        dstore_pmi_query,
+        NULL
     },
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    80,
-    component_avail,
-    component_create,
+    NULL,
     component_finalize
 };
 
-static int dstore_pmi_component_register(void)
-{
-    mca_base_component_t *c = &mca_dstore_pmi_component.base_version;
-
-    mca_dstore_pmi_component.priority = 80;
-    (void) mca_base_component_var_register(c, "priority",
-                                           "Priority dictating order in which components will be considered",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_dstore_pmi_component.priority);
-    return OPAL_SUCCESS;
-}
-
-static bool component_avail(void)
-{
-    /* only use PMI if available - the ESS pmi module
-     * will force our selection if we are direct-launched,
-     * and the orted will turn us "off" if indirectly launched
-     */
-    if ( OPAL_SUCCESS == opal_pmix.init()) {
-        return true;
-    }
-    /* if not, then we are not available */
-    return false;
-}
-
-
 static void component_finalize(void)
 {
-    opal_pmix.finalize();
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();
+    }
 }
 
-static opal_dstore_base_module_t *component_create(void)
+static int dstore_pmi_query(mca_base_module_t **module, int *priority)
 {
-    mca_dstore_pmi_module_t *mod;
-
-    mod = (mca_dstore_pmi_module_t*)malloc(sizeof(mca_dstore_pmi_module_t));
-    if (NULL == mod) {
-        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-        return NULL;
+    /* only use PMI if available */
+    if (NULL != opal_pmix.init && OPAL_SUCCESS == opal_pmix.init()) {
+        *priority = 1;
+        *module = (mca_base_module_t *)&opal_dstore_pmi_module;
+        return ORTE_SUCCESS;
     }
-    /* copy the APIs across */
-    memcpy(mod, &opal_dstore_pmi_module.api, sizeof(opal_dstore_base_module_t));
-    OBJ_CONSTRUCT(&mod->hash_data, opal_hash_table_t);
-    opal_hash_table_init(&mod->hash_data, 256);
-
-    return (opal_dstore_base_module_t*)mod;
+    /* if not, then we are not available */
+    *priority = -1;
+    *module = NULL;
+    return OPAL_ERROR;
 }

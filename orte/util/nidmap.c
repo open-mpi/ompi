@@ -439,7 +439,7 @@ static int decode_app_nodemap(opal_byte_object_t *bo)
             kv.key = strdup(ORTE_DB_HOSTNAME);
             kv.type = OPAL_STRING;
             kv.data.string = strdup(node->name);
-            if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+            if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&kv);
@@ -451,7 +451,7 @@ static int decode_app_nodemap(opal_byte_object_t *bo)
             kv.key = strdup(ORTE_DB_DAEMON_VPID);
             kv.type = OPAL_UINT32;
             kv.data.uint32 = daemon.vpid;
-            if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+            if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                         (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&kv);
@@ -471,7 +471,7 @@ static int decode_app_nodemap(opal_byte_object_t *bo)
             kv.key = strdup(ORTE_DB_HOSTID);
             kv.type = OPAL_UINT32;
             kv.data.uint32 = hostid;
-            if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+            if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                         (opal_identifier_t*)&daemon, &kv))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&kv);
@@ -479,7 +479,7 @@ static int decode_app_nodemap(opal_byte_object_t *bo)
             }
             /* if this is my daemon, then store it as my hostid as well */
             if (daemon.vpid == ORTE_PROC_MY_DAEMON->vpid) {
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                             (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
@@ -835,7 +835,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                     goto cleanup;
                 }
                 /* also need a copy in nonpeer to support dynamic spawns */
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                             (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
@@ -856,7 +856,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                 kv.key = strdup(ORTE_DB_DAEMON_VPID);
                 kv.type = OPAL_UINT32;
                 kv.data.uint32 = pptr->parent;
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                             (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);
@@ -867,7 +867,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                 if (orte_coprocessors_detected) {
                     /* lookup the hostid for this daemon */
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
-                    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+                    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                                 (opal_identifier_t*)&dmn,
                                                                 ORTE_DB_HOSTID, &myvals))) {
                         ORTE_ERROR_LOG(rc);
@@ -880,7 +880,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          ORTE_VPID_PRINT(kvp->data.uint32), ORTE_VPID_PRINT(dmn.vpid)));
                     /* store it as hostid for this proc */
-                    if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                    if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                                 (opal_identifier_t*)&(pptr->name), kvp))) {
                         ORTE_ERROR_LOG(rc);
                         OPAL_LIST_DESTRUCT(&myvals);
@@ -898,7 +898,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                     goto cleanup;
                 }
                 kvp = (opal_value_t*)opal_list_get_first(&myvals);
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                             (opal_identifier_t*)&(pptr->name), kvp))) {
                     ORTE_ERROR_LOG(rc);
                     OPAL_LIST_DESTRUCT(&myvals);
@@ -925,7 +925,7 @@ static int decode_app_pidmap(opal_byte_object_t *bo)
                 kv.key = strdup(ORTE_DB_GLOBAL_RANK);
                 kv.type = OPAL_UINT32;
                 kv.data.uint32 = pptr->name.vpid + offset;
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                             (opal_identifier_t*)&(pptr->name), &kv))) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_DESTRUCT(&kv);

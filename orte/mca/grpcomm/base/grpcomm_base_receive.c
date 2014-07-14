@@ -360,7 +360,7 @@ void orte_grpcomm_base_process_modex(int fd, short args, void *cbdata)
         }
 
         /* collect the desired data */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, opal_dstore_peer))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, opal_dstore_internal))) {
             ORTE_ERROR_LOG(rc);
         }
 
@@ -420,7 +420,7 @@ static void direct_modex(int status, orte_process_name_t* sender,
     }
 
     /* collect the desired data */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, opal_dstore_peer))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(buf, opal_dstore_internal))) {
         ORTE_ERROR_LOG(rc);
     }
 

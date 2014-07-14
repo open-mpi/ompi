@@ -164,7 +164,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         goto error;
     }
     
-    /* data store */
+    /* setup the dstore framework */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "opal_dstore_base_open";
@@ -172,22 +172,12 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     }
     if (ORTE_SUCCESS != (ret = opal_dstore_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_dstore_base_select";
+        error = "opal_dstore_base_select";
         goto error;
     }
-    /* create the handles */
-    if (0 > (opal_dstore_peer = opal_dstore.open("PEER"))) {
-        error = "opal dstore global";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
+    /* create the handle */
     if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
         error = "opal dstore internal";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
-    if (0 > (opal_dstore_nonpeer = opal_dstore.open("NONPEER"))) {
-        error = "opal dstore nonpeer";
         ret = ORTE_ERR_FATAL;
         goto error;
     }
