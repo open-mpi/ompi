@@ -148,7 +148,7 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
         }
 
         /* this is between our peers, so only collect info marked for them */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_peer))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_internal))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -224,7 +224,7 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
          * Thus, we need to include the non-peer info as well as our peers
          * since we can't tell what the other participants may already have
          */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_peer))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_internal))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -233,7 +233,7 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_nonpeer))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_internal))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -306,7 +306,7 @@ void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
                  * since the "peer" datastore is for storing our own data - i.e.,
                  * it contains data we will share with our peers
                  */
-                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_nonpeer,
+                if (ORTE_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                             (opal_identifier_t*)&pname, kv))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;

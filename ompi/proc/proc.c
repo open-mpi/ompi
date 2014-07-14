@@ -154,15 +154,11 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
 
     /* if we don't already have it, compute and save it for future use */
     OBJ_CONSTRUCT(&myvals, opal_list_t);
-    if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_nonpeer,
+    if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
                                                  (opal_identifier_t*)&proc->proc_name,
                                                  OMPI_RTE_NODE_ID, &myvals))) {
-        if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_peer,
-                                                     (opal_identifier_t*)&proc->proc_name,
-                                                     OMPI_RTE_NODE_ID, &myvals))) {
-            OPAL_LIST_DESTRUCT(&myvals);
-            return ret;
-        }
+        OPAL_LIST_DESTRUCT(&myvals);
+        return ret;
     }
     kv = (opal_value_t*)opal_list_get_first(&myvals);
     vpid = kv->data.uint32;
@@ -200,18 +196,9 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
 
             /* retrieve the binding for the other proc */
             OBJ_CONSTRUCT(&myvals, opal_list_t);
-            if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
-                                                         (opal_identifier_t*)&proc->proc_name,
-                                                         OPAL_DSTORE_CPUSET, &myvals))) {
-                /* check the nonpeer data in case of comm_spawn */
-                if (OMPI_SUCCESS != ( ret = opal_dstore.fetch(opal_dstore_nonpeer,
-                                                              (opal_identifier_t*)&proc->proc_name,
-                                                              OPAL_DSTORE_CPUSET, &myvals))) {
-                    ret = opal_dstore.fetch(opal_dstore_peer,
-                                            (opal_identifier_t*)&proc->proc_name,
-                                            OPAL_DSTORE_CPUSET, &myvals);
-                }
-            }
+            ret = opal_dstore.fetch(opal_dstore_internal,
+                                    (opal_identifier_t*)&proc->proc_name,
+                                    OPAL_DSTORE_CPUSET, &myvals);
             if (OMPI_SUCCESS != ret) {
                 /* we don't know their cpuset, so nothing more we can say */
                 locality = OPAL_PROC_ON_NODE;
@@ -611,23 +598,15 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
              * data that each process computes about its peers
              */
             OBJ_CONSTRUCT(&data, opal_list_t);
-            rc = opal_dstore.fetch(opal_dstore_peer,
+            rc = opal_dstore.fetch(opal_dstore_internal,
                                    (opal_identifier_t*)&proclist[i]->proc_name,
                                    NULL, &data);
             if (OPAL_SUCCESS != rc) {
                 OMPI_ERROR_LOG(rc);
                 num_entries = 0;
             } else {
-                rc = opal_dstore.fetch(opal_dstore_nonpeer,
-                                       (opal_identifier_t*)&proclist[i]->proc_name,
-                                       NULL, &data);
-                if (OPAL_SUCCESS != rc) {
-                    OMPI_ERROR_LOG(rc);
-                    num_entries = 0;
-                } else {
-                    /* count the number of entries we will send */
-                    num_entries = opal_list_get_size(&data);
-                }
+                /* count the number of entries we will send */
+                num_entries = opal_list_get_size(&data);
             }
 
             /* put the number of entries into the buffer */
@@ -798,7 +777,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                     if (OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                                    OMPI_PROC_MY_NAME, &new_name)) {
                         /* store it in the database */
-                        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_peer,
+                        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                                     (opal_identifier_t*)&new_name, kv))) {
                             OMPI_ERROR_LOG(rc);
                         }
@@ -807,7 +786,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 }
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_CONSTRUCT(&myvals, opal_list_t);
-                rc = opal_dstore.fetch(opal_dstore_peer,
+                rc = opal_dstore.fetch(opal_dstore_internal,
                                        (opal_identifier_t*)&new_name,
                                        "OMPI_ARCH", &myvals);
                 if( OPAL_SUCCESS == rc ) {
@@ -823,7 +802,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 if (ompi_process_info.num_procs < ompi_hostname_cutoff) {
                     /* retrieve the hostname */
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
-                    rc = opal_dstore.fetch(opal_dstore_peer,
+                    rc = opal_dstore.fetch(opal_dstore_internal,
                                            (opal_identifier_t*)&new_name,
                                            OMPI_DB_HOSTNAME, &myvals);
                     if( OPAL_SUCCESS == rc ) {

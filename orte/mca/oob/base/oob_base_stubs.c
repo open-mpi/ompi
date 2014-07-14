@@ -65,7 +65,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
          * to our hash table
          */
         OBJ_CONSTRUCT(&myvals, opal_list_t);
-	if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_peer,
+	if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal,
                                               (opal_identifier_t*)&msg->dst,
                                               ORTE_DB_RMLURI, &myvals)) {
             kv = (opal_value_t*)opal_list_get_first(&myvals);

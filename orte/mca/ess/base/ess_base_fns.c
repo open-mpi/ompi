@@ -301,7 +301,7 @@ int orte_ess_base_proc_binding(void)
         kv.key = strdup(OPAL_DSTORE_CPUSET);
         kv.type = OPAL_STRING;
         kv.data.string = strdup(orte_process_info.cpuset);
-        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_nonpeer,
+        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
                                                      (opal_identifier_t*)ORTE_PROC_MY_NAME,
                                                      &kv))) {
             ORTE_ERROR_LOG(ret);

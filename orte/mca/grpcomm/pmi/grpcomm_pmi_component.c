@@ -73,6 +73,10 @@ int orte_grpcomm_pmi_open(void)
 
 int orte_grpcomm_pmi_close(void)
 {
+    if (NULL != opal_pmix.finalize) {
+        opal_pmix.finalize();  // balances query
+    }
+
     return ORTE_SUCCESS;
 }
 
@@ -81,7 +85,7 @@ int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
     /* if we are indirectly launched via orted, the
      * selection will have been turned "off" for us
      */
-    if (ORTE_PROC_IS_APP &&
+    if (ORTE_PROC_IS_APP && NULL != opal_pmix.init &&
         OPAL_SUCCESS == opal_pmix.init()) {
         /* if PMI is available, make it available for use by MPI procs */
         *priority = my_priority;

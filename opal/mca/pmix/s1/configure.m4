@@ -25,5 +25,4 @@ AC_DEFUN([MCA_opal_pmix_s1_CONFIG], [
     AC_SUBST([pmix_s1_CPPFLAGS])
     AC_SUBST([pmix_s1_LDFLAGS])
     AC_SUBST([pmix_s1_LIBS])
-
 ])

@@ -38,9 +38,7 @@ opal_dstore_base_API_t opal_dstore = {
 };
 opal_dstore_base_t opal_dstore_base;
 
-int opal_dstore_peer = -1;
 int opal_dstore_internal = -1;
-int opal_dstore_nonpeer = -1;
 
 static int opal_dstore_base_frame_close(void)
 {
@@ -57,9 +55,9 @@ static int opal_dstore_base_frame_close(void)
     }
     OBJ_DESTRUCT(&opal_dstore_base.handles);
 
-    /* let the active component to finalize, should it wish to do so */
-    if (NULL != opal_dstore_base.active && NULL != opal_dstore_base.active->finalize) {
-        opal_dstore_base.active->finalize();
+    /* let the backfill module finalize, should it wish to do so */
+    if (NULL != opal_dstore_base.backfill_module && NULL != opal_dstore_base.backfill_module->finalize) {
+        opal_dstore_base.backfill_module->finalize((struct opal_dstore_base_module_t*)opal_dstore_base.backfill_module);
     }
 
     return mca_base_framework_components_close(&opal_dstore_base_framework, NULL);
@@ -79,6 +77,7 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, dstore, NULL, NULL,
                            opal_dstore_base_frame_close,
                            mca_dstore_base_static_components, 0);
 
+/***  CLASS INSTANCES   ***/
 static void hdl_con(opal_dstore_handle_t *p)
 {
     p->name = NULL;

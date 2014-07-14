@@ -67,7 +67,6 @@ static int init(void)
  */
 static void finalize(void)
 {
-    opal_pmix.finalize();  // matches the init call in the component query function
     return;
 }
 
@@ -146,6 +145,9 @@ static int modex(orte_grpcomm_collective_t *coll)
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* need to barrier first to ensure that all procs have posted their data */
+    opal_pmix.fence();
+
     /* discover the local ranks */
     rc = opal_pmix.get_local_info(ORTE_PROC_MY_NAME->vpid, &local_ranks,
                                  &local_rank_count, &error);
@@ -180,7 +182,7 @@ static int modex(orte_grpcomm_collective_t *coll)
          */
         if (local) {
             OBJ_CONSTRUCT(&myvals, opal_list_t);
-	    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+	    if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                         (opal_identifier_t*)&name,
                                                         OPAL_DSTORE_CPUSET, &myvals))) {
 		ORTE_ERROR_LOG(rc);

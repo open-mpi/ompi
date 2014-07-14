@@ -137,7 +137,7 @@ static int rte_init(void)
         ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
 
         /* get the number of procs from PMI */
-        if (OPAL_SUCCESS != (ret = opal_pmix.get_size(&i))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.get_size(PMIX_GLOBAL, &i))) {
             error = "getting size";
             goto error;
         }
@@ -186,7 +186,7 @@ static int rte_init(void)
     ORTE_PROC_MY_NAME->vpid = i;
 
     /* get the number of procs from PMI */
-    if (OPAL_SUCCESS != (ret = opal_pmix.get_size(&i))) {
+    if (OPAL_SUCCESS != (ret = opal_pmix.get_size(PMIX_GLOBAL, &i))) {
         error = "getting size";
         goto error;
     }
@@ -299,7 +299,7 @@ static int rte_init(void)
     kv.key = strdup(ORTE_DB_RMLURI);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(rmluri);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
                                                  (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store uri";
         OBJ_DESTRUCT(&kv);
@@ -312,7 +312,7 @@ static int rte_init(void)
     kv.key = strdup(ORTE_DB_HOSTNAME);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(orte_process_info.nodename);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
                                                  (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store hostname";
         OBJ_DESTRUCT(&kv);
@@ -324,7 +324,7 @@ static int rte_init(void)
     kv.key = strdup(OPAL_DSTORE_CPUSET);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(orte_process_info.cpuset);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
                                                  (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store cpuset";
         OBJ_DESTRUCT(&kv);
@@ -336,7 +336,7 @@ static int rte_init(void)
     kv.key = strdup(OPAL_DSTORE_LOCALRANK);
     kv.type = OPAL_UINT16;
     kv.data.uint16 = orte_process_info.my_local_rank;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
                                                  (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store local rank";
         OBJ_DESTRUCT(&kv);
@@ -348,7 +348,7 @@ static int rte_init(void)
     kv.key = strdup(ORTE_DB_NODERANK);
     kv.type = OPAL_UINT16;
     kv.data.uint16 = orte_process_info.my_node_rank;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_peer,
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
                                                  (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
         error = "db store node rank";
         OBJ_DESTRUCT(&kv);
@@ -449,7 +449,7 @@ static void rte_abort(int status, bool report)
     /* PMI doesn't like NULL messages, but our interface
      * doesn't provide one - so rig one up here
      */
-    mca_common_pmi_abort(status, "N/A");
+    opal_pmix.abort(status, "N/A");
 
     /* - Clean out the global structures 
      * (not really necessary, but good practice) */
