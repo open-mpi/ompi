@@ -14,36 +14,30 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
+#include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/mca/pmix/pmix.h"
 
 #include "dstore_pmi.h"
 
-/* we only support the finalize and fetch APIs */
-static void finalize(void);
-static int fetch(const opal_identifier_t *proc,
+/* we only support the fetch API */
+static int fetch(struct opal_dstore_base_module_t *mod,
+                 const opal_identifier_t *proc,
                  const char *key,
                  opal_list_t *kvs);
 
 mca_dstore_pmi_module_t opal_dstore_pmi_module = {
     {
         NULL,
-        finalize,
+        NULL,
         NULL,
         fetch,
         NULL
     }
 };
 
-/* Local variables */
-
-static void finalize(void)
-{
-    /* balance the calls to pmi_init */
-    opal_pmix.finalize();
-}
-
-static int fetch(const opal_identifier_t *uid,
+static int fetch(struct opal_dstore_base_module_t *mod,
+                 const opal_identifier_t *uid,
                  const char *key, opal_list_t *kvs)
 {
     int rc;
@@ -51,7 +45,7 @@ static int fetch(const opal_identifier_t *uid,
 
     /* request the data from pmi */
     kv = OBJ_NEW(opal_value_t);
-    if (OPAL_SUCCESS != (rc = opal_pmix.get(uid, key, kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix.get((opal_identifier_t*)uid, key, kv))) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(kv);
         return rc;

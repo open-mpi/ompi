@@ -21,7 +21,6 @@
 #include "dstore_pmi.h"
 
 static void component_finalize(void);
-static int setup_pmi(void);
 static int dstore_pmi_query(mca_base_module_t **module, int *priority);
 /*
  * Instantiate the public struct with all of our public information
@@ -61,10 +60,11 @@ static void component_finalize(void)
 static int dstore_pmi_query(mca_base_module_t **module, int *priority)
 {
     /* only use PMI if available */
-    if (NULL != opal_pmix.init && OPAL_SUCCESS == opal_pmix.init()) {
+    if (NULL != opal_pmix.init && NULL != opal_pmix.init &&
+        OPAL_SUCCESS == opal_pmix.init()) {
         *priority = 1;
         *module = (mca_base_module_t *)&opal_dstore_pmi_module;
-        return ORTE_SUCCESS;
+        return OPAL_SUCCESS;
     }
     /* if not, then we are not available */
     *priority = -1;
