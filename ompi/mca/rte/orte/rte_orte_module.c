@@ -159,10 +159,12 @@ int ompi_rte_modex(ompi_rte_collective_t *coll)
     /* mark that this process reached modex */
     orte_grpcomm_base.modex_ready = true;
 
+#if 0
     /* let the datastore commit any data we provided that needs
      * to be shared with our peers, if required
      */
     opal_dstore.commit(opal_dstore_peer, (opal_identifier_t*)ORTE_PROC_MY_NAME);
+#endif
 
     if ((orte_process_info.num_procs < ompi_hostname_cutoff) ||
          !mca_rte_orte_component.direct_modex ||
