@@ -537,7 +537,7 @@ int osc_rdma_incoming_post (ompi_osc_rdma_module_t *module, int source)
 
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "received unexpected post message from %d. module->sc_group = %p, size = %d",
-                             source, module->sc_group, module->sc_group ? ompi_group_size (module->sc_group) : 0));
+                             source, (void*)module->sc_group, module->sc_group ? ompi_group_size (module->sc_group) : 0));
 
         pending_post->rank = source;
 
