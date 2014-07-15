@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2014 NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -101,6 +101,8 @@ static size_t saved_page_size;
 #define RESTORE_PAGE_ALIGNMENT() \
     mca_mpool_base_page_size_log = saved_page_size;
 
+static int mca_mpool_rgpusm_deregister_no_lock(struct mca_mpool_base_module_t *,
+                                               mca_mpool_base_registration_t *);
 static inline bool mca_mpool_rgpusm_deregister_lru (mca_mpool_base_module_t *mpool) {
     mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t *) mpool;
     mca_mpool_base_registration_t *old_reg;
@@ -285,7 +287,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
             (*reg)->ref_count++;
             /* Invalidate the registration so it will get booted out. */
             (*reg)->flags |= MCA_MPOOL_FLAGS_INVALID;
-            mca_mpool_rgpusm_deregister(mpool, *reg);
+            mca_mpool_rgpusm_deregister_no_lock(mpool, *reg);
             *reg = NULL;
             mpool_rgpusm->stat_cache_invalid++;
         }
@@ -381,7 +383,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
             oldreg->ref_count++;
             /* Invalidate the registration so it will get booted out. */
             oldreg->flags |= MCA_MPOOL_FLAGS_INVALID;
-            mca_mpool_rgpusm_deregister(mpool, oldreg);
+            mca_mpool_rgpusm_deregister_no_lock(mpool, oldreg);
             mpool_rgpusm->stat_evicted++;
 
             /* And try again.  This one usually works. */
@@ -537,6 +539,45 @@ int mca_mpool_rgpusm_deregister(struct mca_mpool_base_module_t *mpool,
 
     /* Cleanup any vmas that we have deferred deletion on */
     mpool->rcache->rcache_clean(mpool->rcache);
+
+    return rc;
+}
+
+int mca_mpool_rgpusm_deregister_no_lock(struct mca_mpool_base_module_t *mpool,
+                            mca_mpool_base_registration_t *reg)
+{
+    mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t*)mpool;
+    int rc = OMPI_SUCCESS;
+    assert(reg->ref_count > 0);
+
+    reg->ref_count--;
+    opal_output(-1, "Deregister: reg->ref_count=%d", (int)reg->ref_count);
+    if(reg->ref_count > 0) {
+        return OMPI_SUCCESS;
+    }
+    if(mca_mpool_rgpusm_component.leave_pinned && registration_is_cachebale(reg))
+    {
+        /* if leave_pinned is set don't deregister memory, but put it
+         * on LRU list for future use */
+        opal_list_prepend(&mpool_rgpusm->lru_list, (opal_list_item_t*)reg);
+    } else {
+        /* Remove from rcache first */
+        if(!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS))
+            mpool->rcache->rcache_delete(mpool->rcache, reg);
+
+        {
+             mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t *)mpool;
+
+             assert(reg->ref_count == 0);
+             rc = mpool_rgpusm->resources.deregister_mem(mpool_rgpusm->resources.reg_data,
+                                                         reg);
+         }
+
+        if(OMPI_SUCCESS == rc) {
+            OMPI_FREE_LIST_RETURN_MT(&mpool_rgpusm->reg_list,
+                                  (ompi_free_list_item_t*)reg);
+        }
+    }
 
     return rc;
 }
