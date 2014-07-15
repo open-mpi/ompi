@@ -434,7 +434,7 @@ int opal_util_register_stackhandlers (void)
     gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
     stacktrace_hostname[sizeof(stacktrace_hostname) - 1] = '\0';
     /* to keep these somewhat readable, only print the machine name */
-    for (i = 0 ; i < (int)sizeof(stacktrace_hostname) ; ++i) {
+    for (i = 0 ; i < (int)strlen(stacktrace_hostname) ; ++i) {
         if (stacktrace_hostname[i] == '.') {
             stacktrace_hostname[i] = '\0';
             break;
