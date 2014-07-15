@@ -90,7 +90,7 @@ ORTE_DECLSPEC void orte_wait_cb_cancel(orte_proc_t *proc);
                             "%s waiting on progress thread at %s:%d",   \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__);                        \
-        while ((flg)) {                                                \
+        while ((flg)) {                                                 \
             /* provide a short quiet period so we                       \
              * don't hammer the cpu while waiting                       \
              */                                                         \

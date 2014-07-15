@@ -88,6 +88,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* process called "errmgr.abort_procs" */
 #define ORTE_DAEMON_ABORT_PROCS_CALLED      (orte_daemon_cmd_flag_t) 28
 
+/* new daemon collective id */
+#define ORTE_DAEMON_NEW_COLL_ID             (orte_daemon_cmd_flag_t) 29
+
 
 /*
  * Struct written up the pipe from the child to the parent.

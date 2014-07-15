@@ -45,6 +45,7 @@
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
 
 extern ompi_rte_orte_component_t mca_rte_orte_component;
 static void recv_callback(int status, orte_process_name_t* sender,
@@ -402,3 +403,67 @@ static void recv_callback(int status, orte_process_name_t* sender,
     /* release */
     opal_mutex_unlock(&mca_rte_orte_component.lock);
 }
+
+/* everybody involved in the collective has to call this function. However,
+ * only the "root" process (i.e., rank=0 in this communicator) will send
+ * the collective id request to the HNP. The HNP will then xcast the
+ * assigned value to all daemons so that every daemon knows about it. This
+ * will ensure that daemons properly handle the request. The daemons will
+ * relay the received ID to their local procs */
+orte_grpcomm_coll_id_t ompi_rte_get_collective_id(const struct ompi_communicator_t *comm)
+{
+    opal_buffer_t *nbuf;
+    int32_t i, rc;
+    orte_rml_recv_cb_t xfer;
+    orte_grpcomm_coll_id_t id;
+    uint8_t flag=1;
+
+    /* everybody waits for the id */
+    OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
+    xfer.active = true;
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_FULL_COLL_ID,
+                            ORTE_RML_NON_PERSISTENT,
+                            orte_rml_recv_callback, &xfer);
+
+    /* the lowest member of the communicator requests the communicator
+     * id from mpirun */
+    if (0 == ompi_comm_rank((ompi_communicator_t*)comm)) {
+        nbuf = OBJ_NEW(opal_buffer_t);
+        if (NULL == nbuf) {
+            return OMPI_ERROR;
+        }
+        /* tell the HNP we want one id */
+        i = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(nbuf, &i, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(nbuf);
+            return OMPI_ERROR;
+        }
+        /* tell the HNP this is to be a global value */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(nbuf, &flag, 1, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(nbuf);
+            return OMPI_ERROR;
+        }
+        /* send the request */
+        rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, nbuf,
+                                     ORTE_RML_TAG_COLL_ID_REQ,
+                                     orte_rml_send_callback, NULL);
+    }
+
+    /* wait for response */
+    OMPI_WAIT_FOR_COMPLETION(xfer.active);
+
+    /* extract the id */
+    i=1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer.data, &id, &i, ORTE_GRPCOMM_COLL_ID_T))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&xfer);
+        return OMPI_ERROR;
+    }
+    OBJ_DESTRUCT(&xfer);  // done with the received data
+
+    return id;
+}
+

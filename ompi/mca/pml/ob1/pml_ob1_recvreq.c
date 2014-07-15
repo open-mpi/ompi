@@ -188,8 +188,8 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
 
     if( OPAL_LIKELY(status == OMPI_SUCCESS) ) {
         bytes_received = mca_pml_ob1_compute_segment_length (btl->btl_seg_size,
-                                                             (void *) des->des_remote,
-                                                             des->des_remote_count, 0);
+                                                             (void *) des->des_local,
+                                                             des->des_local_count, 0);
     }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
 

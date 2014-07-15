@@ -76,7 +76,10 @@ opal_finalize_util(void)
 
     (void) mca_base_framework_close(&opal_if_base_framework);
 
+    (void) mca_base_framework_close(&opal_event_base_framework);
+
     /* Clear out all the registered MCA params */
+    opal_deregister_params();
     mca_base_var_finalize();
 
     opal_net_finalize();
@@ -158,6 +161,12 @@ opal_finalize(void)
 
     /* close the hwloc framework */
     (void) mca_base_framework_close(&opal_hwloc_base_framework);
+
+    /* close the shmem framework */
+    (void) mca_base_framework_close(&opal_shmem_base_framework);
+
+    /* close the sec framework */
+    (void) mca_base_framework_close(&opal_sec_base_framework);
 
     /* finalize the mca */
     mca_base_close();

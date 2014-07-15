@@ -228,7 +228,7 @@ int ompi_mpi_finalize(void)
        https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
        more details). */
     coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_rte_get_collective_id(OMPI_PROC_MY_NAME);
+    coll->id = ompi_process_info.peer_fini_barrier;
     coll->active = true;
     if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
         OMPI_ERROR_LOG(ret);

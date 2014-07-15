@@ -20,15 +20,11 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
-#include "ompi/info/info.h"
-struct ompi_proc_t;
-
 #include "opal/threads/threads.h"
 
 #include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
@@ -36,6 +32,10 @@ struct ompi_proc_t;
 #include "orte/runtime/runtime.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
+
+#include "ompi/info/info.h"
+struct ompi_proc_t;
+struct ompi_communicator_t;
 
 BEGIN_C_DECLS
 
@@ -69,7 +69,7 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 typedef orte_grpcomm_coll_id_t ompi_rte_collective_id_t;
 OMPI_DECLSPEC int ompi_rte_modex(ompi_rte_collective_t *coll);
 #define ompi_rte_barrier(a) orte_grpcomm.barrier(a)
-#define ompi_rte_get_collective_id(a) orte_grpcomm_base_get_coll_id(a)
+OMPI_DECLSPEC orte_grpcomm_coll_id_t ompi_rte_get_collective_id(const struct ompi_communicator_t *comm);
 
 /* Process info struct and values */
 typedef orte_node_rank_t ompi_node_rank_t;

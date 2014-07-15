@@ -169,8 +169,8 @@ int opal_class_finalize(void)
 
     if (NULL != classes) {
         for (i = 0; i < num_classes; ++i) {
-            if (NULL != classes[i]) {
-                free(classes[i]);
+            if (NULL != classes[i]) { 
+                free(classes[i]); 
             }
         }
         free(classes);
@@ -199,7 +199,7 @@ static void expand_array(void)
     int i;
 
     max_classes += increment;
-    classes = (void**)realloc(classes, sizeof(void *) * max_classes);
+    classes = (void**)realloc(classes, sizeof(opal_class_t*) * max_classes);
     if (NULL == classes) {
         perror("class malloc failed");
         exit(-1);

@@ -115,7 +115,9 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_GOVERNOR               (ORTE_JOB_START_KEY + 27)    // string - governor used for nodes in job
 #define ORTE_JOB_FAIL_NOTIFIED          (ORTE_JOB_START_KEY + 28)    // bool - abnormal term of proc within job has been reported
 #define ORTE_JOB_TERM_NOTIFIED          (ORTE_JOB_START_KEY + 29)    // bool - normal term of job has been reported
-#define ORTE_JOB_COLL_ID_CNTR           (ORTE_JOB_START_KEY + 30)    // uint32_t - counter for current collective id
+#define ORTE_JOB_PEER_MODX_ID           (ORTE_JOB_START_KEY + 30)    // orte_grpcomm_coll_id_t - collective id
+#define ORTE_JOB_INIT_BAR_ID            (ORTE_JOB_START_KEY + 31)    // orte_grpcomm_coll_id_t - collective id
+#define ORTE_JOB_FINI_BAR_ID            (ORTE_JOB_START_KEY + 32)    // orte_grpcomm_coll_id_t - collective id
 
 #define ORTE_JOB_MAX_KEY   300
 

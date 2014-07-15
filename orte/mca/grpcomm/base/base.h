@@ -83,9 +83,9 @@ OBJ_CLASS_DECLARATION(orte_grpcomm_caddy_t);
     do {                                                                \
         orte_grpcomm_caddy_t *caddy;                                    \
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output, \
-                             "%s ACTIVATING GRCPCOMM OP %lu at %s:%d",  \
+                             "%s ACTIVATING GRCPCOMM OP %d at %s:%d",   \
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),        \
-                             (unsigned long)(o)->id, __FILE__, __LINE__)); \
+                             (o)->id, __FILE__, __LINE__));             \
         caddy = OBJ_NEW(orte_grpcomm_caddy_t);                          \
         caddy->op = (o);                                                \
         opal_event_set(orte_event_base, &caddy->ev, -1,                 \
@@ -96,9 +96,9 @@ OBJ_CLASS_DECLARATION(orte_grpcomm_caddy_t);
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
 
-ORTE_DECLSPEC orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_jobid_t jobid, orte_grpcomm_coll_id_t id);
+ORTE_DECLSPEC orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_grpcomm_coll_id_t id);
 ORTE_DECLSPEC void orte_grpcomm_base_progress_collectives(void);
-ORTE_DECLSPEC orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(orte_process_name_t *nm);
+ORTE_DECLSPEC orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void);
 ORTE_DECLSPEC void orte_grpcomm_base_pack_collective(opal_buffer_t *relay,
                                                      orte_jobid_t jobid,
                                                      orte_grpcomm_collective_t *coll,
