@@ -51,9 +51,10 @@ int opal_pmi_version = 0;
 bool opal_base_distill_checkpoint_ready = false;
 #endif
 
+static bool opal_register_done = false;
+
 int opal_register_params(void)
 {
-    static bool opal_register_done = false;
     int ret;
 
     if (opal_register_done) {
@@ -94,16 +95,16 @@ int opal_register_params(void)
             }
         }
 
-	opal_signal_string = string;
-	ret = mca_base_var_register ("opal", "opal", NULL, "signal",
+        opal_signal_string = string;
+        ret = mca_base_var_register ("opal", "opal", NULL, "signal",
 				     "Comma-delimited list of integer signal numbers to Open MPI to attempt to intercept.  Upon receipt of the intercepted signal, Open MPI will display a stack trace and abort.  Open MPI will *not* replace signals if handlers are already installed by the time MPI_INIT is invoked.  Optionally append \":complain\" to any signal number in the comma-delimited list to make Open MPI complain if it detects another signal handler (and therefore does not insert its own).",
 				     MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
 				     OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
 				     &opal_signal_string);
         free (string);
-	if (0 > ret) {
-	    return ret;
-	}
+        if (0 > ret) {
+            return ret;
+        }
     }
 
 #if defined(HAVE_SCHED_YIELD)
@@ -123,7 +124,7 @@ int opal_register_params(void)
 				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
 				 &opal_progress_debug);
     if (0 > ret) {
-	return ret;
+        return ret;
     }
 
     opal_debug_threads = false;
@@ -134,7 +135,7 @@ int opal_register_params(void)
 				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
 				 &opal_debug_threads);
     if (0 > ret) {
-	return ret;
+        return ret;
     }
 #endif
 
@@ -166,7 +167,7 @@ int opal_register_params(void)
 				 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
 				 &opal_net_private_ipv4);
     if (0 > ret) {
-	return ret;
+        return ret;
     }
 
     opal_set_max_sys_limits = NULL;
@@ -177,7 +178,7 @@ int opal_register_params(void)
 				 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
 				 &opal_set_max_sys_limits);
     if (0 > ret) {
-	return ret;
+        return ret;
     }
 
     opal_pmi_version = 0;
@@ -203,6 +204,17 @@ int opal_register_params(void)
     if (OPAL_SUCCESS != ret) { 
         return ret; 
     }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_deregister_params(void)
+{
+    opal_signal_string = NULL;
+    opal_net_private_ipv4 = NULL;
+    opal_set_max_sys_limits = NULL;
+    opal_pmi_version = 0;
+    opal_register_done = false;
 
     return OPAL_SUCCESS;
 }

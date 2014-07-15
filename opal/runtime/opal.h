@@ -115,6 +115,7 @@ OPAL_DECLSPEC void opal_finalize_test(void);
  * Internal function.  Do not call.
  */
 OPAL_DECLSPEC int opal_register_params(void);
+OPAL_DECLSPEC int opal_deregister_params(void);
 
 END_C_DECLS
 
