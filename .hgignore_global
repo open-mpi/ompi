@@ -859,6 +859,7 @@ syntax: glob
 ./orte/test/mpi/ziaprobe
 ./orte/test/mpi/ziatest
 ./orte/test/mpi/.gdb_history
+./orte/test/mpi/*.dwarf
 ./orte/test/mpi/junk*
 ./orte/test/mpi/sio
 ./orte/test/mpi/sendrecv_blaster
