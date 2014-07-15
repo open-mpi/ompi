@@ -14,6 +14,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/pmix/pmix.h"
+#include "pmix_cray_pmap_parser.h"
 
 BEGIN_C_DECLS
 

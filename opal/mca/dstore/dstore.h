@@ -42,6 +42,10 @@ BEGIN_C_DECLS
  */
 OPAL_DECLSPEC extern int opal_dstore_internal;
 
+OPAL_DECLSPEC extern int opal_dstore_peer;
+OPAL_DECLSPEC extern int opal_dstore_internal;
+OPAL_DECLSPEC extern int opal_dstore_nonpeer;
+
 /****    DEFINE THE PUBLIC API'S    ****/
 /*
  * Open a database
