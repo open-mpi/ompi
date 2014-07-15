@@ -53,6 +53,7 @@ opal_shmem_base_register (mca_base_register_flag_t flags)
     /* register an INTERNAL parameter used to provide a component selection
      * hint to the shmem framework.
      */
+    opal_shmem_base_RUNTIME_QUERY_hint = NULL;
     ret = mca_base_framework_var_register (&opal_shmem_base_framework, "RUNTIME_QUERY_hint",
                                            "Internal OMPI parameter used to provide a "
                                            "component selection hint to the shmem "
