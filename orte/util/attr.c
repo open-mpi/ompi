@@ -195,8 +195,12 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
         return "JOB-FAIL-NOTIFIED";
     case ORTE_JOB_TERM_NOTIFIED:
         return "JOB-TERM-NOTIFIED";
-    case ORTE_JOB_COLL_ID_CNTR:
-        return "JOB-COLL-ID-CNTR";
+    case ORTE_JOB_PEER_MODX_ID:
+        return "JOB-PEER-MODX-ID";
+    case ORTE_JOB_INIT_BAR_ID:
+        return "JOB-INIT-BAR-ID";
+    case ORTE_JOB_FINI_BAR_ID:
+        return "JOB-FINI-BAR-ID";
 
     case ORTE_PROC_NOBARRIER:
         return "PROC-NOBARRIER";

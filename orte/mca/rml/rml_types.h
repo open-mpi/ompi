@@ -149,6 +149,9 @@ BEGIN_C_DECLS
 /* notifier support */
 #define ORTE_RML_TAG_NOTIFIER_HNP           50
 
+/* global collective ID request */
+#define ORTE_RML_TAG_FULL_COLL_ID           51
+
 #define ORTE_RML_TAG_MAX                   100
 
 

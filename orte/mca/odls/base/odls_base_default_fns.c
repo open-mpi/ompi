@@ -192,8 +192,11 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     int8_t flag;
     int32_t n;
     orte_proc_t *pptr, *dmn;
+    orte_grpcomm_collective_t *coll;
+    orte_namelist_t *nm;
     opal_buffer_t *bptr;
     orte_app_context_t *app;
+    orte_grpcomm_coll_id_t gid, *gidptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                          "%s odls:constructing child list",
@@ -378,22 +381,49 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
 
  COMPLETE:
-#if OPAL_ENABLE_FT_CR == 1
-    {
-        orte_grpcomm_coll_id_t gid, *gidptr;
-        orte_grpcomm_collective_t *coll;
-        /* create the collectives so the job doesn't stall */
-        gidptr = &gid;
-        if (orte_get_attribute(&jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR,
-                               (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
-            coll = orte_grpcomm_base_setup_collective(jdata->jobid, *gidptr);
-        }
-        if (orte_get_attribute(&jdata->attributes, ORTE_JOB_SNAPC_FINI_BAR,
-                               (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
-            coll = orte_grpcomm_base_setup_collective(jdata->jobid, *gidptr);
-        }
+    /* create the collectives so the job doesn't stall */
+    gidptr = &gid;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_PEER_MODX_ID,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        coll = orte_grpcomm_base_setup_collective(*gidptr);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
     }
-#endif
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_INIT_BAR_ID,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        coll = orte_grpcomm_base_setup_collective(*gidptr);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+    }
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FINI_BAR_ID,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        coll = orte_grpcomm_base_setup_collective(*gidptr);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+    }
+
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        coll = orte_grpcomm_base_setup_collective(*gidptr);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+    }
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_SNAPC_FINI_BAR,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        coll = orte_grpcomm_base_setup_collective(*gidptr);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = jdata->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+    }
 
     /* progress any pending collectives */
     orte_grpcomm_base_progress_collectives();
@@ -434,10 +464,34 @@ static int odls_base_default_setup_fork(orte_job_t *jdata,
 
     /* add any collective id info to the app's environ */
     gidptr = &gid;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_PEER_MODX_ID,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        (void) mca_base_var_env_name ("orte_peer_modex_id", &param);
+        asprintf(&param2, "%d", *gidptr);
+        opal_setenv(param, param2, true, environ_copy);
+        free(param);
+        free(param2);
+    }
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_INIT_BAR_ID,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        (void) mca_base_var_env_name ("orte_peer_init_barrier_id", &param);
+        asprintf(&param2, "%d", *gidptr);
+        opal_setenv(param, param2, true, environ_copy);
+        free(param);
+        free(param2);
+    }
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FINI_BAR_ID,
+                           (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
+        (void) mca_base_var_env_name ("orte_peer_fini_barrier_id", &param);
+        asprintf(&param2, "%d", *gidptr);
+        opal_setenv(param, param2, true, environ_copy);
+        free(param);
+        free(param2);
+    }
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_SNAPC_INIT_BAR,
                            (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
         (void) mca_base_var_env_name ("orte_snapc_init_barrier_id", &param);
-        asprintf(&param2, "%lu", (unsigned long)gid);
+        asprintf(&param2, "%d", *gidptr);
         opal_setenv(param, param2, true, environ_copy);
         free(param);
         free(param2);
@@ -445,7 +499,7 @@ static int odls_base_default_setup_fork(orte_job_t *jdata,
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_SNAPC_FINI_BAR,
                            (void**)&gidptr, ORTE_GRPCOMM_COLL_ID_T)) {
         (void) mca_base_var_env_name ("orte_snapc_fini_barrier_id", &param);
-        asprintf(&param2, "%lu", (unsigned long)gid);
+        asprintf(&param2, "%d", *gidptr);
         opal_setenv(param, param2, true, environ_copy);
         free(param);
         free(param2);

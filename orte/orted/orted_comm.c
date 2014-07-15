@@ -59,7 +59,7 @@
 #include "orte/util/nidmap.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
@@ -112,6 +112,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
     orte_std_cntr_t num_procs, num_new_procs = 0, p;
     orte_proc_t *cur_proc = NULL, *prev_proc = NULL;
     bool found = false;
+    orte_grpcomm_collective_t *coll;
+    orte_namelist_t *nm;
+    orte_grpcomm_coll_id_t id;
 
     /* unpack the command */
     n = 1;
@@ -238,7 +241,46 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
         }
         break;
-           
+
+    case ORTE_DAEMON_NEW_COLL_ID:
+        if (orte_debug_daemons_flag) {
+            opal_output(0, "%s orted_cmd: received new_coll_id",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+        /* unpack the jobid of the involved party */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+        /* unpack the new collective id */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &id, &n, ORTE_GRPCOMM_COLL_ID_T))) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+        /* setup a new collective for it - will return the
+         * existing coll if already present */
+        coll = orte_grpcomm_base_setup_collective(id);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = job;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_prepend(&coll->participants, &nm->super);
+        /* pass it down to any local procs from that jobid */
+        relay_msg = OBJ_NEW(opal_buffer_t);
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(relay_msg, &id, 1, ORTE_GRPCOMM_COLL_ID_T))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(relay_msg);
+            goto CLEANUP;
+        }
+        if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(job, relay_msg, ORTE_RML_TAG_FULL_COLL_ID))) {
+            ORTE_ERROR_LOG(ret);
+        }
+        OBJ_RELEASE(relay_msg);
+        /* progress any pending collectives */
+        orte_grpcomm_base_progress_collectives();
+        break;
+
     case ORTE_DAEMON_ABORT_PROCS_CALLED:
         if (orte_debug_daemons_flag) {
             opal_output(0, "%s orted_cmd: received abort_procs report",
