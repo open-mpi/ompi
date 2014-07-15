@@ -335,11 +335,6 @@ opal_init_util(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    if (OPAL_SUCCESS != (ret = mca_base_framework_register(&opal_event_base_framework, 0))) {
-        error = "opal_event_register";
-        goto return_error;
-    }
-
     return OPAL_SUCCESS;
 
  return_error:
@@ -431,7 +426,7 @@ opal_init(int* pargc, char*** pargv)
     }
 
     /*
-     * Need to start the event and progress engines if noone else is.
+     * Need to start the event and progress engines if none else is.
      * opal_cr_init uses the progress engine, so it is lumped together
      * into this set as well.
      */
