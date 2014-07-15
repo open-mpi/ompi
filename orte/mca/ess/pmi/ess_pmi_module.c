@@ -49,7 +49,6 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -357,7 +356,7 @@ static int rte_init(void)
     if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
         orte_grpcomm_collective_t coll;
         OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-        coll.id = orte_grpcomm_base_get_coll_id(ORTE_PROC_MY_NAME);
+        coll.id = orte_process_info.peer_modex;
         coll.active = true;
         if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(&coll))) {
             ORTE_ERROR_LOG(ret);

@@ -139,7 +139,6 @@ ORTE_DECLSPEC extern int orte_exit_status;
 #define ORTE_DB_RMLURI       "orte.rmluri"
 #define ORTE_DB_HOSTID       "orte.hostid"
 #define ORTE_DB_GLOBAL_RANK  "orte.global.rank"
-#define ORTE_DB_COLL_ID_CNTR "orte.coll.id.cntr"
 
 /* State Machine lists */
 ORTE_DECLSPEC extern opal_list_t orte_job_states;

@@ -38,28 +38,28 @@ int main(int argc, char* argv[])
     for (i=0; i < COLL_TEST_MAX; i++) {
         fprintf(stderr, "%d executing barrier %d\n", rank, i);
         coll = OBJ_NEW(ompi_rte_collective_t);
-        coll->id = ompi_rte_get_collective_id(OMPI_PROC_MY_NAME);
+        coll->id = ompi_rte_get_collective_id(MPI_COMM_WORLD);
         coll->active = true;
         if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
             OMPI_ERROR_LOG(ret);
             return ret;
         }
+        OMPI_LAZY_WAIT_FOR_COMPLETION(coll->active);
+        OBJ_RELEASE(coll);
     }
 
     for (i=0; i < COLL_TEST_MAX; i++) {
         fprintf(stderr, "%d executing modex %d\n", rank, i);
         coll = OBJ_NEW(ompi_rte_collective_t);
-        coll->id = ompi_rte_get_collective_id(OMPI_PROC_MY_NAME);
+        coll->id = ompi_rte_get_collective_id(MPI_COMM_WORLD);
         coll->active = true;
         if (OMPI_SUCCESS != (ret = ompi_rte_modex(coll))) {
             OMPI_ERROR_LOG(ret);
             return ret;
         }
+        OMPI_LAZY_WAIT_FOR_COMPLETION(coll->active);
+        OBJ_RELEASE(coll);
     }
-
-    /* wait for barrier to complete */
-    OMPI_LAZY_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
 
     MPI_Finalize();
     return 0;
