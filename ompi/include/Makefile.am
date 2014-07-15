@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -33,7 +35,6 @@ pkginclude_HEADERS =
 
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
 include_HEADERS += \
-        mpif.h \
         mpif-constants.h \
         mpif-externals.h \
         mpif-handles.h \
@@ -49,6 +50,7 @@ endif
 nodist_include_HEADERS = \
         mpi.h \
         mpi-ext.h \
+        mpif.h \
         mpif-ext.h \
 	mpi_portable_platform.h
 
