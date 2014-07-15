@@ -165,20 +165,13 @@ void opal_class_initialize(opal_class_t *cls)
  */
 int opal_class_finalize(void)
 {
-    opal_class_t *cls;
     int i;
 
     if (NULL != classes) {
         for (i = 0; i < num_classes; ++i) {
-            if (NULL == (cls = classes[i])) continue;
-
-            free(cls->cls_construct_array);
-            cls->cls_construct_array = NULL;
-            cls->cls_destruct_array  = NULL;
-            cls->cls_depth           = 0;
-            if( cls != &opal_object_t_class )
-                cls->cls_initialized = 0;  /* all but the predefined */
-            classes[i] = NULL;  /* security */
+            if (NULL != classes[i]) { 
+                free(classes[i]); 
+            }
         }
         free(classes);
         classes = NULL;
@@ -196,7 +189,7 @@ static void save_class(opal_class_t *cls)
         expand_array();
     }
 
-    classes[num_classes] = cls;
+    classes[num_classes] = cls->cls_construct_array;
     ++num_classes;
 }
 
