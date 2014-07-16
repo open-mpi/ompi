@@ -206,7 +206,7 @@ static void cuda_dump_memhandle(int, void *, char *) __opal_attribute_unused__ ;
  * specific initialization as this may just be a host buffer that is
  * triggering this call.
  */
-static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
+static int mca_common_cuda_stage_two_init(opal_common_cuda_function_table_t *ftable)
 {
     if (OPAL_UNLIKELY(!ompi_mpi_cuda_support)) {
         return OMPI_ERROR;
@@ -456,7 +456,7 @@ int mca_common_cuda_stage_one_init(void)
     if (true != stage_one_init_passed) {
         return 1;
     }
-    opal_cuda_add_initialization_function(&mca_common_cuda_init);
+    opal_cuda_add_initialization_function(&mca_common_cuda_stage_two_init);
     OBJ_CONSTRUCT(&common_cuda_memory_registrations, opal_list_t);
 
     /* Map in the functions that we need.  Note that if there is an error
