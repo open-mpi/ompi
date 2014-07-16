@@ -91,16 +91,6 @@
 #include "ompi/mca/rte/rte.h"
 
 
-/* A hack so that page alignment is disabled in my instantiation of
- * the rcache.  This needs to be fixed. */
-static size_t saved_page_size;
-#define SET_PAGE_ALIGNMENT_TO_ZERO() \
-    saved_page_size = mca_mpool_base_page_size_log; \
-    mca_mpool_base_page_size_log = 0;
-
-#define RESTORE_PAGE_ALIGNMENT() \
-    mca_mpool_base_page_size_log = saved_page_size;
-
 static int mca_mpool_rgpusm_deregister_no_lock(struct mca_mpool_base_module_t *,
                                                mca_mpool_base_registration_t *);
 static inline bool mca_mpool_rgpusm_deregister_lru (mca_mpool_base_module_t *mpool) {
@@ -246,9 +236,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
 
     /* Check to see if memory is registered and stored in the cache. */
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
-    SET_PAGE_ALIGNMENT_TO_ZERO();
     mpool->rcache->rcache_find(mpool->rcache, addr, size, reg);
-    RESTORE_PAGE_ALIGNMENT();
 
     /* If *reg is not NULL, we have a registration.  Let us see if the
      * memory handle matches the one we were looking for.  If not, the
@@ -361,11 +349,9 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     if (OMPI_ERR_WOULD_BLOCK == rc) {
         mca_mpool_base_registration_t *oldreg;
 
-        SET_PAGE_ALIGNMENT_TO_ZERO();
         /* Need to make sure it is at least 4 bytes in size  This will
          * ensure we get the hit in the cache. */
         mpool->rcache->rcache_find(mpool->rcache, addr, 4, &oldreg);
-        RESTORE_PAGE_ALIGNMENT();
 
         /* For most cases, we will find a registration that overlaps.
          * Removal of it should allow the registration we are
@@ -413,7 +399,6 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
 
     opal_output_verbose(80, mca_mpool_rgpusm_component.output,
                         "RGPUSM: About to insert in rgpusm cache addr=%p, size=%d", addr, (int)size);
-    SET_PAGE_ALIGNMENT_TO_ZERO();
     while((rc = mpool->rcache->rcache_insert(mpool->rcache, (mca_mpool_base_registration_t *)rgpusm_reg,
              mca_mpool_rgpusm_component.rcache_size_limit)) ==
             OMPI_ERR_TEMP_OUT_OF_RESOURCE) {
@@ -422,7 +407,6 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
             break;
         }
     }
-    RESTORE_PAGE_ALIGNMENT();
 
     if(rc != OMPI_SUCCESS) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
@@ -469,9 +453,7 @@ int mca_mpool_rgpusm_find(struct mca_mpool_base_module_t *mpool, void *addr,
 
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
     opal_output(-1, "Looking for addr=%p, size=%d", addr, (int)size);
-    SET_PAGE_ALIGNMENT_TO_ZERO();
     rc = mpool->rcache->rcache_find(mpool->rcache, addr, size, reg);
-    RESTORE_PAGE_ALIGNMENT();
     if(*reg != NULL && mca_mpool_rgpusm_component.leave_pinned) {
         if(0 == (*reg)->ref_count && mca_mpool_rgpusm_component.leave_pinned) {
             opal_list_remove_item(&mpool_rgpusm->lru_list, (opal_list_item_t*)(*reg));
