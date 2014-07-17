@@ -13,6 +13,15 @@
 
 #include "oshmem_config.h"
 
+/*
+ * Environment variables
+ */
+#define OSHMEM_ENV_SYMMETRIC_SIZE      "SMA_SYMMETRIC_SIZE"
+#define OSHMEM_ENV_DEBUG               "SMA_DEBUG"
+#define OSHMEM_ENV_INFO                "SMA_INFO"
+#define OSHMEM_ENV_VERSION             "SMA_VERSION"
+
+
 void oshmem_output_verbose(int level, int output_id, const char* prefix,
     const char* file, int line, const char* function, const char* format, ...);
 
