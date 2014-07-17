@@ -64,12 +64,12 @@ extern "C" {
  * Environment variables
  */
 
+/* Following environment variables are Mellanox extension */
+
 /* size of symmetric heap in bytes.
  * Can be qualified with the letter 'K', 'M', 'G' or 'T'
  */
 #define SHMEM_HEAP_SIZE "SHMEM_SYMMETRIC_HEAP_SIZE"
-
-/* Following environment variables are Mellanox extension */
 
 /*
  * Type of allocator used by symmetric heap
