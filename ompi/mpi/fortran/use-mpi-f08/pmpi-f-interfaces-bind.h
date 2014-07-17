@@ -2267,7 +2267,7 @@ end subroutine pompi_win_post_f
 
 #if OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS
 subroutine pompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
-      ierror) BIND(C, name="ompi_win_shared_query_f")
+      ierror) BIND(C, name="pompi_win_shared_query_f")
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
   INTEGER, INTENT(IN) ::  win
