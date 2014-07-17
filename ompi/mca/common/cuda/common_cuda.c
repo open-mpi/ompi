@@ -97,6 +97,7 @@ struct cudaFunctionTable {
     int (*cuCtxSetCurrent)(CUcontext);
     int (*cuEventSynchronize)(CUevent);
     int (*cuStreamSynchronize)(CUstream);
+    int (*cuStreamDestroy)(CUstream);
 } cudaFunctionTable;
 typedef struct cudaFunctionTable cudaFunctionTable_t;
 cudaFunctionTable_t cuFunc;
@@ -110,10 +111,11 @@ bool mca_common_cuda_enabled = false;
 static bool mca_common_cuda_register_memory = true;
 static bool mca_common_cuda_warning = false;
 static opal_list_t common_cuda_memory_registrations;
-static CUstream ipcStream;
-static CUstream dtohStream;
-static CUstream htodStream;
-static CUstream memcpyStream;
+static CUstream ipcStream = NULL;
+static CUstream dtohStream = NULL;
+static CUstream htodStream = NULL;
+static CUstream memcpyStream = NULL;
+static opal_mutex_t common_cuda_init_lock;
 
 /* Functions called by opal layer - plugged into opal function table */
 static int mca_common_cuda_is_gpu_buffer(const void*);
@@ -229,6 +231,7 @@ int mca_common_cuda_stage_one_init(void)
         return 0;
     }
     stage_one_init_complete = true;
+    OBJ_CONSTRUCT(&common_cuda_init_lock, opal_mutex_t);
 
     /* Set different levels of verbosity in the cuda related code. */
     mca_common_cuda_verbose = 0;
@@ -472,6 +475,7 @@ int mca_common_cuda_stage_one_init(void)
     OMPI_CUDA_DLSYM(libcuda_handle, cuCtxSetCurrent);
     OMPI_CUDA_DLSYM(libcuda_handle, cuEventSynchronize);
     OMPI_CUDA_DLSYM(libcuda_handle, cuStreamSynchronize);
+    OMPI_CUDA_DLSYM(libcuda_handle, cuStreamDestroy);
     return 0;
 }
 
@@ -506,26 +510,37 @@ static int mca_common_cuda_stage_two_init(opal_common_cuda_function_table_t *fta
  */
 static int mca_common_cuda_stage_three_init(void)
 {
-    int i, s;
+    int i, s, rc;
     CUresult res;
     CUcontext cuContext;
     common_cuda_mem_regs_t *mem_reg;
 
-    stage_three_init_complete = true;
-
+    OPAL_THREAD_LOCK(&common_cuda_init_lock);
     opal_output_verbose(20, mca_common_cuda_output,
                         "CUDA: entering stage three init");
 
+    /* Compiled without support or user disabled support */
     if (OPAL_UNLIKELY(!ompi_mpi_cuda_support)) {
         opal_output_verbose(20, mca_common_cuda_output,
                             "CUDA: No mpi cuda support, exiting stage three init");
+        stage_three_init_complete = true;
+        OPAL_THREAD_UNLOCK(&common_cuda_init_lock);
         return OMPI_ERROR;
     }
 
-    if (OPAL_LIKELY(common_cuda_initialized)) {
-        opal_output_verbose(20, mca_common_cuda_output,
-                            "CUDA: Stage three already complete, exiting stage three init");
-        return OMPI_SUCCESS;
+    /* In case another thread snuck in and completed the initialization */
+    if (true == stage_three_init_complete) {
+        if (common_cuda_initialized) {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "CUDA: Stage three already complete, exiting stage three init");
+            OPAL_THREAD_UNLOCK(&common_cuda_init_lock);
+            return OMPI_SUCCESS;
+        } else {
+            opal_output_verbose(20, mca_common_cuda_output,
+                                "CUDA: Stage three already complete, failed during the init");
+            OPAL_THREAD_UNLOCK(&common_cuda_init_lock);
+            return OMPI_ERROR;
+        }
     }
 
     /* Check to see if this process is running in a CUDA context.  If
@@ -566,6 +581,7 @@ static int mca_common_cuda_stage_three_init(void)
      * CUDA support.
      */
     if (false == mca_common_cuda_enabled) {
+        OPAL_THREAD_UNLOCK(&common_cuda_init_lock);
         return OMPI_ERROR;
     }
 
@@ -578,11 +594,12 @@ static int mca_common_cuda_stage_three_init(void)
         cuda_event_ipc_first_avail = 0;
         cuda_event_ipc_first_used = 0;
 
-        cuda_event_ipc_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
+        cuda_event_ipc_array = (CUevent *) calloc(cuda_event_max, sizeof(CUevent *));
         if (NULL == cuda_event_ipc_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, ompi_process_info.nodename);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup_and_error;
         }
 
         /* Create the events since they can be reused. */
@@ -591,7 +608,8 @@ static int mca_common_cuda_stage_three_init(void)
             if (CUDA_SUCCESS != res) {
                 opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                                true, ompi_process_info.nodename, res);
-                return OMPI_ERROR;
+                rc = OMPI_ERROR;
+                goto cleanup_and_error;
             }
         }
 
@@ -602,7 +620,8 @@ static int mca_common_cuda_stage_three_init(void)
         if (NULL == cuda_event_ipc_frag_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, ompi_process_info.nodename);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup_and_error;
         }
     }
 
@@ -616,11 +635,12 @@ static int mca_common_cuda_stage_three_init(void)
         cuda_event_dtoh_first_avail = 0;
         cuda_event_dtoh_first_used = 0;
 
-        cuda_event_dtoh_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
+        cuda_event_dtoh_array = (CUevent *) calloc(cuda_event_max, sizeof(CUevent *));
         if (NULL == cuda_event_dtoh_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, ompi_process_info.nodename);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup_and_error;
         }
 
         /* Create the events since they can be reused. */
@@ -629,7 +649,8 @@ static int mca_common_cuda_stage_three_init(void)
             if (CUDA_SUCCESS != res) {
                 opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                                true, ompi_process_info.nodename, res);
-                return OMPI_ERROR;
+                rc = OMPI_ERROR;
+                goto cleanup_and_error;
             }
         }
 
@@ -640,7 +661,8 @@ static int mca_common_cuda_stage_three_init(void)
         if (NULL == cuda_event_dtoh_frag_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, ompi_process_info.nodename);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup_and_error;
         }
 
         /* Set up an array to store outstanding async htod events.  Used on the
@@ -651,11 +673,12 @@ static int mca_common_cuda_stage_three_init(void)
         cuda_event_htod_first_avail = 0;
         cuda_event_htod_first_used = 0;
 
-        cuda_event_htod_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
+        cuda_event_htod_array = (CUevent *) calloc(cuda_event_max, sizeof(CUevent *));
         if (NULL == cuda_event_htod_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, ompi_process_info.nodename);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup_and_error;
         }
 
         /* Create the events since they can be reused. */
@@ -664,7 +687,8 @@ static int mca_common_cuda_stage_three_init(void)
             if (CUDA_SUCCESS != res) {
                 opal_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                                true, ompi_process_info.nodename, res);
-                return OMPI_ERROR;
+                rc = OMPI_ERROR;
+                goto cleanup_and_error;
             }
         }
 
@@ -675,7 +699,8 @@ static int mca_common_cuda_stage_three_init(void)
         if (NULL == cuda_event_htod_frag_array) {
             opal_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, ompi_process_info.nodename);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup_and_error;
         }
     }
 
@@ -707,7 +732,8 @@ static int mca_common_cuda_stage_three_init(void)
     if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
         opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
                        true, ompi_process_info.nodename, res);
-        return OMPI_ERROR;
+        rc = OMPI_ERROR;
+        goto cleanup_and_error;
     }
 
     /* Create stream for use in dtoh asynchronous copies */
@@ -715,8 +741,8 @@ static int mca_common_cuda_stage_three_init(void)
     if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
         opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
                        true, ompi_process_info.nodename, res);
-        return OMPI_ERROR;
-
+        rc = OMPI_ERROR;
+        goto cleanup_and_error;
     }
 
     /* Create stream for use in htod asynchronous copies */
@@ -724,8 +750,8 @@ static int mca_common_cuda_stage_three_init(void)
     if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
         opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
                        true, ompi_process_info.nodename, res);
-        return OMPI_ERROR;
-
+        rc = OMPI_ERROR;
+        goto cleanup_and_error;
     }
 
     if (mca_common_cuda_cumemcpy_async) {
@@ -734,14 +760,64 @@ static int mca_common_cuda_stage_three_init(void)
         if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
             opal_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
                            true, ompi_process_info.nodename, res);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup_and_error;
         }
     }
 
     opal_output_verbose(30, mca_common_cuda_output,
                         "CUDA: initialized");
     common_cuda_initialized = true;
+    stage_three_init_complete = true;
+    OPAL_THREAD_UNLOCK(&common_cuda_init_lock);
     return OMPI_SUCCESS;
+
+    /* If we are here, something went wrong.  Cleanup and return an error. */
+ cleanup_and_error:
+    for (i = 0; i < cuda_event_max; i++) {
+        if (NULL != cuda_event_ipc_array[i]) {
+            cuFunc.cuEventDestroy(cuda_event_ipc_array[i]);
+        }
+        if (NULL != cuda_event_htod_array[i]) {
+            cuFunc.cuEventDestroy(cuda_event_htod_array[i]);
+        }
+        if (NULL != cuda_event_dtoh_array[i]) {
+            cuFunc.cuEventDestroy(cuda_event_dtoh_array[i]);
+        }
+    }
+    if (NULL != cuda_event_ipc_array) {
+        free(cuda_event_ipc_array);
+    }
+    if (NULL != cuda_event_htod_array) {
+        free(cuda_event_htod_array);
+    }
+    if (NULL != cuda_event_dtoh_array) {
+        free(cuda_event_dtoh_array);
+    }
+    if (NULL != cuda_event_ipc_frag_array) {
+        free(cuda_event_ipc_frag_array);
+    }
+    if (NULL != cuda_event_htod_frag_array) {
+        free(cuda_event_ipc_frag_array);
+    }
+    if (NULL != cuda_event_dtoh_frag_array) {
+        free(cuda_event_dtoh_frag_array);
+    }
+    if (NULL != ipcStream) {
+        cuFunc.cuStreamDestroy(ipcStream);
+    }
+    if (NULL != dtohStream) {
+        cuFunc.cuStreamDestroy(dtohStream);
+    }
+    if (NULL != htodStream) {
+        cuFunc.cuStreamDestroy(htodStream);
+    }
+    if (NULL != memcpyStream) {
+        cuFunc.cuStreamDestroy(memcpyStream);
+    }
+    stage_three_init_complete = true;
+    OPAL_THREAD_UNLOCK(&common_cuda_init_lock);
+    return rc;
 }
 
 
