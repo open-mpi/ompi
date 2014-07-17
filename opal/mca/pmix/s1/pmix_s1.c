@@ -20,6 +20,7 @@
 
 #include "pmix_s1.h"
 #include "opal/mca/dstore/dstore.h"
+#include "opal/dss/dss.h"
 
 static int s1_init(void);
 static int s1_fini(void);
