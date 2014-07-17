@@ -69,7 +69,7 @@ int pmi_commit_packed(opal_identifier_t* proc, int pmix_vallen_max, char* pmix_k
 
         kv.key = tmp_key;
         kv.data.string = tmp;
-        rc = opal_pmix.put(proc, pmix_kvs_name, PMIX_GLOBAL, &kv);//FIXME
+        rc = opal_pmix.put(proc, PMIX_GLOBAL, &kv);//FIXME
         kv.key = NULL;
         kv.data.string = NULL;
         if (OPAL_SUCCESS != rc) {

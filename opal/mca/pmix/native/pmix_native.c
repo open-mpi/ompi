@@ -96,14 +96,51 @@ static char* pmix_error(int pmix_err);
                     pmi_func, __FILE__, __LINE__, __func__,     \
                     pmix_error(pmi_err));                        \
     } while(0);
+/* callback for wait completion */
+static wait_cbfunc(int status, opal_value_t *kv, void *cbdata)
+{
+    pmix_cback_t *cb = (pmix_cback_t*)cbdata;
+    cb->active = false;
+    if (NULL != cb->cbfunc) {
+        cb->cbfunc(status, kv, cb->cbdata);
+    }
+}
 
 static int native_init(void)
 {
+    char *t;
+
     /* if we are intitialized, then we are good */
     if (0 < init_cntr) {
         return OPAL_SUCCESS;
     }
     ++init_cntr;
+
+    /* get the PMIX server contact info - we know
+     * it is here because the component checked for it */
+    if (NULL == (t = getenv("PMIX_SERVER_URI"))) {
+        return OPAL_ERROR;
+    }
+    mca_pmix_native_component.uri = strdup(t);
+
+    /* construct the server fields */
+    mca_pmix_native_component.cache = NULL;
+    mca_pmix_native_component.sd = -1;
+    mca_pmix_native_component.state = PMIX_USOCK_UNCONNECTED;
+    OBJ_CONSTRUCT(&mca_pmix_native_component.send_queue, opal_list_t);
+    mca_pmix_native_component.send_msg = NULL;
+    mca_pmix_native_component.recv_msg = NULL;
+    mca_pmix_native_component.send_ev_active = false;
+    mca_pmix_native_component.recv_ev_active = false;
+    mca_pmix_native_component.timer_ev_active = false;
+
+    /* create an event base and progress thread for us */
+    if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("pmix_native", true))) {
+        free(uri);
+        return OPAL_ERROR;
+    }
+
+    /* we will connect on first send */
 
     return OPAL_SUCCESS;
 }
@@ -117,6 +154,22 @@ static int native_fini(void) {
     if (0 == init_cntr) {
         /* finalize things */
     }
+
+    if (NULL != mca_pmix_native_component.evbase) {
+        opal_stop_progress_thread("pmix_native");
+        mca_pmix_native_component.evbase = NULL;
+    }
+
+    if (NULL != mca_pmix_native_component.uri) {
+        free(mca_pmix_native_component.uri);
+    }
+    if (0 <= mca_pmix_native_component.sd) {
+        CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+    }
+    OPAL_LIST_DESTRUCT(&mca_pmix_native_component.send_queue);
+
+    OBJ_DESTRUCT(&mca_pmix_native_component.server);
+
     return OPAL_SUCCESS;
 }
 
@@ -130,6 +183,34 @@ static bool native_initialized(void)
 
 static int native_abort(int flag, const char msg[])
 {
+    opal_buffer_t *msg;
+    pmix_cmd_t cmd = PMIX_ABORT_CMD;
+
+    /* create a buffer to hold the message */
+    msg = OBJ_NEW(opal_buffer_t);
+    /* pack the cmd */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+    /* pack the status flag */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &flag, 1, OPAL_INT))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+    /* pack the string message - a NULL is okay */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &msg, 1, OPAL_STRING))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+
+    /* push it into our event base to send to the server, marking
+     * that we don't need/expect a return message for this send */
+    PMIX_ACTIVATE_POST_SEND(msg, NULL, NULL);
+
     return OPAL_SUCCESS;
 }
 
@@ -167,15 +248,78 @@ static int native_put(opal_identifier_t *id,
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
+
 static int native_fence(void)
 {
+    opal_buffer_t *msg;
+    pmix_cmd_t cmd = PMIX_FENCE_CMD;
+    pmix_cback_t *cb;
+
+    msg = OBJ_NEW(opal_buffer_t);
+    /* pack the fence cmd */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+
     /* if we haven't already done it, ensure we have committed our values */
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    if (NULL != mca_pmix_native_component.cache) {
+        opal_dss.copy_payload(msg, mca_pmix_native_component.cache);
+        OBJ_RELEASE(mca_pmix_native_component.cache);
+    }
+
+    /* create a callback object as we need to pass it to the
+     * send routine so we know which callback to use when
+     * the return message is recvd */
+    cb = OBJ_NEW(pmix_cback_t);
+
+    /* push it into our event base to send to the server, asking
+     * that our wait_cbfunc be called upon completion so we know
+     * that the "release" was recvd */
+    PMIX_ACTIVATE_POST_SEND(msg, cb, wait_cbfunc);
+
+    /* wait for the fence to complete */
+    PMIX_WAIT_FOR_COMPLETION(cb->active);
+    OBJ_RELEASE(cb);
+
+    return OPAL_SUCCESS;
 }
 
 static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    opal_buffer_t *msg;
+    pmix_cmd_t cmd = PMIX_FENCE_CMD;
+    pmix_cback_t *cb;
+
+    msg = OBJ_NEW(opal_buffer_t);
+    /* pack the fence cmd */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+
+    /* if we haven't already done it, ensure we commit our values
+     * as part of the fence message to reduce message traffic */
+    if (NULL != mca_pmix_native_component.cache) {
+        opal_dss.copy_payload(msg, mca_pmix_native_component.cache);
+        OBJ_RELEASE(mca_pmix_native_component.cache);
+    }
+
+    /* create a callback object as we need to pass it to the
+     * send routine so we know which callback to use when
+     * the return message is recvd */
+    cb = OBJ_NEW(pmix_cback_t);
+    cb->cbfunc = cbfunc;
+    cb->cbdata = cbdata;
+
+    /* push it into our event base to send to the server - the
+     * provided function will be called upon receipt of the
+     * "release" message */
+    PMIX_ACTIVATE_POST_SEND(msg, cb, wait_cbfunc);
+
+    return OPAL_SUCCESS;
 }
 
 static int native_get(opal_identifier_t *id,
@@ -336,3 +480,25 @@ static char* pmix_error(int pmix_err)
 #endif
     return NULL;
 }
+
+/***   INSTANTIATE INTERNAL CLASSES   ***/
+static void mcon(pmix_usock_msg_t *p)
+{
+    p->data = NULL;
+    p->crnt_ptr = NULL;
+    p->crnt_bytes = 0;
+    p->total_bytes = 0;
+}
+OBJ_CLASS_INSTANCE(pmix_usock_msg_t,
+                   opal_object_t,
+                   mcon, NULL);
+
+static void cbcon(pmix_cb_t *p)
+{
+    p->active = false;
+    p->cbfunc = NULL;
+    p->cbdata = NULL;
+}
+OBJ_CLASS_INSTANCE(pmix_cb_t,
+                   opal_object_t,
+                   cbcon, NULL);

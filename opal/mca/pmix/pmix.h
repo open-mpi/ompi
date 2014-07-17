@@ -107,7 +107,6 @@ typedef int (*opal_pmix_base_module_fence_nb_fn_t)(opal_pmix_cbfunc_t cbfunc, vo
  * we can form the PMI key within the active component instead of sprinkling that
  * code all over the code base. */
 typedef int (*opal_pmix_base_module_put_fn_t)(opal_identifier_t *id,
-                                             const char key[],
                                              opal_pmix_scope_t scope,
                                              opal_value_t *kv);
 

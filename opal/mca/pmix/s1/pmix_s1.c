@@ -31,7 +31,6 @@ static int s1_get_appnum(int *appnum);
 static int s1_fence(void);
 static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int s1_put(opal_identifier_t *id,
-                  const char key[],
                   opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s1_get(opal_identifier_t *id,
@@ -245,7 +244,6 @@ static int s1_get_size(opal_pmix_scope_t scope, int *size)
 }
 
 static int s1_put(opal_identifier_t *id,
-                  const char key[],
                   opal_pmix_scope_t scope,
                   opal_value_t *kv)
 {

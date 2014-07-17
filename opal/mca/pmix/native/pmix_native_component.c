@@ -36,44 +36,51 @@ static int pmix_native_component_query(mca_base_module_t **module, int *priority
  * and pointers to our public functions in it
  */
 
-const opal_pmix_base_component_t mca_pmix_native_component = {
-
-    /* First, the mca_component_t struct containing meta information
-       about the component itself */
-
+const opal_pmix_native_component_t mca_pmix_native_component = {
     {
-        /* Indicate that we are a pmix v1.1.0 component (which also
-           implies a specific MCA version) */
+
+        /* First, the mca_component_t struct containing meta information
+           about the component itself */
+
+        {
+            /* Indicate that we are a pmix v1.1.0 component (which also
+               implies a specific MCA version) */
         
-        OPAL_PMIX_BASE_VERSION_2_0_0,
+            OPAL_PMIX_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
+            /* Component name and version */
 
-        "native",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+            "native",
+            OPAL_MAJOR_VERSION,
+            OPAL_MINOR_VERSION,
+            OPAL_RELEASE_VERSION,
 
-        /* Component open and close functions */
+            /* Component open and close functions */
 
-        NULL,
-        NULL,
-        pmix_native_component_query,
-        NULL
-    },
-    /* Next the MCA v1.0.0 component meta data */
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
+            NULL,
+            NULL,
+            pmix_native_component_query,
+            NULL
+        },
+        /* Next the MCA v1.0.0 component meta data */
+        {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
     }
 };
 
 
 static int pmix_native_component_query(mca_base_module_t **module, int *priority)
 {
-    /* we can be considered, but set our priority by default
-     * to be less than any other component */
-    *priority = 1;
-    *module = (mca_base_module_t *)&opal_pmix_native_module;
-    return OPAL_SUCCESS;
+    /* if we find a PMIx server is present, then offer ourselves */
+    if (NULL != getenv("PMIX_SERVER_URI")) {
+        *priority = 1;
+        *module = (mca_base_module_t *)&opal_pmix_native_module;
+        return OPAL_SUCCESS;
+    }
+
+    /* otherwise, we are not available */
+    *module = NULL;
+    return OPAL_ERROR;
 }
