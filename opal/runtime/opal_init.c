@@ -75,6 +75,10 @@ int opal_util_initialized = 0;
    hwloc is available, this value will be overwritten when the
    hwloc data is loaded. */
 int opal_cache_line_size = 128;
+/* we use an identifier for this process in multiple places,
+ * so let's store it somewhere and allow/require that it
+ * be set before using various features */
+opal_identifier_t opalid = OPAL_ID_INVALID;
 
 static int
 opal_err2str(int errnum, const char **errmsg)
@@ -589,3 +593,11 @@ int opal_init_test(void)
                     error, ret );
     return ret;
 }
+
+void opal_init_set_identifier(opal_identifier_t *id)
+{
+    /* for alignment purposes, we copy the id instead
+     * of directly setting it */
+    memcpy(&opalid, id, sizeof(opal_identifier_t));
+}
+

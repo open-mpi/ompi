@@ -14,6 +14,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/runtime/opal.h"
 
 #include <string.h>
 #include <pmi.h>
@@ -32,8 +33,7 @@ static int s1_get_size(opal_pmix_scope_t scope, int *size);
 static int s1_get_appnum(int *appnum);
 static int s1_fence(void);
 static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
-static int s1_put(opal_identifier_t *id,
-                  opal_pmix_scope_t scope,
+static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s1_get(opal_identifier_t *id,
                   const char *key,
@@ -42,26 +42,23 @@ static void s1_get_nb(opal_identifier_t *id,
                       const char *key,
                       opal_pmix_cbfunc_t cbfunc,
                       void *cbdata);
-static int s1_publish(opal_identifier_t *id,
-        const char service_name[],
-        opal_list_t *info,
-        const char port[]);
-static int s1_lookup(opal_identifier_t *id,
-        const char service_name[],
-        opal_list_t *info,
-        char port[], int portLen);
-static int s1_unpublish(opal_identifier_t *id,
-        const char service_name[], 
-        opal_list_t *info);
+static int s1_publish(const char service_name[],
+                      opal_list_t *info,
+                      const char port[]);
+static int s1_lookup(const char service_name[],
+                     opal_list_t *info,
+                     char port[], int portLen);
+static int s1_unpublish(const char service_name[], 
+                        opal_list_t *info);
 static int s1_local_info(int vpid, int **ranks_ret,
                          int *procs_ret, char **error);
 static int s1_spawn(int count, const char * cmds[],
-        int argcs[], const char ** argvs[],
-        const int maxprocs[],
-        opal_list_t *info_keyval_vector,
-        opal_list_t *preput_keyval_vector,
-        char jobId[], int jobIdSize,
-        int errors[]);
+                    int argcs[], const char ** argvs[],
+                    const int maxprocs[],
+                    opal_list_t *info_keyval_vector,
+                    opal_list_t *preput_keyval_vector,
+                    char jobId[], int jobIdSize,
+                    int errors[]);
 static int s1_job_connect(const char jobId[]);
 static int s1_job_disconnect(const char jobId[]);
 
@@ -110,8 +107,6 @@ static bool s1_committed = false;
 static char* pmix_packed_data = NULL;
 static int pmix_packed_data_offset = 0;
 static int pmix_pack_key = 0;
-
-static opal_identifier_t my_id;
 
 static char* pmix_error(int pmix_err);
 #define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
@@ -225,12 +220,12 @@ static int s1_abort(int flag, const char msg[])
 }
 
 static int s1_spawn(int count, const char * cmds[],
-        int argcs[], const char ** argvs[],
-        const int maxprocs[],
-        opal_list_t *info_keyval_vector,
-        opal_list_t *preput_keyval_vector,
-        char jobId[], int jobIdSize,
-        int errors[])
+                    int argcs[], const char ** argvs[],
+                    const int maxprocs[],
+                    opal_list_t *info_keyval_vector,
+                    opal_list_t *preput_keyval_vector,
+                    char jobId[], int jobIdSize,
+                    int errors[])
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
@@ -252,7 +247,7 @@ static int s1_get_size(opal_pmix_scope_t scope, int *size)
     return OPAL_SUCCESS;
 }
 
-static int pmix_commit_packed(opal_identifier_t* id, char* buffer_to_put, int data_to_put)
+static int pmix_commit_packed( char* buffer_to_put, int data_to_put)
 {
     int rc, left;
     char *pmikey = NULL, *tmp;
@@ -268,7 +263,7 @@ static int pmix_commit_packed(opal_identifier_t* id, char* buffer_to_put, int da
 
         sprintf (tmp_key, "key%d", pmix_pack_key);
 
-        if (NULL == (pmikey = setup_key(id, tmp_key, pmix_vallen_max))) {
+        if (NULL == (pmikey = setup_key(OPAL_MY_ID, tmp_key, pmix_vallen_max))) {
             OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
             rc = OPAL_ERR_BAD_PARAM;
             break;
@@ -304,8 +299,7 @@ static int pmix_commit_packed(opal_identifier_t* id, char* buffer_to_put, int da
     }
 }
 
-static int s1_put(opal_identifier_t *id,
-                  opal_pmix_scope_t scope,
+static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv)
 {
     int rc;
@@ -338,7 +332,7 @@ static int s1_put(opal_identifier_t *id,
     buffer_to_put = (char*)malloc(data_to_put);
     memcpy(buffer_to_put, pmix_packed_data, data_to_put);
     
-    pmix_commit_packed (id, buffer_to_put, data_to_put);
+    pmix_commit_packed (buffer_to_put, data_to_put);
     
     free(buffer_to_put);
     pmix_packed_data_offset = rem_offset;
@@ -350,7 +344,6 @@ static int s1_put(opal_identifier_t *id,
         pmix_packed_data = realloc (pmix_packed_data, pmix_packed_data_offset);
     }
 
-    my_id = *id;
     s1_committed = false;
     return rc;
 }
@@ -360,7 +353,7 @@ static int s1_fence(void)
     int rc;
     /* check if there is partially filled meta key and put them */
     if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
-        pmix_commit_packed(&my_id, pmix_packed_data, pmix_packed_data_offset);
+        pmix_commit_packed(pmix_packed_data, pmix_packed_data_offset);
         pmix_packed_data_offset = 0;
         free(pmix_packed_data);
         pmix_packed_data = NULL;
@@ -629,10 +622,9 @@ static int s1_get_job_attr_array(const char name[],
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int s1_publish(opal_identifier_t *id,
-        const char service_name[],
-        opal_list_t *info,
-        const char port[])
+static int s1_publish(const char service_name[],
+                      opal_list_t *info,
+                      const char port[])
 {
     int rc;
 
@@ -643,10 +635,9 @@ static int s1_publish(opal_identifier_t *id,
     return OPAL_SUCCESS;
 }
 
-static int s1_lookup(opal_identifier_t *id,
-        const char service_name[],
-        opal_list_t *info,
-        char port[], int portLen)
+static int s1_lookup(const char service_name[],
+                     opal_list_t *info,
+                     char port[], int portLen)
 {
     int rc;
 /*
@@ -663,9 +654,8 @@ static int s1_lookup(opal_identifier_t *id,
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int s1_unpublish(opal_identifier_t *id,
-        const char service_name[], 
-        opal_list_t *info)
+static int s1_unpublish(const char service_name[], 
+                        opal_list_t *info)
 {
     int rc;
 
@@ -677,7 +667,7 @@ static int s1_unpublish(opal_identifier_t *id,
 }
 
 static int s1_local_info(int vpid, int **ranks_ret,
-                          int *procs_ret, char **error)
+                         int *procs_ret, char **error)
 {
     int *ranks;
     int procs = -1;

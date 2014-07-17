@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008	   Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #define OPAL_H
 
 #include "opal_config.h"
+#include "opal/types.h"
 
 BEGIN_C_DECLS
 
@@ -37,6 +39,15 @@ OPAL_DECLSPEC extern const char opal_version_string[];
    If the hwloc data is available, opal_cache_line_size will be set to
    its final value by the end of orte_init(). */
 OPAL_DECLSPEC extern int opal_cache_line_size;
+
+/** Identifier for this process. Currently defined in opal/types.h
+ * as a uint64_t, but may change at some point to a more opaque
+ * struct handle */
+OPAL_DECLSPEC extern opal_identifier_t opalid;
+#define OPAL_MY_ID &opalid
+
+/* set the identifier */
+OPAL_DECLSPEC void opal_init_set_identifier(opal_identifier_t *id);
 
 /**
  * Initialize the OPAL layer, including the MCA system.

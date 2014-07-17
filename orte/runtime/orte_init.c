@@ -13,6 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -148,6 +149,8 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "orte_ess_base_select";
         goto error;
     }
+    /* set our identifier in the OPAL layer */
+    opal_init_set_identifier(ORTE_PROC_MY_NAME);
 
     if (!ORTE_PROC_IS_APP) {
         /* ORTE tools "block" in their own loop over the event

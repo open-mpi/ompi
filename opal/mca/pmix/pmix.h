@@ -103,12 +103,9 @@ typedef int (*opal_pmix_base_module_fence_fn_t)(void);
 typedef int (*opal_pmix_base_module_fence_nb_fn_t)(opal_pmix_cbfunc_t cbfunc, void *cbdata);
 
 /* Put - note that this API has been modified from the current PMI standard to
- * reflect the proposed PMIx extensions, and to include the process identifier so
- * we can form the PMI key within the active component instead of sprinkling that
- * code all over the code base. */
-typedef int (*opal_pmix_base_module_put_fn_t)(opal_identifier_t *id,
-                                             opal_pmix_scope_t scope,
-                                             opal_value_t *kv);
+ * reflect the proposed PMIx extensions. */
+typedef int (*opal_pmix_base_module_put_fn_t)(opal_pmix_scope_t scope,
+                                              opal_value_t *kv);
 
 /* Get - note that this API has been modified from the current PMI standard to
  * reflect the proposed PMIx extensions, and to include the process identifier so
@@ -128,30 +125,21 @@ typedef void (*opal_pmix_base_module_get_nb_fn_t)(opal_identifier_t *id,
                                                  opal_pmix_cbfunc_t cbfunc,
                                                  void *cbdata);
 
-/* Publish - note that this API has been modified from the current PMI standard
- * to include the process identifier so we can form the PMI key within the active
- * component instead of sprinkling that code all over the code base. The "info" parameter
+/* Publish - the "info" parameter
  * consists of a list of pmix_info_t objects */
-typedef int (*opal_pmix_base_module_publish_fn_t)(opal_identifier_t *id,
-                                                  const char service_name[],
+typedef int (*opal_pmix_base_module_publish_fn_t)(const char service_name[],
                                                   opal_list_t *info,
                                                   const char port[]);
 
-/* Lookup - note that this API has been modified from the current PMI standard
- * to include the process identifier so we can form the PMI key within the active
- * component instead of sprinkling that code all over the code base. The "info" parameter
+/* Lookup - the "info" parameter
  * consists of a list of pmix_info_t objects */
-typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_identifier_t *id,
-                                                 const char service_name[],
+typedef int (*opal_pmix_base_module_lookup_fn_t)(const char service_name[],
                                                  opal_list_t *info,
                                                  char port[], int portLen);
 
-/* Unpublish - note that this API has been modified from the current PMI standard
- * to include the process identifier so we can form the PMI key within the active
- * component instead of sprinkling that code all over the code base. The "info" parameter
+/* Unpublish - the "info" parameter
  * consists of a list of pmix_info_t objects */
-typedef int (*opal_pmix_base_module_unpublish_fn_t)(opal_identifier_t *id,
-                                                    const char service_name[], 
+typedef int (*opal_pmix_base_module_unpublish_fn_t)(const char service_name[], 
                                                     opal_list_t *info);
 
 /* Not an official PMI API, but something we use. Unfortunately, the calls required to
