@@ -49,22 +49,11 @@ module mpi_f08
 end module mpi_f08
 
 #if ! OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS
-subroutine ompi_win_shared_query_f_with_ierror(win, rank, size, disp_unit, baseptr,&
-      ierror) BIND(C, name="ompi_win_shared_query_f")
-  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
-  use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-  INTEGER, INTENT(IN) ::  win
-  INTEGER, INTENT(IN) ::  rank
-  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
-  INTEGER, INTENT(OUT) ::  disp_unit
-  TYPE(C_PTR), INTENT(OUT) ::  baseptr
-  INTEGER, INTENT(OUT) ::  ierror
-end subroutine ompi_win_shared_query_f_with_ierror
-
 subroutine ompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
       ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+  use :: mpi_f08, only : ompi_win_shared_query_f_error
   implicit none
   INTEGER, INTENT(IN) ::  win
   INTEGER, INTENT(IN) ::  rank
@@ -72,30 +61,16 @@ subroutine ompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
   INTEGER, INTENT(OUT) ::  disp_unit
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
-  INTEGER :: ilerror
-  if (PRESENT(ierror)) then
-     call ompi_win_shared_query_f_with_ierror(win, rank, size, disp_unit, baseptr, ierror)
-  else
-     call ompi_win_shared_query_f_with_ierror(win, rank, size, disp_unit, baseptr, ilerror)
-  endif
+  INTEGER :: cerror
+  call ompi_win_shared_query_f_error(win, rank, size, disp_unit, baseptr, cerror)
+  if (present(ierror)) ierror = cerror
 end subroutine ompi_win_shared_query_f
-
-subroutine pompi_win_shared_query_f_with_ierror(win, rank, size, disp_unit, baseptr,&
-      ierror) BIND(C, name="pompi_win_shared_query_f")
-  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
-  use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-  INTEGER, INTENT(IN) ::  win
-  INTEGER, INTENT(IN) ::  rank
-  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
-  INTEGER, INTENT(OUT) ::  disp_unit
-  TYPE(C_PTR), INTENT(OUT) ::  baseptr
-  INTEGER, INTENT(OUT) ::  ierror
-end subroutine pompi_win_shared_query_f_with_ierror
 
 subroutine pompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
       ierror)
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+  use :: mpi_f08, only : pompi_win_shared_query_f_error
   implicit none
   INTEGER, INTENT(IN) ::  win
   INTEGER, INTENT(IN) ::  rank
@@ -103,11 +78,8 @@ subroutine pompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
   INTEGER, INTENT(OUT) ::  disp_unit
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
   INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
-  INTEGER :: ilerror
-  if (PRESENT(ierror)) then
-     call pompi_win_shared_query_f_with_ierror(win, rank, size, disp_unit, baseptr, ierror)
-  else
-     call pompi_win_shared_query_f_with_ierror(win, rank, size, disp_unit, baseptr, ilerror)
-  endif
+  INTEGER :: cerror
+  call pompi_win_shared_query_f_error(win, rank, size, disp_unit, baseptr, cerror)
+  if (present(ierror)) ierror = cerror
 end subroutine pompi_win_shared_query_f
 #endif

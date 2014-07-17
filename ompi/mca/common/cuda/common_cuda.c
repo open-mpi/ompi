@@ -121,6 +121,9 @@ static int mca_common_cuda_memmove(void*, void*, size_t);
 static int mca_common_cuda_cu_memcpy_async(void*, const void*, size_t, opal_convertor_t*);
 static int mca_common_cuda_cu_memcpy(void*, const void*, size_t);
 
+/* Function that gets plugged into opal layer */
+static int mca_common_cuda_stage_two_init(opal_common_cuda_function_table_t *);
+
 /* Structure to hold memory registrations that are delayed until first
  * call to send or receive a GPU pointer */
 struct common_cuda_mem_regs_t {
@@ -198,29 +201,6 @@ static void cuda_dump_memhandle(int, void *, char *) __opal_attribute_unused__ ;
 
 #endif /* OPAL_CUDA_SUPPORT_41 */
 
-
-/**
- * This function is registered with the OPAL CUDA support.  In that way,
- * these function pointers will be loaded into the OPAL CUDA code when
- * the first convertor is initialized.  This does not trigger any CUDA
- * specific initialization as this may just be a host buffer that is
- * triggering this call.
- */
-static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
-{
-    if (OPAL_UNLIKELY(!ompi_mpi_cuda_support)) {
-        return OMPI_ERROR;
-    }
-
-    ftable->gpu_is_gpu_buffer = &mca_common_cuda_is_gpu_buffer;
-    ftable->gpu_cu_memcpy_async = &mca_common_cuda_cu_memcpy_async;
-    ftable->gpu_cu_memcpy = &mca_common_cuda_cu_memcpy;
-    ftable->gpu_memmove = &mca_common_cuda_memmove;
-
-    opal_output_verbose(30, mca_common_cuda_output,
-                        "CUDA: support functions initialized");
-    return OMPI_SUCCESS;
-}
 
 /**
  * This is the first stage of initialization.  This function is
@@ -456,7 +436,7 @@ int mca_common_cuda_stage_one_init(void)
     if (true != stage_one_init_passed) {
         return 1;
     }
-    opal_cuda_add_initialization_function(&mca_common_cuda_init);
+    opal_cuda_add_initialization_function(&mca_common_cuda_stage_two_init);
     OBJ_CONSTRUCT(&common_cuda_memory_registrations, opal_list_t);
 
     /* Map in the functions that we need.  Note that if there is an error
@@ -495,6 +475,28 @@ int mca_common_cuda_stage_one_init(void)
     return 0;
 }
 
+/**
+ * This function is registered with the OPAL CUDA support.  In that way,
+ * these function pointers will be loaded into the OPAL CUDA code when
+ * the first convertor is initialized.  This does not trigger any CUDA
+ * specific initialization as this may just be a host buffer that is
+ * triggering this call.
+ */
+static int mca_common_cuda_stage_two_init(opal_common_cuda_function_table_t *ftable)
+{
+    if (OPAL_UNLIKELY(!ompi_mpi_cuda_support)) {
+        return OMPI_ERROR;
+    }
+
+    ftable->gpu_is_gpu_buffer = &mca_common_cuda_is_gpu_buffer;
+    ftable->gpu_cu_memcpy_async = &mca_common_cuda_cu_memcpy_async;
+    ftable->gpu_cu_memcpy = &mca_common_cuda_cu_memcpy;
+    ftable->gpu_memmove = &mca_common_cuda_memmove;
+
+    opal_output_verbose(30, mca_common_cuda_output,
+                        "CUDA: support functions initialized");
+    return OMPI_SUCCESS;
+}
 
 /**
  * This is the last phase of initialization.  This is triggered when we examine
