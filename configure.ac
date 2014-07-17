@@ -20,6 +20,8 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -624,8 +626,8 @@ OPAL_CONFIG_ASM
 m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN], [ompi_fortran_happy=0])
 
 AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
-    [test "$enable_oshmem" == "yes" -a "$ompi_fortran_happy" == "1" -a \
-          "$OMPI_WANT_FORTRAN_BINDINGS" == "1" -a \
+    [test "$enable_oshmem" = "yes" -a "$ompi_fortran_happy" = "1" -a \
+          "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a \
           "$enable_oshmem_fortran" != "no"])
 
 # checkpoint results
