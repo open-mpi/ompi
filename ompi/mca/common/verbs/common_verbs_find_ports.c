@@ -268,7 +268,7 @@ static int usnic_magic_probe(struct ibv_context *context)
 }
 
 /*
- * usNIC devices will always return one of three
+ * usNIC devices will always return one of these
  * device->transport_type values:
  *
  * 1. TRANSPORT_IWARP: for older kernels (e.g., on systems such as
@@ -288,16 +288,17 @@ static int usnic_magic_probe(struct ibv_context *context)
  * 3. TRANSPORT_USNIC_UDP: on systems with new kernels and new
  * libibverbs.  In this case, the transport is guaranteed to be
  * usNIC/UDP.
-*/
+ *
+ * 4. TRANSPORT_UNKNOWN: on systems with a new kernel but an old
+ * libibverbs (i.e., kernel understands/returns TRANSPORT_USNIC*
+ * values, but libibverbs doesn't understant the TRANSPORT_USNIC*
+ * constants, and therefore returns TRANSPORT_UNKNOWN).
+ */
 static int usnic_transport(struct ibv_device *device,
                            struct ibv_context *context)
 {
     if (!device_is_usnic(device)) {
         return USNIC_UNKNOWN;
-    }
-
-    if (IBV_TRANSPORT_IWARP == device->transport_type) {
-        return usnic_magic_probe(context);
     }
 
 #if HAVE_DECL_IBV_TRANSPORT_USNIC_UDP
@@ -308,15 +309,9 @@ static int usnic_transport(struct ibv_device *device,
     }
 #endif
 
-#if HAVE_DECL_IBV_TRANSPORT_USNIC
-    if (IBV_TRANSPORT_USNIC == device->transport_type) {
-        return usnic_magic_probe(context);
-    }
-#endif
-
-    /* Should never get here -- usnic devices should *always* return
-       one of the 3 above values */
-    return USNIC_UNKNOWN;
+    /* All other cases require a secondary check to figure out whether
+       the transport is L2 or UDP */
+    return usnic_magic_probe(context);
 }
 
 /***********************************************************************/
