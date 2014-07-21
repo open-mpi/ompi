@@ -80,10 +80,12 @@ static int map_compare_endpoints(const void *aa, const void *bb)
     ompi_btl_usnic_endpoint_t *a = *((ompi_btl_usnic_endpoint_t**) aa);
     ompi_btl_usnic_endpoint_t *b = *((ompi_btl_usnic_endpoint_t**) bb);
 
-    if (NULL == a) {
-      return 1;
+    if (NULL == a && NULL == b) {
+        return 0;
+    } else if (NULL == a) {
+        return 1;
     } else if (NULL == b) {
-      return -1;
+        return -1;
     }
 
     return strcmp(ibv_get_device_name(a->endpoint_module->device),
