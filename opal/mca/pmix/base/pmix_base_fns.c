@@ -30,11 +30,7 @@
 
 #define OPAL_PMI_PAD  10
 
-//static char *pmi_packed_data = NULL;
-//static int pmi_pack_key = 0;
-//static int pmi_packed_data_off = 0;
-
-int pmi_store_encoded(const char *key, const void *data,
+int pmix_store_encoded(const char *key, const void *data,
         opal_data_type_t type, char** buffer, int* length)
 {
     opal_byte_object_t *bo;
@@ -95,6 +91,58 @@ int pmi_store_encoded(const char *key, const void *data,
 
     *length = pmi_packed_data_off;
     return OPAL_SUCCESS;
+}
+
+int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* pack_key, kvs_put_fn fn)
+{
+    int rc, left;
+    char *pmikey = NULL, *tmp;
+    char tmp_key[32], save;
+    char *encoded_data;
+    if (NULL == (encoded_data = pmi_encode(buffer_to_put, data_to_put))) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (left = strlen (encoded_data), tmp = encoded_data ; left ; ) {
+        size_t value_size = vallen > left ? left : vallen - 1;
+
+        sprintf (tmp_key, "key%d", *pack_key);
+
+        if (NULL == (pmikey = setup_key(OPAL_MY_ID, tmp_key, vallen))) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            rc = OPAL_ERR_BAD_PARAM;
+            break;
+        }
+
+        /* only write value_size bytes */
+        save = tmp[value_size];
+        tmp[value_size] = '\0';
+
+        //rc = kvs_put(pmikey, tmp);
+        rc = fn(pmikey, tmp);
+        //rc = PMI_KVS_Put(pmix_kvs_name, pmikey, tmp);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+
+        free(pmikey);
+        if (OPAL_SUCCESS != rc) {
+            break;
+        }
+
+        tmp[value_size] = save;
+        tmp += value_size;
+        left -= value_size;
+
+        *pack_key ++;
+
+        rc = OPAL_SUCCESS;
+    }
+
+    if (encoded_data) {
+        free(encoded_data);
+    }
 }
 
 char* setup_key(opal_identifier_t* name, const char *key, int pmix_keylen_max)

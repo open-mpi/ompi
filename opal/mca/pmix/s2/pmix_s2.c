@@ -60,7 +60,7 @@ static int s2_publish(const char service_name[],
 static int s2_lookup(const char service_name[],
                      opal_list_t *info,
                      char port[], int portLen);
-static int s2_unpublish(const char service_name[], 
+static int s2_unpublish(const char service_name[],
                         opal_list_t *info);
 static int s2_local_info(int vpid, int **ranks_ret,
                          int *procs_ret, char **error);
@@ -124,6 +124,10 @@ static int pmix_rank = 0;
 static int pmix_appnum = 0;
 static int pmix_usize = 0;
 static char *pmix_kvs_name = NULL;
+
+static char* pmix_packed_data = NULL;
+static int pmix_packed_data_offset = 0;
+static int pmix_pack_key = 0;
 
 static char* pmix_error(int pmix_err);
 #define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
@@ -258,26 +262,78 @@ static int s2_get_appnum(int *appnum)
     return OPAL_SUCCESS;
 }
 
+static int kvs_put(const char key[], const char value[])
+{
+    int rc;
+    rc = PMI2_KVS_Put(key, value);
+    if( PMI2_SUCCESS != rc ){
+        OPAL_PMI_ERROR(rc, "PMI2_KVS_Put");
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
 static int s2_put(opal_pmix_scope_t scope,
                   opal_value_t *kv)
 {
     int rc;
-/*
-    if( PMI2_SUCCESS != PMI2_KVS_Put(key, value) ){
-        OPAL_PMI_ERROR(rc, "PMI2_KVS_Put");
-        return OPAL_ERROR;
+    char* buffer_to_put;
+    int rem_offset = 0;
+    int data_to_put = 0;
+    if (OPAL_SUCCESS != (rc = pmix_store_encoded (kv->key, (void*)&kv->data, kv->type, &pmix_packed_data, &pmix_packed_data_offset))) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
     }
-    return OPAL_SUCCESS;*/
-    return OPAL_ERR_NOT_IMPLEMENTED;
+
+    if (pmix_packed_data_offset == 0) {
+        /* nothing to write */
+        return OPAL_SUCCESS;
+    }
+
+    if (pmix_packed_data_offset < pmix_vallen_max) {
+        /* this meta-key is still being filled,
+         * nothing to put yet
+         */
+        return OPAL_SUCCESS;
+    }
+
+    /* encode only full filled meta keys */
+    rem_offset = pmix_packed_data_offset % pmix_vallen_max;
+    data_to_put = pmix_packed_data_offset - rem_offset;
+    buffer_to_put = (char*)malloc(data_to_put);
+    memcpy(buffer_to_put, pmix_packed_data, data_to_put);
+
+    pmix_commit_packed (buffer_to_put, data_to_put, pmix_vallen_max, &pmix_pack_key, kvs_put);
+
+    free(buffer_to_put);
+    pmix_packed_data_offset = rem_offset;
+    if (0 == pmix_packed_data_offset) {
+        free(pmix_packed_data);
+        pmix_packed_data = NULL;
+    } else {
+        memmove (pmix_packed_data, pmix_packed_data + data_to_put, pmix_packed_data_offset);
+        pmix_packed_data = realloc (pmix_packed_data, pmix_packed_data_offset);
+    }
+
+    return rc;
 }
 
 static int s2_fence(void)
 {
     int rc;
+    /* check if there is partially filled meta key and put them */
+    if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
+        pmix_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
+        pmix_packed_data_offset = 0;
+        free(pmix_packed_data);
+        pmix_packed_data = NULL;
+    }
+
     if (PMI2_SUCCESS != (rc = PMI2_KVS_Fence())) {
         OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
         return OPAL_ERROR;
     }
+
     return OPAL_SUCCESS;
 }
 
@@ -353,43 +409,40 @@ static int s2_publish(const char service_name[],
                       opal_list_t *info,
                       const char port[])
 {
-/*    int rc;
+    int rc;
 
-    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, info_ptr, port))) {
+    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, NULL, port))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_publish");
         return OPAL_ERROR;
     }
-    return OPAL_SUCCESS;*/
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_SUCCESS;
 }
 
 static int s2_lookup(const char service_name[],
                      opal_list_t *info,
                      char port[], int portLen)
 {
-    /*int rc;
+    int rc;
 
-    if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, info_ptr, port, portlen))) {
+    if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, NULL, port, portLen))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
-        free(port);
+//        free(port);
         return OPAL_ERROR;
     }
 
-    return OPAL_SUCCESS;*/
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_SUCCESS;
 }
 
-static int s2_unpublish(const char service_name[], 
+static int s2_unpublish(const char service_name[],
                         opal_list_t *info)
 {
-    /*int rc;
+    int rc;
 
-    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, info_ptr))) {
+    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_unpublish(service_name, NULL))) {
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
         return OPAL_ERROR;
     }
-    return OPAL_SUCCESS;;*/
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_SUCCESS;;
 }
 
 static int s2_local_info(int vpid, int **ranks_ret,
@@ -415,7 +468,7 @@ static int s2_local_info(int vpid, int **ranks_ret,
         return OPAL_ERROR;
     }
 
-    ranks = mca_common_pmix2_parse_pmap(pmapping, vpid, &my_node, &procs);
+    ranks = mca_common_pmi2_parse_pmap(pmapping, vpid, &my_node, &procs);
     if (NULL == ranks) {
         *error = "mca_common_pmix_local_info: could not get memory for PMIv2 local ranks";
         return OPAL_ERR_OUT_OF_RESOURCE;

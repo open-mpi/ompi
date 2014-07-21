@@ -14,7 +14,6 @@
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/runtime/opal.h"
 
 #include <string.h>
 #include <pmi.h>
@@ -48,7 +47,7 @@ static int s1_publish(const char service_name[],
 static int s1_lookup(const char service_name[],
                      opal_list_t *info,
                      char port[], int portLen);
-static int s1_unpublish(const char service_name[], 
+static int s1_unpublish(const char service_name[],
                         opal_list_t *info);
 static int s1_local_info(int vpid, int **ranks_ret,
                          int *procs_ret, char **error);
@@ -126,7 +125,7 @@ static int s1_init(void)
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
         return OPAL_ERROR;
     }
-    
+
     if( PMI_TRUE != initialized && PMI_SUCCESS != (rc = PMI_Init(&spawned)) ) {
         OPAL_PMI_ERROR(rc, "PMI_Init");
         return OPAL_ERROR;
@@ -247,56 +246,15 @@ static int s1_get_size(opal_pmix_scope_t scope, int *size)
     return OPAL_SUCCESS;
 }
 
-static int pmix_commit_packed( char* buffer_to_put, int data_to_put)
+static int kvs_put(const char key[], const char value[])
 {
-    int rc, left;
-    char *pmikey = NULL, *tmp;
-    char tmp_key[32], save;
-    char *encoded_data;
-    if (NULL == (encoded_data = pmi_encode(buffer_to_put, data_to_put))) {
-        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-        return OPAL_ERR_OUT_OF_RESOURCE;
+    int rc;
+    rc = PMI_KVS_Put(pmix_kvs_name, key, value);
+    if( PMI_SUCCESS != rc ){
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
+        return OPAL_ERROR;
     }
-
-    for (left = strlen (encoded_data), tmp = encoded_data ; left ; ) {
-        size_t value_size = pmix_vallen_max > left ? left : pmix_vallen_max - 1;
-
-        sprintf (tmp_key, "key%d", pmix_pack_key);
-
-        if (NULL == (pmikey = setup_key(OPAL_MY_ID, tmp_key, pmix_vallen_max))) {
-            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
-            rc = OPAL_ERR_BAD_PARAM;
-            break;
-        }
-
-        /* only write value_size bytes */
-        save = tmp[value_size];
-        tmp[value_size] = '\0';
-
-        //rc = kvs_put(pmikey, tmp);
-        rc = PMI_KVS_Put(pmix_kvs_name, pmikey, tmp);
-        if( PMI_SUCCESS != rc ){
-            OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
-            return OPAL_ERROR;
-        }
-
-        free(pmikey);
-        if (OPAL_SUCCESS != rc) {
-            break;
-        }
-
-        tmp[value_size] = save;
-        tmp += value_size;
-        left -= value_size;
-
-        pmix_pack_key ++;
-
-        rc = OPAL_SUCCESS;
-    }
-
-    if (encoded_data) {
-        free(encoded_data);
-    }
+    return rc;
 }
 
 static int s1_put(opal_pmix_scope_t scope,
@@ -306,7 +264,7 @@ static int s1_put(opal_pmix_scope_t scope,
     char* buffer_to_put;
     int rem_offset = 0;
     int data_to_put = 0;
-    if (OPAL_SUCCESS != (rc = pmi_store_encoded (kv->key, (void*)&kv->data, kv->type, &pmix_packed_data, &pmix_packed_data_offset))) {
+    if (OPAL_SUCCESS != (rc = pmix_store_encoded (kv->key, (void*)&kv->data, kv->type, &pmix_packed_data, &pmix_packed_data_offset))) {
         OPAL_ERROR_LOG(rc);
         return rc;
     }
@@ -328,9 +286,9 @@ static int s1_put(opal_pmix_scope_t scope,
     data_to_put = pmix_packed_data_offset - rem_offset;
     buffer_to_put = (char*)malloc(data_to_put);
     memcpy(buffer_to_put, pmix_packed_data, data_to_put);
-    
-    pmix_commit_packed (buffer_to_put, data_to_put);
-    
+
+    pmix_commit_packed (buffer_to_put, data_to_put, pmix_vallen_max, &pmix_pack_key, kvs_put);
+
     free(buffer_to_put);
     pmix_packed_data_offset = rem_offset;
     if (0 == pmix_packed_data_offset) {
@@ -350,7 +308,7 @@ static int s1_fence(void)
     int rc;
     /* check if there is partially filled meta key and put them */
     if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
-        pmix_commit_packed(pmix_packed_data, pmix_packed_data_offset);
+        pmix_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
         pmix_packed_data_offset = 0;
         free(pmix_packed_data);
         pmix_packed_data = NULL;
@@ -481,7 +439,7 @@ static void cache_keys_locally(opal_identifier_t* id, const char* key, opal_valu
         kv = OBJ_NEW(opal_value_t);
         kv->key = strdup(tmp_val + offset);
         kv->type = stored_type;
-        
+
         switch (stored_type) {
             case OPAL_BYTE:
                 kv->data.byte = *tmp3;
@@ -649,7 +607,7 @@ static int s1_lookup(const char service_name[],
     return OPAL_SUCCESS;
 }
 
-static int s1_unpublish(const char service_name[], 
+static int s1_unpublish(const char service_name[],
                         opal_list_t *info)
 {
     int rc;

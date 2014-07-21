@@ -16,6 +16,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
 #include "opal/dss/dss_types.h"
+#include "opal/runtime/opal.h"
 
 
 BEGIN_C_DECLS
