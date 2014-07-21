@@ -356,6 +356,9 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
         if (mca_spml_ikrit.mxm_peers[i]->mxm_conn) {
             mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_conn);
         }
+        if (mca_spml_ikrit.hw_rdma_channel && mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn) {
+            mxm_ep_disconnect(mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn);
+        }
         destroy_ptl_idx(i);
         if (mca_spml_ikrit.mxm_peers[i]) {
             OBJ_RELEASE(mca_spml_ikrit.mxm_peers[i]);
@@ -370,6 +373,7 @@ int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs)
 int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 {
     spml_ikrit_mxm_ep_conn_info_t *ep_info = NULL;
+    spml_ikrit_mxm_ep_conn_info_t *ep_hw_rdma_info = NULL;
     spml_ikrit_mxm_ep_conn_info_t my_ep_info;
 #if MXM_API < MXM_VERSION(2,0)
     mxm_conn_req_t *conn_reqs;
@@ -400,6 +404,15 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     }
     memset(ep_info, 0x0, sizeof(spml_ikrit_mxm_ep_conn_info_t));
 
+    if (mca_spml_ikrit.hw_rdma_channel) {
+        ep_hw_rdma_info = malloc(nprocs * sizeof(spml_ikrit_mxm_ep_conn_info_t));
+        if (NULL == ep_hw_rdma_info) {
+            rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+            goto bail;
+        }
+        memset(ep_hw_rdma_info, 0x0, sizeof(spml_ikrit_mxm_ep_conn_info_t));
+    }
+
     mca_spml_ikrit.mxm_peers = (mxm_peer_t **) malloc(nprocs
             * sizeof(*(mca_spml_ikrit.mxm_peers)));
     if (NULL == mca_spml_ikrit.mxm_peers) {
@@ -417,6 +430,16 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         return OSHMEM_ERROR;
     }
 #else
+    if (mca_spml_ikrit.hw_rdma_channel) {
+        err = mxm_ep_get_address(mca_spml_ikrit.mxm_hw_rdma_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
+        if (MXM_OK != err) {
+            orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
+                    mxm_error_string(err));
+            return OSHMEM_ERROR;
+        }
+        oshmem_shmem_allgather(&my_ep_info, ep_hw_rdma_info,
+                sizeof(spml_ikrit_mxm_ep_conn_info_t));
+    }
     err = mxm_ep_get_address(mca_spml_ikrit.mxm_ep, &my_ep_info.addr.ep_addr, &mxm_addr_len);
     if (MXM_OK != err) {
         orte_show_help("help-oshmem-spml-ikrit.txt", "unable to get endpoint address", true,
@@ -424,11 +447,10 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         return OSHMEM_ERROR;
     }
 #endif
-
-    opal_progress_register(spml_ikrit_progress);
-
     oshmem_shmem_allgather(&my_ep_info, ep_info,
                            sizeof(spml_ikrit_mxm_ep_conn_info_t));
+
+    opal_progress_register(spml_ikrit_progress);
 
     /* Get the EP connection requests for all the processes from modex */
     for (i = 0; i < nprocs; ++i) {
@@ -455,6 +477,15 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
         if (OSHMEM_SUCCESS != create_ptl_idx(i))
                 goto bail;
         mxm_conn_ctx_set(mca_spml_ikrit.mxm_peers[i]->mxm_conn, mca_spml_ikrit.mxm_peers[i]);
+        if (mca_spml_ikrit.hw_rdma_channel) {
+            err = mxm_ep_connect(mca_spml_ikrit.mxm_hw_rdma_ep, ep_hw_rdma_info[i].addr.ep_addr, &mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn);
+            if (MXM_OK != err) {
+                SPML_ERROR("MXM returned connect error: %s\n", mxm_error_string(err));
+                goto bail;
+            }
+        } else {
+            mca_spml_ikrit.mxm_peers[i]->mxm_hw_rdma_conn = mca_spml_ikrit.mxm_peers[i]->mxm_conn;
+        }
 #endif
     }
 
@@ -577,7 +608,7 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
 #if MXM_API < MXM_VERSION(2,0)
             mkeys[i].len = 0;
 #else
-            if (mca_spml_ikrit.ud_only) {
+            if (mca_spml_ikrit.ud_only && !mca_spml_ikrit.hw_rdma_channel) {
                 mkeys[i].len = 0;
                 break;
             }
