@@ -10,7 +10,9 @@
 sources = \
         pmix_s2.h \
         pmix_s2_component.c \
-        pmix_s2.c
+        pmix_s2.c \
+		pmi2_pmap_parser.h \
+		pmi2_pmap_parser.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

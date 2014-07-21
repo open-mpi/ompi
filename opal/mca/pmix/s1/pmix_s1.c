@@ -306,9 +306,6 @@ static int s1_put(opal_pmix_scope_t scope,
     char* buffer_to_put;
     int rem_offset = 0;
     int data_to_put = 0;
-    //opal_identifier_t id;
-    /* to protect alignment, copy the identifier across */
-    //memcpy(&id, uid, sizeof(opal_identifier_t));
     if (OPAL_SUCCESS != (rc = pmi_store_encoded (kv->key, (void*)&kv->data, kv->type, &pmix_packed_data, &pmix_packed_data_offset))) {
         OPAL_ERROR_LOG(rc);
         return rc;
@@ -640,8 +637,7 @@ static int s1_lookup(const char service_name[],
                      char port[], int portLen)
 {
     int rc;
-/*
-    *port_ret = port;
+
     // Allocate mem for port here? Otherwise we won't get success!
     // SLURM PMIv1 doesn't implement this function
 
@@ -650,8 +646,7 @@ static int s1_lookup(const char service_name[],
         return OPAL_ERROR;
     }
 
-    return OPAL_SUCCESS;*/
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_SUCCESS;
 }
 
 static int s1_unpublish(const char service_name[], 
@@ -663,7 +658,7 @@ static int s1_unpublish(const char service_name[],
         OPAL_PMI_ERROR(rc, "PMI2_Nameserv_unpublish");
         return OPAL_ERROR;
     }
-    return OPAL_SUCCESS;;
+    return OPAL_SUCCESS;
 }
 
 static int s1_local_info(int vpid, int **ranks_ret,
