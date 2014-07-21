@@ -19,8 +19,6 @@
 #include <pmi.h>
 
 #include "pmix_s1.h"
-#include "opal/mca/dstore/dstore.h"
-#include "opal/dss/dss.h"
 
 static int s1_init(void);
 static int s1_fini(void);
@@ -335,189 +333,15 @@ static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len)
+static int kvs_get(const char key[], char value [], int maxvalue)
 {
-    char *tmp_encoded = NULL, *pmikey, *pmi_tmp;
-    int remote_key, size;
-    size_t bytes_read;
     int rc;
-
-    /* set default */
-    *packed_data = NULL;
-    *len = 0;
-
-    /* read all of the packed data from this proc */
-    for (remote_key = 0, bytes_read = 0 ; ; ++remote_key) {
-        char tmp_key[32];
-
-        sprintf (tmp_key, "key%d", remote_key);
-
-        if (NULL == (pmikey = setup_key(proc, tmp_key, pmix_vallen_max))) {
-            rc = OPAL_ERR_OUT_OF_RESOURCE;
-            OPAL_ERROR_LOG(rc);
-            return rc;
-        }
-
-//        OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
-//                             "GETTING KEY %s", pmikey));
-
-        //rc = kvs_get(mod, pmikey, pmi_tmp, pmix_vallen_max);
-        rc = PMI_KVS_Get(pmix_kvs_name, pmikey, pmi_tmp, pmix_vallen_max);
-        if( PMI_SUCCESS != rc ){
-            OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
-            return OPAL_ERROR;
-        }
-        free (pmikey);
-        if (OPAL_SUCCESS != rc) {
-            break;
-        }
-
-        size = strlen (pmi_tmp);
-
-        if (NULL == tmp_encoded) {
-            tmp_encoded = malloc (size + 1);
-        } else {
-            tmp_encoded = realloc (tmp_encoded, bytes_read + size + 1);
-        }
-
-        strcpy (tmp_encoded + bytes_read, pmi_tmp);
-        bytes_read += size;
-
-        /* is the string terminator present? */
-        if ('-' == tmp_encoded[bytes_read-1]) {
-            break;
-        }
+    rc = PMI_KVS_Get(pmix_kvs_name, key, value, maxvalue);
+    if( PMI_SUCCESS != rc ){
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
+        return OPAL_ERROR;
     }
-
-    free (pmi_tmp);
-
-    //OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
-    //                     "Read data %s\n",
-    //                     (NULL == tmp_encoded) ? "NULL" : tmp_encoded));
-
-    if (NULL != tmp_encoded) {
-        *packed_data = (char *) pmi_decode (tmp_encoded, len);
-        free (tmp_encoded);
-        if (NULL == *packed_data) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-    }
-
     return OPAL_SUCCESS;
-}
-
-static void cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *out_kv)
-{
-    char *tmp, *tmp2, *tmp3, *tmp_val;
-    opal_data_type_t stored_type;
-    size_t len, offset;
-    int rc, size;
-    opal_value_t *kv, *knew;
-
-    //OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
-    //                     "dstore:pmi:fetch get all keys for proc %" PRIu64 " in KVS %s",
-    //		 id, pmix_kvs_name));
-
-    rc = pmix_get_packed(id, &tmp_val, &len);
-    if (OPAL_SUCCESS != rc) {
-        return;
-    }
-
-    /* search for each key in the decoded data */
-    for (offset = 0 ; offset < len && '\0' != tmp_val[offset] ; ) {
-        /* type */
-        tmp = tmp_val + offset + strlen (tmp_val + offset) + 1;
-        /* size */
-        tmp2 = tmp + strlen (tmp) + 1;
-        /* data */
-        tmp3 = tmp2 + strlen (tmp2) + 1;
-
-        stored_type = (opal_data_type_t) strtol (tmp, NULL, 16);
-        size = strtol (tmp2, NULL, 16);
-
-        /* cache value locally so we don't have to look it up via pmi again */
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(tmp_val + offset);
-        kv->type = stored_type;
-
-        switch (stored_type) {
-            case OPAL_BYTE:
-                kv->data.byte = *tmp3;
-                break;
-            case OPAL_STRING:
-                if (NULL != tmp3) {
-                    kv->data.string = strdup(tmp3);
-                } else {
-                    kv->data.string = NULL;
-                }
-                break;
-            case OPAL_PID:
-                kv->data.pid = strtoul(tmp3, NULL, 10);
-                break;
-            case OPAL_INT:
-                kv->data.integer = strtol(tmp3, NULL, 10);
-                break;
-            case OPAL_INT8:
-                kv->data.int8 = strtol(tmp3, NULL, 10);
-                break;
-            case OPAL_INT16:
-                kv->data.int16 = strtol(tmp3, NULL, 10);
-                break;
-            case OPAL_INT32:
-                kv->data.int32 = strtol(tmp3, NULL, 10);
-                break;
-            case OPAL_INT64:
-                kv->data.int64 = strtol(tmp3, NULL, 10);
-                break;
-            case OPAL_UINT:
-                kv->data.uint = strtoul(tmp3, NULL, 10);
-                break;
-            case OPAL_UINT8:
-                kv->data.uint8 = strtoul(tmp3, NULL, 10);
-                break;
-            case OPAL_UINT16:
-                kv->data.uint16 = strtoul(tmp3, NULL, 10);
-                break;
-            case OPAL_UINT32:
-                kv->data.uint32 = strtoul(tmp3, NULL, 10);
-                break;
-            case OPAL_UINT64:
-                kv->data.uint64 = strtoul(tmp3, NULL, 10);
-                break;
-            case OPAL_BYTE_OBJECT:
-                if (size == 0xffff) {
-                    kv->data.bo.bytes = NULL;
-                    kv->data.bo.size = 0;
-                } else {
-                    kv->data.bo.bytes = malloc(size);
-                    memcpy(kv->data.bo.bytes, tmp3, size);
-                    kv->data.bo.size = size;
-                }
-                break;
-            default:
-                opal_output(0, "UNSUPPORTED TYPE %d", stored_type);
-                return;
-        }
-        /* store data in local hash table */
-        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, id, kv))) {
-            OPAL_ERROR_LOG(rc);
-            //FIXME handle errors
-        }
-
-        /* keep going and cache everything locally */
-        offset = (size_t) (tmp3 - tmp_val) + size;
-        if (0 == strcmp(kv->key, key)) {
-            /* create the copy */
-            if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
-                OPAL_ERROR_LOG(rc);
-                //FIXME handle errors
-            }
-            out_kv = knew;
-        }
-    }
-    //proc_data->loaded = true;
-
-    free (tmp_val);
 }
 
 static int s1_get(opal_identifier_t *id,
@@ -525,7 +349,7 @@ static int s1_get(opal_identifier_t *id,
                   opal_value_t *kv)
 {
     int rc = OPAL_SUCCESS;
-    cache_keys_locally(id, key, kv);
+    cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
     return rc;
 }
 

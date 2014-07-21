@@ -342,19 +342,25 @@ static int s2_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
+static int kvs_get(const char key[], char value [], int maxvalue)
+{
+    int rc;
+    int len;
+    rc = PMI2_KVS_Get(pmix_kvs_name, PMI2_ID_NULL, key, value, maxvalue, &len);
+    if( PMI2_SUCCESS != rc || len < 0){
+        OPAL_PMI_ERROR(rc, "PMI2_KVS_Get");
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
 static int s2_get(opal_identifier_t *id,
         const char *key,
         opal_value_t *kv)
 {
-/*    int rc;
-    int len;
-    rc = PMI2_KVS_Get(kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
-    if( PMI2_SUCCESS != rc ){
-        // OPAL_PMI2_ERROR(rc, "PMI_KVS_Get");
-        return OPAL_ERROR;
-    }
-    return OPAL_SUCCESS;*/
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    int rc = OPAL_SUCCESS;
+    cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
+    return rc;
 }
 
 static void s2_get_nb(opal_identifier_t *id,
