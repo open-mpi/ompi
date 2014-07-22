@@ -14,13 +14,12 @@
 
 #include "opal/mca/event/event.h"
 
-/* start a progress thread using the given function, assigning
- * it the provided name for tracking purposes. This function will
- * also create a pipe so that libevent has something to block
+/* start a progress thread, assigning it the provided name for
+ * tracking purposes. If create_block is true, then this function
+ * will also create a pipe so that libevent has something to block
  * against, thus keeping the thread from free-running
  */
 OPAL_DECLSPEC opal_event_base_t *opal_start_progress_thread(char *name,
-                                                            opal_thread_fn_t func,
                                                             bool create_block);
 
 /* stop the progress thread of the provided name. This function will
