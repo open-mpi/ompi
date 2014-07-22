@@ -27,14 +27,15 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/mca/pmix/base/pmix_base_fns.h"
+#include "opal/include/opal/frameworks.h"
 
 #define OPAL_PMI_PAD  10
 
-//static char *pmi_packed_data = NULL;
-//static int pmi_pack_key = 0;
-//static int pmi_packed_data_off = 0;
+static char* setup_key(opal_identifier_t* name, const char *key, int pmix_keylen_max);
+static char *pmi_encode(const void *val, size_t vallen);
+static uint8_t *pmi_decode (const char *data, size_t *retlen);
 
-int pmi_store_encoded(const char *key, const void *data,
+int pmix_store_encoded(const char *key, const void *data,
         opal_data_type_t type, char** buffer, int* length)
 {
     opal_byte_object_t *bo;
@@ -97,7 +98,235 @@ int pmi_store_encoded(const char *key, const void *data,
     return OPAL_SUCCESS;
 }
 
-char* setup_key(opal_identifier_t* name, const char *key, int pmix_keylen_max)
+int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* pack_key, kvs_put_fn fn)
+{
+    int rc, left;
+    char *pmikey = NULL, *tmp;
+    char tmp_key[32], save;
+    char *encoded_data;
+    if (NULL == (encoded_data = pmi_encode(buffer_to_put, data_to_put))) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (left = strlen (encoded_data), tmp = encoded_data ; left ; ) {
+        size_t value_size = vallen > left ? left : vallen - 1;
+
+        sprintf (tmp_key, "key%d", *pack_key);
+
+        if (NULL == (pmikey = setup_key(OPAL_MY_ID, tmp_key, vallen))) {
+            OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
+            rc = OPAL_ERR_BAD_PARAM;
+            break;
+        }
+
+        /* only write value_size bytes */
+        save = tmp[value_size];
+        tmp[value_size] = '\0';
+
+        rc = fn(pmikey, tmp);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+
+        free(pmikey);
+        if (OPAL_SUCCESS != rc) {
+            break;
+        }
+
+        tmp[value_size] = save;
+        tmp += value_size;
+        left -= value_size;
+
+        *pack_key ++;
+
+        rc = OPAL_SUCCESS;
+    }
+
+    if (encoded_data) {
+        free(encoded_data);
+    }
+}
+
+int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, int vallen, kvs_get_fn fn)
+{
+    char *tmp_encoded = NULL, *pmikey, *pmi_tmp;
+    int remote_key, size;
+    size_t bytes_read;
+    int rc;
+
+    /* set default */
+    *packed_data = NULL;
+    *len = 0;
+
+    /* read all of the packed data from this proc */
+    for (remote_key = 0, bytes_read = 0 ; ; ++remote_key) {
+        char tmp_key[32];
+
+        sprintf (tmp_key, "key%d", remote_key);
+
+        if (NULL == (pmikey = setup_key(proc, tmp_key, vallen))) {
+            rc = OPAL_ERR_OUT_OF_RESOURCE;
+            OPAL_ERROR_LOG(rc);
+            return rc;
+        }
+
+        OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
+                             "GETTING KEY %s", pmikey));
+
+        rc = fn(pmikey, pmi_tmp, vallen);
+        free (pmikey);
+        if (OPAL_SUCCESS != rc) {
+            break;
+        }
+
+        size = strlen (pmi_tmp);
+
+        if (NULL == tmp_encoded) {
+            tmp_encoded = malloc (size + 1);
+        } else {
+            tmp_encoded = realloc (tmp_encoded, bytes_read + size + 1);
+        }
+
+        strcpy (tmp_encoded + bytes_read, pmi_tmp);
+        bytes_read += size;
+
+        /* is the string terminator present? */
+        if ('-' == tmp_encoded[bytes_read-1]) {
+            break;
+        }
+    }
+
+    free (pmi_tmp);
+
+    OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
+                         "Read data %s\n",
+                         (NULL == tmp_encoded) ? "NULL" : tmp_encoded));
+
+    if (NULL != tmp_encoded) {
+        *packed_data = (char *) pmi_decode (tmp_encoded, len);
+        free (tmp_encoded);
+        if (NULL == *packed_data) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *out_kv, char* kvs_name, int vallen, kvs_get_fn fn)
+{
+    char *tmp, *tmp2, *tmp3, *tmp_val;
+    opal_data_type_t stored_type;
+    size_t len, offset;
+    int rc, size;
+    opal_value_t *kv, *knew;
+
+    OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
+                         "pmix: get all keys for proc %" PRIu64 " in KVS %s",
+    		 id, kvs_name));
+
+    rc = pmix_get_packed(id, &tmp_val, &len, vallen, fn);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    /* search for each key in the decoded data */
+    for (offset = 0 ; offset < len && '\0' != tmp_val[offset] ; ) {
+        /* type */
+        tmp = tmp_val + offset + strlen (tmp_val + offset) + 1;
+        /* size */
+        tmp2 = tmp + strlen (tmp) + 1;
+        /* data */
+        tmp3 = tmp2 + strlen (tmp2) + 1;
+
+        stored_type = (opal_data_type_t) strtol (tmp, NULL, 16);
+        size = strtol (tmp2, NULL, 16);
+        /* cache value locally so we don't have to look it up via pmi again */
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(tmp_val + offset);
+        kv->type = stored_type;
+
+        switch (stored_type) {
+            case OPAL_BYTE:
+                kv->data.byte = *tmp3;
+                break;
+            case OPAL_STRING:
+                if (NULL != tmp3) {
+                    kv->data.string = strdup(tmp3);
+                } else {
+                    kv->data.string = NULL;
+                }
+                break;
+            case OPAL_PID:
+                kv->data.pid = strtoul(tmp3, NULL, 10);
+                break;
+            case OPAL_INT:
+                kv->data.integer = strtol(tmp3, NULL, 10);
+                break;
+            case OPAL_INT8:
+                kv->data.int8 = strtol(tmp3, NULL, 10);
+                break;
+            case OPAL_INT16:
+                kv->data.int16 = strtol(tmp3, NULL, 10);
+                break;
+            case OPAL_INT32:
+                kv->data.int32 = strtol(tmp3, NULL, 10);
+                break;
+            case OPAL_INT64:
+                kv->data.int64 = strtol(tmp3, NULL, 10);
+                break;
+            case OPAL_UINT:
+                kv->data.uint = strtoul(tmp3, NULL, 10);
+                break;
+            case OPAL_UINT8:
+                kv->data.uint8 = strtoul(tmp3, NULL, 10);
+                break;
+            case OPAL_UINT16:
+                kv->data.uint16 = strtoul(tmp3, NULL, 10);
+                break;
+            case OPAL_UINT32:
+                kv->data.uint32 = strtoul(tmp3, NULL, 10);
+                break;
+            case OPAL_UINT64:
+                kv->data.uint64 = strtoul(tmp3, NULL, 10);
+                break;
+            case OPAL_BYTE_OBJECT:
+                if (size == 0xffff) {
+                    kv->data.bo.bytes = NULL;
+                    kv->data.bo.size = 0;
+                } else {
+                    kv->data.bo.bytes = malloc(size);
+                    memcpy(kv->data.bo.bytes, tmp3, size);
+                    kv->data.bo.size = size;
+                }
+                break;
+            default:
+                opal_output(0, "UNSUPPORTED TYPE %d", stored_type);
+                return OPAL_ERROR;
+        }
+        /* store data in local hash table */
+        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, id, kv))) {
+            OPAL_ERROR_LOG(rc);
+        }
+
+        /* keep going and cache everything locally */
+        offset = (size_t) (tmp3 - tmp_val) + size;
+        if (0 == strcmp(kv->key, key)) {
+            /* create the copy */
+            if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
+                out_kv = NULL;
+                OPAL_ERROR_LOG(rc);
+            } else {
+                out_kv = knew;
+            }
+        }
+    }
+    free (tmp_val);
+    return rc;
+}
+
+static char* setup_key(opal_identifier_t* name, const char *key, int pmix_keylen_max)
 {
     char *pmi_kvs_key;
 
@@ -175,7 +404,7 @@ static inline int pmi_base64_decode_block (const char in[4], unsigned char out[3
 
 
 /* PMI only supports strings. For now, do a simple base64. */
-char *pmi_encode(const void *val, size_t vallen) 
+static char *pmi_encode(const void *val, size_t vallen) 
 {
     char *outdata, *tmp;
     size_t i;
@@ -196,7 +425,7 @@ char *pmi_encode(const void *val, size_t vallen)
     return outdata;
 }
 
-uint8_t *pmi_decode (const char *data, size_t *retlen) 
+static uint8_t *pmi_decode (const char *data, size_t *retlen) 
 {
     size_t input_len = (strlen (data) - 1) / 4;
     unsigned char *ret;
