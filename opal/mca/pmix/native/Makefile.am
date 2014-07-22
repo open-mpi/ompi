@@ -10,7 +10,9 @@
 sources = \
         pmix_native.h \
         pmix_native_component.c \
-        pmix_native.c
+        pmix_native.c \
+        usock.c \
+        usock_sendrecv.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

@@ -28,6 +28,8 @@ const char *opal_pmix_native_component_version_string =
 /*
  * Local function
  */
+static int pmix_native_open(void);
+static int pmix_native_close(void);
 static int pmix_native_component_query(mca_base_module_t **module, int *priority);
 
 
@@ -36,7 +38,7 @@ static int pmix_native_component_query(mca_base_module_t **module, int *priority
  * and pointers to our public functions in it
  */
 
-const opal_pmix_native_component_t mca_pmix_native_component = {
+opal_pmix_native_component_t mca_pmix_native_component = {
     {
 
         /* First, the mca_component_t struct containing meta information
@@ -57,8 +59,8 @@ const opal_pmix_native_component_t mca_pmix_native_component = {
 
             /* Component open and close functions */
 
-            NULL,
-            NULL,
+            pmix_native_open,
+            pmix_native_close,
             pmix_native_component_query,
             NULL
         },
@@ -70,17 +72,32 @@ const opal_pmix_native_component_t mca_pmix_native_component = {
     }
 };
 
+static int pmix_native_open(void)
+{
+    mca_pmix_native_component.uri = NULL;
+    return OPAL_SUCCESS;
+}
+
+static int pmix_native_close(void)
+{
+    if (NULL != mca_pmix_native_component.uri) {
+        free(mca_pmix_native_component.uri);
+    }
+    return OPAL_SUCCESS;
+}
+
 
 static int pmix_native_component_query(mca_base_module_t **module, int *priority)
 {
-    /* if we find a PMIx server is present, then offer ourselves */
-    if (NULL != getenv("PMIX_SERVER_URI")) {
-        *priority = 1;
-        *module = (mca_base_module_t *)&opal_pmix_native_module;
-        return OPAL_SUCCESS;
-    }
+    char *t;
 
-    /* otherwise, we are not available */
-    *module = NULL;
-    return OPAL_ERROR;
+    /* see if a PMIx server is present */
+    if (NULL == (t = getenv("PMIX_SERVER_URI"))) {
+        *module = NULL;
+        return OPAL_ERROR;
+    }
+    mca_pmix_native_component.uri = strdup(t);
+    *priority = 1;
+    *module = (mca_base_module_t *)&opal_pmix_native_module;
+    return OPAL_SUCCESS;
 }

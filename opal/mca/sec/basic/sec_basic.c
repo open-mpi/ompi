@@ -81,7 +81,7 @@ static int get_my_cred(int dstorehandle,
                 OBJ_RELEASE(kv);
             }
         } else {
-            my_cred.credential = strdup("12345");
+            my_cred.credential = strdup("1234567");
             my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
         }
         OPAL_LIST_DESTRUCT(&vals);

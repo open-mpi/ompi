@@ -25,68 +25,111 @@
 #include "opal_config.h"
 #include "opal/types.h"
 
+#include <fcntl.h>
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+#ifdef HAVE_NET_UIO_H
+#include <net/uio.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#include "opal_stdint.h"
+#include "opal/opal_socket_errno.h"
+#include "opal/dss/dss.h"
+#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/sec/sec.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 
-/*
- * Local utility functions
- */
-static void recv_handler(int sd, short flags, void* user);
+#include "opal/mca/pmix/base/base.h"
+#include "pmix_native.h"
+
+static int usock_send_blocking(char *ptr, size_t size);
+static void pmix_usock_try_connect(int fd, short args, void *cbdata);
+static int usock_create_socket(void);
+
+/* State machine for internal operations */
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+} pmix_usock_op_t;
+static OBJ_CLASS_INSTANCE(pmix_usock_op_t,
+                          opal_object_t,
+                          NULL, NULL);
+
+#define PMIX_ACTIVATE_USOCK_STATE(cbfunc)                               \
+    do {                                                                \
+        pmix_usock_op_t *op;                                            \
+        op = OBJ_NEW(pmix_usock_op_t);                                  \
+        opal_event_set(mca_pmix_native_component.evbase, &op->ev, -1,   \
+                       OPAL_EV_WRITE, (cbfunc), op);                    \
+        opal_event_set_priority(&op->ev, OPAL_EV_MSG_LO_PRI);           \
+        opal_event_active(&op->ev, OPAL_EV_WRITE, 1);                    \
+    } while(0);
 
 void pmix_usock_process_send(int fd, short args, void *cbdata)
 {
-    pmix_usock_msg_op_t *op = (pmix_usock_msg_op_t*)cbdata;
+    pmix_usock_send_t *msg = (pmix_usock_send_t*)cbdata;
 
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "pmix:usock processing send to server");
 
     /* add the msg to the send queue if we are already connected*/
     if (PMIX_USOCK_CONNECTED == mca_pmix_native_component.state) {
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                             "usock:send_nb: already connected to server - queueing for send");
-        PMIX_USOCK_QUEUE_SEND(op->msg);
-        goto cleanup;
+        /* if there is no message on-deck, put this one there */
+        if (NULL == mca_pmix_native_component.send_msg) {
+            mca_pmix_native_component.send_msg = msg;
+        } else {
+            /* add it to the queue */
+            opal_list_append(&mca_pmix_native_component.send_queue, &msg->super);
+        }
+        /* ensure the send event is active */
+        if (!mca_pmix_native_component.send_ev_active) {
+            opal_event_add(&mca_pmix_native_component.send_event, 0);
+            mca_pmix_native_component.send_ev_active = true;
+        }
+        return;
     }
 
     /* add the message to the queue for sending after the
      * connection is formed
      */
-    PMIX_USOCK_QUEUE_PENDING(op->msg);
+    opal_list_append(&mca_pmix_native_component.send_queue, &msg->super);
 
-    if (PMIX_USOCK_CONNECTING != peer->state &&
-        PMIX_USOCK_CONNECT_ACK != peer->state) {
+    if (PMIX_USOCK_CONNECTING != mca_pmix_native_component.state &&
+        PMIX_USOCK_CONNECT_ACK != mca_pmix_native_component.state) {
         /* we have to initiate the connection - again, we do not
          * want to block while the connection is created.
          * So throw us into an event that will create
          * the connection via a mini-state-machine :-)
          */
-        opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                            "%s usock:send_nb: initiating connection to %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        peer->state = PMIX_USOCK_CONNECTING;
-        ORTE_ACTIVATE_USOCK_CONN_STATE(peer, pmix_usock_peer_try_connect);
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "usock:send_nb: initiating connection to server");
+        mca_pmix_native_component.state = PMIX_USOCK_CONNECTING;
+        PMIX_ACTIVATE_USOCK_STATE(pmix_usock_try_connect);
     }
-
- cleanup:
-    OBJ_RELEASE(op);
 }
 
 void pmix_usock_post_recv(int fd, short args, void *cbdata)
 {
-    pmix_usock_recv_t *req = (pmix_usock_recv_t*)cbdata;
-    pmix_usock_recv_t *rcv;
-    pmix_usock_msg_t *msg;
+    pmix_usock_posted_recv_t *req = (pmix_usock_posted_recv_t*)cbdata;
+    pmix_usock_posted_recv_t *rcv;
+    pmix_usock_recv_t *msg;
     opal_buffer_t buf;
 
-    opal_output_verbose(5, orte_rml_base_framework.framework_output,
-                        "%s posting recv",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    opal_output_verbose(5, opal_pmix_base_framework.framework_output,
+                        "posting recv");
 
     /* bozo check - cannot have two receives for the same tag */
-    OPAL_LIST_FOREACH(rcv, &mca_pmix_native_component.posted_recvs, pmix_usock_recv_t) {
-        if (req->tag == recv->tag) {
+    OPAL_LIST_FOREACH(rcv, &mca_pmix_native_component.posted_recvs, pmix_usock_posted_recv_t) {
+        if (req->tag == rcv->tag) {
             opal_output(0, "TWO RECEIVES WITH SAME TAG %d - ABORTING", req->tag);
             abort();
         }
@@ -98,15 +141,15 @@ void pmix_usock_post_recv(int fd, short args, void *cbdata)
     opal_list_append(&mca_pmix_native_component.posted_recvs, &req->super);
 
     /* check to see if a message has already arrived for this recv */
-    OPAL_LIST_FOREACH(msg, &mca_pmix_native_component.unmatched_msgs, pmix_usock_msg_t) {
-        opal_output_verbose(5, orte_rml_base_framework.framework_output,
+    OPAL_LIST_FOREACH(msg, &mca_pmix_native_component.unmatched_msgs, pmix_usock_recv_t) {
+        opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                             "checking unmatched msg on tag %u for tag %u",
-                            msg->tag, req->tag);
+                            msg->hdr.tag, req->tag);
 
-        if (msg->tag == req->tag) {
+        if (msg->hdr.tag == req->tag) {
             /* construct and load the buffer */
             OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            opal_dss.load(&buf, msg->data, msg->total_bytes);
+            opal_dss.load(&buf, msg->data, msg->hdr.nbytes);
             if (NULL != req->cbfunc) {
                 req->cbfunc(&buf, req->cbdata);
             }
@@ -121,37 +164,36 @@ void pmix_usock_post_recv(int fd, short args, void *cbdata)
     }
 }
 
-void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
+void pmix_usock_process_msg(int fd, short flags, void *cbdata)
 {
-    orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
-    pmix_usock_recv_t *rcv;
+    pmix_usock_recv_t *msg = (pmix_usock_recv_t*)cbdata;
+    pmix_usock_posted_recv_t *rcv;
     opal_buffer_t buf;
 
     OPAL_OUTPUT_VERBOSE((5, opal_pmix_base_framework.framework_output,
                          "message received %d bytes for tag %u",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (int)msg->total_bytes, msg->tag));
+                         (int)msg->hdr.nbytes, msg->hdr.tag));
 
     /* see if we have a waiting recv for this message */
-    OPAL_LIST_FOREACH(rcv, &mca_pmix_native_component.posted_recvs, pmix_usock_recv_t) {
+    OPAL_LIST_FOREACH(rcv, &mca_pmix_native_component.posted_recvs, pmix_usock_posted_recv_t) {
         opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                             "checking msg on tag %u for tag %u",
-                            msg->tag, rcv->tag);
+                            msg->hdr.tag, rcv->tag);
 
-        if (msg->tag == rcv->tag) {
+        if (msg->hdr.tag == rcv->tag) {
             if (NULL != rcv->cbfunc) {
                 /* construct and load the buffer */
                 OBJ_CONSTRUCT(&buf, opal_buffer_t);
-                opal_dss.load(&buf, msg->data, msg->total_bytes);
+                opal_dss.load(&buf, msg->data, msg->hdr.nbytes);
                 if (NULL != rcv->cbfunc) {
-                    req->cbfunc(&buf, rcv->cbdata);
+                    rcv->cbfunc(&buf, rcv->cbdata);
                 }
                 OBJ_DESTRUCT(&buf);  // free's the msg data
                 opal_list_remove_item(&mca_pmix_native_component.unmatched_msgs, &msg->super);
                 OBJ_RELEASE(msg);
                 /* also done with the recv */
-                opal_list_remove_item(&mca_pmix_native_component.posted_recvs, &req->super);
-                OBJ_RELEASE(req);
+                opal_list_remove_item(&mca_pmix_native_component.posted_recvs, &rcv->super);
+                OBJ_RELEASE(rcv);
                 break;
             }
         }
@@ -163,65 +205,273 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
     opal_list_append(&mca_pmix_native_component.unmatched_msgs, &msg->super);
 }
 
-/*
- * Event callback when there is data available on the registered
- * socket to recv.  This is called for the listen sockets to accept an
- * incoming connection, on new sockets trying to complete the software
- * connection process, and for probes.  Data on an established
- * connection is handled elsewhere. 
- */
-static void recv_handler(int sd, short flags, void *cbdata)
+static int usock_create_socket(void)
 {
-    pmix_usock_conn_op_t *op = (pmix_usock_conn_op_t*)cbdata;
-    pmix_usock_hdr_t hdr;
-    pmix_usock_peer_t *peer;
-    uint64_t *ui64;
+    int flags;
 
-    opal_output_verbose(OOB_USOCK_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s:usock:recv:handler called",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* get the handshake */
-    if (ORTE_SUCCESS != pmix_usock_peer_recv_connect_ack(NULL, sd, &hdr)) {
-        goto cleanup;
+    if (mca_pmix_native_component.sd > 0) {
+        return OPAL_SUCCESS;
     }
 
-    /* finish processing ident */
-    if (PMIX_USOCK_IDENT == hdr.type) {
-        if (NULL == (peer = pmix_usock_peer_lookup(&hdr.origin))) {
-            /* should never happen */
-            pmix_usock_peer_close(peer);
-            goto cleanup;
-        }
-        /* set socket up to be non-blocking */
-        if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-            opal_output(0, "%s pmix_usock_recv_connect: fcntl(F_GETFL) failed: %s (%d)",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-        } else {
-            flags |= O_NONBLOCK;
-            if (fcntl(sd, F_SETFL, flags) < 0) {
-                opal_output(0, "%s pmix_usock_recv_connect: fcntl(F_SETFL) failed: %s (%d)",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
-            }
-        }
+    OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
+                         "pmix:usock:peer creating socket to server"));
+    
+    mca_pmix_native_component.sd = socket(PF_UNIX, SOCK_STREAM, 0);
 
-        /* is the peer instance willing to accept this connection */
-        peer->sd = sd;
-        if (pmix_usock_peer_accept(peer) == false) {
-            if (OOB_USOCK_DEBUG_CONNECT <= opal_output_get_verbosity(orte_oob_base_framework.framework_output)) {
-                opal_output(0, "%s-%s pmix_usock_recv_connect: "
-                            "rejected connection state %d",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer->name)),
-                            peer->state);
-            }
-            CLOSE_THE_SOCKET(sd);
-            ui64 = (uint64_t*)(&peer->name);
-            opal_hash_table_set_value_uint64(&pmix_usock_module.peers, (*ui64), NULL);
-            OBJ_RELEASE(peer);
-        }
+    if (mca_pmix_native_component.sd < 0) {
+        opal_output(0, "usock_peer_create_socket: socket() failed: %s (%d)\n",
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+        return OPAL_ERR_UNREACH;
     }
 
- cleanup:
-    OBJ_RELEASE(op);
+    /* setup event callbacks */
+    opal_event_set(mca_pmix_native_component.evbase,
+                   &mca_pmix_native_component.recv_event,
+                   mca_pmix_native_component.sd,
+                   OPAL_EV_READ|OPAL_EV_PERSIST,
+                   pmix_usock_recv_handler, NULL);
+    opal_event_set_priority(&mca_pmix_native_component.recv_event, OPAL_EV_MSG_LO_PRI);
+    mca_pmix_native_component.recv_ev_active = false;
+
+    opal_event_set(mca_pmix_native_component.evbase,
+                   &mca_pmix_native_component.send_event,
+                   mca_pmix_native_component.sd,
+                   OPAL_EV_WRITE|OPAL_EV_PERSIST,
+                   pmix_usock_send_handler, NULL);
+    opal_event_set_priority(&mca_pmix_native_component.send_event, OPAL_EV_MSG_LO_PRI);
+    mca_pmix_native_component.send_ev_active = false;
+
+    /* setup the socket as non-blocking */
+    if ((flags = fcntl(mca_pmix_native_component.sd, F_GETFL, 0)) < 0) {
+        opal_output(0, "usock_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n", 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+    } else {
+        flags |= O_NONBLOCK;
+        if(fcntl(mca_pmix_native_component.sd, F_SETFL, flags) < 0)
+            opal_output(0, "usock_peer_connect: fcntl(F_SETFL) failed: %s (%d)\n", 
+                        strerror(opal_socket_errno),
+                        opal_socket_errno);
+    }
+
+    return OPAL_SUCCESS;
 }
+
+
+/*
+ * Try connecting to a peer
+ */
+static void pmix_usock_try_connect(int fd, short args, void *cbdata)
+{
+    int rc;
+    opal_socklen_t addrlen = 0;
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "usock_peer_try_connect: attempting to connect to server");
+
+    if (OPAL_SUCCESS != usock_create_socket()) {
+        return;
+    }
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "usock_peer_try_connect: attempting to connect to server on socket %d",
+                        mca_pmix_native_component.sd);
+
+    addrlen = sizeof(struct sockaddr_un);
+ retry_connect:
+    mca_pmix_native_component.retries++;
+    if (connect(mca_pmix_native_component.sd, (struct sockaddr *) &mca_pmix_native_component.address, addrlen) < 0) {
+        /* non-blocking so wait for completion */
+        if (opal_socket_errno == EINPROGRESS || opal_socket_errno == EWOULDBLOCK) {
+            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                "waiting for connect completion to server - activating send event");
+            /* just ensure the send_event is active */
+            if (!mca_pmix_native_component.send_ev_active) {
+                opal_event_add(&mca_pmix_native_component.send_event, 0);
+                mca_pmix_native_component.send_ev_active = true;
+            }
+            return;
+        }
+
+        /* Some kernels (Linux 2.6) will automatically software
+           abort a connection that was ECONNREFUSED on the last
+           attempt, without even trying to establish the
+           connection.  Handle that case in a semi-rational
+           way by trying twice before giving up */
+        if (ECONNABORTED == opal_socket_errno) {
+            if (mca_pmix_native_component.retries < mca_pmix_native_component.max_retries) {
+                opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                    "connection to server aborted by OS - retrying");
+                goto retry_connect;
+            } else {
+                /* We were unsuccessful in establishing this connection, and are
+                 * not likely to suddenly become successful,
+                 */
+                mca_pmix_native_component.state = PMIX_USOCK_FAILED;
+                CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+                return;
+            }
+        }
+    }
+
+    /* connection succeeded */
+    mca_pmix_native_component.retries = 0;
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "sock_peer_try_connect: Connection across to server succeeded");
+ 
+    /* setup our recv to catch the return ack call */
+    if (!mca_pmix_native_component.recv_ev_active) {
+        opal_event_add(&mca_pmix_native_component.recv_event, 0);
+        mca_pmix_native_component.recv_ev_active = true;
+    }
+
+    /* send our globally unique process identifier to the server */
+    if (OPAL_SUCCESS == (rc = usock_send_connect_ack())) {
+        mca_pmix_native_component.state = PMIX_USOCK_CONNECT_ACK;
+    } else {
+        opal_output(0, 
+                    "usock_peer_try_connect: "
+                    "usock_send_connect_ack to server failed: %s (%d)",
+                    opal_strerror(rc), rc);
+        mca_pmix_native_component.state = PMIX_USOCK_FAILED;
+        CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        return;
+    }
+}
+
+int usock_send_connect_ack(void)
+{
+    char *msg;
+    pmix_usock_hdr_t hdr;
+    int rc;
+    size_t sdsize;
+    opal_sec_cred_t *cred;
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "SEND CONNECT ACK");
+
+    /* setup the header */
+    hdr.id = *OPAL_MY_ID;
+    hdr.tag = UINT32_MAX;
+    hdr.type = PMIX_USOCK_IDENT;
+
+    /* get our security credential */
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal, OPAL_MY_ID, &cred))) {
+        return rc;
+    }
+
+    /* set the number of bytes to be read beyond the header */
+    hdr.nbytes = strlen(opal_version_string) + 1 + cred->size;
+
+    /* create a space for our message */
+    sdsize = (sizeof(hdr) + strlen(opal_version_string) + 1 + cred->size);
+    if (NULL == (msg = (char*)malloc(sdsize))) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    memset(msg, 0, sdsize);
+
+    /* load the message */
+    memcpy(msg, &hdr, sizeof(hdr));
+    memcpy(msg+sizeof(hdr), opal_version_string, strlen(opal_version_string));
+    memcpy(msg+sizeof(hdr)+strlen(opal_version_string)+1, cred->credential, cred->size);
+
+
+    if (OPAL_SUCCESS != usock_send_blocking(msg, sdsize)) {
+        free(msg);
+        return OPAL_ERR_UNREACH;
+    }
+    free(msg);
+    return OPAL_SUCCESS;
+}
+
+/*
+ * A blocking send on a non-blocking socket. Used to send the small amount of connection
+ * information that identifies the peers endpoint.
+ */
+static int usock_send_blocking(char *ptr, size_t size)
+{
+    size_t cnt = 0;
+    int retval;
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "send blocking of %"PRIsize_t" bytes to socket %d",
+                        size, mca_pmix_native_component.sd);
+
+    while (cnt < size) {
+        retval = send(mca_pmix_native_component.sd, (char*)ptr+cnt, size-cnt, 0);
+        if (retval < 0) {
+            if (opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
+                opal_output(0, "usock_peer_send_blocking: send() to socket %d failed: %s (%d)\n",
+                            mca_pmix_native_component.sd,
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
+                mca_pmix_native_component.state = PMIX_USOCK_FAILED;
+                CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+                return OPAL_ERR_UNREACH;
+            }
+            continue;
+        }
+        cnt += retval;
+    }
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "blocking send complete to socket %d",
+                        mca_pmix_native_component.sd);
+
+    return OPAL_SUCCESS;
+}
+
+/*
+ * Routine for debugging to print the connection state and socket options
+ */
+void pmix_usock_dump(const char* msg)
+{
+    char buff[255];
+    int nodelay,flags;
+
+    if ((flags = fcntl(mca_pmix_native_component.sd, F_GETFL, 0)) < 0) {
+        opal_output(0, "usock_peer_dump: fcntl(F_GETFL) failed: %s (%d)\n",
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+    }
+                                                                                                            
+#if defined(USOCK_NODELAY)
+    optlen = sizeof(nodelay);
+    if (getsockopt(mca_pmix_native_component.sd, IPPROTO_USOCK, USOCK_NODELAY, (char *)&nodelay, &optlen) < 0) {
+        opal_output(0, "usock_peer_dump: USOCK_NODELAY option: %s (%d)\n", 
+                    strerror(opal_socket_errno),
+                    opal_socket_errno);
+    }
+#else
+    nodelay = 0;
+#endif
+
+    snprintf(buff, sizeof(buff), "%s: nodelay %d flags %08x\n",
+             msg, nodelay, flags);
+    opal_output(0, "%s", buff);
+}
+
+char* pmix_usock_state_print(pmix_usock_state_t state)
+{
+    switch (state) {
+    case PMIX_USOCK_UNCONNECTED:
+        return "UNCONNECTED";
+    case PMIX_USOCK_CLOSED:
+        return "CLOSED";
+    case PMIX_USOCK_RESOLVE:
+        return "RESOLVE";
+    case PMIX_USOCK_CONNECTING:
+        return "CONNECTING";
+    case PMIX_USOCK_CONNECT_ACK:
+        return "ACK";
+    case PMIX_USOCK_CONNECTED:
+        return "CONNECTED";
+    case PMIX_USOCK_FAILED:
+        return "FAILED";
+    default:
+        return "UNKNOWN";
+    }
+}
+

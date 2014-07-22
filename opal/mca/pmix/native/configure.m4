@@ -21,15 +21,15 @@
 # $HEADER$
 #
 
-# MCA_oob_usock_CONFIG([action-if-found], [action-if-not-found])
+# MCA_pmix_native_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_orte_oob_usock_CONFIG],[
-    AC_CONFIG_FILES([orte/mca/oob/usock/Makefile])
+AC_DEFUN([MCA_opal_pmix_native_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/pmix/native/Makefile])
 
     # check for sockaddr_un (a good sign we have Unix domain sockets)
     AC_CHECK_TYPES([struct sockaddr_un], 
-                   [oob_usock_happy="yes"],
-                   [oob_usock_happy="no"], 
+                   [pmix_native_happy="yes"],
+                   [pmix_native_happy="no"], 
                    [AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -38,5 +38,5 @@ AC_DEFUN([MCA_orte_oob_usock_CONFIG],[
 #include <sys/un.h>
 #endif])
 
-    AS_IF([test "$oob_usock_happy" = "yes"], [$1], [$2])
+    AS_IF([test "$pmix_native_happy" = "yes"], [$1], [$2])
 ])dnl
