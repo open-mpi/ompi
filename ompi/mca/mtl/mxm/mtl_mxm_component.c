@@ -86,6 +86,44 @@ static int ompi_mtl_mxm_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_mxm.mxm_np);
 
+#if MXM_API >= MXM_VERSION(3,1)
+{
+    unsigned long cur_ver = mxm_get_version();
+
+    if (cur_ver < MXM_VERSION(3,2)) {
+        ompi_mtl_mxm.bulk_connect    = 0;
+        ompi_mtl_mxm.bulk_disconnect = 0;
+    } else {
+        ompi_mtl_mxm.bulk_connect    = 1;
+        ompi_mtl_mxm.bulk_disconnect = 1;
+    }
+
+    (void) mca_base_component_var_register(c, "bulk_connect",
+                               "[integer] use bulk connect",
+                               MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                               OPAL_INFO_LVL_9,
+                               MCA_BASE_VAR_SCOPE_READONLY,
+                               &ompi_mtl_mxm.bulk_connect);
+
+    (void) mca_base_component_var_register(c, "bulk_disconnect",
+                               "[integer] use bulk disconnect",
+                               MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                               OPAL_INFO_LVL_9,
+                               MCA_BASE_VAR_SCOPE_READONLY,
+                               &ompi_mtl_mxm.bulk_disconnect);
+
+    if (cur_ver < MXM_VERSION(3,2) &&
+           (ompi_mtl_mxm.bulk_connect || ompi_mtl_mxm.bulk_disconnect)) {
+        ompi_mtl_mxm.bulk_connect    = 0;
+        ompi_mtl_mxm.bulk_disconnect = 0;
+
+        MXM_VERBOSE(1, "WARNING: OMPI runs with %s version of MXM that is less than 3.2, "
+                       "so bulk connect/disconnect cannot work properly and will be turn off.",
+                        ompi_mtl_mxm.runtime_version);
+    }
+}
+#endif
+
     return OMPI_SUCCESS;
 }
 

@@ -35,6 +35,12 @@ typedef struct mca_mtl_mxm_module_t {
 #if MXM_API >= MXM_VERSION(2,0)
     int                   using_mem_hooks;
 #endif
+#if MXM_API >= MXM_VERSION(3,1)
+    int                   bulk_connect;    /* use bulk connect */
+    int                   bulk_disconnect; /* use bulk disconnect */
+#endif
+    char*                 runtime_version;
+    char*                 compiletime_version;
 } mca_mtl_mxm_module_t;
 
 
