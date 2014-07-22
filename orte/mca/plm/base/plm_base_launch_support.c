@@ -1312,6 +1312,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     bool one_filter = false;
     int num_nodes;
     bool default_hostfile_used;
+    bool singleton=false;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:setup_vm",
@@ -1328,12 +1329,31 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
      */
     if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
         OBJ_CONSTRUCT(&nodes, opal_list_t);
+        if (NULL == daemons->map) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                 "%s plm:base:setup_vm creating map",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            /* this is the first time thru, so the vm is just getting
+             * defined - create a map for it and put us in as we
+             * are obviously already here! The ess will already
+             * have assigned our node to us.
+             */
+            daemons->map = OBJ_NEW(orte_job_map_t);
+            node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+            opal_pointer_array_add(daemons->map->nodes, (void*)node);
+            ++(daemons->map->num_nodes);
+            /* maintain accounting */
+            OBJ_RETAIN(node);
+            /* mark that this is from a singleton */
+            singleton = true;
+        }
+        map = daemons->map;
         for (i=1; i < orte_node_pool->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                 continue;
             }
             /* only add in nodes marked as "added" */
-            if (ORTE_NODE_STATE_ADDED != node->state) {
+            if (!singleton && ORTE_NODE_STATE_ADDED != node->state) {
                 OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                                      "%s plm_base:setup_vm NODE %s WAS NOT ADDED",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));

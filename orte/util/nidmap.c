@@ -1054,36 +1054,41 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-                /* if coprocessors were detected, lookup and store the hostid for this proc */
-                if (orte_coprocessors_detected) {
-                    /* lookup the hostid for this daemon */
-                    vptr = &hostid;
-                    if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&dmn, ORTE_DB_HOSTID,
-                                                            (void**)&vptr, OPAL_UINT32))) {
+                /* in a singleton comm_spawn, we can be passed the name of a daemon, which
+                 * means that the proc's parent is invalid - check and avoid the rest of
+                 * this logic in that case */
+                if (ORTE_VPID_INVALID != dmn.vpid) {
+                    /* if coprocessors were detected, lookup and store the hostid for this proc */
+                    if (orte_coprocessors_detected) {
+                        /* lookup the hostid for this daemon */
+                        vptr = &hostid;
+                        if (ORTE_SUCCESS != (rc = opal_db.fetch((opal_identifier_t*)&dmn, ORTE_DB_HOSTID,
+                                                                (void**)&vptr, OPAL_UINT32))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto cleanup;
+                        }
+                        OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
+                                             "%s FOUND HOSTID %s FOR DAEMON %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_VPID_PRINT(hostid), ORTE_VPID_PRINT(dmn.vpid)));
+                        /* store it as hostid for this proc */
+                        if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_NON_PEER,
+                                                                ORTE_DB_HOSTID, &hostid, OPAL_UINT32))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto cleanup;
+                        }
+                    }
+                    /* lookup and store the hostname for this proc */
+                    if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&dmn, ORTE_DB_HOSTNAME,
+                                                                    (void**)&hostname, OPAL_STRING))) {
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
-                    OPAL_OUTPUT_VERBOSE((2, orte_nidmap_output,
-                                         "%s FOUND HOSTID %s FOR DAEMON %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_VPID_PRINT(hostid), ORTE_VPID_PRINT(dmn.vpid)));
-                    /* store it as hostid for this proc */
                     if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_NON_PEER,
-                                                            ORTE_DB_HOSTID, &hostid, OPAL_UINT32))) {
+                                                            ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
                     }
-                }
-                /* lookup and store the hostname for this proc */
-                if (ORTE_SUCCESS != (rc = opal_db.fetch_pointer((opal_identifier_t*)&dmn, ORTE_DB_HOSTNAME,
-                                                                (void**)&hostname, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                if (ORTE_SUCCESS != (rc = opal_db.store((opal_identifier_t*)&proc, OPAL_SCOPE_NON_PEER,
-                                                        ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
                 }
                 /* store this procs global rank - only used by us */
                 global_rank = proc.vpid + offset;
