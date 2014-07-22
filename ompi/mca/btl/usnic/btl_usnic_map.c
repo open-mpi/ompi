@@ -10,6 +10,10 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "opal/util/show_help.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_util.h"
@@ -246,7 +250,15 @@ void ompi_btl_usnic_connectivity_map(void)
 
     fp = fopen(filename, "w");
     if (NULL == fp) {
-        /* JMS abort? */
+        char dirname[PATH_MAX];
+        getcwd(dirname, sizeof(dirname));
+        dirname[sizeof(dirname) - 1] = '\0';
+        opal_show_help("help-mpi-btl-usnic.txt", "cannot write to map file",
+                       true,
+                       ompi_process_info.nodename,
+                       filename,
+                       dirname,
+                       strerror(errno), errno);
         return;
     }
 
