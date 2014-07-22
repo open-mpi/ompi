@@ -177,11 +177,21 @@ static size_t _memheap_size(void)
     int idx;
     long long size = 0;
 
-    p = getenv(SHMEM_HEAP_SIZE);
-    if (!p)
-        return SIZE_IN_MEGA_BYTES(DEFAULT_SYMMETRIC_HEAP_SIZE);
+    p = getenv(OSHMEM_ENV_SYMMETRIC_SIZE);
+    if (!p) {
+        p = getenv(SHMEM_HEAP_SIZE);
+    } else {
+        char *p1 = getenv(SHMEM_HEAP_SIZE);
+        if (p1 && strcmp(p, p1)) {
+            MEMHEAP_ERROR("Found conflict between env '%s' and '%s'.\n",
+                          OSHMEM_ENV_SYMMETRIC_SIZE, SHMEM_HEAP_SIZE);
+            return 0;
+        }
+    }
 
-    if (1 == sscanf(p, "%lld%n", &size, &idx)) {
+    if (!p) {
+        size = SIZE_IN_MEGA_BYTES(DEFAULT_SYMMETRIC_HEAP_SIZE);
+    } else if (1 == sscanf(p, "%lld%n", &size, &idx)) {
         if (p[idx] != '\0') {
             if (p[idx + 1] == '\0') {
                 if (p[idx] == 'k' || p[idx] == 'K') {
@@ -202,10 +212,25 @@ static size_t _memheap_size(void)
     }
 
     if (size <= 0) {
-        MEMHEAP_ERROR("Set incorrect symmetric heap size %s.\n",
-                      p, DEFAULT_SYMMETRIC_HEAP_SIZE);
+        MEMHEAP_ERROR("Set incorrect symmetric heap size\n");
         return 0;
+    } else {
+        char *tmp = p;
+
+        if(!p) {
+            asprintf(&tmp, "%lld", size);
+        }
+
+        if (tmp) {
+            setenv(OSHMEM_ENV_SYMMETRIC_SIZE, tmp, 1);
+            setenv(SHMEM_HEAP_SIZE, tmp, 1);
+        }
+
+        if (!p && tmp) {
+            free(tmp);
+        }
     }
+
     return (size_t) memheap_align(size * factor);
 }
 

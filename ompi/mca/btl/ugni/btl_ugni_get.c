@@ -144,7 +144,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
         frag->segments[0].base.seg_len = frag->segments[1].base.seg_len =
             (hdr.eager.src_seg.base.seg_len + 3) & ~3;
 
-        frag->base.des_remote = &frag->segments[1].base;
+        frag->base.des_local = &frag->segments[1].base;
 
         rc = mca_btl_ugni_post_wcb (frag, GNI_POST_RDMA_GET, frag->segments, frag->segments + 1,
                                     mca_btl_ugni_callback_eager_get);
