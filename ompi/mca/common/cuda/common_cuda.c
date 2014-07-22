@@ -40,10 +40,6 @@
 #include "ompi/runtime/params.h"
 #include "common_cuda.h"
 
-#ifndef OPAL_HAVE_ATOMIC_SPINLOCKS
-eatme
-#endif
-
 /**
  * Since function names can get redefined in cuda.h file, we need to do this
  * stringifying to get the latest function name from the header file.  For
@@ -1189,12 +1185,14 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
     CUresult result;
     int iter;
 
+    OPAL_THREAD_LOCK(&common_cuda_ipc_lock);
     /* First make sure there is room to store the event.  If not, then
      * return an error.  The error message will tell the user to try and
      * run again, but with a larger array for storing events. */
     if (cuda_event_ipc_num_used == cuda_event_max) {
         opal_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
                        true, cuda_event_max, cuda_event_max+100, cuda_event_max+100);
+        OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1214,6 +1212,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
             opal_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
                            true, dst, src, amount, result);
+            OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
             return OMPI_ERROR;
         } else {
             opal_output_verbose(20, mca_common_cuda_output,
@@ -1224,6 +1223,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
             opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                            true, ompi_process_info.nodename, result);
+            OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
             return OMPI_ERROR;
         }
         cuda_event_ipc_frag_array[cuda_event_ipc_first_avail] = frag;
@@ -1242,6 +1242,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
             opal_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
                            true, dst, src, amount, result);
+            OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
             return OMPI_ERROR;
         } else {
             opal_output_verbose(20, mca_common_cuda_output,
@@ -1254,6 +1255,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
             opal_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                            true, ompi_process_info.nodename, result);
+            OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
             return OMPI_ERROR;
         }
 
@@ -1270,6 +1272,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         if ((CUDA_SUCCESS != result) && (CUDA_ERROR_NOT_READY != result)) {
             opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                            true, result);
+            OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
             return OMPI_ERROR;
         }
 
@@ -1282,6 +1285,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
             if ((CUDA_SUCCESS != result) && (CUDA_ERROR_NOT_READY != result)) {
                 opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                                true, result);
+                OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
                 return OMPI_ERROR;
             }
             iter++;
@@ -1293,7 +1297,8 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
             cuda_event_ipc_first_used = 0;
         }
         *done = 1;
-    }  
+    }
+    OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
     return OMPI_SUCCESS;
 }
 
@@ -1414,6 +1419,7 @@ void *mca_common_cuda_get_htod_stream(void) {
 int progress_one_cuda_ipc_event(struct mca_btl_base_descriptor_t **frag) {
     CUresult result;
 
+    OPAL_THREAD_LOCK(&common_cuda_ipc_lock);
     if (cuda_event_ipc_num_used > 0) {
         opal_output_verbose(20, mca_common_cuda_output,
                            "CUDA: progress_one_cuda_ipc_event, outstanding_events=%d",
@@ -1426,11 +1432,13 @@ int progress_one_cuda_ipc_event(struct mca_btl_base_descriptor_t **frag) {
             opal_output_verbose(20, mca_common_cuda_output,
                                 "CUDA: cuEventQuery returned CUDA_ERROR_NOT_READY");
             *frag = NULL;
+            OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
             return 0;
         } else if (CUDA_SUCCESS != result) {
             opal_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                            true, result);
             *frag = NULL;
+            OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
             return OMPI_ERROR;
         }
 
@@ -1445,8 +1453,10 @@ int progress_one_cuda_ipc_event(struct mca_btl_base_descriptor_t **frag) {
             cuda_event_ipc_first_used = 0;
         }
         /* A return value of 1 indicates an event completed and a frag was returned */
+        OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
         return 1;
     }
+    OPAL_THREAD_UNLOCK(&common_cuda_ipc_lock);
     return 0;
 }
 
