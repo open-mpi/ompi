@@ -14,19 +14,34 @@ CPPFLAGS = $(CPPFLAGS_FOR_BUILD)
 LDFLAGS = $(LDFLAGS_FOR_BUILD)
 LIBS = $(LIBS_FOR_BUILD)
 
+# From Automake v2.0 the 'subdir-objects' option will be required to compile
+# sources located outside of the current build directory. Due to a bug in
+# Automake (see http://debbugs.gnu.org/cgi/bugreport.cgi?bug=13928) we cannot
+# enable this option, so we have to sym link in the following sources (actually
+# located in $(top_srcdir)/util/) to lead Automake to believe that all sources
+# are located in this directory.
+UTILSOURCES = \
+	installdirs.c \
+	util.c
+
 vtlibwrapgen_SOURCES = \
 	vt_libwrapgen.h \
 	vt_libwrapgen_filter.h \
 	vt_libwrapgen_parser.h \
 	vt_libwrapgen.cc \
 	vt_libwrapgen_filter.cc \
-	vt_libwrapgen_parser.cc \
-	$(top_srcdir)/util/installdirs.c \
-	$(top_srcdir)/util/util.c
+	vt_libwrapgen_parser.cc
 
 nodist_vtlibwrapgen_SOURCES = \
-	vt_libwrapgen_defs.h
+	$(UTILSOURCES)
 
 vtlibwrapgen_LDADD = \
 	$(CTOOLLIBDIR) $(CTOOLLIB)
+
+# Sym link in util sources to keep the non-subdir-objects behavior
+$(UTILSOURCES):
+	$(LN_S) $(top_srcdir)/util/$@
+
+CLEANFILES = \
+	$(UTILSOURCES)
 

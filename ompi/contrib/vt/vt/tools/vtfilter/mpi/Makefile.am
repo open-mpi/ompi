@@ -1,9 +1,10 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 if AMBUILDBINARIES
 bin_PROGRAMS = vtfilter-mpi
 endif
 
-VTFILTERSRCDIR = $(srcdir)/..
-include $(srcdir)/../Makefile.common
+include ../Makefile.common
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f vtfiltergen-mpi$(EXEEXT); \
@@ -11,11 +12,16 @@ install-exec-hook:
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/vtfiltergen-mpi$(EXEEXT)
 
+$(COMMONSOURCES):
+	$(LN_S) $(abs_top_srcdir)/tools/vtfilter/$@ $@
+
 CXX = $(MPICXX)
 
 vtfilter_mpi_CXXFLAGS = $(COMMONCXXFLAGS) -DVT_MPI $(MPICXXFLAGS) $(MPIINCDIR)
 vtfilter_mpi_LDFLAGS = $(COMMONLDFLAGS) $(MPICXXFLAGS)
-vtfilter_mpi_SOURCES = $(COMMONSOURCES)
+nodist_vtfilter_mpi_SOURCES = $(COMMONSOURCES)
 vtfilter_mpi_LDADD = $(COMMONLDADD) $(MPILIBDIR) $(MPILIB)
 vtfilter_mpi_DEPENDENCIES = $(COMMONDEPENDENCIES)
+
+CLEANFILES = $(COMMONSOURCES)
 
