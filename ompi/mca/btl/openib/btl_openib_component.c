@@ -2696,11 +2696,8 @@ btl_openib_component_init(int *num_btl_modules,
        initialize them */
     i = 0;
     while (NULL != (item = opal_list_remove_first(&btl_list))) {
-        mca_btl_openib_device_t *device;
-
         ib_selected = (mca_btl_base_selected_module_t*)item;
         openib_btl = (mca_btl_openib_module_t*)ib_selected->btl_module;
-        device = openib_btl->device;
 
         /* Search for a CPC that can handle this port */
         ret = ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
