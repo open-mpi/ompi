@@ -49,7 +49,7 @@ static int publish(const char *service_name, ompi_info_t *info, const char *port
         opal_list_append(&xfer, &p->super);
     }
 
-    rc = opal_pmix.publish((opal_identifier_t*)OMPI_PROC_MY_NAME, service_name, &xfer, port_name);
+    rc = opal_pmix.publish(service_name, &xfer, port_name);
     OPAL_LIST_DESTRUCT(&xfer);
     return rc;
 }
@@ -70,7 +70,7 @@ static char* lookup(const char *service_name, ompi_info_t *info)
         strncpy(p->value, ie->ie_value, PMIX_MAX_INFO_VAL);
         opal_list_append(&xfer, &p->super);
     }
-    rc = opal_pmix.lookup((opal_identifier_t*)OMPI_PROC_MY_NAME, service_name, &xfer, port, PMIX_MAX_VALLEN);
+    rc = opal_pmix.lookup(service_name, &xfer, port, PMIX_MAX_VALLEN);
     OPAL_LIST_DESTRUCT(&xfer);
 
     /* in error case port will be set to NULL
@@ -102,7 +102,7 @@ static int unpublish(const char *service_name, ompi_info_t *info)
         strncpy(p->value, ie->ie_value, PMIX_MAX_INFO_VAL);
         opal_list_append(&xfer, &p->super);
     }
-    rc = opal_pmix.unpublish((opal_identifier_t*)OMPI_PROC_MY_NAME, service_name, &xfer);
+    rc = opal_pmix.unpublish(service_name, &xfer);
     OPAL_LIST_DESTRUCT(&xfer);
     return rc;
 }
