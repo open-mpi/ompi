@@ -23,6 +23,7 @@ typedef struct {
     opal_list_item_t super;
     char *name;
     opal_event_base_t *ev_base;
+    volatile bool ev_active;
     bool block_active;
     opal_event_t block;
     bool engine_defined;
@@ -33,6 +34,7 @@ static void trkcon(opal_progress_tracker_t *p)
 {
     p->name = NULL;
     p->ev_base = NULL;
+    p->ev_active = true;
     p->block_active = false;
     p->engine_defined = false;
     p->pipe[0] = -1;
@@ -74,10 +76,17 @@ static void wakeup(int fd, short args, void *cbdata)
      * it so we don't try to delete it again */
     trk->block_active = false;
 }
+static void* progress_engine(opal_object_t *obj)
+{
+    opal_progress_tracker_t *trk = (opal_progress_tracker_t*)obj;
 
+    while (trk->ev_active) {
+        opal_event_loop(trk->ev_base, OPAL_EVLOOP_ONCE);
+    }
+    return OPAL_THREAD_CANCELLED;
+}
 
 opal_event_base_t *opal_start_progress_thread(char *name,
-                                              opal_thread_fn_t func,
                                               bool create_block)
 {
     opal_progress_tracker_t *trk;
@@ -115,7 +124,8 @@ opal_event_base_t *opal_start_progress_thread(char *name,
     OBJ_CONSTRUCT(&trk->engine, opal_thread_t);
     trk->engine_defined = true;
     /* fork off a thread to progress it */
-    trk->engine.t_run = func;
+    trk->engine.t_run = progress_engine;
+    trk->engine.t_arg = trk;
     if (OPAL_SUCCESS != (rc = opal_thread_start(&trk->engine))) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(trk);
@@ -142,15 +152,18 @@ void opal_stop_progress_thread(char *name, bool cleanup)
     /* find the specified engine */
     OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
+            /* mark it as inactive */
+            trk->ev_active = false;
+            /* break the event loop - this will cause the loop to exit
+             * upon completion of any current event */
+            opal_event_base_loopbreak(trk->ev_base);
             /* if present, use the block to break it loose just in
-             * case the thread is blocking in a call to select for
+             * case the thread is blocked in a call to select for
              * a long time */
             if (trk->block_active) {
                 i=1;
                 write(trk->pipe[1], &i, sizeof(int));
             }
-            /* break the event loop */
-            opal_event_base_loopbreak(trk->ev_base);
             /* wait for thread to exit */
             opal_thread_join(&trk->engine, NULL);
             /* cleanup, if they indicated they are done with this event base */
