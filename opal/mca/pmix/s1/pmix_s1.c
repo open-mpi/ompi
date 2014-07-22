@@ -224,11 +224,27 @@ static int s1_spawn(int count, const char * cmds[],
                     char jobId[], int jobIdSize,
                     int errors[])
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    /*
+    int rc;
+    size_t preput_vector_size;
+    const int info_keyval_sizes[1];
+    info_keyval_sizes[0] = (int)opal_list_get_size(info_keyval_vector);
+    //FIXME what's the size of array of lists?
+    preput_vector_size = opal_list_get_size(preput_keyval_vector);
+    rc = PMI_Spawn_multiple(count, cmds, argcs, argvs, maxprocs, info_keyval_sizes, info_keyval_vector, (int)preput_vector_size, preput_keyval_vector);
+    if( PMI_SUCCESS != rc ) {
+        OPAL_PMI_ERROR(rc, "PMI_Spawn_multiple");
+        return OPAL_ERROR;
+    }*/
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int s1_get_jobid(char jobId[], int jobIdSize)
 {
+    if (pmix_kvslen_max > jobIdSize) {
+        return OPAL_ERROR;
+    }
+    memcpy(jobId, pmix_kvs_name, pmix_kvslen_max);
     return OPAL_SUCCESS;
 }
 
@@ -330,7 +346,7 @@ static int s1_fence(void)
 
 static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int kvs_get(const char key[], char value [], int maxvalue)
@@ -348,8 +364,11 @@ static int s1_get(opal_identifier_t *id,
                   const char *key,
                   opal_value_t *kv)
 {
-    int rc = OPAL_SUCCESS;
-    cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
+    int rc;
+    rc = cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
+    if (NULL == kv) {
+        return OPAL_ERROR;
+    }
     return rc;
 }
 
@@ -422,7 +441,7 @@ static int s1_lookup(const char service_name[],
 
     // Allocate mem for port here? Otherwise we won't get success!
     // SLURM PMIv1 doesn't implement this function
-
+    /* I don't understand this comment. Is it still valid? */
     if (PMI_SUCCESS != (rc = PMI_Lookup_name(service_name, port))) {
         OPAL_PMI_ERROR(rc, "PMI_Lookup_name");
         return OPAL_ERROR;
@@ -475,12 +494,12 @@ static int s1_local_info(int vpid, int **ranks_ret,
 
 static int s1_job_connect(const char jobId[])
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int s1_job_disconnect(const char jobId[])
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int s1_get_appnum(int *appnum)

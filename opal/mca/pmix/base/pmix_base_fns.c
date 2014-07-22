@@ -214,7 +214,7 @@ int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, in
     return OPAL_SUCCESS;
 }
 
-void cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *out_kv, char* kvs_name, int vallen, kvs_get_fn fn)
+int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *out_kv, char* kvs_name, int vallen, kvs_get_fn fn)
 {
     char *tmp, *tmp2, *tmp3, *tmp_val;
     opal_data_type_t stored_type;
@@ -223,12 +223,12 @@ void cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *ou
     opal_value_t *kv, *knew;
 
     OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
-                         "dstore:pmi:fetch get all keys for proc %" PRIu64 " in KVS %s",
+                         "pmix: get all keys for proc %" PRIu64 " in KVS %s",
     		 id, kvs_name));
 
     rc = pmix_get_packed(id, &tmp_val, &len, vallen, fn);
     if (OPAL_SUCCESS != rc) {
-        return;
+        return rc;
     }
 
     /* search for each key in the decoded data */
@@ -303,12 +303,11 @@ void cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *ou
                 break;
             default:
                 opal_output(0, "UNSUPPORTED TYPE %d", stored_type);
-                return;
+                return OPAL_ERROR;
         }
         /* store data in local hash table */
         if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, id, kv))) {
             OPAL_ERROR_LOG(rc);
-            //FIXME handle errors
         }
 
         /* keep going and cache everything locally */
@@ -316,13 +315,15 @@ void cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *ou
         if (0 == strcmp(kv->key, key)) {
             /* create the copy */
             if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
+                out_kv = NULL;
                 OPAL_ERROR_LOG(rc);
-                //FIXME handle errors
+            } else {
+                out_kv = knew;
             }
-            out_kv = knew;
         }
     }
     free (tmp_val);
+    return rc;
 }
 
 static char* setup_key(opal_identifier_t* name, const char *key, int pmix_keylen_max)
