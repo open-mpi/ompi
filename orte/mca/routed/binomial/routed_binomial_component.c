@@ -48,12 +48,8 @@ static int orte_routed_binomial_component_query(mca_base_module_t **module, int 
 {
     /* make this selected ONLY if the user directs as this module scales
      * poorly compared to our other options
-     *
-     * XXX: make this the default until we can figure out what's going on with
-     * debruijn within undersubscribed allocations. Once debruijn is fixed,
-     * revert back to priority 0.
      */
-    *priority = 70;
+    *priority = 30;
     *module = (mca_base_module_t *) &orte_routed_binomial_module;
     return ORTE_SUCCESS;
 }
