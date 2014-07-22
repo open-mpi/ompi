@@ -15,8 +15,6 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -38,7 +36,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     OMPI_FORTRAN_HAVE_IGNORE_TKR=0
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
-    OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS=0
     OMPI_FORTRAN_HAVE_BIND_C=0
     OMPI_FORTRAN_HAVE_ISO_C_BINDING=0
     OMPI_FORTRAN_HAVE_BIND_C_SUB=0
@@ -388,16 +385,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
-    OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS=0
-    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
-           $OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME -eq 1 -a \
-           $OMPI_FORTRAN_HAVE_OPTIONAL_ARGS -eq 1],
-          [ # Does the compiler have optional arguments?
-           OMPI_FORTRAN_CHECK_BIND_C_WITH_OPTIONAL_ARGS(
-               [OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS=1],
-               [OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS=0])])
-
     OMPI_FORTRAN_HAVE_PRIVATE=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
@@ -661,9 +648,6 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_OPTIONAL_ARGS], 
                        [$OMPI_FORTRAN_HAVE_OPTIONAL_ARGS],
                        [For ompi_info: whether the Fortran compiler supports optional arguments or not])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS], 
-                       [$OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS],
-                       [For ompi_info: whether the Fortran compiler supports BIND(C, NAME="name") subroutine with optional arguments or not])
 
     # For configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
     AC_SUBST([OMPI_FORTRAN_HAVE_PRIVATE])
@@ -700,10 +684,6 @@ end type test_mpi_handle],
 
     # For configure-fortran-output.h
     AC_SUBST(OMPI_FORTRAN_HAVE_BIND_C)
-    
-    # For configure-fortran-output.h, various files in
-    # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
-    AC_SUBST(OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS)
 
     # Somewhat redundant because ompi/Makefile.am won't traverse into
     # ompi/mpi/fortran/use-mpi-f08 if it's not to be built, but we

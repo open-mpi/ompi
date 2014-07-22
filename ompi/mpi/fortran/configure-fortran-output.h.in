@@ -3,8 +3,6 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2014      Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
 !
 ! $COPYRIGHT$
 !
@@ -42,9 +40,6 @@
 
 ! Whether we are building the MPI F08 bindings with subarray support or not
 #define OMPI_FORTRAN_SUBARRAYS_SUPPORTED @OMPI_FORTRAN_SUBARRAYS_SUPPORTED@
-
-! Whether we have BIND(C, NAME="name") subroutine with optional parameters or not
-#define OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS @OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS@
 
 ! Line 1 of the ignore TKR syntax
 ! ...JMS not figured out yet...
