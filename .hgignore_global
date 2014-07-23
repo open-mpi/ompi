@@ -173,6 +173,8 @@ syntax: glob
 ./ompi/contrib/vt/vt/tools/vtfilter/vtfilter
 ./ompi/contrib/vt/vt/tools/vtfilter/mpi/Makefile.in
 ./ompi/contrib/vt/vt/tools/vtfilter/mpi/vtfilter-mpi
+./ompi/contrib/vt/vt/tools/vtfilter/mpi/*.cc
+./ompi/contrib/vt/vt/tools/vtfilter/mpi/old
 ./ompi/contrib/vt/vt/tools/vtiofsl/Makefile.in
 ./ompi/contrib/vt/vt/tools/vtiofsl/vtiofsl-common
 ./ompi/contrib/vt/vt/tools/vtiofsl/vtiofsl-start
@@ -182,6 +184,8 @@ syntax: glob
 ./ompi/contrib/vt/vt/tools/vtlibwrapgen/Makefile.in
 ./ompi/contrib/vt/vt/tools/vtlibwrapgen/vt_libwrapgen_defs.h
 ./ompi/contrib/vt/vt/tools/vtlibwrapgen/vtlibwrapgen
+./ompi/contrib/vt/vt/tools/vtlibwrapgen/installdirs.c
+./ompi/contrib/vt/vt/tools/vtlibwrapgen/util.c
 ./ompi/contrib/vt/vt/tools/vtrun/Makefile.in
 ./ompi/contrib/vt/vt/tools/vtrun/vtrun
 ./ompi/contrib/vt/vt/tools/vtsetup/Makefile.in
