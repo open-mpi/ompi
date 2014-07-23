@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,6 +86,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   MPI_Request *send_req=NULL, *recv_req=NULL;
   /* For creating datatype of type io_array */
   int blocklen[3] = {1, 1, 1};
+  int static_num_io_procs=1;
   OPAL_PTRDIFF_TYPE d[3], base;
   ompi_datatype_t *types[3];
   ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
@@ -124,12 +125,10 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	status->_ucount = max_data;
     }
 
-
-  if (! (fh->f_flags & OMPIO_AGGREGATOR_IS_SET)) {
+    mca_io_ompio_get_num_aggregators ( & static_num_io_procs );
     ompi_io_ompio_set_aggregator_props (fh, 
-					mca_fcoll_static_num_io_procs,
+					static_num_io_procs,
 					max_data);
-  }
   
   
   /* io_array datatype  for using in communication*/
@@ -183,14 +182,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 
   }
   
-  if (mca_fcoll_static_constant_cbs) {
+  mca_io_ompio_get_bytes_per_agg ( (int *) &bytes_per_cycle);
 
-    bytes_per_cycle = 
-      mca_fcoll_static_cycle_buffer_size/fh->f_procs_per_group;
-  }
-  else {
-    bytes_per_cycle = mca_fcoll_static_cycle_buffer_size;
-  }
   
   local_cycles = ceil((double)max_data/bytes_per_cycle);
   ret = fh->f_comm->c_coll.coll_allreduce (&local_cycles, 
@@ -907,7 +900,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
       nentry.aggregator = 1;
     else
       nentry.aggregator = 0;
-    nentry.nprocs_for_coll = mca_fcoll_static_num_io_procs;
+    nentry.nprocs_for_coll = static_num_io_procs;
     if (!ompi_io_ompio_full_print_queue(WRITE_PRINT_QUEUE)){
       ompi_io_ompio_register_print_entry(WRITE_PRINT_QUEUE,
 					 nentry);

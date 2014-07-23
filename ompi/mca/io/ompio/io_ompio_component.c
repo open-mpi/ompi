@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
+int mca_io_ompio_num_aggregators = -1;
 int mca_io_ompio_record_offset_info = 0;
 int mca_io_ompio_coll_timing_info = 0;
 int mca_io_ompio_sharedfp_lazy_open = 1;
@@ -125,7 +126,7 @@ mca_io_base_component_2_0_0_t mca_io_ompio_component = {
 
 static int register_component(void)
 {
-    priority_param = 10;
+    priority_param = 30;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "priority", "Priority of the io ompio component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -139,12 +140,6 @@ static int register_component(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &delete_priority_param);
-
-    /* NTH: Don't bother registering a version if there is none */
-/*     reg_string(&mca_io_ompio_component.io_version, */
-/*                               "version",  */
-/*                               "Version of OMPIO", */
-/*                               false, true, NULL, NULL); */
 
     mca_io_ompio_record_offset_info = 0;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
@@ -167,7 +162,7 @@ static int register_component(void)
     mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "cycle_buffer_size",
-                                           "Cycle Buffer Size of individual reads/writes",
+                                           "Cycle buffer size of individual reads/writes",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -176,11 +171,20 @@ static int register_component(void)
     mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "bytes_per_agg",
-                                           "Bytes per aggregator process for automatic selection",
+                                           "Size of temporary buffer for collective I/O operations",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_bytes_per_agg);
+
+    mca_io_ompio_num_aggregators = -1;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "num_aggregators",
+                                           "number of aggregators for collective I/O operations",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_num_aggregators);
 
     mca_io_ompio_sharedfp_lazy_open = 1;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,

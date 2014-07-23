@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +37,6 @@
    This is exactly similar to ROMIO's two_phase */
 
 
-
 /* Datastructure to support specifying the flat-list. */
 typedef struct flat_list_node {  
     MPI_Datatype type;
@@ -62,7 +61,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 				    OMPI_MPI_OFFSET_TYPE *fd_end,
 				    Flatlist_node *flat_buf,
 				    size_t *buf_idx, int striping_unit,
-				    int *aggregator_list);
+				    int num_io_procs, int *aggregator_list);
 
 
 
@@ -85,8 +84,8 @@ static int  two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				   int *send_buf_idx, int *curr_to_proc,
 				   int *done_to_proc, int iter,
 				   size_t *buf_idx, MPI_Aint buftype_extent,
-				   int striping_unit, int *aggregator_list,
-				   int *hole);
+				   int striping_unit, int num_io_procs, 
+				   int *aggregator_list,  int *hole);
 				   
 
 static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
@@ -106,7 +105,8 @@ static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
 				      int *curr_to_proc, 
 				      int *done_to_proc,
 				      int iter, MPI_Aint buftype_extent,
-				      int striping_unit, int *aggregator_list);
+				      int striping_unit, 
+				      int num_io_procs, int *aggregator_list);
 #if TIME_BREAKDOWN
 static int is_aggregator(int rank,
 			 int nprocs_for_coll,
@@ -149,6 +149,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
   size_t max_data = 0, total_bytes = 0; 
   int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs;
   int count_other_req_procs,  ret=OMPI_SUCCESS;
+  int two_phase_num_io_procs=1;
   size_t *buf_indices=NULL;
   int local_count = 0, local_size=0,*aggregator_list = NULL;
   struct iovec *iov = NULL;
@@ -208,37 +209,36 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     status->_ucount = max_data;
   }
 
-  
-  if(-1 == mca_fcoll_two_phase_num_io_procs){
+  mca_io_ompio_get_num_aggregators ( &two_phase_num_io_procs );
+  if(-1 == two_phase_num_io_procs){
     ret = ompi_io_ompio_set_aggregator_props (fh, 
-					      mca_fcoll_two_phase_num_io_procs,
+					      two_phase_num_io_procs,
 					      max_data);
     if ( OMPI_SUCCESS != ret){
       return  ret;
     }
     
-    mca_fcoll_two_phase_num_io_procs = 
-      ceil((float)fh->f_size/fh->f_procs_per_group);
+    two_phase_num_io_procs = 
+	ceil((float)fh->f_size/fh->f_procs_per_group);
     
   }
   
-  if (mca_fcoll_two_phase_num_io_procs > fh->f_size){
-    mca_fcoll_two_phase_num_io_procs = fh->f_size;
+  if (two_phase_num_io_procs > fh->f_size){
+      two_phase_num_io_procs = fh->f_size;
   }
   
 #if DEBUG_ON
-  printf("Number of aggregators : %ld\n", mca_fcoll_two_phase_num_io_procs);
+  printf("Number of aggregators : %ld\n", two_phase_num_io_procs);
 #endif
 
-  aggregator_list = (int *) malloc (mca_fcoll_two_phase_num_io_procs *
-				    sizeof(int));
+  aggregator_list = (int *) malloc (two_phase_num_io_procs *sizeof(int));
   
   if ( NULL == aggregator_list ) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
   
-  for (i =0; i< mca_fcoll_two_phase_num_io_procs; i++){
-    aggregator_list[i] = i;
+  for (i =0; i< two_phase_num_io_procs; i++){
+    aggregator_list[i] = i * fh->f_size / two_phase_num_io_procs;
   }
   
   
@@ -424,14 +424,14 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 					       domain_size, 
 					       &fd_size,
 					       striping_unit,
-					       mca_fcoll_two_phase_num_io_procs);
+					       two_phase_num_io_procs);
     if ( OMPI_SUCCESS != ret ){
       goto exit;
     }
     
     
 #if  DEBUG_ON
-	for (i=0;i<mca_fcoll_two_phase_num_io_procs;i++){
+	for (i=0;i<two_phase_num_io_procs;i++){
 	  printf("fd_start[%d] : %lld, fd_end[%d] : %lld, local_count: %d\n",
 		   i, fd_start[i], i, fd_end[i], local_count);
 	}
@@ -450,7 +450,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 						    &my_req,
 						    &buf_indices,
 						    striping_unit,
-						    mca_fcoll_two_phase_num_io_procs,
+						    two_phase_num_io_procs,
 						    aggregator_list);
 	if ( OMPI_SUCCESS != ret ){
 	  goto exit;
@@ -490,6 +490,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 				       flat_buf,
 				       buf_indices,
 				       striping_unit,
+				       two_phase_num_io_procs, 
 				       aggregator_list);
 
 	if (OMPI_SUCCESS != ret){
@@ -505,14 +506,14 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	nentry.time[1] = comm_time;
 	nentry.time[2] = exch_write;
 	if (is_aggregator(fh->f_rank,
-			  mca_fcoll_two_phase_num_io_procs,
+			  two_phase_num_io_procs,
 			  aggregator_list)){
 	  nentry.aggregator = 1;
 	}
 	else{
 	  nentry.aggregator = 0;
 	}
-	nentry.nprocs_for_coll = mca_fcoll_two_phase_num_io_procs;
+	nentry.nprocs_for_coll = two_phase_num_io_procs;
 	if (!ompi_io_ompio_full_print_queue(WRITE_PRINT_QUEUE)){
 	  ompi_io_ompio_register_print_entry(WRITE_PRINT_QUEUE,
 					     nentry);
@@ -562,6 +563,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 				    OMPI_MPI_OFFSET_TYPE *fd_end,
 				    Flatlist_node *flat_buf,
 				    size_t *buf_idx, int striping_unit,
+				    int two_phase_num_io_procs, 
 				    int *aggregator_list)
     
 {
@@ -576,6 +578,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE size=0, req_off, len;
     MPI_Aint buftype_extent;
     int  hole;
+    int two_phase_cycle_buffer_size;
     size_t byte_size;
     MPI_Datatype byte = MPI_BYTE;
     #if DEBUG_ON
@@ -604,8 +607,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	}
     }
     
-
-    ntimes = (int) ((end_loc - st_loc + mca_fcoll_two_phase_cycle_buffer_size)/mca_fcoll_two_phase_cycle_buffer_size); 
+    mca_io_ompio_get_bytes_per_agg ( &two_phase_cycle_buffer_size );
+    ntimes = (int) ((end_loc - st_loc + two_phase_cycle_buffer_size)/two_phase_cycle_buffer_size); 
     
     if ((st_loc == -1) && (end_loc == -1)) {
 	ntimes = 0;
@@ -620,7 +623,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 				       fh->f_comm->c_coll.coll_allreduce_module);
 
     if (ntimes){
-      write_buf = (char *) malloc (mca_fcoll_two_phase_cycle_buffer_size);
+      write_buf = (char *) malloc (two_phase_cycle_buffer_size);
       if ( NULL == write_buf ){
 	return OMPI_ERR_OUT_OF_RESOURCE;
       }
@@ -694,7 +697,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     for (m=0;m <ntimes; m++){
 	for (i=0; i< fh->f_size; i++) count[i] = recv_size[i] = 0;
 	
-	size = OMPIO_MIN((unsigned)mca_fcoll_two_phase_cycle_buffer_size,
+	size = OMPIO_MIN((unsigned)two_phase_cycle_buffer_size,
 			 end_loc-st_loc+1-done);
 	for (i=0;i<fh->f_size;i++){
 	    if(others_req[i].count){
@@ -757,6 +760,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 				     send_buf_idx, curr_to_proc,
 				     done_to_proc, m, buf_idx, 
 				     buftype_extent, striping_unit,
+				     two_phase_num_io_procs,
 				     aggregator_list, &hole);
 	
 	if ( OMPI_SUCCESS != ret ){
@@ -845,6 +849,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 				   send_buf_idx, curr_to_proc,
 				   done_to_proc, m, buf_idx,
 				   buftype_extent, striping_unit,
+				   two_phase_num_io_procs, 
 				   aggregator_list, &hole);
       if ( OMPI_SUCCESS != ret ){
 	goto exit;
@@ -911,8 +916,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				  int *send_buf_idx, int *curr_to_proc,
 				  int *done_to_proc, int iter,
 				  size_t *buf_idx,MPI_Aint buftype_extent,
-				  int striping_unit, int *aggregator_list,
-				  int *hole){
+				  int striping_unit, int two_phase_num_io_procs, 
+				  int *aggregator_list, int *hole){
   
     int *tmp_len=NULL, sum, *srt_len=NULL, nprocs_recv, nprocs_send,  k,i,j;
     int ret=OMPI_SUCCESS;
@@ -1143,7 +1148,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 				       fd_start, fd_end, send_buf_idx,
 				       curr_to_proc, done_to_proc,
 				       iter, buftype_extent, striping_unit,
-				       aggregator_list);
+				       two_phase_num_io_procs, aggregator_list);
       
       if ( OMPI_SUCCESS != ret ){
 	goto exit;
@@ -1243,7 +1248,8 @@ static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
 				      int *curr_to_proc, 
 				      int *done_to_proc,
 				      int iter, MPI_Aint buftype_extent,
-				      int striping_unit, int *aggregator_list){
+				      int striping_unit, int two_phase_num_io_procs, 
+				      int *aggregator_list){
 
     int i, p, flat_buf_idx;
     OMPI_MPI_OFFSET_TYPE flat_buf_sz, size_in_buf, buf_incr, size;
@@ -1277,7 +1283,7 @@ static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
 						    fd_start,
 						    fd_end,
 						    striping_unit,
-						    mca_fcoll_two_phase_num_io_procs,
+						    two_phase_num_io_procs,
 						    aggregator_list);
 
 	    if (send_buf_idx[p] < send_size[p]) {

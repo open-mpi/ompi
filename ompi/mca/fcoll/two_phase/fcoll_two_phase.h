@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,9 +33,6 @@ BEGIN_C_DECLS
 /* Globally exported variables */
 
 extern int mca_fcoll_two_phase_priority;
-extern int mca_fcoll_two_phase_num_io_procs;
-extern int mca_fcoll_two_phase_constant_cbs;
-extern int mca_fcoll_two_phase_cycle_buffer_size;
 
 OMPI_MODULE_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_two_phase_component;
 

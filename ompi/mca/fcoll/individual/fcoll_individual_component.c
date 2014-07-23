@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,8 +41,6 @@ const char *mca_fcoll_individual_component_version_string =
  * Global variables
  */
 int mca_fcoll_individual_priority = 10;
-int mca_fcoll_individual_constant_cbs = 0;
-int mca_fcoll_individual_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
 
 /*
  * Local function
@@ -88,19 +86,5 @@ individual_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_priority);
-    mca_fcoll_individual_constant_cbs = 0;
-    (void) mca_base_component_var_register(&mca_fcoll_individual_component.fcollm_version,
-                                           "constant_cbs",
-                                           "wether we are using constant or scaling cycle buffer size in the individual fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_constant_cbs);
-    mca_fcoll_individual_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
-    (void) mca_base_component_var_register(&mca_fcoll_individual_component.fcollm_version,
-                                           "cycle_buffer_size", "Cycle Buffer Size of the individual fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_cycle_buffer_size);
-
     return OMPI_SUCCESS;
 }

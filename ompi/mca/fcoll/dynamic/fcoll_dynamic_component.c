@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,9 +38,6 @@ const char *mca_fcoll_dynamic_component_version_string =
  * Global variables
  */
 int mca_fcoll_dynamic_priority = 10;
-int mca_fcoll_dynamic_num_io_procs = -1;
-int mca_fcoll_dynamic_constant_cbs = 0;
-int mca_fcoll_dynamic_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
 
 /*
  * Local function
@@ -86,25 +83,6 @@ dynamic_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_priority);
-    mca_fcoll_dynamic_num_io_procs = -1;
-    (void) mca_base_component_var_register(&mca_fcoll_dynamic_component.fcollm_version,
-                                           "num_io_procs", "Number of writers in the dynamic fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_num_io_procs);
-    mca_fcoll_dynamic_constant_cbs = 0;
-    (void) mca_base_component_var_register(&mca_fcoll_dynamic_component.fcollm_version,
-                                           "constant_cbs",
-                                           "wether we are using constant or scaling cycle buffer size in the dynamic fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_constant_cbs);
-    mca_fcoll_dynamic_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
-    (void) mca_base_component_var_register(&mca_fcoll_dynamic_component.fcollm_version,
-                                           "cycle_buffer_size", "Cycle Buffer Size of the dynamic fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_cycle_buffer_size);
 
     return OMPI_SUCCESS;
 }
