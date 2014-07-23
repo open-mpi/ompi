@@ -2435,7 +2435,7 @@ subroutine ompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
   INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
   INTEGER, INTENT(OUT) ::  disp_unit
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
-  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
+  INTEGER, INTENT(OUT) ::  ierror
 end subroutine ompi_win_shared_query_f
 
 subroutine ompi_win_start_f(group,assert,win,ierror) &
