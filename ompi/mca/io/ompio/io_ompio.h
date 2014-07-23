@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,6 +41,7 @@
 
 extern int mca_io_ompio_cycle_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
+extern int mca_io_ompio_num_aggregators;
 extern int mca_io_ompio_record_offset_info;
 extern int mca_io_ompio_sharedfp_lazy_open;
 OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
@@ -223,6 +224,11 @@ typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
 OMPI_DECLSPEC extern print_queue *coll_write_time;
 OMPI_DECLSPEC extern print_queue *coll_read_time;
+
+/* functions to retrieve the number of aggregators and the size of the 
+   temporary buffer on aggregators from the fcoll modules */
+OMPI_DECLSPEC void mca_io_ompio_get_num_aggregators ( int *num_aggregators);
+OMPI_DECLSPEC void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg);
 
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);

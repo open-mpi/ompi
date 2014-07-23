@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2013 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
@@ -2001,9 +2001,19 @@ int ompi_io_ompio_scatter_data (mca_io_ompio_file_t *fh,
     return rc;
 }
 
+void mca_io_ompio_get_num_aggregators ( int *num_aggregators)
+{
+    *num_aggregators = mca_io_ompio_num_aggregators;
+    return;
+}
+
+void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg)
+{
+    *bytes_per_agg = mca_io_ompio_bytes_per_agg;
+    return;
+}
+
 /* Print queue related function implementations */
-
-
 int ompi_io_ompio_set_print_queue (print_queue **q, 
 				   int queue_type){
 
