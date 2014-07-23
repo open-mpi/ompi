@@ -12,7 +12,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -97,7 +97,7 @@ void* mca_mpool_sm_alloc(
     }
 
 #if OPAL_CUDA_SUPPORT
-    if (flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) {
+    if ((flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) && (NULL != mseg.mbs_start_addr)) {
         mca_common_cuda_register(mseg.mbs_start_addr, size,
                                  mpool->mpool_component->mpool_version.mca_component_name);
     }
