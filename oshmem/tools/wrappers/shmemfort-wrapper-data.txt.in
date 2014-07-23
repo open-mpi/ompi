@@ -28,7 +28,7 @@ linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
 # intentionally only link in the SHMEM and MPI libraries (ORTE, OPAL,
 # etc. are pulled in implicitly) because we intend MPI applications to
 # only use the SHMEM and MPI APIs.
-libs=-loshmem -lmpi_mpifh -lmpi @OMPI_WRAPPER_EXTRA_LIBS@
+libs=-loshmem -lmpi_mpifh -lmpi
 libs_static=-loshmem -lmpi_mpifh -lmpi -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
 dyn_lib_file=liboshmem.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=liboshmem.a
