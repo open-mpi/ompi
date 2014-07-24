@@ -282,3 +282,13 @@ may exist for other peer pairs, too.
 
 NOTE: You can set the MCA param btl_usnic_show_route_failures to 0 to
 disable this warning.
+#
+[cannot write to map file]
+WARNING: The usnic BTL was unable to open the requested output
+connectivity map file.  Your job will continue, but this output
+connectivity map file will not be written.
+
+  Local server:      %s
+  Output map file:   %s
+  Working directory: %s
+  Error:             %s (%d)

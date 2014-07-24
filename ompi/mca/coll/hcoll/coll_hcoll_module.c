@@ -237,17 +237,17 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         HCOL_VERBOSE(10,"Calling hcoll_init();");
         rc = hcoll_init();
 
-        if (cm->using_mem_hooks && hcoll_check_mem_release_cb_needed()) {
-            opal_mem_hooks_register_release(mca_coll_hcoll_mem_release_cb, NULL);
-        } else {
-            cm->using_mem_hooks = 0;
-        }
-
         if (HCOLL_SUCCESS != rc){
             cm->hcoll_enable = 0;
             opal_progress_unregister(mca_coll_hcoll_progress);
             HCOL_ERROR("Hcol library init failed");
             return NULL;
+        }
+
+        if (cm->using_mem_hooks && hcoll_check_mem_release_cb_needed()) {
+            opal_mem_hooks_register_release(mca_coll_hcoll_mem_release_cb, NULL);
+        } else {
+            cm->using_mem_hooks = 0;
         }
 
         copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*) MPI_COMM_NULL_COPY_FN;

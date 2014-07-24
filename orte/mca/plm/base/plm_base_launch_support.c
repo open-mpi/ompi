@@ -1074,7 +1074,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     char *param = NULL;
     const char **tmp_value;
     int loc_id;
-    char * tmp_force = NULL;
+    char *tmp_force = NULL;
     int i, j, cnt, rc;
     orte_job_t *jdata;
     char *rml_uri;
@@ -1302,10 +1302,15 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                 }
             }
             if (!ignore) {
-                /* must be okay - pass it along */
+                /* even if it is a single word, we have to try and quote it
+                 * because it could contain a special character like a colon
+                 * or semicolon */
+                (void)asprintf(&tmp_force, "\"%s\"", orted_cmd_line[i+2]);
+                /* pass it along */
                 opal_argv_append(argc, argv, orted_cmd_line[i]);
                 opal_argv_append(argc, argv, orted_cmd_line[i+1]);
-                opal_argv_append(argc, argv, orted_cmd_line[i+2]);
+                opal_argv_append(argc, argv, tmp_force);
+                free(tmp_force);
             }
         }
     }

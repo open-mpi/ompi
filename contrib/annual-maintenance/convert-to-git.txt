@@ -1,0 +1,60 @@
+From Dave:
+
+For fun, here's the Git version of the "AUTHORS with commits in the past year" part of your script:
+
+----8<----
+savbu-usnic-a ~/g/ompi-svn-mirror git:master ❮❮❮ git log --all --since='1 year ago' --pretty=tformat:'%ae' | sort | uniq -c
+    39 adrian@open-mpi-git-mirror.example.com
+     3 alex@open-mpi-git-mirror.example.com
+     5 alinas@open-mpi-git-mirror.example.com
+     9 amikheev@open-mpi-git-mirror.example.com
+    90 bosilca@open-mpi-git-mirror.example.com
+    22 brbarret@open-mpi-git-mirror.example.com
+     5 devendar@open-mpi-git-mirror.example.com
+    60 dgoodell@open-mpi-git-mirror.example.com
+     8 edgar@open-mpi-git-mirror.example.com
+    48 ggouaillardet@open-mpi-git-mirror.example.com
+     4 hadi@open-mpi-git-mirror.example.com
+   295 hjelmn@open-mpi-git-mirror.example.com
+     4 hpcchris@open-mpi-git-mirror.example.com
+     2 hppritcha@open-mpi-git-mirror.example.com
+    28 jladd@open-mpi-git-mirror.example.com
+     2 jroman@open-mpi-git-mirror.example.com
+   697 jsquyres@open-mpi-git-mirror.example.com
+    11 jurenz@open-mpi-git-mirror.example.com
+     3 manjugv@open-mpi-git-mirror.example.com
+   209 miked@open-mpi-git-mirror.example.com
+    24 mpiteam@open-mpi-git-mirror.example.com
+     4 naughtont@open-mpi-git-mirror.example.com
+    50 osvegis@open-mpi-git-mirror.example.com
+     2 pasha@open-mpi-git-mirror.example.com
+     5 regrant@open-mpi-git-mirror.example.com
+     6 rfaucett@open-mpi-git-mirror.example.com
+  1516 rhc@open-mpi-git-mirror.example.com
+    79 rolfv@open-mpi-git-mirror.example.com
+     2 swise@open-mpi-git-mirror.example.com
+     7 vasily@open-mpi-git-mirror.example.com
+     1 vvenkatesan@open-mpi-git-mirror.example.com
+    10 yosefe@open-mpi-git-mirror.example.com
+----8<----
+
+And the "NO commits":
+----8<----
+savbu-usnic-a ~/g/ompi-svn-mirror git:master ❯❯❯ git log --all --since='1 year ago' --pretty=tformat:'%ae' | sort | uniq > /tmp/active ; git log --pretty=tformat:'%ae' --all | sort | uniq > /tmp/all ; diff -u
+/tmp/all /tmp/active | grep '^-[^-]'
+-abbyz@open-mpi-git-mirror.example.com
+-adi@open-mpi-git-mirror.example.com
+-adkulkar@open-mpi-git-mirror.example.com
+-afriedle@open-mpi-git-mirror.example.com
+-alekseys@open-mpi-git-mirror.example.com
+-alexma@open-mpi-git-mirror.example.com
+-angskun@open-mpi-git-mirror.example.com
+-Anya@open-mpi-git-mirror.example.com
+-apant@open-mpi-git-mirror.example.com
+-bbenton@open-mpi-git-mirror.example.com
+-bouteill@open-mpi-git-mirror.example.com
+-casswell@open-mpi-git-mirror.example.com
+-coti@open-mpi-git-mirror.example.com
+[...]
+----8<----
+

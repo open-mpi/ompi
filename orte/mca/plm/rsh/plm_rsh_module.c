@@ -568,22 +568,21 @@ static int setup_launch(int *argcptr, char ***argvptr,
     
     /* in the rsh environment, we can append multi-word arguments
      * by enclosing them in quotes. Check for any multi-word
-     * mca params passed to mpirun and include them
+     * mca params passed to mpirun and include them - they were
+     * excluded in append_basic_args
      */
     cnt = opal_argv_count(orted_cmd_line);    
     for (i=0; i < cnt; i+=3) {
-        /* check if the specified option is more than one word - all
-         * others have already been passed
-         */
         if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
-            /* must add quotes around it */
-            (void)asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
-            /* now pass it along */
-            opal_argv_append(&argc, &argv, orted_cmd_line[i]);
-            opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
-            opal_argv_append(&argc, &argv, param);
-            free(param);
+            continue;
         }
+        /* protect the value with quotes */
+        (void)asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
+        /* now pass it along */
+        opal_argv_append(&argc, &argv, orted_cmd_line[i]);
+        opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
+        opal_argv_append(&argc, &argv, param);
+        free(param);
     }
     
     /* unless told otherwise... */
@@ -612,20 +611,16 @@ static int setup_launch(int *argcptr, char ***argvptr,
                     }
                 }
                 if (!found) {
+                    char *p2;
                     /* add it */
                     opal_argv_append(&argc, &argv, "-mca");
                     opal_argv_append(&argc, &argv, param);
-                    /* if the value has a special character in it,
-                     * then protect it with quotes
-                     */
-                    if (NULL != strchr(value, ';')) {
-                        char *p2;
-                        (void)asprintf(&p2, "\"%s\"", value);
-                        opal_argv_append(&argc, &argv, p2);
-                        free(p2);
-                    } else {
-                        opal_argv_append(&argc, &argv, value);
-                    }
+                    /* there could be multi-word values here, or
+                     * values with special characters, so protect
+                     * the value with quotes */
+                    (void)asprintf(&p2, "\"%s\"", value);
+                    opal_argv_append(&argc, &argv, p2);
+                    free(p2);
                 }
                 free(param);
             }

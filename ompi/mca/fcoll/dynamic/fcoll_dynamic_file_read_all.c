@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,6 +89,7 @@
      /* array that contains the sorted indices of the global_iov */
      int *sorted = NULL;
      int *displs = NULL;
+     int dynamic_num_io_procs;
      size_t max_data = 0; 
      int *bytes_per_process = NULL;
      MPI_Aint *total_bytes_per_process = NULL;
@@ -130,14 +131,12 @@
 	 status->_ucount = max_data;
      }
 
-     if (! (fh->f_flags & OMPIO_AGGREGATOR_IS_SET)) {
-       ret = ompi_io_ompio_set_aggregator_props (fh, 
-						 mca_fcoll_dynamic_num_io_procs,
-						 max_data);
-       if (OMPI_SUCCESS != ret){
+     mca_io_ompio_get_num_aggregators ( &dynamic_num_io_procs);
+     ret = ompi_io_ompio_set_aggregator_props (fh, 
+					       dynamic_num_io_procs,
+					       max_data);
+     if (OMPI_SUCCESS != ret){
 	 goto exit;
-       }
-
      }
 
      total_bytes_per_process = (MPI_Aint*)malloc
@@ -326,7 +325,7 @@
      /*
       * Calculate how many bytes are read in each cycle
       */
-     bytes_per_cycle = mca_fcoll_dynamic_cycle_buffer_size;
+     mca_io_ompio_get_bytes_per_agg ( (int *) &bytes_per_cycle);
      cycles = ceil((double)total_bytes/bytes_per_cycle);
 
      n = 0; 
@@ -845,7 +844,7 @@
        nentry.aggregator = 1;
      else
        nentry.aggregator = 0;
-     nentry.nprocs_for_coll = mca_fcoll_dynamic_num_io_procs;
+     nentry.nprocs_for_coll = dynamic_num_io_procs;
      if (!ompi_io_ompio_full_print_queue(READ_PRINT_QUEUE)){
        ompi_io_ompio_register_print_entry(READ_PRINT_QUEUE,
 					  nentry);

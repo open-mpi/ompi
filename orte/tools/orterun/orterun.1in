@@ -857,50 +857,51 @@ were placed to begin with.
 .
 .PP
 To bind processes, one must first associate them with the resources
-on which they should run.  For example, the \fI-bycore\fP option
+on which they should run.  For example, the \fI--map-by core\fP option
 associates the processes on a node with successive cores.  Or,
-\fI-bysocket\fP associates the processes with successive processor sockets,
+\fI--map-by socket\fP associates the processes with successive processor sockets,
 cycling through the sockets in a round-robin fashion if necessary.
 And \fI-cpus-per-proc\fP indicates how many cores to bind per process.
 .
 .PP
 But, such association is meaningless unless the processes are actually
 bound to those resources.  The binding option specifies the granularity
-of binding -- say, with \fI-bind-to-core\fP or \fI-bind-to-socket\fP.
-One can also turn binding off with \fI-bind-to-none\fP, which is
+of binding -- say, with \fI-bind-to core\fP or \fI-bind-to socket\fP.
+One can also turn binding off with \fI-bind-to none\fP, which is
 typically the default.
+.\" JMS ^^ THE ABOVE STATEMENT IS NO LONGER TRUE.
 .
 .PP
-Finally, \fI-report-bindings\fP can be used to report bindings.
+Finally, \fI--report-bindings\fP can be used to report bindings.
 .
 .PP
 As an example, consider a node with two processor sockets, each comprising
-four cores.  We run \fImpirun\fP with \fI-np 4 -report-bindings\fP and
+four cores.  We run \fImpirun\fP with \fI-np 4 --report-bindings\fP and
 the following additional options:
 .
 
- % mpirun ... -bycore -bind-to-core
+ % mpirun ... --map-by core --bind-to core
  [...] ... binding child [...,0] to cpus 0001
  [...] ... binding child [...,1] to cpus 0002
  [...] ... binding child [...,2] to cpus 0004
  [...] ... binding child [...,3] to cpus 0008
 
- % mpirun ... -bysocket -bind-to-socket
+ % mpirun ... --map-by socket -0bind-to socket
  [...] ... binding child [...,0] to socket 0 cpus 000f
  [...] ... binding child [...,1] to socket 1 cpus 00f0
  [...] ... binding child [...,2] to socket 0 cpus 000f
  [...] ... binding child [...,3] to socket 1 cpus 00f0
 
- % mpirun ... -cpus-per-proc 2 -bind-to-core
+ % mpirun ... --map-by core:PE=2 -bind-to core
  [...] ... binding child [...,0] to cpus 0003
  [...] ... binding child [...,1] to cpus 000c
  [...] ... binding child [...,2] to cpus 0030
  [...] ... binding child [...,3] to cpus 00c0
 
- % mpirun ... -bind-to-none
+ % mpirun ... --bind-to none
 .
 .PP
-Here, \fI-report-bindings\fP shows the binding of each process as a mask.
+Here, \fI--report-bindings\fP shows the binding of each process as a mask.
 In the first case, the processes bind to successive cores as indicated by
 the masks 0001, 0002, 0004, and 0008.  In the second case, processes bind
 to all cores on successive sockets as indicated by the masks 000f and 00f0.
@@ -925,11 +926,12 @@ The correspondences are:
 
   mpirun option          MCA parameter key           value
 
-  -bycore                rmaps_base_schedule_policy  core
-  -bysocket              rmaps_base_schedule_policy  socket
-  -bind-to-core          orte_process_binding        core
-  -bind-to-socket        orte_process_binding        socket
-  -bind-to-none          orte_process_binding        none
+  --map-by core          rmaps_base_schedule_policy  core
+  --map-by socket        rmaps_base_schedule_policy  socket
+  --bind-to core         orte_process_binding        core
+  --bind-to socket       orte_process_binding        socket
+  --bind-to none         orte_process_binding        none
+.\" JMS I DON'T KNOW IF THESE ARE STILL THE RIGHT MCA PARAM NAMES
 .
 .PP
 The \fIorte_process_binding\fP value can also take on the

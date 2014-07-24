@@ -7,8 +7,6 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2014      Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -2265,7 +2263,6 @@ subroutine pompi_win_post_f(group,assert,win,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_win_post_f
 
-#if OMPI_FORTRAN_HAVE_BIND_C_WITH_OPTIONAL_ARGS
 subroutine pompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
       ierror) BIND(C, name="pompi_win_shared_query_f")
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
@@ -2275,33 +2272,8 @@ subroutine pompi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
   INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
   INTEGER, INTENT(OUT) ::  disp_unit
   TYPE(C_PTR), INTENT(OUT) ::  baseptr
-  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
-end subroutine pompi_win_shared_query_f
-#else
-subroutine pompi_win_shared_query_f_error(win, rank, size, disp_unit, baseptr,&
-      ierror) BIND(C, name="ompi_win_shared_query_f")
-  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
-  use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-  INTEGER, INTENT(IN) ::  win
-  INTEGER, INTENT(IN) ::  rank
-  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
-  INTEGER, INTENT(OUT) ::  disp_unit
-  TYPE(C_PTR), INTENT(OUT) ::  baseptr
   INTEGER, INTENT(OUT) ::  ierror
-end subroutine pompi_win_shared_query_f_error
-
-subroutine pmpi_win_shared_query_f(win, rank, size, disp_unit, baseptr,&
-      ierror)
-  USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
-  use :: mpi_f08_types, only : MPI_ADDRESS_KIND
-  INTEGER, INTENT(IN) ::  win
-  INTEGER, INTENT(IN) ::  rank
-  INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::  size
-  INTEGER, INTENT(OUT) ::  disp_unit
-  TYPE(C_PTR), INTENT(OUT) ::  baseptr
-  INTEGER, OPTIONAL, INTENT(OUT) ::  ierror
-end subroutine pmpi_win_shared_query_f
-#endif
+end subroutine pompi_win_shared_query_f
 
 subroutine pompi_win_start_f(group,assert,win,ierror) &
    BIND(C, name="pompi_win_start_f")
