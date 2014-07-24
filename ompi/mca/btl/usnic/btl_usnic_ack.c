@@ -23,6 +23,7 @@
 #include "btl_usnic_ack.h"
 #include "btl_usnic_util.h"
 #include "btl_usnic_send.h"
+#include "btl_usnic_connectivity.h"
 
 /*
  * Force a retrans of a segment
@@ -219,6 +220,11 @@ ompi_btl_usnic_ack_send(
                 ack->ss_base.us_btl_header->ack_seq, dest_mac,
                 endpoint->endpoint_remote_addr.qp_num[ack->ss_channel]);
 #endif
+
+    /* Do we need to check the connectivity?  If enabled, we'll check
+       the connectivity at either first send to peer X or first ACK to
+       peer X. */
+    ompi_btl_usnic_check_connectivity(module, endpoint);
 
     /* send the ACK */
     ompi_btl_usnic_post_segment(module, endpoint, ack);

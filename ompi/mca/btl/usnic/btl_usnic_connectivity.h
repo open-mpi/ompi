@@ -12,13 +12,12 @@
 
 #include "ompi_config.h"
 
-#include <netinet/in.h>
-
 #include "opal/util/show_help.h"
 
 #include "ompi/runtime/mpiruntime.h"
 
 #include "btl_usnic_util.h"
+#include "btl_usnic_proc.h"
 
 
 /**
@@ -297,5 +296,28 @@ int ompi_btl_usnic_connectivity_agent_init(void);
  * 0.
  */
 int ompi_btl_usnic_connectivity_agent_finalize(void);
+
+
+/**
+ * Helper function invoked in the BTL that will invoke a ping, if the
+ * ping hasn't already been invoked.
+ */
+static inline void
+ompi_btl_usnic_check_connectivity(ompi_btl_usnic_module_t *module,
+				  ompi_btl_usnic_endpoint_t *endpoint)
+{
+    if (OPAL_LIKELY(mca_btl_usnic_component.connectivity_enabled) &&
+        OPAL_UNLIKELY(!endpoint->endpoint_connectivity_checked)) {
+        ompi_btl_usnic_connectivity_ping(module->local_addr.ipv4_addr,
+                                         module->local_addr.connectivity_udp_port,
+                                         endpoint->endpoint_remote_addr.ipv4_addr,
+                                         endpoint->endpoint_remote_addr.cidrmask,
+                                         endpoint->endpoint_remote_addr.connectivity_udp_port,
+                                         endpoint->endpoint_remote_addr.mac,
+					 endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                                         endpoint->endpoint_remote_addr.mtu);
+        endpoint->endpoint_connectivity_checked = true;
+    }
+}
 
 #endif /* OMPI_BTL_USNIC_CONNECITIVITY_H */
