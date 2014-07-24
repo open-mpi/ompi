@@ -13,6 +13,7 @@ uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/vtfiltergen-mpi$(EXEEXT)
 
 $(COMMONSOURCES):
+	$(AM_V_at)$(MKDIR_P) `dirname $@`
 	$(LN_S) $(abs_top_srcdir)/tools/vtfilter/$@ $@
 
 CXX = $(MPICXX)
