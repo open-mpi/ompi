@@ -28,3 +28,4 @@ libopen_rte_la_SOURCES += \
         orted/orted_main.c \
         orted/orted_comm.c
 
+include orted/pmix/Makefile.am

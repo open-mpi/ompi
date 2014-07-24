@@ -223,8 +223,9 @@ int ompi_rte_db_store(const orte_process_name_t *nm, const char* key,
         return rc;
     }
 
-    /* MPI connection data is to be shared with ALL other processes */
-    rc = opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)nm, &kv);
+    /* MPI connection data is to be shared with ALL other processes, so
+     * push it via the pmix framework */
+    rc = opal_pmix.put(PMIX_GLOBAL, &kv);
     OBJ_DESTRUCT(&kv);
     return rc;
 }

@@ -47,6 +47,8 @@ typedef uint8_t pmix_cmd_t;
 /* define some commands */
 #define PMIX_ABORT_CMD  1
 #define PMIX_FENCE_CMD  2
+#define PMIX_PUT_CMD    3
+#define PMIX_GET_CMD    4
 
 /* define some message types */
 #define PMIX_USOCK_IDENT  1
