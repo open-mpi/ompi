@@ -981,19 +981,10 @@ usnic_prepare_src(
     size_t osize = *size;
 #endif
 
-    /* Do we need to check the connectivity? */
-    if (mca_btl_usnic_component.connectivity_enabled &&
-        OPAL_UNLIKELY(!endpoint->endpoint_connectivity_checked)) {
-        ompi_btl_usnic_connectivity_ping(module->local_addr.ipv4_addr,
-                                         module->local_addr.connectivity_udp_port,
-                                         endpoint->endpoint_remote_addr.ipv4_addr,
-                                         endpoint->endpoint_remote_addr.cidrmask,
-                                         endpoint->endpoint_remote_addr.connectivity_udp_port,
-                                         endpoint->endpoint_remote_addr.mac,
-                                         endpoint->endpoint_proc->proc_ompi->proc_hostname,
-                                         endpoint->endpoint_remote_addr.mtu);
-        endpoint->endpoint_connectivity_checked = true;
-    }
+    /* Do we need to check the connectivity?  If enabled, we'll check
+       the connectivity at either first send to peer X or first ACK to
+       peer X. */
+    ompi_btl_usnic_check_connectivity(module, endpoint);
 
     /*
      * if total payload len fits in one MTU use small send, else large
