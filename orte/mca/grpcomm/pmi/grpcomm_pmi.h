@@ -34,11 +34,6 @@ int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority);
 ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_pmi_component;
 extern orte_grpcomm_base_module_t orte_grpcomm_pmi_module;
 
-#if WANT_PMI2_SUPPORT
-ORTE_MODULE_DECLSPEC int *orte_grpcomm_pmi2_parse_pmap(char *pmap, int my_rank,
-                                                       int *node, int *nlrs);
-#endif
-
 END_C_DECLS
 
 #endif
