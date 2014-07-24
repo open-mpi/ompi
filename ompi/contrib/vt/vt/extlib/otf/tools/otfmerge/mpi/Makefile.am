@@ -5,6 +5,7 @@ endif
 include ../Makefile.common
 
 $(COMMONSOURCES):
+	$(AM_V_at)$(MKDIR_P) `dirname $@`
 	$(LN_S) $(top_srcdir)/tools/otfmerge/$@ $@
 
 CC = $(MPICC)
