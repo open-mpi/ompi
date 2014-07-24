@@ -109,7 +109,7 @@ static int finalize(void)
     /* if I am an application process, indicate that I am
         * truly finalizing prior to departure
         */
-    if (ORTE_PROC_IS_APP) {
+    if (ORTE_PROC_IS_APP && orte_routing_is_enabled) {
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -564,6 +564,12 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     }
 
     {  /* MUST BE A PROC */
+        /* if we are a singleton and have not yet exec'd our HNP, then
+         * just return success */
+        if (ORTE_PROC_IS_SINGLETON && !orte_routing_is_enabled) {
+            return ORTE_SUCCESS;
+        }
+
         /* if ndat != NULL, then this is being invoked by the proc to
          * init a route to a specified process that is outside of our
          * job family. We want that route to go through our HNP, routed via
