@@ -36,6 +36,12 @@ ensure that there is a CUDA context prior to calling MPI_Init.
 NOTE: You can turn off this warning by setting the MCA parameter
       mpi_common_cuda_warning to 0.
 #
+[cuMemHostRegister during init failed]
+The call to cuMemHostRegister(%p, %d, 0) failed.
+  Host:  %s
+  cuMemHostRegister return value:  %d
+  Memory Pool:  %s
+#
 [cuMemHostRegister failed]
 The call to cuMemHostRegister(%p, %d, 0) failed.
   Host:  %s

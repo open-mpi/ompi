@@ -719,7 +719,7 @@ static int mca_common_cuda_stage_three_init(void)
             if (res != CUDA_SUCCESS) {
                 /* If registering the memory fails, print a message and continue.
                  * This is not a fatal error. */
-                opal_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
+                opal_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister during init failed",
                                true, mem_reg->ptr, mem_reg->amount,
                                ompi_process_info.nodename, res, mem_reg->msg);
             } else {
