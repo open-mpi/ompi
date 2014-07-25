@@ -241,10 +241,10 @@ static int s1_spawn(int count, const char * cmds[],
 
 static int s1_get_jobid(char jobId[], int jobIdSize)
 {
-    if (pmix_kvslen_max > jobIdSize) {
+    if (pmix_kvslen_max < jobIdSize) {
         return OPAL_ERROR;
     }
-    memcpy(jobId, pmix_kvs_name, pmix_kvslen_max);
+    memcpy(jobId, pmix_kvs_name, jobIdSize);
     return OPAL_SUCCESS;
 }
 

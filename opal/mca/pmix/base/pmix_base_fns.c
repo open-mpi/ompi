@@ -42,8 +42,8 @@ int pmix_store_encoded(const char *key, const void *data,
     size_t data_len = 0;
     size_t needed;
 
-    char* pmi_packed_data = *buffer;
     int pmi_packed_data_off = *length;
+    char* pmi_packed_data = (NULL != *buffer) ? *buffer : NULL;
 
     switch (type) {
         case OPAL_STRING:
@@ -95,6 +95,7 @@ int pmix_store_encoded(const char *key, const void *data,
     }
 
     *length = pmi_packed_data_off;
+    *buffer = pmi_packed_data;
     return OPAL_SUCCESS;
 }
 
@@ -158,6 +159,11 @@ int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, in
     /* set default */
     *packed_data = NULL;
     *len = 0;
+
+    pmi_tmp = calloc (vallen, 1);
+    if (NULL == pmi_tmp) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
 
     /* read all of the packed data from this proc */
     for (remote_key = 0, bytes_read = 0 ; ; ++remote_key) {
