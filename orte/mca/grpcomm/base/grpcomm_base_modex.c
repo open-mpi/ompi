@@ -180,20 +180,7 @@ void orte_grpcomm_base_modex(int fd, short args, void *cbdata)
             goto cleanup;
         }
 
-        /* this is not amongst our peers, but rather between a select
-         * group of processes - e.g., during a connect/accept operation.
-         * Thus, we need to include the non-peer info as well as our peers
-         * since we can't tell what the other participants may already have
-         */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_internal))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        /* pack our name to keep things straight during unpack */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
+        /* grab the modex data */
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer, opal_dstore_internal))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
