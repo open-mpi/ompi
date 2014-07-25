@@ -82,6 +82,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 {
     int ret;
     char *error = NULL;
+    opal_identifier_t id;
 
     if (0 < orte_initialized) {
         /* track number of times we have been called */
@@ -149,8 +150,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "orte_ess_base_select";
         goto error;
     }
-    /* set our identifier in the OPAL layer */
-    opal_init_set_identifier((opal_identifier_t*)ORTE_PROC_MY_NAME);
 
     if (!ORTE_PROC_IS_APP) {
         /* ORTE tools "block" in their own loop over the event
@@ -166,6 +165,9 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "orte_ess_init";
         goto error;
     }
+    /* set our identifier in the OPAL layer */
+    memcpy(&id, &orte_process_info.my_name, sizeof(opal_identifier_t));
+    opal_init_set_identifier(&id);
     
     /* All done */
     return ORTE_SUCCESS;

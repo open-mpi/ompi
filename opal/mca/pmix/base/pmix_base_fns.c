@@ -25,9 +25,9 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/pmix/pmix.h"
+
+#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/base/pmix_base_fns.h"
-#include "opal/include/opal/frameworks.h"
 
 #define OPAL_PMI_PAD  10
 
@@ -147,6 +147,7 @@ int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* p
     if (encoded_data) {
         free(encoded_data);
     }
+    return OPAL_SUCCESS;
 }
 
 int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, int vallen, kvs_get_fn fn)
@@ -177,7 +178,7 @@ int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, in
             return rc;
         }
 
-        OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
+        OPAL_OUTPUT_VERBOSE((10, opal_pmix_base_framework.framework_output,
                              "GETTING KEY %s", pmikey));
 
         rc = fn(pmikey, pmi_tmp, vallen);
@@ -205,7 +206,7 @@ int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, in
 
     free (pmi_tmp);
 
-    OPAL_OUTPUT_VERBOSE((10, opal_dstore_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((10, opal_pmix_base_framework.framework_output,
                          "Read data %s\n",
                          (NULL == tmp_encoded) ? "NULL" : tmp_encoded));
 
@@ -228,9 +229,9 @@ int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *out
     int rc, size;
     opal_value_t *kv, *knew;
 
-    OPAL_OUTPUT_VERBOSE((1, opal_dstore_base_framework.framework_output,
+    OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                          "pmix: get all keys for proc %" PRIu64 " in KVS %s",
-    		 id, kvs_name));
+                         *id, kvs_name));
 
     rc = pmix_get_packed(id, &tmp_val, &len, vallen, fn);
     if (OPAL_SUCCESS != rc) {
