@@ -294,12 +294,12 @@ static int rte_init(void)
     /* construct the PMI RTE string */
     rmluri = orte_rml.get_contact_info();
 
+    /* push it out for others to use */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(ORTE_DB_RMLURI);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(rmluri);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
         error = "db store uri";
         OBJ_DESTRUCT(&kv);
         goto error;
@@ -307,48 +307,48 @@ static int rte_init(void)
     OBJ_DESTRUCT(&kv);
     free(rmluri);
 
+    /* push our hostname */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(ORTE_DB_HOSTNAME);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(orte_process_info.nodename);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
         error = "db store hostname";
         OBJ_DESTRUCT(&kv);
         goto error;
     }
     OBJ_DESTRUCT(&kv);
 
+    /* push our cpuset */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_DSTORE_CPUSET);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(orte_process_info.cpuset);
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
         error = "db store cpuset";
         OBJ_DESTRUCT(&kv);
         goto error;
     }
     OBJ_DESTRUCT(&kv);
 
+    /* push our local rank */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_DSTORE_LOCALRANK);
     kv.type = OPAL_UINT16;
     kv.data.uint16 = orte_process_info.my_local_rank;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
         error = "db store local rank";
         OBJ_DESTRUCT(&kv);
         goto error;
     }
     OBJ_DESTRUCT(&kv);
 
+    /* push our node rank */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(ORTE_DB_NODERANK);
     kv.type = OPAL_UINT16;
     kv.data.uint16 = orte_process_info.my_node_rank;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
         error = "db store node rank";
         OBJ_DESTRUCT(&kv);
         goto error;
