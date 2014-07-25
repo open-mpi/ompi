@@ -29,6 +29,7 @@ const char *opal_pmix_s1_component_version_string =
  * Local function
  */
 static int pmix_s1_component_query(mca_base_module_t **module, int *priority);
+static int pmix_s1_component_register(void);
 
 
 /*
@@ -36,7 +37,7 @@ static int pmix_s1_component_query(mca_base_module_t **module, int *priority);
  * and pointers to our public functions in it
  */
 
-const opal_pmix_base_component_t mca_pmix_s1_component = {
+opal_pmix_base_component_t mca_pmix_s1_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -59,15 +60,33 @@ const opal_pmix_base_component_t mca_pmix_s1_component = {
         NULL,
         NULL,
         pmix_s1_component_query,
-        NULL
+        pmix_s1_component_register
     },
     /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
+    10 /*component priority */
 };
 
+static int pmix_s1_component_register(void)
+{
+    int ret;
+    mca_base_component_t *component = &mca_pmix_s1_component.base_version;
+
+    mca_pmix_s1_component.priority = 10;
+    ret = mca_base_component_var_register(component, "priority",
+                                          "Priority of the pmix s1 component (default: 10)",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_pmix_s1_component.priority);
+    if (0 > ret) {
+        return ret;
+    }
+
+    return OPAL_SUCCESS;
+}
 
 static int pmix_s1_component_query(mca_base_module_t **module, int *priority)
 {
@@ -80,7 +99,7 @@ static int pmix_s1_component_query(mca_base_module_t **module, int *priority)
     
     /* we can be considered, but set our priority by default
      * to be less than s2 */
-    *priority = 10;
+    *priority = mca_pmix_s1_component.priority;
     *module = (mca_base_module_t *)&opal_pmix_s1_module;
     return OPAL_SUCCESS;
 }

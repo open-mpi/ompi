@@ -202,6 +202,7 @@ typedef struct {
 typedef struct {
     mca_base_component_t                      base_version;
     mca_base_component_data_t                 base_data;
+    int priority;
 } opal_pmix_base_component_t;
 
 /*

@@ -22,7 +22,7 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OPAL_DECLSPEC extern const opal_pmix_base_component_t mca_pmix_s1_component;
+OPAL_DECLSPEC extern opal_pmix_base_component_t mca_pmix_s1_component;
 
 OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_s1_module;
 
