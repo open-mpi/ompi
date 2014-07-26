@@ -389,7 +389,7 @@ static int s2_get(opal_identifier_t *id,
         opal_value_t *kv)
 {
     int rc;
-    rc = cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
+    rc = cache_keys_locally(id, key, &kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
     if (NULL == kv) {
         return OPAL_ERROR;
     }

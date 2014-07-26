@@ -47,8 +47,12 @@ int pmix_store_encoded(const char *key, const void *data,
 
     switch (type) {
         case OPAL_STRING:
-            data_len = data ? strlen (data) + 1 : 0;
+        {
+            char *ptr = *(char **)data;
+            data_len = ptr ? strlen(ptr) + 1 : 0;
+            data = ptr;
             break;
+        }
         case OPAL_INT:
         case OPAL_UINT:
             data_len = sizeof (int);
@@ -221,7 +225,7 @@ int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, in
     return OPAL_SUCCESS;
 }
 
-int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *out_kv, char* kvs_name, int vallen, kvs_get_fn fn)
+int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t **out_kv, char* kvs_name, int vallen, kvs_get_fn fn)
 {
     char *tmp, *tmp2, *tmp3, *tmp_val;
     opal_data_type_t stored_type;
@@ -322,10 +326,10 @@ int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t *out
         if (0 == strcmp(kv->key, key)) {
             /* create the copy */
             if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
-                out_kv = NULL;
+                *out_kv = NULL;
                 OPAL_ERROR_LOG(rc);
             } else {
-                out_kv = knew;
+                *out_kv = knew;
             }
         }
     }
