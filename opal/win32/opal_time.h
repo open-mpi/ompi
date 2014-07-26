@@ -2,10 +2,10 @@
  *Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                        University Research and Technology
  *                        Corporation.  All rights reserved.
- *Copyright (c) 2004-2005 The University of Tennessee and The University
+ *Copyright (c) 2004-2014 The University of Tennessee and The University
  *                        of Tennessee Research Foundation.  All rights
  *                        reserved.
- *Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                        University of Stuttgart.  All rights reserved.
  *Copyright (c) 2004-2005 The Regents of the University of California.
  *                        All rights reserved.
@@ -16,14 +16,14 @@
  *$HEADER$
  */
 
-#ifndef OMPI_TIME_H
-#define OMPI_TIME_H
+#ifndef OPAL_TIME_H
+#define OPAL_TIME_H
 
 #include "opal_config.h"
 
-#ifndef OMPI_WIN_COMPAT_H
+#ifndef OPAL_WIN_COMPAT_H
 #error This file is supposed to be included only from win_compat.h
-#endif  /* OMPI_WIN_COMPAT_H */
+#endif  /* OPAL_WIN_COMPAT_H */
 
 #define DST_NONE    0   /* not on dst */
 #define DST_USA     1   /* USA style dst */
@@ -155,8 +155,8 @@ struct clockinfo {
 #define TIMER_RELTIME   0x0 /* relative timer */
 #define TIMER_ABSTIME   0x1 /* absolute timer */
 
-#ifndef OMPI_TIMESPEC
-#define OMPI_TIMESPEC
+#ifndef OPAL_TIMESPEC
+#define OPAL_TIMESPEC
 struct timespec
 {
   long tv_sec;
@@ -181,4 +181,4 @@ OPAL_DECLSPEC int gettimeofday (struct timeval *tv, struct timezone *tz);
 
 END_C_DECLS
 
-#endif				/* OMPI_TIME_H */
+#endif  /* OPAL_TIME_H */

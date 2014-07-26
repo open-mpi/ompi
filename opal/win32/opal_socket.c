@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2010      High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2010      High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "opal_config.h"
 
-#include "opal/win32/ompi_socket.h"
+#include "opal/win32/opal_socket.h"
 #include "opal/util/output.h"
 
 int
