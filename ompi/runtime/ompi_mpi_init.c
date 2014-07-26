@@ -661,6 +661,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
 
+    opal_process_info.nodename         = ompi_process_info.nodename;
+    opal_process_info.job_session_dir  = ompi_process_info.job_session_dir;
+    opal_process_info.proc_session_dir = ompi_process_info.proc_session_dir;
+    opal_process_info.num_local_peers  = (int32_t)ompi_process_info.num_local_peers;
+    opal_process_info.my_local_rank    = (int32_t)ompi_process_info.my_local_rank;
+#if OPAL_HAVE_HWLOC
+    opal_process_info.cpuset           = ompi_process_info.cpuset;
+#endif  /* OPAL_HAVE_HWLOC */
+
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=
 	(ret = mca_pml_base_bsend_init(OMPI_ENABLE_THREAD_MULTIPLE))) {
