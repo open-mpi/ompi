@@ -428,7 +428,7 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
 
         device_context = ibv_open_device(device);
         if (NULL == device_context) {
-            opal_show_help("help-ompi-common-verbs.txt",
+            opal_show_help("help-opal-common-verbs.txt",
                            "ibv_open_device fail", true,
                            opal_proc_local_get()->proc_hostname,
                            ibv_get_device_name(device),
@@ -437,7 +437,7 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
         }
 
         if (ibv_query_device(device_context, &device_attr)){
-            opal_show_help("help-ompi-common-verbs.txt",
+            opal_show_help("help-opal-common-verbs.txt",
                            "ibv_query_device fail", true,
                            opal_proc_local_get()->proc_hostname,
                            ibv_get_device_name(device),
@@ -545,7 +545,7 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
 
             /* Query the port */
             if (ibv_query_port(device_context, (uint8_t) j, &port_attr)) {
-                opal_show_help("help-ompi-common-verbs.txt",
+                opal_show_help("help-opal-common-verbs.txt",
                                "ibv_query_port fail", true,
                                opal_proc_local_get()->proc_hostname,
                                ibv_get_device_name(device),
@@ -632,7 +632,7 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
     if (0 != opal_argv_count(if_sanity_list)) {
         if (opal_common_verbs_warn_nonexistent_if) {
             char *str = opal_argv_join(if_sanity_list, ',');
-            opal_show_help("help-ompi-common-verbs.txt", "nonexistent port",
+            opal_show_help("help-opal-common-verbs.txt", "nonexistent port",
                            true, opal_proc_local_get()->proc_hostname,
                            ((NULL != if_include) ? "in" : "ex"), str);
             free(str);

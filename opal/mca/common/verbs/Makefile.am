@@ -24,7 +24,7 @@ sources = \
 	common_verbs_qp_type.c
 
 dist_ompidata_DATA = \
-        help-ompi-common-verbs.txt
+        help-opal-common-verbs.txt
 
 # To simplify components that link to this library, we will *always*
 # have an output libtool library named libmca_<type>_<name>.la -- even
