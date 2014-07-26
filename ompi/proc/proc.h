@@ -34,9 +34,8 @@
 
 #include "ompi_config.h"
 #include "ompi/types.h"
-#include "opal/class/opal_list.h"
-#include "opal/dss/dss_types.h"
-#include "opal/mca/hwloc/hwloc.h"
+
+#include "opal/util/proc.h"
 
 #include "ompi/mca/rte/rte.h"
 
@@ -65,22 +64,10 @@ BEGIN_C_DECLS
  * if unavoidable.
  */
 struct ompi_proc_t {
-    /** allow proc to be placed on a list */
-    opal_list_item_t                super;
-    /** this process' name */
-    ompi_process_name_t             proc_name;
+    opal_proc_t                     super;
+
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
-    /** architecture of this process */
-    uint32_t                        proc_arch;
-    /** flags for this proc */
-    opal_hwloc_locality_t           proc_flags;
-    /** Base convertor for the proc described by this process */
-    struct opal_convertor_t*        proc_convertor;
-    /** A pointer to the name of this host - data is
-     * actually stored in the RTE
-     */
-    char*                           proc_hostname;
 };
 typedef struct ompi_proc_t ompi_proc_t;
 OBJ_CLASS_DECLARATION(ompi_proc_t);
@@ -240,8 +227,7 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
  * needed to add the proc to a remote list.  This includes the ORTE
  * process name, the architecture, and the hostname.  Ordering is
  * maintained.  The buffer is packed to be sent to a remote node with
- * different architecture (endian or word size).  The buffer can be
- * dss unloaded to be sent using MPI or send using rml_send_packed().
+ * different architecture (endian or word size).
  * 
  * @param[in] proclist     List of process pointers
  * @param[in] proclistsize Length of the proclist array

@@ -19,12 +19,12 @@
 # $HEADER$
 #
 
-# OMPI_CHECK_PORTALS4(prefix, [action-if-found], [action-if-not-found])
+# OPAL_CHECK_PORTALS4(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 # check if PORTALS4 support can be found.  sets prefix_{CPPFLAGS, 
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
-AC_DEFUN([OMPI_CHECK_PORTALS4],[
+AC_DEFUN([OPAL_CHECK_PORTALS4],[
     AC_ARG_WITH([portals4],
         [AC_HELP_STRING([--with-portals4(=DIR)],
              [Build Portals4 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
@@ -67,7 +67,7 @@ AC_DEFUN([OMPI_CHECK_PORTALS4],[
           [AC_MSG_ERROR([--with-portals4-max-md-size requires an integer argument])],
           [AS_IF([test -n "$with_portals4_max_md_size"],
                  [max_md_size="$with_portals4_max_md_size"])])
-    AC_DEFINE_UNQUOTED([OMPI_PORTALS4_MAX_MD_SIZE], [$max_md_size],
+    AC_DEFINE_UNQUOTED([OPAL_PORTALS4_MAX_MD_SIZE], [$max_md_size],
       [Log base 2 of the maximum size in bytes of a memory descriptor.  Set to 0 if MD can bind all of memory.])
 
     max_va_size=0
@@ -78,7 +78,7 @@ AC_DEFUN([OMPI_CHECK_PORTALS4],[
           [AC_MSG_ERROR([--with-portals4-max-va-size requires an integer argument])],
           [AS_IF([test -n "$with_portals4_max_va_size"],
                  [max_va_size="$with_portals4_max_va_size"])])
-    AC_DEFINE_UNQUOTED([OMPI_PORTALS4_MAX_VA_SIZE], [$max_va_size],
+    AC_DEFINE_UNQUOTED([OPAL_PORTALS4_MAX_VA_SIZE], [$max_va_size],
       [Log base 2 of the maximum size in bytes of the user virtual address space.  Set to 0 if MD can bind all of memory.])
 
     AS_IF([test \( $max_md_size -eq 0 -a $max_va_size -ne 0 \) -o \( $max_md_size -ne 0 -a $max_va_size -eq 0 \)],

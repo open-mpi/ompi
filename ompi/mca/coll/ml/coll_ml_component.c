@@ -29,8 +29,8 @@
 
 #include "ompi/constants.h"
 #include "ompi/mca/coll/base/base.h"
-#include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/mca/sbgp/base/base.h"
 

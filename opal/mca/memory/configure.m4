@@ -32,7 +32,7 @@ AC_DEFUN([MCA_opal_memory_CONFIG],[
         AS_IF([test "$with_memory_manager" = "no"], [memory_base_want=0])
         MCA_CONFIGURE_FRAMEWORK($1, $2, $memory_base_want)
 
-        AC_DEFINE_UNQUOTED([OMPI_MEMORY_HAVE_COMPONENT], [$memory_base_found],
+        AC_DEFINE_UNQUOTED([OPAL_MEMORY_HAVE_COMPONENT], [$memory_base_found],
             [Whether any opal memory mca components were found])
 
         # See if someone set to use their header file

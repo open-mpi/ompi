@@ -18,8 +18,8 @@
 
 #include "opal_stdint.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/btl/btl.h"
 #include "oshmem/proc/proc.h"
-#include "ompi/mca/btl/btl.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 

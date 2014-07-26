@@ -33,7 +33,7 @@
 
 #include "ompi/mca/sbgp/ibnet/sbgp_ibnet.h"
 
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/request/request.h"
 
 #include "ompi/mca/common/ofacm/connect.h"
@@ -50,7 +50,7 @@ BEGIN_C_DECLS
 #define MCA_IBOFFLOAD_IB_DRIVER_OPERAND_SIZE 8
 #define MCA_IBOFFLOAD_CACHE_LINE_SIZE 128
 
-#if OMPI_HAVE_IBOFFLOAD_CALC_RDMA
+#if OPAL_HAVE_IBOFFLOAD_CALC_RDMA
 #define MCA_BCOL_IBOFFLOAD_SEND_CALC IBV_M_WR_CALC_SEND
 #else
 #define MCA_BCOL_IBOFFLOAD_SEND_CALC IBV_M_WR_CALC

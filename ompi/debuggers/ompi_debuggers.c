@@ -62,7 +62,7 @@
  * debuggers will be unable to initialize the Open MPI debug library.
  */
 #include "opal/class/opal_list.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"

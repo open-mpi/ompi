@@ -17,7 +17,7 @@
 #include <infiniband/verbs.h>
 #include <infiniband/mverbs.h>
 
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 
 #include "bcol_iboffload.h"
 #include "bcol_iboffload_device.h"

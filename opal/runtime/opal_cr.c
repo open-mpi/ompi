@@ -107,7 +107,7 @@ static int extract_env_vars(int prev_pid, char * file_name);
 
 static void opal_cr_sigpipe_debug_signal_handler (int signo);
 
-static opal_cr_user_inc_callback_fn_t cur_user_coord_callback[OMPI_CR_INC_MAX] = {NULL};
+static opal_cr_user_inc_callback_fn_t cur_user_coord_callback[OPAL_CR_INC_MAX] = {NULL};
 static opal_cr_coord_callback_fn_t  cur_coord_callback = NULL;
 static opal_cr_notify_callback_fn_t cur_notify_callback = NULL;
 
@@ -620,8 +620,8 @@ int opal_cr_inc_core_prep(void)
     /*
      * Call User Level INC
      */
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_PRE_CRS_PRE_MPI,
-                                                        OMPI_CR_INC_STATE_PREPARE)) ) {
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_PRE_CRS_PRE_MPI,
+                                                        OPAL_CR_INC_STATE_PREPARE)) ) {
         return ret;
     }
 
@@ -640,8 +640,8 @@ int opal_cr_inc_core_prep(void)
     /*
      * Call User Level INC
      */
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_PRE_CRS_POST_MPI,
-                                                        OMPI_CR_INC_STATE_PREPARE)) ) {
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_PRE_CRS_POST_MPI,
+                                                        OPAL_CR_INC_STATE_PREPARE)) ) {
         return ret;
     }
 
@@ -719,16 +719,16 @@ int opal_cr_inc_core_recover(int state)
      * Call User Level INC
      */
     if( OPAL_CRS_CONTINUE == state ) {
-        cb_state = OMPI_CR_INC_STATE_CONTINUE;
+        cb_state = OPAL_CR_INC_STATE_CONTINUE;
     }
     else if( OPAL_CRS_RESTART == state ) {
-        cb_state = OMPI_CR_INC_STATE_RESTART;
+        cb_state = OPAL_CR_INC_STATE_RESTART;
     }
     else {
-        cb_state = OMPI_CR_INC_STATE_ERROR;
+        cb_state = OPAL_CR_INC_STATE_ERROR;
     }
 
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_POST_CRS_PRE_MPI,
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_POST_CRS_PRE_MPI,
                                                         cb_state)) ) {
         return ret;
     }
@@ -745,7 +745,7 @@ int opal_cr_inc_core_recover(int state)
         return ret;
     }
 
-    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_POST_CRS_POST_MPI,
+    if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_POST_CRS_POST_MPI,
                                                         cb_state)) ) {
         return ret;
     }
@@ -866,7 +866,7 @@ int opal_cr_user_inc_register_callback(opal_cr_user_inc_callback_event_t event,
                                        opal_cr_user_inc_callback_fn_t  function,
                                        opal_cr_user_inc_callback_fn_t  *prev_function)
 {
-    if (event >= OMPI_CR_INC_MAX) {
+    if (event >= OPAL_CR_INC_MAX) {
         return OPAL_ERROR;
     }
 
@@ -888,7 +888,7 @@ int trigger_user_inc_callback(opal_cr_user_inc_callback_event_t event,
         return OPAL_SUCCESS;
     }
 
-    if (event >= OMPI_CR_INC_MAX) {
+    if (event >= OPAL_CR_INC_MAX) {
         return OPAL_ERROR;
     }
 

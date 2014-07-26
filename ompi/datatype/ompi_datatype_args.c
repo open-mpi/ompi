@@ -550,7 +550,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     bool need_swap = false;
 
-    if( (remote_processor->proc_arch ^ ompi_proc_local()->proc_arch) &
+    if( (remote_processor->super.proc_arch ^ ompi_proc_local()->super.proc_arch) &
         OPAL_ARCH_ISBIGENDIAN ) {
         need_swap = true;
     }

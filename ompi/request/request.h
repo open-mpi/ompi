@@ -30,7 +30,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/threads/condition.h"
 #include "ompi/constants.h"
@@ -370,7 +370,7 @@ static inline int ompi_request_free(ompi_request_t** request)
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
     if(false == req->req_complete) {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
         if(opal_progress_spin(&req->req_complete)) {
             return;
         }

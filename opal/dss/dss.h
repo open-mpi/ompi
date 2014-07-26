@@ -29,7 +29,6 @@
 
 #include "opal_config.h"
 
-
 #include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS

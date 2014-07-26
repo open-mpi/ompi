@@ -23,9 +23,9 @@
 #include "osc_rdma.h"
 
 #include "opal/threads/mutex.h"
+#include "opal/mca/btl/btl.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/osc/base/base.h"
 #include "mpi.h"
 

@@ -913,12 +913,12 @@ static void mca_base_pvar_destructor (mca_base_pvar_t *pvar)
 OBJ_CLASS_INSTANCE(mca_base_pvar_t, opal_object_t, mca_base_pvar_contructor, mca_base_pvar_destructor);
 
 /* mca_base_pvar_session_t class */
-static void ompi_mpi_pvar_session_constructor (mca_base_pvar_session_t *session)
+static void opal_mpi_pvar_session_constructor (mca_base_pvar_session_t *session)
 {
     OBJ_CONSTRUCT(&session->handles, opal_list_t);
 }
 
-static void ompi_mpi_pvar_session_destructor (mca_base_pvar_session_t *session)
+static void opal_mpi_pvar_session_destructor (mca_base_pvar_session_t *session)
 {
     mca_base_pvar_handle_t *handle, *next;
 
@@ -932,8 +932,8 @@ static void ompi_mpi_pvar_session_destructor (mca_base_pvar_session_t *session)
     OBJ_DESTRUCT(&session->handles);
 }
 
-OBJ_CLASS_INSTANCE(mca_base_pvar_session_t, opal_object_t, ompi_mpi_pvar_session_constructor,
-                   ompi_mpi_pvar_session_destructor);
+OBJ_CLASS_INSTANCE(mca_base_pvar_session_t, opal_object_t, opal_mpi_pvar_session_constructor,
+                   opal_mpi_pvar_session_destructor);
 
 /* mca_base_pvar_handle_t class */
 static void mca_base_pvar_handle_constructor (mca_base_pvar_handle_t *handle)

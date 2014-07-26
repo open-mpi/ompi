@@ -23,8 +23,8 @@ AC_DEFUN([MCA_ompi_sbgp_ibnet_CONFIG],[
     sbgp_ofa_happy="no"
     sbgp_mlnx_ofed_happy="no"
 
-    OMPI_CHECK_OPENFABRICS([sbgp_ibnet], [sbgp_ofa_happy="yes"])
-    OMPI_CHECK_MLNX_OPENFABRICS([sbgp_ibnet], [sbgp_mlnx_ofed_happy="yes"])
+    OPAL_CHECK_OPENFABRICS([sbgp_ibnet], [sbgp_ofa_happy="yes"])
+    OPAL_CHECK_MLNX_OPENFABRICS([sbgp_ibnet], [sbgp_mlnx_ofed_happy="yes"])
 
     AS_IF([test "$sbgp_ofa_happy" = "yes" -a "$sbgp_mlnx_ofed_happy" = "yes"],
           [$1],

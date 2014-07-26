@@ -12,7 +12,7 @@
 #include "opal_config.h"
 
 
-#if OMPI_WANT_MEMCHECKER
+#if OPAL_WANT_MEMCHECKER
 
 #include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
@@ -85,4 +85,4 @@ int opal_memchecker_base_set_vbits(void * p, char * vbits, size_t len)
     return opal_memchecker_base_module->set_vbits(p, vbits, len);
 }
 
-#endif /* OMPI_WANT_MEMCHECKER */
+#endif /* OPAL_WANT_MEMCHECKER */

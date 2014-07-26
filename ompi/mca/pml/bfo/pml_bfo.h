@@ -25,7 +25,7 @@
 #define MCA_PML_BFO_H
 
 #include "ompi_config.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -35,7 +35,7 @@
 #include "pml_bfo_hdr.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/proc/proc.h"
-#include "ompi/mca/allocator/base/base.h"
+#include "opal/mca/allocator/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -251,10 +251,10 @@ do {                                                            \
 
 int mca_pml_bfo_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
 #if PML_BFO
-        ompi_ptr_t hdr_des, uint8_t order, uint32_t status,
+        opal_ptr_t hdr_des, uint8_t order, uint32_t status,
         uint16_t seq, uint8_t reqseq, uint16_t ctx, uint32_t src);
 #else /* PML_BFO */
-        ompi_ptr_t hdr_des, uint8_t order, uint32_t status);
+        opal_ptr_t hdr_des, uint8_t order, uint32_t status);
 #endif /* PML_BFO */
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.

@@ -15,7 +15,8 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
-#include "ompi/class/ompi_free_list.h"
+#include "ompi/request/request.h"
+#include "opal/class/ompi_free_list.h"
 
 #include "osc_sm.h"
 
@@ -132,7 +133,7 @@ check_win_ok(ompi_communicator_t *comm, int flavor)
     }
 
     for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
-        if (!OPAL_PROC_ON_LOCAL_NODE(ompi_comm_peer_lookup(comm, i)->proc_flags)) {
+        if (!OPAL_PROC_ON_LOCAL_NODE(ompi_comm_peer_lookup(comm, i)->super.proc_flags)) {
             return OMPI_ERR_RMA_SHARED;
         }
     }

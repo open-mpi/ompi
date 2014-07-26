@@ -28,7 +28,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/bml/base/static-components.h"
-#include "ompi/mca/btl/base/base.h"
+#include "opal/mca/btl/base/base.h"
 #include "opal/mca/base/base.h"
 #if OPAL_ENABLE_DEBUG_RELIABILITY
 #include "opal/util/alfg.h"
@@ -112,7 +112,7 @@ static int mca_bml_base_open(mca_base_open_flag_t flags)
     }
 #endif
 
-    return mca_base_framework_open(&ompi_btl_base_framework, 0);
+    return mca_base_framework_open(&opal_btl_base_framework, 0);
 }
 
 static int mca_bml_base_close( void )
@@ -125,5 +125,5 @@ static int mca_bml_base_close( void )
         return ret;
     }
 
-    return mca_base_framework_close(&ompi_btl_base_framework);
+    return mca_base_framework_close(&opal_btl_base_framework);
 }

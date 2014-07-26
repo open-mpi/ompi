@@ -20,6 +20,8 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
+struct opal_proc_t;
+
 #include "opal/threads/threads.h"
 
 #include "orte/types.h"
@@ -45,8 +47,8 @@ typedef orte_jobid_t ompi_jobid_t;
 typedef orte_vpid_t ompi_vpid_t;
 typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define OMPI_PROC_MY_NAME ORTE_PROC_MY_NAME
-#define OMPI_NAME_PRINT(a) ORTE_NAME_PRINT(a)
-#define ompi_rte_compare_name_fields(a, b, c) orte_util_compare_name_fields(a, b, c)
+#define OMPI_NAME_PRINT(a) ORTE_NAME_PRINT((const orte_process_name_t*)a)
+#define ompi_rte_compare_name_fields(a, b, c) orte_util_compare_name_fields(a, (const orte_process_name_t*)(b), (const orte_process_name_t*)(c))
 #define OMPI_NAME_WILDCARD  ORTE_NAME_WILDCARD
 #define OMPI_NODE_RANK_INVALID ORTE_NODE_RANK_INVALID
 #define OMPI_LOCAL_RANK_INVALID ORTE_LOCAL_RANK_INVALID
@@ -63,6 +65,7 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 /* database keys */
 #define OMPI_RTE_NODE_ID     ORTE_DB_DAEMON_VPID
 #define OMPI_RTE_HOST_ID     ORTE_DB_HOSTID
+#define OMPI_CAST_ORTE_NAME(a) ((orte_process_name_t*)(a))
 
 /* Collective objects and operations */
 #define ompi_rte_collective_t orte_grpcomm_collective_t

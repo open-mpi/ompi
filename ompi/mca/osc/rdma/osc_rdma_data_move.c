@@ -34,9 +34,11 @@
 #include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "opal/align.h"
+#include "opal/mca/btl/btl.h"
+
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/datatype/ompi_datatype.h"

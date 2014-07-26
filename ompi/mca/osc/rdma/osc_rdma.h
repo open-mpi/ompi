@@ -27,6 +27,7 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/threads/threads.h"
+#include "opal/mca/btl/btl.h"
 
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
@@ -34,7 +35,7 @@
 #include "ompi/request/request.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/memchecker.h"
 
@@ -513,7 +514,7 @@ static inline void osc_rdma_copy_on_recv (void *target, void *source, size_t sou
     OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
     /* initialize convertor */
-    opal_convertor_copy_and_prepare_for_recv(proc->proc_convertor, &datatype->super, count, target,
+    opal_convertor_copy_and_prepare_for_recv(proc->super.proc_convertor, &datatype->super, count, target,
                                              0, &convertor);
 
     iov.iov_len  = source_len;
@@ -555,7 +556,7 @@ static inline void osc_rdma_copy_for_send (void *target, size_t target_len, void
 
     OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
-    opal_convertor_copy_and_prepare_for_send(proc->proc_convertor, &datatype->super,
+    opal_convertor_copy_and_prepare_for_send(proc->super.proc_convertor, &datatype->super,
                                              count, source, 0, &convertor);
 
     iov.iov_len = target_len;

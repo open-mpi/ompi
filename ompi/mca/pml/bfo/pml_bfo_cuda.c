@@ -22,10 +22,10 @@
 
 #include "ompi_config.h"
 #include "opal/prefetch.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mpool/mpool.h" 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/mpool/mpool.h" 
 #include "pml_bfo.h"
 #include "pml_bfo_hdr.h"
 #include "pml_bfo_rdmafrag.h"

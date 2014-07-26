@@ -15,7 +15,6 @@
 #include "oshmem_config.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"

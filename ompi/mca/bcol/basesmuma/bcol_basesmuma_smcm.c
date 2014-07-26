@@ -183,8 +183,8 @@ int bcol_basesmuma_smcm_allgather_connection(
        preparing this list from the sbgp-ing module that was passed into the function */
 
     /* fill in local file information */
-    local_file.vpid=my_id->proc_name.vpid;
-    local_file.jobid=my_id->proc_name.jobid;
+    local_file.vpid  = ((orte_process_name_t*)&my_id->super.proc_name)->vpid;
+    local_file.jobid = ((orte_process_name_t*)&my_id->super.proc_name)->jobid;
     local_file.file_size=input.size;
     local_file.size_ctl_structure=input.size_ctl_structure;
     local_file.data_seg_alignment=input.data_seg_alignment;
@@ -232,8 +232,9 @@ int bcol_basesmuma_smcm_allgather_connection(
         OPAL_LIST_FOREACH(item_ptr, peer_list, bcol_basesmuma_smcm_proc_item_t) {
             /* if the vpid/jobid/filename combination already exists in the list,
                then do not map this peer's file --- because you already have */
-            if (proc_temp->proc_name.vpid == item_ptr->peer.vpid &&
-                proc_temp->proc_name.jobid == item_ptr->peer.jobid &&
+            if (0 == ompi_rte_compare_name_fields(proc_temp->super.proc_name,
+                                                  &item_ptr->peer,
+                                                  OMPI_RTE_CMP_ALL) &&
                 0 == strcmp (item_ptr->sm_file.file_name, rem_file->file_name)) {
                 ++item_ptr->refcnt;
                 /* record file data */

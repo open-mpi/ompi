@@ -121,9 +121,6 @@ OMPI_DECLSPEC extern struct ompi_status_public_t *ompi_mpi_statuses_ignore_addr;
 
 #define OMPI_THREADLEVEL_IS_MULTIPLE(threadlevel) (threadlevel & OMPI_THREADLEVEL_MULTIPLE_BF)
 
-/** Do we want to be warned on fork or not? */
-OMPI_DECLSPEC extern bool ompi_warn_on_fork;
-
 /** In ompi_mpi_init: a list of all memory associated with calling
     MPI_REGISTER_DATAREP so that we can free it during
     MPI_FINALIZE. */
@@ -140,8 +137,6 @@ extern opal_hash_table_t ompi_mpi_f90_complex_hashtable;
 
 /** version string of ompi */
 OMPI_DECLSPEC extern const char ompi_version_string[];
-
-OMPI_DECLSPEC void ompi_warn_fork(void);
 
 /**
  * Determine the thread level

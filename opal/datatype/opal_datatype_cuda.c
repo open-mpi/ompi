@@ -7,7 +7,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <errno.h>
 #include <unistd.h>

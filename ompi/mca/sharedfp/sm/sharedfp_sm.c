@@ -84,7 +84,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(m
     
     for (i = 0; i < size; ++i) {
 	proc = ompi_group_peer_lookup(group,i);
-	if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)){
+	if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)){
 	    opal_output(ompi_sharedfp_base_framework.framework_output,
 			"mca_sharedfp_sm_component_file_query: Disqualifying myself: (%d/%s) "
 			"not all processes are on the same node.",

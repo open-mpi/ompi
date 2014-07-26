@@ -27,7 +27,6 @@
 #ifndef MCA_PML_OB1_RECVFRAG_H
 #define MCA_PML_OB1_RECVFRAG_H
 
-#include "ompi/mca/btl/btl.h"
 #include "pml_ob1_hdr.h"
 
 BEGIN_C_DECLS

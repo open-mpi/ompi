@@ -26,9 +26,9 @@
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
 
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 

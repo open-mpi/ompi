@@ -11,10 +11,10 @@
 #ifndef OSHMEM_SPML_YODA_PUT_REQUEST_H
 #define OSHMEM_SPML_YODA_PUT_REQUEST_H
 
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
-#include "ompi/mca/mpool/base/base.h"
+#include "opal/mca/mpool/base/base.h"
 #include "ompi/mca/bml/bml.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_rdmafrag.h"
 #include "oshmem/mca/spml/yoda/spml_yoda.h"

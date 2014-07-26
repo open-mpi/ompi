@@ -64,7 +64,7 @@ int opal_datatype_dump_data_flags( unsigned short usflags, char* ptr, size_t len
     if( !(usflags & OPAL_DATATYPE_FLAG_NO_GAPS) ) ptr[7]  = 'G';
     if( usflags & OPAL_DATATYPE_FLAG_DATA )       ptr[8]  = 'D';
     if( (usflags & OPAL_DATATYPE_FLAG_BASIC) == OPAL_DATATYPE_FLAG_BASIC ) ptr[9]  = 'B';
-    /* We know nothing about the upper level language! This is part of _ompi_dump_data_flags */
+    /* We know nothing about the upper level language or flags! */
     /* ... */
     return index;
 }

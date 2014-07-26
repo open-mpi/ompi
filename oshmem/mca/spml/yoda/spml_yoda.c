@@ -20,9 +20,9 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/btl/sm/btl_sm_frag.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/sm/btl_sm_frag.h"
 
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/memheap/memheap.h"
@@ -417,7 +417,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
         if (NULL != ybtl->btl->btl_prepare_src) {
 
             /* initialize convertor for source descriptor*/
-            opal_convertor_copy_and_prepare_for_recv(proc_self->proc_convertor,
+            opal_convertor_copy_and_prepare_for_recv(proc_self->super.proc_convertor,
                                                      datatype,
                                                      size,
                                                      addr,
@@ -433,7 +433,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
                                                      iov.iov_base, size, 0, &yoda_context->registration);
             }
             /* initialize convertor for source descriptor*/
-            opal_convertor_copy_and_prepare_for_recv(proc_self->proc_convertor,
+            opal_convertor_copy_and_prepare_for_recv(proc_self->super.proc_convertor,
                                                      datatype,
                                                      size,
                                                      addr,
@@ -467,7 +467,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
 
         SPML_VERBOSE(5,
                      "rank %d btl %s va_base: 0x%p len: %d key %llx size %llu",
-                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type),
+                     OSHMEM_PROC_VPID(oshmem_proc_local_proc), btl_type2str(ybtl->btl_type),
                      mkeys[i].va_base, mkeys[i].len, (unsigned long long)mkeys[i].u.key, (unsigned long long)size);
     }
     OBJ_DESTRUCT(&convertor);
@@ -481,7 +481,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
  */
 static void mca_spml_yoda_error_handler(struct mca_btl_base_module_t* btl,
                                         int32_t flags,
-                                        ompi_proc_t* errproc,
+                                        opal_proc_t* errproc,
                                         char* btlinfo)
 {
     oshmem_shmem_abort(-1);
@@ -1151,7 +1151,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
             OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 
             prepare_size = ncopied;
-            opal_convertor_copy_and_prepare_for_recv(proc_self->proc_convertor,
+            opal_convertor_copy_and_prepare_for_recv(proc_self->super.proc_convertor,
                                                      datatype,
                                                      prepare_size,
                                                      p_dst,

@@ -16,8 +16,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_WIN_COMPAT_H
-#define OMPI_WIN_COMPAT_H
+#ifndef OPAL_WIN_COMPAT_H
+#define OPAL_WIN_COMPAT_H
 
 /**
  * don't complain about all the deprecated functions.
@@ -47,8 +47,8 @@
 #define _CRT_RAND_S
 
 /* It is always better to include windows.h with the lean and mean option. 
-   So, include it with that option and then include some which are required 
-   for us in ompi. Note: this file is included only on windows */
+   So, include it with that option and then include some which are required.
+   Note: this file is included only on windows */
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -101,13 +101,13 @@ typedef unsigned int uint;
 
 #ifdef _MSC_VER
 #if defined(OMPI_BUILDING) && OMPI_BUILDING
-#include "opal/win32/ompi_uio.h"
-#include "opal/win32/ompi_time.h"
-#include "opal/win32/ompi_utsname.h"
-#include "opal/win32/ompi_util.h"
-#include "opal/win32/ompi_misc.h"
-#include "opal/win32/ompi_inet.h"
-#include "opal/win32/ompi_socket.h"
+#include "opal/win32/opal_uio.h"
+#include "opal/win32/opal_time.h"
+#include "opal/win32/opal_utsname.h"
+#include "opal/win32/opal_util.h"
+#include "opal/win32/opal_misc.h"
+#include "opal/win32/opal_inet.h"
+#include "opal/win32/opal_socket.h"
 #endif
 
 /* Defines for the access functions */
@@ -163,12 +163,12 @@ typedef unsigned int uint;
 #define pthread_atfork
 #include <winsock.h>
 #if defined(OMPI_BUILDING) && OMPI_BUILDING
-#include "opal/win32/ompi_uio.h"
-#include "opal/win32/ompi_utsname.h"
-#include "opal/win32/ompi_util.h"
-#include "opal/win32/ompi_inet.h"
-#include "opal/win32/ompi_misc.h"
-#include "opal/win32/ompi_socket.h"
+#include "opal/win32/opal_uio.h"
+#include "opal/win32/opal_utsname.h"
+#include "opal/win32/opal_util.h"
+#include "opal/win32/opal_inet.h"
+#include "opal/win32/opal_misc.h"
+#include "opal/win32/opal_socket.h"
 #endif
 
 #define strtok_r(s,d,p)           *p = strtok(s,d)
@@ -188,8 +188,8 @@ typedef unsigned int uint;
 #define mkdir(PATH, MODE)         _mkdir((PATH))
 #define nanosleep(tp, rem)        Sleep(*tp.tv_sec*1000+*tp.tv_nsec/1000000)
 #define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
-#define inet_ntop                 ompi_inet_ntop
-#define inet_pton                 ompi_inet_pton
+#define inet_ntop                 opal_inet_ntop
+#define inet_pton                 opal_inet_pton
 #define lstat                     stat
 
 #ifndef UINT64_MAX

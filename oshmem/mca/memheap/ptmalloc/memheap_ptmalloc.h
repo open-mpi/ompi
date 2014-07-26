@@ -23,7 +23,7 @@
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/util/oshmem_util.h"
 #include "opal/class/opal_hash_table.h"
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include <string.h>
 #include <sys/types.h>
 #include <math.h>

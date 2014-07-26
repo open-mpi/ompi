@@ -36,9 +36,9 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "ompi/mca/rcache/base/base.h"
-#include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/allocator/base/base.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/allocator/base/base.h"
 #include "ompi/runtime/mpiruntime.h"
 
 #include "oshmem/constants.h"

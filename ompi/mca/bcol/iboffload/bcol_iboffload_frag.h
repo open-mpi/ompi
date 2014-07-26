@@ -20,8 +20,8 @@
 
 #include "opal/datatype/opal_convertor.h"
 
-#include "ompi/mca/mpool/mpool.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/mca/mpool/mpool.h"
+#include "opal/class/ompi_free_list.h"
 
 #include "bcol_iboffload.h"
 

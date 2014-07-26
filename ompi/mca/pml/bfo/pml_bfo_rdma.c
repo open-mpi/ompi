@@ -24,7 +24,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
-#include "ompi/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h" 
 #include "pml_bfo.h"
 #include "pml_bfo_rdma.h"
 

@@ -18,9 +18,6 @@
  */
 /** @file
  *
- * See opal_bitmap.h for an explanation of why there is a split
- * between OPAL and ORTE for this generic class.
- *
  * Utility functions to manage fortran <-> c opaque object
  * translation.  Note that since MPI defines fortran handles as
  * [signed] int's, we use int everywhere in here where you would

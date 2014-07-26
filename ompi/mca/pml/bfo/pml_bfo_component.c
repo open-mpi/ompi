@@ -35,7 +35,8 @@
 #include "pml_bfo_recvfrag.h"
 #include "ompi/mca/bml/base/base.h" 
 #include "pml_bfo_component.h"
-#include "ompi/mca/allocator/base/base.h"
+#include "opal/mca/allocator/base/base.h"
+#include "opal/runtime/opal_params.h"
 
 OBJ_CLASS_INSTANCE( mca_pml_bfo_pckt_pending_t,
                     ompi_free_list_item_t,
@@ -209,10 +210,10 @@ mca_pml_bfo_component_init( int* priority,
     }
 
     /* Set this here (vs in component_open()) because
-       ompi_mpi_leave_pinned* may have been set after MCA params were
+       opal_leave_pinned* may have been set after MCA params were
        read (e.g., by the openib btl) */
-    mca_pml_bfo.leave_pinned = (1 == ompi_mpi_leave_pinned);
-    mca_pml_bfo.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
+    mca_pml_bfo.leave_pinned = (1 == opal_leave_pinned);
+    mca_pml_bfo.leave_pinned_pipeline = (int) opal_leave_pinned_pipeline;
 
     return &mca_pml_bfo.super;
 }

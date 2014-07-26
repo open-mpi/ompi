@@ -41,7 +41,7 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "ompi/runtime/ompi_cr.h"
 #include "orte/runtime/orte_wait.h"
 

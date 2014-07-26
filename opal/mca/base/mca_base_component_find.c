@@ -112,7 +112,7 @@ static void find_dyn_components(const char *path, const char *type,
 static int save_filename(const char *filename, lt_ptr data);
 static int open_component(component_file_item_t *target_file, 
                        opal_list_t *found_components);
-static int check_ompi_info(component_file_item_t *target_file, 
+static int check_opal_info(component_file_item_t *target_file, 
                          opal_list_t *dependencies,
                          opal_list_t *found_components);
 static int check_dependency(char *line, component_file_item_t *target_file, 
@@ -123,7 +123,7 @@ static void free_dependency_list(opal_list_t *dependencies);
 /*
  * Private variables
  */
-static const char *ompi_info_suffix = ".ompi_info";
+static const char *opal_info_suffix = ".ompi_info";
 static const char *key_dependency = "dependency=";
 static const char component_template[] = "mca_%s_";
 static opal_list_t found_files;
@@ -555,7 +555,7 @@ static int open_component(component_file_item_t *target_file,
      load. */
 
   OBJ_CONSTRUCT(&dependencies, opal_list_t);
-  if (0 != check_ompi_info(target_file, &dependencies, found_components)) {
+  if (0 != check_opal_info(target_file, &dependencies, found_components)) {
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OPAL_ERR_OUT_OF_RESOURCE;
@@ -716,7 +716,7 @@ static int open_component(component_file_item_t *target_file,
  *
  * Detect dependency cycles and error out.
  */
-static int check_ompi_info(component_file_item_t *target_file, 
+static int check_opal_info(component_file_item_t *target_file, 
                            opal_list_t *dependencies, 
                            opal_list_t *found_components)
 {
@@ -727,11 +727,11 @@ static int check_ompi_info(component_file_item_t *target_file,
 
   /* Form the filename */
 
-  len = strlen(target_file->filename) + strlen(ompi_info_suffix) + 16;
+  len = strlen(target_file->filename) + strlen(opal_info_suffix) + 16;
   depname = (char*)malloc(len);
   if (NULL == depname)
     return OPAL_ERR_OUT_OF_RESOURCE;
-  snprintf(depname, len, "%s%s", target_file->filename, ompi_info_suffix);
+  snprintf(depname, len, "%s%s", target_file->filename, opal_info_suffix);
 
   /* Try to open the file.  If there's no file, return success (i.e.,
      there are no dependencies). */
@@ -745,7 +745,7 @@ static int check_ompi_info(component_file_item_t *target_file,
      them.  Return failure upon the first component that fails to
      load. */
 
-  opal_output_verbose(40, 0, "mca: base: component_find: opening ompi_info file: %s", depname);
+  opal_output_verbose(40, 0, "mca: base: component_find: opening .ompi_info file: %s", depname);
   while (NULL != fgets(buffer, BUFSIZ, fp)) {
 
     /* Perl chomp */

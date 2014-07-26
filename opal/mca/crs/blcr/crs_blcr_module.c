@@ -640,8 +640,8 @@ static int opal_crs_blcr_thread_callback(void *arg) {
     else
 #endif
     {
-        if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_CRS_PRE_CKPT,
-                                                            OMPI_CR_INC_STATE_PREPARE)) ) {
+        if(OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_CRS_PRE_CKPT,
+                                                            OPAL_CR_INC_STATE_PREPARE)) ) {
             ;
         }
 
@@ -665,10 +665,10 @@ static int opal_crs_blcr_thread_callback(void *arg) {
         blcr_current_state = OPAL_CRS_CONTINUE;
     }
 
-    if( OPAL_SUCCESS != (ret = trigger_user_inc_callback(OMPI_CR_INC_CRS_POST_CKPT,
+    if( OPAL_SUCCESS != (ret = trigger_user_inc_callback(OPAL_CR_INC_CRS_POST_CKPT,
                                                          (blcr_current_state == OPAL_CRS_CONTINUE ?
-                                                          OMPI_CR_INC_STATE_CONTINUE :
-                                                          OMPI_CR_INC_STATE_RESTART))) ) {
+                                                          OPAL_CR_INC_STATE_CONTINUE :
+                                                          OPAL_CR_INC_STATE_RESTART))) ) {
         ;
     }
 

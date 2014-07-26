@@ -24,12 +24,12 @@
 #
 
 
-# OMPI_CHECK_OPENFABRICS(prefix, [action-if-found], [action-if-not-found])
+# OPAL_CHECK_OPENFABRICS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 # check if OPENIB support can be found.  sets prefix_{CPPFLAGS, 
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
-AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
+AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     OPAL_VAR_SCOPE_PUSH([$1_msg])
 
     # Setup the --with switches to allow users to specify where
@@ -67,7 +67,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
             ;;
         esac
     fi
-    AC_DEFINE_UNQUOTED([OMPI_OPENIB_PAD_HDR], [$ompi_openib_pad_hdr],
+    AC_DEFINE_UNQUOTED([OPAL_OPENIB_PAD_HDR], [$ompi_openib_pad_hdr],
                        [Add padding bytes to the openib BTL control header])
 
     AS_IF([test "$opal_want_verbs" = "no"],
@@ -134,7 +134,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
                  [AC_MSG_WARN([Can not determine number of args to ibv_create_cq.])
                   AC_MSG_WARN([Not building component.])
                   ompi_check_openib_happy="no"],
-                 [AC_DEFINE_UNQUOTED([OMPI_IBV_CREATE_CQ_ARGS],
+                 [AC_DEFINE_UNQUOTED([OPAL_IBV_CREATE_CQ_ARGS],
                                      [$ompi_cv_func_ibv_create_cq_args],
                                      [Number of arguments to ibv_create_cq])])])
 
@@ -198,7 +198,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
                           [#include <infiniband/verbs.h>])
 
            AC_MSG_CHECKING([if RDMAoE support is enabled])
-           AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMAOE], [$$1_have_rdmaoe], [Enable RDMAoE support])
+           AC_DEFINE_UNQUOTED([OPAL_HAVE_RDMAOE], [$$1_have_rdmaoe], [Enable RDMAoE support])
            if test "1" = "$$1_have_rdmaoe"; then
                 AC_MSG_RESULT([yes])
            else
@@ -220,7 +220,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
                             [AC_INCLUDES_DEFAULT])])
 
     AC_MSG_CHECKING([if ConnectX XRC support is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_CONNECTX_XRC], [$$1_have_xrc],
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_CONNECTX_XRC], [$$1_have_xrc],
         [Enable features required for ConnectX XRC support])
     if test "1" = "$$1_have_xrc"; then
         AC_MSG_RESULT([yes])
@@ -229,7 +229,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
     fi
 
     AC_MSG_CHECKING([if dynamic SL is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_ENABLE_DYNAMIC_SL], [$$1_have_opensm_devel],
+    AC_DEFINE_UNQUOTED([OPAL_ENABLE_DYNAMIC_SL], [$$1_have_opensm_devel],
         [Enable features required for dynamic SL support])
     if test "1" = "$$1_have_opensm_devel"; then
         AC_MSG_RESULT([yes])
@@ -258,7 +258,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
      OPAL_VAR_SCOPE_POP
 ])
 
-AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM_ARGS],[
+AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM_ARGS],[
     #
     # ConnectX XRC support
     #
@@ -289,8 +289,8 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM_ARGS],[
         [enable_openib_rdmacm=yes])
 ])dnl
 
-AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
-    AC_REQUIRE([OMPI_CHECK_OPENFABRICS_CM_ARGS])
+AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM],[
+    AC_REQUIRE([OPAL_CHECK_OPENFABRICS_CM_ARGS])
     $1_have_udcm=0
     $1_have_rdmacm=0
 
@@ -340,7 +340,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
     LIBS="$ompi_check_openib_$1_save_LIBS"
 
     AC_MSG_CHECKING([if UD CM is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_UDCM], [$$1_have_udcm],
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_UDCM], [$$1_have_udcm],
         [Whether UD CM is available or not])
     if test "1" = "$$1_have_udcm"; then
         AC_MSG_RESULT([yes])
@@ -349,7 +349,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
     fi
 
     AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMACM], [$$1_have_rdmacm],
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_RDMACM], [$$1_have_rdmacm],
         [Whether RDMA CM is available or not])
     if test "1" = "$$1_have_rdmacm"; then
         AC_MSG_RESULT([yes])
@@ -358,7 +358,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS_CM],[
     fi
 ])dnl
 
-AC_DEFUN([OMPI_CHECK_MLNX_OPENFABRICS],[
+AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
      $1_have_mverbs=0
      $1_have_mqe=0
 
@@ -385,7 +385,7 @@ AC_DEFUN([OMPI_CHECK_MLNX_OPENFABRICS],[
                                [])])
 
     AC_MSG_CHECKING([if Mellanox OpenFabrics VERBS is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_MVERBS], [$$1_have_mverbs],
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_MVERBS], [$$1_have_mverbs],
         [Whether MVERBS is available or not])
     AS_IF([test "1" = "$$1_have_mverbs"],
           [AC_MSG_RESULT([yes])],
@@ -403,9 +403,9 @@ AC_DEFUN([OMPI_CHECK_MLNX_OPENFABRICS],[
 
     AS_IF([test "1" = "$$1_have_mverbs"],
           [AC_CHECK_DECLS([IBV_M_WR_CALC_RDMA_WRITE_WITH_IMM], 
-                          [AC_DEFINE_UNQUOTED([OMPI_HAVE_IBOFFLOAD_CALC_RDMA], [1],
+                          [AC_DEFINE_UNQUOTED([OPAL_HAVE_IBOFFLOAD_CALC_RDMA], [1],
                                               [Whether IBV_M_WR_CALC_SEND is defined or not])], 
-                          [AC_DEFINE_UNQUOTED([OMPI_HAVE_IBOFFLOAD_CALC_RDMA], [0],
+                          [AC_DEFINE_UNQUOTED([OPAL_HAVE_IBOFFLOAD_CALC_RDMA], [0],
                                               [Whether IBV_M_WR_CALC_SEND is defined or not])], 
                           [#include <infiniband/mverbs.h>])])
 
@@ -413,7 +413,7 @@ AC_DEFUN([OMPI_CHECK_MLNX_OPENFABRICS],[
     CPPFLAGS="$ompi_check_mellanox_openfabrics_$1_save_CPPFLAGS"
 
     AC_MSG_CHECKING([if Mellanox OpenFabrics MQE is enabled])
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_MQE], [$$1_have_mqe],
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_MQE], [$$1_have_mqe],
         [Whether MQE is available or not])
     AS_IF([test "1" = "$$1_have_mqe"],
           [AC_MSG_RESULT([yes])],

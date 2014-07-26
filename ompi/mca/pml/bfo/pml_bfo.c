@@ -31,12 +31,12 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/runtime/ompi_cr.h"
 
@@ -413,7 +413,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
         goto cleanup_and_return;
 #endif /* PML_BFO */
     /* register error handlers */
-    rc = mca_bml.bml_register_error(mca_pml_bfo_error_handler);
+    rc = mca_bml.bml_register_error((mca_btl_base_module_error_cb_fn_t)mca_pml_bfo_error_handler);
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
     
@@ -487,7 +487,7 @@ static void mca_pml_bfo_fin_completion( mca_btl_base_module_t* btl,
  */
 int mca_pml_bfo_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
-                          ompi_ptr_t hdr_des,
+                          opal_ptr_t hdr_des,
                           uint8_t order,
 #if PML_BFO
                           uint32_t status,

@@ -13,6 +13,7 @@
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/util/oshmem_util.h"
 
 #include <stdio.h>
 

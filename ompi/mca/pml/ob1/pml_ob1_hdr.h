@@ -35,7 +35,7 @@
 
 #include "opal/types.h"
 #include "opal/util/arch.h"
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include "ompi/proc/proc.h"
 
 #define MCA_PML_OB1_HDR_TYPE_MATCH     (MCA_BTL_TAG_PML + 1)
@@ -125,7 +125,7 @@ do { \
 struct mca_pml_ob1_rendezvous_hdr_t {
     mca_pml_ob1_match_hdr_t hdr_match;
     uint64_t hdr_msg_length;            /**< message length */
-    ompi_ptr_t hdr_src_req;             /**< pointer to source request - returned in ack */
+    opal_ptr_t hdr_src_req;             /**< pointer to source request - returned in ack */
 };
 typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 
@@ -161,7 +161,7 @@ struct mca_pml_ob1_rget_hdr_t {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[4];
 #endif
-    ompi_ptr_t hdr_des;                       /**< source descriptor */
+    opal_ptr_t hdr_des;                       /**< source descriptor */
 };
 typedef struct mca_pml_ob1_rget_hdr_t mca_pml_ob1_rget_hdr_t;
 
@@ -200,8 +200,8 @@ struct mca_pml_ob1_frag_hdr_t {
     uint8_t hdr_padding[6];
 #endif
     uint64_t hdr_frag_offset;                /**< offset into message */
-    ompi_ptr_t hdr_src_req;                  /**< pointer to source request */
-    ompi_ptr_t hdr_dst_req;                  /**< pointer to matched receive */
+    opal_ptr_t hdr_src_req;                  /**< pointer to source request */
+    opal_ptr_t hdr_dst_req;                  /**< pointer to matched receive */
 };
 typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 
@@ -241,8 +241,8 @@ struct mca_pml_ob1_ack_hdr_t {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t hdr_padding[6];
 #endif
-    ompi_ptr_t hdr_src_req;                   /**< source request */
-    ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
+    opal_ptr_t hdr_src_req;                   /**< source request */
+    opal_ptr_t hdr_dst_req;                   /**< matched receive request */
     uint64_t hdr_send_offset;                 /**< starting point of copy in/out */
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
@@ -288,9 +288,9 @@ struct mca_pml_ob1_rdma_hdr_t {
     uint8_t hdr_padding[2];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
 #endif
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
-    ompi_ptr_t hdr_req;                       /**< destination request */
-    ompi_ptr_t hdr_des;                       /**< source descriptor */
-    ompi_ptr_t hdr_recv_req;                  /**< receive request (NTH: needed for put fallback on send) */
+    opal_ptr_t hdr_req;                       /**< destination request */
+    opal_ptr_t hdr_des;                       /**< source descriptor */
+    opal_ptr_t hdr_recv_req;                  /**< receive request (NTH: needed for put fallback on send) */
     uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
@@ -331,7 +331,7 @@ struct mca_pml_ob1_fin_hdr_t {
     uint8_t hdr_padding[2];
 #endif
     uint32_t hdr_fail;                        /**< RDMA operation failed */
-    ompi_ptr_t hdr_des;                       /**< completed descriptor */
+    opal_ptr_t hdr_des;                       /**< completed descriptor */
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
@@ -420,7 +420,7 @@ ob1_hdr_hton_intr(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type,
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
 #else
 
-    if(!(proc->proc_arch & OPAL_ARCH_ISBIGENDIAN))
+    if(!(proc->super.proc_arch & OPAL_ARCH_ISBIGENDIAN))
         return;
 
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;

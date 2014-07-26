@@ -17,7 +17,7 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/bcol/base/base.h"
 #include "opal/sys/atomic.h"
-#include "ompi/mca/mpool/base/base.h"
+#include "opal/mca/mpool/base/base.h"
 #include "coll_ml_lmngr.h"
 
 /*
