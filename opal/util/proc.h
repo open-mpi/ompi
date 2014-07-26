@@ -48,6 +48,18 @@ typedef struct opal_proc_t {
 } opal_proc_t;
 OBJ_CLASS_DECLARATION(opal_proc_t);
 
+typedef struct opal_process_info_t {
+    char *nodename;                     /**< string name for this node */
+    char *job_session_dir;              /**< Session directory for job */
+    char *proc_session_dir;             /**< Session directory for the process */
+    int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
+    int32_t my_local_rank;    /**< local rank */
+#if OPAL_HAVE_HWLOC
+    char *cpuset;                       /**< String-representation of bitmap where we are bound */
+#endif
+} opal_process_info_t;
+OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
+
 OPAL_DECLSPEC extern opal_proc_t* opal_proc_local_get(void);
 OPAL_DECLSPEC extern int opal_proc_local_set(opal_proc_t* proc);
 
