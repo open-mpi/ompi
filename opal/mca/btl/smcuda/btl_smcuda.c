@@ -61,7 +61,7 @@
 #include "opal/mca/crs/base/base.h"
 #include "opal/util/basename.h"
 #include "orte/mca/sstore/sstore.h"
-#include "ompi/runtime/ompi_cr.h"
+#include "opal/runtime/opal_cr.h"
 #endif
 
 #include "btl_smcuda.h"

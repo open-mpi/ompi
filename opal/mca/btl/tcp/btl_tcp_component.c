@@ -73,8 +73,6 @@
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
-#include "ompi/runtime/ompi_module_exchange.h"
-
 /* 
  * Local functions
  */
@@ -305,10 +303,10 @@ static int mca_btl_tcp_component_register(void)
 
         if (NULL != argv && '\0' != *(argv[0])) {
             int if_index, rc, count;
-            ompi_node_rank_t node_rank;
+            uint32_t node_rank;
             char name[256];
 
-            node_rank = ompi_process_info.my_node_rank;
+            node_rank = opal_process_info.my_local_rank;
 
             /* Now that we've got that local rank, take the
                corresponding entry from the tcp_if_seq list (wrapping

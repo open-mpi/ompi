@@ -588,7 +588,7 @@ out:
  */
 static int
 backing_store_init(mca_btl_smcuda_component_t *comp_ptr,
-                   ompi_local_rank_t local_rank)
+                   uint32_t local_rank)
 {
     int rc = OPAL_SUCCESS;
 
@@ -833,7 +833,7 @@ mca_btl_smcuda_component_init(int *num_btls,
 {
     int num_local_procs = 0;
     mca_btl_base_module_t **btls = NULL;
-    ompi_local_rank_t my_local_rank = UINT16_MAX;
+    uint32_t my_local_rank = UINT32_MAX;
 
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */
@@ -853,7 +853,7 @@ mca_btl_smcuda_component_init(int *num_btls,
      * the spawn case we need to designate a metadata creator rank within the
      * set of processes that are initializing the btl, and my_local_rank seems
      * to provide that for us. */
-    if (UINT16_MAX ==
+    if (UINT32_MAX ==
         (my_local_rank = opal_process_info.my_local_rank)) {
         opal_show_help("help-mpi-btl-sm.txt", "no locality", true);
         return NULL;

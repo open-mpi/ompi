@@ -23,7 +23,6 @@
  */
 #include "opal_config.h"
 
-#include "ompi/constants.h"
 #include "opal/util/output.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
