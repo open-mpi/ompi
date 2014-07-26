@@ -2,7 +2,7 @@
  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
                          University Research and Technology
                          Corporation.  All rights reserved.
- Copyright (c) 2004-2005 The University of Tennessee and The University
+ Copyright (c) 2004-2014 The University of Tennessee and The University
                          of Tennessee Research Foundation.  All rights
                          reserved.
  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -17,7 +17,7 @@
  */
 
 #include "opal_config.h"
-#include "opal/win32/ompi_utsname.h"
+#include "opal/win32/opal_utsname.h"
 
 /*
     This has to fill in the following information
@@ -35,50 +35,50 @@ int uname( struct utsname *un )
     DWORD info_buf_count;
     OSVERSIONINFO version_info;
     SYSTEM_INFO sys_info;
-    TCHAR info_buf[OMPI_UTSNAME_LEN];
+    TCHAR info_buf[OPAL_UTSNAME_LEN];
 
-    info_buf_count = ExpandEnvironmentStrings( env_variable, info_buf, OMPI_UTSNAME_LEN); 
+    info_buf_count = ExpandEnvironmentStrings( env_variable, info_buf, OPAL_UTSNAME_LEN); 
     if (0 == info_buf_count) {
-        snprintf( un->sysname, OMPI_UTSNAME_LEN, "Unknown" );
+        snprintf( un->sysname, OPAL_UTSNAME_LEN, "Unknown" );
     } else {
         /* remove the "OS=" from the beginning of the string */
-        strncpy( un->sysname, info_buf + 3, OMPI_UTSNAME_LEN );
+        strncpy( un->sysname, info_buf + 3, OPAL_UTSNAME_LEN );
     }
-    info_buf_count = OMPI_UTSNAME_LEN;
+    info_buf_count = OPAL_UTSNAME_LEN;
     if (!GetComputerName( un->nodename, &info_buf_count)) {
-        snprintf(un->nodename, OMPI_UTSNAME_LEN, "undefined"); 
+        snprintf(un->nodename, OPAL_UTSNAME_LEN, "undefined"); 
     }
     
     version_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     if (!GetVersionEx(&version_info)) {
-        snprintf(un->release, OMPI_UTSNAME_LEN, "undefined"); 
-        snprintf(un->version, OMPI_UTSNAME_LEN, "undefined"); 
+        snprintf(un->release, OPAL_UTSNAME_LEN, "undefined"); 
+        snprintf(un->version, OPAL_UTSNAME_LEN, "undefined"); 
     } else {
         /* fill in both release and version information */
-        snprintf( un->release, OMPI_UTSNAME_LEN, "%d.%d.%d",
+        snprintf( un->release, OPAL_UTSNAME_LEN, "%d.%d.%d",
                   version_info.dwMajorVersion,
                   version_info.dwMinorVersion,
                   version_info.dwBuildNumber);
-        snprintf( un->version, OMPI_UTSNAME_LEN, "%s", version_info.szCSDVersion );
+        snprintf( un->version, OPAL_UTSNAME_LEN, "%s", version_info.szCSDVersion );
     }
 
     /* get machine information */
     GetSystemInfo(&sys_info);
     switch( sys_info.wProcessorArchitecture ) {
         case PROCESSOR_ARCHITECTURE_UNKNOWN:
-            snprintf( un->machine, OMPI_UTSNAME_LEN, "Unknown %d", sys_info.wProcessorLevel );
+            snprintf( un->machine, OPAL_UTSNAME_LEN, "Unknown %d", sys_info.wProcessorLevel );
             break;
         case PROCESSOR_ARCHITECTURE_INTEL:
-            snprintf( un->machine, OMPI_UTSNAME_LEN, "Intel %d", sys_info.wProcessorLevel );
+            snprintf( un->machine, OPAL_UTSNAME_LEN, "Intel %d", sys_info.wProcessorLevel );
             break;
         case PROCESSOR_ARCHITECTURE_IA64:
-            snprintf( un->machine, OMPI_UTSNAME_LEN, "IA64 %d", sys_info.wProcessorLevel );
+            snprintf( un->machine, OPAL_UTSNAME_LEN, "IA64 %d", sys_info.wProcessorLevel );
             break;
         case PROCESSOR_ARCHITECTURE_AMD64:
-            snprintf( un->machine, OMPI_UTSNAME_LEN, "AMD %d", sys_info.wProcessorLevel );
+            snprintf( un->machine, OPAL_UTSNAME_LEN, "AMD %d", sys_info.wProcessorLevel );
             break;
         default:
-            snprintf( un->machine, OMPI_UTSNAME_LEN, "UFO hardware %d", sys_info.wProcessorLevel );
+            snprintf( un->machine, OPAL_UTSNAME_LEN, "UFO hardware %d", sys_info.wProcessorLevel );
             break;
     }
 
