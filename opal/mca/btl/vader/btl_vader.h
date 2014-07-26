@@ -64,8 +64,8 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/rcache/base/base.h"
+#include "opal/util/proc.h"
 
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "btl_vader_endpoint.h"
 
 BEGIN_C_DECLS
