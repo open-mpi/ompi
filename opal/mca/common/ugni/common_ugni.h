@@ -17,8 +17,6 @@
 #include "opal/include/opal/prefetch.h"
 #include "opal_stdint.h"
 
-#include "ompi/runtime/ompi_module_exchange.h"
-
 #include <errno.h>
 #include <stdint.h>
 #include <sys/types.h>

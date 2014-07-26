@@ -17,7 +17,6 @@
 #include "btl_ugni_smsg.h"
 
 #include "opal/include/opal/align.h"
-#include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 
 static int
