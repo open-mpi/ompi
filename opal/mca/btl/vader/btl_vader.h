@@ -147,10 +147,10 @@ OPAL_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
 
 
 /* number of peers on the node (not including self) */
-#define MCA_BTL_VADER_NUM_LOCAL_PEERS ompi_process_info.num_local_peers
+#define MCA_BTL_VADER_NUM_LOCAL_PEERS opal_process_info.num_local_peers
 
 /* local rank in the group */
-#define MCA_BTL_VADER_LOCAL_RANK ompi_process_info.my_local_rank
+#define MCA_BTL_VADER_LOCAL_RANK opal_process_info.my_local_rank
 
 /* memcpy is faster at larger sizes but is undefined if the
    pointers are aliased (TODO -- readd alias check) */

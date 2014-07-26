@@ -22,7 +22,6 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "portals4.h"
 #include "btl_portals4.h"

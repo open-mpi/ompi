@@ -246,7 +246,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
             mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = i;
 
             /* if we are not bound, then there is nothing further to do */
-            if (NULL != ompi_process_info.cpuset) {
+            if (NULL != opal_process_info.cpuset) {
                 /* count the number of NUMA nodes to which we are bound */
                 for (w=0; w < i; w++) {
                     if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
@@ -449,7 +449,7 @@ create_sm_endpoint(int local_proc, struct opal_proc_t *proc)
     OBJ_CONSTRUCT(&ep->endpoint_lock, opal_mutex_t);
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu",
-            ompi_process_info.job_session_dir,
+            opal_process_info.job_session_dir,
             (unsigned long)proc->proc_name);
     ep->fifo_fd = open(path, O_WRONLY);
     if(ep->fifo_fd < 0) {

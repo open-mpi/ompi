@@ -84,8 +84,7 @@
 #include "opal/runtime/opal_params.h"
 #include "opal/runtime/opal.h"
 
-#include "ompi/runtime/ompi_module_exchange.h"
-#include "ompi/runtime/mpiruntime.h"
+#include "ompi/mca/rte/rte.h"
 
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
@@ -2090,7 +2089,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
 
     opal_output_verbose(1, opal_btl_base_framework.framework_output, 
                         "[rank=%d] openib: using port %s:%d", 
-                        ORTE_PROC_MY_NAME->vpid,
+                        opal_process_name_vpid(OPAL_PROC_MY_NAME),
                         ibv_get_device_name(openib_btl->device->ib_dev),
                         openib_btl->port_num);
     return OPAL_SUCCESS;
@@ -2566,7 +2565,7 @@ btl_openib_component_init(int *num_btl_modules,
             (dev_sorted[i].distance - distance) > EPS) {
             opal_output_verbose(1, opal_btl_base_framework.framework_output, 
                                 "[rank=%d] openib: skipping device %s; it is too far away", 
-                                ORTE_PROC_MY_NAME->vpid,
+                                opal_process_name_vpid(OPAL_PROC_MY_NAME),
                                 ibv_get_device_name(dev_sorted[i].ib_dev));
             break;
         }

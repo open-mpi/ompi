@@ -61,7 +61,7 @@ int opal_btl_usnic_connectivity_client_init(void)
 
     char *ipc_filename = NULL;
     asprintf(&ipc_filename, "%s/%s",
-             ompi_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
+             opal_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
     if (NULL == ipc_filename) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("Out of memory");
@@ -170,7 +170,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
         .mtu = module->local_addr.mtu
     };
     /* Ensure to NULL-terminate the passed strings */
-    strncpy(cmd.nodename, ompi_process_info.nodename,
+    strncpy(cmd.nodename, opal_process_info.nodename,
             CONNECTIVITY_NODENAME_LEN - 1);
     strncpy(cmd.if_name, module->if_name, CONNECTIVITY_IFNAME_LEN - 1);
     strncpy(cmd.usnic_name, ibv_get_device_name(module->device),

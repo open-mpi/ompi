@@ -39,10 +39,8 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
-#include "ompi/mca/rte/rte.h"
-
 #if OPAL_ENABLE_FT_CR == 1
-#include "ompi/runtime/ompi_cr.h"
+#include "opal/runtime/opal_cr.h"
 #endif
 
 #include "btl_openib_ini.h"
@@ -752,7 +750,7 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
                 "XRC on device without XRC support", true,
                 mca_btl_openib_component.num_xrc_qps,
                 ibv_get_device_name(device->ib_dev),
-                ompi_process_info.nodename);
+                opal_process_info.nodename);
         return OPAL_ERROR;
     }
 

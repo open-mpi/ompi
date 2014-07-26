@@ -241,7 +241,7 @@ void opal_btl_usnic_util_abort(const char *msg, const char *file, int line,
 {
     opal_show_help("help-mpi-btl-usnic.txt", "internal error after init",
                    true,
-                   ompi_process_info.nodename,
+                   opal_process_info.nodename,
                    msg, file, line, strerror(ret));
 
     ompi_rte_abort(ret, NULL);
