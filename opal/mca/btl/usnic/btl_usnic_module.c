@@ -41,7 +41,6 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
-#include "ompi/memchecker.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"

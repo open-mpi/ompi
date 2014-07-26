@@ -26,8 +26,6 @@
 #include "opal/util/output.h"
 #include "opal/util/fd.h"
 
-#include "ompi/mca/rte/rte.h"
-
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
 #include "btl_usnic_connectivity.h"
