@@ -18,8 +18,6 @@
 #include "opal/memoryhooks/memory.h"
 #include "ompi/runtime/params.h"
 
-#include "ompi/attribute/attribute.h"
-
 static int btl_ugni_component_register(void);
 static int btl_ugni_component_open(void);
 static int btl_ugni_component_close(void);
