@@ -115,7 +115,7 @@ typedef int (*opal_pmix_base_module_put_fn_t)(opal_pmix_scope_t scope,
  * code all over the code base. */
 typedef int (*opal_pmix_base_module_get_fn_t)(opal_identifier_t *id,
                                              const char *key,
-                                             opal_value_t *kv);
+                                             opal_value_t **kv);
 
 /* Get_nb - not included in the current PMI standard. This is a non-blocking
  * version of the standard "get" call. Retrieved value will be provided as
