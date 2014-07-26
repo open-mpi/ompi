@@ -692,7 +692,7 @@ opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
     proc->proc_modex_claimed[modex_index] = true;
     MSGDEBUG1_OUT("create_endpoint: module=%p claimed endpoint=%p on proc=%p (hash=0x%" PRIx64 ")\n",
                   (void *)module, (void *)endpoint, (void *)proc,
-                  ompi_rte_hash_name(&proc->proc_opal->proc_name));
+                  proc->proc_opal->proc_name);
 
     /* Save the endpoint on this proc's array of endpoints */
     proc->proc_endpoints[proc->proc_endpoint_count] = endpoint;
