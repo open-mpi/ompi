@@ -8,8 +8,8 @@
  * $HEADER$
  */
 
-#if !defined(OMPI_MPIT_PVAR_H)
-#define OMPI_MPIT_PVAR_H
+#if !defined(OPAL_MPIT_PVAR_H)
+#define OPAL_MPIT_PVAR_H
 
 #include "opal/mca/base/mca_base_var.h"
 
@@ -46,7 +46,7 @@ typedef enum {
 typedef enum {
     /** A handle has been created an bound to this variable. The
         return value must be the number of values associated with
-        the bound object or an OMPI error. For example, if the variable
+        the bound object or an OPAL error. For example, if the variable
         is the number of messages sent to each peer in a communicator then the
         return value should be the size of the bound communicator. */
     MCA_BASE_PVAR_HANDLE_BIND,
@@ -92,7 +92,7 @@ enum {
 };
 
 /*
- * Reserved bindings; passed when registering a new pvar. OMPI will
+ * Reserved bindings; passed when registering a new pvar. OPAL will
  * ignore any other binding type.
  */
 enum {
@@ -156,7 +156,7 @@ typedef int (*mca_base_set_value_fn_t) (struct mca_base_pvar_t *pvar, const void
 typedef int (*mca_base_notify_fn_t) (struct mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj, int *count);
 
 /**
- * Structure representing an OMPI performance variable.
+ * Structure representing an OPAL performance variable.
  */
 typedef struct mca_base_pvar_t {
     /** Make this an opal object */
@@ -301,7 +301,7 @@ OBJ_CLASS_DECLARATION(mca_base_pvar_handle_t);
  *                        for future use.
  *
  * @returns index         On success returns the index of this variable.
- * @returns OMPI_ERROR    On error.
+ * @returns OPAL_ERROR    On error.
  *
  * Note: if used incorrectly this function may fail an assert(); see
  * MPI 3.0 14.3 to see acceptable values for datatype given the class.
@@ -392,8 +392,8 @@ OPAL_DECLSPEC int mca_base_pvar_update_all_handles (int index, const void *obj);
  * @param[in]  index Index of variable to get.
  * @param[out] pvar  Performance variable from index on success.
  *
- * @returns OMPI_SUCCESS on success
- * @returns OMPI_ERR_VALUE_OUT_OF_BOUNDS on if index is out of range
+ * @returns OPAL_SUCCESS on success
+ * @returns OPAL_ERR_VALUE_OUT_OF_BOUNDS on if index is out of range
  */
 OPAL_DECLSPEC int mca_base_pvar_get (int index, const mca_base_pvar_t **pvar);
 

@@ -9,7 +9,7 @@
  * $HEADER$
  *
  * When this component is used, this file is included in the rest of
- * the OPAL/ORTE/OMPI code base via opal/mca/event/event.h.  As such,
+ * the code base via opal/mca/event/event.h.  As such,
  * this header represents the public interface to this static component.
  */
 

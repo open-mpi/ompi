@@ -23,9 +23,9 @@
 #include "pml_ob1_sendreq.h"
 #include "ompi/mca/bml/base/base.h" 
 #if OPAL_CUDA_SUPPORT
-#include "ompi/mca/common/cuda/common_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 #include "pml_ob1_recvreq.h"
-#include "ompi/runtime/params.h"
+#include "opal/runtime/opal_params.h"
 static void mca_pml_ob1_process_pending_cuda_async_copies(void);
 #endif /* OPAL_CUDA_SUPPORT */
 
@@ -93,7 +93,7 @@ static void mca_pml_ob1_process_pending_cuda_async_copies(void)
     mca_btl_base_descriptor_t *frag;
     int progress;
 
-    if (!ompi_mpi_cuda_support)
+    if (!opal_cuda_support)
         return;
 
     do {

@@ -33,8 +33,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 
 #include "ompi/mca/bml/base/bml_base_btl.h"
 #include "ompi/types.h"

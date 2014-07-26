@@ -46,7 +46,7 @@
 #include "pml_ob1_hdr.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
-#include "ompi/mca/common/cuda/common_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_buffer_t,

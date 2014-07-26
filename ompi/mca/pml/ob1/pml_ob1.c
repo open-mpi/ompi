@@ -33,12 +33,12 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal_stdint.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/runtime/ompi_cr.h"
 
@@ -86,7 +86,7 @@ void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl,
 #endif /* OPAL_CUDA_SUPPORT */
 
 void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
-                                int32_t flags, ompi_proc_t* errproc,
+                                int32_t flags, opal_proc_t* errproc,
                                 char* btlinfo );
 
 int mca_pml_ob1_enable(bool enable)
@@ -638,7 +638,7 @@ static void mca_pml_ob1_fin_completion( mca_btl_base_module_t* btl,
  */
 int mca_pml_ob1_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
-                          ompi_ptr_t hdr_des,
+                          opal_ptr_t hdr_des,
                           uint8_t order,
                           uint32_t status )
 {
@@ -773,10 +773,10 @@ void mca_pml_ob1_process_pending_rdma(void)
 
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
-        ompi_proc_t* errproc, char* btlinfo ) { 
+        opal_proc_t* errproc, char* btlinfo ) { 
 #if OPAL_CUDA_SUPPORT
     if (flags & MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC) {
-        mca_pml_ob1_cuda_add_ipc_support(btl, flags, errproc, btlinfo);
+        mca_pml_ob1_cuda_add_ipc_support(btl, flags, (struct ompi_proc_t*)errproc, btlinfo);
         return;
     }
 #endif /* OPAL_CUDA_SUPPORT */

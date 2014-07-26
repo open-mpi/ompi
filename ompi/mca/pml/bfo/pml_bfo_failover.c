@@ -28,11 +28,11 @@
 #include <string.h>
 
 #include "opal/class/opal_bitmap.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/base/base.h"
 #include "pml_bfo.h"
 #include "pml_bfo_component.h"
 #include "pml_bfo_comm.h"
@@ -286,7 +286,7 @@ void mca_pml_bfo_repost_fin(struct mca_btl_base_descriptor_t* des) {
 
     opal_output_verbose(20, mca_pml_bfo_output,
                         "REPOST: BFO_HDR_TYPE_FIN: seq=%d,myrank=%d,peer=%d,hdr->hdr_fail=%d,src=%d",
-                        hdr->hdr_match.hdr_seq, OMPI_PROC_MY_NAME->vpid, proc->proc_name.vpid,
+                        hdr->hdr_match.hdr_seq, OMPI_PROC_MY_NAME->vpid, OMPI_CAST_ORTE_NAME(&proc->super.proc_name)->vpid,
                         hdr->hdr_fail, hdr->hdr_match.hdr_src);
 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
@@ -400,7 +400,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
                             "RNDVRESTARTNOTIFY: received: does not match request, sending NACK back "
                             "PML:req=%d,hdr=%d CTX:req=%d,hdr=%d SRC:req=%d,hdr=%d "
                             "RQS:req=%d,hdr=%d src_req=%p, dst_req=%p, peer=%d, hdr->hdr_jobid=%d, "
-                            "hdr->hdr_vpid=%d, ompi_proc->proc_hostname=%s",
+                            "hdr->hdr_vpid=%d, proc_hostname=%s",
                             (uint16_t)recvreq->req_msgseq, hdr->hdr_match.hdr_seq,
                             recvreq->req_recv.req_base.req_comm->c_contextid, hdr->hdr_match.hdr_ctx,
                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
@@ -409,7 +409,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
                             recvreq->remote_req_send.pval, (void *)recvreq,
                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
                             hdr->hdr_restart.hdr_jobid, hdr->hdr_restart.hdr_vpid, 
-                            (NULL == ompi_proc->proc_hostname) ? "unknown" : ompi_proc->proc_hostname);
+                            (NULL == ompi_proc->super.proc_hostname) ? "unknown" : ompi_proc->super.proc_hostname);
         mca_pml_bfo_recv_request_rndvrestartnack(des, ompi_proc, false);
         return;
     }
@@ -1246,7 +1246,7 @@ void mca_pml_bfo_recv_request_rndvrestartnack(mca_btl_base_descriptor_t* olddes,
                         "PML=%d, RQS=%d, CTX=%d, SRC=%d, peer=%d",
                         nack->hdr_match.hdr_seq, nack->hdr_restartseq,
                         nack->hdr_match.hdr_ctx, nack->hdr_match.hdr_src,
-                        ompi_proc->proc_name.vpid);
+                        OMPI_CAST_ORTE_NAME(&ompi_proc->super.proc_name)->vpid);
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNACK);
     if( OPAL_UNLIKELY( rc < 0 ) ) {
@@ -1414,8 +1414,8 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
                             "to rank=%d on node=%s \n",
                             btl->btl_component->btl_version.mca_component_name,
                             OMPI_PROC_MY_NAME->vpid,
-                            btlname, errproc->proc_name.vpid,
-                            (NULL == errproc->proc_hostname) ? "unknown" : errproc->proc_hostname);
+                            btlname, OMPI_CAST_ORTE_NAME(errproc->super.proc_name)->vpid,
+                            (NULL == errproc->super.proc_hostname) ? "unknown" : errproc->super.proc_hostname);
 
         /* Need to search for any pending packets associated
          * with this endpoint and remove them.  We may also

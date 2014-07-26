@@ -36,15 +36,15 @@
  * If we build a static library, Visual C define the _LIB symbol. In the
  * case of a shared library _USERDLL get defined.
  *
- * OMPI_BUILDING and _LIB define how ompi_config.h
+ * OMPI_BUILDING and _LIB define how opal_config.h
  * handles configuring all of Open MPI's "compatibility" code.  Both
- * constants will always be defined by the end of ompi_config.h.
+ * constants will always be defined by the end of opal_config.h.
  *
  * OMPI_BUILDING affects how much compatibility code is included by
- * ompi_config.h.  It will always be 1 or 0.  The user can set the
- * value before including either mpi.h or ompi_config.h and it will be
- * respected.  If ompi_config.h is included before mpi.h, it will
- * default to 1.  If mpi.h is included before ompi_config.h, it will
+ * opal_config.h.  It will always be 1 or 0.  The user can set the
+ * value before including either mpi.h or opal_config.h and it will be
+ * respected.  If opal_config.h is included before mpi.h, it will
+ * default to 1.  If mpi.h is included before opal_config.h, it will
  * default to 0.
  */
 #ifndef OMPI_BUILDING
@@ -357,13 +357,13 @@ typedef unsigned char bool;
  * 2. In the OMPI C++ bindings: we do not want them
  * 3. In the OMPI C++ executables: we do want them
  *
- * So for 1, everyone must include <ompi_config.h> first.  For 2, the
- * C++ bindings will never include <ompi_config.h> -- they will only
- * include <mpi.h>, which includes <ompi_config.h>, but after
+ * So for 1, everyone must include <opal_config.h> first.  For 2, the
+ * C++ bindings will never include <opal_config.h> -- they will only
+ * include <mpi.h>, which includes <opal_config.h>, but after
  * setting OMPI_BUILDING to 0  For 3, it's the same as 1 -- just include
- * <ompi_config.h> first.
+ * <opal_config.h> first.
  *
- * Give code that needs to include ompi_config.h but really can't have
+ * Give code that needs to include opal_config.h but really can't have
  * this stuff enabled (like the memory manager code) a way to turn us
  * off
  */

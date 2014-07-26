@@ -56,15 +56,15 @@ void oshmem_proc_construct(oshmem_proc_t* proc)
      * the arch of the remote nodes, we will have to set the convertors to the correct
      * architecture.
      */
-    proc->proc_arch = opal_local_arch;
-    proc->proc_convertor = oshmem_shmem_local_convertor;
+    proc->super.proc_arch = opal_local_arch;
+    proc->super.proc_convertor = oshmem_shmem_local_convertor;
     OBJ_RETAIN( oshmem_shmem_local_convertor);
 
-    proc->proc_flags = 0;
+    proc->super.proc_flags = 0;
     proc->num_transports = 0;
 
     /* initialize this pointer to NULL */
-    proc->proc_hostname = NULL;
+    proc->super.proc_hostname = NULL;
 }
 
 void oshmem_proc_destruct(oshmem_proc_t* proc)
@@ -74,7 +74,7 @@ void oshmem_proc_destruct(oshmem_proc_t* proc)
      * the local convertor (who has the reference count increased in the datatype) will not get
      * destroyed here. It will be destroyed later when the ompi_datatype_finalize is called.
      */
-    OBJ_RELEASE( proc->proc_convertor);
+    OBJ_RELEASE(proc->super.proc_convertor);
 
     /* DO NOT FREE THE HOSTNAME FIELD AS THIS POINTS
      * TO AN AREA ALLOCATED/FREE'D ELSEWHERE
@@ -99,11 +99,10 @@ int oshmem_proc_init(void)
         oshmem_proc_t *proc = OBJ_NEW(oshmem_proc_t);
         opal_list_append(&oshmem_proc_list, (opal_list_item_t*)proc);
 
-        proc->proc_name.jobid = ompi_procs[i]->proc_name.jobid;
-        proc->proc_name.vpid = ompi_procs[i]->proc_name.vpid;
-        proc->proc_arch = ompi_procs[i]->proc_arch;
-        proc->proc_flags = ompi_procs[i]->proc_flags;
-        proc->proc_hostname = ompi_procs[i]->proc_hostname;
+        proc->super.proc_name = ompi_procs[i]->super.proc_name;
+        proc->super.proc_arch = ompi_procs[i]->super.proc_arch;
+        proc->super.proc_flags = ompi_procs[i]->super.proc_flags;
+        proc->super.proc_hostname = ompi_procs[i]->super.proc_hostname;
 
         if (i == ORTE_PROC_MY_NAME->vpid) {
             oshmem_proc_local_proc = proc;
@@ -138,20 +137,20 @@ int oshmem_proc_set_arch(void)
             item = opal_list_get_next(item)) {
         proc = (oshmem_proc_t*) item;
 
-        if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
+        if (OSHMEM_PROC_VPID(proc) != ORTE_PROC_MY_NAME->vpid) {
             /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != opal_local_arch) {
+            if (proc->super.proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-                OBJ_RELEASE(proc->proc_convertor);
-                proc->proc_convertor = opal_convertor_create(proc->proc_arch, 0);
+                OBJ_RELEASE(proc->super.proc_convertor);
+                proc->super.proc_convertor = opal_convertor_create(proc->super.proc_arch, 0);
 #else
                 orte_show_help("help-shmem-runtime.txt",
                                "heterogeneous-support-unavailable",
                                true,
                                orte_process_info.nodename,
-                               proc->proc_hostname == NULL ?
+                               proc->super.proc_hostname == NULL ?
                                        "<hostname unavailable>" :
-                                       proc->proc_hostname);
+                                       proc->super.proc_hostname);
                 OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
                 return OSHMEM_ERR_NOT_SUPPORTED;
 #endif
@@ -218,7 +217,7 @@ oshmem_proc_t** oshmem_proc_world(size_t *size)
         return NULL ;
     }
     mask = ORTE_NS_CMP_JOBID;
-    my_name = oshmem_proc_local_proc->proc_name;
+    my_name = *(orte_process_name_t*)&oshmem_proc_local_proc->super.proc_name;
 
     /* First count how many match this jobid */
     OPAL_THREAD_LOCK(&oshmem_proc_lock);
@@ -227,7 +226,7 @@ oshmem_proc_t** oshmem_proc_world(size_t *size)
             proc = (oshmem_proc_t*) opal_list_get_next(proc)) {
         if (OPAL_EQUAL
                 == orte_util_compare_name_fields(mask,
-                                                 &proc->proc_name,
+                                                 (orte_process_name_t*)&proc->super.proc_name,
                                                  &my_name)) {
             ++count;
         }
@@ -247,7 +246,7 @@ oshmem_proc_t** oshmem_proc_world(size_t *size)
             proc = (oshmem_proc_t*) opal_list_get_next(proc)) {
         if (OPAL_EQUAL
                 == orte_util_compare_name_fields(mask,
-                                                 &proc->proc_name,
+                                                 (orte_process_name_t*)&proc->super.proc_name,
                                                  &my_name)) {
             /* DO NOT RETAIN THIS OBJECT - the reference count on this
              * object will be adjusted by external callers. The intent
@@ -336,7 +335,7 @@ oshmem_proc_t * oshmem_proc_find(const orte_process_name_t * name)
             proc = (oshmem_proc_t*) opal_list_get_next(proc)) {
         if (OPAL_EQUAL
                 == orte_util_compare_name_fields(mask,
-                                                 &proc->proc_name,
+                                                 (orte_process_name_t*)&proc->super.proc_name,
                                                  name)) {
             rproc = proc;
             break;
@@ -368,19 +367,19 @@ int oshmem_proc_pack(oshmem_proc_t **proclist,
      * can be sent.
      */
     for (i = 0; i < proclistsize; i++) {
-        rc = opal_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
+        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_name), 1, ORTE_NAME);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
             return rc;
         }
-        rc = opal_dss.pack(buf, &(proclist[i]->proc_arch), 1, OPAL_UINT32);
+        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_arch), 1, OPAL_UINT32);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
             return rc;
         }
-        rc = opal_dss.pack(buf, &(proclist[i]->proc_hostname), 1, OPAL_STRING);
+        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_hostname), 1, OPAL_STRING);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
@@ -404,7 +403,7 @@ oshmem_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
             proc = (oshmem_proc_t*) opal_list_get_next(proc)) {
         if (OPAL_EQUAL
                 == orte_util_compare_name_fields(mask,
-                                                 &proc->proc_name,
+                                                 (orte_process_name_t*)&proc->super.proc_name,
                                                  name)) {
             rproc = proc;
             *isnew = false;
@@ -420,7 +419,7 @@ oshmem_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
         rproc = OBJ_NEW(oshmem_proc_t);
         if (NULL != rproc) {
             opal_list_append(&oshmem_proc_list, (opal_list_item_t*)rproc);
-            rproc->proc_name = *name;
+            rproc->super.proc_name = *(opal_process_name_t*)name;
         }
         /* caller had better fill in the rest of the proc, or there's
          going to be pain later... */
@@ -497,12 +496,12 @@ int oshmem_proc_unpack(opal_buffer_t* buf,
             newprocs[newprocs_len++] = plist[i];
 
             /* update all the values */
-            plist[i]->proc_arch = new_arch;
+            plist[i]->super.proc_arch = new_arch;
             /* if arch is different than mine, create a new convertor for this proc */
-            if (plist[i]->proc_arch != opal_local_arch) {
+            if (plist[i]->super.proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(plist[i]->proc_convertor);
-                plist[i]->proc_convertor = opal_convertor_create(plist[i]->proc_arch, 0);
+                plist[i]->super.proc_convertor = opal_convertor_create(plist[i]->super.proc_arch, 0);
 #else
                 orte_show_help("help-shmem-runtime.txt",
                                "heterogeneous-support-unavailable",
@@ -516,14 +515,14 @@ int oshmem_proc_unpack(opal_buffer_t* buf,
 #endif
             }
             if (0
-                    == strcmp(oshmem_proc_local_proc->proc_hostname,
+                    == strcmp(oshmem_proc_local_proc->super.proc_hostname,
                               new_hostname)) {
-                plist[i]->proc_flags |= (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU
+                plist[i]->super.proc_flags |= (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU
                         | OPAL_PROC_ON_CLUSTER);
             }
 
             /* Save the hostname */
-            plist[i]->proc_hostname = new_hostname;
+            plist[i]->super.proc_hostname = new_hostname;
 
             /* eventually, we will update the orte/mca/ess framework's data
              * to contain the info for the new proc. For now, we ignore
@@ -578,9 +577,7 @@ OSHMEM_DECLSPEC int oshmem_proc_group_init(void)
 
     /* Setup SHMEM_GROUP_SELF */
     if (NULL
-            == (oshmem_group_self = oshmem_proc_group_create(oshmem_proc_local()
-                                                                     ->proc_name
-                                                                     .vpid,
+            == (oshmem_group_self = oshmem_proc_group_create(OSHMEM_PROC_VPID(oshmem_proc_local()),
                                                              0,
                                                              1))) {
         oshmem_proc_group_destroy(oshmem_group_self);
@@ -640,7 +637,7 @@ OSHMEM_DECLSPEC oshmem_group_t* oshmem_proc_group_create(int pe_start,
             return NULL ;
         }
 
-        group->my_pe = oshmem_proc_local()->proc_name.vpid;
+        group->my_pe = OSHMEM_PROC_VPID(oshmem_proc_local());
         group->is_member = 0;
         /* now save only the procs that match this jobid */
         for (proc = (oshmem_proc_t*) opal_list_get_first(&oshmem_proc_list);
@@ -668,8 +665,8 @@ OSHMEM_DECLSPEC oshmem_group_t* oshmem_proc_group_create(int pe_start,
 
             for (i = 0; i < group->proc_count; i++) {
                 peer = OBJ_NEW(orte_namelist_t);
-                peer->name.jobid = group->proc_array[i]->proc_name.jobid;
-                peer->name.vpid = group->proc_array[i]->proc_name.vpid;
+                peer->name.jobid = OSHMEM_PROC_JOBID(group->proc_array[i]);
+                peer->name.vpid = OSHMEM_PROC_VPID(group->proc_array[i]);
                 opal_list_append(&(group->peer_list), &peer->super);
             }
         }

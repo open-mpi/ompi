@@ -107,7 +107,7 @@ do {                                                                    \
         ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
     opal_convertor_copy_and_prepare_for_recv(                           \
-                                  ompi_proc->proc_convertor,            \
+                                  ompi_proc->super.proc_convertor,      \
                                   &(datatype->super),                   \
                                   count,                                \
                                   addr,                                 \
@@ -144,7 +144,7 @@ do {                                                                    \
         ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
     opal_convertor_copy_and_prepare_for_recv(                           \
-                                  ompi_proc->proc_convertor,            \
+                                  ompi_proc->super.proc_convertor,      \
                                   &(datatype->super),                   \
                                   count,                                \
                                   addr,                                 \

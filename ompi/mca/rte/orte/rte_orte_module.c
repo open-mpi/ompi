@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2012-2014 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  */
@@ -14,6 +17,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/argv.h"
+#include "opal/util/proc.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/mca/dstore/dstore.h"
 #include "opal/threads/threads.h"
@@ -292,7 +296,7 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                          "%s fetch data from %s for %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc->proc_name), key));
+                         ORTE_NAME_PRINT((const orte_process_name_t *)&proc->super.proc_name), key));
 
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     /* the peer dstore contains our own data that will be shared
@@ -300,24 +304,24 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
      * that would only be shared with nonpeer procs
      */
     if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
-                                                (opal_identifier_t*)(&proc->proc_name),
+                                                (opal_identifier_t*)(&proc->super.proc_name),
                                                 key, &myvals))) {
         if (direct_modex_enabled) {
             OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                                  "%s requesting direct modex from %s for %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->proc_name), key));
+                                 ORTE_NAME_PRINT((const orte_process_name_t *)&proc->super.proc_name), key));
             /* if we couldn't fetch the data via the db, then we will attempt
              * to retrieve it from the target proc
              */
-            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)(&proc->proc_name)))) {
+            if (ORTE_SUCCESS != (rc = direct_modex((orte_process_name_t*)(&proc->super.proc_name)))) {
                 ORTE_ERROR_LOG(rc);
                 OPAL_LIST_DESTRUCT(&myvals);
                 return rc;
             }
             /* now retrieve the requested piece */
             if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
-                                                        (opal_identifier_t*)(&proc->proc_name),
+                                                        (opal_identifier_t*)(&proc->super.proc_name),
                                                         key, &myvals))) {
                 ORTE_ERROR_LOG(rc);
                 OPAL_LIST_DESTRUCT(&myvals);
@@ -329,14 +333,14 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
                                  "%s searching nonpeer dstore for %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), key));
             if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                        (opal_identifier_t*)(&proc->proc_name),
+                                                        (opal_identifier_t*)(&proc->super.proc_name),
                                                         key, &myvals))) {
                 /* try one last place - the peer dstore in case it got stuck there for some reason */
                 OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
                                      "%s searching internal dstore for %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), key));
                 if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_peer,
-                                                            (opal_identifier_t*)(&proc->proc_name),
+                                                            (opal_identifier_t*)(&proc->super.proc_name),
                                                             key, &myvals))) {
                     OPAL_LIST_DESTRUCT(&myvals);
                     return rc;
@@ -353,12 +357,12 @@ int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
     OPAL_LIST_DESTRUCT(&myvals);
 
     /* update the hostname upon first call to modex-recv for this proc */
-    if (NULL == proc->proc_hostname) {
+    if (NULL == proc->super.proc_hostname) {
         OBJ_CONSTRUCT(&myvals, opal_list_t);
-        if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, (opal_identifier_t*)(&proc->proc_name), ORTE_DB_HOSTNAME, &myvals)) {
+        if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, (opal_identifier_t*)(&proc->super.proc_name), ORTE_DB_HOSTNAME, &myvals)) {
             kv = (opal_value_t*)opal_list_get_first(&myvals);
             if (NULL != kv) {
-                opal_value_unload(kv, (void**)&proc->proc_hostname, OPAL_STRING);
+                opal_value_unload(kv, (void**)&proc->super.proc_hostname, OPAL_STRING);
             }
         }
         OPAL_LIST_DESTRUCT(&myvals);

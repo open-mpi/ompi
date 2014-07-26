@@ -24,7 +24,7 @@
 #define MCA_PML_BASE_REQUEST_H
 
 #include "ompi_config.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "opal/datatype/opal_convertor.h"

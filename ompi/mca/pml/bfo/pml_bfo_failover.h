@@ -15,7 +15,7 @@
 #ifndef MCA_PML_BFO_FAILOVER_H
 #define MCA_PML_BFO_FAILOVER_H
 
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include "pml_bfo_hdr.h"
 
 BEGIN_C_DECLS

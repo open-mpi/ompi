@@ -33,9 +33,9 @@
 #include "opal/datatype/opal_datatype.h"
 
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/mpool/base/base.h"
+#include "opal/mca/mpool/base/base.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/mpool/grdma/mpool_grdma.h"
+#include "opal/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/coll/ml/coll_ml_allocation.h"
 
 #include "bcol_iboffload.h"
@@ -761,7 +761,7 @@ static inline struct ibv_cq *ibv_create_cq_compat(struct ibv_context *context,
         int cqe, void *cq_context, struct ibv_comp_channel *channel,
         int comp_vector)
 {
-#if OMPI_IBV_CREATE_CQ_ARGS == 3
+#if OPAL_IBV_CREATE_CQ_ARGS == 3
     return ibv_create_cq(context, cqe, channel);
 #else
     return ibv_create_cq(context, cqe, cq_context, channel, comp_vector);
@@ -775,7 +775,7 @@ int mca_bcol_iboffload_adjust_cq(mca_bcol_iboffload_device_t *device,
 
     if (NULL == *ib_cq) {
         *ib_cq = ibv_create_cq_compat(device->dev.ib_dev_context, cq_size,
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
                 device, device->ib_channel,
 #else
                 NULL, NULL,

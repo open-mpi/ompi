@@ -21,13 +21,13 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/allocator/base/base.h"
-#include "ompi/mca/allocator/allocator.h"
+#include "opal/mca/allocator/base/base.h"
+#include "opal/mca/allocator/allocator.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
-#include "ompi/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h" 
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

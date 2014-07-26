@@ -334,7 +334,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                 OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept adding %s to proc list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
+                                     OMPI_NAME_PRINT(&proc_list[i]->super.proc_name)));
             }
             ompi_proc_pack(proc_list, size, false, nbuf);
         }
@@ -485,7 +485,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
          * Not every routed module will need it, but some do require
          * this info before we can do any comm
          */
-        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(rprocs[0]->proc_name.jobid, nrbuf))) {
+        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(OMPI_CAST_ORTE_NAME(&rprocs[0]->super.proc_name)->jobid, nrbuf))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
@@ -495,7 +495,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         if (send_first) {
             for (i = 0 ; i < rsize ; ++i) {
                 name = OBJ_NEW(orte_namelist_t);
-                name->name = rprocs[i]->proc_name;
+                name->name = *OMPI_CAST_ORTE_NAME(&rprocs[i]->super.proc_name);
                 opal_list_append(&all_procs, &name->super);
                 OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept send first adding %s to allgather list",
@@ -504,7 +504,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             }
             for (i = 0 ; i < group->grp_proc_count ; ++i) {
                 name = OBJ_NEW(orte_namelist_t);
-                name->name = ompi_group_peer_lookup(group, i)->proc_name;
+                name->name = *OMPI_CAST_ORTE_NAME(&(ompi_group_peer_lookup(group, i)->super.proc_name));
                 opal_list_append(&all_procs, &name->super);
                 OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept send first adding %s to allgather list",
@@ -515,7 +515,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         } else {
             for (i = 0 ; i < group->grp_proc_count ; ++i) {
                 name = OBJ_NEW(orte_namelist_t);
-                name->name = ompi_group_peer_lookup(group, i)->proc_name;
+                name->name = *OMPI_CAST_ORTE_NAME(&(ompi_group_peer_lookup(group, i)->super.proc_name));
                 opal_list_append(&all_procs, &name->super);
                 OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept recv first adding %s to allgather list",
@@ -524,7 +524,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             }
             for (i = 0 ; i < rsize ; ++i) {
                 name = OBJ_NEW(orte_namelist_t);
-                name->name = rprocs[i]->proc_name;
+                name->name = *OMPI_CAST_ORTE_NAME(&rprocs[i]->super.proc_name);
                 opal_list_append(&all_procs, &name->super);
                 OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept recv first adding %s to allgather list",
@@ -719,10 +719,9 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:disconnect adding participant %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proct->proc_name)));
+                                 ORTE_NAME_PRINT((const orte_process_name_t *)&proct->super.proc_name)));
             nm = OBJ_NEW(orte_namelist_t);
-            nm->name.jobid = proct->proc_name.jobid;
-            nm->name.vpid = proct->proc_name.vpid;
+            nm->name = *(orte_process_name_t*)&proct->super.proc_name;
             opal_list_append(peers, &nm->super);
         }
     } else {
@@ -736,10 +735,9 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:disconnect adding participant %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proct->proc_name)));
+                                 ORTE_NAME_PRINT((const orte_process_name_t *)&proct->super.proc_name)));
             nm = OBJ_NEW(orte_namelist_t);
-            nm->name.jobid = proct->proc_name.jobid;
-            nm->name.vpid = proct->proc_name.vpid;
+            nm->name = *(orte_process_name_t*)&proct->super.proc_name;
             opal_list_append(peers, &nm->super);
         }
     }

@@ -34,13 +34,14 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
 #include "opal/align.h"
+#include "opal/mca/btl/btl.h"
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include "ompi/mca/pml/pml.h"
 
 static int component_open(void);

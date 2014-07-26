@@ -84,8 +84,8 @@ OPAL_DECLSPEC extern char *mca_base_user_default_path;
  * repository.
  *
  * It must be the first MCA function invoked.  It is normally
- * invoked during ompi_mpi_init() and specifically invoked in the
- * special case of the laminfo command.
+ * invoked during the initialization stage and specifically
+ * invoked in the special case of the *_info command.
  */
 OPAL_DECLSPEC int mca_base_open(void);
 
@@ -99,8 +99,7 @@ OPAL_DECLSPEC int mca_base_open(void);
  * parameters and closes down the MCA component respository.  
  *
  * It must be the last MCA function invoked.  It is normally invoked
- * during ompi_mpi_finalize() and specifically invoked during the
- * special case of the laminfo command.
+ * during the finalize stage.
  */
 OPAL_DECLSPEC int mca_base_close(void);
 

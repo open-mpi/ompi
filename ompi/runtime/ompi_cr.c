@@ -47,6 +47,7 @@
 #include "opal/mca/crs/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/mca/btl/base/base.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
@@ -56,7 +57,6 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 #include "ompi/communicator/communicator.h"

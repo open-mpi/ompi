@@ -29,7 +29,7 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/sbgp/sbgp.h"
 #include "ompi/op/op.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 
 #include "coll_ml_lmngr.h"
 #include "coll_ml_functions.h"

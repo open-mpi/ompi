@@ -97,7 +97,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
          /* We will create a convertor specialized for the        */      \
          /* remote architecture and prepared with the datatype.   */      \
          opal_convertor_copy_and_prepare_for_send(                        \
-                            (request)->req_base.req_proc->proc_convertor, \
+                            (request)->req_base.req_proc->super.proc_convertor, \
                             &((request)->req_base.req_datatype->super),   \
                             (request)->req_base.req_count,                \
                             (request)->req_base.req_addr,                 \

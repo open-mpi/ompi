@@ -28,7 +28,7 @@
 #define MCA_PML_OB1_H
 
 #include "ompi_config.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -38,7 +38,7 @@
 #include "pml_ob1_hdr.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/proc/proc.h"
-#include "ompi/mca/allocator/base/base.h"
+#include "opal/mca/allocator/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -253,7 +253,7 @@ do {                                                            \
 
 
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
-        ompi_ptr_t hdr_des, uint8_t order, uint32_t status);
+        opal_ptr_t hdr_des, uint8_t order, uint32_t status);
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.
  * Packets are added to the queue when sending of FIN or ACK is failed due to
@@ -321,8 +321,8 @@ mca_pml_ob1_compute_segment_length_remote (size_t seg_size, void *segments,
 
     for (i = 0 ; i < count ; ++i) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        if ((rem_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
-            (local_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN))
+        if ((rem_proc->super.proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
+            (local_proc->super.proc_arch & OPAL_ARCH_ISBIGENDIAN))
             /* NTH: seg_len is always 64-bit so use swap_bytes8 */
             length += opal_swap_bytes8(segment->seg_len);
         else

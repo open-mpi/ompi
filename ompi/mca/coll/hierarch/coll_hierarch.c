@@ -26,6 +26,7 @@
 #include <stdio.h>
 
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/btl/btl.h"
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
@@ -41,7 +42,6 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/btl/btl.h"
 
 /* Local functions and data */
 #define HIER_MAXPROTOCOL 6
@@ -566,8 +566,8 @@ mca_coll_hierarch_checkfor_sm ( struct ompi_communicator_t *comm, int *color,  i
     my_proc = ompi_proc_local();
     procs = comm->c_local_group->grp_proc_pointers;
     for ( i = 0 ; i < size ; i++) {
-	if ( procs[i]->proc_name.jobid == my_proc->proc_name.jobid &&
-	     ( OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) ) {
+	if ( OMPI_CAST_ORTE_NAME(&procs[i]->super.proc_name)->jobid == OMPI_CAST_ORTE_NAME(&my_proc->super.proc_name)->jobid &&
+	     ( OPAL_PROC_ON_LOCAL_NODE(procs[i]->super.proc_flags)) ) {
 	    lncount++;
 	    if ( *color == -1){
 		 *color = i;

@@ -25,21 +25,20 @@
 
 #include "ompi_config.h"
 
+#include "opal/mca/mpool/mpool.h" 
+#include "opal/util/arch.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h" 
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/mpool/mpool.h" 
 #include "pml_ob1_comm.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_recvfrag.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h" 
-#include "opal/util/arch.h"
 #include "ompi/memchecker.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
-#include "ompi/mca/common/cuda/common_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
 #if OPAL_CUDA_SUPPORT

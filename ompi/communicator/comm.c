@@ -734,7 +734,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
     /* how many are participating and on my node? */
     for ( my_size = 0, i=0; i < size; i++) {
         if ( results[(2*i)+0] == 1) {
-            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->proc_flags)) {
+            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
                 my_size++;
             }
         }
@@ -755,7 +755,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
     /* ok we can now fill this info */
     for( loc = 0, i = 0; i < size; i++ ) {
         if ( results[(2*i)+0] == 1) {
-            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->proc_flags)) {
+            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
                 sorted[(2*loc)+0] = i;                 /* copy org rank */
                 sorted[(2*loc)+1] = results[(2*i)+1];  /* copy key */
                 loc++;
@@ -800,7 +800,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
         /* how many are participating and on my node? */
         for ( my_rsize = 0, i=0; i < rsize; i++) {
             if ( rresults[(2*i)+0] == 1) {
-                if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->proc_flags)) {
+                if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
                     my_rsize++;
                 }
             }
@@ -816,7 +816,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
             /* ok we can now fill this info */
             for( loc = 0, i = 0; i < rsize; i++ ) {
                 if ( rresults[(2*i)+0] == 1) {
-                    if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->proc_flags)) {
+                    if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
                         rsorted[(2*loc)+0] = i;                  /* org rank */
                         rsorted[(2*loc)+1] = rresults[(2*i)+1];  /* key */
                         loc++;
@@ -1759,7 +1759,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         theirproc = ompi_group_peer_lookup(intercomm->c_remote_group,0);
 
         mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
-        rc = ompi_rte_compare_name_fields(mask, &(ourproc->proc_name), &(theirproc->proc_name));
+        rc = ompi_rte_compare_name_fields(mask, (const orte_process_name_t*)&(ourproc->super.proc_name),
+                                                (const orte_process_name_t*)&(theirproc->super.proc_name));
         if ( 0 > rc ) {
             flag = true;
         }

@@ -51,6 +51,10 @@
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
+#include "opal/mca/allocator/base/base.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/rcache/rcache.h"
+#include "opal/mca/mpool/base/base.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
@@ -68,10 +72,6 @@
 #include "ompi/mca/op/base/base.h"
 #include "ompi/file/file.h"
 #include "ompi/attribute/attribute.h"
-#include "ompi/mca/allocator/base/base.h"
-#include "ompi/mca/rcache/base/base.h"
-#include "ompi/mca/rcache/rcache.h"
-#include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -132,8 +132,6 @@ int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 opal_thread_t *ompi_mpi_main_thread = NULL;
 
-bool ompi_warn_on_fork;
-
 /*
  * These variables are for the MPI F08 bindings (F08 must bind Fortran
  * varaiables to symbols; it cannot bind Fortran variables to the
@@ -170,31 +168,6 @@ struct ompi_status_public_t *ompi_mpi_status_ignore_addr =
     (ompi_status_public_t *) 0;
 struct ompi_status_public_t *ompi_mpi_statuses_ignore_addr =
     (ompi_status_public_t *) 0;
-
-#if OPAL_HAVE_POSIX_THREADS
-static bool fork_warning_issued = false;
-static bool atfork_called = false;
-
-static void warn_fork_cb(void)
-{
-    if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
-        opal_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
-                       ompi_process_info.nodename, getpid(),
-                       ompi_mpi_comm_world.comm.c_my_rank);
-        fork_warning_issued = true;
-    }
-}
-#endif
-
-void ompi_warn_fork(void)
-{
-#if OPAL_HAVE_POSIX_THREADS
-    if (ompi_warn_on_fork && !atfork_called) {
-        pthread_atfork(warn_fork_cb, NULL, NULL);
-        atfork_called = true;
-    }
-#endif
-}
 
 /*
  * These variables are here, rather than under ompi/mpi/c/foo.c
@@ -325,6 +298,38 @@ bool ompi_enable_timing;
 extern bool ompi_mpi_yield_when_idle;
 extern int ompi_mpi_event_tick_rate;
 
+/**
+ * Static functions used to configure the interactions between the OPAL and
+ * the runtime.
+ */
+static char*
+_process_name_print_for_opal(const opal_process_name_t procname)
+{
+    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
+    return OMPI_NAME_PRINT(orte_name);
+}
+
+static int32_t
+_process_name_jobid_for_opal(const opal_process_name_t procname)
+{
+    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
+    return orte_name->jobid;
+}
+
+static int32_t
+_process_name_vpid_for_opal(const opal_process_name_t procname)
+{
+    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
+    return orte_name->vpid;
+}
+
+static int
+_process_name_compare(const opal_process_name_t p1, const opal_process_name_t p2)
+{
+    orte_process_name_t* o1 = (orte_process_name_t*)&p1;
+    orte_process_name_t* o2 = (orte_process_name_t*)&p2;
+    return ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, o1, o2);
+}
 
 void ompi_mpi_thread_level(int requested, int *provided)
 {
@@ -400,6 +405,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: opal_init_util failed";
         goto error;
     }
+
+    /* Convince OPAL to use our naming scheme */
+    opal_process_name_print = _process_name_print_for_opal;
+    opal_process_name_vpid = _process_name_vpid_for_opal;
+    opal_process_name_jobid = _process_name_jobid_for_opal;
+    opal_compare_proc = _process_name_compare;
 
     /* Register MCA variables */
     if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
@@ -543,7 +554,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     if (OMPI_SUCCESS != 
-        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+        (ret = ompi_op_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_op_base_find_available() failed";
         goto error;
@@ -555,15 +566,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Open up MPI-related MCA components */
 
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_allocator_base_framework, 0))) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_allocator_base_framework, 0))) {
         error = "mca_allocator_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_rcache_base_framework, 0))) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_rcache_base_framework, 0))) {
         error = "mca_rcache_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_mpool_base_framework, 0))) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_mpool_base_framework, 0))) {
         error = "mca_mpool_base_open() failed";
         goto error;
     }
@@ -601,14 +612,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Select which MPI components to use */
 
     if (OMPI_SUCCESS != 
-        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
+        (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
+        (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_pml_base_select() failed";
         goto error;
@@ -658,14 +669,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     if (OMPI_SUCCESS != 
-        (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+        (ret = mca_coll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                             OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
     if (OMPI_SUCCESS != 
-        (ret = ompi_osc_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+        (ret = ompi_osc_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                             OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "ompi_osc_base_find_available() failed";
         goto error;
@@ -757,7 +768,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* If thread support was enabled, then setup OPAL to allow for
        them. */
-    if ((OMPI_ENABLE_PROGRESS_THREADS == 1) ||
+    if ((OPAL_ENABLE_PROGRESS_THREADS == 1) ||
         (*provided != MPI_THREAD_SINGLE)) {
         opal_set_using_threads(true);
     }
@@ -838,7 +849,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
+#if OPAL_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
        block in the event library, so that communications don't take
        forever between procs in the dynamic code.  This will increase

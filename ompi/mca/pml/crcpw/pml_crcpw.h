@@ -25,7 +25,7 @@
 
 #include "ompi_config.h"
 
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"

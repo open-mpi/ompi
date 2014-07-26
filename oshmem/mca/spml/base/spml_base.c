@@ -18,7 +18,7 @@
 #include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_putreq.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_getreq.h"
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 
 #define SPML_BASE_DO_CMP(res, addr, op, val) \
     switch((op)) { \

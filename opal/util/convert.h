@@ -37,8 +37,7 @@
  * collision of APIs (e.g., one API requires a size_t and another API
  * requires an int.  And in most places, we're not going to overflow
  * the int when casting down into it (e.g., it's the result of a
- * strlen, or the length of the buffer in an ompi_buffer_t -- if that
- * buffer is larger than MAX_INT, we've got other problems!).
+ * strlen -- if that buffer is larger than MAX_INT, we've got other problems!).
  *
  * BUT -- the whole premise of casting down to an int is dangerous.
  * So we provide extra protection here to detect overflow situations

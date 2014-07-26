@@ -85,7 +85,7 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
 
         /* We will create a convertor specialized for the        */
         /* remote architecture and prepared with the datatype.   */
-        opal_convertor_copy_and_prepare_for_send (dst_proc->proc_convertor,
+        opal_convertor_copy_and_prepare_for_send (dst_proc->super.proc_convertor,
                                                   (const struct opal_datatype_t *) datatype,
 						  count, buf, 0, &convertor);
         opal_convertor_get_packed_size (&convertor, &size);

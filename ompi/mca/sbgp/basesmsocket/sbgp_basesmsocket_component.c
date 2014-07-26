@@ -269,7 +269,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
 
     /* initialize data */
     for (proc = 0, n_local_peers = 0 ; proc < n_procs_in ; ++proc) {
-        if (OPAL_PROC_ON_LOCAL_SOCKET(procs[proc]->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_SOCKET(procs[proc]->super.proc_flags)) {
 	    n_local_peers++;
         }
     }
@@ -300,7 +300,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmsocket_select_procs(struct ompi_pr
     }
 
     for (proc = 0, cnt = 0 ; proc < n_procs_in ; ++proc) {
-	if (OPAL_PROC_ON_LOCAL_SOCKET(procs[proc]->proc_flags)) {
+	if (OPAL_PROC_ON_LOCAL_SOCKET(procs[proc]->super.proc_flags)) {
 	    module->super.group_list[cnt++] = proc;
 	}
     }

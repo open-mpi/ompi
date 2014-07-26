@@ -26,8 +26,8 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/class/ompi_free_list.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef OSHMEM_WAIT_COMPLETION_DEBUG

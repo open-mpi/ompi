@@ -31,6 +31,24 @@ extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
 extern int opal_pmi_version;
 
+OPAL_DECLSPEC extern int opal_initialized;
+OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
+/**
+ *  * Whether we want to enable CUDA GPU buffer send and receive support.
+ *   */
+OPAL_DECLSPEC extern bool opal_cuda_support;
+
+/**
+ * Whether to use the "leave pinned" protocol or not (0 = no, 1 = yes,
+ * -1 = determine at runtime).
+ */
+OPAL_DECLSPEC extern int opal_leave_pinned;
+
+/**
+ * Whether to use the "leave pinned pipeline" protocol or not.
+ */
+OPAL_DECLSPEC extern bool opal_leave_pinned_pipeline;
+
 #if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;
 #endif

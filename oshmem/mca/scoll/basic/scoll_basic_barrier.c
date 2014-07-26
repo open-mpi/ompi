@@ -564,7 +564,7 @@ static int _algorithm_adaptive(struct oshmem_group_t *group, long *pSync)
             if (i == group->id)
                 continue;
 
-            if (!OPAL_PROC_ON_LOCAL_NODE(group->proc_array[i]->proc_flags)) {
+            if (!OPAL_PROC_ON_LOCAL_NODE(group->proc_array[i]->super.proc_flags)) {
                 local_peers_only = false;
                 break;
             }

@@ -30,7 +30,7 @@
 #include "pml_bfo_rdmafrag.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/bfo/pml_bfo_comm.h"
-#include "ompi/mca/mpool/base/base.h"
+#include "opal/mca/mpool/base/base.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 #if PML_BFO
 #define RECVREQ_RECVERRSENT        0x01
@@ -42,7 +42,7 @@ BEGIN_C_DECLS
 
 struct mca_pml_bfo_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
-    ompi_ptr_t remote_req_send;
+    opal_ptr_t remote_req_send;
 #if PML_BFO
     int32_t req_msgseq;     /* PML sequence number */
     int32_t req_events;     /* number of outstanding events on request */
@@ -222,7 +222,7 @@ static inline void prepare_recv_req_converter(mca_pml_bfo_recv_request_t *req)
 {
     if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
         opal_convertor_copy_and_prepare_for_recv(
-                req->req_recv.req_base.req_proc->proc_convertor,
+                req->req_recv.req_base.req_proc->super.proc_convertor,
                 &(req->req_recv.req_base.req_datatype->super),
                 req->req_recv.req_base.req_count,
                 req->req_recv.req_base.req_addr,

@@ -27,7 +27,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/mca/mpool/mpool.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Alloc_mem = PMPI_Alloc_mem

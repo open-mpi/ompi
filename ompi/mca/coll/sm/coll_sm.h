@@ -26,8 +26,8 @@
 #include "mpi.h"
 #include "opal/mca/mca.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/common/sm/common_sm.h"
 #include "ompi/mca/coll/coll.h"
-#include "ompi/mca/common/sm/common_sm.h"
 
 BEGIN_C_DECLS
 

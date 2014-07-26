@@ -18,7 +18,7 @@
 
 #include "opal/datatype/opal_convertor.h"
 
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "ompi/mca/pml/ob1/pml_ob1_comm.h"
 
 BEGIN_C_DECLS

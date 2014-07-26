@@ -31,13 +31,13 @@
 #include "opal/mca/memchecker/base/base.h"
 
 
-#if OMPI_WANT_MEMCHECKER
+#if OPAL_WANT_MEMCHECKER
 #  define MEMCHECKER(x) do {       \
             x;                     \
    } while(0)
 #else
 #  define MEMCHECKER(x)
-#endif /* OMPI_WANT_MEMCHECKER */
+#endif /* OPAL_WANT_MEMCHECKER */
 
 
 static inline int memchecker_convertor_call (int (*f)(void *, size_t), opal_convertor_t* pConvertor)

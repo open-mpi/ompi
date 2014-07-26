@@ -40,7 +40,8 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-
+#include "opal/runtime/opal.h"
+#include "opal/runtime/opal_params.h"
 /*
  * Global variables
  *
@@ -59,12 +60,8 @@ char *ompi_mpi_show_mca_params_file = NULL;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_fqdn_hostnames = false;
-int ompi_mpi_leave_pinned = -1;
-bool ompi_mpi_leave_pinned_pipeline = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
-bool ompi_mpi_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
-bool ompi_mpi_cuda_support;
 
 uint32_t ompi_hostname_cutoff = UINT32_MAX;
 bool ompi_mpi_yield_when_idle = true;
@@ -255,38 +252,9 @@ int ompi_mpi_register_params(void)
     mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "preconnect_all",
                                   MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
-    /* Leave pinned parameter */
-    ompi_mpi_leave_pinned = -1;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "leave_pinned",
-                                 "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (0 = do not use \"leave pinned\" protocol, 1 = use \"leave pinned\" protocol, -1 = allow network to choose at runtime).",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_mpi_leave_pinned);
+    mca_base_var_register_synonym(value, "opal", "opal", NULL, "cuda_support",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
-    ompi_mpi_leave_pinned_pipeline = false;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "leave_pinned_pipeline",
-                                "Whether to use the \"leave pinned pipeline\" protocol or not.",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_mpi_leave_pinned_pipeline);
-    
-    if (ompi_mpi_leave_pinned > 0 && ompi_mpi_leave_pinned_pipeline) {
-        ompi_mpi_leave_pinned_pipeline = 0;
-        opal_show_help("help-mpi-runtime.txt", 
-                       "mpi-params:leave-pinned-and-pipeline-selected",
-                       true);
-    }
-
-    ompi_warn_on_fork = true;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "warn_on_fork",
-                                 "If nonzero, issue a warning if program forks under conditions that could cause system errors",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_warn_on_fork);
-    
     /* Sparse group storage support */
     (void) mca_base_var_register("ompi", "mpi", NULL, "have_sparse_group_storage",
                                  "Whether this Open MPI installation supports storing of data in MPI groups in \"sparse\" formats (good for extremely large process count MPI jobs that create many communicators/groups)",
@@ -317,22 +285,24 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_CONSTANT,
-                                 &ompi_mpi_built_with_cuda_support);
+                                 &opal_built_with_cuda_support);
 
-	/* Current default is to enable CUDA support if it is built into library */
-	ompi_mpi_cuda_support = ompi_mpi_built_with_cuda_support;
+    /* Current default is to enable CUDA support if it is built into library */
+    opal_cuda_support = opal_built_with_cuda_support;
 
     (void) mca_base_var_register("ompi", "mpi", NULL, "cuda_support",
                                  "Whether CUDA GPU buffer support is enabled or not",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_mpi_cuda_support);
-    if (ompi_mpi_cuda_support && !ompi_mpi_built_with_cuda_support) {
+                                 &opal_cuda_support);
+    if (opal_cuda_support && !opal_built_with_cuda_support) {
         opal_show_help("help-mpi-runtime.txt", "no cuda support",
                        true);
         ompi_rte_abort(1, NULL);
     }
+    mca_base_var_register_synonym(value, "opal", "opal", NULL, "cuda_support",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /* cutoff for retrieving hostnames */
     ompi_hostname_cutoff = UINT32_MAX;

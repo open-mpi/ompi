@@ -296,20 +296,20 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      * User Coordination Routines
      *******************************/
     typedef enum {
-        OMPI_CR_INC_PRE_CRS_PRE_MPI   = 0,
-        OMPI_CR_INC_PRE_CRS_POST_MPI  = 1,
-        OMPI_CR_INC_CRS_PRE_CKPT      = 2,
-        OMPI_CR_INC_CRS_POST_CKPT     = 3,
-        OMPI_CR_INC_POST_CRS_PRE_MPI  = 4,
-        OMPI_CR_INC_POST_CRS_POST_MPI = 5,
-        OMPI_CR_INC_MAX               = 6
+        OPAL_CR_INC_PRE_CRS_PRE_MPI   = 0,
+        OPAL_CR_INC_PRE_CRS_POST_MPI  = 1,
+        OPAL_CR_INC_CRS_PRE_CKPT      = 2,
+        OPAL_CR_INC_CRS_POST_CKPT     = 3,
+        OPAL_CR_INC_POST_CRS_PRE_MPI  = 4,
+        OPAL_CR_INC_POST_CRS_POST_MPI = 5,
+        OPAL_CR_INC_MAX               = 6
     } opal_cr_user_inc_callback_event_t;
 
     typedef enum {
-        OMPI_CR_INC_STATE_PREPARE  = 0,
-        OMPI_CR_INC_STATE_CONTINUE = 1,
-        OMPI_CR_INC_STATE_RESTART  = 2,
-        OMPI_CR_INC_STATE_ERROR    = 3
+        OPAL_CR_INC_STATE_PREPARE  = 0,
+        OPAL_CR_INC_STATE_CONTINUE = 1,
+        OPAL_CR_INC_STATE_RESTART  = 2,
+        OPAL_CR_INC_STATE_ERROR    = 3
     } opal_cr_user_inc_callback_state_t;
 
     /**

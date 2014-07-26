@@ -127,9 +127,9 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR="\"${sysconfdir}\"" \
-        /DOMPI_PKGLIBDIR="\"${pkglibdir}\"" \
-        /DOMPI_PKGDATADIR="\"${pkgdatadir}\"" \
+        /DOPAL_SYSCONFDIR="\"${sysconfdir}\"" \
+        /DOPAL_PKGLIBDIR="\"${pkglibdir}\"" \
+        /DOPAL_PKGDATADIR="\"${pkgdatadir}\"" \
         /DHAVE_CONFIG_H \
         /D_WINDLL \
         /EHsc \
@@ -232,8 +232,8 @@ install:
 	@install -d ${topdir}/include ${installdir}/include/
 	@install -p ${topdir}/include/ompi_config_bottom.h \
                                   ${installdir}/include/ompi_config_bottom.h 
-	@install -p ${topdir}/src/win32/generated_include/ompi_config.h \
-                                  ${installdir}/include/ompi_config.h 
+	@install -p ${topdir}/src/win32/generated_include/opal_config.h \
+                                  ${installdir}/include/opal_config.h 
 	@install -p ${topdir}/include/mpi.h ${installdir}/include/mpi.h
 	@install -p ${topdir}/include/ompi_stdint.h ${installdir}/include/ompi_stdint.h
 	@install -d ${topdir}/src/win32 ${installdir}/include/win32

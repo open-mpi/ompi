@@ -1503,7 +1503,7 @@ static int ml_discover_hierarchy(mca_coll_ml_module_t *ml_module)
     /* create the converter, for current implementation we
        support homogenius comunicators only */
     ml_module->reference_convertor =
-        opal_convertor_create(my_proc->proc_arch, 0);
+        opal_convertor_create(my_proc->super.proc_arch, 0);
 
     if (OPAL_UNLIKELY(NULL == ml_module->reference_convertor)) {
         return OMPI_ERROR;

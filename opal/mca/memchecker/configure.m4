@@ -34,10 +34,10 @@ AC_DEFUN([MCA_opal_memchecker_CONFIG],[
         # "memchecker" to the --enable-mca-no-build list.
         DISABLE_memchecker=1
     fi
-    AC_DEFINE_UNQUOTED([OMPI_WANT_MEMCHECKER],
+    AC_DEFINE_UNQUOTED([OPAL_WANT_MEMCHECKER],
                        [$WANT_MEMCHECKER],
                        [if the memory and buffer checking should be enabled])
-    AM_CONDITIONAL([OMPI_WANT_MEMCHECKER],
+    AM_CONDITIONAL([OPAL_WANT_MEMCHECKER],
                    [test "$WANT_MEMCHECKER" = "1"])
 
     # first, compile all the components

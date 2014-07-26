@@ -10,7 +10,7 @@
 
 #include "oshmem_config.h"
 
-#include "opal/util/output.h"
+#include "oshmem/util/oshmem_util.h"
 #include "opal/dss/dss.h"
 
 #include "ompi/mca/dpm/dpm.h"
@@ -215,7 +215,7 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
         if (0 == memheap_oob.mkeys[tr_id].va_base) {
             cnt = 1;
             opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].u.key, &cnt, OPAL_UINT64);
-            if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+            if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
                 memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
             }
         } else {

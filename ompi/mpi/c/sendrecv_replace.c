@@ -95,7 +95,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
         /* initialize convertor to unpack recv buffer */
         OBJ_CONSTRUCT(&convertor, opal_convertor_t);
-        opal_convertor_copy_and_prepare_for_recv( proc->proc_convertor, &(datatype->super),
+        opal_convertor_copy_and_prepare_for_recv( proc->super.proc_convertor, &(datatype->super),
                                                   count, buf, 0, &convertor );
 
         /* setup a buffer for recv */

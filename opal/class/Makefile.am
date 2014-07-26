@@ -33,7 +33,9 @@ headers += \
         class/opal_atomic_lifo.h \
         class/opal_pointer_array.h \
         class/opal_value_array.h \
-        class/opal_ring_buffer.h
+        class/opal_ring_buffer.h \
+        class/opal_rb_tree.h \
+        class/ompi_free_list.h
 
 libopen_pal_la_SOURCES += \
         class/opal_bitmap.c \
@@ -47,5 +49,7 @@ libopen_pal_la_SOURCES += \
         class/opal_atomic_lifo.c \
         class/opal_pointer_array.c \
         class/opal_value_array.c \
-        class/opal_ring_buffer.c
+        class/opal_ring_buffer.c \
+        class/opal_rb_tree.c \
+        class/ompi_free_list.c
 

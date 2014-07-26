@@ -27,23 +27,20 @@
 
 #include "ompi_config.h"
 
+#include "opal/class/opal_object.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-
-#include "opal/class/opal_object.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/class/ompi_free_list.h"
 
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
-
-#include "ompi/class/ompi_free_list.h"
-
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
 
 BEGIN_C_DECLS
 
