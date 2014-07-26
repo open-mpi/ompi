@@ -178,7 +178,7 @@ int mca_mpool_sm_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Record the shared memory filename */
         asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
-                  ompi_process_info.job_session_dir,
+                  opal_process_info.job_session_dir,
                   opal_proc_local_get()->proc_hostname );
         orte_sstore.set_attr(orte_sstore_handle_current, SSTORE_METADATA_LOCAL_TOUCH, file_name);
         free(file_name);

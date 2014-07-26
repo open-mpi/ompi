@@ -300,7 +300,7 @@ get_num_local_procs(void)
 {
     /* num_local_peers does not include us in
      * its calculation, so adjust for that */
-    return (int)(1 + ompi_process_info.num_local_peers);
+    return (int)(1 + opal_process_info.num_local_peers);
 }
 
 static void
@@ -437,28 +437,28 @@ set_uniq_paths_for_init_rndv(mca_btl_smcuda_component_t *comp_ptr)
 
     if (asprintf(&comp_ptr->sm_mpool_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool.%s",
-                 ompi_process_info.job_session_dir,
+                 opal_process_info.job_session_dir,
                  opal_proc_local_get()->proc_hostname) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_mpool_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_pool_rndv.%s",
-                 ompi_process_info.job_session_dir,
+                 opal_process_info.job_session_dir,
                  opal_proc_local_get()->proc_hostname) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_ctl_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_module.%s",
-                 ompi_process_info.job_session_dir,
+                 opal_process_info.job_session_dir,
                  opal_proc_local_get()->proc_hostname) < 0) {
         /* rc set */
         goto out;
     }
     if (asprintf(&comp_ptr->sm_rndv_file_name,
                  "%s"OPAL_PATH_SEP"shared_mem_cuda_btl_rndv.%s",
-                 ompi_process_info.job_session_dir,
+                 opal_process_info.job_session_dir,
                  opal_proc_local_get()->proc_hostname) < 0) {
         /* rc set */
         goto out;
@@ -841,7 +841,7 @@ mca_btl_smcuda_component_init(int *num_btls,
     mca_btl_smcuda_component.sm_mpool_base = NULL;
 
     /* if no session directory was created, then we cannot be used */
-    if (NULL == ompi_process_info.job_session_dir) {
+    if (NULL == opal_process_info.job_session_dir) {
     /* SKG - this isn't true anymore. Some backing facilities don't require a
      * file-backed store. Extend shmem to provide this info one day. Especially
      * when we use a proper modex for init. */
@@ -854,7 +854,7 @@ mca_btl_smcuda_component_init(int *num_btls,
      * set of processes that are initializing the btl, and my_local_rank seems
      * to provide that for us. */
     if (UINT16_MAX ==
-        (my_local_rank = ompi_process_info.my_local_rank)) {
+        (my_local_rank = opal_process_info.my_local_rank)) {
         opal_show_help("help-mpi-btl-sm.txt", "no locality", true);
         return NULL;
     }
@@ -878,7 +878,7 @@ mca_btl_smcuda_component_init(int *num_btls,
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
     sprintf( mca_btl_smcuda_component.sm_fifo_path,
-             "%s"OPAL_PATH_SEP"sm_fifo.%lu", ompi_process_info.job_session_dir,
+             "%s"OPAL_PATH_SEP"sm_fifo.%lu", opal_process_info.job_session_dir,
              (unsigned long)OPAL_PROC_MY_NAME->vpid );
     if(mkfifo(mca_btl_smcuda_component.sm_fifo_path, 0660) < 0) {
         opal_output(0, "mca_btl_smcuda_component_init: mkfifo failed with errno=%d\n",errno);

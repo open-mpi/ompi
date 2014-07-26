@@ -20,6 +20,9 @@
 
 AM_CPPFLAGS="-I$(top_srcdir)/test/support"
 
+if PROJECT_OMPI
+  REQUIRES_OMPI = ompi_rb_tree
+endif
 
 check_PROGRAMS = \
 	$(REQUIRES_OMPI) opal_bitmap \
@@ -68,6 +71,12 @@ opal_value_array_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_value_array_DEPENDENCIES = $(opal_value_array_LDADD)
+
+ompi_rb_tree_SOURCES = ompi_rb_tree.c
+ompi_rb_tree_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+	$(top_builddir)/test/support/libsupport.a
+ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
 
 clean-local:
 	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt

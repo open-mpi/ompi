@@ -202,7 +202,7 @@ static int create_proc(opal_proc_t *opal_proc,
         opal_show_help("help-mpi-btl-usnic.txt",
                        "internal error during init",
                        true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        "<none>", "<none>",
                        "opal_modex_recv() failed", __FILE__, __LINE__,
                        opal_strerror(rc));
@@ -219,7 +219,7 @@ static int create_proc(opal_proc_t *opal_proc,
                  (int) size, (int) sizeof(opal_btl_usnic_addr_t));
         opal_show_help("help-mpi-btl-usnic.txt", "internal error during init",
                        true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        "<none>", 0,
                        "invalid modex data", __FILE__, __LINE__,
                        msg);
@@ -244,7 +244,7 @@ static int create_proc(opal_proc_t *opal_proc,
         opal_show_help("help-mpi-btl-usnic.txt",
                        "transport mismatch",
                        true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        proc->proc_opal->proc_hostname);
         OBJ_RELEASE(proc);
         return OPAL_ERR_BAD_PARAM;
@@ -621,7 +621,7 @@ static int match_modex(opal_btl_usnic_module_t *module,
         proc->proc_modex[*index_out].mtu != (uint16_t) module->if_mtu) {
         opal_show_help("help-mpi-btl-usnic.txt", "MTU mismatch",
                     true,
-                    ompi_process_info.nodename,
+                    opal_process_info.nodename,
                     ibv_get_device_name(module->device),
                     module->if_name,
                     module->if_mtu,

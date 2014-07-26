@@ -693,7 +693,7 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
                                           ap->dest_cidrmask);
         opal_btl_usnic_sprintf_mac(mac_str, ap->dest_mac);
         opal_show_help("help-mpi-btl-usnic.txt", topic, true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        ap->listener->ipv4_addr_str,
                        ap->listener->usnic_name,
                        ap->listener->if_name,
@@ -972,7 +972,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
 {
     /* Only do this initialization if I am the agent (the agent is
        local rank 0) */
-    if (ompi_process_info.my_local_rank != 0) {
+    if (opal_process_info.my_local_rank != 0) {
         return OPAL_SUCCESS;
     }
     if (agent_initialized) {
@@ -1010,7 +1010,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
     }
 
     asprintf(&ipc_filename, "%s/%s",
-             ompi_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
+             opal_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
     if (NULL == ipc_filename) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("Out of memory");

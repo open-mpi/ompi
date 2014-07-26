@@ -293,7 +293,7 @@ static int check_reg_mem_basics(void)
 
     opal_show_help("help-mpi-btl-usnic.txt", "check_reg_mem_basics fail",
                    true,
-                   ompi_process_info.nodename,
+                   opal_process_info.nodename,
                    str_limit);
 
     return OPAL_ERR_OUT_OF_RESOURCE;
@@ -381,7 +381,7 @@ static int check_usnic_config(struct ibv_device_attr *device_attr,
     opal_show_help("help-mpi-btl-usnic.txt",
                    "not enough usnic resources",
                    true,
-                   ompi_process_info.nodename,
+                   opal_process_info.nodename,
                    ibv_get_device_name(module->device),
                    str);
     return OPAL_ERROR;
@@ -465,7 +465,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     if (0 != err) {
         /* API returns negative errno values */
         opal_show_help("help-mpi-btl-usnic.txt", "rtnetlink init fail",
-                       true, ompi_process_info.nodename, strerror(-err));
+                       true, opal_process_info.nodename, strerror(-err));
         return NULL;
     }
 
@@ -566,7 +566,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         filter = NULL;
     }
 
-    num_local_procs = ompi_process_info.num_local_peers;
+    num_local_procs = opal_process_info.num_local_peers;
 
     /* Go through the list of ports and determine if we want it or
        not.  Create and (mostly) fill a module struct for each port
@@ -607,7 +607,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         if (0 != ibv_query_device(module->device_context, &device_attr)) {
             opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                            true, 
-                           ompi_process_info.nodename,
+                           opal_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->if_name,
                            "ibv_query_device", __FILE__, __LINE__,
@@ -1147,7 +1147,7 @@ static int init_module_from_port(opal_btl_usnic_module_t *module,
         opal_memchecker_base_mem_defined(&gid, sizeof(gid));
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
                        true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->if_name,
                        "ibv_query_gid", __FILE__, __LINE__,
@@ -1195,7 +1195,7 @@ static int init_module_from_port(opal_btl_usnic_module_t *module,
                That's a bad sign.  Let's ignore this port. */
             opal_show_help("help-mpi-btl-usnic.txt", "verbs_port_bw failed",
                            true,
-                           ompi_process_info.nodename,
+                           opal_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->if_name);
             return OPAL_ERROR;
@@ -1305,7 +1305,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
         str = strchr(argv[i], '/');
         if (NULL == str) {
             opal_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
-                           true, name, ompi_process_info.nodename,
+                           true, name, opal_process_info.nodename,
                            tmp, "Invalid specification (missing \"/\")");
             free(tmp);
             continue;
@@ -1314,7 +1314,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
         argv_prefix = atoi(str + 1);
         if (argv_prefix < 1 || argv_prefix > 32) {
             opal_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
-                           true, name, ompi_process_info.nodename,
+                           true, name, opal_process_info.nodename,
                            tmp, "Invalid specification (prefix < 1 or prefix >32)");
             free(tmp);
             continue;
@@ -1326,7 +1326,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
                         &((struct sockaddr_in*) &argv_inaddr)->sin_addr);
         if (1 != ret) {
             opal_show_help("help-mpi-btl-usnic.txt", "invalid if_inexclude",
-                           true, name, ompi_process_info.nodename, tmp,
+                           true, name, opal_process_info.nodename, tmp,
                            "Invalid specification (inet_pton() failed)");
             free(tmp);
             continue;

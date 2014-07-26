@@ -235,7 +235,7 @@ void opal_btl_usnic_connectivity_map(void)
        rank>.txt */
     asprintf(&filename, "%s-%s.pid%d.job%d.mcwrank%d.txt",
              mca_btl_usnic_component.connectivity_map_prefix,
-             ompi_process_info.nodename,
+             opal_process_info.nodename,
              getpid(),
              opal_process_name_jobid(opal_proc_local_get()->proc_name),
              opal_process_name_vpid(opal_proc_local_get()->proc_name));
@@ -251,7 +251,7 @@ void opal_btl_usnic_connectivity_map(void)
         dirname[sizeof(dirname) - 1] = '\0';
         opal_show_help("help-mpi-btl-usnic.txt", "cannot write to map file",
                        true,
-                       ompi_process_info.nodename,
+                       opal_process_info.nodename,
                        filename,
                        dirname,
                        strerror(errno), errno);
