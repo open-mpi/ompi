@@ -45,7 +45,7 @@ static int fetch(struct opal_dstore_base_module_t *mod,
 
     /* request the data from pmi */
     kv = OBJ_NEW(opal_value_t);
-    if (OPAL_SUCCESS != (rc = opal_pmix.get((opal_identifier_t*)uid, key, kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix.get((opal_identifier_t*)uid, key, &kv))) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(kv);
         return rc;

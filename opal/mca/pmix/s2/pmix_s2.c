@@ -49,7 +49,7 @@ static int s2_fence(void);
 static int s2_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int s2_get(opal_identifier_t *id,
         const char *key,
-        opal_value_t *kv);
+        opal_value_t **kv);
 static void s2_get_nb(opal_identifier_t *id,
                       const char *key,
                       opal_pmix_cbfunc_t cbfunc,
@@ -386,11 +386,12 @@ static int kvs_get(const char key[], char value [], int maxvalue)
 
 static int s2_get(opal_identifier_t *id,
         const char *key,
-        opal_value_t *kv)
+        opal_value_t **kv)
 {
     int rc;
-    rc = cache_keys_locally(id, key, &kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
-    if (NULL == kv) {
+    *kv = NULL;
+    rc = cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
+    if (NULL == *kv) {
         return OPAL_ERROR;
     }
     return rc;
