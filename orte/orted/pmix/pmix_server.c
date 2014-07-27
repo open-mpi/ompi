@@ -44,6 +44,7 @@
 #endif
 #include <ctype.h>
 
+#include "opal_stdint.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
@@ -54,6 +55,7 @@
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/mca/dstore/dstore.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -75,6 +77,7 @@ bool pmix_server_distribute_data = false;
 opal_hash_table_t *pmix_server_peers = NULL;
 int pmix_server_verbosity = -1;
 int pmix_server_output = -1;
+int pmix_server_handle = -1;
 static bool initialized = false;
 static struct sockaddr_un address;
 static int pmix_server_listener_socket = -1;
@@ -94,7 +97,7 @@ void pmix_server_register(void)
 
     /* register a verbosity */
     pmix_server_verbosity = -1;
-    (void) mca_base_var_register ("orte", "pmix", NULL, "server_verbosity",
+    (void) mca_base_var_register ("orte", "pmix", NULL, "server_verbose",
                                   "Debug verbosity for PMIx server",
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
@@ -111,6 +114,7 @@ void pmix_server_register(void)
 int pmix_server_init(void)
 {
     int rc;
+    char *uri;
 
     if (initialized) {
         return ORTE_SUCCESS;
@@ -141,13 +145,21 @@ int pmix_server_init(void)
     snprintf(address.sun_path, sizeof(address.sun_path)-1,
              "%s/%s/%s/0/%s", orte_process_info.tmpdir_base,
              orte_process_info.top_session_dir,
-             ORTE_JOB_FAMILY_PRINT(ORTE_PROC_MY_NAME->jobid), "usock");
-    opal_output_verbose(2, pmix_server_output,
-                        "%s PMIX server path: %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), address.sun_path);
+             ORTE_JOB_FAMILY_PRINT(ORTE_PROC_MY_NAME->jobid), "pmix");
 
     /* add it to our launch environment so our children get it */
-    opal_setenv("PMIX_SERVER_PATH", address.sun_path, true, &orte_launch_environ);
+    (void)asprintf(&uri, "%"PRIu64":%s", *(opal_identifier_t*)&orte_process_info.my_name, address.sun_path);
+    opal_output_verbose(2, pmix_server_output,
+                        "%s PMIX server uri: %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), uri);
+    opal_setenv("PMIX_SERVER_URI", uri, true, &orte_launch_environ);
+    free(uri);
+
+    /* setup the datastore handle */
+    if (0 > (pmix_server_handle = opal_dstore.open("pmix"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
 
     /* start listening for connection requests */
     if (ORTE_SUCCESS != (rc = pmix_server_start_listening(&address))) {
@@ -166,6 +178,10 @@ void pmix_server_finalize(void)
     if (!initialized) {
         return;
     }
+
+    opal_output_verbose(2, pmix_server_output,
+                        "%s Finalizing PMIX server",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     /* stop listening */
     if (pmix_server_listener_ev_active) {
@@ -261,6 +277,10 @@ static int pmix_server_start_listening(struct sockaddr_un *address)
     opal_event_set_priority(&pmix_server_listener_event, ORTE_MSG_PRI);
     opal_event_add(&pmix_server_listener_event, 0);
 
+    opal_output_verbose(2, pmix_server_output,
+                        "%s pmix server listening on socket %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), sd);
+
     return ORTE_SUCCESS;
 }
 
@@ -339,8 +359,8 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
             pmix_server_peer_event_init(peer);
 
             if (pmix_server_send_connect_ack(peer) != ORTE_SUCCESS) {
-                opal_output(0, "%s-%s usock_peer_accept: "
-                            "usock_peer_send_connect_ack failed\n",
+                opal_output(0, "%s usock_peer_accept: "
+                            "usock_peer_send_connect_ack to %s failed\n",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&(peer->name)));
                 peer->state = PMIX_SERVER_FAILED;
@@ -486,11 +506,3 @@ static void pdes(pmix_server_peer_t *p)
 OBJ_CLASS_INSTANCE(pmix_server_peer_t,
                    opal_object_t,
                    pcon, pdes);
-
-static void popcon(pmix_server_peer_op_t *p)
-{
-    p->peer = NULL;
-}
-OBJ_CLASS_INSTANCE(pmix_server_peer_op_t,
-                   opal_object_t,
-                   popcon, NULL);

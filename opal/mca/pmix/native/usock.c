@@ -72,12 +72,41 @@ static OBJ_CLASS_INSTANCE(pmix_usock_op_t,
         opal_event_active(&op->ev, OPAL_EV_WRITE, 1);                    \
     } while(0);
 
-void pmix_usock_process_send(int fd, short args, void *cbdata)
+void pmix_usock_send_recv(int fd, short args, void *cbdata)
 {
-    pmix_usock_send_t *msg = (pmix_usock_send_t*)cbdata;
+    pmix_usock_sr_t *ms = (pmix_usock_sr_t*)cbdata;
+    pmix_usock_posted_recv_t *req;
+    pmix_usock_send_t *snd;
+    uint32_t tag = UINT32_MAX;
 
-    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "pmix:usock processing send to server");
+    if (NULL != ms->cbfunc) {
+        /* if a callback msg is expected, setup a recv for it */
+        req = OBJ_NEW(pmix_usock_posted_recv_t);
+        /* take the next tag in the sequence */
+        if (UINT32_MAX == mca_pmix_native_component.tag) {
+            mca_pmix_native_component.tag = 0;
+        }
+        req->tag = mca_pmix_native_component.tag++;
+        tag = req->tag;
+        req->cbfunc = ms->cbfunc;
+        req->cbdata = ms->cbdata;
+        opal_output_verbose(5, opal_pmix_base_framework.framework_output,
+                            "posting recv on tag %d", req->tag);
+        /* add it to the list of recvs - we cannot have unexpected messages
+         * in this subsystem as the server never sends us something that
+         * we didn't previously request */
+        opal_list_append(&mca_pmix_native_component.posted_recvs, &req->super);
+    }
+
+    snd = OBJ_NEW(pmix_usock_send_t);
+    snd->hdr.id = *OPAL_MY_ID;
+    snd->hdr.type = PMIX_USOCK_USER;
+    snd->hdr.tag = tag;
+    snd->hdr.nbytes = ms->bfr->bytes_used;
+    snd->data = ms->bfr->base_ptr;
+    /* always start with the header */
+    snd->sdptr = (char*)&snd->hdr;
+    snd->sdbytes = sizeof(pmix_usock_hdr_t);
 
     /* add the msg to the send queue if we are already connected*/
     if (PMIX_USOCK_CONNECTED == mca_pmix_native_component.state) {
@@ -85,10 +114,10 @@ void pmix_usock_process_send(int fd, short args, void *cbdata)
                             "usock:send_nb: already connected to server - queueing for send");
         /* if there is no message on-deck, put this one there */
         if (NULL == mca_pmix_native_component.send_msg) {
-            mca_pmix_native_component.send_msg = msg;
+            mca_pmix_native_component.send_msg = snd;
         } else {
             /* add it to the queue */
-            opal_list_append(&mca_pmix_native_component.send_queue, &msg->super);
+            opal_list_append(&mca_pmix_native_component.send_queue, &snd->super);
         }
         /* ensure the send event is active */
         if (!mca_pmix_native_component.send_ev_active) {
@@ -101,7 +130,7 @@ void pmix_usock_process_send(int fd, short args, void *cbdata)
     /* add the message to the queue for sending after the
      * connection is formed
      */
-    opal_list_append(&mca_pmix_native_component.send_queue, &msg->super);
+    opal_list_append(&mca_pmix_native_component.send_queue, &snd->super);
 
     if (PMIX_USOCK_CONNECTING != mca_pmix_native_component.state &&
         PMIX_USOCK_CONNECT_ACK != mca_pmix_native_component.state) {
@@ -114,53 +143,6 @@ void pmix_usock_process_send(int fd, short args, void *cbdata)
                             "usock:send_nb: initiating connection to server");
         mca_pmix_native_component.state = PMIX_USOCK_CONNECTING;
         PMIX_ACTIVATE_USOCK_STATE(pmix_usock_try_connect);
-    }
-}
-
-void pmix_usock_post_recv(int fd, short args, void *cbdata)
-{
-    pmix_usock_posted_recv_t *req = (pmix_usock_posted_recv_t*)cbdata;
-    pmix_usock_posted_recv_t *rcv;
-    pmix_usock_recv_t *msg;
-    opal_buffer_t buf;
-
-    opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                        "posting recv");
-
-    /* bozo check - cannot have two receives for the same tag */
-    OPAL_LIST_FOREACH(rcv, &mca_pmix_native_component.posted_recvs, pmix_usock_posted_recv_t) {
-        if (req->tag == rcv->tag) {
-            opal_output(0, "TWO RECEIVES WITH SAME TAG %d - ABORTING", req->tag);
-            abort();
-        }
-    }
-
-    opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                        "posting recv on tag %d", req->tag);
-    /* add it to the list of recvs */
-    opal_list_append(&mca_pmix_native_component.posted_recvs, &req->super);
-
-    /* check to see if a message has already arrived for this recv */
-    OPAL_LIST_FOREACH(msg, &mca_pmix_native_component.unmatched_msgs, pmix_usock_recv_t) {
-        opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                            "checking unmatched msg on tag %u for tag %u",
-                            msg->hdr.tag, req->tag);
-
-        if (msg->hdr.tag == req->tag) {
-            /* construct and load the buffer */
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            opal_dss.load(&buf, msg->data, msg->hdr.nbytes);
-            if (NULL != req->cbfunc) {
-                req->cbfunc(&buf, req->cbdata);
-            }
-            OBJ_DESTRUCT(&buf);  // free's the msg data
-            opal_list_remove_item(&mca_pmix_native_component.unmatched_msgs, &msg->super);
-            OBJ_RELEASE(msg);
-            /* also done with the request */
-            opal_list_remove_item(&mca_pmix_native_component.posted_recvs, &req->super);
-            OBJ_RELEASE(req);
-            break;
-        }
     }
 }
 
@@ -185,24 +167,23 @@ void pmix_usock_process_msg(int fd, short flags, void *cbdata)
                 /* construct and load the buffer */
                 OBJ_CONSTRUCT(&buf, opal_buffer_t);
                 opal_dss.load(&buf, msg->data, msg->hdr.nbytes);
+                msg->data = NULL;  // protect the data region
                 if (NULL != rcv->cbfunc) {
                     rcv->cbfunc(&buf, rcv->cbdata);
                 }
                 OBJ_DESTRUCT(&buf);  // free's the msg data
-                opal_list_remove_item(&mca_pmix_native_component.unmatched_msgs, &msg->super);
-                OBJ_RELEASE(msg);
                 /* also done with the recv */
                 opal_list_remove_item(&mca_pmix_native_component.posted_recvs, &rcv->super);
                 OBJ_RELEASE(rcv);
-                break;
+                OBJ_RELEASE(msg);
+                return;
             }
         }
     }
 
-    /* we get here if no matching recv was found - we then hold
-     * the message until such a recv is issued
-     */
-    opal_list_append(&mca_pmix_native_component.unmatched_msgs, &msg->super);
+    /* we get here if no matching recv was found - this is an error */
+    opal_output(0, "UNEXPECTED MESSAGE");
+    OBJ_RELEASE(msg);
 }
 
 static int usock_create_socket(void)

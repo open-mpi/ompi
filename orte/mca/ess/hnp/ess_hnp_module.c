@@ -75,6 +75,8 @@
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/state/state.h"
 
+#include "orte/orted/pmix/pmix_server.h"
+
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -673,6 +675,13 @@ static int rte_init(void)
         free(contact_path);
     }
 
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
+        goto error;
+    }
+
     /* setup the routed info - the selected routed component
      * will know what to do. 
      */
@@ -821,6 +830,9 @@ static int rte_finalize(void)
         }
         signals_set = false;
     }
+
+    /* shutdown the pmix server */
+    pmix_server_finalize();
 
     /* close the dfs */
     (void) mca_base_framework_close(&orte_dfs_base_framework);

@@ -89,6 +89,16 @@ typedef struct {
 } pmix_usock_recv_t;
 OBJ_CLASS_DECLARATION(pmix_usock_recv_t);
 
+/* usock struct for posting send/recv request */
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    opal_buffer_t *bfr;
+    pmix_usock_cbfunc_t cbfunc;
+    void *cbdata;
+} pmix_usock_sr_t;
+OBJ_CLASS_DECLARATION(pmix_usock_sr_t);
+
 /* usock structure for tracking posted recvs */
 typedef struct {
     opal_list_item_t super;
@@ -105,6 +115,7 @@ typedef struct {
     opal_object_t super;
     opal_event_t ev;
     volatile bool active;
+    opal_buffer_t data;
     opal_pmix_cbfunc_t cbfunc;
     void *cbdata;
 } pmix_cb_t;
@@ -123,6 +134,7 @@ typedef struct {
     int retries;                  // number of times we have tried to connect to this address
     pmix_usock_state_t state;
     opal_event_t op_event;        // used for connecting and operations other than read/write
+    uint32_t tag;                 // current tag
     opal_event_t send_event;      // registration with event thread for send events
     bool send_ev_active;
     opal_event_t recv_event;      // registration with event thread for recv events
@@ -133,7 +145,6 @@ typedef struct {
     pmix_usock_send_t *send_msg;  // current send in progress
     pmix_usock_recv_t *recv_msg;  // current recv in progress
     opal_list_t posted_recvs;     // list of pmix_usock_posted_recv_t
-    opal_list_t unmatched_msgs;   // list of pmix_usock_recv_t messages waiting to be matched
 } opal_pmix_native_component_t;
 
 OPAL_DECLSPEC extern opal_pmix_native_component_t mca_pmix_native_component;
@@ -142,9 +153,8 @@ OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_native_module;
 
 
 /* module-level shared functions */
-OPAL_MODULE_DECLSPEC void pmix_usock_process_send(int fd, short args, void *cbdata);
 OPAL_MODULE_DECLSPEC void pmix_usock_process_msg(int fd, short flags, void *cbdata);
-OPAL_MODULE_DECLSPEC void pmix_usock_post_recv(int fd, short args, void *cbdata);
+OPAL_MODULE_DECLSPEC void pmix_usock_send_recv(int fd, short args, void *cbdata);
 OPAL_MODULE_DECLSPEC void pmix_usock_send_handler(int sd, short flags, void *cbdata);
 OPAL_MODULE_DECLSPEC void pmix_usock_recv_handler(int sd, short flags, void *cbdata);
 OPAL_MODULE_DECLSPEC char* pmix_usock_state_print(pmix_usock_state_t state);
@@ -153,45 +163,20 @@ OPAL_MODULE_DECLSPEC int usock_send_connect_ack(void);
 
 
 /* internal convenience macros */
-#define PMIX_ACTIVATE_POST_SEND(b)                                      \
+#define PMIX_ACTIVATE_SEND_RECV(b, cb, d)                               \
     do {                                                                \
-        pmix_usock_send_t *ms;                                          \
+        pmix_usock_sr_t *ms;                                            \
         opal_output_verbose(5, opal_pmix_base_framework.framework_output, \
                             "[%s:%d] post send to server",              \
                             __FILE__, __LINE__);                        \
-        ms = OBJ_NEW(pmix_usock_send_t);                                \
-        ms->hdr.id = *OPAL_MY_ID;                                       \
-        ms->hdr.type = PMIX_USOCK_USER;                                 \
-        ms->hdr.nbytes = (b)->bytes_used;                               \
-        ms->data = (b)->base_ptr;                                       \
-        /* always start with the header */                              \
-        ms->sdptr = (char*)&ms->hdr;                                    \
-        ms->sdbytes = sizeof(pmix_usock_hdr_t);                         \
+        ms = OBJ_NEW(pmix_usock_sr_t);                                  \
+        ms->bfr = (b);                                                  \
+        ms->cbfunc = (cb);                                              \
+        ms->cbdata = (d);                                               \
         opal_event_set(mca_pmix_native_component.evbase, &((ms)->ev), -1, \
-                       OPAL_EV_WRITE, pmix_usock_process_send, (ms));   \
+                       OPAL_EV_WRITE, pmix_usock_send_recv, (ms));   \
         opal_event_set_priority(&((ms)->ev), OPAL_EV_MSG_LO_PRI);       \
         opal_event_active(&((ms)->ev), OPAL_EV_WRITE, 1);               \
-    } while(0);
-
-#define PMIX_ACTIVATE_POST_RECV(cb, d)                                  \
-    do {                                                                \
-        pmix_usock_posted_recv_t *req;                                  \
-        opal_output_verbose(5, opal_pmix_base_framework.framework_output, \
-                            "[%s:%d] post recv",                        \
-                            __FILE__, __LINE__);                        \
-        req = OBJ_NEW(pmix_usock_posted_recv_t);                        \
-        /* take the next tag in the sequence */                         \
-        if (UINT32_MAX == tag) {                                        \
-            tag = 0;                                                    \
-        }                                                               \
-        req->tag = tag++;                                               \
-        req->cbfunc = (cb);                                             \
-        req->cbdata = (d);                                              \
-        opal_event_set(mca_pmix_native_component.evbase, &req->ev, -1,  \
-                       OPAL_EV_WRITE,                                   \
-                       pmix_usock_post_recv, req);                      \
-        opal_event_set_priority(&req->ev, OPAL_EV_MSG_LO_PRI);          \
-        opal_event_active(&req->ev, OPAL_EV_WRITE, 1);                  \
     } while(0);
 
 #define PMIX_ACTIVATE_POST_MSG(ms)                                      \

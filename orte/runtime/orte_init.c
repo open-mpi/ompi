@@ -44,6 +44,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -127,17 +128,22 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
 
-    /* we must have the pmix framework setup prior to opening/selecting ESS
-     * as some of those components may depend on it */
-    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_open";
-        goto error;
-    }
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_pmix_base_select";
-        goto error;
+    if (ORTE_PROC_IS_APP) {
+        /* we must have the pmix framework setup prior to opening/selecting ESS
+         * as some of those components may depend on it */
+        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_pmix_base_open";
+            goto error;
+        }
+        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "opal_pmix_base_select";
+            goto error;
+        }
+    } else {
+        /* let the pmix server register params */
+        pmix_server_register();
     }
 
     /* open the ESS and select the correct module for this environment */

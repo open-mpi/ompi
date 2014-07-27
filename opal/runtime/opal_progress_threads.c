@@ -78,7 +78,8 @@ static void wakeup(int fd, short args, void *cbdata)
 }
 static void* progress_engine(opal_object_t *obj)
 {
-    opal_progress_tracker_t *trk = (opal_progress_tracker_t*)obj;
+    opal_thread_t *t = (opal_thread_t*)obj;
+    opal_progress_tracker_t *trk = (opal_progress_tracker_t*)t->t_arg;
 
     while (trk->ev_active) {
         opal_event_loop(trk->ev_base, OPAL_EVLOOP_ONCE);

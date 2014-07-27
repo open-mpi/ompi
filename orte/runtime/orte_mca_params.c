@@ -64,7 +64,7 @@ int orte_register_params(void)
         return ORTE_SUCCESS;
     }
     passed_thru = true;
-    
+
     /* get a clean output channel too - need to do this here because
      * we use it below, and orterun and some other tools call this
      * function prior to calling orte_init

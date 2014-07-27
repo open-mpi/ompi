@@ -55,8 +55,10 @@
 #include "opal/util/net.h"
 #include "opal/util/error.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/sec/sec.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -321,7 +323,17 @@ static int read_bytes(pmix_server_peer_t* peer)
 void pmix_server_recv_handler(int sd, short flags, void *cbdata)
 {
     pmix_server_peer_t* peer = (pmix_server_peer_t*)cbdata;
-    int rc;
+    int rc, ret, i;
+    int32_t cnt;
+    pmix_cmd_t cmd;
+    opal_buffer_t *reply, xfer, *bptr, buf;
+    opal_value_t kv, *kvp;
+    opal_identifier_t id;
+    char *key;
+    orte_process_name_t name;
+    orte_proc_t *proc;
+    bool local;
+    opal_list_t values;
 
     opal_output_verbose(2, pmix_server_output,
                         "%s:usock:recv:handler called for peer %s",
@@ -439,11 +451,159 @@ void pmix_server_recv_handler(int sd, short flags, void *cbdata)
                                     ORTE_NAME_PRINT((orte_process_name_t*)&(peer->recv_msg->hdr.id)),
                                     (int)peer->recv_msg->hdr.nbytes,
                                     peer->recv_msg->hdr.tag);
-                /* process it */
+                /* xfer the message to a buffer for unpacking */
+                OBJ_CONSTRUCT(&xfer, opal_buffer_t);
+                opal_dss.load(&xfer, peer->recv_msg->data, peer->recv_msg->hdr.nbytes);
+                peer->recv_msg->data = NULL;  // protect the transferred data
+                /* retrieve the cmd */
+                cnt = 1;
+                if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &cmd, &cnt, PMIX_CMD_T))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&xfer);
+                    OBJ_RELEASE(peer->recv_msg);
+                    return;
+                }
                 opal_output_verbose(2, pmix_server_output,
-                                    "%s PROCESSING MESSAGE",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                OBJ_RELEASE(peer->recv_msg);
+                                    "%s recvd pmix cmd %d",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cmd);
+                switch(cmd) {
+                case PMIX_ABORT_CMD:
+                    opal_output_verbose(2, pmix_server_output,
+                                        "%s recvd ABORT",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                    /* unpack the status */
+                    /* unpack the message */
+                    /* report abort request to errmgr */
+                    ORTE_ACTIVATE_PROC_STATE((orte_process_name_t*)&(peer->recv_msg->hdr.id), ORTE_PROC_STATE_CALLED_ABORT);
+                    OBJ_DESTRUCT(&xfer);
+                    OBJ_RELEASE(peer->recv_msg);
+                    return;
+                case PMIX_FENCE_CMD:
+                    opal_output_verbose(2, pmix_server_output,
+                                        "%s recvd FENCE",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                    /* if data was given, unpack and store it in the pmix dstore */
+                    cnt = 1;
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &bptr, &cnt, OPAL_BUFFER))) {
+                        /* it is okay if there was no data - it's just a fence */
+                        ORTE_ERROR_LOG(rc);
+                        goto reply_fence;
+                    }
+                    OBJ_CONSTRUCT(&kv, opal_value_t);
+                    kv.key = strdup("modex");
+                    kv.type = OPAL_BYTE_OBJECT;
+                    kv.data.bo.bytes = (uint8_t*)bptr->base_ptr;
+                    kv.data.bo.size = bptr->bytes_used;
+                    bptr->base_ptr = NULL;  // protect the data region
+                    OBJ_RELEASE(bptr);
+                    if (OPAL_SUCCESS != (rc = opal_dstore.store(pmix_server_handle, &peer->recv_msg->hdr.id, &kv))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&kv);
+                        OBJ_DESTRUCT(&xfer);
+                        OBJ_RELEASE(peer->recv_msg);
+                        return;
+                    }
+                    OBJ_DESTRUCT(&kv);
+                reply_fence:
+                    /* send a release message back to the sender */
+                    reply = OBJ_NEW(opal_buffer_t);
+                    /* pack the tag */
+                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &peer->recv_msg->hdr.tag, 1, OPAL_UINT32))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(reply);
+                        OBJ_DESTRUCT(&xfer);
+                        OBJ_RELEASE(peer->recv_msg);
+                        return;
+                    }
+                    PMIX_SERVER_QUEUE_SEND(peer, peer->recv_msg->hdr.tag, reply);
+                    OBJ_DESTRUCT(&xfer);
+                    OBJ_RELEASE(peer->recv_msg);
+                    return;
+                case PMIX_GET_CMD:
+                    opal_output_verbose(2, pmix_server_output,
+                                        "%s recvd GET",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                    /* unpack the id of the proc whose data is being requested */
+                    cnt = 1;
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &id, &cnt, OPAL_UINT64))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&xfer);
+                        return;
+                    }
+                    /* unpack the key */
+                    cnt = 1;
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &key, &cnt, OPAL_STRING))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&xfer);
+                        return;
+                    }
+                    /* is this proc one of mine? */
+                    memcpy((char*)&name, (char*)&id, sizeof(orte_process_name_t));
+                    local = false;
+                    for (i=0; i < orte_local_children->size; i++) {
+                        if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                            if (name.jobid == proc->name.jobid &&
+                                name.vpid == proc->name.vpid) {
+                                local = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (local) {
+                        /* yes - retrieve the entire blob for that proc */
+                        OBJ_CONSTRUCT(&values, opal_list_t);
+                        ret = opal_dstore.fetch(pmix_server_handle, &id, key, &values);
+                        free(key);
+                        /* return it */
+                        reply = OBJ_NEW(opal_buffer_t);
+                        /* pack the status */
+                        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(reply);
+                            OBJ_DESTRUCT(&xfer);
+                            OBJ_RELEASE(peer->recv_msg);
+                            OPAL_LIST_DESTRUCT(&values);
+                            return;
+                        }
+                        if (OPAL_SUCCESS == ret) {
+                            /* pack the blob */
+                            kvp = (opal_value_t*)opal_list_get_first(&values);
+                            if (OPAL_BYTE_OBJECT == kvp->type) {
+                                OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                                opal_dss.load(&buf, kvp->data.bo.bytes, kvp->data.bo.size);
+                                bptr = &buf;
+                                if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                                    ORTE_ERROR_LOG(rc);
+                                    OBJ_RELEASE(reply);
+                                    OBJ_DESTRUCT(&xfer);
+                                    OBJ_RELEASE(peer->recv_msg);
+                                    OBJ_DESTRUCT(&buf);
+                                    OPAL_LIST_DESTRUCT(&values);
+                                    return;
+                                }
+                                OBJ_DESTRUCT(&buf);
+                            }
+                        }
+                        PMIX_SERVER_QUEUE_SEND(peer, peer->recv_msg->hdr.tag, reply);
+                        OBJ_DESTRUCT(&xfer);
+                        OBJ_RELEASE(peer->recv_msg);
+                        OPAL_LIST_DESTRUCT(&values);
+                        return;
+                    }
+                    /* no - track the request as we'll have to get it
+                     * from the host daemon */
+                    /* see who is hosting this proc */
+                    /* send the request */
+                    free(key);
+                    OBJ_DESTRUCT(&xfer);
+                    OBJ_RELEASE(peer->recv_msg);
+                    return;
+                default:
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+                    OBJ_DESTRUCT(&xfer);
+                    OBJ_RELEASE(peer->recv_msg);
+                    return;
+                }
             }
         } else if (ORTE_ERR_RESOURCE_BUSY == rc ||
                    ORTE_ERR_WOULD_BLOCK == rc) {
@@ -745,67 +905,6 @@ int pmix_server_peer_recv_connect_ack(pmix_server_peer_t* pr,
     }
     return ORTE_SUCCESS;
 }
-
-#if 0
-static void process_send(int fd, short args, void *cbdata)
-{
-    pmix_server_msg_op_t *op = (pmix_server_msg_op_t*)cbdata;
-    pmix_server_peer_t *peer;
-
-    opal_output_verbose(2, pmix_server_output,
-                        "%s:[%s:%d] processing send to peer %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst));
-
-    /* if I am a daemon, the only way I should be given this
-     * message to send is if the proc is local to me
-     */
-    if (NULL == (peer = pmix_server_peer_lookup(&op->msg->dst))) {
-        /* we don't know how to talk to this proc,
-         * so send this back up to the OOB base so it
-         * can try another transport
-         */
-        ORTE_ACTIVATE_USOCK_MSG_ERROR(NULL, op->msg,
-                                      &op->msg->dst,
-                                      pmix_server_component_cannot_send);
-        goto cleanup;
-    }
-
-    /* add the msg to the target's send queue */
-    if (PMIX_SERVER_CONNECTED == peer->state) {
-        opal_output_verbose(2, pmix_server_output,
-                            "%s usock:send_nb: already connected to %s - queueing for send",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        PMIX_SERVER_QUEUE_SEND(op->msg, peer);
-        goto cleanup;
-    }
-
-    /* add the message to the queue for sending after the
-     * connection is formed
-     */
-    PMIX_SERVER_QUEUE_PENDING(op->msg, peer);
-
-    if (PMIX_SERVER_CONNECTING != peer->state &&
-        PMIX_SERVER_CONNECT_ACK != peer->state) {
-        /* we have to initiate the connection - again, we do not
-         * want to block while the connection is created.
-         * So throw us into an event that will create
-         * the connection via a mini-state-machine :-)
-         */
-        opal_output_verbose(2, pmix_server_output,
-                            "%s usock:send_nb: initiating connection to %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer->name));
-        peer->state = PMIX_SERVER_CONNECTING;
-        ORTE_ACTIVATE_USOCK_CONN_STATE(peer, pmix_server_peer_try_connect);
-    }
-
- cleanup:
-    OBJ_RELEASE(op);
-}
-#endif
 
 /*
  * Check the status of the connection. If the connection failed, will retry

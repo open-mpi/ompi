@@ -33,10 +33,8 @@ int opal_pmix_base_select(void)
                                         &opal_pmix_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
-        /* It is okay if we don't find a runnable component - default
-         * to the unsupported default. 
-         */
-        goto cleanup;
+        /* notify caller that no available component found */
+        return OPAL_ERR_NOT_FOUND;
     }
 
     /* Save the winner */

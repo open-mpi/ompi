@@ -122,246 +122,51 @@ typedef struct {
 } pmix_server_peer_t;
 OBJ_CLASS_DECLARATION(pmix_server_peer_t);
 
-/*
- * Data structure for accepting connections.
- */
-struct pmix_server_listener_t {
-    opal_object_t super;
-    bool ev_active;
-    opal_event_t event;
-    int sd;
-};
-typedef struct pmix_server_listener_t pmix_server_listener_t;
-OBJ_CLASS_DECLARATION(pmix_server_listener_t);
-
-typedef struct {
-    opal_object_t super;
-    opal_event_t ev;
-    pmix_server_peer_t *peer;
-} pmix_server_peer_op_t;
-OBJ_CLASS_DECLARATION(pmix_server_peer_op_t);
-
-#define ORTE_ACTIVATE_USOCK_PEER_OP(p, cbfunc)          \
-    do {                                                \
-        pmix_server_peer_op_t *op;                      \
-        op = OBJ_NEW(pmix_server_peer_op_t);            \
-        op->peer = (p);                                 \
-        opal_event_set(orte_event_base, &op->ev, -1,    \
-                       OPAL_EV_WRITE, (cbfunc), op);    \
-        opal_event_set_priority(&op->ev, ORTE_MSG_PRI); \
-        opal_event_active(&op->ev, OPAL_EV_WRITE, 1);   \
-    } while(0);
-
-/* Queue a message to be sent to a specified peer. The macro
- * checks to see if a message is already in position to be
- * sent - if it is, then the message provided is simply added
- * to the peer's message queue. If not, then the provided message
- * is placed in the "ready" position
- *
- * If the provided boolean is true, then the send event for the
- * peer is checked and activated if not already active. This allows
- * the macro to either immediately send the message, or to queue
- * it as "pending" for later transmission - e.g., after the
- * connection procedure is completed
- *
- * p => pointer to pmix_server_peer_t
- * s => pointer to pmix_server_send_t
- * f => true if send event is to be activated
- */
-#define PMIX_SERVER_QUEUE_MSG(p, s, f)                                \
-    do {                                                                \
-        opal_output_verbose(5, orte_oob_base_framework.framework_output, \
-                            "%s:[%s:%d] queue msg to %s",               \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((s)->hdr.dst)));          \
-        /* if there is no message on-deck, put this one there */        \
-        if (NULL == (p)->send_msg) {                                    \
-            (p)->send_msg = (s);                                        \
-        } else {                                                        \
-            /* add it to the queue */                                   \
-            opal_list_append(&(p)->send_queue, &(s)->super);            \
-        }                                                               \
-        if ((f)) {                                                      \
-            /* if we aren't connected, then start connecting */         \
-            if (PMIX_SERVER_CONNECTED != (p)->state) {                \
-                (p)->state = PMIX_SERVER_CONNECTING;                  \
-                ORTE_ACTIVATE_USOCK_CONN_STATE((p),                     \
-                                       pmix_server_peer_try_connect); \
-            } else {                                                    \
-                /* ensure the send event is active */                   \
-                if (!(p)->send_ev_active) {                             \
-                    opal_event_add(&(p)->send_event, 0);                \
-                    (p)->send_ev_active = true;                         \
-                }                                                       \
-            }                                                           \
-        }                                                               \
-    }while(0);
-
-/* queue a message to be sent by one of our modules - must
+/* queue a message to be sent by one of our procs - must
  * provide the following params:
  *
- * m - the RML message to be sent
- * p - the final recipient
+ * p - the peer object of the process
+ * t - tag to be sent to
+ * b - buffer to be sent
  */
-#define PMIX_SERVER_QUEUE_SEND(m, p)                                  \
+#define PMIX_SERVER_QUEUE_SEND(p, t, b)                                 \
     do {                                                                \
-        pmix_server_send_t *msg;                                      \
-        int i;                                                          \
-        opal_output_verbose(5, orte_oob_base_framework.framework_output, \
+        pmix_server_send_t *msg;                                        \
+        opal_output_verbose(2, pmix_server_output,                      \
                             "%s:[%s:%d] queue send to %s",              \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
                             __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((m)->dst)));              \
-        msg = OBJ_NEW(pmix_server_send_t);                            \
+                            ORTE_NAME_PRINT(&(p)->name));               \
+        msg = OBJ_NEW(pmix_server_send_t);                              \
         /* setup the header */                                          \
-        msg->hdr.origin = (m)->origin;                                  \
-        msg->hdr.dst = (m)->dst;                                        \
-        msg->hdr.type = PMIX_SERVER_USER;                             \
-        msg->hdr.tag = (m)->tag;                                        \
+        msg->hdr.id = *OPAL_MY_ID;                                      \
+        msg->hdr.type = PMIX_USOCK_USER;                                \
+        msg->hdr.tag = (t);                                             \
+        msg->hdr.nbytes = (b)->bytes_used;                              \
         /* point to the actual message */                               \
-        msg->msg = (m);                                                 \
-        /* set the total number of bytes to be sent */                  \
-        if (NULL != (m)->buffer) {                                      \
-            msg->hdr.nbytes = (m)->buffer->bytes_used;                  \
-        } else if (NULL != (m)->iov) {                                  \
-            msg->hdr.nbytes = 0;                                        \
-            for (i=0; i < (m)->count; i++) {                            \
-                msg->hdr.nbytes += (m)->iov[i].iov_len;                 \
-            }                                                           \
-        } else {                                                        \
-            msg->hdr.nbytes = (m)->count;                               \
-        }                                                               \
+        msg->data = (b)->base_ptr;                                      \
         /* start the send with the header */                            \
         msg->sdptr = (char*)&msg->hdr;                                  \
         msg->sdbytes = sizeof(pmix_server_hdr_t);                     \
-        /* add to the msg queue for this peer */                        \
-        PMIX_SERVER_QUEUE_MSG((p), msg, true);                        \
-    }while(0);
-
-/* queue a message to be sent by one of our modules upon completing
- * the connection process - must provide the following params:
- *
- * m - the RML message to be sent
- * p - the final recipient
- */
-#define PMIX_SERVER_QUEUE_PENDING(m, p)                               \
-    do {                                                                \
-        pmix_server_send_t *msg;                                      \
-        int i;                                                          \
-        opal_output_verbose(5, orte_oob_base_framework.framework_output, \
-                            "%s:[%s:%d] queue pending to %s",           \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((m)->dst)));              \
-        msg = OBJ_NEW(pmix_server_send_t);                            \
-        /* setup the header */                                          \
-        msg->hdr.origin = (m)->origin;                                  \
-        msg->hdr.dst = (m)->dst;                                        \
-        msg->hdr.type = PMIX_SERVER_USER;                             \
-        msg->hdr.tag = (m)->tag;                                        \
-        /* point to the actual message */                               \
-        msg->msg = (m);                                                 \
-        /* set the total number of bytes to be sent */                  \
-        if (NULL != (m)->buffer) {                                      \
-            msg->hdr.nbytes = (m)->buffer->bytes_used;                  \
-        } else if (NULL != (m)->iov) {                                  \
-            msg->hdr.nbytes = 0;                                        \
-            for (i=0; i < (m)->count; i++) {                            \
-                msg->hdr.nbytes += (m)->iov[i].iov_len;                 \
-            }                                                           \
+        /* if there is no message on-deck, put this one there */        \
+        if (NULL == (p)->send_msg) {                                    \
+            (p)->send_msg = msg;                                        \
         } else {                                                        \
-            msg->hdr.nbytes = (m)->count;                               \
+            /* add it to the queue */                                   \
+            opal_list_append(&(p)->send_queue, &msg->super);            \
         }                                                               \
-        /* start the send with the header */                            \
-        msg->sdptr = (char*)&msg->hdr;                                  \
-        msg->sdbytes = sizeof(pmix_server_hdr_t);                     \
-        /* add to the msg queue for this peer */                        \
-        PMIX_SERVER_QUEUE_MSG((p), msg, false);                       \
+        /* ensure the send event is active */                           \
+        if (!(p)->send_ev_active) {                                     \
+            opal_event_add(&(p)->send_event, 0);                        \
+            (p)->send_ev_active = true;                                 \
+        }                                                               \
     }while(0);
-
-/* State machine for processing message */
-typedef struct {
-    opal_object_t super;
-    opal_event_t ev;
-    pmix_server_send_t *msg;
-} pmix_server_msg_op_t;
-OBJ_CLASS_DECLARATION(pmix_server_msg_op_t);
-
-#define ORTE_ACTIVATE_USOCK_POST_SEND(ms, cbfunc)                       \
-    do {                                                                \
-        pmix_server_msg_op_t *mop;                                    \
-        opal_output_verbose(5, orte_oob_base_framework.framework_output, \
-                            "%s:[%s:%d] post send to %s",               \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((ms)->dst)));             \
-        mop = OBJ_NEW(pmix_server_msg_op_t);                          \
-        mop->msg = (ms);                                                \
-        opal_event_set(orte_event_base, &mop->ev, -1,      \
-                       OPAL_EV_WRITE, (cbfunc), mop);                   \
-        opal_event_set_priority(&mop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&mop->ev, OPAL_EV_WRITE, 1);                  \
-    } while(0);
-
-
-
-/* State machine for connection operations */
-typedef struct {
-    opal_object_t super;
-    pmix_server_peer_t *peer;
-    opal_event_t ev;
-} pmix_server_conn_op_t;
-OBJ_CLASS_DECLARATION(pmix_server_conn_op_t);
 
 #define CLOSE_THE_SOCKET(socket)    \
     do {                            \
         shutdown(socket, 2);        \
         close(socket);              \
     } while(0)
-
-#define ORTE_ACTIVATE_USOCK_CONN_STATE(p, cbfunc)                       \
-    do {                                                                \
-        pmix_server_conn_op_t *cop;                                   \
-        opal_output_verbose(5, orte_oob_base_framework.framework_output, \
-                            "%s:[%s:%d] connect to %s",                 \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT((&(p)->name)));             \
-        cop = OBJ_NEW(pmix_server_conn_op_t);                         \
-        cop->peer = (p);                                                \
-        opal_event_set(orte_event_base, &cop->ev, -1,      \
-                       OPAL_EV_WRITE, (cbfunc), cop);                   \
-        opal_event_set_priority(&cop->ev, ORTE_MSG_PRI);                \
-        opal_event_active(&cop->ev, OPAL_EV_WRITE, 1);                  \
-    } while(0);
-
-#define ORTE_ACTIVATE_USOCK_ACCEPT_STATE(s, a, cbfunc)                  \
-    do {                                                                \
-        pmix_server_conn_op_t *cop;                                   \
-        cop = OBJ_NEW(pmix_server_conn_op_t);                         \
-        opal_event_set(orte_event_base, &cop->ev, s,       \
-                       OPAL_EV_READ, (cbfunc), cop);                    \
-        opal_event_set_priority(&cop->ev, ORTE_MSG_PRI);                \
-        opal_event_add(&cop->ev, 0);                                    \
-    } while(0);
-
-#define ORTE_RETRY_USOCK_CONN_STATE(p, cbfunc, tv)                      \
-    do {                                                                \
-        pmix_server_conn_op_t *cop;                                   \
-        opal_output_verbose(5, orte_oob_base_framework.framework_output, \
-                            "%s:[%s:%d] retry connect to %s",           \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                            __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT((&(p)->name)));             \
-        cop = OBJ_NEW(pmix_server_conn_op_t);                         \
-        cop->peer = (p);                                                \
-        opal_event_evtimer_set(orte_event_base,            \
-                               &cop->ev,                                \
-                               (cbfunc), cop);                          \
-        opal_event_evtimer_add(&cop->ev, (tv));                         \
-    } while(0);
-
 
 /* expose shared functions */
 extern void pmix_server_send_handler(int fd, short args, void *cbdata);
@@ -384,6 +189,7 @@ extern bool pmix_server_distribute_data;
 extern opal_hash_table_t *pmix_server_peers;
 extern int pmix_server_verbosity;
 extern int pmix_server_output;
+extern int pmix_server_handle;
 
 END_C_DECLS
 

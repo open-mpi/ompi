@@ -136,6 +136,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                 if (OPAL_SUCCESS == (rc = send_bytes(msg))) {
                     /* header is completely sent */
                     msg->hdr_sent = true;
+                    opal_output(0, "pmix_usock_peer_send_handler: header sent to server");
                     /* setup to send the data */
                     if (NULL == msg->data) {
                         /* this was a zero-byte msg - nothing more to do */
@@ -167,6 +168,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
             if (msg->hdr_sent) {
                 if (OPAL_SUCCESS == (rc = send_bytes(msg))) {
                     // message is complete
+                    opal_output(0, "pmix_usock_peer_send_handler: msg sent to server");
                     OBJ_RELEASE(msg);
                     mca_pmix_native_component.send_msg = NULL;
                     goto next;
@@ -535,7 +537,8 @@ static int usock_recv_connect_ack(void)
     /* compare the servers name to the expected value */
     if (hdr.id != mca_pmix_native_component.server) {
         opal_output(0, "usock_peer_recv_connect_ack: "
-                    "received unexpected process identifier %"PRIu64" from server", hdr.id);
+                    "received unexpected process identifier %"PRIu64" from server: expected %"PRIu64"",
+                    hdr.id, mca_pmix_native_component.server);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
         return OPAL_ERR_UNREACH;
