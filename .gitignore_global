@@ -253,7 +253,6 @@ ompi/include/mpif-io-handles.h
 ompi/include/mpi_portable_platform.h
 ompi/include/ompi/version.h
 ompi/include/ompi/frameworks.h
-ompi/mca/btl/openib/btl_openib_lex.c
 ompi/mca/coll/basic/coll-basic-version.h*
 ompi/mca/coll/demo/acinclude.m4
 ompi/mca/coll/demo/aclocal.m4
@@ -455,6 +454,7 @@ opal/include/opal/sys/powerpc/atomic-32-64.s
 opal/mca/base/*.obj
 opal/mca/base/mca_base_parse_paramfile_lex.c
 opal/mca/base/vc70.pdb
+opal/mca/btl/openib/btl_openib_lex.c
 opal/mca/crs/opal_crs.7
 opal/mca/event/libevent2021/libevent/stamp-h1
 opal/mca/event/libevent2021/libevent/autom4te.cache

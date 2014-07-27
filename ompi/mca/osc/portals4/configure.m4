@@ -21,7 +21,7 @@ AC_DEFUN([MCA_ompi_osc_portals4_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_osc_portals4_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/osc/portals4/Makefile])
 
-    OMPI_CHECK_PORTALS4([osc_portals4],
+    OPAL_CHECK_PORTALS4([osc_portals4],
                      [osc_portals4_happy="yes"],
                      [osc_portals4_happy="no"])
 

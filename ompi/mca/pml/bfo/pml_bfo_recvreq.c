@@ -23,17 +23,17 @@
 
 #include "ompi_config.h"
 
+#include "opal/util/arch.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mpool/mpool.h" 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h" 
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/mpool/mpool.h" 
 #include "pml_bfo_comm.h"
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_recvfrag.h"
 #include "pml_bfo_sendreq.h"
 #include "pml_bfo_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h" 
-#include "opal/util/arch.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_CUDA_SUPPORT
@@ -570,8 +570,8 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
         mca_btl_base_segment_t *seg = (mca_btl_base_segment_t *)(frag->rdma_segs + i * btl->btl_seg_size);
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        if ((recvreq->req_recv.req_base.req_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
-            (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
+        if ((recvreq->req_recv.req_base.req_proc->super.proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
+            (ompi_proc_local()->super.proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
             size += opal_swap_bytes4(seg->seg_len);
         } else 
 #endif

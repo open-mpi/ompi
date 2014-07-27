@@ -209,7 +209,7 @@ ompi_osc_base_process_op(void *outbuf,
         convertor.datatype = primitive_datatype;
 
         /* initialize convertor */
-        opal_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
+        opal_convertor_copy_and_prepare_for_recv(ompi_proc_local()->super.proc_convertor,
                                                  &(datatype->super),
                                                  count,
                                                  outbuf,
@@ -317,7 +317,7 @@ ompi_osc_base_sndrcv_op(void *origin,
         if (!contiguous_origin) {
             /* initialize send convertor */
             OBJ_CONSTRUCT(&send_convertor, opal_convertor_t);
-            opal_convertor_copy_and_prepare_for_send(ompi_proc_local()->proc_convertor,
+            opal_convertor_copy_and_prepare_for_send(opal_proc_local_get()->proc_convertor,
                                                      &(origin_dt->super), origin_count, origin, 0,
                                                      &send_convertor);
 
@@ -335,7 +335,7 @@ ompi_osc_base_sndrcv_op(void *origin,
             OBJ_CONSTRUCT(&recv_convertor, ompi_osc_base_convertor_t);
             recv_convertor.op = op;
             recv_convertor.datatype = ompi_datatype_get_single_predefined_type_from_args(target_dt);
-            opal_convertor_copy_and_prepare_for_recv(ompi_proc_local()->proc_convertor,
+            opal_convertor_copy_and_prepare_for_recv(opal_proc_local_get()->proc_convertor,
                                                      &(target_dt->super), target_count,
                                                      target, 0, &recv_convertor.convertor);
 

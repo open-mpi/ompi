@@ -21,7 +21,6 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -40,7 +39,9 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 {

@@ -23,8 +23,8 @@ AC_DEFUN([MCA_ompi_bcol_iboffload_CONFIG],[
     bcol_ofa_happy="no"
     bcol_mlnx_ofed_happy="no"
 
-    OMPI_CHECK_OPENFABRICS([bcol_iboffload], [bcol_ofa_happy="yes"])
-    OMPI_CHECK_MLNX_OPENFABRICS([bcol_iboffload], [bcol_mlnx_ofed_happy="yes"])
+    OPAL_CHECK_OPENFABRICS([bcol_iboffload], [bcol_ofa_happy="yes"])
+    OPAL_CHECK_MLNX_OPENFABRICS([bcol_iboffload], [bcol_mlnx_ofed_happy="yes"])
 
     AS_IF([test "$bcol_ofa_happy" = "yes" -a "$bcol_mlnx_ofed_happy" = "yes"],
           [$1],

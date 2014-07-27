@@ -491,7 +491,7 @@ static bool have_local_peers(ompi_group_t *group, size_t size)
 
     for (i = 0; i < size; ++i) {
         proc = ompi_group_peer_lookup(group,i);
-        if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+        if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
             return false;
         }
     }
@@ -521,13 +521,13 @@ static int bootstrap_comm(ompi_communicator_t *comm,
        procs on this node, so also pair it with the PID of the proc
        with the lowest ORTE name to form a unique filename. */
     proc = ompi_group_peer_lookup(comm->c_local_group, 0);
-    lowest_name = &(proc->proc_name);
+    lowest_name = OMPI_CAST_ORTE_NAME(&proc->super.proc_name);
     for (i = 1; i < comm_size; ++i) {
         proc = ompi_group_peer_lookup(comm->c_local_group, i);
         if (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
-                                          &(proc->proc_name),
+                                          OMPI_CAST_ORTE_NAME(&proc->super.proc_name),
                                           lowest_name) < 0) {
-            lowest_name = &(proc->proc_name);
+            lowest_name = OMPI_CAST_ORTE_NAME(&proc->super.proc_name);
         }
     }
     asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,

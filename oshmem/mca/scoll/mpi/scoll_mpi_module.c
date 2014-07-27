@@ -122,7 +122,14 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
         tag = 1;
 
         for (i = 0; i < osh_group->proc_count; i++) {
-            ranks[i] = osh_group->proc_array[i]->proc_name.vpid;
+            ompi_proc_t* ompi_proc;
+            for( int j = 0; j < ompi_group_size(parent_group); j++ ) {
+                ompi_proc = ompi_group_peer_lookup(parent_group, j);
+                if( ompi_proc->super.proc_name == osh_group->proc_array[i]->super.proc_name) {
+                    ranks[i] = j;
+                    break;
+                }
+            }
         }
 
         err = ompi_group_incl(parent_group, osh_group->proc_count, ranks, &new_group);

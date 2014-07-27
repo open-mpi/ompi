@@ -20,8 +20,7 @@
 #include "oshmem_config.h"
 #include "oshmem/constants.h"
 
-#include "ompi/class/ompi_free_list.h"
-
+#include "opal/class/ompi_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/threads/condition.h"
 
@@ -395,7 +394,7 @@ static inline void oshmem_request_wait_any_completion(void)
 static inline void oshmem_request_wait_completion(oshmem_request_t *req)
 {
     if (false == req->req_complete) {
-#if OMPI_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS
         if(opal_progress_spin(&req->req_complete)) {
             return;
         }

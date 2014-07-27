@@ -37,6 +37,7 @@ my $help_arg = 0;
 my $diff_file = "";
 my $diff_arg;
 my $update_arg;
+my $modified_arg;
 
 sub construct {
     # don't process directories or links, and dont' recurse down 
@@ -82,6 +83,7 @@ my $ok = Getopt::Long::GetOptions("help|h" => \$help_arg,
                                   "tgt=s" => \$tgt_arg,
                                   "diff=s" => \$diff_arg,
                                   "update" => \$update_arg,
+                                  "update-modified" => \$modified_arg,
     );
 
 if (!$ok || $help_arg) {
@@ -91,7 +93,8 @@ if (!$ok || $help_arg) {
   --diff | -diff      Output diff of changed files to specified file
   --src | -src        Head of source directory
   --tgt | -tgt        Head of target directory
-  --update | -update  Apply changes to update target\n";
+  --update | -update  Apply changes to update target
+  --update-modified   Only update modified files (do not add/delete files)\n";
     exit($ok ? 0 : 1);
 }
 
@@ -110,7 +113,7 @@ my $npath;
 # leading elements of the src_dir path that
 # must be replaced when pointing to the
 # target location for a file copy
-if ($update_arg) {
+if ($update_arg || $modified_arg) {
     my $s;
     my $t;
     my @srcpath = File::Spec->splitdir($src_dir);
@@ -179,13 +182,15 @@ foreach $src (@src_tree) {
             # file has been found - ignore it
             $found = 1;
             if (compare($src, $tgt) != 0) {
-                push(@modified, $src);
                 if ($diff_arg) {
                     my $diff = diff $tgt, $src, { STYLE => "Unified" };
                     print MYFILE $diff . "\n";
-                } elsif ($update_arg) {
+                    push(@modified, $src);
+                } elsif ($update_arg || $modified_arg) {
                     print "Updating $src to $tgt\n";
                     copy("$src", "$tgt") or die "Copy failed: src=$src tgt=$tgt\n";
+                } else {
+                    push(@modified, $src);
                 }
             }
             # remove this file from the target tree as it has been found
@@ -193,7 +198,7 @@ foreach $src (@src_tree) {
             break;
         }
     }
-    if ($found == 0) {
+    if (!$modified_arg && $found == 0) {
         if ($update_arg) {
             my $targetpath = $src;
             $targetpath =~ s/$spath/$npath/;
@@ -223,35 +228,35 @@ foreach $src (@src_tree) {
 print "\n";
 
 # print a list of files in the target tree that need to be deleted
-foreach $tgt (@tgt_tree) {
-    $found = 0;
-    $tgt_file = substr($tgt, $len_tgt_dir);
-    foreach $src (@src_pared) {
-        $src_file = substr($src, $len_src_dir);
-        if ($src_file eq $tgt_file) {
-            # file has been found - ignore it
-            $found = 1;
-            break;
+if (!$modified_arg) {
+    foreach $tgt (@tgt_tree) {
+        $found = 0;
+        $tgt_file = substr($tgt, $len_tgt_dir);
+        foreach $src (@src_pared) {
+            $src_file = substr($src, $len_src_dir);
+            if ($src_file eq $tgt_file) {
+                # file has been found - ignore it
+                $found = 1;
+                break;
+            }
         }
-    }
-    if ($found == 0) {
-        if ($update_arg) {
-            my $cmd = "svn del $tgt";
-            system($cmd);
-        } else {
-            print "Delete: " . $tgt . "\n";
+        if ($found == 0) {
+            if ($update_arg) {
+                my $cmd = "svn del $tgt";
+                system($cmd);
+            } else {
+                print "Delete: " . $tgt . "\n";
+            }
         }
     }
 }
-
 print "\n";
 
-if (!$update_arg) {
-    # print a list of files that have been modified
-    foreach $tgt (@modified) {
-        print "Modified: " . $tgt . "\n";
-    }
+# print a list of files that have been modified
+foreach $tgt (@modified) {
+    print "Modified: " . $tgt . "\n";
 }
+
 
 if ($diff_arg) {
     close(MYFILE);

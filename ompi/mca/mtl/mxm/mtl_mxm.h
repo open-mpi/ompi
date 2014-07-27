@@ -30,7 +30,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"

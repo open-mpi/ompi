@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/request/request.h"
 #include "ompi/proc/proc.h"
 #include "ompi/patterns/net/netpatterns.h"

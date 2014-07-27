@@ -13,7 +13,7 @@
 #ifndef OSC_SM_SM_H
 #define OSC_SM_SM_H
 
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 #include "opal/mca/shmem/base/base.h"
 
 /* data shared across all peers */

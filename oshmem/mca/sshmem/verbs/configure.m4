@@ -25,7 +25,7 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
           [AC_MSG_RESULT([no])
            oshmem_verbs_sm_build_verbs=0],
           [AC_MSG_RESULT([yes])
-           OMPI_CHECK_OPENFABRICS([oshmem_verbs],
+           OPAL_CHECK_OPENFABRICS([oshmem_verbs],
                   [oshmem_verbs_sm_build_verbs=1],
                   [oshmem_verbs_sm_build_verbs=0])])
 

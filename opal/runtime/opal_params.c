@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -41,15 +41,24 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/dss/dss.h"
+#include "opal/util/show_help.h"
 
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
 int opal_pmi_version = 0;
 
+bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
+bool opal_cuda_support;
 #if OPAL_ENABLE_FT_CR == 1
 bool opal_base_distill_checkpoint_ready = false;
 #endif
+
+/**
+ * Globals imported from the OMPI layer.
+ */
+int opal_leave_pinned = -1;
+bool opal_leave_pinned_pipeline = false;
 
 static bool opal_register_done = false;
 
@@ -181,6 +190,40 @@ int opal_register_params(void)
         return ret;
     }
 
+    ret = mca_base_var_register ("opal", "opal", NULL, "cuda_support",
+                                 "Whether CUDA GPU buffer support is enabled or not",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                 &opal_cuda_support);
+
+    /* Leave pinned parameter */
+    opal_leave_pinned = -1;
+    ret = mca_base_var_register("ompi", "mpi", NULL, "leave_pinned",
+                                "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (0 = do not use \"leave pinned\" protocol, 1 = use \"leave pinned\" protocol, -1 = allow network to choose at runtime).",
+                                MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &opal_leave_pinned);
+    mca_base_var_register_synonym(ret, "opal", "opal", NULL, "leave_pinned",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    opal_leave_pinned_pipeline = false;
+    ret = mca_base_var_register("ompi", "mpi", NULL, "leave_pinned_pipeline",
+                                "Whether to use the \"leave pinned pipeline\" protocol or not.",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_leave_pinned_pipeline);
+    mca_base_var_register_synonym(ret, "opal", "opal", NULL, "leave_pinned_pipeline",
+                                  MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    if (opal_leave_pinned > 0 && opal_leave_pinned_pipeline) {
+        opal_leave_pinned_pipeline = 0;
+        opal_show_help("help-mpi-runtime.txt",
+                       "mpi-params:leave-pinned-and-pipeline-selected",
+                       true);
+    }
+
     opal_pmi_version = 0;
 #ifdef WANT_PMI2_SUPPORT
     (void) mca_base_var_register ("opal", "opal", NULL, "pmi_version",
@@ -192,6 +235,13 @@ int opal_register_params(void)
     opal_pmi_version = 1;
 #endif
 
+    opal_warn_on_fork = true;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "warn_on_fork",
+                                 "If nonzero, issue a warning if program forks under conditions that could cause system errors",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_warn_on_fork);
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();

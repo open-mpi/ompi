@@ -313,7 +313,7 @@ int ompi_mtl_mxm_module_init(void)
     nlps = ompi_process_info.num_local_peers + 1;
 
     for (proc = 0; proc < totps; proc++) {
-        if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
+        if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->super.proc_flags)) {
             mxlr = max(mxlr, procs[proc]->proc_name.vpid);
         }
     }
@@ -465,8 +465,8 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         for (i = 0; i < ep_index; ++i) {
             if (MXM_OK != conn_reqs[i].error) {
                 MXM_ERROR("MXM EP connect to %s error: %s\n",
-                          (NULL == procs[i]->proc_hostname) ?
-                          "unknown" : procs[i]->proc_hostname,
+                          (NULL == procs[i]->super.proc_hostname) ?
+                           "unknown" : procs[i]->proc_hostname,
                           mxm_error_string(conn_reqs[i].error));
             }
         }

@@ -28,9 +28,9 @@
 #endif
 #include <string.h>
 #include "support.h"
-#include "ompi/class/ompi_free_list.h"
-#include "ompi/class/ompi_rb_tree.h"
-#include "ompi/mca/mpool/base/base.h"
+#include "opal/class/ompi_free_list.h"
+#include "opal/class/opal_rb_tree.h"
+#include "opal/mca/mpool/base/base.h"
 
 #define NUM_KEYS 10000
 #define SEED  1
@@ -86,7 +86,7 @@ int comp_key(void* key1, void* key2) {
 
 void test_keys(void)
 {
-    ompi_rb_tree_t tree; 
+    opal_rb_tree_t tree; 
     int rc, i;
     my_key_t keys[NUM_KEYS];
     my_val_t vals[NUM_KEYS];
@@ -95,8 +95,8 @@ void test_keys(void)
     my_val_t *cur_val;
     long tmp;
 
-    OBJ_CONSTRUCT(&tree, ompi_rb_tree_t); 
-    rc = ompi_rb_tree_init(&tree, comp_key); 
+    OBJ_CONSTRUCT(&tree, opal_rb_tree_t); 
+    rc = opal_rb_tree_init(&tree, comp_key); 
     srand(SEED); 
     for(i = 0; i < NUM_KEYS; i++) { 
         cur_key = &(keys[i]); 
@@ -107,21 +107,21 @@ void test_keys(void)
         cur_key->base = (void*) tmp;
         tmp += (long) rand();
         cur_key->bound = (void*) tmp;
-        rc = ompi_rb_tree_insert(&tree, cur_key, cur_val); 
-        if(OMPI_SUCCESS != rc) { 
+        rc = opal_rb_tree_insert(&tree, cur_key, cur_val); 
+        if(OPAL_SUCCESS != rc) { 
             test_failure("error inserting element in the tree"); 
         }
     }
     for(i = 0; i < NUM_KEYS; i+=2) { 
         cur_key = &(keys[i]); 
-        rc = ompi_rb_tree_delete(&tree, cur_key);
-        if(OMPI_SUCCESS != rc) { 
+        rc = opal_rb_tree_delete(&tree, cur_key);
+        if(OPAL_SUCCESS != rc) { 
             test_failure("error deleting element in the tree"); 
         }
     }
     for(i = 1; i < NUM_KEYS; i+=2) { 
         cur_key = &(keys[i]); 
-        cur_val = (my_val_t*) ompi_rb_tree_find(&tree, cur_key); 
+        cur_val = (my_val_t*) opal_rb_tree_find(&tree, cur_key); 
         if(cur_val == NULL) { 
             test_failure("lookup returned NULL item"); 
         }
@@ -137,21 +137,21 @@ void test_keys(void)
 
 void test1(void)
 {
-    ompi_rb_tree_t tree;
+    opal_rb_tree_t tree;
     int rc;
     void * result;
  
-    OBJ_CONSTRUCT(&tree, ompi_rb_tree_t);
-    rc = ompi_rb_tree_init(&tree, comp_fn);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    OBJ_CONSTRUCT(&tree, opal_rb_tree_t);
+    rc = opal_rb_tree_init(&tree, comp_fn);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly initialize the tree");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[0], &values[0]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[0], &values[0]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[0]);
+    result = opal_rb_tree_find(&tree, &keys[0]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -159,11 +159,11 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[1], &values[1]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[1], &values[1]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[1]);
+    result = opal_rb_tree_find(&tree, &keys[1]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -171,11 +171,11 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[2], &values[2]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[2], &values[2]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[2]);
+    result = opal_rb_tree_find(&tree, &keys[2]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -183,11 +183,11 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[3], &values[3]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[3], &values[3]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[3]);
+    result = opal_rb_tree_find(&tree, &keys[3]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -195,11 +195,11 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[4], &values[4]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[4], &values[4]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[4]);
+    result = opal_rb_tree_find(&tree, &keys[4]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -207,11 +207,11 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[5], &values[5]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[5], &values[5]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[5]);
+    result = opal_rb_tree_find(&tree, &keys[5]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -219,11 +219,11 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[6], &values[6]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[6], &values[6]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[6]);
+    result = opal_rb_tree_find(&tree, &keys[6]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -231,11 +231,11 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_insert(&tree, &keys[7], &values[7]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_insert(&tree, &keys[7], &values[7]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly insert a new node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[7]);
+    result = opal_rb_tree_find(&tree, &keys[7]);
     if(NULL == result) {
         test_failure("lookup returned null!");
     }
@@ -243,16 +243,16 @@ void test1(void)
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_size(&tree);
+    rc = opal_rb_tree_size(&tree);
     if(!test_verify_int(8, rc)) {
         test_failure("failed to properly insert a new node");
     }
 
-    rc = ompi_rb_tree_delete(&tree, &keys[0]);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    rc = opal_rb_tree_delete(&tree, &keys[0]);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly delete a node");
     }
-    result = ompi_rb_tree_find(&tree, &keys[0]);
+    result = opal_rb_tree_find(&tree, &keys[0]);
     if(NULL != result) {
         test_failure("lookup returned a value instead of null!");
     } else {
@@ -272,33 +272,33 @@ void test2(void);
 /* the number of memory segments to allocate */
 #define NUM_ALLOCATIONS 500 
 
-struct ompi_test_rb_key_t
+struct opal_test_rb_key_t
 {
     void * bottom;          /* the bottom of the memory range */
     void * top;             /* the top of the memory range */
 };
-typedef struct ompi_test_rb_key_t ompi_test_rb_key_t;
+typedef struct opal_test_rb_key_t opal_test_rb_key_t;
 
-struct ompi_test_rb_value_t
+struct opal_test_rb_value_t
 {
     ompi_free_list_item_t super; /* the parent class */
-    ompi_test_rb_key_t key; /* the key which holds the memory pointers */
+    opal_test_rb_key_t key; /* the key which holds the memory pointers */
     mca_mpool_base_module_t* registered_mpools[MAX_REGISTRATIONS]; 
                             /* the mpools the memory is registered with */
 };
-typedef struct ompi_test_rb_value_t ompi_test_rb_value_t;
+typedef struct opal_test_rb_value_t opal_test_rb_value_t;
 
-OBJ_CLASS_INSTANCE(ompi_test_rb_value_t, ompi_free_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(opal_test_rb_value_t, ompi_free_list_item_t, NULL, NULL);
 
 int mem_node_compare(void * key1, void * key2)
 {
-    if(((ompi_test_rb_key_t *) key1)->bottom < 
-       ((ompi_test_rb_key_t *) key2)->bottom)
+    if(((opal_test_rb_key_t *) key1)->bottom < 
+       ((opal_test_rb_key_t *) key2)->bottom)
     {
         return -1;
     }
-    else if(((ompi_test_rb_key_t *) key1)->bottom > 
-            ((ompi_test_rb_key_t *) key2)->top)
+    else if(((opal_test_rb_key_t *) key1)->bottom > 
+            ((opal_test_rb_key_t *) key2)->top)
     {
         return 1;
     }
@@ -309,7 +309,7 @@ void test2(void)
 {
     ompi_free_list_t key_list;
     ompi_free_list_item_t * new_value;
-    ompi_rb_tree_t tree;
+    opal_rb_tree_t tree;
     int rc, i, size;
     void * result, * lookup;
     void * mem[NUM_ALLOCATIONS];
@@ -317,15 +317,15 @@ void test2(void)
     struct timeval start, end;
     
     OBJ_CONSTRUCT(&key_list, ompi_free_list_t);
-    ompi_free_list_init_new(&key_list, sizeof(ompi_test_rb_value_t),
+    ompi_free_list_init_new(&key_list, sizeof(opal_test_rb_value_t),
             opal_cache_line_size,
-            OBJ_CLASS(ompi_test_rb_value_t), 
+            OBJ_CLASS(opal_test_rb_value_t), 
             0,opal_cache_line_size,
             0, -1 , 128, NULL);
     
-    OBJ_CONSTRUCT(&tree, ompi_rb_tree_t);
-    rc = ompi_rb_tree_init(&tree, mem_node_compare);
-    if(!test_verify_int(OMPI_SUCCESS, rc)) {
+    OBJ_CONSTRUCT(&tree, opal_rb_tree_t);
+    rc = opal_rb_tree_init(&tree, mem_node_compare);
+    if(!test_verify_int(OPAL_SUCCESS, rc)) {
         test_failure("failed to properly initialize the tree");
     }
   
@@ -344,13 +344,13 @@ void test2(void)
             test_failure("failed to get memory from free list");
         }
         key_array[i] = new_value;
-        ((ompi_test_rb_value_t *) new_value)->key.bottom = mem[i];
-        ((ompi_test_rb_value_t *) new_value)->key.top = 
+        ((opal_test_rb_value_t *) new_value)->key.bottom = mem[i];
+        ((opal_test_rb_value_t *) new_value)->key.top = 
                                             (void *) ((size_t) mem[i] + size - 1);
-        ((ompi_test_rb_value_t *) new_value)->registered_mpools[0] = (void *)(intptr_t) i;
-        rc = ompi_rb_tree_insert(&tree, &((ompi_test_rb_value_t *)new_value)->key, 
+        ((opal_test_rb_value_t *) new_value)->registered_mpools[0] = (void *)(intptr_t) i;
+        rc = opal_rb_tree_insert(&tree, &((opal_test_rb_value_t *)new_value)->key, 
                         new_value);
-        if(OMPI_SUCCESS != rc) 
+        if(OPAL_SUCCESS != rc) 
         {
             test_failure("failed to properly insert a new node");
         }
@@ -361,19 +361,19 @@ void test2(void)
     for(i = 0; i < NUM_ALLOCATIONS; i++)
     {
         lookup = (void *) ((size_t) mem[i] + i);
-        result = ompi_rb_tree_find(&tree, &lookup);
+        result = opal_rb_tree_find(&tree, &lookup);
         if(NULL == result) 
         {
             test_failure("lookup returned null!");
-        } else if(i != ((int)(intptr_t) ((ompi_test_rb_value_t *) result)->registered_mpools[0]))
+        } else if(i != ((int)(intptr_t) ((opal_test_rb_value_t *) result)->registered_mpools[0]))
         {
             test_failure("lookup returned wrong node!");
         }
-        result = ompi_rb_tree_find(&tree, &lookup);
+        result = opal_rb_tree_find(&tree, &lookup);
         if(NULL == result) 
         {
             test_failure("lookup returned null!");
-        } else if(i != ((int)(intptr_t) ((ompi_test_rb_value_t *) result)->registered_mpools[0]))
+        } else if(i != ((int)(intptr_t) ((opal_test_rb_value_t *) result)->registered_mpools[0]))
         {
             test_failure("lookup returned wrong node!");
         }
@@ -403,7 +403,7 @@ void test2(void)
 
 int main(int argc, char **argv)
 {
-    test_init("ompi_rb_tree_t");
+    test_init("opal_rb_tree_t");
     
     test1();
     test2();

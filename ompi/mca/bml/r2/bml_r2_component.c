@@ -19,10 +19,10 @@
 
 #include "ompi_config.h"
 #include "opal/mca/event/event.h"
-#include "mpi.h"
+#include "opal/mca/btl/base/base.h"
 #include "ompi/mca/bml/bml.h"
-#include "ompi/mca/btl/base/base.h"
 #include "bml_r2.h"
+#include "mpi.h"
 
 static int mca_bml_r2_component_register(void);
 

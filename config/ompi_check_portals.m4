@@ -18,12 +18,12 @@
 # $HEADER$
 #
 
-# OMPI_CHECK_PORTALS(prefix, [action-if-found], [action-if-not-found])
+# OPAL_CHECK_PORTALS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 # check if PORTALS support can be found.  sets prefix_{CPPFLAGS, 
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
-AC_DEFUN([OMPI_CHECK_PORTALS],[
+AC_DEFUN([OPAL_CHECK_PORTALS],[
     # save compiler flags so that we don't alter them for later
     # components.
     check_portals_save_CPPFLAGS="$CPPFLAGS"
@@ -58,27 +58,27 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
     elif test "$with_portals_config" = "cnl_modex" ; then
 	with_portals_config="xt3-modex"
     fi
-    OMPI_PORTALS_UTCP=0
-    OMPI_PORTALS_CRAYXT3=0
-    OMPI_PORTALS_CRAYXT3_MODEX=0
+    OPAL_PORTALS_UTCP=0
+    OPAL_PORTALS_CRAYXT3=0
+    OPAL_PORTALS_CRAYXT3_MODEX=0
     case "$with_portals_config" in
         "utcp")
-            OMPI_PORTALS_UTCP=1
-            OMPI_PORTALS_HAVE_EVENT_UNLINK=1
+            OPAL_PORTALS_UTCP=1
+            OPAL_PORTALS_HAVE_EVENT_UNLINK=1
             check_portals_LIBS="-lp3utcp -lp3api -lp3lib -lp3rt -lp3utcp"
             check_portals_header_prefix=
             AC_MSG_RESULT([utcp])
             ;;
         "xt3")
-            OMPI_PORTALS_CRAYXT3=1
-            OMPI_PORTALS_HAVE_EVENT_UNLINK=0
+            OPAL_PORTALS_CRAYXT3=1
+            OPAL_PORTALS_HAVE_EVENT_UNLINK=0
             check_portals_LIBS=
             check_portals_header_prefix="portals/"
             AC_MSG_RESULT([Cray XT3])
             ;;
         "xt3-modex")
-            OMPI_PORTALS_CRAYXT3_MODEX=1
-            OMPI_PORTALS_HAVE_EVENT_UNLINK=0
+            OPAL_PORTALS_CRAYXT3_MODEX=1
+            OPAL_PORTALS_HAVE_EVENT_UNLINK=0
             check_portals_LIBS=
             check_portals_header_prefix="portals/"
             AC_MSG_RESULT([Cray XT3 - Modex])
@@ -90,17 +90,17 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
             ;;
     esac
 
-    AC_DEFINE_UNQUOTED([OMPI_PORTALS_HAVE_EVENT_UNLINK], 
-                        [$OMPI_PORTALS_HAVE_EVENT_UNLINK],
+    AC_DEFINE_UNQUOTED([OPAL_PORTALS_HAVE_EVENT_UNLINK], 
+                        [$OPAL_PORTALS_HAVE_EVENT_UNLINK],
                         [Does Portals send a PTL_EVENT_UNLINK event])
 
-    AC_DEFINE_UNQUOTED([OMPI_PORTALS_UTCP], [$OMPI_PORTALS_UTCP],
+    AC_DEFINE_UNQUOTED([OPAL_PORTALS_UTCP], [$OPAL_PORTALS_UTCP],
                        [Use the UTCP reference implementation of Portals])
 
-    AC_DEFINE_UNQUOTED([OMPI_PORTALS_CRAYXT3], [$OMPI_PORTALS_CRAYXT3],
+    AC_DEFINE_UNQUOTED([OPAL_PORTALS_CRAYXT3], [$OPAL_PORTALS_CRAYXT3],
                        [Use the Cray XT-3 implementation of Portals])
     
-    AC_DEFINE_UNQUOTED([OMPI_PORTALS_CRAYXT3_MODEX], [$OMPI_PORTALS_CRAYXT3_MODEX],
+    AC_DEFINE_UNQUOTED([OPAL_PORTALS_CRAYXT3_MODEX], [$OPAL_PORTALS_CRAYXT3_MODEX],
                        [Use the Cray XT-3 implementation of Portals using Modex])
 
     # Add correct -I and -L flags

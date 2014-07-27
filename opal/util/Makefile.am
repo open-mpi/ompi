@@ -60,6 +60,7 @@ headers = \
         output.h \
         path.h \
         printf.h \
+        proc.h \
         qsort.h \
         show_help.h \
         show_help_lex.h \
@@ -94,6 +95,7 @@ libopalutil_la_SOURCES = \
         output.c \
         path.c \
         printf.c \
+        proc.c \
         qsort.c \
         show_help.c \
         show_help_lex.l \

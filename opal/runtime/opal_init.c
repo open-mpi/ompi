@@ -31,6 +31,7 @@
 #include "opal/util/arch.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/proc.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -75,10 +76,7 @@ int opal_util_initialized = 0;
    hwloc is available, this value will be overwritten when the
    hwloc data is loaded. */
 int opal_cache_line_size = 128;
-/* we use an identifier for this process in multiple places,
- * so let's store it somewhere and allow/require that it
- * be set before using various features */
-opal_identifier_t opalid = OPAL_ID_INVALID;
+bool opal_warn_on_fork;
 
 static int
 opal_err2str(int errnum, const char **errmsg)
@@ -597,10 +595,26 @@ int opal_init_test(void)
     return ret;
 }
 
-void opal_init_set_identifier(opal_identifier_t *id)
-{
-    /* for alignment purposes, we copy the id instead
-     * of directly setting it */
-    memcpy(&opalid, id, sizeof(opal_identifier_t));
-}
+#if OPAL_HAVE_POSIX_THREADS
+static bool fork_warning_issued = false;
+static bool atfork_called = false;
 
+static void warn_fork_cb(void)
+{
+    if (opal_initialized && !fork_warning_issued) {
+        opal_show_help("help-opal-runtime.txt", "opal_init:warn-fork", true,
+                       OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), getpid());
+        fork_warning_issued = true;
+    }
+}
+#endif  /* OPAL_HAVE_POSIX_THREADS */
+
+void opal_warn_fork(void)
+{
+#if OPAL_HAVE_POSIX_THREADS
+    if (opal_warn_on_fork && !atfork_called) {
+        pthread_atfork(warn_fork_cb, NULL, NULL);
+        atfork_called = true;
+    }
+#endif
+}

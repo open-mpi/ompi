@@ -22,14 +22,14 @@
 #ifndef OMPI_PML_BFO_SEND_REQUEST_H
 #define OMPI_PML_BFO_SEND_REQUEST_H
 
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/mca/mpool/base/base.h"
 #include "pml_bfo_comm.h"
 #include "pml_bfo_hdr.h"
 #include "pml_bfo_rdma.h"
 #include "pml_bfo_rdmafrag.h"
-#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/bml/bml.h" 
 
 BEGIN_C_DECLS
@@ -43,7 +43,7 @@ typedef enum {
 struct mca_pml_bfo_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_bml_base_endpoint_t* req_endpoint;
-    ompi_ptr_t req_recv;
+    opal_ptr_t req_recv;
 #if PML_BFO
     int32_t req_events;     /* number of outstanding events on request */
     int32_t req_restartseq; /* sequence number of restarted request */

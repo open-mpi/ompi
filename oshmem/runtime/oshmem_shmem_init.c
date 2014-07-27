@@ -46,9 +46,9 @@
 #include "orte/util/name_fns.h"
 
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/rcache/base/base.h"
-#include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/allocator/base/base.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/allocator/base/base.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -346,7 +346,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     }
 
     if (OSHMEM_SUCCESS
-            != (ret = mca_spml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
+            != (ret = mca_spml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
                                            OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_spml_base_select() failed";
         goto error;
@@ -354,7 +354,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     if (OSHMEM_SUCCESS
             != (ret =
-                    mca_scoll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                    mca_scoll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_scoll_base_find_available() failed";
         goto error;
@@ -430,7 +430,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     if (OSHMEM_SUCCESS
             != (ret =
-                    mca_atomic_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                    mca_atomic_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                                    OMPI_ENABLE_THREAD_MULTIPLE))) {
         error = "mca_atomic_base_find_available() failed";
         goto error;

@@ -1,0 +1,94 @@
+# -*- shell-script -*-
+#
+# Copyright (c) 2009      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# OPAL_CHECK_KNEM(prefix, [action-if-found], [action-if-not-found])
+# --------------------------------------------------------
+# check if knem support can be found.  sets prefix_{CPPFLAGS,
+# LDFLAGS, LIBS} as needed and runs action-if-found if there is
+# support, otherwise executes action-if-not-found
+AC_DEFUN([OPAL_CHECK_KNEM],[
+    OPAL_VAR_SCOPE_PUSH([opal_check_knem_happy opal_check_knem_$1_save_CPPFLAGS opal_check_knem_dir])
+    AC_ARG_WITH([knem],
+        [AC_HELP_STRING([--with-knem(=DIR)],
+             [Build knem Linux kernel module support, searching for headers in DIR])])
+
+    OPAL_CHECK_WITHDIR([knem], [$with_knem], [include/knem_io.h])
+    opal_check_knem_$1_save_CPPFLAGS="$CPPFLAGS"
+
+    AS_IF([test "$with_knem" != "no"],
+          [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "yes"],
+                 [opal_check_knem_dir="$with_knem"])
+
+           _OPAL_CHECK_PACKAGE_HEADER([$1],
+                              [knem_io.h],
+                              [$opal_check_knem_dir],
+                              [opal_check_knem_happy="yes"],
+                              [opal_check_knem_happy="no"])],
+          [opal_check_knem_happy="no"])
+
+    CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
+
+    # need at least version 0x0000000b
+    AS_IF([test "$opal_check_knem_happy" = "yes"],
+          [AC_CACHE_CHECK([for knem ABI version 0xb or later],
+                          [opal_cv_knem_version_ok],
+                          [AC_PREPROC_IFELSE(
+                            [AC_LANG_PROGRAM([
+#include <knem_io.h>
+                             ],[
+#if KNEM_ABI_VERSION < 0xc
+#error "Version less than 0xc"
+#endif
+                             ])],
+                            [opal_cv_knem_version_ok=yes],
+                            [opal_cv_knem_version_ok=no])])])
+
+    CPPFLAGS="$opal_check_knem_$1_save_CPPFLAGS"
+
+    AS_IF([test "$opal_check_knem_happy" = "yes" -a "$opal_cv_knem_version_ok" = "yes"],
+          [$2],
+          [AS_IF([test ! -z "$with_knem" -a "$with_knem" != "no"],
+                 [AC_MSG_ERROR([KNEM support requested but not found.  Aborting])])
+           $3])
+    OPAL_VAR_SCOPE_POP
+])dnl
+
+# MCA_btl_sm_CONFIG([action-if-can-compile],
+#                   [action-if-cant-compile])
+# ------------------------------------------------
+AC_DEFUN([MCA_opal_btl_sm_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/btl/sm/Makefile])
+
+    OPAL_VAR_SCOPE_PUSH([btl_sm_cma_happy])
+    OPAL_CHECK_CMA([btl_sm], [btl_sm_cma_happy=1], [btl_sm_cma_happy=0])
+
+    AC_DEFINE_UNQUOTED([OPAL_BTL_SM_HAVE_CMA],
+        [$btl_sm_cma_happy],
+        [If CMA support can be enabled])
+
+    OPAL_VAR_SCOPE_POP
+
+    OPAL_VAR_SCOPE_PUSH([btl_sm_knem_happy])
+    OPAL_CHECK_KNEM([btl_sm],
+        [btl_sm_knem_happy=1],
+        [btl_sm_knem_happy=0])
+
+    AC_DEFINE_UNQUOTED([OPAL_BTL_SM_HAVE_KNEM],
+        [$btl_sm_knem_happy],
+        [If knem support can be enabled])
+    [$1]
+    # substitute in the things needed to build KNEM
+    AC_SUBST([btl_sm_CPPFLAGS])
+    OPAL_VAR_SCOPE_POP
+])dnl

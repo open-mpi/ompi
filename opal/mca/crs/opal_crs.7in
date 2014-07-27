@@ -7,7 +7,7 @@
 .\" Man page for OPAL's CRS Functionality
 .\" 
 .\" .TH name     section center-footer   left-footer  center-header
-.TH OPAL_CRS 7 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.TH OPAL_CRS 7 "#OPAL_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
 .\" **************************
 .\"    Name Section

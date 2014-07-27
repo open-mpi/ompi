@@ -17,6 +17,7 @@
 #include "oshmem/mca/scoll/scoll.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/util/proc.h"
 #include "opal/dss/dss_types.h"
 #include "opal/mca/hwloc/hwloc.h"
 
@@ -40,23 +41,9 @@ struct oshmem_group_t;
  * one oshmem_proc_t structure for each remote process it knows about.
  */
 struct oshmem_proc_t {
-    /** allow proc to be placed on a list */
-    opal_list_item_t                super;
-    /** this process' name */
-    orte_process_name_t             proc_name;
+    opal_proc_t                    super;
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
-    /** architecture of this process */
-    uint32_t                        proc_arch;
-    /** flags for this proc */
-    opal_hwloc_locality_t           proc_flags;
-    /** Base convertor for the proc described by this process */
-    struct opal_convertor_t        *proc_convertor;
-    /** A pointer to the name of this host - data is
-     * actually stored in the RTE
-     */
-    char                           *proc_hostname;
-
     /* 
      * All transport channels are globally ordered. 
      * pe(s) can talk to each other via subset of transports
@@ -314,8 +301,11 @@ OSHMEM_DECLSPEC int oshmem_proc_unpack(opal_buffer_t *buf,
 
 static inline int oshmem_proc_pe(oshmem_proc_t *proc)
 {
-    return (proc ? (int) proc->proc_name.vpid : -1);
+    return (proc ? (int) ((orte_process_name_t*)&proc->super.proc_name)->vpid : -1);
 }
+
+#define OSHMEM_PROC_JOBID(PROC)    (((orte_process_name_t*)&((PROC)->super.proc_name))->jobid)
+#define OSHMEM_PROC_VPID(PROC)     (((orte_process_name_t*)&((PROC)->super.proc_name))->vpid)
 
 /**
  * Initialize the OSHMEM process predefined groups

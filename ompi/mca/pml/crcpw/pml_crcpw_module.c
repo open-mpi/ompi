@@ -22,12 +22,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/mca/btl/base/base.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/pml/crcpw/pml_crcpw.h"
 #include "ompi/mca/bml/base/base.h"
 
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 
 mca_pml_crcpw_module_t mca_pml_crcpw_module = {
     {

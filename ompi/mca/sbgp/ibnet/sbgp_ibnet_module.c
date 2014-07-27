@@ -538,7 +538,7 @@ static int setup_cgroup_node(mca_sbgp_ibnet_connection_group_info_t *cgroup, mca
             ibnet_proc  = (mca_sbgp_ibnet_proc_t *)
             opal_list_get_next((opal_list_item_t *)ibnet_proc)) {
 
-        local = OPAL_PROC_ON_LOCAL_NODE(ibnet_proc->ompi_proc->proc_flags);
+        local = OPAL_PROC_ON_LOCAL_NODE(ibnet_proc->ompi_proc->super.proc_flags);
         if (0 == local) {
             /* the remote process resides on different node */
             continue;

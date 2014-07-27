@@ -490,7 +490,7 @@ ompi_osc_rdma_test(ompi_win_t *win,
     ompi_group_t *group;
     int ret = OMPI_SUCCESS;
 
-#if !OMPI_ENABLE_PROGRESS_THREADS
+#if !OPAL_ENABLE_PROGRESS_THREADS
     opal_progress();
 #endif
 

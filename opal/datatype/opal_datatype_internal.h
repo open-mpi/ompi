@@ -103,7 +103,8 @@ static inline void DUMP( char* fmt __opal_attribute_unused_tmp__, ... )
  * (C, C++ or FORTRAN), we only focus on their internal representation in
  * the host memory.
  *
- * NOTE: This (and in ompi_datatype_internal.h) is the id-order to obey
+ * NOTE: This predefined datatype order should be matched by any upper-level
+ * users of the OPAL datatype.
  */
 #define OPAL_DATATYPE_LOOP           0
 #define OPAL_DATATYPE_END_LOOP       1

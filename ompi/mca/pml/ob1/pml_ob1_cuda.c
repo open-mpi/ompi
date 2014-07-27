@@ -22,10 +22,10 @@
 
 #include "ompi_config.h"
 #include "opal/prefetch.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mpool/mpool.h" 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/mpool/mpool.h" 
 #include "pml_ob1.h"
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_rdmafrag.h"
@@ -203,8 +203,8 @@ void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t
                         "to rank=%d on node=%s \n",
                         btl->btl_component->btl_version.mca_component_name,
                         OMPI_PROC_MY_NAME->vpid,
-                        errproc->proc_name.vpid,
-                        errproc->proc_hostname);
+                        ((ompi_process_name_t*)&errproc->super.proc_name)->vpid,
+                        errproc->super.proc_hostname);
         }
     }
 }

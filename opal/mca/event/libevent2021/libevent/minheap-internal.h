@@ -61,14 +61,14 @@ int min_heap_elem_greater(struct event *a, struct event *b)
 	return evutil_timercmp(&a->ev_timeout, &b->ev_timeout, >);
 }
 
-void min_heap_ctor(min_heap_t* s) { s->p = 0; s->n = 0; s->a = 0; }
-void min_heap_dtor(min_heap_t* s) { if (s->p) mm_free(s->p); }
-void min_heap_elem_init(struct event* e) { e->ev_timeout_pos.min_heap_idx = -1; }
-int min_heap_empty(min_heap_t* s) { return 0u == s->n; }
-unsigned min_heap_size(min_heap_t* s) { return s->n; }
-struct event* min_heap_top(min_heap_t* s) { return s->n ? *s->p : 0; }
+static inline void min_heap_ctor(min_heap_t* s) { s->p = 0; s->n = 0; s->a = 0; }
+static inline void min_heap_dtor(min_heap_t* s) { if (s->p) mm_free(s->p); }
+static inline void min_heap_elem_init(struct event* e) { e->ev_timeout_pos.min_heap_idx = -1; }
+static inline int min_heap_empty(min_heap_t* s) { return 0u == s->n; }
+static inline unsigned min_heap_size(min_heap_t* s) { return s->n; }
+static inline struct event* min_heap_top(min_heap_t* s) { return s->n ? *s->p : 0; }
 
-int min_heap_push(min_heap_t* s, struct event* e)
+static inline int min_heap_push(min_heap_t* s, struct event* e)
 {
 	if (min_heap_reserve(s, s->n + 1))
 		return -1;
@@ -76,7 +76,7 @@ int min_heap_push(min_heap_t* s, struct event* e)
 	return 0;
 }
 
-struct event* min_heap_pop(min_heap_t* s)
+static inline struct event* min_heap_pop(min_heap_t* s)
 {
 	if (s->n)
 	{
@@ -88,12 +88,12 @@ struct event* min_heap_pop(min_heap_t* s)
 	return 0;
 }
 
-int min_heap_elt_is_top(const struct event *e)
+static inline int min_heap_elt_is_top(const struct event *e)
 {
 	return e->ev_timeout_pos.min_heap_idx == 0;
 }
 
-int min_heap_erase(min_heap_t* s, struct event* e)
+static inline int min_heap_erase(min_heap_t* s, struct event* e)
 {
 	if (-1 != e->ev_timeout_pos.min_heap_idx)
 	{

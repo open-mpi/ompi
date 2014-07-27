@@ -18,7 +18,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/mca/sbgp/sbgp.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"

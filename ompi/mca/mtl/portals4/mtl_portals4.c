@@ -74,13 +74,13 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
             me = i;
         }
 
-        if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
+        if (procs[i]->super.proc_arch != ompi_proc_local()->super.proc_arch) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "Portals 4 MTL does not support heterogeneous operations.");
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "Proc %s architecture %x, mine %x.",
                                 OMPI_NAME_PRINT(&procs[i]->proc_name), 
-                                procs[i]->proc_arch, ompi_proc_local()->proc_arch);
+                                procs[i]->super.proc_arch, ompi_proc_local()->super.proc_arch);
             return OMPI_ERR_NOT_SUPPORTED;
         }
 

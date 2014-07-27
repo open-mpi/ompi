@@ -14,7 +14,7 @@
 #ifndef MCA_SPML_YODA_RDMAFRAG_H
 #define MCA_SPML_YODA_RDMAFRAG_H
 
-#include "ompi/mca/btl/btl.h"
+#include "opal/mca/btl/btl.h"
 #include "opal/types.h"
 #include "opal/util/arch.h"
 #include "oshmem/proc/proc.h"

@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/btl/base/base.h"
+#include "opal/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/bml_base_btl.h"
 
 int mca_bml_base_ft_event(int state)

@@ -29,7 +29,7 @@ const opal_memchecker_base_module_1_0_0_t *opal_memchecker_base_module = NULL;
 
 int opal_memchecker_base_select(void)
 {
-#if OMPI_WANT_MEMCHECKER
+#if OPAL_WANT_MEMCHECKER
     int ret, exit_status = OPAL_SUCCESS;
     opal_memchecker_base_component_2_0_0_t *best_component = NULL;
     opal_memchecker_base_module_1_0_0_t *best_module = NULL;
@@ -63,6 +63,6 @@ int opal_memchecker_base_select(void)
     return exit_status;
 #else
     return OPAL_SUCCESS;
-#endif /* OMPI_WANT_MEMCHECKER */
+#endif /* OPAL_WANT_MEMCHECKER */
 }
 

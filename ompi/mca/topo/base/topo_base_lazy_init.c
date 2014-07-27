@@ -38,7 +38,7 @@ int mca_topo_base_lazy_init(void)
     if (0 == opal_list_get_size(&ompi_topo_base_framework.framework_components)) {
         ompi_topo_base_framework.framework_open(MCA_BASE_OPEN_FIND_COMPONENTS);
         if (OMPI_SUCCESS != 
-            (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+            (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                                 OMPI_ENABLE_THREAD_MULTIPLE))) {
             return err;
         }

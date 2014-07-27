@@ -20,7 +20,7 @@
 #include "opal/mca/mca.h"
 #include "ompi/mca/sbgp/sbgp.h"
 #include "ompi/mca/sbgp/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/request/request.h"
 #include "ompi/proc/proc.h"
 #include "opal/util/output.h"

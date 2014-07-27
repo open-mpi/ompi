@@ -32,14 +32,14 @@
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/ob1/pml_ob1_comm.h"
-#include "ompi/mca/mpool/base/base.h"
+#include "opal/mca/mpool/base/base.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 
 BEGIN_C_DECLS
 
 struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
-    ompi_ptr_t remote_req_send;
+    opal_ptr_t remote_req_send;
     int32_t req_lock;
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;  /**< amount of data transferred into the user buffer */
@@ -206,7 +206,7 @@ static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
 {
     if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
         opal_convertor_copy_and_prepare_for_recv(
-                req->req_recv.req_base.req_proc->proc_convertor,
+                req->req_recv.req_base.req_proc->super.proc_convertor,
                 &(req->req_recv.req_base.req_datatype->super),
                 req->req_recv.req_base.req_count,
                 req->req_recv.req_base.req_addr,

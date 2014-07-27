@@ -161,7 +161,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_
     module->super.group_list = NULL;
     module->super.group_net = OMPI_SBGP_MUMA;
     for (proc = 0, cnt = 0, last_local_proc = 0 ; proc < n_procs_in ; ++proc) {
-        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
+        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->super.proc_flags);
         if (local) {
             last_local_proc = proc;
             cnt++;
@@ -189,7 +189,7 @@ static mca_sbgp_base_module_t *mca_sbgp_basesmuma_select_procs(struct ompi_proc_
     }
 
     for (proc = 0, cnt = 0 ; proc < n_procs_in ; ++proc) {
-        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags);
+        local = OPAL_PROC_ON_LOCAL_NODE(procs[proc]->super.proc_flags);
         if( local ) {
             module->super.group_list[cnt++] = proc;
         }

@@ -21,11 +21,10 @@
 #include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 #include "opal/mca/event/event.h"
-
+#include "opal/mca/btl/base/base.h"
 
 #include "mpi.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/crcpw/pml_crcpw.h"
 #include "ompi/mca/bml/base/base.h"

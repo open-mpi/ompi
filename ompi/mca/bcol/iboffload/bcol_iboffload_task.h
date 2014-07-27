@@ -477,7 +477,7 @@ mca_bcol_iboffload_get_calc_task(mca_bcol_iboffload_module_t *iboffload,
     SENDWR(task)->sg_list = task->sg_entries;
 
     SENDWR(task)->opcode = MCA_BCOL_IBOFFLOAD_SEND_CALC;
-#if OMPI_HAVE_IBOFFLOAD_CALC_RDMA
+#if OPAL_HAVE_IBOFFLOAD_CALC_RDMA
     SENDWR(task)->wr.calc_send.data_type = coll_request->actual_ib_dtype;
     SENDWR(task)->wr.calc_send.calc_op = coll_request->actual_ib_op;
 #else
@@ -533,7 +533,7 @@ static inline __opal_attribute_always_inline__ mca_bcol_iboffload_task_t*
     SENDWR(task)->num_sge = 1;
     SENDWR(task)->sg_list = task->sg_entries;
 
-#if OMPI_HAVE_IBOFFLOAD_CALC_RDMA
+#if OPAL_HAVE_IBOFFLOAD_CALC_RDMA
     SENDWR(task)->opcode = IBV_M_WR_CALC_RDMA_WRITE_WITH_IMM;
     SENDWR(task)->wr.calc_rdma.data_type = coll_request->actual_ib_dtype;
     SENDWR(task)->wr.calc_rdma.calc_op = coll_request->actual_ib_op;

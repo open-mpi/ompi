@@ -29,7 +29,7 @@
 #include "ompi/mca/bcol/bcol.h"
 #include "ompi/mca/bcol/base/base.h"
 #include "ompi/include/ompi/constants.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/mca/mpool/mpool.h"
 #include "opal/class/opal_list.h"
 /*
  * The following file was created by configure.  It contains extern

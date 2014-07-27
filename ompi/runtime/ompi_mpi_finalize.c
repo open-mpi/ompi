@@ -47,6 +47,10 @@
 #include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/show_help.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/mpool/base/mpool_base_tree.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/allocator/base/base.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -70,11 +74,7 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
-#include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/base/mpool_base_tree.h"
-#include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
-#include "ompi/mca/allocator/base/base.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/pubsub/base/base.h"
@@ -139,7 +139,7 @@ int ompi_mpi_finalize(void)
      */
     (void)mca_pml_base_bsend_detach(NULL, NULL);
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
+#if OPAL_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
 #endif
 
@@ -319,7 +319,7 @@ int ompi_mpi_finalize(void)
     /* If requested, print out a list of memory allocated by ALLOC_MEM
        but not freed by FREE_MEM */
     if (0 != ompi_debug_show_mpi_alloc_mem_leaks) {
-        mca_mpool_base_tree_print();
+        mca_mpool_base_tree_print(ompi_debug_show_mpi_alloc_mem_leaks);
     }
 
     /* Now that all MPI objects dealing with communications are gone,
@@ -423,13 +423,13 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_bml_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_mpool_base_framework))) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_mpool_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_rcache_base_framework))) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_rcache_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_allocator_base_framework))) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_allocator_base_framework))) {
         return ret;
     }
 

@@ -368,9 +368,9 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     if ((size != strlen(my_pml) + 1) ||
         (0 != strcmp(my_pml, remote_pml))) {
         opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
-                    OMPI_NAME_PRINT(&ompi_proc_local()->proc_name),
-                    my_pml, OMPI_NAME_PRINT(&procs[0]->proc_name),
-                    (NULL == procs[0]->proc_hostname) ? "unknown" : procs[0]->proc_hostname,
+                    OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name),
+                    my_pml, OMPI_NAME_PRINT(&procs[0]->super.proc_name),
+                    (NULL == procs[0]->super.proc_hostname) ? "unknown" : procs[0]->super.proc_hostname,
                     remote_pml);
         free(remote_pml); /* cleanup before returning */
         return OMPI_ERR_UNREACH;

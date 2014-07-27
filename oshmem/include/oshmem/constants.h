@@ -111,13 +111,13 @@ enum {
 
 #define OSHMEM_PREDEFINED_GLOBAL(type, global) ((type) ((void *) &(global)))
 
-#if OMPI_WANT_MEMCHECKER
+#if OPAL_WANT_MEMCHECKER
 #define MEMCHECKER(x) do {       \
                 x;                     \
        } while(0)
 #else
 #define MEMCHECKER(x)
-#endif /* OMPI_WANT_MEMCHECKER */
+#endif /* OPAL_WANT_MEMCHECKER */
 
 #endif /* OSHMEM_CONSTANTS_H */
 

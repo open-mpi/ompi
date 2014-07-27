@@ -22,7 +22,7 @@
 
 #include "bcol_iboffload.h"
 
-#include "ompi/class/ompi_free_list.h"
+#include "opal/class/ompi_free_list.h"
 
 BEGIN_C_DECLS
 

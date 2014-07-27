@@ -35,8 +35,8 @@
 #include "opal/util/output.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "bml_r2.h"
 #include "ompi/proc/proc.h"
@@ -198,7 +198,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         opal_bitmap_clear_all_bits(reachable);
         memset(btl_endpoints, 0, nprocs *sizeof(struct mca_btl_base_endpoint_t*)); 
 
-        rc = btl->btl_add_procs(btl, n_new_procs, new_procs, btl_endpoints, reachable);
+        rc = btl->btl_add_procs(btl, n_new_procs, (opal_proc_t**)new_procs, btl_endpoints, reachable);
         if(OMPI_SUCCESS != rc) {
             /* This BTL has troubles adding the nodes. Let's continue maybe some other BTL
              * can take care of this task.
@@ -242,23 +242,23 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                     bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, size-1);
                     /* skip this btl if the exclusivity is less than the previous */
                     if(bml_btl->btl->btl_exclusivity > btl->btl_exclusivity) {
-                        btl->btl_del_procs(btl, 1, &proc, &btl_endpoints[p]);
-                        opal_output_verbose(20, ompi_btl_base_framework.framework_output, 
+                        btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &btl_endpoints[p]);
+                        opal_output_verbose(20, opal_btl_base_framework.framework_output, 
                                             "mca: bml: Not using %s btl to %s on node %s "
                                             "because %s btl has higher exclusivity (%d > %d)",
                                             btl->btl_component->btl_version.mca_component_name,
-                                            OMPI_NAME_PRINT(&proc->proc_name), proc->proc_hostname,
+                                            OMPI_NAME_PRINT(&proc->super.proc_name), proc->super.proc_hostname,
                                             bml_btl->btl->btl_component->btl_version.mca_component_name,
                                             bml_btl->btl->btl_exclusivity,
                                             btl->btl_exclusivity);
                         continue;
                     }
                 }
-                opal_output_verbose(1, ompi_btl_base_framework.framework_output, 
+                opal_output_verbose(1, opal_btl_base_framework.framework_output, 
                                     "mca: bml: Using %s btl to %s on node %s",
                                     btl->btl_component->btl_version.mca_component_name,
-                                    OMPI_NAME_PRINT(&proc->proc_name),
-                                    proc->proc_hostname);
+                                    OMPI_NAME_PRINT(&proc->super.proc_name),
+                                    proc->super.proc_hostname);
 
                 /* cache the endpoint on the proc */
                 bml_btl = mca_bml_base_btl_array_insert(&bml_endpoint->btl_send);
@@ -383,7 +383,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 
             /* check flags - is rdma prefered */
             if ((btl->btl_flags & (MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_GET)) &&
-                !((proc->proc_arch != ompi_proc_local_proc->proc_arch) &&
+                !((proc->super.proc_arch != ompi_proc_local_proc->super.proc_arch) &&
                   (0 == (btl->btl_flags & MCA_BTL_FLAGS_HETEROGENEOUS_RDMA)))) {
                 mca_bml_base_btl_t* bml_btl_rdma = mca_bml_base_btl_array_insert(&bml_endpoint->btl_rdma);
                 mca_btl_base_module_t* btl_rdma = bml_btl->btl;
@@ -409,12 +409,12 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 opal_show_help("help-mca-bml-r2.txt",
                                "unreachable proc",
                                true, 
-                               OMPI_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
-                               (NULL != ompi_proc_local_proc->proc_hostname ?
-                                ompi_proc_local_proc->proc_hostname : "unknown!"),
-                               OMPI_NAME_PRINT(&(proc->proc_name)),
-                               (NULL != ompi_proc_local_proc->proc_hostname ?
-                                ompi_proc_local_proc->proc_hostname : "unknown!"),
+                               OMPI_NAME_PRINT(&(ompi_proc_local_proc->super.proc_name)),
+                               (NULL != ompi_proc_local_proc->super.proc_hostname ?
+                                ompi_proc_local_proc->super.proc_hostname : "unknown!"),
+                               OMPI_NAME_PRINT(&(proc->super.proc_name)),
+                               (NULL != ompi_proc_local_proc->super.proc_hostname ?
+                                ompi_proc_local_proc->super.proc_hostname : "unknown!"),
                                btl_names);
             }
             break;
@@ -467,7 +467,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
             mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, f_index);
             mca_btl_base_module_t* btl = bml_btl->btl;
 
-            rc = btl->btl_del_procs(btl, 1, &proc, &bml_btl->btl_endpoint);
+            rc = btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &bml_btl->btl_endpoint);
             if(OMPI_SUCCESS != rc) {
                 free(del_procs);
                 return rc;

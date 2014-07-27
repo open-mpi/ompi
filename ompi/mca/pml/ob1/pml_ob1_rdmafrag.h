@@ -23,7 +23,6 @@
 #ifndef MCA_PML_OB1_RDMAFRAG_H
 #define MCA_PML_OB1_RDMAFRAG_H
 
-#include "ompi/mca/btl/btl.h"
 #include "pml_ob1_hdr.h"
 
 BEGIN_C_DECLS

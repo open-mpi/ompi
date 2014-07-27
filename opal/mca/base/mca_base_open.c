@@ -91,7 +91,7 @@ int mca_base_open(void)
 
     mca_base_component_path = value;
     var_id = mca_base_var_register("opal", "mca", "base", "component_path",
-                                   "Path where to look for Open MPI and ORTE components",
+                                   "Path where to look for additional components",
                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                    OPAL_INFO_LVL_9,
                                    MCA_BASE_VAR_SCOPE_READONLY,

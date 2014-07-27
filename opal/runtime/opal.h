@@ -40,14 +40,8 @@ OPAL_DECLSPEC extern const char opal_version_string[];
    its final value by the end of orte_init(). */
 OPAL_DECLSPEC extern int opal_cache_line_size;
 
-/** Identifier for this process. Currently defined in opal/types.h
- * as a uint64_t, but may change at some point to a more opaque
- * struct handle */
-OPAL_DECLSPEC extern opal_identifier_t opalid;
-#define OPAL_MY_ID &opalid
-
-/* set the identifier */
-OPAL_DECLSPEC void opal_init_set_identifier(opal_identifier_t *id);
+/** Do we want to be warned on fork or not? */
+OPAL_DECLSPEC extern bool opal_warn_on_fork;
 
 /**
  * Initialize the OPAL layer, including the MCA system.
@@ -121,6 +115,8 @@ OPAL_DECLSPEC int opal_init_test(void);
  * @retval OPAL_ERROR Upon failure.
  */
 OPAL_DECLSPEC void opal_finalize_test(void);
+
+OPAL_DECLSPEC void opal_warn_fork(void);
 
 /**
  * Internal function.  Do not call.
