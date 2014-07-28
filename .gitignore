@@ -253,7 +253,6 @@ ompi/include/mpif-io-handles.h
 ompi/include/mpi_portable_platform.h
 ompi/include/ompi/version.h
 ompi/include/ompi/frameworks.h
-ompi/mca/btl/openib/btl_openib_lex.c
 ompi/mca/coll/basic/coll-basic-version.h*
 ompi/mca/coll/demo/acinclude.m4
 ompi/mca/coll/demo/aclocal.m4
@@ -455,6 +454,7 @@ opal/include/opal/sys/powerpc/atomic-32-64.s
 opal/mca/base/*.obj
 opal/mca/base/mca_base_parse_paramfile_lex.c
 opal/mca/base/vc70.pdb
+opal/mca/btl/openib/btl_openib_lex.c
 opal/mca/crs/opal_crs.7
 opal/mca/event/libevent2021/libevent/stamp-h1
 opal/mca/event/libevent2021/libevent/autom4te.cache
@@ -582,6 +582,7 @@ orte/test/mpi/spawn_multiple
 orte/test/mpi/ziaprobe
 orte/test/mpi/ziatest
 orte/test/mpi/.gdb_history
+orte/test/mpi/*.dwarf
 orte/test/mpi/junk*
 orte/test/mpi/sio
 orte/test/mpi/sendrecv_blaster
@@ -603,6 +604,7 @@ orte/test/mpi/paccept
 orte/test/mpi/pconnect
 orte/test/mpi/thread_init
 orte/test/mpi/memcached-dummy
+orte/test/mpi/coll_test
 orte/test/system/radix
 orte/test/system/sigusr_trap
 orte/test/system/orte_no_op
@@ -804,7 +806,3 @@ test/util/opal_path_nfs.out
 test/util/opal_bit_ops
 test/util/*.log
 test/util/*.trs
-ompi/contrib/vt/vt/extlib/otf/otf_vc08.sln
-ompi/mpi/fortran/use-mpi-f08-desc/ISO_Fortran_binding.h
-ompi/mpi/java/README
-opal/win32/win_compat.h
