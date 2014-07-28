@@ -20,6 +20,7 @@
 #include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include "opal/mca/pmix/base/base.h"
@@ -156,7 +157,7 @@ static int tmp_put(opal_pmix_scope_t scope,
                       opal_value_t *kv)
 {
     /* just store the value in the datastore */
-    return opal_dstore.store(opal_dstore_internal, OPAL_MY_ID, kv);
+    return opal_dstore.store(opal_dstore_internal, OPAL_PROC_MY_NAME, kv);
 }
 
 

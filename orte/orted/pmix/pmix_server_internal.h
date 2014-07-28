@@ -36,7 +36,7 @@
 #include "opal/types.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/event/event.h"
-
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
@@ -139,7 +139,7 @@ OBJ_CLASS_DECLARATION(pmix_server_peer_t);
                             ORTE_NAME_PRINT(&(p)->name));               \
         msg = OBJ_NEW(pmix_server_send_t);                              \
         /* setup the header */                                          \
-        msg->hdr.id = *OPAL_MY_ID;                                      \
+        msg->hdr.id = OPAL_PROC_MY_NAME;                                \
         msg->hdr.type = PMIX_USOCK_USER;                                \
         msg->hdr.tag = (t);                                             \
         msg->hdr.nbytes = (b)->bytes_used;                              \

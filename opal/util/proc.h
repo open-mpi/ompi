@@ -16,6 +16,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/types.h"
 #include "opal/dss/dss.h"
 
 /**

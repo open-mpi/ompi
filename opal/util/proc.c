@@ -140,7 +140,7 @@ opal_modex_send_internal(const mca_base_component_t *source_component,
     }
 
     /* MPI connection data is to be shared with ALL other processes */
-    rc = opal_dstore.store(opal_dstore_peer, (opal_identifier_t*)&proc->proc_name, &kv);
+    rc = opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&proc->proc_name, &kv);
     OBJ_DESTRUCT(&kv);
     return rc;
 }
@@ -167,14 +167,14 @@ opal_modex_recv_internal(const mca_base_component_t *component,
 
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     /* the peer dstore contains our own data that will be shared
-     * with our peers - the nonpeer dstore contains data we received
-     * that would only be shared with nonpeer procs
+     * with our peers - the internal dstore contains data we received
+     * that would only be shared with internal procs
      */
-    if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_nonpeer,
+    if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                 (opal_identifier_t*)(&proc->proc_name),
                                                 key, &myvals))) {
         /* see if we can find it in the internal dstore */
-        OPAL_OUTPUT_VERBOSE((2, 0, "%s searching nonpeer dstore for %s",
+        OPAL_OUTPUT_VERBOSE((2, 0, "%s searching internal dstore for %s",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key));
         if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                     (opal_identifier_t*)(&proc->proc_name),
@@ -182,7 +182,7 @@ opal_modex_recv_internal(const mca_base_component_t *component,
             /* try one last place - the peer dstore in case it got stuck there for some reason */
             OPAL_OUTPUT_VERBOSE((2, 0, "%s searching internal dstore for %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key));
-            if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_peer,
+            if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                         (opal_identifier_t*)(&proc->proc_name),
                                                         key, &myvals))) {
                 OPAL_LIST_DESTRUCT(&myvals);

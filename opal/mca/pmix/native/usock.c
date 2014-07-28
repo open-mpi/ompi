@@ -45,6 +45,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"
 #include "pmix_native.h"
@@ -99,7 +100,7 @@ void pmix_usock_send_recv(int fd, short args, void *cbdata)
     }
 
     snd = OBJ_NEW(pmix_usock_send_t);
-    snd->hdr.id = *OPAL_MY_ID;
+    snd->hdr.id = OPAL_PROC_MY_NAME;
     snd->hdr.type = PMIX_USOCK_USER;
     snd->hdr.tag = tag;
     snd->hdr.nbytes = ms->bfr->bytes_used;
@@ -334,12 +335,12 @@ int usock_send_connect_ack(void)
                         "SEND CONNECT ACK");
 
     /* setup the header */
-    hdr.id = *OPAL_MY_ID;
+    hdr.id = OPAL_PROC_MY_NAME;
     hdr.tag = UINT32_MAX;
     hdr.type = PMIX_USOCK_IDENT;
 
     /* get our security credential */
-    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal, OPAL_MY_ID, &cred))) {
+    if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(opal_dstore_internal, &OPAL_PROC_MY_NAME, &cred))) {
         return rc;
     }
 

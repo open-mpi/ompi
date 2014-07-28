@@ -24,6 +24,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include "opal/mca/pmix/base/base.h"
@@ -31,7 +32,7 @@
 
 #define OPAL_PMI_PAD  10
 
-static char* setup_key(opal_identifier_t* name, const char *key, int pmix_keylen_max);
+static char* setup_key(opal_process_name_t* name, const char *key, int pmix_keylen_max);
 static char *pmi_encode(const void *val, size_t vallen);
 static uint8_t *pmi_decode (const char *data, size_t *retlen);
 
@@ -119,7 +120,7 @@ int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* p
 
         sprintf (tmp_key, "key%d", *pack_key);
 
-        if (NULL == (pmikey = setup_key(OPAL_MY_ID, tmp_key, vallen))) {
+        if (NULL == (pmikey = setup_key(&OPAL_PROC_MY_NAME, tmp_key, vallen))) {
             OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
             rc = OPAL_ERR_BAD_PARAM;
             break;
@@ -337,7 +338,7 @@ int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t **ou
     return rc;
 }
 
-static char* setup_key(opal_identifier_t* name, const char *key, int pmix_keylen_max)
+static char* setup_key(opal_process_name_t* name, const char *key, int pmix_keylen_max)
 {
     char *pmi_kvs_key;
 
