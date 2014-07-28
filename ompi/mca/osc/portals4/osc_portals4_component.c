@@ -13,7 +13,6 @@
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/request/request.h"
-#include "ompi/class/ompi_free_list.h"
 
 #include "osc_portals4.h"
 #include "osc_portals4_request.h"
@@ -444,12 +443,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         goto error;
     }
     
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     {
         int i;
         int num_mds = ompi_mtl_portals4_get_num_mds();
-        ptl_size_t size = 1ULL << OMPI_PORTALS4_MAX_MD_SIZE;
-        ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
+        ptl_size_t size = 1ULL << OPAL_PORTALS4_MAX_MD_SIZE;
+        ptl_size_t offset_unit = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) / 2;
 
         module->md_h = malloc(sizeof(ptl_handle_md_t) * num_mds);
         if (NULL == module->md_h) {
@@ -622,7 +621,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* BWB: FIX ME: This is all wrong... */
     if (0 != module->ct_h) PtlCTFree(module->ct_h);
     if (0 != module->data_me_h) PtlMEUnlink(module->data_me_h);
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     /* BWB: FIX ME */
 #else 
     if (0 != module->req_md_h) PtlMDRelease(module->req_md_h[0]);
@@ -662,7 +661,7 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
 
     /* cleanup */
     PtlMEUnlink(module->data_me_h);
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     /* BWB: FIX ME */
 #else 
     PtlMDRelease(module->md_h[0]);

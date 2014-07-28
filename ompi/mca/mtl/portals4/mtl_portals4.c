@@ -79,7 +79,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                 "Portals 4 MTL does not support heterogeneous operations.");
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "Proc %s architecture %x, mine %x.",
-                                OMPI_NAME_PRINT(&procs[i]->proc_name), 
+                                OMPI_NAME_PRINT(&procs[i]->super.proc_name), 
                                 procs[i]->super.proc_arch, ompi_proc_local()->super.proc_arch);
             return OMPI_ERR_NOT_SUPPORTED;
         }
@@ -170,7 +170,7 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
 
     PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
     PtlMDRelease(ompi_mtl_portals4.zero_md_h);
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     {
         int i;
         int num_mds = ompi_mtl_portals4_get_num_mds();
