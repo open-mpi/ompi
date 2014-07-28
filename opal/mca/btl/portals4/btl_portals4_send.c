@@ -103,6 +103,6 @@ int mca_btl_portals4_sendi(struct mca_btl_base_module_t* btl_base,
                           mca_btl_base_descriptor_t** des)
 {
     opal_output(opal_btl_base_framework.framework_output, "mca_btl_portals_sendi is not implemented");
-    abort();
+    BTL_ERROR(("mca_btl_portals_sendi is not implemented"));
     return OPAL_SUCCESS;
 }
