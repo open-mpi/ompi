@@ -44,7 +44,7 @@ int pmix_store_encoded(const char *key, const void *data,
     size_t needed;
 
     int pmi_packed_data_off = *length;
-    char* pmi_packed_data = (NULL != *buffer) ? *buffer : NULL;
+    char* pmi_packed_data = *buffer;
 
     switch (type) {
         case OPAL_STRING:
@@ -233,6 +233,7 @@ int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t **ou
     size_t len, offset;
     int rc, size;
     opal_value_t *kv, *knew;
+    *out_kv = NULL;
 
     OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                          "pmix: get all keys for proc %" PRIu64 " in KVS %s",
@@ -327,7 +328,6 @@ int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t **ou
         if (0 == strcmp(kv->key, key)) {
             /* create the copy */
             if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
-                *out_kv = NULL;
                 OPAL_ERROR_LOG(rc);
             } else {
                 *out_kv = knew;

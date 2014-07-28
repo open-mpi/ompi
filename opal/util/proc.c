@@ -14,6 +14,7 @@
 #include "opal/util/proc.h"
 #include "opal/util/arch.h"
 #include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 
 opal_process_info_t opal_process_info = {
     .nodename = "not yet named",
@@ -140,7 +141,7 @@ opal_modex_send_internal(const mca_base_component_t *source_component,
     }
 
     /* MPI connection data is to be shared with ALL other processes */
-    rc = opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&proc->proc_name, &kv);
+    rc = opal_pmix.put(PMIX_GLOBAL, &kv);
     OBJ_DESTRUCT(&kv);
     return rc;
 }
