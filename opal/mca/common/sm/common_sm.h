@@ -126,64 +126,6 @@ OPAL_DECLSPEC extern int
 mca_common_sm_module_unlink(mca_common_sm_module_t *modp);
 
 /**
- *  This routine is used to set up a shared memory segment (whether
- *  it's an mmaped file or a SYSV IPC segment).  It is assumed that
- *  the shared memory segment does not exist before any of the current
- *  set of processes try and open it.
- *
- *  @param procs - array of (opal_proc_t *)'s to create this shared
- *  memory segment for.  This array must be writable; it may be edited
- *  (in undefined ways) if the array contains procs that are not on
- *  this host.  It is assumed that the caller will simply free this
- *  array upon return.  (INOUT)
- *
- *  @param num_procs - length of the procs array (IN)
- *
- *  @param size - size of the segment, in bytes (IN)
- *
- *  @param name - unique string identifier of this segment (IN)
- *
- *  @param size_ctl_structure  size of the control structure at
- *                             the head of the segment. The control structure
- *                             is assumed to have mca_common_sm_seg_header_t
- *                             as its first segment (IN)
- *
- *  @param data_set_alignment  alignment of the data segment.  this
- *                             follows the control structure.  If this
- *                             value if 0, then assume that there will
- *                             be no data segment following the control
- *                             structure. (IN)
- *
- *  @returnvalue pointer to control structure at head of shared memory segment.
- */
-OPAL_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_init(opal_proc_t **procs,
-                   size_t num_procs,
-                   size_t size,
-                   char *file_name,
-                   size_t size_ctl_structure,
-                   size_t data_seg_alignment);
-
-/**
- * This routine is used to set up a shared memory segment (whether
- * it's an mmaped file or a SYSV IPC segment).  It is assumed that
- * the shared memory segment does not exist before any of the current
- * set of processes try and open it.
- *
- * This routine is the same as mca_common_sm_mmap_init() except that
- * it takes an (ompi_group_t *) parameter to specify the peers rather
- * than an array of procs.  Unlike mca_common_sm_mmap_init(), the
- * group must contain *only* local peers, or this function will return
- * NULL and not create any shared memory segment.
- */
-OPAL_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_init_group(ompi_group_t *group,
-                         size_t size,
-                         char *file_name,
-                         size_t size_ctl_structure,
-                         size_t data_seg_alignment);
-
-/**
  * callback from the sm mpool
  */
 OPAL_DECLSPEC extern void *

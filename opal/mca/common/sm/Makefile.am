@@ -44,13 +44,11 @@
 # Header files
 
 headers = \
-        common_sm_rml.h \
         common_sm.h
 
 # Source files
 
 sources = \
-        common_sm_rml.c \
         common_sm.c
 
 # Help file
