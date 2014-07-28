@@ -15,6 +15,7 @@
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +61,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/util/proc.h"
 #include "opal/mca/common/verbs/common_verbs.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"
@@ -252,9 +254,8 @@ static int usnic_modex_send(void)
                                 ntoh64(addrs[i].gid.global.interface_id));
         }
     }
-
-    rc = opal_modex_send(&mca_btl_usnic_component.super.btl_version, 
-                         addrs, size);
+    OPAL_MODEX_SEND(rc, PMIX_REMOTE, &mca_btl_usnic_component.super.btl_version, 
+                    addrs, size);
     if (NULL != addrs) {
         free(addrs);
     }

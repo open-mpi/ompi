@@ -19,6 +19,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/mca/dstore/dstore.h"
 #include "opal/dss/dss.h"
+#include "opal/util/error.h"
 
 BEGIN_C_DECLS
 
@@ -48,12 +49,73 @@ OBJ_CLASS_DECLARATION(pmix_info_t);
  *              regardless of location
  */
 typedef uint8_t opal_pmix_scope_t;
-#define PMIX_LOCAL   0x01
-#define PMIX_REMOTE  0x02
-#define PMIX_GLOBAL  0x03
+#define PMIX_INTERNAL  0x01  // data used internally only
+#define PMIX_LOCAL     0x01  // share to procs also on this node
+#define PMIX_REMOTE    0x02  // share with procs not on this node
+#define PMIX_GLOBAL    0x03  // share with all procs (local + remote)
 
 /* callback function for non-blocking operations */
 typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
+
+/**
+ * Provide a simplified macro for sending data via modex
+ * to other processes. The macro requires four arguments:
+ *
+ * r - the integer return status from the modex op
+ * sc - the PMIX scope of the data
+ * s - the MCA component that is posting the data
+ * d - the data object being posted
+ * sz - the number of bytes in the data object
+ */
+#define OPAL_MODEX_SEND(r, sc, s, d, sz)                        \
+    do {                                                        \
+        opal_value_t kv;                                        \
+        OBJ_CONSTRUCT(&kv, opal_value_t);                       \
+        kv.key = mca_base_component_to_string((s));             \
+        kv.type = OPAL_BYTE_OBJECT;                             \
+        kv.data.bo.bytes = (uint8_t*)(d);                       \
+        kv.data.bo.size = (sz);                                 \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.put(sc, &kv))) {   \
+            OPAL_ERROR_LOG((r));                                \
+        }                                                       \
+        kv.data.bo.bytes = NULL; /* protect the data */         \
+        OBJ_DESTRUCT(&kv);                                      \
+    } while(0);
+
+/**
+ * Provide a simplified macro for retrieving modex data
+ * from another process:
+ *
+ * r - the integer return status from the modex op (int)
+ * s - the MCA component that posted the data (mca_base_component_t*)
+ * p - pointer to the opal_proc_t of the proc that posted
+ *     the data (opal_proc_t*)
+ * d - pointer to a location wherein the data object
+ *     it to be returned (char**)
+ * sz - pointer to a location wherein the number of bytes
+ *     in the data object can be returned (size_t)
+ */
+#define OPAL_MODEX_RECV(r, s, p, d, sz)                                 \
+    do {                                                                \
+        opal_value_t *kv;                                               \
+        char *key;                                                      \
+        key = mca_base_component_to_string((s));                        \
+        if (NULL == key) {                                              \
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);                   \
+            (r) = OPAL_ERR_OUT_OF_RESOURCE;                             \
+        } else {                                                        \
+            if (OPAL_SUCCESS != ((r) = opal_pmix.get(&(p)->proc_name,   \
+                                                     key, &kv))) {      \
+                OPAL_ERROR_LOG((r));                                    \
+            } else {                                                    \
+                *(d) = kv->data.bo.bytes;                               \
+                *(sz) = kv->data.bo.size;                               \
+                kv->data.bo.bytes = NULL; /* protect the data */        \
+                OBJ_RELEASE(kv);                                        \
+            }                                                           \
+            free(key);                                                  \
+        }                                                               \
+    } while(0);
 
 
 /****    DEFINE THE PUBLIC API'S                          ****
@@ -113,7 +175,7 @@ typedef int (*opal_pmix_base_module_put_fn_t)(opal_pmix_scope_t scope,
  * reflect the proposed PMIx extensions, and to include the process identifier so
  * we can form the PMI key within the active component instead of sprinkling that
  * code all over the code base. */
-typedef int (*opal_pmix_base_module_get_fn_t)(opal_identifier_t *id,
+typedef int (*opal_pmix_base_module_get_fn_t)(const opal_identifier_t *id,
                                              const char *key,
                                              opal_value_t **kv);
 
@@ -122,7 +184,7 @@ typedef int (*opal_pmix_base_module_get_fn_t)(opal_identifier_t *id,
  * opal_value_t object in the callback. We include the process identifier so
  * we can form the PMI key within the active component instead of sprinkling that
  * code all over the code base. */
-typedef void (*opal_pmix_base_module_get_nb_fn_t)(opal_identifier_t *id,
+typedef void (*opal_pmix_base_module_get_nb_fn_t)(const opal_identifier_t *id,
                                                  const char *key,
                                                  opal_pmix_cbfunc_t cbfunc,
                                                  void *cbdata);

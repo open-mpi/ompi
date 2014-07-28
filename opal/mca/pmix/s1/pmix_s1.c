@@ -32,10 +32,10 @@ static int s1_fence(void);
 static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
-static int s1_get(opal_identifier_t *id,
+static int s1_get(const opal_identifier_t *id,
                   const char *key,
                   opal_value_t **kv);
-static void s1_get_nb(opal_identifier_t *id,
+static void s1_get_nb(const opal_identifier_t *id,
                       const char *key,
                       opal_pmix_cbfunc_t cbfunc,
                       void *cbdata);
@@ -360,7 +360,7 @@ static int kvs_get(const char key[], char value [], int maxvalue)
     return OPAL_SUCCESS;
 }
 
-static int s1_get(opal_identifier_t *id,
+static int s1_get(const opal_identifier_t *id,
                   const char *key,
                   opal_value_t **kv)
 {
@@ -372,7 +372,7 @@ static int s1_get(opal_identifier_t *id,
     return rc;
 }
 
-static void s1_get_nb(opal_identifier_t *id,
+static void s1_get_nb(const opal_identifier_t *id,
                       const char *key,
                       opal_pmix_cbfunc_t cbfunc,
                       void *cbdata)

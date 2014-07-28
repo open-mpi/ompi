@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "portals4.h"
 #include "btl_portals4.h"
@@ -528,7 +530,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                   interface, portals4_btl->portals_ni_h,
                   ptl_process_ids[interface].phys.nid, ptl_process_ids[interface].phys.pid));
     }
-    ret = opal_modex_send(&mca_btl_portals4_component.super.btl_version,
+    OPAL_MODEX_SEND(ret, PMIX_REMOTE, &mca_btl_portals4_component.super.btl_version,
                           ptl_process_ids, mca_btl_portals4_component.num_btls * sizeof(ptl_process_t));
     if (OPAL_SUCCESS != ret) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,

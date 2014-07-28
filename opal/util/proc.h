@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,6 +19,7 @@
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/types.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 /**
  * This is a transparent handle proposed to the upper layer as a mean
@@ -79,16 +81,5 @@ OPAL_DECLSPEC extern int32_t (*opal_process_name_jobid)(const opal_process_name_
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
 #define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)
 #define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
-
-/**
- * Access to the modex.
- */
-OPAL_DECLSPEC extern int
-(*opal_modex_send)(const mca_base_component_t *source_component,
-                   const void *data, size_t size);
-OPAL_DECLSPEC extern int
-(*opal_modex_recv)(const mca_base_component_t *component,
-                   const opal_proc_t *proc,
-                   void **buffer, size_t *size);
 
 #endif  /* OPAL_PROC_H */

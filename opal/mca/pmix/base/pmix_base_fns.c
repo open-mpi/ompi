@@ -32,7 +32,7 @@
 
 #define OPAL_PMI_PAD  10
 
-static char* setup_key(opal_process_name_t* name, const char *key, int pmix_keylen_max);
+static char* setup_key(const opal_process_name_t* name, const char *key, int pmix_keylen_max);
 static char *pmi_encode(const void *val, size_t vallen);
 static uint8_t *pmi_decode (const char *data, size_t *retlen);
 
@@ -155,7 +155,8 @@ int pmix_commit_packed( char* buffer_to_put, int data_to_put, int vallen, int* p
     return OPAL_SUCCESS;
 }
 
-int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, int vallen, kvs_get_fn fn)
+int pmix_get_packed(const opal_identifier_t* proc, char **packed_data,
+                    size_t *len, int vallen, kvs_get_fn fn)
 {
     char *tmp_encoded = NULL, *pmikey, *pmi_tmp;
     int remote_key, size;
@@ -226,7 +227,9 @@ int pmix_get_packed(opal_identifier_t* proc, char **packed_data, size_t *len, in
     return OPAL_SUCCESS;
 }
 
-int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t **out_kv, char* kvs_name, int vallen, kvs_get_fn fn)
+int cache_keys_locally(const opal_identifier_t* id, const char* key,
+                       opal_value_t **out_kv, char* kvs_name,
+                       int vallen, kvs_get_fn fn)
 {
     char *tmp, *tmp2, *tmp3, *tmp_val;
     opal_data_type_t stored_type;
@@ -338,7 +341,7 @@ int cache_keys_locally(opal_identifier_t* id, const char* key, opal_value_t **ou
     return rc;
 }
 
-static char* setup_key(opal_process_name_t* name, const char *key, int pmix_keylen_max)
+static char* setup_key(const opal_process_name_t* name, const char *key, int pmix_keylen_max)
 {
     char *pmi_kvs_key;
 

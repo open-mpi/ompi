@@ -16,6 +16,7 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,6 +64,7 @@
 #include "opal/mca/btl/base/base.h" 
 #include "opal/mca/mpool/base/base.h" 
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_addr.h"
@@ -1001,7 +1003,7 @@ static int mca_btl_tcp_component_exchange(void)
 #endif
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
-         rc =  opal_modex_send(&mca_btl_tcp_component.super.btl_version, 
+         OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_tcp_component.super.btl_version, 
                                addrs, xfer_size);
          free(addrs);
      } /* end if */

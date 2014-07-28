@@ -37,10 +37,10 @@ static int native_fence(void);
 static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int native_put(opal_pmix_scope_t scope,
                       opal_value_t *kv);
-static int native_get(opal_identifier_t *id,
+static int native_get(const opal_identifier_t *id,
                       const char *key,
                       opal_value_t *kv);
-static void native_get_nb(opal_identifier_t *id,
+static void native_get_nb(const opal_identifier_t *id,
                           const char *key,
                           opal_pmix_cbfunc_t cbfunc,
                           void *cbdata);
@@ -357,7 +357,7 @@ static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
     return OPAL_SUCCESS;
 }
 
-static int native_get(opal_identifier_t *id,
+static int native_get(const opal_identifier_t *id,
                       const char *key,
                       opal_value_t *kv)
 {
@@ -438,7 +438,7 @@ static int native_get(opal_identifier_t *id,
     return rc;
 }
 
-static void native_get_nb(opal_identifier_t *id,
+static void native_get_nb(const opal_identifier_t *id,
                           const char *key,
                           opal_pmix_cbfunc_t cbfunc,
                           void *cbdata)

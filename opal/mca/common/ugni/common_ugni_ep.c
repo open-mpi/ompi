@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,6 +12,7 @@
  */
 
 #include "common_ugni.h"
+#include "opal/mca/pmix/pmix.h"
 
 OBJ_CLASS_INSTANCE(opal_common_ugni_endpoint_t, opal_object_t, NULL, NULL);
 
@@ -31,8 +33,8 @@ int opal_common_ugni_endpoint_for_proc (opal_common_ugni_device_t *dev, opal_pro
     }
 
     /* Receive the modex */
-    rc = opal_modex_recv(&opal_common_ugni_component, peer_proc,
-                         (void *) &modex, &msg_size);
+    OPAL_MODEX_RECV(rc, &opal_common_ugni_component,
+                    peer_proc, (void *) &modex, &msg_size);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         OPAL_OUTPUT((-1, "btl/ugni error receiving modex"));
         return rc;
