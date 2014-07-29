@@ -116,11 +116,6 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     /* We should not get here for an endpoint that is on the ACK list,
        so it should be safe to unconditionally destruct the ack_li */
     OBJ_DESTRUCT(&(endpoint->endpoint_ack_li));
-
-    /* Remove this endpoint from module->all_endpoints list, then
-       destruct the list_item_t */
-    opal_list_remove_item(&endpoint->endpoint_module->all_endpoints,
-                          &endpoint->endpoint_endpoint_li);
     OBJ_DESTRUCT(&(endpoint->endpoint_endpoint_li));
 
     if (endpoint->endpoint_hotel.rooms != NULL) {
