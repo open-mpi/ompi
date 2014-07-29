@@ -37,10 +37,10 @@ comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
 /*
  * Public component structure
  */
-mca_topo_base_component_2_1_0_t mca_topo_example_component = 
+mca_topo_base_component_2_2_0_t mca_topo_example_component = 
 {
     {
-        MCA_TOPO_BASE_VERSION_2_1_0,
+        MCA_TOPO_BASE_VERSION_2_2_0,
 
         "example",
         OMPI_MAJOR_VERSION,
