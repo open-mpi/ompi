@@ -18,8 +18,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 sources = \
     topo_example.h \
     topo_example_cart_map.c \
