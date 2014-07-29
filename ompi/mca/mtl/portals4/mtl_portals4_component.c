@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
-#include "ompi/runtime/ompi_module_exchange.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
@@ -268,8 +269,9 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    ret = ompi_modex_send(&mca_mtl_portals4_component.mtl_version,
-                          &id, sizeof(id));
+    OPAL_MODEX_SEND(ret, PMIX_REMOTE,
+                    &mca_mtl_portals4_component.mtl_version,
+                    &id, sizeof(id));
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: ompi_modex_send failed: %d\n",

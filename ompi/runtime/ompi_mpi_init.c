@@ -55,12 +55,12 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
@@ -525,7 +525,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     OMPI_THREADLEVEL_SET_BITFLAG ( ompi_mpi_thread_provided, threadlevel_bf );
 
     /* add this bitflag to the modex */
-    if ( OMPI_SUCCESS != (ret = ompi_modex_send_string("MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t)))) {
+    OPAL_MODEX_SEND_STRING(ret, PMIX_GLOBAL, "MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t));
+    if (OPAL_SUCCESS != ret) {
         error = "ompi_mpi_init: modex send thread level";
         goto error;
     }

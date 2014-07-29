@@ -35,11 +35,11 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/params.h"
 
 static opal_list_t  ompi_proc_list;
@@ -115,7 +115,8 @@ int ompi_proc_init(void)
             opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
-            if (OMPI_SUCCESS != (ret = ompi_modex_send_key_value("OMPI_ARCH", &proc->super.proc_arch, OPAL_UINT32))) {
+            OPAL_MODEX_SEND_STRING(ret, PMIX_REMOTE, "OMPI_ARCH", &proc->super.proc_arch, OPAL_UINT32);
+            if (OPAL_SUCCESS != ret) {
                 return ret;
             }
 #endif
@@ -267,8 +268,9 @@ int ompi_proc_complete_init(void)
                  * ALL modex info for this proc) will have no appreciable
                  * impact on launch scaling
                  */
-                ret = ompi_modex_recv_key_value(OMPI_DB_HOSTNAME, proc, (void**)&(proc->super.proc_hostname), OPAL_STRING);
-                if (OMPI_SUCCESS != ret) {
+                OPAL_MODEX_RECV_VALUE(ret, OMPI_DB_HOSTNAME, (opal_proc_t*)&proc->super,
+                                      (char**)&(proc->super.proc_hostname), OPAL_STRING);
+                if (OPAL_SUCCESS != ret) {
                     errcode = ret;
                     break;
                 }
@@ -287,8 +289,9 @@ int ompi_proc_complete_init(void)
             {
                 uint32_t *ui32ptr;
                 ui32ptr = &(proc->super.proc_arch);
-                ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&ui32ptr, OPAL_UINT32);
-                if (OMPI_SUCCESS == ret) {
+                OPAL_MODEX_RECV_VALUE(ret, "OMPI_ARCH", (opal_proc_t*)&proc->super,
+                                      (void**)&ui32ptr, OPAL_UINT32);
+                if (OPAL_SUCCESS == ret) {
                     /* if arch is different than mine, create a new convertor for this proc */
                     if (proc->super.proc_arch != opal_local_arch) {
                         OBJ_RELEASE(proc->super.proc_convertor);
@@ -518,7 +521,8 @@ int ompi_proc_refresh(void)
                  * ALL modex info for this proc) will have no appreciable
                  * impact on launch scaling
                  */
-                ret = ompi_modex_recv_key_value(OMPI_DB_HOSTNAME, proc, (void**)&(proc->super.proc_hostname), OPAL_STRING);
+                OPAL_MODEX_RECV_VALUE(ret, OMPI_DB_HOSTNAME, (opal_proc_t*)&proc->super,
+                                      (char**)&(proc->super.proc_hostname), OPAL_STRING);
                 if (OMPI_SUCCESS != ret) {
                     break;
                 }
@@ -536,7 +540,8 @@ int ompi_proc_refresh(void)
             {
                 /* get the remote architecture */
                 uint32_t* uiptr = &(proc->super.proc_arch);
-                ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
+                OPAL_MODEX_RECV_VALUE(ret, "OMPI_ARCH", (opal_proc_t*)&proc->super,
+                                      (void**)&uiptr, OPAL_UINT32);
                 if (OMPI_SUCCESS != ret) {
                     break;
                 }

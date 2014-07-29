@@ -17,7 +17,7 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,8 @@
 #include "ompi_config.h"
 
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
+
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/op/op.h"
@@ -38,7 +40,6 @@
 #include "ompi/mca/rte/rte.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/request/request.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/mpiruntime.h"
 
 BEGIN_C_DECLS
@@ -147,7 +148,7 @@ int ompi_comm_cid_init (void)
 #if OMPI_ENABLE_THREAD_MULTIPLE
     ompi_proc_t **procs, *thisproc;
     uint8_t thread_level;
-    void *tlpointer;
+    uint8_t *tlpointer;
     int ret;
     size_t i, size, numprocs;
 
@@ -161,7 +162,7 @@ int ompi_comm_cid_init (void)
     for ( i=0; i<numprocs; i++ ) {
         thisproc = procs[i];
 
-        ret = ompi_modex_recv_string("MPI_THREAD_LEVEL", thisproc, &tlpointer, &size);
+        OPAL_MODEX_RECV_STRING(ret, "MPI_THREAD_LEVEL", thisproc, (uint8_t**)&tlpointer, &size);
         if (OMPI_SUCCESS == ret) {
             thread_level = *((uint8_t *) tlpointer);
             if ( OMPI_THREADLEVEL_IS_MULTIPLE (thread_level) ) {

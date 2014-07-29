@@ -38,10 +38,10 @@ static int tmp_fence(void);
 static int tmp_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int tmp_put(opal_pmix_scope_t scope,
                       opal_value_t *kv);
-static int tmp_get(opal_identifier_t *id,
-                      const char *key,
-                      opal_value_t *kv);
-static void tmp_get_nb(opal_identifier_t *id,
+static int tmp_get(const opal_identifier_t *id,
+                   const char *key,
+                   opal_value_t **kv);
+static void tmp_get_nb(const opal_identifier_t *id,
                           const char *key,
                           opal_pmix_cbfunc_t cbfunc,
                           void *cbdata);
@@ -154,10 +154,10 @@ static int tmp_get_size(opal_pmix_scope_t scope, int *size)
 }
 
 static int tmp_put(opal_pmix_scope_t scope,
-                      opal_value_t *kv)
+                   opal_value_t *kv)
 {
     /* just store the value in the datastore */
-    return opal_dstore.store(opal_dstore_internal, OPAL_PROC_MY_NAME, kv);
+    return opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kv);
 }
 
 
@@ -171,17 +171,17 @@ static int tmp_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int tmp_get(opal_identifier_t *id,
-                      const char *key,
-                      opal_value_t *kv)
+static int tmp_get(const opal_identifier_t *id,
+                   const char *key,
+                   opal_value_t **kv)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static void tmp_get_nb(opal_identifier_t *id,
-                          const char *key,
-                          opal_pmix_cbfunc_t cbfunc,
-                          void *cbdata)
+static void tmp_get_nb(const opal_identifier_t *id,
+                       const char *key,
+                       opal_pmix_cbfunc_t cbfunc,
+                       void *cbdata)
 {
     return;
 }

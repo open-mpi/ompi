@@ -15,7 +15,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
-#include "opal/dss/dss_types.h"
+#include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/dstore/dstore.h"
 #include "opal/dss/dss.h"
@@ -63,15 +63,15 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
  *
  * r - the integer return status from the modex op
  * sc - the PMIX scope of the data
- * s - the MCA component that is posting the data
+ * s - the key to tag the data being posted
  * d - the data object being posted
  * sz - the number of bytes in the data object
  */
-#define OPAL_MODEX_SEND(r, sc, s, d, sz)                        \
+#define OPAL_MODEX_SEND_STRING(r, sc, s, d, sz)                 \
     do {                                                        \
         opal_value_t kv;                                        \
         OBJ_CONSTRUCT(&kv, opal_value_t);                       \
-        kv.key = mca_base_component_to_string((s));             \
+        kv.key = (s);                                           \
         kv.type = OPAL_BYTE_OBJECT;                             \
         kv.data.bo.bytes = (uint8_t*)(d);                       \
         kv.data.bo.size = (sz);                                 \
@@ -79,7 +79,79 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
             OPAL_ERROR_LOG((r));                                \
         }                                                       \
         kv.data.bo.bytes = NULL; /* protect the data */         \
+        kv.key = NULL;  /* protect the key */                   \
         OBJ_DESTRUCT(&kv);                                      \
+    } while(0);
+
+/**
+ * Provide a simplified macro for sending data via modex
+ * to other processes. The macro requires four arguments:
+ *
+ * r - the integer return status from the modex op
+ * sc - the PMIX scope of the data
+ * s - the MCA component that is posting the data
+ * d - the data object being posted
+ * sz - the number of bytes in the data object
+ */
+#define OPAL_MODEX_SEND(r, sc, s, d, sz)                        \
+    do {                                                        \
+        char *key;                                              \
+        key = mca_base_component_to_string((s));                \
+        OPAL_MODEX_SEND_STRING((r), (sc), key, (d), (sz));      \
+        free(key);                                              \
+    } while(0);
+
+
+
+/**
+ * Provide a simplified macro for retrieving modex data
+ * from another process:
+ *
+ * r - the integer return status from the modex op (int)
+ * s - string key (char*)
+ * p - pointer to the opal_proc_t of the proc that posted
+ *     the data (opal_proc_t*)
+ * d - pointer to a location wherein the data object
+ *     it to be returned
+ * t - the expected data type
+ */
+#define OPAL_MODEX_RECV_VALUE(r, s, p, d, t)                            \
+    do {                                                                \
+        opal_value_t *kv;                                               \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.get(&(p)->proc_name,       \
+                                                 (s), &kv))) {          \
+            OPAL_ERROR_LOG((r));                                        \
+        } else {                                                        \
+            (r) = opal_value_unload(kv, (void**)(d), (t));              \
+            OBJ_RELEASE(kv);                                            \
+        }                                                               \
+    } while(0);
+
+/**
+ * Provide a simplified macro for retrieving modex data
+ * from another process:
+ *
+ * r - the integer return status from the modex op (int)
+ * s - string key (char*)
+ * p - pointer to the opal_proc_t of the proc that posted
+ *     the data (opal_proc_t*)
+ * d - pointer to a location wherein the data object
+ *     it to be returned (char**)
+ * sz - pointer to a location wherein the number of bytes
+ *     in the data object can be returned (size_t)
+ */
+#define OPAL_MODEX_RECV_STRING(r, s, p, d, sz)                          \
+    do {                                                                \
+        opal_value_t *kv;                                               \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.get(&(p)->proc_name,       \
+                                                 (s), &kv))) {          \
+            OPAL_ERROR_LOG((r));                                        \
+        } else {                                                        \
+            *(d) = kv->data.bo.bytes;                                   \
+            *(sz) = kv->data.bo.size;                                   \
+            kv->data.bo.bytes = NULL; /* protect the data */            \
+            OBJ_RELEASE(kv);                                            \
+        }                                                               \
     } while(0);
 
 /**
@@ -97,22 +169,13 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
  */
 #define OPAL_MODEX_RECV(r, s, p, d, sz)                                 \
     do {                                                                \
-        opal_value_t *kv;                                               \
         char *key;                                                      \
         key = mca_base_component_to_string((s));                        \
         if (NULL == key) {                                              \
             OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);                   \
             (r) = OPAL_ERR_OUT_OF_RESOURCE;                             \
         } else {                                                        \
-            if (OPAL_SUCCESS != ((r) = opal_pmix.get(&(p)->proc_name,   \
-                                                     key, &kv))) {      \
-                OPAL_ERROR_LOG((r));                                    \
-            } else {                                                    \
-                *(d) = kv->data.bo.bytes;                               \
-                *(sz) = kv->data.bo.size;                               \
-                kv->data.bo.bytes = NULL; /* protect the data */        \
-                OBJ_RELEASE(kv);                                        \
-            }                                                           \
+            OPAL_MODEX_RECV_STRING((r), key, (p), (d), (sz));           \
             free(key);                                                  \
         }                                                               \
     } while(0);

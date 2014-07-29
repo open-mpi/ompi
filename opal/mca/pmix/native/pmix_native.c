@@ -39,7 +39,7 @@ static int native_put(opal_pmix_scope_t scope,
                       opal_value_t *kv);
 static int native_get(const opal_identifier_t *id,
                       const char *key,
-                      opal_value_t *kv);
+                      opal_value_t **kv);
 static void native_get_nb(const opal_identifier_t *id,
                           const char *key,
                           opal_pmix_cbfunc_t cbfunc,
@@ -359,13 +359,14 @@ static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
 
 static int native_get(const opal_identifier_t *id,
                       const char *key,
-                      opal_value_t *kv)
+                      opal_value_t **kv)
 {
     opal_buffer_t *msg, *bptr;
     pmix_cmd_t cmd = PMIX_GET_CMD;
     pmix_cb_t *cb;
     int rc, ret;
     int32_t cnt;
+    opal_value_t *kp;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "pmix:native getting value for key %s", key);
@@ -417,11 +418,15 @@ static int native_get(const opal_identifier_t *id,
             OBJ_RELEASE(cb);
             return rc;
         }
-        while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kv, &cnt, OPAL_VALUE))) {
-            if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kv))) {
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
+            if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kp))) {
                 OPAL_ERROR_LOG(ret);
             }
-            OBJ_RELEASE(kv);
+            if (0 == strcmp(key, kp->key)) {
+                *kv = kp;
+            } else {
+                OBJ_RELEASE(kv);
+            }
         }
         if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
             OPAL_ERROR_LOG(rc);
