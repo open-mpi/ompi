@@ -265,17 +265,6 @@ static int btl_openib_component_close(void)
     opal_btl_openib_fd_finalize();
     opal_btl_openib_ini_finalize();
 
-    if (NULL != mca_btl_openib_component.receive_queues
-            && BTL_OPENIB_RQ_SOURCE_DEFAULT ==
-                            mca_btl_openib_component.receive_queues_source) {
-        /*
-         * In that case, the string has not been duplicated during variable
-         * registration. So it won't be freed by the mca_base_var system.
-         * Free it here.
-         */
-        free(mca_btl_openib_component.receive_queues);
-    }
-
     if (NULL != mca_btl_openib_component.default_recv_qps) {
         free(mca_btl_openib_component.default_recv_qps);
     }
