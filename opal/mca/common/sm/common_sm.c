@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,30 +29,18 @@
  * selected based on its own, local run-time test.
  */
 
-/* RML Messaging in common sm and Our Assumptions
- * o MPI_Init is single threaded
- * o this routine will not be called after MPI_Init.
- *
- * if these assumptions ever change, then we may need to add some support code
- * that queues  up RML messages that have arrived, but have not yet been
- * consumed by the thread who is looking to complete its component
- * initialization.
- */
-
 #include "opal_config.h"
 
 #include "opal/align.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/shmem/shmem.h"
+#include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
 #endif
 
 #include "opal/constants.h"
 #include "opal/mca/mpool/sm/mpool_sm.h"
-
-#include "common_sm_rml.h"
 
 OBJ_CLASS_INSTANCE(
     mca_common_sm_module_t,
