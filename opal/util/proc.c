@@ -21,7 +21,6 @@ opal_process_info_t opal_process_info = {
     .proc_session_dir = "not yet defined",
     .num_local_peers = 1,  /* I'm the only process around here */
     .my_local_rank = 0,    /* I'm the only process around here */
-    .num_procs = 1,        /* I'm the only process I know about */
 #if OPAL_HAVE_HWLOC
     .cpuset = NULL,
 #endif
