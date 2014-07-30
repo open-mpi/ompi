@@ -7,71 +7,52 @@
  * $HEADER$
  */
 
-/* This header contains macros to help minimize usnic BTL differences between
- * v1.6, v1.7, and trunk. Note that we are stomping on other namespaces,
- * especially to make stock trunk code play nicely with v1.6 OMPI. */
+/* This header contains macros to help minimize usnic BTL differences
+ * between v1.7/v1.8 and v1.9/v2.0. */
 
 #ifndef BTL_USNIC_COMPAT_H
 #define BTL_USNIC_COMPAT_H
 
-#if OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION == 6
-/* The usnic BTL will never be in the upstream v1.6 branch.  The only v1.6
- * variant will be a Cisco-supplied version. */
+/************************************************************************/
 
-/* for per-file #ifdefs, esp. #includes */
-#  define OPAL_BTL_USNIC_CISCO_V1_6 1
+/* v1.9 and beyond */
 
-/* for some of the ORTE_* constants that we name-shift to OMPI_* here */
-#  include "orte/mca/errmgr/errmgr.h"
-#  include "orte/runtime/orte_globals.h"
-#  include "orte/util/show_help.h"
+#if (OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION >= 9) || \
+    (OPAL_MAJOR_VERSION >= 2)
 
-#define opal_event_set(event_base_,A,B,C,D,E) \
-    opal_event_set(A,B,C,D,E)
-#  define opal_show_help orte_show_help
-#  define mca_base_var_check_exclusive(S,A,B,C,D,E,F) \
-    mca_base_param_check_exclusive_string(A,B,C,D,E,F)
-#  define opal_rte_compare_name_fields(a, b, c) \
-    orte_util_compare_name_fields(a, b, c)
-#  define OMPI_RTE_CMP_ALL ORTE_NS_CMP_ALL
-#  define ompi_process_info orte_process_info
-#  define opal_rte_hash_name orte_util_hash_name
-#  define OMPI_PROC_MY_NAME ORTE_PROC_MY_NAME
-#  define OMPI_ERROR_LOG ORTE_ERROR_LOG
-#  define OMPI_NAME_PRINT ORTE_NAME_PRINT
+/* OMPI_ERROR_LOG and friends */
+#  include "opal/util/error.h"
 
-#  define USNIC_OUT mca_btl_base_output
-#  define proc_bound() opal_btl_usnic_proc_bound_v1_6_helper()
+#  define USNIC_OUT opal_btl_base_framework.framework_output
+/* JMS Really want to be able to get the job size somehow...  But for
+   now, so that we can compile, just set it to a constant :-( */
+#  define USNIC_MCW_SIZE 16
+#if OPAL_HAVE_HWLOC
+#    define proc_bound() (NULL != opal_process_info.cpuset ? 1 : 0)
+#else
+#    define proc_bound() 0
+#endif
 
-/* the opal_if code lives inside the BTL dir in v1.6-cisco */
-#  define opal_ifbegin       btl_usnic_opal_ifbegin
-#  define opal_ifnext        btl_usnic_opal_ifnext
-#  define opal_ifindextoaddr btl_usnic_opal_ifindextoaddr
-#  define opal_ifindextomac  btl_usnic_opal_ifindextomac
-#  define opal_ifindextomask btl_usnic_opal_ifindextomask
-#  define opal_ifindextomtu  btl_usnic_opal_ifindextomtu
-#  define opal_ifindextoname btl_usnic_opal_ifindextoname
+/************************************************************************/
 
-/* this _FOREACH macro is not present in v1.6 */
-#define OPAL_LIST_FOREACH(item, list, type)                             \
-  for (item = (type *) (list)->opal_list_sentinel.opal_list_next ;      \
-       item != (type *) &(list)->opal_list_sentinel ;                   \
-       item = (type *) ((opal_list_item_t *) (item))->opal_list_next)
+/* v1.7 and v1.8 */
 
-#elif (OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION >= 7) || \
-      (OPAL_MAJOR_VERSION >= 2)
+#elif (OPAL_MAJOR_VERSION == 1 && OPAL_MINOR_VERSION >= 7)
 
-/* the v1.7+ equivalent way to get OMPI_ERROR_LOG and friends */
+/* OMPI_ERROR_LOG and friends */
 #  include "ompi/mca/rte/rte.h"
 
-/* v1.7, v1.8 (to be released), trunk (v1.9), or later */
-/* TODO validate that all of these things actually work with v1.7 */
-#  define USNIC_OUT opal_btl_base_framework.framework_output
+#  define USNIC_OUT ompi_btl_base_framework.framework_output
+#  define USNIC_MCW_SIZE ompi_process_info.num_procs
 #  define proc_bound() (ompi_rte_proc_is_bound)
 
+/************************************************************************/
+
 #else
-#  error OMPI version too old (< 1.6)
+#  error OMPI version too old (< 1.7)
 #endif
+
+/************************************************************************/
 
 /* The FREE_LIST_*_MT stuff was introduced on the SVN trunk in r28722
    (2013-07-04), but so far, has not been merged into the v1.7 branch
