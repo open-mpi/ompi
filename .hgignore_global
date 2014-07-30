@@ -442,6 +442,7 @@ syntax: glob
 ./ompi/mca/sharedfp/sm/Makefile.in
 ./ompi/mca/topo/Makefile.in
 ./ompi/mca/topo/basic/Makefile.in
+./ompi/mca/topo/example/Makefile.in
 ./ompi/mca/vprotocol/Makefile.in
 ./ompi/mca/vprotocol/base/Makefile.in
 ./ompi/mca/vprotocol/example/Makefile.in

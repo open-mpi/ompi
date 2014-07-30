@@ -3,6 +3,8 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +15,7 @@
 #include "btl_scif.h"
 #include "btl_scif_frag.h"
 
+#include "opal/runtime/opal_params.h"
 #include "opal/include/opal/align.h"
 #include "opal/memoryhooks/memory.h"
 
