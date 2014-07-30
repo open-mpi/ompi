@@ -2097,8 +2097,7 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
     /* Setup the pointer array for the procs that will be used by this
        module */
     OBJ_CONSTRUCT(&module->all_procs, opal_pointer_array_t);
-    opal_pointer_array_init(&module->all_procs, ompi_process_info.num_procs,
-                            INT_MAX, 32);
+    opal_pointer_array_init(&module->all_procs, USNIC_MCW_SIZE, INT_MAX, 32);
 
     /* Get a PD */
     module->pd = ibv_alloc_pd(ctx);

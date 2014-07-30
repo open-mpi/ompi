@@ -681,7 +681,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          */
         if (-1 == mca_btl_usnic_component.prio_sd_num) {
             module->prio_sd_num =
-                max(128, 32 * ompi_process_info.num_procs) - 1;
+                max(128, 32 * USNIC_MCW_SIZE) - 1;
         } else {
             module->prio_sd_num = mca_btl_usnic_component.prio_sd_num;
         }
@@ -690,7 +690,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
         if (-1 == mca_btl_usnic_component.prio_rd_num) {
             module->prio_rd_num =
-                max(128, 32 * ompi_process_info.num_procs) - 1;
+                max(128, 32 * USNIC_MCW_SIZE) - 1;
         } else {
             module->prio_rd_num = mca_btl_usnic_component.prio_rd_num;
         }
