@@ -123,7 +123,7 @@ typedef struct opal_btl_usnic_module_t {
     int prio_sd_num;
     int prio_rd_num;
 
-    /* 
+    /*
      * Fragments larger than max_frag_payload will be broken up into
      * multiple chunks.  The amount that can be held in a single chunk
      * segment is slightly less than what can be held in frag segment due

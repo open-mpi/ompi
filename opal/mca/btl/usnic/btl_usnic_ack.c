@@ -139,7 +139,7 @@ opal_btl_usnic_handle_ack(
         /* If all ACKs received, and this is a put or a regular send
          * that needs a callback, perform the callback now
          *
-         * NOTE on sf_ack_bytes_left - here we check for 
+         * NOTE on sf_ack_bytes_left - here we check for
          *      sf_ack_bytes_left == bytes_acked
          * as opposed to adjusting sf_ack_bytes_left and checking for 0 because
          * if we don't, the callback function may call usnic_free() and free
@@ -205,7 +205,7 @@ opal_btl_usnic_ack_send(
     ack->ss_base.us_btl_header->ack_seq =
         endpoint->endpoint_next_contig_seq_to_recv - 1;
 
-    ack->ss_base.us_sg_entry[0].length = 
+    ack->ss_base.us_sg_entry[0].length =
         sizeof(opal_btl_usnic_btl_header_t);
 
 #if MSGDEBUG1
@@ -255,7 +255,7 @@ opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
 void
 opal_btl_usnic_ack_timeout(
     opal_hotel_t *hotel,
-    int room_num, 
+    int room_num,
     void *occupant)
 {
     opal_btl_usnic_send_segment_t *seg;
@@ -278,7 +278,7 @@ opal_btl_usnic_ack_timeout(
     seg->ss_hotel_room = -1;
 
     /* Queue up this frag to be resent */
-    opal_list_append(&(module->pending_resend_segs), 
+    opal_list_append(&(module->pending_resend_segs),
                      &(seg->ss_base.us_list.super));
 
     /* Stats */

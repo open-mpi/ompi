@@ -95,7 +95,7 @@ static void proc_destruct(opal_btl_usnic_proc_t* proc)
 
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_proc_t,
-                   opal_list_item_t, 
+                   opal_list_item_t,
                    proc_construct,
                    proc_destruct);
 
@@ -168,7 +168,7 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
  * Returns OPAL_ERR_UNREACH if we can't reach the peer (i.e., we can't
  * find their modex data).
  */
-static int create_proc(opal_proc_t *opal_proc, 
+static int create_proc(opal_proc_t *opal_proc,
                        opal_btl_usnic_proc_t **usnic_proc)
 {
     opal_btl_usnic_proc_t *proc = NULL;
@@ -213,7 +213,7 @@ static int create_proc(opal_proc_t *opal_proc,
     if ((size % sizeof(opal_btl_usnic_addr_t)) != 0) {
         char msg[1024];
 
-        snprintf(msg, sizeof(msg), 
+        snprintf(msg, sizeof(msg),
                  "sizeof(modex for peer %s data) == %d, expected multiple of %d",
                  OPAL_NAME_PRINT(opal_proc->proc_name),
                  (int) size, (int) sizeof(opal_btl_usnic_addr_t));
@@ -250,7 +250,7 @@ static int create_proc(opal_proc_t *opal_proc,
         return OPAL_ERR_BAD_PARAM;
     }
 
-    proc->proc_modex_claimed = (bool*) 
+    proc->proc_modex_claimed = (bool*)
         calloc(proc->proc_modex_count, sizeof(bool));
     if (NULL == proc->proc_modex_claimed) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);

@@ -427,7 +427,7 @@ static void setup_mpit_pvars_enum(void)
        into private storage, so we don't need them any more) */
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         free((char*) devices[i].string);
-    }    
+    }
 
     /* The devices_enum has been RETAIN'ed by the pvar, so we can
        RELEASE it here, and the enum will be destroyed when the pvar

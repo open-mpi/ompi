@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -205,7 +205,7 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
     /* Lookup the distance between my NUMA node and the NUMA node of
        the device */
     if (NULL != dev_numa) {
-        module->numa_distance = 
+        module->numa_distance =
             matrix->latency[dev_numa->logical_index * num_numa_nodes +
                             my_numa_node->logical_index];
 
