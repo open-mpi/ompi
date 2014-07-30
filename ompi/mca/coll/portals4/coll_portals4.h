@@ -36,7 +36,7 @@ struct mca_coll_portals4_component_t {
     ptl_handle_me_t barrier_unex_me_h;
     ptl_handle_me_t finish_me_h;
     /** Send MD handle(s).  Use ompi_coll_portals4_get_md() to get the right md */
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     ptl_handle_md_t *md_hs;
 #else
     ptl_handle_md_t md_h;
@@ -112,11 +112,11 @@ ompi_coll_portals4_get_nchildren(int cube_dim, int hibit, int rank, int size)
 static inline void
 ompi_coll_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr)
 {
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
-    int mask = (1ULL << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1)) - 1;
-    int which = (((uintptr_t) ptr) >> (OMPI_PORTALS4_MAX_MD_SIZE - 1)) & mask;
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    int mask = (1ULL << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1)) - 1;
+    int which = (((uintptr_t) ptr) >> (OPAL_PORTALS4_MAX_MD_SIZE - 1)) & mask;
     *md_h = mca_coll_portals4_component.md_hs[which];
-    *base_ptr = (void*) (which * (1ULL << (OMPI_PORTALS4_MAX_MD_SIZE - 1)));
+    *base_ptr = (void*) (which * (1ULL << (OPAL_PORTALS4_MAX_MD_SIZE - 1)));
 #else
     *md_h = mca_coll_portals4_component.md_h;
     *base_ptr = 0;
@@ -127,8 +127,8 @@ ompi_coll_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_pt
 static inline int
 ompi_coll_portals4_get_num_mds(void)
 {
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
-    return (1 << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1));
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    return (1 << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1));
 #else
     return 1;
 #endif

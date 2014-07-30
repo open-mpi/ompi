@@ -24,6 +24,10 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/show_help.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/mpool/base/base.h"
 
 #include "portals4.h"
 #include "btl_portals4.h"

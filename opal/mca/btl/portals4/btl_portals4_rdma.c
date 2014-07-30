@@ -28,7 +28,7 @@ mca_btl_portals4_put(struct mca_btl_base_module_t* btl_base,
 {
     opal_output(opal_btl_base_framework.framework_output, "mca_btl_portals4_put not implemented\n");
 
-    MPI_Abort(MPI_COMM_WORLD, 10);
+    BTL_ERROR(("mca_btl_portals4_put not implemented\n"));
     return OPAL_SUCCESS;
 }
 

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -111,7 +112,7 @@ static void ib_address_destructor(ib_address_t *ib_addr)
     OBJ_DESTRUCT(&ib_addr->pending_ep);
 }
 
-static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, opal_process_name_ti ep_jobid)
+static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, opal_process_name_t ep_jobid)
 {
     ib_addr->key = malloc(SIZE_OF3(s_id, lid, ep_jobid));
     if (NULL == ib_addr->key) {

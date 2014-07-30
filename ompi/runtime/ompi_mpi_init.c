@@ -505,6 +505,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
+    opal_process_info.nodename         = ompi_process_info.nodename;
+    opal_process_info.job_session_dir  = ompi_process_info.job_session_dir;
+    opal_process_info.proc_session_dir = ompi_process_info.proc_session_dir;
+    opal_process_info.num_local_peers  = (int32_t)ompi_process_info.num_local_peers;
+    opal_process_info.my_local_rank    = (int32_t)ompi_process_info.my_local_rank;
+#if OPAL_HAVE_HWLOC
+    opal_process_info.cpuset           = ompi_process_info.cpuset;
+#endif  /* OPAL_HAVE_HWLOC */
+
     /* Register the default errhandler callback - RTE will ignore if it
      * doesn't support this capability
      */
@@ -653,15 +662,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
-
-    opal_process_info.nodename         = ompi_process_info.nodename;
-    opal_process_info.job_session_dir  = ompi_process_info.job_session_dir;
-    opal_process_info.proc_session_dir = ompi_process_info.proc_session_dir;
-    opal_process_info.num_local_peers  = (int32_t)ompi_process_info.num_local_peers;
-    opal_process_info.my_local_rank    = (int32_t)ompi_process_info.my_local_rank;
-#if OPAL_HAVE_HWLOC
-    opal_process_info.cpuset           = ompi_process_info.cpuset;
-#endif  /* OPAL_HAVE_HWLOC */
 
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=

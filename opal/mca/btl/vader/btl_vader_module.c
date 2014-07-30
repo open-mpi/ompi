@@ -290,7 +290,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
     }
 
     /* make sure that my local rank has been defined */
-    if (0 <= MCA_BTL_VADER_LOCAL_RANK) {
+    if (0 > MCA_BTL_VADER_LOCAL_RANK) {
         return OPAL_ERROR;
     }
 

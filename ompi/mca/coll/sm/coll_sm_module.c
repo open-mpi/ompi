@@ -59,6 +59,8 @@
 #include "ompi/proc/proc.h"
 #include "coll_sm.h"
 
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/pml/pml.h"
 
 /*
  * Global variables
@@ -576,15 +578,23 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:enable:bootstrap comm (%d/%s): attaching to %" PRIsize_t " byte mmap: %s",
                         comm->c_contextid, comm->c_name, size, fullpath);
-    data->sm_bootstrap_meta =
-        mca_common_sm_init_group(comm->c_local_group, size, fullpath,
-                                 sizeof(mca_common_sm_seg_header_t),
-                                 getpagesize());
-    if (NULL == data->sm_bootstrap_meta) {
-        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed", 
-                            comm->c_contextid, comm->c_name);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if (0 == ompi_comm_rank (comm)) {
+	data->sm_bootstrap_meta = mca_common_sm_module_create_and_attach (size, fullpath, sizeof(mca_common_sm_seg_header_t), 8);
+	if (NULL == data->sm_bootstrap_meta) {
+	    opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+				"coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed",
+				comm->c_contextid, comm->c_name);
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+
+	for (int i = 0 ; i < ompi_comm_size (comm) ; ++i) {
+	    MCA_PML_CALL(send(&data->sm_bootstrap_meta->shmem_ds, sizeof (data->sm_bootstrap_meta->shmem_ds), MPI_BYTE,
+			      i, MCA_COLL_BASE_TAG_BCAST, MCA_PML_BASE_SEND_STANDARD, comm));
+	}
+    } else {
+	opal_shmem_ds_t shmem_ds;
+	MCA_PML_CALL(recv(&shmem_ds, sizeof (shmem_ds), MPI_BYTE, 0, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
+	data->sm_bootstrap_meta = mca_common_sm_module_attach (&shmem_ds, sizeof(mca_common_sm_seg_header_t), 8);
     }
 
     /* All done */

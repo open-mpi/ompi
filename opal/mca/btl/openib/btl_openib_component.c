@@ -2271,15 +2271,15 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 
     for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
-        if (OPAL_HAVE_HWLOC && ompi_rte_proc_is_bound) {
+        /* If we're not bound, just assume that the device is close. */
+        devs[i].distance = 0;
+#if OPAL_HAVE_HWLOC
+        if (opal_process_info.cpuset) {
             /* If this process is bound to one or more PUs, we can get
                an accurate distance. */
             devs[i].distance = get_ib_dev_distance(ib_devs[i]);
-        } else {
-            /* Since we're not bound, just assume that the device is
-               close. */
-            devs[i].distance = 0;
         }
+#endif
     }
 
     qsort(devs, count, sizeof(struct dev_distance), compare_distance);

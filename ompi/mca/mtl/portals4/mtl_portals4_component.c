@@ -198,7 +198,7 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
 
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     ompi_mtl_portals4.send_md_hs = NULL;
 #else
     ompi_mtl_portals4.send_md_h = PTL_INVALID_HANDLE;
@@ -349,12 +349,12 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 
     /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
        to have a single MD across all of memory */
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     {
         int i;
         int num_mds = ompi_mtl_portals4_get_num_mds();
-        ptl_size_t size = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) - 1;
-        ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
+        ptl_size_t size = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) - 1;
+        ptl_size_t offset_unit = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) / 2;
 
         ompi_mtl_portals4.send_md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
         if (NULL == ompi_mtl_portals4.send_md_hs) {
@@ -480,7 +480,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
         PtlMDRelease(ompi_mtl_portals4.zero_md_h);
     }
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     if (NULL != ompi_mtl_portals4.send_md_hs) {
         int i;
         int num_mds = ompi_mtl_portals4_get_num_mds();
