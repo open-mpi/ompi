@@ -1407,23 +1407,20 @@ static void dump_endpoint(opal_btl_usnic_endpoint_t *endpoint)
     int i;
     opal_btl_usnic_frag_t *frag;
     opal_btl_usnic_send_segment_t *sseg;
-    int ep_jobid;
-    int ep_rank;
     struct in_addr ia;
     char ep_addr_str[INET_ADDRSTRLEN];
     char tmp[128], str[2048];
-
-    ep_jobid = ((orte_process_name_t*)&endpoint->endpoint_proc->proc_opal->proc_name)->jobid;
-    ep_rank = ((orte_process_name_t*)&endpoint->endpoint_proc->proc_opal->proc_name)->vpid;
 
     memset(ep_addr_str, 0x00, sizeof(ep_addr_str));
     ia.s_addr = endpoint->endpoint_remote_addr.ipv4_addr;
     inet_ntop(AF_INET, &ia, ep_addr_str, sizeof(ep_addr_str));
 
-    opal_output(0, "    endpoint %p, %s job=%"PRIu32" rank=%"PRIu32" rts=%s s_credits=%"PRIi32"\n",
-           (void *)endpoint, ep_addr_str, ep_jobid, ep_rank,
-           (endpoint->endpoint_ready_to_send ? "true" : "false"),
-           endpoint->endpoint_send_credits);
+    opal_output(0, "    endpoint %p, %s job=%u, rank=%u rts=%s s_credits=%"PRIi32"\n",
+                (void *)endpoint, ep_addr_str,
+                opal_process_name_jobid(endpoint->endpoint_proc->proc_opal->proc_name),
+                opal_process_name_vpid(endpoint->endpoint_proc->proc_opal->proc_name),
+                (endpoint->endpoint_ready_to_send ? "true" : "false"),
+                endpoint->endpoint_send_credits);
     opal_output(0, "      endpoint->frag_send_queue:\n");
 
     OPAL_LIST_FOREACH(frag, &endpoint->endpoint_frag_send_queue,
@@ -1531,9 +1528,10 @@ void opal_btl_usnic_component_debug(void)
     opal_btl_usnic_endpoint_t *endpoint;
     opal_btl_usnic_send_segment_t *sseg;
     opal_list_item_t *item;
+    const opal_proc_t *proc = opal_proc_local_get();
 
-    opal_output(0, "*** dumping usnic state for MPI_COMM_WORLD rank %d ***\n",
-                ((orte_process_name_t*)&opal_proc_local_get()->proc_name)->vpid);
+    opal_output(0, "*** dumping usnic state for MPI_COMM_WORLD rank %u ***\n",
+                opal_process_name_vpid(proc->proc_name));
     for (i = 0; i < (int)mca_btl_usnic_component.num_modules; ++i) {
         module = mca_btl_usnic_component.usnic_active_modules[i];
 
