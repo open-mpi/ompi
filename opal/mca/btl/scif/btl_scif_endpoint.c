@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,12 +111,12 @@ static int mca_btl_scif_ep_connect_finish (mca_btl_base_endpoint_t *ep, bool pas
     }
 
     if (OPAL_UNLIKELY(-1 == rc)) {
-        BTL_VERBOSE(("error exchanging connection data with peer %d", ep->peer_proc->proc_name.vpid));
+        BTL_VERBOSE(("error exchanging connection data with peer %d", opal_process_name_vpid(ep->peer_proc->proc_name)));
         mca_btl_scif_ep_free_buffer (ep);
         return OPAL_ERROR;
     }
 
-    BTL_VERBOSE(("remote peer %d has scif offset %lu", ep->peer_proc->proc_name.vpid,
+    BTL_VERBOSE(("remote peer %d has scif offset %lu", opal_process_name_vpid(ep->peer_proc->proc_name),
                  (unsigned long) ep->send_buffer.scif_offset));
 
     ep->send_buffer.buffer = scif_mmap (0, mca_btl_scif_component.segment_size,
@@ -128,7 +130,7 @@ static int mca_btl_scif_ep_connect_finish (mca_btl_base_endpoint_t *ep, bool pas
 
     opal_memchecker_base_mem_defined (ep->send_buffer.buffer, mca_btl_scif_component.segment_size);
 
-    BTL_VERBOSE(("remote peer %d buffer mapped to local pointer %p", ep->peer_proc->proc_name.vpid,
+    BTL_VERBOSE(("remote peer %d buffer mapped to local pointer %p", opal_process_name_vpid(ep->peer_proc->proc_name),
                  ep->send_buffer.buffer));
 
     /* setup the circular send buffers */
@@ -142,14 +144,14 @@ static int mca_btl_scif_ep_connect_finish (mca_btl_base_endpoint_t *ep, bool pas
     /* connection complete */
     ep->state = MCA_BTL_SCIF_EP_STATE_CONNECTED;
 
-    BTL_VERBOSE(("btl/scif connection to remote peer %d established", ep->peer_proc->proc_name.vpid));
+    BTL_VERBOSE(("btl/scif connection to remote peer %d established", opal_process_name_vpid(ep->peer_proc->proc_name)));
 
     return OPAL_SUCCESS;
 }
 
 int mca_btl_scif_ep_connect_start_passive (void) {
     mca_btl_base_endpoint_t *ep = NULL;
-    orte_process_name_t remote_name;
+    opal_process_name_t remote_name;
     struct scif_portID port_id;
     unsigned int i;
     scif_epd_t epd;
@@ -173,10 +175,11 @@ int mca_btl_scif_ep_connect_start_passive (void) {
     }
 
     BTL_VERBOSE(("got connection request from vpid %d on port %u on node %u",
-                 remote_name.vpid, port_id.port, port_id.node));
+                 opal_process_name_vpid(remote_name), port_id.port, port_id.node));
 
     for (i = 0 ; i < mca_btl_scif_module.endpoint_count ; ++i) {
-        if (mca_btl_scif_module.endpoints[i].peer_proc->proc_name.vpid == remote_name.vpid) {
+        if (opal_process_name_vpid(mca_btl_scif_module.endpoints[i].peer_proc->proc_name) ==
+            opal_process_name_vpid(remote_name)) {
             ep = mca_btl_scif_module.endpoints + i;
             break;
         }
@@ -184,7 +187,7 @@ int mca_btl_scif_ep_connect_start_passive (void) {
 
     /* peer not found */
     if (i == mca_btl_scif_module.endpoint_count) {
-        BTL_VERBOSE(("remote peer %d unknown", remote_name.vpid));
+        BTL_VERBOSE(("remote peer %d unknown", opal_process_name_vpid(remote_name)));
         scif_close (epd);
         return OPAL_ERROR;
     }
@@ -193,7 +196,7 @@ int mca_btl_scif_ep_connect_start_passive (void) {
     if ((MCA_BTL_SCIF_EP_STATE_CONNECTING == ep->state &&
          ep->port_id.port < mca_btl_scif_module.port_id.port) ||
         MCA_BTL_SCIF_EP_STATE_CONNECTED == ep->state) {
-        BTL_VERBOSE(("active connection in progress. connection request from peer %d rejected", remote_name.vpid));
+        BTL_VERBOSE(("active connection in progress. connection request from peer %d rejected", opal_process_name_vpid(remote_name)));
         scif_close (epd);
         return OPAL_SUCCESS;
     }
@@ -227,7 +230,7 @@ static inline int mca_btl_scif_ep_connect_start_active (mca_btl_base_endpoint_t 
     int rc = OPAL_SUCCESS;
 
     BTL_VERBOSE(("initiaiting connection to remote peer %d with port: %u on local scif node: %u",
-                 ep->peer_proc->proc_name.vpid, ep->port_id.port, ep->port_id.node));
+                 opal_process_name_vpid(ep->peer_proc->proc_name), ep->port_id.port, ep->port_id.node));
 
     opal_mutex_lock (&ep->lock);
     do {
