@@ -187,11 +187,6 @@ opal_btl_usnic_ack_send(
     opal_btl_usnic_endpoint_t *endpoint)
 {
     opal_btl_usnic_ack_segment_t *ack;
-#if MSGDEBUG1
-    uint8_t mac[6];
-    char src_mac[32];
-    char dest_mac[32];
-#endif
 
     /* Get an ACK frag.  If we don't get one, just discard this ACK. */
     ack = opal_btl_usnic_ack_segment_alloc(module);
@@ -209,16 +204,22 @@ opal_btl_usnic_ack_send(
         sizeof(opal_btl_usnic_btl_header_t);
 
 #if MSGDEBUG1
-    memset(src_mac, 0, sizeof(src_mac));
-    memset(dest_mac, 0, sizeof(dest_mac));
-    opal_btl_usnic_sprintf_mac(src_mac, module->if_mac);
-    opal_btl_usnic_gid_to_mac(&endpoint->endpoint_remote_addr.gid, mac);
-    opal_btl_usnic_sprintf_mac(dest_mac, mac);
+    {
+        uint8_t mac[6];
+        char src_mac[32];
+        char dest_mac[32];
 
-    opal_output(0, "--> Sending ACK, sg_entry length %d, seq %" UDSEQ " to %s, qp %u", 
-                ack->ss_base.us_sg_entry[0].length,
-                ack->ss_base.us_btl_header->ack_seq, dest_mac,
-                endpoint->endpoint_remote_addr.qp_num[ack->ss_channel]);
+        memset(src_mac, 0, sizeof(src_mac));
+        memset(dest_mac, 0, sizeof(dest_mac));
+        opal_btl_usnic_sprintf_mac(src_mac, module->if_mac);
+        opal_btl_usnic_gid_to_mac(&endpoint->endpoint_remote_addr.gid, mac);
+        opal_btl_usnic_sprintf_mac(dest_mac, mac);
+
+        opal_output(0, "--> Sending ACK, sg_entry length %d, seq %" UDSEQ " to %s, qp %u",
+                    ack->ss_base.us_sg_entry[0].length,
+                    ack->ss_base.us_btl_header->ack_seq, dest_mac,
+                    endpoint->endpoint_remote_addr.qp_num[ack->ss_channel]);
+    }
 #endif
 
     /* Do we need to check the connectivity?  If enabled, we'll check
