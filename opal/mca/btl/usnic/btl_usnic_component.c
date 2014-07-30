@@ -476,7 +476,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                                              OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP,
                                              USNIC_OUT);
     if (NULL == port_list) {
-        OPAL_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         goto free_include_list;
     } else if (opal_list_get_size(port_list) > 0) {
         mca_btl_usnic_component.use_udp = true;
@@ -491,7 +491,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                                                  USNIC_OUT);
 
         if (NULL == port_list) {
-            OPAL_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
             goto free_include_list;
         } else if (opal_list_get_size(port_list) > 0) {
             mca_btl_usnic_component.use_udp = false;
