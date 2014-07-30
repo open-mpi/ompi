@@ -41,7 +41,7 @@ lookup_sender(opal_btl_usnic_module_t *module, opal_btl_usnic_segment_t *seg)
        btl_header->sender, echo back the ptr to the sender's
        ompi_proc.  There was limited speedup with this scheme; more
        investigation is required. */
-    ret = opal_hash_table_get_value_uint64(&module->senders, 
+    ret = opal_hash_table_get_value_uint64(&module->senders,
                                            seg->us_btl_header->sender,
                                            (void**) &sender);
     if (OPAL_LIKELY(OPAL_SUCCESS == ret)) {
@@ -50,10 +50,10 @@ lookup_sender(opal_btl_usnic_module_t *module, opal_btl_usnic_segment_t *seg)
 
     /* The sender wasn't in the hash table, so do a slow lookup and
        put the result in the hash table */
-    sender = opal_btl_usnic_proc_lookup_endpoint(module, 
+    sender = opal_btl_usnic_proc_lookup_endpoint(module,
                                                  seg->us_btl_header->sender);
     if (NULL != sender) {
-        opal_hash_table_set_value_uint64(&module->senders, 
+        opal_hash_table_set_value_uint64(&module->senders,
                                          seg->us_btl_header->sender, sender);
         return sender;
     }
@@ -132,7 +132,7 @@ opal_btl_usnic_check_rx_seq(
     }
 
     /* Do we have room in the endpoint's receiver window?
-           
+
        Receiver window:
 
                    |-------- WINDOW_SIZE ----------|
@@ -144,7 +144,7 @@ opal_btl_usnic_check_rx_seq(
                    +-- next_contig_seq_to_recv: the window left edge;
                        will always be less than highest_seq_rcvd
 
-       The good condition is 
+       The good condition is
 
          next_contig_seq_to_recv <= seq < next_contig_seq_to_recv + WINDOW_SIZE
 
@@ -159,9 +159,9 @@ opal_btl_usnic_check_rx_seq(
     if (delta < 0 || delta >= WINDOW_SIZE) {
 #if MSGDEBUG1
             opal_output(0, "<-- Received FRAG/CHUNK ep %p, seq %" UDSEQ " outside of window (%" UDSEQ " - %" UDSEQ "), %p, module %p -- DROPPED\n",
-                        (void*)endpoint, seg->rs_base.us_btl_header->pkt_seq, 
+                        (void*)endpoint, seg->rs_base.us_btl_header->pkt_seq,
                         endpoint->endpoint_next_contig_seq_to_recv,
-                        (endpoint->endpoint_next_contig_seq_to_recv + 
+                        (endpoint->endpoint_next_contig_seq_to_recv +
                          WINDOW_SIZE - 1),
                         (void*) seg,
                         (void*) endpoint->endpoint_module);
@@ -194,7 +194,7 @@ opal_btl_usnic_check_rx_seq(
 
            rel_posn_in_recv_win = seq - next_contig_seq_to_recv
            array_posn = (rel_posn_in_recv_win + rfstart) % WINDOW_SIZE
-       
+
        rfstart is then updated when we send ACKs:
 
            rfstart = (rfstart + num_acks_sent) % WINDOW_SIZE
@@ -234,7 +234,7 @@ dup_needs_ack:
 }
 
 /*
- * We have received a segment, take action based on the 
+ * We have received a segment, take action based on the
  * packet type in the BTL header.
  * Try to be fast here - defer as much bookkeeping until later as
  * possible.
@@ -289,7 +289,7 @@ opal_btl_usnic_recv_fast(opal_btl_usnic_module_t *module,
          */
         reg = mca_btl_base_active_message_trigger + bseg->us_btl_header->tag;
         seg->rs_segment.seg_len = bseg->us_btl_header->payload_len;
-        reg->cbfunc(&module->super, bseg->us_btl_header->tag, 
+        reg->cbfunc(&module->super, bseg->us_btl_header->tag,
                     &seg->rs_desc, reg->cbdata);
 
 drop:
@@ -347,7 +347,7 @@ repost:
 }
 
 /*
- * We have received a segment, take action based on the 
+ * We have received a segment, take action based on the
  * packet type in the BTL header
  */
 static inline void

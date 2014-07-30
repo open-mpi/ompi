@@ -117,7 +117,7 @@ void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
 
 void opal_btl_usnic_sprintf_mac(char *out, const uint8_t mac[6])
 {
-    snprintf(out, 32, "%02x:%02x:%02x:%02x:%02x:%02x", 
+    snprintf(out, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
              mac[0],
              mac[1],
              mac[2],
@@ -185,7 +185,7 @@ int opal_btl_usnic_find_ip(opal_btl_usnic_module_t *module, uint8_t mac[6])
             }
 
             /* Yes, it is! */
-            if (OPAL_SUCCESS != opal_ifindextoname(i, module->if_name, 
+            if (OPAL_SUCCESS != opal_ifindextoname(i, module->if_name,
                                                    sizeof(module->if_name)) ||
                 OPAL_SUCCESS != opal_ifindextoaddr(i, &sa, sizeof(sa)) ||
                 OPAL_SUCCESS != opal_ifindextomask(i, &module->if_cidrmask,

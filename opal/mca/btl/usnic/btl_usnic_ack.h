@@ -35,7 +35,7 @@
     } while (0)
 
 /*
- * Reap an ACK send that is complete 
+ * Reap an ACK send that is complete
  */
 void opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
                                    opal_btl_usnic_ack_segment_t *ack);
@@ -51,7 +51,7 @@ void opal_btl_usnic_ack_send(opal_btl_usnic_module_t *module,
  * Callback for when a send times out without receiving a
  * corresponding ACK
  */
-void opal_btl_usnic_ack_timeout(opal_hotel_t *hotel, int room_num, 
+void opal_btl_usnic_ack_timeout(opal_hotel_t *hotel, int room_num,
                                   void *occupant);
 
 /*
@@ -68,7 +68,7 @@ opal_btl_usnic_piggyback_ack(
     /* If ACK is needed, piggy-back it here and send it on */
     if (endpoint->endpoint_ack_needed) {
         opal_btl_usnic_remove_from_endpoints_needing_ack(endpoint);
-        sseg->ss_base.us_btl_header->ack_seq = 
+        sseg->ss_base.us_btl_header->ack_seq =
             endpoint->endpoint_next_contig_seq_to_recv - 1;
         sseg->ss_base.us_btl_header->ack_present = 1;
 #if MSGDEBUG1

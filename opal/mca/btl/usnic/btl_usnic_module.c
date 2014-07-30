@@ -477,7 +477,7 @@ static int usnic_del_procs(struct mca_btl_base_module_t *base_module,
 /*
  * Let the PML register a callback function with me
  */
-static int usnic_register_pml_err_cb(struct mca_btl_base_module_t* btl, 
+static int usnic_register_pml_err_cb(struct mca_btl_base_module_t* btl,
                                      mca_btl_base_module_error_cb_fn_t cbfunc)
 {
     opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t*) btl;
@@ -494,7 +494,7 @@ static int usnic_register_pml_err_cb(struct mca_btl_base_module_t* btl,
  * alloc.
  *  --> Contraction in the btl.h documentation.
  */
-static mca_btl_base_descriptor_t* 
+static mca_btl_base_descriptor_t*
 usnic_alloc(struct mca_btl_base_module_t* btl,
               struct mca_btl_base_endpoint_t* endpoint,
               uint8_t order,
@@ -1217,7 +1217,7 @@ usnic_do_resends(
             /* re-send the segment */
             opal_btl_usnic_post_segment(module, endpoint, sseg);
 
-            /* consume a send credit for this endpoint.  May send us 
+            /* consume a send credit for this endpoint.  May send us
              * negative, oh well...  This is because the completion routine
              * always increments send credits, and we must balance.
              * Alternative is to mark this as a retrans segment and check in
@@ -1333,7 +1333,7 @@ usnic_handle_large_send(
 
 /*
  * Progress the send engine.
- * Should only ever be called from usnic_component_progress() to 
+ * Should only ever be called from usnic_component_progress() to
  * avoid re-entrancy issues.
  */
 void
@@ -1347,7 +1347,7 @@ opal_btl_usnic_module_progress_sends(
     struct opal_btl_usnic_channel_t *prio_channel;
 
     /*
-     * Post all the sends that we can 
+     * Post all the sends that we can
      * resends 1st priority
      * ACKs 2nd priority
      * new sends 3rd
@@ -1535,7 +1535,7 @@ usnic_send(
     if (frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_SMALL_SEND &&
             frag->sf_ack_bytes_left < module->max_tiny_payload &&
             WINDOW_OPEN(endpoint) &&
-            (module->mod_channels[USNIC_PRIORITY_CHANNEL].sd_wqe >= 
+            (module->mod_channels[USNIC_PRIORITY_CHANNEL].sd_wqe >=
              module->mod_channels[USNIC_PRIORITY_CHANNEL].fastsend_wqe_thresh)) {
         size_t payload_len;
 
@@ -1547,7 +1547,7 @@ usnic_send(
 
         /* fix up verbs SG entries */
         sseg->ss_base.us_sg_entry[0].length =
-            sizeof(opal_btl_usnic_btl_header_t) + 
+            sizeof(opal_btl_usnic_btl_header_t) +
             frag->sf_base.uf_local_seg[0].seg_len;
 
         if (frag->sf_base.uf_base.des_local_count > 1) {
@@ -1617,7 +1617,7 @@ usnic_send(
          * We move this off to another function because having it inside
          * this function seems to add a little latency, likely due to inlines
          * making the function too big.  In fact, the routine had to go to
-         * another file entirely, else the compiler tried to be helpful 
+         * another file entirely, else the compiler tried to be helpful
          * and inline all by itself.
          */
         rc = opal_btl_usnic_finish_put_or_send(module, endpoint, frag, tag);
@@ -1719,7 +1719,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
                ignore it. */
             opal_output_verbose(10, USNIC_OUT,
                                 "btl:usnic: got IBV_EVENT_PORT_ACTIVE on %s:%d",
-                                ibv_get_device_name(module->device), 
+                                ibv_get_device_name(module->device),
                                 module->port_num);
             break;
 
@@ -1790,7 +1790,7 @@ init_qp(
     channel->qp = ibv_create_qp(module->pd, &qp_init_attr);
     if (NULL == channel->qp) {
         opal_show_help("help-mpi-btl-usnic.txt", "create ibv resource failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->if_name,
@@ -1810,7 +1810,7 @@ init_qp(
     if (ibv_modify_qp(channel->qp, &qp_attr,
                       IBV_QP_STATE | IBV_QP_PORT)) {
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->if_name,
@@ -1825,9 +1825,9 @@ init_qp(
     if (ibv_query_qp(channel->qp, &qp_attr, IBV_QP_CAP,
                      &qp_init_attr) != 0) {
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
-                       ibv_get_device_name(module->device), 
+                       ibv_get_device_name(module->device),
                        module->if_name,
                        "ibv_query_qp()", __FILE__, __LINE__,
                        "Failed to query an existing queue pair");
@@ -1853,7 +1853,7 @@ static int move_qp_to_rtr(opal_btl_usnic_module_t *module,
     qp_attr.qp_state = IBV_QPS_RTR;
     if (ibv_modify_qp(channel->qp, &qp_attr, IBV_QP_STATE)) {
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->if_name,
@@ -1876,7 +1876,7 @@ static int move_qp_to_rts(opal_btl_usnic_module_t *module,
     qp_attr.qp_state = IBV_QPS_RTS;
     if (ibv_modify_qp(channel->qp, &qp_attr, IBV_QP_STATE)) {
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->if_name,
@@ -1955,7 +1955,7 @@ opal_btl_usnic_channel_init(
     channel->cq = ibv_create_cq(ctx, module->cq_num, NULL, NULL, 0);
     if (NULL == channel->cq) {
         opal_show_help("help-mpi-btl-usnic.txt", "create ibv resource failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->if_name,
@@ -2001,7 +2001,7 @@ opal_btl_usnic_channel_init(
         if (NULL == rseg) {
             opal_show_help("help-mpi-btl-usnic.txt",
                            "internal error during init",
-                           true, 
+                           true,
                            opal_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->if_name,
@@ -2016,7 +2016,7 @@ opal_btl_usnic_channel_init(
 
         if (ibv_post_recv(channel->qp, &rseg->rs_recv_desc, &bad_wr)) {
             opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                           true, 
+                           true,
                            opal_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->if_name,
@@ -2103,9 +2103,9 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
     module->pd = ibv_alloc_pd(ctx);
     if (NULL == module->pd) {
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
-                       ibv_get_device_name(module->device), 
+                       ibv_get_device_name(module->device),
                        module->if_name,
                        "ibv_alloc_pd()", __FILE__, __LINE__,
                        "Failed to create a PD; is the usnic_verbs Linux kernel module loaded?");
@@ -2117,14 +2117,14 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
     mpool_resources.sizeof_reg = sizeof(opal_btl_usnic_reg_t);
     mpool_resources.register_mem = usnic_reg_mr;
     mpool_resources.deregister_mem = usnic_dereg_mr;
-    asprintf(&mpool_resources.pool_name, "usnic.%" PRIu64, 
+    asprintf(&mpool_resources.pool_name, "usnic.%" PRIu64,
              module->local_addr.gid.global.interface_id);
     module->super.btl_mpool =
         mca_mpool_base_module_create(mca_btl_usnic_component.usnic_mpool_name,
                                      &module->super, &mpool_resources);
     if (NULL == module->super.btl_mpool) {
         opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                       true, 
+                       true,
                        opal_process_info.nodename,
                        ibv_get_device_name(module->device),
                        module->if_name,
@@ -2159,8 +2159,8 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
 
     /* Get the fd to receive events on this device */
     opal_event_set(opal_event_base, &(module->device_async_event),
-                   module->device_context->async_fd, 
-                   OPAL_EV_READ | OPAL_EV_PERSIST, 
+                   module->device_context->async_fd,
+                   OPAL_EV_READ | OPAL_EV_PERSIST,
                    module_async_event_callback, module);
     opal_event_add(&(module->device_async_event), NULL);
     module->device_async_event_active = true;
@@ -2176,7 +2176,7 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
 
     /* list of endpoints that are ready to send */
     OBJ_CONSTRUCT(&module->endpoints_with_sends, opal_list_t);
-    
+
     segsize = (module->if_mtu + opal_cache_line_size - 1) &
         ~(opal_cache_line_size - 1);
 
@@ -2298,7 +2298,7 @@ dealloc_pd:
 }
 
 
-static int usnic_ft_event(int state) 
+static int usnic_ft_event(int state)
 {
     return OPAL_SUCCESS;
 }
