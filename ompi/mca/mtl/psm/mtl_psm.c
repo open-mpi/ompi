@@ -174,7 +174,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ompi_mtl_psm.epid = epid;
     ompi_mtl_psm.mq   = mq;
 
-    OPAL_MODEX_SEND(rc, PMIX_REMOTE,
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
                     &mca_mtl_psm_component.super.mtl_version, 
                     &ompi_mtl_psm.epid, sizeof(psm_epid_t));
     if (OPAL_SUCCESS != rc) {

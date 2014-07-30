@@ -20,6 +20,7 @@
 #include "opal/mca/dstore/dstore.h"
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
@@ -57,19 +58,30 @@ typedef uint8_t opal_pmix_scope_t;
 /* callback function for non-blocking operations */
 typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 
+/* flags to indicate if the modex value being pushed into
+ * the PMIx server comes from an element that is ready to
+ * support async modex operations, or from one that requires
+ * synchronous modex (i.e., blocking modex operation) */
+#define PMIX_SYNC_REQD  true
+#define PMIX_ASYNC_RDY  false
+
 /**
  * Provide a simplified macro for sending data via modex
  * to other processes. The macro requires four arguments:
  *
  * r - the integer return status from the modex op
+ * f - whether this modex requires sync or is async ready
  * sc - the PMIX scope of the data
  * s - the key to tag the data being posted
  * d - the data object being posted
  * sz - the number of bytes in the data object
  */
-#define OPAL_MODEX_SEND_STRING(r, sc, s, d, sz)                 \
+#define OPAL_MODEX_SEND_STRING(r, f, sc, s, d, sz)              \
     do {                                                        \
         opal_value_t kv;                                        \
+        if (PMIX_SYNC_REQD == (f)) {                            \
+            opal_pmix_use_collective = true;                    \
+        }                                                       \
         OBJ_CONSTRUCT(&kv, opal_value_t);                       \
         kv.key = (s);                                           \
         kv.type = OPAL_BYTE_OBJECT;                             \
@@ -88,20 +100,22 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
  * to other processes. The macro requires four arguments:
  *
  * r - the integer return status from the modex op
+ * f - whether this modex requires sync or is async ready
  * sc - the PMIX scope of the data
  * s - the MCA component that is posting the data
  * d - the data object being posted
  * sz - the number of bytes in the data object
  */
-#define OPAL_MODEX_SEND(r, sc, s, d, sz)                        \
+#define OPAL_MODEX_SEND(r, f, sc, s, d, sz)                     \
     do {                                                        \
         char *key;                                              \
+        if (PMIX_SYNC_REQD == (f)) {                            \
+            opal_pmix_use_collective = true;                    \
+        }                                                       \
         key = mca_base_component_to_string((s));                \
-        OPAL_MODEX_SEND_STRING((r), (sc), key, (d), (sz));      \
+        OPAL_MODEX_SEND_STRING((r), (f), (sc), key, (d), (sz)); \
         free(key);                                              \
     } while(0);
-
-
 
 /**
  * Provide a simplified macro for retrieving modex data
@@ -181,6 +195,21 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
     } while(0);
 
 
+/**
+ * Provide a simplified macro for calling the fence function
+ * that takes into account directives and availability of
+ * non-blocking operations
+ */
+#define OPAL_FENCE(p, s, cf, cd)                                        \
+    do {                                                                \
+        if (opal_pmix_use_collective || NULL == opal_pmix.fence_nb) {   \
+            opal_pmix.fence((p), (s));                                  \
+        } else {                                                        \
+            opal_pmix.fence_nb((p), (s), (cf), (cd));                   \
+        }                                                               \
+    } while(0);
+
+
 /****    DEFINE THE PUBLIC API'S                          ****
  ****    NOTE THAT WE DO NOT HAVE A 1:1 MAPPING OF APIs   ****
  ****    HERE TO THOSE CURRENTLY DEFINED BY PMI AS WE     ****
@@ -221,13 +250,14 @@ typedef int (*opal_pmix_base_module_get_appnum_fn_t)(int *appnum);
  * data "put" to the system since the last call to "fence"
  * prior to (or as part of) executing the barrier. Serves both PMI2
  * and PMI1 "barrier" purposes */
-typedef int (*opal_pmix_base_module_fence_fn_t)(void);
+typedef int (*opal_pmix_base_module_fence_fn_t)(opal_process_name_t *procs, size_t nprocs);
 
 /* Fence_nb - not included in the current PMI standard. This is a non-blocking
  * version of the standard "fence" call. All subsequent "get" calls will block
  * pending completion of this operation. Non-blocking "get" calls will still
  * complete as data becomes available */
-typedef int (*opal_pmix_base_module_fence_nb_fn_t)(opal_pmix_cbfunc_t cbfunc, void *cbdata);
+typedef int (*opal_pmix_base_module_fence_nb_fn_t)(opal_process_name_t *procs, size_t nprocs,
+                                                   opal_pmix_cbfunc_t cbfunc, void *cbdata);
 
 /* Put - note that this API has been modified from the current PMI standard to
  * reflect the proposed PMIx extensions. */
@@ -339,6 +369,9 @@ typedef struct {
 
 /* Global structure for accessing store functions */
 OPAL_DECLSPEC extern opal_pmix_base_module_t opal_pmix;  /* holds base function pointers */
+
+/* flag to indicate collective vs direct fence operations */
+OPAL_DECLSPEC extern bool opal_pmix_use_collective;
 
 END_C_DECLS
 

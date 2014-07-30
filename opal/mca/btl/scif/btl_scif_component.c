@@ -211,7 +211,9 @@ static int mca_btl_scif_modex_send (void)
     int rc;
 
     /* only processes on the same node need to know this info */
-    OPAL_MODEX_SEND(rc, PMIX_LOCAL, &mca_btl_scif_component.super.btl_version, &modex, sizeof (modex));
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_LOCAL,
+                    &mca_btl_scif_component.super.btl_version,
+                    &modex, sizeof (modex));
     return rc;
 }
 

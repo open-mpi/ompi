@@ -45,7 +45,6 @@ int orte_grpcomm_base_select(void)
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
-        exit_status = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
 

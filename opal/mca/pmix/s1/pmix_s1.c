@@ -13,6 +13,7 @@
 #include "opal/types.h"
 
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include <string.h>
@@ -28,8 +29,9 @@ static int s1_get_jobid(char jobId[], int jobIdSize);
 static int s1_get_rank(int *rank);
 static int s1_get_size(opal_pmix_scope_t scope, int *size);
 static int s1_get_appnum(int *appnum);
-static int s1_fence(void);
-static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
+static int s1_fence(opal_process_name_t *procs, size_t nprocs);
+static int s1_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                       opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s1_get(const opal_identifier_t *id,
@@ -317,7 +319,7 @@ static int s1_put(opal_pmix_scope_t scope,
     return rc;
 }
 
-static int s1_fence(void)
+static int s1_fence(opal_process_name_t *procs, size_t nprocs)
 {
     int rc;
     /* check if there is partially filled meta key and put them */
@@ -344,7 +346,8 @@ static int s1_fence(void)
     return OPAL_SUCCESS;
 }
 
-static int s1_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
+static int s1_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                       opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }

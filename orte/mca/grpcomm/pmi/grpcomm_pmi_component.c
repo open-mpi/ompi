@@ -31,7 +31,7 @@ static int orte_grpcomm_pmi_register(void);
  */
 orte_grpcomm_base_component_t mca_grpcomm_pmi_component = {
     {
-        ORTE_GRPCOMM_BASE_VERSION_2_0_0,
+        ORTE_GRPCOMM_BASE_VERSION_3_0_0,
         
         "pmi", /* MCA module name */
         ORTE_MAJOR_VERSION,  /* MCA module major version */

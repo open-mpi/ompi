@@ -439,7 +439,8 @@ static int btl_openib_modex_send(void)
     }
 
     /* All done -- send it! */
-    OPAL_MODEX_SEND(rc, PMIX_REMOTE, &mca_btl_openib_component.super.btl_version,
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
+                    &mca_btl_openib_component.super.btl_version,
                     message, msg_size);
     free(message);
     opal_output(-1, "Modex sent!  %d calculated, %d actual\n", (int) msg_size, (int) (offset - message));

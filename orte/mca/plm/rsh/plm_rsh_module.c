@@ -735,7 +735,6 @@ static void ssh_child(int argc, char **argv)
  */
 static int remote_spawn(opal_buffer_t *launch)
 {
-    opal_list_item_t *item;
     int node_name_index1;
     int proc_vpid_index;
     char **argv = NULL;
@@ -748,7 +747,8 @@ static int remote_spawn(opal_buffer_t *launch)
     orte_process_name_t target;
     orte_plm_rsh_caddy_t *caddy;
     orte_job_t *daemons;
-    orte_grpcomm_collective_t coll;
+    opal_list_t coll;
+    orte_namelist_t *child;
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:rsh: remote spawn called",
@@ -780,11 +780,11 @@ static int remote_spawn(opal_buffer_t *launch)
     orte_routed.update_routing_plan();
     
     /* get the updated routing list */
-    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-    orte_routed.get_routing_list(ORTE_GRPCOMM_XCAST, &coll);
+    OBJ_CONSTRUCT(&coll, opal_list_t);
+    orte_routed.get_routing_list(&coll);
     
     /* if I have no children, just return */
-    if (0 == opal_list_get_size(&coll.targets)) {
+    if (0 == opal_list_get_size(&coll)) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:rsh: remote spawn - have no children!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -814,10 +814,7 @@ static int remote_spawn(opal_buffer_t *launch)
     }
     
     target.jobid = ORTE_PROC_MY_NAME->jobid;
-    for (item = opal_list_get_first(&coll.targets);
-         item != opal_list_get_end(&coll.targets);
-         item = opal_list_get_next(item)) {
-        orte_namelist_t *child = (orte_namelist_t*)item;
+    OPAL_LIST_FOREACH(child, &coll, orte_namelist_t) {
         target.vpid = child->name.vpid;
         
         /* get the host where this daemon resides */
@@ -854,7 +851,7 @@ static int remote_spawn(opal_buffer_t *launch)
         caddy->daemon->name.vpid = target.vpid;
         opal_list_append(&launch_list, &caddy->super);
     }
-    OBJ_DESTRUCT(&coll);
+    OPAL_LIST_DESTRUCT(&coll);
     
     /* trigger the event to start processing the launch list */
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
@@ -958,12 +955,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_app_context_t *app;
     orte_node_t *node, *nd;
     orte_std_cntr_t nnode;
-    opal_list_item_t *item;
     orte_job_t *daemons;
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
     orte_plm_rsh_caddy_t *caddy;
-    orte_grpcomm_collective_t coll;
+    opal_list_t coll;
     char *username;
+    orte_namelist_t *child;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
@@ -1122,8 +1119,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
         }
         
         /* get the updated routing list */
-        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-        orte_routed.get_routing_list(ORTE_GRPCOMM_XCAST, &coll);
+        OBJ_CONSTRUCT(&coll, opal_list_t);
+        orte_routed.get_routing_list(&coll);
     }
     
     /* setup the launch */
@@ -1143,10 +1140,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         
         /* if we are tree launching, only launch our own children */
         if (!mca_plm_rsh_component.no_tree_spawn) {
-            for (item = opal_list_get_first(&coll.targets);
-                 item != opal_list_get_end(&coll.targets);
-                 item = opal_list_get_next(item)) {
-                orte_namelist_t *child = (orte_namelist_t*)item;
+            OPAL_LIST_FOREACH(child, &coll, orte_namelist_t) {
                 if (child->name.vpid == node->daemon->name.vpid) {
                     goto launch;
                 }

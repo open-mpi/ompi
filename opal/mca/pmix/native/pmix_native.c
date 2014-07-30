@@ -33,8 +33,9 @@ static int native_get_jobid(char jobId[], int jobIdSize);
 static int native_get_rank(int *rank);
 static int native_get_size(opal_pmix_scope_t scope, int *size);
 static int native_get_appnum(int *appnum);
-static int native_fence(void);
-static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
+static int native_fence(opal_process_name_t *procs, size_t nprocs);
+static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                           opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int native_put(opal_pmix_scope_t scope,
                       opal_value_t *kv);
 static int native_get(const opal_identifier_t *id,
@@ -275,7 +276,7 @@ static int native_put(opal_pmix_scope_t scope,
 }
 
 
-static int native_fence(void)
+static int native_fence(opal_process_name_t *procs, size_t nprocs)
 {
     opal_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_FENCE_CMD;
@@ -291,6 +292,19 @@ static int native_fence(void)
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(msg);
         return rc;
+    }
+    /* pack the number of procs */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &nprocs, 1, OPAL_SIZE))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+    if (0 < nprocs) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_UINT64))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
     }
 
     /* if we haven't already done it, ensure we have committed our values */
@@ -322,10 +336,11 @@ static int native_fence(void)
     return OPAL_SUCCESS;
 }
 
-static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
+static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                           opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
     opal_buffer_t *msg;
-    pmix_cmd_t cmd = PMIX_FENCE_CMD;
+    pmix_cmd_t cmd = PMIX_FENCENB_CMD;
     int rc;
     pmix_cb_t *cb;
 
@@ -335,6 +350,19 @@ static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(msg);
         return rc;
+    }
+    /* pack the number of procs */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &nprocs, 1, OPAL_SIZE))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+    if (0 < nprocs) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_UINT64))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
     }
 
     /* if we haven't already done it, ensure we commit our values
@@ -371,6 +399,11 @@ static int native_get(const opal_identifier_t *id,
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "pmix:native getting value for key %s", key);
 
+    /* first see if we already have the info in our dstore */
+
+    /* yep - pass it back */
+
+    /* nope - see if we can get it */
     msg = OBJ_NEW(opal_buffer_t);
     /* pack the get cmd */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
@@ -403,7 +436,7 @@ static int native_get(const opal_identifier_t *id,
     PMIX_WAIT_FOR_COMPLETION(cb->active);
 
     /* we have received the entire data blob for this process - unpack
-     * and store all values, keeping the one we requested to return
+     * and cache all values, keeping the one we requested to return
      * to the caller */
     cnt = 1;
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &ret, &cnt, OPAL_INT))) {
@@ -425,7 +458,7 @@ static int native_get(const opal_identifier_t *id,
             if (0 == strcmp(key, kp->key)) {
                 *kv = kp;
             } else {
-                OBJ_RELEASE(kv);
+                OBJ_RELEASE(kp);
             }
         }
         if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {

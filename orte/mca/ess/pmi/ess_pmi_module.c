@@ -366,17 +366,7 @@ static int rte_init(void)
      * in the job won't be executing this step, so we would hang
      */
     if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
-        orte_grpcomm_collective_t coll;
-        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-        coll.id = orte_process_info.peer_modex;
-        coll.active = true;
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(&coll))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte modex";
-            goto error;
-        }
-        ORTE_WAIT_FOR_COMPLETION(coll.active);
-        OBJ_DESTRUCT(&coll);
+        opal_pmix.fence(NULL, 0);
     }
 
     /* flag that we completed init */

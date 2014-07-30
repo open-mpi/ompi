@@ -229,7 +229,9 @@ static int mca_btl_base_vader_modex_send (void)
     memmove (&modex.seg_ds, &mca_btl_vader_component.seg_ds, modex_size);
 #endif
 
-    OPAL_MODEX_SEND(rc, PMIX_LOCAL, &mca_btl_vader_component.super.btl_version, &modex, modex_size);
+    OPAL_MODEX_SEND(rc, PMIX_ASYNC_RDY, PMIX_LOCAL,
+                    &mca_btl_vader_component.super.btl_version,
+                    &modex, modex_size);
     return rc;
 }
 

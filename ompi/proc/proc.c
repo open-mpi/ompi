@@ -115,7 +115,8 @@ int ompi_proc_init(void)
             opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
-            OPAL_MODEX_SEND_STRING(ret, PMIX_REMOTE, "OMPI_ARCH", &proc->super.proc_arch, OPAL_UINT32);
+            OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_REMOTE, "OMPI_ARCH",
+                                   &proc->super.proc_arch, OPAL_UINT32);
             if (OPAL_SUCCESS != ret) {
                 return ret;
             }

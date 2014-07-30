@@ -530,8 +530,9 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
                   interface, portals4_btl->portals_ni_h,
                   ptl_process_ids[interface].phys.nid, ptl_process_ids[interface].phys.pid));
     }
-    OPAL_MODEX_SEND(ret, PMIX_REMOTE, &mca_btl_portals4_component.super.btl_version,
-                          ptl_process_ids, mca_btl_portals4_component.num_btls * sizeof(ptl_process_t));
+    OPAL_MODEX_SEND(ret, PMIX_SYNC_REQD, PMIX_REMOTE,
+                    &mca_btl_portals4_component.super.btl_version,
+                    ptl_process_ids, mca_btl_portals4_component.num_btls * sizeof(ptl_process_t));
     if (OPAL_SUCCESS != ret) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
                         "%s:%d: opal_modex_send failed: %d\n",

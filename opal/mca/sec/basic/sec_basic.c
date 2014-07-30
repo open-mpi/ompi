@@ -17,6 +17,7 @@
 
 #include "opal_stdint.h"
 #include "opal/dss/dss_types.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -57,9 +58,33 @@ static int get_my_cred(int dstorehandle,
                        opal_identifier_t *my_id,
                        opal_sec_cred_t **cred)
 {
+    opal_list_t vals;
+    opal_value_t *kv;
+
     if (!initialized) {
-        my_cred.credential = strdup("1234567");
-        my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
+        /* check first if a credential was stored for this job
+         * in the database
+         */
+        OBJ_CONSTRUCT(&vals, opal_list_t);
+        if (OPAL_SUCCESS == opal_dstore.fetch(dstorehandle, my_id, OPAL_DSTORE_CREDENTIAL, &vals)) {
+            kv = (opal_value_t*)opal_list_remove_first(&vals);
+            if (NULL == kv) {
+                /* make the default credential 7-bytes long so we hit a nice
+                 * 8-byte alignment (including NULL terminator) to keep valgrind
+                 * from barking in optimized builds
+                 */
+                my_cred.credential = strdup("1234567");
+                my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
+            } else {
+                my_cred.credential = strdup(kv->data.string);
+                my_cred.size = strlen(kv->data.string);
+                OBJ_RELEASE(kv);
+            }
+        } else {
+            my_cred.credential = strdup("12345");
+            my_cred.size = strlen(my_cred.credential)+1;  // include the NULL
+        }
+        OPAL_LIST_DESTRUCT(&vals);
     }
     initialized = true;
 

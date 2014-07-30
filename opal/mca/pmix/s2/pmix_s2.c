@@ -18,6 +18,7 @@
 #include "opal/types.h"
 
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include "pmi2_pmap_parser.h"
@@ -45,8 +46,9 @@ static int s2_get_rank(int *rank);
 static int s2_get_size(opal_pmix_scope_t scope, int *size);
 static int s2_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
-static int s2_fence(void);
-static int s2_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
+static int s2_fence(opal_process_name_t *procs, size_t nprocs);
+static int s2_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                       opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int s2_get(const opal_identifier_t *id,
                   const char *key,
                   opal_value_t **kv);
@@ -348,7 +350,7 @@ static int s2_put(opal_pmix_scope_t scope,
     return rc;
 }
 
-static int s2_fence(void)
+static int s2_fence(opal_process_name_t *procs, size_t nprocs)
 {
     int rc;
     /* check if there is partially filled meta key and put them */
@@ -367,7 +369,8 @@ static int s2_fence(void)
     return OPAL_SUCCESS;
 }
 
-static int s2_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
+static int s2_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                       opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }

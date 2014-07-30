@@ -19,7 +19,6 @@
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/types.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/pmix/pmix.h"
 
 /**
  * This is a transparent handle proposed to the upper layer as a mean

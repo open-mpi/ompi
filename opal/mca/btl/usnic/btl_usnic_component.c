@@ -254,7 +254,8 @@ static int usnic_modex_send(void)
                                 ntoh64(addrs[i].gid.global.interface_id));
         }
     }
-    OPAL_MODEX_SEND(rc, PMIX_REMOTE, &mca_btl_usnic_component.super.btl_version, 
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
+                    &mca_btl_usnic_component.super.btl_version, 
                     addrs, size);
     if (NULL != addrs) {
         free(addrs);

@@ -35,7 +35,7 @@
 #include "opal/mca/event/event.h"
 
 #include "orte/mca/odls/odls_types.h"
-#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
@@ -102,7 +102,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
         OBJ_RELEASE(cmd);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, cmd, ORTE_RML_TAG_DAEMON))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid, cmd, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(cmd);
@@ -177,7 +177,7 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
             }
         }
     }
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, cmd, ORTE_RML_TAG_DAEMON))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid, cmd, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_RELEASE(cmd);
@@ -221,7 +221,7 @@ int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
     }
     
     /* send it! */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &cmd, ORTE_RML_TAG_DAEMON))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid, &cmd, ORTE_RML_TAG_DAEMON))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&cmd);

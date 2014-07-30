@@ -46,7 +46,7 @@ static int cray_job_connect(const char jobId[],
                           PMI2_Connect_comm_t *conn);
 static int cray_job_disconnect(const char jobId[]);
 static int cray_put(const char key[], const char value[]);
-static int cray_fence(void);
+static int cray_fence(opal_process_name_t *procs, size_t nprocs);
 static int cray_get(const char *jobid,
                     int src_pmix_id,
                     const char key[],
@@ -254,7 +254,7 @@ static int cray_put(const char key[], const char value[])
     return OPAL_SUCCESS;
 }
 
-static int cray_fence(void)
+static int cray_fence(opal_process_name_t *procs, size_t nprocs)
 {
     int rc;
 

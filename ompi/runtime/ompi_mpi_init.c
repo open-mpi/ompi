@@ -387,7 +387,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     struct timeval ompistart, ompistop;
-    ompi_rte_collective_t *coll;
     char *cmd=NULL, *av=NULL;
 
     /* bitflag of the thread level support provided. To be used
@@ -524,12 +523,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));
     OMPI_THREADLEVEL_SET_BITFLAG ( ompi_mpi_thread_provided, threadlevel_bf );
 
+#if OMPI_ENABLE_THREAD_MULTIPLE
     /* add this bitflag to the modex */
-    OPAL_MODEX_SEND_STRING(ret, PMIX_GLOBAL, "MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t));
+    OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
+                           "MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t));
     if (OPAL_SUCCESS != ret) {
         error = "ompi_mpi_init: modex send thread level";
         goto error;
     }
+#endif
 
     /* initialize datatypes. This step should be done early as it will
      * create the local convertor and local arch used in the proc
@@ -636,22 +638,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
-    /* exchange connection info - this function also acts as a barrier
-     * as it will not return until the exchange is complete
+    /* exchange connection info - this function may also act as a barrier
+     * if data exchange is required. The modex occurs solely across procs
+     * in our job, so no proc array is passed. If a barrier is required,
+     * the "fence" function will perform it internally
      */
-    coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_modex;
-    coll->active = true;
-    if (OMPI_SUCCESS != (ret = ompi_rte_modex(coll))) {
-        error = "rte_modex failed";
-        goto error;
-    }
-    /* wait for modex to complete - this may be moved anywhere in mpi_init
-     * so long as it occurs prior to calling a function that needs
-     * the modex info!
-     */
-    OMPI_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
+    OPAL_FENCE(NULL, 0, NULL, NULL);
 
     if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
@@ -836,17 +828,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
 
-    /* wait for everyone to reach this point */
-    coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_init_barrier;
-    coll->active = true;
-    if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
-        error = "rte_barrier failed";
-        goto error;
-    }
-    /* wait for barrier to complete */
-    OMPI_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
+    /* wait for everyone to reach this point - this is a hard
+     * barrier requirement at this time, though we hope to relax
+     * it at a later point */
+    opal_pmix.fence(NULL, 0);
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */

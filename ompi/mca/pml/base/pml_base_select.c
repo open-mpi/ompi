@@ -312,7 +312,7 @@ mca_pml_base_pml_selected(const char *name)
 {
     int rc;
 
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
     return rc;
 }
 

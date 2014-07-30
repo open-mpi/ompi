@@ -328,12 +328,13 @@ void pmix_server_recv_handler(int sd, short flags, void *cbdata)
     pmix_cmd_t cmd;
     opal_buffer_t *reply, xfer, *bptr, buf;
     opal_value_t kv, *kvp;
-    opal_identifier_t id;
+    opal_identifier_t id, *sig;
     char *key;
     orte_process_name_t name;
     orte_proc_t *proc;
     bool local;
     opal_list_t values;
+    size_t nprocs;
 
     opal_output_verbose(2, pmix_server_output,
                         "%s:usock:recv:handler called for peer %s",
@@ -482,28 +483,81 @@ void pmix_server_recv_handler(int sd, short flags, void *cbdata)
                     opal_output_verbose(2, pmix_server_output,
                                         "%s recvd FENCE",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                    /* if data was given, unpack and store it in the pmix dstore */
+                    /* get the number of procs in this fence collective */
                     cnt = 1;
-                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &bptr, &cnt, OPAL_BUFFER))) {
-                        /* it is okay if there was no data - it's just a fence */
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &nprocs, &cnt, OPAL_SIZE))) {
                         ORTE_ERROR_LOG(rc);
                         goto reply_fence;
                     }
-                    OBJ_CONSTRUCT(&kv, opal_value_t);
-                    kv.key = strdup("modex");
-                    kv.type = OPAL_BYTE_OBJECT;
-                    kv.data.bo.bytes = (uint8_t*)bptr->base_ptr;
-                    kv.data.bo.size = bptr->bytes_used;
-                    bptr->base_ptr = NULL;  // protect the data region
-                    OBJ_RELEASE(bptr);
-                    if (OPAL_SUCCESS != (rc = opal_dstore.store(pmix_server_handle, &peer->recv_msg->hdr.id, &kv))) {
-                        ORTE_ERROR_LOG(rc);
-                        OBJ_DESTRUCT(&kv);
-                        OBJ_DESTRUCT(&xfer);
-                        OBJ_RELEASE(peer->recv_msg);
-                        return;
+                    /* if a signature was provided, get it */
+                    if (0 < nprocs) {
+                        sig = (opal_identifier_t*)malloc(nprocs * sizeof(opal_identifier_t));
+                        cnt = nprocs;
+                        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, sig, &cnt, OPAL_UINT64))) {
+                            ORTE_ERROR_LOG(rc);
+                            free(sig);
+                            goto reply_fence;
+                        }
                     }
-                    OBJ_DESTRUCT(&kv);
+                    /* if data was given, unpack and store it in the pmix dstore - it is okay
+                     * if there was no data, it's just a fence*/
+                    cnt = 1;
+                    if (OPAL_SUCCESS == (rc = opal_dss.unpack(&xfer, &bptr, &cnt, OPAL_BUFFER))) {
+                        OBJ_CONSTRUCT(&kv, opal_value_t);
+                        kv.key = strdup("modex");
+                        kv.type = OPAL_BYTE_OBJECT;
+                        kv.data.bo.bytes = (uint8_t*)bptr->base_ptr;
+                        kv.data.bo.size = bptr->bytes_used;
+                        bptr->base_ptr = NULL;  // protect the data region
+                        OBJ_RELEASE(bptr);
+                        if (OPAL_SUCCESS != (rc = opal_dstore.store(pmix_server_handle, &peer->recv_msg->hdr.id, &kv))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_DESTRUCT(&kv);
+                            OBJ_DESTRUCT(&xfer);
+                            OBJ_RELEASE(peer->recv_msg);
+                            free(sig);
+                            return;
+                        }
+                        OBJ_DESTRUCT(&kv);
+                    }
+                    /* send notification to myself */
+                    reply = OBJ_NEW(opal_buffer_t);
+                    /* pack the id of the sender */
+                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &peer->recv_msg->hdr.id, 1, OPAL_UINT64))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(reply);
+                        free(sig);
+                        goto reply_fence;
+                    }
+                    /* pass the tag that this sender is sitting on */
+                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &peer->recv_msg->hdr.tag, 1, OPAL_UINT32))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(reply);
+                        free(sig);
+                        goto reply_fence;
+                    }
+                    /* pack the number of procs */
+                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &nprocs, 1, OPAL_SIZE))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(reply);
+                        free(sig);
+                        goto reply_fence;
+                    }
+                    if (0 < nprocs) {
+                        /* pack the signature, if given - if not, then the signature will
+                         * be NULL to indicate that the entire job is involved */
+                        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, sig, nprocs, OPAL_UINT64))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(reply);
+                            free(sig);
+                            goto reply_fence;
+                        }
+                    }
+                    free(sig);
+                    orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, reply,
+                                            ORTE_RML_TAG_DAEMON_COLL,
+                                            orte_rml_send_callback, NULL);
+                    return;
                 reply_fence:
                     /* send a release message back to the sender */
                     reply = OBJ_NEW(opal_buffer_t);
