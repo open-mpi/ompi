@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,7 +84,7 @@ void opal_btl_usnic_print_stats(
     /* The usuals */
     snprintf(str, sizeof(str), "%s:MCW:%3u, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu OA/DA %4lu/%4lu CRC:%4lu ",
              prefix,
-             ((orte_process_name_t*)&opal_proc_local_get()->proc_name)->vpid,
+             opal_process_name_vpid(opal_proc_local_get()->proc_name),
 
              module->stats.num_total_sends,
              module->mod_channels[USNIC_PRIORITY_CHANNEL].num_channel_sends,
