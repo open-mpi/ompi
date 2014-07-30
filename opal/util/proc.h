@@ -53,7 +53,8 @@ typedef struct opal_process_info_t {
     char *job_session_dir;              /**< Session directory for job */
     char *proc_session_dir;             /**< Session directory for the process */
     int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
-    int32_t my_local_rank;    /**< local rank */
+    int32_t my_local_rank;              /**< local rank */
+    uint32_t num_procs;                 /**< number of peers */
 #if OPAL_HAVE_HWLOC
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
 #endif
