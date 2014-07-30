@@ -1735,26 +1735,13 @@ static void module_async_event_callback(int fd, short flags, void *arg)
                if any async event other than PORT_ACTIVE occurs. */
 
             opal_show_help("help-mpi-btl-usnic.txt", "async event",
-                           true, 
+                           true,
                            opal_process_info.nodename,
-                           ibv_get_device_name(module->device), 
+                           ibv_get_device_name(module->device),
                            module->if_name,
                            ibv_event_type_str(event.event_type),
                            event.event_type);
-            /* After discussion with George, we decided that it was
-               safe to cast away the const from opal_proc_local_get()
-               -- the error function needs to be smart enough to not
-               take certain actions if the passed proc is yourself
-               (e.g., don't call del_procs() on yourself). */
-            module->pml_error_callback(&module->super, 
-                                       MCA_BTL_ERROR_FLAGS_FATAL,
-                                       (opal_proc_t*) opal_proc_local_get(),
-                                       "usnic");
-            /* The PML error callback will likely not return (i.e., it
-               will likely kill the job).  But in case someone
-               implements a non-fatal PML error callback someday, do
-               reasonable things just in case it does actually
-               return. */
+
             fatal = true;
             break;
         }
@@ -1766,7 +1753,7 @@ static void module_async_event_callback(int fd, short flags, void *arg)
     /* If this is fatal, invoke the upper layer error handler to abort
        the job */
     if (fatal) {
-        opal_btl_usnic_exit();
+        opal_btl_usnic_exit(module);
         /* Does not return */
     }
 }

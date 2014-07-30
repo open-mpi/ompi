@@ -699,7 +699,7 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
                        mac_str,
                        ap->sizes[0],
                        ap->sizes[1]);
-        opal_btl_usnic_exit();
+        opal_btl_usnic_exit(NULL);
         /* Will not return */
     }
 

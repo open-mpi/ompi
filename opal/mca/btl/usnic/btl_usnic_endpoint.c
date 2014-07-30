@@ -102,7 +102,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     assert(NULL != endpoint->endpoint_rx_frag_info);
     if (OPAL_UNLIKELY(endpoint->endpoint_rx_frag_info == NULL)) {
         BTL_ERROR(("calloc returned NULL -- this should not happen!"));
-        opal_btl_usnic_exit();
+        opal_btl_usnic_exit(endpoint->endpoint_module);
         /* Does not return */
     }
 }

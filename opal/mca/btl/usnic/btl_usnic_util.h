@@ -79,7 +79,7 @@ usnic_convertor_pack_simple(
  * Safely (but abnornmally) exit this process without abort()'ing (and
  * leaving a corefile).
  */
-void opal_btl_usnic_exit(void);
+void opal_btl_usnic_exit(opal_btl_usnic_module_t *module);
 
 /*
  * Long enough to hold "xxx.xxx.xxx.xxx/xx"
@@ -112,8 +112,7 @@ void opal_btl_usnic_dump_hex(uint8_t *addr, int len);
 
 uint32_t opal_btl_usnic_get_ipv4_subnet(uint32_t addrn, uint32_t cidr_len);
 
-void opal_btl_usnic_util_abort(const char *msg, const char *file, int line,
-                               int ret);
+void opal_btl_usnic_util_abort(const char *msg, const char *file, int line);
 
 size_t opal_btl_usnic_convertor_pack_peek(const opal_convertor_t *conv,
                                           size_t max_len);
