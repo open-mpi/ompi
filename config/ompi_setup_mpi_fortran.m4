@@ -15,6 +15,8 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2014      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -253,7 +255,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AS_IF([test $ompi_fortran_happy -eq 1],
           [AC_MSG_RESULT([yes])
            OMPI_BUILD_FORTRAN_MPIFH_BINDINGS=1],
-          [AC_MSG_RESULT([no])])
+           [AS_IF([test $OMPI_FORTRAN_USER_REQUESTED -eq 1 && test $OMPI_WANT_FORTRAN_MPIFH_BINDINGS -eq 1],
+                  [AC_MSG_ERROR([no, cannot continue])],
+                  [AC_MSG_RESULT([no])])])
     
     #--------------------------------------------
     # Fortran use mpi or use mpi_f08 MPI bindings
@@ -294,7 +298,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AC_MSG_CHECKING([if building Fortran 'use mpi' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1],
           [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])])
+          [AS_IF([test $OMPI_FORTRAN_USER_REQUESTED -eq 1 && test $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1],
+                 [AC_MSG_ERROR([no, cannot continue])],
+                 [AC_MSG_RESULT([no])])])
     
     #---------------------------------
     # Fortran use mpi_f08 MPI bindings
@@ -486,7 +492,9 @@ end type test_mpi_handle],
     AS_IF([test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
           [OMPI_FORTRAN_USEMPIF08_LIB=-lmpi_usempif08
            AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])])
+          [AS_IF([test $OMPI_FORTRAN_USER_REQUESTED -eq 1 && test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+                 [AC_MSG_ERROR([no, cannot continue])],
+                 [AC_MSG_RESULT([no])])])
 
     # -------------------
     # mpif.h final setup
