@@ -398,6 +398,9 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  "Suppress warnings when attempting to set an overridden value (default: false)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_2,
                                  MCA_BASE_VAR_SCOPE_LOCAL, &mca_base_var_suppress_override_warning);
+    if (0 > ret) {
+        return ret;
+    }
 
     /* Aggregate MCA parameter files
      * A prefix search path to look up aggregate MCA parameter file
@@ -408,6 +411,9 @@ static int mca_base_var_cache_files(bool rel_path_search)
                                  "Aggregate MCA parameter file sets",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_var_file_prefix);
+    if (0 > ret) {
+        return ret;
+    }
 
     ret = asprintf(&mca_base_param_file_path, "%s" OPAL_PATH_SEP "amca-param-sets%c%s",
                    opal_install_dirs.opaldatadir, OPAL_ENV_SEP, cwd);
@@ -822,7 +828,7 @@ int mca_base_var_env_name(const char *param_name,
  */
 static int var_find_by_name (const char *full_name, int *vari, bool invalidok)
 {
-    mca_base_var_t *var;
+    mca_base_var_t *var = NULL;
     void *tmp;
     int rc;
 
@@ -834,7 +840,7 @@ static int var_find_by_name (const char *full_name, int *vari, bool invalidok)
 
     (void) var_get ((int)(uintptr_t) tmp, &var, false);
 
-    if (invalidok || VAR_IS_VALID(var[0])) {
+    if (invalidok || (var && VAR_IS_VALID(var[0]))) {
         *vari = (int)(uintptr_t) tmp;
         return OPAL_SUCCESS;
     }
@@ -1803,8 +1809,12 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
             ret = var->mbv_enumerator->string_from_value(var->mbv_enumerator, value->intval, &tmp);
         }
 
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+
         *value_string = strdup (tmp);
-        if (NULL == value_string) {
+        if (NULL == *value_string) {
             ret = OPAL_ERR_OUT_OF_RESOURCE;
         }
     }
@@ -1820,24 +1830,23 @@ int mca_base_var_check_exclusive (const char *project,
                                   const char *component_b,
                                   const char *param_b)
 {
-    mca_base_var_t *var_a, *var_b;
+    mca_base_var_t *var_a = NULL, *var_b = NULL;
     int var_ai, var_bi;
 
     /* XXX -- Remove me once the project name is in the componennt */
     project = NULL;
 
     var_ai = mca_base_var_find (project, type_a, component_a, param_a);
-    if (var_ai < 0) {
-        return OPAL_ERR_NOT_FOUND;
-    }
-
     var_bi = mca_base_var_find (project, type_b, component_b, param_b);
-    if (var_bi < 0) {
+    if (var_bi < 0 || var_ai < 0) {
         return OPAL_ERR_NOT_FOUND;
     }
 
     (void) var_get (var_ai, &var_a, true);
     (void) var_get (var_bi, &var_b, true);
+    if (NULL == var_a || NULL == var_b) {
+        return OPAL_ERR_NOT_FOUND;
+    }
 
     if (MCA_BASE_VAR_SOURCE_DEFAULT != var_a->mbv_source &&
         MCA_BASE_VAR_SOURCE_DEFAULT != var_b->mbv_source) {
@@ -1916,6 +1925,10 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
     }
 
     source_string = source_name(var);
+    if (NULL == source_string) {
+        free (value_string);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
 
     if (MCA_BASE_VAR_DUMP_PARSABLE == output_type) {
         if (NULL != var->mbv_enumerator) {
@@ -1938,11 +1951,9 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
 
         /* Output the value */
         asprintf(out[0] + line++, "%svalue:%s", tmp, value_string);
-        free(value_string);
 
         /* Output the source */
         asprintf(out[0] + line++, "%ssource:%s", tmp, source_string);
-        free(source_string);
 
         /* Output whether it's read only or writable */
         asprintf(out[0] + line++, "%sstatus:%s", tmp, VAR_IS_DEFAULT_ONLY(var[0]) ? "read-only" : "writeable");
@@ -2005,8 +2016,6 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
                   VAR_IS_DEFAULT_ONLY(var[0]) ? "informational" : "parameter",
                   full_name, value_string, source_string, var->mbv_info_lvl + 1,
                   info_lvl_strings[var->mbv_info_lvl], var_type_names[var->mbv_type]);
-        free (value_string);
-        free (source_string);
 
         tmp = out[0][0];
         if (VAR_IS_DEPRECATED(var[0])) {
@@ -2068,10 +2077,10 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
         }
 
         asprintf(out[0], "%s=%s (%s)", var->mbv_full_name, value_string, source_string);
-
-        free (value_string);
-        free (source_string);
     }
+
+    free (value_string);
+    free (source_string);
 
     return OPAL_SUCCESS;
 }
