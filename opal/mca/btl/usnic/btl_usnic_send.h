@@ -104,7 +104,7 @@ opal_btl_usnic_post_segment(
     ret = ibv_post_send(channel->qp, &sseg->ss_send_desc, &bad_wr);
     if (OPAL_UNLIKELY(0 != ret)) {
         opal_btl_usnic_util_abort("ibv_post_send() failed", 
-                                  __FILE__, __LINE__, ret);
+                                  __FILE__, __LINE__);
         /* Never returns */
     }
 
