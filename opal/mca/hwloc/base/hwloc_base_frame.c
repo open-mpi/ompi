@@ -494,7 +494,7 @@ OBJ_CLASS_INSTANCE(opal_hwloc_topo_data_t,
                    topo_data_const,
                    topo_data_dest);
 
-OBJ_CLASS_INSTANCE(orte_rmaps_numa_node_t,
+OBJ_CLASS_INSTANCE(opal_rmaps_numa_node_t,
         opal_list_item_t,
         NULL,
         NULL);

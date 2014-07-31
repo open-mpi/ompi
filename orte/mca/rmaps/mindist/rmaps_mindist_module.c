@@ -61,7 +61,7 @@ static int mindist_map(orte_job_t *jdata)
     opal_list_t numa_list;
     opal_list_item_t *item;
     opal_list_item_t *numa_item;
-    orte_rmaps_numa_node_t *numa;
+    opal_rmaps_numa_node_t *numa;
     orte_node_t *node;
     orte_proc_t *proc;
     int nprocs_mapped;
@@ -253,7 +253,7 @@ static int mindist_map(orte_job_t *jdata)
             if (opal_list_get_size(&numa_list) > 0) {
                 j = 0;
                 required = 0;
-                OPAL_LIST_FOREACH(numa, &numa_list, orte_rmaps_numa_node_t) {
+                OPAL_LIST_FOREACH(numa, &numa_list, opal_rmaps_numa_node_t) {
                     /* get the hwloc object for this numa */
                     if (NULL == (obj = opal_hwloc_base_get_obj_by_type(node->topology, HWLOC_OBJ_NODE, 0, numa->index, OPAL_HWLOC_AVAILABLE))) {
                         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -355,7 +355,7 @@ static int mindist_map(orte_job_t *jdata)
                 if (opal_list_get_size(&numa_list) > 0) {
                     numa_item = opal_list_get_first(&numa_list);
                     k = 0;
-                    obj = hwloc_get_obj_by_type(node->topology, HWLOC_OBJ_NODE,((orte_rmaps_numa_node_t*)numa_item)->index);
+                    obj = hwloc_get_obj_by_type(node->topology, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
                     npus = opal_hwloc_base_get_npus(node->topology, obj);
                     for (j = 0; j < (int)num_procs_to_assign && nprocs_mapped < (int)app->num_procs; j++) {
                         if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, i))) {
@@ -370,7 +370,7 @@ static int mindist_map(orte_job_t *jdata)
                             if (numa_item == opal_list_get_end(&numa_list)) { 
                                 numa_item = opal_list_get_first(&numa_list);
                             }
-                            obj = hwloc_get_obj_by_type(node->topology, HWLOC_OBJ_NODE,((orte_rmaps_numa_node_t*)numa_item)->index);
+                            obj = hwloc_get_obj_by_type(node->topology, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);
                             npus = opal_hwloc_base_get_npus(node->topology, obj);
                             k = 0;
                         }
