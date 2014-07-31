@@ -107,12 +107,26 @@ AC_DEFUN([MCA_ompi_btl_usnic_POST_CONFIG], [
                    [test "$1" -eq 1 && test "X$enable_ompi_btl_usnic_libnl3_utils" = "Xyes"])
 ])
 
-# MCA_btl_usnic_CONFIG([action-if-can-compile], 
+# MCA_btl_usnic_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/btl/usnic/Makefile])
 
+    AC_ARG_WITH([usnic],
+                [AS_HELP_STRING([--with-usnic],
+                                [If specified, cause an error if usNIC
+                                 support cannot be built])])
+
+    # If --without-usnic was specified, then gracefully exit.
+    # Otherwise, do the rest of the config.
+    AS_IF([test "x$with_usnic" = "xno"],
+          [AC_MSG_WARN([--without-usnic specified; skipping usnic BTL])
+           $2],
+          [OMPI_BTL_USNIC_DO_CONFIG($1, $2)])
+])
+
+AC_DEFUN([OMPI_BTL_USNIC_DO_CONFIG],[
     # see README.test for information about this scheme
     AC_ARG_ENABLE([ompi-btl-usnic-unit-tests],
                   [AS_HELP_STRING([--enable-ompi-btl-usnic-unit-tests],
@@ -195,7 +209,11 @@ AC_DEFUN([MCA_ompi_btl_usnic_CONFIG],[
           [btl_usnic_WRAPPER_EXTRA_LDFLAGS="$btl_usnic_LDFLAGS"
            btl_usnic_WRAPPER_EXTRA_LIBS="$btl_usnic_LIBS"
            $1],
-          [$2])
+          [AS_IF([test "$with_usnic" = "yes"],
+                 [AC_MSG_WARN([--with-usnic specified, but usNIC support cannot be built])
+                  AC_MSG_ERROR([Cannot continue])],
+                 [$2])
+          ])
 
     # Substitute in the things needed to build USNIC
     AC_SUBST([btl_usnic_CPPFLAGS])
