@@ -92,10 +92,6 @@ struct mca_btl_tcp_component_t {
     /* Do we want to use TCP_NODELAY? */
     int    tcp_not_use_nodelay;
 
-    /* If btl_tcp_if_seq was specified, this is the one interface
-       (name) that we're supposed to use. */
-    char *tcp_if_seq;
-
     /* do we want to warn on all excluded interfaces
      * that are not found?
      */
