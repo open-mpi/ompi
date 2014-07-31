@@ -31,7 +31,7 @@ opaldir = $(opalincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
 
-dist_ompidata_DATA =
+dist_opaldata_DATA =
 include base/Makefile.am
 
 distclean-local:

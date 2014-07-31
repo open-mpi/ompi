@@ -29,7 +29,7 @@ LEX_OUTPUT_ROOT = lex.btl_openib_ini_yy
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = btl-openib-benchmark
 
-dist_ompidata_DATA = \
+dist_opaldata_DATA = \
         help-mpi-btl-openib.txt \
         connect/help-mpi-btl-openib-cpc-base.txt \
         mca-btl-openib-device-params.ini
@@ -78,7 +78,7 @@ sources += \
     connect/btl_openib_connect_rdmacm.c \
     connect/btl_openib_connect_rdmacm.h
 
-dist_ompidata_DATA += connect/help-mpi-btl-openib-cpc-rdmacm.txt
+dist_opaldata_DATA += connect/help-mpi-btl-openib-cpc-rdmacm.txt
 endif
 
 # If we have udcm support, build that CPC
@@ -87,7 +87,7 @@ sources += \
     connect/btl_openib_connect_udcm.c \
     connect/btl_openib_connect_udcm.h
 
-# dist_ompidata_DATA += connect/help-mpi-btl-openib-cpc-ud.txt
+# dist_opaldata_DATA += connect/help-mpi-btl-openib-cpc-ud.txt
 endif
 
 # If we have dynamic SL support, build those files
@@ -113,15 +113,15 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
 mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS)
 mca_btl_openib_la_LIBADD = $(btl_openib_LIBS) \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/verbs/libmca_common_verbs.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/libmca_common_verbs.la
 if OPAL_cuda_support
 mca_btl_openib_la_LIBADD += \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(lib)

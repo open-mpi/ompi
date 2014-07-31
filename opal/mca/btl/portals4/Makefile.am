@@ -43,7 +43,7 @@ local_sources = \
 	btl_portals4_recv.h \
 	btl_portals4_send.c
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_portals4_la_SOURCES = $(local_sources)
 mca_btl_portals4_la_LIBADD = \

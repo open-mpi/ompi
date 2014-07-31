@@ -38,15 +38,15 @@ endif
 # See opal/mca/common/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_sm_la_SOURCES = $(sources)
 mca_mpool_sm_la_LDFLAGS = -module -avoid-version
 mca_mpool_sm_la_LIBADD = \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
 if OPAL_cuda_support
 mca_mpool_sm_la_LIBADD += \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-mpi-btl-sm.txt
+dist_opaldata_DATA = help-mpi-btl-sm.txt
 
 libmca_btl_sm_la_sources = \
     btl_sm.c \
@@ -43,12 +43,12 @@ endif
 # See opal/mca/common/sm/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
 mca_btl_sm_la_LDFLAGS = -module -avoid-version
 mca_btl_sm_la_LIBADD = \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
 mca_btl_sm_la_CPPFLAGS = $(btl_sm_CPPFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

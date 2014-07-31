@@ -30,7 +30,7 @@ headers = common_ugni.h \
 ugni_SOURCES = common_ugni.c \
                common_ugni_ep.c
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 libmca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
 nodist_libmca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
 libmca_common_ugni_la_LIBADD = $(common_ugni_LIBS) 
