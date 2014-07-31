@@ -25,7 +25,7 @@
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "opal_config.h"
 #include "opal/mca/base/base.h"
-#include "opal/runtime/params.h"
+#include "opal/runtime/opal_params.h"
 #include "mpool_udreg.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
