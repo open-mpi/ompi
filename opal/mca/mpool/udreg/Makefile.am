@@ -40,7 +40,7 @@ component_noinst = libmca_mpool_udreg.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_udreg_la_SOURCES = $(sources)
 mca_mpool_udreg_la_LDFLAGS = -module -avoid-version $(mpool_udreg_LDFLAGS)

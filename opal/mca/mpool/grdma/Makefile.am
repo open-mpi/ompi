@@ -42,14 +42,14 @@ component_noinst = libmca_mpool_grdma.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_grdma_la_SOURCES = $(sources)
 mca_mpool_grdma_la_LDFLAGS = -module -avoid-version
 mca_mpool_grdma_la_LIBADD = $(mpool_grdma_LIBS)
 if OPAL_cuda_support
 mca_mpool_grdma_la_LIBADD += \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

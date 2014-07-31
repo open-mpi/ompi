@@ -24,7 +24,7 @@ AM_CFLAGS = $(btl_usnic_CFLAGS)
 
 EXTRA_DIST = README.txt README.test
 
-dist_ompidata_DATA = \
+dist_opaldata_DATA = \
     help-mpi-btl-usnic.txt
 
 test_sources = \
@@ -99,12 +99,12 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_usnic_la_SOURCES = $(component_sources)
 mca_btl_usnic_la_LDFLAGS = -module -avoid-version $(btl_usnic_LDFLAGS)
 mca_btl_usnic_la_LIBADD = $(btl_usnic_LIBS) \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/verbs/libmca_common_verbs.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/verbs/libmca_common_verbs.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)

@@ -40,7 +40,7 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_rcache_vma_la_SOURCES = $(component_sources)
 mca_rcache_vma_la_LDFLAGS = -module -avoid-version $(rcache_vma_LDFLAGS)

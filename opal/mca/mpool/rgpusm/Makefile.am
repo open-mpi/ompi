@@ -41,14 +41,14 @@ component_noinst = libmca_mpool_rgpusm.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_rgpusm_la_SOURCES = $(sources)
 mca_mpool_rgpusm_la_LDFLAGS = -module -avoid-version
 mca_mpool_rgpusm_la_LIBADD = $(mpool_rgpusm_LIBS)
 if OPAL_cuda_support
 mca_mpool_rgpusm_la_LIBADD += \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)
