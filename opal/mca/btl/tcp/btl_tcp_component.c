@@ -80,8 +80,6 @@ static int mca_btl_tcp_component_register(void);
 static int mca_btl_tcp_component_open(void);
 static int mca_btl_tcp_component_close(void);
 
-static char *mca_btl_tcp_if_seq_string;
-
 mca_btl_tcp_component_t mca_btl_tcp_component = {
     .super = {
         /* First, the mca_base_component_t struct containing meta information
@@ -293,56 +291,6 @@ static int mca_btl_tcp_component_register(void)
 
     mca_btl_tcp_param_register_int ("disable_family", NULL, 0, OPAL_INFO_LVL_2,  &mca_btl_tcp_component.tcp_disable_family);
 
-    /* Register a list of interfaces to use in sequence */
-    mca_btl_tcp_param_register_string("if_seq", 
-                                      "If specified, a comma-delimited list of TCP interfaces.  Interfaces will be assigned, one to each MPI process, in a round-robin fashion on each server.  For example, if the list is \"eth0,eth1\" and four MPI processes are run on a single server, then local ranks 0 and 2 will use eth0 and local ranks 1 and 3 will use eth1.", NULL, OPAL_INFO_LVL_9, &mca_btl_tcp_if_seq_string);
-
-    mca_btl_tcp_component.tcp_if_seq = NULL;
-    if (NULL != mca_btl_tcp_if_seq_string && '\0' != *mca_btl_tcp_if_seq_string) {
-        char **argv = opal_argv_split(mca_btl_tcp_if_seq_string, ',');
-
-        if (NULL != argv && '\0' != *(argv[0])) {
-            int if_index, rc, count;
-            uint32_t node_rank;
-            char name[256];
-
-            node_rank = opal_process_info.my_local_rank;
-
-            /* Now that we've got that local rank, take the
-               corresponding entry from the tcp_if_seq list (wrapping
-               if necessary) */
-            count = opal_argv_count(argv);
-            mca_btl_tcp_component.tcp_if_seq = 
-                strdup(argv[node_rank % count]);
-            opal_argv_free(argv);
-
-            /* Double check that the selected interface actually exists */
-            for (if_index = opal_ifbegin(); if_index >= 0; 
-                 if_index = opal_ifnext(if_index)){
-                if (OPAL_SUCCESS != 
-                    (rc = opal_ifindextoname(if_index, name, sizeof(name)))) {
-                    return rc;
-                }
-                if (0 == strcmp(name, mca_btl_tcp_component.tcp_if_seq)) {
-                    break;
-                }
-            }
-            if (if_index < 0) {
-                opal_show_help("help-mpi-btl-tcp.txt", 
-                               "invalid if_inexclude",
-                               true, "if_seq",
-                               opal_proc_local_get()->proc_hostname,
-                               mca_btl_tcp_component.tcp_if_seq,
-                               "Interface does not exist");
-                free(mca_btl_tcp_component.tcp_if_seq);
-                mca_btl_tcp_component.tcp_if_seq = NULL;
-            } else {
-                BTL_VERBOSE(("Node rank %d using TCP interface %s",
-                             node_rank, mca_btl_tcp_component.tcp_if_seq));
-            }
-        }
-    }
-
     return mca_btl_tcp_component_verify();
 }
 
@@ -396,10 +344,6 @@ static int mca_btl_tcp_component_close(void)
 {
     opal_list_item_t* item;
     opal_list_item_t* next;
-
-    if (NULL != mca_btl_tcp_component.tcp_if_seq) {
-        free(mca_btl_tcp_component.tcp_if_seq);
-    }
 
     if (NULL != mca_btl_tcp_component.tcp_btls)
         free(mca_btl_tcp_component.tcp_btls);
@@ -646,16 +590,6 @@ static int mca_btl_tcp_component_create_instances(void)
                 /* Have we seen this if already? */
                 for (j = 0; want_this_if && (j < kif_count); j++) {
                     if (kindexes[j] == index) {
-                        want_this_if = false;
-                    }
-                }
-
-                /* If we have an if_seq list, see if this is the one
-                   interface that we're supposed to have */
-                if (NULL != mca_btl_tcp_component.tcp_if_seq) {
-                    char name[256];
-                    opal_ifindextoname(if_index, name, sizeof(name));
-                    if (0 != strcmp(mca_btl_tcp_component.tcp_if_seq, name)) {
                         want_this_if = false;
                     }
                 }
