@@ -34,7 +34,7 @@
 #include <malloc.h>
 #endif
 #include "opal/mca/mpool/base/base.h"
-#include "opal/runtime/params.h"
+#include "opal/runtime/opal_params.h"
 #include "opal/include/opal_stdint.h"
 
 #include <fcntl.h>
@@ -175,8 +175,8 @@ int mca_mpool_udreg_module_init(mca_mpool_udreg_module_t* mpool)
         return OPAL_ERROR;
     }
 
-    OBJ_CONSTRUCT(&mpool->reg_list, opal_free_list_t);
-    opal_free_list_init_new(&mpool->reg_list, mpool->resources.sizeof_reg,
+    OBJ_CONSTRUCT(&mpool->reg_list, ompi_free_list_t);
+    ompi_free_list_init_new(&mpool->reg_list, mpool->resources.sizeof_reg,
                             opal_cache_line_size,
                             OBJ_CLASS(mca_mpool_base_registration_t),
                             0, opal_cache_line_size, 0, -1, 32, NULL);
@@ -189,7 +189,7 @@ static void *mca_mpool_udreg_reg_func (void *addr, uint64_t len, void *reg_conte
 {
     mca_mpool_udreg_module_t *mpool_udreg = (mca_mpool_udreg_module_t *) reg_context;
     mca_mpool_base_registration_t *udreg_reg;
-    opal_free_list_item_t *item;
+    ompi_free_list_item_t *item;
     int rc;
 
     OMPI_FREE_LIST_GET_MT(&mpool_udreg->reg_list, item);
@@ -222,7 +222,7 @@ static uint32_t mca_mpool_udreg_dereg_func (void *device_data, void *dreg_contex
 
     if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
         OMPI_FREE_LIST_RETURN_MT(&mpool_udreg->reg_list,
-                              (opal_free_list_item_t *) udreg_reg);
+                              (ompi_free_list_item_t *) udreg_reg);
     }
     /* might be worth printing out a warning if an error occurs here */
 
