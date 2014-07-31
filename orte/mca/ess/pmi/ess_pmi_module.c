@@ -92,6 +92,8 @@ static int rte_init(void)
     char *rmluri;
     orte_process_name_t ldr;
     opal_value_t kv;
+    opal_pmix_attr_t *attr;
+    opal_list_t attrs;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -128,19 +130,37 @@ static int rte_init(void)
             goto error;
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
+
+        /* setup to get attributes from PMI */
+        OBJ_CONSTRUCT(&attrs, opal_value_t);
+
         /* get our rank from PMI */
-        if (OPAL_SUCCESS != (ret = opal_pmix.get_rank(&i))) {
-            error = "getting rank";
+        attr = OBJ_NEW(opal_pmix_attr_t);
+        attr->attr = PMIX_RANK;
+        attr->scope = PMIX_GLOBAL;
+        opal_list_append(&attrs, &attr->super);
+
+        /* get universe size */
+        attr = OBJ_NEW(opal_pmix_attr_t);
+        attr->attr = PMIX_SIZE;
+        attr->scope = PMIX_GLOBAL;
+        opal_list_append(&attrs, &attr->super);
+
+        if (OPAL_SUCCESS != (ret = opal_pmix.get_attr(&attrs))) {
+            error = "getting PMI values";
             goto error;
         }
-        ORTE_PROC_MY_NAME->vpid = i + 1;  /* compensate for orterun */
+
+        /* we know the order of the attrs */
+        attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+        /* the rank is in the uint32_t field */
+        ORTE_PROC_MY_NAME->vpid = attr->value.data.ui32;
+        OBJ_RELEASE(attr);
 
         /* get the number of procs from PMI */
-        if (OPAL_SUCCESS != (ret = opal_pmix.get_size(PMIX_GLOBAL, &i))) {
-            error = "getting size";
-            goto error;
-        }
-        orte_process_info.num_procs = i + 1;  /* compensate for orterun */
+        attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+        /* size is in uint32_t field */
+        orte_process_info.num_procs = attr->value.data.ui32;
 
         /* complete setup */
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
@@ -152,44 +172,117 @@ static int rte_init(void)
 
     }
 
-    /* we are a direct-launched MPI process */
-    if (OPAL_SUCCESS != (ret = opal_pmix.get_jobid(pmi_id, 256))) {
-        error = "get jobid";
+    /* we are an application process, so
+     * setup to get attributes from PMI */
+    OBJ_CONSTRUCT(&attrs, opal_value_t);
+
+    /* get our jobid from PMI */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_JOBID;
+    attr->scope = PMIX_GLOBAL;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get our global rank from PMI */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_RANK;
+    attr->scope = PMIX_GLOBAL;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get our local rank from PMI */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_RANK;
+    attr->scope = PMIX_LOCAL;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get our node rank from PMI */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_RANK;
+    attr->scope = PMIX_NODE;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get universe size */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_SIZE;
+    attr->scope = PMIX_GLOBAL;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get number of local procs on this node */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_SIZE;
+    attr->scope = PMIX_LOCAL;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get total number of procs on this node */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_SIZE;
+    attr->scope = PMIX_NODE;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get our app number from PMI */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_APPNUM;
+    attr->scope = PMIX_GLOBAL;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get our local ldr from PMI */
+    attr = OBJ_NEW(opal_pmix_attr_t);
+    attr->attr = PMIX_LDR;
+    attr->scope = PMIX_LOCAL;
+    opal_list_append(&attrs, &attr->super);
+
+    /* get the info */
+    if (OPAL_SUCCESS != (ret = opal_pmix.get_attr(&attrs))) {
+        error = "getting PMI attr";
         goto error;
     }
 
-    /* PMI is very nice to us - the job id is an integer followed
-     * by a '.', followed by essentially a stepid. The first integer
-     * defines an overall job number. The second integer is the number of
-     * individual jobs we have run within that allocation. So we translate
-     * this as the overall job number equating to our job family, and
-     * the individual number equating to our local jobid
-     */
-    jobfam = strtol(pmi_id, &localj, 10);
-    if (NULL == localj) {
-        /* hmmm - no '.', so let's just use zero */
-        stepid = 0;
-    } else {
-        localj++; /* step over the '.' */
-        stepid = strtol(localj, NULL, 10) + 1; /* add one to avoid looking like a daemon */
-    }
+    /* the attrs remain in the same order, so let's parse them
+     * to retrieve the results - start with the jobid. ORTE
+     * uses a uint32_t value, so convert the string */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    ORTE_PROC_MY_NAME->jobid = strtoul(attr->value.data.string, NULL, 10);
+    OBJ_RELEASE(attr);
 
-    /* now build the jobid */
-    ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
+    /* extract our rank */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    ORTE_PROC_MY_NAME->vpid = attr->value.data.ui32;
+    OBJ_RELEASE(attr);
 
-    /* get our rank */
-    if (OPAL_SUCCESS != (ret = opal_pmix.get_rank(&i))) {
-        error = "getting rank";
+    /* extract our local rank */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    orte_process_info.my_local_rank = (orte_local_rank_t)attr->value.data.ui32;
+    OBJ_RELEASE(attr);
+    /* store for use */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_LOCALRANK);
+    kv.type = OPAL_UINT16;
+    kv.data.ui32 = orte_process_info.my_local_rank;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+        error = "storing nprocs node";
+        OBJ_DESTRUCT(&kv);
         goto error;
     }
-    ORTE_PROC_MY_NAME->vpid = i;
 
-    /* get the number of procs from PMI */
-    if (OPAL_SUCCESS != (ret = opal_pmix.get_size(PMIX_GLOBAL, &i))) {
-        error = "getting size";
+    /* extract our node rank */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    orte_process_info.my_node_rank = (orte_node_rank_t)attr->value.data.ui32;
+    OBJ_RELEASE(attr);
+    /* store for use */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_NODERANK);
+    kv.type = OPAL_UINT16;
+    kv.data.ui32 = orte_process_info.my_node_rank;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+        error = "storing nprocs node";
+        OBJ_DESTRUCT(&kv);
         goto error;
     }
-    orte_process_info.num_procs = i;
+
+    /* extract our universe size */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    orte_process_info.num_procs = attr->value.data.ui32;
     /* push into the environ for pickup in MPI layer for
      * MPI-3 required info key
      */
@@ -197,6 +290,74 @@ static int rte_init(void)
     putenv(ev1);
     asprintf(&ev2, "OMPI_APP_CTX_NUM_PROCS=%d", i);
     putenv(ev2);
+    /* store for use */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_UNIV_SIZE);
+    kv.type = OPAL_UINT32;
+    kv.data.ui32 = attr->value.data.ui32;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+        error = "storing nprocs node";
+        OBJ_DESTRUCT(&kv);
+        goto error;
+    }
+    OBJ_DESTRUCT(&kv);
+    OBJ_RELEASE(attr);
+
+    /* extract the number of local procs on the node */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    /* store the number of local peers - remember, we want the number
+     * of peers that share the node WITH ME, so we have to subtract
+     * ourselves from that number */
+    orte_process_info.num_local_peers = attr->value.data.ui32 - 1;
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_NPROCS_PEER);
+    kv.type = OPAL_UINT32;
+    kv.data.ui32 = attr->value.data.ui32;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+        error = "storing nprocs node";
+        OBJ_DESTRUCT(&kv);
+        goto error;
+    }
+    OBJ_DESTRUCT(&kv);
+    OBJ_RELEASE(attr);
+
+    /* extract the total number of procs on the node and store it */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_NPROCS_NODE);
+    kv.type = OPAL_UINT32;
+    kv.data.ui32 = attr->value.data.ui32;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+        error = "storing nprocs node";
+        OBJ_DESTRUCT(&kv);
+        goto error;
+    }
+    OBJ_DESTRUCT(&kv);
+    OBJ_RELEASE(attr);
+
+    /* extract our app number */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    orte_process_info.app_num = attr->value.data.ui32;
+    OBJ_RELEASE(attr);
+
+    /* extract the local leader */
+    attr = (opal_pmix_attr_t*)opal_list_remove_first(&attrs);
+    ldr.jobid = ORTE_PROC_MY_NAME->jobid;
+    ldr.vpid = attr->value.data.ui32;
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_DSTORE_LOCALLDR);
+    kv.type = OPAL_ID_T;
+    kv.data.uint64 = *(opal_identifier_t*)&ldr;
+    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
+                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
+        error = "storing local leader";
+        OBJ_DESTRUCT(&kv);
+        goto error;
+    }
+    OBJ_RELEASE(attr);
 
     /* setup transport keys in case the MPI layer needs them -
      * we can use the jobfam and stepid as unique keys
@@ -218,11 +379,6 @@ static int rte_init(void)
     free(cs_env);
     free(string_key);
 
-    /* our app_context number can only be 0 as we don't support
-     * dynamic spawns
-     */
-    orte_process_info.app_num = 0;
-
     /* setup my daemon's name - arbitrary, since we don't route
      * messages
      */
@@ -230,8 +386,6 @@ static int rte_init(void)
     ORTE_PROC_MY_DAEMON->vpid = 0;
 
     /* ensure we pick the correct critical components */
-    putenv("OMPI_MCA_grpcomm=pmi");
-    putenv("OMPI_MCA_db_pmi_store_priority=100");
     putenv("OMPI_MCA_routed=direct");
     
     /* now use the default procedure to finish my setup */
@@ -240,42 +394,6 @@ static int rte_init(void)
         error = "orte_ess_base_app_setup";
         goto error;
     }
-
-    ret = opal_pmix.get_local_info(ORTE_PROC_MY_NAME->vpid, &ranks, &procs, &error);
-    if( OPAL_SUCCESS != ret ){
-        goto error;
-    }
-    /* store the number of local peers - remember, we want the number
-     * of peers that share the node WITH ME, so we have to subtract
-     * ourselves from that number
-     */
-    orte_process_info.num_local_peers = procs - 1;
-    /* The clique ranks are returned in rank order, so
-     * cycle thru the array and update the local/node
-     * rank info
-     */
-    for (j=0; j < procs; j++) {
-        if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
-            orte_process_info.my_local_rank = (orte_local_rank_t)j;
-            orte_process_info.my_node_rank = (orte_node_rank_t)j;
-            break;
-        }
-    }
-    /* store the name of the local leader */
-    ldr.jobid = ORTE_PROC_MY_NAME->jobid;
-    ldr.vpid = ranks[0];
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_DSTORE_LOCALLDR);
-    kv.type = OPAL_ID_T;
-    kv.data.uint64 = *(opal_identifier_t*)&ldr;
-    if (ORTE_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                 (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv))) {
-        error = "storing local leader";
-        OBJ_DESTRUCT(&kv);
-        goto error;
-    }
-    OBJ_DESTRUCT(&kv);
-    free(ranks);
 
     /* setup process binding */
     if (ORTE_SUCCESS != (ret = orte_ess_base_proc_binding())) {
@@ -291,12 +409,13 @@ static int rte_init(void)
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
 
-    /* construct the PMI RTE string */
+    /***  PUSH DATA FOR OTHERS TO FIND   ***/
+    /* construct the RTE string */
     rmluri = orte_rml.get_contact_info();
 
     /* push it out for others to use */
     OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(ORTE_DB_RMLURI);
+    kv.key = strdup(OPAL_DSTORE_URI);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(rmluri);
     if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
@@ -309,7 +428,7 @@ static int rte_init(void)
 
     /* push our hostname */
     OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(ORTE_DB_HOSTNAME);
+    kv.key = strdup(OPAL_DSTORE_HOSTNAME);
     kv.type = OPAL_STRING;
     kv.data.string = strdup(orte_process_info.nodename);
     if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
@@ -345,7 +464,7 @@ static int rte_init(void)
 
     /* push our node rank */
     OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(ORTE_DB_NODERANK);
+    kv.key = strdup(OPAL_DSTORE_NODERANK);
     kv.type = OPAL_UINT16;
     kv.data.uint16 = orte_process_info.my_node_rank;
     if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {

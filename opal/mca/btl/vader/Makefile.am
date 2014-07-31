@@ -21,7 +21,7 @@
 
 AM_CPPFLAGS = $(btl_vader_CPPFLAGS)
 
-dist_ompidata_DATA = help-mpi-btl-vader.txt
+dist_opaldata_DATA = help-mpi-btl-vader.txt
 
 libmca_btl_vader_la_sources = \
     btl_vader_module.c \
@@ -54,7 +54,7 @@ endif
 # See opal/mca/common/vader/Makefile.am for an explanation of
 # libmca_common_vader.la.
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_vader_la_SOURCES = $(libmca_btl_vader_la_sources)
 mca_btl_vader_la_LDFLAGS = -module -avoid-version $(btl_vader_LDFLAGS)

@@ -139,7 +139,7 @@ opal_btl_usnic_handle_ack(
         /* If all ACKs received, and this is a put or a regular send
          * that needs a callback, perform the callback now
          *
-         * NOTE on sf_ack_bytes_left - here we check for 
+         * NOTE on sf_ack_bytes_left - here we check for
          *      sf_ack_bytes_left == bytes_acked
          * as opposed to adjusting sf_ack_bytes_left and checking for 0 because
          * if we don't, the callback function may call usnic_free() and free
@@ -187,11 +187,6 @@ opal_btl_usnic_ack_send(
     opal_btl_usnic_endpoint_t *endpoint)
 {
     opal_btl_usnic_ack_segment_t *ack;
-#if MSGDEBUG1
-    uint8_t mac[6];
-    char src_mac[32];
-    char dest_mac[32];
-#endif
 
     /* Get an ACK frag.  If we don't get one, just discard this ACK. */
     ack = opal_btl_usnic_ack_segment_alloc(module);
@@ -205,20 +200,26 @@ opal_btl_usnic_ack_send(
     ack->ss_base.us_btl_header->ack_seq =
         endpoint->endpoint_next_contig_seq_to_recv - 1;
 
-    ack->ss_base.us_sg_entry[0].length = 
+    ack->ss_base.us_sg_entry[0].length =
         sizeof(opal_btl_usnic_btl_header_t);
 
 #if MSGDEBUG1
-    memset(src_mac, 0, sizeof(src_mac));
-    memset(dest_mac, 0, sizeof(dest_mac));
-    opal_btl_usnic_sprintf_mac(src_mac, module->if_mac);
-    opal_btl_usnic_gid_to_mac(&endpoint->endpoint_remote_addr.gid, mac);
-    opal_btl_usnic_sprintf_mac(dest_mac, mac);
+    {
+        uint8_t mac[6];
+        char src_mac[32];
+        char dest_mac[32];
 
-    opal_output(0, "--> Sending ACK, sg_entry length %d, seq %" UDSEQ " to %s, qp %u", 
-                ack->ss_base.us_sg_entry[0].length,
-                ack->ss_base.us_btl_header->ack_seq, dest_mac,
-                endpoint->endpoint_remote_addr.qp_num[ack->ss_channel]);
+        memset(src_mac, 0, sizeof(src_mac));
+        memset(dest_mac, 0, sizeof(dest_mac));
+        opal_btl_usnic_sprintf_mac(src_mac, module->if_mac);
+        opal_btl_usnic_gid_to_mac(&endpoint->endpoint_remote_addr.gid, mac);
+        opal_btl_usnic_sprintf_mac(dest_mac, mac);
+
+        opal_output(0, "--> Sending ACK, sg_entry length %d, seq %" UDSEQ " to %s, qp %u",
+                    ack->ss_base.us_sg_entry[0].length,
+                    ack->ss_base.us_btl_header->ack_seq, dest_mac,
+                    endpoint->endpoint_remote_addr.qp_num[ack->ss_channel]);
+    }
 #endif
 
     /* Do we need to check the connectivity?  If enabled, we'll check
@@ -255,7 +256,7 @@ opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
 void
 opal_btl_usnic_ack_timeout(
     opal_hotel_t *hotel,
-    int room_num, 
+    int room_num,
     void *occupant)
 {
     opal_btl_usnic_send_segment_t *seg;
@@ -278,7 +279,7 @@ opal_btl_usnic_ack_timeout(
     seg->ss_hotel_room = -1;
 
     /* Queue up this frag to be resent */
-    opal_list_append(&(module->pending_resend_segs), 
+    opal_list_append(&(module->pending_resend_segs),
                      &(seg->ss_base.us_list.super));
 
     /* Stats */

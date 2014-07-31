@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-mpi-btl-tcp.txt
+dist_opaldata_DATA = help-mpi-btl-tcp.txt
 
 sources = \
     btl_tcp.c \
@@ -51,13 +51,13 @@ component =
 component_sources =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_tcp_la_SOURCES = $(component_sources)
 mca_btl_tcp_la_LDFLAGS = -module -avoid-version
 if OPAL_cuda_support
 mca_btl_tcp_la_LIBADD = \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(lib)

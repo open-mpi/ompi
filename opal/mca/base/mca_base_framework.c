@@ -177,7 +177,7 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
     group_id = mca_base_var_group_find (framework->framework_project,
                                         framework->framework_name, NULL);
     if (0 <= group_id) {
-        ret = mca_base_var_group_deregister (group_id);
+        (void) mca_base_var_group_deregister (group_id);
         framework->framework_flags &= ~MCA_BASE_FRAMEWORK_FLAG_REGISTERED;
     }
 

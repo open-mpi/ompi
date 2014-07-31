@@ -11,7 +11,7 @@
 
 AM_CPPFLAGS = $(common_ofacm_CPPFLAGS)
 
-dist_ompidata_DATA = \
+dist_opaldata_DATA = \
         help-mpi-common-ofacm-base.txt \
         help-mpi-common-ofacm-oob.txt
 headers = \

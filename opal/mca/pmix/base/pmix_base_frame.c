@@ -66,3 +66,17 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework",
 OBJ_CLASS_INSTANCE(pmix_info_t,
                    opal_list_item_t,
                    NULL, NULL);
+
+static void acon(opal_pmix_attr_t *p)
+{
+    p->attr = PMIX_ATTR_UNDEF;
+    p->scope = PMIX_SCOPE_UNDEF;
+    OBJ_CONSTRUCT(&p->value, opal_value_t);
+}
+static void ades(opal_pmix_attr_t *p)
+{
+    OBJ_DESTRUCT(&p->value);
+}
+OBJ_CLASS_INSTANCE(opal_pmix_attr_t,
+                   opal_list_item_t,
+                   acon, ades);

@@ -53,7 +53,7 @@ sources = \
 
 # Help file
 
-dist_ompidata_DATA = help-mpi-common-sm.txt
+dist_opaldata_DATA = help-mpi-common-sm.txt
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules

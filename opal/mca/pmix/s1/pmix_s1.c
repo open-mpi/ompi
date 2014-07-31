@@ -25,10 +25,6 @@ static int s1_init(void);
 static int s1_fini(void);
 static bool s1_initialized(void);
 static int s1_abort(int flag, const char msg[]);
-static int s1_get_jobid(char jobId[], int jobIdSize);
-static int s1_get_rank(int *rank);
-static int s1_get_size(opal_pmix_scope_t scope, int *size);
-static int s1_get_appnum(int *appnum);
 static int s1_fence(opal_process_name_t *procs, size_t nprocs);
 static int s1_fence_nb(opal_process_name_t *procs, size_t nprocs,
                        opal_pmix_cbfunc_t cbfunc, void *cbdata);
@@ -49,8 +45,10 @@ static int s1_lookup(const char service_name[],
                      char port[], int portLen);
 static int s1_unpublish(const char service_name[],
                         opal_list_t *info);
-static int s1_local_info(int vpid, int **ranks_ret,
-                         int *procs_ret, char **error);
+static int s1_get_attr(opal_list_t *attrs);
+static int s1_get_attr_nb(opal_list_t *attrs,
+                          opal_pmix_cbfunc_t cbfunc,
+                          void *cbdata);
 static int s1_spawn(int count, const char * cmds[],
                     int argcs[], const char ** argvs[],
                     const int maxprocs[],
@@ -66,10 +64,6 @@ const opal_pmix_base_module_t opal_pmix_s1_module = {
     s1_fini,
     s1_initialized,
     s1_abort,
-    s1_get_jobid,
-    s1_get_rank,
-    s1_get_size,
-    s1_get_appnum,
     s1_fence,
     s1_fence_nb,
     s1_put,
@@ -78,7 +72,8 @@ const opal_pmix_base_module_t opal_pmix_s1_module = {
     s1_publish,
     s1_lookup,
     s1_unpublish,
-    s1_local_info,
+    s1_get_attr,
+    s1_get_attr_nb,
     s1_spawn,
     s1_job_connect,
     s1_job_disconnect
@@ -120,6 +115,7 @@ static int s1_init(void)
     PMI_BOOL initialized;
     int spawned;
     int rc, ret = OPAL_ERROR;
+    char *pmi_id=NULL;
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
@@ -151,11 +147,43 @@ static int s1_init(void)
     }
 
     // Initialize job environment information
+    pmi_id = (char*)malloc(pmix_vallen_max);
+    if( pmi_id == NULL ){
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    /* Get domain id */
+    if (PMI_SUCCESS != (rc = PMI_Get_kvs_domain_id(pmi_id, pmi_maxlen))) {
+        free(pmi_id);
+        return OPAL_ERROR;
+    }
+    /* Slurm PMI provides the job id as an integer followed
+     * by a '.', followed by essentially a stepid. The first integer
+     * defines an overall job number. The second integer is the number of
+     * individual jobs we have run within that allocation. So we translate
+     * this as the overall job number equating to our job family, and
+     * the individual number equating to our local jobid
+     */
+    jobfam = strtol(pmi_id, &localj, 10);
+    if (NULL == localj) {
+        /* hmmm - no '.', so let's just use zero */
+        stepid = 0;
+    } else {
+        localj++; /* step over the '.' */
+        stepid = strtol(localj, NULL, 10) + 1; /* add one to avoid looking like a daemon */
+    }
+    free(pmi_id);
+
+    /* now build the jobid */
+    jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
+
+
+
     rc = PMI_Get_rank(&pmix_rank);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_rank");
         return OPAL_ERROR;
     }
+
     rc = PMI_Get_universe_size(&pmix_usize);
     if( PMI_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_universe_size");
@@ -185,6 +213,27 @@ static int s1_init(void)
         OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
         goto err_exit;
     }
+
+    /* get our local proc info to find our local rank */
+    if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&procs))) {
+        OPAL_PMI_ERROR(rc, "PMI_Get_clique_size");
+        *error = "mca_common_pmix_local_info: could not get PMI clique size";
+        return OPAL_ERROR;
+    }
+    /* now get the specific ranks */
+    ranks = (int*)calloc(procs, sizeof(int));
+    if (NULL == ranks) {
+        *error = "mca_common_pmix_local_info: could not get memory for local ranks";
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, procs))) {
+        OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
+        *error = "mca_common_pmix_local_info: could not get clique ranks";
+        return OPAL_ERROR;
+    }
+
+    *ranks_ret = ranks;
+    *procs_ret = procs;
 
     return OPAL_SUCCESS;
 
@@ -239,27 +288,6 @@ static int s1_spawn(int count, const char * cmds[],
         return OPAL_ERROR;
     }*/
     return OPAL_ERR_NOT_IMPLEMENTED;
-}
-
-static int s1_get_jobid(char jobId[], int jobIdSize)
-{
-    if (pmix_kvslen_max < jobIdSize) {
-        return OPAL_ERROR;
-    }
-    memcpy(jobId, pmix_kvs_name, jobIdSize);
-    return OPAL_SUCCESS;
-}
-
-static int s1_get_rank(int *rank)
-{
-    *rank = pmix_rank;
-    return OPAL_SUCCESS;
-}
-
-static int s1_get_size(opal_pmix_scope_t scope, int *size)
-{
-    *size = pmix_size;
-    return OPAL_SUCCESS;
 }
 
 static int kvs_put(const char key[], const char value[])
@@ -383,46 +411,6 @@ static void s1_get_nb(const opal_identifier_t *id,
     return;
 }
 
-static int s1_get_node_attr(const char name[],
-                            char value[],
-                            int valuelen,
-                            int *found,
-                            int waitfor)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int s1_get_node_attr_array(const char name[],
-                                  int array[],
-                                  int arraylen,
-                                  int *outlen,
-                                  int *found)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int s1_put_node_attr(const char name[], const char value[])
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int s1_get_job_attr(const char name[],
-                           char value[],
-                           int valuelen,
-                           int *found)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int s1_get_job_attr_array(const char name[],
-                                 int array[],
-                                 int arraylen,
-                                 int *outlen,
-                                 int *found)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
 static int s1_publish(const char service_name[],
                       opal_list_t *info,
                       const char port[])
@@ -465,34 +453,48 @@ static int s1_unpublish(const char service_name[],
     return OPAL_SUCCESS;
 }
 
-static int s1_local_info(int vpid, int **ranks_ret,
-                         int *procs_ret, char **error)
+static int s1_get_attr(opal_list_t *attrs)
 {
     int *ranks;
     int procs = -1;
     int rc;
+    opal_pmix_attr_t *a;
 
-    /* get our local proc info to find our local rank */
-    if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&procs))) {
-        OPAL_PMI_ERROR(rc, "PMI_Get_clique_size");
-        *error = "mca_common_pmix_local_info: could not get PMI clique size";
-        return OPAL_ERROR;
-    }
-    /* now get the specific ranks */
-    ranks = (int*)calloc(procs, sizeof(int));
-    if (NULL == ranks) {
-        *error = "mca_common_pmix_local_info: could not get memory for local ranks";
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, procs))) {
-        OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
-        *error = "mca_common_pmix_local_info: could not get clique ranks";
-        return OPAL_ERROR;
-    }
+    OPAL_LIST_FOREACH(a, attrs, opal_pmix_attr_t) {
+        switch(a->attr) {
+        case PMIX_JOBID:
+            a->value.type = OPAL_STRING;
+            a->value.data.string = strdup(jobId);
+            break;
 
-    *ranks_ret = ranks;
-    *procs_ret = procs;
+        case PMIX_RANK:
+            if (PMIX_GLOBAL == a->scope) {
+                a->value.type = OPAL_UINT32;
+                a->valud.data.ui32 = pmix_rank;
+            } else if (PMIX_LOCAL == a->scope) {
+            } else {
+            }
+            break;
+
+        case PMIX_SIZE:
+            if (PMIX_GLOBAL == a->scope) {
+                a->value.type = OPAL_UINT32;
+                a->value.data.ui32 = pmix_size;
+            }
+            break;
+
+        default:
+            OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        }
+    }
     return OPAL_SUCCESS;
+}
+
+static int s1_get_attr_nb(opal_list_t *attrs,
+                          opal_pmix_cbfunc_t cbfunc,
+                          void *cbdata)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 static int s1_job_connect(const char jobId[])

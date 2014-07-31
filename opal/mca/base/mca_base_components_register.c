@@ -156,18 +156,18 @@ static int register_components(const char *project_name, const char *type_name,
         }
 
         /* Register this component's version */
-        mca_base_var_register (project_name, type_name, component->mca_component_name, "major_version",
-                               NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY |
-                               MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
-                               &component->mca_component_major_version);
-        mca_base_var_register (project_name, type_name, component->mca_component_name, "minor_version",
-                               NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY |
-                               MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
-                               &component->mca_component_minor_version);
-        mca_base_var_register (project_name, type_name, component->mca_component_name, "release_version",
-                               NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY |
-                               MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
-                               &component->mca_component_release_version);
+        mca_base_component_var_register (component, "major_version", NULL, MCA_BASE_VAR_TYPE_INT, NULL,
+                                         0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY | MCA_BASE_VAR_FLAG_INTERNAL,
+                                         OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
+                                         &component->mca_component_major_version);
+        mca_base_component_var_register (component, "minor_version", NULL, MCA_BASE_VAR_TYPE_INT, NULL,
+                                         0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY | MCA_BASE_VAR_FLAG_INTERNAL,
+                                         OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
+                                         &component->mca_component_minor_version);
+        mca_base_component_var_register (component, "release_version", NULL, MCA_BASE_VAR_TYPE_INT, NULL,
+                                         0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY | MCA_BASE_VAR_FLAG_INTERNAL,
+                                         OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
+                                         &component->mca_component_release_version);
         
         opal_list_append(dest, item);
     }

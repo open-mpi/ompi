@@ -123,7 +123,7 @@ struct opal_btl_usnic_graph_t {
     do {                               \
         if ((v) < 0 ||                 \
             (v) >= NUM_VERTICES(g)) {  \
-            return OMPI_ERR_BAD_PARAM; \
+            return OPAL_ERR_BAD_PARAM; \
         }                              \
     } while (0)
 
@@ -251,11 +251,11 @@ set_capacity(opal_btl_usnic_graph_t *g, int source, int target, int cap)
         assert(e->source == source);
         if (e->target == target) {
             e->capacity = cap;
-            return OMPI_SUCCESS;
+            return OPAL_SUCCESS;
         }
     }
 
-    return OMPI_ERR_NOT_FOUND;
+    return OPAL_ERR_NOT_FOUND;
 }
 
 static void free_vertex(opal_btl_usnic_graph_t *g,
@@ -277,14 +277,14 @@ int opal_btl_usnic_gr_create(opal_btl_usnic_cleanup_fn_t v_data_cleanup_fn,
     opal_btl_usnic_graph_t *g = NULL;
 
     if (NULL == g_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *g_out = NULL;
 
     g = calloc(1, sizeof(*g));
     if (NULL == g) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out_free_g;
     }
 
@@ -302,7 +302,7 @@ int opal_btl_usnic_gr_create(opal_btl_usnic_cleanup_fn_t v_data_cleanup_fn,
     }
 
     *g_out = g;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 
 out_free_g:
     free(g);
@@ -345,7 +345,7 @@ int opal_btl_usnic_gr_free(opal_btl_usnic_graph_t *g)
     OBJ_DESTRUCT(&g->vertices);
     free(g);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_btl_usnic_gr_clone(const opal_btl_usnic_graph_t *g,
@@ -359,19 +359,19 @@ int opal_btl_usnic_gr_clone(const opal_btl_usnic_graph_t *g,
     opal_btl_usnic_edge_t *e;
 
     if (NULL == g_clone_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *g_clone_out = NULL;
 
     if (copy_user_data) {
         BTL_ERROR(("user data copy requested but not yet supported"));
         abort();
-        return OMPI_ERR_FATAL;
+        return OPAL_ERR_FATAL;
     }
 
     gx = NULL;
     err = opal_btl_usnic_gr_create(NULL, NULL, &gx);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         return err;
     }
     assert(NULL != gx);
@@ -379,7 +379,7 @@ int opal_btl_usnic_gr_clone(const opal_btl_usnic_graph_t *g,
     /* reconstruct all vertices */
     for (i = 0; i < NUM_VERTICES(g); ++i) {
         err = opal_btl_usnic_gr_add_vertex(gx, NULL, &index);
-        if (OMPI_SUCCESS != err) {
+        if (OPAL_SUCCESS != err) {
             goto out_free_gx;
         }
         assert(index == i);
@@ -392,14 +392,14 @@ int opal_btl_usnic_gr_clone(const opal_btl_usnic_graph_t *g,
             assert(i == e->source);
             err = opal_btl_usnic_gr_add_edge(gx, e->source, e->target,
                                              e->cost, e->capacity, NULL);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 goto out_free_gx;
             }
         }
     }
 
     *g_clone_out = gx;
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 
 out_free_gx:
     /* we don't reach in and manipulate gx's state directly, so it should be
@@ -437,31 +437,31 @@ int opal_btl_usnic_gr_add_edge(opal_btl_usnic_graph_t *g,
     opal_btl_usnic_vertex_t *v_from, *v_to;
 
     if (from < 0 || from >= NUM_VERTICES(g)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (to < 0 || to >= NUM_VERTICES(g)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (cost == MAX_COST) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (capacity < 0) {
         /* negative cost is fine, but negative capacity is not currently
          * handled appropriately */
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     FOREACH_OUT_EDGE(g, from, e) {
         assert(e->source == from);
         if (e->target == to) {
-            return OMPI_EXISTS;
+            return OPAL_EXISTS;
         }
     }
 
     /* this reference is owned by the out_edges list */
     e = OBJ_NEW(opal_btl_usnic_edge_t);
     if (NULL == e) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     e->source   = from;
@@ -477,7 +477,7 @@ int opal_btl_usnic_gr_add_edge(opal_btl_usnic_graph_t *g,
     v_to = V_ID_TO_PTR(g, to);
     opal_list_append(&v_to->in_edges, &e->inbound_li);
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_btl_usnic_gr_add_vertex(opal_btl_usnic_graph_t *g,
@@ -488,8 +488,8 @@ int opal_btl_usnic_gr_add_vertex(opal_btl_usnic_graph_t *g,
 
     v = calloc(1, sizeof(*v));
     if (NULL == v) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     /* add to the ptr array early to simplify cleanup in the incredibly rare
@@ -497,8 +497,8 @@ int opal_btl_usnic_gr_add_vertex(opal_btl_usnic_graph_t *g,
     v->v_index = opal_pointer_array_add(&g->vertices, v);
     if (-1 == v->v_index) {
         free(v);
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return OPAL_ERR_OUT_OF_RESOURCE;
     }
     assert(v->v_index == g->num_vertices);
 
@@ -512,7 +512,7 @@ int opal_btl_usnic_gr_add_vertex(opal_btl_usnic_graph_t *g,
         *index_out = v->v_index;
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 int opal_btl_usnic_gr_order(const opal_btl_usnic_graph_t *g)
@@ -600,25 +600,25 @@ static bool bellman_ford(opal_btl_usnic_graph_t *gx,
     bool found_target = false;
 
     if (NULL == gx) {
-        OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+        OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return false;
     }
     if (NULL == pred) {
-        OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+        OPAL_ERROR_LOG(OPAL_ERR_BAD_PARAM);
         return false;
     }
     if (source < 0 || source >= NUM_VERTICES(gx)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     if (target < 0 || target >= NUM_VERTICES(gx)) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
     /* initialize */
     n = opal_btl_usnic_gr_order(gx);
     dist = malloc(n * sizeof(*dist));
     if (NULL == dist) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         goto out;
     }
     for (i = 0; i < n; ++i) {
@@ -721,11 +721,11 @@ static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
     order = opal_btl_usnic_gr_order(g);
 
     err = opal_btl_usnic_gr_add_vertex(g, NULL, &g->source_idx);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         return err;
     }
     err = opal_btl_usnic_gr_add_vertex(g, NULL, &g->sink_idx);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         return err;
     }
 
@@ -753,7 +753,7 @@ static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
                                              0, /* no cost */
                                              /*capacity=*/1,
                                              /*e_data=*/NULL);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 GRAPH_DEBUG_OUT(("add_edge failed"));
                 return err;
             }
@@ -765,7 +765,7 @@ static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
                                              0, /* no cost */
                                              /*capacity=*/1,
                                              /*e_data=*/NULL);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 GRAPH_DEBUG_OUT(("add_edge failed"));
                 return err;
             }
@@ -775,7 +775,7 @@ static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
     /* it doesn't make sense to extend this graph with a source and sink
      * unless */
     if (num_right == 0 || num_left == 0) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
 
     /* now run through and create "residual" edges as well (i.e., create edges
@@ -797,13 +797,13 @@ static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
                                              -e_ptr->cost,
                                              /*capacity=*/0,
                                              /*e_data=*/NULL);
-            if (OMPI_SUCCESS != err && OMPI_EXISTS != err) {
+            if (OPAL_SUCCESS != err && OPAL_EXISTS != err) {
                 return err;
             }
         }
     }
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
 /**
@@ -830,7 +830,7 @@ static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
  * The result is an array of (u,v) vertex pairs, where (u,v) is an edge in the
  * original graph which has non-zero flow.
  *
- * Returns OMPI error codes like OMPI_SUCCESS/OMPI_ERR_OUT_OF_RESOURCE.
+ * Returns OMPI error codes like OPAL_SUCCESS/OPAL_ERR_OUT_OF_RESOURCE.
  *
  * This version of the algorithm has a theoretical upper bound on its running
  * time of O(|V|^2 * |E| * f), where f is essentially the maximum flow in the
@@ -850,7 +850,7 @@ static int bipartite_to_flow(opal_btl_usnic_graph_t *g)
 static int min_cost_flow_ssp(opal_btl_usnic_graph_t *gx,
                              int **flow_out)
 {
-    int err = OMPI_SUCCESS;
+    int err = OPAL_SUCCESS;
     int n;
     int *pred = NULL;
     int *flow = NULL;
@@ -860,7 +860,7 @@ static int min_cost_flow_ssp(opal_btl_usnic_graph_t *gx,
     GRAPH_DEBUG_OUT(("begin min_cost_flow_ssp()"));
 
     if (NULL == flow_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *flow_out = NULL;
 
@@ -868,16 +868,16 @@ static int min_cost_flow_ssp(opal_btl_usnic_graph_t *gx,
 
     pred = malloc(n*sizeof(*pred));
     if (NULL == pred) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out_error;
     }
 
     /* "flow" is a 2d matrix of current flow values, all initialized to zero */
     flow = calloc(n*n, sizeof(*flow));
     if (NULL == flow) {
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out_error;
     }
 
@@ -908,7 +908,7 @@ static int min_cost_flow_ssp(opal_btl_usnic_graph_t *gx,
             c = get_capacity(gx, u, v) - cap_f_path;
             assert(c >= 0);
             err = set_capacity(gx, u, v, c);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 BTL_ERROR(("unable to set capacity, missing edge?"));
                 abort();
             }
@@ -916,7 +916,7 @@ static int min_cost_flow_ssp(opal_btl_usnic_graph_t *gx,
             c = get_capacity(gx, v, u) + cap_f_path;
             assert(c >= 0);
             err = set_capacity(gx, v, u, c);
-            if (OMPI_SUCCESS != err) {
+            if (OPAL_SUCCESS != err) {
                 BTL_ERROR(("unable to set capacity, missing edge?"));
                 abort();
             }
@@ -946,14 +946,14 @@ int opal_btl_usnic_solve_bipartite_assignment(const opal_btl_usnic_graph_t *g,
     opal_btl_usnic_graph_t *gx = NULL;
 
     if (NULL == match_edges_out || NULL == num_match_edges_out) {
-        return OMPI_ERR_BAD_PARAM;
+        return OPAL_ERR_BAD_PARAM;
     }
     *num_match_edges_out = 0;
     *match_edges_out = NULL;
 
     /* don't perturb the caller's data structure */
     err = opal_btl_usnic_gr_clone(g, false, &gx);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         GRAPH_DEBUG_OUT(("opal_btl_usnic_gr_clone failed"));
         goto out;
     }
@@ -971,9 +971,9 @@ int opal_btl_usnic_solve_bipartite_assignment(const opal_btl_usnic_graph_t *g,
      * direct knowledge of the flow matrix.
      */
     err = bipartite_to_flow(gx);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         GRAPH_DEBUG_OUT(("bipartite_to_flow failed"));
-        OMPI_ERROR_LOG(err);
+        OPAL_ERROR_LOG(err);
         return err;
     }
 
@@ -984,7 +984,7 @@ int opal_btl_usnic_solve_bipartite_assignment(const opal_btl_usnic_graph_t *g,
      * accordingly later on.
      */
     err = min_cost_flow_ssp(gx, &flow);
-    if (OMPI_SUCCESS != err) {
+    if (OPAL_SUCCESS != err) {
         GRAPH_DEBUG_OUT(("min_cost_flow_ssp failed"));
         return err;
     }
@@ -1017,8 +1017,8 @@ int opal_btl_usnic_solve_bipartite_assignment(const opal_btl_usnic_graph_t *g,
     *match_edges_out = malloc(*num_match_edges_out * sizeof(*match_edges_out));
     if (NULL == *match_edges_out) {
         *num_match_edges_out = 0;
-        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-        err = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out;
     }
 

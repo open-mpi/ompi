@@ -48,7 +48,7 @@ struct opal_btl_usnic_module_t;
 /**
  * Fragment types
  * The upper layer may give us very large "fragements" to send, larger than
- * an MTU.  We break fragments into segments for sending, a segment being 
+ * an MTU.  We break fragments into segments for sending, a segment being
  * defined to fit within an MTU.
  */
 typedef enum {
@@ -128,7 +128,7 @@ typedef struct {
     /* payload legnth (in bytes).  We unfortunately have to include
        this in our header because the L2 layer may artifically inflate
        the length of the packet to meet a minimum size */
-    uint16_t payload_len; 
+    uint16_t payload_len;
 
     /* If this is an emulated PUT, store at this address on receiver */
     char *put_addr;
@@ -141,7 +141,7 @@ typedef struct {
 
     /* tag for upper layer */
     mca_btl_base_tag_t tag;
-} opal_btl_usnic_btl_header_t; 
+} opal_btl_usnic_btl_header_t;
 
 /**
  * BTL header for a chunk of a fragment
@@ -301,7 +301,7 @@ typedef struct opal_btl_usnic_large_send_frag_t {
  * small send fragment
  * Small send will optimistically use 2 SG entries in hopes of performing
  * an inline send, but will convert to a single SG entry is inline cannot
- * be done and data must be copied.  
+ * be done and data must be copied.
  * First segment will point to registered memory of associated segment to
  * hold BTL and upper layer headers.
  * Second segment will point directly to user data.  If inlining fails, we
@@ -497,8 +497,8 @@ opal_btl_usnic_send_frag_return_cond(
 
 /*
  * Return a frag if it's all done and owned by BTL
- * If this is a PUT destination, only condition is that we own it.  If it's 
- * a send frag, there are other conditions, so use the specific send frag 
+ * If this is a PUT destination, only condition is that we own it.  If it's
+ * a send frag, there are other conditions, so use the specific send frag
  * return checker.
  */
 static inline void
@@ -574,7 +574,7 @@ opal_btl_usnic_ack_segment_alloc(opal_btl_usnic_module_t *module)
     return ack;
 }
 
-/* 
+/*
  * Return an ACK segment
  */
 static inline void

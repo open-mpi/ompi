@@ -736,6 +736,7 @@ static int component_set_addr(orte_process_name_t *peer,
             opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                                 "FORMAT ERROR IN ADDR: %s",
                                 (NULL == host) ? "NULL" : "ZERO LENGTH");
+            free(tcpuri);
             return ORTE_ERR_BAD_PARAM;
         }
 
@@ -793,6 +794,8 @@ static int component_set_addr(orte_process_name_t *peer,
             mca_oob_tcp_module.api.set_peer(peer, af_family, host, ports);
             found = true;
         }
+        opal_argv_free(addrs);
+        free(tcpuri);
     }
     if (found) {
         /* indicate that this peer is addressable by this component */

@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,6 @@ int mca_btl_scif_get (struct mca_btl_base_module_t *btl,
     size_t len = lmin (src->base.seg_len, dst->base.seg_len);
     int rc, mark, flags = 0;
     off_t roffset, loffset;
-    size_t to_get;
 #if defined(SCIF_TIMING)
     struct timespec ts;
 
