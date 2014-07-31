@@ -237,6 +237,23 @@ int cache_keys_locally(const opal_identifier_t* id, const char* key,
     int rc, size;
     opal_value_t *kv, *knew;
     *out_kv = NULL;
+    opal_list_t values;
+
+    /* first try to fetch data from data storage */
+    OBJ_CONSTRUCT(&values, opal_list_t);
+    rc = opal_dstore.fetch(opal_dstore_internal, id, key, &values);
+    if (OPAL_SUCCESS == rc) {
+        kv = (opal_value_t*)opal_list_get_first(&values);
+        /* create the copy */
+        if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&knew, kv, OPAL_VALUE))) {
+            OPAL_ERROR_LOG(rc);
+        } else {
+            *out_kv = knew;
+        }
+        OPAL_LIST_DESTRUCT(&values);
+        return rc;
+    }
+    OPAL_LIST_DESTRUCT(&values);
 
     OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                          "pmix: get all keys for proc %" PRIu64 " in KVS %s",
