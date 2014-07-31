@@ -140,8 +140,16 @@ typedef struct opal_btl_usnic_module_t {
     /** local address information */
     struct opal_btl_usnic_addr_t local_addr;
 
-    /** list of all endpoints */
+    /** list of all endpoints.  Note that the main application thread
+        reads and writes to this list, and the connectivity agent
+        reads from it.  So all access to the list (but not the items
+        in the list) must be protected by a lock.  Also, have a flag
+        that indicates that the list has been constructed.  Probably
+        overkill, but you can't be too safe with multi-threaded
+        programming in non-performance-critical code paths... */
     opal_list_t all_endpoints;
+    opal_mutex_t all_endpoints_lock;
+    bool all_endpoints_constructed;
 
     /** array of procs used by this module (can't use a list because a
         proc can be used by multiple modules) */

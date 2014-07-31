@@ -163,6 +163,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
 
     /* Send the LISTEN command parameters */
     opal_btl_usnic_connectivity_cmd_listen_t cmd = {
+        .module = module,
         .ipv4_addr = module->local_addr.ipv4_addr,
         .cidrmask = module->local_addr.cidrmask,
         .mtu = module->local_addr.mtu

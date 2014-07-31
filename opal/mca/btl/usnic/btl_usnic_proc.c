@@ -138,6 +138,7 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
     MSGDEBUG1_OUT("lookup_endpoint: recvmodule=%p sendhash=0x%" PRIx64,
                   (void *)receiver, sender_hashed_rte_name);
 
+    opal_mutex_lock(&receiver->all_endpoints_lock);
     for (item = opal_list_get_first(&receiver->all_endpoints);
          item != opal_list_get_end(&receiver->all_endpoints);
          item = opal_list_get_next(item)) {
@@ -152,9 +153,11 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
         if (proc->proc_opal->proc_name == sender_proc_name) {
             MSGDEBUG1_OUT("lookup_endpoint: matched endpoint=%p",
                           (void *)endpoint);
+            opal_mutex_unlock(&receiver->all_endpoints_lock);
             return endpoint;
         }
     }
+    opal_mutex_unlock(&receiver->all_endpoints_lock);
 
     /* Didn't find it */
     return NULL;
@@ -702,8 +705,10 @@ opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
     OBJ_RETAIN(proc);
 
     /* also add endpoint to module's list of endpoints */
+    opal_mutex_lock(&module->all_endpoints_lock);
     opal_list_append(&(module->all_endpoints),
             &(endpoint->endpoint_endpoint_li));
+    opal_mutex_unlock(&module->all_endpoints_lock);
 
     *endpoint_o = endpoint;
     return OPAL_SUCCESS;
