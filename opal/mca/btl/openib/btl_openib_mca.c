@@ -620,13 +620,13 @@ int btl_openib_register_mca_params(void)
     if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.cuda_have_gdr) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "CUDA_no_gdr_support", true,
-                       OPAL_PROC_MY_NAME);
+                       opal_proc_local_get()->proc_hostname);
         return OPAL_ERROR;
     }
     if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.driver_have_gdr) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "driver_no_gdr_support", true,
-                       OPAL_PROC_MY_NAME);
+                       opal_proc_local_get()->proc_hostname);
         return OPAL_ERROR;
     }
 #if OPAL_CUDA_GDR_SUPPORT
@@ -807,7 +807,7 @@ int btl_openib_verify_mca_params (void)
         mca_btl_openib_component.driver_have_gdr) {
         if (1 == mca_btl_openib_component.want_fork_support) {
               opal_show_help("help-mpi-btl-openib.txt", "no_fork_with_gdr",
-                             true, OPAL_PROC_MY_NAME);
+                             true, opal_proc_local_get()->proc_hostname);
               return OPAL_ERR_BAD_PARAM;
         }
         if (-1 == mca_btl_openib_component.want_fork_support) {
