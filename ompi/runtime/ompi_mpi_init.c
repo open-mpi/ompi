@@ -305,29 +305,29 @@ extern int ompi_mpi_event_tick_rate;
 static char*
 _process_name_print_for_opal(const opal_process_name_t procname)
 {
-    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
-    return OMPI_NAME_PRINT(orte_name);
+    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
+    return OMPI_NAME_PRINT(rte_name);
 }
 
 static int32_t
 _process_name_jobid_for_opal(const opal_process_name_t procname)
 {
-    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
-    return orte_name->jobid;
+    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
+    return rte_name->jobid;
 }
 
 static int32_t
 _process_name_vpid_for_opal(const opal_process_name_t procname)
 {
-    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
-    return orte_name->vpid;
+    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
+    return rte_name->vpid;
 }
 
 static int
 _process_name_compare(const opal_process_name_t p1, const opal_process_name_t p2)
 {
-    orte_process_name_t* o1 = (orte_process_name_t*)&p1;
-    orte_process_name_t* o2 = (orte_process_name_t*)&p2;
+    ompi_process_name_t* o1 = (ompi_process_name_t*)&p1;
+    ompi_process_name_t* o2 = (ompi_process_name_t*)&p2;
     return ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, o1, o2);
 }
 
