@@ -115,6 +115,7 @@ enum {
  * socket from the cclient to the cagent.
  */
 typedef struct {
+    void *module;
     uint32_t ipv4_addr;
     uint32_t cidrmask;
     uint32_t mtu;

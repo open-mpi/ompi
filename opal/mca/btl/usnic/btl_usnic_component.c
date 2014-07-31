@@ -1555,6 +1555,7 @@ void opal_btl_usnic_component_debug(void)
 
         /* the all_endpoints list uses a different list item member */
         opal_output(0, "  all_endpoints:\n");
+        opal_mutex_lock(&module->all_endpoints_lock);
         item = opal_list_get_first(&module->all_endpoints);
         while (item != opal_list_get_end(&module->all_endpoints)) {
             endpoint = container_of(item, mca_btl_base_endpoint_t,
@@ -1562,6 +1563,7 @@ void opal_btl_usnic_component_debug(void)
             item = opal_list_get_next(item);
             dump_endpoint(endpoint);
         }
+        opal_mutex_unlock(&module->all_endpoints_lock);
 
         opal_output(0, "  pending_resend_segs:\n");
         OPAL_LIST_FOREACH(sseg, &module->pending_resend_segs,

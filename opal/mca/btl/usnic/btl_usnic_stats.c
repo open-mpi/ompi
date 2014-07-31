@@ -133,6 +133,7 @@ void opal_btl_usnic_print_stats(
         rd_min = su_min = WINDOW_SIZE * 2;
         rd_max = su_max = 0;
 
+        opal_mutex_lock(&module->all_endpoints_lock);
         item = opal_list_get_first(&module->all_endpoints);
         while (item != opal_list_get_end(&(module->all_endpoints))) {
             endpoint = container_of(item, mca_btl_base_endpoint_t,
@@ -156,6 +157,7 @@ void opal_btl_usnic_print_stats(
             if (recv_depth > rd_max) rd_max = recv_depth;
             if (recv_depth < rd_min) rd_min = recv_depth;
         }
+        opal_mutex_unlock(&module->all_endpoints_lock);
         snprintf(tmp, sizeof(tmp), "PML S:%1ld, Win!A/R:%4ld/%4ld %4ld/%4ld",
                  module->stats.pml_module_sends,
                  su_min, su_max,

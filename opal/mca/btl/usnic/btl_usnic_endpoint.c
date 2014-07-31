@@ -118,8 +118,10 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* Remove this endpoint from module->all_endpoints list, then
        destruct the list_item_t */
+    opal_mutex_lock(&endpoint->endpoint_module->all_endpoints_lock);
     opal_list_remove_item(&endpoint->endpoint_module->all_endpoints,
                           &endpoint->endpoint_endpoint_li);
+    opal_mutex_unlock(&endpoint->endpoint_module->all_endpoints_lock);
     OBJ_DESTRUCT(&(endpoint->endpoint_endpoint_li));
 
     if (endpoint->endpoint_hotel.rooms != NULL) {

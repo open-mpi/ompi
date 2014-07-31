@@ -71,6 +71,7 @@ typedef struct {
     uint8_t *buffer;
     opal_event_t event;
     bool active;
+    opal_btl_usnic_module_t *module;
 } agent_udp_port_listener_t;
 
 OBJ_CLASS_DECLARATION(agent_udp_port_listener_t);
@@ -324,6 +325,40 @@ static void agent_thread_noop(int fd, short flags, void *context)
 }
 
 /*
+ * Check to ensure that we expected to receive a ping from this sender
+ * on the interface in which it was received (i.e., did the usnic
+ * module corresponding to the received interface choose to pair
+ * itself with the sender's interface).  If not, discard it.
+ *
+ * Note that there may be a race condition here.  We may get a ping
+ * before we've setup endpoints on the module in question.  It's no
+ * problem -- if we don't find it, we'll drop the PING and let the
+ * sender try again later.
+ */
+static bool agent_thread_is_ping_expected(opal_btl_usnic_module_t *module,
+                                          uint32_t src_ipv4_addr)
+{
+    bool found = false;
+    opal_list_item_t *item;
+
+    opal_mutex_lock(&module->all_endpoints_lock);
+    if (module->all_endpoints_constructed) {
+        OPAL_LIST_FOREACH(item, &module->all_endpoints, opal_list_item_t) {
+            opal_btl_usnic_endpoint_t *ep;
+            ep = container_of(item, opal_btl_usnic_endpoint_t,
+                              endpoint_endpoint_li);
+            if (src_ipv4_addr == ep->endpoint_remote_addr.ipv4_addr) {
+                found = true;
+                break;
+            }
+        }
+    }
+    opal_mutex_unlock(&module->all_endpoints_lock);
+
+    return found;
+}
+
+/*
  * Handle an incoming PING message (send an ACK)
  */
 static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
@@ -364,6 +399,19 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
                             msg_ipv4_addr_str, real_ipv4_addr_str);
         return;
     }
+
+    /* Finally, check that the ping is from an interface that the
+       module expects */
+    if (!agent_thread_is_ping_expected(listener->module,
+                                       src_addr_in->sin_addr.s_addr)) {
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity got bad ping (from unexpected address: listener %s not paired with peer interface %s, discarded)",
+                            listener->ipv4_addr_str,
+                            real_ipv4_addr_str);
+        return;
+    }
+
+    /* Ok, this is a good ping.  Send the ACK back */
 
     opal_output_verbose(20, USNIC_OUT,
                         "usNIC connectivity got PING (size=%ld) from %s; sending ACK",
@@ -545,6 +593,7 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
         /* Will not return */
     }
 
+    udp_listener->module = cmd.module;
     udp_listener->mtu = cmd.mtu;
     udp_listener->ipv4_addr = cmd.ipv4_addr;
     udp_listener->cidrmask = cmd.cidrmask;
