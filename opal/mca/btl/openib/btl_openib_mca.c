@@ -222,8 +222,7 @@ int btl_openib_register_mca_params(void)
     char default_qps[100];
     uint32_t mid_qp_size;
     char *msg, *str;
-    int ret, tmp, index;
-    mca_base_var_source_t source;
+    int ret, tmp;
 
     ret = OPAL_SUCCESS;
 #define CHECK(expr) do {\
@@ -665,16 +664,6 @@ int btl_openib_register_mca_params(void)
                      default_qps, &mca_btl_openib_component.receive_queues,
                      0
                 ));
-    index = mca_base_var_find("opal","btl","openib","receive_queues");
-    if (index >= 0) {
-        if (OPAL_SUCCESS != (ret = mca_base_var_get_value(index, NULL, &source, NULL))) {
-            BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d", 
-                        __FILE__, __LINE__));
-            return ret;
-        } else {
-            mca_btl_openib_component.receive_queues_source = source;
-        }
-    }
 
     CHECK(reg_string("if_include", NULL,
                      "Comma-delimited list of devices/ports to be used (e.g. \"mthca0,mthca1:2\"; empty value means to use all ports found).  Mutually exclusive with btl_openib_if_exclude.",

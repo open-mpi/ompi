@@ -1935,6 +1935,23 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
         */
 
+        {
+            /* we need to read this MCA param at this point in case someone
+             * altered it via MPI_T */
+            int index;
+            mca_base_var_source_t source;
+            index = mca_base_var_find("opal","btl","openib","receive_queues");
+            if (index >= 0) {
+                if (OPAL_SUCCESS != (ret = mca_base_var_get_value(index, NULL, &source, NULL))) {
+                    BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d", 
+                               __FILE__, __LINE__));
+                    goto error;
+                } else {
+                    mca_btl_openib_component.receive_queues_source = source;
+                }
+            }
+        }
+
         /* If the MCA param was specified, skip all the checks */
         if ( MCA_BASE_VAR_SOURCE_COMMAND_LINE ||
                 MCA_BASE_VAR_SOURCE_ENV ==
