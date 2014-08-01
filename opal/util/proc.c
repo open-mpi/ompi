@@ -47,11 +47,10 @@ static void opal_proc_construct(opal_proc_t* proc)
 
 static void opal_proc_destruct(opal_proc_t* proc)
 {
-    proc->proc_flags    = 0;
-    proc->proc_name     = 0;
-    proc->proc_hostname = NULL;
-    /* We don't create the convertor so we don't have to release it either */
-    assert( NULL != proc->proc_convertor );
+    proc->proc_flags     = 0;
+    proc->proc_name      = 0;
+    proc->proc_hostname  = NULL;
+    proc->proc_convertor = NULL;
 }
 
 OBJ_CLASS_INSTANCE(opal_proc_t, opal_list_item_t,
