@@ -374,7 +374,6 @@ int orte_proc_info_finalize(void)
     OBJ_RELEASE(orte_process_info.sync_buf);
     orte_process_info.sync_buf = NULL;
 
-    OBJ_DESTRUCT(&orte_process_info.super);
 
     init = false;
     return ORTE_SUCCESS;
