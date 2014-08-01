@@ -255,7 +255,7 @@ struct mca_btl_openib_component_t {
     /* MCA param btl_openib_receive_queues */
     char *receive_queues;
     /* Whether we got a non-default value of btl_openib_receive_queues */
-    btl_openib_receive_queues_source_t receive_queues_source;
+    mca_base_var_source_t receive_queues_source;
 
     /** Colon-delimited list of filenames for device parameters */
     char *device_params_file_names;

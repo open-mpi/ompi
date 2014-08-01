@@ -529,8 +529,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
        if a user distributes different INI files or parameters for different node/procs,
        it is on his own responsibility */
     switch(mca_btl_openib_component.receive_queues_source) {
-        case BTL_OPENIB_RQ_SOURCE_MCA:
-        case BTL_OPENIB_RQ_SOURCE_MAX:
+        case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
+        case MCA_BASE_VAR_SOURCE_ENV:
+        case MCA_BASE_VAR_SOURCE_MAX:
             break;
 
         /* If the queues configuration was set from command line
@@ -540,7 +541,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
            not possible that remote side got its queues configuration from command line =>
            (by prio) the configuration was set from INI file or (if not configure)
            by default queues configuration */
-        case BTL_OPENIB_RQ_SOURCE_DEVICE_INI:
+        case MCA_BASE_VAR_SOURCE_FILE:
+        case MCA_BASE_VAR_SOURCE_SET:
+        case MCA_BASE_VAR_SOURCE_OVERRIDE:
             if(NULL != values.receive_queues) {
                 recv_qps = values.receive_queues;
             } else {
@@ -568,7 +571,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
 
         /* If the local queues configuration was set
            by default queues => check all possible cases for remote side and compare */
-        case  BTL_OPENIB_RQ_SOURCE_DEFAULT:
+        case  MCA_BASE_VAR_SOURCE_DEFAULT:
             if(NULL != values.receive_queues) {
                 if(0 != strcmp(mca_btl_openib_component.receive_queues,
                                                 values.receive_queues)) {
