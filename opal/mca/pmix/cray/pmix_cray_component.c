@@ -18,6 +18,7 @@
 #include "opal/constants.h"
 #include "opal/mca/pmix/pmix.h"
 #include "pmix_cray.h"
+#include <sys/syscall.h>   
 
 /*
  * Public string showing the pmix cray component version number
@@ -68,11 +69,31 @@ const opal_pmix_base_component_t mca_pmix_cray_component = {
     }
 };
 
-
 static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
 {
-   /* if we built, we should be selected */
-    *priority = 90;
-    *module = (mca_base_module_t *)&opal_pmix_cray_module;
-    return OPAL_SUCCESS;
+    int rc;
+    const char proc_job_file[]="/proc/job";
+    FILE *fd = NULL;
+    char string[128];  /* just need to get a little output */
+    char *tmp = NULL;
+
+    /* disqualify ourselves if not running in a Cray PAGG container */
+    fd = fopen(proc_job_file, "r");
+    if (fd == NULL) {
+        *priority = 0;
+        *module = NULL;
+        rc = OPAL_ERROR;
+    } else {
+        tmp = fgets(string, sizeof(string), fd);
+        if (tmp) {   /* okay we're in a PAGG container, got non-null output from job device */
+            *priority = 90;
+            *module = (mca_base_module_t *)&opal_pmix_cray_module;
+            rc = OPAL_SUCCESS;
+        }
+        fclose(fd);
+    }
+
+    return rc;
 }
+
+

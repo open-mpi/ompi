@@ -21,6 +21,51 @@
 # $HEADER$
 #
 
+#
+# special check for cray pmi, uses macro(s) from pkg.m4 which
+# may not be installed on some systems where ompi is being configured,
+# but will always be installed on cray xe/xc/? systems.
+# OPAL_CHECK_CRAY_PMI(prefix, [action-if-found], [action-if-not-found])
+# --------------------------------------------------------
+AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
+    AC_ARG_WITH([pmi],
+                [AC_HELP_STRING([--with-pmi=cray],
+                                [Build Cray PMI support. Use PKG_CONFIG_PATH variable for path specification (default: no)])],
+                                [], with_pmi=no)
+
+    # set defaults
+    opal_have_pmi1=0
+    opal_enable_pmi2=0
+
+    AC_MSG_CHECKING([if user requested Cray PMI support])
+    AS_IF([test "$with_pmi" = "cray"],
+          [AC_MSG_RESULT([yes])
+           AC_MSG_CHECKING([Looking to see if Cray PMI package is installed])
+           PKG_CHECK_MODULES([CRAY_PMI], [cray-pmi],
+                             [$1_LDFLAGS="$CRAY_PMI_LIBS"
+                              $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
+                              $1_LIBS="$1_LDFLAGS"
+                              opal_have_pmi1=1
+                              opal_enable_pmi2=1
+                              $2],
+                             [AC_MSG_RESULT([no])
+                              AC_MSG_WARN([Cray PMI support requested (via --with-pmi=cray) but not found.])
+                              AC_MSG_ERROR([Aborting.])
+                              $3])],
+          [AC_MSG_RESULT([no])
+           $3])
+
+   AC_DEFINE_UNQUOTED([WANT_PMI_SUPPORT],
+                      [$opal_enable_pmi],
+                      [Whether we want PMI support])
+   AC_DEFINE_UNQUOTED([WANT_PMI2_SUPPORT],
+                      [$opal_have_pmi2],
+                      [Whether we have PMI2 support])
+   AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$opal_enable_pmi" = 1])
+   AM_CONDITIONAL(WANT_PMI2_SUPPORT, [test "$opal_have_pmi2" = 1])
+])
+
+
 # OPAL_CHECK_PMI(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_PMI],[
@@ -44,6 +89,11 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_check_pmi_$1_CPPFLAGS=
     opal_check_pmi_$1_LIBS=
 
+if test "$with_pmi" = "cray"; then
+    OPAL_CHECK_CRAY_PMI([$1],[opal_check_pmi_cray_good=1],[opal_check_pmi_cray_good=0])
+    AS_IF([test "$opal_check_pmi_cray_good" = 1],
+          [$2], [$3])
+else
     AC_MSG_CHECKING([if user requested PMI support])
     opal_have_pmi_support=no
     AS_IF([test "$with_pmi" = "no"],
@@ -145,4 +195,6 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                       [Whether we have PMI2 support])
    AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$opal_enable_pmi" = 1])
    AM_CONDITIONAL(WANT_PMI2_SUPPORT, [test "$opal_have_pmi2" = 1])
+fi
+
 ])
