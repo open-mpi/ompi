@@ -41,7 +41,9 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pstat/base/base.h"
+#include "opal/util/arch.h"
 #include "opal/util/os_path.h"
+#include "opal/util/proc.h"
 
 #include "orte/mca/rtc/base/base.h"
 #include "orte/mca/rml/base/base.h"
@@ -110,6 +112,13 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_app_context_t *app;
     orte_node_t *node;
     char *param;
+
+    /* my name is set, xfer it to the OPAL layer */
+    orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
+    orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
+    orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
+    orte_process_info.super.proc_arch = opal_local_arch;
+    opal_proc_local_set(&orte_process_info.super);
 
     plm_in_use = false;
 

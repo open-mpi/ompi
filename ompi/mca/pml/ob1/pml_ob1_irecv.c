@@ -28,6 +28,9 @@
 #include "pml_ob1_recvfrag.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/message/message.h"
+#if HAVE_ALLOCA_H
+#include <alloca.h>
+#endif  /* HAVE_ALLOCA_H */
 
 int mca_pml_ob1_irecv_init(void *addr,
                            size_t count,

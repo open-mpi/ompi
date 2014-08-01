@@ -1134,7 +1134,10 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     /* Note that usnic_del_procs will have been called for *all* procs
        by this point, so the module->all_endpoints list will be empty.
        Destruct it. */
+    opal_mutex_lock(&module->all_endpoints_lock);
     OBJ_DESTRUCT(&(module->all_endpoints));
+    module->all_endpoints_constructed = false;
+    opal_mutex_unlock(&module->all_endpoints_lock);
 
     /* _flush_endpoint should have emptied this list */
     assert(opal_list_is_empty(&(module->pending_resend_segs)));
@@ -2168,7 +2171,10 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
     /* No more errors anticipated - initialize everything else */
 
     /* list of all endpoints */
+    opal_mutex_lock(&module->all_endpoints_lock);
     OBJ_CONSTRUCT(&(module->all_endpoints), opal_list_t);
+    module->all_endpoints_constructed = true;
+    opal_mutex_unlock(&module->all_endpoints_lock);
 
     /* Pending send segs list */
     OBJ_CONSTRUCT(&module->pending_resend_segs, opal_list_t);

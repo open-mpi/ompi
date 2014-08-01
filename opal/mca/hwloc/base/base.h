@@ -97,13 +97,13 @@ OPAL_DECLSPEC int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *poli
  */
 OPAL_DECLSPEC void opal_hwloc_base_get_local_cpuset(void);
 
-struct orte_rmaps_numa_node_t {
+struct opal_rmaps_numa_node_t {
     opal_list_item_t super;
     int index;
     float dist_from_closed;
 };
-typedef struct orte_rmaps_numa_node_t orte_rmaps_numa_node_t;
-OBJ_CLASS_DECLARATION(orte_rmaps_numa_node_t);
+typedef struct opal_rmaps_numa_node_t opal_rmaps_numa_node_t;
+OBJ_CLASS_DECLARATION(opal_rmaps_numa_node_t);
 
 /**
  * Enum for what memory allocation policy we want for user allocations.

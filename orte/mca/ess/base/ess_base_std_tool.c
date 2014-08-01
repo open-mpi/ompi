@@ -36,6 +36,8 @@
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/util/arch.h"
+#include "opal/util/proc.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/base.h"
@@ -61,6 +63,13 @@ int orte_ess_base_tool_setup(void)
 {
     int ret;
     char *error = NULL;
+
+    /* my name is set, xfer it to the OPAL layer */
+    orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
+    orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
+    orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
+    orte_process_info.super.proc_arch = opal_local_arch;
+    opal_proc_local_set(&orte_process_info.super);
 
     if (NULL != orte_process_info.my_hnp_uri) {
         /* if we were given an HNP, then we were launched

@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -150,7 +152,7 @@ int mca_coll_ml_lmngr_reg(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_coll_ml_component.lmngr_block_size));
 
-    cm->lmngr_alignment = 4 * 1024;
+    cm->lmngr_alignment = sysconf(_SC_PAGESIZE);
     CHECK(mca_base_component_var_register(&mca_coll_ml_component.super.collm_version,
                                           "memory_manager_alignment", "Memory manager alignment",
                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
