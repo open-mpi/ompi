@@ -478,5 +478,11 @@ else
 fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_GETPWUID], [$opal_want_getpwuid],
                    [Disable getpwuid support (default: enabled)])
-    
+
+dnl We no longer support the old OPAL_ENABLE_PROGRESS_THREADS.  At
+dnl some point, this should die.
+AC_DEFINE([OPAL_ENABLE_PROGRESS_THREADS],
+          [0],
+          [Whether we want BTL progress threads enabled])
+
 ])dnl
