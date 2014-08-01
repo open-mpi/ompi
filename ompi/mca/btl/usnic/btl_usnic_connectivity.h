@@ -132,6 +132,10 @@ struct ompi_btl_usnic_module_t;
  * Helper macro the pack a uint32_t into RML message buffers.
  */
 #define PACK_UINT32(buffer, value) PACK_(buffer, uint32_t, OPAL_UINT32, value)
+/**
+ * Helper macro the pack a uint64_t into RML message buffers.
+ */
+#define PACK_UINT64(buffer, value) PACK_(buffer, uint64_t, OPAL_UINT64, value)
 
 /**
  * Helper macro to unpack binary bytes from RML message buffers.
@@ -190,6 +194,11 @@ struct ompi_btl_usnic_module_t;
  */
 #define UNPACK_UINT32(buffer, value)                            \
     UNPACK(buffer, uint32_t, OPAL_UINT32, value)
+/**
+ * Helper macro to unpack a uint64_t from RML message buffers.
+ */
+#define UNPACK_UINT64(buffer, value)                            \
+    UNPACK(buffer, uint64_t, OPAL_UINT64, value)
 
 /**
  * RML message types.  This value is packed as the first field in each

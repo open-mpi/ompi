@@ -1139,6 +1139,7 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
      * as the main point is to make usnic_del_procs() happy to release
      * the proc/endpoint.
      */
+    opal_mutex_lock(&module->all_endpoints_lock);
     while (!opal_list_is_empty(&(module->all_endpoints))) {
         opal_list_item_t *item;
         ompi_btl_usnic_endpoint_t *endpoint;
@@ -1150,6 +1151,8 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
         }
     }
     OBJ_DESTRUCT(&(module->all_endpoints));
+    module->all_endpoints_constructed = false;
+    opal_mutex_unlock(&module->all_endpoints_lock);
 
     /* _flush_endpoint should have emptied this list */
     assert(opal_list_is_empty(&(module->pending_resend_segs)));
@@ -2200,7 +2203,10 @@ int ompi_btl_usnic_module_init(ompi_btl_usnic_module_t *module)
     /* No more errors anticipated - initialize everything else */
 
     /* list of all endpoints */
+    opal_mutex_lock(&module->all_endpoints_lock);
     OBJ_CONSTRUCT(&(module->all_endpoints), opal_list_t);
+    module->all_endpoints_constructed = true;
+    opal_mutex_unlock(&module->all_endpoints_lock);
 
     /* Pending send segs list */
     OBJ_CONSTRUCT(&module->pending_resend_segs, opal_list_t);
