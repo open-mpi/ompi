@@ -13,6 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -33,6 +34,7 @@
 
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/runtime/opal.h"
 #include "opal/threads/threads.h"
 
@@ -40,12 +42,46 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_locks.h"
+
+/**
+ * Static functions used to configure the interactions between the OPAL and
+ * the runtime.
+ */
+static char*
+_process_name_print_for_opal(const opal_process_name_t procname)
+{
+    orte_process_name_t* rte_name = (orte_process_name_t*)&procname;
+    return ORTE_NAME_PRINT(rte_name);
+}
+
+static uint32_t
+_process_name_jobid_for_opal(const opal_process_name_t procname)
+{
+    orte_process_name_t* rte_name = (orte_process_name_t*)&procname;
+    return rte_name->jobid;
+}
+
+static uint32_t
+_process_name_vpid_for_opal(const opal_process_name_t procname)
+{
+    orte_process_name_t* rte_name = (orte_process_name_t*)&procname;
+    return rte_name->vpid;
+}
+
+static int
+_process_name_compare(const opal_process_name_t p1, const opal_process_name_t p2)
+{
+    orte_process_name_t* o1 = (orte_process_name_t*)&p1;
+    orte_process_name_t* o2 = (orte_process_name_t*)&p2;
+    return orte_util_compare_name_fields(ORTE_NS_CMP_ALL, o1, o2);
+}
 
 /*
  * Whether we have completed orte_init or we are in orte_finalize
@@ -94,6 +130,12 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         goto error;
     }
     
+    /* Convince OPAL to use our naming scheme */
+    opal_process_name_print = _process_name_print_for_opal;
+    opal_process_name_vpid = _process_name_vpid_for_opal;
+    opal_process_name_jobid = _process_name_jobid_for_opal;
+    opal_compare_proc = _process_name_compare;
+
     /* ensure we know the type of proc for when we finalize */
     orte_process_info.proc_type = flags;
 

@@ -12,6 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,6 +39,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 
 #include "orte/util/proc_info.h"
 
@@ -114,6 +116,8 @@ int orte_proc_info(void)
         return ORTE_SUCCESS;
     }
     init = true;
+
+    OBJ_CONSTRUCT(&orte_process_info.super, opal_proc_t);
 
     orte_process_info.my_hnp_uri = NULL;
     mca_base_var_register ("orte", "orte", NULL, "hnp_uri",
@@ -369,6 +373,8 @@ int orte_proc_info_finalize(void)
     
     OBJ_RELEASE(orte_process_info.sync_buf);
     orte_process_info.sync_buf = NULL;
+
+    OBJ_DESTRUCT(&orte_process_info.super);
 
     init = false;
     return ORTE_SUCCESS;

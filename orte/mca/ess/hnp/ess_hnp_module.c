@@ -42,6 +42,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "opal/util/arch.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
@@ -305,6 +306,13 @@ static int rte_init(void)
             goto error;
         }
     }
+    /* now that my name is set, xfer it to the OPAL layer */
+    orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
+    orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
+    orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
+    orte_process_info.super.proc_arch = opal_local_arch;
+    opal_proc_local_set(&orte_process_info.super);
+
     /* Setup the communication infrastructure */
     
     /*

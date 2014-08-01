@@ -72,8 +72,8 @@ typedef int (*opal_compare_proc_fct_t)(const opal_process_name_t, const opal_pro
 OPAL_DECLSPEC extern opal_compare_proc_fct_t opal_compare_proc;
 
 OPAL_DECLSPEC extern char* (*opal_process_name_print)(const opal_process_name_t);
-OPAL_DECLSPEC extern int32_t (*opal_process_name_vpid)(const opal_process_name_t);
-OPAL_DECLSPEC extern int32_t (*opal_process_name_jobid)(const opal_process_name_t);
+OPAL_DECLSPEC extern uint32_t (*opal_process_name_vpid)(const opal_process_name_t);
+OPAL_DECLSPEC extern uint32_t (*opal_process_name_jobid)(const opal_process_name_t);
 
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
 #define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)

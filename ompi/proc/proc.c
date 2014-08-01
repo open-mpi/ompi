@@ -103,8 +103,8 @@ int ompi_proc_init(void)
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
 
-        OMPI_CAST_ORTE_NAME(&proc->super.proc_name)->jobid = OMPI_PROC_MY_NAME->jobid;
-        OMPI_CAST_ORTE_NAME(&proc->super.proc_name)->vpid = i;
+        OMPI_CAST_RTE_NAME(&proc->super.proc_name)->jobid = OMPI_PROC_MY_NAME->jobid;
+        OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid = i;
 
         if (i == OMPI_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
@@ -266,7 +266,7 @@ int ompi_proc_complete_init(void)
          item  = opal_list_get_next(item)) {
         proc = (ompi_proc_t*)item;
 
-        if (OMPI_CAST_ORTE_NAME(&proc->super.proc_name)->vpid != OMPI_PROC_MY_NAME->vpid) {
+        if (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid != OMPI_PROC_MY_NAME->vpid) {
             /* get the locality information */
             ret = ompi_proc_set_locality(proc);
             if (OMPI_SUCCESS != ret) {
@@ -374,14 +374,14 @@ ompi_proc_t** ompi_proc_world(size_t *size)
         return NULL;
     }
     mask = OMPI_RTE_CMP_JOBID;
-    my_name = *OMPI_CAST_ORTE_NAME(&ompi_proc_local_proc->super.proc_name);
+    my_name = *OMPI_CAST_RTE_NAME(&ompi_proc_local_proc->super.proc_name);
 
     /* First count how many match this jobid */
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, OMPI_CAST_ORTE_NAME(&proc->super.proc_name), &my_name)) {
+        if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, OMPI_CAST_RTE_NAME(&proc->super.proc_name), &my_name)) {
             ++count;
         }
     }
@@ -508,7 +508,7 @@ int ompi_proc_refresh(void)
         proc = (ompi_proc_t*)item;
 
         /* Does not change: proc->super.proc_name.vpid */
-        OMPI_CAST_ORTE_NAME(&proc->super.proc_name)->jobid = OMPI_PROC_MY_NAME->jobid;
+        OMPI_CAST_RTE_NAME(&proc->super.proc_name)->jobid = OMPI_PROC_MY_NAME->jobid;
 
         /* Make sure to clear the local flag before we set it below */
         proc->super.proc_flags = 0;
@@ -694,7 +694,7 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
         rproc = OBJ_NEW(ompi_proc_t);
         if (NULL != rproc) {
             opal_list_append(&ompi_proc_list, (opal_list_item_t*)rproc);
-            *OMPI_CAST_ORTE_NAME(&rproc->super.proc_name) = *name;
+            *OMPI_CAST_RTE_NAME(&rproc->super.proc_name) = *name;
         }
         /* caller had better fill in the rest of the proc, or there's
          going to be pain later... */

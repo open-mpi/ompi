@@ -523,13 +523,13 @@ static int bootstrap_comm(ompi_communicator_t *comm,
        procs on this node, so also pair it with the PID of the proc
        with the lowest ORTE name to form a unique filename. */
     proc = ompi_group_peer_lookup(comm->c_local_group, 0);
-    lowest_name = OMPI_CAST_ORTE_NAME(&proc->super.proc_name);
+    lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
     for (i = 1; i < comm_size; ++i) {
         proc = ompi_group_peer_lookup(comm->c_local_group, i);
         if (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, 
-                                          OMPI_CAST_ORTE_NAME(&proc->super.proc_name),
+                                          OMPI_CAST_RTE_NAME(&proc->super.proc_name),
                                           lowest_name) < 0) {
-            lowest_name = OMPI_CAST_ORTE_NAME(&proc->super.proc_name);
+            lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
         }
     }
     asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,
