@@ -309,14 +309,14 @@ _process_name_print_for_opal(const opal_process_name_t procname)
     return OMPI_NAME_PRINT(rte_name);
 }
 
-static int32_t
+static uint32_t
 _process_name_jobid_for_opal(const opal_process_name_t procname)
 {
     ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
     return rte_name->jobid;
 }
 
-static int32_t
+static uint32_t
 _process_name_vpid_for_opal(const opal_process_name_t procname)
 {
     ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;

@@ -86,7 +86,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
         } else {
             assert(count <= nprocs);
             procs[count++] =
-                *OMPI_CAST_ORTE_NAME(ompi_group_get_proc_ptr(comm->c_remote_group, i)->super.proc_name);
+                *OMPI_CAST_RTE_NAME(ompi_group_get_proc_ptr(comm->c_remote_group, i)->super.proc_name);
         }
     }
 
@@ -94,7 +94,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
     for (i = 0; i < ompi_comm_remote_size(comm); ++i) {
         assert(count <= nprocs);
         procs[count++] =
-            *OMPI_CAST_ORTE_NAME(ompi_group_get_proc_ptr(comm->c_remote_group, i)->super.proc_name);
+            *OMPI_CAST_RTE_NAME(ompi_group_get_proc_ptr(comm->c_remote_group, i)->super.proc_name);
     }
 
     if (nprocs > 0) {

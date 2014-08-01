@@ -101,16 +101,15 @@ opal_process_name_print_should_never_be_called(const opal_process_name_t procnam
     return "My Name is Nobody";
 }
 
-static int32_t
+static uint32_t
 opal_process_name_vpid_should_never_be_called(const opal_process_name_t unused)
 {
-    static int32_t free_loader = INT_MIN;
-    return ++free_loader;
+    return UINT_MAX;
 }
 
 char* (*opal_process_name_print)(const opal_process_name_t) = opal_process_name_print_should_never_be_called;
-int32_t (*opal_process_name_vpid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
-int32_t (*opal_process_name_jobid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
+uint32_t (*opal_process_name_vpid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
+uint32_t (*opal_process_name_jobid)(const opal_process_name_t) = opal_process_name_vpid_should_never_be_called;
 
 static int
 opal_modex_send_internal(const mca_base_component_t *source_component,
