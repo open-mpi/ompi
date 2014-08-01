@@ -721,7 +721,6 @@ libmpi_usempif08_la_SOURCES = \
         attr-fn-f08-callback-interfaces.h \
         conversion-fn-null-f08-interface.h \
         mpi-f08.F90 \
-        mpi-f08-types.F90 \
         constants.h \
         constants.c
 
@@ -730,6 +729,7 @@ libmpi_usempif08_la_SOURCES = \
 #
 
 libmpi_usempif08_la_LIBADD = \
+        $(module_sentinel_file) \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
         $(top_builddir)/ompi/libmpi.la
 libmpi_usempif08_la_DEPENDENCIES = $(module_sentinel_file)
@@ -750,7 +750,7 @@ mpi-f08-sizeof.lo: mpi-f08-sizeof.F90
 
 mpi-f08.lo: $(module_sentinel_file)
 mpi-f08.lo: mpi-f08-sizeof.lo
-mpi-f08.lo: mpi-f08.F90 
+mpi-f08.lo: mpi-f08.F90
 mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
 mpi-f08.lo: attr-fn-f08-callback-interfaces.h
 mpi-f08.lo: conversion-fn-null-f08-interface.h
