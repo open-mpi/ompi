@@ -661,8 +661,12 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.default_recv_qps = default_qps;
     CHECK(reg_string("receive_queues", NULL,
                      "Colon-delimited, comma-delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
-                     NULL, &mca_btl_openib_component.receive_queues,
+                     default_qps, &mca_btl_openib_component.receive_queues,
                      0));
+    mca_btl_openib_component.receive_queues_source =
+        (0 == strcmp(default_qps,
+                     mca_btl_openib_component.receive_queues)) ?
+        BTL_OPENIB_RQ_SOURCE_DEFAULT : BTL_OPENIB_RQ_SOURCE_MCA;
 
     CHECK(reg_string("if_include", NULL,
                      "Comma-delimited list of devices/ports to be used (e.g. \"mthca0,mthca1:2\"; empty value means to use all ports found).  Mutually exclusive with btl_openib_if_exclude.",

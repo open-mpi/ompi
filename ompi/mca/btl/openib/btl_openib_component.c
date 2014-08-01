@@ -274,17 +274,6 @@ static int btl_openib_component_close(void)
     ompi_btl_openib_fd_finalize();
     ompi_btl_openib_ini_finalize();
 
-    if (NULL != mca_btl_openib_component.receive_queues
-            && BTL_OPENIB_RQ_SOURCE_DEFAULT ==
-                            mca_btl_openib_component.receive_queues_source) {
-        /*
-         * In that case, the string has not been duplicated during variable
-         * registration. So it won't be freed by the mca_base_var system.
-         * Free it here.
-         */
-        free(mca_btl_openib_component.receive_queues);
-    }
-
     if (NULL != mca_btl_openib_component.default_recv_qps) {
         free(mca_btl_openib_component.default_recv_qps);
     }
@@ -1485,13 +1474,13 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     if(NULL == device->ib_dev_context){
         BTL_ERROR(("error obtaining device context for %s errno says %s",
-                   ibv_get_device_name(device->ib_dev), strerror(errno)));
+                    ibv_get_device_name(device->ib_dev), strerror(errno)));
         goto error;
     }
 
     if(ibv_query_device(device->ib_dev_context, &device->ib_dev_attr)){
         BTL_ERROR(("error obtaining device attributes for %s errno says %s",
-                   ibv_get_device_name(device->ib_dev), strerror(errno)));
+                    ibv_get_device_name(device->ib_dev), strerror(errno)));
         goto error;
     }
     /* If mca_btl_if_include/exclude were specified, get usable ports */
@@ -1586,7 +1575,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     device->ib_pd = ibv_alloc_pd(device->ib_dev_context);
     if(NULL == device->ib_pd){
         BTL_ERROR(("error allocating protection domain for %s errno says %s",
-                   ibv_get_device_name(device->ib_dev), strerror(errno)));
+                    ibv_get_device_name(device->ib_dev), strerror(errno)));
         goto error;
     }
 
@@ -1613,8 +1602,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                default_values.max_inline_data >= -1) {
                 BTL_ERROR(("Invalid max_inline_data value specified "
                            "in INI file (%d); using default value (%d)",
-                           values.max_inline_data,
-                           default_values.max_inline_data));
+                            values.max_inline_data,
+                            default_values.max_inline_data));
                 device->max_inline_data = (uint32_t)
                     default_values.max_inline_data;
             } else {
@@ -1655,19 +1644,19 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     mpool_resources.deregister_mem = openib_dereg_mr;
     device->mpool =
         mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
-                                     device, &mpool_resources);
+                device, &mpool_resources);
     if(NULL == device->mpool){
         /* Don't print an error message here -- we'll get one from
            mpool_create anyway */
-        goto error;
+         goto error;
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS
     device->ib_channel = ibv_create_comp_channel(device->ib_dev_context);
     if (NULL == device->ib_channel) {
         BTL_ERROR(("error creating channel for %s errno says %s",
-                   ibv_get_device_name(device->ib_dev),
-                   strerror(errno)));
+                    ibv_get_device_name(device->ib_dev),
+                    strerror(errno)));
         goto error;
     }
 #endif
@@ -1680,8 +1669,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         i = allowed_ports[k];
         if(ibv_query_port(device->ib_dev_context, i, &ib_port_attr)){
             BTL_ERROR(("error getting port attributes for device %s "
-                       "port number %d errno says %s",
-                       ibv_get_device_name(device->ib_dev), i, strerror(errno)));
+                        "port number %d errno says %s",
+                        ibv_get_device_name(device->ib_dev), i, strerror(errno)));
             break;
         }
         if(IBV_PORT_ACTIVE == ib_port_attr.state) {
@@ -1703,8 +1692,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 for (j = 0; j < device->ib_dev_attr.max_pkeys; j++) {
                     if(ibv_query_pkey(device->ib_dev_context, i, j, &pkey)){
                         BTL_ERROR(("error getting pkey for index %d, device %s "
-                                   "port number %d errno says %s",
-                                   j, ibv_get_device_name(device->ib_dev), i, strerror(errno)));
+                                    "port number %d errno says %s",
+                                    j, ibv_get_device_name(device->ib_dev), i, strerror(errno)));
                     }
                     pkey = ntohs(pkey) & MCA_BTL_IB_PKEY_MASK;
                     if(pkey == mca_btl_openib_component.ib_pkey_val){
@@ -1745,17 +1734,17 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
            the code below, here's some notes:
 
            1. The openib BTL component only supports 1 value of the
-           receive_queues between all of its modules.
+              receive_queues between all of its modules.
 
-           --> This could be changed to allow every module to have
-           its own receive_queues.  But that would be a big
-           deal; no one has time to code this up right now.
+              --> This could be changed to allow every module to have
+                  its own receive_queues.  But that would be a big
+                  deal; no one has time to code this up right now.
 
            2. The receive_queues value can be specified either as an
-           MCA parameter or in the INI file.  Specifying the value
-           as an MCA parameter overrides all INI file values
-           (meaning: that MCA param value will be used for all
-           openib BTL modules in the process).
+              MCA parameter or in the INI file.  Specifying the value
+              as an MCA parameter overrides all INI file values
+              (meaning: that MCA param value will be used for all
+              openib BTL modules in the process).
 
            Effectively, the first device through init_one_device()
            gets to decide what the receive_queues will be for the all
@@ -1765,11 +1754,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
            value from: (in priority order):
 
            1. If the btl_openib_receive_queues MCA param was
-           specified, use that.
+              specified, use that.
            2. If this device has a receive_queues value specified in
-           the INI file, use that.
+              the INI file, use that.
            3. Otherwise, use the default MCA param value for
-           btl_openib_receive_queues.
+              btl_openib_receive_queues.
 
            If any successive device has a different value specified in
            the INI file, we show_help and return up the stack that
@@ -1853,10 +1842,10 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
            - device 1: no receive_queues in INI file
            - device 2: no receive_queues in INI file
            --> Jeff thinks that it would be great to use
-           receive_queues value B with all devices.  However, it
-           shares one of the problems cited in case 8, below.  So
-           we need to fail this scenario; print an error and
-           abort.
+               receive_queues value B with all devices.  However, it
+               shares one of the problems cited in case 8, below.  So
+               we need to fail this scenario; print an error and
+               abort.
 
            Case 8: one INI value, different than default
            - MCA parameter: not specified
@@ -1866,76 +1855,76 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
            - device 2: no receive_queues in INI file
 
            --> Jeff thinks that it would be great to use
-           receive_queues value B with all devices.  However, it
-           has (at least) 2 problems:
+               receive_queues value B with all devices.  However, it
+               has (at least) 2 problems:
 
-           1. The check for local receive_queue compatibility is
-           done here in init_one_device().  By the time we call
-           init_one_device() for device 1, we have already
-           called init_one_device() for device 0, meaning that
-           device 0's QPs have already been created and setup
-           using the MCA parameter's default receive_queues
-           value.  So if device 1 *changes* the
-           component.receive_queues value, then device 0 and
-           device 1 now have different receive_queue sets (more
-           specifically: the QPs setup for device 0 are now
-           effectively lost).  This is Bad.
+               1. The check for local receive_queue compatibility is
+                  done here in init_one_device().  By the time we call
+                  init_one_device() for device 1, we have already
+                  called init_one_device() for device 0, meaning that
+                  device 0's QPs have already been created and setup
+                  using the MCA parameter's default receive_queues
+                  value.  So if device 1 *changes* the
+                  component.receive_queues value, then device 0 and
+                  device 1 now have different receive_queue sets (more
+                  specifically: the QPs setup for device 0 are now
+                  effectively lost).  This is Bad.
 
-           It would be great if we didn't have this restriction
-           -- either by letting each module have its own
-           receive_queues value or by scanning all devices and
-           figuring out a final receive_queues value *before*
-           actually setting up any QPs.  But that's not the
-           current flow of the code (patches would be greatly
-           appreciated here, of course!).  Unfortunately, no
-           one has time to code this up right now, so we're
-           leaving this as explicitly documented for some
-           future implementer...
+                  It would be great if we didn't have this restriction
+                  -- either by letting each module have its own
+                  receive_queues value or by scanning all devices and
+                  figuring out a final receive_queues value *before*
+                  actually setting up any QPs.  But that's not the
+                  current flow of the code (patches would be greatly
+                  appreciated here, of course!).  Unfortunately, no
+                  one has time to code this up right now, so we're
+                  leaving this as explicitly documented for some
+                  future implementer...
 
-           2. Conside a scenario with server 1 having HCA A/subnet
-           X, and server 2 having HCA B/subnet X and HCA
-           C/subnet Y.  And let's assume:
+               2. Conside a scenario with server 1 having HCA A/subnet
+                  X, and server 2 having HCA B/subnet X and HCA
+                  C/subnet Y.  And let's assume:
 
-           Server 1:
-           HCA A: no receive_queues in INI file
+                  Server 1:
+                  HCA A: no receive_queues in INI file
 
-           Server 2:
-           HCA B: no receive_queues in INI file
-           HCA C: receive_queues specified in INI file
+                  Server 2:
+                  HCA B: no receive_queues in INI file
+                  HCA C: receive_queues specified in INI file
 
-           A will therefore use the default receive_queues
-           value.  B and C will use C's INI receive_queues.
-           But note that modex [currently] only sends around
-           vendor/part IDs for OpenFabrics devices -- not the
-           actual receive_queues value (it was felt that
-           including the final receive_queues string value in
-           the modex would dramatically increase the size of
-           the modex).  So processes on server 1 will get the
-           vendor/part ID for HCA B, look it up in the INI
-           file, see that it has no receive_queues value
-           specified, and then assume that it uses the default
-           receive_queues value.  Hence, procs on server 1 will
-           try to connect HCA A-->HCA B with the wrong
-           receive_queues value.  Bad.  Further, the error
-           won't be discovered by checks like this because A
-           won't check D's receive_queues because D is on a
-           different subnet.
+                  A will therefore use the default receive_queues
+                  value.  B and C will use C's INI receive_queues.
+                  But note that modex [currently] only sends around
+                  vendor/part IDs for OpenFabrics devices -- not the
+                  actual receive_queues value (it was felt that
+                  including the final receive_queues string value in
+                  the modex would dramatically increase the size of
+                  the modex).  So processes on server 1 will get the
+                  vendor/part ID for HCA B, look it up in the INI
+                  file, see that it has no receive_queues value
+                  specified, and then assume that it uses the default
+                  receive_queues value.  Hence, procs on server 1 will
+                  try to connect HCA A-->HCA B with the wrong
+                  receive_queues value.  Bad.  Further, the error
+                  won't be discovered by checks like this because A
+                  won't check D's receive_queues because D is on a
+                  different subnet.
 
-           This could be fixed, of course; either by a) send
-           the final receive_queues value in the modex (perhaps
-           compressing or encoding it so that it can be much
-           shorter than the string -- the current vendor/part
-           ID stuff takes 8 bytes for each device), or b)
-           replicating the determination process of each host
-           in each process (i.e., procs on server 1 would see
-           both B and C, and use them both to figure out what
-           the "final" receive_queues value is for B).
-           Unfortunately, no one has time to code this up right
-           now, so we're leaving this as explicitly documented
-           for some future implementer...
+                  This could be fixed, of course; either by a) send
+                  the final receive_queues value in the modex (perhaps
+                  compressing or encoding it so that it can be much
+                  shorter than the string -- the current vendor/part
+                  ID stuff takes 8 bytes for each device), or b)
+                  replicating the determination process of each host
+                  in each process (i.e., procs on server 1 would see
+                  both B and C, and use them both to figure out what
+                  the "final" receive_queues value is for B).
+                  Unfortunately, no one has time to code this up right
+                  now, so we're leaving this as explicitly documented
+                  for some future implementer...
 
-           Because of both of these problems, this case is
-           problematic and must fail with a show_help error.
+               Because of both of these problems, this case is
+               problematic and must fail with a show_help error.
 
            Case 9: two devices with same INI value (different than default)
            - MCA parameter: not specified
@@ -1955,26 +1944,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
         */
 
-        { 
-            /* we need to read this MCA param at this point in case someone 
-             * altered it via MPI_T */ 
-            int index; 
-            mca_base_var_source_t source; 
-            index = mca_base_var_find("opal","btl","openib","receive_queues"); 
-            if (index >= 0) { 
-                if (OPAL_SUCCESS != (ret = mca_base_var_get_value(index, NULL, &source, NULL))) { 
-                    BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d",  
-                               __FILE__, __LINE__)); 
-                    goto error; 
-                } else { 
-                    mca_btl_openib_component.receive_queues_source = source; 
-                } 
-            } 
-        }
-
         /* If the MCA param was specified, skip all the checks */
-        if ( MCA_BASE_VAR_SOURCE_COMMAND_LINE ||
-                MCA_BASE_VAR_SOURCE_ENV ==
+        if (BTL_OPENIB_RQ_SOURCE_MCA ==
             mca_btl_openib_component.receive_queues_source) {
             goto good;
         }
@@ -1993,7 +1964,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 mca_btl_openib_component.receive_queues =
                     strdup(values.receive_queues);
                 mca_btl_openib_component.receive_queues_source =
-                    MCA_BASE_VAR_SOURCE_FILE;
+                    BTL_OPENIB_RQ_SOURCE_DEVICE_INI;
             }
         }
 
@@ -2030,7 +2001,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                component.receive_queues value came from the 1st
                device's INI file, we must error. */
             else if (BTL_OPENIB_RQ_SOURCE_DEVICE_INI ==
-                     mca_btl_openib_component.receive_queues_source) {
+                mca_btl_openib_component.receive_queues_source) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "locally conflicting receive_queues", true,
                                opal_install_dirs.ompidatadir,
@@ -2055,7 +2026,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         return OMPI_SUCCESS;
     }
 
- error:
+error:
 #if OMPI_ENABLE_PROGRESS_THREADS
     if (device->ib_channel) {
         ibv_destroy_comp_channel(device->ib_channel);
