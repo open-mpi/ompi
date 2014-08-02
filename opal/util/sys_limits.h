@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,6 +49,12 @@ OPAL_DECLSPEC extern opal_sys_limits_t opal_sys_limits;
  * them to the specified limit
  */
 OPAL_DECLSPEC int opal_util_init_sys_limits(char **errmsg);
+
+/**
+ * Get pagesize
+ */
+OPAL_DECLSPEC int opal_getpagesize(void);
+
 
 END_C_DECLS
 
