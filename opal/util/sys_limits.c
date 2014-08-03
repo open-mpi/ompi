@@ -12,14 +12,12 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
- *
- * This file is only here because some platforms have a broken strncpy
- * (e.g., Itanium with RedHat Advanced Server glibc).
  */
 
 #include "opal_config.h"
@@ -37,6 +35,9 @@
 #endif
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include "opal/constants.h"
@@ -223,4 +224,17 @@ int opal_util_init_sys_limits(char **errmsg)
     opal_sys_limits.initialized = true;
 
     return OPAL_SUCCESS;
+}
+
+int opal_getpagesize(void)
+{
+#ifdef HAVE_GETPAGESIZE
+    return getpagesize();
+#elif defined(_SC_PAGESIZE )
+    return sysconf(_SC_PAGESIZE);
+#elif defined(_SC_PAGE_SIZE)
+    return sysconf(_SC_PAGE_SIZE);
+#else
+    return 65536; /* safer to overestimate than under */
+#endif
 }
