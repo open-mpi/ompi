@@ -55,13 +55,9 @@ typedef uint8_t opal_pmix_scope_t;
 #define PMIX_LOCAL        2  // share to procs also on this node
 #define PMIX_REMOTE       3  // share with procs not on this node
 #define PMIX_GLOBAL       4  // share with all procs (local + remote)
-#define PMIX_NODE         5  // node-level non-proc data
-#define PMIX_APPCTX       6
 
-/* callback function for non-blocking operations - the list
- * consists of a list of opal_value_t objects containing any
- * returned data*/
-typedef void (*opal_pmix_cbfunc_t)(int status, opal_list_t *values, void *cbdata);
+/* callback function for non-blocking operations */
+typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 
 /* flags to indicate if the modex value being pushed into
  * the PMIx server comes from an element that is ready to
@@ -71,35 +67,41 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_list_t *values, void *cbdata
 #define PMIX_ASYNC_RDY  false
 
 /* define a set of "standard" PMIx attributes that can
- * be queried. Implementations are free to extend as
+ * be queried. Implementations (and users) are free to extend as
  * desired, so the get_attr functions need to be capable
- * of handling the "not found" condition */
-typedef uint16_t pmix_attr_t;
-#define PMIX_ATTR_UNDEF     0
-#define PMIX_SIZE           1  // scope=global (univ), scope=local (within job, on node),
-                               // scope=node (across jobs, on node) returned as uint32_t
-#define PMIX_PROC_MAP       2  // scope=global (all procs in job), scope=local (procs on node), returned as byte_object
-#define PMIX_NET_TOPO       3
-#define PMIX_CART_DIMS      4
-#define PMIX_JOBID          5  // returned as char*
-#define PMIX_RANK           6  // scope=global (within job), scope=local (within job, on node),
-                               // scope=node (on node, span jobs), returned as uint32_t
-#define PMIX_APPNUM         7  // uint32_t
-#define PMIX_LOCAL_PROCS    8  // comma-delimited string of ranks (scope=global, spanning all jobs;
-                               // scope=local, within same job) sharing the node
-#define PMIX_LDR            9  // rank of lowest proc in scope; scope=local within job, on node,
-                               // scope=appctx within app_context
+ * of handling the "not found" condition. Note that these
+ * are attributes of the system and the job as opposed to
+ * values the application (or underlying MPI library)
+ * might choose to expose - i.e., they are values provided
+ * by the resource manager as opposed to the application */
+#define PMIX_ATTR_UNDEF      NULL
 
-/* define a list object for requesting and returning
- * attributes
- */
-typedef struct {
-    opal_list_item_t super;
-    pmix_attr_t attr;
-    opal_pmix_scope_t scope;
-    opal_value_t value;
-} opal_pmix_attr_t;
-OBJ_CLASS_DECLARATION(opal_pmix_attr_t);
+#define PMIX_CPUSET          "pmix.cpuset"      // (char*) hwloc bitmap applied to proc upon launch
+#define PMIX_CREDENTIAL      "pmix.cred"        // (opal_byte_object*) security credential assigned to proc
+/* scratch directory locations for use by applications */
+#define PMIX_TMPDIR          "pmix.tmpdir"      // (char*) top-level tmp dir assigned to job
+/* information about relative ranks as assigned */
+#define PMIX_JOBID           "pmix.jobid"       // (char*) jobid assigned by scheduler
+#define PMIX_APPNUM          "pmix.appnum"      // (uint32_t) app number within the job
+#define PMIX_RANK            "pmix.rank"        // (uint32_t) process rank within the job
+#define PMIX_GLOBAL_RANK     "pmix.grank"       // (uint32_t) rank spanning across all jobs in this session
+#define PMIX_NPROC_OFFSET    "pmix.offset"      // (uint32_t) starting global rank of this job
+#define PMIX_LOCAL_RANK      "pmix.lrank"       // (uint16_t) rank on this node within this job
+#define PMIX_NODE_RANK       "pmix.nrank"       // (uint16_t) rank on this node spanning all jobs
+#define PMIX_LOCALLDR        "pmix.lldr"        // (uint64_t) opal_identifier of lowest rank on this node within this job
+#define PMIX_APPLDR          "pmix.aldr"        // (uint32_t) lowest rank in this app within this job
+/* proc location-related info */
+#define PMIX_PROC_MAP        "pmix.map"         // (byte_object) packed map of proc locations within this job
+#define PMIX_LOCAL_PEERS     "pmix.lpeers"      // (char*) comma-delimited string of ranks on this node within this job
+/* size info */
+#define PMIX_UNIV_SIZE       "pmix.univ.size"   // (uint32_t) #procs in this namespace
+#define PMIX_JOB_SIZE        "pmix.job.size"    // (uint32_t) #procs in this job
+#define PMIX_LOCAL_SIZE      "pmix.local.size"  // (uint32_t) #procs in this job on this node
+#define PMIX_NODE_SIZE       "pmix.node.size"   // (uint32_t) #procs across all jobs on this node
+#define PMIX_MAX_PROCS       "pmix.max.size"    // (uint32_t) max #procs for this job
+/* topology info */
+#define PMIX_NET_TOPO        "pmix.ntopo"       // (byte_object) network topology
+
 
 /**
  * Provide a simplified macro for sending data via modex
@@ -321,20 +323,23 @@ typedef int (*opal_pmix_base_module_lookup_fn_t)(const char service_name[],
 typedef int (*opal_pmix_base_module_unpublish_fn_t)(const char service_name[], 
                                                     opal_list_t *info);
 
-/* Get attributes
- * Query the server for the specified list of attributes - values are
- * returned in the corresponding opal_pmix_attr_t object.
+/* Get attribute
+ * Query the server for the specified attribute, returning it in the
+ * provided opal_value_t. The function will return "true" if the attribute
+ * is found, and "false" if not.
  * Attributes are provided by the PMIx server, so there is no corresponding
  * "put" function. */
-typedef int (*opal_pmix_base_module_get_attr_fn_t)(opal_list_t *attrs);
+typedef bool (*opal_pmix_base_module_get_attr_fn_t)(const char *attr, opal_value_t **kv);
 
-/* Get attributes (non-blocking)
- * Query the server for the specified list of attributes. All values are returned
- * in the corresponding opal_pmix_attr_t ojbect.
+/* Get attribute (non-blocking)
+ * Query the server for the specified attribute..
  * Attributes are provided by the PMIx server, so there is no corresponding "put"
  * function. The call will be executed as non-blocking, returning immediately,
- * with data resulting from the call returned in the callback function */
-typedef int (*opal_pmix_base_module_get_attr_nb_fn_t)(opal_list_t *attrs,
+ * with data resulting from the call returned in the callback function. A returned
+ * NULL opal_value_t* indicates that the attribute was not found. The returned
+ * pointer is "owned" by the PMIx module and must not be released by the
+ * callback function */
+typedef int (*opal_pmix_base_module_get_attr_nb_fn_t)(const char *attr,
                                                       opal_pmix_cbfunc_t cbfunc,
                                                       void *cbdata);
 
@@ -369,10 +374,6 @@ typedef struct {
     opal_pmix_base_module_fini_fn_t                   finalize;
     opal_pmix_base_module_initialized_fn_t            initialized;
     opal_pmix_base_module_abort_fn_t                  abort;
-    opal_pmix_base_module_get_jobid_fn_t              get_jobid;
-    opal_pmix_base_module_get_rank_fn_t               get_rank;
-    opal_pmix_base_module_get_size_fn_t               get_size;
-    opal_pmix_base_module_get_appnum_fn_t             get_appnum;
     opal_pmix_base_module_fence_fn_t                  fence;
     opal_pmix_base_module_fence_nb_fn_t               fence_nb;
     opal_pmix_base_module_put_fn_t                    put;

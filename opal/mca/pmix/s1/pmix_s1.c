@@ -96,6 +96,7 @@ static int pmix_rank = 0;
 static int pmix_appnum = 0;
 static int pmix_usize = 0;
 static char *pmix_kvs_name = NULL;
+static char *pmix_jobid = NULL;
 
 static bool s1_committed = false;
 static char* pmix_packed_data = NULL;
@@ -115,7 +116,9 @@ static int s1_init(void)
     PMI_BOOL initialized;
     int spawned;
     int rc, ret = OPAL_ERROR;
-    char *pmi_id=NULL;
+    char *pmi_id=NULL, *localj;
+    uint32_t jobid, jobfam, stepid;
+    int *ranks, procs;
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
@@ -152,7 +155,7 @@ static int s1_init(void)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     /* Get domain id */
-    if (PMI_SUCCESS != (rc = PMI_Get_kvs_domain_id(pmi_id, pmi_maxlen))) {
+    if (PMI_SUCCESS != (rc = PMI_Get_kvs_domain_id(pmi_id, pmix_vallen_max))) {
         free(pmi_id);
         return OPAL_ERROR;
     }
@@ -163,20 +166,19 @@ static int s1_init(void)
      * this as the overall job number equating to our job family, and
      * the individual number equating to our local jobid
      */
-    jobfam = strtol(pmi_id, &localj, 10);
+    jobfam = strtoul(pmi_id, &localj, 10);
     if (NULL == localj) {
         /* hmmm - no '.', so let's just use zero */
         stepid = 0;
     } else {
         localj++; /* step over the '.' */
-        stepid = strtol(localj, NULL, 10) + 1; /* add one to avoid looking like a daemon */
+        stepid = strtoul(localj, NULL, 10) + 1; /* add one to avoid looking like a daemon */
     }
     free(pmi_id);
 
     /* now build the jobid */
-    jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
-
-
+    jobid = (jobfam << 16) | stepid;
+    (void)asprintf(&pmix_jobid, "%d", jobid);
 
     rc = PMI_Get_rank(&pmix_rank);
     if( PMI_SUCCESS != rc ) {
@@ -217,23 +219,18 @@ static int s1_init(void)
     /* get our local proc info to find our local rank */
     if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&procs))) {
         OPAL_PMI_ERROR(rc, "PMI_Get_clique_size");
-        *error = "mca_common_pmix_local_info: could not get PMI clique size";
         return OPAL_ERROR;
     }
     /* now get the specific ranks */
     ranks = (int*)calloc(procs, sizeof(int));
     if (NULL == ranks) {
-        *error = "mca_common_pmix_local_info: could not get memory for local ranks";
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, procs))) {
         OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
-        *error = "mca_common_pmix_local_info: could not get clique ranks";
         return OPAL_ERROR;
     }
-
-    *ranks_ret = ranks;
-    *procs_ret = procs;
 
     return OPAL_SUCCESS;
 
@@ -455,8 +452,6 @@ static int s1_unpublish(const char service_name[],
 
 static int s1_get_attr(opal_list_t *attrs)
 {
-    int *ranks;
-    int procs = -1;
     int rc;
     opal_pmix_attr_t *a;
 
@@ -464,13 +459,13 @@ static int s1_get_attr(opal_list_t *attrs)
         switch(a->attr) {
         case PMIX_JOBID:
             a->value.type = OPAL_STRING;
-            a->value.data.string = strdup(jobId);
+            a->value.data.string = strdup(pmix_jobid);
             break;
 
         case PMIX_RANK:
             if (PMIX_GLOBAL == a->scope) {
                 a->value.type = OPAL_UINT32;
-                a->valud.data.ui32 = pmix_rank;
+                a->value.data.uint32 = pmix_rank;
             } else if (PMIX_LOCAL == a->scope) {
             } else {
             }
@@ -479,7 +474,7 @@ static int s1_get_attr(opal_list_t *attrs)
         case PMIX_SIZE:
             if (PMIX_GLOBAL == a->scope) {
                 a->value.type = OPAL_UINT32;
-                a->value.data.ui32 = pmix_size;
+                a->value.data.uint32 = pmix_size;
             }
             break;
 
@@ -505,12 +500,6 @@ static int s1_job_connect(const char jobId[])
 static int s1_job_disconnect(const char jobId[])
 {
     return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int s1_get_appnum(int *appnum)
-{
-    *appnum = pmix_appnum;
-    return OPAL_SUCCESS;
 }
 
 static char* pmix_error(int pmix_err)

@@ -53,33 +53,45 @@ BEGIN_C_DECLS
  * Component functions - all MUST be provided!
  */
 
+typedef void (*orte_grpcomm_cbfunc_t)(opal_buffer_t *buf, void *cbdata);
+
 /* initialize the selected module */
 typedef int (*orte_grpcomm_base_module_init_fn_t)(void);
 
 /* finalize the selected module */
 typedef void (*orte_grpcomm_base_module_finalize_fn_t)(void);
 
-/* Send a message to all members of a job - blocking */
-typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_jobid_t job,
-                                                   opal_buffer_t *buffer,
-                                                   orte_rml_tag_t tag);
+/* Scalably send a message. Caller will provide an array
+ * of daemon vpids that are to receive the message. A NULL
+ * pointer indicates that all daemons are participating.
+ * The message is to be sent to the ORTE_RML_DAEMON tag
+ * on each daemon for processing. */
+typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_vpid_t *vpids,
+                                                   size_t nprocs,
+                                                   opal_buffer_t *buf);
 
-/* allgather - gather data from all procs */
-typedef int (*orte_grpcomm_base_module_allgather_fn_t)(void);
-
-/* barrier function */
-typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
+/* allgather - gather data from all procs. Barrier operations
+ * will provide a zero-byte buffer. Caller will provide an array
+ * of daemon vpids that are participating in the allgather. A NULL
+ * pointer indicates that all daemons are participating.
+ *
+ * NOTE: this is a non-blocking call. The cbfunc will pass back
+ * the collected data buffer and the provided cbdata upon completion. */
+typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_vpid_t *vpids,
+                                                       size_t nprocs,
+                                                       opal_buffer_t *buf,
+                                                       orte_grpcomm_cbfunc_t cbfunc,
+                                                       void *cbdata);
 
 /*
- * Ver 2.0
+ * Ver 3.0
  */
 struct orte_grpcomm_base_module_2_0_0_t {
-    orte_grpcomm_base_module_init_fn_t                  init;
-    orte_grpcomm_base_module_finalize_fn_t              finalize;
+    orte_grpcomm_base_module_init_fn_t           init;
+    orte_grpcomm_base_module_finalize_fn_t       finalize;
     /* collective operations */
-    orte_grpcomm_base_module_xcast_fn_t                 xcast;
-    orte_grpcomm_base_module_allgather_fn_t             allgather;
-    orte_grpcomm_base_module_barrier_fn_t               barrier;
+    orte_grpcomm_base_module_xcast_fn_t          xcast;
+    orte_grpcomm_base_module_allgather_fn_t      allgather;
 };
 
 typedef struct orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_2_0_0_t;
@@ -88,12 +100,12 @@ typedef orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_t;
 /*
  * the standard component data structure
  */
-struct orte_grpcomm_base_component_2_0_0_t {
+struct orte_grpcomm_base_component_3_0_0_t {
     mca_base_component_t base_version;
     mca_base_component_data_t base_data;
 };
-typedef struct orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_2_0_0_t;
-typedef orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_t;
+typedef struct orte_grpcomm_base_component_3_0_0_t orte_grpcomm_base_component_3_0_0_t;
+typedef orte_grpcomm_base_component_3_0_0_t orte_grpcomm_base_component_t;
 
 
 

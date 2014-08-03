@@ -16,31 +16,32 @@
 
 #include "opal/mca/mca.h"
 #include "opal/runtime/opal_params.h"
-#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/proc_info.h"
 
-#include "grpcomm_pmi.h"
+#include "grpcomm_direct.h"
 
 static int my_priority=5;  /* must be below "bad" module */
-
-static int orte_grpcomm_pmi_register(void);
+static int direct_open(void);
+static int direct_close(void);
+static int direct_query(mca_base_module_t **module, int *priority);
+static int direct_register(void);
 
 /*
  * Struct of function pointers that need to be initialized
  */
-orte_grpcomm_base_component_t mca_grpcomm_pmi_component = {
+orte_grpcomm_base_component_t mca_grpcomm_direct_component = {
     {
         ORTE_GRPCOMM_BASE_VERSION_3_0_0,
         
-        "pmi", /* MCA module name */
+        "direct", /* MCA module name */
         ORTE_MAJOR_VERSION,  /* MCA module major version */
         ORTE_MINOR_VERSION,  /* MCA module minor version */
         ORTE_RELEASE_VERSION,  /* MCA module release version */
-        orte_grpcomm_pmi_open,  /* module open */
-        orte_grpcomm_pmi_close, /* module close */
-        orte_grpcomm_pmi_component_query, /* module query */
-        orte_grpcomm_pmi_register
+        direct_open,  /* component open */
+        direct_close, /* component close */
+        direct_query, /* component query */
+        direct_register
     },
     {
         /* The component is checkpoint ready */
@@ -48,16 +49,16 @@ orte_grpcomm_base_component_t mca_grpcomm_pmi_component = {
     }
 };
 
-static int orte_grpcomm_pmi_register(void)
+static int direct_register(void)
 {
-    mca_base_component_t *c = &mca_grpcomm_pmi_component.base_version;
+    mca_base_component_t *c = &mca_grpcomm_direct_component.base_version;
 
     /* make the priority adjustable so users can select
-     * pmi for use by apps without affecting daemons
+     * direct for use by apps without affecting daemons
      */
-    my_priority = 5;
+    my_priority = 1;
     (void) mca_base_component_var_register(c, "priority",
-                                           "Priority of the grpcomm pmi component",
+                                           "Priority of the grpcomm direct component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -66,35 +67,20 @@ static int orte_grpcomm_pmi_register(void)
 }
 
 /* Open the component */
-int orte_grpcomm_pmi_open(void)
+static int direct_open(void)
 {
     return ORTE_SUCCESS;
 }
 
-int orte_grpcomm_pmi_close(void)
+static int direct_close(void)
 {
-    if (NULL != opal_pmix.finalize) {
-        opal_pmix.finalize();  // balances query
-    }
-
     return ORTE_SUCCESS;
 }
 
-int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
+static int direct_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are indirectly launched via orted, the
-     * selection will have been turned "off" for us
-     */
-    if (ORTE_PROC_IS_APP && NULL != opal_pmix.init &&
-        OPAL_SUCCESS == opal_pmix.init()) {
-        /* if PMI is available, make it available for use by MPI procs */
-        *priority = my_priority;
-        *module = (mca_base_module_t *)&orte_grpcomm_pmi_module;
-        return ORTE_SUCCESS;
-    }
-
-    /* we can't run */
-    *priority = -1;
-    *module = NULL;
-    return ORTE_ERROR;
+    /* we are always available */
+    *priority = my_priority;
+    *module = (mca_base_module_t *)&orte_grpcomm_direct_module;
+    return ORTE_SUCCESS;
 }

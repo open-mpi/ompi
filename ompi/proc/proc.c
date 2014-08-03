@@ -115,7 +115,7 @@ int ompi_proc_init(void)
             opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
             /* add our arch to the modex */
-            OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_REMOTE, "OMPI_ARCH",
+            OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_REMOTE, OPAL_DSTORE_ARCH,
                                    &proc->super.proc_arch, OPAL_UINT32);
             if (OPAL_SUCCESS != ret) {
                 return ret;
@@ -154,7 +154,7 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     if (OMPI_SUCCESS != (ret = opal_dstore.fetch(opal_dstore_internal,
                                                  (opal_identifier_t*)&proc->super.proc_name,
-                                                 OMPI_RTE_NODE_ID, &myvals))) {
+                                                 OPAL_DSTORE_NODEID, &myvals))) {
         OPAL_LIST_DESTRUCT(&myvals);
         return ret;
     }
@@ -173,7 +173,7 @@ int ompi_proc_set_locality(ompi_proc_t *proc)
         OBJ_CONSTRUCT(&myvals, opal_list_t);
         if (OMPI_SUCCESS == opal_dstore.fetch(opal_dstore_internal,
                                               (opal_identifier_t*)&proc->super.proc_name,
-                                              OMPI_RTE_HOST_ID, &myvals)) {
+                                              OPAL_DSTORE_HOSTID, &myvals)) {
             kv = (opal_value_t*)opal_list_get_first(&myvals);
             vpid = kv->data.uint32;
             /* if this matches my host id, then we are on the same host,
@@ -269,7 +269,7 @@ int ompi_proc_complete_init(void)
                  * ALL modex info for this proc) will have no appreciable
                  * impact on launch scaling
                  */
-                OPAL_MODEX_RECV_VALUE(ret, OMPI_DB_HOSTNAME, (opal_proc_t*)&proc->super,
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_HOSTNAME, (opal_proc_t*)&proc->super,
                                       (char**)&(proc->super.proc_hostname), OPAL_STRING);
                 if (OPAL_SUCCESS != ret) {
                     errcode = ret;
@@ -290,7 +290,7 @@ int ompi_proc_complete_init(void)
             {
                 uint32_t *ui32ptr;
                 ui32ptr = &(proc->super.proc_arch);
-                OPAL_MODEX_RECV_VALUE(ret, "OMPI_ARCH", (opal_proc_t*)&proc->super,
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_ARCH, (opal_proc_t*)&proc->super,
                                       (void**)&ui32ptr, OPAL_UINT32);
                 if (OPAL_SUCCESS == ret) {
                     /* if arch is different than mine, create a new convertor for this proc */
@@ -522,7 +522,7 @@ int ompi_proc_refresh(void)
                  * ALL modex info for this proc) will have no appreciable
                  * impact on launch scaling
                  */
-                OPAL_MODEX_RECV_VALUE(ret, OMPI_DB_HOSTNAME, (opal_proc_t*)&proc->super,
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_HOSTNAME, (opal_proc_t*)&proc->super,
                                       (char**)&(proc->super.proc_hostname), OPAL_STRING);
                 if (OMPI_SUCCESS != ret) {
                     break;
@@ -541,7 +541,7 @@ int ompi_proc_refresh(void)
             {
                 /* get the remote architecture */
                 uint32_t* uiptr = &(proc->super.proc_arch);
-                OPAL_MODEX_RECV_VALUE(ret, "OMPI_ARCH", (opal_proc_t*)&proc->super,
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_ARCH, (opal_proc_t*)&proc->super,
                                       (void**)&uiptr, OPAL_UINT32);
                 if (OMPI_SUCCESS != ret) {
                     break;
@@ -794,7 +794,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 OBJ_CONSTRUCT(&myvals, opal_list_t);
                 rc = opal_dstore.fetch(opal_dstore_internal,
                                        (opal_identifier_t*)&new_name,
-                                       "OMPI_ARCH", &myvals);
+                                       OPAL_DSTORE_ARCH, &myvals);
                 if( OPAL_SUCCESS == rc ) {
                     kv = (opal_value_t*)opal_list_get_first(&myvals);
                     new_arch = kv->data.uint32;
@@ -810,7 +810,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                     OBJ_CONSTRUCT(&myvals, opal_list_t);
                     rc = opal_dstore.fetch(opal_dstore_internal,
                                            (opal_identifier_t*)&new_name,
-                                           OMPI_DB_HOSTNAME, &myvals);
+                                           OPAL_DSTORE_HOSTNAME, &myvals);
                     if( OPAL_SUCCESS == rc ) {
                         kv = (opal_value_t*)opal_list_get_first(&myvals);
                         new_hostname = strdup(kv->data.string);
