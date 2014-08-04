@@ -12,6 +12,8 @@
  *                         reserved. 
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -575,7 +577,7 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
     }
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if (proc->proc_arch != ompi_proc_local()->proc_arch) {
+    if (proc->super.proc_arch != ompi_proc_local()->super.proc_arch) {
         ompi_datatype_t *primitive_datatype = NULL;
         uint32_t primitive_count;
         size_t buflen;
@@ -601,7 +603,7 @@ static inline int osc_rdma_accumulate_buffer (void *target, void *source, size_t
                                    count, op);
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if (proc->proc_arch != ompi_proc_local()->proc_arch) {
+    if (proc->super.proc_arch != ompi_proc_local()->super.proc_arch) {
         free(buffer);
     }
 #endif
