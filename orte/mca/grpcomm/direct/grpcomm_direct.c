@@ -43,7 +43,7 @@ static int allgather(orte_vpid_t *vpids,
                      void *cbdata);
 
 /* Module def */
-orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
+orte_grpcomm_base_module_t orte_grpcomm_direct_module = {
     init,
     finalize,
     xcast,

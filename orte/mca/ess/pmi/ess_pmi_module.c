@@ -161,7 +161,7 @@ static int rte_init(void)
         ret = ORTE_ERR_NOT_FOUND;
         goto error;
     }
-    ORTE_PROC_MY_NAME->jobid = strtoul(kv->data.string, NULL, 10);
+    ORTE_PROC_MY_NAME->jobid = kv->data.uint32;
     OBJ_RELEASE(kv);
 
     /* get our global rank from PMI */
@@ -174,7 +174,7 @@ static int rte_init(void)
     OBJ_RELEASE(kv);
 
     /* get our local rank from PMI */
-    if (!opal_pmix.get_attr(PMIX_LOCAL_RANK, &kv)) {
+    if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
         error = "getting local rank";
         ret = ORTE_ERR_NOT_FOUND;
         goto error;
@@ -182,14 +182,7 @@ static int rte_init(void)
     orte_process_info.my_local_rank = (orte_local_rank_t)kv->data.uint16;
     OBJ_RELEASE(kv);
 
-    /* get our node rank from PMI */
-    if (!opal_pmix.get_attr(PMIX_NODE_RANK, &kv)) {
-        error = "getting node rank";
-        ret = ORTE_ERR_NOT_FOUND;
-        goto error;
-    }
-    orte_process_info.my_node_rank = (orte_local_rank_t)kv->data.uint16;
-    OBJ_RELEASE(kv);
+    orte_process_info.my_node_rank = orte_process_info.my_local_rank;
 
     /* get universe size */
     if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
@@ -209,7 +202,7 @@ static int rte_init(void)
 
 
     /* get our app number from PMI - ok if not found */
-    if (opal_pmix.get_attr(PMIX_RANK, &kv)) {
+    if (opal_pmix.get_attr(PMIX_APPNUM, &kv)) {
         orte_process_info.app_num = kv->data.uint32;
         OBJ_RELEASE(kv);
     } else {
@@ -241,6 +234,9 @@ static int rte_init(void)
      */
     ORTE_PROC_MY_DAEMON->jobid = 0;
     ORTE_PROC_MY_DAEMON->vpid = 0;
+
+    /* ensure we pick the correct critical components */
+    putenv("OMPI_MCA_routed=direct");
 
     /* now use the default procedure to finish my setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {
