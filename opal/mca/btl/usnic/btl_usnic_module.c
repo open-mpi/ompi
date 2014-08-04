@@ -263,7 +263,7 @@ static int add_procs_create_ahs(opal_btl_usnic_module_t *module,
                          EHOSTUNREACH == errno) {
                     add_procs_warn_ah_fail(module, endpoints[i]);
 
-                    OBJ_RELEASE(endpoints[i]);
+                    opal_btl_usnic_release_endpoint(module, endpoints[i]);
                     endpoints[i] = NULL;
                     --num_ah_left;
                 }
@@ -317,7 +317,7 @@ static int add_procs_create_ahs(opal_btl_usnic_module_t *module,
         if (NULL != endpoints[i]) {
             if (OPAL_SUCCESS != ret ||
                 NULL == endpoints[i]->endpoint_remote_ah) {
-                OBJ_RELEASE(endpoints[i]);
+                opal_btl_usnic_release_endpoint(module, endpoints[i]);
                 endpoints[i] = NULL;
             } else {
                 ++num_created;
@@ -402,7 +402,7 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
        reachable. */
     for (size_t i = 0; i < nprocs; ++i) {
         if (NULL != endpoints[i]) {
-            OBJ_RELEASE(endpoints[i]);
+            opal_btl_usnic_release_endpoint(module, endpoints[i]);
             endpoints[i] = NULL;
         }
     }
@@ -451,7 +451,7 @@ static int usnic_del_procs(struct mca_btl_base_module_t *base_module,
                     }
 
                     /* We're all done with this endpoint */
-                    OBJ_RELEASE(endpoint);
+                    opal_btl_usnic_release_endpoint(module, endpoint);
 
                     break;  /* done once we found match */
                 }
