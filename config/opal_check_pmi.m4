@@ -28,33 +28,22 @@
 # OPAL_CHECK_CRAY_PMI(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
-    AC_ARG_WITH([pmi],
-                [AC_HELP_STRING([--with-pmi=cray],
-                                [Build Cray PMI support. Use PKG_CONFIG_PATH variable for path specification (default: no)])],
-                                [], with_pmi=no)
 
     # set defaults
     opal_have_pmi1=0
     opal_enable_pmi2=0
 
-    AC_MSG_CHECKING([if user requested Cray PMI support])
-    AS_IF([test "$with_pmi" = "cray"],
-          [AC_MSG_RESULT([yes])
-           AC_MSG_CHECKING([Looking to see if Cray PMI package is installed])
-           PKG_CHECK_MODULES([CRAY_PMI], [cray-pmi],
-                             [$1_LDFLAGS="$CRAY_PMI_LIBS"
-                              $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
-                              $1_LIBS="$1_LDFLAGS"
-                              opal_have_pmi1=1
-                              opal_enable_pmi2=1
-                              $2],
-                             [AC_MSG_RESULT([no])
-                              AC_MSG_WARN([Cray PMI support requested (via --with-pmi=cray) but not found.])
-                              AC_MSG_ERROR([Aborting.])
-                              $3])],
-          [AC_MSG_RESULT([no])
-           $3])
-
+    AC_MSG_CHECKING([if Cray PMI package is installed])
+    PKG_CHECK_MODULES([CRAY_PMI], [cray-pmi],
+                      [$1_LDFLAGS="$CRAY_PMI_LIBS"
+                       $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
+                       $1_LIBS="$1_LDFLAGS"
+                        opal_have_pmi1=1
+                        opal_enable_pmi2=1
+                        $2],
+                       [AC_MSG_RESULT([no])
+                        AC_MSG_WARN([Cray PMI not found.])
+                        $3])
    AC_DEFINE_UNQUOTED([WANT_PMI_SUPPORT],
                       [$opal_enable_pmi],
                       [Whether we want PMI support])
@@ -78,6 +67,7 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_pmi_rpath=
     opal_have_pmi2=0
     opal_have_pmi1=0
+    opal_check_pmi_cray_good=0
 
     # save flags
     opal_check_pmi_$1_save_CPPFLAGS="$CPPFLAGS"
@@ -89,13 +79,15 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_check_pmi_$1_CPPFLAGS=
     opal_check_pmi_$1_LIBS=
 
-if test "$with_pmi" = "cray"; then
+    AC_CHECK_PROG([PKG_CONFIG], [pkg-config])
+if test -n "$PKG_CONFIG" -a "$with_pmi" != "no"; then
     OPAL_CHECK_CRAY_PMI([$1],[opal_check_pmi_cray_good=1],[opal_check_pmi_cray_good=0])
-    AS_IF([test "$opal_check_pmi_cray_good" = 1],
-          [$2], [$3])
-else
+    AS_IF([test "$opal_check_pmi_cray_good" = "1"],
+          [$2], 
+          [$3])
+fi
+if test "$opal_check_pmi_cray_good" = "0"; then
     AC_MSG_CHECKING([if user requested PMI support])
-    opal_have_pmi_support=no
     AS_IF([test "$with_pmi" = "no"],
           [AC_MSG_RESULT([no])
            $3],
