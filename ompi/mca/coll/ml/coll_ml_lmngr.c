@@ -207,7 +207,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
     if((errno = posix_memalign(&lmngr->base_addr, 
                     lmngr->list_alignment, 
                     lmngr->list_size * lmngr->list_block_size)) != 0) {
-        ML_ERROR(("Failed to allocate memory: %s [%d]", errno, strerror(errno)));
+        ML_ERROR(("Failed to allocate memory: %d [%s]", errno, strerror(errno)));
         return OMPI_ERROR;
     }
     lmngr->alloc_base = lmngr->base_addr;
@@ -215,7 +215,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
     lmngr->alloc_base =
         malloc(lmngr->list_size * lmngr->list_block_size + lmngr->list_alignment);
     if(NULL == lmngr->alloc_base) {
-        ML_ERROR(("Failed to allocate memory: %s [%d]", errno, strerror(errno)));
+        ML_ERROR(("Failed to allocate memory: %d [%s]", errno, strerror(errno)));
         return OMPI_ERROR;
     }
 
@@ -230,7 +230,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
         ML_VERBOSE(7, ("Call registration for resource index %d", i));
         rc = lmngr_register(lmngr, nc);
         if (OMPI_SUCCESS != rc) {
-            ML_ERROR(("Failed to lmngr register: %s [%d]", errno, strerror(errno)));
+            ML_ERROR(("Failed to lmngr register: %d [%s]", errno, strerror(errno)));
             return rc;
         }
     }
@@ -297,7 +297,7 @@ int mca_coll_ml_lmngr_append_nc(mca_coll_ml_lmngr_t *lmngr, bcol_base_network_co
        if we do have - do not do anything, just return success
      */
     if (OPAL_UNLIKELY(MCA_COLL_ML_MAX_REG_INFO == lmngr->n_resources)) {
-        ML_ERROR(("MPI overflows maximum supported network contexts is %d"));
+        ML_ERROR(("MPI overflows maximum supported network contexts is %d", MCA_COLL_ML_MAX_REG_INFO));
         return OMPI_ERROR;
     }
 
