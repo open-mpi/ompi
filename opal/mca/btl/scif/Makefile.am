@@ -35,7 +35,7 @@ scif_SOURCES = \
         btl_scif_get.c \
         btl_scif.h
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_scif_la_SOURCES = $(scif_SOURCES)
 nodist_mca_btl_scif_la_SOURCES = $(scif_nodist_SOURCES)

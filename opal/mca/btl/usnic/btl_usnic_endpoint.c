@@ -85,7 +85,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
      * due to timeout
      */
     OBJ_CONSTRUCT(&endpoint->endpoint_hotel, opal_hotel_t);
-    opal_hotel_init(&endpoint->endpoint_hotel, 
+    opal_hotel_init(&endpoint->endpoint_hotel,
                     WINDOW_SIZE,
                     mca_btl_usnic_component.retrans_timeout,
                     0,
@@ -102,7 +102,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     assert(NULL != endpoint->endpoint_rx_frag_info);
     if (OPAL_UNLIKELY(endpoint->endpoint_rx_frag_info == NULL)) {
         BTL_ERROR(("calloc returned NULL -- this should not happen!"));
-        opal_btl_usnic_exit();
+        opal_btl_usnic_exit(endpoint->endpoint_module);
         /* Does not return */
     }
 }
@@ -118,8 +118,10 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* Remove this endpoint from module->all_endpoints list, then
        destruct the list_item_t */
+    opal_mutex_lock(&endpoint->endpoint_module->all_endpoints_lock);
     opal_list_remove_item(&endpoint->endpoint_module->all_endpoints,
                           &endpoint->endpoint_endpoint_li);
+    opal_mutex_unlock(&endpoint->endpoint_module->all_endpoints_lock);
     OBJ_DESTRUCT(&(endpoint->endpoint_endpoint_li));
 
     if (endpoint->endpoint_hotel.rooms != NULL) {
@@ -147,7 +149,7 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 }
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_endpoint_t,
-                   opal_list_item_t, 
+                   opal_list_item_t,
                    endpoint_construct,
                    endpoint_destruct);
 
@@ -166,7 +168,7 @@ opal_btl_usnic_flush_endpoint(
         frag = (opal_btl_usnic_send_frag_t *)opal_list_remove_first(
                 &endpoint->endpoint_frag_send_queue);
 
-        /* _cond still needs to check ownership, but make sure the 
+        /* _cond still needs to check ownership, but make sure the
          * fragment is marked as done.
          */
         frag->sf_ack_bytes_left = 0;

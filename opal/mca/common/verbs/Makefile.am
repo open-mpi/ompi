@@ -23,7 +23,7 @@ sources = \
 	common_verbs_port.c \
 	common_verbs_qp_type.c
 
-dist_ompidata_DATA = \
+dist_opaldata_DATA = \
         help-opal-common-verbs.txt
 
 # To simplify components that link to this library, we will *always*
@@ -58,10 +58,10 @@ libmca_common_verbs_noinst_la_SOURCES = $(libmca_common_verbs_la_SOURCES)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(ompiincludedir)/ompi/mca/common/verbs
-ompi_HEADERS = $(headers)
+opaldir = $(opalincludedir)/opal/mca/common/verbs
+opal_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+opaldir = $(includedir)
 endif
 
 # These two rules will sym link the "noinst" libtool library filename

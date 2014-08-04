@@ -44,18 +44,16 @@
 # Header files
 
 headers = \
-        common_sm_rml.h \
         common_sm.h
 
 # Source files
 
 sources = \
-        common_sm_rml.c \
         common_sm.c
 
 # Help file
 
-dist_ompidata_DATA = help-mpi-common-sm.txt
+dist_opaldata_DATA = help-mpi-common-sm.txt
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules

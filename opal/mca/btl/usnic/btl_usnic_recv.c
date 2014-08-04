@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +45,7 @@
 
 
 /*
- * We have received a segment, take action based on the 
+ * We have received a segment, take action based on the
  * packet type in the BTL header
  */
 void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
@@ -79,8 +79,8 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
         /* No idea who this was from, so drop it */
 #if MSGDEBUG1
         opal_output(0, "=== Unknown sender; dropped: from MAC %s to MAC %s, seq %" UDSEQ, 
-                    src_mac, 
-                    dest_mac, 
+                    src_mac,
+                    dest_mac,
                     bseg->us_btl_header->pkt_seq);
 #endif
         ++module->stats.num_unk_recvs;
@@ -149,7 +149,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
          */
         } else {
 #if MSGDEBUG1
-            opal_output(0, "Copy %d PUT bytes to %p\n", 
+            opal_output(0, "Copy %d PUT bytes to %p\n",
                 seg->rs_base.us_btl_header->payload_len,
                 (void*)seg->rs_base.us_btl_header->put_addr);
 #endif
@@ -330,7 +330,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
     /***********************************************************************/
     /* Frag is an incoming ACK */
-    else if (OPAL_LIKELY(OPAL_BTL_USNIC_PAYLOAD_TYPE_ACK == 
+    else if (OPAL_LIKELY(OPAL_BTL_USNIC_PAYLOAD_TYPE_ACK ==
                          bseg->us_btl_header->payload_type)) {
         opal_btl_usnic_seq_t ack_seq;
 

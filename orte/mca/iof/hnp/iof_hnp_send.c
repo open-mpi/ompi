@@ -37,7 +37,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/iof/iof.h"
@@ -97,7 +97,7 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
     if (ORTE_PROC_MY_NAME->jobid == host->jobid &&
         ORTE_VPID_WILDCARD == host->vpid) {
         /* xcast this to everyone - the local daemons will know how to handle it */
-        orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, buf, ORTE_RML_TAG_IOF_PROXY);
+        orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid, buf, ORTE_RML_TAG_IOF_PROXY);
         OBJ_RELEASE(buf);
         return ORTE_SUCCESS;
     }

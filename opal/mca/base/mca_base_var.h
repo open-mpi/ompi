@@ -606,7 +606,7 @@ OPAL_DECLSPEC int mca_base_var_find_by_name (const char *full_name, int *vari);
  * not default values).
  *
  * Note that opal_show_help() allows itself to be hooked, so if this
- * happens after the aggregated orte_show_help() system is
+ * happens after the aggregated opal_show_help() system is
  * initialized, the messages will be aggregated (w00t).
  *
  * @returns OPAL_ERR_BAD_VAR if the two variables have sources that

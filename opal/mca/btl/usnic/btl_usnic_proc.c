@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 #include "opal/util/arch.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_proc.h"
@@ -95,7 +96,7 @@ static void proc_destruct(opal_btl_usnic_proc_t* proc)
 
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_proc_t,
-                   opal_list_item_t, 
+                   opal_list_item_t,
                    proc_construct,
                    proc_destruct);
 
@@ -138,6 +139,7 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
     MSGDEBUG1_OUT("lookup_endpoint: recvmodule=%p sendhash=0x%" PRIx64,
                   (void *)receiver, sender_hashed_rte_name);
 
+    opal_mutex_lock(&receiver->all_endpoints_lock);
     for (item = opal_list_get_first(&receiver->all_endpoints);
          item != opal_list_get_end(&receiver->all_endpoints);
          item = opal_list_get_next(item)) {
@@ -152,9 +154,11 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
         if (proc->proc_opal->proc_name == sender_proc_name) {
             MSGDEBUG1_OUT("lookup_endpoint: matched endpoint=%p",
                           (void *)endpoint);
+            opal_mutex_unlock(&receiver->all_endpoints_lock);
             return endpoint;
         }
     }
+    opal_mutex_unlock(&receiver->all_endpoints_lock);
 
     /* Didn't find it */
     return NULL;
@@ -168,7 +172,7 @@ opal_btl_usnic_proc_lookup_endpoint(opal_btl_usnic_module_t *receiver,
  * Returns OPAL_ERR_UNREACH if we can't reach the peer (i.e., we can't
  * find their modex data).
  */
-static int create_proc(opal_proc_t *opal_proc, 
+static int create_proc(opal_proc_t *opal_proc,
                        opal_btl_usnic_proc_t **usnic_proc)
 {
     opal_btl_usnic_proc_t *proc = NULL;
@@ -188,9 +192,8 @@ static int create_proc(opal_proc_t *opal_proc,
     proc->proc_opal = opal_proc;
 
     /* query for the peer address info */
-    rc = opal_modex_recv(&mca_btl_usnic_component.super.btl_version,
-                         opal_proc, (void*)&proc->proc_modex,
-                         &size);
+    OPAL_MODEX_RECV(rc, &mca_btl_usnic_component.super.btl_version,
+                    opal_proc, (uint8_t**)&proc->proc_modex, &size);
 
     /* If this proc simply doesn't have this key, then they're not
        running the usnic BTL -- just ignore them.  Otherwise, show an
@@ -213,7 +216,7 @@ static int create_proc(opal_proc_t *opal_proc,
     if ((size % sizeof(opal_btl_usnic_addr_t)) != 0) {
         char msg[1024];
 
-        snprintf(msg, sizeof(msg), 
+        snprintf(msg, sizeof(msg),
                  "sizeof(modex for peer %s data) == %d, expected multiple of %d",
                  OPAL_NAME_PRINT(opal_proc->proc_name),
                  (int) size, (int) sizeof(opal_btl_usnic_addr_t));
@@ -250,7 +253,7 @@ static int create_proc(opal_proc_t *opal_proc,
         return OPAL_ERR_BAD_PARAM;
     }
 
-    proc->proc_modex_claimed = (bool*) 
+    proc->proc_modex_claimed = (bool*)
         calloc(proc->proc_modex_count, sizeof(bool));
     if (NULL == proc->proc_modex_claimed) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
@@ -702,8 +705,10 @@ opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
     OBJ_RETAIN(proc);
 
     /* also add endpoint to module's list of endpoints */
+    opal_mutex_lock(&module->all_endpoints_lock);
     opal_list_append(&(module->all_endpoints),
             &(endpoint->endpoint_endpoint_li));
+    opal_mutex_unlock(&module->all_endpoints_lock);
 
     *endpoint_o = endpoint;
     return OPAL_SUCCESS;

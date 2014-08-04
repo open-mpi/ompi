@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = base/help-mpi-btl-base.txt
+dist_opaldata_DATA = base/help-mpi-btl-base.txt
 
 headers += \
         base/base.h \

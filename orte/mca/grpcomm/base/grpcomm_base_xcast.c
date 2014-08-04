@@ -45,6 +45,45 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
 
+int orte_grpcomm_base_xcast(orte_jobid_t job,
+                            opal_buffer_t *buffer,
+                            orte_rml_tag_t tag)
+{
+    int rc = ORTE_SUCCESS;
+    opal_buffer_t *buf;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                         "%s grpcomm:base:xcast sent to job %s tag %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(job), (long)tag));
+    
+    /* if there is no message to send, then just return ok */
+    if (NULL == buffer) {
+        return ORTE_SUCCESS;
+    }
+    
+    /* prep the output buffer */
+    buf = OBJ_NEW(opal_buffer_t);
+    
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_xcast(job, buf, buffer, tag))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    /* send it to the HNP (could be myself) for relay */
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_XCAST,
+                                          orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        goto CLEANUP;
+    }
+    rc = ORTE_SUCCESS;
+    
+CLEANUP:
+    return rc;
+}
+
+
 void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
                                   opal_buffer_t* buffer, orte_rml_tag_t tag,
                                   void* cbdata)
@@ -57,9 +96,9 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     opal_buffer_t wireup;
     opal_byte_object_t *bo;
     int8_t flag;
-    orte_grpcomm_collective_t coll;
     orte_job_t *jdata;
     orte_proc_t *rec;
+    opal_list_t coll;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:xcast:recv: with %d bytes",
@@ -144,13 +183,13 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
 
  relay:
     /* setup the relay list */
-    OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+    OBJ_CONSTRUCT(&coll, opal_list_t);
 
     /* get the list of next recipients from the routed module */
-    orte_routed.get_routing_list(ORTE_GRPCOMM_XCAST, &coll);
+    orte_routed.get_routing_list(&coll);
 
     /* if list is empty, no relay is required */
-    if (opal_list_is_empty(&coll.targets)) {
+    if (opal_list_is_empty(&coll)) {
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                              "%s orte:daemon:send_relay - recipient list is empty!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -158,7 +197,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
     }
     
     /* send the message to each recipient on list, deconstructing it as we go */
-    while (NULL != (item = opal_list_remove_first(&coll.targets))) {
+    while (NULL != (item = opal_list_remove_first(&coll))) {
         nm = (orte_namelist_t*)item;
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,

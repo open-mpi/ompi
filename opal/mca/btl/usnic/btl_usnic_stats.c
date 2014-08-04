@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,7 +84,7 @@ void opal_btl_usnic_print_stats(
     /* The usuals */
     snprintf(str, sizeof(str), "%s:MCW:%3u, ST(P+D)/F/C/R(T+F)/A:%8lu(%8u+%8u)/%8lu/%8lu/%4lu(%4lu+%4lu)/%8lu, RcvTot/Chk/F/C/L/H/D/BF/A:%8lu/%c%c/%8lu/%8lu/%4lu+%2lu/%4lu/%4lu/%6lu OA/DA %4lu/%4lu CRC:%4lu ",
              prefix,
-             ((orte_process_name_t*)&opal_proc_local_get()->proc_name)->vpid,
+             opal_process_name_vpid(opal_proc_local_get()->proc_name),
 
              module->stats.num_total_sends,
              module->mod_channels[USNIC_PRIORITY_CHANNEL].num_channel_sends,
@@ -133,6 +133,7 @@ void opal_btl_usnic_print_stats(
         rd_min = su_min = WINDOW_SIZE * 2;
         rd_max = su_max = 0;
 
+        opal_mutex_lock(&module->all_endpoints_lock);
         item = opal_list_get_first(&module->all_endpoints);
         while (item != opal_list_get_end(&(module->all_endpoints))) {
             endpoint = container_of(item, mca_btl_base_endpoint_t,
@@ -156,6 +157,7 @@ void opal_btl_usnic_print_stats(
             if (recv_depth > rd_max) rd_max = recv_depth;
             if (recv_depth < rd_min) rd_min = recv_depth;
         }
+        opal_mutex_unlock(&module->all_endpoints_lock);
         snprintf(tmp, sizeof(tmp), "PML S:%1ld, Win!A/R:%4ld/%4ld %4ld/%4ld",
                  module->stats.pml_module_sends,
                  su_min, su_max,
@@ -427,7 +429,7 @@ static void setup_mpit_pvars_enum(void)
        into private storage, so we don't need them any more) */
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
         free((char*) devices[i].string);
-    }    
+    }
 
     /* The devices_enum has been RETAIN'ed by the pvar, so we can
        RELEASE it here, and the enum will be destroyed when the pvar

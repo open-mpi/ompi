@@ -29,8 +29,8 @@ libmca_btl_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-ompidir = $(ompiincludedir)/$(subdir)
-nobase_ompi_HEADERS = $(headers)
+opaldir = $(opalincludedir)/$(subdir)
+nobase_opal_HEADERS = $(headers)
 endif
 
 include base/Makefile.am

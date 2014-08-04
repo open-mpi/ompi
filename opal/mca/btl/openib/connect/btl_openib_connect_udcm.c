@@ -5,6 +5,8 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -2215,7 +2217,6 @@ static int udcm_xrc_start_connect (opal_btl_openib_connect_base_module_t *cpc,
                                    mca_btl_base_endpoint_t *lcl_ep)
 {
     udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
-    udcm_module_t *m = UDCM_ENDPOINT_MODULE(lcl_ep);
     int rc = OPAL_SUCCESS;
 
     opal_mutex_lock (&udep->udep_lock);
@@ -2311,7 +2312,7 @@ static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
     uint32_t psn;
     int ret;
 
-    BTL_VERBOSE(("Connecting send qp: %d, remote qp: %d", lcl_ep->qps[0].qp->lcl_qp,
+    BTL_VERBOSE(("Connecting send qp: %p, remote qp: %d", (void *)lcl_ep->qps[0].qp->lcl_qp,
                  msg_hdr->data.xres.rem_qp_num));
     assert(NULL != lcl_ep->qps);
     qp = lcl_ep->qps[0].qp->lcl_qp;

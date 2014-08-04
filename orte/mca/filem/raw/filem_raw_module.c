@@ -51,7 +51,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/rml.h"
 
 #include "orte/mca/filem/filem.h"
@@ -870,8 +870,8 @@ static void send_chunk(int fd, short argc, void *cbdata)
     }
 
     /* xcast this chunk to all daemons */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid,
-                                                 &chunk, ORTE_RML_TAG_FILEM_BASE))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid,
+                                                      &chunk, ORTE_RML_TAG_FILEM_BASE))) {
         ORTE_ERROR_LOG(rc);
         close(fd);
         return;

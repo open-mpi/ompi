@@ -232,7 +232,7 @@ typedef uint16_t opal_btl_usnic_seq_t;
 /**
  * Register the usnic BTL MCA params
  */
-int opal_btl_usnic_component_register(void); 
+int opal_btl_usnic_component_register(void);
 
 /**
  * Routine which can be called from a debugger to print module, endpoint,

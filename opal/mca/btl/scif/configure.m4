@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 #
@@ -10,13 +10,14 @@
 #
 
 AC_DEFUN([MCA_opal_btl_scif_CONFIG],[
+    OPAL_VAR_SCOPE_PUSH([opal_btl_scif_happy])
     AC_CONFIG_FILES([opal/mca/btl/scif/Makefile])
 
     AC_ARG_WITH([scif], [AC_HELP_STRING([--with-scif(=DIR)]),
 		[Build with SCIF, searching for headers in DIR])])
     OPAL_CHECK_WITHDIR([scif], [$with_scif], [include/scif.h])
 
-    btl_scif_happy="no"
+    opal_btl_scif_happy="no"
 
     if test "$with_scif" != "no" ; then
 	if test -n "$with_scif" -a "$with_scif" != "yes" ; then
@@ -24,17 +25,18 @@ AC_DEFUN([MCA_opal_btl_scif_CONFIG],[
 	fi
 
 	OPAL_CHECK_PACKAGE([btl_scif], [scif.h], [scif], [scif_open], [],
-	                   [$ompi_check_scif_dir], [], [btl_scif_happy="yes"], [])
+	                   [$opal_check_scif_dir], [], [opal_btl_scif_happy="yes"], [])
 
-	if test "$btl_scif_happy" != "yes" -a -n "$with_scif" ; then
+	if test "$opal_btl_scif_happy" != "yes" -a -n "$with_scif" ; then
 	    AC_MSG_ERROR([SCIF support requested but not found.  Aborting])
 	fi
     fi
 
-    AS_IF([test "$btl_scif_happy" = "yes"], [$1], [$2])
+    AS_IF([test "$opal_btl_scif_happy" = "yes"], [$1], [$2])
 
     # substitute in the things needed to build scif
     AC_SUBST([btl_scif_CPPFLAGS])
     AC_SUBST([btl_scif_LDFLAGS])
     AC_SUBST([btl_scif_LIBS])
+    OPAL_VAR_SCOPE_POP
 ])dnl

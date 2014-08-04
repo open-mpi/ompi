@@ -88,7 +88,6 @@ result in either lower performance or your job aborting.
   Server:          %s
   usNIC interface: %s (which is %s)
   Failure:         %s (%s:%d)
-  Description:     %s
 #
 [internal error after init]
 An internal error has occurred in the Open MPI usNIC BTL.  This is

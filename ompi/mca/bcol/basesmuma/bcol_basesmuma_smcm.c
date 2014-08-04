@@ -232,9 +232,9 @@ int bcol_basesmuma_smcm_allgather_connection(
         OPAL_LIST_FOREACH(item_ptr, peer_list, bcol_basesmuma_smcm_proc_item_t) {
             /* if the vpid/jobid/filename combination already exists in the list,
                then do not map this peer's file --- because you already have */
-            if (0 == ompi_rte_compare_name_fields(proc_temp->super.proc_name,
-                                                  &item_ptr->peer,
-                                                  OMPI_RTE_CMP_ALL) &&
+            if (0 == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
+                                                  OMPI_CAST_RTE_NAME(&proc_temp->super.proc_name),
+                                                  &item_ptr->peer) &&
                 0 == strcmp (item_ptr->sm_file.file_name, rem_file->file_name)) {
                 ++item_ptr->refcnt;
                 /* record file data */

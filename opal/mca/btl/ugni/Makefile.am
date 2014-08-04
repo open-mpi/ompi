@@ -40,7 +40,7 @@ ugni_SOURCES = \
         btl_ugni_smsg.c \
         btl_ugni_prepare.h
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_ugni_la_SOURCES = $(ugni_SOURCES)
 nodist_mca_btl_ugni_la_SOURCES = $(ugni_nodist_SOURCES)

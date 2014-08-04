@@ -29,5 +29,5 @@ libmca_mpool_la_SOURCES += \
         base/mpool_base_mem_cb.c \
 	base/mpool_base_tree.c
 
-dist_ompidata_DATA += \
+dist_opaldata_DATA += \
         base/help-mpool-base.txt

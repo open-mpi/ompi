@@ -59,10 +59,13 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_CMD_T OPAL_UINT8
 
 /* define some commands */
-#define PMIX_ABORT_CMD  1
-#define PMIX_FENCE_CMD  2
-#define PMIX_PUT_CMD    3
-#define PMIX_GET_CMD    4
+#define PMIX_ABORT_CMD    1
+#define PMIX_FENCE_CMD    2
+#define PMIX_FENCENB_CMD  3
+#define PMIX_PUT_CMD      4
+#define PMIX_GET_CMD      5
+#define PMIX_GETNB_CMD    6
+#define PMIX_LOCAL_INFO_CMD   7
 
 /* define some message types */
 #define PMIX_USOCK_IDENT  1

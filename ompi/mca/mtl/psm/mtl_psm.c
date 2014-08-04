@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -23,8 +23,8 @@
 
 #include "ompi_config.h"
 
+#include "opal/mca/pmix/pmix.h"
 #include "ompi/mca/mtl/mtl.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "opal/util/show_help.h"
 #include "ompi/proc/proc.h"
@@ -97,7 +97,8 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     unsigned long long *uu = (unsigned long long *) unique_job_key;
     char *generated_key;
     char env_string[256];
-    
+    int rc;
+
     generated_key = getenv("OMPI_MCA_orte_precondition_transports");
     memset(uu, 0, sizeof(psm_uuid_t));
     
@@ -173,10 +174,10 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ompi_mtl_psm.epid = epid;
     ompi_mtl_psm.mq   = mq;
 
-    if (OMPI_SUCCESS != 
-	ompi_modex_send( &mca_mtl_psm_component.super.mtl_version, 
-                             &ompi_mtl_psm.epid, 
-			     sizeof(psm_epid_t))) {
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
+                    &mca_mtl_psm_component.super.mtl_version, 
+                    &ompi_mtl_psm.epid, sizeof(psm_epid_t));
+    if (OPAL_SUCCESS != rc) {
 	opal_output(0, "Open MPI couldn't send PSM epid to head node process"); 
 	return OMPI_ERROR;
     }
@@ -316,7 +317,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 		for (j = 0; j < (int) nprocs; j++) {
 		  if (errs_out[j] == thiserr) {
                       opal_output(0, " %s", (NULL == procs[j]->super.proc_hostname) ?
-                                  "unknown" : procs[j]->proc_hostname);
+                                  "unknown" : procs[j]->super.proc_hostname);
 		  }
 		}
 		opal_output(0, "\n");

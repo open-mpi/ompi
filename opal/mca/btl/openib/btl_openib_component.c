@@ -18,7 +18,7 @@
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -83,6 +83,7 @@
 #include "opal/mca/common/verbs/common_verbs.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/mca/rte/rte.h"
 
@@ -438,8 +439,9 @@ static int btl_openib_modex_send(void)
     }
 
     /* All done -- send it! */
-    rc = opal_modex_send(&mca_btl_openib_component.super.btl_version,
-                         message, msg_size);
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
+                    &mca_btl_openib_component.super.btl_version,
+                    message, msg_size);
     free(message);
     opal_output(-1, "Modex sent!  %d calculated, %d actual\n", (int) msg_size, (int) (offset - message));
 
@@ -1935,8 +1937,26 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
         */
 
+        {
+            /* we need to read this MCA param at this point in case someone
+             * altered it via MPI_T */
+            int index;
+            mca_base_var_source_t source;
+            index = mca_base_var_find("opal","btl","openib","receive_queues");
+            if (index >= 0) {
+                if (OPAL_SUCCESS != (ret = mca_base_var_get_value(index, NULL, &source, NULL))) {
+                    BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d", 
+                               __FILE__, __LINE__));
+                    goto error;
+                } else {
+                    mca_btl_openib_component.receive_queues_source = source;
+                }
+            }
+        }
+
         /* If the MCA param was specified, skip all the checks */
-        if (BTL_OPENIB_RQ_SOURCE_MCA ==
+        if ( MCA_BASE_VAR_SOURCE_COMMAND_LINE ||
+                MCA_BASE_VAR_SOURCE_ENV ==
             mca_btl_openib_component.receive_queues_source) {
             goto good;
         }
@@ -1955,7 +1975,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 mca_btl_openib_component.receive_queues =
                     strdup(values.receive_queues);
                 mca_btl_openib_component.receive_queues_source =
-                    BTL_OPENIB_RQ_SOURCE_DEVICE_INI;
+                    MCA_BASE_VAR_SOURCE_FILE;
             }
         }
 
@@ -2269,15 +2289,15 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 
     for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
-        if (OPAL_HAVE_HWLOC && ompi_rte_proc_is_bound) {
+        /* If we're not bound, just assume that the device is close. */
+        devs[i].distance = 0;
+#if OPAL_HAVE_HWLOC
+        if (opal_process_info.cpuset) {
             /* If this process is bound to one or more PUs, we can get
                an accurate distance. */
             devs[i].distance = get_ib_dev_distance(ib_devs[i]);
-        } else {
-            /* Since we're not bound, just assume that the device is
-               close. */
-            devs[i].distance = 0;
         }
+#endif
     }
 
     qsort(devs, count, sizeof(struct dev_distance), compare_distance);

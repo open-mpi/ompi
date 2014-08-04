@@ -37,21 +37,16 @@
 /* Static API's */
 static int init(void);
 static void finalize(void);
-static int xcast(orte_jobid_t job,
-                 opal_buffer_t *buffer,
-                 orte_rml_tag_t tag);
-static int pmi_allgather(orte_grpcomm_collective_t *coll);
-static int pmi_barrier(orte_grpcomm_collective_t *coll);
-static int modex(orte_grpcomm_collective_t *coll);
+static int pmi_allgather(void);
+static int pmi_barrier(void);
 
 /* Module def */
 orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
     init,
     finalize,
-    xcast,
+    orte_grpcomm_base_xcast,
     pmi_allgather,
-    pmi_barrier,
-    modex
+    pmi_barrier
 };
 
 /**
@@ -70,63 +65,19 @@ static void finalize(void)
     return;
 }
 
-/**
- *  A "broadcast-like" function to a job's processes.
- *  @param  jobid   The job whose processes are to receive the message
- *  @param  buffer  The data to broadcast
- */
-
-static int xcast(orte_jobid_t job,
-                 opal_buffer_t *buffer,
-                 orte_rml_tag_t tag)
-{
-    /* not used in this module */
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int pmi_barrier(orte_grpcomm_collective_t *coll)
-{
-    int rc;
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:pmi entering barrier",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* if I am alone, just execute the callback */
-    if (1 == orte_process_info.num_procs) {
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:pmi:barrier only one proc",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        coll->active = false;
-        if (NULL != coll->cbfunc) {
-            coll->cbfunc(NULL, coll->cbdata);
-        }
-        return ORTE_SUCCESS;
-    }
-    
-    if( OPAL_SUCCESS != (rc = opal_pmix.fence()) ){
-        return rc;
-    }
-
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:pmi barrier complete",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    /* execute the callback */
-    coll->active = false;
-    if (NULL != coll->cbfunc) {
-        coll->cbfunc(NULL, coll->cbdata);
-    }
-
-    return ORTE_SUCCESS;
-}
-
-static int pmi_allgather(orte_grpcomm_collective_t *coll)
+static int pmi_barrier(void)
 {
     /* not used in this implementation */
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
+static int pmi_allgather(void)
+{
+    /* not used in this implementation */
+    return ORTE_ERR_NOT_SUPPORTED;
+}
 
+#if 0
 /***   MODEX SECTION ***/
 static int modex(orte_grpcomm_collective_t *coll)
 {
@@ -146,7 +97,7 @@ static int modex(orte_grpcomm_collective_t *coll)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* need to barrier first to ensure that all procs have posted their data */
-    opal_pmix.fence();
+    opal_pmix.fence(NULL, 0);
 
     /* discover the local ranks */
     rc = opal_pmix.get_local_info(ORTE_PROC_MY_NAME->vpid, &local_ranks,
@@ -233,3 +184,4 @@ static int modex(orte_grpcomm_collective_t *coll)
     }
     return rc;
 }
+#endif

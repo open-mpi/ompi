@@ -90,7 +90,7 @@ struct opal_btl_usnic_proc_t;
  * This is the largest number of fragments that can possibly be in-flight
  * to us from a particular endpoint because eash chunked fragment will occupy
  * at least two segments, and only WINDOW_SIZE segments can be in flight.
- * OK, so there is an extremely pathological case where we could see 
+ * OK, so there is an extremely pathological case where we could see
  * (WINDOW_SIZE/2)+1 "in flight" at once, but just dropping that last one
  * and waiting for retrans is just fine in this hypothetical hyper-pathological
  * case, which is what we'll do.

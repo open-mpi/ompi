@@ -58,6 +58,8 @@
 #include "opal/mca/dstore/dstore.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
@@ -66,11 +68,55 @@
 #include "pmix_server.h"
 #include "pmix_server_internal.h"
 
+/* local classes for tracking collective ops */
+typedef struct {
+    opal_list_item_t super;
+    orte_process_name_t name;
+    uint32_t tag;
+} pmix_server_local_t;
+static OBJ_CLASS_INSTANCE(pmix_server_local_t,
+                          opal_list_item_t,
+                          NULL, NULL);
+typedef struct {
+    opal_list_item_t super;
+    orte_jobid_t jobid;
+    opal_identifier_t *signature;
+    orte_vpid_t nlocal;           // number of local procs in this collective
+    orte_vpid_t nprocs_reqd;      // total number of participating procs
+    orte_vpid_t nprocs_reported;  // #procs reported
+    opal_list_t locals;           // list of pmix_server_local_t
+} pmix_server_trk_t;
+static void trkcon(pmix_server_trk_t *p)
+{
+    p->jobid = ORTE_JOBID_INVALID;
+    p->signature = NULL;
+    p->nlocal = 0;
+    p->nprocs_reqd = 0;
+    p->nprocs_reported = 0;
+    OBJ_CONSTRUCT(&p->locals, opal_list_t);
+}
+static void trkdes(pmix_server_trk_t *p)
+{
+    if (NULL != p->signature) {
+        free(p->signature);
+    }
+    OPAL_LIST_DESTRUCT(&p->locals);
+}
+static OBJ_CLASS_INSTANCE(pmix_server_trk_t,
+                          opal_list_item_t,
+                          trkcon, trkdes);
+
 /*
  * Local utility functions
  */
 static void connection_handler(int incoming_sd, short flags, void* cbdata);
 static int pmix_server_start_listening(struct sockaddr_un *address);
+static void pmix_server_recv(int status, orte_process_name_t* sender,
+                             opal_buffer_t *buffer,
+                             orte_rml_tag_t tag, void *cbdata);
+static void pmix_server_release(int status, orte_process_name_t* sender,
+                                opal_buffer_t *buffer,
+                                orte_rml_tag_t tag, void *cbdata);
 
 char *pmix_server_mode = NULL;
 bool pmix_server_distribute_data = false;
@@ -83,6 +129,7 @@ static struct sockaddr_un address;
 static int pmix_server_listener_socket = -1;
 static bool pmix_server_listener_ev_active = false;
 static opal_event_t pmix_server_listener_event;
+static opal_list_t collectives;
 
 void pmix_server_register(void)
 {
@@ -124,6 +171,7 @@ int pmix_server_init(void)
     /* setup the servers's state variables */
     pmix_server_peers = OBJ_NEW(opal_hash_table_t);
     opal_hash_table_init(pmix_server_peers, 32);
+    OBJ_CONSTRUCT(&collectives, opal_list_t);
 
     if (NULL != pmix_server_mode && 0 == (strcmp(pmix_server_mode, "group"))) {
         pmix_server_distribute_data = true;
@@ -161,6 +209,16 @@ int pmix_server_init(void)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    /* setup recv for barriers - this will get replaced by
+     * more scalable collectives later */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLL,
+                            ORTE_RML_PERSISTENT, pmix_server_recv, NULL);
+
+    /* setup recv for barrier release - this will get replaced by
+     * more scalable collectives later */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_RELEASE,
+                            ORTE_RML_PERSISTENT, pmix_server_release, NULL);
+
     /* start listening for connection requests */
     if (ORTE_SUCCESS != (rc = pmix_server_start_listening(&address))) {
         OBJ_DESTRUCT(&pmix_server_peers);
@@ -187,9 +245,15 @@ void pmix_server_finalize(void)
     if (pmix_server_listener_ev_active) {
         opal_event_del(&pmix_server_listener_event);
     }
+    /* stop receives */
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLL);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_RELEASE);
 
     /* delete the rendezvous file */
     unlink(address.sun_path);
+
+    /* cleanup collectives */
+    OPAL_LIST_DESTRUCT(&collectives);
 
     /* cleanup all peers */
     if (OPAL_SUCCESS == opal_hash_table_get_first_key_uint64(pmix_server_peers, &ui64,
@@ -420,6 +484,353 @@ pmix_server_peer_t* pmix_server_peer_lookup(const orte_process_name_t *name)
     }
     return peer;
 }
+
+
+static pmix_server_trk_t* get_trk(orte_jobid_t jobid,
+                                  opal_identifier_t *sig,
+                                  size_t sz)
+{
+    pmix_server_trk_t *trk;
+    size_t i;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
+    orte_process_name_t name;
+
+    OPAL_LIST_FOREACH(trk, &collectives, pmix_server_trk_t) {
+        if (NULL == sig) {
+            /* see if the jobid matches */
+            if (jobid == trk->jobid) {
+                /* got it */
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s pmix:server found tracker for job %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_JOBID_PRINT(jobid));
+                return trk;
+            }
+        } else if (sz == trk->nprocs_reqd) {
+            if (0 == memcmp(sig, trk->signature, sz)) {
+                /* got it */
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s pmix:server found tracker for signature",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                return trk;
+            }
+        }
+    }
+
+    opal_output_verbose(2, pmix_server_output,
+                        "%s pmix:server adding new tracker for job %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_JOBID_PRINT(jobid));
+
+    /* get here if tracker not found */
+    trk = OBJ_NEW(pmix_server_trk_t);
+    trk->jobid = jobid;
+    opal_list_append(&collectives, &trk->super);
+    if (NULL != sig) {
+        trk->signature = (opal_identifier_t*)malloc(sz * sizeof(opal_identifier_t));
+        memcpy(trk->signature, sig, sz * sizeof(opal_identifier_t));
+        trk->nprocs_reqd = sz;
+        /* count how many of these procs are local to us */
+        for (i=0; i < sz; i++) {
+            memcpy(&name, &sig[i], sizeof(orte_process_name_t));
+            /* get the job object */
+            if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                continue;
+            }
+            /* get the proc object */
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, name.vpid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                continue;
+            }
+            if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
+                trk->nlocal++;
+            }
+        }
+    } else {
+        /* get the job object */
+        if (NULL == (jdata = orte_get_job_data_object(jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return NULL;
+        }
+        trk->nlocal = jdata->num_local_procs;
+        trk->nprocs_reqd = jdata->num_procs;
+    }
+    opal_output_verbose(2, pmix_server_output,
+                        "%s pmix:server tracker has %s local procs requires %s procs",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_VPID_PRINT(trk->nlocal),
+                        ORTE_VPID_PRINT(trk->nprocs_reqd));
+    return trk;
+}
+        
+static void pmix_server_recv(int status, orte_process_name_t* sender,
+                             opal_buffer_t *buffer,
+                             orte_rml_tag_t tg, void *cbdata)
+{
+    orte_process_name_t name;
+    int rc;
+    int32_t cnt;
+    size_t sz;
+    opal_identifier_t id, *sig = NULL;
+    pmix_server_trk_t *trk;
+    pmix_server_local_t *lcl;
+    uint32_t tag;
+    opal_buffer_t *reply;
+
+    opal_output_verbose(2, pmix_server_output,
+                        "%s pmix:server:recv msg recvd from %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender));
+
+    /* if this came from myself, then it's a relay for me to
+     * use for local tracking of completion */
+    if (ORTE_PROC_MY_NAME->jobid == sender->jobid &&
+        ORTE_PROC_MY_NAME->vpid == sender->vpid) {
+        /* unpack the id of the proc involved - must be one
+         * of my local children */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        memcpy(&name, &id, sizeof(orte_process_name_t));
+
+        /* unpack the tag the proc is listening on */
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &tag, &cnt, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+
+        /* unpack the #procs in this collective - if it's a zero, then
+         * that means everyone in the job is participating. If nonzero,
+         * then we have an array of proc names that are involved */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sz, &cnt, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        if (0 < sz) {
+            /* allocate space for the array */
+            sig = (opal_identifier_t*)malloc(sz * sizeof(opal_identifier_t));
+            /* unpack the array - the array is our signature for the collective */
+            cnt = sz;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, OPAL_UINT64))) {
+                ORTE_ERROR_LOG(rc);
+                if (NULL != sig) {
+                    free(sig);
+                }
+                return;
+            }
+        }
+        /* check for the tracker and create it if not found */
+        if (NULL == (trk = get_trk(name.jobid, sig, sz))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            if (NULL != sig) {
+                free(sig);
+            }
+            return;
+        }
+
+        /* I would only have received this if one of my local children
+         * is participating, so add them to the tracker so we know how
+         * to send a response back to them when the collective is complete */
+        lcl = OBJ_NEW(pmix_server_local_t);
+        lcl->name = name;
+        lcl->tag = tag;
+        opal_list_append(&trk->locals, &lcl->super);
+
+        /* increment the track counter */
+        trk->nprocs_reported++;
+        opal_output_verbose(2, pmix_server_output,
+                            "%s pmix:server %d reported for job %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (int)opal_list_get_size(&trk->locals),
+                            ORTE_JOBID_PRINT(name.jobid));
+
+        /* if locally complete, send to HNP if I'm a daemon - otherwise,
+         * see if we are done */
+        if (trk->nlocal == opal_list_get_size(&trk->locals)) {
+            reply = OBJ_NEW(opal_buffer_t);
+            /* pack the id of the sender in case the signature is NULL */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &id, 1, OPAL_UINT64))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                if (NULL != sig) {
+                    free(sig);
+                }
+                return;
+            }
+            /* pack the size of the signature */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sz, 1, OPAL_SIZE))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                if (NULL != sig) {
+                    free(sig);
+                }
+                return;
+            }
+            if (0 < sz) {
+                /* pack the signature, if given */
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, sig, sz, OPAL_UINT64))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(reply);
+                    free(sig);
+                    return;
+                }
+                free(sig);
+            }
+            if (ORTE_PROC_IS_DAEMON) {
+                /* pack the number of local procs that participated */
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &trk->nlocal, 1, ORTE_VPID))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(reply);
+                    return;
+                }
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s pmix:server locally complete - sending to %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_HNP));
+                orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, reply,
+                                        ORTE_RML_TAG_DAEMON_COLL,
+                                        orte_rml_send_callback, NULL);
+            } else {
+                if (trk->nprocs_reqd == trk->nprocs_reported) {
+                    /* send the release via xcast */
+                    orte_grpcomm_base_xcast(ORTE_PROC_MY_NAME->jobid, reply, ORTE_RML_TAG_COLL_RELEASE);
+                    OBJ_RELEASE(reply);
+                }
+            }
+        }
+        return;
+    }
+
+    /***   HNP   ***/
+
+    /* unpack the id of the proc involved in case the signature is NULL*/
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    memcpy(&name, &id, sizeof(orte_process_name_t));
+
+    /* unpack the #procs in this collective - if it's a zero, then
+     * that means everyone in the job is participating. If nonzero,
+     * then we have an array of proc names that are involved */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sz, &cnt, OPAL_SIZE))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    if (0 < sz) {
+        /* allocate space for the array */
+        sig = (opal_identifier_t*)malloc(sz * sizeof(opal_identifier_t));
+        /* unpack the array - the array is our signature for the collective */
+        cnt = sz;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            if (NULL != sig) {
+                free(sig);
+            }
+            return;
+        }
+    }
+    /* check for the tracker and create it if not found */
+    if (NULL == (trk = get_trk(name.jobid, sig, sz))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        if (NULL != sig) {
+            free(sig);
+        }
+        return;
+    }
+
+    /* unpack the number of procs reported in this message */
+
+    /* increment nprocs reported for collective */
+
+    /* if all procs reported */
+    if (trk->nprocs_reqd == trk->nprocs_reported) {
+        /* send the release via xcast */
+    }
+}
+
+static void pmix_server_release(int status, orte_process_name_t* sender,
+                                opal_buffer_t *buffer,
+                                orte_rml_tag_t tag, void *cbdata)
+{
+    orte_process_name_t name;
+    int rc;
+    int32_t cnt;
+    size_t sz;
+    opal_identifier_t id, *sig = NULL;
+    pmix_server_trk_t *trk;
+    pmix_server_local_t *lcl;
+    pmix_server_peer_t *peer;
+    opal_buffer_t *reply;
+
+    opal_output_verbose(2, pmix_server_output,
+                        "%s pmix:server:recv release recvd from %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender));
+
+    /* unpack the id of the proc involved in case the signature is NULL*/
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &id, &cnt, OPAL_UINT64))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    memcpy(&name, &id, sizeof(orte_process_name_t));
+
+    /* unpack the #procs in this collective - if it's a zero, then
+     * that means everyone in the job is participating. If nonzero,
+     * then we have an array of proc names that are involved */
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sz, &cnt, OPAL_SIZE))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    if (0 < sz) {
+        /* allocate space for the array */
+        sig = (opal_identifier_t*)malloc(sz * sizeof(opal_identifier_t));
+        /* unpack the array - the array is our signature for the collective */
+        cnt = sz;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sig, &cnt, OPAL_UINT64))) {
+            ORTE_ERROR_LOG(rc);
+            if (NULL != sig) {
+                free(sig);
+            }
+            return;
+        }
+    }
+    /* check for the tracker and create it if not found */
+    if (NULL == (trk = get_trk(name.jobid, sig, sz))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        if (NULL != sig) {
+            free(sig);
+        }
+        return;
+    }
+
+    /* for each local process, send the release */
+    reply = OBJ_NEW(opal_buffer_t); // just need a zero-byte message
+    OPAL_LIST_FOREACH(lcl, &trk->locals, pmix_server_local_t) {
+        OBJ_RETAIN(reply);
+        opal_output_verbose(2, pmix_server_output,
+                            "%s pmix:server:recv sending release to %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&lcl->name));
+        peer = pmix_server_peer_lookup(&lcl->name);
+        PMIX_SERVER_QUEUE_SEND(peer, lcl->tag, reply);
+    }
+    OBJ_RELEASE(reply);
+
+    /* release the tracker */
+    opal_list_remove_item(&collectives, &trk->super);
+    OBJ_RELEASE(trk);
+}
+
 
 /*
  * Routine for debugging to print the connection state and socket options

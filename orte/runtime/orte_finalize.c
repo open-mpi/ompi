@@ -70,8 +70,10 @@ int orte_finalize(void)
     /* close the ess itself */
     (void) mca_base_framework_close(&orte_ess_base_framework);
 
-    /* close the pmix framework */
-    (void)mca_base_framework_close(&opal_pmix_base_framework);
+    if (ORTE_PROC_IS_APP) {
+        /* close the pmix framework */
+        (void)mca_base_framework_close(&opal_pmix_base_framework);
+    }
 
     /* cleanup the process info */
     orte_proc_info_finalize();

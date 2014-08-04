@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,7 +115,6 @@ static int mca_btl_scif_send_frag (struct mca_btl_base_endpoint_t *endpoint,
                                    mca_btl_scif_base_frag_t *frag)
 {
     size_t size = frag->hdr.size;
-    uint8_t tag = frag->hdr.tag;
     unsigned char * restrict dst;
 
     BTL_VERBOSE(("btl/scif sending descriptor %p from %d -> %d. length = %" PRIu64, (void *) frag,

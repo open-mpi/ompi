@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,22 +74,11 @@ typedef int (*opal_compare_proc_fct_t)(const opal_process_name_t, const opal_pro
 OPAL_DECLSPEC extern opal_compare_proc_fct_t opal_compare_proc;
 
 OPAL_DECLSPEC extern char* (*opal_process_name_print)(const opal_process_name_t);
-OPAL_DECLSPEC extern int32_t (*opal_process_name_vpid)(const opal_process_name_t);
-OPAL_DECLSPEC extern int32_t (*opal_process_name_jobid)(const opal_process_name_t);
+OPAL_DECLSPEC extern uint32_t (*opal_process_name_vpid)(const opal_process_name_t);
+OPAL_DECLSPEC extern uint32_t (*opal_process_name_jobid)(const opal_process_name_t);
 
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
 #define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)
 #define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
-
-/**
- * Access to the modex.
- */
-OPAL_DECLSPEC extern int
-(*opal_modex_send)(const mca_base_component_t *source_component,
-                   const void *data, size_t size);
-OPAL_DECLSPEC extern int
-(*opal_modex_recv)(const mca_base_component_t *component,
-                   const opal_proc_t *proc,
-                   void **buffer, size_t *size);
 
 #endif  /* OPAL_PROC_H */

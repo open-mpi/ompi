@@ -104,7 +104,7 @@ portals4_open(void)
     mca_coll_portals4_component.eq_h = PTL_INVALID_HANDLE;
     mca_coll_portals4_component.barrier_unex_me_h = PTL_INVALID_HANDLE;
     mca_coll_portals4_component.finish_me_h = PTL_INVALID_HANDLE;
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     mca_coll_portals4_component.md_hs = NULL;
 #else
     mca_coll_portals4_component.md_h = PTL_INVALID_HANDLE;
@@ -136,7 +136,7 @@ portals4_close(void)
 
     OBJ_DESTRUCT(&mca_coll_portals4_component.requests);
 
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     if (NULL != mca_coll_portals4_component.md_hs) {
         int i;
         int num_mds = ompi_coll_portals4_get_num_mds();
@@ -312,12 +312,12 @@ portals4_init_query(bool enable_progress_threads,
 
     /* Bind MD/MDs across all memory.  We prefer (for obvious reasons)
        to have a single MD across all of memory */
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     {
         int i;
         int num_mds = ompi_coll_portals4_get_num_mds();
-        ptl_size_t size = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) - 1;
-        ptl_size_t offset_unit = (1ULL << OMPI_PORTALS4_MAX_MD_SIZE) / 2;
+        ptl_size_t size = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) - 1;
+        ptl_size_t offset_unit = (1ULL << OPAL_PORTALS4_MAX_MD_SIZE) / 2;
 
         mca_coll_portals4_component.md_hs = malloc(sizeof(ptl_handle_md_t) * num_mds);
         if (NULL == mca_coll_portals4_component.md_hs) {

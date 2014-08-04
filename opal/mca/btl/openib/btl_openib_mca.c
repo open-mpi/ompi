@@ -619,13 +619,13 @@ int btl_openib_register_mca_params(void)
     if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.cuda_have_gdr) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "CUDA_no_gdr_support", true,
-                       OPAL_PROC_MY_NAME);
+                       opal_proc_local_get()->proc_hostname);
         return OPAL_ERROR;
     }
     if (mca_btl_openib_component.cuda_want_gdr && !mca_btl_openib_component.driver_have_gdr) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "driver_no_gdr_support", true,
-                       OPAL_PROC_MY_NAME);
+                       opal_proc_local_get()->proc_hostname);
         return OPAL_ERROR;
     }
 #if OPAL_CUDA_GDR_SUPPORT
@@ -662,11 +662,8 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_string("receive_queues", NULL,
                      "Colon-delimited, comma-delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
                      default_qps, &mca_btl_openib_component.receive_queues,
-                     0));
-    mca_btl_openib_component.receive_queues_source =
-        (0 == strcmp(default_qps,
-                     mca_btl_openib_component.receive_queues)) ?
-        BTL_OPENIB_RQ_SOURCE_DEFAULT : BTL_OPENIB_RQ_SOURCE_MCA;
+                     0
+                ));
 
     CHECK(reg_string("if_include", NULL,
                      "Comma-delimited list of devices/ports to be used (e.g. \"mthca0,mthca1:2\"; empty value means to use all ports found).  Mutually exclusive with btl_openib_if_exclude.",
@@ -799,7 +796,7 @@ int btl_openib_verify_mca_params (void)
         mca_btl_openib_component.driver_have_gdr) {
         if (1 == mca_btl_openib_component.want_fork_support) {
               opal_show_help("help-mpi-btl-openib.txt", "no_fork_with_gdr",
-                             true, OPAL_PROC_MY_NAME);
+                             true, opal_proc_local_get()->proc_hostname);
               return OPAL_ERR_BAD_PARAM;
         }
         if (-1 == mca_btl_openib_component.want_fork_support) {

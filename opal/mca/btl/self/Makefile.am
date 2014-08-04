@@ -36,7 +36,7 @@ component_noinst = libmca_btl_self.la
 component_install =
 endif
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_self_la_SOURCES = $(libmca_btl_self_la_sources)
 mca_btl_self_la_LDFLAGS = -module -avoid-version

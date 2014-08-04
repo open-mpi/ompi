@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +21,7 @@
 #include "opal/mca/mpool/grdma/mpool_grdma.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
-#include "opal/proc/proc.h"
+#include "opal/util/proc.h"
 
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"

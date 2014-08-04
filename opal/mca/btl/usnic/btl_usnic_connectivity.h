@@ -82,7 +82,7 @@ struct opal_btl_usnic_module_t;
 /** @internal
  * This macro just makes the macros below a little easier to read.
  */
-#define ABORT(msg) opal_btl_usnic_util_abort((msg), __FILE__, __LINE__, 1)
+#define ABORT(msg) opal_btl_usnic_util_abort((msg), __FILE__, __LINE__)
 
 /**
  * Local IPC socket message types.  This value is either sent or
@@ -115,6 +115,7 @@ enum {
  * socket from the cclient to the cagent.
  */
 typedef struct {
+    void *module;
     uint32_t ipv4_addr;
     uint32_t cidrmask;
     uint32_t mtu;

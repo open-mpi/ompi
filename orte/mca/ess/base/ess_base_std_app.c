@@ -31,12 +31,16 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/dstore/base/base.h"
-#include "orte/util/show_help.h"
+#include "opal/util/arch.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
@@ -94,6 +98,17 @@ int orte_ess_base_app_setup(bool db_restrict_local)
             setvbuf(stdout, NULL, _IOFBF, 0);
             setvbuf(stderr, NULL, _IOFBF, 0);
         }
+    }
+
+    /* if I am an MPI app, we will let the MPI layer define and
+     * control the opal_proc_t structure. Otherwise, we need to
+     * do so here */
+    if (ORTE_PROC_NON_MPI) {
+        orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
+        orte_process_info.super.proc_hostname = strdup(orte_process_info.nodename);
+        orte_process_info.super.proc_flags = OPAL_PROC_ALL_LOCAL;
+        orte_process_info.super.proc_arch = opal_local_arch;
+        opal_proc_local_set(&orte_process_info.super);
     }
 
     /* get a separate orte event base */

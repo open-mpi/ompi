@@ -65,17 +65,10 @@ typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_jobid_t job,
                                                    orte_rml_tag_t tag);
 
 /* allgather - gather data from all procs */
-typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_grpcomm_collective_t *coll);
+typedef int (*orte_grpcomm_base_module_allgather_fn_t)(void);
 
 /* barrier function */
-typedef int (*orte_grpcomm_base_module_barrier_fn_t)(orte_grpcomm_collective_t *coll);
-
-/** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
- *  OF HOW THIS ALL WORKS
- */
-
-/* perform a modex operation */
-typedef int (*orte_grpcomm_base_module_modex_fn_t)(orte_grpcomm_collective_t *coll);
+typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
 
 /*
  * Ver 2.0
@@ -87,7 +80,6 @@ struct orte_grpcomm_base_module_2_0_0_t {
     orte_grpcomm_base_module_xcast_fn_t                 xcast;
     orte_grpcomm_base_module_allgather_fn_t             allgather;
     orte_grpcomm_base_module_barrier_fn_t               barrier;
-    orte_grpcomm_base_module_modex_fn_t                 modex;
 };
 
 typedef struct orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_2_0_0_t;
@@ -106,13 +98,13 @@ typedef orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_t;
 
 
 /*
- * Macro for use in components that are of type grpcomm v2.0.0
+ * Macro for use in components that are of type grpcomm v3.0.0
  */
-#define ORTE_GRPCOMM_BASE_VERSION_2_0_0 \
-  /* grpcomm v2.0 is chained to MCA v2.0 */ \
+#define ORTE_GRPCOMM_BASE_VERSION_3_0_0 \
+  /* grpcomm v3.0 is chained to MCA v2.0 */ \
   MCA_BASE_VERSION_2_0_0, \
-  /* grpcomm v2.0 */ \
-  "grpcomm", 2, 0, 0
+  /* grpcomm v3.0 */ \
+  "grpcomm", 3, 0, 0
 
 /* Global structure for accessing name server functions
  */

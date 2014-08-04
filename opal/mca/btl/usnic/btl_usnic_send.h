@@ -20,7 +20,7 @@
 #endif
 
 /*
- * Check if conditions are right, and if so, put endpoint on 
+ * Check if conditions are right, and if so, put endpoint on
  * list of endpoints that have sends to be done
  */
 static inline void
@@ -85,7 +85,7 @@ opal_btl_usnic_post_segment(
 #if MSGDEBUG1
     opal_output(0, "post_send: type=%s, addr=%p, len=%d, payload=%d\n",
                 usnic_seg_type(sseg->ss_base.us_type),
-                (void*) sseg->ss_send_desc.sg_list->addr, 
+                (void*) sseg->ss_send_desc.sg_list->addr,
                 sge_total(&sseg->ss_send_desc),
                 sseg->ss_base.us_btl_header->payload_len);
     /*opal_btl_usnic_dump_hex((void *)(sseg->ss_send_desc.sg_list->addr + sizeof(opal_btl_usnic_btl_header_t)), 16); */
@@ -103,8 +103,8 @@ opal_btl_usnic_post_segment(
     /* Post segment to the NIC */
     ret = ibv_post_send(channel->qp, &sseg->ss_send_desc, &bad_wr);
     if (OPAL_UNLIKELY(0 != ret)) {
-        opal_btl_usnic_util_abort("ibv_post_send() failed", 
-                                  __FILE__, __LINE__, ret);
+        opal_btl_usnic_util_abort("ibv_post_send() failed",
+                                  __FILE__, __LINE__);
         /* Never returns */
     }
 
@@ -185,7 +185,7 @@ opal_btl_usnic_endpoint_send_segment(
             (sseg->ss_parent_frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_LARGE_SEND)?
                 "CHUNK" : "FRAG",
             sseg->ss_base.us_btl_header->pkt_seq,
-            sseg->ss_base.us_btl_header->sender, 
+            sseg->ss_base.us_btl_header->sender,
             endpoint->endpoint_module->device->name,
             mac_str1, module->local_addr.qp_num[sseg->ss_channel],
             (void*)sseg, sseg->ss_hotel_room,
@@ -259,7 +259,7 @@ opal_btl_usnic_release_send_segment(
     opal_btl_usnic_send_frag_t *frag,
     opal_btl_usnic_send_segment_t *sseg)
 {
-    /* We only return CHUNK segments because they are the only send-style 
+    /* We only return CHUNK segments because they are the only send-style
      * segments that are dynamically allocated.
      */
     if (sseg->ss_base.us_type == OPAL_BTL_USNIC_SEG_CHUNK) {

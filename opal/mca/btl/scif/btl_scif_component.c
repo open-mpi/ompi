@@ -2,6 +2,9 @@
 /*
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,10 +15,12 @@
 #include "btl_scif.h"
 #include "btl_scif_frag.h"
 
+#include "opal/runtime/opal_params.h"
 #include "opal/include/opal/align.h"
 #include "opal/memoryhooks/memory.h"
 
 #include "opal/mca/base/mca_base_pvar.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include <scif.h>
 
@@ -206,8 +211,13 @@ static void mca_btl_scif_autoset_leave_pinned (void) {
 static int mca_btl_scif_modex_send (void)
 {
     mca_btl_scif_modex_t modex = {.port_id = mca_btl_scif_module.port_id};
+    int rc;
 
-    return opal_modex_send (&mca_btl_scif_component.super.btl_version, &modex, sizeof (modex));
+    /* only processes on the same node need to know this info */
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_LOCAL,
+                    &mca_btl_scif_component.super.btl_version,
+                    &modex, sizeof (modex));
+    return rc;
 }
 
 

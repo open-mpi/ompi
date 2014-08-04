@@ -12,6 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,6 +39,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 
 #include "orte/util/proc_info.h"
 
@@ -80,25 +82,11 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .cpuset =                          NULL,
 #endif
     .app_rank =                        -1,
-    .peer_modex =                      -1,
-    .peer_init_barrier =               -1,
-    .peer_fini_barrier =               -1,
-    .my_hostid =                       ORTE_VPID_INVALID,
-#if OPAL_ENABLE_FT_CR == 1
-    .snapc_init_barrier =              -1,
-    .snapc_fini_barrier =              -1,
-#endif
+    .my_hostid =                       ORTE_VPID_INVALID
 };
 
 static bool init=false;
 static int orte_ess_node_rank;
-static int orte_peer_modex_id;
-static int orte_peer_init_barrier_id;
-static int orte_peer_fini_barrier_id;
-#if OPAL_ENABLE_FT_CR == 1
-static int orte_snapc_init_barrier_id;
-static int orte_snapc_fini_barrier_id;
-#endif
 static char *orte_strip_prefix;
 
 int orte_proc_info(void)
@@ -114,6 +102,8 @@ int orte_proc_info(void)
         return ORTE_SUCCESS;
     }
     init = true;
+
+    OBJ_CONSTRUCT(&orte_process_info.super, opal_proc_t);
 
     orte_process_info.my_hnp_uri = NULL;
     mca_base_var_register ("orte", "orte", NULL, "hnp_uri",
@@ -267,54 +257,6 @@ int orte_proc_info(void)
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
     
-    /* get the collective id info */
-    orte_peer_modex_id = -1;
-    (void) mca_base_var_register ("orte", "orte", NULL, "peer_modex_id", "Peer modex collective id",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                  MCA_BASE_VAR_FLAG_INTERNAL,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_CONSTANT,
-                                  &orte_peer_modex_id);
-    orte_process_info.peer_modex = (orte_grpcomm_coll_id_t) orte_peer_modex_id;
-
-    orte_peer_init_barrier_id = -1;
-    (void) mca_base_var_register ("orte", "orte", NULL, "peer_init_barrier_id", "Peer init barrier collective id",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                  MCA_BASE_VAR_FLAG_INTERNAL,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_CONSTANT,
-                                  &orte_peer_init_barrier_id);
-    orte_process_info.peer_init_barrier = (orte_grpcomm_coll_id_t) orte_peer_init_barrier_id;
-
-    orte_peer_fini_barrier_id = -1;
-    (void) mca_base_var_register ("orte", "orte", NULL, "peer_fini_barrier_id", "Peer finalize barrier collective id",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                  MCA_BASE_VAR_FLAG_INTERNAL,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_CONSTANT,
-                                  &orte_peer_fini_barrier_id);
-    orte_process_info.peer_fini_barrier = (orte_grpcomm_coll_id_t) orte_peer_fini_barrier_id;
-
-#if OPAL_ENABLE_FT_CR == 1
-    orte_snapc_init_barrier_id = -1;
-    (void) mca_base_var_register ("orte", "orte", NULL, "snapc_init_barrier_id", "SNAPC init barrier collective id",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                  MCA_BASE_VAR_FLAG_INTERNAL,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_CONSTANT,
-                                  &orte_snapc_init_barrier_id);
-    orte_process_info.snapc_init_barrier = (orte_grpcomm_coll_id_t) orte_snapc_init_barrier_id;
-
-    orte_snapc_fini_barrier_id = -1;
-    (void) mca_base_var_register ("orte", "orte", NULL, "snapc_fini_barrier_id", "SNAPC finalize barrier collective id",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                  MCA_BASE_VAR_FLAG_INTERNAL,
-                                  OPAL_INFO_LVL_9,
-                                  MCA_BASE_VAR_SCOPE_CONSTANT,
-                                  &orte_snapc_fini_barrier_id);
-    orte_process_info.snapc_fini_barrier = (orte_grpcomm_coll_id_t) orte_snapc_fini_barrier_id;
-#endif
-
     return ORTE_SUCCESS;
 }
 
@@ -369,6 +311,8 @@ int orte_proc_info_finalize(void)
     
     OBJ_RELEASE(orte_process_info.sync_buf);
     orte_process_info.sync_buf = NULL;
+
+    OBJ_DESTRUCT(&orte_process_info.super);
 
     init = false;
     return ORTE_SUCCESS;

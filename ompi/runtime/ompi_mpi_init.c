@@ -55,12 +55,12 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
@@ -305,29 +305,29 @@ extern int ompi_mpi_event_tick_rate;
 static char*
 _process_name_print_for_opal(const opal_process_name_t procname)
 {
-    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
-    return OMPI_NAME_PRINT(orte_name);
+    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
+    return OMPI_NAME_PRINT(rte_name);
 }
 
-static int32_t
+static uint32_t
 _process_name_jobid_for_opal(const opal_process_name_t procname)
 {
-    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
-    return orte_name->jobid;
+    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
+    return rte_name->jobid;
 }
 
-static int32_t
+static uint32_t
 _process_name_vpid_for_opal(const opal_process_name_t procname)
 {
-    orte_process_name_t* orte_name = (orte_process_name_t*)&procname;
-    return orte_name->vpid;
+    ompi_process_name_t* rte_name = (ompi_process_name_t*)&procname;
+    return rte_name->vpid;
 }
 
 static int
 _process_name_compare(const opal_process_name_t p1, const opal_process_name_t p2)
 {
-    orte_process_name_t* o1 = (orte_process_name_t*)&p1;
-    orte_process_name_t* o2 = (orte_process_name_t*)&p2;
+    ompi_process_name_t* o1 = (ompi_process_name_t*)&p1;
+    ompi_process_name_t* o2 = (ompi_process_name_t*)&p2;
     return ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, o1, o2);
 }
 
@@ -387,7 +387,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     struct timeval ompistart, ompistop;
-    ompi_rte_collective_t *coll;
     char *cmd=NULL, *av=NULL;
 
     /* bitflag of the thread level support provided. To be used
@@ -506,6 +505,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
+    opal_process_info.nodename         = ompi_process_info.nodename;
+    opal_process_info.job_session_dir  = ompi_process_info.job_session_dir;
+    opal_process_info.proc_session_dir = ompi_process_info.proc_session_dir;
+    opal_process_info.num_local_peers  = (int32_t)ompi_process_info.num_local_peers;
+    opal_process_info.my_local_rank    = (int32_t)ompi_process_info.my_local_rank;
+#if OPAL_HAVE_HWLOC
+    opal_process_info.cpuset           = ompi_process_info.cpuset;
+#endif  /* OPAL_HAVE_HWLOC */
+
     /* Register the default errhandler callback - RTE will ignore if it
      * doesn't support this capability
      */
@@ -524,11 +532,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     memset ( &threadlevel_bf, 0, sizeof(uint8_t));
     OMPI_THREADLEVEL_SET_BITFLAG ( ompi_mpi_thread_provided, threadlevel_bf );
 
+#if OMPI_ENABLE_THREAD_MULTIPLE
     /* add this bitflag to the modex */
-    if ( OMPI_SUCCESS != (ret = ompi_modex_send_string("MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t)))) {
+    OPAL_MODEX_SEND_STRING(ret, PMIX_SYNC_REQD, PMIX_GLOBAL,
+                           "MPI_THREAD_LEVEL", &threadlevel_bf, sizeof(uint8_t));
+    if (OPAL_SUCCESS != ret) {
         error = "ompi_mpi_init: modex send thread level";
         goto error;
     }
+#endif
 
     /* initialize datatypes. This step should be done early as it will
      * create the local convertor and local arch used in the proc
@@ -635,22 +647,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
-    /* exchange connection info - this function also acts as a barrier
-     * as it will not return until the exchange is complete
+    /* exchange connection info - this function may also act as a barrier
+     * if data exchange is required. The modex occurs solely across procs
+     * in our job, so no proc array is passed. If a barrier is required,
+     * the "fence" function will perform it internally
      */
-    coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_modex;
-    coll->active = true;
-    if (OMPI_SUCCESS != (ret = ompi_rte_modex(coll))) {
-        error = "rte_modex failed";
-        goto error;
-    }
-    /* wait for modex to complete - this may be moved anywhere in mpi_init
-     * so long as it occurs prior to calling a function that needs
-     * the modex info!
-     */
-    OMPI_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
+    OPAL_FENCE(NULL, 0, NULL, NULL);
 
     if (ompi_enable_timing && 0 == OMPI_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
@@ -660,15 +662,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
-
-    opal_process_info.nodename         = ompi_process_info.nodename;
-    opal_process_info.job_session_dir  = ompi_process_info.job_session_dir;
-    opal_process_info.proc_session_dir = ompi_process_info.proc_session_dir;
-    opal_process_info.num_local_peers  = (int32_t)ompi_process_info.num_local_peers;
-    opal_process_info.my_local_rank    = (int32_t)ompi_process_info.my_local_rank;
-#if OPAL_HAVE_HWLOC
-    opal_process_info.cpuset           = ompi_process_info.cpuset;
-#endif  /* OPAL_HAVE_HWLOC */
 
     /* select buffered send allocator component to be used */
     if( OMPI_SUCCESS !=
@@ -835,17 +828,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
 
-    /* wait for everyone to reach this point */
-    coll = OBJ_NEW(ompi_rte_collective_t);
-    coll->id = ompi_process_info.peer_init_barrier;
-    coll->active = true;
-    if (OMPI_SUCCESS != (ret = ompi_rte_barrier(coll))) {
-        error = "rte_barrier failed";
-        goto error;
-    }
-    /* wait for barrier to complete */
-    OMPI_WAIT_FOR_COMPLETION(coll->active);
-    OBJ_RELEASE(coll);
+    /* wait for everyone to reach this point - this is a hard
+     * barrier requirement at this time, though we hope to relax
+     * it at a later point */
+    opal_pmix.fence(NULL, 0);
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */

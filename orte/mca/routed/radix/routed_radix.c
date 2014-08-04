@@ -51,8 +51,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static void update_routing_plan(void);
-static void get_routing_list(orte_grpcomm_coll_t type,
-                             orte_grpcomm_collective_t *coll);
+static void get_routing_list(opal_list_t *coll);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
 static size_t num_routes(void);
@@ -940,8 +939,7 @@ static void update_routing_plan(void)
     }
 }
 
-static void get_routing_list(orte_grpcomm_coll_t type,
-                             orte_grpcomm_collective_t *coll)
+static void get_routing_list(opal_list_t *coll)
 {
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -950,15 +948,7 @@ static void get_routing_list(orte_grpcomm_coll_t type,
         return;
     }
     
-    if (ORTE_GRPCOMM_XCAST == type) {
-        orte_routed_base_xcast_routing(coll, &my_children);
-    } else if (ORTE_GRPCOMM_COLL_RELAY == type) {
-        orte_routed_base_coll_relay_routing(coll);
-    } else if (ORTE_GRPCOMM_COLL_COMPLETE == type) {
-        orte_routed_base_coll_complete_routing(coll);
-    } else if (ORTE_GRPCOMM_COLL_PEERS == type) {
-        orte_routed_base_coll_peers(coll, &my_children);
-    }
+    orte_routed_base_xcast_routing(coll, &my_children);
 }
 
 static int get_wireup_info(opal_buffer_t *buf)

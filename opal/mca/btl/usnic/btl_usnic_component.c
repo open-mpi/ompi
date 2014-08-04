@@ -15,6 +15,7 @@
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +61,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/util/proc.h"
 #include "opal/mca/common/verbs/common_verbs.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"
@@ -160,13 +162,13 @@ static int usnic_component_open(void)
     /* In this version, the USNIC stack does not support having more
      * than one GID.  So just hard-wire this value to 0. */
     mca_btl_usnic_component.gid_index = 0;
-    
+
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_usnic_component.usnic_procs, opal_list_t);
-    
+
     /* Sanity check: if_include and if_exclude need to be mutually
        exclusive */
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         mca_base_var_check_exclusive("opal",
             mca_btl_usnic_component.super.btl_version.mca_type_name,
             mca_btl_usnic_component.super.btl_version.mca_component_name,
@@ -178,13 +180,13 @@ static int usnic_component_open(void)
            "open" failing is not printed */
         return OPAL_ERR_NOT_AVAILABLE;
     }
-    
+
     return OPAL_SUCCESS;
 }
 
 
 /*
- * Component cleanup 
+ * Component cleanup
  */
 static int usnic_component_close(void)
 {
@@ -232,7 +234,7 @@ static int usnic_modex_send(void)
     size_t size;
     opal_btl_usnic_addr_t* addrs = NULL;
 
-    size = mca_btl_usnic_component.num_modules * 
+    size = mca_btl_usnic_component.num_modules *
         sizeof(opal_btl_usnic_addr_t);
     if (size != 0) {
         addrs = (opal_btl_usnic_addr_t*) malloc(size);
@@ -241,20 +243,20 @@ static int usnic_modex_send(void)
         }
 
         for (i = 0; i < mca_btl_usnic_component.num_modules; i++) {
-            opal_btl_usnic_module_t* module = 
+            opal_btl_usnic_module_t* module =
                 mca_btl_usnic_component.usnic_active_modules[i];
             addrs[i] = module->local_addr;
             opal_output_verbose(5, USNIC_OUT,
                                 "btl:usnic: modex_send DQP:%d, CQP:%d, subnet = 0x%016" PRIx64 " interface =0x%016" PRIx64,
-                                addrs[i].qp_num[USNIC_DATA_CHANNEL], 
-                                addrs[i].qp_num[USNIC_PRIORITY_CHANNEL], 
+                                addrs[i].qp_num[USNIC_DATA_CHANNEL],
+                                addrs[i].qp_num[USNIC_PRIORITY_CHANNEL],
                                 ntoh64(addrs[i].gid.global.subnet_prefix),
                                 ntoh64(addrs[i].gid.global.interface_id));
         }
     }
-
-    rc = opal_modex_send(&mca_btl_usnic_component.super.btl_version, 
-                         addrs, size);
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_REMOTE,
+                    &mca_btl_usnic_component.super.btl_version, 
+                    addrs, size);
     if (NULL != addrs) {
         free(addrs);
     }
@@ -454,7 +456,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
      ************************************************************************/
 
     /* initialization */
-    mca_btl_usnic_component.my_hashed_rte_name = 
+    mca_btl_usnic_component.my_hashed_rte_name =
         opal_proc_local_get()->proc_name;
     MSGDEBUG1_OUT("%s: my_hashed_rte_name=0x%" PRIx64,
                    __func__, mca_btl_usnic_component.my_hashed_rte_name);
@@ -476,7 +478,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                                              OPAL_COMMON_VERBS_FLAGS_TRANSPORT_USNIC_UDP,
                                              USNIC_OUT);
     if (NULL == port_list) {
-        OPAL_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         goto free_include_list;
     } else if (opal_list_get_size(port_list) > 0) {
         mca_btl_usnic_component.use_udp = true;
@@ -491,7 +493,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                                                  USNIC_OUT);
 
         if (NULL == port_list) {
-            OPAL_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
             goto free_include_list;
         } else if (opal_list_get_size(port_list) > 0) {
             mca_btl_usnic_component.use_udp = false;
@@ -522,7 +524,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        return upstream) */
     mca_btl_usnic_component.num_modules = opal_list_get_size(port_list);
     btls = (struct mca_btl_base_module_t**)
-        malloc(mca_btl_usnic_component.num_modules * 
+        malloc(mca_btl_usnic_component.num_modules *
                sizeof(opal_btl_usnic_module_t*));
     if (NULL == btls) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
@@ -606,7 +608,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         /* Query this device */
         if (0 != ibv_query_device(module->device_context, &device_attr)) {
             opal_show_help("help-mpi-btl-usnic.txt", "ibv API failed",
-                           true, 
+                           true,
                            opal_process_info.nodename,
                            ibv_get_device_name(module->device),
                            module->if_name,
@@ -681,7 +683,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          */
         if (-1 == mca_btl_usnic_component.prio_sd_num) {
             module->prio_sd_num =
-                max(128, 32 * ompi_process_info.num_procs) - 1;
+                max(128, 32 * USNIC_MCW_SIZE) - 1;
         } else {
             module->prio_sd_num = mca_btl_usnic_component.prio_sd_num;
         }
@@ -690,7 +692,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         }
         if (-1 == mca_btl_usnic_component.prio_rd_num) {
             module->prio_rd_num =
-                max(128, 32 * ompi_process_info.num_procs) - 1;
+                max(128, 32 * USNIC_MCW_SIZE) - 1;
         } else {
             module->prio_rd_num = mca_btl_usnic_component.prio_rd_num;
         }
@@ -820,7 +822,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
                             module->port_num,
                             module->super.btl_rndv_eager_limit);
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: max send size %s:%d = %" PRIsize_t 
+                            "btl:usnic: max send size %s:%d = %" PRIsize_t
                             " (not overrideable)",
                             ibv_get_device_name(module->device),
                             module->port_num,
@@ -924,7 +926,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
  * receive queue is handled directly in this routine, everything else
  * is deferred to an external call, usnic_component_progress_2()
  * This helps keep usnic_component_progress() very small and very responsive
- * to a single incoming packet.  We make sure not to always return 
+ * to a single incoming packet.  We make sure not to always return
  * immediately after one packet to avoid starvation, "fastpath_ok" is
  * used for this.
  */
@@ -1108,7 +1110,7 @@ static int usnic_component_progress_2(void)
 
             /* Re-post all the remaining receive buffers */
             if (OPAL_LIKELY(channel->repost_recv_head)) {
-                rc = ibv_post_recv(channel->qp, 
+                rc = ibv_post_recv(channel->qp,
                                 channel->repost_recv_head, &bad_wr);
                 channel->repost_recv_head = NULL;
                 if (OPAL_UNLIKELY(rc != 0)) {
@@ -1407,23 +1409,20 @@ static void dump_endpoint(opal_btl_usnic_endpoint_t *endpoint)
     int i;
     opal_btl_usnic_frag_t *frag;
     opal_btl_usnic_send_segment_t *sseg;
-    int ep_jobid;
-    int ep_rank;
     struct in_addr ia;
     char ep_addr_str[INET_ADDRSTRLEN];
     char tmp[128], str[2048];
-
-    ep_jobid = ((orte_process_name_t*)&endpoint->endpoint_proc->proc_opal->proc_name)->jobid;
-    ep_rank = ((orte_process_name_t*)&endpoint->endpoint_proc->proc_opal->proc_name)->vpid;
 
     memset(ep_addr_str, 0x00, sizeof(ep_addr_str));
     ia.s_addr = endpoint->endpoint_remote_addr.ipv4_addr;
     inet_ntop(AF_INET, &ia, ep_addr_str, sizeof(ep_addr_str));
 
-    opal_output(0, "    endpoint %p, %s job=%"PRIu32" rank=%"PRIu32" rts=%s s_credits=%"PRIi32"\n",
-           (void *)endpoint, ep_addr_str, ep_jobid, ep_rank,
-           (endpoint->endpoint_ready_to_send ? "true" : "false"),
-           endpoint->endpoint_send_credits);
+    opal_output(0, "    endpoint %p, %s job=%u, rank=%u rts=%s s_credits=%"PRIi32"\n",
+                (void *)endpoint, ep_addr_str,
+                opal_process_name_jobid(endpoint->endpoint_proc->proc_opal->proc_name),
+                opal_process_name_vpid(endpoint->endpoint_proc->proc_opal->proc_name),
+                (endpoint->endpoint_ready_to_send ? "true" : "false"),
+                endpoint->endpoint_send_credits);
     opal_output(0, "      endpoint->frag_send_queue:\n");
 
     OPAL_LIST_FOREACH(frag, &endpoint->endpoint_frag_send_queue,
@@ -1531,9 +1530,10 @@ void opal_btl_usnic_component_debug(void)
     opal_btl_usnic_endpoint_t *endpoint;
     opal_btl_usnic_send_segment_t *sseg;
     opal_list_item_t *item;
+    const opal_proc_t *proc = opal_proc_local_get();
 
-    opal_output(0, "*** dumping usnic state for MPI_COMM_WORLD rank %d ***\n",
-                ((orte_process_name_t*)&opal_proc_local_get()->proc_name)->vpid);
+    opal_output(0, "*** dumping usnic state for MPI_COMM_WORLD rank %u ***\n",
+                opal_process_name_vpid(proc->proc_name));
     for (i = 0; i < (int)mca_btl_usnic_component.num_modules; ++i) {
         module = mca_btl_usnic_component.usnic_active_modules[i];
 
@@ -1557,6 +1557,7 @@ void opal_btl_usnic_component_debug(void)
 
         /* the all_endpoints list uses a different list item member */
         opal_output(0, "  all_endpoints:\n");
+        opal_mutex_lock(&module->all_endpoints_lock);
         item = opal_list_get_first(&module->all_endpoints);
         while (item != opal_list_get_end(&module->all_endpoints)) {
             endpoint = container_of(item, mca_btl_base_endpoint_t,
@@ -1564,6 +1565,7 @@ void opal_btl_usnic_component_debug(void)
             item = opal_list_get_next(item);
             dump_endpoint(endpoint);
         }
+        opal_mutex_unlock(&module->all_endpoints_lock);
 
         opal_output(0, "  pending_resend_segs:\n");
         OPAL_LIST_FOREACH(sseg, &module->pending_resend_segs,

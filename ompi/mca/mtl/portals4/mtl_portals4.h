@@ -22,6 +22,7 @@
 
 #include <portals4.h>
 
+#include "opal/include/opal_config.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 #include "opal/datatype/opal_convertor.h"
@@ -73,7 +74,7 @@ struct mca_mtl_portals4_module_t {
     ptl_handle_md_t zero_md_h;
 
     /** Send MD handle(s).  Use ompi_mtl_portals4_get_md() to get the right md */
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     ptl_handle_md_t *send_md_hs;
 #else
     ptl_handle_md_t send_md_h;
@@ -241,11 +242,11 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 static inline void
 ompi_mtl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr)
 {
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
-    int mask = (1ULL << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1)) - 1;
-    int which = (((uintptr_t) ptr) >> (OMPI_PORTALS4_MAX_MD_SIZE - 1)) & mask;
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    int mask = (1ULL << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1)) - 1;
+    int which = (((uintptr_t) ptr) >> (OPAL_PORTALS4_MAX_MD_SIZE - 1)) & mask;
     *md_h = ompi_mtl_portals4.send_md_hs[which];
-    *base_ptr = (void*) (which * (1ULL << (OMPI_PORTALS4_MAX_MD_SIZE - 1)));
+    *base_ptr = (void*) (which * (1ULL << (OPAL_PORTALS4_MAX_MD_SIZE - 1)));
 #else
     *md_h = ompi_mtl_portals4.send_md_h;
     *base_ptr = 0;
@@ -256,8 +257,8 @@ ompi_mtl_portals4_get_md(const void *ptr, ptl_handle_md_t *md_h, void **base_ptr
 static inline int
 ompi_mtl_portals4_get_num_mds(void)
 {
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
-    return (1 << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1));
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    return (1 << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1));
 #else
     return 1;
 #endif

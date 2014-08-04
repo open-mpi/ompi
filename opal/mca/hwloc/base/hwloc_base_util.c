@@ -1898,8 +1898,8 @@ int opal_hwloc_base_cset2mapstr(char *str, int len,
 
 static int dist_cmp_fn (opal_list_item_t **a, opal_list_item_t **b)
 {
-    orte_rmaps_numa_node_t *aitem = *((orte_rmaps_numa_node_t **) a);
-    orte_rmaps_numa_node_t *bitem = *((orte_rmaps_numa_node_t **) b);
+    opal_rmaps_numa_node_t *aitem = *((opal_rmaps_numa_node_t **) a);
+    opal_rmaps_numa_node_t *bitem = *((opal_rmaps_numa_node_t **) b);
 
     if (aitem->dist_from_closed > bitem->dist_from_closed) {
         return 1;
@@ -1915,7 +1915,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
     hwloc_obj_t device_obj = NULL;
     hwloc_obj_t obj = NULL, root = NULL;
     const struct hwloc_distances_s* distances;
-    orte_rmaps_numa_node_t *numa_node;
+    opal_rmaps_numa_node_t *numa_node;
     int close_node_index;
     float latency;
     unsigned int j;
@@ -1972,7 +1972,7 @@ static void sort_by_dist(hwloc_topology_t topo, char* device_name, opal_list_t *
                 /* fill list of numa nodes */
                 for (j = 0; j < distances->nbobjs; j++) {
                     latency = distances->latency[close_node_index + distances->nbobjs * j];
-                    numa_node = OBJ_NEW(orte_rmaps_numa_node_t);
+                    numa_node = OBJ_NEW(opal_rmaps_numa_node_t);
                     numa_node->index = j;
                     numa_node->dist_from_closed = latency;
                     opal_list_append(sorted_list, &numa_node->super);
@@ -2005,7 +2005,7 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
     opal_list_item_t *item;
     opal_hwloc_summary_t *sum;
     opal_hwloc_topo_data_t *data;
-    orte_rmaps_numa_node_t *numa, *copy_numa;
+    opal_rmaps_numa_node_t *numa, *copy_numa;
     int count;
 
     obj = hwloc_get_root_obj(topo);
@@ -2020,8 +2020,8 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
             sum = (opal_hwloc_summary_t*)item;
             if (HWLOC_OBJ_NODE == sum->type) {
                 if (opal_list_get_size(&sum->sorted_by_dist_list) > 0) { 
-                    OPAL_LIST_FOREACH(numa, &(sum->sorted_by_dist_list), orte_rmaps_numa_node_t) {
-                        copy_numa = OBJ_NEW(orte_rmaps_numa_node_t);
+                    OPAL_LIST_FOREACH(numa, &(sum->sorted_by_dist_list), opal_rmaps_numa_node_t) {
+                        copy_numa = OBJ_NEW(opal_rmaps_numa_node_t);
                         copy_numa->index = numa->index;
                         copy_numa->dist_from_closed = numa->dist_from_closed;
                         opal_list_append(sorted_list, &copy_numa->super);
@@ -2041,8 +2041,8 @@ int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, char* device_name, op
                     }
                     sort_by_dist(topo, device_name, sorted_list);
                     /* store this info in summary object for later usage */
-                    OPAL_LIST_FOREACH(numa, sorted_list, orte_rmaps_numa_node_t) {
-                        copy_numa = OBJ_NEW(orte_rmaps_numa_node_t);
+                    OPAL_LIST_FOREACH(numa, sorted_list, opal_rmaps_numa_node_t) {
+                        copy_numa = OBJ_NEW(opal_rmaps_numa_node_t);
                         copy_numa->index = numa->index;
                         copy_numa->dist_from_closed = numa->dist_from_closed;
                         opal_list_append(&(sum->sorted_by_dist_list), &copy_numa->super);

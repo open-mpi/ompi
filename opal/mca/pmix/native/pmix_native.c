@@ -29,18 +29,15 @@ static int native_init(void);
 static int native_fini(void);
 static bool native_initialized(void);
 static int native_abort(int flag, const char msg[]);
-static int native_get_jobid(char jobId[], int jobIdSize);
-static int native_get_rank(int *rank);
-static int native_get_size(opal_pmix_scope_t scope, int *size);
-static int native_get_appnum(int *appnum);
-static int native_fence(void);
-static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata);
+static int native_fence(opal_process_name_t *procs, size_t nprocs);
+static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                           opal_pmix_cbfunc_t cbfunc, void *cbdata);
 static int native_put(opal_pmix_scope_t scope,
                       opal_value_t *kv);
-static int native_get(opal_identifier_t *id,
+static int native_get(const opal_identifier_t *id,
                       const char *key,
-                      opal_value_t *kv);
-static void native_get_nb(opal_identifier_t *id,
+                      opal_value_t **kv);
+static void native_get_nb(const opal_identifier_t *id,
                           const char *key,
                           opal_pmix_cbfunc_t cbfunc,
                           void *cbdata);
@@ -52,8 +49,10 @@ static int native_lookup(const char service_name[],
                          char port[], int portLen);
 static int native_unpublish(const char service_name[], 
                             opal_list_t *info);
-static int native_local_info(int vpid, int **ranks_ret,
-                             int *procs_ret, char **error);
+static int native_get_attr(opal_list_t *attrs);
+static int native_get_attr_nb(opal_list_t *attrs,
+                              opal_pmix_cbfunc_t cbfunc,
+                              void *cbdata);
 static int native_spawn(int count, const char * cmds[],
                         int argcs[], const char ** argvs[],
                         const int maxprocs[],
@@ -69,10 +68,6 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
     native_fini,
     native_initialized,
     native_abort,
-    native_get_jobid,
-    native_get_rank,
-    native_get_size,
-    native_get_appnum,
     native_fence,
     native_fence_nb,
     native_put,
@@ -81,7 +76,8 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
     native_publish,
     native_lookup,
     native_unpublish,
-    native_local_info,
+    native_get_attr,
+    native_get_attr_nb,
     native_spawn,
     native_job_connect,
     native_job_disconnect
@@ -90,13 +86,6 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
 // local variables
 static int init_cntr = 0;
 
-static char* pmix_error(int pmix_err);
-#define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
-    do {                                                        \
-        opal_output(0, "%s [%s:%d:%s]: %s\n",                   \
-                    pmi_func, __FILE__, __LINE__, __func__,     \
-                    pmix_error(pmi_err));                        \
-    } while(0);
 /* callback for wait completion */
 static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
 {
@@ -244,21 +233,6 @@ static int native_spawn(int count, const char * cmds[],
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int native_get_jobid(char jobId[], int jobIdSize)
-{
-    return OPAL_SUCCESS;
-}
-
-static int native_get_rank(int *rank)
-{
-    return OPAL_SUCCESS;
-}
-
-static int native_get_size(opal_pmix_scope_t scope, int *size)
-{
-    return OPAL_SUCCESS;
-}
-
 static int native_put(opal_pmix_scope_t scope,
                       opal_value_t *kv)
 {
@@ -275,7 +249,7 @@ static int native_put(opal_pmix_scope_t scope,
 }
 
 
-static int native_fence(void)
+static int native_fence(opal_process_name_t *procs, size_t nprocs)
 {
     opal_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_FENCE_CMD;
@@ -291,6 +265,19 @@ static int native_fence(void)
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(msg);
         return rc;
+    }
+    /* pack the number of procs */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &nprocs, 1, OPAL_SIZE))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+    if (0 < nprocs) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_UINT64))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
     }
 
     /* if we haven't already done it, ensure we have committed our values */
@@ -322,10 +309,11 @@ static int native_fence(void)
     return OPAL_SUCCESS;
 }
 
-static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
+static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
+                           opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
     opal_buffer_t *msg;
-    pmix_cmd_t cmd = PMIX_FENCE_CMD;
+    pmix_cmd_t cmd = PMIX_FENCENB_CMD;
     int rc;
     pmix_cb_t *cb;
 
@@ -335,6 +323,19 @@ static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(msg);
         return rc;
+    }
+    /* pack the number of procs */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &nprocs, 1, OPAL_SIZE))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+    if (0 < nprocs) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, procs, nprocs, OPAL_UINT64))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
     }
 
     /* if we haven't already done it, ensure we commit our values
@@ -357,19 +358,30 @@ static int native_fence_nb(opal_pmix_cbfunc_t cbfunc, void *cbdata)
     return OPAL_SUCCESS;
 }
 
-static int native_get(opal_identifier_t *id,
+static int native_get(const opal_identifier_t *id,
                       const char *key,
-                      opal_value_t *kv)
+                      opal_value_t **kv)
 {
     opal_buffer_t *msg, *bptr;
     pmix_cmd_t cmd = PMIX_GET_CMD;
     pmix_cb_t *cb;
     int rc, ret;
     int32_t cnt;
+    opal_list_t vals;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "pmix:native getting value for key %s", key);
 
+    /* first see if we already have the info in our dstore */
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, id,
+                                          key, &vals)) {
+        *kv = (opal_value_t*)opal_list_remove_first(&vals);
+        OPAL_LIST_DESTRUCT(&vals);
+        return OPAL_SUCCESS;
+    }
+
+    /* nope - see if we can get it */
     msg = OBJ_NEW(opal_buffer_t);
     /* pack the get cmd */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
@@ -377,13 +389,9 @@ static int native_get(opal_identifier_t *id,
         OBJ_RELEASE(msg);
         return rc;
     }
-    /* pack the request information */
+    /* pack the request information - we'll get the entire blob
+     * for this proc, so we don't need to pass the key */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, id, 1, OPAL_UINT64))) {
-        OPAL_ERROR_LOG(rc);
-        OBJ_RELEASE(msg);
-        return rc;
-    }
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &key, 1, OPAL_STRING))) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(msg);
         return rc;
@@ -402,7 +410,7 @@ static int native_get(opal_identifier_t *id,
     PMIX_WAIT_FOR_COMPLETION(cb->active);
 
     /* we have received the entire data blob for this process - unpack
-     * and store all values, keeping the one we requested to return
+     * and cache all values, keeping the one we requested to return
      * to the caller */
     cnt = 1;
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &ret, &cnt, OPAL_INT))) {
@@ -417,11 +425,15 @@ static int native_get(opal_identifier_t *id,
             OBJ_RELEASE(cb);
             return rc;
         }
-        while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kv, &cnt, OPAL_VALUE))) {
-            if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kv))) {
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
+            if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kp))) {
                 OPAL_ERROR_LOG(ret);
             }
-            OBJ_RELEASE(kv);
+            if (0 == strcmp(key, kp->key)) {
+                *kv = kp;
+            } else {
+                OBJ_RELEASE(kp);
+            }
         }
         if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
             OPAL_ERROR_LOG(rc);
@@ -438,55 +450,13 @@ static int native_get(opal_identifier_t *id,
     return rc;
 }
 
-static void native_get_nb(opal_identifier_t *id,
+static void native_get_nb(const opal_identifier_t *id,
                           const char *key,
                           opal_pmix_cbfunc_t cbfunc,
                           void *cbdata)
 {
     return;
 }
-
-#if 0
-static int native_get_node_attr(const char name[],
-                                char value[],
-                                int valuelen,
-                                int *found,
-                                int waitfor)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int native_get_node_attr_array(const char name[],
-                                      int array[],
-                                      int arraylen,
-                                      int *outlen,
-                                      int *found)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int native_put_node_attr(const char name[], const char value[])
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int native_get_job_attr(const char name[],
-                               char value[],
-                               int valuelen,
-                               int *found)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int native_get_job_attr_array(const char name[],
-                                     int array[],
-                                     int arraylen,
-                                     int *outlen,
-                                     int *found)
-{
-    return OPAL_ERR_NOT_SUPPORTED;
-}
-#endif
 
 static int native_publish(const char service_name[],
                           opal_list_t *info,
@@ -508,13 +478,13 @@ static int native_unpublish(const char service_name[],
     return OPAL_SUCCESS;;
 }
 
-static int native_local_info(int vpid, int **ranks_ret,
-                             int *procs_ret, char **error)
+static int native_get_attr(opal_list_t *attrs)
 {
-#if 0
     int *ranks;
     int procs = -1;
     int rc;
+    pmix_cmd_t cmd = PMIX_LOCAL_INFO_CMD;
+    opal_buffer_t *msg, *bptr;
 
     /* get our local proc info to find our local rank */
     if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&procs))) {
@@ -536,8 +506,14 @@ static int native_local_info(int vpid, int **ranks_ret,
 
     *ranks_ret = ranks;
     *procs_ret = procs;
-#endif
     return OPAL_SUCCESS;
+}
+
+static int native_get_attr_nb(opal_list_t *attrs,
+                              opal_pmix_cbfunc_t cbfunc,
+                              void *cbdata)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int native_job_connect(const char jobId[])
@@ -548,43 +524,6 @@ static int native_job_connect(const char jobId[])
 static int native_job_disconnect(const char jobId[])
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
-}
-
-static int native_get_appnum(int *appnum)
-{
-    return OPAL_ERR_NOT_IMPLEMENTED;
-}
-
-static char* pmix_error(int pmix_err)
-{
-#if 0
-    char * err_msg;
-
-    switch(pmix_err) {
-        case PMI_FAIL: err_msg = "Operation failed"; break;
-        case PMI_ERR_INIT: err_msg = "PMI is not initialized"; break;
-        case PMI_ERR_NOMEM: err_msg = "Input buffer not large enough"; break;
-        case PMI_ERR_INVALID_ARG: err_msg = "Invalid argument"; break;
-        case PMI_ERR_INVALID_KEY: err_msg = "Invalid key argument"; break;
-        case PMI_ERR_INVALID_KEY_LENGTH: err_msg = "Invalid key length argument"; break;
-        case PMI_ERR_INVALID_VAL: err_msg = "Invalid value argument"; break;
-        case PMI_ERR_INVALID_VAL_LENGTH: err_msg = "Invalid value length argument"; break;
-        case PMI_ERR_INVALID_LENGTH: err_msg = "Invalid length argument"; break;
-        case PMI_ERR_INVALID_NUM_ARGS: err_msg = "Invalid number of arguments"; break;
-        case PMI_ERR_INVALID_ARGS: err_msg = "Invalid args argument"; break;
-        case PMI_ERR_INVALID_NUM_PARSED: err_msg = "Invalid num_parsed length argument"; break;
-        case PMI_ERR_INVALID_KEYVALP: err_msg = "Invalid keyvalp argument"; break;
-        case PMI_ERR_INVALID_SIZE: err_msg = "Invalid size argument"; break;
-#if defined(PMI_ERR_INVALID_KVS)
-	/* pmix.h calls this a valid return code but mpich doesn't define it (slurm does). */
-        case PMI_ERR_INVALID_KVS: err_msg = "Invalid kvs argument"; break;
-#endif
-        case PMI_SUCCESS: err_msg = "Success"; break;
-        default: err_msg = "Unkown error";
-    }
-    return err_msg;
-#endif
-    return NULL;
 }
 
 /***   INSTANTIATE INTERNAL CLASSES   ***/

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,12 +33,12 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/proc/proc.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 
 typedef struct opened_component_t {
   opal_list_item_t super;
@@ -310,7 +310,10 @@ static mca_base_component_t pml_base_component = {
 int
 mca_pml_base_pml_selected(const char *name)
 {
-    return ompi_modex_send(&pml_base_component, name, strlen(name) + 1);
+    int rc;
+
+    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
+    return rc;
 }
 
 int
@@ -339,9 +342,8 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     }
     
     /* get the name of the PML module selected by rank=0 */
-    ret = ompi_modex_recv(&pml_base_component,
-                          procs[0],
-                          (void**) &remote_pml, &size);
+    OPAL_MODEX_RECV(ret, &pml_base_component,
+                    &procs[0]->super, (void**) &remote_pml, &size);
     
     /* if this key wasn't found, then just assume all is well... */
     if (OMPI_SUCCESS != ret) {

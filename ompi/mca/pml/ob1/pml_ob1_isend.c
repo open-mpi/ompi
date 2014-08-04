@@ -26,6 +26,9 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
+#if HAVE_ALLOCA_H
+#include <alloca.h>
+#endif  /* HAVE_ALLOCA_H */
 
 int mca_pml_ob1_isend_init(void *buf,
                            size_t count,

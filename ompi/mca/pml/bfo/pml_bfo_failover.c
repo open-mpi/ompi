@@ -286,7 +286,7 @@ void mca_pml_bfo_repost_fin(struct mca_btl_base_descriptor_t* des) {
 
     opal_output_verbose(20, mca_pml_bfo_output,
                         "REPOST: BFO_HDR_TYPE_FIN: seq=%d,myrank=%d,peer=%d,hdr->hdr_fail=%d,src=%d",
-                        hdr->hdr_match.hdr_seq, OMPI_PROC_MY_NAME->vpid, OMPI_CAST_ORTE_NAME(&proc->super.proc_name)->vpid,
+                        hdr->hdr_match.hdr_seq, OMPI_PROC_MY_NAME->vpid, OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid,
                         hdr->hdr_fail, hdr->hdr_match.hdr_src);
 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
@@ -1246,7 +1246,7 @@ void mca_pml_bfo_recv_request_rndvrestartnack(mca_btl_base_descriptor_t* olddes,
                         "PML=%d, RQS=%d, CTX=%d, SRC=%d, peer=%d",
                         nack->hdr_match.hdr_seq, nack->hdr_restartseq,
                         nack->hdr_match.hdr_ctx, nack->hdr_match.hdr_src,
-                        OMPI_CAST_ORTE_NAME(&ompi_proc->super.proc_name)->vpid);
+                        OMPI_CAST_RTE_NAME(&ompi_proc->super.proc_name)->vpid);
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNACK);
     if( OPAL_UNLIKELY( rc < 0 ) ) {
@@ -1414,7 +1414,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
                             "to rank=%d on node=%s \n",
                             btl->btl_component->btl_version.mca_component_name,
                             OMPI_PROC_MY_NAME->vpid,
-                            btlname, OMPI_CAST_ORTE_NAME(errproc->super.proc_name)->vpid,
+                            btlname, OMPI_CAST_RTE_NAME(errproc->super.proc_name)->vpid,
                             (NULL == errproc->super.proc_hostname) ? "unknown" : errproc->super.proc_hostname);
 
         /* Need to search for any pending packets associated

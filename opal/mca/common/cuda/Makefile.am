@@ -52,7 +52,7 @@ headers = \
 sources = \
         common_cuda.c
 
-dist_ompidata_DATA = help-mpi-common-cuda.txt
+dist_opaldata_DATA = help-mpi-common-cuda.txt
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules

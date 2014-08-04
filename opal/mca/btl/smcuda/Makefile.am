@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = help-mpi-btl-smcuda.txt
+dist_opaldata_DATA = help-mpi-btl-smcuda.txt
 
 libmca_btl_smcuda_la_sources = \
     btl_smcuda.c \
@@ -44,16 +44,16 @@ endif
 # See opal/mca/common/cuda/Makefile.am for an explanation of
 # libmca_common_sm.la.
 
-mcacomponentdir = $(ompilibdir)
+mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_smcuda_la_SOURCES = $(libmca_btl_smcuda_la_sources)
 mca_btl_smcuda_la_LDFLAGS = -module -avoid-version
 mca_btl_smcuda_la_LIBADD = \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/libmca_common_sm.la
 mca_btl_smcuda_la_CPPFLAGS = $(btl_smcuda_CPPFLAGS)
 if OPAL_cuda_support
 mca_btl_smcuda_la_LIBADD += \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/libmca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

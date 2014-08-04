@@ -26,7 +26,6 @@ struct opal_proc_t;
 
 #include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
@@ -65,14 +64,7 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 /* database keys */
 #define OMPI_RTE_NODE_ID     ORTE_DB_DAEMON_VPID
 #define OMPI_RTE_HOST_ID     ORTE_DB_HOSTID
-#define OMPI_CAST_ORTE_NAME(a) ((orte_process_name_t*)(a))
-
-/* Collective objects and operations */
-#define ompi_rte_collective_t orte_grpcomm_collective_t
-typedef orte_grpcomm_coll_id_t ompi_rte_collective_id_t;
-OMPI_DECLSPEC int ompi_rte_modex(ompi_rte_collective_t *coll);
-#define ompi_rte_barrier(a) orte_grpcomm.barrier(a)
-OMPI_DECLSPEC orte_grpcomm_coll_id_t ompi_rte_get_collective_id(const struct ompi_communicator_t *comm);
+#define OMPI_CAST_RTE_NAME(a) ((orte_process_name_t*)(a))
 
 /* Process info struct and values */
 typedef orte_node_rank_t ompi_node_rank_t;
@@ -97,12 +89,6 @@ typedef orte_error_t ompi_rte_error_report_t;
 #define ompi_rte_finalize() orte_finalize()
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 
-/* Database operations */
-OMPI_DECLSPEC int ompi_rte_db_store(const ompi_process_name_t *nm, const char* key,
-                                    const void *data, opal_data_type_t type);
-OMPI_DECLSPEC int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
-                                    const char *key,
-                                    void **data, opal_data_type_t type);
 #define OMPI_DB_HOSTNAME ORTE_DB_HOSTNAME
 #define OMPI_DB_LOCALITY ORTE_DB_LOCALITY
 #define OMPI_DB_GLOBAL_RANK ORTE_DB_GLOBAL_RANK

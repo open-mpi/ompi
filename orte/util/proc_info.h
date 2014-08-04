@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,6 +43,7 @@
 
 #include "opal/dss/dss_types.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/util/proc.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
 
@@ -89,6 +90,7 @@ typedef uint32_t orte_proc_type_t;
  * files - however, these are all initialized elsewhere.
  */
 struct orte_proc_info_t {
+    opal_proc_t super;
     orte_process_name_t my_name;        /**< My official process name */
     orte_process_name_t my_daemon;      /**< Name of my local daemon */
     char *my_daemon_uri;                /**< Contact info to local daemon */
@@ -129,14 +131,7 @@ struct orte_proc_info_t {
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
 #endif
     int app_rank;                        /**< rank within my app_context */
-    orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */
-    orte_grpcomm_coll_id_t peer_init_barrier;   /**< barrier id during init */
-    orte_grpcomm_coll_id_t peer_fini_barrier;   /**< barrier id during finalize */
     orte_vpid_t my_hostid;               /** identifies the local host for a coprocessor */
-#if OPAL_ENABLE_FT_CR == 1
-    orte_grpcomm_coll_id_t snapc_init_barrier;  /**< barrier id during init */
-    orte_grpcomm_coll_id_t snapc_fini_barrier;  /**< barrier id during finalize */
-#endif
 };
 typedef struct orte_proc_info_t orte_proc_info_t;
 

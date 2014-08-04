@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +73,7 @@ static int reg_string(const char* param_name,
 {
     *storage = (char*) default_value;
     mca_base_component_var_register(&mca_btl_usnic_component.super.btl_version,
-                                    param_name, help_string, 
+                                    param_name, help_string,
                                     MCA_BASE_VAR_TYPE_STRING,
                                     NULL,
                                     0,
@@ -82,7 +82,7 @@ static int reg_string(const char* param_name,
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     storage);
 
-    if (0 == (flags & REGSTR_EMPTY_OK) && 
+    if (0 == (flags & REGSTR_EMPTY_OK) &&
         (NULL == *storage || 0 == strlen(*storage))) {
         opal_output(0, "Bad parameter value for parameter \"%s\"",
                     param_name);
@@ -102,7 +102,7 @@ static int reg_int(const char* param_name,
 {
     *storage = default_value;
     mca_base_component_var_register(&mca_btl_usnic_component.super.btl_version,
-                                    param_name, help_string, 
+                                    param_name, help_string,
                                     MCA_BASE_VAR_TYPE_INT,
                                     NULL,
                                     0,
@@ -177,9 +177,9 @@ int opal_btl_usnic_component_register(void)
 
     CHECK(reg_string("if_include",
                      "Comma-delimited list of devices/networks to be used (e.g. \"usnic_0,10.10.0.0/16\"; empty value means to use all available usNICs).  Mutually exclusive with btl_usnic_if_exclude.",
-                     NULL, &mca_btl_usnic_component.if_include, 
+                     NULL, &mca_btl_usnic_component.if_include,
                      REGSTR_EMPTY_OK, OPAL_INFO_LVL_1));
-    
+
     CHECK(reg_string("if_exclude",
                      "Comma-delimited list of devices/networks to be excluded (empty value means to not exclude any usNICs).  Mutually exclusive with btl_usnic_if_include.",
                      NULL, &mca_btl_usnic_component.if_exclude,
@@ -189,7 +189,7 @@ int opal_btl_usnic_component_register(void)
                   "A non-negative integer specifying the frequency at which each USNIC BTL will output statistics (default: 0 seconds, meaning that statistics are disabled)",
                   0, &mca_btl_usnic_component.stats_frequency, 0,
                   OPAL_INFO_LVL_4));
-    mca_btl_usnic_component.stats_enabled = 
+    mca_btl_usnic_component.stats_enabled =
         (bool) (mca_btl_usnic_component.stats_frequency > 0);
 
     CHECK(reg_int("stats_relative",
@@ -237,7 +237,7 @@ int opal_btl_usnic_component_register(void)
     CHECK(reg_int("priority_limit", "Max size of \"priority\" messages (0 = use pre-set defaults; depends on number and type of devices available)",
                   0, &max_tiny_payload,
                   REGINT_GE_ZERO, OPAL_INFO_LVL_5));
-    opal_btl_usnic_module_template.max_tiny_payload = 
+    opal_btl_usnic_module_template.max_tiny_payload =
         (size_t) max_tiny_payload;
 
     CHECK(reg_int("eager_limit", "Eager send limit (0 = use pre-set defaults; depends on number and type of devices available)",
@@ -246,7 +246,7 @@ int opal_btl_usnic_component_register(void)
 
     CHECK(reg_int("rndv_eager_limit", "Eager rendezvous limit (0 = use pre-set defaults; depends on number and type of devices available)",
                   0, &rndv_eager_limit, REGINT_GE_ZERO, OPAL_INFO_LVL_5));
-    opal_btl_usnic_module_template.super.btl_rndv_eager_limit = 
+    opal_btl_usnic_module_template.super.btl_rndv_eager_limit =
         rndv_eager_limit;
 
     CHECK(reg_int("pack_lazy_threshold", "Convertor packing on-the-fly threshold (-1 = always pack eagerly, 0 = always pack lazily, otherwise will pack on the fly if fragment size is > limit)",

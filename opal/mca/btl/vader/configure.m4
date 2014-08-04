@@ -42,7 +42,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
 	fi
 
 	OPAL_CHECK_PACKAGE([$1],[xpmem.h sn/xpmem.h],[xpmem],[xpmem_make],[],
-	    [$ompi_check_xpmem_dir],[$ompi_check_xpmem_libdir], [ompi_check_xpmem_happy="yes"], [])
+	    [$opal_check_xpmem_dir],[$opal_check_xpmem_libdir], [opal_check_xpmem_happy="yes"], [])
 
 	if test "$opal_check_xpmem_happy" = "no" -a -n "$with_xpmem" -a "$with_xpmem" != "yes" ; then
 	    AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])

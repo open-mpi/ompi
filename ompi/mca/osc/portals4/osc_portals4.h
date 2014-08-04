@@ -11,7 +11,6 @@
 #define OSC_PORTALS4_PORTALS4_H
 
 #include <portals4.h>
-#include "ompi/class/ompi_free_list.h"
 #include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
 
@@ -74,7 +73,7 @@ struct ompi_osc_portals4_module_t {
     ptl_handle_ni_t ni_h; /* network interface used by this window */
     ptl_pt_index_t pt_idx; /* portal table index used by this window (this will be same across window) */
     ptl_handle_ct_t ct_h; /* Counting event handle used for completion in this window */
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
     ptl_handle_md_t *md_h; /* memory descriptor describing all of memory used by this window */
     ptl_handle_md_t *req_md_h; /* memory descriptor with event completion used by this window */
 #else
@@ -127,11 +126,11 @@ static inline void
 ompi_osc_portals4_get_md(const void *ptr, const ptl_handle_md_t *array,
                          ptl_handle_md_t *md_h, void **base_ptr)
 {
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
-    int mask = (1ULL << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1)) - 1;
-    int which = (((uintptr_t) ptr) >> (OMPI_PORTALS4_MAX_MD_SIZE - 1)) & mask;
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    int mask = (1ULL << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1)) - 1;
+    int which = (((uintptr_t) ptr) >> (OPAL_PORTALS4_MAX_MD_SIZE - 1)) & mask;
     *md_h = array[which];
-    *base_ptr = (void*) (which * (1ULL << (OMPI_PORTALS4_MAX_MD_SIZE - 1)));
+    *base_ptr = (void*) (which * (1ULL << (OPAL_PORTALS4_MAX_MD_SIZE - 1)));
 #else
     *md_h = array[0];
     *base_ptr = 0;
@@ -142,8 +141,8 @@ ompi_osc_portals4_get_md(const void *ptr, const ptl_handle_md_t *array,
 static inline int
 ompi_osc_portals4_get_num_mds(void)
 {
-#if OMPI_PORTALS4_MAX_MD_SIZE < OMPI_PORTALS4_MAX_VA_SIZE
-    return (1 << (OMPI_PORTALS4_MAX_VA_SIZE - OMPI_PORTALS4_MAX_MD_SIZE + 1));
+#if OPAL_PORTALS4_MAX_MD_SIZE < OPAL_PORTALS4_MAX_VA_SIZE
+    return (1 << (OPAL_PORTALS4_MAX_VA_SIZE - OPAL_PORTALS4_MAX_MD_SIZE + 1));
 #else
     return 1;
 #endif

@@ -20,14 +20,37 @@
 #include "btl_usnic_util.h"
 
 
-void opal_btl_usnic_exit(void)
+void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
 {
-    ompi_rte_abort(1, NULL);
-
-    /* If the error manager returns, wait to be killed */
-    while (1) {
-        sleep(99999);
+    if (NULL == module) {
+        /* Find the first module with an error callback */
+        for (uint32_t i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
+            if (NULL != mca_btl_usnic_component.usnic_active_modules[i]->pml_error_callback) {
+                module = mca_btl_usnic_component.usnic_active_modules[i];
+                break;
+            }
+        }
+        /* If we didn't find a PML error callback, just exit. */
+        if (NULL == module) {
+            exit(1);
+        }
     }
+
+    /* After discussion with George, we decided that it was safe to
+       cast away the const from opal_proc_local_get() -- the error
+       function needs to be smart enough to not take certain actions
+       if the passed proc is yourself (e.g., don't call del_procs() on
+       yourself). */
+    if (NULL != module->pml_error_callback) {
+        module->pml_error_callback(&module->super,
+                                   MCA_BTL_ERROR_FLAGS_FATAL,
+                                   (opal_proc_t*) opal_proc_local_get(),
+                                   "usnic");
+    }
+
+    /* If the PML error callback returns (or if there wasn't one),
+       just exit.  Shrug. */
+    exit(1);
 }
 
 
@@ -94,7 +117,7 @@ void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
 
 void opal_btl_usnic_sprintf_mac(char *out, const uint8_t mac[6])
 {
-    snprintf(out, 32, "%02x:%02x:%02x:%02x:%02x:%02x", 
+    snprintf(out, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
              mac[0],
              mac[1],
              mac[2],
@@ -162,7 +185,7 @@ int opal_btl_usnic_find_ip(opal_btl_usnic_module_t *module, uint8_t mac[6])
             }
 
             /* Yes, it is! */
-            if (OPAL_SUCCESS != opal_ifindextoname(i, module->if_name, 
+            if (OPAL_SUCCESS != opal_ifindextoname(i, module->if_name,
                                                    sizeof(module->if_name)) ||
                 OPAL_SUCCESS != opal_ifindextoaddr(i, &sa, sizeof(sa)) ||
                 OPAL_SUCCESS != opal_ifindextomask(i, &module->if_cidrmask,
@@ -236,15 +259,14 @@ uint32_t opal_btl_usnic_get_ipv4_subnet(uint32_t addrn, uint32_t cidr_len)
  * Simple utility in a .c file, mainly so that inline functions in .h
  * files don't need to include RTE header files.
  */
-void opal_btl_usnic_util_abort(const char *msg, const char *file, int line,
-                               int ret)
+void opal_btl_usnic_util_abort(const char *msg, const char *file, int line)
 {
     opal_show_help("help-mpi-btl-usnic.txt", "internal error after init",
                    true,
                    opal_process_info.nodename,
-                   msg, file, line, strerror(ret));
+                   msg, file, line);
 
-    ompi_rte_abort(ret, NULL);
+    opal_btl_usnic_exit(NULL);
     /* Never returns */
 }
 
