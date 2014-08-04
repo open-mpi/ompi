@@ -161,7 +161,7 @@ int pmix_get_packed(const opal_identifier_t* proc, char **packed_data,
     char *tmp_encoded = NULL, *pmikey, *pmi_tmp;
     int remote_key, size;
     size_t bytes_read;
-    int rc;
+    int rc = OPAL_ERR_NOT_FOUND;
 
     /* set default */
     *packed_data = NULL;
@@ -224,7 +224,7 @@ int pmix_get_packed(const opal_identifier_t* proc, char **packed_data,
         }
     }
 
-    return OPAL_SUCCESS;
+    return rc;
 }
 
 int cache_keys_locally(const opal_identifier_t* id, const char* key,

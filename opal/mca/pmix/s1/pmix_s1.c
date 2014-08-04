@@ -12,6 +12,7 @@
 #include "opal/constants.h"
 #include "opal/types.h"
 
+#include "opal_stdint.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -91,11 +92,23 @@ static int pmix_vallen_max = 0;
 
 // Job environment description
 static char *pmix_kvs_name = NULL;
-static char *pmix_id = NULL;
 static bool s1_committed = false;
 static char* pmix_packed_data = NULL;
 static int pmix_packed_data_offset = 0;
 static int pmix_pack_key = 0;
+static uint32_t s1_jobid;
+static int s1_rank;
+static uint16_t s1_lrank;
+static uint16_t s1_nrank;
+static int s1_usize;
+static int s1_jsize;
+static int s1_appnum;
+static int s1_nlranks;
+static int *s1_lranks=NULL;
+static struct {
+    uint32_t jid;
+    uint32_t vid;
+} s1_pname;
 
 static char* pmix_error(int pmix_err);
 #define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
@@ -104,12 +117,27 @@ static char* pmix_error(int pmix_err);
                     pmi_func, __FILE__, __LINE__, __func__,     \
                     pmix_error(pmi_err));                        \
     } while(0);
+static int kvs_get(const char key[], char value [], int maxvalue)
+{
+    int rc;
+    rc = PMI_KVS_Get(pmix_kvs_name, key, value, maxvalue);
+    if( PMI_SUCCESS != rc ){
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
 
 static int s1_init(void)
 {
     PMI_BOOL initialized;
     int spawned;
     int rc, ret = OPAL_ERROR;
+    int i;
+    char *pmix_id, *tmp;
+    uint32_t jobfam, stepid;
+    opal_proc_t *proc;
 
     if (PMI_SUCCESS != (rc = PMI_Initialized(&initialized))) {
         OPAL_PMI_ERROR(rc, "PMI_Initialized");
@@ -151,6 +179,44 @@ static int s1_init(void)
         free(pmix_id);
         goto err_exit;
     }
+    /* Slurm PMI provides the job id as an integer followed
+     * by a '.', followed by essentially a stepid. The first integer
+     * defines an overall job number. The second integer is the number of
+     * individual jobs we have run within that allocation. So we translate
+     * this as the overall job number equating to our job family, and
+     * the individual number equating to our local jobid
+     */
+    jobfam = strtoul(pmix_id, &tmp, 10);
+    if (NULL == tmp) {
+        /* hmmm - no '.', so let's just use zero */
+        stepid = 0;
+    } else {
+        tmp++; /* step over the '.' */
+        stepid = strtoul(tmp, NULL, 10);
+    }
+    /* now build the jobid */
+    s1_jobid = (jobfam << 16) | stepid;
+    free(pmix_id);
+
+    /* get our rank */
+    ret = PMI_Get_rank(&s1_rank);
+    if( PMI_SUCCESS != ret ) {
+        OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+        goto err_exit;
+    }
+    /* store our name in the opal_proc_t so that
+     * debug messages will make sense - an upper
+     * layer will eventually overwrite it, but that
+     * won't do any harm */
+    proc = opal_proc_local_get();
+    if (OPAL_NAME_INVALID == proc->proc_name) {
+        s1_pname.jid = s1_jobid;
+        s1_pname.vid = s1_rank;
+        memcpy(&proc->proc_name, &s1_pname, sizeof(opal_identifier_t));
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:s1: assigned tmp name",
+                            OPAL_NAME_PRINT(proc->proc_name));
+    }
 
     pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
     if( pmix_kvs_name == NULL ){
@@ -164,9 +230,55 @@ static int s1_init(void)
         goto err_exit;
     }
 
+    /* get our local proc info to find our local rank */
+    if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&s1_nlranks))) {
+        OPAL_PMI_ERROR(rc, "PMI_Get_clique_size");
+        return rc;
+    }
+    /* now get the specific ranks */
+    s1_lranks = (int*)calloc(s1_nlranks, sizeof(int));
+    if (NULL == s1_lranks) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return rc;
+    }
+    if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(s1_lranks, s1_nlranks))) {
+        OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
+        free(s1_lranks);
+        return rc;
+    }
+    /* find ourselves */
+    for (i=0; i < s1_nlranks; i++) {
+        if (s1_rank == s1_lranks[i]) {
+            s1_lrank = i;
+            s1_nrank = i;
+            break;
+        }
+    }
+
+    /* get universe size */
+    ret = PMI_Get_universe_size(&s1_usize);
+    if (PMI_SUCCESS != ret) {
+        OPAL_PMI_ERROR(ret, "PMI_Get_universe_size");
+        goto err_exit;
+    }
+
+    /* get job size */
+    ret = PMI_Get_size(&s1_jsize);
+    if (PMI_SUCCESS != ret) {
+        OPAL_PMI_ERROR(ret, "PMI_Get_size");
+        goto err_exit;
+    }
+
+    /* get appnum */
+    ret = PMI_Get_appnum(&s1_appnum);
+    if (PMI_SUCCESS != ret) {
+        OPAL_PMI_ERROR(ret, "PMI_Get_appnum");
+        goto err_exit;
+    }
+
     return OPAL_SUCCESS;
 
-err_exit:
+ err_exit:
     PMI_Finalize();
     return ret;
 }
@@ -178,6 +290,10 @@ static int s1_fini(void) {
 
     if (0 == --pmix_init_count) {
         PMI_Finalize ();
+    }
+
+    if (NULL != s1_lranks) {
+        free(s1_lranks);
     }
     return OPAL_SUCCESS;
 }
@@ -237,6 +353,11 @@ static int s1_put(opal_pmix_scope_t scope,
     char* buffer_to_put;
     int rem_offset = 0;
     int data_to_put = 0;
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s1 put for key %s",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kv->key);
+
     if (OPAL_SUCCESS != (rc = pmix_store_encoded (kv->key, (void*)&kv->data, kv->type, &pmix_packed_data, &pmix_packed_data_offset))) {
         OPAL_ERROR_LOG(rc);
         return rc;
@@ -279,15 +400,13 @@ static int s1_put(opal_pmix_scope_t scope,
 static int s1_fence(opal_process_name_t *procs, size_t nprocs)
 {
     int rc;
-    int i;
-    int *ranks, ps;
-    opal_process_name_t name;
+    int32_t i;
     opal_value_t *kp, kvn;
     opal_hwloc_locality_t locality;
-#if OPAL_HAVE_HWLOC
-    char *cpuset;
-    opal_list_t vals;
-#endif
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s1 called fence",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* check if there is partially filled meta key and put them */
     if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
@@ -298,11 +417,18 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
     }
     /* if we haven't already done it, ensure we have committed our values */
     if (!s1_committed) {
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:s1 committing values",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmix_kvs_name))) {
             OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
             return OPAL_ERROR;
         }
     }
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s1 performing barrier",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* use the PMI barrier function */
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
@@ -310,41 +436,45 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
         return OPAL_ERROR;
     }
 
-    /*** RHC: you'll need to do add some logic here to get the
-     * modex data from each local process so you can set the
-     * localities */
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s1 barrier complete",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    /* get the modex data from each local process and set the
+     * localities to avoid having the MPI layer fetch data
+     * for every process in the job */
     if (!s1_committed) {
         s1_committed = true;
-        /* get our local proc info to find our local rank */
-        if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&ps))) {
-            OPAL_PMI_ERROR(rc, "PMI_Get_clique_size");
-            return rc;
-        }
-        /* now get the specific ranks */
-        ranks = (int*)calloc(ps, sizeof(int));
-        if (NULL == ranks) {
-            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-            return rc;
-        }
-        if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, ps))) {
-            OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
-            return rc;
-        }
-
-        /* set locality */
-        name = OPAL_PROC_MY_NAME;
-        for (i=0; i < ps; i++) {
-            name = (name & 0xffff0000) | (ranks[i] & 0x0000ffff);
-#if OPAL_HAVE_HWLOC
-            OBJ_CONSTRUCT(&vals, opal_list_t);
-            if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, &name,
-                                                        OPAL_DSTORE_CPUSET, &vals))) {
-                OPAL_LIST_DESTRUCT(&vals);
+        memcpy(&s1_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
+        /* set a default locality for every process in the job other than myself */
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_LOCALITY);
+        kvn.type = OPAL_UINT16;
+        kvn.data.uint16 = OPAL_PROC_NON_LOCAL;
+        for (i=0; i < s1_usize; i++) {
+            if (s1_rank == i) {
                 continue;
             }
-            kp = (opal_value_t*)opal_list_get_first(&vals);
-            cpuset = kp->data.string;
-            if (NULL == cpuset) {
+            s1_pname.vid = i;
+            opal_output_verbose(5, opal_pmix_base_framework.framework_output,
+                                "%s SETTING LOCALITY FOR %s",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                OPAL_NAME_PRINT(*(opal_identifier_t*)&s1_pname));
+            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&s1_pname, &kvn);
+        }
+        OBJ_DESTRUCT(&kvn);
+
+        /* overwrite locality for each local rank */
+        for (i=0; i < s1_nlranks; i++) {
+            s1_pname.vid = i;
+            rc = cache_keys_locally((opal_identifier_t*)&s1_pname, OPAL_DSTORE_CPUSET,
+                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
+            if (OPAL_SUCCESS != rc) {
+                OPAL_ERROR_LOG(rc);
+                return rc;
+            }
+#if OPAL_HAVE_HWLOC
+            if (NULL == kp || NULL == kp->data.string) {
                 /* if we share a node, but we don't know anything more, then
                  * mark us as on the node as this is all we know
                  */
@@ -353,9 +483,11 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
                 /* determine relative location on our node */
                 locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
                                                                  opal_process_info.cpuset,
-                                                                 (char *) cpuset);
+                                                                 kp->data.string);
             }
-            OPAL_LIST_DESTRUCT(&vals);
+            if (NULL != kp) {
+                OBJ_RELEASE(kp);
+            }
 #else
             /* all we know is we share a node */
             locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
@@ -363,13 +495,14 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:native proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                 OPAL_NAME_PRINT(name), opal_hwloc_base_print_locality(locality)));
+                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&s1_pname),
+                                 opal_hwloc_base_print_locality(locality)));
     
             OBJ_CONSTRUCT(&kvn, opal_value_t);
             kvn.key = strdup(OPAL_DSTORE_LOCALITY);
             kvn.type = OPAL_UINT16;
             kvn.data.uint16 = locality;
-            (void)opal_dstore.store(opal_dstore_internal, &name, &kvn);
+            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&s1_pname, &kvn);
             OBJ_DESTRUCT(&kvn);
         }
     }
@@ -381,17 +514,6 @@ static int s1_fence_nb(opal_process_name_t *procs, size_t nprocs,
                        opal_pmix_cbfunc_t cbfunc, void *cbdata)
 {
     return OPAL_ERR_NOT_SUPPORTED;
-}
-
-static int kvs_get(const char key[], char value [], int maxvalue)
-{
-    int rc;
-    rc = PMI_KVS_Get(pmix_kvs_name, key, value, maxvalue);
-    if( PMI_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
-        return OPAL_ERROR;
-    }
-    return OPAL_SUCCESS;
 }
 
 static int s1_get(const opal_identifier_t *id,
@@ -458,91 +580,67 @@ static int s1_unpublish(const char service_name[],
 
 static bool s1_get_attr(const char *attr, opal_value_t **kv)
 {
-    int rc, i;
-    char *tmp, *t2;
-    uint32_t jobid, jobfam, stepid;
     opal_value_t *kp;
 
     if (0 == strcmp(PMIX_JOBID, attr)) {
-        /* Slurm PMI provides the job id as an integer followed
-         * by a '.', followed by essentially a stepid. The first integer
-         * defines an overall job number. The second integer is the number of
-         * individual jobs we have run within that allocation. So we translate
-         * this as the overall job number equating to our job family, and
-         * the individual number equating to our local jobid
-         */
-        t2 = strdup(pmix_id);
-        jobfam = strtoul(t2, &tmp, 10);
-        if (NULL == tmp) {
-            /* hmmm - no '.', so let's just use zero */
-            stepid = 0;
-        } else {
-            tmp++; /* step over the '.' */
-            stepid = strtoul(tmp, NULL, 10);
-        }
-        free(t2);
-        /* now build the jobid */
-        jobid = (jobfam << 16) | stepid;
         kp = OBJ_NEW(opal_value_t);
         kp->key = strdup(attr);
         kp->type = OPAL_UINT32;
-        kp->data.uint32 = jobid;
+        kp->data.uint32 = s1_jobid;
         *kv = kp;
         return true;
     }
 
     if (0 == strcmp(PMIX_RANK, attr)) {
-        rc = PMI_Get_rank(&i);
-        if( PMI_SUCCESS != rc ) {
-            OPAL_PMI_ERROR(rc, "PMI_Get_rank");
-            return false;
-        }
         kp = OBJ_NEW(opal_value_t);
         kp->key = strdup(attr);
         kp->type = OPAL_UINT32;
-        kp->data.uint32 = i;
+        kp->data.uint32 = s1_rank;
         *kv = kp;
         return true;
     }
 
     if (0 == strcmp(PMIX_UNIV_SIZE, attr)) {
-        rc = PMI_Get_universe_size(&i);
-        if( PMI_SUCCESS != rc ) {
-            OPAL_PMI_ERROR(rc, "PMI_Get_universe_size");
-            return false;
-        }
         kp = OBJ_NEW(opal_value_t);
         kp->key = strdup(attr);
         kp->type = OPAL_UINT32;
-        kp->data.uint32 = i;
+        kp->data.uint32 = s1_usize;
         *kv = kp;
         return true;
     }
 
     if (0 == strcmp(PMIX_JOB_SIZE, attr)) {
-        rc = PMI_Get_size(&i);
-        if( PMI_SUCCESS != rc ) {
-            OPAL_PMI_ERROR(rc, "PMI_Get_size");
-            return false;
-        }
         kp = OBJ_NEW(opal_value_t);
         kp->key = strdup(attr);
         kp->type = OPAL_UINT32;
-        kp->data.uint32 = i;
+        kp->data.uint32 = s1_jsize;
         *kv = kp;
         return true;
     }
 
     if (0 == strcmp(PMIX_APPNUM, attr)) {
-        rc = PMI_Get_appnum(&i);
-        if( PMI_SUCCESS != rc ) {
-            OPAL_PMI_ERROR(rc, "PMI_Get_appnum");
-            return false;
-        }
         kp = OBJ_NEW(opal_value_t);
         kp->key = strdup(attr);
         kp->type = OPAL_UINT32;
-        kp->data.uint32 = i;
+        kp->data.uint32 = s1_appnum;
+        *kv = kp;
+        return true;
+    }
+
+    if (0 == strcmp(PMIX_LOCAL_RANK, attr)) {
+        kp = OBJ_NEW(opal_value_t);
+        kp->key = strdup(attr);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = s1_lrank;
+        *kv = kp;
+        return true;
+    }
+
+    if (0 == strcmp(PMIX_NODE_RANK, attr)) {
+        kp = OBJ_NEW(opal_value_t);
+        kp->key = strdup(attr);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = s1_nrank;
         *kv = kp;
         return true;
     }
