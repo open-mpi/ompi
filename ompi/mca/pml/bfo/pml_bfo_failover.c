@@ -3,6 +3,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1414,7 +1416,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
                             "to rank=%d on node=%s \n",
                             btl->btl_component->btl_version.mca_component_name,
                             OMPI_PROC_MY_NAME->vpid,
-                            btlname, OMPI_CAST_RTE_NAME(errproc->super.proc_name)->vpid,
+                            btlname, OMPI_CAST_RTE_NAME(&errproc->super.proc_name)->vpid,
                             (NULL == errproc->super.proc_hostname) ? "unknown" : errproc->super.proc_hostname);
 
         /* Need to search for any pending packets associated
