@@ -359,7 +359,6 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
     int sd, rc;
     pmix_server_hdr_t hdr;
     pmix_server_peer_t *peer;
-    uint64_t *ui64;
 
     sd = accept(incoming_sd, (struct sockaddr*)&addr, &addrlen);
     opal_output_verbose(2, pmix_server_output,
@@ -399,10 +398,15 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
     if (PMIX_USOCK_IDENT == hdr.type) {
         /* get the peer */
         if (NULL == (peer = pmix_server_peer_lookup(sd))) {
-            /* should never happen */
-            peer->state = PMIX_SERVER_CLOSED;
-            CLOSE_THE_SOCKET(sd);
-            return;
+            /* create the peer */
+            peer = OBJ_NEW(pmix_server_peer_t);
+            if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(pmix_server_peers, sd, peer))) {
+                OPAL_ERROR_LOG(rc);
+                return;
+            }
+            memcpy(&peer->name, &hdr.id, sizeof(opal_identifier_t));
+            peer->state = PMIX_SERVER_ACCEPTING;
+            peer->sd = sd;
         }
         /* set socket up to be non-blocking */
         if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
@@ -441,9 +445,8 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name),
                         pmix_server_state_print(peer->state), peer->sd);
+            opal_hash_table_set_value_uint64(pmix_server_peers, sd, NULL);
             CLOSE_THE_SOCKET(sd);
-            ui64 = (uint64_t*)(&peer->name);
-            opal_hash_table_set_value_uint64(pmix_server_peers, (*ui64), NULL);
             OBJ_RELEASE(peer);
         }
     }
