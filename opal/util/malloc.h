@@ -21,7 +21,7 @@
 #ifndef OPAL_MALLOC_H
 #define OPAL_MALLOC_H
 
-#include "opal_config.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 /*
