@@ -3,6 +3,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,7 +66,11 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 /* database keys */
 #define OMPI_RTE_NODE_ID     ORTE_DB_DAEMON_VPID
 #define OMPI_RTE_HOST_ID     ORTE_DB_HOSTID
+#if OPAL_ENABLE_DEBUG
+static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * name);
+#else
 #define OMPI_CAST_RTE_NAME(a) ((orte_process_name_t*)(a))
+#endif
 
 /* Process info struct and values */
 typedef orte_node_rank_t ompi_node_rank_t;
@@ -126,6 +132,11 @@ typedef struct {
 } ompi_orte_tracker_t;
 OBJ_CLASS_DECLARATION(ompi_orte_tracker_t);
 
+#if OPAL_ENABLE_DEBUG
+static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * name) {
+    return (orte_process_name_t *)name;
+}
+#endif
 END_C_DECLS
 
 #endif /* MCA_OMPI_RTE_ORTE_H */
