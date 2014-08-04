@@ -116,12 +116,6 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
        so it should be safe to unconditionally destruct the ack_li */
     OBJ_DESTRUCT(&(endpoint->endpoint_ack_li));
 
-    /* Remove this endpoint from module->all_endpoints list, then
-       destruct the list_item_t */
-    opal_mutex_lock(&endpoint->endpoint_module->all_endpoints_lock);
-    opal_list_remove_item(&endpoint->endpoint_module->all_endpoints,
-                          &endpoint->endpoint_endpoint_li);
-    opal_mutex_unlock(&endpoint->endpoint_module->all_endpoints_lock);
     OBJ_DESTRUCT(&(endpoint->endpoint_endpoint_li));
 
     if (endpoint->endpoint_hotel.rooms != NULL) {
@@ -178,4 +172,13 @@ opal_btl_usnic_flush_endpoint(
 
     /* Now, ACK everything that is pending */
     opal_btl_usnic_handle_ack(endpoint, endpoint->endpoint_next_seq_to_send-1);
+}
+
+void opal_btl_usnic_release_endpoint(opal_btl_usnic_module_t *module,
+                                     opal_btl_usnic_endpoint_t *endpoint)
+{
+    opal_mutex_lock(&module->all_endpoints_lock);
+    opal_list_remove_item(&module->all_endpoints, &endpoint->endpoint_endpoint_li);
+    opal_mutex_unlock(&module->all_endpoints_lock);
+    OBJ_RELEASE(endpoint);
 }
