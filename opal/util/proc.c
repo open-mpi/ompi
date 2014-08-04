@@ -30,7 +30,7 @@ opal_process_info_t opal_process_info = {
 static opal_proc_t opal_local_proc = {
     { .opal_list_next = NULL,
       .opal_list_prev = NULL},
-    0x1122334455667788,
+    0xffffffffffffffff,
     0,
     0,
     NULL,

@@ -43,11 +43,6 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 
 static int opal_pmix_base_frame_close(void)
 {
-   /* let the active component to finalize, should it wish to do so */
-    if (NULL != opal_pmix.finalize) {
-        opal_pmix.finalize();
-    }
-
     return mca_base_framework_components_close(&opal_pmix_base_framework, NULL);
 }
 
@@ -67,16 +62,3 @@ OBJ_CLASS_INSTANCE(pmix_info_t,
                    opal_list_item_t,
                    NULL, NULL);
 
-static void acon(opal_pmix_attr_t *p)
-{
-    p->attr = PMIX_ATTR_UNDEF;
-    p->scope = PMIX_SCOPE_UNDEF;
-    OBJ_CONSTRUCT(&p->value, opal_value_t);
-}
-static void ades(opal_pmix_attr_t *p)
-{
-    OBJ_DESTRUCT(&p->value);
-}
-OBJ_CLASS_INSTANCE(opal_pmix_attr_t,
-                   opal_list_item_t,
-                   acon, ades);

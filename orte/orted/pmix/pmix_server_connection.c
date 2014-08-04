@@ -268,7 +268,7 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
     /* if we don't already have it, get the peer */
     if (NULL == peer) {
         memcpy(&sender, &hdr.id, sizeof(opal_identifier_t));
-        peer = pmix_server_peer_lookup(&sender);
+        peer = pmix_server_peer_lookup(sd);
         if (NULL == peer) {
             opal_output_verbose(2, pmix_server_output,
                                 "%s pmix_server_recv_connect: connection from new peer",

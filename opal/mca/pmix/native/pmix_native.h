@@ -21,6 +21,8 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
+#include "opal/util/proc.h"
+
 #include "opal/mca/pmix/pmix.h"
 
 BEGIN_C_DECLS
@@ -51,7 +53,8 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_PUT_CMD          4
 #define PMIX_GET_CMD          5
 #define PMIX_GETNB_CMD        6
-#define PMIX_LOCAL_INFO_CMD   7
+#define PMIX_FINALIZE_CMD     7
+#define PMIX_GETATTR_CMD      8
 
 /* define some message types */
 #define PMIX_USOCK_IDENT  1
@@ -129,6 +132,7 @@ typedef struct {
     opal_pmix_base_component_t super;
     opal_buffer_t *cache;
     opal_event_base_t *evbase;
+    opal_identifier_t id;
     opal_identifier_t server;
     char *uri;
     struct sockaddr_un address;

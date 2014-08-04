@@ -10,6 +10,8 @@
 /* This header contains macros to help minimize usnic BTL differences
  * between v1.7/v1.8 and v1.9/v2.0. */
 
+#include "opal_config.h"
+
 #ifndef BTL_USNIC_COMPAT_H
 #define BTL_USNIC_COMPAT_H
 

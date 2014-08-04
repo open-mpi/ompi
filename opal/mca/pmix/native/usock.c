@@ -100,7 +100,7 @@ void pmix_usock_send_recv(int fd, short args, void *cbdata)
     }
 
     snd = OBJ_NEW(pmix_usock_send_t);
-    snd->hdr.id = OPAL_PROC_MY_NAME;
+    snd->hdr.id = mca_pmix_native_component.id;
     snd->hdr.type = PMIX_USOCK_USER;
     snd->hdr.tag = tag;
     snd->hdr.nbytes = ms->bfr->bytes_used;

@@ -43,6 +43,7 @@
 
 #include <signal.h>
 
+#include "opal_stdint.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_dirpath.h"
@@ -577,6 +578,7 @@ static int setup_child(orte_proc_t *child,
     char *param, *value, ***env;
     int rc;
     int32_t nrestarts=0, *nrptr;
+    opal_identifier_t id;
 
     /* for convenience */
     env = &app->env;
@@ -642,7 +644,7 @@ static int setup_child(orte_proc_t *child,
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
-    if (ORTE_NODE_RANK_INVALID ==child->node_rank) {
+    if (ORTE_NODE_RANK_INVALID == child->node_rank) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
         rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         return rc;
@@ -658,7 +660,17 @@ static int setup_child(orte_proc_t *child,
     opal_setenv(param, value, true, env);
     free(param);
     free(value);
-    
+
+    /* provide the identifier for the PMIx connection - the
+     * PMIx connection is made prior to setting the process
+     * name itself. Although in most cases the ID and the
+     * process name are the same, it isn't necessarily
+     * required */
+    memcpy(&id, &child->name, sizeof(id));
+    asprintf(&value, "%"PRIu64"", id);
+    opal_setenv("PMIX_ID", value, true, env);
+    free(value);
+
     nrptr = &nrestarts;
     if (orte_get_attribute(&child->attributes, ORTE_PROC_NRESTARTS, (void**)&nrptr, OPAL_INT32)) {
         /* pass the number of restarts for this proc - will be zero for

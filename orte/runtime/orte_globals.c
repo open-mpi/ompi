@@ -512,7 +512,7 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                 (opal_identifier_t*)proc,
-                                                ORTE_DB_HOSTNAME,
+                                                OPAL_DSTORE_HOSTNAME,
                                                 &myvals))) {
         ORTE_ERROR_LOG(rc);
         OPAL_LIST_DESTRUCT(&myvals);
@@ -548,7 +548,7 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     OBJ_CONSTRUCT(&myvals, opal_list_t);
     if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
                                                 (opal_identifier_t*)proc,
-                                                ORTE_DB_NODERANK,
+                                                OPAL_DSTORE_NODERANK,
                                                 &myvals))) {
         ORTE_ERROR_LOG(rc);
         OPAL_LIST_DESTRUCT(&myvals);

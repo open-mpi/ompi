@@ -16,10 +16,12 @@
 
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include "opal/mca/pmix/base/base.h"
@@ -49,8 +51,8 @@ static int native_lookup(const char service_name[],
                          char port[], int portLen);
 static int native_unpublish(const char service_name[], 
                             opal_list_t *info);
-static int native_get_attr(opal_list_t *attrs);
-static int native_get_attr_nb(opal_list_t *attrs,
+static bool native_get_attr(const char *attr, opal_value_t **kv);
+static int native_get_attr_nb(const char *attr,
                               opal_pmix_cbfunc_t cbfunc,
                               void *cbdata);
 static int native_spawn(int count, const char * cmds[],
@@ -90,20 +92,20 @@ static int init_cntr = 0;
 static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    opal_value_t *kv=NULL;
     int status=OPAL_SUCCESS;
 
     cb->active = false;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "pmix:native recv callback activated");
+                        "%s pmix:native recv callback activated",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     if (NULL != buf) {
         /* transfer the data to the cb */
         opal_dss.copy_payload(&cb->data, buf);
     }
     if (NULL != cb->cbfunc) {
-        cb->cbfunc(status, kv, cb->cbdata);
+        cb->cbfunc(status, NULL, cb->cbdata);
     }
 }
 
@@ -111,11 +113,10 @@ static int native_init(void)
 {
     char **uri;
 
-    /* if we are intitialized, then we are good */
-    if (0 < init_cntr) {
+    ++init_cntr;
+    if (1 < init_cntr) {
         return OPAL_SUCCESS;
     }
-    ++init_cntr;
 
     /* construct the server fields */
     mca_pmix_native_component.cache = NULL;
@@ -153,14 +154,50 @@ static int native_init(void)
     return OPAL_SUCCESS;
 }
 
-static int native_fini(void) {
-    if (0 == init_cntr) {
-        return OPAL_SUCCESS;
-    }
-    --init_cntr;
+static int native_fini(void)
+{
+    opal_buffer_t *msg;
+    pmix_cb_t *cb;
+    pmix_cmd_t cmd = PMIX_FINALIZE_CMD;
+    int rc;
 
-    if (0 == init_cntr) {
-        /* finalize things */
+    if (1 != init_cntr) {
+        --init_cntr;
+       return OPAL_SUCCESS;
+    }
+    init_cntr = 0;
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:native finalize called",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    if (PMIX_USOCK_CONNECTED == mca_pmix_native_component.state) {
+        /* setup a cmd message to notify the PMIx
+         * server that we are normally terminating */
+        msg = OBJ_NEW(opal_buffer_t);
+        /* pack the cmd */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+
+        /* create a callback object as we need to pass it to the
+         * recv routine so we know which callback to use when
+         * the return message is recvd */
+        cb = OBJ_NEW(pmix_cb_t);
+        cb->active = true;
+
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native sending finalize sync to server",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+        /* push the message into our event base to send to the server */
+        PMIX_ACTIVATE_SEND_RECV(msg, wait_cbfunc, cb);
+
+        /* wait for the ack to return */
+        PMIX_WAIT_FOR_COMPLETION(cb->active);
+        OBJ_RELEASE(cb);
     }
 
     if (NULL != mca_pmix_native_component.evbase) {
@@ -192,7 +229,8 @@ static int native_abort(int flag, const char msg[])
     int rc;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "pmix:native abort called");
+                        "%s pmix:native abort called",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* create a buffer to hold the message */
     bfr = OBJ_NEW(opal_buffer_t);
@@ -241,6 +279,12 @@ static int native_put(opal_pmix_scope_t scope,
     if (NULL == mca_pmix_native_component.cache) {
         mca_pmix_native_component.cache = OBJ_NEW(opal_buffer_t);
     }
+    /* pack the scope so the server can correctly distribute
+     * the data */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache, &scope, 1, PMIX_SCOPE_T))) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
+    }
     if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache, &kv, 1, OPAL_VALUE))) {
         OPAL_ERROR_LOG(rc);
     }
@@ -257,7 +301,8 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
     int rc;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "pmix:native executing fence");
+                        "%s pmix:native executing fence",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     msg = OBJ_NEW(opal_buffer_t);
     /* pack the fence cmd */
@@ -304,7 +349,8 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
     OBJ_RELEASE(cb);
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "pmix:native fence released");
+                        "%s pmix:native fence released",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     return OPAL_SUCCESS;
 }
@@ -368,9 +414,11 @@ static int native_get(const opal_identifier_t *id,
     int rc, ret;
     int32_t cnt;
     opal_list_t vals;
+    opal_value_t *kp;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "pmix:native getting value for key %s", key);
+                        "%s pmix:native getting value for key %s",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key);
 
     /* first see if we already have the info in our dstore */
     OBJ_CONSTRUCT(&vals, opal_list_t);
@@ -445,7 +493,8 @@ static int native_get(const opal_identifier_t *id,
     OBJ_RELEASE(cb);
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "pmix:native get completed");
+                        "%s pmix:native get completed",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     return rc;
 }
@@ -478,38 +527,138 @@ static int native_unpublish(const char service_name[],
     return OPAL_SUCCESS;;
 }
 
-static int native_get_attr(opal_list_t *attrs)
+static bool native_get_attr(const char *attr, opal_value_t **kv)
 {
-    int *ranks;
-    int procs = -1;
-    int rc;
-    pmix_cmd_t cmd = PMIX_LOCAL_INFO_CMD;
-    opal_buffer_t *msg, *bptr;
+    opal_buffer_t *msg;
+    opal_list_t vals;
+    opal_value_t *kp, *lclpeers=NULL, kvn;
+    pmix_cmd_t cmd = PMIX_GETATTR_CMD;
+    opal_process_name_t name, rank;
+    char **ranks;
+    int i, rc;
+    int32_t cnt;
+    bool found=false;
+    opal_hwloc_locality_t locality;
+    pmix_cb_t *cb;
+#if OPAL_HAVE_HWLOC
+    char *cpuset;
+#endif
 
-    /* get our local proc info to find our local rank */
-    if (PMI_SUCCESS != (rc = PMI_Get_clique_size(&procs))) {
-        OPAL_PMI_ERROR(rc, "PMI_Get_clique_size");
-        *error = "mca_common_pmix_local_info: could not get PMI clique size";
-        return OPAL_ERROR;
-    }
-    /* now get the specific ranks */
-    ranks = (int*)calloc(procs, sizeof(int));
-    if (NULL == ranks) {
-        *error = "mca_common_pmix_local_info: could not get memory for local ranks";
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(ranks, procs))) {
-        OPAL_PMI_ERROR(rc, "PMI_Get_clique_ranks");
-        *error = "mca_common_pmix_local_info: could not get clique ranks";
-        return OPAL_ERROR;
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:native get_attr called",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    /* try to retrieve the requested value from the dstore */
+    OBJ_CONSTRUCT(&vals, opal_list_t);
+    if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME, attr, &vals)) {
+        *kv = (opal_value_t*)opal_list_remove_first(&vals);
+        OPAL_LIST_DESTRUCT(&vals);
+        return true;
     }
 
-    *ranks_ret = ranks;
-    *procs_ret = procs;
-    return OPAL_SUCCESS;
+    /* if the value isn't yet available, then we should try to retrieve
+     * all the available attributes and store them for future use */
+    msg = OBJ_NEW(opal_buffer_t);
+    /* pack the cmd */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &cmd, 1, PMIX_CMD_T))) {
+        OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
+        return false;
+    }
+
+    /* create a callback object as we need to pass it to the
+     * recv routine so we know which callback to use when
+     * the return message is recvd */
+    cb = OBJ_NEW(pmix_cb_t);
+    cb->active = true;
+
+    /* push the message into our event base to send to the server */
+    PMIX_ACTIVATE_SEND_RECV(msg, wait_cbfunc, cb);
+
+    /* wait for the data to return */
+    PMIX_WAIT_FOR_COMPLETION(cb->active);
+
+    /* we have received the entire data blob for this process - unpack
+     * and cache all values, keeping the one we requested to return
+     * to the caller */
+    cnt = 1;
+    while (OPAL_SUCCESS == (rc = opal_dss.unpack(&cb->data, &kp, &cnt, OPAL_VALUE))) {
+        (void)opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp);
+        /* save the list of local peers */
+        if (0 == strcmp(PMIX_LOCAL_PEERS, kp->key)) {
+            OBJ_RETAIN(kp);
+            lclpeers = kp;
+        }
+        if (0 == strcmp(attr, kp->key)) {
+            OBJ_RETAIN(kp);
+            *kv = kp;
+            found = true;
+        }
+        OBJ_RELEASE(kp);
+        cnt = 1;
+    }
+    if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        OPAL_ERROR_LOG(rc);
+    }
+    OBJ_RELEASE(cb);
+
+    /* if the list of local peers wasn't included, then we are done */
+    if (NULL == lclpeers) {
+        return found;
+    }
+
+    /* parse the list of local peers to compute and store the
+     * locality as doing this here will prevent the MPI layer
+     * from fetching data for all ranks
+     */
+    name = OPAL_PROC_MY_NAME;
+    ranks = opal_argv_split(lclpeers->data.string, ',');
+    for (i=0; NULL != ranks[i]; i++) {
+        rank = strtoul(ranks[i], NULL, 10);
+        name = (name & 0xffff0000) | (rank & 0x0000ffff);
+#if OPAL_HAVE_HWLOC
+        OBJ_CONSTRUCT(&vals, opal_list_t);
+        if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, &name,
+                                                    OPAL_DSTORE_CPUSET, &vals))) {
+            OPAL_LIST_DESTRUCT(&vals);
+            continue;
+        }
+        kp = (opal_value_t*)opal_list_get_first(&vals);
+        cpuset = kp->data.string;
+        if (NULL == cpuset) {
+            /* if we share a node, but we don't know anything more, then
+             * mark us as on the node as this is all we know
+             */
+            locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+        } else {
+            /* determine relative location on our node */
+            locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                             opal_process_info.cpuset,
+                                                             (char *) cpuset);
+        }
+        OPAL_LIST_DESTRUCT(&vals);
+#else
+        /* all we know is we share a node */
+        locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+#endif
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
+                             "%s pmix:native proc %s locality %s",
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                             OPAL_NAME_PRINT(name), opal_hwloc_base_print_locality(locality)));
+    
+        OBJ_CONSTRUCT(&kvn, opal_value_t);
+        kvn.key = strdup(OPAL_DSTORE_LOCALITY);
+        kvn.type = OPAL_UINT16;
+        kvn.data.uint16 = locality;
+        (void)opal_dstore.store(opal_dstore_internal, &name, &kvn);
+        OBJ_DESTRUCT(&kvn);
+    }
+    opal_argv_free(ranks);
+
+    return found;
 }
 
-static int native_get_attr_nb(opal_list_t *attrs,
+static int native_get_attr_nb(const char *attr,
                               opal_pmix_cbfunc_t cbfunc,
                               void *cbdata)
 {
