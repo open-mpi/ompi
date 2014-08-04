@@ -13,6 +13,7 @@
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -511,6 +512,9 @@ static void reset_values(opal_btl_openib_ini_values_t *v)
 
     v->rdmacm_reject_causes_connect_error = false;
     v->rdmacm_reject_causes_connect_error_set = false;
+
+    v->ignore_device        = false; 
+    v->ignore_device_set    = false;
 }
 
 
