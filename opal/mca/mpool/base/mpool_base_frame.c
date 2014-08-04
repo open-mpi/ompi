@@ -18,6 +18,8 @@
  * $HEADER$
  */
 
+#include "opal_config.h"
+
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h> 
@@ -25,8 +27,6 @@
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
-
-#include "opal_config.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
