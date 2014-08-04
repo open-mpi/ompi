@@ -21,6 +21,7 @@
 #include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
 #include "opal/mca/pmix/base/base.h"
@@ -277,6 +278,12 @@ static int native_put(opal_pmix_scope_t scope,
 
     if (NULL == mca_pmix_native_component.cache) {
         mca_pmix_native_component.cache = OBJ_NEW(opal_buffer_t);
+    }
+    /* pack the scope so the server can correctly distribute
+     * the data */
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache, &scope, 1, PMIX_SCOPE_T))) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
     }
     if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache, &kv, 1, OPAL_VALUE))) {
         OPAL_ERROR_LOG(rc);

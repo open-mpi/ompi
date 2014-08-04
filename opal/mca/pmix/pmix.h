@@ -50,6 +50,7 @@ OBJ_CLASS_DECLARATION(pmix_info_t);
  *              regardless of location
  */
 typedef uint8_t opal_pmix_scope_t;
+#define PMIX_SCOPE_T OPAL_UINT8
 #define PMIX_SCOPE_UNDEF  0
 #define PMIX_INTERNAL     1  // data used internally only
 #define PMIX_LOCAL        2  // share to procs also on this node

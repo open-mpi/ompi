@@ -89,14 +89,16 @@ static int pmix_native_close(void)
 
 static int pmix_native_component_query(mca_base_module_t **module, int *priority)
 {
-    char *t;
+    char *t, *id;
 
     /* see if a PMIx server is present */
-    if (NULL == (t = getenv("PMIX_SERVER_URI"))) {
+    if (NULL == (t = getenv("PMIX_SERVER_URI")) ||
+        NULL == (id = getenv("PMIX_ID"))) {
         *module = NULL;
         return OPAL_ERROR;
     }
     mca_pmix_native_component.uri = strdup(t);
+    mca_pmix_native_component.id = strtoul(id, NULL, 10);
     *priority = 1;
     *module = (mca_base_module_t *)&opal_pmix_native_module;
     return OPAL_SUCCESS;

@@ -59,13 +59,14 @@ typedef uint8_t pmix_cmd_t;
 #define PMIX_CMD_T OPAL_UINT8
 
 /* define some commands */
-#define PMIX_ABORT_CMD    1
-#define PMIX_FENCE_CMD    2
-#define PMIX_FENCENB_CMD  3
-#define PMIX_PUT_CMD      4
-#define PMIX_GET_CMD      5
-#define PMIX_GETNB_CMD    6
-#define PMIX_LOCAL_INFO_CMD   7
+#define PMIX_ABORT_CMD        1
+#define PMIX_FENCE_CMD        2
+#define PMIX_FENCENB_CMD      3
+#define PMIX_PUT_CMD          4
+#define PMIX_GET_CMD          5
+#define PMIX_GETNB_CMD        6
+#define PMIX_FINALIZE_CMD     7
+#define PMIX_GETATTR_CMD      8
 
 /* define some message types */
 #define PMIX_USOCK_IDENT  1
@@ -102,14 +103,15 @@ typedef struct {
 } pmix_server_recv_t;
 OBJ_CLASS_DECLARATION(pmix_server_recv_t);
 
-/* object for tracking peers */
+/* object for tracking peers - each peer can have multiple
+ * connections. This can occur if the initial app executes
+ * a fork/exec, and the child initiates its own connection
+ * back to the PMIx server. Thus, the trackers are "indexed"
+ * by the socket, not the process name */
 typedef struct {
     opal_object_t super;
-    /* although not required, there is enough debug
-     * value that retaining the name makes sense
-     */
-    orte_process_name_t name;
     int sd;
+    orte_process_name_t name;
     int retries;                  // number of times we have tried to connect to this address
     pmix_server_state_t state;
     opal_event_t op_event;      // used for connecting and operations other than read/write
@@ -183,7 +185,7 @@ extern int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
                                         pmix_server_hdr_t *dhdr);
 extern void pmix_server_peer_event_init(pmix_server_peer_t* peer);
 extern char* pmix_server_state_print(pmix_server_state_t state);
-extern pmix_server_peer_t* pmix_server_peer_lookup(const orte_process_name_t *name);
+extern pmix_server_peer_t* pmix_server_peer_lookup(int sd);
 extern void pmix_server_peer_dump(pmix_server_peer_t* peer, const char* msg);
 
 

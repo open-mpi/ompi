@@ -71,6 +71,7 @@
 /* local classes for tracking collective ops */
 typedef struct {
     opal_list_item_t super;
+    int sd;
     orte_process_name_t name;
     uint32_t tag;
 } pmix_server_local_t;
@@ -359,7 +360,6 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
     pmix_server_hdr_t hdr;
     pmix_server_peer_t *peer;
     uint64_t *ui64;
-    orte_process_name_t sender;
 
     sd = accept(incoming_sd, (struct sockaddr*)&addr, &addrlen);
     opal_output_verbose(2, pmix_server_output,
@@ -397,9 +397,8 @@ static void connection_handler(int incoming_sd, short flags, void* cbdata)
 
     /* finish processing ident */
     if (PMIX_USOCK_IDENT == hdr.type) {
-        /* get the name */
-        memcpy(&sender, &hdr.id, sizeof(opal_identifier_t));
-        if (NULL == (peer = pmix_server_peer_lookup(&sender))) {
+        /* get the peer */
+        if (NULL == (peer = pmix_server_peer_lookup(sd))) {
             /* should never happen */
             peer->state = PMIX_SERVER_CLOSED;
             CLOSE_THE_SOCKET(sd);
@@ -473,12 +472,12 @@ char* pmix_server_state_print(pmix_server_state_t state)
 }
 
 
-pmix_server_peer_t* pmix_server_peer_lookup(const orte_process_name_t *name)
+pmix_server_peer_t* pmix_server_peer_lookup(int sd)
 {
     pmix_server_peer_t *peer;
     uint64_t ui64;
 
-    memcpy(&ui64, (char*)name, sizeof(uint64_t));
+    ui64 = sd;
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(pmix_server_peers, ui64, (void**)&peer)) {
         return NULL;
     }
@@ -578,6 +577,7 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
     pmix_server_local_t *lcl;
     uint32_t tag;
     opal_buffer_t *reply;
+    int32_t sd;
 
     opal_output_verbose(2, pmix_server_output,
                         "%s pmix:server:recv msg recvd from %s",
@@ -597,7 +597,11 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
         }
         memcpy(&name, &id, sizeof(orte_process_name_t));
 
-        /* unpack the tag the proc is listening on */
+        /* unpack the socket and tag the proc is listening on */
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &sd, &cnt, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &tag, &cnt, OPAL_UINT32))) {
             ORTE_ERROR_LOG(rc);
             return;
@@ -637,6 +641,7 @@ static void pmix_server_recv(int status, orte_process_name_t* sender,
          * is participating, so add them to the tracker so we know how
          * to send a response back to them when the collective is complete */
         lcl = OBJ_NEW(pmix_server_local_t);
+        lcl->sd = sd;
         lcl->name = name;
         lcl->tag = tag;
         opal_list_append(&trk->locals, &lcl->super);
@@ -821,7 +826,7 @@ static void pmix_server_release(int status, orte_process_name_t* sender,
                             "%s pmix:server:recv sending release to %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&lcl->name));
-        peer = pmix_server_peer_lookup(&lcl->name);
+        peer = pmix_server_peer_lookup(lcl->sd);
         PMIX_SERVER_QUEUE_SEND(peer, lcl->tag, reply);
     }
     OBJ_RELEASE(reply);

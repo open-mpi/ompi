@@ -328,7 +328,6 @@ static void process_message(pmix_server_peer_t *peer)
     opal_buffer_t *reply, xfer, *bptr, buf;
     opal_value_t kv, *kvp;
     opal_identifier_t id, idreq, *sig=NULL;
-    char *key;
     orte_process_name_t name;
     orte_job_t *jdata;
     orte_proc_t *proc;
@@ -486,7 +485,6 @@ static void process_message(pmix_server_peer_t *peer)
             /* yes - retrieve the entire blob for that proc */
             OBJ_CONSTRUCT(&values, opal_list_t);
             ret = opal_dstore.fetch(pmix_server_handle, &idreq, "modex", &values);
-            free(key);
             /* return it */
             reply = OBJ_NEW(opal_buffer_t);
             /* pack the status */
@@ -524,9 +522,16 @@ static void process_message(pmix_server_peer_t *peer)
          * from the host daemon */
         /* see who is hosting this proc */
         /* send the request */
-        free(key);
         OBJ_DESTRUCT(&xfer);
         return;
+
+    case PMIX_GETATTR_CMD:
+        opal_output_verbose(2, pmix_server_output,
+                            "%s recvd GETATTR",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* send the nidmap down */
+        return;
+
     default:
         ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
         OBJ_DESTRUCT(&xfer);
@@ -842,12 +847,13 @@ int pmix_server_peer_recv_connect_ack(pmix_server_peer_t* pr,
     /* if we don't already have it, get the peer */
     if (NULL == peer) {
         memcpy(&sender, &hdr.id, sizeof(opal_identifier_t));
-        peer = pmix_server_peer_lookup(&sender);
+        peer = pmix_server_peer_lookup(sd);
         if (NULL == peer) {
             opal_output_verbose(2, pmix_server_output,
                                 "%s pmix_server_recv_connect: connection from new peer",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             peer = OBJ_NEW(pmix_server_peer_t);
+            peer->sd = sd;
             peer->name = sender;
             peer->state = PMIX_SERVER_ACCEPTING;
             ui64 = (uint64_t*)(&peer->name);
