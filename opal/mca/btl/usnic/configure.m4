@@ -145,6 +145,19 @@ AC_DEFUN([OMPI_BTL_USNIC_DO_CONFIG],[
                         [btl_usnic_happy="yes"],
                         [btl_usnic_happy="no"])
 
+    # The current logic in btl_usnic_compat.h checks the OPAL version as a
+    # proxy for the top-level OMPI version.  Unfortunately this does the wrong
+    # thing for other top-level projects that might use the usnic BTL, such as
+    # ORCM.  ORCM's versioning is totally unrelated to OMPI's.  As a short term
+    # workaround, just disqualify ourselves if the OPAL version seems too old.
+    # In the longer term we should be doing something else, like versioning
+    # OPAL and OMPI separately.
+    AS_IF([test "$btl_usnic_happy" = "yes"],
+          [AS_IF([test "$OPAL_MAJOR_VERSION" -eq "1" && \
+                  test "$OPAL_MAJOR_VERSION" -lt "7"],
+                 [AC_MSG_NOTICE([OPAL version appears to be too old, disabling the usnic BTL])
+                  btl_usnic_happy=no])])
+
     # We only want to build on 64 bit Linux.
     AS_IF([test "$btl_usnic_happy" = "yes"],
           [AC_CHECK_SIZEOF([void *])
