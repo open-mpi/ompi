@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -383,7 +385,7 @@ int mca_btl_tcp2_proc_insert( mca_btl_tcp2_proc_t* btl_proc,
        Network Byte Order) and expect all information received to
        be in NBO.  Since big endian machines always send and receive
        in NBO, we don't care so much about that case. */
-    if (btl_proc->proc_ompi->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
+    if (btl_proc->proc_ompi->super.proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         btl_endpoint->endpoint_nbo = true;
     }
 #endif
