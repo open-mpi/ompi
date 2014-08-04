@@ -676,6 +676,10 @@ void evutil_secure_rng_get_bytes(void *buf, size_t n);
  */
 int evutil_secure_rng_init(void);
 
+/* Unused by OPAL and cannot support on OpenBSD.
+ * See https://svn.open-mpi.org/trac/ompi/ticket/4829
+ */
+#if 0
 /** Seed the random number generator with extra random bytes.
 
     You should almost never need to call this function; it should be
@@ -691,6 +695,7 @@ int evutil_secure_rng_init(void);
     @param datlen the number of bytes to read from datlen
  */
 void evutil_secure_rng_add_bytes(const char *dat, size_t datlen);
+#endif
 
 #ifdef __cplusplus
 }

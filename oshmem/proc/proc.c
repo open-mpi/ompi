@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -500,7 +502,7 @@ int oshmem_proc_unpack(opal_buffer_t* buf,
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->super.proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-                OBJ_RELEASE(plist[i]->proc_convertor);
+                OBJ_RELEASE(plist[i]->super.proc_convertor);
                 plist[i]->super.proc_convertor = opal_convertor_create(plist[i]->super.proc_arch, 0);
 #else
                 orte_show_help("help-shmem-runtime.txt",

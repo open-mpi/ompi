@@ -293,21 +293,19 @@ int orte_ess_base_proc_binding(void)
         }
     }
     hwloc_bitmap_free(mycpus);
-    /* store our cpuset for exchange with non-peers
-     * so that other procs in a comm_spawn can know it
-     */
+    /* push our cpuset so others can calculate our locality */
     if (NULL != orte_process_info.cpuset) {
-        OBJ_CONSTRUCT(&kv, opal_value_t);
+         OBJ_CONSTRUCT(&kv, opal_value_t);
         kv.key = strdup(OPAL_DSTORE_CPUSET);
         kv.type = OPAL_STRING;
         kv.data.string = strdup(orte_process_info.cpuset);
-        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                     (opal_identifier_t*)ORTE_PROC_MY_NAME,
-                                                     &kv))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kv))) {
             ORTE_ERROR_LOG(ret);
             OBJ_DESTRUCT(&kv);
             goto error;
         }
+        /* and store a copy locally */
+        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)ORTE_PROC_MY_NAME, &kv);
         OBJ_DESTRUCT(&kv);
     }
     return ORTE_SUCCESS;

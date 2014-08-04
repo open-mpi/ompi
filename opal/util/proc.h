@@ -80,5 +80,6 @@ OPAL_DECLSPEC extern uint32_t (*opal_process_name_jobid)(const opal_process_name
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
 #define OPAL_PROC_MY_NAME           (opal_proc_local_get()->proc_name)
 #define OPAL_PROC_MY_HOSTNAME       (opal_proc_local_get()->proc_hostname)
+#define OPAL_NAME_INVALID  0xffffffffffffffff
 
 #endif  /* OPAL_PROC_H */
