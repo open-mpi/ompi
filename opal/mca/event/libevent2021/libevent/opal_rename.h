@@ -296,7 +296,6 @@ extern "C" {
 #define evutil_open_closeonexec                              opal_libevent2021_evutil_open_closeonexec
 #define evutil_parse_sockaddr_port                           opal_libevent2021_evutil_parse_sockaddr_port
 #define evutil_read_file                                     opal_libevent2021_evutil_read_file
-#define evutil_secure_rng_add_bytes                          opal_libevent2021_evutil_secure_rng_add_bytes
 #define evutil_secure_rng_get_bytes                          opal_libevent2021_evutil_secure_rng_get_bytes
 #define evutil_secure_rng_global_setup_locks_                opal_libevent2021_evutil_secure_rng_global_setup_locks_
 #define evutil_secure_rng_init                               opal_libevent2021_evutil_secure_rng_init
