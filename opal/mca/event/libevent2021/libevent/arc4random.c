@@ -444,7 +444,7 @@ arc4random_stir(void)
 }
 #endif
 
-#ifndef ARC4RANDOM_NOADDRANDOM
+#if 0
 ARC4RANDOM_EXPORT void
 arc4random_addrandom(const unsigned char *dat, int datlen)
 {
