@@ -569,6 +569,7 @@ haveepoll=no
 dnl   ****** Open MPI Changes ******
 AC_MSG_CHECKING([for epoll support])
 if test "$enable_epoll" != "no" ; then
+    AC_MSG_RESULT([enabled])
     AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], )
     if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
         # Unfortunately, it's not sufficient to just test for the
@@ -604,7 +605,6 @@ if test "$enable_epoll" != "no" ; then
         # written to.
 
         haveepoll=no
-	AC_MSG_RESULT([yes])
         AC_MSG_CHECKING([for working epoll library interface])
         AC_RUN_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT
@@ -645,8 +645,11 @@ int main(int argc, char **argv)
         # OMPI: Don't use AC_LIBOBJ
         needsignal=yes],
         [haveepoll=no], [])
+	AC_MSG_CHECKING([if epoll can build])
         AC_MSG_RESULT([$haveepoll])
     fi
+else
+    AC_MSG_RESULT([disabled])
 fi
 AM_CONDITIONAL(EPOLL_BACKEND, [test "x$haveepoll" = "xyes" -a "$enable_epoll" != "no"])
 AS_IF([test "$enable_epoll" != "no" && test "x$haveepoll" = "xyes"],

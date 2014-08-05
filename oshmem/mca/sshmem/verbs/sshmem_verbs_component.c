@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,7 +148,7 @@ verbs_runtime_query(mca_base_module_t **module,
     /* Allocate memory */
     if (!rc) {
         void *addr = NULL;
-        size_t size = getpagesize();
+        size_t size = (size_t)opal_getpagesize();
         struct ibv_mr *ib_mr = NULL;
         uint64_t access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |

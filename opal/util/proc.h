@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +22,10 @@
 #include "opal/types.h"
 #include "opal/dss/dss.h"
 
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#include <arpa/inet.h>
+#endif
+
 /**
  * This is a transparent handle proposed to the upper layer as a mean
  * to store whatever information it needs in order to efficiently
@@ -30,8 +36,27 @@
  */
 typedef opal_identifier_t opal_process_name_t;
 
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
+#define OPAL_PROCESS_NAME_NTOH(guid) opal_process_name_ntoh_intr(&(guid))
+static inline __opal_attribute_always_inline__ void
+opal_process_name_ntoh_intr(opal_process_name_t *name)
+{
+    uint32_t * w = (uint32_t *)name;
+    w[0] = ntohl(w[0]);
+    w[1] = ntohl(w[1]);
+}
+#define OPAL_PROCESS_NAME_HTON(guid) opal_process_name_hton_intr(&(guid))
+static inline __opal_attribute_always_inline__ void
+opal_process_name_hton_intr(opal_process_name_t *name)
+{
+    uint32_t * w = (uint32_t *)name;
+    w[0] = htonl(w[0]);
+    w[1] = htonl(w[1]);
+}
+#else
 #define OPAL_PROCESS_NAME_NTOH(guid)
 #define OPAL_PROCESS_NAME_HTON(guid)
+#endif
 
 typedef struct opal_proc_t {
     /** allow proc to be placed on a list */

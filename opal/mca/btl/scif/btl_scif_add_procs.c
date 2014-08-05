@@ -12,6 +12,7 @@
  */
 
 #include "opal_config.h"
+#include "opal/util/sys_limits.h"
 
 #include "btl_scif.h"
 #include "btl_scif_frag.h"
@@ -227,7 +228,7 @@ mca_btl_scif_setup_mpools (mca_btl_scif_module_t *scif_module)
     rc = ompi_free_list_init_new (&scif_module->dma_frags,
                                   sizeof (mca_btl_scif_dma_frag_t), 64,
                                   OBJ_CLASS(mca_btl_scif_dma_frag_t),
-                                  128, getpagesize (),
+                                  128, opal_getpagesize (),
                                   mca_btl_scif_component.scif_free_list_num,
                                   mca_btl_scif_component.scif_free_list_max,
                                   mca_btl_scif_component.scif_free_list_inc,
