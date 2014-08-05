@@ -721,7 +721,10 @@ static void process_message(pmix_server_peer_t *peer)
         if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
             /* yes - retrieve the entire blob for that proc */
             OBJ_CONSTRUCT(&values, opal_list_t);
-            ret = opal_dstore.fetch(pmix_server_handle, &idreq, "modex", &values);
+            if (OPAL_SUCCESS != (ret = opal_dstore.fetch(pmix_server_handle, &idreq, "modex", &values))) {
+                ORTE_ERROR_LOG(ret);
+                OPAL_LIST_DESTRUCT(&values);
+            }
             /* return it */
             reply = OBJ_NEW(opal_buffer_t);
             /* pack the status */
@@ -749,10 +752,10 @@ static void process_message(pmix_server_peer_t *peer)
                     }
                     OBJ_DESTRUCT(&buf);
                 }
+                OPAL_LIST_DESTRUCT(&values);
             }
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
             OBJ_DESTRUCT(&xfer);
-            OPAL_LIST_DESTRUCT(&values);
             return;
         }
         /* no - track the request as we'll have to get it

@@ -57,9 +57,15 @@ ORTE_DECLSPEC int orte_grpcomm_base_select(void);
  * globals that might be needed
  */
 typedef struct {
-#if OPAL_HAVE_HWLOC
-    hwloc_cpuset_t working_cpuset;
-#endif
+    opal_list_item_t super;
+    int pri;
+    orte_grpcomm_base_module_t *module;
+    mca_base_component_t *component;
+} orte_grpcomm_base_active_t;
+OBJ_CLASS_DECLARATION(orte_grpcomm_base_active_t);
+
+typedef struct {
+    opal_list_t actives;
 } orte_grpcomm_base_t;
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;
