@@ -89,6 +89,15 @@ int opal_proc_local_set(opal_proc_t* proc)
     return OPAL_SUCCESS;
 }
 
+/* this function is used to temporarily set the local
+ * name while OPAL and upper layers are initializing,
+ * thus allowing debug messages to be more easily
+ * understood */
+void opal_proc_set_name(opal_process_name_t *name)
+{
+    opal_local_proc.proc_name = *name;
+}
+
 /**
  * The following functions are surrogates for the RTE functionality, and are not supposed
  * to be called. Instead, the corresponding function pointer should be set by the upper layer

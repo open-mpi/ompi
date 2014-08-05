@@ -63,8 +63,6 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_PROCESS_AND_RELAY_CMD   (orte_daemon_cmd_flag_t) 9
 #define ORTE_DAEMON_MESSAGE_LOCAL_PROCS     (orte_daemon_cmd_flag_t) 10
 #define ORTE_DAEMON_NULL_CMD                (orte_daemon_cmd_flag_t) 11
-#define ORTE_DAEMON_SYNC_BY_PROC            (orte_daemon_cmd_flag_t) 12
-#define ORTE_DAEMON_SYNC_WANT_NIDMAP        (orte_daemon_cmd_flag_t) 13
 
 /* commands for use by tools */
 #define ORTE_DAEMON_REPORT_JOB_INFO_CMD     (orte_daemon_cmd_flag_t) 14

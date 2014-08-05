@@ -64,6 +64,7 @@ OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
 
 OPAL_DECLSPEC extern opal_proc_t* opal_proc_local_get(void);
 OPAL_DECLSPEC extern int opal_proc_local_set(opal_proc_t* proc);
+OPAL_DECLSPEC extern void opal_proc_set_name(opal_process_name_t *name);
 
 /**
  * Compare two processor name and return an integer greater than,

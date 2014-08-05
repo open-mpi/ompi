@@ -86,118 +86,6 @@ void orte_routed_base_xcast_routing(opal_list_t *coll, opal_list_t *my_children)
     }
 }
 
-static void report_sync(int status, orte_process_name_t* sender,
-                        opal_buffer_t *buffer,
-                        orte_rml_tag_t tag, void *cbdata)
-{
-    bool *sync_waiting = (bool*)cbdata;
-
-    /* just copy the payload to the sync_buf */
-    opal_dss.copy_payload(orte_process_info.sync_buf, buffer);
-    /* flag as complete */
-    *sync_waiting = false;
-}
-
-int orte_routed_base_register_sync(bool setup)
-{
-    opal_buffer_t *buffer;
-    int rc;
-    orte_daemon_cmd_flag_t command;
-    char *rml_uri;
-    uint8_t flag;
-    bool sync_waiting;
-
-    if (orte_abnormal_term_ordered) {
-        /* if we are abnormally terminating, don't
-         * even try to deregister from the daemon - there
-         * is no guarantee we won't just hang in
-         * the communication
-         */
-        return ORTE_SUCCESS;
-    }
-
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
-                         "%s %s with daemon %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON),
-                         setup ? "registering" : "deregistering"));
-    
-    /* we need to get the oob to establish
-     * the connection - the oob will leave the connection "alive"
-     * thereafter so we can communicate readily
-     */
-    
-    buffer = OBJ_NEW(opal_buffer_t);
-    
-    if (setup) {
-        /* tell the daemon to send back a nidmap */
-        command = ORTE_DAEMON_SYNC_WANT_NIDMAP;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-            return rc;
-        }
-    
-        /* add our contact info to the buffer so the daemon can explicitly
-         * store it
-         */
-        rml_uri = orte_rml.get_contact_info();
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-            free(rml_uri);
-            return rc;
-        }
-        if (NULL != rml_uri) free(rml_uri);
-    
-        /* tell the daemon if we are an MPI proc */
-        if (ORTE_PROC_IS_MPI) {
-            flag = 1;
-        } else {
-            flag = 0;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &flag, 1, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-            return rc;
-        }
-    } else {
-        /* deregister with the daemon */
-        command = ORTE_DAEMON_SYNC_BY_PROC;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-            return rc;
-        }
-    }
-
-    /* setup to receive the response */
-    sync_waiting = true;
-    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
-                            ORTE_RML_NON_PERSISTENT, report_sync, &sync_waiting);
-
-    /* send the sync command to our daemon */
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buffer,
-                                          ORTE_RML_TAG_DAEMON,
-                                          orte_rml_send_callback, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
-                         "%s registering sync waiting for ack",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    
-    /* get the ack - includes the nidmap */
-    ORTE_WAIT_FOR_COMPLETION(sync_waiting);
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_framework.framework_output,
-                         "%s registering sync ack recvd",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    return ORTE_SUCCESS;
-}
-
 int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
 {
     orte_proc_t *proc;
@@ -224,7 +112,7 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
         }
         
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
-                             "%s routed_binomial:callback got uri %s for job %s rank %s",
+                             "%s routed_base:callback got uri %s for job %s rank %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri,
                              ORTE_JOBID_PRINT(job), ORTE_VPID_PRINT(vpid)));

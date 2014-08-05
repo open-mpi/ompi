@@ -234,14 +234,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            /* register ourselves -this sends a message to the daemon (warming up that connection)
-             * and sends our contact info to the HNP when all local procs have reported
-             */
-            if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* no answer is expected or coming */
         }
         return ORTE_SUCCESS;
     }

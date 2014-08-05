@@ -101,19 +101,8 @@ static int init(void)
 
 static int finalize(void)
 {
-    int rc;
     opal_list_item_t *item;
 
-    /* if I am an application process, indicate that I am
-        * truly finalizing prior to departure
-        */
-    if (ORTE_PROC_IS_APP) {
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-   
     lifeline = NULL;
 
     /* deconstruct the list of children */
@@ -658,27 +647,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         
         /* set our lifeline to the local daemon - we will abort if this connection is lost */
         lifeline = ORTE_PROC_MY_DAEMON;
-        
-        /* register ourselves -this sends a message to the daemon (warming up that connection)
-         * and sends our contact info to the HNP when all local procs have reported
-         *
-         * NOTE: it may seem odd that we send our contact info to the HNP - after all,
-         * the HNP doesn't really need to know how to talk to us directly if we are
-         * using this routing method. However, this is good for two reasons:
-         *
-         * (1) some debuggers and/or tools may need RML contact
-         *     info to set themselves up
-         *
-         * (2) doing so allows the HNP to "block" in a dynamic launch
-         *     until all procs are reported running, thus ensuring that no communication
-         *     is attempted until the overall ORTE system knows how to talk to everyone -
-         *     otherwise, the system can just hang.
-         */
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* no answer is expected or coming */
         
         return ORTE_SUCCESS;
     }

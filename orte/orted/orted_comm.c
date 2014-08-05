@@ -231,6 +231,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             opal_output(0, "%s orted_cmd: received add_local_procs",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
+
         /* launch the processes */
         if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(buffer))) {
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
@@ -901,31 +902,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
         ret = ORTE_ERR_NOT_IMPLEMENTED;
         break;
             
-        /****    SYNC FROM LOCAL PROC    ****/
-    case ORTE_DAEMON_SYNC_BY_PROC:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_recv: received sync from local proc %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(sender));
-        }
-        if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer, false))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        break;
-            
-    case ORTE_DAEMON_SYNC_WANT_NIDMAP:
-        if (orte_debug_daemons_flag) {
-            opal_output(0, "%s orted_recv: received sync+nidmap from local proc %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(sender));
-        }
-        if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer, true))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        break;
-        
         /****     TOP COMMAND     ****/
     case ORTE_DAEMON_TOP_CMD:
         /* setup the answer */
@@ -1129,10 +1105,6 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_REPORT_PROC_INFO_CMD");
     case ORTE_DAEMON_HEARTBEAT_CMD:
         return strdup("ORTE_DAEMON_HEARTBEAT_CMD");
-    case ORTE_DAEMON_SYNC_BY_PROC:
-        return strdup("ORTE_DAEMON_SYNC_BY_PROC");
-    case ORTE_DAEMON_SYNC_WANT_NIDMAP:
-        return strdup("ORTE_DAEMON_SYNC_WANT_NIDMAP");
     case ORTE_DAEMON_TOP_CMD:
         return strdup("ORTE_DAEMON_TOP_CMD");
     case ORTE_DAEMON_ABORT_PROCS_CALLED:
