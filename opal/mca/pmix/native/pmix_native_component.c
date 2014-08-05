@@ -98,10 +98,11 @@ static int pmix_native_component_query(mca_base_module_t **module, int *priority
         *module = NULL;
         return OPAL_ERROR;
     }
+    /* if PMIx is present, then we need to use it */
     mca_pmix_native_component.uri = strdup(t);
     mca_pmix_native_component.id = strtoul(id, NULL, 10);
     opal_proc_set_name(&mca_pmix_native_component.id);
-    *priority = 1;
+    *priority = 100;
     *module = (mca_base_module_t *)&opal_pmix_native_module;
     return OPAL_SUCCESS;
 }
