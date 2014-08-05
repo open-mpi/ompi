@@ -53,6 +53,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_proc_index = -1;
     endpoint->endpoint_exiting = false;
     endpoint->endpoint_connectivity_checked = false;
+    endpoint->endpoint_on_all_endpoints = false;
 
     for (i=0; i<USNIC_NUM_CHANNELS; ++i) {
         endpoint->endpoint_remote_addr.qp_num[i] = 0;
@@ -116,6 +117,15 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
        so it should be safe to unconditionally destruct the ack_li */
     OBJ_DESTRUCT(&(endpoint->endpoint_ack_li));
 
+    /* Remove the endpoint from the all_endpoints list */
+    opal_btl_usnic_module_t *module = endpoint->endpoint_module;
+    opal_mutex_lock(&module->all_endpoints_lock);
+    if (endpoint->endpoint_on_all_endpoints) {
+        opal_list_remove_item(&module->all_endpoints,
+                              &endpoint->endpoint_endpoint_li);
+        endpoint->endpoint_on_all_endpoints = false;
+    }
+    opal_mutex_unlock(&module->all_endpoints_lock);
     OBJ_DESTRUCT(&(endpoint->endpoint_endpoint_li));
 
     if (endpoint->endpoint_hotel.rooms != NULL) {
@@ -172,13 +182,4 @@ opal_btl_usnic_flush_endpoint(
 
     /* Now, ACK everything that is pending */
     opal_btl_usnic_handle_ack(endpoint, endpoint->endpoint_next_seq_to_send-1);
-}
-
-void opal_btl_usnic_release_endpoint(opal_btl_usnic_module_t *module,
-                                     opal_btl_usnic_endpoint_t *endpoint)
-{
-    opal_mutex_lock(&module->all_endpoints_lock);
-    opal_list_remove_item(&module->all_endpoints, &endpoint->endpoint_endpoint_li);
-    opal_mutex_unlock(&module->all_endpoints_lock);
-    OBJ_RELEASE(endpoint);
 }

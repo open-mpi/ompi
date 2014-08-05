@@ -704,10 +704,13 @@ opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
     ++proc->proc_endpoint_count;
     OBJ_RETAIN(proc);
 
-    /* also add endpoint to module's list of endpoints */
+    /* also add endpoint to module's list of endpoints (done here and
+       not in the endpoint constructor because we aren't able to pass
+       the module as a constructor argument -- doh!). */
     opal_mutex_lock(&module->all_endpoints_lock);
     opal_list_append(&(module->all_endpoints),
             &(endpoint->endpoint_endpoint_li));
+    endpoint->endpoint_on_all_endpoints = true;
     opal_mutex_unlock(&module->all_endpoints_lock);
 
     *endpoint_o = endpoint;
