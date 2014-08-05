@@ -13,6 +13,8 @@
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +53,7 @@
 #include "opal/constants.h"
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
+#include "opal/util/sys_limits.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "shmem_sysv.h"
@@ -183,7 +186,7 @@ sysv_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
          "starting run-time test...\n")
     );
 
-    if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(getpagesize()),
+    if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(opal_getpagesize()),
                               IPC_CREAT | IPC_EXCL | S_IRWXU ))) {
         goto out;
     }
