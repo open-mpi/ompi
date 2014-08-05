@@ -110,6 +110,7 @@ static struct {
     uint32_t vid;
 } s1_pname;
 
+static bool got_modex_data = false;
 static char* pmix_error(int pmix_err);
 #define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
     do {                                                        \
@@ -444,8 +445,8 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
     /* get the modex data from each local process and set the
      * localities to avoid having the MPI layer fetch data
      * for every process in the job */
-    if (!s1_committed) {
-        s1_committed = true;
+    if (!got_modex_data) {
+        got_modex_data = true;
         memcpy(&s1_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
         /* set a default locality for every process in the job other than myself */
         OBJ_CONSTRUCT(&kvn, opal_value_t);
