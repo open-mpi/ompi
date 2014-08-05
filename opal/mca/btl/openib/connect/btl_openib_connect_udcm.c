@@ -71,6 +71,7 @@
 #include "connect/connect.h"
 
 #include "opal/mca/mpool/grdma/mpool_grdma.h"
+#include "opal/util/sys_limits.h"
 
 #if (ENABLE_DYNAMIC_SL)
 #include "connect/btl_openib_connect_sl.h"
@@ -935,7 +936,7 @@ static int udcm_module_allocate_buffers (udcm_module_t *m)
                                           UDCM_GRH_SIZE);
 
     m->cm_buffer = NULL;
-    posix_memalign ((void **)&m->cm_buffer, sysconf(_SC_PAGESIZE),
+    posix_memalign ((void **)&m->cm_buffer, (size_t)opal_getpagesize(),
                     total_size);
     if (NULL == m->cm_buffer) {
         BTL_ERROR(("malloc failed! errno = %d", errno));
