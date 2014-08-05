@@ -75,6 +75,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_quit.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 #include "orte/mca/ess/base/base.h"
 
@@ -278,24 +279,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
-    /* setup the dstore framework */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_dstore_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_dstore_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_dstore_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_dstore_base_select";
-        goto error;
-    }
-    /* create the handle */
-    if (0 > (opal_dstore_internal = opal_dstore.open("INTERNAL"))) {
-        error = "opal dstore internal";
-        ret = ORTE_ERR_FATAL;
-        goto error;
-    }
-
     /*
      * Group communications
      */
@@ -550,6 +533,13 @@ int orte_ess_base_orted_setup(char **hosts)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
     
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
+        goto error;
+    }
+
     /* setup the routed info - the selected routed component
      * will know what to do. 
      */
@@ -663,6 +653,9 @@ int orte_ess_base_orted_finalize(void)
         unlink(log_path);
     }
     
+    /* shutdown the pmix server */
+    pmix_server_finalize();
+
     /* close frameworks */
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);

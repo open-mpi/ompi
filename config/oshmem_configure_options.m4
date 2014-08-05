@@ -3,6 +3,7 @@ dnl
 dnl Copyright (c) 2013      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -22,7 +23,7 @@ AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 AC_MSG_CHECKING([if want oshmem])
 AC_ARG_ENABLE([oshmem],
               [AC_HELP_STRING([--enable-oshmem],
-                              [Enable building the OpenSHMEM interface (disabled by default)])],
+                              [Enable building the OpenSHMEM interface (available on Linux only, where it is enabled by default)])],
               [oshmem_arg_given=yes],
               [oshmem_arg_given=no])
 if test "$oshmem_arg_given" = "yes"; then

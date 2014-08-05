@@ -954,6 +954,7 @@ static void agent_thread_accept(int fd, short flags, void *context)
     socklen_t len;
     agent_ipc_listener_t *listener = NULL;
 
+    len = sizeof(addr);
     int client_fd = accept(fd, &addr, &len);
     if (-1 == client_fd) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);

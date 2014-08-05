@@ -110,6 +110,7 @@ static struct {
     uint32_t vid;
 } s1_pname;
 
+static bool got_modex_data = false;
 static char* pmix_error(int pmix_err);
 #define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
     do {                                                        \
@@ -117,6 +118,7 @@ static char* pmix_error(int pmix_err);
                     pmi_func, __FILE__, __LINE__, __func__,     \
                     pmix_error(pmi_err));                        \
     } while(0);
+
 static int kvs_get(const char key[], char value [], int maxvalue)
 {
     int rc;
@@ -128,6 +130,16 @@ static int kvs_get(const char key[], char value [], int maxvalue)
     return OPAL_SUCCESS;
 }
 
+static int kvs_put(const char key[], const char value[])
+{
+    int rc;
+    rc = PMI_KVS_Put(pmix_kvs_name, key, value);
+    if( PMI_SUCCESS != rc ){
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
+        return OPAL_ERROR;
+    }
+    return rc;
+}
 
 static int s1_init(void)
 {
@@ -226,7 +238,7 @@ static int s1_init(void)
 
     rc = PMI_KVS_Get_my_name(pmix_kvs_name, pmix_kvslen_max);
     if( PMI_SUCCESS != rc ) {
-        OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
+        OPAL_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
         goto err_exit;
     }
 
@@ -238,7 +250,8 @@ static int s1_init(void)
     /* now get the specific ranks */
     s1_lranks = (int*)calloc(s1_nlranks, sizeof(int));
     if (NULL == s1_lranks) {
-        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(rc);
         return rc;
     }
     if (PMI_SUCCESS != (rc = PMI_Get_clique_ranks(s1_lranks, s1_nlranks))) {
@@ -333,17 +346,6 @@ static int s1_spawn(int count, const char * cmds[],
         return OPAL_ERROR;
     }*/
     return OPAL_ERR_NOT_IMPLEMENTED;
-}
-
-static int kvs_put(const char key[], const char value[])
-{
-    int rc;
-    rc = PMI_KVS_Put(pmix_kvs_name, key, value);
-    if( PMI_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
-        return OPAL_ERROR;
-    }
-    return rc;
 }
 
 static int s1_put(opal_pmix_scope_t scope,
@@ -443,8 +445,8 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
     /* get the modex data from each local process and set the
      * localities to avoid having the MPI layer fetch data
      * for every process in the job */
-    if (!s1_committed) {
-        s1_committed = true;
+    if (!got_modex_data) {
+        got_modex_data = true;
         memcpy(&s1_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
         /* set a default locality for every process in the job other than myself */
         OBJ_CONSTRUCT(&kvn, opal_value_t);
@@ -493,7 +495,7 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
             locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
 #endif
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
-                                 "%s pmix:native proc %s locality %s",
+                                 "%s pmix:s1 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                  OPAL_NAME_PRINT(*(opal_identifier_t*)&s1_pname),
                                  opal_hwloc_base_print_locality(locality)));
@@ -645,7 +647,7 @@ static bool s1_get_attr(const char *attr, opal_value_t **kv)
         return true;
     }
 
-    return OPAL_SUCCESS;
+    return false;
 }
 
 static int s1_get_attr_nb(const char *attr,

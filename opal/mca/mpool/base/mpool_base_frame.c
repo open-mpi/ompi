@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,6 +34,7 @@
 #include "opal/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 #include "opal/constants.h"
+#include "opal/util/sys_limits.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -72,7 +75,7 @@ static int mca_mpool_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&mca_mpool_base_modules, opal_list_t);
   
     /* get the page size for this architecture*/ 
-    mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
+    mca_mpool_base_page_size = opal_getpagesize();
     mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size); 
 
     /* setup tree for tracking MPI_Alloc_mem */ 

@@ -28,11 +28,14 @@ AC_DEFUN([OPAL_CHECK_CMA],[
     AC_MSG_CHECKING([if user requested CMA build])
     if test "$with_cma" = "yes" ; then
             ompi_check_cma_happy="yes"
+            AC_MSG_RESULT([yes])
             AC_CHECK_FUNC(process_vm_readv, [ompi_check_cma_need_defs=0],
                 [ompi_check_cma_need_defs=1])
             AC_DEFINE_UNQUOTED([OPAL_CMA_NEED_SYSCALL_DEFS],
                 [$ompi_check_cma_need_defs],
                 [Need CMA syscalls defined])
+    else
+        AC_MSG_RESULT([no])
     fi
     AS_IF([test "$ompi_check_cma_happy" = "yes"],
             [$2],

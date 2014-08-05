@@ -15,6 +15,7 @@
 
 #include "btl_scif_endpoint.h"
 #include "opal/mca/memchecker/base/base.h"
+#include "opal/util/sys_limits.h"
 
 static void mca_btl_scif_ep_construct (mca_btl_base_endpoint_t *ep) {
     memset ((char *) ep + sizeof(ep->super), 0, sizeof (*ep) - sizeof (ep->super));
@@ -55,7 +56,7 @@ static void mca_btl_scif_ep_free_buffer (mca_btl_base_endpoint_t *ep) {
 static inline int mca_btl_scif_ep_get_buffer (mca_btl_base_endpoint_t *ep) {
     int rc;
 
-    rc = posix_memalign ((void **) &ep->recv_buffer.buffer, getpagesize(), mca_btl_scif_component.segment_size);
+    rc = posix_memalign ((void **) &ep->recv_buffer.buffer, opal_getpagesize(), mca_btl_scif_component.segment_size);
     if (0 > rc) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

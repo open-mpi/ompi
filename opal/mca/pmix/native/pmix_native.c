@@ -87,6 +87,10 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
 
 // local variables
 static int init_cntr = 0;
+static struct {
+    uint32_t jid;
+    uint32_t vid;
+} native_pname;
 
 /* callback for wait completion */
 static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
@@ -529,20 +533,17 @@ static int native_unpublish(const char service_name[],
 
 static bool native_get_attr(const char *attr, opal_value_t **kv)
 {
-    opal_buffer_t *msg;
+    opal_buffer_t *msg, *bptr;
     opal_list_t vals;
     opal_value_t *kp, *lclpeers=NULL, kvn;
     pmix_cmd_t cmd = PMIX_GETATTR_CMD;
-    opal_process_name_t name, rank;
     char **ranks;
-    int i, rc;
+    int rc, ret;
     int32_t cnt;
     bool found=false;
     opal_hwloc_locality_t locality;
     pmix_cb_t *cb;
-#if OPAL_HAVE_HWLOC
-    char *cpuset;
-#endif
+    uint32_t i, usize, myrank;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native get_attr called",
@@ -582,50 +583,109 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
      * and cache all values, keeping the one we requested to return
      * to the caller */
     cnt = 1;
-    while (OPAL_SUCCESS == (rc = opal_dss.unpack(&cb->data, &kp, &cnt, OPAL_VALUE))) {
-        (void)opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp);
-        /* save the list of local peers */
-        if (0 == strcmp(PMIX_LOCAL_PEERS, kp->key)) {
-            OBJ_RETAIN(kp);
-            lclpeers = kp;
-        }
-        if (0 == strcmp(attr, kp->key)) {
-            OBJ_RETAIN(kp);
-            *kv = kp;
-            found = true;
-        }
-        OBJ_RELEASE(kp);
-        cnt = 1;
-    }
-    if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &ret, &cnt, OPAL_INT))) {
         OPAL_ERROR_LOG(rc);
+        OBJ_RELEASE(cb);
+        return rc;
+    }
+    if (OPAL_SUCCESS == ret) {
+        /* unpack the buffer containing the values */
+        cnt = 1;
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &bptr, &cnt, OPAL_BUFFER))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(cb);
+            return rc;
+        }
+        cnt = 1;
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
+            opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                                "%s unpacked attr %s",
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key);
+            if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp))) {
+                OPAL_ERROR_LOG(rc);
+                OBJ_RELEASE(kp);
+                cnt = 1;
+                continue;
+            }
+            /* save the list of local peers */
+            if (0 == strcmp(PMIX_LOCAL_PEERS, kp->key)) {
+                OBJ_RETAIN(kp);
+                lclpeers = kp;
+                opal_output(0, "%s LCLPEERS %s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                            (NULL == kp->data.string) ? "NULL" : kp->data.string);
+            } else if (0 == strcmp(PMIX_UNIV_SIZE, kp->key)) {
+                usize = kp->data.uint32;
+                opal_output(0, "%s UNIV SIZE %u", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), usize);
+            } else if (0 == strcmp(PMIX_JOBID, kp->key)) {
+                native_pname.jid = kp->data.uint32;
+            } else if (0 == strcmp(PMIX_RANK, kp->key)) {
+                native_pname.vid = kp->data.uint32;
+            }
+            if (0 == strcmp(attr, kp->key)) {
+                OBJ_RETAIN(kp);
+                *kv = kp;
+                found = true;
+            }
+            OBJ_RELEASE(kp);
+            cnt = 1;
+        }
+        OBJ_RELEASE(bptr);
+        if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            OPAL_ERROR_LOG(rc);
+            return false;
+        }
+    } else {
+        OPAL_ERROR_LOG(ret);
+        OBJ_RELEASE(cb);
+        return ret;
     }
     OBJ_RELEASE(cb);
+    opal_proc_set_name((opal_process_name_t*)&native_pname);
 
     /* if the list of local peers wasn't included, then we are done */
     if (NULL == lclpeers) {
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s no local peers reported",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
         return found;
     }
 
-    /* parse the list of local peers to compute and store the
-     * locality as doing this here will prevent the MPI layer
-     * from fetching data for all ranks
-     */
-    name = OPAL_PROC_MY_NAME;
+    /* baseline all the procs as nonlocal */
+    myrank = native_pname.vid;
+    /* set a default locality for every process in the job other than myself */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_LOCALITY);
+    kvn.type = OPAL_UINT16;
+    kvn.data.uint16 = OPAL_PROC_NON_LOCAL;
+    for (i=0; i < usize; i++) {
+        if (myrank == i) {
+            continue;
+        }
+        native_pname.vid = i;
+        opal_output_verbose(5, opal_pmix_base_framework.framework_output,
+                            "%s SETTING LOCALITY FOR %s",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                            OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname));
+        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&native_pname, &kvn);
+    }
+    OBJ_DESTRUCT(&kvn);
+
+    /* overwrite locality for each local rank */
     ranks = opal_argv_split(lclpeers->data.string, ',');
     for (i=0; NULL != ranks[i]; i++) {
-        rank = strtoul(ranks[i], NULL, 10);
-        name = (name & 0xffff0000) | (rank & 0x0000ffff);
+        if (myrank == i) {
+            continue;
+        }
+        native_pname.vid = strtoul(ranks[i], NULL, 10);
 #if OPAL_HAVE_HWLOC
         OBJ_CONSTRUCT(&vals, opal_list_t);
-        if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, &name,
+        if (OPAL_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal, (opal_identifier_t*)&native_pname,
                                                     OPAL_DSTORE_CPUSET, &vals))) {
             OPAL_LIST_DESTRUCT(&vals);
             continue;
         }
         kp = (opal_value_t*)opal_list_get_first(&vals);
-        cpuset = kp->data.string;
-        if (NULL == cpuset) {
+        if (NULL == kp->data.string) {
             /* if we share a node, but we don't know anything more, then
              * mark us as on the node as this is all we know
              */
@@ -634,7 +694,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             /* determine relative location on our node */
             locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
                                                              opal_process_info.cpuset,
-                                                             (char *) cpuset);
+                                                             kp->data.string);
         }
         OPAL_LIST_DESTRUCT(&vals);
 #else
@@ -644,13 +704,14 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                              "%s pmix:native proc %s locality %s",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                             OPAL_NAME_PRINT(name), opal_hwloc_base_print_locality(locality)));
+                             OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname),
+                             opal_hwloc_base_print_locality(locality)));
     
         OBJ_CONSTRUCT(&kvn, opal_value_t);
         kvn.key = strdup(OPAL_DSTORE_LOCALITY);
         kvn.type = OPAL_UINT16;
         kvn.data.uint16 = locality;
-        (void)opal_dstore.store(opal_dstore_internal, &name, &kvn);
+        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&native_pname, &kvn);
         OBJ_DESTRUCT(&kvn);
     }
     opal_argv_free(ranks);

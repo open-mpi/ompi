@@ -285,23 +285,17 @@ static int rte_init(void)
     }
     OPAL_LIST_DESTRUCT(&vals);
 
-    /* if our hostname was not provided by the system, then
-     * push our hostname so others can find us */
-    OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS != opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
-                                          OPAL_DSTORE_HOSTNAME, &vals)) {
-        OBJ_CONSTRUCT(&kvn, opal_value_t);
-        kvn.key = strdup(OPAL_DSTORE_HOSTNAME);
-        kvn.type = OPAL_STRING;
-        kvn.data.string = strdup(orte_process_info.nodename);
-        if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
-            error = "db store hostname";
-            OBJ_DESTRUCT(&kvn);
-            goto error;
-        }
+    /* push our hostname so others can find us, if they need to */
+    OBJ_CONSTRUCT(&kvn, opal_value_t);
+    kvn.key = strdup(OPAL_DSTORE_HOSTNAME);
+    kvn.type = OPAL_STRING;
+    kvn.data.string = strdup(orte_process_info.nodename);
+    if (ORTE_SUCCESS != (ret = opal_pmix.put(PMIX_GLOBAL, &kvn))) {
+        error = "db store hostname";
         OBJ_DESTRUCT(&kvn);
+        goto error;
     }
-    OPAL_LIST_DESTRUCT(&vals);
+    OBJ_DESTRUCT(&kvn);
 
     /* if our local rank was not provided by the system, then
      * push our local rank so others can access it */

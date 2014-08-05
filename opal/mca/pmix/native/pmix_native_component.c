@@ -16,6 +16,7 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
+#include "opal/util/proc.h"
 #include "opal/mca/pmix/pmix.h"
 #include "pmix_native.h"
 
@@ -97,9 +98,11 @@ static int pmix_native_component_query(mca_base_module_t **module, int *priority
         *module = NULL;
         return OPAL_ERROR;
     }
+    /* if PMIx is present, then we need to use it */
     mca_pmix_native_component.uri = strdup(t);
     mca_pmix_native_component.id = strtoul(id, NULL, 10);
-    *priority = 1;
+    opal_proc_set_name(&mca_pmix_native_component.id);
+    *priority = 100;
     *module = (mca_base_module_t *)&opal_pmix_native_module;
     return OPAL_SUCCESS;
 }

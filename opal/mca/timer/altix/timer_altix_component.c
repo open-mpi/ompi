@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,6 +32,7 @@
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/altix/timer_altix.h"
 #include "opal/constants.h"
+#include "opal/util/sys_limits.h"
 
 opal_timer_t opal_timer_altix_freq;
 opal_timer_t opal_timer_altix_usec_conv;
@@ -87,7 +90,7 @@ opal_timer_altix_open(void)
     if (ret == -ENOSYS) return OPAL_ERR_NOT_SUPPORTED;
     offset = ret;
 
-    mmdev_map = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, fd, 0);
+    mmdev_map = mmap(0, (size_t)opal_getpagesize(), PROT_READ, MAP_SHARED, fd, 0);
     if (NULL == mmdev_map) return OPAL_ERR_NOT_SUPPORTED;
     opal_timer_altix_mmdev_timer_addr = mmdev_map + offset;
     close(fd);
@@ -100,7 +103,7 @@ static int
 opal_timer_altix_close(void)
 {
     if (NULL != mmdev_map) {
-        munmap(mmdev_map, getpagesize());
+        munmap(mmdev_map, (size_t)opal_getpagesize());
     }
 
     return OPAL_SUCCESS;

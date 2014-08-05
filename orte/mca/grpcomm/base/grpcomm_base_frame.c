@@ -52,22 +52,21 @@ static bool recv_issued = false;
 
 static int orte_grpcomm_base_close(void)
 {
+    orte_grpcomm_base_active_t *active;
+
     if (recv_issued) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_XCAST);
         recv_issued = false;
     }
 
-    /* Close the selected component */
-    if( NULL != orte_grpcomm.finalize ) {
-        orte_grpcomm.finalize();
+    /* Close the active modules */
+    OPAL_LIST_FOREACH(active, &orte_grpcomm_base.actives, orte_grpcomm_base_active_t) {
+        if (NULL != active->module->finalize) {
+            active->module->finalize();
+        }
     }
+    OPAL_LIST_DESTRUCT(&orte_grpcomm_base.actives);
 
-#if OPAL_HAVE_HWLOC
-    if (NULL != orte_grpcomm_base.working_cpuset) {
-        hwloc_bitmap_free(orte_grpcomm_base.working_cpuset);
-        orte_grpcomm_base.working_cpuset = NULL;
-    }
-#endif
     return mca_base_framework_components_close(&orte_grpcomm_base_framework, NULL);
 }
 
@@ -77,9 +76,7 @@ static int orte_grpcomm_base_close(void)
  */
 static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
 {
-#if OPAL_HAVE_HWLOC
-    orte_grpcomm_base.working_cpuset = NULL;
-#endif
+    OBJ_CONSTRUCT(&orte_grpcomm_base.actives, opal_list_t);
 
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
@@ -93,3 +90,7 @@ static int orte_grpcomm_base_open(mca_base_open_flag_t flags)
 
 MCA_BASE_FRAMEWORK_DECLARE(orte, grpcomm, NULL, NULL, orte_grpcomm_base_open, orte_grpcomm_base_close,
                            mca_grpcomm_base_static_components, 0);
+
+OBJ_CLASS_INSTANCE(orte_grpcomm_base_active_t,
+                   opal_list_item_t,
+                   NULL, NULL);

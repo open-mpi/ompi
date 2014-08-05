@@ -80,12 +80,13 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 #define PMIX_CPUSET          "pmix.cpuset"      // (char*) hwloc bitmap applied to proc upon launch
 #define PMIX_CREDENTIAL      "pmix.cred"        // (opal_byte_object*) security credential assigned to proc
 /* scratch directory locations for use by applications */
-#define PMIX_TMPDIR          "pmix.tmpdir"      // (char*) top-level tmp dir assigned to job
+#define PMIX_TMPDIR          "pmix.tmpdir"      // (char*) top-level tmp dir assigned to session
 /* information about relative ranks as assigned */
 #define PMIX_JOBID           "pmix.jobid"       // (char*) jobid assigned by scheduler
 #define PMIX_APPNUM          "pmix.appnum"      // (uint32_t) app number within the job
 #define PMIX_RANK            "pmix.rank"        // (uint32_t) process rank within the job
 #define PMIX_GLOBAL_RANK     "pmix.grank"       // (uint32_t) rank spanning across all jobs in this session
+#define PMIX_APP_RANK        "pmix.apprank"     // (uint32_t) rank within this app
 #define PMIX_NPROC_OFFSET    "pmix.offset"      // (uint32_t) starting global rank of this job
 #define PMIX_LOCAL_RANK      "pmix.lrank"       // (uint16_t) rank on this node within this job
 #define PMIX_NODE_RANK       "pmix.nrank"       // (uint16_t) rank on this node spanning all jobs
