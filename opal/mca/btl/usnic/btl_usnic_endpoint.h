@@ -186,5 +186,11 @@ void
 opal_btl_usnic_flush_endpoint(
     opal_btl_usnic_endpoint_t *endpoint);
 
+/* Release the given endpoint and remove it from the all_endpoints list.  The
+ * reference that is released was logically held by the all_endpoints list
+ * (this is not a generic release function). */
+void opal_btl_usnic_release_endpoint(struct opal_btl_usnic_module_t *module,
+                                     opal_btl_usnic_endpoint_t *endpoint);
+
 END_C_DECLS
 #endif

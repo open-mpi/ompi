@@ -6,6 +6,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #include "opal/align.h"
 #include "opal_stdint.h"
 #endif
+#include "opal/util/sys_limits.h"
 
 /* Constructor for list memory manager */
 static void construct_lmngr(mca_coll_ml_lmngr_t *lmngr)
@@ -152,7 +154,7 @@ int mca_coll_ml_lmngr_reg(void)
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_coll_ml_component.lmngr_block_size));
 
-    cm->lmngr_alignment = sysconf(_SC_PAGESIZE);
+    cm->lmngr_alignment = opal_getpagesize();
     CHECK(mca_base_component_var_register(&mca_coll_ml_component.super.collm_version,
                                           "memory_manager_alignment", "Memory manager alignment",
                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
