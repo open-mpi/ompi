@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,7 @@
 #endif /* HAVE_UNISTD_H */
 
 #include "opal/constants.h"
+#include "opal/util/sys_limits.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
