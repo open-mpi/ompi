@@ -124,7 +124,9 @@ bool pmix_server_distribute_data = false;
 opal_hash_table_t *pmix_server_peers = NULL;
 int pmix_server_verbosity = -1;
 int pmix_server_output = -1;
-int pmix_server_handle = -1;
+int pmix_server_local_handle = -1;
+int pmix_server_remote_handle = -1;
+int pmix_server_global_handle = -1;
 static bool initialized = false;
 static struct sockaddr_un address;
 static int pmix_server_listener_socket = -1;
@@ -204,8 +206,16 @@ int pmix_server_init(void)
     opal_setenv("PMIX_SERVER_URI", uri, true, &orte_launch_environ);
     free(uri);
 
-    /* setup the datastore handle */
-    if (0 > (pmix_server_handle = opal_dstore.open("pmix"))) {
+    /* setup the datastore handles */
+    if (0 > (pmix_server_local_handle = opal_dstore.open("pmix-local"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (0 > (pmix_server_remote_handle = opal_dstore.open("pmix-remote"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (0 > (pmix_server_global_handle = opal_dstore.open("pmix-global"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -249,6 +259,11 @@ void pmix_server_finalize(void)
     /* stop receives */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLL);
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLL_RELEASE);
+
+    /* cleanup the dstore handles */
+    (void)opal_dstore.close(pmix_server_local_handle);
+    (void)opal_dstore.close(pmix_server_remote_handle);
+    (void)opal_dstore.close(pmix_server_global_handle);
 
     /* delete the rendezvous file */
     unlink(address.sun_path);

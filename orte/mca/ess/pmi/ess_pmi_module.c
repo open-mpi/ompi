@@ -126,23 +126,27 @@ static int rte_init(void)
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
 
-        /* get our global rank from PMI */
-        if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
-            error = "getting rank";
-            ret = ORTE_ERR_NOT_FOUND;
-            goto error;
+        /* if we weren't given it, get our global rank from PMI */
+        if (NULL == orte_ess_base_vpid) {
+            if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
+                error = "getting rank";
+                ret = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
+            ORTE_PROC_MY_NAME->vpid = kv->data.uint32 + 1;  // compensate for orterun
+            OBJ_RELEASE(kv);
         }
-        ORTE_PROC_MY_NAME->vpid = kv->data.uint32 + 1;  // compensate for orterun
-        OBJ_RELEASE(kv);
 
-        /* get universe size */
-        if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
-            error = "getting univ size";
-            ret = ORTE_ERR_NOT_FOUND;
-            goto error;
+        /* if we weren't given it, get universe size */
+        if (orte_ess_base_num_procs < 0) {
+            if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
+                error = "getting univ size";
+                ret = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
+            orte_process_info.num_procs = kv->data.uint32 + 1;  // compensate for orterun
+            OBJ_RELEASE(kv);
         }
-        orte_process_info.num_procs = kv->data.uint32 + 1;  // compensate for orterun
-        OBJ_RELEASE(kv);
 
         /* complete setup */
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
