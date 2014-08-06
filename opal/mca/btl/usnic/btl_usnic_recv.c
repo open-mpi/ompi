@@ -362,7 +362,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
     /* if endpoint exiting, and all ACKs received, release the endpoint */
     if (endpoint->endpoint_exiting && ENDPOINT_DRAINED(endpoint)) {
-        opal_btl_usnic_release_endpoint(module, endpoint);
+        OBJ_RELEASE(endpoint);
     }
  repost_no_endpoint:
     ++module->stats.num_recv_reposts;

@@ -341,6 +341,14 @@ static bool agent_thread_is_ping_expected(opal_btl_usnic_module_t *module,
     bool found = false;
     opal_list_item_t *item;
 
+    /* If we have a NULL value for the module, it means that the MPI
+       process that is the agent hasn't submitted the LISTEN command
+       yet (which can happen for a fast sender / slow receiver).  So
+       just return "ping is not [yet] expected". */
+    if (NULL == module) {
+        return false;
+    }
+
     opal_mutex_lock(&module->all_endpoints_lock);
     if (module->all_endpoints_constructed) {
         OPAL_LIST_FOREACH(item, &module->all_endpoints, opal_list_item_t) {
@@ -519,18 +527,18 @@ static void agent_thread_receive_ping(int fd, short flags, void *context)
     }
 }
 
-static bool agent_thread_already_listening(uint32_t ipv4_addr,
-                                           uint32_t *udp_port)
+static agent_udp_port_listener_t *
+agent_thread_find_listener(uint32_t ipv4_addr, uint32_t *udp_port)
 {
     agent_udp_port_listener_t *listener;
     OPAL_LIST_FOREACH(listener, &udp_port_listeners, agent_udp_port_listener_t) {
         if (listener->ipv4_addr == ipv4_addr) {
             *udp_port = listener->udp_port;
-            return true;
+            return listener;
         }
     }
 
-    return false;
+    return NULL;
 }
 
 /*
@@ -577,7 +585,18 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
     /* If we're already listening on this address, send the UDP port
        back to the client. */
     uint32_t udp_port;
-    if (agent_thread_already_listening(cmd.ipv4_addr, &udp_port)) {
+    agent_udp_port_listener_t *udp_listener;
+    udp_listener = agent_thread_find_listener(cmd.ipv4_addr, &udp_port);
+    if (NULL != udp_listener) {
+        /* If we get a non-NULL "module" pointer value from the
+           client, it means that this client is the same process as
+           this agent, and we should save this pointer value (all
+           non-agent MPI procs will send NULL as their "module"
+           pointer value -- i.e., some non-agent MPI proc was the
+           first one to send the LISTEN command). */
+        if (NULL == udp_listener->module) {
+            udp_listener->module = cmd.module;
+        }
         agent_thread_cmd_listen_reply(ipc_listener->client_fd,
                                       cmd.ipv4_addr, udp_port);
         return;
@@ -585,7 +604,6 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
 
     /* We're not listening on this interface already, so create a
        UDP port listener entry */
-    agent_udp_port_listener_t *udp_listener = NULL;
     udp_listener = OBJ_NEW(agent_udp_port_listener_t);
     if (NULL == udp_listener) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);

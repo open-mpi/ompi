@@ -163,11 +163,17 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
 
     /* Send the LISTEN command parameters */
     opal_btl_usnic_connectivity_cmd_listen_t cmd = {
-        .module = module,
+        .module = NULL,
         .ipv4_addr = module->local_addr.ipv4_addr,
         .cidrmask = module->local_addr.cidrmask,
         .mtu = module->local_addr.mtu
     };
+    /* Only the MPI process who is also the agent will send the
+       pointer value (it doesn't make sense otherwise) */
+    if (0 == opal_process_info.my_local_rank) {
+        cmd.module = NULL;
+    }
+
     /* Ensure to NULL-terminate the passed strings */
     strncpy(cmd.nodename, opal_process_info.nodename,
             CONNECTIVITY_NODENAME_LEN - 1);

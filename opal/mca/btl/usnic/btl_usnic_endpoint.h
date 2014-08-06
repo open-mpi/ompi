@@ -174,6 +174,7 @@ typedef struct mca_btl_base_endpoint_t {
     uint32_t                        endpoint_rfstart;
 
     bool                            endpoint_connectivity_checked;
+    bool                            endpoint_on_all_endpoints;
 } mca_btl_base_endpoint_t;
 
 typedef mca_btl_base_endpoint_t opal_btl_usnic_endpoint_t;
@@ -185,12 +186,6 @@ OBJ_CLASS_DECLARATION(opal_btl_usnic_endpoint_t);
 void
 opal_btl_usnic_flush_endpoint(
     opal_btl_usnic_endpoint_t *endpoint);
-
-/* Release the given endpoint and remove it from the all_endpoints list.  The
- * reference that is released was logically held by the all_endpoints list
- * (this is not a generic release function). */
-void opal_btl_usnic_release_endpoint(struct opal_btl_usnic_module_t *module,
-                                     opal_btl_usnic_endpoint_t *endpoint);
 
 END_C_DECLS
 #endif

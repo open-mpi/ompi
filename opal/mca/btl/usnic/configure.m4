@@ -154,7 +154,7 @@ AC_DEFUN([OMPI_BTL_USNIC_DO_CONFIG],[
     # OPAL and OMPI separately.
     AS_IF([test "$btl_usnic_happy" = "yes"],
           [AS_IF([test "$OPAL_MAJOR_VERSION" -eq "1" && \
-                  test "$OPAL_MAJOR_VERSION" -lt "7"],
+                  test "$OPAL_MINOR_VERSION" -lt "7"],
                  [AC_MSG_NOTICE([OPAL version appears to be too old, disabling the usnic BTL])
                   btl_usnic_happy=no])])
 
