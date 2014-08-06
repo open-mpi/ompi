@@ -130,7 +130,9 @@ OBJ_CLASS_DECLARATION(pmix_cb_t);
 
 typedef struct {
     opal_pmix_base_component_t super;
-    opal_buffer_t *cache;
+    opal_buffer_t *cache_local;
+    opal_buffer_t *cache_remote;
+    opal_buffer_t *cache_global;
     opal_event_base_t *evbase;
     opal_identifier_t id;
     opal_identifier_t server;

@@ -195,7 +195,7 @@ extern bool pmix_server_distribute_data;
 extern opal_hash_table_t *pmix_server_peers;
 extern int pmix_server_verbosity;
 extern int pmix_server_output;
-extern int pmix_server_handle;
+extern int pmix_server_local_handle, pmix_server_remote_handle, pmix_server_global_handle;
 
 END_C_DECLS
 

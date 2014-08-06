@@ -46,7 +46,6 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/session_dir.h"
 
 #include "orte/mca/ess/ess.h"
@@ -188,12 +187,6 @@ static int rte_init(void)
         return rc;
     }
     
-    /* if one was provided, build my nidmap */
-    if (ORTE_SUCCESS != (rc = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* to the best of our knowledge, we are alone */
     orte_process_info.my_node_rank = 0;
     orte_process_info.my_local_rank = 0;
@@ -210,10 +203,7 @@ static int rte_init(void)
 static int rte_finalize(void)
 {
     int ret;
-    
-    /* deconstruct my nidmap and jobmap arrays */
-    orte_util_nidmap_finalize();
-    
+        
     /* use the default procedure to finish */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
         ORTE_ERROR_LOG(ret);

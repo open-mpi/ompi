@@ -39,7 +39,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/regex.h"
 
 #include "orte/mca/ess/ess.h"
@@ -106,7 +105,6 @@ static int rte_init(void)
             error = "orte_ess_base_tool_setup";
             goto error;
         }
-        /* as a tool, I don't need a nidmap - so just return now */
         return ORTE_SUCCESS;
         
     }
@@ -117,13 +115,6 @@ static int rte_init(void)
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_app_setup";
-        goto error;
-    }
-    
-    /* setup the nidmap arrays */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_util_nidmap_init";
         goto error;
     }
     
@@ -154,7 +145,6 @@ static int rte_finalize(void)
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-        /* as a tool, I didn't create a nidmap - so just return now */
         return ret;
     } else {
         /* otherwise, I must be an application process
@@ -165,9 +155,6 @@ static int rte_finalize(void)
             return ret;
         }
     }
-
-    /* deconstruct my nidmap and jobmap arrays */
-    orte_util_nidmap_finalize();
 
     return ORTE_SUCCESS;;
 }

@@ -35,7 +35,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/regex.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -115,7 +114,6 @@ static int rte_init(void)
             error = "orte_ess_base_tool_setup";
             goto error;
         }
-        /* as a tool, I don't need a nidmap - so just return now */
         return ORTE_SUCCESS;
     }
 

@@ -53,7 +53,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/regex.h"
 #include "orte/runtime/orte_globals.h"
@@ -126,23 +125,27 @@ static int rte_init(void)
         }
         ORTE_PROC_MY_NAME->jobid = jobid;
 
-        /* get our global rank from PMI */
-        if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
-            error = "getting rank";
-            ret = ORTE_ERR_NOT_FOUND;
-            goto error;
+        /* if we weren't given it, get our global rank from PMI */
+        if (NULL == orte_ess_base_vpid) {
+            if (!opal_pmix.get_attr(PMIX_RANK, &kv)) {
+                error = "getting rank";
+                ret = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
+            ORTE_PROC_MY_NAME->vpid = kv->data.uint32 + 1;  // compensate for orterun
+            OBJ_RELEASE(kv);
         }
-        ORTE_PROC_MY_NAME->vpid = kv->data.uint32 + 1;  // compensate for orterun
-        OBJ_RELEASE(kv);
 
-        /* get universe size */
-        if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
-            error = "getting univ size";
-            ret = ORTE_ERR_NOT_FOUND;
-            goto error;
+        /* if we weren't given it, get universe size */
+        if (orte_ess_base_num_procs < 0) {
+            if (!opal_pmix.get_attr(PMIX_UNIV_SIZE, &kv)) {
+                error = "getting univ size";
+                ret = ORTE_ERR_NOT_FOUND;
+                goto error;
+            }
+            orte_process_info.num_procs = kv->data.uint32 + 1;  // compensate for orterun
+            OBJ_RELEASE(kv);
         }
-        orte_process_info.num_procs = kv->data.uint32 + 1;  // compensate for orterun
-        OBJ_RELEASE(kv);
 
         /* complete setup */
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
@@ -391,18 +394,6 @@ static int rte_finalize(void)
         }
     }
     
-    /* deconstruct my nidmap and jobmap arrays - this
-     * function protects itself from being called
-     * before things were initialized
-     */
-    orte_util_nidmap_finalize();
-
-#if OPAL_HAVE_HWLOC
-    if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
-        opal_hwloc_topology = NULL;
-    }
-#endif
     return ORTE_SUCCESS;
 }
 

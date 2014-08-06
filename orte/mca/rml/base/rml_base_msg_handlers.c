@@ -52,12 +52,21 @@ static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all);
 void orte_rml_base_post_recv(int sd, short args, void *cbdata)
 {
     orte_rml_recv_request_t *req = (orte_rml_recv_request_t*)cbdata;
-    orte_rml_posted_recv_t *post = req->post, *recv;
+    orte_rml_posted_recv_t *post, *recv;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL | ORTE_NS_CMP_WILD;
 
     opal_output_verbose(5, orte_rml_base_framework.framework_output,
                         "%s posting recv",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    if (NULL == req) {
+        /* this can only happen if something is really wrong, but
+         * someone managed to get here in a bizarre test */
+        opal_output(0, "%s CANNOT POST NULL RML RECV REQUEST",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        return;
+    }
+    post = req->post;
 
     /* if the request is to cancel a recv, then find the recv
      * and remove it from our list

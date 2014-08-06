@@ -101,8 +101,9 @@ static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
     cb->active = false;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s pmix:native recv callback activated",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+                        "%s pmix:native recv callback activated with %d bytes",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        (NULL == buf) ? -1 : (int)buf->bytes_used);
 
     if (NULL != buf) {
         /* transfer the data to the cb */
@@ -122,8 +123,10 @@ static int native_init(void)
         return OPAL_SUCCESS;
     }
 
-    /* construct the server fields */
-    mca_pmix_native_component.cache = NULL;
+    /* construct the component fields */
+    mca_pmix_native_component.cache_local = NULL;
+    mca_pmix_native_component.cache_remote = NULL;
+    mca_pmix_native_component.cache_global = NULL;
     mca_pmix_native_component.sd = -1;
     mca_pmix_native_component.state = PMIX_USOCK_UNCONNECTED;
     mca_pmix_native_component.tag = 0;
@@ -280,19 +283,43 @@ static int native_put(opal_pmix_scope_t scope,
 {
     int rc;
 
-    if (NULL == mca_pmix_native_component.cache) {
-        mca_pmix_native_component.cache = OBJ_NEW(opal_buffer_t);
-    }
-    /* pack the scope so the server can correctly distribute
-     * the data */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache, &scope, 1, PMIX_SCOPE_T))) {
-        OPAL_ERROR_LOG(rc);
-        return rc;
-    }
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache, &kv, 1, OPAL_VALUE))) {
-        OPAL_ERROR_LOG(rc);
+    /* pack the cache that matches the scope */
+    if (PMIX_LOCAL == scope) {
+        if (NULL == mca_pmix_native_component.cache_local) {
+            mca_pmix_native_component.cache_local = OBJ_NEW(opal_buffer_t);
+        }
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native put local data for key %s",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kv->key);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache_local, &kv, 1, OPAL_VALUE))) {
+            OPAL_ERROR_LOG(rc);
+        }
+    } else if (PMIX_REMOTE == scope) {
+        if (NULL == mca_pmix_native_component.cache_remote) {
+            mca_pmix_native_component.cache_remote = OBJ_NEW(opal_buffer_t);
+        }
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native put remote data for key %s",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kv->key);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache_remote, &kv, 1, OPAL_VALUE))) {
+            OPAL_ERROR_LOG(rc);
+        }
+    } else {
+        /* must be global */
+        if (NULL == mca_pmix_native_component.cache_global) {
+            mca_pmix_native_component.cache_global = OBJ_NEW(opal_buffer_t);
+        }
+        opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                            "%s pmix:native put global data for key %s",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kv->key);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(mca_pmix_native_component.cache_global, &kv, 1, OPAL_VALUE))) {
+            OPAL_ERROR_LOG(rc);
+        }
     }
 
+    /* have to save a copy locally as some of our components will
+     * look for it */
+    (void)opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kv);
     return rc;
 }
 
@@ -303,6 +330,7 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
     pmix_cmd_t cmd = PMIX_FENCE_CMD;
     pmix_cb_t *cb;
     int rc;
+    opal_pmix_scope_t scope;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native executing fence",
@@ -330,13 +358,47 @@ static int native_fence(opal_process_name_t *procs, size_t nprocs)
     }
 
     /* if we haven't already done it, ensure we have committed our values */
-    if (NULL != mca_pmix_native_component.cache) {
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &mca_pmix_native_component.cache, 1, OPAL_BUFFER))) {
+    if (NULL != mca_pmix_native_component.cache_local) {
+        scope = PMIX_LOCAL;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &scope, 1, PMIX_SCOPE_T))) {
             OPAL_ERROR_LOG(rc);
             OBJ_RELEASE(msg);
             return rc;
         }
-        OBJ_RELEASE(mca_pmix_native_component.cache);
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &mca_pmix_native_component.cache_local, 1, OPAL_BUFFER))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        OBJ_RELEASE(mca_pmix_native_component.cache_local);
+    }
+    if (NULL != mca_pmix_native_component.cache_remote) {
+        scope = PMIX_REMOTE;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &scope, 1, PMIX_SCOPE_T))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &mca_pmix_native_component.cache_remote, 1, OPAL_BUFFER))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        OBJ_RELEASE(mca_pmix_native_component.cache_remote);
+    }
+    if (NULL != mca_pmix_native_component.cache_global) {
+        scope = PMIX_GLOBAL;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &scope, 1, PMIX_SCOPE_T))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &mca_pmix_native_component.cache_global, 1, OPAL_BUFFER))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        OBJ_RELEASE(mca_pmix_native_component.cache_global);
     }
 
     /* create a callback object as we need to pass it to the
@@ -366,6 +428,7 @@ static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
     pmix_cmd_t cmd = PMIX_FENCENB_CMD;
     int rc;
     pmix_cb_t *cb;
+    opal_pmix_scope_t scope;
 
     msg = OBJ_NEW(opal_buffer_t);
     /* pack the fence cmd */
@@ -388,11 +451,48 @@ static int native_fence_nb(opal_process_name_t *procs, size_t nprocs,
         }
     }
 
-    /* if we haven't already done it, ensure we commit our values
-     * as part of the fence message to reduce message traffic */
-    if (NULL != mca_pmix_native_component.cache) {
-        opal_dss.copy_payload(msg, mca_pmix_native_component.cache);
-        OBJ_RELEASE(mca_pmix_native_component.cache);
+    /* if we haven't already done it, ensure we have committed our values */
+    if (NULL != mca_pmix_native_component.cache_local) {
+        scope = PMIX_LOCAL;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &scope, 1, PMIX_SCOPE_T))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &mca_pmix_native_component.cache_local, 1, OPAL_BUFFER))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        OBJ_RELEASE(mca_pmix_native_component.cache_local);
+    }
+    if (NULL != mca_pmix_native_component.cache_remote) {
+        scope = PMIX_REMOTE;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &scope, 1, PMIX_SCOPE_T))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &mca_pmix_native_component.cache_remote, 1, OPAL_BUFFER))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        OBJ_RELEASE(mca_pmix_native_component.cache_remote);
+    }
+    if (NULL != mca_pmix_native_component.cache_global) {
+        scope = PMIX_GLOBAL;
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &scope, 1, PMIX_SCOPE_T))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(msg, &mca_pmix_native_component.cache_global, 1, OPAL_BUFFER))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
+            return rc;
+        }
+        OBJ_RELEASE(mca_pmix_native_component.cache_global);
     }
 
     /* create a callback object as we need to pass it to the
@@ -472,25 +572,28 @@ static int native_get(const opal_identifier_t *id,
     }
     if (OPAL_SUCCESS == ret) {
         cnt = 1;
-        if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &bptr, &cnt, OPAL_BUFFER))) {
-            OPAL_ERROR_LOG(rc);
-            OBJ_RELEASE(cb);
-            return rc;
-        }
-        while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
-            if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kp))) {
-                OPAL_ERROR_LOG(ret);
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(&cb->data, &bptr, &cnt, OPAL_BUFFER))) {
+            while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
+                if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal, id, kp))) {
+                    OPAL_ERROR_LOG(ret);
+                }
+                if (0 == strcmp(key, kp->key)) {
+                    *kv = kp;
+                } else {
+                    OBJ_RELEASE(kp);
+                }
             }
-            if (0 == strcmp(key, kp->key)) {
-                *kv = kp;
-            } else {
-                OBJ_RELEASE(kp);
+            if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+                OPAL_ERROR_LOG(rc);
             }
+            OBJ_RELEASE(bptr);
+            cnt = 1;
         }
         if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
             OPAL_ERROR_LOG(rc);
+        } else {
+            rc = OPAL_SUCCESS;
         }
-        OBJ_RELEASE(bptr);
     } else {
         rc = ret;
     }
@@ -586,7 +689,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &ret, &cnt, OPAL_INT))) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(cb);
-        return rc;
+        return false;
     }
     if (OPAL_SUCCESS == ret) {
         /* unpack the buffer containing the values */
@@ -594,13 +697,43 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
         if (OPAL_SUCCESS != (rc = opal_dss.unpack(&cb->data, &bptr, &cnt, OPAL_BUFFER))) {
             OPAL_ERROR_LOG(rc);
             OBJ_RELEASE(cb);
-            return rc;
+            return false;
         }
         cnt = 1;
         while (OPAL_SUCCESS == (rc = opal_dss.unpack(bptr, &kp, &cnt, OPAL_VALUE))) {
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s unpacked attr %s",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key);
+            /* if this is the local topology, we need to save it in a special way */
+#if OPAL_HAVE_HWLOC
+            {
+                hwloc_topology_t topo;
+                opal_buffer_t buf;
+                if (0 == strcmp(PMIX_LOCAL_TOPO, kp->key)) {
+                    /* transfer the byte object for unpacking */
+                    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                    opal_dss.load(&buf, kp->data.bo.bytes, kp->data.bo.size);
+                    kp->data.bo.bytes = NULL;  // protect the data region
+                    kp->data.bo.size = 0;
+                    OBJ_RELEASE(kp);
+                    /* extract the topology */
+                    cnt=1;
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &topo, &cnt, OPAL_HWLOC_TOPO))) {
+                        OPAL_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&buf);
+                        continue;
+                    }
+                    OBJ_DESTRUCT(&buf);
+                    if (NULL == opal_hwloc_topology) {
+                        opal_hwloc_topology = topo;
+                    } else {
+                        hwloc_topology_destroy(topo);
+                    }
+                }
+                cnt = 1;
+                continue;
+            }
+#endif
             if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp))) {
                 OPAL_ERROR_LOG(rc);
                 OBJ_RELEASE(kp);
@@ -637,7 +770,7 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
     } else {
         OPAL_ERROR_LOG(ret);
         OBJ_RELEASE(cb);
-        return ret;
+        return false;
     }
     OBJ_RELEASE(cb);
     opal_proc_set_name((opal_process_name_t*)&native_pname);
@@ -652,25 +785,8 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
 
     /* baseline all the procs as nonlocal */
     myrank = native_pname.vid;
-    /* set a default locality for every process in the job other than myself */
-    OBJ_CONSTRUCT(&kvn, opal_value_t);
-    kvn.key = strdup(OPAL_DSTORE_LOCALITY);
-    kvn.type = OPAL_UINT16;
-    kvn.data.uint16 = OPAL_PROC_NON_LOCAL;
-    for (i=0; i < usize; i++) {
-        if (myrank == i) {
-            continue;
-        }
-        native_pname.vid = i;
-        opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                            "%s SETTING LOCALITY FOR %s",
-                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                            OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname));
-        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&native_pname, &kvn);
-    }
-    OBJ_DESTRUCT(&kvn);
-
-    /* overwrite locality for each local rank */
+    /* we only need to set locality for each local rank as "not found"
+     * equates to "non local" */
     ranks = opal_argv_split(lclpeers->data.string, ',');
     for (i=0; NULL != ranks[i]; i++) {
         if (myrank == i) {

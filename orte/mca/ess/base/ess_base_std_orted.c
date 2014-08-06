@@ -324,12 +324,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
-    /* initialize the nidmaps */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_util_nidmap_init";
-        goto error;
-    }
 #if ORTE_ENABLE_STATIC_PORTS
     /* if we are using static ports, then we need to setup
      * the daemon info so the RML can function properly

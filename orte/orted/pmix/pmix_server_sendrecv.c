@@ -556,7 +556,7 @@ static void process_message(pmix_server_peer_t *peer)
     int32_t cnt;
     pmix_cmd_t cmd;
     opal_buffer_t *reply, xfer, *bptr, buf;
-    opal_value_t kv, *kvp;
+    opal_value_t kv, *kvp, *kvp2;
     opal_identifier_t id, idreq, *sig=NULL;
     orte_process_name_t name;
     orte_job_t *jdata;
@@ -564,6 +564,8 @@ static void process_message(pmix_server_peer_t *peer)
     opal_list_t values;
     size_t nprocs;
     uint32_t tag;
+    opal_pmix_scope_t scope;
+    int handle;
 
     /* xfer the message to a buffer for unpacking */
     OBJ_CONSTRUCT(&xfer, opal_buffer_t);
@@ -617,7 +619,16 @@ static void process_message(pmix_server_peer_t *peer)
         /* if data was given, unpack and store it in the pmix dstore - it is okay
          * if there was no data, it's just a fence*/
         cnt = 1;
-        if (OPAL_SUCCESS == (rc = opal_dss.unpack(&xfer, &bptr, &cnt, OPAL_BUFFER))) {
+        while (OPAL_SUCCESS == (rc = opal_dss.unpack(&xfer, &scope, &cnt, PMIX_SCOPE_T))) {
+            /* unpack the buffer */
+            cnt = 1;
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(&xfer, &bptr, &cnt, OPAL_BUFFER))) {
+                OPAL_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&xfer);
+                free(sig);
+                return;
+            }
+            /* prep the value_t */
             OBJ_CONSTRUCT(&kv, opal_value_t);
             kv.key = strdup("modex");
             kv.type = OPAL_BYTE_OBJECT;
@@ -625,7 +636,32 @@ static void process_message(pmix_server_peer_t *peer)
             kv.data.bo.size = bptr->bytes_used;
             bptr->base_ptr = NULL;  // protect the data region
             OBJ_RELEASE(bptr);
-            if (OPAL_SUCCESS != (rc = opal_dstore.store(pmix_server_handle, &id, &kv))) {
+            if (PMIX_LOCAL == scope) {
+                /* store it in the local-modex dstore handle */
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s recvd LOCAL modex of size %d for proc %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    (int)kv.data.bo.size,
+                                    ORTE_NAME_PRINT(&peer->name));
+                handle = pmix_server_local_handle;
+            } else if (PMIX_REMOTE == scope) {
+                /* store it in the remote-modex dstore handle */
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s recvd REMOTE modex of size %d for proc %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    (int)kv.data.bo.size,
+                                    ORTE_NAME_PRINT(&peer->name));
+                handle = pmix_server_remote_handle;
+            } else {
+                /* must be for global dissemination */
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s recvd GLOBAL modex of size %d for proc %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    (int)kv.data.bo.size,
+                                    ORTE_NAME_PRINT(&peer->name));
+                handle = pmix_server_global_handle;
+            }
+            if (OPAL_SUCCESS != (rc = opal_dstore.store(handle, &id, &kv))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&kv);
                 OBJ_DESTRUCT(&xfer);
@@ -633,6 +669,10 @@ static void process_message(pmix_server_peer_t *peer)
                 return;
             }
             OBJ_DESTRUCT(&kv);
+            cnt = 1;
+        }
+        if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+            OPAL_ERROR_LOG(rc);
         }
         /* send notification to myself */
         reply = OBJ_NEW(opal_buffer_t);
@@ -707,7 +747,7 @@ static void process_message(pmix_server_peer_t *peer)
             return;
         }
         /* is this proc one of mine? */
-        memcpy((char*)&name, (char*)&id, sizeof(orte_process_name_t));
+        memcpy((char*)&name, (char*)&idreq, sizeof(orte_process_name_t));
         if (NULL == (jdata = orte_get_job_data_object(name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             OBJ_DESTRUCT(&xfer);
@@ -719,12 +759,20 @@ static void process_message(pmix_server_peer_t *peer)
             return;
         }
         if (ORTE_FLAG_TEST(proc, ORTE_PROC_FLAG_LOCAL)) {
-            /* yes - retrieve the entire blob for that proc */
+            kvp = NULL;
+            kvp2 = NULL;
+            /* retrieve the local blob for that proc */
             OBJ_CONSTRUCT(&values, opal_list_t);
-            if (OPAL_SUCCESS != (ret = opal_dstore.fetch(pmix_server_handle, &idreq, "modex", &values))) {
-                ORTE_ERROR_LOG(ret);
-                OPAL_LIST_DESTRUCT(&values);
+            if (OPAL_SUCCESS == (ret = opal_dstore.fetch(pmix_server_local_handle, &idreq, "modex", &values))) {
+                kvp = (opal_value_t*)opal_list_remove_first(&values);
             }
+            OPAL_LIST_DESTRUCT(&values);
+            /* retrieve the global blob for that proc */
+            OBJ_CONSTRUCT(&values, opal_list_t);
+            if (OPAL_SUCCESS == (ret = opal_dstore.fetch(pmix_server_global_handle, &idreq, "modex", &values))) {
+                kvp2 = (opal_value_t*)opal_list_remove_first(&values);
+            }
+            OPAL_LIST_DESTRUCT(&values);
             /* return it */
             reply = OBJ_NEW(opal_buffer_t);
             /* pack the status */
@@ -732,27 +780,54 @@ static void process_message(pmix_server_peer_t *peer)
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(reply);
                 OBJ_DESTRUCT(&xfer);
-                OPAL_LIST_DESTRUCT(&values);
                 return;
             }
-            if (OPAL_SUCCESS == ret) {
-                /* pack the blob */
-                kvp = (opal_value_t*)opal_list_get_first(&values);
-                if (OPAL_BYTE_OBJECT == kvp->type) {
-                    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-                    opal_dss.load(&buf, kvp->data.bo.bytes, kvp->data.bo.size);
-                    bptr = &buf;
-                    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
-                        ORTE_ERROR_LOG(rc);
-                        OBJ_RELEASE(reply);
-                        OBJ_DESTRUCT(&xfer);
-                        OBJ_DESTRUCT(&buf);
-                        OPAL_LIST_DESTRUCT(&values);
-                        return;
-                    }
+            /* local blob */
+            if (NULL != kvp) {
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s passing local blob of size %d from proc %s to proc %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    (int)kvp->data.bo.size,
+                                    ORTE_NAME_PRINT(&name),
+                                    ORTE_NAME_PRINT(&peer->name));
+                OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                opal_dss.load(&buf, kvp->data.bo.bytes, kvp->data.bo.size);
+                /* protect the data */
+                kvp->data.bo.bytes = NULL;
+                kvp->data.bo.size = 0;
+                bptr = &buf;
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(reply);
+                    OBJ_DESTRUCT(&xfer);
                     OBJ_DESTRUCT(&buf);
+                    return;
                 }
-                OPAL_LIST_DESTRUCT(&values);
+                OBJ_DESTRUCT(&buf);
+                OBJ_RELEASE(kvp);
+            }
+            if (NULL != kvp2) {
+                opal_output_verbose(2, pmix_server_output,
+                                    "%s passing global blob of size %d from proc %s to proc %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    (int)kvp2->data.bo.size,
+                                    ORTE_NAME_PRINT(&name),
+                                    ORTE_NAME_PRINT(&peer->name));
+                OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                opal_dss.load(&buf, kvp2->data.bo.bytes, kvp2->data.bo.size);
+                /* protect the data */
+                kvp2->data.bo.bytes = NULL;
+                kvp2->data.bo.size = 0;
+                bptr = &buf;
+                if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &bptr, 1, OPAL_BUFFER))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(reply);
+                    OBJ_DESTRUCT(&xfer);
+                    OBJ_DESTRUCT(&buf);
+                    return;
+                }
+                OBJ_DESTRUCT(&buf);
+                OBJ_RELEASE(kvp2);
             }
             PMIX_SERVER_QUEUE_SEND(peer, tag, reply);
             OBJ_DESTRUCT(&xfer);

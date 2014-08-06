@@ -334,7 +334,7 @@ opal_btl_usnic_recv_frag_bookkeeping(
 repost:
     /* if endpoint exiting, and all ACKs received, release the endpoint */
     if (endpoint->endpoint_exiting && ENDPOINT_DRAINED(endpoint)) {
-        opal_btl_usnic_release_endpoint(module, endpoint);
+        OBJ_RELEASE(endpoint);
     }
 
     ++module->stats.num_recv_reposts;

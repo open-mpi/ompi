@@ -103,7 +103,7 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
 #define PMIX_MAX_PROCS       "pmix.max.size"    // (uint32_t) max #procs for this job
 /* topology info */
 #define PMIX_NET_TOPO        "pmix.ntopo"       // (byte_object) network topology
-
+#define PMIX_LOCAL_TOPO      "pmix.ltopo"       // (hwloc topo) local node topology
 
 /**
  * Provide a simplified macro for sending data via modex
