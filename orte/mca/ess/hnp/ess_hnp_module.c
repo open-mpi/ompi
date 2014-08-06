@@ -85,7 +85,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/util/comm/comm.h"
-#include "orte/util/nidmap.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -380,9 +379,6 @@ static int rte_init(void)
         error = "setup node topologies array";
         goto error;
     }
-
-    /* init the nidmap - just so we register that verbosity */
-    orte_util_nidmap_init(NULL);
 
     /* Setup the job data object for the daemons */        
     /* create and store the job data object */

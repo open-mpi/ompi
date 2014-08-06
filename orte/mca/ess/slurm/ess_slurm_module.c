@@ -43,7 +43,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/nidmap.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -107,7 +106,6 @@ static int rte_init(void)
             error = "orte_ess_base_tool_setup";
             goto error;
         }
-        /* as a tool, I don't need a nidmap - so just return now */
         return ORTE_SUCCESS;
         
     }
@@ -141,7 +139,6 @@ static int rte_finalize(void)
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-        /* as a tool, I didn't create a nidmap - so just return now */
         return ret;
     } else {
         /* otherwise, I must be an application process
@@ -153,9 +150,6 @@ static int rte_finalize(void)
         }
     }
     
-    /* deconstruct my nidmap and jobmap arrays */
-    orte_util_nidmap_finalize();
-
     return ORTE_SUCCESS;
 }
 

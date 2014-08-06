@@ -704,6 +704,36 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s unpacked attr %s",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key);
+            /* if this is the local topology, we need to save it in a special way */
+#if OPAL_HAVE_HWLOC
+            {
+                hwloc_topology_t topo;
+                opal_buffer_t buf;
+                if (0 == strcmp(PMIX_LOCAL_TOPO, kp->key)) {
+                    /* transfer the byte object for unpacking */
+                    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                    opal_dss.load(&buf, kp->data.bo.bytes, kp->data.bo.size);
+                    kp->data.bo.bytes = NULL;  // protect the data region
+                    kp->data.bo.size = 0;
+                    OBJ_RELEASE(kp);
+                    /* extract the topology */
+                    cnt=1;
+                    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &topo, &cnt, OPAL_HWLOC_TOPO))) {
+                        OPAL_ERROR_LOG(rc);
+                        OBJ_DESTRUCT(&buf);
+                        continue;
+                    }
+                    OBJ_DESTRUCT(&buf);
+                    if (NULL == opal_hwloc_topology) {
+                        opal_hwloc_topology = topo;
+                    } else {
+                        hwloc_topology_destroy(topo);
+                    }
+                }
+                cnt = 1;
+                continue;
+            }
+#endif
             if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, &OPAL_PROC_MY_NAME, kp))) {
                 OPAL_ERROR_LOG(rc);
                 OBJ_RELEASE(kp);
@@ -755,25 +785,8 @@ static bool native_get_attr(const char *attr, opal_value_t **kv)
 
     /* baseline all the procs as nonlocal */
     myrank = native_pname.vid;
-    /* set a default locality for every process in the job other than myself */
-    OBJ_CONSTRUCT(&kvn, opal_value_t);
-    kvn.key = strdup(OPAL_DSTORE_LOCALITY);
-    kvn.type = OPAL_UINT16;
-    kvn.data.uint16 = OPAL_PROC_NON_LOCAL;
-    for (i=0; i < usize; i++) {
-        if (myrank == i) {
-            continue;
-        }
-        native_pname.vid = i;
-        opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                            "%s SETTING LOCALITY FOR %s",
-                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                            OPAL_NAME_PRINT(*(opal_identifier_t*)&native_pname));
-        (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&native_pname, &kvn);
-    }
-    OBJ_DESTRUCT(&kvn);
-
-    /* overwrite locality for each local rank */
+    /* we only need to set locality for each local rank as "not found"
+     * equates to "non local" */
     ranks = opal_argv_split(lclpeers->data.string, ',');
     for (i=0; NULL != ranks[i]; i++) {
         if (myrank == i) {

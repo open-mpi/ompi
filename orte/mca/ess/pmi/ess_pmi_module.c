@@ -53,7 +53,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/regex.h"
 #include "orte/runtime/orte_globals.h"
@@ -395,18 +394,6 @@ static int rte_finalize(void)
         }
     }
     
-    /* deconstruct my nidmap and jobmap arrays - this
-     * function protects itself from being called
-     * before things were initialized
-     */
-    orte_util_nidmap_finalize();
-
-#if OPAL_HAVE_HWLOC
-    if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
-        opal_hwloc_topology = NULL;
-    }
-#endif
     return ORTE_SUCCESS;
 }
 

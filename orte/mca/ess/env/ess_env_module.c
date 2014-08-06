@@ -63,7 +63,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/nidmap.h"
 #include "orte/util/regex.h"
 
 #include "orte/runtime/runtime.h"
@@ -137,7 +136,6 @@ static int rte_init(void)
             error = "orte_ess_base_tool_setup";
             goto error;
         }
-        /* as a tool, I don't need a nidmap - so just return now */
         return ORTE_SUCCESS;
         
     }
@@ -146,13 +144,6 @@ static int rte_init(void)
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(true))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_app_setup";
-        goto error;
-    }
-    
-    /* if data was provided, update the database */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_util_nidmap_init";
         goto error;
     }
     
@@ -213,9 +204,6 @@ static int rte_finalize(void)
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
         ORTE_ERROR_LOG(ret);
     }
-
-    /* deconstruct the nidmap and jobmap arrays */
-    orte_util_nidmap_finalize();
 
     return ORTE_SUCCESS;
 }
@@ -451,13 +439,6 @@ static int rte_ft_event(int state)
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_RESTART))) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        /* if one was provided, build my nidmap */
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

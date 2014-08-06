@@ -39,6 +39,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 
@@ -389,6 +390,8 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         opal_list_t all_procs;
         orte_namelist_t *name;
         opal_identifier_t *ids;
+        opal_list_t myvals;
+        opal_value_t *kv;
 
         /* we first need to give the wireup info to our routed module.
          * Not every routed module will need it, but some do require
@@ -464,9 +467,19 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                              "%s dpm:orte:connect_accept adding procs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-        /* set the locality of the new procs */
+        /* set the locality of the new procs - the required info should
+         * have been included in the data exchange */
         for (j=0; j < new_proc_len; j++) {
-            ompi_proc_set_locality(new_proc_list[j]);
+            OBJ_CONSTRUCT(&myvals, opal_list_t);
+            if (OMPI_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
+                                                         (opal_identifier_t*)&new_proc_list[j]->super.proc_name,
+                                                         OPAL_DSTORE_LOCALITY, &myvals))) {
+                new_proc_list[j]->super.proc_flags = OPAL_PROC_NON_LOCAL;
+            } else {
+                kv = (opal_value_t*)opal_list_get_first(&myvals);
+                new_proc_list[j]->super.proc_flags = kv->data.uint16;
+            }
+            OPAL_LIST_DESTRUCT(&myvals);
         }
 
         if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(new_proc_list, new_proc_len)))) {

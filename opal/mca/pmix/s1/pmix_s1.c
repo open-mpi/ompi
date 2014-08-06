@@ -448,25 +448,8 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
     if (!got_modex_data) {
         got_modex_data = true;
         memcpy(&s1_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
-        /* set a default locality for every process in the job other than myself */
-        OBJ_CONSTRUCT(&kvn, opal_value_t);
-        kvn.key = strdup(OPAL_DSTORE_LOCALITY);
-        kvn.type = OPAL_UINT16;
-        kvn.data.uint16 = OPAL_PROC_NON_LOCAL;
-        for (i=0; i < s1_usize; i++) {
-            if (s1_rank == i) {
-                continue;
-            }
-            s1_pname.vid = i;
-            opal_output_verbose(5, opal_pmix_base_framework.framework_output,
-                                "%s SETTING LOCALITY FOR %s",
-                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                                OPAL_NAME_PRINT(*(opal_identifier_t*)&s1_pname));
-            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&s1_pname, &kvn);
-        }
-        OBJ_DESTRUCT(&kvn);
-
-        /* overwrite locality for each local rank */
+        /* we only need to set locality for each local rank as "not found"
+         * equates to "non-local" */
         for (i=0; i < s1_nlranks; i++) {
             s1_pname.vid = i;
             rc = cache_keys_locally((opal_identifier_t*)&s1_pname, OPAL_DSTORE_CPUSET,
