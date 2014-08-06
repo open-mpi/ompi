@@ -33,7 +33,6 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
     opal_have_pmi1=0
     opal_enable_pmi2=0
 
-    AC_MSG_CHECKING([if Cray PMI package is installed])
     PKG_CHECK_MODULES([CRAY_PMI], [cray-pmi],
                       [$1_LDFLAGS="$CRAY_PMI_LIBS"
                        $1_CPPFLAGS="$CRAY_PMI_CFLAGS"
@@ -42,7 +41,6 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
                         opal_enable_pmi2=1
                         $2],
                        [AC_MSG_RESULT([no])
-                        AC_MSG_WARN([Cray PMI not found.])
                         $3])
    AC_DEFINE_UNQUOTED([WANT_PMI_SUPPORT],
                       [$opal_enable_pmi],
