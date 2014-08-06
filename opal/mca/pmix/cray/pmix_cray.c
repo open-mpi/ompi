@@ -17,6 +17,10 @@
 #include "opal/constants.h"
 #include "opal/types.h"
 
+#include "opal_stdint.h"
+#include "opal/mca/hwloc/base/base.h"
+#include "opal/util/output.h"
+#include "opal/util/proc.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 
@@ -24,7 +28,13 @@
 #include <pmi.h>
 #include <pmi2.h>
 
+#include "opal/mca/pmix/base/base.h"
 #include "pmix_cray.h"
+
+typedef struct {
+    uint32_t jid;
+    uint32_t vid;
+} cray_pname_t;
 
 static int cray_init(void);
 static int cray_fini(void);
@@ -62,6 +72,7 @@ static bool cray_get_attr(const char *attr, opal_value_t **kv);
 static int cray_get_attr_nb(const char *attr,
                           opal_pmix_cbfunc_t cbfunc,
                           void *cbdata);
+static int kvs_get(const char key[], char value [], int maxvalue);
 #if 0
 static int cray_get_jobid(char jobId[], int jobIdSize);
 static int cray_get_rank(int *rank);
@@ -102,13 +113,20 @@ static int pmix_vallen_max = 0;
 // Job environment description
 static int pmix_size = 0;
 static int pmix_rank = 0;
+static int pmix_lrank = 0;
+static int pmix_nrank = 0;
+static int pmix_nlranks = 0;
 static int pmix_appnum = 0;
 static int pmix_usize = 0;
 static char *pmix_kvs_name = NULL;
+static int *pmix_lranks = NULL;
+static cray_pname_t cray_pname;
+
 
 static char* pmix_packed_data = NULL;
 static int pmix_packed_data_offset = 0;
 static int pmix_pack_key = 0;
+static bool pmix_got_modex_data = false;
 
 static char* pmix_error(int pmix_err);
 #define OPAL_PMI_ERROR(pmi_err, pmi_func)                       \
@@ -120,8 +138,9 @@ static char* pmix_error(int pmix_err);
 
 static int cray_init(void)
 {
-    int spawned, size, rank, appnum;
+    int i, spawned, size, rank, appnum, my_node;
     int rc, ret = OPAL_ERROR;
+    char *pmapping = NULL;
     char buf[16];
     int found;
 
@@ -168,6 +187,37 @@ static int cray_init(void)
         goto err_exit;
     }
 
+    pmapping = (char*)malloc(PMI2_MAX_VALLEN);
+    if( pmapping == NULL ){
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = PMI2_Info_GetJobAttr("PMI_process_mapping", pmapping, PMI2_MAX_VALLEN, &found);
+    if( !found || PMI_SUCCESS != rc ) {
+        OPAL_PMI_ERROR(rc,"PMI2_Info_GetJobAttr");
+        return OPAL_ERROR;
+    }
+
+    pmix_lranks = pmix_cray_parse_pmap(pmapping, pmix_rank, &my_node, &pmix_nlranks);
+    if (NULL == pmix_lranks) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        OPAL_ERROR_LOG(rc);
+        return rc;
+    }
+
+    free(pmapping);
+
+    /* find ourselves */
+    for (i=0; i < pmix_nlranks; i++) {
+        if (pmix_rank == pmix_lranks[i]) {
+            pmix_lrank = i;
+            pmix_nrank = my_node;
+            break;
+        }
+    }
+
     return OPAL_SUCCESS;
 err_exit:
     PMI2_Finalize();
@@ -182,6 +232,16 @@ static int cray_fini(void) {
     if (0 == --pmix_init_count) {
         PMI2_Finalize();
     }
+
+    if (NULL != pmix_kvs_name) {
+        free(pmix_kvs_name);
+        pmix_kvs_name = NULL;
+    }
+
+    if (NULL != pmix_lranks) {
+        free(pmix_lranks);
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -249,6 +309,10 @@ static int kvs_put(const char key[], const char value[])
 
     int rc;
 
+    opal_output_verbose(4, opal_pmix_base_framework.framework_output,
+                        "%s pmix:cray kvs_put key %s  value %s",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), key, value);
+
     rc =  PMI2_KVS_Put(key, value);
     if( PMI_SUCCESS != rc ){
         OPAL_PMI_ERROR(rc, "PMI2_KVS_Put");
@@ -303,7 +367,88 @@ static int cray_put(opal_pmix_scope_t scope,
     return rc;
 }
 
+static int cray_fence(opal_process_name_t *procs, size_t nprocs)
+{
+    int rc;
+    int32_t i;
+    opal_value_t *kp, kvn;
+    opal_hwloc_locality_t locality;
 
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:cray called fence",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    /* check if there is partially filled meta key and put them */
+    if (0 != pmix_packed_data_offset && NULL != pmix_packed_data) {
+        pmix_commit_packed(pmix_packed_data, pmix_packed_data_offset, pmix_vallen_max, &pmix_pack_key, kvs_put);
+        pmix_packed_data_offset = 0;
+        free(pmix_packed_data);
+        pmix_packed_data = NULL;
+    }
+
+    if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
+        OPAL_PMI_ERROR(rc, "PMI2_KVS_Fence");
+        return OPAL_ERROR;
+    }
+
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:cray kvs_fence complete",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    /* get the modex data from each local process and set the
+     * localities to avoid having the MPI layer fetch data
+     * for every process in the job */
+    if (!pmix_got_modex_data) {
+        pmix_got_modex_data = true;
+        memcpy(&cray_pname, &OPAL_PROC_MY_NAME, sizeof(opal_identifier_t));
+        /* we only need to set locality for each local rank as "not found"
+         * equates to "non-local" */
+        for (i=0; i < pmix_nlranks; i++) {
+            cray_pname.vid = i;
+            rc = cache_keys_locally((opal_identifier_t*)&cray_pname, OPAL_DSTORE_CPUSET,
+                                    &kp, pmix_kvs_name, pmix_vallen_max, kvs_get);
+            if (OPAL_SUCCESS != rc) {
+                OPAL_ERROR_LOG(rc);
+                return rc;
+            }
+#if OPAL_HAVE_HWLOC
+            if (NULL == kp || NULL == kp->data.string) {
+                /* if we share a node, but we don't know anything more, then
+                 * mark us as on the node as this is all we know
+                 */
+                locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+            } else {
+                /* determine relative location on our node */
+                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                 opal_process_info.cpuset,
+                                                                 kp->data.string);
+            }
+            if (NULL != kp) {
+                OBJ_RELEASE(kp);
+            }
+#else
+            /* all we know is we share a node */
+            locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+#endif
+            OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
+                                 "%s pmix:s2 proc %s locality %s",
+                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                                 OPAL_NAME_PRINT(*(opal_identifier_t*)&cray_pname),
+                                 opal_hwloc_base_print_locality(locality)));
+
+            OBJ_CONSTRUCT(&kvn, opal_value_t);
+            kvn.key = strdup(OPAL_DSTORE_LOCALITY);
+            kvn.type = OPAL_UINT16;
+            kvn.data.uint16 = locality;
+            (void)opal_dstore.store(opal_dstore_internal, (opal_identifier_t*)&cray_pname, &kvn);
+            OBJ_DESTRUCT(&kvn);
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+#if 0
 static int cray_fence(opal_process_name_t *procs, size_t nprocs)
 {
     int rc;
@@ -323,6 +468,7 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
 
     return OPAL_SUCCESS;
 }
+#endif
 
 static int cray_fence_nb(opal_process_name_t *procs, size_t nprocs,
                          opal_pmix_cbfunc_t cbfunc, void *cbdata)
@@ -474,6 +620,24 @@ static bool cray_get_attr(const char *attr, opal_value_t **kv)
         kp->key = strdup(attr);
         kp->type = OPAL_UINT32;
         kp->data.uint32 = i;
+        *kv = kp;
+        return true;
+    }
+
+    if (0 == strcmp(PMIX_LOCAL_RANK, attr)) {
+        kp = OBJ_NEW(opal_value_t);
+        kp->key = strdup(attr);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = pmix_lrank;
+        *kv = kp;
+        return true;
+    }
+
+    if (0 == strcmp(PMIX_NODE_RANK, attr)) {
+        kp = OBJ_NEW(opal_value_t);
+        kp->key = strdup(attr);
+        kp->type = OPAL_UINT32;
+        kp->data.uint32 = pmix_nrank;
         *kv = kp;
         return true;
     }
