@@ -171,7 +171,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     /* Only the MPI process who is also the agent will send the
        pointer value (it doesn't make sense otherwise) */
     if (0 == opal_process_info.my_local_rank) {
-        cmd.module = NULL;
+        cmd.module = module;
     }
 
     /* Ensure to NULL-terminate the passed strings */
