@@ -1332,7 +1332,7 @@ m4_ifdef([project_ompi], [AC_SUBST(FFLAGS)
 #
 # Aggregate MCA parameters directory
 #
-AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(ompidatadir)/amca-param-sets'])
+AC_SUBST([AMCA_PARAM_SETS_DIR], ['$(opaldatadir)/amca-param-sets'])
 
 ############################################################################
 # final wrapper compiler config
