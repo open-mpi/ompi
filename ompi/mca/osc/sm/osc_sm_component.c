@@ -3,6 +3,7 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,6 +17,7 @@
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/class/ompi_free_list.h"
+#include "opal/util/sys_limits.h"
 
 #include "osc_sm.h"
 
@@ -212,11 +214,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
                              "allocating shared memory region of size %ld\n", (long) size));
 
-#ifdef HAVE_GETPAGESIZE
-        pagesize = getpagesize();
-#else
-        pagesize = 4096;
-#endif
+        /* get the pagesize */
+        pagesize = opal_getpagesize();
 
         rbuf = malloc(sizeof(unsigned long) * ompi_comm_size(module->comm));
         if (NULL == rbuf) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;

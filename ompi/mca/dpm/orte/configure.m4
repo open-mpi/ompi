@@ -15,7 +15,6 @@
 AC_DEFUN([MCA_ompi_dpm_orte_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/dpm/orte/Makefile])
 
-    AC_MSG_CHECKING([orte configuration args])
     AC_ARG_WITH([orte],
         AC_HELP_STRING([--with-orte],
                        [Use ORTE run-time environment (default: yes)]))

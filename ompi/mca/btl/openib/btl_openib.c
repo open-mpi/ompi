@@ -64,6 +64,8 @@
 #include "ompi/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
+#include "opal/util/sys_limits.h"
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -654,13 +656,13 @@ static uint64_t calculate_max_reg (void)
             num_mtt = 1 << 20;
         }
 
-        max_reg = (num_mtt - reserved_mtt) * getpagesize () * mtts_per_seg;
+        max_reg = (num_mtt - reserved_mtt) * opal_getpagesize () * mtts_per_seg;
     } else if (0 == stat("/sys/module/ib_mthca/parameters", &statinfo)) {
         mtts_per_seg = 1 << read_module_param("/sys/module/ib_mthca/parameters/log_mtts_per_seg", 1);
         num_mtt = read_module_param("/sys/module/ib_mthca/parameters/num_mtt", 1 << 20);
         reserved_mtt = read_module_param("/sys/module/ib_mthca/parameters/fmr_reserved_mtts", 0);
 
-        max_reg = (num_mtt - reserved_mtt) * getpagesize () * mtts_per_seg;
+        max_reg = (num_mtt - reserved_mtt) * opal_getpagesize () * mtts_per_seg;
     } else {
         /* Need to update to determine the registration limit for this
            configuration */

@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +35,7 @@
 #include "opal/constants.h"
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
+#include "opal/util/sys_limits.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
@@ -110,7 +113,7 @@ sysv_runtime_query(mca_base_module_t **module,
 #if defined (SHM_HUGETLB)
     mca_sshmem_sysv_component.use_hp = 1;
     flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR | SHM_HUGETLB;
-    if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(getpagesize()), flags))) {
+    if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(opal_getpagesize()), flags))) {
         mca_sshmem_sysv_component.use_hp = 0;
     }
     else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {
@@ -121,7 +124,7 @@ sysv_runtime_query(mca_base_module_t **module,
 
     if (0 == mca_sshmem_sysv_component.use_hp) {
         flags = IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR;
-        if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(getpagesize()), flags))) {
+        if (-1 == (shmid = shmget(IPC_PRIVATE, (size_t)(opal_getpagesize()), flags))) {
             goto out;
         }
         else if ((void *)-1 == (addr = shmat(shmid, NULL, 0))) {

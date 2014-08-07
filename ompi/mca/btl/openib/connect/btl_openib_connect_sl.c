@@ -2,6 +2,8 @@
  * Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
  *
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +14,7 @@
 #include "btl_openib.h"
 
 #include "opal/util/show_help.h"
+#include "opal/util/sys_limits.h"
 #include "connect/btl_openib_connect_sl.h"
 #include <infiniband/iba/ib_types.h>
 
@@ -393,7 +396,7 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
     ib_sa_mad_t *req_mad, *resp_mad;
     struct ibv_sge ssge;
     struct mca_btl_openib_sa_qp_cache *cache;
-    long page_size = sysconf(_SC_PAGESIZE);
+    size_t page_size = (size_t)opal_getpagesize();
     int rc;
 
     /* search for a cached item */
