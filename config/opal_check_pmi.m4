@@ -22,9 +22,8 @@
 #
 
 #
-# special check for cray pmi, uses macro(s) from pkg.m4 which
-# may not be installed on some systems where ompi is being configured,
-# but will always be installed on cray xe/xc/? systems.
+# special check for cray pmi, uses macro(s) from pkg.m4 
+#
 # OPAL_CHECK_CRAY_PMI(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
@@ -65,7 +64,6 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_pmi_rpath=
     opal_have_pmi2=0
     opal_have_pmi1=0
-    opal_check_pmi_cray_good=0
 
     # save flags
     opal_check_pmi_$1_save_CPPFLAGS="$CPPFLAGS"
@@ -77,14 +75,6 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     opal_check_pmi_$1_CPPFLAGS=
     opal_check_pmi_$1_LIBS=
 
-    AC_CHECK_PROG([PKG_CONFIG], [pkg-config])
-if test -n "$PKG_CONFIG" -a "$with_pmi" != "no"; then
-    OPAL_CHECK_CRAY_PMI([$1],[opal_check_pmi_cray_good=1],[opal_check_pmi_cray_good=0])
-    AS_IF([test "$opal_check_pmi_cray_good" = "1"],
-          [$2], 
-          [$3])
-fi
-if test "$opal_check_pmi_cray_good" = "0"; then
     AC_MSG_CHECKING([if user requested PMI support])
     AS_IF([test "$with_pmi" = "no"],
           [AC_MSG_RESULT([no])
@@ -185,6 +175,4 @@ if test "$opal_check_pmi_cray_good" = "0"; then
                       [Whether we have PMI2 support])
    AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$opal_enable_pmi" = 1])
    AM_CONDITIONAL(WANT_PMI2_SUPPORT, [test "$opal_have_pmi2" = 1])
-fi
-
 ])
